@@ -95,7 +95,15 @@ export default function OnboardingPage() {
                     salary_payment_day: data.settings.salary_payment_day || 10,
                     salary_month_type: (data.settings.salary_month_type as 'current' | 'next') || 'next',
                     tuition_due_day: data.settings.tuition_due_day || 5,
-                    tuition_settings: data.settings.settings ? JSON.parse(data.settings.settings) : defaultFormData.tuition_settings,
+                    tuition_settings: (() => {
+                        if (!data.settings.settings) return defaultFormData.tuition_settings;
+                        if (typeof data.settings.settings === 'object') return data.settings.settings;
+                        try {
+                            return JSON.parse(data.settings.settings);
+                        } catch {
+                            return defaultFormData.tuition_settings;
+                        }
+                    })(),
                 }));
             } catch (error) {
                 console.error('Failed to load onboarding data:', error);
