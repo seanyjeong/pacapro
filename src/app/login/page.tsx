@@ -1,7 +1,5 @@
 'use client';
 
-console.log('=== LOGIN PAGE LOADED ===');
-
 import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -16,7 +14,6 @@ export default function LoginPage() {
     const [error, setError] = useState('');
 
     const handleSubmit = async (e: React.FormEvent) => {
-        console.log('=== FORM SUBMITTED ===');
         e.preventDefault();
         setError('');
         setLoading(true);
@@ -28,24 +25,17 @@ export default function LoginPage() {
             localStorage.setItem('token', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
 
-            console.log('[LOGIN] User role:', response.user.role);
-            console.log('[LOGIN] Is owner?', response.user.role === 'owner');
-
             // 원장(owner)인 경우 온보딩 상태 확인
             if (response.user.role === 'owner') {
-                console.log('[LOGIN] Checking onboarding status...');
                 try {
                     const onboardingStatus = await onboardingAPI.getStatus();
-                    console.log('[LOGIN] Onboarding status:', onboardingStatus);
                     if (!onboardingStatus.onboarding_completed) {
                         // 온보딩 미완료 → 온보딩 페이지로 이동
-                        console.log('[LOGIN] Redirecting to onboarding...');
                         window.location.href = '/onboarding';
                         return;
                     }
-                } catch (err) {
+                } catch {
                     // 온보딩 상태 확인 실패 시 대시보드로 이동
-                    console.error('[LOGIN] Failed to check onboarding status:', err);
                 }
             }
 
