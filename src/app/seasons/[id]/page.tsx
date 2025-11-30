@@ -1,0 +1,375 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  ArrowLeft,
+  Edit2,
+  Trash2,
+  Loader2,
+  AlertCircle,
+  Trophy,
+  Calendar,
+  Users,
+  DollarSign,
+  XCircle,
+} from 'lucide-react';
+import { toast } from 'sonner';
+import { seasonsApi } from '@/lib/api/seasons';
+import type { Season, StudentSeason } from '@/lib/types/season';
+import {
+  SEASON_TYPE_LABELS,
+  SEASON_STATUS_LABELS,
+  formatSeasonFee,
+  formatOperatingDays,
+  parseOperatingDays,
+  TIME_SLOT_LABELS,
+  SEASON_TARGET_GRADES,
+} from '@/lib/types/season';
+import type { GradeTimeSlots } from '@/lib/types/season';
+
+export default function SeasonDetailPage() {
+  const router = useRouter();
+  const params = useParams();
+  const seasonId = parseInt(params.id as string);
+
+  const [season, setSeason] = useState<Season | null>(null);
+  const [enrolledStudents, setEnrolledStudents] = useState<StudentSeason[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+
+  const fetchSeason = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await seasonsApi.getSeason(seasonId);
+      setSeason(response.season);
+
+      // 등록 학생 목록 조회
+      try {
+        const students = await seasonsApi.getEnrolledStudents(seasonId);
+        setEnrolledStudents(students);
+      } catch {
+        // 학생 목록 조회 실패는 무시
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '시즌 정보를 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [seasonId]);
+
+  useEffect(() => {
+    if (seasonId) {
+      fetchSeason();
+    }
+  }, [seasonId, fetchSeason]);
+
+  const handleDelete = async () => {
+    if (!season) return;
+    if (!confirm(`"${season.season_name}" 시즌을 삭제하시겠습니까?\n등록된 학생이 있으면 삭제할 수 없습니다.`)) return;
+
+    try {
+      await seasonsApi.deleteSeason(seasonId);
+      router.push('/seasons');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '삭제에 실패했습니다.');
+    }
+  };
+
+  const handleCancelEnrollment = async (enrollment: StudentSeason) => {
+    if (!confirm(`${enrollment.student_name} 학생의 시즌 등록을 취소하시겠습니까?\n환불 계산이 진행됩니다.`)) return;
+
+    try {
+      setCancellingId(enrollment.id);
+      await seasonsApi.cancelEnrollment(seasonId, enrollment.student_id);
+      toast.success('시즌 등록이 취소되었습니다.');
+      // 목록 새로고침
+      const students = await seasonsApi.getEnrolledStudents(seasonId);
+      setEnrolledStudents(students);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '취소에 실패했습니다.');
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (error || !season) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" onClick={() => router.back()}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          뒤로
+        </Button>
+        <Card>
+          <CardContent className="p-12 text-center">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {error || '시즌을 찾을 수 없습니다.'}
+            </h3>
+            <Button onClick={() => router.push('/seasons')}>목록으로</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const operatingDays = parseOperatingDays(season.operating_days);
+  const gradeTimeSlots = typeof season.grade_time_slots === 'string'
+    ? JSON.parse(season.grade_time_slots) as GradeTimeSlots
+    : season.grade_time_slots;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/seasons')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            목록
+          </Button>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-2xl font-bold text-gray-900">{season.season_name}</h1>
+              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                season.season_type === 'early' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+              }`}>
+                {SEASON_TYPE_LABELS[season.season_type]}
+              </span>
+              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                season.status === 'active'
+                  ? 'bg-green-100 text-green-800'
+                  : season.status === 'draft'
+                  ? 'bg-yellow-100 text-yellow-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {SEASON_STATUS_LABELS[season.status] || season.status}
+              </span>
+            </div>
+            <p className="text-gray-600">{new Date(season.season_start_date).getFullYear()}년</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" onClick={() => router.push(`/seasons/${seasonId}/edit`)}>
+            <Edit2 className="w-4 h-4 mr-2" />
+            수정
+          </Button>
+          <Button variant="outline" onClick={handleDelete} className="text-red-600 hover:text-red-700">
+            <Trash2 className="w-4 h-4 mr-2" />
+            삭제
+          </Button>
+        </div>
+      </div>
+
+      {/* Info Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <Calendar className="w-8 h-8 text-blue-500" />
+              <div>
+                <p className="text-sm text-gray-500">시즌 기간</p>
+                <p className="font-medium">{season.season_start_date}</p>
+                <p className="font-medium">~ {season.season_end_date}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <DollarSign className="w-8 h-8 text-green-500" />
+              <div>
+                <p className="text-sm text-gray-500">시즌비</p>
+                <p className="text-xl font-bold">{formatSeasonFee(season.default_season_fee)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <Trophy className="w-8 h-8 text-orange-500" />
+              <div>
+                <p className="text-sm text-gray-500">운영 요일</p>
+                <p className="font-medium">{formatOperatingDays(operatingDays)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-3">
+              <Users className="w-8 h-8 text-purple-500" />
+              <div>
+                <p className="text-sm text-gray-500">등록 학생</p>
+                <p className="text-xl font-bold">{enrolledStudents.length}명</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Detail Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">시즌 정보</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">비시즌 종강일</p>
+                <p className="font-medium">{season.non_season_end_date || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">연속등록 허용</p>
+                <p className="font-medium">{season.allows_continuous ? '허용' : '불허'}</p>
+              </div>
+              {season.allows_continuous && (
+                <>
+                  <div>
+                    <p className="text-sm text-gray-500">연속등록 할인</p>
+                    <p className="font-medium">
+                      {season.continuous_discount_type === 'none' && '없음'}
+                      {season.continuous_discount_type === 'free' && '무료'}
+                      {season.continuous_discount_type === 'rate' && `${season.continuous_discount_rate}% 할인`}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">연속등록 대상 시즌</p>
+                    <p className="font-medium">
+                      {season.continuous_to_season_type === 'early' && '수시'}
+                      {season.continuous_to_season_type === 'regular' && '정시'}
+                      {!season.continuous_to_season_type && '-'}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">학년별 수업 시간대</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {gradeTimeSlots ? (
+              <div className="space-y-2">
+                {SEASON_TARGET_GRADES.map(grade => {
+                  const slots = gradeTimeSlots[grade];
+                  // 배열이 아니면 배열로 변환 (하위 호환성)
+                  const slotArray = Array.isArray(slots) ? slots : (slots ? [slots] : []);
+                  return (
+                    <div key={grade} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <span className="font-medium">{grade}</span>
+                      <div className="flex gap-1">
+                        {slotArray.length > 0 ? slotArray.map(slot => (
+                          <span key={slot} className={`px-3 py-1 rounded-full text-sm ${
+                            slot === 'morning' ? 'bg-yellow-100 text-yellow-800' :
+                            slot === 'afternoon' ? 'bg-blue-100 text-blue-800' :
+                            slot === 'evening' ? 'bg-purple-100 text-purple-800' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {TIME_SLOT_LABELS[slot] || slot}
+                          </span>
+                        )) : (
+                          <span className="px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-600">미설정</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-gray-500">설정된 시간대가 없습니다.</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Enrolled Students */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg">등록 학생 ({enrolledStudents.length}명)</CardTitle>
+          <Button size="sm" onClick={() => router.push(`/seasons/${seasonId}/enroll`)}>
+            학생 등록
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {enrolledStudents.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <p>등록된 학생이 없습니다.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">학생명</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">시즌비</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">등록일</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">납부상태</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">관리</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {enrolledStudents.map(enrollment => (
+                    <tr key={enrollment.id} className="border-b last:border-0 hover:bg-gray-50">
+                      <td className="py-2 px-3 font-medium">{enrollment.student_name}</td>
+                      <td className="py-2 px-3">{formatSeasonFee(enrollment.season_fee)}</td>
+                      <td className="py-2 px-3 text-sm text-gray-600">{enrollment.registered_at?.split('T')[0]}</td>
+                      <td className="py-2 px-3">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          enrollment.status === 'active' ? 'bg-green-100 text-green-800' :
+                          enrollment.status === 'registered' ? 'bg-blue-100 text-blue-800' :
+                          enrollment.payment_status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {enrollment.payment_status === 'cancelled' ? '취소됨' : enrollment.status}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-right">
+                        {enrollment.payment_status !== 'cancelled' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleCancelEnrollment(enrollment)}
+                            disabled={cancellingId === enrollment.id}
+                          >
+                            {cancellingId === enrollment.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <>
+                                <XCircle className="w-4 h-4 mr-1" />
+                                취소
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

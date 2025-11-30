@@ -1,0 +1,299 @@
+'use client';
+
+/**
+ * 수업 캘린더 뷰 v2
+ * - 모든 날에 오전/오후/저녁 슬롯 표시
+ * - 학생 드래그 앤 드롭으로 타임 이동
+ */
+
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sun, Sunrise, Moon, User, UserCheck } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  generateCalendarGrid,
+  isInMonth,
+  formatDateToString,
+  isToday,
+} from '@/lib/utils/schedule-helpers';
+import type { ClassSchedule, TimeSlot } from '@/lib/types/schedule';
+
+interface StudentInSlot {
+  id: number;
+  name: string;
+  student_id: number;
+}
+
+interface SlotInstructorCounts {
+  scheduled: number;
+  attended: number;
+}
+
+interface DailyInstructorStats {
+  morning: SlotInstructorCounts;
+  afternoon: SlotInstructorCounts;
+  evening: SlotInstructorCounts;
+}
+
+interface ScheduleCalendarV2Props {
+  schedules: ClassSchedule[];
+  selectedDate: string | null;
+  onDateSelect: (date: string) => void;
+  onMonthChange?: (year: number, month: number) => void;
+  onStudentMove?: (studentId: number, fromDate: string, fromSlot: TimeSlot, toDate: string, toSlot: TimeSlot) => void;
+  onSlotClick?: (date: string, slot: TimeSlot) => void;
+  instructorStats?: Record<string, DailyInstructorStats>;  // 날짜별 강사 통계
+  currentYear: number;   // 부모에서 관리하는 연도
+  currentMonth: number;  // 부모에서 관리하는 월
+}
+
+const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; bgColor: string }[] = [
+  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600', bgColor: 'bg-orange-50 hover:bg-orange-100 border-orange-200' },
+  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-blue-600', bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200' },
+  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600', bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200' },
+];
+
+export function ScheduleCalendarV2({
+  schedules,
+  selectedDate,
+  onDateSelect,
+  onMonthChange,
+  onStudentMove,
+  onSlotClick,
+  instructorStats,
+  currentYear,
+  currentMonth,
+}: ScheduleCalendarV2Props) {
+  const [draggedStudent, setDraggedStudent] = useState<{
+    studentId: number;
+    studentName: string;
+    fromDate: string;
+    fromSlot: TimeSlot;
+  } | null>(null);
+
+  // 부모에서 전달받은 연/월 사용 (제어 컴포넌트)
+  const year = currentYear;
+  const month = currentMonth;
+
+  const calendarGrid = generateCalendarGrid(year, month);
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+
+  // 날짜+슬롯별 수업 및 학생 그룹화
+  const scheduleMap = useMemo(() => {
+    const map = new Map<string, ClassSchedule>();
+    schedules.forEach((schedule) => {
+      const key = `${schedule.class_date}_${schedule.time_slot}`;
+      map.set(key, schedule);
+    });
+    return map;
+  }, [schedules]);
+
+  const handlePrevMonth = () => {
+    // 부모에게만 알림 (부모가 상태 관리)
+    const newDate = new Date(year, month - 1, 1);
+    onMonthChange?.(newDate.getFullYear(), newDate.getMonth());
+  };
+
+  const handleNextMonth = () => {
+    // 부모에게만 알림 (부모가 상태 관리)
+    const newDate = new Date(year, month + 1, 1);
+    onMonthChange?.(newDate.getFullYear(), newDate.getMonth());
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    onMonthChange?.(today.getFullYear(), today.getMonth());
+    onDateSelect(formatDateToString(today));
+  };
+
+  const handleDragStart = (
+    e: React.DragEvent,
+    studentId: number,
+    studentName: string,
+    fromDate: string,
+    fromSlot: TimeSlot
+  ) => {
+    setDraggedStudent({ studentId, studentName, fromDate, fromSlot });
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, toDate: string, toSlot: TimeSlot) => {
+    e.preventDefault();
+    if (draggedStudent && onStudentMove) {
+      const { studentId, fromDate, fromSlot } = draggedStudent;
+      if (fromDate !== toDate || fromSlot !== toSlot) {
+        onStudentMove(studentId, fromDate, fromSlot, toDate, toSlot);
+      }
+    }
+    setDraggedStudent(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedStudent(null);
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5" />
+            {year}년 {month + 1}월
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleToday}>
+              오늘
+            </Button>
+            <Button variant="outline" size="icon" onClick={handlePrevMonth}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleNextMonth}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-7 gap-1">
+          {/* 요일 헤더 */}
+          {weekdays.map((day, index) => (
+            <div
+              key={day}
+              className={cn(
+                'text-center text-sm font-semibold py-2',
+                index === 0 && 'text-red-600',
+                index === 6 && 'text-blue-600'
+              )}
+            >
+              {day}
+            </div>
+          ))}
+
+          {/* 캘린더 그리드 */}
+          {calendarGrid.map((date, index) => {
+            const dateStr = formatDateToString(date);
+            const inMonth = isInMonth(date, year, month);
+            const today = isToday(dateStr);
+            const selected = dateStr === selectedDate;
+
+            return (
+              <div
+                key={index}
+                onClick={() => onDateSelect(dateStr)}
+                className={cn(
+                  'min-h-[140px] p-1 rounded-lg border text-left transition-colors cursor-pointer',
+                  !inMonth && 'bg-muted/50 opacity-50',
+                  today && 'bg-primary/5 border-primary',
+                  selected && 'ring-2 ring-primary'
+                )}
+              >
+                <div className="flex flex-col h-full">
+                  {/* 날짜 */}
+                  <div
+                    className={cn(
+                      'text-sm font-medium mb-1 px-1',
+                      index % 7 === 0 && 'text-red-600',
+                      index % 7 === 6 && 'text-blue-600',
+                      !inMonth && 'text-muted-foreground'
+                    )}
+                  >
+                    {date.getDate()}
+                  </div>
+
+                  {/* 타임 슬롯들 */}
+                  {inMonth && (
+                    <div className="flex-1 space-y-0.5">
+                      {TIME_SLOTS.map(({ slot, label, icon: Icon, color, bgColor }) => {
+                        const key = `${dateStr}_${slot}`;
+                        const schedule = scheduleMap.get(key);
+                        const studentCount = schedule?.student_count || 0;
+
+                        // 강사 통계
+                        const dayStats = instructorStats?.[dateStr];
+                        const slotStats = dayStats?.[slot];
+                        const scheduledInstructors = slotStats?.scheduled || 0;
+                        const attendedInstructors = slotStats?.attended || 0;
+
+                        return (
+                          <div
+                            key={slot}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSlotClick?.(dateStr, slot);
+                            }}
+                            onDragOver={handleDragOver}
+                            onDrop={(e) => handleDrop(e, dateStr, slot)}
+                            className={cn(
+                              'flex items-center gap-1 px-1 py-0.5 rounded text-xs border transition-all cursor-pointer',
+                              bgColor,
+                              draggedStudent && 'ring-1 ring-dashed ring-gray-400'
+                            )}
+                          >
+                            <Icon className={cn('h-3 w-3', color)} />
+                            <span className={cn('font-medium', color)}>{label}</span>
+                            <div className="ml-auto flex items-center gap-1.5">
+                              {/* 강사 출근/배정 현황 */}
+                              {scheduledInstructors > 0 && (
+                                <span
+                                  className={cn(
+                                    'flex items-center gap-0.5',
+                                    attendedInstructors >= scheduledInstructors
+                                      ? 'text-green-600'
+                                      : attendedInstructors > 0
+                                      ? 'text-yellow-600'
+                                      : 'text-gray-500'
+                                  )}
+                                  title={`출근 ${attendedInstructors}명 / 배정 ${scheduledInstructors}명`}
+                                >
+                                  <UserCheck className="h-3 w-3" />
+                                  {attendedInstructors}/{scheduledInstructors}
+                                </span>
+                              )}
+                              {/* 학생 수 */}
+                              {studentCount > 0 && (
+                                <span className="flex items-center gap-0.5 text-gray-600">
+                                  <User className="h-3 w-3" />
+                                  {studentCount}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 범례 */}
+        <div className="mt-4 pt-4 border-t">
+          <div className="flex flex-wrap gap-4 text-sm">
+            {TIME_SLOTS.map(({ slot, label, icon: Icon, color }) => (
+              <div key={slot} className="flex items-center gap-2">
+                <Icon className={cn('h-4 w-4', color)} />
+                <span>{label}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-2 ml-4 border-l pl-4">
+              <UserCheck className="h-4 w-4 text-green-600" />
+              <span>= 강사 출근/배정</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-gray-600" />
+              <span>= 학생 수</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

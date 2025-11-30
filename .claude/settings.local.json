@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /b \"C:\\projects\\papa\")",
+      "Bash(dir /b \"C:\\projects\\papa\\backend\")",
+      "Bash(ssh:*)",
+      "Bash(curl:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(npm install:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

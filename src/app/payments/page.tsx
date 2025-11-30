@@ -1,0 +1,311 @@
+'use client';
+
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Plus, Download, AlertCircle, Banknote } from 'lucide-react';
+import { toast } from 'sonner';
+import { PaymentList } from '@/components/payments/payment-list';
+import { usePayments } from '@/hooks/use-payments';
+import { paymentsAPI } from '@/lib/api/payments';
+import { usePermissions } from '@/lib/utils/permissions';
+import {
+  PAYMENT_STATUS_OPTIONS,
+  PAYMENT_TYPE_OPTIONS,
+} from '@/lib/types/payment';
+
+function PaymentsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [initialFiltersApplied, setInitialFiltersApplied] = useState(false);
+
+  const { payments, loading, error, filters, updateFilters, resetFilters, reload } = usePayments({});
+
+  // URL에서 status 파라미터 읽기 (대시보드에서 미납 확인하기 클릭 시) - 클라이언트 사이드에서만
+  useEffect(() => {
+    if (!initialFiltersApplied) {
+      const statusFromUrl = searchParams.get('status');
+      if (statusFromUrl === 'unpaid') {
+        updateFilters({ payment_status: 'pending' as const });
+      }
+      setInitialFiltersApplied(true);
+    }
+  }, [searchParams, initialFiltersApplied, updateFilters]);
+  const [bulkCharging, setBulkCharging] = useState(false);
+  const { canEdit, canView } = usePermissions();
+  const canEditPayments = canEdit('payments');
+  const canViewPayments = canView('payments');
+  const viewOnly = canViewPayments && !canEditPayments; // view만 있고 edit 없는 경우
+
+  // view 권한만 있으면 미납 내역만 표시
+  const filteredPayments = viewOnly
+    ? payments.filter(p => p.payment_status !== 'paid')
+    : payments;
+
+  const handlePaymentClick = (id: number) => {
+    router.push(`/payments/${id}`);
+  };
+
+  const handleAddPayment = () => {
+    router.push('/payments/new');
+  };
+
+  const handleBulkMonthlyCharge = async () => {
+    if (!confirm('모든 재원 학생에 대해 이번 달 수강료를 청구하시겠습니까?')) return;
+
+    try {
+      setBulkCharging(true);
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = today.getMonth() + 1;
+      const dueDate = new Date(year, month, 10).toISOString().split('T')[0];
+
+      const result = await paymentsAPI.bulkMonthlyCharge({
+        year,
+        month,
+        due_date: dueDate,
+      });
+
+      toast.success(`${result.created}명의 학생에 대해 수강료가 청구되었습니다.`);
+      reload();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '일괄 청구에 실패했습니다.');
+    } finally {
+      setBulkCharging(false);
+    }
+  };
+
+  if (error && !loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">학원비 관리</h1>
+          <p className="text-gray-600 mt-1">학원비 청구 및 납부 관리</p>
+        </div>
+
+        <Card>
+          <CardContent className="p-12 text-center">
+            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <Button onClick={reload}>다시 시도</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const paidCount = filteredPayments.filter((p) => p.payment_status === 'paid').length;
+  const unpaidCount = filteredPayments.filter((p) => p.payment_status === 'pending').length;
+  const partialCount = filteredPayments.filter((p) => p.payment_status === 'partial').length;
+  const totalAmount = Math.floor(filteredPayments.reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
+  const paidAmount = Math.floor(filteredPayments
+    .filter((p) => p.payment_status === 'paid')
+    .reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
+  const unpaidAmount = Math.floor(filteredPayments
+    .filter((p) => p.payment_status !== 'paid')
+    .reduce((sum, p) => sum + parseFloat(String(p.final_amount)) - parseFloat(String(p.paid_amount || 0)), 0));
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {viewOnly ? '미납 학원비' : '학원비 관리'}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {viewOnly ? '미납 학원비 현황 조회' : '학원비 청구 및 납부 관리'}
+          </p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Button variant="outline" onClick={reload}>
+            새로고침
+          </Button>
+          {canEditPayments && (
+            <>
+              <Button variant="outline" onClick={handleBulkMonthlyCharge} disabled={bulkCharging}>
+                <Banknote className="w-4 h-4 mr-2" />
+                {bulkCharging ? '청구 중...' : '월 수강료 일괄 청구'}
+              </Button>
+              <Button onClick={handleAddPayment}>
+                <Plus className="w-4 h-4 mr-2" />
+                학원비 청구
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className={`grid grid-cols-1 ${viewOnly ? 'md:grid-cols-2' : 'md:grid-cols-4'} gap-4`}>
+        {viewOnly ? (
+          <>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">미납 건수</p>
+                    <p className="text-2xl font-bold text-red-600">{filteredPayments.length}건</p>
+                  </div>
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">미납 금액</p>
+                    <p className="text-2xl font-bold text-red-600">{unpaidAmount.toLocaleString()}원</p>
+                  </div>
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <Banknote className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">총 청구</p>
+                    <p className="text-2xl font-bold text-gray-900">{filteredPayments.length}건</p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Banknote className="w-6 h-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">완납</p>
+                    <p className="text-2xl font-bold text-green-600">{paidCount}건</p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                    <Banknote className="w-6 h-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">미납</p>
+                    <p className="text-2xl font-bold text-red-600">{unpaidCount}건</p>
+                  </div>
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div>
+                  <p className="text-sm text-gray-600">납부율</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {filteredPayments.length > 0 ? Math.round((paidCount / filteredPayments.length) * 100) : 0}%
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {paidAmount.toLocaleString()} / {totalAmount.toLocaleString()}원
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div>
+              <label className="text-sm text-gray-600">납부 상태</label>
+              <select
+                value={filters.payment_status || ''}
+                onChange={(e) => updateFilters({ payment_status: e.target.value as any })}
+                className="ml-2 px-3 py-1 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="">전체</option>
+                {PAYMENT_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-sm text-gray-600">청구 유형</label>
+              <select
+                value={filters.payment_type || ''}
+                onChange={(e) => updateFilters({ payment_type: e.target.value as any })}
+                className="ml-2 px-3 py-1 border border-gray-300 rounded-md text-sm"
+              >
+                <option value="">전체</option>
+                {PAYMENT_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-gray-600">청구 월</label>
+              <input
+                type="month"
+                value={filters.year && filters.month ? `${filters.year}-${String(filters.month).padStart(2, '0')}` : ''}
+                onChange={(e) => {
+                  const [year, month] = e.target.value.split('-');
+                  updateFilters({ year: parseInt(year), month: parseInt(month) });
+                }}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+              />
+            </div>
+
+            <Button variant="outline" onClick={resetFilters} className="ml-auto">
+              필터 초기화
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <PaymentList payments={filteredPayments} loading={loading} onPaymentClick={handlePaymentClick} />
+    </div>
+  );
+}
+
+export default function PaymentsPage() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">학원비 관리</h1>
+          <p className="text-gray-600 mt-1">학원비 청구 및 납부 관리</p>
+        </div>
+        <Card>
+          <CardContent className="p-12 text-center">
+            <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600">학원비 정보를 불러오는 중...</p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <PaymentsPageContent />
+    </Suspense>
+  );
+}

@@ -1,0 +1,291 @@
+/**
+ * Student Type Definitions
+ * 학생 관련 타입 정의 - DB 스키마와 일치
+ */
+
+// ===== 기본 타입 정의 =====
+
+// 학생 유형 (student_type) - 입시생/성인
+export type StudentType = 'exam' | 'adult';
+
+// 학년 (grade) - 입시생용
+export type Grade = '고1' | '고2' | '고3' | 'N수';
+
+// 입시 유형 (admission_type)
+export type AdmissionType = 'regular' | 'early' | 'civil_service';
+
+// 학생 상태 (status) - DB enum
+export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn';
+
+// ===== 학생 인터페이스 =====
+
+// 기본 학생 인터페이스 - DB 스키마 매칭
+export interface Student {
+  id: number;
+  academy_id: number;
+  student_number: string | null;
+  name: string;
+  student_type: StudentType; // 입시생/성인
+  phone: string | null;
+  parent_phone: string | null;
+  school: string | null;
+  grade: Grade | null; // 학년 (고1, 고2, 고3, N수) - 입시생용
+  age: number | null; // 나이 - 성인용
+  address: string | null;
+  admission_type: AdmissionType; // regular, early, civil_service
+  profile_image_url: string | null;
+  class_days: number[] | string; // JSON array 또는 string
+  weekly_count: number;
+  monthly_tuition: string; // decimal -> string
+  discount_rate: string; // decimal -> string
+  discount_reason: string | null; // 할인 사유
+  payment_due_day: number | null; // 개별 납부일
+  final_monthly_tuition: string | null;
+  is_season_registered: boolean;
+  current_season_id: number | null;
+  status: StudentStatus;
+  enrollment_date: string | null;
+  withdrawal_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
+// 학생 등록/수정용 DTO
+export interface StudentFormData {
+  student_number?: string;
+  name: string;
+  student_type: StudentType;
+  phone: string;
+  parent_phone?: string;
+  school?: string;
+  grade?: Grade; // 입시생용
+  age?: number; // 성인용
+  address?: string;
+  admission_type: AdmissionType;
+  class_days: number[]; // [1, 3, 5] = 월, 수, 금
+  weekly_count: number;
+  monthly_tuition: number;
+  discount_rate?: number;
+  discount_reason?: string; // 할인 사유
+  payment_due_day?: number; // 개별 납부일 (1~28, null이면 학원 기본값 사용)
+  status?: StudentStatus;
+  enrollment_date?: string;
+  notes?: string;
+  // 시즌 등록 옵션 (고3, N수 학생용)
+  enroll_in_season?: boolean;
+  selected_season_id?: number;
+}
+
+// 학생 필터 인터페이스
+export interface StudentFilters {
+  student_type?: StudentType;
+  grade?: Grade;
+  admission_type?: AdmissionType;
+  status?: StudentStatus;
+  search?: string;
+}
+
+// 학생 상세 정보 (성적, 납부내역 포함)
+export interface StudentDetail extends Student {
+  academy_name?: string;
+}
+
+// 성적 기록
+export interface StudentPerformance {
+  id: number;
+  student_id: number;
+  record_date: string;
+  record_type: 'mock_exam' | 'physical' | 'competition';
+  subject?: string;
+  score?: number;
+  max_score?: number;
+  grade_rank?: number;
+  school_rank?: number;
+  performance_data?: Record<string, unknown>;
+  notes?: string;
+  created_at: string;
+}
+
+// 납부 내역
+export interface StudentPayment {
+  id: number;
+  student_id: number;
+  student_name?: string;
+  year_month: string;
+  base_amount: string;
+  discount_amount: string;
+  final_amount: string;
+  paid_amount: string;
+  payment_status: 'unpaid' | 'partial' | 'paid' | 'overdue';
+  payment_method?: 'account' | 'card' | 'cash' | 'other';
+  paid_date?: string;
+  due_date: string;
+  notes?: string;
+  created_at: string;
+}
+
+// ===== API 응답 타입 =====
+
+export interface StudentsResponse {
+  message: string;
+  students: Student[];
+}
+
+export interface StudentDetailResponse {
+  message?: string;
+  student: StudentDetail;
+  performances: StudentPerformance[];
+  payments: StudentPayment[];
+}
+
+export interface StudentCreateResponse {
+  message: string;
+  student: Student;
+}
+
+export interface StudentUpdateResponse {
+  message: string;
+  student: Student;
+}
+
+export interface StudentDeleteResponse {
+  message: string;
+  student: {
+    id: number;
+    name: string;
+  };
+}
+
+// ===== 레이블 매핑 =====
+
+export const STUDENT_TYPE_LABELS: Record<StudentType, string> = {
+  exam: '입시생',
+  adult: '성인',
+};
+
+export const GRADE_LABELS: Record<Grade, string> = {
+  '고1': '고1',
+  '고2': '고2',
+  '고3': '고3',
+  'N수': 'N수',
+};
+
+export const ADMISSION_TYPE_LABELS: Record<AdmissionType, string> = {
+  regular: '정시',
+  early: '수시',
+  civil_service: '공무원',
+};
+
+export const STATUS_LABELS: Record<StudentStatus, string> = {
+  active: '재원',
+  paused: '휴원',
+  graduated: '졸업',
+  withdrawn: '퇴원',
+};
+
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  unpaid: '미납',
+  partial: '부분납',
+  paid: '완납',
+  overdue: '연체',
+};
+
+// 요일 매핑 (숫자 -> 한글)
+export const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+export const WEEKDAY_MAP: Record<number, string> = {
+  0: '일',
+  1: '월',
+  2: '화',
+  3: '수',
+  4: '목',
+  5: '금',
+  6: '토',
+};
+
+// ===== 옵션 데이터 =====
+
+// 학생 유형 옵션
+export const STUDENT_TYPE_OPTIONS = [
+  { value: 'exam' as StudentType, label: '입시생' },
+  { value: 'adult' as StudentType, label: '성인' },
+];
+
+// 학년 옵션 (입시생용)
+export const GRADE_OPTIONS = [
+  { value: '고1' as Grade, label: '고1' },
+  { value: '고2' as Grade, label: '고2' },
+  { value: '고3' as Grade, label: '고3' },
+  { value: 'N수' as Grade, label: 'N수' },
+];
+
+// 입시 유형 옵션 (입시생용)
+export const EXAM_ADMISSION_OPTIONS = [
+  { value: 'regular' as AdmissionType, label: '정시' },
+  { value: 'early' as AdmissionType, label: '수시' },
+];
+
+// 입시 유형 옵션 (성인용)
+export const ADULT_ADMISSION_OPTIONS = [
+  { value: 'civil_service' as AdmissionType, label: '공무원' },
+];
+
+// 전체 입시 유형 옵션
+export const ADMISSION_TYPE_OPTIONS = [
+  { value: 'regular' as AdmissionType, label: '정시' },
+  { value: 'early' as AdmissionType, label: '수시' },
+  { value: 'civil_service' as AdmissionType, label: '공무원' },
+];
+
+// 상태 옵션
+export const STATUS_OPTIONS = [
+  { value: 'active' as StudentStatus, label: '재원' },
+  { value: 'paused' as StudentStatus, label: '휴원' },
+  { value: 'graduated' as StudentStatus, label: '졸업' },
+  { value: 'withdrawn' as StudentStatus, label: '퇴원' },
+];
+
+// 요일 옵션 (체크박스용)
+export const WEEKDAY_OPTIONS = [
+  { value: 1, label: '월' },
+  { value: 2, label: '화' },
+  { value: 3, label: '수' },
+  { value: 4, label: '목' },
+  { value: 5, label: '금' },
+  { value: 6, label: '토' },
+  { value: 0, label: '일' },
+];
+
+// ===== 유틸리티 함수 =====
+
+// class_days 파싱 (JSON string -> array)
+export function parseClassDays(classDays: number[] | string): number[] {
+  if (Array.isArray(classDays)) {
+    return classDays;
+  }
+  try {
+    const parsed = JSON.parse(classDays);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+// class_days를 한글로 변환
+export function formatClassDays(classDays: number[] | string): string {
+  const days = parseClassDays(classDays);
+  return days.map(d => WEEKDAY_MAP[d] || '').filter(Boolean).join(', ');
+}
+
+// 금액 포맷 (decimal string -> 원화 표시)
+export function formatCurrency(amount: string | number): string {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  return new Intl.NumberFormat('ko-KR').format(num) + '원';
+}
+
+// 할인율 포맷
+export function formatDiscountRate(rate: string | number): string {
+  const num = typeof rate === 'string' ? parseFloat(rate) : rate;
+  return num > 0 ? `${num}%` : '-';
+}
