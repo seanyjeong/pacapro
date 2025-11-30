@@ -8,6 +8,21 @@ P-ACA(Papa Academy)는 체대입시 학원관리시스템입니다.
 - **프론트엔드**: Next.js 15 + React 18 + TypeScript + TailwindCSS (포트 3000)
 - **백엔드**: Express.js + MySQL (포트 8320, API 베이스: `/paca`)
 
+## 저장소 및 배포
+
+### GitHub 저장소
+- **URL**: https://github.com/seanyjeong/pacapro
+- **브랜치**: `main`
+
+### 프론트엔드 배포 (Vercel)
+- **URL**: https://pacapro.vercel.app (또는 Vercel이 생성한 도메인)
+- **자동 배포**: `main` 브랜치에 push하면 자동으로 배포됨
+- **환경변수**: `NEXT_PUBLIC_API_URL=https://supermax.kr/paca`
+
+### 백엔드 배포
+- **서버**: 211.37.174.218 (cafe24)
+- **API URL**: https://supermax.kr/paca
+
 ## 개발 명령어
 
 ### 프론트엔드 (루트 디렉토리)
@@ -85,11 +100,31 @@ sudo journalctl -u paca -f     # 로그 확인
 
 ## 개발 워크플로우
 
+### 다른 컴퓨터에서 작업 시작하기
+```bash
+# 1. 저장소 클론
+git clone https://github.com/seanyjeong/pacapro.git
+cd pacapro
+
+# 2. 의존성 설치
+npm install
+
+# 3. 환경변수 설정 (.env.local 생성)
+echo "NEXT_PUBLIC_API_URL=https://supermax.kr/paca" > .env.local
+
+# 4. 개발 서버 실행
+npm run dev
+```
+
+### 프론트엔드 수정 프로세스
+1. 코드 수정
+2. `git add . && git commit -m "메시지" && git push`
+3. **자동 배포**: Vercel이 자동으로 빌드 & 배포 (1-2분 소요)
+
 ### 백엔드 수정 프로세스
-1. **사용자 요청** → 기능 추가/수정 요청
-2. **Claude 확인** → 백엔드 코드 분석 및 로컬에서 수정
-3. **사용자 배포** → 수정된 파일을 서버에 복사 (SFTP 또는 직접)
-4. **서버 재시작** → `sudo systemctl restart paca`
+1. `backend/` 폴더에서 코드 수정
+2. 수정된 파일을 서버에 SFTP로 업로드
+3. `sudo systemctl restart paca`
 
 ### 파일 업로드 위치
 - **로컬 백엔드**: `C:\projects\papa\backend\`
@@ -101,8 +136,8 @@ sudo journalctl -u paca -f     # 로그 확인
 2. 서버에서 직접 MySQL 실행: `mysql -u root -p paca < migration.sql`
 
 ### 주의사항
-- 백엔드 수정은 로컬에서만, 서버 업로드는 사용자가 직접
-- 프론트엔드는 로컬에서 `npm run build` 후 배포
+- 프론트엔드는 GitHub push 시 자동 배포 (Vercel)
+- 백엔드는 수동으로 서버에 업로드 필요
 - 서버 로그 확인: `sudo journalctl -u paca -f`
 
 ## 버전 관리
