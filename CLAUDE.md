@@ -11,17 +11,19 @@ P-ACA(Papa Academy)는 체대입시 학원관리시스템입니다.
 ## 저장소 및 배포
 
 ### GitHub 저장소
-- **URL**: https://github.com/seanyjeong/pacapro
-- **브랜치**: `main`
+- **프론트엔드**: https://github.com/seanyjeong/pacapro (`main` 브랜치)
+- **백엔드**: https://github.com/seanyjeong/supermax (`master` 브랜치, `paca/` 폴더)
 
 ### 프론트엔드 배포 (Vercel)
 - **URL**: https://pacapro.vercel.app (또는 Vercel이 생성한 도메인)
 - **자동 배포**: `main` 브랜치에 push하면 자동으로 배포됨
 - **환경변수**: `NEXT_PUBLIC_API_URL=https://supermax.kr/paca`
 
-### 백엔드 배포
+### 백엔드 배포 (n8n 자동 배포)
 - **서버**: 211.37.174.218 (cafe24)
 - **API URL**: https://supermax.kr/paca
+- **자동 배포**: supermax 레포 `master` 브랜치에 push하면 n8n이 자동으로 배포
+- **n8n URL**: https://n8n.sean8320.dedyn.io/
 
 ## 개발 명령어
 
@@ -32,9 +34,9 @@ npm run build    # 프로덕션 빌드
 npm run lint     # ESLint 실행
 ```
 
-### 백엔드 (backend/ 디렉토리)
+### 백엔드 (supermax/paca/backend/ 디렉토리)
 ```bash
-cd backend
+cd /home/sean/supermax/paca/backend
 npm run dev      # nodemon으로 개발 서버 실행 (핫 리로드)
 npm start        # 프로덕션 서버 실행
 npm test         # Jest 테스트 (watch 모드)
@@ -117,18 +119,19 @@ npm run dev
 ```
 
 ### 프론트엔드 수정 프로세스
-1. 코드 수정
+1. `/home/sean/pacapro/` 에서 코드 수정
 2. `git add . && git commit -m "메시지" && git push`
 3. **자동 배포**: Vercel이 자동으로 빌드 & 배포 (1-2분 소요)
 
 ### 백엔드 수정 프로세스
-1. `backend/` 폴더에서 코드 수정
-2. 수정된 파일을 서버에 SFTP로 업로드
-3. `sudo systemctl restart paca`
+1. `/home/sean/supermax/paca/backend/` 에서 코드 수정
+2. `cd /home/sean/supermax && git add . && git commit -m "메시지" && git push origin master`
+3. **자동 배포**: n8n이 자동으로 서버에 배포 (3초 소요)
 
-### 파일 업로드 위치
-- **로컬 백엔드**: `C:\projects\papa\backend\`
-- **서버 백엔드**: `/root/supermax/paca/`
+### 로컬 작업 경로
+- **프론트엔드**: `/home/sean/pacapro/`
+- **백엔드**: `/home/sean/supermax/paca/backend/`
+- **서버 백엔드**: `/root/supermax/paca/` (211.37.174.218)
 
 ### DB 마이그레이션
 새 테이블이나 컬럼 추가 시:
@@ -137,23 +140,9 @@ npm run dev
 
 ### 주의사항
 - 프론트엔드는 GitHub push 시 자동 배포 (Vercel)
-- 백엔드는 수동으로 서버에 업로드 필요
+- 백엔드도 GitHub push 시 자동 배포 (n8n)
 - 서버 로그 확인: `sudo journalctl -u paca -f`
-
-### 중요: 백엔드 수정 후 알림
-**백엔드 파일을 수정하면 반드시 사용자에게 알려줘야 함!**
-
-```
-서버에서 업데이트 해주세요:
-cd /root/supermax/paca
-git pull
-sudo systemctl restart paca
-```
-
-수정된 파일 목록도 함께 알려줄 것:
-- `backend/routes/xxx.js`
-- `backend/scheduler/xxx.js`
-- 등등
+- n8n 실행 로그: https://n8n.sean8320.dedyn.io/ → Executions
 
 ## 버전 관리
 
