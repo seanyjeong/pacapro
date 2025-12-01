@@ -59,7 +59,10 @@ function PaymentsPageContent() {
       const today = new Date();
       const year = today.getFullYear();
       const month = today.getMonth() + 1;
-      const dueDate = new Date(year, month, 10).toISOString().split('T')[0];
+
+      // 납부기한: 해당 월의 12일 (납부일 5일 + 7일)
+      // month-1을 해야 해당 월이 됨 (JS Date는 month가 0부터 시작)
+      const dueDate = new Date(year, month - 1, 12).toISOString().split('T')[0];
 
       const result = await paymentsAPI.bulkMonthlyCharge({
         year,
@@ -67,7 +70,12 @@ function PaymentsPageContent() {
         due_date: dueDate,
       });
 
-      toast.success(`${result.created}명의 학생에 대해 수강료가 청구되었습니다.`);
+      const messages = [];
+      if (result.created > 0) messages.push(`${result.created}명 생성`);
+      if (result.updated > 0) messages.push(`${result.updated}명 업데이트`);
+      if (result.skipped > 0) messages.push(`${result.skipped}명 건너뜀`);
+
+      toast.success(messages.length > 0 ? `학원비 처리 완료: ${messages.join(', ')}` : '처리할 학원비가 없습니다.');
       reload();
     } catch (err: any) {
       toast.error(err.response?.data?.message || '일괄 청구에 실패했습니다.');
