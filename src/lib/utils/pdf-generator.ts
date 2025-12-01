@@ -96,12 +96,12 @@ function createSalaryTemplate(data: SalaryWithAttendance): string {
         attendanceTableRows += `
           <tr style="${bgColor}">
             ${idx === 0 ? `
-              <td rowspan="${data.details.length}" style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB; font-weight: 500;">${month}/${day}</td>
-              <td rowspan="${data.details.length}" style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB; ${textColor}">${dayOfWeek}</td>
+              <td rowspan="${data.details.length}" style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB; font-weight: 500; vertical-align: middle; text-align: center;">${month}/${day}</td>
+              <td rowspan="${data.details.length}" style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB; ${textColor} vertical-align: middle; text-align: center;">${dayOfWeek}</td>
             ` : ''}
-            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB;">${detail.time_slot_label}</td>
-            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB; color: #6B7280;">${detail.check_in_time || '-'}</td>
-            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB; color: #6B7280;">${detail.check_out_time || '-'}</td>
+            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB; vertical-align: middle; text-align: center;">${detail.time_slot_label}</td>
+            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB; color: #6B7280; vertical-align: middle; text-align: center;">${detail.check_in_time || '-'}</td>
+            <td style="padding: 4px 8px; border-bottom: 1px solid #E5E7EB; color: #6B7280; vertical-align: middle; text-align: center;">${detail.check_out_time || '-'}</td>
           </tr>
         `;
       });
@@ -174,11 +174,27 @@ function createSalaryTemplate(data: SalaryWithAttendance): string {
     `;
   }
 
+  // 월급제 기본급 표시
+  const baseSalary = parseFloat(String(salary.base_salary)) || 0;
+
+  // 수당 기준 표시 여부 결정 (월급제는 기본급, 시급제는 시급, 건당은 수업당 단가)
+  const hasRateInfo = salary.salary_type === 'monthly'
+    ? baseSalary > 0
+    : salary.salary_type === 'hourly'
+      ? hourlyRate > 0
+      : (morningRate > 0 || afternoonRate > 0 || eveningRate > 0);
+
   return `
     <div style="width: 700px; padding: 24px; font-family: 'Malgun Gothic', sans-serif; background: white;">
-      <!-- 헤더 -->
+      <!-- 헤더 - 학원명 -->
+      <div style="text-align: center; margin-bottom: 8px;">
+        <h1 style="font-size: 28px; font-weight: bold; color: #1E40AF; margin: 0; letter-spacing: 2px;">P-ACA</h1>
+        <p style="font-size: 11px; color: #6B7280; margin: 4px 0 0 0;">체대입시 전문학원</p>
+      </div>
+
+      <!-- 급여 명세서 제목 -->
       <div style="text-align: center; border-bottom: 2px solid #1F2937; padding-bottom: 12px; margin-bottom: 16px;">
-        <h1 style="font-size: 20px; font-weight: bold; margin: 0 0 4px 0;">급 여 명 세 서</h1>
+        <h2 style="font-size: 18px; font-weight: bold; margin: 0 0 4px 0;">급 여 명 세 서</h2>
         <p style="font-size: 12px; color: #4B5563; margin: 0;">${salary.year_month} ${attendance_summary ? `(${attendance_summary.work_year_month} 근무분)` : ''}</p>
       </div>
 
@@ -200,11 +216,17 @@ function createSalaryTemplate(data: SalaryWithAttendance): string {
         </div>
       </div>
 
-      <!-- 단가 정보 -->
-      ${(salary.salary_type === 'per_class' || salary.salary_type === 'hourly') ? `
+      <!-- 수당 기준 -->
+      ${hasRateInfo ? `
         <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; margin-bottom: 12px; background-color: #F9FAFB;">
-          <h3 style="font-size: 13px; font-weight: 600; color: #374151; margin: 0 0 8px 0;">단가 정보</h3>
+          <h3 style="font-size: 13px; font-weight: 600; color: #374151; margin: 0 0 8px 0;">수당 기준</h3>
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 12px;">
+            ${salary.salary_type === 'monthly' && baseSalary > 0 ? `
+              <div>
+                <span style="color: #6B7280;">월 기본급:</span>
+                <span style="margin-left: 8px; font-weight: 600;">${formatCurrency(baseSalary)}</span>
+              </div>
+            ` : ''}
             ${salary.salary_type === 'hourly' && hourlyRate > 0 ? `
               <div>
                 <span style="color: #6B7280;">시급:</span>
@@ -212,9 +234,9 @@ function createSalaryTemplate(data: SalaryWithAttendance): string {
               </div>
             ` : ''}
             ${salary.salary_type === 'per_class' ? `
-              ${morningRate > 0 ? `<div><span style="color: #6B7280;">오전:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(morningRate)}/회</span></div>` : ''}
-              ${afternoonRate > 0 ? `<div><span style="color: #6B7280;">오후:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(afternoonRate)}/회</span></div>` : ''}
-              ${eveningRate > 0 ? `<div><span style="color: #6B7280;">저녁:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(eveningRate)}/회</span></div>` : ''}
+              ${morningRate > 0 ? `<div><span style="color: #6B7280;">오전 수당:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(morningRate)}/회</span></div>` : ''}
+              ${afternoonRate > 0 ? `<div><span style="color: #6B7280;">오후 수당:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(afternoonRate)}/회</span></div>` : ''}
+              ${eveningRate > 0 ? `<div><span style="color: #6B7280;">저녁 수당:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(eveningRate)}/회</span></div>` : ''}
             ` : ''}
           </div>
         </div>
@@ -237,11 +259,11 @@ function createSalaryTemplate(data: SalaryWithAttendance): string {
           <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
             <thead style="background-color: #F3F4F6;">
               <tr>
-                <th style="padding: 6px 8px; text-align: left; font-weight: 500; color: #4B5563; width: 60px;">날짜</th>
-                <th style="padding: 6px 8px; text-align: left; font-weight: 500; color: #4B5563; width: 40px;">요일</th>
-                <th style="padding: 6px 8px; text-align: left; font-weight: 500; color: #4B5563;">시간대</th>
-                <th style="padding: 6px 8px; text-align: left; font-weight: 500; color: #4B5563; width: 60px;">출근</th>
-                <th style="padding: 6px 8px; text-align: left; font-weight: 500; color: #4B5563; width: 60px;">퇴근</th>
+                <th style="padding: 6px 8px; text-align: center; font-weight: 500; color: #4B5563; width: 60px;">날짜</th>
+                <th style="padding: 6px 8px; text-align: center; font-weight: 500; color: #4B5563; width: 40px;">요일</th>
+                <th style="padding: 6px 8px; text-align: center; font-weight: 500; color: #4B5563;">시간대</th>
+                <th style="padding: 6px 8px; text-align: center; font-weight: 500; color: #4B5563; width: 60px;">출근</th>
+                <th style="padding: 6px 8px; text-align: center; font-weight: 500; color: #4B5563; width: 60px;">퇴근</th>
               </tr>
             </thead>
             <tbody>
