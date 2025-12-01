@@ -63,6 +63,12 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
     }
 
     if (!workSummary) {
+      toast.error('강사 정보를 불러올 수 없습니다.');
+      return;
+    }
+
+    // 월급제가 아닌데 출근 기록이 없으면 에러
+    if (workSummary.instructor.salary_type !== 'monthly' && !workSummary.work_summary.total_classes) {
       toast.error('근무 기록이 없습니다. 먼저 출근 체크를 완료해주세요.');
       return;
     }
@@ -277,11 +283,20 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
           </div>
         )}
 
-        {/* 근무 기록 없음 */}
-        {!loadingWorkData && !error && instructorId && yearMonth && !workSummary?.work_summary.total_classes && (
+        {/* 근무 기록 없음 (월급제가 아닌 경우에만 경고) */}
+        {!loadingWorkData && !error && instructorId && yearMonth && !workSummary?.work_summary.total_classes && workSummary?.instructor?.salary_type !== 'monthly' && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
             <p className="text-sm text-yellow-800">
               선택한 월에 출근 기록이 없습니다. 먼저 강사 출근 체크를 진행해주세요.
+            </p>
+          </div>
+        )}
+
+        {/* 월급제 안내 */}
+        {!loadingWorkData && !error && workSummary?.instructor?.salary_type === 'monthly' && (
+          <div className="bg-green-50 border border-green-200 rounded-md p-3">
+            <p className="text-sm text-green-800">
+              월급제 강사입니다. 기본 월급 {parseInt(String(workSummary.instructor.base_salary || 0)).toLocaleString()}원이 적용됩니다.
             </p>
           </div>
         )}
@@ -312,7 +327,9 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
 
         <Button
           onClick={handleCalculate}
-          disabled={calculating || !workSummary || loadingWorkData}
+          disabled={calculating || !workSummary || loadingWorkData ||
+            // 월급제가 아닌데 출근 기록이 없으면 비활성화
+            (workSummary?.instructor?.salary_type !== 'monthly' && !workSummary?.work_summary?.total_classes)}
           className="w-full"
         >
           {calculating ? '계산 중...' : '급여 계산'}
