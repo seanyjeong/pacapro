@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle, Banknote, RefreshCw, FileSpreadsheet } from 'lucide-react';
+import { AlertCircle, Banknote, RefreshCw, FileSpreadsheet, FileDown } from 'lucide-react';
 import { SalaryList } from '@/components/salaries/salary-list';
 import { useSalaries } from '@/hooks/use-salaries';
 import { instructorsAPI } from '@/lib/api/instructors';
 import { exportsApi } from '@/lib/api/exports';
+import { salariesAPI } from '@/lib/api/salaries';
 import { PAYMENT_STATUS_OPTIONS } from '@/lib/types/salary';
 import { calculateTotalPaid, calculateTotalUnpaid } from '@/lib/utils/salary-helpers';
+// PDF 유틸리티는 동적 import로 필요할 때만 로드
 import { toast } from 'sonner';
 
 export default function SalariesPage() {
@@ -18,6 +20,8 @@ export default function SalariesPage() {
   const { salaries, loading, error, filters, updateFilters, resetFilters, reload } = useSalaries();
   const [instructors, setInstructors] = useState<any[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
 
   useEffect(() => {
     loadInstructors();
@@ -50,6 +54,57 @@ export default function SalariesPage() {
       toast.error('다운로드 실패');
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    if (salaries.length === 0) {
+      toast.error('다운로드할 급여 기록이 없습니다');
+      return;
+    }
+
+    try {
+      setPdfExporting(true);
+      setPdfProgress({ current: 0, total: salaries.length });
+
+      // 각 급여의 상세 정보(출근 기록 포함) 가져오기
+      const salaryDataList = await Promise.all(
+        salaries.map(async (salary) => {
+          try {
+            const response = await salariesAPI.getSalary(salary.id);
+            return {
+              salary: response.salary,
+              attendance_summary: (response as any).attendance_summary || null,
+            };
+          } catch (err) {
+            console.error(`Failed to load salary ${salary.id}:`, err);
+            return {
+              salary: salary as any,
+              attendance_summary: null,
+            };
+          }
+        })
+      );
+
+      const yearMonth = filters.year && filters.month
+        ? `${filters.year}-${String(filters.month).padStart(2, '0')}`
+        : new Date().toISOString().slice(0, 7);
+
+      // 동적 import로 PDF 유틸리티 로드 (번들 크기 최적화)
+      const { downloadSalariesAsZip } = await import('@/lib/utils/pdf-generator');
+      await downloadSalariesAsZip(
+        salaryDataList,
+        yearMonth,
+        (current, total) => setPdfProgress({ current, total })
+      );
+
+      toast.success(`PDF ${salaries.length}개 다운로드 완료`);
+    } catch (error) {
+      console.error('PDF Export failed:', error);
+      toast.error('PDF 다운로드 실패');
+    } finally {
+      setPdfExporting(false);
+      setPdfProgress({ current: 0, total: 0 });
     }
   };
 
@@ -87,13 +142,26 @@ export default function SalariesPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={handleExportPDF} disabled={pdfExporting || salaries.length === 0}>
+            {pdfExporting ? (
+              <div className="flex items-center">
+                <div className="w-4 h-4 mr-2 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                <span>{pdfProgress.current}/{pdfProgress.total}</span>
+              </div>
+            ) : (
+              <>
+                <FileDown className="w-4 h-4 mr-2" />
+                PDF 다운로드
+              </>
+            )}
+          </Button>
           <Button variant="outline" onClick={handleExportSalaries} disabled={exporting}>
             {exporting ? (
               <div className="w-4 h-4 mr-2 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
             ) : (
               <FileSpreadsheet className="w-4 h-4 mr-2" />
             )}
-            급여 명세서
+            엑셀
           </Button>
           <Button variant="outline" onClick={reload}>
             <RefreshCw className="w-4 h-4 mr-2" />

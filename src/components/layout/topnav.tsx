@@ -33,7 +33,7 @@ export function TopNav() {
     };
 
     return (
-        <header className="h-16 bg-white border-b border-gray-200 fixed top-0 right-0 left-0 md:left-64 z-10">
+        <header className="h-16 bg-white border-b border-gray-200 fixed top-0 right-0 left-0 md:left-64 z-10 no-print">
             <div className="h-full px-4 md:px-6 flex items-center justify-between">
                 {/* Left: Mobile Menu + Search */}
                 <div className="flex items-center space-x-4 flex-1">
