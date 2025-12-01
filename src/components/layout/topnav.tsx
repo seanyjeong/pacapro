@@ -56,7 +56,7 @@ export function TopNav() {
         const timer = setTimeout(async () => {
             try {
                 setSearching(true);
-                const response = await apiClient.get('/search', {
+                const response = await apiClient.get<{ results: SearchResult[] }>('/search', {
                     params: { q: searchQuery }
                 });
                 setSearchResults(response.data.results || []);
