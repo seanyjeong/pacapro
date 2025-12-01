@@ -56,10 +56,10 @@ export function TopNav() {
         const timer = setTimeout(async () => {
             try {
                 setSearching(true);
-                const response = await apiClient.get<{ results: SearchResult[] }>('/search', {
+                const data = await apiClient.get<{ results: SearchResult[] }>('/search', {
                     params: { q: searchQuery }
                 });
-                setSearchResults(response.data.results || []);
+                setSearchResults(data.results || []);
                 setShowResults(true);
             } catch (error) {
                 console.error('Search error:', error);
