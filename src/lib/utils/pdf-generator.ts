@@ -57,9 +57,8 @@ function formatCurrency(amount: number): string {
 /**
  * 급여 명세서 HTML 템플릿 생성
  */
-function createSalaryTemplate(data: SalaryWithAttendance): string {
+function createSalaryTemplate(data: SalaryWithAttendance, academyName: string = 'P-ACA'): string {
   const { salary, attendance_summary } = data;
-  const salaryTypeLabel = SALARY_TYPE_LABELS[salary.salary_type as keyof typeof SALARY_TYPE_LABELS] || salary.salary_type || '-';
   const hourlyRate = parseFloat(String(salary.hourly_rate)) || 0;
   const morningRate = parseFloat(String(salary.morning_class_rate)) || 0;
   const afternoonRate = parseFloat(String(salary.afternoon_class_rate)) || 0;
@@ -177,19 +176,30 @@ function createSalaryTemplate(data: SalaryWithAttendance): string {
   // 월급제 기본급 표시
   const baseSalary = parseFloat(String(salary.base_salary)) || 0;
 
-  // 수당 기준 표시 여부 결정 (월급제는 기본급, 시급제는 시급, 건당은 수업당 단가)
-  const hasRateInfo = salary.salary_type === 'monthly'
-    ? baseSalary > 0
-    : salary.salary_type === 'hourly'
-      ? hourlyRate > 0
-      : (morningRate > 0 || afternoonRate > 0 || eveningRate > 0);
+  // 급여유형 라벨 생성 (수업당 50,000원 / 시급 15,000원 / 월급 3,000,000원 형태)
+  let salaryTypeLabel = '';
+  if (salary.salary_type === 'monthly') {
+    salaryTypeLabel = baseSalary > 0 ? `월급 ${formatCurrency(baseSalary)}` : '월급제';
+  } else if (salary.salary_type === 'hourly') {
+    salaryTypeLabel = hourlyRate > 0 ? `시급 ${formatCurrency(hourlyRate)}` : '시급제';
+  } else if (salary.salary_type === 'per_class') {
+    // 수업당 단가 중 가장 높은 것 또는 평균 표시
+    const rates = [morningRate, afternoonRate, eveningRate].filter(r => r > 0);
+    if (rates.length > 0) {
+      const avgRate = Math.round(rates.reduce((a, b) => a + b, 0) / rates.length);
+      salaryTypeLabel = `수업당 ${formatCurrency(avgRate)}`;
+    } else {
+      salaryTypeLabel = '수업당';
+    }
+  } else {
+    salaryTypeLabel = SALARY_TYPE_LABELS[salary.salary_type as keyof typeof SALARY_TYPE_LABELS] || salary.salary_type || '-';
+  }
 
   return `
     <div style="width: 700px; padding: 24px; font-family: 'Malgun Gothic', sans-serif; background: white;">
       <!-- 헤더 - 학원명 -->
-      <div style="text-align: center; margin-bottom: 8px;">
-        <h1 style="font-size: 28px; font-weight: bold; color: #1E40AF; margin: 0; letter-spacing: 2px;">P-ACA</h1>
-        <p style="font-size: 11px; color: #6B7280; margin: 4px 0 0 0;">체대입시 전문학원</p>
+      <div style="text-align: center; margin-bottom: 12px;">
+        <h1 style="font-size: 26px; font-weight: bold; color: #1E40AF; margin: 0;">${academyName}</h1>
       </div>
 
       <!-- 급여 명세서 제목 -->
@@ -216,28 +226,14 @@ function createSalaryTemplate(data: SalaryWithAttendance): string {
         </div>
       </div>
 
-      <!-- 수당 기준 -->
-      ${hasRateInfo ? `
+      <!-- 수당 기준 (시간대별 단가가 다른 경우에만 표시) -->
+      ${salary.salary_type === 'per_class' && (morningRate !== afternoonRate || afternoonRate !== eveningRate) && (morningRate > 0 || afternoonRate > 0 || eveningRate > 0) ? `
         <div style="border: 1px solid #E5E7EB; border-radius: 8px; padding: 12px; margin-bottom: 12px; background-color: #F9FAFB;">
-          <h3 style="font-size: 13px; font-weight: 600; color: #374151; margin: 0 0 8px 0;">수당 기준</h3>
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 12px;">
-            ${salary.salary_type === 'monthly' && baseSalary > 0 ? `
-              <div>
-                <span style="color: #6B7280;">월 기본급:</span>
-                <span style="margin-left: 8px; font-weight: 600;">${formatCurrency(baseSalary)}</span>
-              </div>
-            ` : ''}
-            ${salary.salary_type === 'hourly' && hourlyRate > 0 ? `
-              <div>
-                <span style="color: #6B7280;">시급:</span>
-                <span style="margin-left: 8px; font-weight: 600;">${formatCurrency(hourlyRate)}</span>
-              </div>
-            ` : ''}
-            ${salary.salary_type === 'per_class' ? `
-              ${morningRate > 0 ? `<div><span style="color: #6B7280;">오전 수당:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(morningRate)}/회</span></div>` : ''}
-              ${afternoonRate > 0 ? `<div><span style="color: #6B7280;">오후 수당:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(afternoonRate)}/회</span></div>` : ''}
-              ${eveningRate > 0 ? `<div><span style="color: #6B7280;">저녁 수당:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(eveningRate)}/회</span></div>` : ''}
-            ` : ''}
+          <h3 style="font-size: 13px; font-weight: 600; color: #374151; margin: 0 0 8px 0;">시간대별 수당</h3>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 12px;">
+            ${morningRate > 0 ? `<div><span style="color: #6B7280;">오전:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(morningRate)}/회</span></div>` : ''}
+            ${afternoonRate > 0 ? `<div><span style="color: #6B7280;">오후:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(afternoonRate)}/회</span></div>` : ''}
+            ${eveningRate > 0 ? `<div><span style="color: #6B7280;">저녁:</span><span style="margin-left: 8px; font-weight: 600;">${formatCurrency(eveningRate)}/회</span></div>` : ''}
           </div>
         </div>
       ` : ''}
@@ -385,8 +381,8 @@ async function htmlToPdf(html: string): Promise<Blob> {
 /**
  * 단일 급여 명세서 PDF 생성
  */
-export async function generateSalaryPDF(data: SalaryWithAttendance): Promise<Blob> {
-  const html = createSalaryTemplate(data);
+export async function generateSalaryPDF(data: SalaryWithAttendance, academyName?: string): Promise<Blob> {
+  const html = createSalaryTemplate(data, academyName);
   return htmlToPdf(html);
 }
 
@@ -396,7 +392,8 @@ export async function generateSalaryPDF(data: SalaryWithAttendance): Promise<Blo
 export async function downloadSalariesAsZip(
   salaries: SalaryWithAttendance[],
   yearMonth: string,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  academyName?: string
 ): Promise<void> {
   const zip = new JSZip();
 
@@ -405,7 +402,7 @@ export async function downloadSalariesAsZip(
     onProgress?.(i + 1, salaries.length);
 
     try {
-      const pdfBlob = await generateSalaryPDF(data);
+      const pdfBlob = await generateSalaryPDF(data, academyName);
       const filename = `급여명세서_${data.salary.instructor_name}_${yearMonth.replace('-', '')}.pdf`;
       zip.file(filename, pdfBlob);
     } catch (error) {

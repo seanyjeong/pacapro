@@ -10,6 +10,7 @@ import { useSalaries } from '@/hooks/use-salaries';
 import { instructorsAPI } from '@/lib/api/instructors';
 import { exportsApi } from '@/lib/api/exports';
 import { salariesAPI } from '@/lib/api/salaries';
+import apiClient from '@/lib/api/client';
 import { PAYMENT_STATUS_OPTIONS } from '@/lib/types/salary';
 import { calculateTotalPaid, calculateTotalUnpaid } from '@/lib/utils/salary-helpers';
 // PDF 유틸리티는 동적 import로 필요할 때만 로드
@@ -67,6 +68,15 @@ export default function SalariesPage() {
       setPdfExporting(true);
       setPdfProgress({ current: 0, total: salaries.length });
 
+      // 학원명 가져오기
+      let academyName = 'P-ACA';
+      try {
+        const settingsResponse = await apiClient.get<{ settings: { academy_name: string } }>('/settings/academy');
+        academyName = settingsResponse.settings?.academy_name || 'P-ACA';
+      } catch (err) {
+        console.error('Failed to load academy name:', err);
+      }
+
       // 각 급여의 상세 정보(출근 기록 포함) 가져오기
       const salaryDataList = await Promise.all(
         salaries.map(async (salary) => {
@@ -95,7 +105,8 @@ export default function SalariesPage() {
       await downloadSalariesAsZip(
         salaryDataList,
         yearMonth,
-        (current, total) => setPdfProgress({ current, total })
+        (current, total) => setPdfProgress({ current, total }),
+        academyName
       );
 
       toast.success(`PDF ${salaries.length}개 다운로드 완료`);
