@@ -49,7 +49,13 @@ export function PaymentRecordModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.paid_amount <= 0) {
+    // 0원 청구 건은 0원 납부 허용 (100% 할인 등)
+    if (formData.paid_amount < 0) {
+      toast.error('납부 금액은 0원 이상이어야 합니다.');
+      return;
+    }
+    // 미납금이 있는데 0원 납부하려는 경우만 차단
+    if (formData.paid_amount === 0 && remainingAmount > 0) {
       toast.error('납부 금액을 입력해주세요.');
       return;
     }
@@ -114,13 +120,12 @@ export function PaymentRecordModal({
               </label>
               <input
                 type="number"
-                value={formData.paid_amount || ''}
+                value={formData.paid_amount}
                 onChange={(e) => setFormData({ ...formData, paid_amount: Math.floor(Number(e.target.value)) })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="0"
                 min="0"
                 step="1000"
-                required
               />
               <div className="flex gap-2 mt-2">
                 <button
