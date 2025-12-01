@@ -140,6 +140,21 @@ npm run dev
 - 백엔드는 수동으로 서버에 업로드 필요
 - 서버 로그 확인: `sudo journalctl -u paca -f`
 
+### 중요: 백엔드 수정 후 알림
+**백엔드 파일을 수정하면 반드시 사용자에게 알려줘야 함!**
+
+```
+서버에서 업데이트 해주세요:
+cd /root/supermax/paca
+git pull
+sudo systemctl restart paca
+```
+
+수정된 파일 목록도 함께 알려줄 것:
+- `backend/routes/xxx.js`
+- `backend/scheduler/xxx.js`
+- 등등
+
 ## 버전 관리
 
 프로젝트는 **Semantic Versioning** 규칙을 따릅니다: `MAJOR.MINOR.PATCH`
