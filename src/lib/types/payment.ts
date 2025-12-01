@@ -117,6 +117,10 @@ export interface UnpaidPaymentsResponse {
 export interface BulkChargeResponse {
   message: string;
   created: number;
+  updated: number;
+  skipped: number;
+  withNonSeasonProrated: number;
+  withCarryover: number;
   year: number;
   month: number;
   due_date: string;
