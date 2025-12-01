@@ -290,7 +290,10 @@ export default function SchedulesPage() {
       <InstructorAttendanceModal
         open={instructorAttendanceModalOpen}
         date={selectedDate}
-        onClose={() => setInstructorAttendanceModalOpen(false)}
+        onClose={() => {
+          setInstructorAttendanceModalOpen(false);
+          handleAttendanceSuccess(); // 모달 닫을 때도 데이터 갱신
+        }}
         onSuccess={handleAttendanceSuccess}
       />
 
