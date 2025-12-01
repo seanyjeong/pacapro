@@ -44,6 +44,9 @@ export interface Student {
   is_season_registered: boolean;
   current_season_id: number | null;
   status: StudentStatus;
+  rest_start_date: string | null; // 휴식 시작일
+  rest_end_date: string | null; // 휴식 종료일 (null이면 무기한)
+  rest_reason: string | null; // 휴식 사유
   enrollment_date: string | null;
   withdrawal_date: string | null;
   notes: string | null;
@@ -71,6 +74,9 @@ export interface StudentFormData {
   discount_reason?: string; // 할인 사유
   payment_due_day?: number; // 개별 납부일 (1~28, null이면 학원 기본값 사용)
   status?: StudentStatus;
+  rest_start_date?: string; // 휴식 시작일
+  rest_end_date?: string; // 휴식 종료일
+  rest_reason?: string; // 휴식 사유
   enrollment_date?: string;
   notes?: string;
   // 시즌 등록 옵션 (고3, N수 학생용)
@@ -289,3 +295,66 @@ export function formatDiscountRate(rate: string | number): string {
   const num = typeof rate === 'string' ? parseFloat(rate) : rate;
   return num > 0 ? `${num}%` : '-';
 }
+
+// ===== 휴식 크레딧 관련 타입 =====
+
+export type RestCreditType = 'carryover' | 'refund';
+export type RestCreditStatus = 'pending' | 'partial' | 'applied' | 'refunded' | 'cancelled';
+
+// 휴식 크레딧 인터페이스
+export interface RestCredit {
+  id: number;
+  student_id: number;
+  academy_id: number;
+  source_payment_id: number | null;
+  rest_start_date: string;
+  rest_end_date: string;
+  rest_days: number;
+  credit_amount: number;
+  remaining_amount: number;
+  credit_type: RestCreditType;
+  status: RestCreditStatus;
+  applied_to_payment_id: number | null;
+  created_at: string;
+  processed_at: string | null;
+  notes: string | null;
+}
+
+// 휴식 처리 요청 DTO
+export interface RestProcessRequest {
+  rest_start_date: string;
+  rest_end_date?: string; // null이면 무기한
+  rest_reason?: string;
+  credit_type?: RestCreditType | 'none';
+  source_payment_id?: number;
+}
+
+// 휴식 처리 응답
+export interface RestProcessResponse {
+  message: string;
+  student: Student;
+  restCredit?: RestCredit;
+}
+
+// 휴식 크레딧 목록 응답
+export interface RestCreditsResponse {
+  message: string;
+  student: { id: number; name: string };
+  credits: RestCredit[];
+  pendingTotal: number;
+}
+
+// 휴식 크레딧 타입 레이블
+export const REST_CREDIT_TYPE_LABELS: Record<RestCreditType, string> = {
+  carryover: '이월 차감',
+  refund: '환불',
+};
+
+// 휴식 크레딧 상태 레이블
+export const REST_CREDIT_STATUS_LABELS: Record<RestCreditStatus, string> = {
+  pending: '미적용',
+  partial: '부분적용',
+  applied: '적용완료',
+  refunded: '환불완료',
+  cancelled: '취소',
+};

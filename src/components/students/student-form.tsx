@@ -97,7 +97,13 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
     address: initialData?.address || '',
     notes: initialData?.notes || '',
     status: (initialData?.status || 'active') as StudentStatus,
+    rest_start_date: initialData?.rest_start_date || '',
+    rest_end_date: initialData?.rest_end_date || '',
+    rest_reason: initialData?.rest_reason || '',
   });
+
+  // 휴식 설정 관련 상태
+  const [isIndefiniteRest, setIsIndefiniteRest] = useState(!initialData?.rest_end_date && initialData?.status === 'paused');
 
   // 학원 설정 로드
   useEffect(() => {
@@ -722,7 +728,20 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
               <label className="block text-sm font-medium text-gray-700 mb-2">상태</label>
               <select
                 value={formData.status}
-                onChange={(e) => handleChange('status', e.target.value as StudentStatus)}
+                onChange={(e) => {
+                  const newStatus = e.target.value as StudentStatus;
+                  handleChange('status', newStatus);
+                  // 휴원이 아닌 상태로 변경 시 휴식 정보 초기화
+                  if (newStatus !== 'paused') {
+                    handleChange('rest_start_date', '');
+                    handleChange('rest_end_date', '');
+                    handleChange('rest_reason', '');
+                    setIsIndefiniteRest(false);
+                  } else if (!formData.rest_start_date) {
+                    // 휴원으로 변경 시 기본값으로 오늘 날짜 설정
+                    handleChange('rest_start_date', new Date().toISOString().split('T')[0]);
+                  }
+                }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {STATUS_OPTIONS.map((option) => (
@@ -731,6 +750,79 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
                   </option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {/* 휴식 설정 (휴원 상태일 때만 표시) */}
+          {mode === 'edit' && formData.status === 'paused' && (
+            <div className="col-span-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg space-y-4">
+              <h4 className="font-medium text-yellow-800 flex items-center gap-2">
+                <span className="text-lg">⏸️</span> 휴식 설정
+              </h4>
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* 휴식 시작일 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    휴식 시작일 <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.rest_start_date || ''}
+                    onChange={(e) => handleChange('rest_start_date', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    required
+                  />
+                </div>
+
+                {/* 휴식 종료일 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    휴식 종료일
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={formData.rest_end_date || ''}
+                      onChange={(e) => handleChange('rest_end_date', e.target.value)}
+                      disabled={isIndefiniteRest}
+                      className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
+                        isIndefiniteRest ? 'bg-gray-100 text-gray-400' : ''
+                      }`}
+                    />
+                  </div>
+                  <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isIndefiniteRest}
+                      onChange={(e) => {
+                        setIsIndefiniteRest(e.target.checked);
+                        if (e.target.checked) {
+                          handleChange('rest_end_date', '');
+                        }
+                      }}
+                      className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                    />
+                    무기한 휴식
+                  </label>
+                </div>
+              </div>
+
+              {/* 휴식 사유 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">휴식 사유</label>
+                <input
+                  type="text"
+                  value={formData.rest_reason || ''}
+                  onChange={(e) => handleChange('rest_reason', e.target.value)}
+                  placeholder="예: 개인 사정, 부상, 여행 등"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                />
+              </div>
+
+              <p className="text-xs text-yellow-700">
+                💡 휴식 기간 동안 학원비 이월/환불 처리는 학생 상세 페이지에서 별도로 진행할 수 있습니다.
+              </p>
             </div>
           )}
         </CardContent>
