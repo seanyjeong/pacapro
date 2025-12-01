@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, Bell, User, LogOut, Menu } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { Search, Bell, User, LogOut, Menu, Users, UserCog } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api/auth';
+import apiClient from '@/lib/api/client';
 
 // 역할을 한글로 변환
 const getRoleLabel = (role: string, position?: string): string => {
@@ -19,14 +21,77 @@ const getRoleLabel = (role: string, position?: string): string => {
     }
 };
 
+interface SearchResult {
+    id: number;
+    type: 'student' | 'instructor';
+    name: string;
+    subtext: string;
+    phone?: string;
+    status: string;
+}
+
 export function TopNav() {
+    const router = useRouter();
     const [user, setUser] = useState<any>(null);
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [showResults, setShowResults] = useState(false);
+    const [searching, setSearching] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const currentUser = authAPI.getCurrentUser();
         setUser(currentUser);
     }, []);
+
+    // 검색 실행 (debounce)
+    useEffect(() => {
+        if (searchQuery.trim().length < 1) {
+            setSearchResults([]);
+            setShowResults(false);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                setSearching(true);
+                const response = await apiClient.get('/search', {
+                    params: { q: searchQuery }
+                });
+                setSearchResults(response.data.results || []);
+                setShowResults(true);
+            } catch (error) {
+                console.error('Search error:', error);
+                setSearchResults([]);
+            } finally {
+                setSearching(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    // 외부 클릭 시 검색 결과 닫기
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setShowResults(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleResultClick = (result: SearchResult) => {
+        if (result.type === 'student') {
+            router.push(`/students/${result.id}`);
+        } else if (result.type === 'instructor') {
+            router.push(`/instructors/${result.id}`);
+        }
+        setSearchQuery('');
+        setShowResults(false);
+    };
 
     const handleLogout = () => {
         authAPI.logout();
@@ -43,13 +108,71 @@ export function TopNav() {
                     </Button>
 
                     {/* Search Bar */}
-                    <div className="relative max-w-md w-full">
+                    <div className="relative max-w-md w-full" ref={searchRef}>
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
                             type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => searchResults.length > 0 && setShowResults(true)}
                             placeholder="학생, 강사, 전화번호 검색..."
                             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
+
+                        {/* 검색 결과 드롭다운 */}
+                        {showResults && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                                {searching ? (
+                                    <div className="p-4 text-center text-gray-500 text-sm">
+                                        검색 중...
+                                    </div>
+                                ) : searchResults.length === 0 ? (
+                                    <div className="p-4 text-center text-gray-500 text-sm">
+                                        검색 결과가 없습니다
+                                    </div>
+                                ) : (
+                                    <ul>
+                                        {searchResults.map((result) => (
+                                            <li key={`${result.type}-${result.id}`}>
+                                                <button
+                                                    onClick={() => handleResultClick(result)}
+                                                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
+                                                >
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                                        result.type === 'student' ? 'bg-blue-100' : 'bg-green-100'
+                                                    }`}>
+                                                        {result.type === 'student' ? (
+                                                            <Users className="w-5 h-5 text-blue-600" />
+                                                        ) : (
+                                                            <UserCog className="w-5 h-5 text-green-600" />
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium text-gray-900">{result.name}</span>
+                                                            <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                                                result.type === 'student' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                                                            }`}>
+                                                                {result.type === 'student' ? '학생' : '강사'}
+                                                            </span>
+                                                            {result.status !== 'active' && (
+                                                                <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                                                                    {result.status === 'paused' ? '휴원' : result.status === 'withdrawn' ? '퇴원' : result.status}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="text-sm text-gray-500 truncate">
+                                                            {result.subtext}
+                                                            {result.phone && ` · ${result.phone}`}
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
