@@ -15,7 +15,7 @@ P-ACA(Papa Academy)는 체대입시 학원관리시스템입니다.
 - **백엔드**: https://github.com/seanyjeong/supermax (`master` 브랜치, `paca/` 폴더)
 
 ### 프론트엔드 배포 (Vercel)
-- **URL**: https://pacapro.vercel.app (또는 Vercel이 생성한 도메인)
+- **URL**: https://pacapro.vercel.app
 - **자동 배포**: `main` 브랜치에 push하면 자동으로 배포됨
 - **환경변수**: `NEXT_PUBLIC_API_URL=https://supermax.kr/paca`
 
@@ -24,6 +24,12 @@ P-ACA(Papa Academy)는 체대입시 학원관리시스템입니다.
 - **API URL**: https://supermax.kr/paca
 - **자동 배포**: supermax 레포 `master` 브랜치에 push하면 n8n이 자동으로 배포
 - **n8n URL**: https://n8n.sean8320.dedyn.io/
+
+### DB 백업
+- **위치**: `/home/sean/backups/paca/`
+- **주기**: 매주 일요일 새벽 3시 (한국시간)
+- **보관**: 6개월치 (182일 이상 된 파일 자동 삭제)
+- **수동 실행**: `/home/sean/backups/paca/backup.sh`
 
 ## 개발 명령어
 
@@ -58,240 +64,206 @@ sudo systemctl status paca     # 상태 확인
 sudo journalctl -u paca -f     # 로그 확인
 ```
 
+## 완성된 기능 목록
+
+### 학생 관리
+- 학생 CRUD (등록, 조회, 수정)
+- 학생 검색 (이름, 전화번호)
+- 학생 상태 관리: `active`(재원), `paused`(휴원), `withdrawn`(퇴원), `graduated`(졸업)
+- 휴원 처리 (휴식 기간, 사유 저장, 학원비 이월 크레딧)
+- 복귀 처리 (일할계산 학원비 자동 생성, 스케줄 재배정)
+- 퇴원 처리 (퇴원 사유 저장, 스케줄 제거)
+- 졸업 처리 (고3/N수 학생)
+- 삭제 (Hard Delete, owner만 가능)
+
+### 학년 자동 진급
+- 매년 3월 1일 오전 1시(한국시간) 자동 실행
+- 진급: 중1→중2→중3→고1→고2→고3→N수
+- active, paused 학생만 진급 (graduated, withdrawn 제외)
+
+### 학원비 관리
+- 월별 학원비 자동 생성 (매월 1일 스케줄러)
+- 학원비 일괄 생성/업데이트
+- 납부 처리 (완납, 부분납)
+- 일할계산 (복귀 시)
+- 휴식 크레딧 자동 차감
+
+### 수업/출석 관리
+- 수업 스케줄 관리
+- 출석 체크 (출석, 지각, 결석, 병결)
+- 시즌(입시 시즌) 관리
+- 시즌 활성화 시 스케줄 자동 배치
+
+### 강사 관리
+- 강사 CRUD
+- 출퇴근 기록
+- 급여 관리
+
+### 알림톡/SMS
+- Naver Cloud SENS API 연동
+- 알림톡 발송 (KakaoTalk 비즈메시지)
+- SMS/LMS 발송
+- MMS 발송 (이미지 첨부, 최대 3장)
+- 학년별 필터 발송 (선행반/3학년)
+- 자동 발송 스케줄 (날짜, 시간 설정 가능)
+
+### 리포트/대시보드
+- 대시보드 통계
+- 재무 리포트
+- 데이터 내보내기 (Excel)
+
+### 기타
+- 전역 검색 (학생, 강사)
+- 설정 관리 (학원 정보, 수강료, 시간대)
+
 ## 아키텍처
 
 ### 백엔드 구조
-- `paca.js` - Express 서버 진입점
-- `routes/` - API 라우트 핸들러 (auth, students, instructors, payments, salaries, seasons, schedules 등)
-- `middleware/auth.js` - JWT 인증 (`verifyToken`, `requireRole()`)
-- `config/database.js` - MySQL 커넥션 풀
-- `scheduler/paymentScheduler.js` - 학원비 자동 생성 크론잡 (매일 자정 실행)
+```
+/home/sean/supermax/paca/backend/
+├── paca.js                 # Express 서버 진입점
+├── config/database.js      # MySQL 커넥션 풀
+├── middleware/auth.js      # JWT 인증, 역할 기반 접근 제어
+├── routes/                 # API 라우트 (20개)
+│   ├── auth.js            # 로그인, 회원가입
+│   ├── students.js        # 학생 CRUD, 휴식/복귀/퇴원/졸업
+│   ├── instructors.js     # 강사 CRUD
+│   ├── payments.js        # 학원비 관리
+│   ├── schedules.js       # 수업 일정, 출석
+│   ├── seasons.js         # 시즌 관리
+│   ├── salaries.js        # 급여 관리
+│   ├── notifications.js   # 알림톡 (SENS)
+│   ├── sms.js             # SMS/MMS 발송
+│   ├── search.js          # 전역 검색
+│   └── ...
+├── scheduler/              # 자동화 스케줄러 (3개)
+│   ├── paymentScheduler.js         # 월별 학원비 생성 (매월 1일)
+│   ├── notificationScheduler.js    # 알림톡 자동 발송 (매시간 체크)
+│   └── gradePromotionScheduler.js  # 학년 진급 (매년 3월 1일)
+├── utils/naverSens.js      # 네이버 SENS API 유틸
+└── migrations/             # DB 마이그레이션 SQL
+```
 
 ### 프론트엔드 구조
-- `src/app/` - Next.js App Router 페이지
-- `src/components/` - 기능별 컴포넌트 (students/, instructors/, schedules/ 등)
-- `src/lib/api/` - Axios 싱글톤 API 클라이언트 (`client.ts`)
-- `src/hooks/` - React Query 데이터 페칭 훅
+```
+/home/sean/pacapro/
+├── src/app/                # Next.js App Router 페이지
+│   ├── students/          # 학생 관리
+│   ├── instructors/       # 강사 관리
+│   ├── payments/          # 학원비 관리
+│   ├── schedules/         # 수업 일정
+│   ├── seasons/           # 시즌 관리
+│   ├── salaries/          # 급여 관리
+│   ├── sms/               # SMS 발송
+│   ├── settings/          # 설정 (알림톡 포함)
+│   └── reports/           # 대시보드/리포트
+├── src/components/         # 기능별 컴포넌트
+├── src/lib/api/            # API 클라이언트
+└── src/hooks/              # React Query 훅
+```
 
 ### 주요 패턴
 - **인증**: JWT 토큰을 localStorage에 저장, Axios 인터셉터로 자동 첨부
-- **API 클라이언트**: `src/lib/api/client.ts`의 싱글톤 `apiClient`가 모든 HTTP 요청 처리
-- **데이터 페칭**: TanStack React Query 사용
+- **API 클라이언트**: `src/lib/api/client.ts`의 싱글톤 `apiClient`
+- **데이터 페칭**: TanStack React Query
 - **폼**: React Hook Form + Zod 유효성 검사
-- **사용자 역할**: `owner`, `admin`, `teacher` - `requireRole()` 미들웨어로 권한 제어
+- **사용자 역할**: `owner`, `admin`, `teacher`
 
-### 데이터베이스
-- MySQL 커넥션 풀 사용
-- 마이그레이션: `database/migrations/`
-- Soft Delete: `deleted_at` 컬럼 활용
-- 타임존: 한국 시간 (`+09:00`)
-
-## API 엔드포인트
+## API 엔드포인트 요약
 
 모든 엔드포인트는 `/paca/` 접두사 사용:
-- `/auth` - 로그인, 회원가입
-- `/students`, `/instructors` - 학생/강사 CRUD
-- `/payments`, `/salaries` - 학원비/급여 관리
-- `/schedules` - 수업 일정 및 출석
-- `/seasons` - 시즌/등록 관리
-- `/performance` - 학생 성적 기록
-- `/reports` - 대시보드 및 재무 리포트
-- `/settings` - 학원 설정
 
-상세 API 문서: `backend/API-REFERENCE.md`
+| 경로 | 설명 |
+|------|------|
+| `/auth` | 로그인, 회원가입 |
+| `/students` | 학생 CRUD, 휴식/복귀/퇴원/졸업 |
+| `/students/auto-promote` | 학년 자동 진급 |
+| `/instructors` | 강사 CRUD |
+| `/payments` | 학원비 관리 |
+| `/schedules` | 수업 일정, 출석 |
+| `/seasons` | 시즌 관리 |
+| `/salaries` | 급여 관리 |
+| `/notifications` | 알림톡 설정/발송 |
+| `/sms` | SMS/MMS 발송 |
+| `/search` | 전역 검색 |
+| `/reports` | 대시보드, 리포트 |
+| `/settings` | 학원 설정 |
 
 ## 개발 워크플로우
 
-### 다른 컴퓨터에서 작업 시작하기
-```bash
-# 1. 저장소 클론
-git clone https://github.com/seanyjeong/pacapro.git
-cd pacapro
-
-# 2. 의존성 설치
-npm install
-
-# 3. 환경변수 설정 (.env.local 생성)
-echo "NEXT_PUBLIC_API_URL=https://supermax.kr/paca" > .env.local
-
-# 4. 개발 서버 실행
-npm run dev
-```
-
-### 프론트엔드 수정 프로세스
+### 프론트엔드 수정
 1. `/home/sean/pacapro/` 에서 코드 수정
-2. `git add . && git commit -m "메시지" && git push`
-3. **자동 배포**: Vercel이 자동으로 빌드 & 배포 (1-2분 소요)
+2. `npm run build` 로 빌드 확인
+3. `git add . && git commit -m "메시지" && git push`
+4. Vercel 자동 배포 (1-2분)
 
-### 백엔드 수정 프로세스
+### 백엔드 수정
 1. `/home/sean/supermax/paca/backend/` 에서 코드 수정
 2. `cd /home/sean/supermax && git add . && git commit -m "메시지" && git push origin master`
-3. **자동 배포**: n8n이 자동으로 서버에 배포 (3초 소요)
-
-### 로컬 작업 경로
-- **프론트엔드**: `/home/sean/pacapro/`
-- **백엔드**: `/home/sean/supermax/paca/backend/`
-- **서버 백엔드**: `/root/supermax/paca/` (211.37.174.218)
+3. n8n 자동 배포 (3초)
 
 ### DB 마이그레이션
-새 테이블이나 컬럼 추가 시:
 1. `backend/migrations/` 에 SQL 파일 생성
-2. 서버에서 직접 MySQL 실행: `mysql -u root -p paca < migration.sql`
-
-### 주의사항
-- 프론트엔드는 GitHub push 시 자동 배포 (Vercel)
-- 백엔드도 GitHub push 시 자동 배포 (n8n)
-- 서버 로그 확인: `sudo journalctl -u paca -f`
-- n8n 실행 로그: https://n8n.sean8320.dedyn.io/ → Executions
-
-## 버전 관리
-
-프로젝트는 **Semantic Versioning** 규칙을 따릅니다: `MAJOR.MINOR.PATCH`
-
-### 버전 업데이트 기준
-- **PATCH (1.0.X)**: 자잘한 버그 수정, 오타 수정, 작은 UI 개선
-  - 예: 1.0.0 → 1.0.1
-- **MINOR (1.X.0)**: 새 기능 추가, 중간 규모 수정, API 변경 (하위호환)
-  - 예: 1.0.1 → 1.1.0
-- **MAJOR (X.0.0)**: 대규모 리팩토링, 아키텍처 변경, 하위호환 깨지는 변경
-  - 예: 1.5.3 → 2.0.0
-
-### 버전 업데이트 방법
-수정 완료 후 **3곳** 모두 업데이트 필요:
-
-1. **package.json** - `version` 필드
-```json
-"version": "1.0.1"
+2. 서버에서 실행:
+```bash
+ssh root@211.37.174.218
+mysql -u root -pQq141171616! paca < /root/supermax/paca/backend/migrations/파일명.sql
 ```
-
-2. **src/components/layout/sidebar.tsx** - 사이드바 하단 (line ~199)
-```tsx
-P-ACA v1.0.1
-```
-
-3. **src/app/settings/page.tsx** - 시스템 정보 카드 (line ~750)
-```tsx
-<span className="font-medium text-gray-900">v1.0.1</span>
-<span className="font-medium text-gray-900">2025-11-30</span>  // 날짜도 업데이트
-```
-
-### 현재 버전
-- **v1.3.0** (2025-12-02): KakaoTalk 알림톡 기능 추가 (Naver Cloud SENS API 연동, 미납 알림 발송)
-- **v1.2.5** (2025-12-02): 급여 목록 월별 네비게이션, 급여일 기준 기본 월 표시
-- **v1.2.4** (2025-12-02): 학생 성별 필드 추가, 스케줄 버그 수정, 검색 오류 수정, 강사 출퇴근 월별 필터
-- **v1.2.3** (2025-12-02): (스킵됨)
-- **v1.2.2** (2025-12-01): 휴원 복귀 시 일할계산 학원비 자동 생성
-- **v1.2.1** (2025-12-01): 학원비 일괄 생성 로직 개선, 납부기한 버그 수정
-- **v1.2.0** (2025-12-01): 휴식 기간 관리 기능 추가, 학원비 이월/환불 처리, 스케줄러 수정
-- **v1.0.1** (2025-11-30): Hydration 에러 수정, 시즌 태그 쿼리 수정, 빌드 오류 수정
-- **v1.0.0** (2025-11-30): 시즌 시간대 다중 선택, 시즌 활성화 시 스케줄 자동 배치
 
 ## 주의사항 (개발 패턴)
 
+### 학생 상태 (status)
+- `active`: 재원 (스케줄 포함, 학원비 생성, 진급 대상)
+- `paused`: 휴원 (스케줄 제외, 학원비 미생성, 진급 대상)
+- `withdrawn`: 퇴원 (스케줄 제외, 학원비 미생성, 진급 제외)
+- `graduated`: 졸업 (스케줄 제외, 학원비 미생성, 진급 제외)
+
+### 삭제/퇴원/졸업 처리 시 확인 필요
+- 삭제: "삭제" 텍스트 입력 확인
+- 퇴원: "퇴원" 텍스트 입력 확인 + 사유 입력
+- 졸업: "졸업" 텍스트 입력 확인
+
 ### Hydration 에러 방지
-Next.js에서 localStorage나 권한 체크처럼 클라이언트에서만 사용 가능한 값은 SSR과 클라이언트 렌더링 불일치로 hydration 에러 발생 가능.
-
-**해결 패턴:**
 ```tsx
-// ❌ 잘못된 방식 (hydration 에러 발생)
-const canEdit = canEdit('schedules');
-
-// ✅ 올바른 방식 (클라이언트에서만 체크)
+// ✅ 클라이언트에서만 체크
 const [canEditSchedules, setCanEditSchedules] = useState(false);
 useEffect(() => {
   setCanEditSchedules(canEdit('schedules'));
 }, []);
 ```
 
-### useSearchParams 사용
-Next.js 15에서 `useSearchParams()`는 반드시 Suspense boundary 내에서 사용해야 함.
-정적 생성 시점에 URL 파라미터를 읽으면 빌드 에러 발생.
-
-**해결 패턴:**
-```tsx
-// Suspense로 감싸고, useEffect에서 파라미터 처리
-const searchParams = useSearchParams();
-useEffect(() => {
-  const status = searchParams.get('status');
-  if (status === 'unpaid') {
-    updateFilters({ payment_status: 'pending' });
-  }
-}, [searchParams]);
-```
-
-### 시즌 날짜 필드 구분
-- `non_season_end_date`: 비시즌 종강일 (시즌 시작 전 마지막 날)
-- `season_start_date`: 시즌 시작일
-- `season_end_date`: 시즌 종료일
-
-시즌 기간 체크 시: `date BETWEEN season_start_date AND season_end_date`
-
-### 휴식(휴원) 기간 관리
-학생이 휴식(paused) 상태가 되면 휴식 기간을 설정할 수 있음.
-
-**관련 테이블/필드:**
-- `students.rest_start_date`: 휴식 시작일
-- `students.rest_end_date`: 휴식 종료일 (NULL이면 무기한)
-- `students.rest_reason`: 휴식 사유
-- `rest_credits`: 휴식으로 인한 이월/환불 크레딧 기록
-
-**API 엔드포인트:**
-- `POST /paca/students/:id/rest` - 휴식 처리 (이월/환불 크레딧 생성)
-- `POST /paca/students/:id/resume` - 휴식 복귀
-- `GET /paca/students/:id/rest-credits` - 휴식 크레딧 내역 조회
-
-**이월 처리 흐름:**
-1. 학생을 휴원 상태로 변경하고 휴식 기간 설정
-2. 이미 납부한 학원비가 있으면 휴식 일수만큼 일할 계산하여 크레딧 생성
-3. 다음 달 학원비 생성 시 크레딧이 자동 차감됨
-
-**학원비 자동 생성:**
-- 스케줄러가 매월 1일에 모든 active 학생의 학원비를 자동 생성
-- 또는 학원비 관리 페이지에서 "월별 학원비 생성" 버튼으로 수동 생성
-
-### 학원비 일괄 생성 (bulk-monthly) 로직
-`POST /paca/payments/bulk-monthly` API는 다음과 같이 동작:
-
-1. **학원비 없는 학생** → 새로 생성
-2. **학원비 있음 (미납/부분납)** → 최신 정보로 업데이트 (수강료, 할인율 변경 반영)
-3. **학원비 있음 (납부완료)** → 건너뜀
-
-**응답 예시:**
-```json
-{
-  "message": "학원비 처리 완료: 32명 생성, 1명 업데이트, 1명 건너뜀(납부완료)",
-  "created": 32,
-  "updated": 1,
-  "skipped": 1
-}
-```
-
-### JavaScript Date 월(month) 주의사항
-JavaScript의 `Date(year, month, day)`는 month가 **0부터 시작**:
-- `new Date(2025, 0, 1)` → 2025년 1월 1일
-- `new Date(2025, 11, 1)` → 2025년 12월 1일
-- `new Date(2025, 12, 1)` → **2026년 1월 1일** (주의!)
-
-**올바른 패턴:**
+### JavaScript Date 월(month) 주의
 ```javascript
-const month = 12; // 12월
-// ❌ 잘못됨: new Date(2025, month, 10) → 2026년 1월 10일
-// ✅ 올바름: new Date(2025, month - 1, 10) → 2025년 12월 10일
+// month는 0부터 시작!
+new Date(2025, 11, 1)  // 12월 1일
+new Date(2025, 12, 1)  // 2026년 1월 1일 (주의!)
 ```
 
-### 휴원 복귀 시 학원비 자동 생성
-`POST /paca/students/:id/resume` API 호출 시:
-
-1. 학생 상태를 `paused` → `active`로 변경
-2. 해당 월 학원비가 없으면 **일할계산하여 자동 생성**
-3. 스케줄도 자동 재배정
-
-**일할계산 로직:**
+### 휴원 복귀 시 일할계산
 - 복귀일부터 말일까지의 수업일수 계산
 - `월수강료 × (남은수업일 / 총수업일)` (천원 단위 절삭)
 - 납부기한: 복귀일 + 7일
 
-**예시:** 12월 15일 복귀, 월/목 수업, 월수강료 30만원
-- 12월 총 수업일: 9일 (월: 2,9,16,23,30 / 목: 5,12,19,26)
-- 15일 이후 수업일: 5일 (16,19,23,26,30)
-- 학원비: 300,000 × (5/9) = 166,000원
+## 버전 이력
+
+### 현재 버전: v1.3.0 (2025-12-02)
+
+- **v1.3.0** (2025-12-02): 알림톡/SMS/MMS 기능, 학년 자동 진급, 퇴원/졸업 처리, DB 백업
+- **v1.2.2** (2025-12-01): 휴원 복귀 시 일할계산 학원비 자동 생성
+- **v1.2.0** (2025-12-01): 휴식 기간 관리, 학원비 이월/환불 처리
+- **v1.0.0** (2025-11-30): 초기 버전
+
+## 보안 참고사항
+
+현재 코드에 하드코딩된 값들 (프로덕션 전 환경변수로 분리 권장):
+- DB 비밀번호: `config/database.js`
+- JWT 시크릿: `middleware/auth.js`
+- 암호화 키: `routes/notifications.js`, `routes/sms.js`
+
+권장 `.env` 파일:
+```
+DB_HOST=211.37.174.218
+DB_PASSWORD=실제비밀번호
+JWT_SECRET=강한랜덤문자열
+ENCRYPTION_KEY=또다른랜덤문자열
+```

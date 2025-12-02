@@ -1,0 +1,313 @@
+{
+  "name": "P-ACA 학생 동기화",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "id": "trigger",
+      "name": "매일 아침 9시",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://supermax.kr/paca/students",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "paca-n8n-api-key-2024"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "academy_id",
+              "value": "2"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-students",
+      "name": "학생 목록 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://supermax.kr/paca/payments",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "paca-n8n-api-key-2024"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "academy_id",
+              "value": "2"
+            },
+            {
+              "name": "year",
+              "value": "={{ $now.year }}"
+            },
+            {
+              "name": "month",
+              "value": "={{ $now.month }}"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-payments",
+      "name": "이번달 수납 조회",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [220, 200]
+    },
+    {
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "value": "1O9wjLbA969k7YZ1eHVnE2iahXWCt5_d3biWXJhW4A34",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "학생명단",
+          "mode": "name"
+        },
+        "clear": "exceptFirstRow"
+      },
+      "id": "clear-students-sheet",
+      "name": "학생명단 초기화",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "operation": "clear",
+        "documentId": {
+          "__rl": true,
+          "value": "1O9wjLbA969k7YZ1eHVnE2iahXWCt5_d3biWXJhW4A34",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "월별수납",
+          "mode": "name"
+        },
+        "clear": "exceptFirstRow"
+      },
+      "id": "clear-payments-sheet",
+      "name": "월별수납 초기화",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [440, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "const students = $('학생 목록 조회').first().json.students || $('학생 목록 조회').first().json.data || $('학생 목록 조회').first().json;\n\nconst statusMap = {\n  'active': '재원',\n  'paused': '휴원',\n  'withdrawn': '퇴원',\n  'graduated': '졸업'\n};\n\nconst result = [];\nlet no = 1;\n\nconst studentList = Array.isArray(students) ? students : (students.students || []);\n\nfor (const s of studentList) {\n  result.push({\n    json: {\n      'No': no++,\n      '이름': s.name || '',\n      '학년': s.grade || '',\n      '상태': statusMap[s.status] || s.status || '',\n      '학생전화': s.phone || '',\n      '학부모전화': s.parent_phone || '',\n      '등록일': s.created_at ? s.created_at.split('T')[0] : ''\n    }\n  });\n}\n\nreturn result;"
+      },
+      "id": "transform-students",
+      "name": "학생 데이터 변환",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "const payments = $('이번달 수납 조회').first().json.payments || $('이번달 수납 조회').first().json.data || $('이번달 수납 조회').first().json;\n\nconst statusMap = {\n  'pending': '미납',\n  'partial': '부분납',\n  'paid': '완납',\n  'refunded': '환불'\n};\n\nconst result = [];\nlet no = 1;\n\nconst paymentList = Array.isArray(payments) ? payments : (payments.payments || []);\n\nfor (const p of paymentList) {\n  const yearMonth = p.year && p.month ? `${p.year}-${String(p.month).padStart(2, '0')}` : '';\n  result.push({\n    json: {\n      'No': no++,\n      '이름': p.student_name || '',\n      '학년': p.grade || '',\n      '년월': yearMonth,\n      '수강료': p.amount || 0,\n      '납부상태': statusMap[p.payment_status] || p.payment_status || '',\n      '납부일': p.paid_date ? p.paid_date.split('T')[0] : ''\n    }\n  });\n}\n\nreturn result;"
+      },
+      "id": "transform-payments",
+      "name": "수납 데이터 변환",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 200]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1O9wjLbA969k7YZ1eHVnE2iahXWCt5_d3biWXJhW4A34",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "학생명단",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "No": "={{ $json['No'] }}",
+            "이름": "={{ $json['이름'] }}",
+            "학년": "={{ $json['학년'] }}",
+            "상태": "={{ $json['상태'] }}",
+            "학생전화": "={{ $json['학생전화'] }}",
+            "학부모전화": "={{ $json['학부모전화'] }}",
+            "등록일": "={{ $json['등록일'] }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "append-students",
+      "name": "학생명단 입력",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [880, 0]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1O9wjLbA969k7YZ1eHVnE2iahXWCt5_d3biWXJhW4A34",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "월별수납",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "No": "={{ $json['No'] }}",
+            "이름": "={{ $json['이름'] }}",
+            "학년": "={{ $json['학년'] }}",
+            "년월": "={{ $json['년월'] }}",
+            "수강료": "={{ $json['수강료'] }}",
+            "납부상태": "={{ $json['납부상태'] }}",
+            "납부일": "={{ $json['납부일'] }}"
+          }
+        },
+        "options": {}
+      },
+      "id": "append-payments",
+      "name": "월별수납 입력",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [880, 200]
+    }
+  ],
+  "connections": {
+    "매일 아침 9시": {
+      "main": [
+        [
+          {
+            "node": "학생 목록 조회",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "이번달 수납 조회",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "학생 목록 조회": {
+      "main": [
+        [
+          {
+            "node": "학생명단 초기화",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "이번달 수납 조회": {
+      "main": [
+        [
+          {
+            "node": "월별수납 초기화",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "학생명단 초기화": {
+      "main": [
+        [
+          {
+            "node": "학생 데이터 변환",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "월별수납 초기화": {
+      "main": [
+        [
+          {
+            "node": "수납 데이터 변환",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "학생 데이터 변환": {
+      "main": [
+        [
+          {
+            "node": "학생명단 입력",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "수납 데이터 변환": {
+      "main": [
+        [
+          {
+            "node": "월별수납 입력",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Seoul"
+  }
+}

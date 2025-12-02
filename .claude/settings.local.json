@@ -1,25 +1,29 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir /b \"C:\\projects\\papa\")",
-      "Bash(dir /b \"C:\\projects\\papa\\backend\")",
       "Bash(ssh:*)",
       "Bash(curl:*)",
       "Bash(npm run build:*)",
       "Bash(npm run lint:*)",
-      "Bash(cat:*)",
-      "Bash(find:*)",
       "Bash(npm install:*)",
-      "Bash(git init:*)",
+      "Bash(npm i:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git branch:*)",
-      "Bash(git remote add:*)",
       "Bash(git push:*)",
       "Bash(git config:*)",
-      "Bash(findstr:*)",
-      "Bash(git remote set-url:*)",
-      "WebSearch"
+      "Bash(git remote:*)",
+      "Bash(chmod:*)",
+      "Bash(crontab:*)",
+      "Bash(/home/sean/backups/paca/backup.sh)",
+      "Bash(sudo apt-get install:*)",
+      "Bash(sudo systemctl:*)",
+      "WebSearch",
+      "Read(/home/sean/supermax/**)",
+      "Read(/home/sean/backups/**)",
+      "Bash(cat:*)",
+      "Bash(mysql:*)",
+      "Bash(zcat:*)"
     ],
     "deny": [],
     "ask": []

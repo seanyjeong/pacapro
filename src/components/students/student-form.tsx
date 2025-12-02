@@ -280,7 +280,36 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
     }
 
     setErrors(newErrors);
+
+    // 에러가 있으면 첫 번째 에러 필드로 스크롤
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorField = Object.keys(newErrors)[0];
+      const element = document.getElementById(`field-${firstErrorField}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.focus();
+      }
+    }
+
     return Object.keys(newErrors).length === 0;
+  };
+
+  // API 에러에서 사용자 친화적 메시지 추출
+  const extractErrorMessage = (err: unknown): string => {
+    if (err && typeof err === 'object') {
+      // Axios 에러 구조
+      const axiosError = err as { response?: { data?: { message?: string; error?: string } } };
+      if (axiosError.response?.data?.message) {
+        return axiosError.response.data.message;
+      }
+      if (axiosError.response?.data?.error) {
+        return axiosError.response.data.error;
+      }
+    }
+    if (err instanceof Error) {
+      return err.message;
+    }
+    return '저장에 실패했습니다.';
   };
 
   // 폼 제출 핸들러
@@ -301,8 +330,15 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
       await onSubmit(submitData);
     } catch (err: unknown) {
       console.error('Form submit error:', err);
-      const errorMessage = err instanceof Error ? err.message : '저장에 실패했습니다.';
+      const errorMessage = extractErrorMessage(err);
       setErrors({ submit: errorMessage });
+      // 에러 메시지 영역으로 스크롤
+      setTimeout(() => {
+        const errorElement = document.querySelector('[class*="bg-red-50"]');
+        if (errorElement) {
+          errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
     } finally {
       setSubmitting(false);
     }
@@ -332,6 +368,7 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
               </label>
               <input
                 type="text"
+                id="field-name"
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 placeholder="홍길동"
@@ -383,6 +420,7 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
               </label>
               <input
                 type="tel"
+                id="field-phone"
                 value={formData.phone}
                 onChange={(e) => handleChange('phone', formatPhoneNumber(e.target.value))}
                 placeholder="010-1234-5678"
@@ -463,6 +501,7 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
                   학년 <span className="text-red-500">*</span>
                 </label>
                 <select
+                  id="field-grade"
                   value={formData.grade || ''}
                   onChange={(e) => handleChange('grade', e.target.value as Grade || undefined)}
                   className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
@@ -488,6 +527,7 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
                 </label>
                 <input
                   type="number"
+                  id="field-age"
                   value={formData.age || ''}
                   onChange={(e) => handleChange('age', e.target.value ? parseInt(e.target.value) : undefined)}
                   placeholder="25"
