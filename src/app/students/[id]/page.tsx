@@ -32,7 +32,21 @@ export default function StudentDetailPage() {
   const handleDelete = async () => {
     if (!student) return;
 
-    if (!confirm(`정말 "${student.name}" 학생을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+    const confirmation = prompt(
+      `⚠️ 경고: "${student.name}" 학생을 완전히 삭제합니다.\n\n` +
+      `삭제되는 데이터:\n` +
+      `- 학생 정보\n` +
+      `- 출석 기록\n` +
+      `- 학원비 내역\n` +
+      `- 성적 기록\n\n` +
+      `이 작업은 되돌릴 수 없습니다!\n\n` +
+      `확인하려면 "삭제"를 입력하세요:`
+    );
+
+    if (confirmation !== '삭제') {
+      if (confirmation !== null) {
+        toast.error('입력값이 일치하지 않습니다.');
+      }
       return;
     }
 
@@ -50,7 +64,19 @@ export default function StudentDetailPage() {
   const handleGraduate = async () => {
     if (!student) return;
 
-    if (!confirm(`"${student.name}" 학생을 졸업 처리하시겠습니까?\n\n졸업 처리 후:\n- 스케줄에서 제외됩니다\n- 3월 자동 진급에서 제외됩니다`)) {
+    const confirmation = prompt(
+      `🎓 "${student.name}" 학생을 졸업 처리합니다.\n\n` +
+      `졸업 처리 후:\n` +
+      `- 스케줄에서 제외됩니다\n` +
+      `- 3월 자동 진급에서 제외됩니다\n` +
+      `- 학생 목록에서 '졸업' 상태로 표시됩니다\n\n` +
+      `확인하려면 "졸업"을 입력하세요:`
+    );
+
+    if (confirmation !== '졸업') {
+      if (confirmation !== null) {
+        toast.error('입력값이 일치하지 않습니다.');
+      }
       return;
     }
 
@@ -68,12 +94,23 @@ export default function StudentDetailPage() {
   const handleWithdraw = async () => {
     if (!student) return;
 
-    const reason = prompt(`"${student.name}" 학생의 퇴원 사유를 입력해주세요.\n(선택사항, 빈칸 가능)`);
-    if (reason === null) return; // 취소
+    const confirmation = prompt(
+      `⚠️ "${student.name}" 학생을 퇴원 처리합니다.\n\n` +
+      `퇴원 처리 후:\n` +
+      `- 스케줄에서 제외됩니다\n` +
+      `- 학생 목록에서 '퇴원' 상태로 표시됩니다\n\n` +
+      `확인하려면 "퇴원"을 입력하세요:`
+    );
 
-    if (!confirm(`"${student.name}" 학생을 퇴원 처리하시겠습니까?\n\n퇴원 처리 후:\n- 스케줄에서 제외됩니다\n- 목록에서 '퇴원' 상태로 표시됩니다`)) {
+    if (confirmation !== '퇴원') {
+      if (confirmation !== null) {
+        toast.error('입력값이 일치하지 않습니다.');
+      }
       return;
     }
+
+    const reason = prompt(`퇴원 사유를 입력해주세요.\n(선택사항, 빈칸 가능)`);
+    if (reason === null) return; // 취소
 
     try {
       await studentsAPI.withdrawStudent(studentId, reason || undefined);
