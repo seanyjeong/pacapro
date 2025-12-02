@@ -15,6 +15,7 @@ export interface NotificationSettings {
   is_enabled: boolean;
   auto_send_day: number;
   auto_send_days: string;  // 콤마로 구분된 자동발송 날짜들 (예: "5,15,25")
+  auto_send_hour: number;  // 자동발송 시간 (0-23, 한국시간)
   has_secret_key?: boolean;
 }
 

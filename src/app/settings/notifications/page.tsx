@@ -16,6 +16,7 @@ export default function NotificationSettingsPage() {
     is_enabled: false,
     auto_send_day: 0,
     auto_send_days: '',
+    auto_send_hour: 9,
   });
 
   // 선택된 자동발송 날짜들을 배열로 관리
@@ -352,6 +353,31 @@ export default function NotificationSettingsPage() {
             </div>
             <p className="text-xs text-gray-500 mt-1">
               선택한 날짜마다 미납자에게 자동으로 알림이 발송됩니다 (매월 반복)
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              자동 발송 시간 (한국 시간)
+            </label>
+            <div className="flex items-center gap-3">
+              <select
+                value={settings.auto_send_hour}
+                onChange={e => setSettings(prev => ({ ...prev, auto_send_hour: parseInt(e.target.value) }))}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {[...Array(24)].map((_, hour) => (
+                  <option key={hour} value={hour}>
+                    {hour.toString().padStart(2, '0')}:00
+                  </option>
+                ))}
+              </select>
+              <span className="text-sm text-gray-600">
+                매월 선택한 날짜의 {settings.auto_send_hour.toString().padStart(2, '0')}시 정각에 발송
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              설정한 시간에 미납 학생에게 알림톡이 자동 발송됩니다
             </p>
           </div>
         </div>
