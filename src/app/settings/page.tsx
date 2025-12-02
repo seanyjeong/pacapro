@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, User, Building, Bell, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle } from 'lucide-react';
+import { Save, User, Building, Bell, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 
@@ -747,11 +747,11 @@ export default function SettingsPage() {
         <CardContent className="space-y-3 text-sm text-gray-600">
           <div className="flex justify-between">
             <span>버전</span>
-            <span className="font-medium text-gray-900">v1.2.0</span>
+            <span className="font-medium text-gray-900">v1.2.3</span>
           </div>
           <div className="flex justify-between">
             <span>마지막 업데이트</span>
-            <span className="font-medium text-gray-900">2025-12-01</span>
+            <span className="font-medium text-gray-900">2025-12-02</span>
           </div>
           <div className="flex justify-between">
             <span>데이터베이스</span>
@@ -759,6 +759,63 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* 스케줄 관리 도구 - owner only */}
+      {user?.role === 'owner' && (
+        <Card className="border-orange-300 bg-orange-50">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-orange-600" />
+              <CardTitle className="text-orange-700">스케줄 관리 도구</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-orange-100 rounded-lg border border-orange-200">
+              <h4 className="font-bold text-orange-800 mb-2">스케줄 일괄 정리</h4>
+              <p className="text-sm text-orange-700 mb-4">
+                잘못된 시간대(아침/점심)의 스케줄을 삭제하고, 저녁 시간대로 재배정합니다.
+                <br />
+                수업요일과 맞지 않는 스케줄도 함께 정리됩니다.
+              </p>
+              <Button
+                variant="outline"
+                className="border-orange-400 text-orange-700 hover:bg-orange-200"
+                disabled={loading}
+                onClick={async () => {
+                  if (!confirm('스케줄을 정리하시겠습니까?\n\n정리 내용:\n- 아침/점심 시간대 스케줄 → 저녁으로 이동\n- 수업요일 불일치 스케줄 삭제\n- 올바른 스케줄로 재배정')) {
+                    return;
+                  }
+                  try {
+                    setLoading(true);
+                    const result = await apiClient.post<{
+                      message: string;
+                      results: {
+                        deleted_attendance: number;
+                        deleted_empty_schedules: number;
+                        created_schedules: number;
+                        assigned_attendance: number;
+                        details: string[];
+                      };
+                    }>('/schedules/fix-all');
+                    toast.success('스케줄 정리 완료', {
+                      description: `삭제: ${result.results.deleted_attendance}개, 재배정: ${result.results.assigned_attendance}개`
+                    });
+                  } catch (err) {
+                    toast.error('스케줄 정리 실패', {
+                      description: err instanceof Error ? err.message : '알 수 없는 오류'
+                    });
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Calendar className="w-4 h-4 mr-2" />}
+                스케줄 정리 실행
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 위험 구역 - 데이터베이스 초기화 */}
       {user?.role === 'owner' && (
