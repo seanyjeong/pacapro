@@ -11,6 +11,7 @@ export default function NotificationSettingsPage() {
     naver_service_id: '',
     kakao_channel_id: '',
     template_code: '',
+    template_content: '',
     is_enabled: false,
     auto_send_day: 0,
   });
@@ -181,7 +182,7 @@ export default function NotificationSettingsPage() {
             />
           </div>
 
-          <div className="md:col-span-2">
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               템플릿 코드 (Naver에서 승인받은 코드)
             </label>
@@ -190,8 +191,27 @@ export default function NotificationSettingsPage() {
               value={settings.template_code}
               onChange={e => setSettings(prev => ({ ...prev, template_code: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="예: payment_reminder"
+              placeholder="예: A06"
             />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              템플릿 본문 (승인받은 템플릿 내용)
+            </label>
+            <textarea
+              value={settings.template_content}
+              onChange={e => setSettings(prev => ({ ...prev, template_content: e.target.value }))}
+              rows={6}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+              placeholder={`수강료안내
+#{이름} 학생의 수강료 납부일이,
+#{날짜} 일입니다
+계좌 하나은행 000-000000-00000 홍길동`}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              사용 가능한 변수: <code className="bg-gray-100 px-1 rounded">{'#{이름}'}</code>, <code className="bg-gray-100 px-1 rounded">{'#{날짜}'}</code>, <code className="bg-gray-100 px-1 rounded">{'#{금액}'}</code>, <code className="bg-gray-100 px-1 rounded">{'#{월}'}</code>
+            </p>
           </div>
         </div>
       </div>

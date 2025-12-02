@@ -10,6 +10,7 @@ export interface NotificationSettings {
   naver_service_id: string;
   kakao_channel_id: string;
   template_code: string;
+  template_content: string;  // 템플릿 본문 (변수: #{이름}, #{날짜}, #{금액} 등)
   is_enabled: boolean;
   auto_send_day: number;
   has_secret_key?: boolean;
