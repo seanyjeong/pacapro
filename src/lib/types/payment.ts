@@ -68,6 +68,7 @@ export interface PaymentFilters {
   payment_type?: 'monthly' | 'season' | 'material' | 'other';
   year?: number;
   month?: number;
+  search?: string;
 }
 
 // 학원비 통계

@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Download, AlertCircle, Banknote, Bell } from 'lucide-react';
+import { Plus, Download, AlertCircle, Banknote, Bell, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentList } from '@/components/payments/payment-list';
 import { usePayments } from '@/hooks/use-payments';
@@ -40,10 +40,14 @@ function PaymentsPageContent() {
   const canViewPayments = canView('payments');
   const viewOnly = canViewPayments && !canEditPayments; // view만 있고 edit 없는 경우
 
-  // view 권한만 있으면 미납 내역만 표시
-  const filteredPayments = viewOnly
-    ? payments.filter(p => p.payment_status !== 'paid')
-    : payments;
+  // view 권한만 있으면 미납 내역만 표시 + 검색어 필터링
+  const filteredPayments = payments.filter(p => {
+    // view 권한만 있으면 미납만
+    if (viewOnly && p.payment_status === 'paid') return false;
+    // 검색어 필터
+    if (filters.search && !p.student_name?.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    return true;
+  });
 
   const handlePaymentClick = (id: number) => {
     router.push(`/payments/${id}`);
@@ -269,7 +273,18 @@ function PaymentsPageContent() {
 
       <Card>
         <CardContent className="p-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="학생 이름 검색..."
+                value={filters.search || ''}
+                onChange={(e) => updateFilters({ search: e.target.value })}
+                className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-md text-sm w-48"
+              />
+            </div>
+
             <div>
               <label className="text-sm text-gray-600">납부 상태</label>
               <select
