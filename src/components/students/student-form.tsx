@@ -12,11 +12,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Loader2 } from 'lucide-react';
 import apiClient from '@/lib/api/client';
 import { seasonsApi } from '@/lib/api/seasons';
-import type { Student, StudentFormData, StudentType, Grade, AdmissionType, StudentStatus } from '@/lib/types/student';
+import type { Student, StudentFormData, StudentType, Grade, AdmissionType, StudentStatus, Gender } from '@/lib/types/student';
 import type { Season } from '@/lib/types/season';
 import { SEASON_TYPE_LABELS, formatSeasonFee } from '@/lib/types/season';
 import {
   STUDENT_TYPE_OPTIONS,
+  GENDER_OPTIONS,
   GRADE_OPTIONS,
   EXAM_ADMISSION_OPTIONS,
   ADULT_ADMISSION_OPTIONS,
@@ -80,6 +81,7 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
   const [formData, setFormData] = useState<StudentFormData>({
     student_number: initialData?.student_number || '',
     name: initialData?.name || '',
+    gender: initialData?.gender || undefined,
     student_type: (initialData?.student_type || 'exam') as StudentType,
     phone: initialData?.phone || '',
     parent_phone: initialData?.parent_phone || '',
@@ -311,6 +313,26 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
                 }`}
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+            </div>
+
+            {/* 성별 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">성별</label>
+              <div className="flex gap-4">
+                {GENDER_OPTIONS.map((option) => (
+                  <label key={option.value} className="flex items-center">
+                    <input
+                      type="radio"
+                      name="gender"
+                      value={option.value}
+                      checked={formData.gender === option.value}
+                      onChange={(e) => handleChange('gender', e.target.value as Gender)}
+                      className="mr-2 text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-gray-700">{option.label}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* 학번 */}

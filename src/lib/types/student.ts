@@ -17,6 +17,9 @@ export type AdmissionType = 'regular' | 'early' | 'civil_service';
 // 학생 상태 (status) - DB enum
 export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn';
 
+// 성별 (gender)
+export type Gender = 'male' | 'female';
+
 // ===== 학생 인터페이스 =====
 
 // 기본 학생 인터페이스 - DB 스키마 매칭
@@ -25,6 +28,7 @@ export interface Student {
   academy_id: number;
   student_number: string | null;
   name: string;
+  gender: Gender | null; // 성별
   student_type: StudentType; // 입시생/성인
   phone: string | null;
   parent_phone: string | null;
@@ -59,6 +63,7 @@ export interface Student {
 export interface StudentFormData {
   student_number?: string;
   name: string;
+  gender?: Gender;
   student_type: StudentType;
   phone: string;
   parent_phone?: string;
@@ -191,6 +196,11 @@ export const STATUS_LABELS: Record<StudentStatus, string> = {
   withdrawn: '퇴원',
 };
 
+export const GENDER_LABELS: Record<Gender, string> = {
+  male: '남',
+  female: '여',
+};
+
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   unpaid: '미납',
   partial: '부분납',
@@ -216,6 +226,12 @@ export const WEEKDAY_MAP: Record<number, string> = {
 export const STUDENT_TYPE_OPTIONS = [
   { value: 'exam' as StudentType, label: '입시생' },
   { value: 'adult' as StudentType, label: '성인' },
+];
+
+// 성별 옵션
+export const GENDER_OPTIONS = [
+  { value: 'male' as Gender, label: '남자' },
+  { value: 'female' as Gender, label: '여자' },
 ];
 
 // 학년 옵션 (입시생용)

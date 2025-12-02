@@ -21,6 +21,7 @@ import {
   ADMISSION_TYPE_LABELS,
   STATUS_LABELS,
   STUDENT_TYPE_LABELS,
+  GENDER_LABELS,
 } from '@/lib/types/student';
 
 interface StudentCardProps {
@@ -80,6 +81,13 @@ export function StudentCard({ student, onEdit, onDelete }: StudentCardProps) {
                   }`}>
                     {STUDENT_TYPE_LABELS[student.student_type]}
                   </span>
+                  {student.gender && (
+                    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full mr-2 ${
+                      student.gender === 'male' ? 'bg-sky-100 text-sky-800' : 'bg-pink-100 text-pink-800'
+                    }`}>
+                      {GENDER_LABELS[student.gender]}
+                    </span>
+                  )}
                   {getStudentDisplayInfo(student)} • {ADMISSION_TYPE_LABELS[student.admission_type]}
                 </p>
                 {student.school && <p>학교: {student.school}</p>}
