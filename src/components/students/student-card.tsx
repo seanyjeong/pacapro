@@ -5,7 +5,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Phone, Mail, MapPin, Calendar, Banknote } from 'lucide-react';
+import { Edit, Trash2, Phone, Mail, MapPin, Calendar, Banknote, GraduationCap } from 'lucide-react';
 import type { StudentDetail } from '@/lib/types/student';
 import {
   formatStudentNumber,
@@ -28,10 +28,12 @@ interface StudentCardProps {
   student: StudentDetail;
   onEdit: () => void;
   onDelete: () => void;
+  onGraduate?: () => void;
 }
 
-export function StudentCard({ student, onEdit, onDelete }: StudentCardProps) {
+export function StudentCard({ student, onEdit, onDelete, onGraduate }: StudentCardProps) {
   const discountedTuition = calculateDiscountedTuition(student.monthly_tuition, student.discount_rate);
+  const canGraduate = (student.grade === '고3' || student.grade === 'N수') && student.status === 'active';
 
   return (
     <Card>
@@ -52,6 +54,17 @@ export function StudentCard({ student, onEdit, onDelete }: StudentCardProps) {
               <Trash2 className="w-4 h-4 mr-1" />
               삭제
             </Button>
+            {canGraduate && onGraduate && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onGraduate}
+                className="text-purple-600 border-purple-600 hover:bg-purple-50"
+              >
+                <GraduationCap className="w-4 h-4 mr-1" />
+                졸업 처리
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>

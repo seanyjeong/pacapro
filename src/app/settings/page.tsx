@@ -698,91 +698,25 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* 학년 진급 관리 - owner only */}
+      {/* 학년 진급 안내 - owner only */}
       {user?.role === 'owner' && (
         <Card className="border-purple-300 bg-purple-50">
           <CardHeader>
             <div className="flex items-center gap-2">
               <GraduationCap className="w-5 h-5 text-purple-600" />
-              <CardTitle className="text-purple-700">학년 진급 관리</CardTitle>
+              <CardTitle className="text-purple-700">학년 자동 진급</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
             <div className="p-4 bg-purple-100 rounded-lg border border-purple-200">
-              <h4 className="font-bold text-purple-800 mb-2">신학기 진급 (3월)</h4>
-              <p className="text-sm text-purple-700 mb-2">
-                매년 3월 1일 자동으로 진급 처리됩니다. 수동으로 미리 실행할 수도 있습니다.
+              <p className="text-sm text-purple-700 mb-3">
+                매년 <strong>3월 1일 오전 1시</strong>에 자동으로 진급 처리됩니다.
               </p>
-              <ul className="text-xs text-purple-600 mb-4 space-y-1">
+              <ul className="text-xs text-purple-600 space-y-1">
                 <li>• 중1→중2→중3→고1→고2→고3→N수</li>
                 <li>• N수생은 유지됨</li>
-                <li>• 고3 졸업자는 별도로 &apos;졸업&apos; 처리 필요</li>
+                <li>• 졸업 처리: 학생 상세 페이지에서 개별 처리</li>
               </ul>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="border-purple-400 text-purple-700 hover:bg-purple-200"
-                  disabled={loading}
-                  onClick={async () => {
-                    try {
-                      setLoading(true);
-                      const result = await apiClient.post<{
-                        message: string;
-                        dry_run: boolean;
-                        promoted: number;
-                        graduated: number;
-                        summary: Record<string, number>;
-                      }>('/students/auto-promote', { dry_run: true });
-
-                      const summaryText = Object.entries(result.summary)
-                        .map(([k, v]) => `${k}: ${v}명`)
-                        .join('\n');
-
-                      alert(`진급 미리보기\n\n${result.message}\n\n${summaryText || '변경 사항 없음'}`);
-                    } catch (err) {
-                      toast.error('미리보기 실패', {
-                        description: err instanceof Error ? err.message : '알 수 없는 오류'
-                      });
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <GraduationCap className="w-4 h-4 mr-2" />}
-                  미리보기
-                </Button>
-                <Button
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                  disabled={loading}
-                  onClick={async () => {
-                    if (!confirm('모든 학생의 학년을 진급시키겠습니까?\n\n중1→중2→중3→고1→고2→고3→N수\n\n이 작업은 되돌릴 수 없습니다!')) {
-                      return;
-                    }
-                    try {
-                      setLoading(true);
-                      const result = await apiClient.post<{
-                        message: string;
-                        promoted: number;
-                        graduated: number;
-                        summary: Record<string, number>;
-                      }>('/students/auto-promote', { dry_run: false });
-
-                      toast.success('진급 완료', {
-                        description: result.message
-                      });
-                    } catch (err) {
-                      toast.error('진급 실패', {
-                        description: err instanceof Error ? err.message : '알 수 없는 오류'
-                      });
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                >
-                  {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <GraduationCap className="w-4 h-4 mr-2" />}
-                  진급 실행
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>

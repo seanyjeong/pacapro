@@ -46,6 +46,24 @@ export default function StudentDetailPage() {
     }
   };
 
+  // 졸업 처리
+  const handleGraduate = async () => {
+    if (!student) return;
+
+    if (!confirm(`"${student.name}" 학생을 졸업 처리하시겠습니까?\n\n졸업 처리 후:\n- 스케줄에서 제외됩니다\n- 3월 자동 진급에서 제외됩니다`)) {
+      return;
+    }
+
+    try {
+      await studentsAPI.updateStudent(studentId, { status: 'graduated' });
+      toast.success(`${student.name} 학생이 졸업 처리되었습니다.`);
+      reload();
+    } catch (err: any) {
+      console.error('Failed to graduate student:', err);
+      toast.error(err.response?.data?.message || '졸업 처리에 실패했습니다.');
+    }
+  };
+
   // 로딩 화면
   if (loading) {
     return (
@@ -104,7 +122,7 @@ export default function StudentDetailPage() {
       </div>
 
       {/* 학생 기본 정보 카드 */}
-      <StudentCard student={student} onEdit={handleEdit} onDelete={handleDelete} />
+      <StudentCard student={student} onEdit={handleEdit} onDelete={handleDelete} onGraduate={handleGraduate} />
 
       {/* 탭 메뉴 */}
       <div className="border-b border-gray-200">
