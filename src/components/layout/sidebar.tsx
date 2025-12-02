@@ -142,8 +142,8 @@ export function Sidebar() {
             {academyName && (
                 <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
                     <div className="flex items-center space-x-2">
-                        <Building2 className="w-4 h-4 text-primary-500 flex-shrink-0" />
-                        <span className="text-sm font-medium text-gray-700 truncate">{academyName}</span>
+                        <Building2 className="w-5 h-5 text-primary-500 flex-shrink-0" />
+                        <span className="text-base font-bold text-gray-800 truncate">{academyName}</span>
                     </div>
                 </div>
             )}

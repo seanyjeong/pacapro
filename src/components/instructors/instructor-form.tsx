@@ -42,6 +42,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
     name: initialData?.name || '',
     phone: initialData?.phone || '',
     email: initialData?.email || '',
+    resident_number: initialData?.resident_number || '',
     hire_date: initialData?.hire_date || new Date().toISOString().split('T')[0],
     salary_type: initialData?.salary_type || 'hourly',
     instructor_type: initialData?.instructor_type || 'teacher',
@@ -191,6 +192,19 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                 placeholder="instructor@example.com"
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
+            </div>
+
+            {/* 주민번호 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">주민번호</label>
+              <input
+                type="text"
+                value={formData.resident_number}
+                onChange={(e) => handleChange('resident_number', e.target.value)}
+                placeholder="000000-0000000"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">세무 신고용 (선택사항)</p>
             </div>
 
             {/* 입사일 */}
