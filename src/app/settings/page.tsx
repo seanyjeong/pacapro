@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, User, Building, Bell, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle, Loader2, ChevronRight, MessageSquare } from 'lucide-react';
+import { Save, User, Building, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle, Loader2, ChevronRight, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
@@ -98,11 +98,6 @@ export default function SettingsPage() {
     adult_tuition: { ...DEFAULT_TUITION },
     season_fees: { ...DEFAULT_SEASON_FEES },
   });
-  const [notificationSettings, setNotificationSettings] = useState({
-    payment_reminder: true,
-    attendance_alert: true,
-    performance_report: true,
-  });
   const [resetConfirmation, setResetConfirmation] = useState('');
   const [isResetting, setIsResetting] = useState(false);
 
@@ -164,18 +159,6 @@ export default function SettingsPage() {
         salary_month_type: academySettings.salary_month_type,
       });
       toast.success('학원 설정이 저장되었습니다.');
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || '설정 저장에 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSaveNotifications = async () => {
-    try {
-      setLoading(true);
-      await apiClient.put('/settings/notifications', notificationSettings);
-      toast.success('알림 설정이 저장되었습니다.');
     } catch (err: any) {
       toast.error(err.response?.data?.message || '설정 저장에 실패했습니다.');
     } finally {
@@ -671,86 +654,20 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      {/* 알림 설정 */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5" />
-            <CardTitle>알림 설정</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between py-3 border-b">
-            <div>
-              <h4 className="font-medium text-gray-900">납부 알림</h4>
-              <p className="text-sm text-gray-500">학원비 미납 시 알림을 받습니다</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={notificationSettings.payment_reminder}
-                onChange={(e) => setNotificationSettings({ ...notificationSettings, payment_reminder: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between py-3 border-b">
-            <div>
-              <h4 className="font-medium text-gray-900">출결 알림</h4>
-              <p className="text-sm text-gray-500">학생 결석 시 알림을 받습니다</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={notificationSettings.attendance_alert}
-                onChange={(e) => setNotificationSettings({ ...notificationSettings, attendance_alert: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between py-3 border-b">
-            <div>
-              <h4 className="font-medium text-gray-900">성적 리포트</h4>
-              <p className="text-sm text-gray-500">학생 성적 변동 시 알림을 받습니다</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={notificationSettings.performance_report}
-                onChange={(e) => setNotificationSettings({ ...notificationSettings, performance_report: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-            </label>
-          </div>
-
-          <div className="pt-4 border-t">
-            <Button onClick={handleSaveNotifications} disabled={loading}>
-              <Save className="w-4 h-4 mr-2" />
-              {loading ? '저장 중...' : '알림 설정 저장'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* 알림톡 설정 */}
-      <Card className="hover:shadow-md transition-shadow">
+      <Card className="border-yellow-300 bg-yellow-50 hover:shadow-md transition-shadow">
         <Link href="/settings/notifications">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-yellow-600" />
-                <CardTitle>알림톡 설정</CardTitle>
+                <CardTitle className="text-yellow-800">알림톡 설정</CardTitle>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400" />
+              <ChevronRight className="w-5 h-5 text-yellow-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-yellow-700">
               KakaoTalk 알림톡으로 미납 학원비 알림을 발송합니다. Naver Cloud SENS API 연동 설정을 관리할 수 있습니다.
             </p>
           </CardContent>

@@ -20,6 +20,7 @@ import {
     Award,
     UserCheck,
     Building2,
+    MessageSquare,
 } from 'lucide-react';
 import type { Permissions } from '@/lib/types/staff';
 import apiClient from '@/lib/api/client';
@@ -45,6 +46,7 @@ const navItems: NavItem[] = [
     { title: '수입', href: '/incomes', icon: TrendingUp, permissionKey: 'incomes' },
     { title: '성적기록 (추후)', href: '/performance', icon: Award },
     { title: '리포트', href: '/reports', icon: BarChart3, permissionKey: 'reports' },
+    { title: '문자 보내기', href: '/sms', icon: MessageSquare, permissionKey: 'settings' },
     { title: '직원관리', href: '/staff', icon: UserCheck, ownerOnly: true },
     { title: '설정', href: '/settings', icon: Settings, permissionKey: 'settings' },
 ];
