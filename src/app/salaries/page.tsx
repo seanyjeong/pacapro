@@ -18,47 +18,32 @@ import { toast } from 'sonner';
 
 /**
  * 급여일 기준으로 보여줄 급여 월을 계산
- * - 익월 정산(next): 11월 급여일에 10월분 급여 표시
- * - 당월 정산(current): 11월 급여일에 11월분 급여 표시
+ *
+ * 익월 정산(next): 이번 달 급여일에 전달 근무분을 지급
+ * - 12월 2일 (급여일 10일 전): 이번 달에 지급할 11월분 표시
+ * - 12월 15일 (급여일 10일 후): 이번 달에 지급한 11월분 표시
+ *
+ * 당월 정산(current): 이번 달 급여일에 당월 근무분을 지급
+ * - 12월 2일 (급여일 10일 전): 이번 달에 지급할 12월분 표시
+ * - 12월 15일 (급여일 10일 후): 이번 달에 지급한 12월분 표시
  */
 function calculateDefaultYearMonth(salaryPayDay: number, salaryMonthType: 'next' | 'current'): { year: number; month: number } {
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1; // 1-12
-  const currentDay = today.getDate();
 
   if (salaryMonthType === 'next') {
-    // 익월 정산: 급여일에는 전달 근무분을 정산
-    // 급여일 이전: 전전달 근무분 (ex: 11/5 이전 → 9월분)
-    // 급여일 이후: 전달 근무분 (ex: 11/10 이후 → 10월분)
-    if (currentDay < salaryPayDay) {
-      // 급여일 전 → 전전달
-      const targetMonth = currentMonth - 2;
-      if (targetMonth <= 0) {
-        return { year: currentYear - 1, month: targetMonth + 12 };
-      }
-      return { year: currentYear, month: targetMonth };
-    } else {
-      // 급여일 이후 → 전달
-      const targetMonth = currentMonth - 1;
-      if (targetMonth <= 0) {
-        return { year: currentYear - 1, month: 12 };
-      }
-      return { year: currentYear, month: targetMonth };
+    // 익월 정산: 이번 달 급여일에 전달 근무분 지급
+    // 12월 → 11월분 표시
+    const targetMonth = currentMonth - 1;
+    if (targetMonth <= 0) {
+      return { year: currentYear - 1, month: 12 };
     }
+    return { year: currentYear, month: targetMonth };
   } else {
-    // 당월 정산: 급여일에 당월분 정산
-    // 급여일 이전: 전달 근무분
-    // 급여일 이후: 당월 근무분
-    if (currentDay < salaryPayDay) {
-      const targetMonth = currentMonth - 1;
-      if (targetMonth <= 0) {
-        return { year: currentYear - 1, month: 12 };
-      }
-      return { year: currentYear, month: targetMonth };
-    } else {
-      return { year: currentYear, month: currentMonth };
-    }
+    // 당월 정산: 이번 달 급여일에 당월 근무분 지급
+    // 12월 → 12월분 표시
+    return { year: currentYear, month: currentMonth };
   }
 }
 
