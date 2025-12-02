@@ -197,7 +197,7 @@ export default function NotificationSettingsPage() {
 
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              템플릿 본문 (승인받은 템플릿 내용)
+              템플릿 본문 (승인받은 템플릿 내용 그대로 입력)
             </label>
             <textarea
               value={settings.template_content}
@@ -209,9 +209,59 @@ export default function NotificationSettingsPage() {
 #{날짜} 일입니다
 계좌 하나은행 000-000000-00000 홍길동`}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              사용 가능한 변수: <code className="bg-gray-100 px-1 rounded">{'#{이름}'}</code>, <code className="bg-gray-100 px-1 rounded">{'#{날짜}'}</code>, <code className="bg-gray-100 px-1 rounded">{'#{금액}'}</code>, <code className="bg-gray-100 px-1 rounded">{'#{월}'}</code>
-            </p>
+
+            {/* 사용 가능한 변수 목록 */}
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm font-medium text-blue-800 mb-2">사용 가능한 변수</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{이름}'}</code>
+                  <span className="text-gray-600">학생 이름</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{날짜}'}</code>
+                  <span className="text-gray-600">납부기한</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{금액}'}</code>
+                  <span className="text-gray-600">학원비</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{월}'}</code>
+                  <span className="text-gray-600">청구 월</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{학원명}'}</code>
+                  <span className="text-gray-600">학원 이름</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{학원전화}'}</code>
+                  <span className="text-gray-600">학원 전화</span>
+                </div>
+              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                * Naver에 템플릿 등록 시 위 변수명을 그대로 사용해주세요
+              </p>
+            </div>
+
+            {/* 미리보기 */}
+            {settings.template_content && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+                <p className="text-sm font-medium text-gray-700 mb-2">미리보기 (예시)</p>
+                <div className="p-3 bg-yellow-50 rounded border border-yellow-200 text-sm whitespace-pre-wrap">
+                  {settings.template_content
+                    .replace(/#{이름}/g, '홍길동')
+                    .replace(/#{학생명}/g, '홍길동')
+                    .replace(/#{날짜}/g, '12월 10일')
+                    .replace(/#{납부기한}/g, '12월 10일')
+                    .replace(/#{금액}/g, '300,000')
+                    .replace(/#{월}/g, '12')
+                    .replace(/#{학원명}/g, '파파체대')
+                    .replace(/#{학원전화}/g, '02-1234-5678')
+                  }
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
