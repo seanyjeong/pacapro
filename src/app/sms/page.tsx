@@ -1,20 +1,40 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { MessageSquare, Send, Users, User, UserCheck, Phone, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { MessageSquare, Send, Users, User, Phone, CheckCircle, XCircle, Clock, AlertCircle, Search, X } from 'lucide-react';
 import { smsAPI } from '@/lib/api/sms';
+import apiClient from '@/lib/api/client';
 import { toast } from 'sonner';
+import { debounce } from 'lodash';
 
-type Target = 'all' | 'students' | 'parents' | 'custom';
+type SendMode = 'all' | 'individual' | 'custom';
+type RecipientType = 'student' | 'parent';
+
+interface Student {
+  id: number;
+  name: string;
+  phone: string | null;
+  parent_phone: string | null;
+}
 
 export default function SMSPage() {
-  const [target, setTarget] = useState<Target>('all');
+  // 발송 모드: 모두 / 개별 / 직접입력
+  const [sendMode, setSendMode] = useState<SendMode>('all');
+  // 수신자 타입: 학생 / 학부모
+  const [recipientType, setRecipientType] = useState<RecipientType>('parent');
+
   const [content, setContent] = useState('');
   const [customPhones, setCustomPhones] = useState('');
   const [sending, setSending] = useState(false);
   const [recipientsCount, setRecipientsCount] = useState({ all: 0, students: 0, parents: 0 });
   const [logs, setLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+
+  // 개별 선택 관련
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Student[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   useEffect(() => {
     loadRecipientsCount();
@@ -42,20 +62,75 @@ export default function SMSPage() {
     }
   };
 
+  // 학생 검색 (디바운스)
+  const searchStudents = useCallback(
+    debounce(async (query: string) => {
+      if (!query.trim()) {
+        setSearchResults([]);
+        return;
+      }
+      setSearching(true);
+      try {
+        const response = await apiClient.get<{ students: Student[] }>('/students', {
+          params: { search: query, limit: 10, status: 'active' }
+        });
+        setSearchResults(response.students || []);
+      } catch (error) {
+        console.error('학생 검색 실패:', error);
+        setSearchResults([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 300),
+    []
+  );
+
+  useEffect(() => {
+    searchStudents(searchQuery);
+  }, [searchQuery, searchStudents]);
+
   const handleSend = async () => {
     if (!content.trim()) {
       toast.error('문자 내용을 입력해주세요.');
       return;
     }
 
-    if (target === 'custom' && !customPhones.trim()) {
-      toast.error('전화번호를 입력해주세요.');
-      return;
+    // 직접입력 모드에서 전화번호 검증
+    if (sendMode === 'custom') {
+      if (!customPhones.trim()) {
+        toast.error('전화번호를 입력해주세요.');
+        return;
+      }
+      const phones = customPhones.split(/[\n,]/).filter(p => p.trim());
+      const invalidPhones = phones.filter(p => !/^\d{3}-\d{3,4}-\d{4}$/.test(p.trim()));
+      if (invalidPhones.length > 0) {
+        toast.error('전화번호는 하이픈(-)을 포함한 형식으로 입력해주세요.\n예: 010-1234-5678');
+        return;
+      }
     }
 
-    const recipientCount = target === 'custom'
-      ? customPhones.split(/[\n,]/).filter(p => p.trim()).length
-      : recipientsCount[target];
+    // 개별 모드에서 학생 선택 검증
+    if (sendMode === 'individual') {
+      if (!selectedStudent) {
+        toast.error('학생을 선택해주세요.');
+        return;
+      }
+      const targetPhone = recipientType === 'student' ? selectedStudent.phone : selectedStudent.parent_phone;
+      if (!targetPhone) {
+        toast.error(`${recipientType === 'student' ? '학생' : '학부모'} 전화번호가 등록되어 있지 않습니다.`);
+        return;
+      }
+    }
+
+    // 수신자 수 계산
+    let recipientCount = 0;
+    if (sendMode === 'custom') {
+      recipientCount = customPhones.split(/[\n,]/).filter(p => p.trim()).length;
+    } else if (sendMode === 'individual') {
+      recipientCount = 1;
+    } else {
+      recipientCount = recipientType === 'student' ? recipientsCount.students : recipientsCount.parents;
+    }
 
     if (recipientCount === 0) {
       toast.error('발송할 수신자가 없습니다.');
@@ -68,15 +143,31 @@ export default function SMSPage() {
 
     setSending(true);
     try {
-      const phones = target === 'custom'
-        ? customPhones.split(/[\n,]/).map(p => p.trim()).filter(Boolean)
-        : undefined;
+      let result;
 
-      const result = await smsAPI.send({
-        target,
-        content,
-        customPhones: phones,
-      });
+      if (sendMode === 'custom') {
+        // 직접입력
+        const phones = customPhones.split(/[\n,]/).map(p => p.trim()).filter(Boolean);
+        result = await smsAPI.send({
+          target: 'custom',
+          content,
+          customPhones: phones,
+        });
+      } else if (sendMode === 'individual') {
+        // 개별 발송
+        const targetPhone = recipientType === 'student' ? selectedStudent!.phone : selectedStudent!.parent_phone;
+        result = await smsAPI.send({
+          target: 'custom',
+          content,
+          customPhones: [targetPhone!],
+        });
+      } else {
+        // 모두 (학생 또는 학부모)
+        result = await smsAPI.send({
+          target: recipientType === 'student' ? 'students' : 'parents',
+          content,
+        });
+      }
 
       toast.success(result.message);
       loadLogs();
@@ -100,8 +191,16 @@ export default function SMSPage() {
   };
 
   // 글자 수 (byte) 계산
-  const contentBytes = Buffer.from(content, 'utf8').length;
+  const contentBytes = new TextEncoder().encode(content).length;
   const isLMS = contentBytes > 80;
+
+  // 모드 변경 시 초기화
+  const handleModeChange = (mode: SendMode) => {
+    setSendMode(mode);
+    setSelectedStudent(null);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -117,73 +216,176 @@ export default function SMSPage() {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h2 className="text-lg font-semibold mb-4">문자 작성</h2>
 
-        {/* 수신 대상 선택 */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">수신 대상</label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* STEP 1: 발송 대상 선택 */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">1. 발송 대상</label>
+          <div className="grid grid-cols-3 gap-3">
             <button
               type="button"
-              onClick={() => setTarget('all')}
+              onClick={() => handleModeChange('all')}
               className={`p-4 rounded-lg border-2 transition-all ${
-                target === 'all'
+                sendMode === 'all'
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <Users className={`w-6 h-6 mx-auto mb-2 ${target === 'all' ? 'text-green-600' : 'text-gray-400'}`} />
+              <Users className={`w-6 h-6 mx-auto mb-2 ${sendMode === 'all' ? 'text-green-600' : 'text-gray-400'}`} />
               <div className="text-sm font-medium">모두</div>
-              <div className="text-xs text-gray-500">{recipientsCount.all}명</div>
+              <div className="text-xs text-gray-500">전체 발송</div>
             </button>
 
             <button
               type="button"
-              onClick={() => setTarget('students')}
+              onClick={() => handleModeChange('individual')}
               className={`p-4 rounded-lg border-2 transition-all ${
-                target === 'students'
+                sendMode === 'individual'
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <User className={`w-6 h-6 mx-auto mb-2 ${target === 'students' ? 'text-blue-600' : 'text-gray-400'}`} />
-              <div className="text-sm font-medium">학생에게</div>
-              <div className="text-xs text-gray-500">{recipientsCount.students}명</div>
+              <User className={`w-6 h-6 mx-auto mb-2 ${sendMode === 'individual' ? 'text-blue-600' : 'text-gray-400'}`} />
+              <div className="text-sm font-medium">개별</div>
+              <div className="text-xs text-gray-500">학생 선택</div>
             </button>
 
             <button
               type="button"
-              onClick={() => setTarget('parents')}
+              onClick={() => handleModeChange('custom')}
               className={`p-4 rounded-lg border-2 transition-all ${
-                target === 'parents'
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <UserCheck className={`w-6 h-6 mx-auto mb-2 ${target === 'parents' ? 'text-purple-600' : 'text-gray-400'}`} />
-              <div className="text-sm font-medium">학부모에게</div>
-              <div className="text-xs text-gray-500">{recipientsCount.parents}명</div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setTarget('custom')}
-              className={`p-4 rounded-lg border-2 transition-all ${
-                target === 'custom'
+                sendMode === 'custom'
                   ? 'border-orange-500 bg-orange-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <Phone className={`w-6 h-6 mx-auto mb-2 ${target === 'custom' ? 'text-orange-600' : 'text-gray-400'}`} />
+              <Phone className={`w-6 h-6 mx-auto mb-2 ${sendMode === 'custom' ? 'text-orange-600' : 'text-gray-400'}`} />
               <div className="text-sm font-medium">직접 입력</div>
               <div className="text-xs text-gray-500">번호 직접 입력</div>
             </button>
           </div>
         </div>
 
+        {/* STEP 2: 개별 선택 시 학생 검색 */}
+        {sendMode === 'individual' && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">2. 학생 선택</label>
+
+            {/* 선택된 학생 */}
+            {selectedStudent ? (
+              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
+                <div>
+                  <span className="font-medium text-blue-900">{selectedStudent.name}</span>
+                  <div className="text-xs text-blue-600 mt-1">
+                    학생: {selectedStudent.phone || '미등록'} / 학부모: {selectedStudent.parent_phone || '미등록'}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedStudent(null)}
+                  className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* 검색 입력 */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="학생 이름으로 검색..."
+                  />
+                </div>
+
+                {/* 검색 결과 */}
+                {searchQuery && (
+                  <div className="mt-2 border rounded-lg max-h-48 overflow-y-auto">
+                    {searching ? (
+                      <div className="p-3 text-center text-gray-500">검색 중...</div>
+                    ) : searchResults.length === 0 ? (
+                      <div className="p-3 text-center text-gray-500">검색 결과가 없습니다</div>
+                    ) : (
+                      searchResults.map(student => (
+                        <button
+                          key={student.id}
+                          onClick={() => {
+                            setSelectedStudent(student);
+                            setSearchQuery('');
+                            setSearchResults([]);
+                          }}
+                          className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-0"
+                        >
+                          <div className="font-medium">{student.name}</div>
+                          <div className="text-xs text-gray-500">
+                            학생: {student.phone || '미등록'} / 학부모: {student.parent_phone || '미등록'}
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* STEP 2/3: 수신자 타입 (모두/개별 선택 시) */}
+        {(sendMode === 'all' || (sendMode === 'individual' && selectedStudent)) && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {sendMode === 'all' ? '2' : '3'}. 수신자 선택
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setRecipientType('student')}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  recipientType === 'student'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="text-sm font-medium">학생에게</div>
+                {sendMode === 'all' && (
+                  <div className="text-xs text-gray-500">{recipientsCount.students}명</div>
+                )}
+                {sendMode === 'individual' && selectedStudent && (
+                  <div className="text-xs text-gray-500">
+                    {selectedStudent.phone || '전화번호 미등록'}
+                  </div>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setRecipientType('parent')}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  recipientType === 'parent'
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="text-sm font-medium">학부모에게</div>
+                {sendMode === 'all' && (
+                  <div className="text-xs text-gray-500">{recipientsCount.parents}명</div>
+                )}
+                {sendMode === 'individual' && selectedStudent && (
+                  <div className="text-xs text-gray-500">
+                    {selectedStudent.parent_phone || '전화번호 미등록'}
+                  </div>
+                )}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 직접 입력 시 전화번호 입력 */}
-        {target === 'custom' && (
-          <div className="mb-4">
+        {sendMode === 'custom' && (
+          <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              전화번호 입력 (쉼표 또는 줄바꿈으로 구분)
+              2. 전화번호 입력 (쉼표 또는 줄바꿈으로 구분)
             </label>
             <textarea
               value={customPhones}
@@ -192,20 +394,23 @@ export default function SMSPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               placeholder="010-1234-5678, 010-9876-5432&#10;또는 줄바꿈으로 구분"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              * 전화번호는 하이픈(-)을 포함하여 입력해주세요 (예: 010-1234-5678)
+            </p>
           </div>
         )}
 
         {/* 문자 내용 */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            문자 내용
+            {sendMode === 'custom' ? '3' : sendMode === 'individual' && selectedStudent ? '4' : '3'}. 문자 내용
           </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={5}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-            placeholder="안녕하세요, 파파체대입니다.&#10;&#10;내용을 입력해주세요..."
+            placeholder="안녕하세요, OO학원입니다.&#10;&#10;내용을 입력해주세요..."
           />
           <div className="flex justify-between items-center mt-2">
             <div className="flex items-center gap-2">

@@ -21,6 +21,7 @@ export interface Permissions {
   seasons?: PagePermission;
   settings?: PagePermission;
   staff?: PagePermission;
+  sms?: PagePermission;  // 문자 보내기
   // 대시보드 세부 권한
   dashboard_finance?: PagePermission;  // 수입, 지출, 순수익
   dashboard_unpaid?: PagePermission;   // 미수금 현황
@@ -90,6 +91,7 @@ export const DEFAULT_PERMISSIONS: Permissions = {
   seasons: { view: false, edit: false },
   settings: { view: false, edit: false },
   staff: { view: false, edit: false },
+  sms: { view: false, edit: false },
   dashboard_finance: { view: false, edit: false },
   dashboard_unpaid: { view: false, edit: false },
   overtime_approval: { view: false, edit: false },
@@ -109,6 +111,7 @@ export const PERMISSION_PAGES: PermissionPage[] = [
   { key: 'expenses', label: '지출 관리', description: '지출 기록' },
   { key: 'incomes', label: '기타수입', description: '기타 수입 기록' },
   { key: 'seasons', label: '시즌 관리', description: '수시/정시 시즌' },
+  { key: 'sms', label: '문자 보내기', description: 'SMS 발송' },
   { key: 'settings', label: '설정', description: '학원 설정' },
   { key: 'staff', label: '직원 관리', description: '관리자 추가/권한 설정' },
 ];

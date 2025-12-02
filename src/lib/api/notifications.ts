@@ -7,7 +7,8 @@ import apiClient from './client';
 export interface NotificationSettings {
   naver_access_key: string;
   naver_secret_key: string;
-  naver_service_id: string;
+  naver_service_id: string;  // 알림톡용 Service ID
+  sms_service_id: string;    // SMS용 Service ID
   kakao_channel_id: string;
   template_code: string;
   template_content: string;  // 템플릿 본문 (변수: #{이름}, #{날짜}, #{금액} 등)

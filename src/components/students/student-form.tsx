@@ -225,6 +225,26 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
     }));
   };
 
+  // 전화번호 자동 포맷팅 (하이픈 추가)
+  const formatPhoneNumber = (value: string): string => {
+    // 숫자만 추출
+    const numbers = value.replace(/[^0-9]/g, '');
+
+    // 형식에 맞게 하이픈 추가
+    if (numbers.length <= 3) {
+      return numbers;
+    } else if (numbers.length <= 7) {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+    } else {
+      return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+    }
+  };
+
+  // 전화번호 유효성 검사 (하이픈 포함 형식)
+  const isValidPhoneNumber = (phone: string): boolean => {
+    return /^\d{3}-\d{3,4}-\d{4}$/.test(phone);
+  };
+
   // 유효성 검사
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -235,6 +255,13 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
 
     if (!formData.phone?.trim()) {
       newErrors.phone = '전화번호를 입력해주세요.';
+    } else if (!isValidPhoneNumber(formData.phone)) {
+      newErrors.phone = '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)';
+    }
+
+    // 학부모 전화번호 검증 (입력된 경우만)
+    if (formData.parent_phone?.trim() && !isValidPhoneNumber(formData.parent_phone)) {
+      newErrors.parent_phone = '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)';
     }
 
     if (formData.student_type === 'exam') {
@@ -357,12 +384,14 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
+                onChange={(e) => handleChange('phone', formatPhoneNumber(e.target.value))}
                 placeholder="010-1234-5678"
+                maxLength={13}
                 className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                   errors.phone ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
+              <p className="text-xs text-gray-500 mt-1">하이픈(-) 포함 형식으로 입력하세요</p>
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
 
@@ -373,10 +402,15 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
                 <input
                   type="tel"
                   value={formData.parent_phone || ''}
-                  onChange={(e) => handleChange('parent_phone', e.target.value)}
+                  onChange={(e) => handleChange('parent_phone', formatPhoneNumber(e.target.value))}
                   placeholder="010-9876-5432"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  maxLength={13}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.parent_phone ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                <p className="text-xs text-gray-500 mt-1">하이픈(-) 포함 형식으로 입력하세요</p>
+                {errors.parent_phone && <p className="text-red-500 text-sm mt-1">{errors.parent_phone}</p>}
               </div>
             )}
 

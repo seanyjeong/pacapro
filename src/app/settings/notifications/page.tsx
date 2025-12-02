@@ -9,6 +9,7 @@ export default function NotificationSettingsPage() {
     naver_access_key: '',
     naver_secret_key: '',
     naver_service_id: '',
+    sms_service_id: '',
     kakao_channel_id: '',
     template_code: '',
     template_content: '',
@@ -128,8 +129,8 @@ export default function NotificationSettingsPage() {
       <div className="flex items-center gap-3 mb-6">
         <Bell className="w-8 h-8 text-blue-600" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">알림톡 설정</h1>
-          <p className="text-gray-500">KakaoTalk 알림톡으로 미납 학원비 알림을 발송합니다</p>
+          <h1 className="text-2xl font-bold text-gray-900">알림톡 및 SMS 설정</h1>
+          <p className="text-gray-500">KakaoTalk 알림톡과 SMS 발송을 위한 Naver Cloud SENS 설정</p>
         </div>
       </div>
 
@@ -175,15 +176,30 @@ export default function NotificationSettingsPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              SENS Service ID
+              알림톡 Service ID
             </label>
             <input
               type="text"
               value={settings.naver_service_id}
               onChange={e => setSettings(prev => ({ ...prev, naver_service_id: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="ncp:kkobizmsg:kr:..."
+            />
+            <p className="text-xs text-gray-500 mt-1">알림톡 전용 (SENS &gt; 알림톡 &gt; 프로젝트)</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              SMS Service ID
+            </label>
+            <input
+              type="text"
+              value={settings.sms_service_id}
+              onChange={e => setSettings(prev => ({ ...prev, sms_service_id: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="ncp:sms:kr:..."
             />
+            <p className="text-xs text-gray-500 mt-1">SMS 전용 (SENS &gt; SMS &gt; 프로젝트)</p>
           </div>
 
           <div>

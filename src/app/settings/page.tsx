@@ -654,21 +654,21 @@ export default function SettingsPage() {
         </Button>
       </div>
 
-      {/* 알림톡 설정 */}
+      {/* 알림톡 및 SMS 설정 */}
       <Card className="border-yellow-300 bg-yellow-50 hover:shadow-md transition-shadow">
         <Link href="/settings/notifications">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-yellow-600" />
-                <CardTitle className="text-yellow-800">알림톡 설정</CardTitle>
+                <CardTitle className="text-yellow-800">알림톡 및 SMS 설정</CardTitle>
               </div>
               <ChevronRight className="w-5 h-5 text-yellow-600" />
             </div>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-yellow-700">
-              KakaoTalk 알림톡으로 미납 학원비 알림을 발송합니다. Naver Cloud SENS API 연동 설정을 관리할 수 있습니다.
+              KakaoTalk 알림톡과 SMS 발송을 위한 Naver Cloud SENS API 설정을 관리합니다.
             </p>
           </CardContent>
         </Link>
