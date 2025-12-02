@@ -19,8 +19,10 @@ import {
     Shield,
     Award,
     UserCheck,
+    Building2,
 } from 'lucide-react';
 import type { Permissions } from '@/lib/types/staff';
+import apiClient from '@/lib/api/client';
 
 interface NavItem {
     title: string;
@@ -60,6 +62,7 @@ export function Sidebar() {
     const pathname = usePathname();
     const [mounted, setMounted] = useState(false);
     const [user, setUser] = useState<UserState | null>(null);
+    const [academyName, setAcademyName] = useState<string>('');
 
     // 클라이언트에서만 사용자 정보 로드 (hydration 문제 방지)
     useEffect(() => {
@@ -76,7 +79,21 @@ export function Sidebar() {
             }
         }
         setMounted(true);
+
+        // 학원명 로드
+        loadAcademyName();
     }, []);
+
+    const loadAcademyName = async () => {
+        try {
+            const response = await apiClient.get<{ settings: { academy_name?: string } }>('/settings/academy');
+            if (response.settings?.academy_name) {
+                setAcademyName(response.settings.academy_name);
+            }
+        } catch (err) {
+            // 로그인 안된 상태에서는 에러 무시
+        }
+    };
 
     const isAdmin = user?.role === 'admin';
     const isOwner = user?.role === 'owner';
@@ -120,6 +137,16 @@ export function Sidebar() {
                     <span className="text-xl font-bold text-gray-900">P-ACA</span>
                 </Link>
             </div>
+
+            {/* Academy Name */}
+            {academyName && (
+                <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                    <div className="flex items-center space-x-2">
+                        <Building2 className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                        <span className="text-sm font-medium text-gray-700 truncate">{academyName}</span>
+                    </div>
+                </div>
+            )}
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto py-4 px-3">
