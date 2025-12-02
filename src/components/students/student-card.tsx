@@ -5,7 +5,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Phone, Mail, MapPin, Calendar, Banknote, GraduationCap } from 'lucide-react';
+import { Edit, Trash2, Phone, Mail, MapPin, Calendar, Banknote, GraduationCap, UserMinus } from 'lucide-react';
 import type { StudentDetail } from '@/lib/types/student';
 import {
   formatStudentNumber,
@@ -29,11 +29,13 @@ interface StudentCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onGraduate?: () => void;
+  onWithdraw?: () => void;
 }
 
-export function StudentCard({ student, onEdit, onDelete, onGraduate }: StudentCardProps) {
+export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw }: StudentCardProps) {
   const discountedTuition = calculateDiscountedTuition(student.monthly_tuition, student.discount_rate);
   const canGraduate = (student.grade === '고3' || student.grade === 'N수') && student.status === 'active';
+  const canWithdraw = student.status === 'active' || student.status === 'paused';
 
   return (
     <Card>
@@ -63,6 +65,17 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate }: StudentCa
               >
                 <GraduationCap className="w-4 h-4 mr-1" />
                 졸업 처리
+              </Button>
+            )}
+            {canWithdraw && onWithdraw && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onWithdraw}
+                className="text-orange-600 border-orange-600 hover:bg-orange-50"
+              >
+                <UserMinus className="w-4 h-4 mr-1" />
+                퇴원 처리
               </Button>
             )}
           </div>

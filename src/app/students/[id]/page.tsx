@@ -64,6 +64,27 @@ export default function StudentDetailPage() {
     }
   };
 
+  // 퇴원 처리
+  const handleWithdraw = async () => {
+    if (!student) return;
+
+    const reason = prompt(`"${student.name}" 학생의 퇴원 사유를 입력해주세요.\n(선택사항, 빈칸 가능)`);
+    if (reason === null) return; // 취소
+
+    if (!confirm(`"${student.name}" 학생을 퇴원 처리하시겠습니까?\n\n퇴원 처리 후:\n- 스케줄에서 제외됩니다\n- 목록에서 '퇴원' 상태로 표시됩니다`)) {
+      return;
+    }
+
+    try {
+      await studentsAPI.withdrawStudent(studentId, reason || undefined);
+      toast.success(`${student.name} 학생이 퇴원 처리되었습니다.`);
+      reload();
+    } catch (err: any) {
+      console.error('Failed to withdraw student:', err);
+      toast.error(err.response?.data?.message || '퇴원 처리에 실패했습니다.');
+    }
+  };
+
   // 로딩 화면
   if (loading) {
     return (
@@ -122,7 +143,7 @@ export default function StudentDetailPage() {
       </div>
 
       {/* 학생 기본 정보 카드 */}
-      <StudentCard student={student} onEdit={handleEdit} onDelete={handleDelete} onGraduate={handleGraduate} />
+      <StudentCard student={student} onEdit={handleEdit} onDelete={handleDelete} onGraduate={handleGraduate} onWithdraw={handleWithdraw} />
 
       {/* 탭 메뉴 */}
       <div className="border-b border-gray-200">

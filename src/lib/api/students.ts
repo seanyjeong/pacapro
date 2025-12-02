@@ -78,6 +78,26 @@ export const studentsAPI = {
   },
 
   /**
+   * 퇴원 처리
+   * POST /paca/students/:id/withdraw
+   */
+  withdrawStudent: async (id: number, reason?: string, withdrawalDate?: string): Promise<{
+    message: string;
+    student: {
+      id: number;
+      name: string;
+      status: string;
+      withdrawal_date: string;
+      withdrawal_reason: string | null;
+    };
+  }> => {
+    return await apiClient.post(`/students/${id}/withdraw`, {
+      reason,
+      withdrawal_date: withdrawalDate
+    });
+  },
+
+  /**
    * 학년 자동 진급
    * POST /paca/students/auto-promote
    * @param dryRun - true면 미리보기만
