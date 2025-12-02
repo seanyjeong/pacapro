@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, User, Building, Bell, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle, Loader2 } from 'lucide-react';
+import { Save, User, Building, Bell, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle, Loader2, ChevronRight, MessageSquare } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 
@@ -734,6 +735,26 @@ export default function SettingsPage() {
             </Button>
           </div>
         </CardContent>
+      </Card>
+
+      {/* 알림톡 설정 */}
+      <Card className="hover:shadow-md transition-shadow">
+        <Link href="/settings/notifications">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-5 h-5 text-yellow-600" />
+                <CardTitle>알림톡 설정</CardTitle>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600">
+              KakaoTalk 알림톡으로 미납 학원비 알림을 발송합니다. Naver Cloud SENS API 연동 설정을 관리할 수 있습니다.
+            </p>
+          </CardContent>
+        </Link>
       </Card>
 
       {/* 시스템 정보 */}
