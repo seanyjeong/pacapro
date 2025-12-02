@@ -25,6 +25,28 @@ P-ACA(Papa Academy)는 체대입시 학원관리시스템입니다.
 - **자동 배포**: supermax 레포 `master` 브랜치에 push하면 n8n이 자동으로 배포
 - **n8n URL**: https://n8n.sean8320.dedyn.io/
 
+## n8n 워크플로우
+
+### 1. GitHub 자동 배포
+- **트리거**: GitHub webhook (supermax 레포 push)
+- **동작**: 서버 SSH 접속 → git pull → systemctl restart paca
+- **소요시간**: 약 3초
+
+### 2. Google Sheets 동기화 (P-ACA 학생 동기화)
+- **트리거**: 매일 아침 9시 (Asia/Seoul)
+- **대상**: academy_id = 2 (P-ACA)
+- **동기화 내용**:
+  - **학생명단** 시트: No, 이름, 학년, 상태, 학생전화, 학부모전화, 등록일
+  - **월별수납** 시트: No, 이름, 학년, 년월, 수강료, 납부상태, 납부일
+- **Google Sheet ID**: `1O9wjLbA969k7YZ1eHVnE2iahXWCt5_d3biWXJhW4A34`
+- **인증**: N8N API Key (`X-API-Key: paca-n8n-api-key-2024`)
+
+### N8N API Key 인증
+백엔드에서 n8n 서비스 계정용 API Key 인증 지원:
+- 헤더: `X-API-Key: paca-n8n-api-key-2024`
+- JWT 없이 API 호출 가능
+- `middleware/auth.js`에서 처리
+
 ### DB 백업
 - **위치**: `/home/sean/backups/paca/`
 - **주기**: 매주 일요일 새벽 3시 (한국시간)
@@ -75,6 +97,8 @@ sudo journalctl -u paca -f     # 로그 확인
 - 퇴원 처리 (퇴원 사유 저장, 스케줄 제거)
 - 졸업 처리 (고3/N수 학생)
 - 삭제 (Hard Delete, owner만 가능)
+- 중복 등록 방지 (이름+전화번호 동일 시 차단)
+- 동명이인 경고 (이름만 같으면 확인 다이얼로그 후 등록 가능)
 
 ### 학년 자동 진급
 - 매년 3월 1일 오전 1시(한국시간) 자동 실행
@@ -246,8 +270,9 @@ new Date(2025, 12, 1)  // 2026년 1월 1일 (주의!)
 
 ## 버전 이력
 
-### 현재 버전: v1.3.0 (2025-12-02)
+### 현재 버전: v1.3.1 (2025-12-02)
 
+- **v1.3.1** (2025-12-02): n8n Google Sheets 동기화, 중복등록 방지, 동명이인 경고
 - **v1.3.0** (2025-12-02): 알림톡/SMS/MMS 기능, 학년 자동 진급, 퇴원/졸업 처리, DB 백업
 - **v1.2.2** (2025-12-01): 휴원 복귀 시 일할계산 학원비 자동 생성
 - **v1.2.0** (2025-12-01): 휴식 기간 관리, 학원비 이월/환불 처리
