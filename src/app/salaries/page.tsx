@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle, Banknote, RefreshCw, FileSpreadsheet, FileDown } from 'lucide-react';
+import { AlertCircle, Banknote, RefreshCw, FileSpreadsheet, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SalaryList } from '@/components/salaries/salary-list';
 import { useSalaries } from '@/hooks/use-salaries';
 import { instructorsAPI } from '@/lib/api/instructors';
@@ -16,17 +16,98 @@ import { calculateTotalPaid, calculateTotalUnpaid } from '@/lib/utils/salary-hel
 // PDF 유틸리티는 동적 import로 필요할 때만 로드
 import { toast } from 'sonner';
 
+/**
+ * 급여일 기준으로 보여줄 급여 월을 계산
+ * - 익월 정산(next): 11월 급여일에 10월분 급여 표시
+ * - 당월 정산(current): 11월 급여일에 11월분 급여 표시
+ */
+function calculateDefaultYearMonth(salaryPayDay: number, salaryMonthType: 'next' | 'current'): { year: number; month: number } {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1; // 1-12
+  const currentDay = today.getDate();
+
+  if (salaryMonthType === 'next') {
+    // 익월 정산: 급여일에는 전달 근무분을 정산
+    // 급여일 이전: 전전달 근무분 (ex: 11/5 이전 → 9월분)
+    // 급여일 이후: 전달 근무분 (ex: 11/10 이후 → 10월분)
+    if (currentDay < salaryPayDay) {
+      // 급여일 전 → 전전달
+      const targetMonth = currentMonth - 2;
+      if (targetMonth <= 0) {
+        return { year: currentYear - 1, month: targetMonth + 12 };
+      }
+      return { year: currentYear, month: targetMonth };
+    } else {
+      // 급여일 이후 → 전달
+      const targetMonth = currentMonth - 1;
+      if (targetMonth <= 0) {
+        return { year: currentYear - 1, month: 12 };
+      }
+      return { year: currentYear, month: targetMonth };
+    }
+  } else {
+    // 당월 정산: 급여일에 당월분 정산
+    // 급여일 이전: 전달 근무분
+    // 급여일 이후: 당월 근무분
+    if (currentDay < salaryPayDay) {
+      const targetMonth = currentMonth - 1;
+      if (targetMonth <= 0) {
+        return { year: currentYear - 1, month: 12 };
+      }
+      return { year: currentYear, month: targetMonth };
+    } else {
+      return { year: currentYear, month: currentMonth };
+    }
+  }
+}
+
 export default function SalariesPage() {
   const router = useRouter();
-  const { salaries, loading, error, filters, updateFilters, resetFilters, reload } = useSalaries();
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [salaryPayDay, setSalaryPayDay] = useState(10);
+  const [salaryMonthType, setSalaryMonthType] = useState<'next' | 'current'>('next');
+
+  // 초기 필터는 설정 로드 후 계산
+  const initialFilters = useMemo(() => {
+    if (!settingsLoaded) return {};
+    const { year, month } = calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
+    return { year, month };
+  }, [settingsLoaded, salaryPayDay, salaryMonthType]);
+
+  const { salaries, loading, error, filters, updateFilters, resetFilters, reload, setFilters } = useSalaries();
   const [instructors, setInstructors] = useState<any[]>([]);
   const [exporting, setExporting] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
 
+  // 설정 로드 및 초기 필터 설정
   useEffect(() => {
+    loadSettings();
     loadInstructors();
   }, []);
+
+  // 설정 로드 후 초기 필터 적용
+  useEffect(() => {
+    if (settingsLoaded && !filters.year && !filters.month) {
+      const { year, month } = calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
+      setFilters({ ...filters, year, month });
+    }
+  }, [settingsLoaded, salaryPayDay, salaryMonthType]);
+
+  const loadSettings = async () => {
+    try {
+      const response = await apiClient.get<{ settings: { salary_payment_day?: number; salary_month_type?: string } }>('/settings/academy');
+      if (response.settings) {
+        setSalaryPayDay(response.settings.salary_payment_day || 10);
+        setSalaryMonthType((response.settings.salary_month_type as 'next' | 'current') || 'next');
+      }
+    } catch (err) {
+      console.error('Failed to load settings:', err);
+    } finally {
+      setSettingsLoaded(true);
+    }
+  };
 
   const loadInstructors = async () => {
     try {
@@ -35,6 +116,34 @@ export default function SalariesPage() {
     } catch (err) {
       console.error('Failed to load instructors:', err);
     }
+  };
+
+  // 이전 월로 이동
+  const goToPrevMonth = () => {
+    const year = filters.year || new Date().getFullYear();
+    const month = filters.month || new Date().getMonth() + 1;
+    if (month === 1) {
+      updateFilters({ year: year - 1, month: 12 });
+    } else {
+      updateFilters({ month: month - 1 });
+    }
+  };
+
+  // 다음 월로 이동
+  const goToNextMonth = () => {
+    const year = filters.year || new Date().getFullYear();
+    const month = filters.month || new Date().getMonth() + 1;
+    if (month === 12) {
+      updateFilters({ year: year + 1, month: 1 });
+    } else {
+      updateFilters({ month: month + 1 });
+    }
+  };
+
+  // 현재(기본) 월로 이동
+  const goToDefaultMonth = () => {
+    const { year, month } = calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
+    setFilters({ ...filters, year, month, instructor_id: undefined, payment_status: undefined });
   };
 
   const handleSalaryClick = (id: number) => {
@@ -291,21 +400,21 @@ export default function SalariesPage() {
               </select>
             </div>
 
+            {/* 월 네비게이션 */}
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">급여월</label>
-              <input
-                type="month"
-                value={filters.year && filters.month ? `${filters.year}-${String(filters.month).padStart(2, '0')}` : ''}
-                onChange={(e) => {
-                  const [year, month] = e.target.value.split('-');
-                  updateFilters({ year: parseInt(year), month: parseInt(month) });
-                }}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
-              />
+              <Button variant="outline" size="sm" onClick={goToPrevMonth}>
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToDefaultMonth} className="min-w-[120px]">
+                {filters.year && filters.month ? `${filters.year}년 ${filters.month}월` : '전체'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={goToNextMonth}>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
 
-            <Button variant="outline" onClick={resetFilters} className="ml-auto">
-              필터 초기화
+            <Button variant="outline" onClick={goToDefaultMonth} className="ml-auto">
+              오늘 기준
             </Button>
           </div>
         </CardContent>
