@@ -9,6 +9,9 @@ import {
   CheckCircle,
   AlertCircle,
   Printer,
+  Edit3,
+  X,
+  Save,
 } from 'lucide-react';
 import { salariesAPI } from '@/lib/api/salaries';
 import type { SalaryDetail } from '@/lib/types/salary';
@@ -54,6 +57,11 @@ export default function SalaryDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
 
+  // 인센티브 수정 상태
+  const [editingIncentive, setEditingIncentive] = useState(false);
+  const [incentiveInput, setIncentiveInput] = useState('');
+  const [savingIncentive, setSavingIncentive] = useState(false);
+
   useEffect(() => {
     if (salaryId) {
       loadSalary();
@@ -96,6 +104,41 @@ export default function SalaryDetailPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  // 인센티브 수정 시작
+  const startEditIncentive = () => {
+    setIncentiveInput(salary?.incentive_amount?.toString() || '0');
+    setEditingIncentive(true);
+  };
+
+  // 인센티브 수정 취소
+  const cancelEditIncentive = () => {
+    setEditingIncentive(false);
+    setIncentiveInput('');
+  };
+
+  // 인센티브 저장
+  const saveIncentive = async () => {
+    if (!salary) return;
+
+    const newIncentive = parseFloat(incentiveInput) || 0;
+    if (newIncentive < 0) {
+      alert('인센티브는 0 이상이어야 합니다.');
+      return;
+    }
+
+    try {
+      setSavingIncentive(true);
+      await salariesAPI.updateSalary(salaryId, { incentive_amount: newIncentive });
+      setEditingIncentive(false);
+      loadSalary(); // 새로고침
+    } catch (err: any) {
+      console.error('Failed to update incentive:', err);
+      alert(err.response?.data?.message || '인센티브 수정에 실패했습니다.');
+    } finally {
+      setSavingIncentive(false);
+    }
   };
 
   // 로딩 화면
@@ -383,12 +426,51 @@ export default function SalaryDetailPage() {
               <span className="text-gray-600">기본급</span>
               <span className="font-medium">{formatCurrency(salary.base_amount)}</span>
             </div>
-            {salary.incentive_amount > 0 && (
-              <div className="flex justify-between py-1 border-b">
-                <span className="text-gray-600">인센티브</span>
-                <span className="font-medium text-green-600">+{formatCurrency(salary.incentive_amount)}</span>
-              </div>
-            )}
+            {/* 인센티브 - 항상 표시 (수정 가능) */}
+            <div className="flex justify-between py-1 border-b items-center">
+              <span className="text-gray-600">인센티브</span>
+              {editingIncentive ? (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="number"
+                    value={incentiveInput}
+                    onChange={(e) => setIncentiveInput(e.target.value)}
+                    className="w-32 px-2 py-1 border border-gray-300 rounded text-right text-sm"
+                    min="0"
+                    step="10000"
+                    autoFocus
+                  />
+                  <span className="text-sm text-gray-500">원</span>
+                  <button
+                    onClick={saveIncentive}
+                    disabled={savingIncentive}
+                    className="p-1 text-green-600 hover:bg-green-50 rounded"
+                  >
+                    <Save className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={cancelEditIncentive}
+                    className="p-1 text-gray-500 hover:bg-gray-100 rounded"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <span className={`font-medium ${salary.incentive_amount > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                    {salary.incentive_amount > 0 ? `+${formatCurrency(salary.incentive_amount)}` : '0원'}
+                  </span>
+                  {salary.payment_status === 'pending' && (
+                    <button
+                      onClick={startEditIncentive}
+                      className="p-1 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded no-print"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
             {salary.total_deduction > 0 && (
               <div className="flex justify-between py-1 border-b">
                 <span className="text-gray-600">공제액</span>
