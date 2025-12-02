@@ -14,7 +14,24 @@ export default function NotificationSettingsPage() {
     template_content: '',
     is_enabled: false,
     auto_send_day: 0,
+    auto_send_days: '',
   });
+
+  // 선택된 자동발송 날짜들을 배열로 관리
+  const selectedDays = settings.auto_send_days
+    ? settings.auto_send_days.split(',').map(d => parseInt(d.trim())).filter(d => !isNaN(d))
+    : [];
+
+  const toggleDay = (day: number) => {
+    const newDays = selectedDays.includes(day)
+      ? selectedDays.filter(d => d !== day)
+      : [...selectedDays, day].sort((a, b) => a - b);
+    setSettings(prev => ({
+      ...prev,
+      auto_send_days: newDays.join(','),
+      auto_send_day: 0 // 다중 날짜 사용시 단일 날짜는 0으로
+    }));
+  };
   const [logs, setLogs] = useState<NotificationLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -244,10 +261,10 @@ export default function NotificationSettingsPage() {
               </p>
             </div>
 
-            {/* 미리보기 */}
+            {/* 미리보기 - 변수만 치환하고 나머지는 그대로 */}
             {settings.template_content && (
               <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                <p className="text-sm font-medium text-gray-700 mb-2">미리보기 (예시)</p>
+                <p className="text-sm font-medium text-gray-700 mb-2">미리보기 (변수만 예시로 치환)</p>
                 <div className="p-3 bg-yellow-50 rounded border border-yellow-200 text-sm whitespace-pre-wrap">
                   {settings.template_content
                     .replace(/#{이름}/g, '홍길동')
@@ -256,8 +273,8 @@ export default function NotificationSettingsPage() {
                     .replace(/#{납부기한}/g, '12월 10일')
                     .replace(/#{금액}/g, '300,000')
                     .replace(/#{월}/g, '12')
-                    .replace(/#{학원명}/g, '파파체대')
-                    .replace(/#{학원전화}/g, '02-1234-5678')
+                    .replace(/#{학원명}/g, '○○학원')
+                    .replace(/#{학원전화}/g, '010-0000-0000')
                   }
                 </div>
               </div>
@@ -285,20 +302,41 @@ export default function NotificationSettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              자동 발송 설정
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              자동 발송 날짜 (여러 날짜 선택 가능)
             </label>
-            <select
-              value={settings.auto_send_day}
-              onChange={e => setSettings(prev => ({ ...prev, auto_send_day: parseInt(e.target.value) }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value={0}>수동 발송만 사용</option>
-              {[...Array(28)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>매월 {i + 1}일 자동 발송</option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-500 mt-1">설정한 날짜에 미납자에게 자동으로 알림이 발송됩니다</p>
+            <div className="p-3 border border-gray-300 rounded-lg bg-gray-50">
+              <div className="grid grid-cols-7 gap-2">
+                {[...Array(28)].map((_, i) => {
+                  const day = i + 1;
+                  const isSelected = selectedDays.includes(day);
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => toggleDay(day)}
+                      className={`p-2 text-sm rounded-lg transition-colors ${
+                        isSelected
+                          ? 'bg-blue-600 text-white font-medium'
+                          : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedDays.length > 0 && (
+                <div className="mt-3 pt-3 border-t">
+                  <p className="text-sm text-blue-700">
+                    <span className="font-medium">선택된 날짜:</span> 매월 {selectedDays.join('일, ')}일
+                  </p>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              선택한 날짜마다 미납자에게 자동으로 알림이 발송됩니다 (매월 반복)
+            </p>
           </div>
         </div>
 

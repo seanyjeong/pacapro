@@ -13,6 +13,7 @@ export interface NotificationSettings {
   template_content: string;  // 템플릿 본문 (변수: #{이름}, #{날짜}, #{금액} 등)
   is_enabled: boolean;
   auto_send_day: number;
+  auto_send_days: string;  // 콤마로 구분된 자동발송 날짜들 (예: "5,15,25")
   has_secret_key?: boolean;
 }
 
