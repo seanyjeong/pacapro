@@ -44,12 +44,14 @@ interface LogsResponse {
 
 export const smsAPI = {
   /**
-   * SMS 발송
+   * SMS/MMS 발송
    */
   send: async (params: {
     target: 'all' | 'students' | 'parents' | 'custom';
     content: string;
     customPhones?: string[];
+    images?: { name: string; data: string }[];  // MMS 이미지 (base64)
+    gradeFilter?: 'all' | 'junior' | 'senior';  // 학년 필터
   }): Promise<SendSMSResponse> => {
     return apiClient.post<SendSMSResponse>('/sms/send', params);
   },
@@ -57,8 +59,10 @@ export const smsAPI = {
   /**
    * 수신자 수 조회
    */
-  getRecipientsCount: async (): Promise<RecipientsCountResponse> => {
-    return apiClient.get<RecipientsCountResponse>('/sms/recipients-count');
+  getRecipientsCount: async (gradeFilter?: string): Promise<RecipientsCountResponse> => {
+    return apiClient.get<RecipientsCountResponse>('/sms/recipients-count', {
+      params: gradeFilter ? { gradeFilter } : {}
+    });
   },
 
   /**

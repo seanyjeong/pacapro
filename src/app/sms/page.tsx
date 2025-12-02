@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { MessageSquare, Send, Users, User, Phone, CheckCircle, XCircle, Clock, AlertCircle, Search, X } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { MessageSquare, Send, Users, User, Phone, CheckCircle, XCircle, Clock, AlertCircle, Search, X, Image, GraduationCap } from 'lucide-react';
 import { smsAPI } from '@/lib/api/sms';
 import apiClient from '@/lib/api/client';
 import { toast } from 'sonner';
@@ -9,6 +9,7 @@ import { debounce } from 'lodash';
 
 type SendMode = 'all' | 'individual' | 'custom';
 type RecipientType = 'student' | 'parent';
+type GradeFilter = 'all' | 'junior' | 'senior';
 
 interface Student {
   id: number;
@@ -17,11 +18,19 @@ interface Student {
   parent_phone: string | null;
 }
 
+interface ImageFile {
+  name: string;
+  data: string;  // base64
+  preview: string;  // URL for preview
+}
+
 export default function SMSPage() {
   // 발송 모드: 모두 / 개별 / 직접입력
   const [sendMode, setSendMode] = useState<SendMode>('all');
   // 수신자 타입: 학생 / 학부모
   const [recipientType, setRecipientType] = useState<RecipientType>('parent');
+  // 학년 필터: 전체 / 선행반 / 3학년
+  const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
 
   const [content, setContent] = useState('');
   const [customPhones, setCustomPhones] = useState('');
@@ -29,6 +38,10 @@ export default function SMSPage() {
   const [recipientsCount, setRecipientsCount] = useState({ all: 0, students: 0, parents: 0 });
   const [logs, setLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
+
+  // 이미지 첨부 (MMS)
+  const [images, setImages] = useState<ImageFile[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 개별 선택 관련
   const [searchQuery, setSearchQuery] = useState('');
@@ -41,9 +54,16 @@ export default function SMSPage() {
     loadLogs();
   }, []);
 
+  // 학년 필터 변경 시 수신자 수 다시 로드
+  useEffect(() => {
+    if (sendMode === 'all') {
+      loadRecipientsCount();
+    }
+  }, [gradeFilter, sendMode]);
+
   const loadRecipientsCount = async () => {
     try {
-      const data = await smsAPI.getRecipientsCount();
+      const data = await smsAPI.getRecipientsCount(gradeFilter);
       setRecipientsCount(data);
     } catch (error) {
       console.error('수신자 수 조회 실패:', error);
@@ -88,6 +108,58 @@ export default function SMSPage() {
   useEffect(() => {
     searchStudents(searchQuery);
   }, [searchQuery, searchStudents]);
+
+  // 이미지 파일 선택 핸들러
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const maxSize = 300 * 1024; // 300KB
+
+    Array.from(files).forEach(file => {
+      if (images.length >= 3) {
+        toast.error('이미지는 최대 3장까지 첨부 가능합니다.');
+        return;
+      }
+
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('JPG, PNG 이미지만 첨부 가능합니다.');
+        return;
+      }
+
+      if (file.size > maxSize) {
+        toast.error('이미지 크기는 300KB 이하여야 합니다.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        setImages(prev => [...prev, {
+          name: file.name,
+          data: base64,
+          preview: URL.createObjectURL(file)
+        }]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // input 초기화
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // 이미지 삭제
+  const removeImage = (index: number) => {
+    setImages(prev => {
+      const newImages = [...prev];
+      URL.revokeObjectURL(newImages[index].preview);
+      newImages.splice(index, 1);
+      return newImages;
+    });
+  };
 
   const handleSend = async () => {
     if (!content.trim()) {
@@ -137,13 +209,15 @@ export default function SMSPage() {
       return;
     }
 
-    if (!confirm(`${recipientCount}명에게 문자를 발송하시겠습니까?\n\n※ 80byte 초과 시 LMS로 자동 전환됩니다.`)) {
+    const messageType = images.length > 0 ? 'MMS' : (contentBytes > 80 ? 'LMS' : 'SMS');
+    if (!confirm(`${recipientCount}명에게 ${messageType}를 발송하시겠습니까?${images.length > 0 ? `\n\n이미지 ${images.length}장 첨부` : ''}`)) {
       return;
     }
 
     setSending(true);
     try {
       let result;
+      const imageData = images.length > 0 ? images.map(img => ({ name: img.name, data: img.data })) : undefined;
 
       if (sendMode === 'custom') {
         // 직접입력
@@ -152,6 +226,7 @@ export default function SMSPage() {
           target: 'custom',
           content,
           customPhones: phones,
+          images: imageData,
         });
       } else if (sendMode === 'individual') {
         // 개별 발송
@@ -160,12 +235,15 @@ export default function SMSPage() {
           target: 'custom',
           content,
           customPhones: [targetPhone!],
+          images: imageData,
         });
       } else {
         // 모두 (학생 또는 학부모)
         result = await smsAPI.send({
           target: recipientType === 'student' ? 'students' : 'parents',
           content,
+          images: imageData,
+          gradeFilter,
         });
       }
 
@@ -190,9 +268,20 @@ export default function SMSPage() {
     }
   };
 
+  const getTypeBadge = (type: string) => {
+    const typeUpper = type?.toUpperCase() || 'SMS';
+    const colors: Record<string, string> = {
+      SMS: 'bg-gray-100 text-gray-700',
+      LMS: 'bg-blue-100 text-blue-700',
+      MMS: 'bg-purple-100 text-purple-700',
+    };
+    return <span className={`px-1.5 py-0.5 rounded text-xs ${colors[typeUpper] || colors.SMS}`}>{typeUpper}</span>;
+  };
+
   // 글자 수 (byte) 계산
   const contentBytes = new TextEncoder().encode(content).length;
-  const isLMS = contentBytes > 80;
+  const isMMS = images.length > 0;
+  const isLMS = !isMMS && contentBytes > 80;
 
   // 모드 변경 시 초기화
   const handleModeChange = (mode: SendMode) => {
@@ -200,6 +289,9 @@ export default function SMSPage() {
     setSelectedStudent(null);
     setSearchQuery('');
     setSearchResults([]);
+    if (mode !== 'all') {
+      setGradeFilter('all');
+    }
   };
 
   return (
@@ -263,6 +355,51 @@ export default function SMSPage() {
             </button>
           </div>
         </div>
+
+        {/* 모두 선택 시 학년 필터 */}
+        {sendMode === 'all' && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              <GraduationCap className="w-4 h-4 inline mr-1" />
+              학년 선택
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setGradeFilter('all')}
+                className={`p-2 rounded-lg border-2 transition-all text-sm ${
+                  gradeFilter === 'all'
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                전체
+              </button>
+              <button
+                type="button"
+                onClick={() => setGradeFilter('junior')}
+                className={`p-2 rounded-lg border-2 transition-all text-sm ${
+                  gradeFilter === 'junior'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                선행반 (1-2학년)
+              </button>
+              <button
+                type="button"
+                onClick={() => setGradeFilter('senior')}
+                className={`p-2 rounded-lg border-2 transition-all text-sm ${
+                  gradeFilter === 'senior'
+                    ? 'border-purple-500 bg-purple-50 text-purple-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                3학년 (고3/N수)
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* STEP 2: 개별 선택 시 학생 검색 */}
         {sendMode === 'individual' && (
@@ -414,17 +551,76 @@ export default function SMSPage() {
           />
           <div className="flex justify-between items-center mt-2">
             <div className="flex items-center gap-2">
+              {isMMS && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-purple-100 text-purple-700">
+                  <Image className="w-3 h-3" />
+                  MMS (이미지 첨부)
+                </span>
+              )}
               {isLMS && (
                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-orange-100 text-orange-700">
                   <AlertCircle className="w-3 h-3" />
-                  LMS 전환 (80byte 초과)
+                  LMS (80byte 초과)
                 </span>
               )}
             </div>
-            <span className={`text-sm ${isLMS ? 'text-orange-600' : 'text-gray-500'}`}>
-              {contentBytes} / {isLMS ? '2000' : '80'} byte
+            <span className={`text-sm ${isMMS ? 'text-purple-600' : isLMS ? 'text-orange-600' : 'text-gray-500'}`}>
+              {contentBytes} / {isMMS ? '2000' : isLMS ? '2000' : '80'} byte
             </span>
           </div>
+        </div>
+
+        {/* 이미지 첨부 */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            이미지 첨부 (선택, 최대 3장)
+          </label>
+
+          {/* 첨부된 이미지 미리보기 */}
+          {images.length > 0 && (
+            <div className="flex gap-2 mb-3 flex-wrap">
+              {images.map((img, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={img.preview}
+                    alt={img.name}
+                    className="w-20 h-20 object-cover rounded-lg border"
+                  />
+                  <button
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 이미지 추가 버튼 */}
+          {images.length < 3 && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png"
+                multiple
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+              >
+                <Image className="w-4 h-4" />
+                이미지 추가
+              </button>
+            </>
+          )}
+          <p className="text-xs text-gray-500 mt-2">
+            * JPG, PNG 형식, 300KB 이하 | 이미지 첨부 시 MMS로 발송됩니다
+          </p>
         </div>
 
         {/* 발송 버튼 */}
@@ -435,7 +631,7 @@ export default function SMSPage() {
             className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Send className="w-5 h-5" />
-            {sending ? '발송 중...' : '문자 발송'}
+            {sending ? '발송 중...' : isMMS ? 'MMS 발송' : 'SMS 발송'}
           </button>
         </div>
       </div>
@@ -470,6 +666,7 @@ export default function SMSPage() {
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2 px-2">발송시간</th>
+                  <th className="text-left py-2 px-2">유형</th>
                   <th className="text-left py-2 px-2">수신자</th>
                   <th className="text-left py-2 px-2">전화번호</th>
                   <th className="text-left py-2 px-2">내용</th>
@@ -482,6 +679,7 @@ export default function SMSPage() {
                     <td className="py-2 px-2 text-gray-500 whitespace-nowrap">
                       {log.sent_at ? new Date(log.sent_at).toLocaleString('ko-KR') : '-'}
                     </td>
+                    <td className="py-2 px-2">{getTypeBadge(log.message_type)}</td>
                     <td className="py-2 px-2">{log.recipient_name || '-'}</td>
                     <td className="py-2 px-2">{log.recipient_phone}</td>
                     <td className="py-2 px-2 max-w-[200px] truncate" title={log.message_content}>
