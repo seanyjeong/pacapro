@@ -3,10 +3,35 @@
  * 강사 출퇴근 기록 컴포넌트
  */
 
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, Clock, LogIn, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Calendar, LogIn, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { InstructorAttendance } from '@/lib/types/instructor';
-import { formatDate, formatTime, formatWorkHours } from '@/lib/utils/instructor-helpers';
+
+const TIME_SLOT_LABELS: Record<string, string> = {
+  morning: '오전',
+  afternoon: '오후',
+  evening: '저녁',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  present: '출근',
+  absent: '결근',
+  late: '지각',
+  day_off: '휴무',
+};
+
+const formatDate = (dateStr: string): string => {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+};
+
+const formatTime = (timeStr: string | null): string => {
+  if (!timeStr) return '-';
+  return timeStr.substring(0, 5); // HH:mm:ss -> HH:mm
+};
 
 interface InstructorAttendanceProps {
   attendances: InstructorAttendance[];
@@ -14,6 +39,45 @@ interface InstructorAttendanceProps {
 }
 
 export function InstructorAttendanceComponent({ attendances, loading }: InstructorAttendanceProps) {
+  // 현재 년월 상태
+  const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(() => new Date().getMonth() + 1);
+
+  // 해당 월의 출퇴근 기록만 필터링
+  const filteredAttendances = useMemo(() => {
+    return attendances.filter((att) => {
+      if (!att.work_date) return false;
+      const date = new Date(att.work_date);
+      return date.getFullYear() === currentYear && date.getMonth() + 1 === currentMonth;
+    });
+  }, [attendances, currentYear, currentMonth]);
+
+  // 이전 월로 이동
+  const goToPrevMonth = () => {
+    if (currentMonth === 1) {
+      setCurrentYear(currentYear - 1);
+      setCurrentMonth(12);
+    } else {
+      setCurrentMonth(currentMonth - 1);
+    }
+  };
+
+  // 다음 월로 이동
+  const goToNextMonth = () => {
+    if (currentMonth === 12) {
+      setCurrentYear(currentYear + 1);
+      setCurrentMonth(1);
+    } else {
+      setCurrentMonth(currentMonth + 1);
+    }
+  };
+
+  // 오늘 월로 이동
+  const goToCurrentMonth = () => {
+    const today = new Date();
+    setCurrentYear(today.getFullYear());
+    setCurrentMonth(today.getMonth() + 1);
+  };
   if (loading) {
     return (
       <Card>
@@ -28,11 +92,29 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
     );
   }
 
+  // 월 네비게이션 UI
+  const MonthNavigation = () => (
+    <div className="flex items-center space-x-2">
+      <Button variant="outline" size="sm" onClick={goToPrevMonth}>
+        <ChevronLeft className="w-4 h-4" />
+      </Button>
+      <Button variant="outline" size="sm" onClick={goToCurrentMonth} className="min-w-[100px]">
+        {currentYear}년 {currentMonth}월
+      </Button>
+      <Button variant="outline" size="sm" onClick={goToNextMonth}>
+        <ChevronRight className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+
   if (attendances.length === 0) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>출퇴근 기록</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>출퇴근 기록</CardTitle>
+            <MonthNavigation />
+          </div>
         </CardHeader>
         <CardContent className="p-12 text-center">
           <div className="text-gray-400 mb-4">
@@ -45,16 +127,16 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
     );
   }
 
-  // 월별 총 근무시간 계산
-  const totalWorkHours = attendances.reduce((sum, att) => sum + parseFloat(att.work_hours || '0'), 0);
-
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>출퇴근 기록</CardTitle>
-          <div className="text-sm text-gray-600">
-            총 근무시간: <span className="font-semibold text-gray-900">{formatWorkHours(totalWorkHours)}</span>
+          <div className="flex items-center space-x-4">
+            <MonthNavigation />
+            <div className="text-sm text-gray-600">
+              {currentYear}년 {currentMonth}월: <span className="font-semibold text-gray-900">{filteredAttendances.length}</span>건
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -67,13 +149,16 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
                   날짜
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  출근시간
+                  시간대
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  퇴근시간
+                  상태
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  근무시간
+                  출근
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  퇴근
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   메모
@@ -81,27 +166,54 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {attendances.map((attendance) => (
+              {filteredAttendances.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                    {currentYear}년 {currentMonth}월에 출퇴근 기록이 없습니다.
+                  </td>
+                </tr>
+              ) : filteredAttendances.map((attendance) => (
                 <tr key={attendance.id} className="hover:bg-gray-50">
                   {/* 날짜 */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
                       <Calendar className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-900">
-                        {formatDate(attendance.attendance_date)}
+                        {formatDate(attendance.work_date)}
                       </span>
                     </div>
                   </td>
 
+                  {/* 시간대 */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                      attendance.time_slot === 'morning' ? 'bg-yellow-100 text-yellow-800' :
+                      attendance.time_slot === 'afternoon' ? 'bg-orange-100 text-orange-800' :
+                      'bg-blue-100 text-blue-800'
+                    }`}>
+                      {TIME_SLOT_LABELS[attendance.time_slot] || attendance.time_slot}
+                    </span>
+                  </td>
+
+                  {/* 상태 */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                      attendance.attendance_status === 'present' ? 'bg-green-100 text-green-800' :
+                      attendance.attendance_status === 'absent' ? 'bg-red-100 text-red-800' :
+                      attendance.attendance_status === 'late' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {STATUS_LABELS[attendance.attendance_status || 'present']}
+                    </span>
+                  </td>
+
                   {/* 출근시간 */}
                   <td className="px-4 py-3 whitespace-nowrap">
-                    {attendance.check_in ? (
+                    {attendance.check_in_time ? (
                       <div className="flex items-center space-x-2">
-                        <div className="p-1.5 bg-green-100 rounded">
-                          <LogIn className="w-3.5 h-3.5 text-green-600" />
-                        </div>
+                        <LogIn className="w-4 h-4 text-green-500" />
                         <span className="text-sm text-gray-900">
-                          {formatTime(attendance.check_in)}
+                          {formatTime(attendance.check_in_time)}
                         </span>
                       </div>
                     ) : (
@@ -111,27 +223,11 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
 
                   {/* 퇴근시간 */}
                   <td className="px-4 py-3 whitespace-nowrap">
-                    {attendance.check_out ? (
+                    {attendance.check_out_time ? (
                       <div className="flex items-center space-x-2">
-                        <div className="p-1.5 bg-red-100 rounded">
-                          <LogOut className="w-3.5 h-3.5 text-red-600" />
-                        </div>
+                        <LogOut className="w-4 h-4 text-red-500" />
                         <span className="text-sm text-gray-900">
-                          {formatTime(attendance.check_out)}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-sm text-gray-400">-</span>
-                    )}
-                  </td>
-
-                  {/* 근무시간 */}
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    {attendance.work_hours ? (
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-blue-500" />
-                        <span className="text-sm font-medium text-gray-900">
-                          {formatWorkHours(attendance.work_hours)}
+                          {formatTime(attendance.check_out_time)}
                         </span>
                       </div>
                     ) : (

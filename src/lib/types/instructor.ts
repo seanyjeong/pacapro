@@ -100,12 +100,12 @@ export interface InstructorDetail extends Instructor {
 
 export interface InstructorAttendance {
   id: number;
-  instructor_id: number;
-  academy_id?: number;
-  attendance_date: string; // YYYY-MM-DD
-  check_in: string | null; // HH:mm:ss
-  check_out: string | null; // HH:mm:ss
-  work_hours: string | null; // decimal
+  instructor_id?: number;
+  work_date: string; // YYYY-MM-DD
+  time_slot: 'morning' | 'afternoon' | 'evening';
+  check_in_time: string | null; // HH:mm:ss
+  check_out_time: string | null; // HH:mm:ss
+  attendance_status: 'present' | 'absent' | 'late' | 'day_off' | null;
   notes: string | null;
   created_at: string;
 }
