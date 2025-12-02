@@ -48,9 +48,9 @@ export function BulkScheduleModal({ open, onClose, onSuccess }: BulkScheduleModa
   const [month, setMonth] = useState(new Date().getMonth() + 1);
 
   // Common
-  const [timeSlot, setTimeSlot] = useState<TimeSlot>('afternoon');
+  const [timeSlot, setTimeSlot] = useState<TimeSlot>('evening');
   // 시즌 모드: 여러 시간대 선택 가능
-  const [selectedTimeSlots, setSelectedTimeSlots] = useState<Set<TimeSlot>>(new Set(['afternoon']));
+  const [selectedTimeSlots, setSelectedTimeSlots] = useState<Set<TimeSlot>>(new Set(['evening']));
 
   // Load data
   useEffect(() => {
