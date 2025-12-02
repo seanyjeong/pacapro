@@ -312,8 +312,19 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
     return '저장에 실패했습니다.';
   };
 
+  // 같은 이름 경고인지 확인
+  const isSameNameWarning = (err: unknown): { isWarning: boolean; existingStudent?: { name: string; phone: string; gender?: string } } => {
+    if (err && typeof err === 'object') {
+      const axiosError = err as { response?: { data?: { code?: string; existingStudent?: { name: string; phone: string; gender?: string } } } };
+      if (axiosError.response?.data?.code === 'SAME_NAME_EXISTS') {
+        return { isWarning: true, existingStudent: axiosError.response.data.existingStudent };
+      }
+    }
+    return { isWarning: false };
+  };
+
   // 폼 제출 핸들러
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, forceSubmit = false) => {
     e.preventDefault();
 
     if (!validate()) return;
@@ -323,6 +334,7 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
       ...formData,
       enroll_in_season: enrollInSeason && !!selectedSeasonId,
       selected_season_id: enrollInSeason ? selectedSeasonId ?? undefined : undefined,
+      confirm_force: forceSubmit, // 강제 등록 플래그
     };
 
     try {
@@ -330,6 +342,24 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
       await onSubmit(submitData);
     } catch (err: unknown) {
       console.error('Form submit error:', err);
+
+      // 같은 이름 경고인지 확인
+      const sameNameCheck = isSameNameWarning(err);
+      if (sameNameCheck.isWarning && sameNameCheck.existingStudent) {
+        const existing = sameNameCheck.existingStudent;
+        const genderText = existing.gender === 'male' ? '남' : existing.gender === 'female' ? '여' : '';
+        const confirmMessage = `같은 이름의 학생이 이미 존재합니다.\n\n` +
+          `기존 학생: ${existing.name} ${genderText ? `(${genderText})` : ''}\n` +
+          `전화번호: ${existing.phone || '없음'}\n\n` +
+          `그래도 등록하시겠습니까?`;
+
+        if (confirm(confirmMessage)) {
+          // 강제 등록 재시도
+          handleSubmit(e, true);
+        }
+        return;
+      }
+
       const errorMessage = extractErrorMessage(err);
       setErrors({ submit: errorMessage });
       // 에러 메시지 영역으로 스크롤
