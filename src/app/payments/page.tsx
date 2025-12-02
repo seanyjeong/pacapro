@@ -4,11 +4,12 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Download, AlertCircle, Banknote } from 'lucide-react';
+import { Plus, Download, AlertCircle, Banknote, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentList } from '@/components/payments/payment-list';
 import { usePayments } from '@/hooks/use-payments';
 import { paymentsAPI } from '@/lib/api/payments';
+import { notificationsAPI } from '@/lib/api/notifications';
 import { usePermissions } from '@/lib/utils/permissions';
 import {
   PAYMENT_STATUS_OPTIONS,
@@ -33,6 +34,7 @@ function PaymentsPageContent() {
     }
   }, [searchParams, initialFiltersApplied, updateFilters]);
   const [bulkCharging, setBulkCharging] = useState(false);
+  const [sendingNotification, setSendingNotification] = useState(false);
   const { canEdit, canView } = usePermissions();
   const canEditPayments = canEdit('payments');
   const canViewPayments = canView('payments');
@@ -81,6 +83,30 @@ function PaymentsPageContent() {
       toast.error(err.response?.data?.message || '일괄 청구에 실패했습니다.');
     } finally {
       setBulkCharging(false);
+    }
+  };
+
+  const handleSendUnpaidNotification = async () => {
+    const unpaidList = filteredPayments.filter(p => p.payment_status !== 'paid');
+    if (unpaidList.length === 0) {
+      toast.error('미납자가 없습니다.');
+      return;
+    }
+
+    if (!confirm(`미납자 ${unpaidList.length}명에게 알림톡을 발송하시겠습니까?`)) return;
+
+    try {
+      setSendingNotification(true);
+      const today = new Date();
+      const year = filters.year || today.getFullYear();
+      const month = filters.month || (today.getMonth() + 1);
+
+      const result = await notificationsAPI.sendUnpaid(year, month);
+      toast.success(`알림 발송 완료: ${result.sent}명 성공, ${result.failed}명 실패`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '알림 발송에 실패했습니다.');
+    } finally {
+      setSendingNotification(false);
     }
   };
 
@@ -135,6 +161,10 @@ function PaymentsPageContent() {
               <Button variant="outline" onClick={handleBulkMonthlyCharge} disabled={bulkCharging}>
                 <Banknote className="w-4 h-4 mr-2" />
                 {bulkCharging ? '청구 중...' : '월 수강료 일괄 청구'}
+              </Button>
+              <Button variant="outline" onClick={handleSendUnpaidNotification} disabled={sendingNotification || unpaidCount === 0}>
+                <Bell className="w-4 h-4 mr-2" />
+                {sendingNotification ? '발송 중...' : `미납 알림 (${unpaidCount}명)`}
               </Button>
               <Button onClick={handleAddPayment}>
                 <Plus className="w-4 h-4 mr-2" />
