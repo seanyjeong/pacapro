@@ -76,4 +76,30 @@ export const studentsAPI = {
   searchStudents: async (query: string): Promise<StudentsResponse> => {
     return await apiClient.get(`/students/search?q=${encodeURIComponent(query)}`);
   },
+
+  /**
+   * 학년 자동 진급
+   * POST /paca/students/auto-promote
+   * @param dryRun - true면 미리보기만
+   * @param graduateStudentIds - 고3 중 졸업 처리할 학생 ID 배열
+   */
+  autoPromote: async (dryRun: boolean = false, graduateStudentIds: number[] = []): Promise<{
+    message: string;
+    dry_run: boolean;
+    promoted: number;
+    graduated: number;
+    summary: Record<string, number>;
+    details: Array<{
+      studentId: number;
+      name: string;
+      from: string;
+      to: string;
+      action: 'promoted' | 'graduated';
+    }>;
+  }> => {
+    return await apiClient.post('/students/auto-promote', {
+      dry_run: dryRun,
+      graduate_student_ids: graduateStudentIds
+    });
+  },
 };
