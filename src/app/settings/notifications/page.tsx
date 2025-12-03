@@ -25,7 +25,8 @@ export default function NotificationSettingsPage() {
     solapi_template_id: '',
     solapi_template_content: '',
     // 공통
-    is_enabled: false,
+    is_enabled: false,        // SENS 활성화
+    solapi_enabled: false,    // 솔라피 활성화
     auto_send_day: 0,
     auto_send_days: '',
     auto_send_hour: 9,
@@ -490,18 +491,37 @@ export default function NotificationSettingsPage() {
         <h2 className="text-lg font-semibold mb-4">발송 설정</h2>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-gray-900">알림톡 활성화</p>
-              <p className="text-sm text-gray-500">활성화해야 알림을 발송할 수 있습니다</p>
+          {/* SENS 활성화 토글 */}
+          {activeTab === 'sens' && (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900">SENS 알림톡 활성화</p>
+                <p className="text-sm text-gray-500">활성화해야 자동 발송이 실행됩니다</p>
+              </div>
+              <button
+                onClick={() => setSettings(prev => ({ ...prev, is_enabled: !prev.is_enabled }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.is_enabled ? 'bg-green-600' : 'bg-gray-200'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.is_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
             </div>
-            <button
-              onClick={() => setSettings(prev => ({ ...prev, is_enabled: !prev.is_enabled }))}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.is_enabled ? 'bg-blue-600' : 'bg-gray-200'}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.is_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
+          )}
+
+          {/* 솔라피 활성화 토글 */}
+          {activeTab === 'solapi' && (
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-gray-900">솔라피 알림톡 활성화</p>
+                <p className="text-sm text-gray-500">n8n에서 이 설정을 확인하여 발송 여부를 결정합니다</p>
+              </div>
+              <button
+                onClick={() => setSettings(prev => ({ ...prev, solapi_enabled: !prev.solapi_enabled }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_enabled ? 'bg-purple-600' : 'bg-gray-200'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+          )}
 
           {/* SENS 선택시에만 자동 발송 스케줄 설정 표시 */}
           {activeTab === 'sens' && (
@@ -609,14 +629,17 @@ export default function NotificationSettingsPage() {
           />
           <button
             onClick={handleTest}
-            disabled={testing || !settings.is_enabled}
+            disabled={testing || (activeTab === 'sens' ? !settings.is_enabled : !settings.solapi_enabled)}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {testing ? '발송 중...' : '테스트 발송'}
           </button>
         </div>
-        {!settings.is_enabled && (
-          <p className="text-sm text-amber-600 mt-2">알림톡을 활성화해야 테스트 발송이 가능합니다</p>
+        {activeTab === 'sens' && !settings.is_enabled && (
+          <p className="text-sm text-amber-600 mt-2">SENS 알림톡을 활성화해야 테스트 발송이 가능합니다</p>
+        )}
+        {activeTab === 'solapi' && !settings.solapi_enabled && (
+          <p className="text-sm text-amber-600 mt-2">솔라피 알림톡을 활성화해야 테스트 발송이 가능합니다</p>
         )}
       </div>
 
@@ -633,14 +656,17 @@ export default function NotificationSettingsPage() {
 
         <button
           onClick={handleSendUnpaid}
-          disabled={sendingUnpaid || !settings.is_enabled}
+          disabled={sendingUnpaid || (activeTab === 'sens' ? !settings.is_enabled : !settings.solapi_enabled)}
           className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {sendingUnpaid ? '발송 중...' : '미납자에게 알림 발송'}
         </button>
 
-        {!settings.is_enabled && (
-          <p className="text-sm text-amber-600 mt-2">알림톡을 활성화해야 발송이 가능합니다</p>
+        {activeTab === 'sens' && !settings.is_enabled && (
+          <p className="text-sm text-amber-600 mt-2">SENS 알림톡을 활성화해야 발송이 가능합니다</p>
+        )}
+        {activeTab === 'solapi' && !settings.solapi_enabled && (
+          <p className="text-sm text-amber-600 mt-2">솔라피 알림톡을 활성화해야 발송이 가능합니다</p>
         )}
       </div>
 
