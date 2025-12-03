@@ -41,6 +41,10 @@ interface AcademySettings {
   exam_tuition: TuitionByWeeklyCount;
   adult_tuition: TuitionByWeeklyCount;
   tuition_due_day?: number; // 학원 기본 납부일
+  // 시간대별 수업 시간 (HH:MM-HH:MM 형식)
+  morning_class_time?: string;
+  afternoon_class_time?: string;
+  evening_class_time?: string;
 }
 
 const DEFAULT_TUITION: TuitionByWeeklyCount = {
@@ -154,6 +158,10 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           exam_tuition: response.settings.exam_tuition || { ...DEFAULT_TUITION },
           adult_tuition: response.settings.adult_tuition || { ...DEFAULT_TUITION },
           tuition_due_day: response.settings.tuition_due_day,
+          // 시간대 설정
+          morning_class_time: response.settings.morning_class_time,
+          afternoon_class_time: response.settings.afternoon_class_time,
+          evening_class_time: response.settings.evening_class_time,
         });
       }
     } catch {
@@ -418,11 +426,17 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
     setTrialDates(updated);
   };
 
-  // 시간대 라벨
+  // 시간대 라벨 (학원 설정에서 불러온 시간 사용)
+  const formatTimeLabel = (timeRange: string | undefined, defaultRange: string): string => {
+    const range = timeRange || defaultRange;
+    const [start, end] = range.split('-');
+    return `${start || '00:00'}~${end || '00:00'}`;
+  };
+
   const timeSlotLabels: Record<string, string> = {
-    morning: '오전 (09:00~12:00)',
-    afternoon: '오후 (13:00~18:00)',
-    evening: '저녁 (18:00~21:00)',
+    morning: `오전 (${formatTimeLabel(academySettings.morning_class_time, '09:00-12:00')})`,
+    afternoon: `오후 (${formatTimeLabel(academySettings.afternoon_class_time, '13:00-18:00')})`,
+    evening: `저녁 (${formatTimeLabel(academySettings.evening_class_time, '18:00-21:00')})`,
   };
 
   return (
