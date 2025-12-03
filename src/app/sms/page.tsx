@@ -643,9 +643,12 @@ export default function SMSPage() {
           <div>
             <p className="text-sm font-medium text-blue-800">발신번호 안내</p>
             <p className="text-sm text-blue-700 mt-1">
-              문자는 <strong>설정 &gt; 학원 기본 정보</strong>에 등록된 전화번호로 발송됩니다.
-              발신번호는 Naver Cloud SENS에 사전 등록되어 있어야 합니다.
+              문자는 <strong>설정 &gt; 알림톡 및 SMS 설정</strong>에서 선택한 서비스로 발송됩니다.
             </p>
+            <ul className="text-sm text-blue-600 mt-2 space-y-1">
+              <li>• <strong>SENS</strong>: 학원 기본 정보의 전화번호가 Naver Cloud SENS에 등록되어 있어야 합니다.</li>
+              <li>• <strong>솔라피</strong>: 솔라피 설정의 발신번호로 발송됩니다.</li>
+            </ul>
           </div>
         </div>
       </div>
