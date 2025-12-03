@@ -28,9 +28,9 @@ export function usePayments(initialFilters?: PaymentFilters) {
       setError(null);
       const data = await paymentsAPI.getPayments(filters);
       setPayments(data.payments);
-    } catch (err: any) {
-      console.error('Failed to load payments:', err);
-      setError(err.response?.data?.message || '학원비 목록을 불러오는데 실패했습니다.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || '학원비 목록을 불러오는데 실패했습니다.');
       setPayments([]);
     } finally {
       setLoading(false);
@@ -76,9 +76,9 @@ export function usePayment(id: number) {
       setError(null);
       const data = await paymentsAPI.getPayment(id);
       setPayment(data.payment);
-    } catch (err: any) {
-      console.error('Failed to load payment:', err);
-      setError(err.response?.data?.message || '학원비 정보를 불러오는데 실패했습니다.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || '학원비 정보를 불러오는데 실패했습니다.');
       setPayment(null);
     } finally {
       setLoading(false);
@@ -113,9 +113,9 @@ export function useUnpaidPayments() {
       setError(null);
       const data = await paymentsAPI.getUnpaidPayments();
       setUnpaidPayments(data.payments);
-    } catch (err: any) {
-      console.error('Failed to load unpaid payments:', err);
-      setError(err.response?.data?.message || '미납 학원비를 불러오는데 실패했습니다.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || '미납 학원비를 불러오는데 실패했습니다.');
       setUnpaidPayments([]);
     } finally {
       setLoading(false);
@@ -150,9 +150,9 @@ export function usePaymentStats(year?: number, month?: number) {
       setError(null);
       const data = await paymentsAPI.getPaymentStats(year, month);
       setStats(data.stats);
-    } catch (err: any) {
-      console.error('Failed to load payment stats:', err);
-      setError(err.response?.data?.message || '통계를 불러오는데 실패했습니다.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || '통계를 불러오는데 실패했습니다.');
       setStats(null);
     } finally {
       setLoading(false);

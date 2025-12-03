@@ -32,7 +32,7 @@ interface SearchResult {
 
 export function TopNav() {
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<{ name?: string; email?: string; role?: string; position?: string } | null>(null);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -61,8 +61,7 @@ export function TopNav() {
                 });
                 setSearchResults(data.results || []);
                 setShowResults(true);
-            } catch (error) {
-                console.error('Search error:', error);
+            } catch {
                 setSearchResults([]);
             } finally {
                 setSearching(false);
@@ -198,7 +197,7 @@ export function TopNav() {
                                     {user?.name || '사용자'}
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                    {user ? getRoleLabel(user.role, user.position) : '사용자'}
+                                    {user ? getRoleLabel(user.role || '', user.position) : '사용자'}
                                 </div>
                             </div>
                         </button>

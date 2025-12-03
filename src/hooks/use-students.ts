@@ -29,9 +29,9 @@ export function useStudents(initialFilters?: StudentFilters) {
       setError(null);
       const data = await studentsAPI.getStudents(filters);
       setStudents(data.students);
-    } catch (err: any) {
-      console.error('Failed to load students:', err);
-      setError(err.response?.data?.message || '학생 목록을 불러오는데 실패했습니다.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || '학생 목록을 불러오는데 실패했습니다.');
       setStudents([]);
     } finally {
       setLoading(false);
@@ -81,9 +81,9 @@ export function useStudent(id: number) {
       setStudent(data.student);
       setPerformances(data.performances || []);
       setPayments(data.payments || []);
-    } catch (err: any) {
-      console.error('Failed to load student:', err);
-      setError(err.response?.data?.message || '학생 정보를 불러오는데 실패했습니다.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || '학생 정보를 불러오는데 실패했습니다.');
       setStudent(null);
       setPerformances([]);
       setPayments([]);
@@ -128,9 +128,9 @@ export function useStudentSearch() {
       setError(null);
       const data = await studentsAPI.searchStudents(searchQuery);
       setResults(data.students);
-    } catch (err: any) {
-      console.error('Failed to search students:', err);
-      setError(err.response?.data?.message || '학생 검색에 실패했습니다.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setError(axiosErr.response?.data?.message || '학생 검색에 실패했습니다.');
       setResults([]);
     } finally {
       setLoading(false);

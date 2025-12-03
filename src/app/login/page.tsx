@@ -41,9 +41,9 @@ export default function LoginPage() {
 
             // 대시보드로 이동 (전체 페이지 새로고침으로 사이드바 메뉴 업데이트)
             window.location.href = '/';
-        } catch (err: any) {
-            console.error('Login error:', err);
-            setError(err.response?.data?.message || '로그인에 실패했습니다.');
+        } catch (err: unknown) {
+            const axiosErr = err as { response?: { data?: { message?: string } } };
+            setError(axiosErr.response?.data?.message || '로그인에 실패했습니다.');
         } finally {
             setLoading(false);
         }
