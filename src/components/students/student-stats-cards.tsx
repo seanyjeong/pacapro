@@ -1,22 +1,69 @@
 /**
  * Student Stats Cards Component
- * 학생 통계 카드 컴포넌트
+ * 학생 통계 카드 컴포넌트 - 전체 학생 현황 (탭과 무관하게 고정)
  */
 
+'use client';
+
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, UserCheck, UserX, GraduationCap } from 'lucide-react';
+import { Users, UserCheck, UserX, GraduationCap, Sparkles } from 'lucide-react';
+import { studentsAPI } from '@/lib/api/students';
 import type { Student } from '@/lib/types/student';
 
 interface StudentStatsCardsProps {
-  students: Student[];
+  onStatsLoaded?: (stats: StudentStats) => void;
 }
 
-export function StudentStatsCards({ students }: StudentStatsCardsProps) {
-  const stats = {
-    total: students.length,
-    active: students.filter((s) => s.status === 'active').length,
-    paused: students.filter((s) => s.status === 'paused').length,
-    graduated: students.filter((s) => s.status === 'graduated').length,
+interface StudentStats {
+  total: number;
+  active: number;
+  paused: number;
+  graduated: number;
+  trial: number;
+}
+
+export function StudentStatsCards({ onStatsLoaded }: StudentStatsCardsProps) {
+  const [stats, setStats] = useState<StudentStats>({
+    total: 0,
+    active: 0,
+    paused: 0,
+    graduated: 0,
+    trial: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadAllStudentsStats();
+  }, []);
+
+  const loadAllStudentsStats = async () => {
+    try {
+      setLoading(true);
+      // 모든 학생 가져오기 (필터 없이)
+      const [allStudents, trialStudents] = await Promise.all([
+        studentsAPI.getStudents({ is_trial: false }),
+        studentsAPI.getStudents({ is_trial: true }),
+      ]);
+
+      const students = allStudents.students || [];
+      const trials = trialStudents.students || [];
+
+      const newStats = {
+        total: students.length + trials.length,
+        active: students.filter((s) => s.status === 'active').length,
+        paused: students.filter((s) => s.status === 'paused').length,
+        graduated: students.filter((s) => s.status === 'graduated').length,
+        trial: trials.length,
+      };
+
+      setStats(newStats);
+      onStatsLoaded?.(newStats);
+    } catch (error) {
+      console.error('Failed to load student stats:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const cards = [
@@ -38,8 +85,8 @@ export function StudentStatsCards({ students }: StudentStatsCardsProps) {
       title: '휴원',
       value: stats.paused,
       icon: UserX,
-      bgColor: 'bg-gray-100',
-      iconColor: 'text-gray-600',
+      bgColor: 'bg-yellow-100',
+      iconColor: 'text-yellow-600',
     },
     {
       title: '졸업',
@@ -48,22 +95,31 @@ export function StudentStatsCards({ students }: StudentStatsCardsProps) {
       bgColor: 'bg-purple-100',
       iconColor: 'text-purple-600',
     },
+    {
+      title: '체험',
+      value: stats.trial,
+      icon: Sparkles,
+      bgColor: 'bg-pink-100',
+      iconColor: 'text-pink-600',
+    },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
           <Card key={card.title}>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className={`p-3 ${card.bgColor} rounded-xl`}>
-                  <Icon className={`w-6 h-6 ${card.iconColor}`} />
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <div className={`p-2 ${card.bgColor} rounded-lg`}>
+                  <Icon className={`w-5 h-5 ${card.iconColor}`} />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">{card.title}</div>
-                  <div className="text-2xl font-bold text-gray-900">{card.value}명</div>
+                  <div className="text-xs text-gray-600">{card.title}</div>
+                  <div className="text-xl font-bold text-gray-900">
+                    {loading ? '-' : card.value}명
+                  </div>
                 </div>
               </div>
             </CardContent>

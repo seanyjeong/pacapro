@@ -139,8 +139,8 @@ export default function StudentsPage() {
         </nav>
       </div>
 
-      {/* 체험생 탭이 아닐 때만 통계 카드 표시 */}
-      {activeTab !== 'trial' && <StudentStatsCards students={students} />}
+      {/* 통계 카드 - 모든 탭에서 전체 현황 표시 */}
+      <StudentStatsCards />
 
       {/* 체험생 탭이 아닐 때만 필터 표시 */}
       {activeTab !== 'trial' && (
