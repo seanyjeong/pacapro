@@ -172,7 +172,7 @@ export default function NotificationSettingsPage() {
 
   // 현재 선택된 서비스의 템플릿 내용
   const currentTemplateContent = activeTab === 'solapi'
-    ? settings.solapi_template_content || settings.template_content
+    ? settings.solapi_template_content
     : settings.template_content;
 
   if (loading) {
