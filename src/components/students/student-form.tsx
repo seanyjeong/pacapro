@@ -82,9 +82,18 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
   const [enrollInSeason, setEnrollInSeason] = useState(false);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
 
-  // 체험생 관련 상태
-  const [isTrial, setIsTrial] = useState(initialIsTrial);
-  const [trialDates, setTrialDates] = useState<TrialDate[]>([]);
+  // 체험생 관련 상태 (수정 모드에서는 initialData에서 가져옴)
+  const [isTrial, setIsTrial] = useState(initialData?.is_trial || initialIsTrial);
+  const [trialDates, setTrialDates] = useState<TrialDate[]>(() => {
+    if (initialData?.trial_dates) {
+      // DB에서 문자열로 저장되어 있을 수 있음
+      const dates = typeof initialData.trial_dates === 'string'
+        ? JSON.parse(initialData.trial_dates)
+        : initialData.trial_dates;
+      return Array.isArray(dates) ? dates : [];
+    }
+    return [];
+  });
 
   // 폼 데이터 초기화
   const [formData, setFormData] = useState<StudentFormData>({
@@ -121,9 +130,9 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
     loadAcademySettings();
   }, []);
 
-  // initialIsTrial이 true로 시작하면 기본 일정 1개 추가
+  // 새로운 체험생 등록 시 기본 일정 1개 추가 (수정 모드가 아닐 때만)
   useEffect(() => {
-    if (initialIsTrial && trialDates.length === 0) {
+    if (mode === 'create' && initialIsTrial && trialDates.length === 0) {
       const today = new Date().toISOString().split('T')[0];
       setTrialDates([{ date: today, time_slot: 'afternoon' }]);
     }
