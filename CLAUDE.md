@@ -235,6 +235,18 @@ sudo journalctl -u paca -f     # 로그 확인
 3. `git add . && git commit -m "메시지" && git push`
 4. Vercel 자동 배포 (1-2분)
 
+### ⚠️ 버전 업데이트 규칙
+**배포할 때마다 버전을 올려야 함!** 버전 업데이트 시 아래 4곳을 모두 수정:
+1. `package.json` - `"version": "x.x.x"`
+2. `src/components/layout/sidebar.tsx` - 푸터의 버전 및 날짜
+3. `src/app/settings/page.tsx` - 설정 페이지의 버전 및 날짜
+4. `CLAUDE.md` - 버전 이력 섹션
+
+버전 규칙:
+- **Major (x.0.0)**: 대규모 기능 추가, 아키텍처 변경
+- **Minor (0.x.0)**: 새 기능 추가
+- **Patch (0.0.x)**: 버그 수정, 작은 개선
+
 ### 백엔드 수정
 1. `/home/sean/supermax/paca/backend/` 에서 코드 수정
 2. `cd /home/sean/supermax && git add . && git commit -m "메시지" && git push origin master`
@@ -284,8 +296,13 @@ new Date(2025, 12, 1)  // 2026년 1월 1일 (주의!)
 
 ## 버전 이력
 
-### 현재 버전: v2.0.1 (2025-12-04)
+### 현재 버전: v2.0.2 (2025-12-04)
 
+- **v2.0.2** (2025-12-04): 학생 관리 UI 개선
+  - 학생 통계 카드: 전체 학생 현황 표시 (탭과 무관하게 고정)
+  - 체험생 카드 추가 (전체, 재원, 휴원, 졸업, 체험 5개)
+  - 필터 초기화 버튼 수정 (탭에서 관리하는 status 필터 숨김)
+  - 초기화 시 검색어도 함께 초기화
 - **v2.0.1** (2025-12-04): 버그 수정
   - DB ENUM에 lms, mms 추가
   - message_type 소문자 변환 처리
