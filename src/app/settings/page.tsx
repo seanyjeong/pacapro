@@ -685,7 +685,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-3 text-sm text-gray-600">
           <div className="flex justify-between">
             <span>버전</span>
-            <span className="font-medium text-gray-900">v1.3.2</span>
+            <span className="font-medium text-gray-900">v1.3.3</span>
           </div>
           <div className="flex justify-between">
             <span>마지막 업데이트</span>
@@ -694,6 +694,10 @@ export default function SettingsPage() {
           <div className="flex justify-between">
             <span>데이터베이스</span>
             <span className="font-medium text-green-600">정상</span>
+          </div>
+          <div className="flex justify-between">
+            <span>문의사항</span>
+            <span className="font-medium text-gray-900">010-2144-6755</span>
           </div>
         </CardContent>
       </Card>

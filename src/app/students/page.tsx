@@ -22,8 +22,8 @@ export default function StudentsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<StudentTab>('active');
 
-  // useStudents 훅 사용
-  const { students, loading, error, filters, updateFilters, resetFilters, reload } = useStudents();
+  // useStudents 훅 사용 (초기값: 재원생만)
+  const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents({ status: 'active', is_trial: false });
 
   // 탭 변경 시 필터 업데이트
   useEffect(() => {
@@ -147,7 +147,16 @@ export default function StudentsPage() {
         <StudentFiltersComponent
           filters={filters}
           onFilterChange={updateFilters}
-          onReset={resetFilters}
+          onReset={() => {
+            // 탭 기본 필터는 유지하면서 나머지만 초기화
+            if (activeTab === 'active') {
+              setFilters({ status: 'active', is_trial: false });
+            } else if (activeTab === 'paused') {
+              setFilters({ status: 'paused', is_trial: false });
+            } else if (activeTab === 'withdrawn') {
+              setFilters({ status: 'withdrawn', is_trial: false });
+            }
+          }}
         />
       )}
 
