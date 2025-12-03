@@ -29,7 +29,7 @@ export default function AttendancePage() {
   const scheduleId = parseInt(params.id as string);
 
   const { data: schedule, isLoading: scheduleLoading } = useSchedule(scheduleId);
-  const { data: attendances = [], isLoading: attendanceLoading } = useAttendance(scheduleId);
+  const { data: attendances = [], isLoading: attendanceLoading, refetch: refetchAttendance } = useAttendance(scheduleId);
   const submitAttendance = useSubmitAttendance();
 
   const isLoading = scheduleLoading || attendanceLoading;
@@ -140,6 +140,9 @@ export default function AttendancePage() {
         isSubmitting={submitAttendance.isPending}
         readOnly={schedule.attendance_taken}
         currentDate={schedule.class_date}
+        scheduleId={scheduleId}
+        timeSlot={schedule.time_slot}
+        onStudentAdded={() => refetchAttendance()}
       />
 
       {schedule.attendance_taken && (
