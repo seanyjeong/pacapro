@@ -35,7 +35,7 @@ class APIClient {
                 if (error.response?.status === 401) {
                     // 토큰 만료 또는 인증 실패
                     this.clearAuth();
-                    if (typeof window !== 'undefined') {
+                    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
                         window.location.href = '/login';
                     }
                 } else if (error.response?.status === 403) {
