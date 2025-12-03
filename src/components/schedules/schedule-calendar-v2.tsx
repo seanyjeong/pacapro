@@ -231,43 +231,40 @@ export function ScheduleCalendarV2({
                             onDragOver={handleDragOver}
                             onDrop={(e) => handleDrop(e, dateStr, slot)}
                             className={cn(
-                              'flex items-center gap-1 px-1 py-0.5 rounded text-xs border transition-all cursor-pointer',
+                              'flex items-center gap-0.5 px-1 py-0.5 rounded text-xs border transition-all cursor-pointer',
                               bgColor,
                               draggedStudent && 'ring-1 ring-dashed ring-gray-400'
                             )}
                           >
-                            <Icon className={cn('h-3 w-3', color)} />
-                            <span className={cn('font-medium', color)}>{label}</span>
-                            <div className="ml-auto flex items-center gap-1.5">
-                              {/* 강사 출근/배정 현황 */}
+                            <Icon className={cn('h-3 w-3 shrink-0', color)} />
+                            <div className="flex items-center gap-1 ml-auto overflow-hidden">
+                              {/* 강사 출근/배정 현황 - 아이콘만 */}
                               {scheduledInstructors > 0 && (
                                 <span
                                   className={cn(
-                                    'flex items-center gap-0.5',
+                                    'shrink-0',
                                     attendedInstructors >= scheduledInstructors
                                       ? 'text-green-600'
                                       : attendedInstructors > 0
                                       ? 'text-yellow-600'
-                                      : 'text-gray-500'
+                                      : 'text-gray-400'
                                   )}
-                                  title={`출근 ${attendedInstructors}명 / 배정 ${scheduledInstructors}명`}
+                                  title={`강사 ${attendedInstructors}/${scheduledInstructors}`}
                                 >
                                   <UserCheck className="h-3 w-3" />
-                                  {attendedInstructors}/{scheduledInstructors}
                                 </span>
                               )}
                               {/* 체험생 태그 */}
                               {trialCount > 0 && (
-                                <span className="flex items-center gap-0.5 text-purple-600" title={`체험생 ${trialCount}명`}>
+                                <span className="shrink-0 text-purple-600" title={`체험 ${trialCount}`}>
                                   <Sparkles className="h-3 w-3" />
-                                  {trialCount}
                                 </span>
                               )}
                               {/* 학생 수 */}
                               {studentCount > 0 && (
-                                <span className="flex items-center gap-0.5 text-gray-600">
+                                <span className="flex items-center gap-0.5 text-gray-600 shrink-0">
                                   <User className="h-3 w-3" />
-                                  {studentCount}
+                                  <span className="text-[10px]">{studentCount}</span>
                                 </span>
                               )}
                             </div>
@@ -291,17 +288,17 @@ export function ScheduleCalendarV2({
                 <span>{label}</span>
               </div>
             ))}
-            <div className="flex items-center gap-2 ml-4 border-l pl-4">
+            <div className="flex items-center gap-1.5 ml-4 border-l pl-4">
               <UserCheck className="h-4 w-4 text-green-600" />
-              <span>= 강사 출근/배정</span>
+              <span className="text-xs">강사</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-purple-600" />
-              <span>= 체험생</span>
+              <span className="text-xs">체험</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <User className="h-4 w-4 text-gray-600" />
-              <span>= 학생 수</span>
+              <span className="text-xs">학생</span>
             </div>
           </div>
         </div>
