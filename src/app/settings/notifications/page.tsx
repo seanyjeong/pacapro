@@ -333,7 +333,7 @@ export default function NotificationSettingsPage() {
                 placeholder={`수강료안내
 #{이름} 학생의 수강료 납부일이,
 #{날짜} 일입니다
-계좌 하나은행 000-000000-00000 홍길동`}
+계좌 ○○은행 000-000000-00000 홍길동`}
               />
             </div>
           </div>
