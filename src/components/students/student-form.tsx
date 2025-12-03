@@ -552,6 +552,78 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
         </Card>
       )}
 
+      {/* 체험생 일정 수정 (수정 모드 + 체험생일 때) */}
+      {mode === 'edit' && isTrial && (
+        <Card className="border-purple-300 bg-purple-50">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Sparkles className="w-5 h-5 mr-2 text-purple-600" />
+              체험 일정 수정
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700">
+                체험 일정 <span className="text-gray-500 text-xs">(최대 2회)</span>
+              </label>
+              {trialDates.length < 2 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addTrialDate}
+                  className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  일정 추가
+                </Button>
+              )}
+            </div>
+
+            {trialDates.length === 0 ? (
+              <p className="text-sm text-gray-500 py-2">
+                체험 일정을 추가하세요.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {trialDates.map((td, idx) => (
+                  <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-purple-200">
+                    <Calendar className="w-4 h-4 text-purple-500" />
+                    <span className="text-sm font-medium text-purple-700">{idx + 1}회차</span>
+                    <input
+                      type="date"
+                      value={td.date}
+                      onChange={(e) => updateTrialDate(idx, 'date', e.target.value)}
+                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+                    />
+                    <select
+                      value={td.time_slot}
+                      onChange={(e) => updateTrialDate(idx, 'time_slot', e.target.value as TrialDate['time_slot'])}
+                      className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      {Object.entries(timeSlotLabels).map(([value, label]) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => removeTrialDate(idx)}
+                      className="p-1 text-gray-400 hover:text-red-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="text-xs text-purple-600">
+              * 일정 수정 시 기존 미출석 스케줄은 삭제되고 새 일정으로 재배정됩니다.
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 기본 정보 */}
       <Card>
         <CardHeader>

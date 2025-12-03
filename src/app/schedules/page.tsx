@@ -234,9 +234,9 @@ export default function SchedulesPage() {
 
           {/* 캘린더 뷰 */}
           <TabsContent value="calendar" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* 캘린더 (2/3 너비) */}
-              <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+              {/* 캘린더 (3/4 너비) */}
+              <div className="lg:col-span-3">
                 <ScheduleCalendarV2
                   schedules={schedules}
                   selectedDate={selectedDate}
@@ -249,7 +249,7 @@ export default function SchedulesPage() {
                 />
               </div>
 
-              {/* 강사 근무 배정 패널 (1/3 너비) */}
+              {/* 강사 근무 배정 패널 (1/4 너비) */}
               <div className="lg:col-span-1">
                 <InstructorSchedulePanel
                   date={selectedDate}
