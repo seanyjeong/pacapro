@@ -28,6 +28,7 @@ export const studentsAPI = {
     if (filters?.admission_type) params.append('admission_type', filters.admission_type);
     if (filters?.status) params.append('status', filters.status);
     if (filters?.search) params.append('search', filters.search);
+    if (filters?.is_trial !== undefined) params.append('is_trial', String(filters.is_trial));
 
     const queryString = params.toString();
     const url = queryString ? `/students?${queryString}` : '/students';
