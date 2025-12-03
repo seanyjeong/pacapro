@@ -698,7 +698,7 @@ export function TimeSlotDetailModal({
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium text-gray-900">{student.student_name}</span>
-                                  {student.is_trial && (
+                                  {!!student.is_trial && (
                                     <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs flex items-center gap-1">
                                       <Sparkles className="h-3 w-3" />
                                       체험 {(2 - (student.trial_remaining ?? 2)) + 1}/2
