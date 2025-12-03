@@ -91,6 +91,11 @@ export const studentsAPI = {
       withdrawal_date: string;
       withdrawal_reason: string | null;
     };
+    withdrawalInfo?: {
+      deletedPayments: number;
+      totalUnpaidAmount: number;
+      message: string;
+    };
   }> => {
     return await apiClient.post(`/students/${id}/withdraw`, {
       reason,

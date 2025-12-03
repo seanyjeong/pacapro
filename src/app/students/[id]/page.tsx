@@ -94,13 +94,26 @@ export default function StudentDetailPage() {
   const handleWithdraw = async () => {
     if (!student) return;
 
-    const confirmation = prompt(
-      `⚠️ "${student.name}" 학생을 퇴원 처리합니다.\n\n` +
-      `퇴원 처리 후:\n` +
-      `- 스케줄에서 제외됩니다\n` +
-      `- 학생 목록에서 '퇴원' 상태로 표시됩니다\n\n` +
-      `확인하려면 "퇴원"을 입력하세요:`
-    );
+    // 미납 학원비 확인
+    const unpaidPayments = payments.filter(p => p.payment_status !== 'paid');
+    const totalUnpaid = unpaidPayments.reduce((sum, p) => sum + (parseInt(p.final_amount) - parseInt(p.paid_amount || '0')), 0);
+
+    let warningMessage = `⚠️ "${student.name}" 학생을 퇴원 처리합니다.\n\n`;
+
+    if (unpaidPayments.length > 0) {
+      warningMessage += `⚠️ 미납 학원비 ${unpaidPayments.length}건 (${totalUnpaid.toLocaleString()}원)이 있습니다!\n`;
+      warningMessage += `퇴원 처리 시 미납 학원비가 삭제됩니다.\n\n`;
+    }
+
+    warningMessage += `퇴원 처리 후:\n`;
+    warningMessage += `- 스케줄에서 제외됩니다\n`;
+    warningMessage += `- 학생 목록에서 '퇴원' 상태로 표시됩니다\n`;
+    if (unpaidPayments.length > 0) {
+      warningMessage += `- 미납 학원비가 삭제됩니다\n`;
+    }
+    warningMessage += `\n확인하려면 "퇴원"을 입력하세요:`;
+
+    const confirmation = prompt(warningMessage);
 
     if (confirmation !== '퇴원') {
       if (confirmation !== null) {
@@ -113,12 +126,16 @@ export default function StudentDetailPage() {
     if (reason === null) return; // 취소
 
     try {
-      await studentsAPI.withdrawStudent(studentId, reason || undefined);
-      toast.success(`${student.name} 학생이 퇴원 처리되었습니다.`);
+      const result = await studentsAPI.withdrawStudent(studentId, reason || undefined);
+      let successMsg = `${student.name} 학생이 퇴원 처리되었습니다.`;
+      if (result.withdrawalInfo) {
+        successMsg += ` (${result.withdrawalInfo.message})`;
+      }
+      toast.success(successMsg);
       reload();
-    } catch (err: any) {
-      console.error('Failed to withdraw student:', err);
-      toast.error(err.response?.data?.message || '퇴원 처리에 실패했습니다.');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      toast.error(axiosErr.response?.data?.message || '퇴원 처리에 실패했습니다.');
     }
   };
 
