@@ -5,6 +5,10 @@
 import apiClient from './client';
 
 export interface NotificationSettings {
+  // 서비스 타입 선택
+  service_type: 'sens' | 'solapi';
+
+  // SENS 설정
   naver_access_key: string;
   naver_secret_key: string;
   naver_service_id: string;  // 알림톡용 Service ID
@@ -12,11 +16,22 @@ export interface NotificationSettings {
   kakao_channel_id: string;
   template_code: string;
   template_content: string;  // 템플릿 본문 (변수: #{이름}, #{날짜}, #{금액} 등)
+  has_secret_key?: boolean;
+
+  // 솔라피 설정
+  solapi_api_key: string;
+  solapi_api_secret: string;
+  solapi_pfid: string;  // 카카오 채널 ID
+  solapi_sender_phone: string;  // 발신번호
+  solapi_template_id: string;
+  solapi_template_content: string;
+  has_solapi_secret?: boolean;
+
+  // 공통 설정
   is_enabled: boolean;
   auto_send_day: number;
   auto_send_days: string;  // 콤마로 구분된 자동발송 날짜들 (예: "5,15,25")
   auto_send_hour: number;  // 자동발송 시간 (0-23, 한국시간)
-  has_secret_key?: boolean;
 }
 
 export interface NotificationLog {

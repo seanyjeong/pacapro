@@ -4,8 +4,12 @@ import { useState, useEffect } from 'react';
 import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users } from 'lucide-react';
 import { notificationsAPI, NotificationSettings, NotificationLog } from '@/lib/api/notifications';
 
+type ServiceType = 'sens' | 'solapi';
+
 export default function NotificationSettingsPage() {
   const [settings, setSettings] = useState<NotificationSettings>({
+    service_type: 'sens',
+    // SENS
     naver_access_key: '',
     naver_secret_key: '',
     naver_service_id: '',
@@ -13,11 +17,22 @@ export default function NotificationSettingsPage() {
     kakao_channel_id: '',
     template_code: '',
     template_content: '',
+    // 솔라피
+    solapi_api_key: '',
+    solapi_api_secret: '',
+    solapi_pfid: '',
+    solapi_sender_phone: '',
+    solapi_template_id: '',
+    solapi_template_content: '',
+    // 공통
     is_enabled: false,
     auto_send_day: 0,
     auto_send_days: '',
     auto_send_hour: 9,
   });
+
+  // 현재 선택된 서비스 탭 (보기용, 실제 저장은 service_type)
+  const [activeTab, setActiveTab] = useState<ServiceType>('sens');
 
   // 선택된 자동발송 날짜들을 배열로 관리
   const selectedDays = settings.auto_send_days
@@ -54,8 +69,10 @@ export default function NotificationSettingsPage() {
     try {
       const data = await notificationsAPI.getSettings();
       setSettings(data);
-    } catch (error) {
-      console.error('설정 로드 실패:', error);
+      // 현재 선택된 서비스 타입으로 탭 설정
+      setActiveTab(data.service_type || 'sens');
+    } catch {
+      // 설정 로드 실패 시 기본값 유지
     } finally {
       setLoading(false);
     }
@@ -65,8 +82,8 @@ export default function NotificationSettingsPage() {
     try {
       const data = await notificationsAPI.getLogs({ limit: 10 });
       setLogs(data.logs);
-    } catch (error) {
-      console.error('로그 로드 실패:', error);
+    } catch {
+      // 로그 로드 실패 시 빈 배열 유지
     }
   };
 
@@ -77,7 +94,7 @@ export default function NotificationSettingsPage() {
       await notificationsAPI.saveSettings(settings);
       setMessage({ type: 'success', text: '설정이 저장되었습니다.' });
       loadSettings();
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: '설정 저장에 실패했습니다.' });
     } finally {
       setSaving(false);
@@ -95,8 +112,9 @@ export default function NotificationSettingsPage() {
       await notificationsAPI.sendTest(testPhone);
       setMessage({ type: 'success', text: '테스트 메시지가 발송되었습니다.' });
       loadLogs();
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.response?.data?.message || '테스트 발송에 실패했습니다.' });
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || '테스트 발송에 실패했습니다.' });
     } finally {
       setTesting(false);
     }
@@ -121,8 +139,9 @@ export default function NotificationSettingsPage() {
         text: `발송 완료: ${result.sent}명 성공, ${result.failed}명 실패`
       });
       loadLogs();
-    } catch (error: any) {
-      setMessage({ type: 'error', text: error.response?.data?.message || '발송에 실패했습니다.' });
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || '발송에 실패했습니다.' });
     } finally {
       setSendingUnpaid(false);
     }
@@ -144,6 +163,17 @@ export default function NotificationSettingsPage() {
     }
   };
 
+  // 서비스 타입 변경 시 settings도 업데이트
+  const handleServiceTypeChange = (type: ServiceType) => {
+    setActiveTab(type);
+    setSettings(prev => ({ ...prev, service_type: type }));
+  };
+
+  // 현재 선택된 서비스의 템플릿 내용
+  const currentTemplateContent = activeTab === 'solapi'
+    ? settings.solapi_template_content || settings.template_content
+    : settings.template_content;
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -158,7 +188,7 @@ export default function NotificationSettingsPage() {
         <Bell className="w-8 h-8 text-blue-600" />
         <div>
           <h1 className="text-2xl font-bold text-gray-900">알림톡 및 SMS 설정</h1>
-          <p className="text-gray-500">KakaoTalk 알림톡과 SMS 발송을 위한 Naver Cloud SENS 설정</p>
+          <p className="text-gray-500">KakaoTalk 알림톡과 SMS 발송을 위한 설정</p>
         </div>
       </div>
 
@@ -168,163 +198,291 @@ export default function NotificationSettingsPage() {
         </div>
       )}
 
-      {/* API 연동 설정 */}
+      {/* 서비스 선택 탭 */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Key className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-semibold">API 연동 설정</h2>
+        <h2 className="text-lg font-semibold mb-4">서비스 선택</h2>
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => handleServiceTypeChange('sens')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'sens'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            네이버 SENS
+          </button>
+          <button
+            onClick={() => handleServiceTypeChange('solapi')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'solapi'
+                ? 'bg-purple-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            솔라피 (Solapi)
+          </button>
         </div>
+        <p className="text-sm text-gray-500">
+          현재 사용 중: <strong>{settings.service_type === 'solapi' ? '솔라피' : '네이버 SENS'}</strong>
+          {settings.service_type !== activeTab && (
+            <span className="text-amber-600 ml-2">(변경 후 저장 필요)</span>
+          )}
+        </p>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Naver Cloud Access Key
-            </label>
-            <input
-              type="text"
-              value={settings.naver_access_key}
-              onChange={e => setSettings(prev => ({ ...prev, naver_access_key: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Access Key ID"
-            />
+      {/* SENS 설정 */}
+      {activeTab === 'sens' && (
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Key className="w-5 h-5 text-green-600" />
+            <h2 className="text-lg font-semibold">네이버 SENS API 설정</h2>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Naver Cloud Secret Key
-            </label>
-            <input
-              type="password"
-              value={settings.naver_secret_key}
-              onChange={e => setSettings(prev => ({ ...prev, naver_secret_key: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder={settings.has_secret_key ? '저장됨 (변경하려면 새로 입력)' : 'Secret Key'}
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Naver Cloud Access Key
+              </label>
+              <input
+                type="text"
+                value={settings.naver_access_key}
+                onChange={e => setSettings(prev => ({ ...prev, naver_access_key: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="Access Key ID"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              알림톡 Service ID
-            </label>
-            <input
-              type="text"
-              value={settings.naver_service_id}
-              onChange={e => setSettings(prev => ({ ...prev, naver_service_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="ncp:kkobizmsg:kr:..."
-            />
-            <p className="text-xs text-gray-500 mt-1">알림톡 전용 (SENS &gt; 알림톡 &gt; 프로젝트)</p>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Naver Cloud Secret Key
+              </label>
+              <input
+                type="password"
+                value={settings.naver_secret_key}
+                onChange={e => setSettings(prev => ({ ...prev, naver_secret_key: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder={settings.has_secret_key ? '저장됨 (변경하려면 새로 입력)' : 'Secret Key'}
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              SMS Service ID
-            </label>
-            <input
-              type="text"
-              value={settings.sms_service_id}
-              onChange={e => setSettings(prev => ({ ...prev, sms_service_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="ncp:sms:kr:..."
-            />
-            <p className="text-xs text-gray-500 mt-1">SMS 전용 (SENS &gt; SMS &gt; 프로젝트)</p>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                알림톡 Service ID
+              </label>
+              <input
+                type="text"
+                value={settings.naver_service_id}
+                onChange={e => setSettings(prev => ({ ...prev, naver_service_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="ncp:kkobizmsg:kr:..."
+              />
+              <p className="text-xs text-gray-500 mt-1">알림톡 전용 (SENS &gt; 알림톡 &gt; 프로젝트)</p>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              KakaoTalk 채널 ID
-            </label>
-            <input
-              type="text"
-              value={settings.kakao_channel_id}
-              onChange={e => setSettings(prev => ({ ...prev, kakao_channel_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="@채널ID"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                SMS Service ID
+              </label>
+              <input
+                type="text"
+                value={settings.sms_service_id}
+                onChange={e => setSettings(prev => ({ ...prev, sms_service_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="ncp:sms:kr:..."
+              />
+              <p className="text-xs text-gray-500 mt-1">SMS 전용 (SENS &gt; SMS &gt; 프로젝트)</p>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              템플릿 코드 (Naver에서 승인받은 코드)
-            </label>
-            <input
-              type="text"
-              value={settings.template_code}
-              onChange={e => setSettings(prev => ({ ...prev, template_code: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="예: A06"
-            />
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                KakaoTalk 채널 ID
+              </label>
+              <input
+                type="text"
+                value={settings.kakao_channel_id}
+                onChange={e => setSettings(prev => ({ ...prev, kakao_channel_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="@채널ID"
+              />
+            </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              템플릿 본문 (승인받은 템플릿 내용 그대로 입력)
-            </label>
-            <textarea
-              value={settings.template_content}
-              onChange={e => setSettings(prev => ({ ...prev, template_content: e.target.value }))}
-              rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
-              placeholder={`수강료안내
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                템플릿 코드 (Naver에서 승인받은 코드)
+              </label>
+              <input
+                type="text"
+                value={settings.template_code}
+                onChange={e => setSettings(prev => ({ ...prev, template_code: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="예: A06"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                템플릿 본문 (승인받은 템플릿 내용 그대로 입력)
+              </label>
+              <textarea
+                value={settings.template_content}
+                onChange={e => setSettings(prev => ({ ...prev, template_content: e.target.value }))}
+                rows={6}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm"
+                placeholder={`수강료안내
 #{이름} 학생의 수강료 납부일이,
 #{날짜} 일입니다
 계좌 하나은행 000-000000-00000 홍길동`}
-            />
-
-            {/* 사용 가능한 변수 목록 */}
-            <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm font-medium text-blue-800 mb-2">사용 가능한 변수</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{이름}'}</code>
-                  <span className="text-gray-600">학생 이름</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{날짜}'}</code>
-                  <span className="text-gray-600">납부기한</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{금액}'}</code>
-                  <span className="text-gray-600">학원비</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{월}'}</code>
-                  <span className="text-gray-600">청구 월</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{학원명}'}</code>
-                  <span className="text-gray-600">학원 이름</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{학원전화}'}</code>
-                  <span className="text-gray-600">학원 전화</span>
-                </div>
-              </div>
-              <p className="text-xs text-blue-600 mt-2">
-                * Naver에 템플릿 등록 시 위 변수명을 그대로 사용해주세요
-              </p>
+              />
             </div>
-
-            {/* 미리보기 - 변수만 치환하고 나머지는 그대로 */}
-            {settings.template_content && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-                <p className="text-sm font-medium text-gray-700 mb-2">미리보기 (변수만 예시로 치환)</p>
-                <div className="p-3 bg-yellow-50 rounded border border-yellow-200 text-sm whitespace-pre-wrap">
-                  {settings.template_content
-                    .replace(/#{이름}/g, '홍길동')
-                    .replace(/#{학생명}/g, '홍길동')
-                    .replace(/#{날짜}/g, '12월 10일')
-                    .replace(/#{납부기한}/g, '12월 10일')
-                    .replace(/#{금액}/g, '300,000')
-                    .replace(/#{월}/g, '12')
-                    .replace(/#{학원명}/g, '○○학원')
-                    .replace(/#{학원전화}/g, '010-0000-0000')
-                  }
-                </div>
-              </div>
-            )}
           </div>
         </div>
+      )}
+
+      {/* 솔라피 설정 */}
+      {activeTab === 'solapi' && (
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Key className="w-5 h-5 text-purple-600" />
+            <h2 className="text-lg font-semibold">솔라피 API 설정</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                API Key
+              </label>
+              <input
+                type="text"
+                value={settings.solapi_api_key}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_api_key: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="API Key"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                API Secret
+              </label>
+              <input
+                type="password"
+                value={settings.solapi_api_secret}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_api_secret: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder={settings.has_solapi_secret ? '저장됨 (변경하려면 새로 입력)' : 'API Secret'}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                카카오 채널 ID (pfId)
+              </label>
+              <input
+                type="text"
+                value={settings.solapi_pfid}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_pfid: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="KA01PF..."
+              />
+              <p className="text-xs text-gray-500 mt-1">솔라피 콘솔에서 확인 가능</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                발신번호
+              </label>
+              <input
+                type="text"
+                value={settings.solapi_sender_phone}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_sender_phone: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="010-1234-5678"
+              />
+              <p className="text-xs text-gray-500 mt-1">솔라피에 등록된 발신번호</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                템플릿 ID
+              </label>
+              <input
+                type="text"
+                value={settings.solapi_template_id}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_template_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="KA01TP..."
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                템플릿 본문 (솔라피용)
+              </label>
+              <textarea
+                value={settings.solapi_template_content}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_template_content: e.target.value }))}
+                rows={6}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
+                placeholder={`수강료안내
+#{이름} 학생의 수강료 납부일이,
+#{날짜} 일입니다`}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 사용 가능한 변수 (공통) */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-sm font-medium text-blue-800 mb-2">사용 가능한 변수</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+            <div className="flex items-center gap-2">
+              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{이름}'}</code>
+              <span className="text-gray-600">학생 이름</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{날짜}'}</code>
+              <span className="text-gray-600">납부기한</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{금액}'}</code>
+              <span className="text-gray-600">학원비</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{월}'}</code>
+              <span className="text-gray-600">청구 월</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{학원명}'}</code>
+              <span className="text-gray-600">학원 이름</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{학원전화}'}</code>
+              <span className="text-gray-600">학원 전화</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 미리보기 */}
+        {currentTemplateContent && (
+          <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
+            <p className="text-sm font-medium text-gray-700 mb-2">미리보기 (변수만 예시로 치환)</p>
+            <div className="p-3 bg-yellow-50 rounded border border-yellow-200 text-sm whitespace-pre-wrap">
+              {currentTemplateContent
+                .replace(/#{이름}/g, '홍길동')
+                .replace(/#{학생명}/g, '홍길동')
+                .replace(/#{날짜}/g, '12월 10일')
+                .replace(/#{납부기한}/g, '12월 10일')
+                .replace(/#{금액}/g, '300,000')
+                .replace(/#{월}/g, '12')
+                .replace(/#{학원명}/g, '○○학원')
+                .replace(/#{학원전화}/g, '010-0000-0000')
+              }
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 발송 설정 */}
@@ -403,9 +561,6 @@ export default function NotificationSettingsPage() {
                 매월 선택한 날짜의 {settings.auto_send_hour.toString().padStart(2, '0')}시 정각에 발송
               </span>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              설정한 시간에 미납 학생에게 알림톡이 자동 발송됩니다
-            </p>
           </div>
         </div>
 
@@ -477,60 +632,60 @@ export default function NotificationSettingsPage() {
         <h2 className="text-lg font-semibold mb-4">설정 가이드</h2>
 
         <div className="space-y-2">
-          {/* 가이드 1: Naver Cloud 가입 */}
-          <div className="border rounded-lg">
-            <button
-              onClick={() => toggleGuide('naver')}
-              className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-            >
-              <span className="font-medium">1. Naver Cloud Platform 가입 및 SENS 서비스 등록</span>
-              {openGuides['naver'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </button>
-            {openGuides['naver'] && (
-              <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
-                <p>1. <a href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">Naver Cloud Platform <ExternalLink className="w-3 h-3" /></a> 접속 후 회원가입</p>
-                <p>2. 콘솔 → Products & Services → SENS 선택</p>
-                <p>3. 프로젝트 생성 후 Service ID 확인</p>
-                <p>4. 마이페이지 → 인증키 관리 → Access Key/Secret Key 발급</p>
+          {/* SENS 가이드 */}
+          {activeTab === 'sens' && (
+            <>
+              <div className="border rounded-lg">
+                <button
+                  onClick={() => toggleGuide('naver')}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                >
+                  <span className="font-medium">1. Naver Cloud Platform 가입 및 SENS 서비스 등록</span>
+                  {openGuides['naver'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </button>
+                {openGuides['naver'] && (
+                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                    <p>1. <a href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">Naver Cloud Platform <ExternalLink className="w-3 h-3" /></a> 접속 후 회원가입</p>
+                    <p>2. 콘솔 → Products & Services → SENS 선택</p>
+                    <p>3. 프로젝트 생성 후 Service ID 확인</p>
+                    <p>4. 마이페이지 → 인증키 관리 → Access Key/Secret Key 발급</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* 가이드 2: KakaoTalk 채널 */}
-          <div className="border rounded-lg">
-            <button
-              onClick={() => toggleGuide('kakao')}
-              className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-            >
-              <span className="font-medium">2. KakaoTalk 비즈니스 채널 생성</span>
-              {openGuides['kakao'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </button>
-            {openGuides['kakao'] && (
-              <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
-                <p>1. <a href="https://center-pf.kakao.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">카카오 비즈니스 센터 <ExternalLink className="w-3 h-3" /></a> 접속</p>
-                <p>2. 카카오톡 채널 생성 (비즈니스 채널)</p>
-                <p>3. 채널 ID 확인 (예: @학원이름)</p>
-                <p>4. Naver Cloud SENS에서 KakaoTalk 채널 연동</p>
+              <div className="border rounded-lg">
+                <button
+                  onClick={() => toggleGuide('kakao')}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                >
+                  <span className="font-medium">2. KakaoTalk 비즈니스 채널 생성</span>
+                  {openGuides['kakao'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </button>
+                {openGuides['kakao'] && (
+                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                    <p>1. <a href="https://center-pf.kakao.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">카카오 비즈니스 센터 <ExternalLink className="w-3 h-3" /></a> 접속</p>
+                    <p>2. 카카오톡 채널 생성 (비즈니스 채널)</p>
+                    <p>3. 채널 ID 확인 (예: @학원이름)</p>
+                    <p>4. Naver Cloud SENS에서 KakaoTalk 채널 연동</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* 가이드 3: 템플릿 등록 */}
-          <div className="border rounded-lg">
-            <button
-              onClick={() => toggleGuide('template')}
-              className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
-            >
-              <span className="font-medium">3. 알림톡 템플릿 등록 및 승인</span>
-              {openGuides['template'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-            </button>
-            {openGuides['template'] && (
-              <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
-                <p>1. Naver Cloud SENS 콘솔 → 알림톡 → 템플릿 관리</p>
-                <p>2. 새 템플릿 등록 (아래 예시 참고)</p>
-                <p>3. 카카오 심사 대기 (영업일 기준 2-3일 소요)</p>
-                <p>4. 승인 완료 후 템플릿 코드를 위 설정에 입력</p>
-                <div className="mt-3 p-3 bg-gray-100 rounded text-xs font-mono whitespace-pre-wrap">
+              <div className="border rounded-lg">
+                <button
+                  onClick={() => toggleGuide('template')}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                >
+                  <span className="font-medium">3. 알림톡 템플릿 등록 및 승인</span>
+                  {openGuides['template'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </button>
+                {openGuides['template'] && (
+                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                    <p>1. Naver Cloud SENS 콘솔 → 알림톡 → 템플릿 관리</p>
+                    <p>2. 새 템플릿 등록 (아래 예시 참고)</p>
+                    <p>3. 카카오 심사 대기 (영업일 기준 2-3일 소요)</p>
+                    <p>4. 승인 완료 후 템플릿 코드를 위 설정에 입력</p>
+                    <div className="mt-3 p-3 bg-gray-100 rounded text-xs font-mono whitespace-pre-wrap">
 {`[#{학원명}] 학원비 납부 안내
 
 안녕하세요, #{학생명} 학부모님.
@@ -542,10 +697,70 @@ export default function NotificationSettingsPage() {
 문의: #{학원전화}
 
 ※ 이미 납부하셨다면 이 메시지는 무시해주세요.`}
-                </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
+
+          {/* 솔라피 가이드 */}
+          {activeTab === 'solapi' && (
+            <>
+              <div className="border rounded-lg">
+                <button
+                  onClick={() => toggleGuide('solapi-signup')}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                >
+                  <span className="font-medium">1. 솔라피 가입 및 API Key 발급</span>
+                  {openGuides['solapi-signup'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </button>
+                {openGuides['solapi-signup'] && (
+                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                    <p>1. <a href="https://solapi.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">솔라피 <ExternalLink className="w-3 h-3" /></a> 접속 후 회원가입</p>
+                    <p>2. 사업자등록증 인증 (알림톡 발송에 필요)</p>
+                    <p>3. 콘솔 → API Key 메뉴에서 API Key/Secret 발급</p>
+                    <p>4. 발신번호 등록 (문자 발송용)</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border rounded-lg">
+                <button
+                  onClick={() => toggleGuide('solapi-channel')}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                >
+                  <span className="font-medium">2. 카카오톡 채널 연동</span>
+                  {openGuides['solapi-channel'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </button>
+                {openGuides['solapi-channel'] && (
+                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                    <p>1. 솔라피 콘솔 → 알림톡 → 채널 관리</p>
+                    <p>2. 카카오톡 채널 연동 (카카오 비즈니스 채널 필요)</p>
+                    <p>3. 채널 ID (pfId) 확인 후 위 설정에 입력</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border rounded-lg">
+                <button
+                  onClick={() => toggleGuide('solapi-template')}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                >
+                  <span className="font-medium">3. 알림톡 템플릿 등록</span>
+                  {openGuides['solapi-template'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </button>
+                {openGuides['solapi-template'] && (
+                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                    <p>1. 솔라피 콘솔 → 알림톡 → 템플릿 관리</p>
+                    <p>2. 새 템플릿 등록</p>
+                    <p>3. 카카오 심사 대기 (영업일 기준 1-2일)</p>
+                    <p>4. 승인 완료 후 템플릿 ID를 위 설정에 입력</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
