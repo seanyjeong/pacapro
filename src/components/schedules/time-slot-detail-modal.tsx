@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, Sun, Sunrise, Moon, X, UserCog, Check, Clock } from 'lucide-react';
+import { Loader2, User, Sun, Sunrise, Moon, X, UserCog, Check, Clock, UserPlus, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { TimeSlot } from '@/lib/types/schedule';
@@ -115,6 +115,13 @@ export function TimeSlotDetailModal({
   const [savingInstructor, setSavingInstructor] = useState(false);
   const [savingStudent, setSavingStudent] = useState<number | null>(null);
   const [movingStudent, setMovingStudent] = useState<number | null>(null);
+
+  // 보충 학생 추가 관련 상태
+  const [showAddStudent, setShowAddStudent] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Array<{ id: number; name: string; grade: string; student_number: string }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isAddingStudent, setIsAddingStudent] = useState(false);
 
   useEffect(() => {
     if (open && date && timeSlot) {
@@ -300,6 +307,56 @@ export function TimeSlotDetailModal({
       }));
     } finally {
       setSavingStudent(null);
+    }
+  };
+
+  // 학생 검색
+  const handleSearchStudent = async (query: string) => {
+    setSearchQuery(query);
+    if (query.length < 1) {
+      setSearchResults([]);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const response = await apiClient.get<{ students: Array<{ id: number; name: string; grade: string; student_number: string }> }>(
+        `/students?search=${encodeURIComponent(query)}&status=active&limit=10`
+      );
+      // 이미 등록된 학생 제외
+      const existingIds = new Set(students.map(s => s.student_id));
+      const filtered = response.students.filter(s => !existingIds.has(s.id));
+      setSearchResults(filtered);
+    } catch (err) {
+      console.error('Failed to search students:', err);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // 보충 학생 추가
+  const handleAddMakeupStudent = async (studentId: number, studentName: string) => {
+    if (!date || !timeSlot) return;
+
+    try {
+      setIsAddingStudent(true);
+      await apiClient.post('/schedules/slot/student', {
+        date,
+        time_slot: timeSlot,
+        student_id: studentId,
+        is_makeup: true,
+      });
+      toast.success(`${studentName} 학생이 보충으로 추가되었습니다.`);
+      setShowAddStudent(false);
+      setSearchQuery('');
+      setSearchResults([]);
+      loadSlotData(); // 목록 새로고침
+      onStudentMoved?.(); // 캘린더도 새로고침
+    } catch (err: any) {
+      console.error('Failed to add makeup student:', err);
+      toast.error(err.response?.data?.message || '학생 추가에 실패했습니다.');
+    } finally {
+      setIsAddingStudent(false);
     }
   };
 
@@ -544,8 +601,69 @@ export function TimeSlotDetailModal({
                 <div className="flex items-center gap-2 mb-3">
                   <User className="h-4 w-4 text-gray-500" />
                   <h3 className="font-semibold text-gray-900">학생 출결</h3>
-                  <Badge variant="secondary" className="ml-auto">{students.length}명</Badge>
+                  <Badge variant="secondary">{students.length}명</Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="ml-auto h-7 text-xs"
+                    onClick={() => setShowAddStudent(true)}
+                  >
+                    <UserPlus className="h-3.5 w-3.5 mr-1" />
+                    보충 추가
+                  </Button>
                 </div>
+
+                {/* 보충 학생 검색 */}
+                {showAddStudent && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Search className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-800">보충 학생 검색</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="ml-auto h-6 w-6 p-0"
+                        onClick={() => {
+                          setShowAddStudent(false);
+                          setSearchQuery('');
+                          setSearchResults([]);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Input
+                      placeholder="학생 이름 검색..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearchStudent(e.target.value)}
+                      className="h-8 text-sm"
+                      autoFocus
+                    />
+                    {isSearching && (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+                      </div>
+                    )}
+                    {searchResults.length > 0 && (
+                      <div className="mt-2 space-y-1 max-h-32 overflow-y-auto">
+                        {searchResults.map((student) => (
+                          <button
+                            key={student.id}
+                            onClick={() => handleAddMakeupStudent(student.id, student.name)}
+                            disabled={isAddingStudent}
+                            className="w-full flex items-center justify-between p-2 text-left text-sm bg-white rounded hover:bg-blue-100 transition-colors"
+                          >
+                            <span>{student.name}</span>
+                            <span className="text-xs text-gray-500">{student.grade}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {searchQuery.length > 0 && !isSearching && searchResults.length === 0 && (
+                      <p className="text-xs text-gray-500 mt-2 text-center">검색 결과가 없습니다</p>
+                    )}
+                  </div>
+                )}
 
                 {students.length === 0 ? (
                   <div className="py-8 text-center">

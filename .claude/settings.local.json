@@ -23,7 +23,17 @@
       "Read(/home/sean/backups/**)",
       "Bash(cat:*)",
       "Bash(mysql:*)",
-      "Bash(zcat:*)"
+      "Bash(zcat:*)",
+      "Bash(sudo find:*)",
+      "Bash(systemctl status:*)",
+      "Bash(n8n:*)",
+      "Bash(nslookup:*)",
+      "Bash(host:*)",
+      "Bash(sudo docker ps:*)",
+      "Bash(sudo -S docker ps:*)",
+      "Bash(sudo -S docker exec:*)",
+      "Bash(sudo -S sh -c 'docker exec n8n-postgres-1 psql -U n8nuser -d n8ndb -c \"\"\"\"SELECT id, email, \\\"\"\"\"firstName\\\"\"\"\", \\\"\"\"\"lastName\\\"\"\"\" FROM \\\"\"\"\"user\\\"\"\"\";\"\"\"\"')",
+      "Bash(printf:*)"
     ],
     "deny": [],
     "ask": []
