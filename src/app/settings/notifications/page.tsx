@@ -503,65 +503,82 @@ export default function NotificationSettingsPage() {
             </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              자동 발송 날짜 (여러 날짜 선택 가능)
-            </label>
-            <div className="p-3 border border-gray-300 rounded-lg bg-gray-50">
-              <div className="grid grid-cols-7 gap-2">
-                {[...Array(28)].map((_, i) => {
-                  const day = i + 1;
-                  const isSelected = selectedDays.includes(day);
-                  return (
-                    <button
-                      key={day}
-                      type="button"
-                      onClick={() => toggleDay(day)}
-                      className={`p-2 text-sm rounded-lg transition-colors ${
-                        isSelected
-                          ? 'bg-blue-600 text-white font-medium'
-                          : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {day}
-                    </button>
-                  );
-                })}
-              </div>
-              {selectedDays.length > 0 && (
-                <div className="mt-3 pt-3 border-t">
-                  <p className="text-sm text-blue-700">
-                    <span className="font-medium">선택된 날짜:</span> 매월 {selectedDays.join('일, ')}일
-                  </p>
+          {/* SENS 선택시에만 자동 발송 스케줄 설정 표시 */}
+          {activeTab === 'sens' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  자동 발송 날짜 (여러 날짜 선택 가능)
+                </label>
+                <div className="p-3 border border-gray-300 rounded-lg bg-gray-50">
+                  <div className="grid grid-cols-7 gap-2">
+                    {[...Array(28)].map((_, i) => {
+                      const day = i + 1;
+                      const isSelected = selectedDays.includes(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleDay(day)}
+                          className={`p-2 text-sm rounded-lg transition-colors ${
+                            isSelected
+                              ? 'bg-blue-600 text-white font-medium'
+                              : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+                          }`}
+                        >
+                          {day}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedDays.length > 0 && (
+                    <div className="mt-3 pt-3 border-t">
+                      <p className="text-sm text-blue-700">
+                        <span className="font-medium">선택된 날짜:</span> 매월 {selectedDays.join('일, ')}일
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              선택한 날짜마다 미납자에게 자동으로 알림이 발송됩니다 (매월 반복)
-            </p>
-          </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  선택한 날짜마다 미납자에게 자동으로 알림이 발송됩니다 (매월 반복)
+                </p>
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              자동 발송 시간 (한국 시간)
-            </label>
-            <div className="flex items-center gap-3">
-              <select
-                value={settings.auto_send_hour}
-                onChange={e => setSettings(prev => ({ ...prev, auto_send_hour: parseInt(e.target.value) }))}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {[...Array(24)].map((_, hour) => (
-                  <option key={hour} value={hour}>
-                    {hour.toString().padStart(2, '0')}:00
-                  </option>
-                ))}
-              </select>
-              <span className="text-sm text-gray-600">
-                매월 선택한 날짜의 {settings.auto_send_hour.toString().padStart(2, '0')}시 정각에 발송
-              </span>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  자동 발송 시간 (한국 시간)
+                </label>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={settings.auto_send_hour}
+                    onChange={e => setSettings(prev => ({ ...prev, auto_send_hour: parseInt(e.target.value) }))}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {[...Array(24)].map((_, hour) => (
+                      <option key={hour} value={hour}>
+                        {hour.toString().padStart(2, '0')}:00
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-sm text-gray-600">
+                    매월 선택한 날짜의 {settings.auto_send_hour.toString().padStart(2, '0')}시 정각에 발송
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* 솔라피 선택시 안내 메시지 */}
+          {activeTab === 'solapi' && (
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <p className="text-sm text-purple-800">
+                <strong>자동 발송 스케줄</strong>은 n8n 워크플로우에서 설정합니다.
+              </p>
+              <p className="text-xs text-purple-600 mt-1">
+                솔라피 연동 완료 후 n8n에서 원하는 날짜/시간에 자동 발송되도록 설정할 수 있습니다.
+              </p>
             </div>
-          </div>
+          )}
         </div>
 
         <div className="mt-6">
