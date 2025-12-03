@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles } from 'lucide-react';
+import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles, Pencil } from 'lucide-react';
 import type { Student, TrialDate } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 
@@ -168,6 +168,14 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => router.push(`/students/${student.id}/edit`)}
+                        title="체험 일정 수정"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="default"

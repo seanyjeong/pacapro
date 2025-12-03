@@ -120,7 +120,7 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
                             {student.name}
-                            {student.is_trial && (
+                            {student.is_trial === true && (
                               <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs flex items-center gap-1 px-1.5 py-0">
                                 <Sparkles className="h-3 w-3" />
                                 체험
