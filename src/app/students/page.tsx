@@ -147,8 +147,10 @@ export default function StudentsPage() {
         <StudentFiltersComponent
           filters={filters}
           onFilterChange={updateFilters}
+          hideStatusFilter={true}
           onReset={() => {
             // 탭 기본 필터는 유지하면서 나머지만 초기화
+            setSearchQuery('');
             if (activeTab === 'active') {
               setFilters({ status: 'active', is_trial: false });
             } else if (activeTab === 'paused') {

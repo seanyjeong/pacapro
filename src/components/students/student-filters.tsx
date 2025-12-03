@@ -18,12 +18,14 @@ interface StudentFiltersComponentProps {
   filters: StudentFilters;
   onFilterChange: (filters: StudentFilters) => void;
   onReset: () => void;
+  hideStatusFilter?: boolean; // 탭에서 status를 관리할 때 status 필터 숨김
 }
 
 export function StudentFiltersComponent({
   filters,
   onFilterChange,
   onReset,
+  hideStatusFilter = false,
 }: StudentFiltersComponentProps) {
   const handleChange = (key: keyof StudentFilters, value: unknown) => {
     onFilterChange({
@@ -32,8 +34,9 @@ export function StudentFiltersComponent({
     });
   };
 
+  // 탭에서 status를 관리하면 status는 활성 필터로 취급 안 함
   const hasActiveFilters =
-    filters.student_type || filters.grade || filters.admission_type || filters.status;
+    filters.student_type || filters.grade || filters.admission_type || (!hideStatusFilter && filters.status);
 
   return (
     <Card>
@@ -51,7 +54,7 @@ export function StudentFiltersComponent({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-1 gap-4 ${hideStatusFilter ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}>
           {/* 학생 유형 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">학생 유형</label>
@@ -103,22 +106,24 @@ export function StudentFiltersComponent({
             </select>
           </div>
 
-          {/* 상태 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">상태</label>
-            <select
-              value={filters.status || ''}
-              onChange={(e) => handleChange('status', e.target.value as StudentStatus || undefined)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-            >
-              <option value="">전체</option>
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* 상태 - hideStatusFilter가 true면 숨김 (탭에서 관리) */}
+          {!hideStatusFilter && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">상태</label>
+              <select
+                value={filters.status || ''}
+                onChange={(e) => handleChange('status', e.target.value as StudentStatus || undefined)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              >
+                <option value="">전체</option>
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
