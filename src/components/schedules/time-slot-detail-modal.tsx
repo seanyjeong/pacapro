@@ -24,6 +24,7 @@ import apiClient from '@/lib/api/client';
 interface AttendanceStudent {
   student_id: number;
   student_name: string;
+  grade?: string | null;  // 학년
   attendance_status: string | null;
   season_type?: string | null;  // 'regular' | 'rolling' | null
   is_trial?: boolean | null;  // 체험생 여부
@@ -698,6 +699,9 @@ export function TimeSlotDetailModal({
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium text-gray-900">{student.student_name}</span>
+                                  {student.grade && (
+                                    <span className="text-xs text-gray-500">{student.grade}</span>
+                                  )}
                                   {!!student.is_trial && (
                                     <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs flex items-center gap-1">
                                       <Sparkles className="h-3 w-3" />
