@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink } from 'lucide-react';
+import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users } from 'lucide-react';
 import { notificationsAPI, NotificationSettings, NotificationLog } from '@/lib/api/notifications';
 
 export default function NotificationSettingsPage() {
@@ -40,6 +40,7 @@ export default function NotificationSettingsPage() {
   const [testing, setTesting] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [sendingUnpaid, setSendingUnpaid] = useState(false);
 
   // 가이드 아코디언 상태
   const [openGuides, setOpenGuides] = useState<Record<string, boolean>>({});
@@ -98,6 +99,32 @@ export default function NotificationSettingsPage() {
       setMessage({ type: 'error', text: error.response?.data?.message || '테스트 발송에 실패했습니다.' });
     } finally {
       setTesting(false);
+    }
+  };
+
+  // 미납자 수동 발송
+  const handleSendUnpaid = async () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+
+    if (!confirm(`${year}년 ${month}월 미납자에게 알림톡을 발송하시겠습니까?`)) {
+      return;
+    }
+
+    setSendingUnpaid(true);
+    setMessage(null);
+    try {
+      const result = await notificationsAPI.sendUnpaid(year, month);
+      setMessage({
+        type: 'success',
+        text: `발송 완료: ${result.sent}명 성공, ${result.failed}명 실패`
+      });
+      loadLogs();
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.response?.data?.message || '발송에 실패했습니다.' });
+    } finally {
+      setSendingUnpaid(false);
     }
   };
 
@@ -418,6 +445,30 @@ export default function NotificationSettingsPage() {
         </div>
         {!settings.is_enabled && (
           <p className="text-sm text-amber-600 mt-2">알림톡을 활성화해야 테스트 발송이 가능합니다</p>
+        )}
+      </div>
+
+      {/* 미납자 수동 발송 */}
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="w-5 h-5 text-gray-600" />
+          <h2 className="text-lg font-semibold">미납자 수동 발송</h2>
+        </div>
+
+        <p className="text-sm text-gray-600 mb-4">
+          현재 월({new Date().getMonth() + 1}월) 미납자에게 알림톡을 즉시 발송합니다.
+        </p>
+
+        <button
+          onClick={handleSendUnpaid}
+          disabled={sendingUnpaid || !settings.is_enabled}
+          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {sendingUnpaid ? '발송 중...' : '미납자에게 알림 발송'}
+        </button>
+
+        {!settings.is_enabled && (
+          <p className="text-sm text-amber-600 mt-2">알림톡을 활성화해야 발송이 가능합니다</p>
         )}
       </div>
 

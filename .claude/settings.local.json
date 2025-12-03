@@ -33,7 +33,8 @@
       "Bash(sudo -S docker ps:*)",
       "Bash(sudo -S docker exec:*)",
       "Bash(sudo -S sh -c 'docker exec n8n-postgres-1 psql -U n8nuser -d n8ndb -c \"\"\"\"SELECT id, email, \\\"\"\"\"firstName\\\"\"\"\", \\\"\"\"\"lastName\\\"\"\"\" FROM \\\"\"\"\"user\\\"\"\"\";\"\"\"\"')",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "Bash(git revert:*)"
     ],
     "deny": [],
     "ask": []
