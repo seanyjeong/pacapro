@@ -1,16 +1,19 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudentForm } from '@/components/students/student-form';
 import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
 import type { StudentFormData } from '@/lib/types/student';
 
-export default function NewStudentPage() {
+function NewStudentContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isTrial = searchParams.get('is_trial') === 'true';
 
   const handleSubmit = async (data: StudentFormData) => {
     try {
@@ -77,7 +80,7 @@ export default function NewStudentPage() {
       </div>
 
       {/* Form */}
-      <StudentForm mode="create" onSubmit={handleSubmit} onCancel={handleCancel} />
+      <StudentForm mode="create" initialIsTrial={isTrial} onSubmit={handleSubmit} onCancel={handleCancel} />
 
       {/* 안내 */}
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
@@ -94,5 +97,18 @@ export default function NewStudentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Suspense로 감싸서 export (useSearchParams 사용 위해)
+export default function NewStudentPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      </div>
+    }>
+      <NewStudentContent />
+    </Suspense>
   );
 }

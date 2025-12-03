@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, Sun, Sunrise, Moon, X, UserCog, Check, Clock, UserPlus, Search } from 'lucide-react';
+import { Loader2, User, Sun, Sunrise, Moon, X, UserCog, Check, Clock, UserPlus, Search, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { TimeSlot } from '@/lib/types/schedule';
@@ -26,6 +26,8 @@ interface AttendanceStudent {
   student_name: string;
   attendance_status: string | null;
   season_type?: string | null;  // 'regular' | 'rolling' | null
+  is_trial?: boolean | null;  // 체험생 여부
+  trial_remaining?: number | null;  // 남은 체험 횟수
 }
 
 interface InstructorAttendance {
@@ -696,6 +698,12 @@ export function TimeSlotDetailModal({
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium text-gray-900">{student.student_name}</span>
+                                  {student.is_trial && (
+                                    <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs flex items-center gap-1">
+                                      <Sparkles className="h-3 w-3" />
+                                      체험 {student.trial_remaining ?? 0}/2
+                                    </Badge>
+                                  )}
                                   {student.season_type && (
                                     <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
                                       시즌

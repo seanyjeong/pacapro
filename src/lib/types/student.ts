@@ -22,6 +22,12 @@ export type Gender = 'male' | 'female';
 
 // ===== 학생 인터페이스 =====
 
+// 체험 일정 타입
+export interface TrialDate {
+  date: string; // YYYY-MM-DD
+  time_slot: 'morning' | 'afternoon' | 'evening';
+}
+
 // 기본 학생 인터페이스 - DB 스키마 매칭
 export interface Student {
   id: number;
@@ -54,6 +60,10 @@ export interface Student {
   enrollment_date: string | null;
   withdrawal_date: string | null;
   notes: string | null;
+  // 체험생 관련 필드
+  is_trial: boolean | null; // 체험생 여부
+  trial_remaining: number | null; // 남은 체험 횟수
+  trial_dates: TrialDate[] | string | null; // 체험 일정
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -87,6 +97,10 @@ export interface StudentFormData {
   // 시즌 등록 옵션 (고3, N수 학생용)
   enroll_in_season?: boolean;
   selected_season_id?: number;
+  // 체험생 관련 필드
+  is_trial?: boolean; // 체험생으로 등록
+  trial_remaining?: number; // 체험 횟수 (기본 2)
+  trial_dates?: TrialDate[]; // 체험 일정 배열
 }
 
 // 학생 필터 인터페이스
@@ -96,6 +110,7 @@ export interface StudentFilters {
   admission_type?: AdmissionType;
   status?: StudentStatus;
   search?: string;
+  is_trial?: boolean; // 체험생 필터
 }
 
 // 학생 상세 정보 (성적, 납부내역 포함)

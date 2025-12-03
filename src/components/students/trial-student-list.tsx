@@ -1,0 +1,202 @@
+'use client';
+
+/**
+ * Trial Student List Component
+ * 체험생 목록 컴포넌트
+ */
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles } from 'lucide-react';
+import type { Student, TrialDate } from '@/lib/types/student';
+import apiClient from '@/lib/api/client';
+
+interface TrialStudentListProps {
+  students: Student[];
+  loading: boolean;
+  onReload: () => void;
+}
+
+export function TrialStudentList({ students, loading, onReload }: TrialStudentListProps) {
+  const router = useRouter();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  // 체험 일정 파싱
+  const parseTrialDates = (trialDates: TrialDate[] | string | null): TrialDate[] => {
+    if (!trialDates) return [];
+    if (typeof trialDates === 'string') {
+      try {
+        return JSON.parse(trialDates);
+      } catch {
+        return [];
+      }
+    }
+    return trialDates;
+  };
+
+  // 시간대 라벨
+  const getTimeSlotLabel = (slot: string) => {
+    const labels: Record<string, string> = {
+      morning: '오전',
+      afternoon: '오후',
+      evening: '저녁',
+    };
+    return labels[slot] || slot;
+  };
+
+  // 정식 등록 처리
+  const handleRegister = (student: Student) => {
+    // 체험생 정보를 쿼리 파라미터로 전달
+    const params = new URLSearchParams({
+      from_trial: student.id.toString(),
+      name: student.name,
+      phone: student.phone || '',
+      student_type: student.student_type,
+      grade: student.grade || '',
+    });
+    router.push(`/students/new?${params.toString()}`);
+  };
+
+  // 체험 종료 (삭제) 처리
+  const handleDelete = async (student: Student) => {
+    if (!confirm(`${student.name} 학생의 체험을 종료하시겠습니까?\n(체험 기록이 삭제됩니다)`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(student.id);
+      await apiClient.delete(`/students/${student.id}`);
+      toast.success(`${student.name} 학생의 체험이 종료되었습니다.`);
+      onReload();
+    } catch (error) {
+      console.error('Failed to delete trial student:', error);
+      toast.error('체험 종료에 실패했습니다.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto" />
+          <p className="text-gray-500 mt-2">로딩 중...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (students.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-12 text-center">
+          <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">체험생이 없습니다</h3>
+          <p className="text-gray-500 mb-4">
+            체험 수업을 원하는 학생을 등록해보세요.
+          </p>
+          <Button onClick={() => router.push('/students/new?is_trial=true')}>
+            <UserPlus className="w-4 h-4 mr-2" />
+            체험생 등록
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <table className="w-full">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">이름</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">학년</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">연락처</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">체험 일정</th>
+              <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">남은 횟수</th>
+              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600">액션</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {students.map((student) => {
+              const trialDates = parseTrialDates(student.trial_dates);
+              const remaining = student.trial_remaining ?? 0;
+              const total = 2; // 기본 체험 횟수
+
+              return (
+                <tr key={student.id} className="hover:bg-gray-50">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                        <User className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <span className="font-medium text-gray-900">{student.name}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-sm text-gray-600">
+                    {student.grade || '-'}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-gray-600">
+                    {student.phone || '-'}
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex flex-wrap gap-1">
+                      {trialDates.map((td, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {td.date} {getTimeSlotLabel(td.time_slot)}
+                        </Badge>
+                      ))}
+                      {trialDates.length === 0 && (
+                        <span className="text-gray-400 text-sm">미정</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <Badge
+                      variant={remaining === 0 ? 'destructive' : 'secondary'}
+                      className="font-mono"
+                    >
+                      {remaining}/{total}
+                    </Badge>
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() => handleRegister(student)}
+                      >
+                        <UserPlus className="w-4 h-4 mr-1" />
+                        정식 등록
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDelete(student)}
+                        disabled={deletingId === student.id}
+                      >
+                        {deletingId === student.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}

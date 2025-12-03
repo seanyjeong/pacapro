@@ -9,10 +9,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Trophy, Loader2 } from 'lucide-react';
+import { Trophy, Loader2, Sparkles, Plus, X, Calendar } from 'lucide-react';
 import apiClient from '@/lib/api/client';
 import { seasonsApi } from '@/lib/api/seasons';
-import type { Student, StudentFormData, StudentType, Grade, AdmissionType, StudentStatus, Gender } from '@/lib/types/student';
+import type { Student, StudentFormData, StudentType, Grade, AdmissionType, StudentStatus, Gender, TrialDate } from '@/lib/types/student';
 import type { Season } from '@/lib/types/season';
 import { SEASON_TYPE_LABELS, formatSeasonFee } from '@/lib/types/season';
 import {
@@ -56,11 +56,12 @@ const DEFAULT_TUITION: TuitionByWeeklyCount = {
 interface StudentFormProps {
   mode: 'create' | 'edit';
   initialData?: Student;
+  initialIsTrial?: boolean; // URL에서 is_trial=true로 전달된 경우
   onSubmit: (data: StudentFormData) => Promise<void>;
   onCancel: () => void;
 }
 
-export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFormProps) {
+export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmit, onCancel }: StudentFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -76,6 +77,10 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
   const [seasonsLoading, setSeasonsLoading] = useState(false);
   const [enrollInSeason, setEnrollInSeason] = useState(false);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+
+  // 체험생 관련 상태
+  const [isTrial, setIsTrial] = useState(initialIsTrial);
+  const [trialDates, setTrialDates] = useState<TrialDate[]>([]);
 
   // 폼 데이터 초기화
   const [formData, setFormData] = useState<StudentFormData>({
@@ -111,6 +116,14 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
   useEffect(() => {
     loadAcademySettings();
   }, []);
+
+  // initialIsTrial이 true로 시작하면 기본 일정 1개 추가
+  useEffect(() => {
+    if (initialIsTrial && trialDates.length === 0) {
+      const today = new Date().toISOString().split('T')[0];
+      setTrialDates([{ date: today, time_slot: 'afternoon' }]);
+    }
+  }, [initialIsTrial]);
 
   // 시즌 대상 학년(고3, N수)일 때 활성 시즌 로드
   const isSeasonTarget = formData.student_type === 'exam' && (formData.grade === '고3' || formData.grade === 'N수');
@@ -329,12 +342,16 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
 
     if (!validate()) return;
 
-    // 시즌 등록 정보 포함
+    // 시즌 등록 정보 및 체험생 정보 포함
     const submitData = {
       ...formData,
       enroll_in_season: enrollInSeason && !!selectedSeasonId,
       selected_season_id: enrollInSeason ? selectedSeasonId ?? undefined : undefined,
       confirm_force: forceSubmit, // 강제 등록 플래그
+      // 체험생 정보
+      is_trial: isTrial,
+      trial_remaining: isTrial ? 2 : undefined,
+      trial_dates: isTrial ? trialDates : undefined,
     };
 
     try {
@@ -382,8 +399,136 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
     return new Intl.NumberFormat('ko-KR').format(amount) + '원';
   };
 
+  // 체험 일정 추가
+  const addTrialDate = () => {
+    if (trialDates.length >= 2) return; // 최대 2회
+    const today = new Date().toISOString().split('T')[0];
+    setTrialDates([...trialDates, { date: today, time_slot: 'afternoon' }]);
+  };
+
+  // 체험 일정 삭제
+  const removeTrialDate = (index: number) => {
+    setTrialDates(trialDates.filter((_, i) => i !== index));
+  };
+
+  // 체험 일정 수정
+  const updateTrialDate = (index: number, field: keyof TrialDate, value: string) => {
+    const updated = [...trialDates];
+    updated[index] = { ...updated[index], [field]: value };
+    setTrialDates(updated);
+  };
+
+  // 시간대 라벨
+  const timeSlotLabels: Record<string, string> = {
+    morning: '오전 (09:00~12:00)',
+    afternoon: '오후 (13:00~18:00)',
+    evening: '저녁 (18:00~21:00)',
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* 체험생 등록 옵션 (신규 등록 시에만) */}
+      {mode === 'create' && (
+        <Card className={isTrial ? 'border-purple-300 bg-purple-50' : ''}>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Sparkles className={`w-5 h-5 mr-2 ${isTrial ? 'text-purple-600' : 'text-gray-400'}`} />
+              체험생 등록
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* 체험생 체크박스 */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isTrial"
+                checked={isTrial}
+                onChange={(e) => {
+                  setIsTrial(e.target.checked);
+                  if (e.target.checked && trialDates.length === 0) {
+                    // 체험생 선택 시 기본 일정 1개 추가
+                    addTrialDate();
+                  }
+                }}
+                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+              />
+              <label htmlFor="isTrial" className="text-sm font-medium text-gray-700">
+                체험 수업 학생으로 등록 (2회 무료 체험)
+              </label>
+            </div>
+
+            {/* 체험 일정 설정 */}
+            {isTrial && (
+              <div className="ml-6 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    체험 일정 <span className="text-gray-500 text-xs">(최대 2회)</span>
+                  </label>
+                  {trialDates.length < 2 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addTrialDate}
+                      className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      일정 추가
+                    </Button>
+                  )}
+                </div>
+
+                {trialDates.length === 0 ? (
+                  <p className="text-sm text-gray-500 py-2">
+                    체험 일정을 추가하세요. 일정은 나중에 추가할 수도 있습니다.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {trialDates.map((td, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-purple-200">
+                        <Calendar className="w-4 h-4 text-purple-500" />
+                        <span className="text-sm font-medium text-purple-700">{idx + 1}회차</span>
+                        <input
+                          type="date"
+                          value={td.date}
+                          onChange={(e) => updateTrialDate(idx, 'date', e.target.value)}
+                          className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+                        />
+                        <select
+                          value={td.time_slot}
+                          onChange={(e) => updateTrialDate(idx, 'time_slot', e.target.value as TrialDate['time_slot'])}
+                          className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+                        >
+                          {Object.entries(timeSlotLabels).map(([value, label]) => (
+                            <option key={value} value={value}>{label}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => removeTrialDate(idx)}
+                          className="p-1 text-gray-400 hover:text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="bg-purple-100 border border-purple-200 rounded-md p-3 text-sm text-purple-800">
+                  <p className="font-medium">체험생 안내</p>
+                  <ul className="mt-1 text-xs text-purple-700 list-disc list-inside space-y-0.5">
+                    <li>체험 수업은 무료로 진행됩니다 (학원비 0원)</li>
+                    <li>출석 체크 시 남은 체험 횟수가 자동으로 차감됩니다</li>
+                    <li>체험 완료 후 정식 등록으로 전환할 수 있습니다</li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* 기본 정보 */}
       <Card>
         <CardHeader>
@@ -644,8 +789,8 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
         </CardContent>
       </Card>
 
-      {/* 시즌 등록 (고3, N수 학생만 표시, 신규 등록 시에만) */}
-      {isSeasonTarget && mode === 'create' && (
+      {/* 시즌 등록 (고3, N수 학생만 표시, 신규 등록 시에만, 체험생 제외) */}
+      {isSeasonTarget && mode === 'create' && !isTrial && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -721,63 +866,64 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
         </Card>
       )}
 
-      {/* 학원비 정보 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>학원비 정보</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* 월 학원비 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                월 학원비 <span className="text-gray-500 text-xs">(수업횟수에 따라 자동 설정)</span>
-              </label>
-              <input
-                type="number"
-                value={formData.monthly_tuition}
-                onChange={(e) => handleChange('monthly_tuition', parseInt(e.target.value) || 0)}
-                placeholder="0"
-                min="0"
-                step="10000"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
+      {/* 학원비 정보 - 체험생은 무료이므로 숨김 */}
+      {!isTrial && (
+        <Card>
+          <CardHeader>
+            <CardTitle>학원비 정보</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* 월 학원비 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  월 학원비 <span className="text-gray-500 text-xs">(수업횟수에 따라 자동 설정)</span>
+                </label>
+                <input
+                  type="number"
+                  value={formData.monthly_tuition}
+                  onChange={(e) => handleChange('monthly_tuition', parseInt(e.target.value) || 0)}
+                  placeholder="0"
+                  min="0"
+                  step="10000"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
 
-            {/* 할인율 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">할인율 (%)</label>
-              <input
-                type="number"
-                value={formData.discount_rate || 0}
-                onChange={(e) => handleChange('discount_rate', parseFloat(e.target.value) || 0)}
-                placeholder="0"
-                min="0"
-                max="100"
-                step="1"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
+              {/* 할인율 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">할인율 (%)</label>
+                <input
+                  type="number"
+                  value={formData.discount_rate || 0}
+                  onChange={(e) => handleChange('discount_rate', parseFloat(e.target.value) || 0)}
+                  placeholder="0"
+                  min="0"
+                  max="100"
+                  step="1"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
 
-            {/* 납부일 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                납부일 <span className="text-gray-500 text-xs">(비워두면 학원 기본값 사용)</span>
-              </label>
-              <select
-                value={formData.payment_due_day || ''}
-                onChange={(e) => handleChange('payment_due_day', e.target.value ? parseInt(e.target.value) : undefined)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="">학원 기본값 ({academySettings.tuition_due_day || 5}일)</option>
-                {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                  <option key={day} value={day}>
-                    매월 {day}일
-                  </option>
-                ))}
-              </select>
+              {/* 납부일 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  납부일 <span className="text-gray-500 text-xs">(비워두면 학원 기본값 사용)</span>
+                </label>
+                <select
+                  value={formData.payment_due_day || ''}
+                  onChange={(e) => handleChange('payment_due_day', e.target.value ? parseInt(e.target.value) : undefined)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                >
+                  <option value="">학원 기본값 ({academySettings.tuition_due_day || 5}일)</option>
+                  {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                    <option key={day} value={day}>
+                      매월 {day}일
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-          </div>
 
           {/* 할인 사유 - 할인율이 있을 때만 표시 */}
           {(formData.discount_rate || 0) > 0 && (
@@ -815,8 +961,9 @@ export function StudentForm({ mode, initialData, onSubmit, onCancel }: StudentFo
               <span className="font-bold text-lg text-primary-600">{formatCurrency(finalTuition)}</span>
             </div>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 추가 정보 */}
       <Card>

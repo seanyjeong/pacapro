@@ -1,22 +1,50 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Download, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Download, AlertCircle, Users, UserCheck, UserX, Sparkles } from 'lucide-react';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
 import { StudentFiltersComponent } from '@/components/students/student-filters';
 import { StudentSearch } from '@/components/students/student-search';
 import { StudentListTable } from '@/components/students/student-list-table';
+import { TrialStudentList } from '@/components/students/trial-student-list';
 import { useStudents } from '@/hooks/use-students';
+import { cn } from '@/lib/utils';
+
+// 탭 타입
+type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial';
 
 export default function StudentsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<StudentTab>('active');
 
   // useStudents 훅 사용
   const { students, loading, error, filters, updateFilters, resetFilters, reload } = useStudents();
+
+  // 탭 변경 시 필터 업데이트
+  useEffect(() => {
+    if (activeTab === 'trial') {
+      updateFilters({ status: undefined, is_trial: true });
+    } else if (activeTab === 'active') {
+      updateFilters({ status: 'active', is_trial: false });
+    } else if (activeTab === 'paused') {
+      updateFilters({ status: 'paused', is_trial: false });
+    } else if (activeTab === 'withdrawn') {
+      updateFilters({ status: 'withdrawn', is_trial: false });
+    }
+  }, [activeTab]);
+
+  // 탭별 학생 수 계산 (체험생은 별도 API 호출 필요하므로 일단 표시 안 함)
+  const tabCounts = {
+    active: students.filter(s => s.status === 'active' && !s.is_trial).length,
+    paused: students.filter(s => s.status === 'paused' && !s.is_trial).length,
+    withdrawn: students.filter(s => s.status === 'withdrawn' && !s.is_trial).length,
+    trial: students.filter(s => s.is_trial).length,
+  };
 
   // 검색어 필터링 적용
   const handleSearch = (query: string) => {
@@ -55,6 +83,14 @@ export default function StudentsPage() {
     );
   }
 
+  // 탭 정의
+  const tabs = [
+    { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-green-600' },
+    { id: 'paused' as const, label: '휴원생', icon: Users, color: 'text-yellow-600' },
+    { id: 'withdrawn' as const, label: '퇴원생', icon: UserX, color: 'text-gray-600' },
+    { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600' },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -73,20 +109,47 @@ export default function StudentsPage() {
           </Button>
           <Button onClick={handleAddStudent}>
             <Plus className="w-4 h-4 mr-2" />
-            학생 등록
+            {activeTab === 'trial' ? '체험생 등록' : '학생 등록'}
           </Button>
         </div>
       </div>
 
-      {/* 통계 카드 */}
-      <StudentStatsCards students={students} />
+      {/* 탭 네비게이션 */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors',
+                  isActive
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                )}
+              >
+                <Icon className={cn('w-4 h-4', isActive ? tab.color : '')} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
 
-      {/* 필터 */}
-      <StudentFiltersComponent
-        filters={filters}
-        onFilterChange={updateFilters}
-        onReset={resetFilters}
-      />
+      {/* 체험생 탭이 아닐 때만 통계 카드 표시 */}
+      {activeTab !== 'trial' && <StudentStatsCards students={students} />}
+
+      {/* 체험생 탭이 아닐 때만 필터 표시 */}
+      {activeTab !== 'trial' && (
+        <StudentFiltersComponent
+          filters={filters}
+          onFilterChange={updateFilters}
+          onReset={resetFilters}
+        />
+      )}
 
       {/* 검색 */}
       <div className="flex items-center space-x-4">
@@ -98,12 +161,20 @@ export default function StudentsPage() {
         </div>
       </div>
 
-      {/* 학생 목록 테이블 */}
-      <StudentListTable
-        students={students}
-        loading={loading}
-        onStudentClick={handleStudentClick}
-      />
+      {/* 학생 목록 - 탭에 따라 다른 컴포넌트 표시 */}
+      {activeTab === 'trial' ? (
+        <TrialStudentList
+          students={students.filter(s => s.is_trial)}
+          loading={loading}
+          onReload={reload}
+        />
+      ) : (
+        <StudentListTable
+          students={students}
+          loading={loading}
+          onStudentClick={handleStudentClick}
+        />
+      )}
 
       {/* 안내 */}
       {!loading && students.length === 0 && !searchQuery && !filters.grade && !filters.student_type && (
