@@ -17,6 +17,7 @@ export interface ClassSchedule {
   attendance_taken: boolean;
   notes?: string;
   student_count?: number; // 배정된 학생 수
+  trial_count?: number; // 체험생 수
   created_at: string;
   updated_at?: string;
 }

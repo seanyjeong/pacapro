@@ -9,7 +9,7 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sun, Sunrise, Moon, User, UserCheck } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sun, Sunrise, Moon, User, UserCheck, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   generateCalendarGrid,
@@ -213,6 +213,7 @@ export function ScheduleCalendarV2({
                         const key = `${dateStr}_${slot}`;
                         const schedule = scheduleMap.get(key);
                         const studentCount = schedule?.student_count || 0;
+                        const trialCount = schedule?.trial_count || 0;
 
                         // 강사 통계
                         const dayStats = instructorStats?.[dateStr];
@@ -255,6 +256,13 @@ export function ScheduleCalendarV2({
                                   {attendedInstructors}/{scheduledInstructors}
                                 </span>
                               )}
+                              {/* 체험생 태그 */}
+                              {trialCount > 0 && (
+                                <span className="flex items-center gap-0.5 text-purple-600" title={`체험생 ${trialCount}명`}>
+                                  <Sparkles className="h-3 w-3" />
+                                  {trialCount}
+                                </span>
+                              )}
                               {/* 학생 수 */}
                               {studentCount > 0 && (
                                 <span className="flex items-center gap-0.5 text-gray-600">
@@ -286,6 +294,10 @@ export function ScheduleCalendarV2({
             <div className="flex items-center gap-2 ml-4 border-l pl-4">
               <UserCheck className="h-4 w-4 text-green-600" />
               <span>= 강사 출근/배정</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-purple-600" />
+              <span>= 체험생</span>
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-gray-600" />
