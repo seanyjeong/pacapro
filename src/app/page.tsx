@@ -34,6 +34,10 @@ export default function DashboardPage() {
             setStats(data);
             setError(null);
         } catch (err: any) {
+            // 401 에러는 로그인 페이지로 리다이렉트되므로 에러 메시지 표시 안 함
+            if (err.response?.status === 401) {
+                return;
+            }
             console.error('Dashboard load error:', err);
             setError(err.response?.data?.message || '대시보드 데이터를 불러오는데 실패했습니다.');
         } finally {

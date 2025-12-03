@@ -33,11 +33,12 @@ class APIClient {
             (response) => response,
             (error) => {
                 if (error.response?.status === 401) {
-                    // 토큰 만료 또는 인증 실패
+                    // 토큰 만료 또는 인증 실패 - 조용히 처리 (토스트 없음)
                     this.clearAuth();
                     if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
                         window.location.href = '/login';
                     }
+                    return Promise.reject(error); // 여기서 바로 리턴 (아래 에러 처리 안 함)
                 } else if (error.response?.status === 403) {
                     // 권한 없음 - 사용자 친화적 메시지 표시
                     if (typeof window !== 'undefined') {
