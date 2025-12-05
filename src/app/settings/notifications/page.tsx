@@ -27,6 +27,8 @@ export default function NotificationSettingsPage() {
     // 공통
     is_enabled: false,        // SENS 활성화
     solapi_enabled: false,    // 솔라피 활성화
+    solapi_auto_enabled: false,  // 솔라피 자동발송 활성화
+    solapi_auto_hour: 10,        // 솔라피 자동발송 시간
     auto_send_day: 0,
     auto_send_days: '',
     auto_send_hour: 9,
@@ -621,16 +623,53 @@ export default function NotificationSettingsPage() {
             </>
           )}
 
-          {/* 솔라피 선택시 안내 메시지 */}
+          {/* 솔라피 자동발송 설정 */}
           {activeTab === 'solapi' && (
-            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-              <p className="text-sm text-purple-800">
-                <strong>자동 발송 스케줄</strong>은 n8n 워크플로우에서 설정합니다.
-              </p>
-              <p className="text-xs text-purple-600 mt-1">
-                솔라피 연동 완료 후 n8n에서 원하는 날짜/시간에 자동 발송되도록 설정할 수 있습니다.
-              </p>
-            </div>
+            <>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium text-gray-900">자동 발송 활성화</p>
+                  <p className="text-sm text-gray-500">오늘 수업 있는 미납자에게 자동으로 알림톡 발송</p>
+                </div>
+                <button
+                  onClick={() => setSettings(prev => ({ ...prev, solapi_auto_enabled: !prev.solapi_auto_enabled }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_auto_enabled ? 'bg-purple-600' : 'bg-gray-200'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  자동 발송 시간 (한국 시간)
+                </label>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={settings.solapi_auto_hour ?? 10}
+                    onChange={e => setSettings(prev => ({ ...prev, solapi_auto_hour: parseInt(e.target.value) }))}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  >
+                    {[...Array(24)].map((_, hour) => (
+                      <option key={hour} value={hour}>
+                        {hour.toString().padStart(2, '0')}:00
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-sm text-gray-600">
+                    매일 {(settings.solapi_auto_hour ?? 10).toString().padStart(2, '0')}시에 오늘 수업 있는 미납자에게 발송
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <p className="text-sm text-purple-800">
+                  <strong>발송 대상:</strong> 오늘 수업이 예정된 미납 학생
+                </p>
+                <p className="text-xs text-purple-600 mt-1">
+                  예: 월/수/금 수업인 학생은 월/수/금에만 알림톡을 받습니다.
+                </p>
+              </div>
+            </>
           )}
         </div>
 

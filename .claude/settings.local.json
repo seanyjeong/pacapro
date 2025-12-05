@@ -39,7 +39,13 @@
       "Bash(git clone:*)",
       "Bash(node:*)",
       "Bash(git checkout:*)",
-      "WebFetch(domain:n8n.sean8320.dedyn.io)"
+      "WebFetch(domain:n8n.sean8320.dedyn.io)",
+      "Bash(base64:*)",
+      "Bash(claude mcp list:*)",
+      "Bash(claude mcp add:*)",
+      "mcp__n8n-mcp__list_workflows",
+      "mcp__n8n-mcp__get_workflow",
+      "mcp__n8n-mcp__create_workflow"
     ],
     "deny": [],
     "ask": []

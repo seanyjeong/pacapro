@@ -30,6 +30,8 @@ export interface NotificationSettings {
   // 공통 설정
   is_enabled: boolean;        // SENS 활성화
   solapi_enabled: boolean;    // 솔라피 활성화
+  solapi_auto_enabled: boolean;  // 솔라피 자동발송 활성화
+  solapi_auto_hour: number;      // 솔라피 자동발송 시간 (0-23)
   auto_send_day: number;
   auto_send_days: string;  // 콤마로 구분된 자동발송 날짜들 (예: "5,15,25")
   auto_send_hour: number;  // 자동발송 시간 (0-23, 한국시간)
