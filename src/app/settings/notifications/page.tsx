@@ -268,22 +268,28 @@ export default function NotificationSettingsPage() {
                 <tbody>
                   <tr className="border-b">
                     <td className="py-3 px-2 font-medium">단문 SMS (90byte)</td>
-                    <td className="text-center py-3 px-2 bg-green-50">~9원</td>
+                    <td className="text-center py-3 px-2 bg-green-50">
+                      <span className="text-green-600 font-medium">50건 무료</span>
+                      <br /><span className="text-gray-500 text-xs">초과 시 9원</span>
+                    </td>
                     <td className="text-center py-3 px-2 bg-purple-50">18원</td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-3 px-2 font-medium">장문 LMS (2,000byte)</td>
-                    <td className="text-center py-3 px-2 bg-green-50">~30원</td>
+                    <td className="text-center py-3 px-2 bg-green-50">
+                      <span className="text-green-600 font-medium">10건 무료</span>
+                      <br /><span className="text-gray-500 text-xs">초과 시 30원</span>
+                    </td>
                     <td className="text-center py-3 px-2 bg-purple-50">45원</td>
                   </tr>
                   <tr className="border-b">
                     <td className="py-3 px-2 font-medium">사진 MMS</td>
-                    <td className="text-center py-3 px-2 bg-green-50">~100원</td>
+                    <td className="text-center py-3 px-2 bg-green-50">100원</td>
                     <td className="text-center py-3 px-2 bg-purple-50">110원</td>
                   </tr>
                   <tr className="border-b bg-yellow-50">
                     <td className="py-3 px-2 font-medium">카카오 알림톡</td>
-                    <td className="text-center py-3 px-2">~7원</td>
+                    <td className="text-center py-3 px-2 font-semibold text-green-700">7.5원</td>
                     <td className="text-center py-3 px-2">13원</td>
                   </tr>
                   <tr className="border-b">
@@ -323,10 +329,10 @@ export default function NotificationSettingsPage() {
 
               <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
                 <p className="text-xs text-amber-800">
-                  * SENS 가격은 추정치입니다. 정확한 가격은 공식 사이트에서 확인하세요.
+                  * 가격은 변동될 수 있으며, 대량 발송 시 할인이 적용될 수 있습니다.
                 </p>
                 <p className="text-xs text-amber-800 mt-1">
-                  * 가격은 변동될 수 있으며, 대량 발송 시 할인이 적용될 수 있습니다.
+                  * 정확한 가격은 각 공식 사이트에서 확인하세요.
                 </p>
               </div>
 
