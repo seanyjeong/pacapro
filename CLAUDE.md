@@ -236,11 +236,12 @@ sudo journalctl -u paca -f     # 로그 확인
 4. Vercel 자동 배포 (1-2분)
 
 ### ⚠️ 버전 업데이트 규칙
-**배포할 때마다 버전을 올려야 함!** 버전 업데이트 시 아래 4곳을 모두 수정:
+**배포할 때마다 버전을 올려야 함!** 버전 업데이트 시 아래 5곳을 모두 수정:
 1. `package.json` - `"version": "x.x.x"`
-2. `src/components/layout/sidebar.tsx` - 푸터의 버전 및 날짜
-3. `src/app/settings/page.tsx` - 설정 페이지의 버전 및 날짜
-4. `CLAUDE.md` - 버전 이력 섹션
+2. `src/components/version-checker.tsx` - `APP_VERSION` 상수 (캐시 버스팅용)
+3. `src/components/layout/sidebar.tsx` - 푸터의 버전 및 날짜
+4. `src/app/settings/page.tsx` - 설정 페이지의 버전 및 날짜
+5. `CLAUDE.md` - 버전 이력 섹션
 
 버전 규칙:
 - **Major (x.0.0)**: 대규모 기능 추가, 아키텍처 변경
