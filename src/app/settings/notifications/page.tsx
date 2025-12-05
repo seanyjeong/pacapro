@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users } from 'lucide-react';
+import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign } from 'lucide-react';
 import { notificationsAPI, NotificationSettings, NotificationLog } from '@/lib/api/notifications';
 
 type ServiceType = 'sens' | 'solapi';
@@ -59,6 +59,9 @@ export default function NotificationSettingsPage() {
   const [testPhone, setTestPhone] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [sendingUnpaid, setSendingUnpaid] = useState(false);
+
+  // 가격 비교 모달
+  const [showPriceModal, setShowPriceModal] = useState(false);
 
   // 가이드 아코디언 상태
   const [openGuides, setOpenGuides] = useState<Record<string, boolean>>({});
@@ -203,7 +206,16 @@ export default function NotificationSettingsPage() {
 
       {/* 서비스 선택 탭 */}
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold mb-4">서비스 선택</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">서비스 선택</h2>
+          <button
+            onClick={() => setShowPriceModal(true)}
+            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            <DollarSign className="w-4 h-4" />
+            가격 비교
+          </button>
+        </div>
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => handleServiceTypeChange('sens')}
@@ -233,6 +245,113 @@ export default function NotificationSettingsPage() {
           )}
         </p>
       </div>
+
+      {/* 가격 비교 모달 */}
+      {showPriceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowPriceModal(false)}>
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">서비스별 가격 비교</h3>
+              <button onClick={() => setShowPriceModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-2">메시지 유형</th>
+                    <th className="text-center py-3 px-2 bg-green-50 text-green-700">SENS</th>
+                    <th className="text-center py-3 px-2 bg-purple-50 text-purple-700">솔라피</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b">
+                    <td className="py-3 px-2 font-medium">단문 SMS (90byte)</td>
+                    <td className="text-center py-3 px-2 bg-green-50">~9원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50">18원</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 px-2 font-medium">장문 LMS (2,000byte)</td>
+                    <td className="text-center py-3 px-2 bg-green-50">~30원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50">45원</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 px-2 font-medium">사진 MMS</td>
+                    <td className="text-center py-3 px-2 bg-green-50">~100원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50">110원</td>
+                  </tr>
+                  <tr className="border-b bg-yellow-50">
+                    <td className="py-3 px-2 font-medium">카카오 알림톡</td>
+                    <td className="text-center py-3 px-2">~7원</td>
+                    <td className="text-center py-3 px-2">13원</td>
+                  </tr>
+                  <tr className="border-b">
+                    <td className="py-3 px-2 font-medium">카카오 친구톡</td>
+                    <td className="text-center py-3 px-2 bg-green-50">~15원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50">19원</td>
+                  </tr>
+                  <tr>
+                    <td className="py-3 px-2 font-medium">친구톡 이미지</td>
+                    <td className="text-center py-3 px-2 bg-green-50">~25원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50">29원</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* 장단점 비교 */}
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                  <p className="font-medium text-green-800 mb-2">SENS 장단점</p>
+                  <div className="text-xs space-y-1">
+                    <p className="text-green-700">✓ 저렴한 가격</p>
+                    <p className="text-green-700">✓ 네이버 클라우드 통합</p>
+                    <p className="text-red-600">✗ 가입 절차 복잡</p>
+                    <p className="text-red-600">✗ 설정이 다소 어려움</p>
+                  </div>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                  <p className="font-medium text-purple-800 mb-2">솔라피 장단점</p>
+                  <div className="text-xs space-y-1">
+                    <p className="text-green-700">✓ 가입/설정 간편</p>
+                    <p className="text-green-700">✓ 직관적인 UI</p>
+                    <p className="text-red-600">✗ SENS 대비 비싼 가격</p>
+                    <p className="text-red-600">✗ 대량 발송 시 비용 부담</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                <p className="text-xs text-amber-800">
+                  * SENS 가격은 추정치입니다. 정확한 가격은 공식 사이트에서 확인하세요.
+                </p>
+                <p className="text-xs text-amber-800 mt-1">
+                  * 가격은 변동될 수 있으며, 대량 발송 시 할인이 적용될 수 있습니다.
+                </p>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <a
+                  href="https://www.ncloud.com/product/applicationService/sens"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  SENS 공식 사이트 <ExternalLink className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://solapi.com/pricing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  솔라피 공식 사이트 <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SENS 설정 */}
       {activeTab === 'sens' && (

@@ -45,7 +45,8 @@
       "Bash(claude mcp add:*)",
       "mcp__n8n-mcp__list_workflows",
       "mcp__n8n-mcp__get_workflow",
-      "mcp__n8n-mcp__create_workflow"
+      "mcp__n8n-mcp__create_workflow",
+      "WebFetch(domain:www.ncloud.com)"
     ],
     "deny": [],
     "ask": []
