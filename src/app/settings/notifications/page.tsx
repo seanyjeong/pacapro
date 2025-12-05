@@ -479,7 +479,7 @@ export default function NotificationSettingsPage() {
                 .replace(/#{교육비}/g, '300,000')
                 .replace(/#{금액}/g, '300,000')
                 .replace(/#{월}/g, '12')
-                .replace(/#{학원명}/g, '○○학원')
+                .replace(/#{학원명}/g, 'P-ACA 체대입시')
                 .replace(/#{학원전화}/g, '010-0000-0000')
               }
             </div>
