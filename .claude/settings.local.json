@@ -32,11 +32,14 @@
       "Bash(sudo docker ps:*)",
       "Bash(sudo -S docker ps:*)",
       "Bash(sudo -S docker exec:*)",
-      "Bash(sudo -S sh -c 'docker exec n8n-postgres-1 psql -U n8nuser -d n8ndb -c \"\"\"\"SELECT id, email, \\\"\"\"\"firstName\\\"\"\"\", \\\"\"\"\"lastName\\\"\"\"\" FROM \\\"\"\"\"user\\\"\"\"\";\"\"\"\"')",
       "Bash(printf:*)",
       "Bash(git revert:*)",
       "WebFetch(domain:techchat.tosspayments.com)",
-      "WebFetch(domain:toss.tech)"
+      "WebFetch(domain:toss.tech)",
+      "Bash(git clone:*)",
+      "Bash(node:*)",
+      "Bash(git checkout:*)",
+      "WebFetch(domain:n8n.sean8320.dedyn.io)"
     ],
     "deny": [],
     "ask": []

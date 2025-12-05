@@ -445,10 +445,10 @@ export default function NotificationSettingsPage() {
             </div>
             <div className="flex items-center gap-2">
               <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{날짜}'}</code>
-              <span className="text-gray-600">납부기한</span>
+              <span className="text-gray-600">납부일 (예: 1일)</span>
             </div>
             <div className="flex items-center gap-2">
-              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{금액}'}</code>
+              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{교육비}'}</code>
               <span className="text-gray-600">학원비</span>
             </div>
             <div className="flex items-center gap-2">
@@ -474,8 +474,9 @@ export default function NotificationSettingsPage() {
               {currentTemplateContent
                 .replace(/#{이름}/g, '홍길동')
                 .replace(/#{학생명}/g, '홍길동')
-                .replace(/#{날짜}/g, '12월 10일')
-                .replace(/#{납부기한}/g, '12월 10일')
+                .replace(/#{날짜}/g, '10일')
+                .replace(/#{납부기한}/g, '10일')
+                .replace(/#{교육비}/g, '300,000')
                 .replace(/#{금액}/g, '300,000')
                 .replace(/#{월}/g, '12')
                 .replace(/#{학원명}/g, '○○학원')
