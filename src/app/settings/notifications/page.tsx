@@ -466,22 +466,54 @@ export default function NotificationSettingsPage() {
           </div>
         </div>
 
-        {/* 미리보기 */}
+        {/* 카카오톡 스타일 미리보기 */}
         {currentTemplateContent && (
-          <div className="mt-3 p-3 bg-gray-50 rounded-lg border">
-            <p className="text-sm font-medium text-gray-700 mb-2">미리보기 (변수만 예시로 치환)</p>
-            <div className="p-3 bg-yellow-50 rounded border border-yellow-200 text-sm whitespace-pre-wrap">
-              {currentTemplateContent
-                .replace(/#{이름}/g, '홍길동')
-                .replace(/#{학생명}/g, '홍길동')
-                .replace(/#{날짜}/g, '10일')
-                .replace(/#{납부기한}/g, '10일')
-                .replace(/#{교육비}/g, '300,000')
-                .replace(/#{금액}/g, '300,000')
-                .replace(/#{월}/g, '12')
-                .replace(/#{학원명}/g, 'P-ACA 체대입시')
-                .replace(/#{학원전화}/g, '010-0000-0000')
-              }
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-700 mb-2">미리보기</p>
+            {/* 카카오톡 채팅창 스타일 */}
+            <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
+              {/* 상단 헤더 */}
+              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
+                <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
+                  </svg>
+                </div>
+                <span className="font-medium text-gray-800 text-sm">알림톡</span>
+              </div>
+
+              {/* 메시지 말풍선 */}
+              <div className="flex gap-2">
+                {/* 프로필 */}
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* 말풍선 */}
+                <div className="flex-1">
+                  <p className="text-xs text-gray-600 mb-1">P-ACA 체대입시</p>
+                  <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                      {currentTemplateContent
+                        .replace(/#{이름}/g, '홍길동')
+                        .replace(/#{학생명}/g, '홍길동')
+                        .replace(/#{날짜}/g, '10일')
+                        .replace(/#{납부기한}/g, '10일')
+                        .replace(/#{교육비}/g, '300,000')
+                        .replace(/#{금액}/g, '300,000')
+                        .replace(/#{월}/g, '12')
+                        .replace(/#{학원명}/g, 'P-ACA 체대입시')
+                        .replace(/#{학원전화}/g, '010-0000-0000')
+                      }
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
+                </div>
+              </div>
             </div>
           </div>
         )}
