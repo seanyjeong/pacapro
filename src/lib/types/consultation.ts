@@ -129,17 +129,20 @@ export interface ConsultationSettings {
   confirmationTemplateCode: string;
 }
 
-// 공개 페이지 정보
+// 공개 페이지 정보 (API 응답 구조)
 export interface ConsultationPageInfo {
-  academyId: number;
-  academyName: string;
-  slug: string;
-  isEnabled: boolean;
-  pageTitle?: string;
-  pageDescription?: string;
-  slotDuration: number;
-  advanceDays: number;
-  referralSources?: string[];
+  academy: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+  settings: {
+    pageTitle?: string;
+    pageDescription?: string;
+    slotDuration: number;
+    advanceDays: number;
+    referralSources?: string[];
+  };
   weeklyHours: WeeklyHour[];
 }
 

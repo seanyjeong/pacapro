@@ -89,7 +89,7 @@ export default function ConsultationPage() {
     try {
       const info = await getConsultationPageInfo(slug);
       setPageInfo(info);
-      if (info.referralSources && info.referralSources.length > 0) {
+      if (info.settings?.referralSources && info.settings.referralSources.length > 0) {
         setFormData(prev => ({ ...prev, referralSource: '' }));
       }
     } catch (error: any) {
@@ -168,7 +168,7 @@ export default function ConsultationPage() {
   // 캘린더 생성
   const generateCalendarDays = () => {
     const today = startOfDay(new Date());
-    const maxDate = addDays(today, pageInfo?.advanceDays || 30);
+    const maxDate = addDays(today, pageInfo?.settings?.advanceDays || 30);
 
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
@@ -223,10 +223,10 @@ export default function ConsultationPage() {
       {/* 헤더 */}
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {pageInfo.pageTitle || `${pageInfo.academyName} 상담 예약`}
+          {pageInfo.settings?.pageTitle || `${pageInfo.academy?.name} 상담 예약`}
         </h1>
-        {pageInfo.pageDescription && (
-          <p className="text-sm text-gray-600">{pageInfo.pageDescription}</p>
+        {pageInfo.settings?.pageDescription && (
+          <p className="text-sm text-gray-600">{pageInfo.settings.pageDescription}</p>
         )}
       </div>
 
@@ -410,7 +410,7 @@ export default function ConsultationPage() {
                 className="mt-1"
               />
             </div>
-            {pageInfo.referralSources && pageInfo.referralSources.length > 0 && (
+            {pageInfo.settings?.referralSources && pageInfo.settings.referralSources.length > 0 && (
               <div>
                 <Label className="text-xs">학원을 알게 된 경로</Label>
                 <Select
@@ -421,7 +421,7 @@ export default function ConsultationPage() {
                     <SelectValue placeholder="선택해주세요" />
                   </SelectTrigger>
                   <SelectContent>
-                    {pageInfo.referralSources.map((source) => (
+                    {pageInfo.settings.referralSources.map((source) => (
                       <SelectItem key={source} value={source}>
                         {source}
                       </SelectItem>
