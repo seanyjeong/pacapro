@@ -645,8 +645,8 @@ export default function ConsultationSettingsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4 px-6">
-            <div>
+          <div className="space-y-4 py-6 px-6">
+            <div className="space-y-2">
               <Label>날짜</Label>
               <Input
                 type="date"
@@ -654,7 +654,7 @@ export default function ConsultationSettingsPage() {
                 onChange={(e) => setNewBlockedDate(e.target.value)}
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label>사유 (선택)</Label>
               <Input
                 value={newBlockReason}
