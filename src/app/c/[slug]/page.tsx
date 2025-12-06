@@ -28,6 +28,12 @@ const GRADE_OPTIONS: StudentGrade[] = [
 
 const MOCK_SUBJECTS = ['국어', '수학', '영어', '탐구'] as const;
 
+const ADMISSION_TYPES = [
+  { value: 'early', label: '수시' },
+  { value: 'regular', label: '정시' },
+  { value: 'both', label: '수시+정시' }
+];
+
 export default function ConsultationPage() {
   const params = useParams();
   const router = useRouter();
@@ -63,6 +69,8 @@ export default function ConsultationPage() {
       english: undefined,
       exploration: undefined
     },
+    schoolGradeAvg: undefined,
+    admissionType: '',
     targetSchool: '',
     referrerStudent: '',
     referralSource: '',
@@ -373,31 +381,64 @@ export default function ConsultationPage() {
             </div>
           </div>
 
-          {/* 모의고사 등급 (국/수/영/탐) */}
+          {/* 성적 정보 */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700">모의고사 등급</h3>
-            <div className="grid grid-cols-4 gap-2">
-              {MOCK_SUBJECTS.map((subject) => {
-                const key = subject === '국어' ? 'korean' : subject === '수학' ? 'math' : subject === '영어' ? 'english' : 'exploration';
-                return (
-                  <div key={subject}>
-                    <Label className="text-xs text-center block mb-1">{subject}</Label>
-                    <CustomDropdown
-                      id={`mock_${key}`}
-                      value={formData.mockTestGrades?.[key]?.toString() || ''}
-                      options={[1,2,3,4,5,6,7,8,9].map(g => ({ value: g.toString(), label: `${g}등급` }))}
-                      placeholder="-"
-                      onChange={(v) => setFormData({
-                        ...formData,
-                        mockTestGrades: {
-                          ...formData.mockTestGrades,
-                          [key]: parseInt(v)
-                        }
-                      })}
-                    />
-                  </div>
-                );
-              })}
+            <h3 className="text-sm font-semibold text-gray-700">성적 정보</h3>
+
+            {/* 내신등급 + 입시유형 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">내신 평균등급</Label>
+                <div className="mt-1">
+                  <CustomDropdown
+                    id="schoolGradeAvg"
+                    value={formData.schoolGradeAvg?.toString() || ''}
+                    options={[1,2,3,4,5,6,7,8,9].map(g => ({ value: g.toString(), label: `${g}등급` }))}
+                    placeholder="선택"
+                    onChange={(v) => setFormData({ ...formData, schoolGradeAvg: parseInt(v) })}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">입시 유형</Label>
+                <div className="mt-1">
+                  <CustomDropdown
+                    id="admissionType"
+                    value={formData.admissionType || ''}
+                    options={ADMISSION_TYPES}
+                    placeholder="선택"
+                    onChange={(v) => setFormData({ ...formData, admissionType: v })}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 모의고사 등급 */}
+            <div>
+              <Label className="text-xs mb-1 block">모의고사 등급</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {MOCK_SUBJECTS.map((subject) => {
+                  const key = subject === '국어' ? 'korean' : subject === '수학' ? 'math' : subject === '영어' ? 'english' : 'exploration';
+                  return (
+                    <div key={subject}>
+                      <Label className="text-xs text-center block mb-1 text-gray-500">{subject}</Label>
+                      <CustomDropdown
+                        id={`mock_${key}`}
+                        value={formData.mockTestGrades?.[key]?.toString() || ''}
+                        options={[1,2,3,4,5,6,7,8,9].map(g => ({ value: g.toString(), label: `${g}등급` }))}
+                        placeholder="-"
+                        onChange={(v) => setFormData({
+                          ...formData,
+                          mockTestGrades: {
+                            ...formData.mockTestGrades,
+                            [key]: parseInt(v)
+                          }
+                        })}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -629,12 +670,26 @@ export default function ConsultationPage() {
                 <div className="text-xs text-gray-400">학교</div>
                 <div className="font-medium text-gray-900">{formData.studentSchool}</div>
               </div>
+              {formData.schoolGradeAvg && (
+                <div>
+                  <div className="text-xs text-gray-400">내신 평균</div>
+                  <div className="font-medium text-gray-900">{formData.schoolGradeAvg}등급</div>
+                </div>
+              )}
+              {formData.admissionType && (
+                <div>
+                  <div className="text-xs text-gray-400">입시 유형</div>
+                  <div className="font-medium text-gray-900">
+                    {formData.admissionType === 'early' ? '수시' : formData.admissionType === 'regular' ? '정시' : '수시+정시'}
+                  </div>
+                </div>
+              )}
             </div>
 
             {(formData.mockTestGrades?.korean || formData.mockTestGrades?.math || formData.mockTestGrades?.english || formData.mockTestGrades?.exploration) && (
               <div>
                 <div className="text-xs text-gray-400 mb-1">모의고사 등급</div>
-                <div className="flex gap-3 text-gray-700">
+                <div className="flex flex-wrap gap-3 text-gray-700">
                   {formData.mockTestGrades?.korean && <span>국어 {formData.mockTestGrades.korean}등급</span>}
                   {formData.mockTestGrades?.math && <span>수학 {formData.mockTestGrades.math}등급</span>}
                   {formData.mockTestGrades?.english && <span>영어 {formData.mockTestGrades.english}등급</span>}

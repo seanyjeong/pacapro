@@ -98,6 +98,8 @@ export interface ConsultationFormData {
   schoolGrade?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   mockTestGrade?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   mockTestGrades?: MockTestGrades;
+  schoolGradeAvg?: number;
+  admissionType?: string;
   academicScores?: AcademicScores;
   targetSchool?: string;
   referrerStudent?: string;
