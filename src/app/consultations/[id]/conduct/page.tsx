@@ -563,9 +563,9 @@ export default function ConductPage({ params }: PageProps) {
                       <span>{trialDates[index].timeSlot || '시간대 선택'}</span>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="morning">오전</SelectItem>
-                      <SelectItem value="afternoon">오후</SelectItem>
-                      <SelectItem value="evening">저녁</SelectItem>
+                      <SelectItem value="오전">오전</SelectItem>
+                      <SelectItem value="오후">오후</SelectItem>
+                      <SelectItem value="저녁">저녁</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
