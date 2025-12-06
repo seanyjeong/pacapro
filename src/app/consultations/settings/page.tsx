@@ -950,7 +950,7 @@ export default function ConsultationSettingsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-6 px-6">
             <div className="space-y-2">
               <Label>카테고리</Label>
               <Select

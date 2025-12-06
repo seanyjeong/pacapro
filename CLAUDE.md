@@ -207,6 +207,35 @@ sudo journalctl -u paca -f     # 로그 확인
 - **폼**: React Hook Form + Zod 유효성 검사
 - **사용자 역할**: `owner`, `admin`, `teacher`
 
+### UI 컴포넌트 규칙
+
+#### Dialog/Modal 패딩 규칙 (필수!)
+모달 내부 컨텐츠에는 **반드시** `py-6 px-6` 패딩을 적용해야 함:
+```tsx
+<Dialog>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>제목</DialogTitle>
+    </DialogHeader>
+
+    {/* ⚠️ 이 div에 py-6 px-6 필수! */}
+    <div className="space-y-4 py-6 px-6">
+      <div className="space-y-2">
+        <Label>라벨</Label>
+        <Input />
+      </div>
+    </div>
+
+    <DialogFooter>
+      <Button>확인</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+```
+- `DialogHeader`와 `DialogFooter` 사이의 본문 영역에 패딩 적용
+- Label과 Input 사이에는 `space-y-2` 사용
+- 여러 필드 사이에는 `space-y-4` 사용
+
 ## API 엔드포인트 요약
 
 모든 엔드포인트는 `/paca/` 접두사 사용:
