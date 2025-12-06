@@ -235,18 +235,27 @@ sudo journalctl -u paca -f     # 로그 확인
 3. `git add . && git commit -m "메시지" && git push`
 4. Vercel 자동 배포 (1-2분)
 
-### ⚠️ 버전 업데이트 규칙
-**배포할 때마다 버전을 올려야 함!** 버전 업데이트 시 아래 5곳을 모두 수정:
-1. `package.json` - `"version": "x.x.x"`
-2. `src/components/version-checker.tsx` - `APP_VERSION` 상수 (캐시 버스팅용)
-3. `src/components/layout/sidebar.tsx` - 푸터의 버전 및 날짜
-4. `src/app/settings/page.tsx` - 설정 페이지의 버전 및 날짜
-5. `CLAUDE.md` - 버전 이력 섹션
+### 🚨🚨🚨 버전 업데이트 규칙 (매우 중요!) 🚨🚨🚨
+
+**⚠️ 프론트엔드 배포할 때마다 반드시 버전을 올려야 함!**
+**버전을 안 올리면 사용자 브라우저에 새 버전이 적용되지 않음!**
+
+**버전 업데이트 시 아래 4곳을 모두 수정:**
+```
+1. package.json                           → "version": "x.x.x"
+2. src/components/version-checker.tsx     → APP_VERSION = 'x.x.x'
+3. src/components/layout/sidebar.tsx      → P-ACA vx.x.x + 날짜
+4. src/app/settings/page.tsx              → vx.x.x + 날짜
+```
+
+**그리고 CLAUDE.md 버전 이력 섹션에 변경 내용 추가!**
 
 버전 규칙:
 - **Major (x.0.0)**: 대규모 기능 추가, 아키텍처 변경
 - **Minor (0.x.0)**: 새 기능 추가
 - **Patch (0.0.x)**: 버그 수정, 작은 개선
+
+**📌 Claude에게: 프론트엔드 코드 수정 후 git push 전에 반드시 버전 업데이트할 것!**
 
 ### 백엔드 수정
 1. `/home/sean/supermax/paca/backend/` 에서 코드 수정
@@ -325,8 +334,16 @@ new Date(2025, 12, 1)  // 2026년 1월 1일 (주의!)
 
 ## 버전 이력
 
-### 현재 버전: v2.3.0 (2025-12-06)
+### 현재 버전: v2.3.2 (2025-12-06)
 
+- **v2.3.2** (2025-12-06): 상담 시스템 개선
+  - 스케줄 캘린더에 상담 예약 표시 (📞 아이콘)
+  - 상담 직접 등록 시 시간 중복 체크
+  - 시간 프리셋 버튼 추가 (9시~19시)
+  - 상담 운영 시간 일괄 설정 기능 (전체 적용/평일만 적용)
+- **v2.3.1** (2025-12-06): 스케줄-상담 연동
+  - 스케줄 페이지에서 상담 데이터 조회
+  - 캘린더에 날짜별 상담 예약 개수 표시
 - **v2.3.0** (2025-12-06): 상담 → 체험 연계 기능
   - 관리자 직접 상담 등록 (전화상담 등 직접 예약)
   - 상담 진행 체크리스트 + 메모 기능
