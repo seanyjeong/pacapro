@@ -46,7 +46,9 @@
       "mcp__n8n-mcp__list_workflows",
       "mcp__n8n-mcp__get_workflow",
       "mcp__n8n-mcp__create_workflow",
-      "WebFetch(domain:www.ncloud.com)"
+      "WebFetch(domain:www.ncloud.com)",
+      "Bash(find:*)",
+      "Bash(npx shadcn@latest add:*)"
     ],
     "deny": [],
     "ask": []

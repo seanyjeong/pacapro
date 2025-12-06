@@ -21,6 +21,7 @@ import {
     UserCheck,
     Building2,
     MessageSquare,
+    PhoneCall,
 } from 'lucide-react';
 import type { Permissions } from '@/lib/types/staff';
 import apiClient from '@/lib/api/client';
@@ -46,6 +47,7 @@ const navItems: NavItem[] = [
     { title: '수입', href: '/incomes', icon: TrendingUp, permissionKey: 'incomes' },
     { title: '성적기록 (추후)', href: '/performance', icon: Award },
     { title: '리포트', href: '/reports', icon: BarChart3, permissionKey: 'reports' },
+    { title: '상담', href: '/consultations', icon: PhoneCall, permissionKey: 'settings' },
     { title: '문자 보내기', href: '/sms', icon: MessageSquare, permissionKey: 'settings' },
     { title: '직원관리', href: '/staff', icon: UserCheck, ownerOnly: true },
     { title: '설정', href: '/settings', icon: Settings, permissionKey: 'settings' },
@@ -225,8 +227,8 @@ export function Sidebar() {
             {/* Footer */}
             <div className="p-4 border-t border-gray-200">
                 <div className="text-xs text-gray-500 text-center space-y-1">
-                    <div>P-ACA v2.1.0</div>
-                    <div className="text-[10px] text-gray-400">Last updated: 2025-12-05</div>
+                    <div>P-ACA v2.2.0</div>
+                    <div className="text-[10px] text-gray-400">Last updated: 2025-12-06</div>
                     <div>문의: 010-2144-6755</div>
                 </div>
             </div>
