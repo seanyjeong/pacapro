@@ -78,16 +78,26 @@ export interface Consultation {
   updated_at: string;
 }
 
+// 모의고사 등급 (과목별)
+export interface MockTestGrades {
+  korean?: number;
+  math?: number;
+  english?: number;
+  exploration?: number;
+}
+
 // 상담 신청 폼 데이터 (공개 페이지용)
 export interface ConsultationFormData {
   consultationType: ConsultationType;
   parentName: string;
   parentPhone: string;
   studentName: string;
+  studentPhone?: string;
   studentGrade?: StudentGrade;
   studentSchool?: string;
   schoolGrade?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   mockTestGrade?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+  mockTestGrades?: MockTestGrades;
   academicScores?: AcademicScores;
   targetSchool?: string;
   referrerStudent?: string;

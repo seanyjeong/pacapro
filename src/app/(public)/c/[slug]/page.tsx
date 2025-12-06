@@ -4,18 +4,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { format, addDays, isBefore, startOfDay } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Loader2, Calendar, Clock, User, Phone, School, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Loader2, Calendar, Clock, User, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   getConsultationPageInfo,
@@ -38,6 +31,8 @@ const CONSULTATION_TYPES = [
   { value: 'learning', label: '학습 상담' }
 ];
 
+const MOCK_SUBJECTS = ['국어', '수학', '영어', '탐구'] as const;
+
 export default function ConsultationPage() {
   const params = useParams();
   const router = useRouter();
@@ -55,16 +50,24 @@ export default function ConsultationPage() {
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
+  // 드롭다운 상태
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
   // 폼 데이터
   const [formData, setFormData] = useState<ConsultationFormData>({
     consultationType: 'new_registration',
     parentName: '',
     parentPhone: '',
     studentName: '',
+    studentPhone: '',
     studentGrade: undefined,
     studentSchool: '',
-    schoolGrade: undefined,
-    mockTestGrade: undefined,
+    mockTestGrades: {
+      korean: undefined,
+      math: undefined,
+      english: undefined,
+      exploration: undefined
+    },
     targetSchool: '',
     referrerStudent: '',
     referralSource: '',
@@ -85,13 +88,21 @@ export default function ConsultationPage() {
     }
   }, [selectedDate]);
 
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (openDropdown && !(e.target as Element).closest('.dropdown-container')) {
+        setOpenDropdown(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openDropdown]);
+
   const loadPageInfo = async () => {
     try {
       const info = await getConsultationPageInfo(slug);
       setPageInfo(info);
-      if (info.settings?.referralSources && info.settings.referralSources.length > 0) {
-        setFormData(prev => ({ ...prev, referralSource: '' }));
-      }
     } catch (error: any) {
       toast.error(error.message || '페이지를 불러올 수 없습니다.');
     } finally {
@@ -138,20 +149,20 @@ export default function ConsultationPage() {
   };
 
   const validateStep1 = () => {
-    if (!formData.parentName.trim()) {
-      toast.error('학부모 성함을 입력해주세요.');
-      return false;
-    }
-    if (!formData.parentPhone.trim()) {
-      toast.error('연락처를 입력해주세요.');
-      return false;
-    }
     if (!formData.studentName.trim()) {
       toast.error('학생 이름을 입력해주세요.');
       return false;
     }
+    if (!formData.studentPhone?.trim()) {
+      toast.error('연락처를 입력해주세요.');
+      return false;
+    }
     if (!formData.studentGrade) {
       toast.error('학년을 선택해주세요.');
+      return false;
+    }
+    if (!formData.studentSchool?.trim()) {
+      toast.error('학교를 입력해주세요.');
       return false;
     }
     return true;
@@ -163,6 +174,64 @@ export default function ConsultationPage() {
       return false;
     }
     return true;
+  };
+
+  // 커스텀 드롭다운 컴포넌트
+  const CustomDropdown = ({
+    id,
+    value,
+    options,
+    placeholder,
+    onChange,
+    renderOption
+  }: {
+    id: string;
+    value: string;
+    options: { value: string; label: string }[];
+    placeholder: string;
+    onChange: (value: string) => void;
+    renderOption?: (opt: { value: string; label: string }) => React.ReactNode;
+  }) => {
+    const isOpen = openDropdown === id;
+    const selectedOption = options.find(o => o.value === value);
+
+    return (
+      <div className="dropdown-container relative">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenDropdown(isOpen ? null : id);
+          }}
+          className="w-full px-3 py-2 text-left border rounded-lg bg-white text-sm flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
+          <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+        </button>
+        {isOpen && (
+          <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(opt.value);
+                  setOpenDropdown(null);
+                }}
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 ${
+                  value === opt.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                }`}
+              >
+                {renderOption ? renderOption(opt) : opt.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // 캘린더 생성
@@ -261,55 +330,21 @@ export default function ConsultationPage() {
           {/* 상담 유형 */}
           <div>
             <Label className="text-sm font-medium">상담 유형</Label>
-            <Select
-              value={formData.consultationType}
-              onValueChange={(v) => setFormData({ ...formData, consultationType: v as any })}
-            >
-              <SelectTrigger className="mt-1.5">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CONSULTATION_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 학부모 정보 */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <User className="h-4 w-4" />
-              학부모 정보
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-xs">성함 <span className="text-red-500">*</span></Label>
-                <Input
-                  value={formData.parentName}
-                  onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                  placeholder="홍길동"
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-xs">연락처 <span className="text-red-500">*</span></Label>
-                <Input
-                  value={formData.parentPhone}
-                  onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                  placeholder="010-0000-0000"
-                  className="mt-1"
-                />
-              </div>
+            <div className="mt-1.5">
+              <CustomDropdown
+                id="consultationType"
+                value={formData.consultationType}
+                options={CONSULTATION_TYPES}
+                placeholder="상담 유형 선택"
+                onChange={(v) => setFormData({ ...formData, consultationType: v as any })}
+              />
             </div>
           </div>
 
           {/* 학생 정보 */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <School className="h-4 w-4" />
+              <User className="h-4 w-4" />
               학생 정보
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -318,75 +353,70 @@ export default function ConsultationPage() {
                 <Input
                   value={formData.studentName}
                   onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                  placeholder="홍길순"
+                  placeholder="홍길동"
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label className="text-xs">학년 <span className="text-red-500">*</span></Label>
-                <Select
-                  value={formData.studentGrade || ''}
-                  onValueChange={(v) => setFormData({ ...formData, studentGrade: v as StudentGrade })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {GRADE_OPTIONS.map((grade) => (
-                      <SelectItem key={grade} value={grade}>
-                        {grade}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs">연락처 <span className="text-red-500">*</span></Label>
+                <Input
+                  value={formData.studentPhone || ''}
+                  onChange={(e) => setFormData({ ...formData, studentPhone: e.target.value })}
+                  placeholder="010-0000-0000"
+                  className="mt-1"
+                />
               </div>
-            </div>
-            <div>
-              <Label className="text-xs">학교</Label>
-              <Input
-                value={formData.studentSchool || ''}
-                onChange={(e) => setFormData({ ...formData, studentSchool: e.target.value })}
-                placeholder="OO고등학교"
-                className="mt-1"
-              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">내신 등급</Label>
-                <Select
-                  value={formData.schoolGrade?.toString() || ''}
-                  onValueChange={(v) => setFormData({ ...formData, schoolGrade: parseInt(v) as any })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => (
-                      <SelectItem key={g} value={g.toString()}>
-                        {g}등급
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs">학년 <span className="text-red-500">*</span></Label>
+                <div className="mt-1">
+                  <CustomDropdown
+                    id="studentGrade"
+                    value={formData.studentGrade || ''}
+                    options={GRADE_OPTIONS.map(g => ({ value: g, label: g }))}
+                    placeholder="선택"
+                    onChange={(v) => setFormData({ ...formData, studentGrade: v as StudentGrade })}
+                  />
+                </div>
               </div>
               <div>
-                <Label className="text-xs">모의고사 등급</Label>
-                <Select
-                  value={formData.mockTestGrade?.toString() || ''}
-                  onValueChange={(v) => setFormData({ ...formData, mockTestGrade: parseInt(v) as any })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => (
-                      <SelectItem key={g} value={g.toString()}>
-                        {g}등급
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs">학교 <span className="text-red-500">*</span></Label>
+                <Input
+                  value={formData.studentSchool || ''}
+                  onChange={(e) => setFormData({ ...formData, studentSchool: e.target.value })}
+                  placeholder="OO고등학교"
+                  className="mt-1"
+                />
               </div>
+            </div>
+          </div>
+
+          {/* 모의고사 등급 (국/수/영/탐) */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700">모의고사 등급</h3>
+            <div className="grid grid-cols-4 gap-2">
+              {MOCK_SUBJECTS.map((subject) => {
+                const key = subject === '국어' ? 'korean' : subject === '수학' ? 'math' : subject === '영어' ? 'english' : 'exploration';
+                return (
+                  <div key={subject}>
+                    <Label className="text-xs text-center block mb-1">{subject}</Label>
+                    <CustomDropdown
+                      id={`mock_${key}`}
+                      value={formData.mockTestGrades?.[key]?.toString() || ''}
+                      options={[1,2,3,4,5,6,7,8,9].map(g => ({ value: g.toString(), label: `${g}등급` }))}
+                      placeholder="-"
+                      onChange={(v) => setFormData({
+                        ...formData,
+                        mockTestGrades: {
+                          ...formData.mockTestGrades,
+                          [key]: parseInt(v)
+                        }
+                      })}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -413,21 +443,15 @@ export default function ConsultationPage() {
             {pageInfo.settings?.referralSources && pageInfo.settings.referralSources.length > 0 && (
               <div>
                 <Label className="text-xs">학원을 알게 된 경로</Label>
-                <Select
-                  value={formData.referralSource || ''}
-                  onValueChange={(v) => setFormData({ ...formData, referralSource: v })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="선택해주세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pageInfo.settings.referralSources.map((source) => (
-                      <SelectItem key={source} value={source}>
-                        {source}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="mt-1">
+                  <CustomDropdown
+                    id="referralSource"
+                    value={formData.referralSource || ''}
+                    options={pageInfo.settings.referralSources.map(s => ({ value: s, label: s }))}
+                    placeholder="선택해주세요"
+                    onChange={(v) => setFormData({ ...formData, referralSource: v })}
+                  />
+                </div>
               </div>
             )}
             <div>
@@ -525,7 +549,7 @@ export default function ConsultationPage() {
                             ? 'hover:bg-blue-50 text-gray-700'
                             : 'text-gray-300 cursor-not-allowed'
                       } ${isToday && !isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''} ${
-                        dayOfWeek === 0 ? 'text-red-400' : dayOfWeek === 6 ? 'text-blue-400' : ''
+                        dayOfWeek === 0 && !isSelected ? 'text-red-400' : dayOfWeek === 6 && !isSelected ? 'text-blue-400' : ''
                       }`}
                     >
                       {date.getDate()}
@@ -548,7 +572,7 @@ export default function ConsultationPage() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
                 </div>
-              ) : availableSlots.length === 0 ? (
+              ) : availableSlots.filter(s => s.available).length === 0 ? (
                 <div className="text-center py-6 text-gray-500 text-sm">
                   예약 가능한 시간이 없습니다.
                 </div>
@@ -609,40 +633,34 @@ export default function ConsultationPage() {
 
             <div className="grid grid-cols-2 gap-3 text-gray-600">
               <div>
-                <div className="text-xs text-gray-400">학부모</div>
-                <div className="font-medium text-gray-900">{formData.parentName}</div>
+                <div className="text-xs text-gray-400">이름</div>
+                <div className="font-medium text-gray-900">{formData.studentName}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-400">연락처</div>
-                <div className="font-medium text-gray-900">{formData.parentPhone}</div>
-              </div>
-              <div>
-                <div className="text-xs text-gray-400">학생</div>
-                <div className="font-medium text-gray-900">{formData.studentName}</div>
+                <div className="font-medium text-gray-900">{formData.studentPhone}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-400">학년</div>
                 <div className="font-medium text-gray-900">{formData.studentGrade}</div>
               </div>
-              {formData.studentSchool && (
-                <div className="col-span-2">
-                  <div className="text-xs text-gray-400">학교</div>
-                  <div className="font-medium text-gray-900">{formData.studentSchool}</div>
-                </div>
-              )}
-              {formData.schoolGrade && (
-                <div>
-                  <div className="text-xs text-gray-400">내신</div>
-                  <div className="font-medium text-gray-900">{formData.schoolGrade}등급</div>
-                </div>
-              )}
-              {formData.mockTestGrade && (
-                <div>
-                  <div className="text-xs text-gray-400">모의고사</div>
-                  <div className="font-medium text-gray-900">{formData.mockTestGrade}등급</div>
-                </div>
-              )}
+              <div>
+                <div className="text-xs text-gray-400">학교</div>
+                <div className="font-medium text-gray-900">{formData.studentSchool}</div>
+              </div>
             </div>
+
+            {(formData.mockTestGrades?.korean || formData.mockTestGrades?.math || formData.mockTestGrades?.english || formData.mockTestGrades?.exploration) && (
+              <div>
+                <div className="text-xs text-gray-400 mb-1">모의고사 등급</div>
+                <div className="flex gap-3 text-gray-700">
+                  {formData.mockTestGrades?.korean && <span>국어 {formData.mockTestGrades.korean}등급</span>}
+                  {formData.mockTestGrades?.math && <span>수학 {formData.mockTestGrades.math}등급</span>}
+                  {formData.mockTestGrades?.english && <span>영어 {formData.mockTestGrades.english}등급</span>}
+                  {formData.mockTestGrades?.exploration && <span>탐구 {formData.mockTestGrades.exploration}등급</span>}
+                </div>
+              </div>
+            )}
 
             {formData.inquiryContent && (
               <div>
