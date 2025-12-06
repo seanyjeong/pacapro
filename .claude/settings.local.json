@@ -48,7 +48,9 @@
       "mcp__n8n-mcp__create_workflow",
       "WebFetch(domain:www.ncloud.com)",
       "Bash(find:*)",
-      "Bash(npx shadcn@latest add:*)"
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm update:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": [],
     "ask": []
