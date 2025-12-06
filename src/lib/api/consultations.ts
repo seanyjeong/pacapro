@@ -207,10 +207,11 @@ export async function createDirectConsultation(data: {
 // 상담 완료 → 체험 학생 등록
 export async function convertToTrialStudent(
   consultationId: number,
-  trialDates: { date: string; timeSlot: string }[]
+  trialDates: { date: string; timeSlot: string }[],
+  studentPhone?: string
 ): Promise<{ message: string; studentId: number }> {
   return apiClient.post<{ message: string; studentId: number }>(
     `/consultations/${consultationId}/convert-to-trial`,
-    { trialDates }
+    { trialDates, studentPhone }
   );
 }

@@ -75,6 +75,7 @@ export default function ConductPage({ params }: PageProps) {
     { date: '', timeSlot: '' },
     { date: '', timeSlot: '' }
   ]);
+  const [studentPhone, setStudentPhone] = useState('');
   const [convertingToTrial, setConvertingToTrial] = useState(false);
 
   // 상담 정보 로드
@@ -163,9 +164,12 @@ export default function ConductPage({ params }: PageProps) {
     try {
       await apiClient.put(`/consultations/${consultation.id}`, {
         checklist,
-        consultationMemo
+        consultationMemo,
+        status: 'completed' // 상담 완료 상태로 변경
       });
-      toast.success('상담 진행 내용이 저장되었습니다.');
+      // 상태 업데이트
+      setConsultation({ ...consultation, status: 'completed' });
+      toast.success('상담이 완료 처리되었습니다.');
     } catch (error) {
       console.error('저장 오류:', error);
       toast.error('저장에 실패했습니다.');
@@ -187,7 +191,7 @@ export default function ConductPage({ params }: PageProps) {
 
     setConvertingToTrial(true);
     try {
-      await convertToTrialStudent(consultation.id, trialDates);
+      await convertToTrialStudent(consultation.id, trialDates, studentPhone || undefined);
       toast.success('체험 학생으로 등록되었습니다.');
       setTrialModalOpen(false);
       router.push('/consultations');
@@ -538,6 +542,21 @@ export default function ConductPage({ params }: PageProps) {
           </DialogHeader>
 
           <div className="space-y-4 py-6 px-6">
+            {/* 학생 전화번호 입력 */}
+            <div className="space-y-2">
+              <Label>학생 전화번호</Label>
+              <Input
+                type="tel"
+                placeholder="010-0000-0000"
+                value={studentPhone}
+                onChange={(e) => setStudentPhone(e.target.value)}
+              />
+              <p className="text-xs text-gray-500">
+                학생 본인 전화번호가 있으면 입력하세요. 없으면 학부모 번호로 등록됩니다.
+              </p>
+            </div>
+
+            {/* 체험 일정 선택 */}
             {[0, 1].map((index) => (
               <div key={index} className="space-y-2">
                 <Label>체험 {index + 1}회차</Label>
