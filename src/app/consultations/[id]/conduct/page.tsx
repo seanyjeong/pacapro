@@ -14,10 +14,16 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
 import apiClient from '@/lib/api/client';
+import { convertToTrialStudent } from '@/lib/api/consultations';
 import type { Consultation, ChecklistItem, ChecklistTemplate } from '@/lib/types/consultation';
 import { CONSULTATION_STATUS_LABELS, CONSULTATION_STATUS_COLORS } from '@/lib/types/consultation';
 
@@ -62,6 +68,14 @@ export default function ConductPage({ params }: PageProps) {
     '체력 및 성향': true,
     '안내 완료': true
   });
+
+  // 체험 등록 모달
+  const [trialModalOpen, setTrialModalOpen] = useState(false);
+  const [trialDates, setTrialDates] = useState<{ date: string; timeSlot: string }[]>([
+    { date: '', timeSlot: '' },
+    { date: '', timeSlot: '' }
+  ]);
+  const [convertingToTrial, setConvertingToTrial] = useState(false);
 
   // 상담 정보 로드
   useEffect(() => {
@@ -157,6 +171,31 @@ export default function ConductPage({ params }: PageProps) {
       toast.error('저장에 실패했습니다.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // 체험 학생 등록
+  const handleConvertToTrial = async () => {
+    if (!consultation) return;
+
+    // 검증
+    if (!trialDates[0].date || !trialDates[0].timeSlot ||
+        !trialDates[1].date || !trialDates[1].timeSlot) {
+      toast.error('체험 일정 2개를 모두 선택해주세요.');
+      return;
+    }
+
+    setConvertingToTrial(true);
+    try {
+      await convertToTrialStudent(consultation.id, trialDates);
+      toast.success('체험 학생으로 등록되었습니다.');
+      setTrialModalOpen(false);
+      router.push('/consultations');
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      toast.error(err.message || '체험 등록에 실패했습니다.');
+    } finally {
+      setConvertingToTrial(false);
     }
   };
 
@@ -475,13 +514,84 @@ export default function ConductPage({ params }: PageProps) {
               )}
               저장
             </Button>
-            <Button variant="default" className="bg-green-600 hover:bg-green-700">
+            <Button
+              variant="default"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => setTrialModalOpen(true)}
+              disabled={!!consultation?.linked_student_id}
+            >
               <Sparkles className="h-4 w-4 mr-2" />
-              체험 등록으로 이동
+              {consultation?.linked_student_id ? '이미 체험 등록됨' : '체험 등록'}
             </Button>
           </div>
         </div>
       </div>
+
+      {/* 체험 등록 모달 */}
+      <Dialog open={trialModalOpen} onOpenChange={setTrialModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>체험 학생 등록</DialogTitle>
+            <DialogDescription>
+              {consultation?.student_name}님의 체험 수업 일정을 선택해주세요. (2회)
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-6 px-6">
+            {[0, 1].map((index) => (
+              <div key={index} className="space-y-2">
+                <Label>체험 {index + 1}회차</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    type="date"
+                    value={trialDates[index].date}
+                    onChange={(e) => {
+                      const newDates = [...trialDates];
+                      newDates[index] = { ...newDates[index], date: e.target.value };
+                      setTrialDates(newDates);
+                    }}
+                  />
+                  <Select
+                    value={trialDates[index].timeSlot}
+                    onValueChange={(v) => {
+                      const newDates = [...trialDates];
+                      newDates[index] = { ...newDates[index], timeSlot: v };
+                      setTrialDates(newDates);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <span>{trialDates[index].timeSlot || '시간대 선택'}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="morning">오전</SelectItem>
+                      <SelectItem value="afternoon">오후</SelectItem>
+                      <SelectItem value="evening">저녁</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTrialModalOpen(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={handleConvertToTrial}
+              disabled={convertingToTrial}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {convertingToTrial ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 mr-2" />
+              )}
+              체험 등록
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
