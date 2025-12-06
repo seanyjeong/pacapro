@@ -890,7 +890,7 @@ export default function ConsultationsPage() {
                 </div>
               ) : directForm.preferredDate ? (
                 <div className="space-y-2">
-                  {/* 시간 프리셋 버튼 */}
+                  {/* 시간 버튼 */}
                   <div className="flex flex-wrap gap-2">
                     {TIME_PRESETS.map((time) => {
                       const isBooked = bookedTimes.includes(time);
@@ -900,29 +900,19 @@ export default function ConsultationsPage() {
                           key={time}
                           type="button"
                           size="sm"
-                          variant={isSelected ? 'default' : isBooked ? 'outline' : 'secondary'}
+                          variant={isSelected ? 'default' : 'outline'}
                           disabled={isBooked}
-                          onClick={() => setDirectForm({ ...directForm, preferredTime: time })}
-                          className={isBooked ? 'opacity-50 line-through' : ''}
+                          onClick={() => !isBooked && setDirectForm({ ...directForm, preferredTime: time })}
+                          className={isBooked ? 'opacity-50 line-through text-gray-400' : ''}
                         >
                           {time}
                         </Button>
                       );
                     })}
                   </div>
-                  {/* 직접 입력 */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-500">또는 직접 입력:</span>
-                    <Input
-                      type="time"
-                      value={directForm.preferredTime}
-                      onChange={(e) => setDirectForm({ ...directForm, preferredTime: e.target.value })}
-                      className="w-32"
-                    />
-                  </div>
                   {bookedTimes.length > 0 && (
                     <p className="text-xs text-gray-500">
-                      * 흐린 시간은 이미 예약됨
+                      * 취소선 표시된 시간은 이미 예약됨
                     </p>
                   )}
                 </div>

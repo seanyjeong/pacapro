@@ -389,7 +389,9 @@ export default function ConsultationSettingsPage() {
                 onValueChange={(v) => setSettings({ ...settings, slotDuration: parseInt(v) })}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <span>
+                    {settings.slotDuration === 30 ? '30분' : settings.slotDuration === 60 ? '1시간' : settings.slotDuration === 90 ? '1시간 30분' : '30분'}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="30">30분</SelectItem>
@@ -405,7 +407,7 @@ export default function ConsultationSettingsPage() {
                 onValueChange={(v) => setSettings({ ...settings, maxReservationsPerSlot: parseInt(v) })}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <span>{settings.maxReservationsPerSlot || 1}명</span>
                 </SelectTrigger>
                 <SelectContent>
                   {[1, 2, 3, 4, 5].map(n => (
@@ -421,7 +423,9 @@ export default function ConsultationSettingsPage() {
                 onValueChange={(v) => setSettings({ ...settings, advanceDays: parseInt(v) })}
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <span>
+                    {settings.advanceDays === 7 ? '1주' : settings.advanceDays === 14 ? '2주' : settings.advanceDays === 30 ? '1개월' : settings.advanceDays === 60 ? '2개월' : '1개월'}
+                  </span>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="7">1주</SelectItem>
@@ -509,7 +513,7 @@ export default function ConsultationSettingsPage() {
                     onValueChange={(v) => updateHour(hour.dayOfWeek, 'startTime', v)}
                   >
                     <SelectTrigger className="w-28">
-                      <SelectValue />
+                      <span>{(hour.startTime || '09:00:00').substring(0, 5)}</span>
                     </SelectTrigger>
                     <SelectContent>
                       {timeOptions.slice(0, -1).map(t => (
@@ -523,7 +527,7 @@ export default function ConsultationSettingsPage() {
                     onValueChange={(v) => updateHour(hour.dayOfWeek, 'endTime', v)}
                   >
                     <SelectTrigger className="w-28">
-                      <SelectValue />
+                      <span>{(hour.endTime || '18:00:00') === '24:00:00' ? '24:00' : (hour.endTime || '18:00:00').substring(0, 5)}</span>
                     </SelectTrigger>
                     <SelectContent>
                       {timeOptions.slice(1).map(t => (
@@ -641,7 +645,7 @@ export default function ConsultationSettingsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 py-4">
             <div>
               <Label>날짜</Label>
               <Input
