@@ -645,7 +645,7 @@ export default function ConsultationSettingsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 px-6">
             <div>
               <Label>날짜</Label>
               <Input
