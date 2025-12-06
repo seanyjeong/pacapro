@@ -26,11 +26,6 @@ const GRADE_OPTIONS: StudentGrade[] = [
   '중1', '중2', '중3', '고1', '고2', '고3', 'N수'
 ];
 
-const CONSULTATION_TYPES = [
-  { value: 'new_registration', label: '신규 등록 상담' },
-  { value: 'learning', label: '학습 상담' }
-];
-
 const MOCK_SUBJECTS = ['국어', '수학', '영어', '탐구'] as const;
 
 export default function ConsultationPage() {
@@ -327,20 +322,6 @@ export default function ConsultationPage() {
       {/* Step 1: 정보 입력 */}
       {step === 1 && (
         <div className="bg-white rounded-xl shadow-sm p-5 space-y-5">
-          {/* 상담 유형 */}
-          <div>
-            <Label className="text-sm font-medium">상담 유형</Label>
-            <div className="mt-1.5">
-              <CustomDropdown
-                id="consultationType"
-                value={formData.consultationType}
-                options={CONSULTATION_TYPES}
-                placeholder="상담 유형 선택"
-                onChange={(v) => setFormData({ ...formData, consultationType: v as any })}
-              />
-            </div>
-          </div>
-
           {/* 학생 정보 */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
