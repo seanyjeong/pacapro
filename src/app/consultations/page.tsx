@@ -29,8 +29,10 @@ import Link from 'next/link';
 
 import {
   getConsultations, updateConsultation, deleteConsultation,
-  createDirectConsultation, convertToTrialStudent, getBookedTimes
+  createDirectConsultation, convertToTrialStudent, getBookedTimes,
+  getConsultationSettings
 } from '@/lib/api/consultations';
+import type { WeeklyHour } from '@/lib/types/consultation';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 import {
   CONSULTATION_TYPE_LABELS,
@@ -77,12 +79,30 @@ export default function ConsultationsPage() {
   const [bookedTimes, setBookedTimes] = useState<string[]>([]);
   const [loadingBookedTimes, setLoadingBookedTimes] = useState(false);
 
-  // 자주 쓰는 상담 시간 프리셋
-  const TIME_PRESETS = [
-    '09:00', '10:00', '11:00',
-    '14:00', '15:00', '16:00',
-    '17:00', '18:00', '19:00'
-  ];
+  // 운영 시간 설정
+  const [weeklyHours, setWeeklyHours] = useState<WeeklyHour[]>([]);
+
+  // 선택한 날짜의 요일에 맞는 시간 옵션 생성
+  const getTimeOptionsForDate = (dateStr: string): string[] => {
+    if (!dateStr || weeklyHours.length === 0) return [];
+
+    const date = new Date(dateStr);
+    const dayOfWeek = date.getDay(); // 0=일, 1=월, ...
+    const hourConfig = weeklyHours.find(h => h.dayOfWeek === dayOfWeek);
+
+    if (!hourConfig || !hourConfig.isAvailable) return [];
+
+    const startHour = parseInt(hourConfig.startTime?.substring(0, 2) || '09');
+    const endHour = parseInt(hourConfig.endTime?.substring(0, 2) || '18');
+
+    const times: string[] = [];
+    for (let h = startHour; h < endHour; h++) {
+      times.push(`${h.toString().padStart(2, '0')}:00`);
+    }
+    return times;
+  };
+
+  const timeOptions = getTimeOptionsForDate(directForm.preferredDate);
 
   // 상담 진행 상태
   const [conductMode, setConductMode] = useState(false);
@@ -130,6 +150,21 @@ export default function ConsultationsPage() {
   useEffect(() => {
     loadData();
   }, [search, statusFilter, typeFilter, pagination.page]);
+
+  // 운영 시간 설정 로드
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await getConsultationSettings();
+        if (response.weeklyHours) {
+          setWeeklyHours(response.weeklyHours);
+        }
+      } catch (error) {
+        console.error('운영시간 설정 로드 오류:', error);
+      }
+    };
+    loadSettings();
+  }, []);
 
   // 상태 변경
   const handleStatusChange = async () => {
@@ -891,26 +926,30 @@ export default function ConsultationsPage() {
               ) : directForm.preferredDate ? (
                 <div className="space-y-2">
                   {/* 시간 버튼 */}
-                  <div className="flex flex-wrap gap-2">
-                    {TIME_PRESETS.map((time) => {
-                      const isBooked = bookedTimes.includes(time);
-                      const isSelected = directForm.preferredTime === time;
-                      return (
-                        <Button
-                          key={time}
-                          type="button"
-                          size="sm"
-                          variant={isSelected ? 'default' : 'outline'}
-                          disabled={isBooked}
-                          onClick={() => !isBooked && setDirectForm({ ...directForm, preferredTime: time })}
-                          className={isBooked ? 'opacity-50 line-through text-gray-400' : ''}
-                        >
-                          {time}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  {bookedTimes.length > 0 && (
+                  {timeOptions.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {timeOptions.map((time) => {
+                        const isBooked = bookedTimes.includes(time);
+                        const isSelected = directForm.preferredTime === time;
+                        return (
+                          <Button
+                            key={time}
+                            type="button"
+                            size="sm"
+                            variant={isSelected ? 'default' : 'outline'}
+                            disabled={isBooked}
+                            onClick={() => !isBooked && setDirectForm({ ...directForm, preferredTime: time })}
+                            className={isBooked ? 'opacity-50 line-through text-gray-400' : ''}
+                          >
+                            {time}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-orange-600 py-2">해당 요일은 휴무입니다</p>
+                  )}
+                  {bookedTimes.length > 0 && timeOptions.length > 0 && (
                     <p className="text-xs text-gray-500">
                       * 취소선 표시된 시간은 이미 예약됨
                     </p>
