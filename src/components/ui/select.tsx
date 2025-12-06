@@ -89,8 +89,10 @@ interface SelectValueProps {
 
 const SelectValue = ({ placeholder }: SelectValueProps) => {
   const { value, items } = React.useContext(SelectContext);
-  const displayLabel = items.get(value) || value;
-  return <span className={cn(!value && 'text-gray-500')}>{displayLabel || placeholder}</span>;
+  // items에서 라벨을 찾고, 없으면 placeholder 사용 (value는 표시하지 않음)
+  const displayLabel = items.get(value);
+  const displayText = displayLabel || placeholder || '';
+  return <span className={cn(!displayLabel && 'text-gray-500')}>{displayText}</span>;
 };
 
 // Select Content
@@ -101,20 +103,26 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
     const { open, setOpen } = React.useContext(SelectContext);
     const contentRef = React.useRef<HTMLDivElement>(null);
 
-    // Close on click outside
+    // Close on click outside (but not on trigger button - it handles its own toggle)
     React.useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
-        if (contentRef.current && !contentRef.current.contains(event.target as Node)) {
+        const target = event.target as HTMLElement;
+        // SelectTrigger 버튼 클릭은 무시 (버튼이 자체적으로 토글 처리)
+        if (target.closest('button[type="button"]')) {
+          return;
+        }
+        if (contentRef.current && !contentRef.current.contains(target)) {
           setOpen(false);
         }
       };
 
       if (open) {
-        document.addEventListener('mousedown', handleClickOutside);
+        // mousedown 대신 click 사용 (버튼 클릭 완료 후 처리)
+        document.addEventListener('click', handleClickOutside);
       }
 
       return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener('click', handleClickOutside);
       };
     }, [open, setOpen]);
 

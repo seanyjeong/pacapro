@@ -503,7 +503,7 @@ export default function ConsultationsPage() {
               <Label>상태</Label>
               <Select value={newStatus} onValueChange={(v) => setNewStatus(v as ConsultationStatus)}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder={CONSULTATION_STATUS_LABELS[newStatus]} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending">대기중</SelectItem>
