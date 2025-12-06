@@ -67,8 +67,7 @@ export default function ConductPage({ params }: PageProps) {
   useEffect(() => {
     const loadConsultation = async () => {
       try {
-        const response = await apiClient.get<{ consultation: Consultation }>(`/consultations/${resolvedParams.id}`);
-        const data = response.consultation;
+        const data = await apiClient.get<Consultation>(`/consultations/${resolvedParams.id}`);
         setConsultation(data);
         setConsultationMemo(data.consultation_memo || '');
 
