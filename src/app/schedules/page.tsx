@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Calendar, List, Loader2, CalendarPlus, UserCheck, UserCog, Bell } from 'lucide-react';
+import { Plus, Calendar, List, Loader2, CalendarPlus, UserCheck, UserCog, Bell, PhoneCall } from 'lucide-react';
 import { ScheduleCalendarV2 } from '@/components/schedules/schedule-calendar-v2';
 import { ScheduleList } from '@/components/schedules/schedule-list';
 import { BulkScheduleModal } from '@/components/schedules/bulk-schedule-modal';
@@ -23,7 +23,9 @@ import { PendingApprovalsModal } from '@/components/schedules/pending-approvals-
 import { useSchedules, useDeleteSchedule } from '@/hooks/use-schedules';
 import { instructorsAPI } from '@/lib/api/instructors';
 import { schedulesApi, type DailyInstructorStats } from '@/lib/api/schedules';
+import { getCalendarEvents } from '@/lib/api/consultations';
 import type { ScheduleFilters, ClassSchedule, TimeSlot } from '@/lib/types/schedule';
+import type { Consultation } from '@/lib/types/consultation';
 import { getMonthRange, getToday } from '@/lib/utils/schedule-helpers';
 import { toast } from 'sonner';
 import { canView, canEdit } from '@/lib/utils/permissions';
@@ -56,6 +58,9 @@ export default function SchedulesPage() {
 
   // 캘린더 강사 통계
   const [instructorStats, setInstructorStats] = useState<Record<string, DailyInstructorStats>>({});
+
+  // 상담 일정
+  const [consultations, setConsultations] = useState<Record<string, Consultation[]>>({});
 
   // 권한 체크 (클라이언트에서만 체크하여 hydration 불일치 방지)
   const [canViewOvertimeApproval, setCanViewOvertimeApproval] = useState(false);
@@ -95,9 +100,21 @@ export default function SchedulesPage() {
     }
   }, [currentYear, currentMonth]);
 
+  // 월별 상담 일정 조회
+  const loadConsultations = useCallback(async () => {
+    try {
+      const { start, end } = getMonthRange(currentYear, currentMonth);
+      const response = await getCalendarEvents(start, end);
+      setConsultations(response.events || {});
+    } catch (err) {
+      console.error('Failed to load consultations:', err);
+    }
+  }, [currentYear, currentMonth]);
+
   useEffect(() => {
     loadInstructorStats();
-  }, [loadInstructorStats]);
+    loadConsultations();
+  }, [loadInstructorStats, loadConsultations]);
 
   // 선택된 날짜의 수업 필터링
   const selectedDateSchedules = useMemo(() => {
@@ -244,6 +261,7 @@ export default function SchedulesPage() {
                   onMonthChange={handleMonthChange}
                   onSlotClick={handleSlotClick}
                   instructorStats={instructorStats}
+                  consultations={consultations}
                   currentYear={currentYear}
                   currentMonth={currentMonth}
                 />

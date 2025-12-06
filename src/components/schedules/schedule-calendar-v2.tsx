@@ -9,7 +9,7 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sun, Sunrise, Moon, User, UserCheck, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sun, Sunrise, Moon, User, UserCheck, Sparkles, PhoneCall } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   generateCalendarGrid,
@@ -18,6 +18,7 @@ import {
   isToday,
 } from '@/lib/utils/schedule-helpers';
 import type { ClassSchedule, TimeSlot } from '@/lib/types/schedule';
+import type { Consultation } from '@/lib/types/consultation';
 
 interface StudentInSlot {
   id: number;
@@ -44,6 +45,7 @@ interface ScheduleCalendarV2Props {
   onStudentMove?: (studentId: number, fromDate: string, fromSlot: TimeSlot, toDate: string, toSlot: TimeSlot) => void;
   onSlotClick?: (date: string, slot: TimeSlot) => void;
   instructorStats?: Record<string, DailyInstructorStats>;  // 날짜별 강사 통계
+  consultations?: Record<string, Consultation[]>;  // 날짜별 상담 예약
   currentYear: number;   // 부모에서 관리하는 연도
   currentMonth: number;  // 부모에서 관리하는 월
 }
@@ -62,6 +64,7 @@ export function ScheduleCalendarV2({
   onStudentMove,
   onSlotClick,
   instructorStats,
+  consultations,
   currentYear,
   currentMonth,
 }: ScheduleCalendarV2Props) {
@@ -194,16 +197,28 @@ export function ScheduleCalendarV2({
                 )}
               >
                 <div className="flex flex-col h-full">
-                  {/* 날짜 */}
-                  <div
-                    className={cn(
-                      'text-sm font-medium mb-1 px-1',
-                      index % 7 === 0 && 'text-red-600',
-                      index % 7 === 6 && 'text-blue-600',
-                      !inMonth && 'text-muted-foreground'
+                  {/* 날짜 + 상담 */}
+                  <div className="flex items-center justify-between mb-1 px-1">
+                    <span
+                      className={cn(
+                        'text-sm font-medium',
+                        index % 7 === 0 && 'text-red-600',
+                        index % 7 === 6 && 'text-blue-600',
+                        !inMonth && 'text-muted-foreground'
+                      )}
+                    >
+                      {date.getDate()}
+                    </span>
+                    {/* 상담 예약 표시 */}
+                    {inMonth && consultations?.[dateStr] && consultations[dateStr].length > 0 && (
+                      <span
+                        className="flex items-center gap-0.5 text-xs text-pink-600 bg-pink-50 px-1 rounded"
+                        title={`상담 ${consultations[dateStr].length}건`}
+                      >
+                        <PhoneCall className="h-3 w-3" />
+                        {consultations[dateStr].length}
+                      </span>
                     )}
-                  >
-                    {date.getDate()}
                   </div>
 
                   {/* 타임 슬롯들 */}
@@ -302,6 +317,10 @@ export function ScheduleCalendarV2({
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-gray-600" />
               <span>= 학생 수</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <PhoneCall className="h-4 w-4 text-pink-600" />
+              <span>= 상담 예약</span>
             </div>
           </div>
         </div>
