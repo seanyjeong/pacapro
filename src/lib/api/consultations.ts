@@ -97,7 +97,7 @@ export async function getConsultation(id: number): Promise<Consultation> {
   return apiClient.get<Consultation>(`/consultations/${id}`);
 }
 
-// 상담 수정 (상태, 메모, 일정)
+// 상담 수정 (상태, 메모, 일정, 체크리스트)
 export async function updateConsultation(
   id: number,
   data: {
@@ -105,6 +105,8 @@ export async function updateConsultation(
     adminNotes?: string;
     preferredDate?: string;
     preferredTime?: string;
+    checklist?: { id: number; text: string; checked: boolean }[];
+    consultationMemo?: string;
   }
 ): Promise<{ message: string }> {
   return apiClient.put<{ message: string }>(`/consultations/${id}`, data);
@@ -182,5 +184,28 @@ export async function getCalendarEvents(
 ): Promise<{ events: Record<string, Consultation[]> }> {
   return apiClient.get<{ events: Record<string, Consultation[]> }>(
     `/consultations/calendar/events?startDate=${startDate}&endDate=${endDate}`
+  );
+}
+
+// 관리자 직접 상담 등록
+export async function createDirectConsultation(data: {
+  studentName: string;
+  phone: string;
+  grade: string;
+  preferredDate: string;
+  preferredTime: string;
+  notes?: string;
+}): Promise<{ message: string; id: number }> {
+  return apiClient.post<{ message: string; id: number }>('/consultations/direct', data);
+}
+
+// 상담 완료 → 체험 학생 등록
+export async function convertToTrialStudent(
+  consultationId: number,
+  trialDates: { date: string; timeSlot: string }[]
+): Promise<{ message: string; studentId: number }> {
+  return apiClient.post<{ message: string; studentId: number }>(
+    `/consultations/${consultationId}/convert-to-trial`,
+    { trialDates }
   );
 }

@@ -70,6 +70,10 @@ export interface Consultation {
   status: ConsultationStatus;
   admin_notes?: string;
 
+  // 상담 진행
+  checklist?: { id: number; text: string; checked: boolean }[];
+  consultation_memo?: string;
+
   // 알림톡
   alimtalk_sent_at?: string;
   alimtalk_status?: string;

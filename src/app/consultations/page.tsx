@@ -6,7 +6,8 @@ import { ko } from 'date-fns/locale';
 import {
   Calendar, Clock, User, Phone, Search, Filter, Settings,
   ChevronDown, ChevronRight, Eye, Edit, Trash2, Link2,
-  MessageSquare, MoreHorizontal, Loader2, RefreshCw
+  MessageSquare, MoreHorizontal, Loader2, RefreshCw, Plus,
+  CheckSquare, Square, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,7 +27,10 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
-import { getConsultations, updateConsultation, deleteConsultation } from '@/lib/api/consultations';
+import {
+  getConsultations, updateConsultation, deleteConsultation,
+  createDirectConsultation, convertToTrialStudent
+} from '@/lib/api/consultations';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 import {
   CONSULTATION_TYPE_LABELS,
@@ -58,6 +62,38 @@ export default function ConsultationsPage() {
   // 삭제 확인 모달
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // 직접 등록 모달
+  const [directRegisterOpen, setDirectRegisterOpen] = useState(false);
+  const [directForm, setDirectForm] = useState({
+    studentName: '',
+    phone: '',
+    grade: '',
+    preferredDate: '',
+    preferredTime: '',
+    notes: ''
+  });
+  const [registering, setRegistering] = useState(false);
+
+  // 상담 진행 상태
+  const [conductMode, setConductMode] = useState(false);
+  const [checklist, setChecklist] = useState<{ id: number; text: string; checked: boolean }[]>([
+    { id: 1, text: '학생 현재 상태 파악 (성적, 목표)', checked: false },
+    { id: 2, text: '학원 커리큘럼 설명', checked: false },
+    { id: 3, text: '수업료 및 시간표 안내', checked: false },
+    { id: 4, text: '체험 수업 일정 확정', checked: false },
+    { id: 5, text: '질의응답', checked: false },
+  ]);
+  const [consultationMemo, setConsultationMemo] = useState('');
+  const [savingProgress, setSavingProgress] = useState(false);
+
+  // 체험 등록 모달
+  const [trialModalOpen, setTrialModalOpen] = useState(false);
+  const [trialDates, setTrialDates] = useState<{ date: string; timeSlot: string }[]>([
+    { date: '', timeSlot: '' },
+    { date: '', timeSlot: '' }
+  ]);
+  const [convertingToTrial, setConvertingToTrial] = useState(false);
 
   // 데이터 로드
   const loadData = async () => {
@@ -124,6 +160,107 @@ export default function ConsultationsPage() {
     }
   };
 
+  // 직접 등록
+  const handleDirectRegister = async () => {
+    if (!directForm.studentName || !directForm.phone || !directForm.grade ||
+        !directForm.preferredDate || !directForm.preferredTime) {
+      toast.error('필수 항목을 모두 입력해주세요.');
+      return;
+    }
+
+    setRegistering(true);
+    try {
+      await createDirectConsultation(directForm);
+      toast.success('상담이 등록되었습니다.');
+      setDirectRegisterOpen(false);
+      setDirectForm({
+        studentName: '',
+        phone: '',
+        grade: '',
+        preferredDate: '',
+        preferredTime: '',
+        notes: ''
+      });
+      loadData();
+    } catch (error) {
+      toast.error('등록에 실패했습니다.');
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  // 체크리스트 토글
+  const toggleChecklistItem = (id: number) => {
+    setChecklist(prev => prev.map(item =>
+      item.id === id ? { ...item, checked: !item.checked } : item
+    ));
+  };
+
+  // 상담 진행 상태 저장
+  const saveConsultationProgress = async () => {
+    if (!selectedConsultation) return;
+
+    setSavingProgress(true);
+    try {
+      await updateConsultation(selectedConsultation.id, {
+        checklist,
+        consultationMemo
+      });
+      toast.success('저장되었습니다.');
+    } catch (error) {
+      toast.error('저장에 실패했습니다.');
+    } finally {
+      setSavingProgress(false);
+    }
+  };
+
+  // 체험 학생 등록
+  const handleConvertToTrial = async () => {
+    if (!selectedConsultation) return;
+
+    // 검증
+    if (!trialDates[0].date || !trialDates[0].timeSlot ||
+        !trialDates[1].date || !trialDates[1].timeSlot) {
+      toast.error('체험 일정 2개를 모두 선택해주세요.');
+      return;
+    }
+
+    setConvertingToTrial(true);
+    try {
+      const result = await convertToTrialStudent(selectedConsultation.id, trialDates);
+      toast.success('체험 학생으로 등록되었습니다.');
+      setTrialModalOpen(false);
+      setDetailOpen(false);
+      setTrialDates([{ date: '', timeSlot: '' }, { date: '', timeSlot: '' }]);
+      loadData();
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      toast.error(err.message || '체험 등록에 실패했습니다.');
+    } finally {
+      setConvertingToTrial(false);
+    }
+  };
+
+  // 상담 상세 열 때 체크리스트/메모 초기화
+  const openDetailModal = (c: Consultation) => {
+    setSelectedConsultation(c);
+    // 기존 체크리스트/메모가 있으면 로드
+    if (c.checklist && Array.isArray(c.checklist) && c.checklist.length > 0) {
+      setChecklist(c.checklist);
+    } else {
+      setChecklist([
+        { id: 1, text: '학생 현재 상태 파악 (성적, 목표)', checked: false },
+        { id: 2, text: '학원 커리큘럼 설명', checked: false },
+        { id: 3, text: '수업료 및 시간표 안내', checked: false },
+        { id: 4, text: '체험 수업 일정 확정', checked: false },
+        { id: 5, text: '질의응답', checked: false },
+      ]);
+    }
+    setConsultationMemo(c.consultation_memo || '');
+    setConductMode(false);
+    setDetailOpen(true);
+  };
+
   // 상태 배지
   const StatusBadge = ({ status }: { status: ConsultationStatus }) => (
     <Badge className={CONSULTATION_STATUS_COLORS[status]}>
@@ -139,12 +276,18 @@ export default function ConsultationsPage() {
           <h1 className="text-2xl font-bold">상담 관리</h1>
           <p className="text-gray-500">상담 신청 내역을 관리합니다.</p>
         </div>
-        <Link href="/consultations/settings">
-          <Button variant="outline" className="gap-2">
-            <Settings className="h-4 w-4" />
-            상담 설정
+        <div className="flex gap-2">
+          <Button onClick={() => setDirectRegisterOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            직접 등록
           </Button>
-        </Link>
+          <Link href="/consultations/settings">
+            <Button variant="outline" className="gap-2">
+              <Settings className="h-4 w-4" />
+              상담 설정
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* 통계 카드 */}
@@ -219,10 +362,7 @@ export default function ConsultationsPage() {
                 <div
                   key={c.id}
                   className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => {
-                    setSelectedConsultation(c);
-                    setDetailOpen(true);
-                  }}
+                  onClick={() => openDetailModal(c)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
@@ -263,8 +403,7 @@ export default function ConsultationsPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedConsultation(c);
-                          setDetailOpen(true);
+                          openDetailModal(c);
                         }}>
                           <Eye className="h-4 w-4 mr-2" />
                           상세 보기
@@ -468,6 +607,95 @@ export default function ConsultationsPage() {
               <p className="text-xs text-gray-400">
                 신청일: {format(parseISO(selectedConsultation.created_at), 'yyyy-MM-dd HH:mm')}
               </p>
+
+              {/* 상담 진행 섹션 */}
+              {(selectedConsultation.status === 'confirmed' || selectedConsultation.status === 'pending') && (
+                <div className="border-t pt-4 mt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <CheckSquare className="h-4 w-4" />
+                      상담 진행
+                    </h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConductMode(!conductMode)}
+                    >
+                      {conductMode ? '접기' : '펼치기'}
+                    </Button>
+                  </div>
+
+                  {conductMode && (
+                    <div className="space-y-4">
+                      {/* 체크리스트 */}
+                      <div className="space-y-2">
+                        {checklist.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
+                            onClick={() => toggleChecklistItem(item.id)}
+                          >
+                            {item.checked ? (
+                              <CheckSquare className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <Square className="h-5 w-5 text-gray-400" />
+                            )}
+                            <span className={item.checked ? 'text-gray-500 line-through' : ''}>
+                              {item.text}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 상담 메모 */}
+                      <div>
+                        <Label>상담 메모</Label>
+                        <Textarea
+                          value={consultationMemo}
+                          onChange={(e) => setConsultationMemo(e.target.value)}
+                          placeholder="상담 중 메모를 작성하세요..."
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* 저장 버튼 */}
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={saveConsultationProgress}
+                          disabled={savingProgress}
+                        >
+                          {savingProgress ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                          저장
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setTrialModalOpen(true);
+                          }}
+                          className="gap-2"
+                          disabled={!!selectedConsultation.linked_student_id}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          상담 완료 → 체험 등록
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 이미 체험 학생으로 등록된 경우 */}
+              {selectedConsultation.linked_student_id && (
+                <div className="bg-green-50 rounded-lg p-4 mt-4">
+                  <p className="text-green-800 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    체험 학생으로 등록 완료
+                    {selectedConsultation.linked_student_name && (
+                      <Badge variant="secondary">{selectedConsultation.linked_student_name}</Badge>
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -556,6 +784,205 @@ export default function ConsultationsPage() {
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               삭제
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 직접 등록 모달 */}
+      <Dialog open={directRegisterOpen} onOpenChange={setDirectRegisterOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>상담 직접 등록</DialogTitle>
+            <DialogDescription>
+              전화 상담 등 직접 예약을 잡아줄 때 사용합니다.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>학생명 *</Label>
+              <Input
+                value={directForm.studentName}
+                onChange={(e) => setDirectForm({ ...directForm, studentName: e.target.value })}
+                placeholder="학생 이름"
+              />
+            </div>
+
+            <div>
+              <Label>전화번호 *</Label>
+              <Input
+                value={directForm.phone}
+                onChange={(e) => setDirectForm({ ...directForm, phone: e.target.value })}
+                placeholder="010-1234-5678"
+              />
+            </div>
+
+            <div>
+              <Label>학년 *</Label>
+              <Select
+                value={directForm.grade}
+                onValueChange={(v) => setDirectForm({ ...directForm, grade: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="학년 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['중1', '중2', '중3', '고1', '고2', '고3', 'N수'].map((g) => (
+                    <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>상담 날짜 *</Label>
+                <Input
+                  type="date"
+                  value={directForm.preferredDate}
+                  onChange={(e) => setDirectForm({ ...directForm, preferredDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>상담 시간 *</Label>
+                <Input
+                  type="time"
+                  value={directForm.preferredTime}
+                  onChange={(e) => setDirectForm({ ...directForm, preferredTime: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>메모</Label>
+              <Textarea
+                value={directForm.notes}
+                onChange={(e) => setDirectForm({ ...directForm, notes: e.target.value })}
+                placeholder="메모 (선택)"
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDirectRegisterOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handleDirectRegister} disabled={registering}>
+              {registering ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              등록
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 체험 일정 선택 모달 */}
+      <Dialog open={trialModalOpen} onOpenChange={setTrialModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>체험 수업 일정 선택</DialogTitle>
+            <DialogDescription>
+              {selectedConsultation?.student_name}님의 체험 수업 일정 2회를 선택해주세요.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* 첫 번째 체험일 */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">첫 번째 체험일</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm">날짜</Label>
+                  <Input
+                    type="date"
+                    value={trialDates[0].date}
+                    onChange={(e) => {
+                      const newDates = [...trialDates];
+                      newDates[0].date = e.target.value;
+                      setTrialDates(newDates);
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">시간대</Label>
+                  <Select
+                    value={trialDates[0].timeSlot}
+                    onValueChange={(v) => {
+                      const newDates = [...trialDates];
+                      newDates[0].timeSlot = v;
+                      setTrialDates(newDates);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="시간대 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="morning">오전 (09:00~12:00)</SelectItem>
+                      <SelectItem value="afternoon">오후 (13:00~17:00)</SelectItem>
+                      <SelectItem value="evening">저녁 (18:00~21:00)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* 두 번째 체험일 */}
+            <div className="space-y-3">
+              <Label className="text-base font-medium">두 번째 체험일</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm">날짜</Label>
+                  <Input
+                    type="date"
+                    value={trialDates[1].date}
+                    onChange={(e) => {
+                      const newDates = [...trialDates];
+                      newDates[1].date = e.target.value;
+                      setTrialDates(newDates);
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">시간대</Label>
+                  <Select
+                    value={trialDates[1].timeSlot}
+                    onValueChange={(v) => {
+                      const newDates = [...trialDates];
+                      newDates[1].timeSlot = v;
+                      setTrialDates(newDates);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="시간대 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="morning">오전 (09:00~12:00)</SelectItem>
+                      <SelectItem value="afternoon">오후 (13:00~17:00)</SelectItem>
+                      <SelectItem value="evening">저녁 (18:00~21:00)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-800">
+              체험 학생으로 등록되면:
+              <ul className="mt-1 ml-4 list-disc">
+                <li>학생 관리에 체험생으로 추가됩니다</li>
+                <li>출석 체크 시 체험 횟수가 차감됩니다</li>
+                <li>2회 체험 후 정식 등록을 권유합니다</li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTrialModalOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handleConvertToTrial} disabled={convertingToTrial}>
+              {convertingToTrial ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              체험 학생 등록
             </Button>
           </DialogFooter>
         </DialogContent>
