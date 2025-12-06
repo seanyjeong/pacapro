@@ -6,7 +6,7 @@ import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
   ArrowLeft, Save, User, Phone, School, Target, Calendar, Clock,
-  CheckSquare, Square, ChevronDown, ChevronUp, Loader2, Sparkles
+  CheckSquare, Square, ChevronDown, ChevronUp, Loader2, Sparkles, Plus, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -178,15 +178,51 @@ export default function ConductPage({ params }: PageProps) {
     }
   };
 
+  // 체험 일정 추가
+  const addTrialDate = () => {
+    setTrialDates([...trialDates, { date: '', timeSlot: '' }]);
+  };
+
+  // 체험 일정 삭제
+  const removeTrialDate = (index: number) => {
+    if (trialDates.length <= 1) {
+      toast.error('최소 1개의 체험 일정이 필요합니다.');
+      return;
+    }
+    const newDates = trialDates.filter((_, i) => i !== index);
+    setTrialDates(newDates);
+  };
+
   // 체험 학생 등록
   const handleConvertToTrial = async () => {
     if (!consultation) return;
 
-    // 검증
-    if (!trialDates[0].date || !trialDates[0].timeSlot ||
-        !trialDates[1].date || !trialDates[1].timeSlot) {
-      toast.error('체험 일정 2개를 모두 선택해주세요.');
+    // 모든 일정이 입력되었는지 검증
+    const incompleteDate = trialDates.find(d => !d.date || !d.timeSlot);
+    if (incompleteDate) {
+      toast.error('모든 체험 일정의 날짜와 시간대를 선택해주세요.');
       return;
+    }
+
+    // 중복 날짜 검증
+    const dateSet = new Set<string>();
+    for (const d of trialDates) {
+      const key = `${d.date}-${d.timeSlot}`;
+      if (dateSet.has(key)) {
+        toast.error('같은 날짜, 같은 시간대의 체험 일정이 중복됩니다.');
+        return;
+      }
+      dateSet.add(key);
+    }
+
+    // 같은 날짜 체크 (시간대 다르더라도)
+    const dateOnlySet = new Set<string>();
+    for (const d of trialDates) {
+      if (dateOnlySet.has(d.date)) {
+        toast.error('같은 날에 여러 체험 수업을 등록할 수 없습니다.');
+        return;
+      }
+      dateOnlySet.add(d.date);
     }
 
     setConvertingToTrial(true);
@@ -533,15 +569,15 @@ export default function ConductPage({ params }: PageProps) {
 
       {/* 체험 등록 모달 */}
       <Dialog open={trialModalOpen} onOpenChange={setTrialModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>체험 학생 등록</DialogTitle>
             <DialogDescription>
-              {consultation?.student_name}님의 체험 수업 일정을 선택해주세요. (2회)
+              {consultation?.student_name}님의 체험 수업 일정을 선택해주세요.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-6 px-6">
+          <div className="space-y-4 py-6 px-6 max-h-[60vh] overflow-y-auto">
             {/* 학생 전화번호 입력 */}
             <div className="space-y-2">
               <Label>학생 전화번호</Label>
@@ -557,29 +593,38 @@ export default function ConductPage({ params }: PageProps) {
             </div>
 
             {/* 체험 일정 선택 */}
-            {[0, 1].map((index) => (
-              <div key={index} className="space-y-2">
-                <Label>체험 {index + 1}회차</Label>
-                <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>체험 일정 ({trialDates.length}회)</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addTrialDate}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  추가
+                </Button>
+              </div>
+
+              {trialDates.map((trialDate, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500 w-8">{index + 1}회</span>
                   <Input
                     type="date"
-                    value={trialDates[index].date}
+                    value={trialDate.date}
                     onChange={(e) => {
                       const newDates = [...trialDates];
                       newDates[index] = { ...newDates[index], date: e.target.value };
                       setTrialDates(newDates);
                     }}
+                    className="flex-1"
                   />
                   <Select
-                    value={trialDates[index].timeSlot}
+                    value={trialDate.timeSlot}
                     onValueChange={(v) => {
                       const newDates = [...trialDates];
                       newDates[index] = { ...newDates[index], timeSlot: v };
                       setTrialDates(newDates);
                     }}
                   >
-                    <SelectTrigger>
-                      <span>{trialDates[index].timeSlot || '시간대 선택'}</span>
+                    <SelectTrigger className="w-24">
+                      <span>{trialDate.timeSlot || '시간대'}</span>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="오전">오전</SelectItem>
@@ -587,9 +632,20 @@ export default function ConductPage({ params }: PageProps) {
                       <SelectItem value="저녁">저녁</SelectItem>
                     </SelectContent>
                   </Select>
+                  {trialDates.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeTrialDate(index)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           <DialogFooter>
