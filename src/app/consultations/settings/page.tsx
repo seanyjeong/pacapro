@@ -76,6 +76,10 @@ export default function ConsultationSettingsPage() {
   // 복사 완료 상태
   const [copied, setCopied] = useState(false);
 
+  // 기본 운영 시간 설정
+  const [defaultStartTime, setDefaultStartTime] = useState('09:00:00');
+  const [defaultEndTime, setDefaultEndTime] = useState('18:00:00');
+
   // 데이터 로드
   useEffect(() => {
     async function loadData() {
@@ -201,6 +205,28 @@ export default function ConsultationSettingsPage() {
     setWeeklyHours(weeklyHours.map(h =>
       h.dayOfWeek === dayOfWeek ? { ...h, [field]: value } : h
     ));
+  };
+
+  // 기본 시간을 전체 요일에 적용
+  const applyDefaultTimeToAll = () => {
+    setWeeklyHours(weeklyHours.map(h => ({
+      ...h,
+      isAvailable: true,
+      startTime: defaultStartTime,
+      endTime: defaultEndTime
+    })));
+    toast.success('모든 요일에 적용되었습니다.');
+  };
+
+  // 평일(월~금)에만 적용
+  const applyDefaultTimeToWeekdays = () => {
+    setWeeklyHours(weeklyHours.map(h => ({
+      ...h,
+      isAvailable: h.dayOfWeek >= 1 && h.dayOfWeek <= 5, // 월~금만 활성화
+      startTime: defaultStartTime,
+      endTime: defaultEndTime
+    })));
+    toast.success('평일(월~금)에 적용되었습니다.');
   };
 
   // 알게 된 경로 추가
@@ -426,6 +452,47 @@ export default function ConsultationSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* 기본 시간 일괄 설정 */}
+          <div className="p-4 bg-blue-50 rounded-lg space-y-3">
+            <p className="text-sm font-medium text-blue-900">기본 시간 일괄 설정</p>
+            <div className="flex items-center gap-3 flex-wrap">
+              <Select
+                value={defaultStartTime}
+                onValueChange={setDefaultStartTime}
+              >
+                <SelectTrigger className="w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.slice(0, -1).map(t => (
+                    <SelectItem key={t} value={t}>{t.substring(0, 5)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span>~</span>
+              <Select
+                value={defaultEndTime}
+                onValueChange={setDefaultEndTime}
+              >
+                <SelectTrigger className="w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.slice(1).map(t => (
+                    <SelectItem key={t} value={t}>{t === '24:00:00' ? '24:00' : t.substring(0, 5)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="secondary" size="sm" onClick={applyDefaultTimeToAll}>
+                전체 적용
+              </Button>
+              <Button variant="outline" size="sm" onClick={applyDefaultTimeToWeekdays}>
+                평일만 적용
+              </Button>
+            </div>
+          </div>
+
+          {/* 개별 요일 설정 */}
           {weeklyHours.map((hour) => (
             <div key={hour.dayOfWeek} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
               <div className="w-12 text-center font-medium">
