@@ -22,8 +22,9 @@ import type {
   TimeSlot
 } from '@/lib/types/consultation';
 
+// 체대입시 학원 - 중3부터
 const GRADE_OPTIONS: StudentGrade[] = [
-  '중1', '중2', '중3', '고1', '고2', '고3', 'N수'
+  '중3', '고1', '고2', '고3', 'N수', '성인'
 ];
 
 const MOCK_SUBJECTS = ['국어', '수학', '영어', '탐구'] as const;

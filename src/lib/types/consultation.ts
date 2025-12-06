@@ -3,9 +3,35 @@
 export type ConsultationType = 'new_registration' | 'learning';
 export type ConsultationStatus = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'no_show';
 
+// 체크리스트 입력 필드 타입
+export interface ChecklistInput {
+  type: 'text' | 'radio';
+  label: string;
+  value: string;
+  options?: string[]; // radio 타입일 때 사용
+}
+
+// 체크리스트 항목 타입
+export interface ChecklistItem {
+  id: number;
+  category: string;
+  text: string;
+  checked: boolean;
+  input?: ChecklistInput;
+  inputs?: ChecklistInput[];
+}
+
+// 체크리스트 템플릿 (설정에서 관리)
+export interface ChecklistTemplate {
+  id: number;
+  category: string;
+  text: string;
+  input?: Omit<ChecklistInput, 'value'> & { value?: string };
+  inputs?: (Omit<ChecklistInput, 'value'> & { value?: string })[];
+}
+
 export type StudentGrade =
-  | '초1' | '초2' | '초3' | '초4' | '초5' | '초6'
-  | '중1' | '중2' | '중3'
+  | '중3'
   | '고1' | '고2' | '고3'
   | 'N수' | '성인';
 
@@ -71,7 +97,7 @@ export interface Consultation {
   admin_notes?: string;
 
   // 상담 진행
-  checklist?: { id: number; text: string; checked: boolean }[];
+  checklist?: ChecklistItem[];
   consultation_memo?: string;
 
   // 알림톡
@@ -228,10 +254,9 @@ export const CONSULTATION_STATUS_COLORS: Record<ConsultationStatus, string> = {
   no_show: 'bg-red-100 text-red-800'
 };
 
-// 학년 목록
+// 학년 목록 (체대입시 학원 - 중3부터)
 export const GRADE_OPTIONS: StudentGrade[] = [
-  '초1', '초2', '초3', '초4', '초5', '초6',
-  '중1', '중2', '중3',
+  '중3',
   '고1', '고2', '고3',
   'N수', '성인'
 ];

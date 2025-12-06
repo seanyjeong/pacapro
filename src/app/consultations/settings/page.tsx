@@ -31,8 +31,26 @@ import {
   removeBlockedSlot,
   checkSlugAvailability
 } from '@/lib/api/consultations';
-import type { WeeklyHour, BlockedSlot, ConsultationSettings } from '@/lib/types/consultation';
+import type { WeeklyHour, BlockedSlot, ConsultationSettings, ChecklistTemplate } from '@/lib/types/consultation';
 import { DAY_LABELS } from '@/lib/types/consultation';
+
+// 기본 체크리스트 템플릿 (체대입시 특화)
+const DEFAULT_CHECKLIST_TEMPLATE: ChecklistTemplate[] = [
+  { id: 1, category: '학생 배경', text: '타학원 경험 확인', input: { type: 'text', label: '학원명' } },
+  { id: 2, category: '학생 배경', text: '운동 경력 확인', inputs: [
+    { type: 'radio', label: '과거 선수 경험', options: ['있음', '없음'] },
+    { type: 'text', label: '종목' }
+  ]},
+  { id: 3, category: '학생 배경', text: '제멀 기록 확인 (학교 기록)', input: { type: 'text', label: '기록' } },
+  { id: 4, category: '체력 및 성향', text: '현재 체력 수준', input: { type: 'radio', label: '체력', options: ['상', '중', '하'] } },
+  { id: 5, category: '체력 및 성향', text: '성격/성향 파악', input: { type: 'radio', label: '성향', options: ['외향적', '내향적'] } },
+  { id: 6, category: '체력 및 성향', text: '기타 운동 종목', input: { type: 'text', label: '종목' } },
+  { id: 7, category: '안내 완료', text: '수시/정시 입시 설명' },
+  { id: 8, category: '안내 완료', text: '학원 커리큘럼 안내' },
+  { id: 9, category: '안내 완료', text: '수업료 안내' },
+  { id: 10, category: '안내 완료', text: '체험 수업 일정 협의' },
+  { id: 11, category: '안내 완료', text: '질의응답 완료' },
+];
 
 export default function ConsultationSettingsPage() {
   const router = useRouter();
@@ -73,6 +91,18 @@ export default function ConsultationSettingsPage() {
   // 알게 된 경로 수정
   const [newReferralSource, setNewReferralSource] = useState('');
 
+  // 체크리스트 템플릿
+  const [checklistTemplate, setChecklistTemplate] = useState<ChecklistTemplate[]>(DEFAULT_CHECKLIST_TEMPLATE);
+  const [newChecklistItem, setNewChecklistItem] = useState({
+    category: '',
+    text: '',
+    inputType: 'none' as 'none' | 'text' | 'radio',
+    inputLabel: '',
+    radioOptions: ''
+  });
+  const [addChecklistModalOpen, setAddChecklistModalOpen] = useState(false);
+  const [savingChecklist, setSavingChecklist] = useState(false);
+
   // 복사 완료 상태
   const [copied, setCopied] = useState(false);
 
@@ -90,6 +120,12 @@ export default function ConsultationSettingsPage() {
         setSettings(response.settings || {});
         setWeeklyHours(response.weeklyHours || []);
         setBlockedSlots(response.blockedSlots || []);
+
+        // 체크리스트 템플릿 로드 (설정에 저장된 것이 있으면 사용)
+        const savedTemplate = (response.settings as { checklist_template?: ChecklistTemplate[] })?.checklist_template;
+        if (savedTemplate && savedTemplate.length > 0) {
+          setChecklistTemplate(savedTemplate);
+        }
       } catch (error) {
         console.error('설정 로드 오류:', error);
         toast.error('설정을 불러오는데 실패했습니다.');
@@ -383,6 +419,66 @@ export default function ConsultationSettingsPage() {
       referralSources: settings.referralSources?.filter(s => s !== source)
     });
   };
+
+  // 체크리스트 항목 추가
+  const addChecklistItem = () => {
+    if (!newChecklistItem.category.trim() || !newChecklistItem.text.trim()) {
+      toast.error('카테고리와 항목명을 입력해주세요.');
+      return;
+    }
+
+    const newId = Math.max(0, ...checklistTemplate.map(c => c.id)) + 1;
+    const newItem: ChecklistTemplate = {
+      id: newId,
+      category: newChecklistItem.category.trim(),
+      text: newChecklistItem.text.trim()
+    };
+
+    if (newChecklistItem.inputType === 'text' && newChecklistItem.inputLabel.trim()) {
+      newItem.input = { type: 'text', label: newChecklistItem.inputLabel.trim() };
+    } else if (newChecklistItem.inputType === 'radio' && newChecklistItem.inputLabel.trim() && newChecklistItem.radioOptions.trim()) {
+      newItem.input = {
+        type: 'radio',
+        label: newChecklistItem.inputLabel.trim(),
+        options: newChecklistItem.radioOptions.split(',').map(o => o.trim()).filter(o => o)
+      };
+    }
+
+    setChecklistTemplate([...checklistTemplate, newItem]);
+    setNewChecklistItem({ category: '', text: '', inputType: 'none', inputLabel: '', radioOptions: '' });
+    setAddChecklistModalOpen(false);
+    toast.success('항목이 추가되었습니다.');
+  };
+
+  // 체크리스트 항목 삭제
+  const removeChecklistItem = (id: number) => {
+    setChecklistTemplate(checklistTemplate.filter(c => c.id !== id));
+  };
+
+  // 체크리스트 저장
+  const saveChecklist = async () => {
+    setSavingChecklist(true);
+    try {
+      await updateConsultationSettings({
+        ...settings,
+        checklist_template: checklistTemplate
+      } as Partial<ConsultationSettings> & { checklist_template: ChecklistTemplate[] });
+      toast.success('체크리스트가 저장되었습니다.');
+    } catch (error) {
+      toast.error('저장에 실패했습니다.');
+    } finally {
+      setSavingChecklist(false);
+    }
+  };
+
+  // 기본 체크리스트로 초기화
+  const resetToDefaultChecklist = () => {
+    setChecklistTemplate(DEFAULT_CHECKLIST_TEMPLATE);
+    toast.success('기본 체크리스트로 초기화되었습니다.');
+  };
+
+  // 체크리스트 카테고리 목록
+  const checklistCategories = [...new Set(checklistTemplate.map(c => c.category))];
 
   // 링크 복사
   const copyLink = () => {
@@ -781,6 +877,164 @@ export default function ConsultationSettingsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* 상담 체크리스트 템플릿 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>상담 체크리스트 템플릿</CardTitle>
+          <CardDescription>
+            상담 진행 시 체크할 항목들을 관리합니다. 상담 진행 페이지에서 사용됩니다.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* 카테고리별 체크리스트 표시 */}
+          {checklistCategories.map((category) => (
+            <div key={category} className="border rounded-lg p-4">
+              <h4 className="font-medium text-gray-900 mb-3">{category}</h4>
+              <div className="space-y-2">
+                {checklistTemplate
+                  .filter(item => item.category === category)
+                  .map((item) => (
+                    <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                      <div className="flex-1">
+                        <span className="text-sm">{item.text}</span>
+                        {item.input && (
+                          <span className="text-xs text-gray-500 ml-2">
+                            ({item.input.type === 'text' ? '텍스트 입력' : `선택: ${item.input.options?.join(', ')}`})
+                          </span>
+                        )}
+                        {item.inputs && (
+                          <span className="text-xs text-gray-500 ml-2">
+                            (다중 입력)
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => removeChecklistItem(item.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ))}
+
+          {/* 버튼들 */}
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" onClick={() => setAddChecklistModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              항목 추가
+            </Button>
+            <Button variant="outline" onClick={resetToDefaultChecklist}>
+              기본값으로 초기화
+            </Button>
+            <Button onClick={saveChecklist} disabled={savingChecklist}>
+              {savingChecklist ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              저장
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 체크리스트 항목 추가 모달 */}
+      <Dialog open={addChecklistModalOpen} onOpenChange={setAddChecklistModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>체크리스트 항목 추가</DialogTitle>
+            <DialogDescription>
+              상담 진행 시 체크할 새 항목을 추가합니다.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>카테고리</Label>
+              <Select
+                value={newChecklistItem.category}
+                onValueChange={(v) => setNewChecklistItem({ ...newChecklistItem, category: v })}
+              >
+                <SelectTrigger>
+                  <span>{newChecklistItem.category || '카테고리 선택 또는 직접 입력'}</span>
+                </SelectTrigger>
+                <SelectContent>
+                  {checklistCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                value={newChecklistItem.category}
+                onChange={(e) => setNewChecklistItem({ ...newChecklistItem, category: e.target.value })}
+                placeholder="새 카테고리 입력"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>항목명</Label>
+              <Input
+                value={newChecklistItem.text}
+                onChange={(e) => setNewChecklistItem({ ...newChecklistItem, text: e.target.value })}
+                placeholder="예: 타학원 경험 확인"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>입력 필드 타입</Label>
+              <Select
+                value={newChecklistItem.inputType}
+                onValueChange={(v) => setNewChecklistItem({ ...newChecklistItem, inputType: v as 'none' | 'text' | 'radio' })}
+              >
+                <SelectTrigger>
+                  <span>
+                    {newChecklistItem.inputType === 'none' ? '없음 (체크만)' :
+                     newChecklistItem.inputType === 'text' ? '텍스트 입력' : '라디오 선택'}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">없음 (체크만)</SelectItem>
+                  <SelectItem value="text">텍스트 입력</SelectItem>
+                  <SelectItem value="radio">라디오 선택</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {newChecklistItem.inputType !== 'none' && (
+              <div className="space-y-2">
+                <Label>입력 필드 라벨</Label>
+                <Input
+                  value={newChecklistItem.inputLabel}
+                  onChange={(e) => setNewChecklistItem({ ...newChecklistItem, inputLabel: e.target.value })}
+                  placeholder="예: 학원명, 체력"
+                />
+              </div>
+            )}
+
+            {newChecklistItem.inputType === 'radio' && (
+              <div className="space-y-2">
+                <Label>선택 옵션 (쉼표로 구분)</Label>
+                <Input
+                  value={newChecklistItem.radioOptions}
+                  onChange={(e) => setNewChecklistItem({ ...newChecklistItem, radioOptions: e.target.value })}
+                  placeholder="예: 상, 중, 하"
+                />
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddChecklistModalOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={addChecklistItem}>
+              추가
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* 차단 날짜 추가 모달 */}
       <Dialog open={blockModalOpen} onOpenChange={setBlockModalOpen}>

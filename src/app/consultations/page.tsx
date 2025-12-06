@@ -104,18 +104,6 @@ export default function ConsultationsPage() {
 
   const timeOptions = getTimeOptionsForDate(directForm.preferredDate);
 
-  // 상담 진행 상태
-  const [conductMode, setConductMode] = useState(false);
-  const [checklist, setChecklist] = useState<{ id: number; text: string; checked: boolean }[]>([
-    { id: 1, text: '학생 현재 상태 파악 (성적, 목표)', checked: false },
-    { id: 2, text: '학원 커리큘럼 설명', checked: false },
-    { id: 3, text: '수업료 및 시간표 안내', checked: false },
-    { id: 4, text: '체험 수업 일정 확정', checked: false },
-    { id: 5, text: '질의응답', checked: false },
-  ]);
-  const [consultationMemo, setConsultationMemo] = useState('');
-  const [savingProgress, setSavingProgress] = useState(false);
-
   // 체험 등록 모달
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [trialDates, setTrialDates] = useState<{ date: string; timeSlot: string }[]>([
@@ -261,31 +249,6 @@ export default function ConsultationsPage() {
     }
   };
 
-  // 체크리스트 토글
-  const toggleChecklistItem = (id: number) => {
-    setChecklist(prev => prev.map(item =>
-      item.id === id ? { ...item, checked: !item.checked } : item
-    ));
-  };
-
-  // 상담 진행 상태 저장
-  const saveConsultationProgress = async () => {
-    if (!selectedConsultation) return;
-
-    setSavingProgress(true);
-    try {
-      await updateConsultation(selectedConsultation.id, {
-        checklist,
-        consultationMemo
-      });
-      toast.success('저장되었습니다.');
-    } catch (error) {
-      toast.error('저장에 실패했습니다.');
-    } finally {
-      setSavingProgress(false);
-    }
-  };
-
   // 체험 학생 등록
   const handleConvertToTrial = async () => {
     if (!selectedConsultation) return;
@@ -313,23 +276,9 @@ export default function ConsultationsPage() {
     }
   };
 
-  // 상담 상세 열 때 체크리스트/메모 초기화
+  // 상담 상세 열기
   const openDetailModal = (c: Consultation) => {
     setSelectedConsultation(c);
-    // 기존 체크리스트/메모가 있으면 로드
-    if (c.checklist && Array.isArray(c.checklist) && c.checklist.length > 0) {
-      setChecklist(c.checklist);
-    } else {
-      setChecklist([
-        { id: 1, text: '학생 현재 상태 파악 (성적, 목표)', checked: false },
-        { id: 2, text: '학원 커리큘럼 설명', checked: false },
-        { id: 3, text: '수업료 및 시간표 안내', checked: false },
-        { id: 4, text: '체험 수업 일정 확정', checked: false },
-        { id: 5, text: '질의응답', checked: false },
-      ]);
-    }
-    setConsultationMemo(c.consultation_memo || '');
-    setConductMode(false);
     setDetailOpen(true);
   };
 
@@ -688,71 +637,13 @@ export default function ConsultationsPage() {
                       <CheckSquare className="h-4 w-4" />
                       상담 진행
                     </h4>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setConductMode(!conductMode)}
-                    >
-                      {conductMode ? '접기' : '펼치기'}
-                    </Button>
+                    <Link href={`/consultations/${selectedConsultation.id}/conduct`}>
+                      <Button size="sm" className="gap-2">
+                        <ChevronRight className="h-4 w-4" />
+                        상담 진행 페이지로 이동
+                      </Button>
+                    </Link>
                   </div>
-
-                  {conductMode && (
-                    <div className="space-y-4">
-                      {/* 체크리스트 */}
-                      <div className="space-y-2">
-                        {checklist.map((item) => (
-                          <div
-                            key={item.id}
-                            className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 cursor-pointer"
-                            onClick={() => toggleChecklistItem(item.id)}
-                          >
-                            {item.checked ? (
-                              <CheckSquare className="h-5 w-5 text-green-600" />
-                            ) : (
-                              <Square className="h-5 w-5 text-gray-400" />
-                            )}
-                            <span className={item.checked ? 'text-gray-500 line-through' : ''}>
-                              {item.text}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* 상담 메모 */}
-                      <div>
-                        <Label>상담 메모</Label>
-                        <Textarea
-                          value={consultationMemo}
-                          onChange={(e) => setConsultationMemo(e.target.value)}
-                          placeholder="상담 중 메모를 작성하세요..."
-                          rows={3}
-                        />
-                      </div>
-
-                      {/* 저장 버튼 */}
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={saveConsultationProgress}
-                          disabled={savingProgress}
-                        >
-                          {savingProgress ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                          저장
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            setTrialModalOpen(true);
-                          }}
-                          className="gap-2"
-                          disabled={!!selectedConsultation.linked_student_id}
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          상담 완료 → 체험 등록
-                        </Button>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
