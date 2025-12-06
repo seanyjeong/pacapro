@@ -13,6 +13,7 @@ import type { Student } from '@/lib/types/student';
 
 interface StudentStatsCardsProps {
   onStatsLoaded?: (stats: StudentStats) => void;
+  refreshTrigger?: number; // 이 값이 변경될 때마다 리로드
 }
 
 interface StudentStats {
@@ -23,7 +24,7 @@ interface StudentStats {
   trial: number;
 }
 
-export function StudentStatsCards({ onStatsLoaded }: StudentStatsCardsProps) {
+export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStatsCardsProps) {
   const [stats, setStats] = useState<StudentStats>({
     total: 0,
     active: 0,
@@ -35,7 +36,7 @@ export function StudentStatsCards({ onStatsLoaded }: StudentStatsCardsProps) {
 
   useEffect(() => {
     loadAllStudentsStats();
-  }, []);
+  }, [refreshTrigger]);
 
   const loadAllStudentsStats = async () => {
     try {

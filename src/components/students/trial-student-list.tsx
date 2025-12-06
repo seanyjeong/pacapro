@@ -127,7 +127,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
             {students.map((student) => {
               const trialDates = parseTrialDates(student.trial_dates);
               const remaining = student.trial_remaining ?? 0;
-              const total = 2; // 기본 체험 횟수
+              const total = trialDates.length || 2; // 체험 일정 수 기준
 
               return (
                 <tr key={student.id} className="hover:bg-gray-50">

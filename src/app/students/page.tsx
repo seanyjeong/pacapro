@@ -21,9 +21,16 @@ export default function StudentsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<StudentTab>('active');
+  const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
 
   // useStudents 훅 사용 (초기값: 재원생만)
   const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents({ status: 'active', is_trial: false });
+
+  // 통계 카드도 함께 갱신하는 리로드
+  const handleReload = () => {
+    reload();
+    setStatsRefreshTrigger(prev => prev + 1);
+  };
 
   // 탭 변경 시 필터 업데이트
   useEffect(() => {
@@ -76,7 +83,7 @@ export default function StudentsPage() {
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
             <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={reload}>다시 시도</Button>
+            <Button onClick={handleReload}>다시 시도</Button>
           </CardContent>
         </Card>
       </div>
@@ -100,7 +107,7 @@ export default function StudentsPage() {
           <p className="text-gray-600 mt-1">학생 등록 및 관리</p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" onClick={reload}>
+          <Button variant="outline" onClick={handleReload}>
             새로고침
           </Button>
           <Button variant="outline">
@@ -140,7 +147,7 @@ export default function StudentsPage() {
       </div>
 
       {/* 통계 카드 - 모든 탭에서 전체 현황 표시 */}
-      <StudentStatsCards />
+      <StudentStatsCards refreshTrigger={statsRefreshTrigger} />
 
       {/* 체험생 탭이 아닐 때만 필터 표시 */}
       {activeTab !== 'trial' && (
@@ -177,7 +184,7 @@ export default function StudentsPage() {
         <TrialStudentList
           students={students.filter(s => s.is_trial)}
           loading={loading}
-          onReload={reload}
+          onReload={handleReload}
         />
       ) : (
         <StudentListTable
