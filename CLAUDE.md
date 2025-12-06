@@ -361,10 +361,33 @@ new Date(2025, 12, 1)  // 2026년 1월 1일 (주의!)
 - `월수강료 × (남은수업일 / 총수업일)` (천원 단위 절삭)
 - 납부기한: 복귀일 + 7일
 
+### 시간대(time_slot) 변환 규칙
+DB `class_schedules.time_slot`은 **ENUM('morning','afternoon','evening')** 으로 영어만 허용.
+프론트엔드에서 한글로 보내면 백엔드에서 반드시 변환 필요:
+```javascript
+const timeSlotMap = { '오전': 'morning', '오후': 'afternoon', '저녁': 'evening' };
+const dbTimeSlot = timeSlotMap[frontendTimeSlot] || frontendTimeSlot;
+```
+
+### 체험생 관련 주의사항
+- 대시보드 재원생 수: 체험생 제외 (`is_trial = 0 OR is_trial IS NULL`)
+- 체험생 등록 시 `class_days`(NOT NULL)와 `monthly_tuition`(NOT NULL) 기본값 필요: `'[]'`, `0`
+- 체험 일정은 `trial_dates` JSON 배열로 저장: `[{date, time_slot, attended}]`
+
 ## 버전 이력
 
-### 현재 버전: v2.3.2 (2025-12-06)
+### 현재 버전: v2.5.0 (2025-12-06)
 
+- **v2.5.0** (2025-12-06): 상담 → 체험 등록 완성
+  - 상담 진행 페이지에서 체크리스트/메모 저장 시 상태 '완료'로 자동 변경
+  - 체험 등록 시 학생 전화번호 입력 필드 추가 (선택, 없으면 학부모 번호 사용)
+  - 체험 일정 개수 동적 추가/삭제 (2개 고정 → 1개 이상 자유롭게)
+  - 같은 날 체험 일정 중복 선택 방지
+  - 체험 등록 시 스케줄에 자동 배정 (time_slot 한글→영어 변환: 오전→morning, 오후→afternoon, 저녁→evening)
+  - 대시보드 재원생 수에서 체험생 제외
+  - 체험생 삭제 시 통계 카드 즉시 갱신
+  - 체험 횟수 표시: 등록된 일정 수 기준으로 동적 표시 (2/2 고정 → N/N)
+  - 체크리스트 JSON 파싱 추가 (GET /consultations/:id)
 - **v2.3.2** (2025-12-06): 상담 시스템 개선
   - 스케줄 캘린더에 상담 예약 표시 (📞 아이콘)
   - 상담 직접 등록 시 시간 중복 체크
