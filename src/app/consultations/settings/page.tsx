@@ -81,11 +81,11 @@ export default function ConsultationSettingsPage() {
     async function loadData() {
       try {
         const response = await getConsultationSettings();
-        setAcademyName(response.academy.name);
-        setSlug(response.academy.slug || '');
-        setSettings(response.settings);
-        setWeeklyHours(response.weeklyHours);
-        setBlockedSlots(response.blockedSlots);
+        setAcademyName(response.academy?.name || '');
+        setSlug(response.academy?.slug || '');
+        setSettings(response.settings || {});
+        setWeeklyHours(response.weeklyHours || []);
+        setBlockedSlots(response.blockedSlots || []);
       } catch (error) {
         console.error('설정 로드 오류:', error);
         toast.error('설정을 불러오는데 실패했습니다.');

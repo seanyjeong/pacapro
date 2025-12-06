@@ -175,14 +175,14 @@ export interface SlotsResponse {
 }
 
 export interface SettingsResponse {
-  academy: {
+  academy?: {
     id: number;
     name: string;
-    slug: string;
+    slug?: string;
   };
-  settings: ConsultationSettings;
-  weeklyHours: WeeklyHour[];
-  blockedSlots: BlockedSlot[];
+  settings?: Partial<ConsultationSettings>;
+  weeklyHours?: WeeklyHour[];
+  blockedSlots?: BlockedSlot[];
 }
 
 // 상담 유형 라벨
