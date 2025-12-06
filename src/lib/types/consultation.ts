@@ -84,15 +84,17 @@ export interface ConsultationFormData {
   parentName: string;
   parentPhone: string;
   studentName: string;
-  studentGrade: StudentGrade;
+  studentGrade?: StudentGrade;
   studentSchool?: string;
+  schoolGrade?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+  mockTestGrade?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   academicScores?: AcademicScores;
   targetSchool?: string;
   referrerStudent?: string;
-  referralSources?: string[];
+  referralSource?: string;
   inquiryContent?: string;
-  preferredDate: string;
-  preferredTime: string;
+  preferredDate?: string;
+  preferredTime?: string;
 }
 
 // 요일별 운영 시간
@@ -129,12 +131,15 @@ export interface ConsultationSettings {
 
 // 공개 페이지 정보
 export interface ConsultationPageInfo {
-  academy: {
-    id: number;
-    name: string;
-    slug: string;
-  };
-  settings: ConsultationSettings;
+  academyId: number;
+  academyName: string;
+  slug: string;
+  isEnabled: boolean;
+  pageTitle?: string;
+  pageDescription?: string;
+  slotDuration: number;
+  advanceDays: number;
+  referralSources?: string[];
   weeklyHours: WeeklyHour[];
 }
 

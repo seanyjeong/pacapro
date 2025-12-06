@@ -50,7 +50,8 @@
       "Bash(find:*)",
       "Bash(npx shadcn@latest add:*)",
       "Bash(npm update:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []
