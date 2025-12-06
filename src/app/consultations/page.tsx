@@ -332,7 +332,7 @@ export default function ConsultationsPage() {
           </DialogHeader>
 
           {selectedConsultation && (
-            <div className="space-y-6">
+            <div className="space-y-6 px-6 py-4">
               {/* 상태 */}
               <div className="flex items-center gap-2">
                 <StatusBadge status={selectedConsultation.status} />
@@ -498,7 +498,7 @@ export default function ConsultationsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 px-6 py-4">
             <div>
               <Label>상태</Label>
               <Select value={newStatus} onValueChange={(v) => setNewStatus(v as ConsultationStatus)}>
