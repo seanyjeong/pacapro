@@ -9,12 +9,16 @@ const SelectContext = React.createContext<{
   open: boolean;
   setOpen: (open: boolean) => void;
   disabled: boolean;
+  items: Map<string, React.ReactNode>;
+  registerItem: (value: string, label: React.ReactNode) => void;
 }>({
   value: '',
   onValueChange: () => {},
   open: false,
   setOpen: () => {},
   disabled: false,
+  items: new Map(),
+  registerItem: () => {},
 });
 
 // Select Root
@@ -29,6 +33,7 @@ interface SelectProps {
 const Select = ({ value, defaultValue, onValueChange, disabled, children }: SelectProps) => {
   const [internalValue, setInternalValue] = React.useState(defaultValue || '');
   const [open, setOpen] = React.useState(false);
+  const [items] = React.useState(() => new Map<string, React.ReactNode>());
   const currentValue = value ?? internalValue;
 
   const handleValueChange = React.useCallback((newValue: string) => {
@@ -37,8 +42,12 @@ const Select = ({ value, defaultValue, onValueChange, disabled, children }: Sele
     setOpen(false);
   }, [onValueChange]);
 
+  const registerItem = React.useCallback((itemValue: string, label: React.ReactNode) => {
+    items.set(itemValue, label);
+  }, [items]);
+
   return (
-    <SelectContext.Provider value={{ value: currentValue, onValueChange: handleValueChange, open, setOpen, disabled: disabled || false }}>
+    <SelectContext.Provider value={{ value: currentValue, onValueChange: handleValueChange, open, setOpen, disabled: disabled || false, items, registerItem }}>
       <div className="relative">
         {children}
       </div>
@@ -79,8 +88,9 @@ interface SelectValueProps {
 }
 
 const SelectValue = ({ placeholder }: SelectValueProps) => {
-  const { value } = React.useContext(SelectContext);
-  return <span className={cn(!value && 'text-gray-500')}>{value || placeholder}</span>;
+  const { value, items } = React.useContext(SelectContext);
+  const displayLabel = items.get(value) || value;
+  return <span className={cn(!value && 'text-gray-500')}>{displayLabel || placeholder}</span>;
 };
 
 // Select Content
@@ -114,7 +124,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
       <div
         ref={contentRef}
         className={cn(
-          'absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 text-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+          'absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 text-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
           className
         )}
         {...props}
@@ -135,6 +145,11 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
   ({ className, children, value, ...props }, ref) => {
     const context = React.useContext(SelectContext);
     const isSelected = context.value === value;
+
+    // 아이템 등록 (라벨 매핑용)
+    React.useEffect(() => {
+      context.registerItem(value, children);
+    }, [value, children, context]);
 
     return (
       <div
