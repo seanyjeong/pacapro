@@ -77,7 +77,7 @@ export default function ConductPage({ params }: PageProps) {
         } else {
           // 설정에서 템플릿 로드 시도
           try {
-            const settingsResponse = await apiClient.get<{ settings: { checklist_template?: ChecklistTemplate[] } }>('/consultations/settings');
+            const settingsResponse = await apiClient.get<{ settings: { checklist_template?: ChecklistTemplate[] } }>('/consultations/settings/info');
             const template = settingsResponse.settings?.checklist_template || DEFAULT_CHECKLIST_TEMPLATE;
             setChecklist(template.map(item => ({
               ...item,
