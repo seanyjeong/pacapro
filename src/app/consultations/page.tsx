@@ -29,7 +29,7 @@ import Link from 'next/link';
 
 import {
   getConsultations, updateConsultation, deleteConsultation,
-  createDirectConsultation, convertToTrialStudent
+  createDirectConsultation, convertToTrialStudent, getBookedTimes
 } from '@/lib/api/consultations';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 import {
@@ -74,6 +74,15 @@ export default function ConsultationsPage() {
     notes: ''
   });
   const [registering, setRegistering] = useState(false);
+  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
+  const [loadingBookedTimes, setLoadingBookedTimes] = useState(false);
+
+  // 자주 쓰는 상담 시간 프리셋
+  const TIME_PRESETS = [
+    '09:00', '10:00', '11:00',
+    '14:00', '15:00', '16:00',
+    '17:00', '18:00', '19:00'
+  ];
 
   // 상담 진행 상태
   const [conductMode, setConductMode] = useState(false);
@@ -160,11 +169,37 @@ export default function ConsultationsPage() {
     }
   };
 
+  // 날짜 변경 시 예약된 시간 조회
+  const handleDateChange = async (date: string) => {
+    setDirectForm({ ...directForm, preferredDate: date, preferredTime: '' });
+    if (!date) {
+      setBookedTimes([]);
+      return;
+    }
+
+    setLoadingBookedTimes(true);
+    try {
+      const response = await getBookedTimes(date);
+      setBookedTimes(response.bookedTimes || []);
+    } catch (error) {
+      console.error('예약 시간 조회 오류:', error);
+      setBookedTimes([]);
+    } finally {
+      setLoadingBookedTimes(false);
+    }
+  };
+
   // 직접 등록
   const handleDirectRegister = async () => {
     if (!directForm.studentName || !directForm.phone || !directForm.grade ||
         !directForm.preferredDate || !directForm.preferredTime) {
       toast.error('필수 항목을 모두 입력해주세요.');
+      return;
+    }
+
+    // 이미 예약된 시간인지 확인
+    if (bookedTimes.includes(directForm.preferredTime)) {
+      toast.error('해당 시간에 이미 상담이 예약되어 있습니다.');
       return;
     }
 
@@ -181,9 +216,11 @@ export default function ConsultationsPage() {
         preferredTime: '',
         notes: ''
       });
+      setBookedTimes([]);
       loadData();
-    } catch (error) {
-      toast.error('등록에 실패했습니다.');
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      toast.error(err.message || '등록에 실패했습니다.');
     } finally {
       setRegistering(false);
     }
@@ -835,23 +872,63 @@ export default function ConsultationsPage() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label>상담 날짜 *</Label>
-                <Input
-                  type="date"
-                  value={directForm.preferredDate}
-                  onChange={(e) => setDirectForm({ ...directForm, preferredDate: e.target.value })}
-                />
-              </div>
-              <div>
-                <Label>상담 시간 *</Label>
-                <Input
-                  type="time"
-                  value={directForm.preferredTime}
-                  onChange={(e) => setDirectForm({ ...directForm, preferredTime: e.target.value })}
-                />
-              </div>
+            <div>
+              <Label>상담 날짜 *</Label>
+              <Input
+                type="date"
+                value={directForm.preferredDate}
+                onChange={(e) => handleDateChange(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label>상담 시간 *</Label>
+              {loadingBookedTimes ? (
+                <div className="flex items-center gap-2 py-2 text-sm text-gray-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  예약 현황 확인 중...
+                </div>
+              ) : directForm.preferredDate ? (
+                <div className="space-y-2">
+                  {/* 시간 프리셋 버튼 */}
+                  <div className="flex flex-wrap gap-2">
+                    {TIME_PRESETS.map((time) => {
+                      const isBooked = bookedTimes.includes(time);
+                      const isSelected = directForm.preferredTime === time;
+                      return (
+                        <Button
+                          key={time}
+                          type="button"
+                          size="sm"
+                          variant={isSelected ? 'default' : isBooked ? 'outline' : 'secondary'}
+                          disabled={isBooked}
+                          onClick={() => setDirectForm({ ...directForm, preferredTime: time })}
+                          className={isBooked ? 'opacity-50 line-through' : ''}
+                        >
+                          {time}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  {/* 직접 입력 */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500">또는 직접 입력:</span>
+                    <Input
+                      type="time"
+                      value={directForm.preferredTime}
+                      onChange={(e) => setDirectForm({ ...directForm, preferredTime: e.target.value })}
+                      className="w-32"
+                    />
+                  </div>
+                  {bookedTimes.length > 0 && (
+                    <p className="text-xs text-gray-500">
+                      * 흐린 시간은 이미 예약됨
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 py-2">날짜를 먼저 선택하세요</p>
+              )}
             </div>
 
             <div>

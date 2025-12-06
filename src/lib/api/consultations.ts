@@ -187,6 +187,11 @@ export async function getCalendarEvents(
   );
 }
 
+// 특정 날짜의 예약된 시간 조회
+export async function getBookedTimes(date: string): Promise<{ date: string; bookedTimes: string[] }> {
+  return apiClient.get<{ date: string; bookedTimes: string[] }>(`/consultations/booked-times?date=${date}`);
+}
+
 // 관리자 직접 상담 등록
 export async function createDirectConsultation(data: {
   studentName: string;
