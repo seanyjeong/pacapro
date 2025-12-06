@@ -200,32 +200,99 @@ export default function ConsultationSettingsPage() {
     }
   };
 
-  // 2025년 한국 공휴일 목록
-  const koreanHolidays2025 = [
-    { date: '2025-01-01', name: '신정' },
-    { date: '2025-01-28', name: '설날 연휴' },
-    { date: '2025-01-29', name: '설날' },
-    { date: '2025-01-30', name: '설날 연휴' },
-    { date: '2025-03-01', name: '삼일절' },
-    { date: '2025-05-05', name: '어린이날' },
-    { date: '2025-05-06', name: '부처님오신날' },
-    { date: '2025-06-06', name: '현충일' },
-    { date: '2025-08-15', name: '광복절' },
-    { date: '2025-10-03', name: '개천절' },
-    { date: '2025-10-05', name: '추석 연휴' },
-    { date: '2025-10-06', name: '추석' },
-    { date: '2025-10-07', name: '추석 연휴' },
-    { date: '2025-10-08', name: '추석 대체공휴일' },
-    { date: '2025-10-09', name: '한글날' },
-    { date: '2025-12-25', name: '크리스마스' },
-  ];
+  // 한국 공휴일 (연도별)
+  // 양력 공휴일은 고정, 음력 명절(설날/추석/부처님오신날)은 연도별 계산 필요
+  const getKoreanHolidays = (year: number) => {
+    // 양력 고정 공휴일
+    const fixedHolidays = [
+      { date: `${year}-01-01`, name: '신정' },
+      { date: `${year}-03-01`, name: '삼일절' },
+      { date: `${year}-05-05`, name: '어린이날' },
+      { date: `${year}-06-06`, name: '현충일' },
+      { date: `${year}-08-15`, name: '광복절' },
+      { date: `${year}-10-03`, name: '개천절' },
+      { date: `${year}-10-09`, name: '한글날' },
+      { date: `${year}-12-25`, name: '크리스마스' },
+    ];
+
+    // 음력 명절 (매년 다름, 2025-2030년 미리 계산)
+    const lunarHolidays: Record<number, { date: string; name: string }[]> = {
+      2025: [
+        { date: '2025-01-28', name: '설날 연휴' },
+        { date: '2025-01-29', name: '설날' },
+        { date: '2025-01-30', name: '설날 연휴' },
+        { date: '2025-05-05', name: '부처님오신날' },
+        { date: '2025-10-05', name: '추석 연휴' },
+        { date: '2025-10-06', name: '추석' },
+        { date: '2025-10-07', name: '추석 연휴' },
+      ],
+      2026: [
+        { date: '2026-02-16', name: '설날 연휴' },
+        { date: '2026-02-17', name: '설날' },
+        { date: '2026-02-18', name: '설날 연휴' },
+        { date: '2026-05-24', name: '부처님오신날' },
+        { date: '2026-09-24', name: '추석 연휴' },
+        { date: '2026-09-25', name: '추석' },
+        { date: '2026-09-26', name: '추석 연휴' },
+      ],
+      2027: [
+        { date: '2027-02-05', name: '설날 연휴' },
+        { date: '2027-02-06', name: '설날' },
+        { date: '2027-02-07', name: '설날 연휴' },
+        { date: '2027-05-13', name: '부처님오신날' },
+        { date: '2027-09-14', name: '추석 연휴' },
+        { date: '2027-09-15', name: '추석' },
+        { date: '2027-09-16', name: '추석 연휴' },
+      ],
+      2028: [
+        { date: '2028-01-25', name: '설날 연휴' },
+        { date: '2028-01-26', name: '설날' },
+        { date: '2028-01-27', name: '설날 연휴' },
+        { date: '2028-05-02', name: '부처님오신날' },
+        { date: '2028-10-02', name: '추석 연휴' },
+        { date: '2028-10-03', name: '추석' },
+        { date: '2028-10-04', name: '추석 연휴' },
+      ],
+      2029: [
+        { date: '2029-02-12', name: '설날 연휴' },
+        { date: '2029-02-13', name: '설날' },
+        { date: '2029-02-14', name: '설날 연휴' },
+        { date: '2029-05-20', name: '부처님오신날' },
+        { date: '2029-09-21', name: '추석 연휴' },
+        { date: '2029-09-22', name: '추석' },
+        { date: '2029-09-23', name: '추석 연휴' },
+      ],
+      2030: [
+        { date: '2030-02-02', name: '설날 연휴' },
+        { date: '2030-02-03', name: '설날' },
+        { date: '2030-02-04', name: '설날 연휴' },
+        { date: '2030-05-09', name: '부처님오신날' },
+        { date: '2030-09-11', name: '추석 연휴' },
+        { date: '2030-09-12', name: '추석' },
+        { date: '2030-09-13', name: '추석 연휴' },
+      ],
+    };
+
+    const lunar = lunarHolidays[year] || [];
+
+    // 중복 제거 (어린이날과 부처님오신날이 같은 날인 경우 등)
+    const allHolidays = [...fixedHolidays, ...lunar];
+    const uniqueHolidays = allHolidays.filter((h, idx, arr) =>
+      arr.findIndex(x => x.date === h.date) === idx
+    );
+
+    return uniqueHolidays.sort((a, b) => a.date.localeCompare(b.date));
+  };
+
+  const currentYear = new Date().getFullYear();
 
   // 공휴일 모두 차단
   const [addingHolidays, setAddingHolidays] = useState(false);
 
   const handleAddAllHolidays = async () => {
     const today = new Date();
-    const futureHolidays = koreanHolidays2025.filter(h => new Date(h.date) >= today);
+    const holidays = getKoreanHolidays(currentYear);
+    const futureHolidays = holidays.filter(h => new Date(h.date) >= today);
 
     if (futureHolidays.length === 0) {
       toast.error('추가할 공휴일이 없습니다.');
@@ -642,7 +709,7 @@ export default function ConsultationSettingsPage() {
               ) : (
                 <Check className="h-4 w-4 mr-2" />
               )}
-              2025 공휴일 모두 차단
+              공휴일 차단
             </Button>
           </div>
 
