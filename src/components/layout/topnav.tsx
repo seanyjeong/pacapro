@@ -156,7 +156,7 @@ export function TopNav() {
                                                             </span>
                                                             {result.status !== 'active' && (
                                                                 <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
-                                                                    {result.status === 'paused' ? '휴원' : result.status === 'withdrawn' ? '퇴원' : result.status}
+                                                                    {result.status === 'paused' ? '휴원' : result.status === 'withdrawn' ? '퇴원' : result.status === 'trial' ? '체험' : result.status}
                                                                 </span>
                                                             )}
                                                         </div>

@@ -20,6 +20,7 @@ import {
   ADMISSION_TYPE_LABELS,
   STATUS_LABELS,
   STUDENT_TYPE_LABELS,
+  GENDER_LABELS,
 } from '@/lib/types/student';
 
 interface StudentListTableProps {
@@ -79,6 +80,9 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                   학생 정보
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  성별
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   유형
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -112,7 +116,13 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                     {/* 학생 정보 */}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          student.gender === 'male'
+                            ? 'bg-gradient-to-br from-sky-400 to-sky-600'
+                            : student.gender === 'female'
+                            ? 'bg-gradient-to-br from-pink-400 to-pink-600'
+                            : 'bg-gradient-to-br from-gray-400 to-gray-600'
+                        }`}>
                           <span className="text-white font-bold text-sm">
                             {student.name.charAt(0)}
                           </span>
@@ -136,6 +146,21 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                           </div>
                         </div>
                       </div>
+                    </td>
+
+                    {/* 성별 */}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {student.gender ? (
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          student.gender === 'male'
+                            ? 'bg-sky-100 text-sky-800'
+                            : 'bg-pink-100 text-pink-800'
+                        }`}>
+                          {GENDER_LABELS[student.gender]}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
                     </td>
 
                     {/* 학생 유형/학년 */}

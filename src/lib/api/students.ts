@@ -27,6 +27,7 @@ export const studentsAPI = {
     if (filters?.grade) params.append('grade', filters.grade);
     if (filters?.admission_type) params.append('admission_type', filters.admission_type);
     if (filters?.status) params.append('status', filters.status);
+    if (filters?.gender) params.append('gender', filters.gender);
     if (filters?.search) params.append('search', filters.search);
     if (filters?.is_trial !== undefined) params.append('is_trial', String(filters.is_trial));
 

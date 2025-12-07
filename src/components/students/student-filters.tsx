@@ -6,12 +6,13 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Filter, X } from 'lucide-react';
-import type { StudentFilters, StudentType, Grade, AdmissionType, StudentStatus } from '@/lib/types/student';
+import type { StudentFilters, StudentType, Grade, AdmissionType, StudentStatus, Gender } from '@/lib/types/student';
 import {
   STUDENT_TYPE_OPTIONS,
   GRADE_OPTIONS,
   ADMISSION_TYPE_OPTIONS,
   STATUS_OPTIONS,
+  GENDER_OPTIONS,
 } from '@/lib/types/student';
 
 interface StudentFiltersComponentProps {
@@ -36,7 +37,7 @@ export function StudentFiltersComponent({
 
   // 탭에서 status를 관리하면 status는 활성 필터로 취급 안 함
   const hasActiveFilters =
-    filters.student_type || filters.grade || filters.admission_type || (!hideStatusFilter && filters.status);
+    filters.student_type || filters.grade || filters.admission_type || filters.gender || (!hideStatusFilter && filters.status);
 
   return (
     <Card>
@@ -54,7 +55,7 @@ export function StudentFiltersComponent({
           )}
         </div>
 
-        <div className={`grid grid-cols-1 gap-4 ${hideStatusFilter ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}>
+        <div className={`grid grid-cols-1 gap-4 ${hideStatusFilter ? 'md:grid-cols-4' : 'md:grid-cols-5'}`}>
           {/* 학생 유형 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">학생 유형</label>
@@ -99,6 +100,23 @@ export function StudentFiltersComponent({
             >
               <option value="">전체</option>
               {ADMISSION_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 성별 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">성별</label>
+            <select
+              value={filters.gender || ''}
+              onChange={(e) => handleChange('gender', e.target.value as Gender || undefined)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            >
+              <option value="">전체</option>
+              {GENDER_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>

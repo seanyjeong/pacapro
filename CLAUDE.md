@@ -12,25 +12,30 @@ P-ACA(Papa Academy)는 체대입시 학원관리시스템입니다.
 
 ### GitHub 저장소
 - **프론트엔드**: https://github.com/seanyjeong/pacapro (`main` 브랜치)
-- **백엔드**: https://github.com/seanyjeong/supermax (`master` 브랜치, `paca/` 폴더)
+- **백엔드**: GitHub 사용 안 함 (로컬에서 직접 수정)
 
 ### 프론트엔드 배포 (Vercel)
 - **URL**: https://pacapro.vercel.app
 - **자동 배포**: `main` 브랜치에 push하면 자동으로 배포됨
-- **환경변수**: `NEXT_PUBLIC_API_URL=https://supermax.kr/paca`
+- **환경변수**: `NEXT_PUBLIC_API_URL=https://chejump.com/paca`
 
-### 백엔드 배포 (n8n 자동 배포)
-- **서버**: 211.37.174.218 (cafe24)
-- **API URL**: https://supermax.kr/paca
-- **자동 배포**: supermax 레포 `master` 브랜치에 push하면 n8n이 자동으로 배포
+### 백엔드 배포 (sean-mini-server 로컬)
+- **서버**: sean-mini-server (218.148.190.61 / chejump.com)
+- **API URL**: https://chejump.com/paca
+- **배포 방법**: Git 필요 없음! 로컬에서 코드 수정 후 `sudo systemctl restart paca` 만 실행하면 끝
+- **백엔드 경로**: `/home/sean/supermax/paca/backend` (레거시 경로, 나중에 정리 예정)
 - **n8n URL**: https://n8n.sean8320.dedyn.io/
+
+### ⚠️ 백엔드 배포 주의사항
+- **Git push 필요 없음**: 이 서버에서 직접 작업하므로 코드 수정 후 바로 반영됨
+- **재시작만 하면 됨**: `sudo systemctl restart paca`
+- **로그 확인**: `sudo journalctl -u paca -f`
 
 ## n8n 워크플로우
 
-### 1. GitHub 자동 배포
-- **트리거**: GitHub webhook (supermax 레포 push)
-- **동작**: 서버 SSH 접속 → git pull → systemctl restart paca
-- **소요시간**: 약 3초
+### 1. ~~GitHub 자동 배포~~ (사용 안 함)
+- 백엔드가 로컬 서버에 있으므로 더 이상 사용하지 않음
+- cafe24 서버(supermax) 수정할 일 있을 때만 사용
 
 ### 2. Google Sheets 동기화 (P-ACA 학생 동기화)
 - **트리거**: 매일 아침 9시 (Asia/Seoul)
@@ -78,20 +83,22 @@ npm test         # Jest 테스트 (watch 모드)
 npm run test:ci  # 테스트 1회 실행 (CI용)
 ```
 
-### 서버 배포
+### 백엔드 배포 (로컬에서 바로!)
 ```bash
-# 서버 접속
-ssh root@211.37.174.218
-# 비밀번호: Qq141171616!
-
-# 백엔드 디렉토리
-cd supermax/paca
-
-# systemctl로 서비스 관리
-sudo systemctl restart paca    # 서버 재시작
+# Git 필요 없음! 코드 수정 후 재시작만 하면 됨
+sudo systemctl restart paca    # 서버 재시작 (비밀번호: Qq141171616!)
 sudo systemctl status paca     # 상태 확인
 sudo journalctl -u paca -f     # 로그 확인
 ```
+
+### DB 접속
+```bash
+mysql -u paca -pq141171616! paca   # MySQL 접속 (비밀번호: q141171616!)
+```
+
+### cafe24 서버 (레거시 - 백업용)
+- IP: 211.37.174.218
+- 더 이상 사용하지 않음 (DB/백엔드 모두 로컬로 이전 완료)
 
 ## 완성된 기능 목록
 
@@ -292,11 +299,9 @@ sudo journalctl -u paca -f     # 로그 확인
 3. n8n 자동 배포 (3초)
 
 ### DB 마이그레이션
-1. `backend/migrations/` 에 SQL 파일 생성
-2. 서버에서 실행:
 ```bash
-ssh root@211.37.174.218
-mysql -u root -pQq141171616! paca < /root/supermax/paca/backend/migrations/파일명.sql
+# 로컬에서 직접 실행
+mysql -u root -p paca < /home/sean/supermax/paca/backend/migrations/파일명.sql
 ```
 
 ## 주의사항 (개발 패턴)
@@ -376,8 +381,13 @@ const dbTimeSlot = timeSlotMap[frontendTimeSlot] || frontendTimeSlot;
 
 ## 버전 이력
 
-### 현재 버전: v2.5.0 (2025-12-06)
+### 현재 버전: v2.5.1 (2025-12-07)
 
+- **v2.5.1** (2025-12-07): 체험생 status 분리, 성별 표시/필터 추가
+  - 체험생 status = 'trial' 추가 (기존: is_trial + active → 이제: status = 'trial')
+  - 학생 목록 테이블에 성별 컬럼 추가
+  - 학생 아이콘 성별 색상: 남자 파란색, 여자 분홍색
+  - 성별 필터 추가
 - **v2.5.0** (2025-12-06): 상담 → 체험 등록 완성
   - 상담 진행 페이지에서 체크리스트/메모 저장 시 상태 '완료'로 자동 변경
   - 체험 등록 시 학생 전화번호 입력 필드 추가 (선택, 없으면 학부모 번호 사용)
@@ -467,3 +477,17 @@ DB_PASSWORD=실제비밀번호
 JWT_SECRET=강한랜덤문자열
 ENCRYPTION_KEY=또다른랜덤문자열
 ```
+
+## 문서 목록
+
+| 문서 | 경로 | 설명 |
+|------|------|------|
+| 서버 이전 가이드 | `docs/SERVER-MIGRATION.md` | cafe24 → sean-mini-server 이전 가이드 |
+| 암호화 설계 | `docs/SECURITY-ENCRYPTION.md` | 다중 학원 데이터 암호화 설계 (Zero-knowledge 구조) |
+| Tally API | `/home/sean/tallyform/README.md` | Tally 설문 API 사용법 |
+
+### 암호화 문서 요약 (`docs/SECURITY-ENCRYPTION.md`)
+- **현재 상태**: 암호화 없음, admin이 모든 학원 데이터 열람 가능
+- **추천 구조**: 마스터 키 + 래핑 키 (사용자 비밀번호 기반)
+- **구현 우선순위**: Phase 1 (기본 암호화) → Phase 2 (학원별 키) → Phase 3 (Zero-knowledge)
+- **비용**: 직접 구현 (무료) 추천, HashiCorp Vault/AWS KMS는 소규모엔 과함

@@ -35,22 +35,22 @@ export default function StudentsPage() {
   // 탭 변경 시 필터 업데이트
   useEffect(() => {
     if (activeTab === 'trial') {
-      updateFilters({ status: undefined, is_trial: true });
+      updateFilters({ status: 'trial', is_trial: undefined });
     } else if (activeTab === 'active') {
-      updateFilters({ status: 'active', is_trial: false });
+      updateFilters({ status: 'active', is_trial: undefined });
     } else if (activeTab === 'paused') {
-      updateFilters({ status: 'paused', is_trial: false });
+      updateFilters({ status: 'paused', is_trial: undefined });
     } else if (activeTab === 'withdrawn') {
-      updateFilters({ status: 'withdrawn', is_trial: false });
+      updateFilters({ status: 'withdrawn', is_trial: undefined });
     }
   }, [activeTab]);
 
-  // 탭별 학생 수 계산 (체험생은 별도 API 호출 필요하므로 일단 표시 안 함)
+  // 탭별 학생 수 계산
   const tabCounts = {
-    active: students.filter(s => s.status === 'active' && !s.is_trial).length,
-    paused: students.filter(s => s.status === 'paused' && !s.is_trial).length,
-    withdrawn: students.filter(s => s.status === 'withdrawn' && !s.is_trial).length,
-    trial: students.filter(s => s.is_trial).length,
+    active: students.filter(s => s.status === 'active').length,
+    paused: students.filter(s => s.status === 'paused').length,
+    withdrawn: students.filter(s => s.status === 'withdrawn').length,
+    trial: students.filter(s => s.status === 'trial').length,
   };
 
   // 검색어 필터링 적용
