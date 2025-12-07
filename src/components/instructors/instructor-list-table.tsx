@@ -103,7 +103,13 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
                   {/* 강사 정보 */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        instructor.gender === 'male'
+                          ? 'bg-gradient-to-br from-sky-400 to-sky-600'
+                          : instructor.gender === 'female'
+                          ? 'bg-gradient-to-br from-pink-400 to-pink-600'
+                          : 'bg-gradient-to-br from-primary-500 to-primary-600'
+                      }`}>
                         <span className="text-white font-bold text-sm">
                           {instructor.name.charAt(0)}
                         </span>

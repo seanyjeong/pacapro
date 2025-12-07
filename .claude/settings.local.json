@@ -96,7 +96,9 @@
       "Bash(sudo -S systemctl reload caddy:*)",
       "Bash({ cat)",
       "Bash(})",
-      "Bash(sudo mysql:*)"
+      "Bash(sudo mysql:*)",
+      "Bash(sudo -S systemctl restart paca)",
+      "Bash(sudo -S journalctl:*)"
     ],
     "deny": [],
     "ask": []

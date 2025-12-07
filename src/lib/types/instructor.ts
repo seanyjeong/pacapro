@@ -17,6 +17,9 @@ export type InstructorStatus = 'active' | 'on_leave' | 'retired';
 // 강사 유형 (instructor_type) - 시급제일 때만 사용
 export type InstructorType = 'teacher' | 'assistant';
 
+// 성별 타입
+export type Gender = 'male' | 'female';
+
 // ===== 강사 인터페이스 =====
 
 // 기본 강사 인터페이스 - DB 스키마 매칭
@@ -26,6 +29,7 @@ export interface Instructor {
   user_id: number | null;
   name: string;
   phone: string | null;
+  gender: Gender | null;
   email: string | null;
   address: string | null;
   birth_date: string | null; // YYYY-MM-DD
@@ -58,6 +62,7 @@ export interface Instructor {
 export interface InstructorFormData {
   name: string;
   phone?: string;
+  gender?: Gender;
   email?: string;
   address?: string;
   birth_date?: string;
@@ -88,6 +93,7 @@ export interface InstructorFilters {
   status?: InstructorStatus;
   salary_type?: SalaryType;
   instructor_type?: InstructorType;
+  gender?: Gender;
   search?: string;
 }
 
@@ -192,6 +198,11 @@ export const INSTRUCTOR_TYPE_LABELS: Record<InstructorType, string> = {
   assistant: '사무보조',
 };
 
+export const GENDER_LABELS: Record<Gender, string> = {
+  male: '남',
+  female: '여',
+};
+
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   pending: '미지급',
   unpaid: '미지급',
@@ -226,6 +237,12 @@ export const INSTRUCTOR_STATUS_OPTIONS = [
 export const INSTRUCTOR_TYPE_OPTIONS = [
   { value: 'teacher' as InstructorType, label: '수업강사' },
   { value: 'assistant' as InstructorType, label: '사무보조' },
+];
+
+// 성별 옵션
+export const GENDER_OPTIONS = [
+  { value: 'male' as Gender, label: '남' },
+  { value: 'female' as Gender, label: '여' },
 ];
 
 // 요일 옵션

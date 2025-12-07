@@ -6,13 +6,14 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Instructor, InstructorFormData, InstructorType } from '@/lib/types/instructor';
+import type { Instructor, InstructorFormData, InstructorType, Gender } from '@/lib/types/instructor';
 import {
   SALARY_TYPE_OPTIONS,
   TAX_TYPE_OPTIONS,
   INSTRUCTOR_STATUS_OPTIONS,
   INSTRUCTOR_TYPE_OPTIONS,
   WEEKDAY_OPTIONS,
+  GENDER_OPTIONS,
 } from '@/lib/types/instructor';
 
 interface InstructorFormProps {
@@ -41,6 +42,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
   const [formData, setFormData] = useState<InstructorFormData>({
     name: initialData?.name || '',
     phone: initialData?.phone || '',
+    gender: initialData?.gender || undefined,
     email: initialData?.email || '',
     resident_number: initialData?.resident_number || '',
     hire_date: initialData?.hire_date || new Date().toISOString().split('T')[0],
@@ -180,6 +182,23 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                 }`}
               />
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
+            </div>
+
+            {/* 성별 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">성별</label>
+              <select
+                value={formData.gender || ''}
+                onChange={(e) => handleChange('gender', e.target.value || undefined)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">선택</option>
+                {GENDER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* 이메일 */}

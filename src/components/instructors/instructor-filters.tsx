@@ -11,6 +11,7 @@ import {
   SALARY_TYPE_OPTIONS,
   INSTRUCTOR_STATUS_OPTIONS,
   INSTRUCTOR_TYPE_OPTIONS,
+  GENDER_OPTIONS,
 } from '@/lib/types/instructor';
 
 interface InstructorFiltersComponentProps {
@@ -31,7 +32,7 @@ export function InstructorFiltersComponent({
     });
   };
 
-  const hasActiveFilters = filters.status || filters.salary_type || filters.instructor_type;
+  const hasActiveFilters = filters.status || filters.salary_type || filters.instructor_type || filters.gender;
 
   return (
     <Card>
@@ -49,7 +50,7 @@ export function InstructorFiltersComponent({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* 급여타입 */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">급여타입</label>
@@ -77,6 +78,23 @@ export function InstructorFiltersComponent({
             >
               <option value="">전체</option>
               {INSTRUCTOR_TYPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 성별 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">성별</label>
+            <select
+              value={filters.gender || ''}
+              onChange={(e) => handleChange('gender', e.target.value || undefined)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+            >
+              <option value="">전체</option>
+              {GENDER_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
