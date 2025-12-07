@@ -86,7 +86,7 @@ npm run test:ci  # 테스트 1회 실행 (CI용)
 ### 백엔드 배포 (로컬에서 바로!)
 ```bash
 # Git 필요 없음! 코드 수정 후 재시작만 하면 됨
-sudo systemctl restart paca    # 서버 재시작 (비밀번호: Qq141171616!)
+sudo systemctl restart paca    # 서버 재시작 (비밀번호: q141171616!)
 sudo systemctl status paca     # 상태 확인
 sudo journalctl -u paca -f     # 로그 확인
 ```
