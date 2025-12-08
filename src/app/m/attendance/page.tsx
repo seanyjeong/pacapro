@@ -62,27 +62,32 @@ export default function MobileAttendancePage() {
   const loadSchedule = async () => {
     setLoading(true);
     try {
-      // 해당 날짜/시간대의 스케줄 조회
-      const schedules = await schedulesApi.getSchedules({
-        start_date: date,
-        end_date: date,
-        time_slot: timeSlot,
-      });
+      // 웹과 동일한 /schedules/slot API 사용 (attendance 테이블 기반)
+      const response = await schedulesApi.getSlotData(date, timeSlot);
 
-      console.log('[DEBUG] getSchedules 결과:', schedules.length, '개, time_slot:', timeSlot);
-      if (schedules.length > 0) {
-        const scheduleId = schedules[0].id;
-        console.log('[DEBUG] 선택된 스케줄 ID:', scheduleId, '시간대:', schedules[0].time_slot);
-        setSchedule(schedules[0]);
+      if (response.schedule) {
+        setSchedule(response.schedule as unknown as ClassSchedule);
 
-        // 출석 대상 학생 목록 조회
-        const response = await schedulesApi.getAttendance(scheduleId);
-        console.log('[DEBUG] 출석 학생 수:', response.students?.length || 0);
-        setStudents(response.students || []);
+        // 학생 목록 변환 (API 응답 형식에 맞춤)
+        const studentList = (response.schedule.students || []).map(s => ({
+          student_id: s.student_id,
+          student_name: s.student_name,
+          student_number: null as string | null,  // API에서 제공하지 않음
+          grade: s.grade ?? '',
+          attendance_status: s.attendance_status as AttendanceStatus | null,
+          season_type: s.season_type,
+          is_trial: s.is_trial,
+          trial_remaining: s.trial_remaining,
+          phone: s.phone ?? undefined,
+          parent_phone: s.parent_phone ?? undefined,
+          is_season_student: !!s.season_type,
+          is_makeup: s.is_makeup ?? false,
+        }));
+        setStudents(studentList as unknown as (Attendance & { phone?: string; parent_phone?: string; grade?: string; is_season_student?: boolean })[]);
 
         // 기존 출석 상태 로드
         const initialMap = new Map<number, AttendanceStatus>();
-        (response.students || []).forEach((s: Attendance) => {
+        studentList.forEach((s) => {
           if (s.attendance_status) {
             initialMap.set(s.student_id, s.attendance_status);
           }
