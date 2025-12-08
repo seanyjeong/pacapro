@@ -98,7 +98,15 @@
       "Bash(})",
       "Bash(sudo mysql:*)",
       "Bash(sudo -S systemctl restart paca)",
-      "Bash(sudo -S journalctl:*)"
+      "Bash(sudo -S journalctl:*)",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_resize",
+      "Bash(sudo -S bash -c 'cat > /etc/caddy/Caddyfile << EOF\n:80 {\n    respond \"\"\"\"Caddy is working\"\"\"\"\n}\n\ncode.sean8320.dedyn.io {\n    reverse_proxy localhost:8080\n}\n\nn8n.sean8320.dedyn.io {\n    reverse_proxy localhost:5678\n}\n\nscreenshots.sean8320.dedyn.io {\n    reverse_proxy localhost:8321\n}\n\nchejump.com {\n    reverse_proxy localhost:8320\n}\n\nsean8320.dedyn.io {\n    handle_path /screenshots/* {\n        reverse_proxy localhost:8321\n    }\n    respond \"\"\"\"Hello from sean8320.dedyn.io\"\"\"\"\n}\nEOF')",
+      "Bash(sudo -S bash -c 'echo \"\"\"\":80 {\n    respond \\\"\"\"\"Caddy is working\\\"\"\"\"\n}\n\ncode.sean8320.dedyn.io {\n    reverse_proxy localhost:8080\n}\n\nn8n.sean8320.dedyn.io {\n    reverse_proxy localhost:5678\n}\n\nchejump.com {\n    reverse_proxy localhost:8320\n}\n\nsean8320.dedyn.io {\n    handle /screenshots/* {\n        uri strip_prefix /screenshots\n        reverse_proxy localhost:8321\n    }\n    respond \\\"\"\"\"Hello from sean8320.dedyn.io\\\"\"\"\"\n}\"\"\"\" > /etc/caddy/Caddyfile')",
+      "Bash(kill:*)",
+      "mcp__playwright__browser_wait_for"
     ],
     "deny": [],
     "ask": []

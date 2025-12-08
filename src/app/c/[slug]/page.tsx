@@ -85,6 +85,17 @@ export default function ConsultationPage() {
     loadPageInfo();
   }, [slug]);
 
+  // 페이지 타이틀 동적 설정
+  useEffect(() => {
+    if (pageInfo?.academy?.name) {
+      document.title = `${pageInfo.academy.name} - 상담 예약`;
+    }
+    return () => {
+      // 페이지 떠날 때 기본 타이틀로 복원
+      document.title = 'P-ACA - 체육입시 학원관리시스템';
+    };
+  }, [pageInfo?.academy?.name]);
+
   // 날짜 선택 시 슬롯 로드
   useEffect(() => {
     if (selectedDate) {

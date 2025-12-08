@@ -1,12 +1,35 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { CheckCircle, Phone, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getConsultationPageInfo } from '@/lib/api/consultations';
 
 export default function ConsultationSuccessPage() {
   const params = useParams();
   const slug = params.slug as string;
+  const [academyName, setAcademyName] = useState<string>('');
+
+  // 학원 이름 가져와서 타이틀 설정
+  useEffect(() => {
+    const loadAcademyName = async () => {
+      try {
+        const info = await getConsultationPageInfo(slug);
+        if (info?.academy?.name) {
+          setAcademyName(info.academy.name);
+          document.title = `${info.academy.name} - 상담 신청 완료`;
+        }
+      } catch {
+        // 실패해도 무시
+      }
+    };
+    loadAcademyName();
+
+    return () => {
+      document.title = 'P-ACA - 체육입시 학원관리시스템';
+    };
+  }, [slug]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
