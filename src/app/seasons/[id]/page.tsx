@@ -40,6 +40,7 @@ export default function SeasonDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [updatingTimeSlotId, setUpdatingTimeSlotId] = useState<number | null>(null);
 
   const fetchSeason = useCallback(async () => {
     try {
@@ -94,6 +95,43 @@ export default function SeasonDetailPage() {
       toast.error(err instanceof Error ? err.message : '취소에 실패했습니다.');
     } finally {
       setCancellingId(null);
+    }
+  };
+
+  // 시간대 즉시 변경 핸들러
+  const handleTimeSlotChange = async (enrollment: StudentSeason, slot: string) => {
+    // 현재 시간대 파싱
+    const currentSlots = enrollment.time_slots
+      ? (typeof enrollment.time_slots === 'string' ? JSON.parse(enrollment.time_slots) : enrollment.time_slots)
+      : [];
+
+    // 토글 (이미 있으면 제거, 없으면 추가)
+    let newSlots: string[];
+    if (currentSlots.includes(slot)) {
+      newSlots = currentSlots.filter((s: string) => s !== slot);
+    } else {
+      newSlots = [...currentSlots, slot];
+    }
+
+    // 최소 1개는 선택되어야 함
+    if (newSlots.length === 0) {
+      toast.error('최소 1개의 시간대를 선택해야 합니다.');
+      return;
+    }
+
+    try {
+      setUpdatingTimeSlotId(enrollment.id);
+      await seasonsApi.updateEnrollment(enrollment.id, { time_slots: newSlots });
+
+      // 로컬 상태 즉시 업데이트
+      setEnrolledStudents(prev => prev.map(e =>
+        e.id === enrollment.id ? { ...e, time_slots: newSlots as ('morning' | 'afternoon' | 'evening')[] } : e
+      ));
+      toast.success('시간대가 변경되었습니다.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '시간대 변경에 실패했습니다.');
+    } finally {
+      setUpdatingTimeSlotId(null);
     }
   };
 
@@ -323,6 +361,7 @@ export default function SeasonDetailPage() {
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">시즌비</th>
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">등록일</th>
                     <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">납부상태</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">시간대</th>
                     <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">관리</th>
                   </tr>
                 </thead>
@@ -368,6 +407,34 @@ export default function SeasonDetailPage() {
                             {enrollment.payment_status === 'cancelled' && '취소됨'}
                             {!['paid', 'partial', 'pending', 'cancelled'].includes(enrollment.payment_status) && enrollment.payment_status}
                           </span>
+                        </td>
+                        <td className="py-2 px-3">
+                          {enrollment.payment_status !== 'cancelled' && (
+                            <div className="flex gap-1">
+                              {(['morning', 'afternoon', 'evening'] as const).map(slot => {
+                                const currentSlots = enrollment.time_slots
+                                  ? (typeof enrollment.time_slots === 'string' ? JSON.parse(enrollment.time_slots) : enrollment.time_slots)
+                                  : [];
+                                const isSelected = currentSlots.includes(slot);
+                                const isUpdating = updatingTimeSlotId === enrollment.id;
+
+                                return (
+                                  <button
+                                    key={slot}
+                                    onClick={() => handleTimeSlotChange(enrollment, slot)}
+                                    disabled={isUpdating}
+                                    className={`px-2 py-1 text-xs rounded transition-colors ${
+                                      isSelected
+                                        ? 'bg-primary-500 text-white'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                  >
+                                    {TIME_SLOT_LABELS[slot]}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                         </td>
                         <td className="py-2 px-3 text-right">
                           {enrollment.payment_status !== 'cancelled' && (

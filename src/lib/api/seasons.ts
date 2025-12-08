@@ -141,7 +141,7 @@ export const seasonsApi = {
   },
 
   /**
-   * 시즌 등록 정보 수정 (등록일, 시즌비, 할인)
+   * 시즌 등록 정보 수정 (등록일, 시즌비, 할인, 시간대)
    */
   updateEnrollment: async (
     enrollmentId: number,
@@ -150,6 +150,7 @@ export const seasonsApi = {
       season_fee?: number;
       discount_amount?: number;
       discount_reason?: string;
+      time_slots?: string[];
     }
   ): Promise<{ message: string; enrollment: StudentSeason }> => {
     return apiClient.put<{ message: string; enrollment: StudentSeason }>(

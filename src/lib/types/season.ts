@@ -96,6 +96,7 @@ export interface StudentSeason {
   payment_status: PaymentStatus;  // 납부 상태
   registered_at: string;
   notes: string | null;
+  time_slots?: TimeSlot[] | string; // 시간대 (JSON 또는 배열)
 }
 
 // 일할계산 상세 정보
