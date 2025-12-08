@@ -12,13 +12,20 @@ export function DynamicManifest() {
       const user = JSON.parse(userStr);
       const academyName = user.academy?.name || user.academy_name || 'P-ACA';
 
-      // 기존 manifest 링크 찾기
+      // 기존 manifest 링크 제거
       const existingLink = document.querySelector('link[rel="manifest"]');
-
       if (existingLink) {
-        // 동적 manifest URL로 변경
-        existingLink.setAttribute('href', `/api/manifest?name=${encodeURIComponent(academyName)}`);
+        existingLink.remove();
       }
+
+      // 새 manifest 링크 추가 (브라우저가 다시 읽도록)
+      const newLink = document.createElement('link');
+      newLink.rel = 'manifest';
+      newLink.href = `/api/manifest?name=${encodeURIComponent(academyName)}`;
+      document.head.appendChild(newLink);
+
+      // 설치 준비 완료 표시
+      window.dispatchEvent(new CustomEvent('manifestReady', { detail: { academyName } }));
     } catch {
       // 파싱 실패 시 기본값 유지
     }

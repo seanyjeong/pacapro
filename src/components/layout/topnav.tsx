@@ -69,6 +69,9 @@ export function TopNav() {
         };
     }, []);
 
+    // 로그인 안 했으면 설치 버튼 안 보임
+    const showInstallButton = !isInstalled && user;
+
     // 검색 실행 (debounce)
     useEffect(() => {
         if (searchQuery.trim().length < 1) {
@@ -217,7 +220,7 @@ export function TopNav() {
                 {/* Right: Notifications + User */}
                 <div className="flex items-center space-x-2 md:space-x-4">
                     {/* Install App Button */}
-                    {!isInstalled && (
+                    {showInstallButton && (
                         <button
                             onClick={handleInstallClick}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
