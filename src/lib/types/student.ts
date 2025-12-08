@@ -66,6 +66,8 @@ export interface Student {
   trial_dates: TrialDate[] | string | null; // 체험 일정
   // 시간대
   time_slot: 'morning' | 'afternoon' | 'evening' | null; // 수업 시간대
+  // 메모
+  memo: string | null; // 학생 메모
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -105,6 +107,8 @@ export interface StudentFormData {
   trial_dates?: TrialDate[]; // 체험 일정 배열
   // 시간대
   time_slot?: 'morning' | 'afternoon' | 'evening'; // 수업 시간대 (기본: evening)
+  // 메모
+  memo?: string; // 학생 메모
 }
 
 // 학생 필터 인터페이스

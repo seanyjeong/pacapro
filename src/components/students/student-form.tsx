@@ -116,6 +116,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
     enrollment_date: initialData?.enrollment_date || new Date().toISOString().split('T')[0],
     address: initialData?.address || '',
     notes: initialData?.notes || '',
+    memo: initialData?.memo || '',
     status: (initialData?.status || 'active') as StudentStatus,
     rest_start_date: initialData?.rest_start_date || '',
     rest_end_date: initialData?.rest_end_date || '',
@@ -1108,13 +1109,27 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
             />
           </div>
 
-          {/* 메모 */}
+          {/* 비고 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">메모</label>
-            <textarea
+            <label className="block text-sm font-medium text-gray-700 mb-2">비고</label>
+            <input
+              type="text"
               value={formData.notes || ''}
               onChange={(e) => handleChange('notes', e.target.value)}
-              placeholder="특이사항이나 메모를 입력하세요..."
+              placeholder="간단한 특이사항..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+
+          {/* 학생 메모 (상담 내용 등 상세 기록용) */}
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              학생 메모 <span className="text-gray-500 text-xs">(상담 내용, 특이사항 등 상세 기록)</span>
+            </label>
+            <textarea
+              value={formData.memo || ''}
+              onChange={(e) => handleChange('memo', e.target.value)}
+              placeholder="상담 내용, 학생 특성, 주의사항 등을 자유롭게 기록하세요..."
               rows={4}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />

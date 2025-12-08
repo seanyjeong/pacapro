@@ -232,7 +232,7 @@ export function Sidebar() {
             {/* Footer */}
             <div className="p-4 border-t border-gray-200">
                 <div className="text-xs text-gray-500 text-center space-y-1">
-                    <div>P-ACA v2.6.15</div>
+                    <div>P-ACA v2.7.0</div>
                     <div className="text-[10px] text-gray-400">Last updated: 2025-12-08</div>
                     <div>문의: 010-2144-6755</div>
                 </div>
