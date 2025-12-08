@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Bell, User, LogOut, Menu, Users, UserCog } from 'lucide-react';
+import { Search, Bell, User, LogOut, Menu, Users, UserCog, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api/auth';
 import apiClient from '@/lib/api/client';
@@ -30,6 +30,11 @@ interface SearchResult {
     status: string;
 }
 
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 export function TopNav() {
     const router = useRouter();
     const [user, setUser] = useState<{ name?: string; email?: string; role?: string; position?: string } | null>(null);
@@ -39,10 +44,29 @@ export function TopNav() {
     const [showResults, setShowResults] = useState(false);
     const [searching, setSearching] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [isInstalled, setIsInstalled] = useState(false);
 
     useEffect(() => {
         const currentUser = authAPI.getCurrentUser();
         setUser(currentUser);
+
+        // PWA 설치 상태 체크
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            setIsInstalled(true);
+        }
+
+        // beforeinstallprompt 이벤트 리스닝
+        const handleBeforeInstall = (e: Event) => {
+            e.preventDefault();
+            setDeferredPrompt(e as BeforeInstallPromptEvent);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+        };
     }, []);
 
     // 검색 실행 (debounce)
@@ -94,6 +118,18 @@ export function TopNav() {
 
     const handleLogout = () => {
         authAPI.logout();
+    };
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+
+        await deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+
+        if (outcome === 'accepted') {
+            setIsInstalled(true);
+        }
+        setDeferredPrompt(null);
     };
 
     return (
@@ -176,7 +212,19 @@ export function TopNav() {
                 </div>
 
                 {/* Right: Notifications + User */}
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 md:space-x-4">
+                    {/* Install App Button */}
+                    {!isInstalled && deferredPrompt && (
+                        <button
+                            onClick={handleInstallClick}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                            title="바탕화면에 앱 설치"
+                        >
+                            <Download className="w-4 h-4" />
+                            <span className="hidden md:inline">앱 설치</span>
+                        </button>
+                    )}
+
                     {/* Notifications */}
                     <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                         <Bell className="w-5 h-5" />

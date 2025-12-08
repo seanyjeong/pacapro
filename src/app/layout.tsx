@@ -3,7 +3,6 @@ import './globals.css';
 import { Providers } from '@/components/providers';
 import { LayoutWrapper } from '@/components/layout/layout-wrapper';
 import { DynamicManifest } from '@/components/dynamic-manifest';
-import { PWAInstallPrompt } from '@/components/pwa-install-prompt';
 
 export const metadata: Metadata = {
     title: 'P-ACA - 체육입시 학원관리시스템',
@@ -20,7 +19,6 @@ export default function RootLayout({
             <body className="bg-gray-50">
                 <Providers>
                     <DynamicManifest />
-                    <PWAInstallPrompt />
                     <LayoutWrapper>
                         {children}
                     </LayoutWrapper>

@@ -117,15 +117,6 @@ export default function LoginPage() {
                         </p>
                     </div>
 
-                    {/* Test Account Info */}
-                    <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <p className="text-xs text-blue-800 font-medium mb-2">테스트 계정</p>
-                        <p className="text-xs text-blue-700">
-                            이메일: test@example.com
-                            <br />
-                            비밀번호: password123
-                        </p>
-                    </div>
                 </CardContent>
             </Card>
         </div>
