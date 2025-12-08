@@ -531,50 +531,59 @@ export default function ConsultationsPage() {
                 </div>
               </div>
 
-              {/* 성적 정보 */}
-              {selectedConsultation.academicScores && (
-                <div>
-                  <h4 className="font-medium mb-2">성적 정보</h4>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    {selectedConsultation.academicScores.school_grades && Object.keys(selectedConsultation.academicScores.school_grades).length > 0 && (
-                      <div className="bg-gray-50 rounded p-3">
-                        <p className="font-medium text-gray-700 mb-1">내신 등급</p>
-                        {Object.entries(selectedConsultation.academicScores.school_grades).map(([key, value]) => (
-                          value && (
-                            <p key={key}>
-                              {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}등급
-                            </p>
-                          )
-                        ))}
-                      </div>
-                    )}
-                    {selectedConsultation.academicScores.mock_exam_grades && Object.keys(selectedConsultation.academicScores.mock_exam_grades).length > 0 && (
-                      <div className="bg-gray-50 rounded p-3">
-                        <p className="font-medium text-gray-700 mb-1">모의고사 등급</p>
-                        {Object.entries(selectedConsultation.academicScores.mock_exam_grades).map(([key, value]) => (
-                          value && (
-                            <p key={key}>
-                              {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}등급
-                            </p>
-                          )
-                        ))}
-                      </div>
-                    )}
-                    {selectedConsultation.academicScores.percentiles && Object.keys(selectedConsultation.academicScores.percentiles).length > 0 && (
-                      <div className="bg-gray-50 rounded p-3">
-                        <p className="font-medium text-gray-700 mb-1">백분위</p>
-                        {Object.entries(selectedConsultation.academicScores.percentiles).map(([key, value]) => (
-                          value && (
-                            <p key={key}>
-                              {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}%
-                            </p>
-                          )
-                        ))}
-                      </div>
-                    )}
+              {/* 성적 정보 - 실제 값이 있을 때만 표시 */}
+              {selectedConsultation.academicScores && (() => {
+                const scores = selectedConsultation.academicScores;
+                const hasSchoolGrades = scores.school_grades && Object.values(scores.school_grades).some(v => v);
+                const hasMockGrades = scores.mock_exam_grades && Object.values(scores.mock_exam_grades).some(v => v);
+                const hasPercentiles = scores.percentiles && Object.values(scores.percentiles).some(v => v);
+
+                if (!hasSchoolGrades && !hasMockGrades && !hasPercentiles) return null;
+
+                return (
+                  <div>
+                    <h4 className="font-medium mb-2">성적 정보</h4>
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      {hasSchoolGrades && (
+                        <div className="bg-gray-50 rounded p-3">
+                          <p className="font-medium text-gray-700 mb-1">내신 등급</p>
+                          {Object.entries(scores.school_grades!).map(([key, value]) => (
+                            value && (
+                              <p key={key}>
+                                {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}등급
+                              </p>
+                            )
+                          ))}
+                        </div>
+                      )}
+                      {hasMockGrades && (
+                        <div className="bg-gray-50 rounded p-3">
+                          <p className="font-medium text-gray-700 mb-1">모의고사 등급</p>
+                          {Object.entries(scores.mock_exam_grades!).map(([key, value]) => (
+                            value && (
+                              <p key={key}>
+                                {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}등급
+                              </p>
+                            )
+                          ))}
+                        </div>
+                      )}
+                      {hasPercentiles && (
+                        <div className="bg-gray-50 rounded p-3">
+                          <p className="font-medium text-gray-700 mb-1">백분위</p>
+                          {Object.entries(scores.percentiles!).map(([key, value]) => (
+                            value && (
+                              <p key={key}>
+                                {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}%
+                              </p>
+                            )
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* 기타 정보 */}
               <div className="space-y-2 text-sm">
