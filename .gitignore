@@ -40,3 +40,8 @@ coverage/
 *.log
 *.tsbuildinfo
 nul
+
+# PWA (Service Worker)
+**/public/workbox-*.js
+**/public/sw.js
+**/public/sw.js.map
