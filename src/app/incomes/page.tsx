@@ -91,12 +91,12 @@ export default function IncomesPage() {
 
       const [incomesRes, paymentsRes] = await Promise.all([
         apiClient.get<{incomes: OtherIncome[]}>(`/incomes?start_date=${selectedMonth}-01&end_date=${selectedMonth}-${lastDay}`),
-        apiClient.get<{payments: TuitionPayment[]}>(`/payments?year=${year}&month=${month}`),
+        // 수입 페이지는 실제 납부일(paid_date) 기준으로 조회
+        apiClient.get<{payments: TuitionPayment[]}>(`/payments?paid_year=${year}&paid_month=${month}&payment_status=paid`),
       ]);
 
       setOtherIncomes(incomesRes.incomes || []);
-      // 완납된 학원비만 표시
-      setTuitionPayments((paymentsRes.payments || []).filter((p: TuitionPayment) => p.payment_status === 'paid'));
+      setTuitionPayments(paymentsRes.payments || []);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
