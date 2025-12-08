@@ -20,7 +20,7 @@ export default function ReportsPage() {
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   });
   const [stats, setStats] = useState({
-    students: { total: 0, active: 0, inactive: 0, avgMonthlyTuition: 0 },
+    students: { total: 0, active: 0, paused: 0, avgMonthlyTuition: 0 },
     payments: { total: 0, paid: 0, unpaid: 0, totalAmount: 0, paidAmountFromBilled: 0, paidAmount: 0 },
     expenses: { total: 0, totalAmount: 0 },
     instructors: { total: 0, active: 0 },
@@ -105,20 +105,32 @@ export default function ReportsPage() {
         ? activeStudentsWithTuition.reduce((sum: number, s: any) => sum + parseFloat(s.monthly_tuition || 0), 0) / activeStudentsWithTuition.length
         : 0;
 
+      const activeCount = students.filter((s: any) => s.status === 'active').length;
+      const pausedCount = students.filter((s: any) => s.status === 'paused').length;
+      const graduatedCount = students.filter((s: any) => s.status === 'graduated').length;
+
+      // 재원생의 결제만 필터 (퇴원생 제외)
+      const activeStudentIds = new Set(
+        students.filter((s: any) => s.status === 'active').map((s: any) => s.id)
+      );
+      const activePayments = payments.filter((p: any) => activeStudentIds.has(p.student_id));
+
       setStats({
         students: {
-          total: students.length,
-          active: students.filter((s: any) => s.status === 'active').length,
-          inactive: students.filter((s: any) => s.status !== 'active').length,
+          // 전체 = 재원 + 휴원 + 졸업 (퇴원생, 체험생 제외)
+          total: activeCount + pausedCount + graduatedCount,
+          active: activeCount,
+          paused: pausedCount,
           avgMonthlyTuition: Math.floor(avgTuition),
         },
         payments: {
-          total: payments.length,
-          paid: payments.filter((p: any) => p.payment_status === 'paid').length,
-          unpaid: payments.filter((p: any) => p.payment_status !== 'paid').length,
-          totalAmount: Math.floor(payments.reduce((sum: number, p: any) => sum + parseFloat(p.final_amount || 0), 0)),
-          // 청구건 중 완납된 금액 (수납률 계산용)
-          paidAmountFromBilled: Math.floor(payments
+          total: activePayments.length,
+          paid: activePayments.filter((p: any) => p.payment_status === 'paid').length,
+          unpaid: activePayments.filter((p: any) => p.payment_status !== 'paid').length,
+          // 청구금액: 재원생만 (퇴원생 제외)
+          totalAmount: Math.floor(activePayments.reduce((sum: number, p: any) => sum + parseFloat(p.final_amount || 0), 0)),
+          // 청구건 중 완납된 금액 (수납률 계산용) - 재원생만
+          paidAmountFromBilled: Math.floor(activePayments
             .filter((p: any) => p.payment_status === 'paid')
             .reduce((sum: number, p: any) => sum + parseFloat(p.paid_amount || p.final_amount || 0), 0)),
           // 해당 월 실제 매출 (paid_date 기준)
@@ -381,10 +393,10 @@ export default function ReportsPage() {
 
             <div className="flex justify-between items-center py-3 border-b">
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-                <span className="text-gray-700">휴원/졸업</span>
+                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                <span className="text-gray-700">휴원생</span>
               </div>
-              <span className="font-semibold text-lg">{stats.students.inactive}명</span>
+              <span className="font-semibold text-lg">{stats.students.paused}명</span>
             </div>
 
             <div className="flex justify-between items-center py-3 border-b">
