@@ -69,6 +69,7 @@ export interface Consultation {
 
   // 학생 정보
   student_name: string;
+  student_phone?: string;
   student_grade: StudentGrade;
   student_school?: string;
 

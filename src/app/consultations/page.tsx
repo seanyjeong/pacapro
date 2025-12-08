@@ -397,12 +397,8 @@ export default function ConsultationsPage() {
                       </div>
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <span className="flex items-center gap-1">
-                          <User className="h-3.5 w-3.5" />
-                          {c.parent_name}
-                        </span>
-                        <span className="flex items-center gap-1">
                           <Phone className="h-3.5 w-3.5" />
-                          {c.parent_phone}
+                          {c.student_phone || c.parent_phone}
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
@@ -522,24 +518,16 @@ export default function ConsultationsPage() {
                 </div>
               </div>
 
-              {/* 학부모/학생 정보 */}
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <h4 className="font-medium mb-2">학부모 정보</h4>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="text-gray-500">이름:</span> {selectedConsultation.parent_name}</p>
-                    <p><span className="text-gray-500">연락처:</span> {selectedConsultation.parent_phone}</p>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">학생 정보</h4>
-                  <div className="space-y-1 text-sm">
-                    <p><span className="text-gray-500">이름:</span> {selectedConsultation.student_name}</p>
-                    <p><span className="text-gray-500">학년:</span> {selectedConsultation.student_grade}</p>
-                    {selectedConsultation.student_school && (
-                      <p><span className="text-gray-500">학교:</span> {selectedConsultation.student_school}</p>
-                    )}
-                  </div>
+              {/* 학생 정보 */}
+              <div>
+                <h4 className="font-medium mb-2">학생 정보</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <p><span className="text-gray-500">이름:</span> {selectedConsultation.student_name}</p>
+                  <p><span className="text-gray-500">연락처:</span> {selectedConsultation.student_phone || selectedConsultation.parent_phone}</p>
+                  <p><span className="text-gray-500">학년:</span> {selectedConsultation.student_grade}</p>
+                  {selectedConsultation.student_school && (
+                    <p><span className="text-gray-500">학교:</span> {selectedConsultation.student_school}</p>
+                  )}
                 </div>
               </div>
 
