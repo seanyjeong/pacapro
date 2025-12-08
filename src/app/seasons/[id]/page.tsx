@@ -367,9 +367,9 @@ export default function SeasonDetailPage() {
                 </thead>
                 <tbody>
                   {enrolledStudents.map(enrollment => {
-                    const seasonFee = parseFloat(enrollment.season_fee) || 0;
+                    const seasonFee = parseFloat(enrollment.season_fee) || 0; // 실제 납부할 금액
                     const discountAmount = parseFloat(enrollment.discount_amount || '0') || 0;
-                    const finalFee = parseFloat(enrollment.final_fee || '0') || 0;
+                    const originalFee = seasonFee + discountAmount; // 원래 금액 = 납부금액 + 할인금액
                     const hasDiscount = discountAmount > 0;
 
                     return (
@@ -379,11 +379,11 @@ export default function SeasonDetailPage() {
                           {hasDiscount ? (
                             <div className="flex flex-col">
                               <span className="line-through text-gray-400 text-sm">
-                                {formatSeasonFee(enrollment.season_fee)}
+                                {formatSeasonFee(originalFee.toString())}
                               </span>
                               <div className="flex items-center gap-1">
                                 <span className="text-red-500 text-sm">-{formatSeasonFee(discountAmount.toString())}</span>
-                                <span className="font-bold text-primary-600">{formatSeasonFee(finalFee.toString())}</span>
+                                <span className="font-bold text-primary-600">{formatSeasonFee(seasonFee.toString())}</span>
                               </div>
                             </div>
                           ) : (
