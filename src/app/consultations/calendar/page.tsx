@@ -255,68 +255,75 @@ export default function ConsultationCalendarPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" />
+              <CalendarIcon className="h-5 w-5 text-blue-600" />
               {selectedDate && format(selectedDate, 'yyyy년 M월 d일 (EEE)', { locale: ko })}
-              <Badge variant="secondary">{selectedConsultations.length}건</Badge>
+              <Badge variant="secondary" className="ml-2">{selectedConsultations.length}건</Badge>
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto px-1">
-            {/* 시간대별 그룹핑 */}
-            {(() => {
-              const sorted = [...selectedConsultations].sort((a, b) =>
-                a.preferred_time.localeCompare(b.preferred_time)
-              );
+          <div className="py-4 px-6">
+            <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-2">
+              {/* 시간대별 그룹핑 */}
+              {(() => {
+                const sorted = [...selectedConsultations].sort((a, b) =>
+                  a.preferred_time.localeCompare(b.preferred_time)
+                );
 
-              // 시간대별로 그룹핑
-              const grouped: Record<string, typeof sorted> = {};
-              sorted.forEach(c => {
-                const hour = c.preferred_time.substring(0, 2);
-                const timeLabel = `${hour}:00`;
-                if (!grouped[timeLabel]) {
-                  grouped[timeLabel] = [];
-                }
-                grouped[timeLabel].push(c);
-              });
+                // 시간대별로 그룹핑
+                const grouped: Record<string, typeof sorted> = {};
+                sorted.forEach(c => {
+                  const hour = c.preferred_time.substring(0, 2);
+                  const timeLabel = `${hour}:00`;
+                  if (!grouped[timeLabel]) {
+                    grouped[timeLabel] = [];
+                  }
+                  grouped[timeLabel].push(c);
+                });
 
-              return Object.entries(grouped).map(([time, consultations]) => (
-                <div key={time} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium text-blue-600">{time}</span>
-                    <div className="flex-1 border-t border-gray-200" />
+                return Object.entries(grouped).map(([time, consultations]) => (
+                  <div key={time} className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-full">
+                        <Clock className="h-4 w-4 text-blue-600" />
+                        <span className="font-semibold text-blue-700">{time}</span>
+                      </div>
+                      <div className="flex-1 border-t border-gray-200" />
+                    </div>
+                    <div className="space-y-2 pl-2">
+                      {consultations.map((c) => (
+                        <Link
+                          key={c.id}
+                          href={`/consultations/${c.id}/conduct`}
+                          className="block"
+                          onClick={() => setDetailModalOpen(false)}
+                        >
+                          <Card className="hover:shadow-md transition-all cursor-pointer hover:border-blue-300 hover:bg-blue-50/30">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2.5 h-2.5 rounded-full ${getStatusDot(c.status)}`} />
+                                  <span className="font-medium text-gray-900">{c.student_name}</span>
+                                  <span className="text-sm text-gray-500">{c.student_grade}</span>
+                                  <StatusBadge status={c.status} />
+                                </div>
+                                <span className="text-sm text-gray-500 flex items-center gap-1.5">
+                                  <Phone className="h-3.5 w-3.5" />
+                                  {c.student_phone || c.parent_phone}
+                                </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                  {consultations.map((c) => (
-                    <Link
-                      key={c.id}
-                      href={`/consultations/${c.id}/conduct`}
-                      className="block"
-                      onClick={() => setDetailModalOpen(false)}
-                    >
-                      <Card className="hover:shadow-md transition-shadow cursor-pointer hover:border-blue-300">
-                        <CardContent className="p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{c.student_name}</span>
-                              <span className="text-sm text-gray-500">{c.student_grade}</span>
-                              <StatusBadge status={c.status} />
-                            </div>
-                            <span className="text-sm text-gray-500 flex items-center gap-1">
-                              <Phone className="h-3.5 w-3.5" />
-                              {c.student_phone || c.parent_phone}
-                            </span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              ));
-            })()}
+                ));
+              })()}
+            </div>
           </div>
 
           <DialogFooter>
-            <Button onClick={() => setDetailModalOpen(false)}>닫기</Button>
+            <Button variant="outline" onClick={() => setDetailModalOpen(false)}>닫기</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
