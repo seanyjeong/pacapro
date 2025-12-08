@@ -280,7 +280,7 @@ export default function MobileAttendancePage() {
                               시즌
                             </span>
                           )}
-                          {student.is_makeup && (
+                          {!!student.is_makeup && (
                             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
                               보충
                             </span>
