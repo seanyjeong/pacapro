@@ -69,7 +69,8 @@ export function TopNav() {
         };
     }, []);
 
-    // 로그인 안 했으면 설치 버튼 안 보임
+    // 로그인 안 했거나 이미 설치됐으면 설치 버튼 안 보임
+    // standalone 모드(PWA로 실행 중)면 isInstalled가 true
     const showInstallButton = !isInstalled && user;
 
     // 검색 실행 (debounce)
