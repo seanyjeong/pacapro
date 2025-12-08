@@ -121,15 +121,18 @@ export function TopNav() {
     };
 
     const handleInstallClick = async () => {
-        if (!deferredPrompt) return;
+        if (deferredPrompt) {
+            await deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
 
-        await deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-
-        if (outcome === 'accepted') {
-            setIsInstalled(true);
+            if (outcome === 'accepted') {
+                setIsInstalled(true);
+            }
+            setDeferredPrompt(null);
+        } else {
+            // deferredPrompt가 없으면 안내 메시지
+            alert('브라우저 메뉴에서 "앱 설치" 또는 "홈 화면에 추가"를 선택해주세요.\n\nChrome: 메뉴(⋮) → 앱 설치\nEdge: 메뉴(...) → 앱 → 이 사이트를 앱으로 설치');
         }
-        setDeferredPrompt(null);
     };
 
     return (
@@ -214,7 +217,7 @@ export function TopNav() {
                 {/* Right: Notifications + User */}
                 <div className="flex items-center space-x-2 md:space-x-4">
                     {/* Install App Button */}
-                    {!isInstalled && deferredPrompt && (
+                    {!isInstalled && (
                         <button
                             onClick={handleInstallClick}
                             className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
