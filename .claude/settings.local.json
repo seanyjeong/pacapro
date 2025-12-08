@@ -111,7 +111,11 @@
       "mcp__context7__get-library-docs",
       "Bash(grep:*)",
       "WebFetch(domain:lh3.googleusercontent.com)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(sudo -S bash -c 'systemctl restart paca')",
+      "Bash(setsid sh -c 'echo \"\"q141171616!\"\" | sudo -S systemctl restart paca')",
+      "Bash(sudo -S -k systemctl restart:*)",
+      "Bash(sudo -S -k systemctl:*)"
     ],
     "deny": [],
     "ask": []

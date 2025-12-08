@@ -29,6 +29,7 @@ interface AttendanceStudent {
   season_type?: string | null;  // 'regular' | 'rolling' | null
   is_trial?: boolean | null;  // 체험생 여부
   trial_remaining?: number | null;  // 남은 체험 횟수
+  is_makeup?: boolean | number | null;  // 보충 학생 여부
 }
 
 interface InstructorAttendance {
@@ -711,6 +712,11 @@ export function TimeSlotDetailModal({
                                   {student.season_type && (
                                     <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
                                       시즌
+                                    </Badge>
+                                  )}
+                                  {!!student.is_makeup && (
+                                    <Badge className="bg-orange-100 text-orange-700 border-orange-200 text-xs">
+                                      보충
                                     </Badge>
                                   )}
                                 </div>
