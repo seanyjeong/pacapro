@@ -80,16 +80,18 @@ export default function ReportsPage() {
       const [year, month] = selectedMonth.split('-');
       const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
 
-      const [studentsRes, paymentsRes, expensesRes, instructorsRes, incomesRes] = await Promise.all([
+      const [studentsRes, paymentsRes, paidPaymentsRes, expensesRes, instructorsRes, incomesRes] = await Promise.all([
         apiClient.get<{students: any[]}>('/students'),
-        apiClient.get<{payments: any[]}>(`/payments?year=${year}&month=${month}`),
+        apiClient.get<{payments: any[]}>(`/payments?year=${year}&month=${month}`),  // 청구 기준 (due_date)
+        apiClient.get<{payments: any[]}>(`/payments?paid_year=${year}&paid_month=${month}&payment_status=paid`),  // 매출 기준 (paid_date)
         apiClient.get<{expenses: any[]}>(`/expenses?start_date=${selectedMonth}-01&end_date=${selectedMonth}-${lastDay}`),
         apiClient.get<{instructors: any[]}>('/instructors'),
         apiClient.get<{incomes: any[]}>(`/incomes?start_date=${selectedMonth}-01&end_date=${selectedMonth}-${lastDay}`),
       ]);
 
       const students = studentsRes.students || [];
-      const payments = paymentsRes.payments || [];
+      const payments = paymentsRes.payments || [];  // 청구 기준 (해당 월에 청구된 결제)
+      const paidPayments = paidPaymentsRes.payments || [];  // 매출 기준 (해당 월에 실제 납부된 결제)
       const expenses = expensesRes.expenses || [];
       const instructors = instructorsRes.instructors || [];
       const otherIncomes = incomesRes.incomes || [];
@@ -115,9 +117,8 @@ export default function ReportsPage() {
           paid: payments.filter((p: any) => p.payment_status === 'paid').length,
           unpaid: payments.filter((p: any) => p.payment_status !== 'paid').length,
           totalAmount: Math.floor(payments.reduce((sum: number, p: any) => sum + parseFloat(p.final_amount || 0), 0)),
-          paidAmount: Math.floor(payments
-            .filter((p: any) => p.payment_status === 'paid')
-            .reduce((sum: number, p: any) => sum + parseFloat(p.final_amount || 0), 0)),
+          // paidAmount는 실제 납부일(paid_date) 기준으로 계산 (매출)
+          paidAmount: Math.floor(paidPayments.reduce((sum: number, p: any) => sum + parseFloat(p.paid_amount || p.final_amount || 0), 0)),
         },
         expenses: {
           total: expenses.length,
