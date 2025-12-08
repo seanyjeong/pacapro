@@ -267,6 +267,11 @@ export default function MobileAttendancePage() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-lg">{student.student_name}</p>
+                          {(student as { is_season_student?: boolean }).is_season_student && (
+                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+                              시즌
+                            </span>
+                          )}
                           {student.is_makeup && (
                             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
                               보충
@@ -279,11 +284,11 @@ export default function MobileAttendancePage() {
                         </p>
                       </div>
 
-                      {/* 전화걸기 버튼 */}
+                      {/* 전화걸기 버튼 - 학부모 전번 우선 */}
                       <button
                         onClick={() => handleCall(
-                          (student as { phone?: string }).phone,
-                          (student as { parent_phone?: string }).parent_phone
+                          (student as { parent_phone?: string }).parent_phone,
+                          (student as { phone?: string }).phone
                         )}
                         className="p-2 text-gray-400 hover:text-green-500 transition"
                       >

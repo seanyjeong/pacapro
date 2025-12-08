@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { canView } from '@/lib/utils/permissions';
+import { canView, isOwner, isAdmin } from '@/lib/utils/permissions';
 import { paymentsAPI } from '@/lib/api/payments';
-import { ArrowLeft, Phone, AlertCircle, CreditCard, Calendar, User } from 'lucide-react';
+import { ArrowLeft, CreditCard, Calendar, User } from 'lucide-react';
 import { toast } from 'sonner';
 import type { UnpaidPayment } from '@/lib/types/payment';
 
@@ -13,6 +13,7 @@ export default function MobileUnpaidPage() {
   const [payments, setPayments] = useState<UnpaidPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [canViewAmount, setCanViewAmount] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -26,6 +27,8 @@ export default function MobileUnpaidPage() {
       return;
     }
     setHasPermission(true);
+    // 금액은 owner/admin만 볼 수 있음
+    setCanViewAmount(isOwner() || isAdmin());
   }, [router]);
 
   useEffect(() => {
@@ -47,18 +50,11 @@ export default function MobileUnpaidPage() {
     }
   };
 
-  // 전화걸기
-  const handleCall = (phone?: string, parentPhone?: string) => {
-    const numberToCall = phone || parentPhone;
-    if (!numberToCall) {
-      toast.error('등록된 전화번호가 없습니다.');
-      return;
-    }
-    window.location.href = `tel:${numberToCall}`;
-  };
-
   // 금액 포맷
-  const formatAmount = (amount: number) => {
+  const formatAmount = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return '0';
+    }
     return new Intl.NumberFormat('ko-KR').format(amount);
   };
 
@@ -79,7 +75,10 @@ export default function MobileUnpaidPage() {
   }
 
   // 총 미납액 계산
-  const totalUnpaid = payments.reduce((sum, p) => sum + (p.final_amount - p.paid_amount), 0);
+  const totalUnpaid = payments.reduce((sum, p) => {
+    const unpaid = (p.final_amount || 0) - (p.paid_amount || 0);
+    return sum + (isNaN(unpaid) ? 0 : unpaid);
+  }, 0);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -105,10 +104,17 @@ export default function MobileUnpaidPage() {
             {/* 요약 정보 */}
             <div className="bg-white rounded-xl p-4 mb-4 shadow-sm">
               <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-gray-500">총 미납</p>
-                  <p className="font-bold text-2xl text-red-600">{formatAmount(totalUnpaid)}원</p>
-                </div>
+                {canViewAmount ? (
+                  <div>
+                    <p className="text-sm text-gray-500">총 미납</p>
+                    <p className="font-bold text-2xl text-red-600">{formatAmount(totalUnpaid)}원</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-sm text-gray-500">미납 현황</p>
+                    <p className="font-semibold text-lg text-gray-700">확인 필요</p>
+                  </div>
+                )}
                 <div className="text-right">
                   <p className="text-sm text-gray-500">미납 학생</p>
                   <p className="font-semibold text-lg">{payments.length}명</p>
@@ -116,11 +122,10 @@ export default function MobileUnpaidPage() {
               </div>
             </div>
 
-            {/* 미납자 카드 목록 */}
+            {/* 미납자 카드 목록 - 간소화 */}
             <div className="space-y-3">
               {payments.map((payment) => {
-                const unpaidAmount = payment.final_amount - payment.paid_amount;
-                const hasPhone = payment.phone || payment.parent_phone;
+                const unpaidAmount = (payment.final_amount || 0) - (payment.paid_amount || 0);
 
                 return (
                   <div
@@ -128,74 +133,25 @@ export default function MobileUnpaidPage() {
                     className="bg-white rounded-xl p-4 shadow-sm"
                   >
                     {/* 학생 정보 */}
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-red-100 p-2 rounded-full">
-                          <User className="h-5 w-5 text-red-600" />
+                    <div className="flex items-center gap-3">
+                      <div className="bg-red-100 p-2 rounded-full">
+                        <User className="h-5 w-5 text-red-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-lg">{payment.student_name}</p>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>{payment.year_month}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getOverdueColor(payment.days_overdue || 0)}`}>
+                            {(payment.days_overdue || 0) > 0 ? `${payment.days_overdue}일 연체` : '미납'}
+                          </span>
                         </div>
-                        <div>
-                          <p className="font-semibold text-lg">{payment.student_name}</p>
-                          {payment.student_number && (
-                            <p className="text-sm text-gray-500">{payment.student_number}</p>
-                          )}
+                      </div>
+                      {/* 금액 표시 (권한 있는 경우만) */}
+                      {canViewAmount && (
+                        <div className="text-right">
+                          <p className="font-bold text-red-600">{formatAmount(unpaidAmount)}원</p>
                         </div>
-                      </div>
-
-                      {/* 전화걸기 버튼 */}
-                      <button
-                        onClick={() => handleCall(payment.phone, payment.parent_phone)}
-                        disabled={!hasPhone}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition active:scale-95 ${
-                          hasPhone
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        }`}
-                      >
-                        <Phone className="h-5 w-5" />
-                        전화
-                      </button>
-                    </div>
-
-                    {/* 미납 정보 */}
-                    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600 flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {payment.year_month}
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getOverdueColor(payment.days_overdue)}`}>
-                          {payment.days_overdue > 0 ? `${payment.days_overdue}일 연체` : '미납'}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">청구금액</span>
-                        <span className="font-medium">{formatAmount(payment.final_amount)}원</span>
-                      </div>
-
-                      {payment.paid_amount > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">납부금액</span>
-                          <span className="text-green-600">-{formatAmount(payment.paid_amount)}원</span>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                        <span className="font-semibold text-red-600">미납금액</span>
-                        <span className="font-bold text-lg text-red-600">{formatAmount(unpaidAmount)}원</span>
-                      </div>
-                    </div>
-
-                    {/* 전화번호 정보 */}
-                    <div className="mt-3 text-sm text-gray-500">
-                      {payment.phone && (
-                        <p>학생: {payment.phone}</p>
-                      )}
-                      {payment.parent_phone && (
-                        <p>학부모: {payment.parent_phone}</p>
-                      )}
-                      {!payment.phone && !payment.parent_phone && (
-                        <p className="text-red-400">전화번호 미등록</p>
                       )}
                     </div>
                   </div>
