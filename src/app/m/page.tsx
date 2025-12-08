@@ -11,6 +11,7 @@ export default function MobileHomePage() {
   const router = useRouter();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [userName, setUserName] = useState<string>('');
+  const [academyName, setAcademyName] = useState<string>('');
 
   useEffect(() => {
     // 로그인 체크
@@ -26,6 +27,7 @@ export default function MobileHomePage() {
       try {
         const user = JSON.parse(userStr);
         setUserName(user.name || user.username || '');
+        setAcademyName(user.academy_name || '');
       } catch {
         // ignore
       }
@@ -105,7 +107,7 @@ export default function MobileHomePage() {
             className="rounded-xl shadow-md"
           />
         </div>
-        <h1 className="text-2xl font-bold text-gray-900">P-ACA 모바일</h1>
+        {academyName && <h1 className="text-2xl font-bold text-gray-900">{academyName}</h1>}
         {userName && (
           <p className="text-gray-600 mt-1">{userName}님 안녕하세요</p>
         )}
