@@ -69,12 +69,15 @@ export default function MobileAttendancePage() {
         time_slot: timeSlot,
       });
 
+      console.log('[DEBUG] getSchedules 결과:', schedules.length, '개, time_slot:', timeSlot);
       if (schedules.length > 0) {
         const scheduleId = schedules[0].id;
+        console.log('[DEBUG] 선택된 스케줄 ID:', scheduleId, '시간대:', schedules[0].time_slot);
         setSchedule(schedules[0]);
 
         // 출석 대상 학생 목록 조회
         const response = await schedulesApi.getAttendance(scheduleId);
+        console.log('[DEBUG] 출석 학생 수:', response.students?.length || 0);
         setStudents(response.students || []);
 
         // 기존 출석 상태 로드
