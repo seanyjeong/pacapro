@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { canView, isOwner, isAdmin } from '@/lib/utils/permissions';
+import { canView, canEdit, isOwner } from '@/lib/utils/permissions';
 import { paymentsAPI } from '@/lib/api/payments';
-import { ArrowLeft, CreditCard, Calendar, User } from 'lucide-react';
+import { ArrowLeft, CreditCard, Calendar, User, Check, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 import type { UnpaidPayment } from '@/lib/types/payment';
 
 export default function MobileUnpaidPage() {
@@ -14,6 +15,9 @@ export default function MobileUnpaidPage() {
   const [loading, setLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [canViewAmount, setCanViewAmount] = useState(false);
+  const [canMarkPaid, setCanMarkPaid] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<UnpaidPayment | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -27,8 +31,10 @@ export default function MobileUnpaidPage() {
       return;
     }
     setHasPermission(true);
-    // 금액은 owner/admin만 볼 수 있음
-    setCanViewAmount(isOwner() || isAdmin());
+    // 금액은 원장만 볼 수 있음
+    setCanViewAmount(isOwner());
+    // 납부 처리는 payments.edit 권한 있으면 가능
+    setCanMarkPaid(canEdit('payments'));
   }, [router]);
 
   useEffect(() => {
@@ -64,6 +70,29 @@ export default function MobileUnpaidPage() {
     if (days >= 14) return 'text-orange-600 bg-orange-50';
     if (days >= 7) return 'text-yellow-600 bg-yellow-50';
     return 'text-gray-600 bg-gray-50';
+  };
+
+  // 완납 처리
+  const handleMarkPaid = async () => {
+    if (!selectedPayment) return;
+
+    setProcessing(true);
+    try {
+      const unpaidAmount = (selectedPayment.final_amount || 0) - (selectedPayment.paid_amount || 0);
+      await paymentsAPI.recordPayment(selectedPayment.id, {
+        paid_amount: unpaidAmount,
+        payment_method: 'cash',  // 기본값
+        payment_date: new Date().toISOString().split('T')[0],
+      });
+      toast.success(`${selectedPayment.student_name} 완납 처리되었습니다.`);
+      setSelectedPayment(null);
+      loadUnpaidPayments();  // 목록 새로고침
+    } catch (err) {
+      console.error('Failed to mark as paid:', err);
+      toast.error('납부 처리에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   if (hasPermission === null || loading) {
@@ -122,15 +151,18 @@ export default function MobileUnpaidPage() {
               </div>
             </div>
 
-            {/* 미납자 카드 목록 - 간소화 */}
+            {/* 미납자 카드 목록 */}
             <div className="space-y-3">
               {payments.map((payment) => {
                 const unpaidAmount = (payment.final_amount || 0) - (payment.paid_amount || 0);
 
                 return (
-                  <div
+                  <button
                     key={payment.id}
-                    className="bg-white rounded-xl p-4 shadow-sm"
+                    onClick={() => canMarkPaid && setSelectedPayment(payment)}
+                    className={`w-full bg-white rounded-xl p-4 shadow-sm text-left transition-all ${
+                      canMarkPaid ? 'active:scale-[0.98] hover:bg-gray-50' : ''
+                    }`}
                   >
                     {/* 학생 정보 */}
                     <div className="flex items-center gap-3">
@@ -147,20 +179,69 @@ export default function MobileUnpaidPage() {
                           </span>
                         </div>
                       </div>
-                      {/* 금액 표시 (권한 있는 경우만) */}
+                      {/* 금액 표시 (원장만) */}
                       {canViewAmount && (
                         <div className="text-right">
                           <p className="font-bold text-red-600">{formatAmount(unpaidAmount)}원</p>
                         </div>
                       )}
                     </div>
-                  </div>
+                  </button>
                 );
               })}
             </div>
           </>
         )}
       </main>
+
+      {/* 완납 확인 모달 */}
+      {selectedPayment && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6 space-y-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">완납 처리</h3>
+              <p className="text-gray-600 mt-2">
+                <span className="font-semibold">{selectedPayment.student_name}</span>님의<br />
+                {selectedPayment.year_month} 학원비를<br />
+                완납 처리하시겠습니까?
+              </p>
+              {canViewAmount && (
+                <p className="text-lg font-bold text-green-600 mt-3">
+                  {formatAmount((selectedPayment.final_amount || 0) - (selectedPayment.paid_amount || 0))}원
+                </p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 py-6"
+                onClick={() => setSelectedPayment(null)}
+                disabled={processing}
+              >
+                <X className="h-5 w-5 mr-2" />
+                취소
+              </Button>
+              <Button
+                className="flex-1 py-6 bg-green-500 hover:bg-green-600"
+                onClick={handleMarkPaid}
+                disabled={processing}
+              >
+                {processing ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <>
+                    <Check className="h-5 w-5 mr-2" />
+                    완납
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
