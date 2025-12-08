@@ -119,6 +119,8 @@ export interface SeasonEnrollData {
   is_continuous?: boolean;
   previous_season_id?: number;
   time_slots?: TimeSlot[]; // 고3/N수용 여러 시간대 선택
+  discount_amount?: number; // 수동 할인 금액
+  discount_reason?: string; // 할인 사유
   notes?: string;
 }
 

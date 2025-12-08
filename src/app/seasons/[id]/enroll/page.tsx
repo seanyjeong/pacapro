@@ -46,6 +46,7 @@ export default function SeasonEnrollPage() {
   const [showTimeSlotModal, setShowTimeSlotModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<TimeSlot[]>(['evening']);
+  const [discountAmount, setDiscountAmount] = useState<number>(0); // 할인 금액
 
   // 학생의 기본 시간대 가져오기 (시즌 설정 또는 기본값)
   const getDefaultTimeSlots = (student: Student): TimeSlot[] => {
@@ -91,6 +92,7 @@ export default function SeasonEnrollPage() {
   const handleEnrollClick = (student: Student) => {
     setSelectedStudent(student);
     setSelectedTimeSlots(getDefaultTimeSlots(student));
+    setDiscountAmount(0); // 할인 금액 초기화
     setShowTimeSlotModal(true);
   };
 
@@ -110,20 +112,25 @@ export default function SeasonEnrollPage() {
   // 모달에서 확인 버튼 클릭
   const handleConfirmEnroll = () => {
     if (selectedStudent && selectedTimeSlots.length > 0) {
-      handleEnroll(selectedStudent.id, selectedTimeSlots);
+      handleEnroll(selectedStudent.id, selectedTimeSlots, discountAmount);
       setShowTimeSlotModal(false);
       setSelectedStudent(null);
+      setDiscountAmount(0);
     }
   };
 
-  const handleEnroll = async (studentId: number, timeSlots: TimeSlot[]) => {
+  const handleEnroll = async (studentId: number, timeSlots: TimeSlot[], discount: number = 0) => {
     if (!season) return;
 
     try {
       setEnrolling(studentId);
+      const baseFee = parseFloat(season.default_season_fee) || 0;
+      const finalFee = Math.max(0, baseFee - discount);
+
       await seasonsApi.enrollStudent(seasonId, {
         student_id: studentId,
-        season_fee: parseFloat(season.default_season_fee) || 0,
+        season_fee: baseFee,  // 원래 시즌비 (백엔드에서 할인 적용)
+        discount_amount: discount,  // 할인 금액
         time_slots: timeSlots,
       });
 
@@ -348,6 +355,37 @@ export default function SeasonEnrollPage() {
               <p className="text-xs text-gray-500 mt-4">
                 선택된 시간대: {selectedTimeSlots.map(ts => TIME_SLOT_LABELS[ts]).join(', ')}
               </p>
+
+              {/* 할인 금액 입력 */}
+              <div className="mt-6 pt-4 border-t">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  할인 금액 (선택사항)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    min="0"
+                    step="10000"
+                    value={discountAmount || ''}
+                    onChange={(e) => setDiscountAmount(parseInt(e.target.value) || 0)}
+                    placeholder="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
+                  />
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">원</span>
+                </div>
+                {discountAmount > 0 && season && (
+                  <p className="mt-2 text-sm">
+                    <span className="text-gray-500">시즌비: </span>
+                    <span className="line-through text-gray-400 mr-1">
+                      {parseInt(season.default_season_fee).toLocaleString()}원
+                    </span>
+                    <span className="text-red-500 mr-1">-{discountAmount.toLocaleString()}원</span>
+                    <span className="font-bold text-blue-600">
+                      → {Math.max(0, parseInt(season.default_season_fee) - discountAmount).toLocaleString()}원
+                    </span>
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* 모달 푸터 */}
