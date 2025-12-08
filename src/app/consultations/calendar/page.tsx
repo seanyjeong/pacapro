@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -257,44 +257,67 @@ export default function ConsultationCalendarPage() {
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
               {selectedDate && format(selectedDate, 'yyyy년 M월 d일 (EEE)', { locale: ko })}
+              <Badge variant="secondary">{selectedConsultations.length}건</Badge>
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-            {selectedConsultations
-              .sort((a, b) => a.preferred_time.localeCompare(b.preferred_time))
-              .map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/consultations/${c.id}/conduct`}
-                  className="block"
-                >
-                  <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{c.student_name}</span>
-                            <span className="text-sm text-gray-500">{c.student_grade}</span>
-                            <StatusBadge status={c.status} />
-                          </div>
-                          <div className="flex items-center gap-3 text-sm text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5" />
-                              {c.preferred_time.substring(0, 5)}
-                            </span>
-                            <span className="flex items-center gap-1">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto px-1">
+            {/* 시간대별 그룹핑 */}
+            {(() => {
+              const sorted = [...selectedConsultations].sort((a, b) =>
+                a.preferred_time.localeCompare(b.preferred_time)
+              );
+
+              // 시간대별로 그룹핑
+              const grouped: Record<string, typeof sorted> = {};
+              sorted.forEach(c => {
+                const hour = c.preferred_time.substring(0, 2);
+                const timeLabel = `${hour}:00`;
+                if (!grouped[timeLabel]) {
+                  grouped[timeLabel] = [];
+                }
+                grouped[timeLabel].push(c);
+              });
+
+              return Object.entries(grouped).map(([time, consultations]) => (
+                <div key={time} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-600" />
+                    <span className="font-medium text-blue-600">{time}</span>
+                    <div className="flex-1 border-t border-gray-200" />
+                  </div>
+                  {consultations.map((c) => (
+                    <Link
+                      key={c.id}
+                      href={`/consultations/${c.id}/conduct`}
+                      className="block"
+                      onClick={() => setDetailModalOpen(false)}
+                    >
+                      <Card className="hover:shadow-md transition-shadow cursor-pointer hover:border-blue-300">
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{c.student_name}</span>
+                              <span className="text-sm text-gray-500">{c.student_grade}</span>
+                              <StatusBadge status={c.status} />
+                            </div>
+                            <span className="text-sm text-gray-500 flex items-center gap-1">
                               <Phone className="h-3.5 w-3.5" />
                               {c.student_phone || c.parent_phone}
                             </span>
                           </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              ));
+            })()}
           </div>
+
+          <DialogFooter>
+            <Button onClick={() => setDetailModalOpen(false)}>닫기</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
