@@ -1,8 +1,8 @@
 {
-  "name": "P-ACA 모바일",
+  "name": "P-ACA 학원관리",
   "short_name": "P-ACA",
-  "description": "체육입시 학원관리시스템 - 모바일 출석체크",
-  "start_url": "/m",
+  "description": "체육입시 학원관리시스템",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
