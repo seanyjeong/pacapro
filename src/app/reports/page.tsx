@@ -21,7 +21,7 @@ export default function ReportsPage() {
   });
   const [stats, setStats] = useState({
     students: { total: 0, active: 0, inactive: 0, avgMonthlyTuition: 0 },
-    payments: { total: 0, paid: 0, unpaid: 0, totalAmount: 0, paidAmount: 0 },
+    payments: { total: 0, paid: 0, unpaid: 0, totalAmount: 0, paidAmountFromBilled: 0, paidAmount: 0 },
     expenses: { total: 0, totalAmount: 0 },
     instructors: { total: 0, active: 0 },
     otherIncomes: { total: 0, totalAmount: 0 },
@@ -117,7 +117,11 @@ export default function ReportsPage() {
           paid: payments.filter((p: any) => p.payment_status === 'paid').length,
           unpaid: payments.filter((p: any) => p.payment_status !== 'paid').length,
           totalAmount: Math.floor(payments.reduce((sum: number, p: any) => sum + parseFloat(p.final_amount || 0), 0)),
-          // paidAmount는 실제 납부일(paid_date) 기준으로 계산 (매출)
+          // 청구건 중 완납된 금액 (수납률 계산용)
+          paidAmountFromBilled: Math.floor(payments
+            .filter((p: any) => p.payment_status === 'paid')
+            .reduce((sum: number, p: any) => sum + parseFloat(p.paid_amount || p.final_amount || 0), 0)),
+          // 해당 월 실제 매출 (paid_date 기준)
           paidAmount: Math.floor(paidPayments.reduce((sum: number, p: any) => sum + parseFloat(p.paid_amount || p.final_amount || 0), 0)),
         },
         expenses: {
@@ -313,13 +317,13 @@ export default function ReportsPage() {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">수납 금액</span>
-                <span className="font-semibold text-green-600">{formatAmount(stats.payments.paidAmount)}원</span>
+                <span className="text-sm text-gray-600">수납 완료</span>
+                <span className="font-semibold text-green-600">{formatAmount(stats.payments.paidAmountFromBilled)}원</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-green-600 h-2 rounded-full"
-                  style={{ width: `${stats.payments.totalAmount > 0 ? (stats.payments.paidAmount / stats.payments.totalAmount) * 100 : 0}%` }}
+                  style={{ width: `${stats.payments.totalAmount > 0 ? (stats.payments.paidAmountFromBilled / stats.payments.totalAmount) * 100 : 0}%` }}
                 ></div>
               </div>
             </div>
@@ -328,14 +332,14 @@ export default function ReportsPage() {
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-600">미수납 금액</span>
                 <span className="font-semibold text-red-600">
-                  {formatAmount(stats.payments.totalAmount - stats.payments.paidAmount)}원
+                  {formatAmount(stats.payments.totalAmount - stats.payments.paidAmountFromBilled)}원
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
                   className="bg-red-600 h-2 rounded-full"
                   style={{
-                    width: `${stats.payments.totalAmount > 0 ? ((stats.payments.totalAmount - stats.payments.paidAmount) / stats.payments.totalAmount) * 100 : 0}%`
+                    width: `${stats.payments.totalAmount > 0 ? ((stats.payments.totalAmount - stats.payments.paidAmountFromBilled) / stats.payments.totalAmount) * 100 : 0}%`
                   }}
                 ></div>
               </div>
@@ -346,7 +350,7 @@ export default function ReportsPage() {
                 <span className="font-semibold text-gray-900">수납률</span>
                 <span className="text-xl font-bold text-primary-600">
                   {stats.payments.totalAmount > 0
-                    ? Math.round((stats.payments.paidAmount / stats.payments.totalAmount) * 100)
+                    ? Math.round((stats.payments.paidAmountFromBilled / stats.payments.totalAmount) * 100)
                     : 0}%
                 </span>
               </div>
