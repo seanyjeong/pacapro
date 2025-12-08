@@ -79,7 +79,7 @@ export default function MobileHomePage() {
       href: '/m/unpaid',
       icon: CreditCard,
       label: '미납자 확인',
-      description: '미납 목록 + 전화걸기',
+      description: '미납 학생 목록 조회',
       color: 'bg-red-500 hover:bg-red-600',
       permission: canView('payments'),
     },
@@ -147,15 +147,6 @@ export default function MobileHomePage() {
         </Button>
       </div>
 
-      {/* 웹 버전 링크 */}
-      <div className="mt-4 text-center">
-        <button
-          onClick={() => router.push('/')}
-          className="text-sm text-blue-500 underline"
-        >
-          웹 버전으로 이동
-        </button>
-      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils/cn';
 import {
@@ -135,9 +136,13 @@ export function Sidebar() {
             {/* Logo */}
             <div className="h-16 flex items-center px-6 border-b border-gray-200">
                 <Link href="/" className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">P</span>
-                    </div>
+                    <Image
+                        src="/icons/icon-96x96.png"
+                        alt="P-ACA"
+                        width={32}
+                        height={32}
+                        className="rounded-lg"
+                    />
                     <span className="text-xl font-bold text-gray-900">P-ACA</span>
                 </Link>
             </div>
@@ -227,7 +232,7 @@ export function Sidebar() {
             {/* Footer */}
             <div className="p-4 border-t border-gray-200">
                 <div className="text-xs text-gray-500 text-center space-y-1">
-                    <div>P-ACA v2.6.3</div>
+                    <div>P-ACA v2.6.4</div>
                     <div className="text-[10px] text-gray-400">Last updated: 2025-12-08</div>
                     <div>문의: 010-2144-6755</div>
                 </div>
