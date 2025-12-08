@@ -20,7 +20,7 @@ export default function ReportsPage() {
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
   });
   const [stats, setStats] = useState({
-    students: { total: 0, active: 0, inactive: 0 },
+    students: { total: 0, active: 0, inactive: 0, avgMonthlyTuition: 0 },
     payments: { total: 0, paid: 0, unpaid: 0, totalAmount: 0, paidAmount: 0 },
     expenses: { total: 0, totalAmount: 0 },
     instructors: { total: 0, active: 0 },
@@ -94,11 +94,21 @@ export default function ReportsPage() {
       const instructors = instructorsRes.instructors || [];
       const otherIncomes = incomesRes.incomes || [];
 
+      // 재원생 중 월 수강료가 0원이 아닌 학생들만 필터
+      const activeStudentsWithTuition = students.filter(
+        (s: any) => s.status === 'active' && parseFloat(s.monthly_tuition || 0) > 0
+      );
+      // 평균 월 수강료 계산
+      const avgTuition = activeStudentsWithTuition.length > 0
+        ? activeStudentsWithTuition.reduce((sum: number, s: any) => sum + parseFloat(s.monthly_tuition || 0), 0) / activeStudentsWithTuition.length
+        : 0;
+
       setStats({
         students: {
           total: students.length,
           active: students.filter((s: any) => s.status === 'active').length,
           inactive: students.filter((s: any) => s.status !== 'active').length,
+          avgMonthlyTuition: Math.floor(avgTuition),
         },
         payments: {
           total: payments.length,
@@ -382,13 +392,12 @@ export default function ReportsPage() {
 
             <div className="pt-4 border-t">
               <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-900">학생당 평균 수강료</span>
+                <span className="font-semibold text-gray-900">평균 월 수강료</span>
                 <span className="text-xl font-bold text-primary-600">
-                  {stats.students.active > 0
-                    ? formatAmount(stats.payments.paidAmount / stats.students.active)
-                    : 0}원
+                  {formatAmount(stats.students.avgMonthlyTuition)}원
                 </span>
               </div>
+              <p className="text-xs text-gray-500 mt-1">재원생 기준 (0원 제외)</p>
             </div>
           </CardContent>
         </Card>
