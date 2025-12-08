@@ -117,7 +117,8 @@
       "Bash(sudo -S -k systemctl restart:*)",
       "Bash(sudo -S -k systemctl:*)",
       "Bash(identify:*)",
-      "WebFetch(domain:pacapro.vercel.app)"
+      "WebFetch(domain:pacapro.vercel.app)",
+      "Bash({학원명} 관리\"로 변경\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
