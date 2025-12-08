@@ -302,6 +302,12 @@ export default function ConsultationsPage() {
             <Plus className="h-4 w-4" />
             직접 등록
           </Button>
+          <Link href="/consultations/calendar">
+            <Button variant="outline" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              달력 보기
+            </Button>
+          </Link>
           <Link href="/consultations/settings">
             <Button variant="outline" className="gap-2">
               <Settings className="h-4 w-4" />

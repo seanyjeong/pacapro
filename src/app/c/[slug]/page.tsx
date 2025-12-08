@@ -180,6 +180,32 @@ export default function ConsultationPage() {
       toast.error('학교를 입력해주세요.');
       return false;
     }
+    // 성적 정보 필수 체크
+    if (formData.schoolGradeAvg === undefined) {
+      toast.error('내신 평균등급을 선택해주세요.');
+      return false;
+    }
+    if (!formData.admissionType) {
+      toast.error('입시 유형을 선택해주세요.');
+      return false;
+    }
+    const mockGrades = formData.mockTestGrades;
+    if (!mockGrades?.korean && mockGrades?.korean !== -1) {
+      toast.error('모의고사 국어 등급을 선택해주세요.');
+      return false;
+    }
+    if (!mockGrades?.math && mockGrades?.math !== -1) {
+      toast.error('모의고사 수학 등급을 선택해주세요.');
+      return false;
+    }
+    if (!mockGrades?.english && mockGrades?.english !== -1) {
+      toast.error('모의고사 영어 등급을 선택해주세요.');
+      return false;
+    }
+    if (!mockGrades?.exploration && mockGrades?.exploration !== -1) {
+      toast.error('모의고사 탐구 등급을 선택해주세요.');
+      return false;
+    }
     return true;
   };
 
@@ -395,24 +421,27 @@ export default function ConsultationPage() {
 
           {/* 성적 정보 */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700">성적 정보</h3>
+            <h3 className="text-sm font-semibold text-gray-700">성적 정보 <span className="text-red-500">*</span></h3>
 
             {/* 내신등급 + 입시유형 */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-xs">내신 평균등급</Label>
+                <Label className="text-xs">내신 평균등급 <span className="text-red-500">*</span></Label>
                 <div className="mt-1">
                   <CustomDropdown
                     id="schoolGradeAvg"
                     value={formData.schoolGradeAvg?.toString() || ''}
-                    options={[1,2,3,4,5,6,7,8,9].map(g => ({ value: g.toString(), label: `${g}등급` }))}
+                    options={[
+                      { value: 'none', label: '미응시' },
+                      ...([1,2,3,4,5,6,7,8,9].map(g => ({ value: g.toString(), label: `${g}등급` })))
+                    ]}
                     placeholder="선택"
-                    onChange={(v) => setFormData({ ...formData, schoolGradeAvg: parseInt(v) })}
+                    onChange={(v) => setFormData({ ...formData, schoolGradeAvg: v === 'none' ? -1 : parseInt(v) })}
                   />
                 </div>
               </div>
               <div>
-                <Label className="text-xs">입시 유형</Label>
+                <Label className="text-xs">입시 유형 <span className="text-red-500">*</span></Label>
                 <div className="mt-1">
                   <CustomDropdown
                     id="admissionType"
@@ -427,7 +456,7 @@ export default function ConsultationPage() {
 
             {/* 모의고사 등급 */}
             <div>
-              <Label className="text-xs mb-1 block">모의고사 등급</Label>
+              <Label className="text-xs mb-1 block">모의고사 등급 <span className="text-red-500">*</span></Label>
               <div className="grid grid-cols-4 gap-2">
                 {MOCK_SUBJECTS.map((subject) => {
                   const key = subject === '국어' ? 'korean' : subject === '수학' ? 'math' : subject === '영어' ? 'english' : 'exploration';
@@ -437,13 +466,16 @@ export default function ConsultationPage() {
                       <CustomDropdown
                         id={`mock_${key}`}
                         value={formData.mockTestGrades?.[key]?.toString() || ''}
-                        options={[1,2,3,4,5,6,7,8,9].map(g => ({ value: g.toString(), label: `${g}등급` }))}
-                        placeholder="-"
+                        options={[
+                          { value: 'none', label: '미응시' },
+                          ...([1,2,3,4,5,6,7,8,9].map(g => ({ value: g.toString(), label: `${g}등급` })))
+                        ]}
+                        placeholder="선택"
                         onChange={(v) => setFormData({
                           ...formData,
                           mockTestGrades: {
                             ...formData.mockTestGrades,
-                            [key]: parseInt(v)
+                            [key]: v === 'none' ? -1 : parseInt(v)
                           }
                         })}
                       />
