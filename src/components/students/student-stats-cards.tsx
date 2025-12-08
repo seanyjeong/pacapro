@@ -50,11 +50,16 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
       const students = allStudents.students || [];
       const trials = trialStudents.students || [];
 
+      const active = students.filter((s) => s.status === 'active').length;
+      const paused = students.filter((s) => s.status === 'paused').length;
+      const graduated = students.filter((s) => s.status === 'graduated').length;
+
       const newStats = {
-        total: students.length + trials.length,
-        active: students.filter((s) => s.status === 'active').length,
-        paused: students.filter((s) => s.status === 'paused').length,
-        graduated: students.filter((s) => s.status === 'graduated').length,
+        // 전체 = 재원 + 휴원 + 졸업 (퇴원생, 체험생 제외)
+        total: active + paused + graduated,
+        active,
+        paused,
+        graduated,
         trial: trials.length,
       };
 
