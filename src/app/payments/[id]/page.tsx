@@ -22,12 +22,13 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
   const canEditPayments = canEdit('payments');
   const canDeletePayments = isOwner(); // 삭제는 원장만
 
-  const handleRecordPayment = async (data: { paid_amount: number; payment_method: string; payment_date: string }) => {
+  const handleRecordPayment = async (data: { paid_amount: number; payment_method: string; payment_date: string; discount_amount?: number }) => {
     try {
       await paymentsAPI.recordPayment(paymentId, {
         paid_amount: data.paid_amount,
         payment_method: data.payment_method as 'account' | 'card' | 'cash' | 'other',
         payment_date: data.payment_date,
+        discount_amount: data.discount_amount,
       });
       toast.success('납부가 기록되었습니다.');
       reload();

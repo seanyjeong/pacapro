@@ -52,6 +52,7 @@ export interface PaymentRecordData {
   payment_method: 'account' | 'card' | 'cash' | 'other';
   payment_date?: string; // 기본값은 오늘
   notes?: string;
+  discount_amount?: number; // 추가 할인 금액
 }
 
 // 일괄 청구 DTO

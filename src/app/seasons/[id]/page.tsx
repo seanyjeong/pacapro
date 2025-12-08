@@ -98,12 +98,32 @@ export default function SeasonDetailPage() {
     }
   };
 
+  // 학생의 시간대 가져오기 (enrollment 또는 시즌 설정에서)
+  const getEnrollmentTimeSlots = useCallback((enrollment: StudentSeason): string[] => {
+    // 개별 설정이 있으면 사용
+    if (enrollment.time_slots) {
+      return typeof enrollment.time_slots === 'string'
+        ? JSON.parse(enrollment.time_slots)
+        : enrollment.time_slots;
+    }
+    // 없으면 시즌 설정에서 학년별 기본값 사용
+    if (season?.grade_time_slots) {
+      const gradeTimeSlots = typeof season.grade_time_slots === 'string'
+        ? JSON.parse(season.grade_time_slots)
+        : season.grade_time_slots;
+      const studentGrade = enrollment.student_grade || '';
+      if (gradeTimeSlots[studentGrade]) {
+        return gradeTimeSlots[studentGrade];
+      }
+    }
+    // 기본값: 저녁
+    return ['evening'];
+  }, [season]);
+
   // 시간대 즉시 변경 핸들러
   const handleTimeSlotChange = async (enrollment: StudentSeason, slot: string) => {
     // 현재 시간대 파싱
-    const currentSlots = enrollment.time_slots
-      ? (typeof enrollment.time_slots === 'string' ? JSON.parse(enrollment.time_slots) : enrollment.time_slots)
-      : [];
+    const currentSlots = getEnrollmentTimeSlots(enrollment);
 
     // 토글 (이미 있으면 제거, 없으면 추가)
     let newSlots: string[];
@@ -412,9 +432,7 @@ export default function SeasonDetailPage() {
                           {enrollment.payment_status !== 'cancelled' && (
                             <div className="flex gap-1">
                               {(['morning', 'afternoon', 'evening'] as const).map(slot => {
-                                const currentSlots = enrollment.time_slots
-                                  ? (typeof enrollment.time_slots === 'string' ? JSON.parse(enrollment.time_slots) : enrollment.time_slots)
-                                  : [];
+                                const currentSlots = getEnrollmentTimeSlots(enrollment);
                                 const isSelected = currentSlots.includes(slot);
                                 const isUpdating = updatingTimeSlotId === enrollment.id;
 

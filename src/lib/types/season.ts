@@ -82,6 +82,7 @@ export interface StudentSeason {
   season_name?: string;
   student_name?: string;
   student_number?: string;
+  student_grade?: string; // 학생 학년
   season_fee: string;
   registration_date: string | null; // 시즌 등록일
   prorated_month: string | null; // YYYY-MM
