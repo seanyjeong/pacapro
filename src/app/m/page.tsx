@@ -27,7 +27,7 @@ export default function MobileHomePage() {
       try {
         const user = JSON.parse(userStr);
         setUserName(user.name || user.username || '');
-        setAcademyName(user.academy_name || '');
+        setAcademyName(user.academy?.name || user.academy_name || '');
       } catch {
         // ignore
       }
