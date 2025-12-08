@@ -120,6 +120,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
     rest_start_date: initialData?.rest_start_date || '',
     rest_end_date: initialData?.rest_end_date || '',
     rest_reason: initialData?.rest_reason || '',
+    time_slot: (initialData?.time_slot || 'evening') as 'morning' | 'afternoon' | 'evening',
   });
 
   // 휴식 설정 관련 상태
@@ -369,6 +370,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
       is_trial: isTrial,
       trial_remaining: isTrial ? 2 : undefined,
       trial_dates: isTrial ? trialDates : undefined,
+      // 시간대
+      time_slot: formData.time_slot,
     };
 
     try {
@@ -856,6 +859,33 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   }`}
                 >
                   {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 수업 시간대 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              수업 시간대 <span className="text-gray-500 text-xs">(스케줄 배정 시간대)</span>
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'morning', label: '오전' },
+                { value: 'afternoon', label: '오후' },
+                { value: 'evening', label: '저녁' },
+              ].map((slot) => (
+                <button
+                  key={slot.value}
+                  type="button"
+                  onClick={() => handleChange('time_slot', slot.value as 'morning' | 'afternoon' | 'evening')}
+                  className={`px-4 py-2 rounded-lg border transition-colors ${
+                    formData.time_slot === slot.value
+                      ? 'bg-primary-500 text-white border-primary-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+                  }`}
+                >
+                  {slot.label}
                 </button>
               ))}
             </div>

@@ -47,9 +47,17 @@ export default function SeasonEnrollPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<TimeSlot[]>(['evening']);
 
-  // 고3/N수 학생인지 확인
-  const isMultiTimeSlotStudent = (student: Student) => {
-    return student.grade === '고3' || student.grade === 'N수' || student.student_type === 'n_soo';
+  // 학생의 기본 시간대 가져오기 (시즌 설정 또는 기본값)
+  const getDefaultTimeSlots = (student: Student): TimeSlot[] => {
+    // 시즌 설정에서 해당 학년의 기본 시간대 가져오기
+    if (season?.grade_time_slots && student.grade) {
+      const gradeTimeSlots = season.grade_time_slots as Record<string, TimeSlot[]>;
+      if (gradeTimeSlots[student.grade]) {
+        return gradeTimeSlots[student.grade];
+      }
+    }
+    // 기본값: 저녁
+    return ['evening'];
   };
 
   useEffect(() => {
@@ -79,16 +87,11 @@ export default function SeasonEnrollPage() {
     }
   }, [seasonId]);
 
-  // 등록 버튼 클릭 시 - 고3/N수는 시간대 선택 모달 표시
+  // 등록 버튼 클릭 시 - 모든 학생에게 시간대 선택 모달 표시
   const handleEnrollClick = (student: Student) => {
-    if (isMultiTimeSlotStudent(student)) {
-      setSelectedStudent(student);
-      setSelectedTimeSlots(['evening']); // 기본값 저녁
-      setShowTimeSlotModal(true);
-    } else {
-      // 다른 학년은 바로 등록 (저녁 시간대)
-      handleEnroll(student.id, ['evening']);
-    }
+    setSelectedStudent(student);
+    setSelectedTimeSlots(getDefaultTimeSlots(student));
+    setShowTimeSlotModal(true);
   };
 
   // 시간대 토글
@@ -243,7 +246,7 @@ export default function SeasonEnrollPage() {
                     ) : (
                       <>
                         <UserPlus className="w-4 h-4 mr-1" />
-                        {isMultiTimeSlotStudent(student) ? '시간대 선택' : '등록'}
+                        시간대 선택
                       </>
                     )}
                   </Button>
@@ -283,7 +286,7 @@ export default function SeasonEnrollPage() {
         </Card>
       )}
 
-      {/* 시간대 선택 모달 (고3/N수 전용) */}
+      {/* 시간대 선택 모달 */}
       {showTimeSlotModal && selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
@@ -309,7 +312,7 @@ export default function SeasonEnrollPage() {
             {/* 모달 내용 */}
             <div className="p-4">
               <p className="text-sm text-gray-600 mb-4">
-                고3/N수 학생은 여러 시간대를 선택할 수 있습니다.
+                시간대를 선택하세요 (여러 개 선택 가능).
                 <br />
                 선택한 시간대에 수업 스케줄이 자동으로 생성됩니다.
               </p>

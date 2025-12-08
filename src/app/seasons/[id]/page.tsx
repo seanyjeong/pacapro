@@ -327,43 +327,71 @@ export default function SeasonDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {enrolledStudents.map(enrollment => (
-                    <tr key={enrollment.id} className="border-b last:border-0 hover:bg-gray-50">
-                      <td className="py-2 px-3 font-medium">{enrollment.student_name}</td>
-                      <td className="py-2 px-3">{formatSeasonFee(enrollment.season_fee)}</td>
-                      <td className="py-2 px-3 text-sm text-gray-600">{enrollment.registered_at?.split('T')[0]}</td>
-                      <td className="py-2 px-3">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          enrollment.status === 'active' ? 'bg-green-100 text-green-800' :
-                          enrollment.status === 'registered' ? 'bg-blue-100 text-blue-800' :
-                          enrollment.payment_status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {enrollment.payment_status === 'cancelled' ? '취소됨' : enrollment.status}
-                        </span>
-                      </td>
-                      <td className="py-2 px-3 text-right">
-                        {enrollment.payment_status !== 'cancelled' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleCancelEnrollment(enrollment)}
-                            disabled={cancellingId === enrollment.id}
-                          >
-                            {cancellingId === enrollment.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <>
-                                <XCircle className="w-4 h-4 mr-1" />
-                                취소
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {enrolledStudents.map(enrollment => {
+                    const seasonFee = parseFloat(enrollment.season_fee) || 0;
+                    const discountAmount = parseFloat(enrollment.discount_amount || '0') || 0;
+                    const finalFee = parseFloat(enrollment.final_fee || '0') || 0;
+                    const hasDiscount = discountAmount > 0;
+
+                    return (
+                      <tr key={enrollment.id} className="border-b last:border-0 hover:bg-gray-50">
+                        <td className="py-2 px-3 font-medium">{enrollment.student_name}</td>
+                        <td className="py-2 px-3">
+                          {hasDiscount ? (
+                            <div className="flex flex-col">
+                              <span className="line-through text-gray-400 text-sm">
+                                {formatSeasonFee(enrollment.season_fee)}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-red-500 text-sm">-{formatSeasonFee(discountAmount.toString())}</span>
+                                <span className="font-bold text-primary-600">{formatSeasonFee(finalFee.toString())}</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <span>{formatSeasonFee(enrollment.season_fee)}</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-3 text-sm text-gray-600">
+                          {enrollment.registration_date || enrollment.registered_at?.split('T')[0] || '-'}
+                        </td>
+                        <td className="py-2 px-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            enrollment.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
+                            enrollment.payment_status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                            enrollment.payment_status === 'pending' ? 'bg-red-100 text-red-800' :
+                            enrollment.payment_status === 'cancelled' ? 'bg-gray-100 text-gray-500' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
+                            {enrollment.payment_status === 'paid' && '완납'}
+                            {enrollment.payment_status === 'partial' && '일부납부'}
+                            {enrollment.payment_status === 'pending' && '미납'}
+                            {enrollment.payment_status === 'cancelled' && '취소됨'}
+                            {!['paid', 'partial', 'pending', 'cancelled'].includes(enrollment.payment_status) && enrollment.payment_status}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          {enrollment.payment_status !== 'cancelled' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleCancelEnrollment(enrollment)}
+                              disabled={cancellingId === enrollment.id}
+                            >
+                              {cancellingId === enrollment.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  취소
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

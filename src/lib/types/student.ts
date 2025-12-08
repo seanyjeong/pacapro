@@ -12,7 +12,7 @@ export type StudentType = 'exam' | 'adult';
 export type Grade = '고1' | '고2' | '고3' | 'N수';
 
 // 입시 유형 (admission_type)
-export type AdmissionType = 'regular' | 'early' | 'civil_service';
+export type AdmissionType = 'regular' | 'early' | 'civil_service' | 'military_academy' | 'police_university';
 
 // 학생 상태 (status) - DB enum
 export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn' | 'trial';
@@ -64,6 +64,8 @@ export interface Student {
   is_trial: boolean | null; // 체험생 여부
   trial_remaining: number | null; // 남은 체험 횟수
   trial_dates: TrialDate[] | string | null; // 체험 일정
+  // 시간대
+  time_slot: 'morning' | 'afternoon' | 'evening' | null; // 수업 시간대
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -101,6 +103,8 @@ export interface StudentFormData {
   is_trial?: boolean; // 체험생으로 등록
   trial_remaining?: number; // 체험 횟수 (기본 2)
   trial_dates?: TrialDate[]; // 체험 일정 배열
+  // 시간대
+  time_slot?: 'morning' | 'afternoon' | 'evening'; // 수업 시간대 (기본: evening)
 }
 
 // 학생 필터 인터페이스
@@ -203,6 +207,8 @@ export const ADMISSION_TYPE_LABELS: Record<AdmissionType, string> = {
   regular: '정시',
   early: '수시',
   civil_service: '공무원',
+  military_academy: '사관학교',
+  police_university: '경찰대',
 };
 
 export const STATUS_LABELS: Record<StudentStatus, string> = {
@@ -263,6 +269,8 @@ export const GRADE_OPTIONS = [
 export const EXAM_ADMISSION_OPTIONS = [
   { value: 'regular' as AdmissionType, label: '정시' },
   { value: 'early' as AdmissionType, label: '수시' },
+  { value: 'military_academy' as AdmissionType, label: '사관학교' },
+  { value: 'police_university' as AdmissionType, label: '경찰대' },
 ];
 
 // 입시 유형 옵션 (성인용)
@@ -274,6 +282,8 @@ export const ADULT_ADMISSION_OPTIONS = [
 export const ADMISSION_TYPE_OPTIONS = [
   { value: 'regular' as AdmissionType, label: '정시' },
   { value: 'early' as AdmissionType, label: '수시' },
+  { value: 'military_academy' as AdmissionType, label: '사관학교' },
+  { value: 'police_university' as AdmissionType, label: '경찰대' },
   { value: 'civil_service' as AdmissionType, label: '공무원' },
 ];
 
