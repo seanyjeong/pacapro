@@ -22,10 +22,17 @@ export default function DashboardPage() {
     const [canViewUnpaid, setCanViewUnpaid] = useState(false);
 
     useEffect(() => {
+        // 모바일 기기 감지 → /m 으로 리다이렉트
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            router.replace('/m');
+            return;
+        }
+
         setCanViewFinance(isOwner() || isAdmin() || canView('dashboard_finance'));
         setCanViewUnpaid(isOwner() || isAdmin() || canView('dashboard_unpaid'));
         loadDashboard();
-    }, []);
+    }, [router]);
 
     const loadDashboard = async () => {
         try {
