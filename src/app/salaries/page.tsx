@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle, Banknote, RefreshCw, FileSpreadsheet, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertCircle, Banknote, RefreshCw, FileSpreadsheet, FileDown, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
 import { SalaryList } from '@/components/salaries/salary-list';
 import { useSalaries } from '@/hooks/use-salaries';
 import { instructorsAPI } from '@/lib/api/instructors';
@@ -65,6 +65,7 @@ export default function SalariesPage() {
   const [exporting, setExporting] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
+  const [bulkPaying, setBulkPaying] = useState(false);
 
   // 설정 로드 및 초기 필터 설정
   useEffect(() => {
@@ -210,6 +211,37 @@ export default function SalariesPage() {
     } finally {
       setPdfExporting(false);
       setPdfProgress({ current: 0, total: 0 });
+    }
+  };
+
+  const handleBulkPay = async () => {
+    if (pendingCount === 0) {
+      toast.error('지급 대기 중인 급여가 없습니다');
+      return;
+    }
+
+    // 확인 다이얼로그
+    if (!confirm(`${pendingCount}건의 급여를 모두 지급 처리하시겠습니까?\n총 ${totalUnpaid.toLocaleString()}원`)) {
+      return;
+    }
+
+    try {
+      setBulkPaying(true);
+      const yearMonth = filters.year && filters.month
+        ? `${filters.year}-${String(filters.month).padStart(2, '0')}`
+        : undefined;
+
+      const result = await salariesAPI.bulkRecordPayment({
+        year_month: yearMonth,
+      });
+
+      toast.success(result.message);
+      reload();
+    } catch (error) {
+      console.error('Bulk pay failed:', error);
+      toast.error('일괄 지급 처리 실패');
+    } finally {
+      setBulkPaying(false);
     }
   };
 
@@ -398,9 +430,24 @@ export default function SalariesPage() {
               </Button>
             </div>
 
-            <Button variant="outline" onClick={goToDefaultMonth} className="ml-auto">
-              오늘 기준
-            </Button>
+            <div className="flex items-center gap-2 ml-auto">
+              <Button variant="outline" onClick={goToDefaultMonth}>
+                오늘 기준
+              </Button>
+              <Button
+                variant="default"
+                onClick={handleBulkPay}
+                disabled={bulkPaying || pendingCount === 0}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {bulkPaying ? (
+                  <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                )}
+                모두 지급처리 ({pendingCount}건)
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

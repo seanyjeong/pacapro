@@ -86,9 +86,9 @@ npm run test:ci  # 테스트 1회 실행 (CI용)
 ### 백엔드 배포 (로컬에서 바로!)
 ```bash
 # Git 필요 없음! 코드 수정 후 재시작만 하면 됨
-sudo systemctl restart paca    # 서버 재시작 (비밀번호: q141171616!)
-sudo systemctl status paca     # 상태 확인
-sudo journalctl -u paca -f     # 로그 확인
+echo 'q141171616!' | sudo -S systemctl restart paca    # 서버 재시작
+echo 'q141171616!' | sudo -S systemctl status paca     # 상태 확인
+sudo journalctl -u paca -f                              # 로그 확인
 ```
 
 ### DB 접속
@@ -379,10 +379,66 @@ const dbTimeSlot = timeSlotMap[frontendTimeSlot] || frontendTimeSlot;
 - 체험생 등록 시 `class_days`(NOT NULL)와 `monthly_tuition`(NOT NULL) 기본값 필요: `'[]'`, `0`
 - 체험 일정은 `trial_dates` JSON 배열로 저장: `[{date, time_slot, attended}]`
 
+### 시즌 등록/취소 관련 주의사항
+- **시즌 등록 취소 = 완전 삭제** (status 변경이 아님)
+- 취소 시 처리 순서:
+  1. 환불 필요 여부 확인 (결제 완료 상태인지)
+  2. 환불 금액 계산 (`calculateSeasonRefund()`)
+  3. 환불 금액 > 0이면 `expenses` 테이블에 환불 기록
+  4. `student_seasons` 삭제
+  5. `student_payments` 중 미납건만 삭제
+- **시즌 납부기한 계산**:
+  - 시즌 시작 전 등록: `min(등록일+7, 시즌시작일)`
+  - 시즌 시작 후 등록: `등록일+7` (중간 등록도 7일 유예)
+- **시간대 기본값**: `enrollment.time_slots`이 NULL이면 `season.grade_time_slots[학년]` 사용
+
+### 시즌 관련 주요 파일
+| 파일 | 설명 |
+|------|------|
+| `src/app/seasons/[id]/page.tsx` | 시즌 상세 (등록 학생 목록, 시간대 표시) |
+| `src/app/seasons/[id]/enroll/page.tsx` | 시즌 학생 등록 모달 (할인 입력) |
+| `routes/seasons.js` | 백엔드 시즌 API (등록/취소/환불) |
+| `src/components/payments/payment-record-modal.tsx` | 납부 모달 (할인 입력) |
+
 ## 버전 이력
 
-### 현재 버전: v2.7.0 (2025-12-08)
+### 현재 버전: v2.7.5 (2025-12-09)
 
+- **v2.7.5** (2025-12-09): 시즌 환불 시스템 + 강사 급여 일괄 지급
+  - 시즌 환불 명세서 모달 추가 (학원법 기준 표시, 부가세 옵션, 복사/인쇄 기능)
+  - 환불 계산: 실제 납부 금액 기준, 일할 계산, VAT 10% 제외 옵션
+  - 학원법 기준 안내: 1/3 경과 전 2/3 환불, 1/2 경과 전 1/2 환불, 1/2 이상 환불 불가
+  - 급여 관리 페이지에 "모두 지급처리" 버튼 추가 (미지급 급여 일괄 처리)
+- **v2.7.4** (2025-12-09): 퇴원 처리 시 미납 학원비 삭제 버그 수정
+  - 퇴원 처리 시 미납 학원비가 삭제 안 되는 버그 수정
+  - 테이블명 오류 수정: `payments` → `student_payments`
+  - 컬럼명 오류 수정: `status` → `payment_status`, `amount` → `final_amount`
+- **v2.7.3** (2025-12-08): 시즌 등록 할인 + 학원비 납부 할인 + 시즌 취소 개선
+  - **시즌 등록 시 할인 금액 입력** 기능 추가
+    - 등록 모달에 할인 금액 입력 필드 추가
+    - 할인 적용 시 시즌비 미리보기 표시
+    - `student_seasons` 테이블에 `discount_reason` 컬럼 추가
+    - `discount_type` ENUM에 'manual' 추가
+  - **학원비 납부 시 할인 적용** 기능 추가
+    - 납부 모달에 "추가 할인" 입력 필드 추가
+    - 할인 적용 시 `final_amount` 감소, `discount_amount` 증가
+    - 부분납부/완납 모두 할인 적용 가능
+  - **시즌 중간 등록 연체 표시 수정**
+    - 기존: 시즌 시작일 이후 등록하면 무조건 연체 표시
+    - 수정: 등록일 + 7일이 납부기한 (시즌 시작 후 등록해도 7일 유예)
+  - **시즌 등록 시간대 기본값 개선**
+    - `enrollment.time_slots`이 NULL이면 `season.grade_time_slots`에서 해당 학년 기본값 사용
+    - 백엔드: 등록 학생 조회 시 `student_grade` 필드 추가
+  - **시즌 등록 취소 = 완전 삭제**
+    - 기존: status = 'cancelled'로 업데이트 → 이제: DELETE로 완전 삭제
+    - `student_seasons` 레코드 삭제
+    - `student_payments` 중 미납건만 삭제 (완납건은 유지)
+    - 환불 필요 시 `expenses`에 환불 내역 기록 (삭제 전 처리)
+- **v2.7.2** (2025-12-08): 시즌 페이지 개선
+  - 시즌 상세 페이지 시간대 표시 개선 (NULL 처리)
+- **v2.7.1** (2025-12-08): 시즌 할인/납부 표시 개선
+  - 시즌 상세 페이지 할인 금액 취소선 + 빨간색 표시
+  - 납부 상태 색상 구분 (완납/일부납부/미납)
 - **v2.7.0** (2025-12-08): 학생 시간대 선택 + 입시유형 분리 + 학생 메모
   - 학생 등록/수정 시 **수업 시간대 선택** 버튼 추가 (오전/오후/저녁, 기본값 저녁)
   - 시간대에 따라 스케줄 자동 배정 (기존: 저녁 고정 → 이제: 선택한 시간대로)

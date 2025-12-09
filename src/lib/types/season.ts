@@ -213,6 +213,70 @@ export interface SeasonUpdateResponse {
   season: Season;
 }
 
+// 환불 계산 결과
+export interface RefundData {
+  // 기본 정보
+  paidAmount: number;
+  originalFee: number;
+  discountAmount: number;
+
+  // 수업일 정보
+  totalClassDays: number;
+  attendedDays: number;
+  remainingDays: number;
+  progressRate: string;
+
+  // 일할계산 기준
+  usedAmount: number;
+  usedRate: string;
+  refundAmount: number;
+  refundRate: string;
+
+  // 부가세 옵션
+  includeVat: boolean;
+  vatAmount: number;
+  refundAfterVat: number;
+
+  // 학원법 기준
+  legalRefundRate: string;
+  legalRefundReason: string;
+  legalRefundAmount: number;
+
+  // 최종
+  finalRefundAmount: number;
+
+  // 상세
+  calculationDetails: {
+    paidAmount: string;
+    perClassFee: string;
+    usedFormula: string;
+    refundFormula: string;
+    vatFormula: string | null;
+  };
+}
+
+// 환불 미리보기 응답
+export interface RefundPreviewResponse {
+  enrollment: {
+    id: number;
+    student_name: string;
+    season_name: string;
+    season_start_date: string;
+    season_end_date: string;
+    original_fee: number;
+    discount_amount: number;
+    paid_amount: number;
+    payment_status: string;
+  };
+  cancellation_date: string;
+  refund: RefundData;
+  academy: {
+    academy_name?: string;
+    phone?: string;
+    address?: string;
+  };
+}
+
 // 레이블 매핑
 export const SEASON_TYPE_LABELS: Record<SeasonType, string> = {
   early: '수시',

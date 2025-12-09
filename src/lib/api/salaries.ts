@@ -118,4 +118,25 @@ export const salariesAPI = {
   deleteSalary: async (id: number): Promise<SalaryDeleteResponse> => {
     return await apiClient.delete<SalaryDeleteResponse>(`/salaries/${id}`);
   },
+
+  /**
+   * 급여 일괄 지급
+   * POST /paca/salaries/bulk-pay
+   */
+  bulkRecordPayment: async (params: {
+    year_month?: string;
+    salary_ids?: number[];
+    payment_date?: string;
+  }): Promise<{
+    message: string;
+    paid_count: number;
+    salaries: Array<{
+      id: number;
+      instructor_name: string;
+      net_salary: string;
+      year_month: string;
+    }>;
+  }> => {
+    return await apiClient.post('/salaries/bulk-pay', params);
+  },
 };

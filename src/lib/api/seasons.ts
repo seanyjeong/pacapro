@@ -15,6 +15,8 @@ import type {
   SeasonDetailResponse,
   SeasonCreateResponse,
   SeasonUpdateResponse,
+  RefundData,
+  RefundPreviewResponse,
 } from '@/lib/types/season';
 
 const BASE_PATH = '/seasons';
@@ -160,10 +162,46 @@ export const seasonsApi = {
   },
 
   /**
-   * 시즌 등록 취소
+   * 시즌 등록 취소 (기존 - 간단 취소)
    */
   cancelEnrollment: async (seasonId: number, studentId: number): Promise<{ message: string }> => {
     return apiClient.delete<{ message: string }>(`${BASE_PATH}/${seasonId}/students/${studentId}`);
+  },
+
+  /**
+   * 환불 미리보기 (취소 전 환불금 계산)
+   */
+  getRefundPreview: async (
+    enrollmentId: number,
+    cancellationDate: string,
+    includeVat: boolean = false
+  ): Promise<RefundPreviewResponse> => {
+    return apiClient.post<RefundPreviewResponse>(
+      `${BASE_PATH}/enrollments/${enrollmentId}/refund-preview`,
+      {
+        cancellation_date: cancellationDate,
+        include_vat: includeVat,
+      }
+    );
+  },
+
+  /**
+   * 시즌 등록 취소 (환불 포함)
+   */
+  cancelEnrollmentWithRefund: async (
+    enrollmentId: number,
+    cancellationDate: string,
+    includeVat: boolean = false,
+    finalRefundAmount?: number
+  ): Promise<{ message: string; refundCalculation: RefundData }> => {
+    return apiClient.post<{ message: string; refundCalculation: RefundData }>(
+      `${BASE_PATH}/enrollments/${enrollmentId}/cancel`,
+      {
+        cancellation_date: cancellationDate,
+        include_vat: includeVat,
+        final_refund_amount: finalRefundAmount,
+      }
+    );
   },
 
   /**

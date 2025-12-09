@@ -15,10 +15,11 @@ import {
   Users,
   DollarSign,
   XCircle,
+  Receipt,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { seasonsApi } from '@/lib/api/seasons';
-import type { Season, StudentSeason } from '@/lib/types/season';
+import type { Season, StudentSeason, RefundData, RefundPreviewResponse } from '@/lib/types/season';
 import {
   SEASON_TYPE_LABELS,
   SEASON_STATUS_LABELS,
@@ -29,6 +30,7 @@ import {
   SEASON_TARGET_GRADES,
 } from '@/lib/types/season';
 import type { GradeTimeSlots } from '@/lib/types/season';
+import { RefundModal } from '@/components/refund/refund-modal';
 
 export default function SeasonDetailPage() {
   const router = useRouter();
@@ -41,6 +43,13 @@ export default function SeasonDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [updatingTimeSlotId, setUpdatingTimeSlotId] = useState<number | null>(null);
+
+  // 환불 모달 상태
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [refundLoading, setRefundLoading] = useState(false);
+  const [selectedEnrollment, setSelectedEnrollment] = useState<StudentSeason | null>(null);
+  const [refundPreview, setRefundPreview] = useState<RefundPreviewResponse | null>(null);
+  const [cancellationDate, setCancellationDate] = useState<string>(new Date().toISOString().split('T')[0]);
 
   const fetchSeason = useCallback(async () => {
     try {
@@ -81,8 +90,61 @@ export default function SeasonDetailPage() {
     }
   };
 
+  // 환불 모달 열기 (환불 미리보기 조회)
+  const handleOpenRefundModal = async (enrollment: StudentSeason) => {
+    setSelectedEnrollment(enrollment);
+    setRefundLoading(true);
+    setRefundModalOpen(true);
+
+    try {
+      const preview = await seasonsApi.getRefundPreview(
+        enrollment.id,
+        cancellationDate,
+        false
+      );
+      setRefundPreview(preview);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '환불 정보 조회에 실패했습니다.');
+      setRefundModalOpen(false);
+    } finally {
+      setRefundLoading(false);
+    }
+  };
+
+  // 환불 확정 처리
+  const handleConfirmRefund = async (includeVat: boolean, finalAmount: number) => {
+    if (!selectedEnrollment) return;
+
+    try {
+      await seasonsApi.cancelEnrollmentWithRefund(
+        selectedEnrollment.id,
+        cancellationDate,
+        includeVat,
+        finalAmount
+      );
+      toast.success(`${selectedEnrollment.student_name} 학생의 시즌 등록이 취소되었습니다.`);
+      setRefundModalOpen(false);
+      setSelectedEnrollment(null);
+      setRefundPreview(null);
+
+      // 목록 새로고침
+      const students = await seasonsApi.getEnrolledStudents(seasonId);
+      setEnrolledStudents(students);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '환불 처리에 실패했습니다.');
+    }
+  };
+
+  // 기존 간단 취소 (미납 상태일 때)
   const handleCancelEnrollment = async (enrollment: StudentSeason) => {
-    if (!confirm(`${enrollment.student_name} 학생의 시즌 등록을 취소하시겠습니까?\n환불 계산이 진행됩니다.`)) return;
+    // 완납 상태면 환불 모달 열기
+    if (enrollment.payment_status === 'paid') {
+      handleOpenRefundModal(enrollment);
+      return;
+    }
+
+    // 미납 상태면 간단 취소
+    if (!confirm(`${enrollment.student_name} 학생의 시즌 등록을 취소하시겠습니까?`)) return;
 
     try {
       setCancellingId(enrollment.id);
@@ -456,22 +518,39 @@ export default function SeasonDetailPage() {
                         </td>
                         <td className="py-2 px-3 text-right">
                           {enrollment.payment_status !== 'cancelled' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              onClick={() => handleCancelEnrollment(enrollment)}
-                              disabled={cancellingId === enrollment.id}
-                            >
-                              {cancellingId === enrollment.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <XCircle className="w-4 h-4 mr-1" />
-                                  취소
-                                </>
+                            <div className="flex gap-1 justify-end">
+                              {/* 완납 상태면 환불 버튼 표시 */}
+                              {enrollment.payment_status === 'paid' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                  onClick={() => handleOpenRefundModal(enrollment)}
+                                >
+                                  <Receipt className="w-4 h-4 mr-1" />
+                                  환불
+                                </Button>
                               )}
-                            </Button>
+                              {/* 미납/일부납 상태면 취소 버튼 표시 */}
+                              {enrollment.payment_status !== 'paid' && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => handleCancelEnrollment(enrollment)}
+                                  disabled={cancellingId === enrollment.id}
+                                >
+                                  {cancellingId === enrollment.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <XCircle className="w-4 h-4 mr-1" />
+                                      취소
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </td>
                       </tr>
@@ -483,6 +562,22 @@ export default function SeasonDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* 환불 모달 */}
+      <RefundModal
+        isOpen={refundModalOpen}
+        onClose={() => {
+          setRefundModalOpen(false);
+          setSelectedEnrollment(null);
+          setRefundPreview(null);
+        }}
+        enrollment={refundPreview?.enrollment || null}
+        cancellationDate={refundPreview?.cancellation_date || cancellationDate}
+        refund={refundPreview?.refund || null}
+        academy={refundPreview?.academy || {}}
+        onConfirm={handleConfirmRefund}
+        loading={refundLoading}
+      />
     </div>
   );
 }
