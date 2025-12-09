@@ -103,6 +103,7 @@ export interface Consultation {
   linked_student_id?: number;
   linked_student_name?: string;
   linked_student_grade?: string;
+  linked_student_is_trial?: boolean;
 
   // 상태
   status: ConsultationStatus;

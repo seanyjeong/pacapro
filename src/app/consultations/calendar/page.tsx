@@ -5,7 +5,8 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSam
 import { ko } from 'date-fns/locale';
 import {
   Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, User, Phone,
-  List, Loader2, ArrowLeft
+  List, Loader2, ArrowLeft, Link2, MessageSquare, CheckSquare, Sparkles,
+  GraduationCap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ import Link from 'next/link';
 import { getConsultations } from '@/lib/api/consultations';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 import {
+  CONSULTATION_TYPE_LABELS,
   CONSULTATION_STATUS_LABELS,
   CONSULTATION_STATUS_COLORS
 } from '@/lib/types/consultation';
@@ -29,6 +31,10 @@ export default function ConsultationCalendarPage() {
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedConsultations, setSelectedConsultations] = useState<Consultation[]>([]);
+  const [dayListModalOpen, setDayListModalOpen] = useState(false);
+
+  // 상담 상세 모달
+  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   // 데이터 로드
@@ -73,14 +79,21 @@ export default function ConsultationCalendarPage() {
   // 첫 주 시작 패딩
   const startPadding = monthStart.getDay();
 
-  // 날짜 클릭
+  // 날짜 클릭 (해당 일자 상담 목록 모달)
   const handleDateClick = (date: Date) => {
     const dayConsultations = getConsultationsForDate(date);
     if (dayConsultations.length > 0) {
       setSelectedDate(date);
       setSelectedConsultations(dayConsultations);
-      setDetailModalOpen(true);
+      setDayListModalOpen(true);
     }
+  };
+
+  // 상담 카드 클릭 (상세 모달 열기)
+  const openDetailModal = (c: Consultation) => {
+    setSelectedConsultation(c);
+    setDayListModalOpen(false);
+    setDetailModalOpen(true);
   };
 
   // 상태 배지
@@ -256,8 +269,8 @@ export default function ConsultationCalendarPage() {
         </CardContent>
       </Card>
 
-      {/* 날짜별 상담 상세 모달 */}
-      <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
+      {/* 날짜별 상담 목록 모달 */}
+      <Dialog open={dayListModalOpen} onOpenChange={setDayListModalOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -299,11 +312,10 @@ export default function ConsultationCalendarPage() {
                       {consultations.map((c) => {
                         const isDone = ['completed', 'cancelled', 'no_show'].includes(c.status);
                         return (
-                          <Link
+                          <div
                             key={c.id}
-                            href={`/consultations/${c.id}/conduct`}
-                            className="block"
-                            onClick={() => setDetailModalOpen(false)}
+                            onClick={() => openDetailModal(c)}
+                            className="cursor-pointer"
                           >
                             <Card className={`hover:shadow-md transition-all cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 ${isDone ? 'opacity-60' : ''}`}>
                               <CardContent className="p-4">
@@ -323,7 +335,7 @@ export default function ConsultationCalendarPage() {
                                 </div>
                               </CardContent>
                             </Card>
-                          </Link>
+                          </div>
                         );
                       })}
                     </div>
@@ -334,7 +346,211 @@ export default function ConsultationCalendarPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDetailModalOpen(false)}>닫기</Button>
+            <Button variant="outline" onClick={() => setDayListModalOpen(false)}>닫기</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 상담 상세 모달 */}
+      <Dialog open={detailModalOpen} onOpenChange={setDetailModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>상담 신청 상세</DialogTitle>
+          </DialogHeader>
+
+          {selectedConsultation && (
+            <div className="space-y-6 px-6 py-4">
+              {/* 상태 */}
+              <div className="flex items-center gap-2">
+                <StatusBadge status={selectedConsultation.status} />
+                <Badge variant="outline">
+                  {CONSULTATION_TYPE_LABELS[selectedConsultation.consultation_type]}
+                </Badge>
+                {selectedConsultation.linked_student_name && !selectedConsultation.linked_student_is_trial && (
+                  <Badge variant="secondary" className="gap-1">
+                    <Link2 className="h-3 w-3" />
+                    기존 학생: {selectedConsultation.linked_student_name}
+                  </Badge>
+                )}
+              </div>
+
+              {/* 일정 */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 mb-2">상담 일정</h4>
+                <div className="flex items-center gap-4 text-blue-800">
+                  <span className="flex items-center gap-1">
+                    <CalendarIcon className="h-4 w-4" />
+                    {format(parseISO(selectedConsultation.preferred_date), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
+                    {selectedConsultation.preferred_time.substring(0, 5)}
+                  </span>
+                </div>
+              </div>
+
+              {/* 학생 정보 */}
+              <div>
+                <h4 className="font-medium mb-2">학생 정보</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <p><span className="text-gray-500">이름:</span> {selectedConsultation.student_name}</p>
+                  <p><span className="text-gray-500">연락처:</span> {selectedConsultation.student_phone || selectedConsultation.parent_phone}</p>
+                  <p><span className="text-gray-500">학년:</span> {selectedConsultation.student_grade}</p>
+                  {selectedConsultation.student_school && (
+                    <p><span className="text-gray-500">학교:</span> {selectedConsultation.student_school}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* 성적 정보 */}
+              {selectedConsultation.academicScores && (() => {
+                const scores = selectedConsultation.academicScores;
+                const hasMockGrades = scores.mockTestGrades &&
+                  Object.values(scores.mockTestGrades).some(v => v !== null && v !== undefined && v !== -1);
+                const hasSchoolGradeAvg = scores.schoolGradeAvg !== null &&
+                  scores.schoolGradeAvg !== undefined && scores.schoolGradeAvg !== -1;
+                const hasAdmissionType = scores.admissionType;
+
+                if (!hasMockGrades && !hasSchoolGradeAvg && !hasAdmissionType) return null;
+
+                const admissionTypeLabel = scores.admissionType === 'early' ? '수시' :
+                  scores.admissionType === 'regular' ? '정시' : scores.admissionType;
+
+                const gradeDisplay = (value: number | undefined | null) => {
+                  if (value === null || value === undefined) return '-';
+                  if (value === -1) return '미응시';
+                  return `${value}등급`;
+                };
+
+                return (
+                  <div>
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4" />
+                      성적 정보
+                    </h4>
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                      <div className="flex gap-6">
+                        {hasSchoolGradeAvg && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500 text-sm">내신 평균</span>
+                            <span className="font-semibold text-blue-600">{gradeDisplay(scores.schoolGradeAvg)}</span>
+                          </div>
+                        )}
+                        {hasAdmissionType && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500 text-sm">입시 유형</span>
+                            <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700">{admissionTypeLabel}</span>
+                          </div>
+                        )}
+                      </div>
+                      {hasMockGrades && (
+                        <div>
+                          <p className="text-sm text-gray-500 mb-2">모의고사 등급</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {['korean', 'math', 'english', 'exploration'].map((subject) => {
+                              const labels: Record<string, string> = {
+                                korean: '국어', math: '수학', english: '영어', exploration: '탐구'
+                              };
+                              const value = scores.mockTestGrades?.[subject as keyof typeof scores.mockTestGrades];
+                              return (
+                                <div key={subject} className="bg-white rounded-lg p-3 text-center border">
+                                  <div className="text-xs text-gray-500 mb-1">{labels[subject]}</div>
+                                  <div className={`font-bold text-lg ${value === -1 ? 'text-gray-400' : 'text-gray-800'}`}>
+                                    {value === -1 ? '-' : value ?? '-'}
+                                  </div>
+                                  {value !== -1 && value !== null && value !== undefined && (
+                                    <div className="text-xs text-gray-400">등급</div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 기타 정보 */}
+              <div className="space-y-2 text-sm">
+                {selectedConsultation.target_school && (
+                  <p><span className="text-gray-500">목표 학교:</span> {selectedConsultation.target_school}</p>
+                )}
+                {selectedConsultation.referrer_student && (
+                  <p><span className="text-gray-500">추천 원생:</span> {selectedConsultation.referrer_student}</p>
+                )}
+                {selectedConsultation.referralSources && selectedConsultation.referralSources.length > 0 && (
+                  <p><span className="text-gray-500">알게 된 경로:</span> {selectedConsultation.referralSources.join(', ')}</p>
+                )}
+              </div>
+
+              {/* 문의 내용 */}
+              {selectedConsultation.inquiry_content && (
+                <div>
+                  <h4 className="font-medium mb-2 flex items-center gap-1">
+                    <MessageSquare className="h-4 w-4" />
+                    문의 내용
+                  </h4>
+                  <p className="text-sm bg-gray-50 rounded p-3 whitespace-pre-wrap">
+                    {selectedConsultation.inquiry_content}
+                  </p>
+                </div>
+              )}
+
+              {/* 관리자 메모 */}
+              {selectedConsultation.admin_notes && (
+                <div>
+                  <h4 className="font-medium mb-2">관리자 메모</h4>
+                  <p className="text-sm bg-yellow-50 rounded p-3 whitespace-pre-wrap">
+                    {selectedConsultation.admin_notes}
+                  </p>
+                </div>
+              )}
+
+              {/* 신청일 */}
+              <p className="text-xs text-gray-400">
+                신청일: {format(parseISO(selectedConsultation.created_at), 'yyyy-MM-dd HH:mm')}
+              </p>
+
+              {/* 상담 진행 섹션 - 모든 상태에서 표시 */}
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <CheckSquare className="h-4 w-4" />
+                    상담 진행
+                  </h4>
+                  <Link href={`/consultations/${selectedConsultation.id}/conduct`}>
+                    <Button size="sm" className="gap-2">
+                      상담 진행 페이지로 이동
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* 체험 학생으로 등록된 경우 */}
+              {selectedConsultation.linked_student_id && selectedConsultation.linked_student_is_trial && (
+                <div className="bg-green-50 rounded-lg p-4">
+                  <p className="text-green-800 flex items-center gap-2">
+                    <Sparkles className="h-4 w-4" />
+                    체험 학생으로 등록 완료
+                    {selectedConsultation.linked_student_name && (
+                      <Badge variant="secondary">{selectedConsultation.linked_student_name}</Badge>
+                    )}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setDetailModalOpen(false);
+              setDayListModalOpen(true);
+            }}>
+              목록으로
+            </Button>
+            <Button onClick={() => setDetailModalOpen(false)}>닫기</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
