@@ -14,10 +14,12 @@ import {
   Edit2,
   Calendar,
   X,
+  RotateCcw,
 } from 'lucide-react';
 import { seasonsApi } from '@/lib/api/seasons';
 import axios from 'axios';
-import type { Season, StudentSeason, ProRatedPreview } from '@/lib/types/season';
+import type { Season, StudentSeason, ProRatedPreview, RefundPreviewResponse } from '@/lib/types/season';
+import { RefundModal } from '@/components/refund/refund-modal';
 import {
   SEASON_TYPE_LABELS,
   STUDENT_SEASON_STATUS_LABELS,
@@ -55,6 +57,12 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     discount_reason: '',
   });
   const [saving, setSaving] = useState(false);
+
+  // 환불 모달 상태
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [refundPreview, setRefundPreview] = useState<RefundPreviewResponse | null>(null);
+  const [selectedEnrollmentForRefund, setSelectedEnrollmentForRefund] = useState<StudentSeason | null>(null);
+  const [refundLoading, setRefundLoading] = useState(false);
 
   // 공무원/성인은 시즌 시스템 미사용
   if (studentType === 'adult') {
@@ -210,6 +218,65 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     }
   };
 
+  // 환불 모달 열기
+  const handleOpenRefundModal = async (enrollment: StudentSeason) => {
+    if (enrollment.payment_status !== 'paid') {
+      toast.error('완납된 시즌만 환불 처리할 수 있습니다.');
+      return;
+    }
+
+    try {
+      setRefundLoading(true);
+      setSelectedEnrollmentForRefund(enrollment);
+      const today = new Date().toISOString().split('T')[0];
+      const preview = await seasonsApi.getRefundPreview(enrollment.id, today, false);
+      setRefundPreview(preview);
+      setRefundModalOpen(true);
+    } catch (err) {
+      console.error('Failed to load refund preview:', err);
+      toast.error('환불 정보를 불러오는데 실패했습니다.');
+    } finally {
+      setRefundLoading(false);
+    }
+  };
+
+  // 환불 처리 확정
+  const handleConfirmRefund = async (includeVat: boolean, finalAmount: number) => {
+    if (!selectedEnrollmentForRefund) return;
+
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      await seasonsApi.cancelEnrollmentWithRefund(
+        selectedEnrollmentForRefund.id,
+        today,
+        includeVat,
+        finalAmount
+      );
+      toast.success('환불 처리가 완료되었습니다.');
+      setRefundModalOpen(false);
+      setRefundPreview(null);
+      setSelectedEnrollmentForRefund(null);
+      loadData();
+    } catch (err) {
+      console.error('Failed to process refund:', err);
+      toast.error('환불 처리에 실패했습니다.');
+    }
+  };
+
+  // 미납 시즌 취소
+  const handleCancelEnrollment = async (enrollment: StudentSeason) => {
+    if (!confirm(`${enrollment.season_name} 등록을 취소하시겠습니까?`)) return;
+
+    try {
+      await seasonsApi.cancelEnrollment(enrollment.season_id, studentId);
+      toast.success('시즌 등록이 취소되었습니다.');
+      loadData();
+    } catch (err) {
+      console.error('Failed to cancel enrollment:', err);
+      toast.error('취소 처리에 실패했습니다.');
+    }
+  };
+
   // 미등록 시즌 필터링
   const enrolledSeasonIds = new Set(enrollments.map(e => e.season_id));
   const availableSeasons = activeSeasons.filter(s => !enrolledSeasonIds.has(s.id));
@@ -309,13 +376,43 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
-                      <button
-                        onClick={() => handleEditClick(enrollment)}
-                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="수정"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                      {/* 진행 중인 시즌만 수정/환불/취소 가능 */}
+                      {(enrollment.status === 'active' || enrollment.status === 'registered') && (
+                        <>
+                          <button
+                            onClick={() => handleEditClick(enrollment)}
+                            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="수정"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          {enrollment.payment_status === 'paid' ? (
+                            <button
+                              onClick={() => handleOpenRefundModal(enrollment)}
+                              disabled={refundLoading}
+                              className="px-3 py-1 text-xs font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+                              title="환불"
+                            >
+                              {refundLoading && selectedEnrollmentForRefund?.id === enrollment.id ? (
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                              ) : (
+                                <>
+                                  <RotateCcw className="w-3 h-3 inline mr-1" />
+                                  환불
+                                </>
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleCancelEnrollment(enrollment)}
+                              className="px-3 py-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                              title="취소"
+                            >
+                              취소
+                            </button>
+                          )}
+                        </>
+                      )}
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
                           enrollment.status === 'active'
@@ -329,6 +426,20 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                       >
                         {STUDENT_SEASON_STATUS_LABELS[enrollment.status]}
                       </span>
+                      {/* 납부 상태 표시 */}
+                      {(enrollment.status === 'active' || enrollment.status === 'registered') && (
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            enrollment.payment_status === 'paid'
+                              ? 'bg-green-100 text-green-800'
+                              : enrollment.payment_status === 'partial'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {enrollment.payment_status === 'paid' ? '완납' : enrollment.payment_status === 'partial' ? '일부납부' : '미납'}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -601,6 +712,23 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
             </div>
           </div>
         </div>
+      )}
+
+      {/* 환불 모달 */}
+      {refundPreview && (
+        <RefundModal
+          isOpen={refundModalOpen}
+          onClose={() => {
+            setRefundModalOpen(false);
+            setRefundPreview(null);
+            setSelectedEnrollmentForRefund(null);
+          }}
+          enrollment={refundPreview.enrollment}
+          cancellationDate={refundPreview.cancellation_date}
+          refund={refundPreview.refund}
+          academy={refundPreview.academy}
+          onConfirm={handleConfirmRefund}
+        />
       )}
     </div>
   );
