@@ -202,15 +202,21 @@ export default function ConsultationCalendarPage() {
 
                       {/* 상담 목록 */}
                       <div className="space-y-1">
-                        {dayConsultations.slice(0, 3).map((c) => (
-                          <div
-                            key={c.id}
-                            className="flex items-center gap-1 text-xs truncate"
-                          >
-                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusDot(c.status)}`} />
-                            <span className="truncate">{c.student_name}</span>
-                          </div>
-                        ))}
+                        {dayConsultations.slice(0, 3).map((c) => {
+                          // 완료/취소/노쇼는 줄그음 표시
+                          const isDone = ['completed', 'cancelled', 'no_show'].includes(c.status);
+                          return (
+                            <div
+                              key={c.id}
+                              className={`flex items-center gap-1 text-xs truncate ${isDone ? 'opacity-60' : ''}`}
+                            >
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusDot(c.status)}`} />
+                              <span className={`truncate ${isDone ? 'line-through text-gray-400' : ''}`}>
+                                {c.student_name}
+                              </span>
+                            </div>
+                          );
+                        })}
                         {dayConsultations.length > 3 && (
                           <div className="text-xs text-gray-500 pl-3">
                             +{dayConsultations.length - 3}건 더
@@ -290,31 +296,36 @@ export default function ConsultationCalendarPage() {
                       <div className="flex-1 border-t border-gray-200" />
                     </div>
                     <div className="space-y-2 pl-2">
-                      {consultations.map((c) => (
-                        <Link
-                          key={c.id}
-                          href={`/consultations/${c.id}/conduct`}
-                          className="block"
-                          onClick={() => setDetailModalOpen(false)}
-                        >
-                          <Card className="hover:shadow-md transition-all cursor-pointer hover:border-blue-300 hover:bg-blue-50/30">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-2.5 h-2.5 rounded-full ${getStatusDot(c.status)}`} />
-                                  <span className="font-medium text-gray-900">{c.student_name}</span>
-                                  <span className="text-sm text-gray-500">{c.student_grade}</span>
-                                  <StatusBadge status={c.status} />
+                      {consultations.map((c) => {
+                        const isDone = ['completed', 'cancelled', 'no_show'].includes(c.status);
+                        return (
+                          <Link
+                            key={c.id}
+                            href={`/consultations/${c.id}/conduct`}
+                            className="block"
+                            onClick={() => setDetailModalOpen(false)}
+                          >
+                            <Card className={`hover:shadow-md transition-all cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 ${isDone ? 'opacity-60' : ''}`}>
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-2.5 h-2.5 rounded-full ${getStatusDot(c.status)}`} />
+                                    <span className={`font-medium ${isDone ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                                      {c.student_name}
+                                    </span>
+                                    <span className="text-sm text-gray-500">{c.student_grade}</span>
+                                    <StatusBadge status={c.status} />
+                                  </div>
+                                  <span className="text-sm text-gray-500 flex items-center gap-1.5">
+                                    <Phone className="h-3.5 w-3.5" />
+                                    {c.student_phone || c.parent_phone}
+                                  </span>
                                 </div>
-                                <span className="text-sm text-gray-500 flex items-center gap-1.5">
-                                  <Phone className="h-3.5 w-3.5" />
-                                  {c.student_phone || c.parent_phone}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </Link>
-                      ))}
+                              </CardContent>
+                            </Card>
+                          </Link>
+                        );
+                      })}
                     </div>
                   </div>
                 ));
