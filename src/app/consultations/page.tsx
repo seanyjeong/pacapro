@@ -548,85 +548,66 @@ export default function ConsultationsPage() {
                   scores.schoolGradeAvg !== undefined && scores.schoolGradeAvg !== -1;
                 const hasAdmissionType = scores.admissionType;
 
-                // 기존 구조도 지원 (호환성)
-                const hasSchoolGrades = scores.school_grades && Object.values(scores.school_grades).some(v => v);
-                const hasOldMockGrades = scores.mock_exam_grades && Object.values(scores.mock_exam_grades).some(v => v);
-                const hasPercentiles = scores.percentiles && Object.values(scores.percentiles).some(v => v);
-
                 // 어떤 성적 정보도 없으면 표시 안 함
-                if (!hasMockGrades && !hasSchoolGradeAvg && !hasAdmissionType &&
-                    !hasSchoolGrades && !hasOldMockGrades && !hasPercentiles) return null;
+                if (!hasMockGrades && !hasSchoolGradeAvg && !hasAdmissionType) return null;
+
+                // 입시유형 한글 변환
+                const admissionTypeLabel = scores.admissionType === 'early' ? '수시' :
+                  scores.admissionType === 'regular' ? '정시' : scores.admissionType;
+
+                // 등급 표시 함수 (-1이면 "미응시")
+                const gradeDisplay = (value: number | undefined | null) => {
+                  if (value === null || value === undefined) return '-';
+                  if (value === -1) return '미응시';
+                  return `${value}등급`;
+                };
 
                 return (
                   <div>
-                    <h4 className="font-medium mb-2">성적 정보</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      {/* 새 구조: 내신 평균 등급 + 입시 유형 */}
-                      {(hasSchoolGradeAvg || hasAdmissionType) && (
-                        <div className="bg-gray-50 rounded p-3">
-                          <p className="font-medium text-gray-700 mb-1">기본 정보</p>
-                          {hasSchoolGradeAvg && (
-                            <p>내신 평균: {scores.schoolGradeAvg}등급</p>
-                          )}
-                          {hasAdmissionType && (
-                            <p>입시 유형: {scores.admissionType}</p>
-                          )}
-                        </div>
-                      )}
+                    <h4 className="font-medium mb-3">성적 정보</h4>
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                      {/* 기본 정보: 내신 평균 + 입시 유형 */}
+                      <div className="flex gap-6">
+                        {hasSchoolGradeAvg && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500 text-sm">내신 평균</span>
+                            <span className="font-semibold text-blue-600">{gradeDisplay(scores.schoolGradeAvg)}</span>
+                          </div>
+                        )}
+                        {hasAdmissionType && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-500 text-sm">입시 유형</span>
+                            <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700">{admissionTypeLabel}</span>
+                          </div>
+                        )}
+                      </div>
 
-                      {/* 새 구조: 모의고사 등급 (mockTestGrades) */}
+                      {/* 모의고사 등급 표 */}
                       {hasMockGrades && (
-                        <div className="bg-gray-50 rounded p-3">
-                          <p className="font-medium text-gray-700 mb-1">모의고사 등급</p>
-                          {Object.entries(scores.mockTestGrades!).map(([key, value]) => (
-                            value !== null && value !== undefined && value !== -1 && (
-                              <p key={key}>
-                                {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}등급
-                              </p>
-                            )
-                          ))}
-                        </div>
-                      )}
-
-                      {/* 기존 구조 호환: school_grades */}
-                      {hasSchoolGrades && (
-                        <div className="bg-gray-50 rounded p-3">
-                          <p className="font-medium text-gray-700 mb-1">내신 등급</p>
-                          {Object.entries(scores.school_grades!).map(([key, value]) => (
-                            value && (
-                              <p key={key}>
-                                {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}등급
-                              </p>
-                            )
-                          ))}
-                        </div>
-                      )}
-
-                      {/* 기존 구조 호환: mock_exam_grades */}
-                      {hasOldMockGrades && (
-                        <div className="bg-gray-50 rounded p-3">
-                          <p className="font-medium text-gray-700 mb-1">모의고사 등급</p>
-                          {Object.entries(scores.mock_exam_grades!).map(([key, value]) => (
-                            value && (
-                              <p key={key}>
-                                {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}등급
-                              </p>
-                            )
-                          ))}
-                        </div>
-                      )}
-
-                      {/* 기존 구조 호환: percentiles */}
-                      {hasPercentiles && (
-                        <div className="bg-gray-50 rounded p-3">
-                          <p className="font-medium text-gray-700 mb-1">백분위</p>
-                          {Object.entries(scores.percentiles!).map(([key, value]) => (
-                            value && (
-                              <p key={key}>
-                                {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}%
-                              </p>
-                            )
-                          ))}
+                        <div>
+                          <p className="text-sm text-gray-500 mb-2">모의고사 등급</p>
+                          <div className="grid grid-cols-4 gap-2">
+                            {['korean', 'math', 'english', 'exploration'].map((subject) => {
+                              const labels: Record<string, string> = {
+                                korean: '국어',
+                                math: '수학',
+                                english: '영어',
+                                exploration: '탐구'
+                              };
+                              const value = scores.mockTestGrades?.[subject as keyof typeof scores.mockTestGrades];
+                              return (
+                                <div key={subject} className="bg-white rounded-lg p-3 text-center border">
+                                  <div className="text-xs text-gray-500 mb-1">{labels[subject]}</div>
+                                  <div className={`font-bold text-lg ${value === -1 ? 'text-gray-400' : 'text-gray-800'}`}>
+                                    {value === -1 ? '-' : value ?? '-'}
+                                  </div>
+                                  {value !== -1 && value !== null && value !== undefined && (
+                                    <div className="text-xs text-gray-400">등급</div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>

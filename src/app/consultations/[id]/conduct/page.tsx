@@ -6,7 +6,8 @@ import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
   ArrowLeft, Save, User, Phone, School, Target, Calendar, Clock,
-  CheckSquare, Square, ChevronDown, ChevronUp, Loader2, Sparkles, Plus, Trash2
+  CheckSquare, Square, ChevronDown, ChevronUp, Loader2, Sparkles, Plus, Trash2,
+  GraduationCap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -385,6 +386,79 @@ export default function ConductPage({ params }: PageProps) {
                 )}
               </CardContent>
             </Card>
+
+            {/* 성적 정보 */}
+            {consultation.academicScores && (() => {
+              const scores = consultation.academicScores;
+              const hasMockGrades = scores.mockTestGrades &&
+                Object.values(scores.mockTestGrades).some(v => v !== null && v !== undefined && v !== -1);
+              const hasSchoolGradeAvg = scores.schoolGradeAvg !== null &&
+                scores.schoolGradeAvg !== undefined && scores.schoolGradeAvg !== -1;
+              const hasAdmissionType = scores.admissionType;
+
+              if (!hasMockGrades && !hasSchoolGradeAvg && !hasAdmissionType) return null;
+
+              const admissionTypeLabel = scores.admissionType === 'early' ? '수시' :
+                scores.admissionType === 'regular' ? '정시' : scores.admissionType;
+
+              return (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center">
+                      <GraduationCap className="h-5 w-5 mr-2 text-primary-600" />
+                      성적 정보
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* 내신 평균 + 입시 유형 */}
+                    <div className="flex gap-4">
+                      {hasSchoolGradeAvg && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-sm">내신</span>
+                          <span className="font-bold text-blue-600">
+                            {scores.schoolGradeAvg === -1 ? '미응시' : `${scores.schoolGradeAvg}등급`}
+                          </span>
+                        </div>
+                      )}
+                      {hasAdmissionType && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500 text-sm">입시</span>
+                          <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-sm">
+                            {admissionTypeLabel}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 모의고사 등급 표 */}
+                    {hasMockGrades && (
+                      <div>
+                        <p className="text-sm text-gray-500 mb-2">모의고사</p>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {['korean', 'math', 'english', 'exploration'].map((subject) => {
+                            const labels: Record<string, string> = {
+                              korean: '국',
+                              math: '수',
+                              english: '영',
+                              exploration: '탐'
+                            };
+                            const value = scores.mockTestGrades?.[subject as keyof typeof scores.mockTestGrades];
+                            return (
+                              <div key={subject} className="bg-gray-50 rounded p-2 text-center">
+                                <div className="text-xs text-gray-500">{labels[subject]}</div>
+                                <div className={`font-bold ${value === -1 ? 'text-gray-400 text-sm' : 'text-gray-800'}`}>
+                                  {value === -1 ? '-' : value ?? '-'}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             {/* 상담 메모 */}
             <Card>
