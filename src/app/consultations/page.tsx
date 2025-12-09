@@ -717,27 +717,24 @@ export default function ConsultationsPage() {
                 신청일: {format(parseISO(selectedConsultation.created_at), 'yyyy-MM-dd HH:mm')}
               </p>
 
-              {/* 상담 진행 섹션 */}
-              {(selectedConsultation.status === 'confirmed' || selectedConsultation.status === 'pending') && (
-                <div className="border-t pt-4 mt-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-medium flex items-center gap-2">
-                      <CheckSquare className="h-4 w-4" />
-                      상담 진행
-                    </h4>
-                    <Link href={`/consultations/${selectedConsultation.id}/conduct`}>
-                      <Button size="sm" className="gap-2">
-                        <ChevronRight className="h-4 w-4" />
-                        상담 진행 페이지로 이동
-                      </Button>
-                    </Link>
-                  </div>
+              {/* 상담 진행 섹션 - 모든 상태에서 표시 */}
+              <div className="border-t pt-4 mt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <CheckSquare className="h-4 w-4" />
+                    상담 진행
+                  </h4>
+                  <Link href={`/consultations/${selectedConsultation.id}/conduct`}>
+                    <Button size="sm" className="gap-2">
+                      상담 진행 페이지로 이동
+                    </Button>
+                  </Link>
                 </div>
-              )}
+              </div>
 
-              {/* 이미 체험 학생으로 등록된 경우 */}
-              {selectedConsultation.linked_student_id && (
-                <div className="bg-green-50 rounded-lg p-4 mt-4">
+              {/* 체험 학생으로 등록된 경우 */}
+              {selectedConsultation.linked_student_id && selectedConsultation.linked_student_is_trial && (
+                <div className="bg-green-50 rounded-lg p-4">
                   <p className="text-green-800 flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
                     체험 학생으로 등록 완료
