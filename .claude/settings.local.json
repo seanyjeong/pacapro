@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs basename:*)"
+      "Bash(xargs basename:*)",
+      "Bash(sudo journalctl:*)"
     ],
     "deny": [],
     "ask": []

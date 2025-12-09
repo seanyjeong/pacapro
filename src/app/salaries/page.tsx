@@ -13,6 +13,7 @@ import { salariesAPI } from '@/lib/api/salaries';
 import apiClient from '@/lib/api/client';
 import { PAYMENT_STATUS_OPTIONS } from '@/lib/types/salary';
 import { calculateTotalPaid, calculateTotalUnpaid } from '@/lib/utils/salary-helpers';
+import { PasswordConfirmModal } from '@/components/modals/password-confirm-modal';
 // PDF 유틸리티는 동적 import로 필요할 때만 로드
 import { toast } from 'sonner';
 
@@ -66,6 +67,7 @@ export default function SalariesPage() {
   const [pdfExporting, setPdfExporting] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ current: 0, total: 0 });
   const [bulkPaying, setBulkPaying] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // 설정 로드 및 초기 필터 설정
   useEffect(() => {
@@ -214,16 +216,19 @@ export default function SalariesPage() {
     }
   };
 
-  const handleBulkPay = async () => {
+  // 비밀번호 확인 후 일괄 지급 처리 실행
+  const handleBulkPay = () => {
     if (pendingCount === 0) {
       toast.error('지급 대기 중인 급여가 없습니다');
       return;
     }
+    // 비밀번호 확인 모달 열기
+    setShowPasswordModal(true);
+  };
 
-    // 확인 다이얼로그
-    if (!confirm(`${pendingCount}건의 급여를 모두 지급 처리하시겠습니까?\n총 ${totalUnpaid.toLocaleString()}원`)) {
-      return;
-    }
+  // 비밀번호 확인 후 실제 일괄 지급 처리
+  const executeBulkPay = async () => {
+    setShowPasswordModal(false);
 
     try {
       setBulkPaying(true);
@@ -453,6 +458,15 @@ export default function SalariesPage() {
       </Card>
 
       <SalaryList salaries={salaries} loading={loading} onSalaryClick={handleSalaryClick} />
+
+      {/* 비밀번호 확인 모달 */}
+      <PasswordConfirmModal
+        open={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onConfirm={executeBulkPay}
+        title="급여 지급 확인"
+        description={`${pendingCount}건의 급여를 모두 지급 처리합니다. (총 ${totalUnpaid.toLocaleString()}원)\n비밀번호를 입력해주세요.`}
+      />
     </div>
   );
 }

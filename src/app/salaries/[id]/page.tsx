@@ -18,6 +18,7 @@ import { salariesAPI } from '@/lib/api/salaries';
 import type { SalaryDetail } from '@/lib/types/salary';
 import { PAYMENT_STATUS_LABELS, TAX_TYPE_LABELS } from '@/lib/types/salary';
 import { SALARY_TYPE_LABELS } from '@/lib/types/instructor';
+import { PasswordConfirmModal } from '@/components/modals/password-confirm-modal';
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('ko-KR').format(amount) + '원';
@@ -58,6 +59,7 @@ export default function SalaryDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // 인센티브 수정 상태
   const [editingIncentive, setEditingIncentive] = useState(false);
@@ -85,11 +87,15 @@ export default function SalaryDetailPage() {
     }
   };
 
-  const handlePayment = async () => {
+  // 지급 처리 버튼 클릭 시 비밀번호 모달 열기
+  const handlePayment = () => {
     if (!salary || salary.payment_status === 'paid') return;
+    setShowPasswordModal(true);
+  };
 
-    const confirmed = window.confirm('이 급여를 지급 완료 처리하시겠습니까?');
-    if (!confirmed) return;
+  // 비밀번호 확인 후 실제 지급 처리
+  const executePayment = async () => {
+    setShowPasswordModal(false);
 
     try {
       setPaying(true);
@@ -587,6 +593,15 @@ export default function SalaryDetailPage() {
           )}
         </div>
       </div>
+
+      {/* 비밀번호 확인 모달 */}
+      <PasswordConfirmModal
+        open={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onConfirm={executePayment}
+        title="급여 지급 확인"
+        description={`${salary?.instructor_name}님의 급여를 지급 처리합니다. (${formatCurrency(salary?.net_salary || 0)})\n비밀번호를 입력해주세요.`}
+      />
     </>
   );
 }

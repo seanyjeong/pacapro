@@ -91,4 +91,11 @@ export const authAPI = {
         const token = localStorage.getItem('token');
         return !!token;
     },
+
+    /**
+     * 비밀번호 확인 (중요 작업 전 확인용)
+     */
+    async verifyPassword(password: string): Promise<{ message: string; verified: boolean }> {
+        return apiClient.post('/auth/verify-password', { password });
+    },
 };
