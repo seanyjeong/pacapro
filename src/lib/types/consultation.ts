@@ -37,6 +37,17 @@ export type StudentGrade =
 
 // 성적 정보
 export interface AcademicScores {
+  // 새 구조 (v2.5.10+): 상담 신청 폼에서 사용
+  mockTestGrades?: {
+    korean?: number;
+    math?: number;
+    english?: number;
+    exploration?: number;
+  };
+  schoolGradeAvg?: number;  // 내신 평균등급 (-1: 미응시)
+  admissionType?: string;   // 입시 유형 (수시/정시)
+
+  // 기존 구조 (호환성 유지)
   school_grades?: {
     korean?: number;
     math?: number;

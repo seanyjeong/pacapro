@@ -540,16 +540,55 @@ export default function ConsultationsPage() {
               {/* 성적 정보 - 실제 값이 있을 때만 표시 */}
               {selectedConsultation.academicScores && (() => {
                 const scores = selectedConsultation.academicScores;
+
+                // 새 구조: mockTestGrades, schoolGradeAvg, admissionType
+                const hasMockGrades = scores.mockTestGrades &&
+                  Object.values(scores.mockTestGrades).some(v => v !== null && v !== undefined && v !== -1);
+                const hasSchoolGradeAvg = scores.schoolGradeAvg !== null &&
+                  scores.schoolGradeAvg !== undefined && scores.schoolGradeAvg !== -1;
+                const hasAdmissionType = scores.admissionType;
+
+                // 기존 구조도 지원 (호환성)
                 const hasSchoolGrades = scores.school_grades && Object.values(scores.school_grades).some(v => v);
-                const hasMockGrades = scores.mock_exam_grades && Object.values(scores.mock_exam_grades).some(v => v);
+                const hasOldMockGrades = scores.mock_exam_grades && Object.values(scores.mock_exam_grades).some(v => v);
                 const hasPercentiles = scores.percentiles && Object.values(scores.percentiles).some(v => v);
 
-                if (!hasSchoolGrades && !hasMockGrades && !hasPercentiles) return null;
+                // 어떤 성적 정보도 없으면 표시 안 함
+                if (!hasMockGrades && !hasSchoolGradeAvg && !hasAdmissionType &&
+                    !hasSchoolGrades && !hasOldMockGrades && !hasPercentiles) return null;
 
                 return (
                   <div>
                     <h4 className="font-medium mb-2">성적 정보</h4>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      {/* 새 구조: 내신 평균 등급 + 입시 유형 */}
+                      {(hasSchoolGradeAvg || hasAdmissionType) && (
+                        <div className="bg-gray-50 rounded p-3">
+                          <p className="font-medium text-gray-700 mb-1">기본 정보</p>
+                          {hasSchoolGradeAvg && (
+                            <p>내신 평균: {scores.schoolGradeAvg}등급</p>
+                          )}
+                          {hasAdmissionType && (
+                            <p>입시 유형: {scores.admissionType}</p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 새 구조: 모의고사 등급 (mockTestGrades) */}
+                      {hasMockGrades && (
+                        <div className="bg-gray-50 rounded p-3">
+                          <p className="font-medium text-gray-700 mb-1">모의고사 등급</p>
+                          {Object.entries(scores.mockTestGrades!).map(([key, value]) => (
+                            value !== null && value !== undefined && value !== -1 && (
+                              <p key={key}>
+                                {key === 'korean' ? '국어' : key === 'math' ? '수학' : key === 'english' ? '영어' : '탐구'}: {value}등급
+                              </p>
+                            )
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 기존 구조 호환: school_grades */}
                       {hasSchoolGrades && (
                         <div className="bg-gray-50 rounded p-3">
                           <p className="font-medium text-gray-700 mb-1">내신 등급</p>
@@ -562,7 +601,9 @@ export default function ConsultationsPage() {
                           ))}
                         </div>
                       )}
-                      {hasMockGrades && (
+
+                      {/* 기존 구조 호환: mock_exam_grades */}
+                      {hasOldMockGrades && (
                         <div className="bg-gray-50 rounded p-3">
                           <p className="font-medium text-gray-700 mb-1">모의고사 등급</p>
                           {Object.entries(scores.mock_exam_grades!).map(([key, value]) => (
@@ -574,6 +615,8 @@ export default function ConsultationsPage() {
                           ))}
                         </div>
                       )}
+
+                      {/* 기존 구조 호환: percentiles */}
                       {hasPercentiles && (
                         <div className="bg-gray-50 rounded p-3">
                           <p className="font-medium text-gray-700 mb-1">백분위</p>
