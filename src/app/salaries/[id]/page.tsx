@@ -12,6 +12,7 @@ import {
   Edit3,
   X,
   Save,
+  RefreshCw,
 } from 'lucide-react';
 import { salariesAPI } from '@/lib/api/salaries';
 import type { SalaryDetail } from '@/lib/types/salary';
@@ -56,6 +57,7 @@ export default function SalaryDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
+  const [recalculating, setRecalculating] = useState(false);
 
   // 인센티브 수정 상태
   const [editingIncentive, setEditingIncentive] = useState(false);
@@ -104,6 +106,32 @@ export default function SalaryDetailPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleRecalculate = async () => {
+    if (!salary || salary.payment_status !== 'pending') return;
+
+    const confirmed = window.confirm(
+      '현재 강사 단가와 출근 기록을 기반으로 급여를 재계산합니다.\n\n' +
+      '※ 인센티브와 공제액은 유지됩니다.\n\n계속하시겠습니까?'
+    );
+    if (!confirmed) return;
+
+    try {
+      setRecalculating(true);
+      const result = await salariesAPI.recalculateSalary(salaryId);
+      alert(
+        `급여가 재계산되었습니다.\n\n` +
+        `기본급: ${new Intl.NumberFormat('ko-KR').format(result.salary.base_amount)}원\n` +
+        `실수령액: ${new Intl.NumberFormat('ko-KR').format(result.salary.net_salary)}원`
+      );
+      loadSalary();
+    } catch (err: any) {
+      console.error('Failed to recalculate salary:', err);
+      alert(err.response?.data?.message || '급여 재계산에 실패했습니다.');
+    } finally {
+      setRecalculating(false);
+    }
   };
 
   // 인센티브 수정 시작
@@ -248,10 +276,16 @@ export default function SalaryDetailPage() {
               인쇄
             </Button>
             {salary.payment_status === 'pending' && (
-              <Button size="sm" onClick={handlePayment} disabled={paying}>
-                <CheckCircle className="w-4 h-4 mr-1" />
-                {paying ? '처리 중...' : '지급 완료'}
-              </Button>
+              <>
+                <Button variant="outline" size="sm" onClick={handleRecalculate} disabled={recalculating}>
+                  <RefreshCw className={`w-4 h-4 mr-1 ${recalculating ? 'animate-spin' : ''}`} />
+                  {recalculating ? '재계산 중...' : '재계산'}
+                </Button>
+                <Button size="sm" onClick={handlePayment} disabled={paying}>
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  {paying ? '처리 중...' : '지급 완료'}
+                </Button>
+              </>
             )}
           </div>
         </div>
@@ -540,10 +574,16 @@ export default function SalaryDetailPage() {
             목록
           </Button>
           {salary.payment_status === 'pending' && (
-            <Button size="sm" onClick={handlePayment} disabled={paying}>
-              <CheckCircle className="w-4 h-4 mr-1" />
-              {paying ? '처리 중...' : '지급 완료'}
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm" onClick={handleRecalculate} disabled={recalculating}>
+                <RefreshCw className={`w-4 h-4 mr-1 ${recalculating ? 'animate-spin' : ''}`} />
+                {recalculating ? '재계산 중...' : '재계산'}
+              </Button>
+              <Button size="sm" onClick={handlePayment} disabled={paying}>
+                <CheckCircle className="w-4 h-4 mr-1" />
+                {paying ? '처리 중...' : '지급 완료'}
+              </Button>
+            </div>
           )}
         </div>
       </div>

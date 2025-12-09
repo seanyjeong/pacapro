@@ -104,6 +104,31 @@ export const salariesAPI = {
   },
 
   /**
+   * 급여 재계산
+   * POST /paca/salaries/:id/recalculate
+   * - 현재 강사 단가와 출근 기록으로 급여 재계산
+   * - 미지급 상태만 가능
+   */
+  recalculateSalary: async (id: number): Promise<{
+    message: string;
+    salary: {
+      id: number;
+      base_amount: number;
+      tax_amount: number;
+      net_salary: number;
+      incentive_amount: number;
+      total_deduction: number;
+      morning_classes: number;
+      afternoon_classes: number;
+      evening_classes: number;
+      total_classes: number;
+      total_hours: number;
+    };
+  }> => {
+    return await apiClient.post(`/salaries/${id}/recalculate`);
+  },
+
+  /**
    * 급여 수정
    * PUT /paca/salaries/:id
    */
