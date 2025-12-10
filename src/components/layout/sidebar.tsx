@@ -132,9 +132,9 @@ export function Sidebar() {
     };
 
     return (
-        <aside className="hidden md:flex md:w-64 md:flex-col fixed left-0 top-0 h-full bg-white border-r border-gray-200 no-print">
+        <aside className="hidden md:flex md:w-64 md:flex-col fixed left-0 top-0 h-full bg-card border-r border-border no-print">
             {/* Logo */}
-            <div className="h-16 flex items-center px-6 border-b border-gray-200">
+            <div className="h-16 flex items-center px-6 border-b border-border">
                 <Link href="/" className="flex items-center space-x-2">
                     <Image
                         src="/icons/icon-96x96.png"
@@ -143,16 +143,16 @@ export function Sidebar() {
                         height={32}
                         className="rounded-lg"
                     />
-                    <span className="text-xl font-bold text-gray-900">P-ACA</span>
+                    <span className="text-xl font-bold text-foreground">P-ACA</span>
                 </Link>
             </div>
 
             {/* Academy Name */}
             {academyName && (
-                <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                <div className="px-4 py-3 border-b border-border bg-muted">
                     <div className="flex items-center space-x-2">
-                        <Building2 className="w-5 h-5 text-primary-500 flex-shrink-0" />
-                        <span className="text-base font-bold text-gray-800 truncate">{academyName}</span>
+                        <Building2 className="w-5 h-5 text-primary flex-shrink-0" />
+                        <span className="text-base font-bold text-foreground truncate">{academyName}</span>
                     </div>
                 </div>
             )}
@@ -172,11 +172,11 @@ export function Sidebar() {
                                     className={cn(
                                         'flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                                         isActive
-                                            ? 'bg-primary-50 text-primary-700'
-                                            : 'text-gray-700 hover:bg-gray-100'
+                                            ? 'bg-primary/10 text-primary'
+                                            : 'text-foreground hover:bg-muted'
                                     )}
                                 >
-                                    <Icon className={cn('w-5 h-5', isActive ? 'text-primary-600' : 'text-gray-500')} />
+                                    <Icon className={cn('w-5 h-5', isActive ? 'text-primary' : 'text-muted-foreground')} />
                                     <span>{item.title}</span>
                                     {item.badge && (
                                         <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
@@ -193,7 +193,7 @@ export function Sidebar() {
                 {mounted && isAdmin && (
                     <div className="mt-6">
                         <div className="px-3 mb-2">
-                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">개발자 전용</h3>
+                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">개발자 전용</h3>
                         </div>
                         <ul className="space-y-1">
                             {adminNavItems.map((item) => {
@@ -207,12 +207,12 @@ export function Sidebar() {
                                             className={cn(
                                                 'flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                                                 isActive
-                                                    ? 'bg-purple-50 text-purple-700'
-                                                    : 'text-gray-700 hover:bg-gray-100'
+                                                    ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                                                    : 'text-foreground hover:bg-muted'
                                             )}
                                         >
                                             <Icon
-                                                className={cn('w-5 h-5', isActive ? 'text-purple-600' : 'text-gray-500')}
+                                                className={cn('w-5 h-5', isActive ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}
                                             />
                                             <span>{item.title}</span>
                                             {item.badge && (
@@ -230,10 +230,10 @@ export function Sidebar() {
             </nav>
 
             {/* Footer */}
-            <div className="p-4 border-t border-gray-200">
-                <div className="text-xs text-gray-500 text-center space-y-1">
-                    <div>P-ACA v2.8.3</div>
-                    <div className="text-[10px] text-gray-400">Last updated: 2025-12-09</div>
+            <div className="p-4 border-t border-border">
+                <div className="text-xs text-muted-foreground text-center space-y-1">
+                    <div>P-ACA v2.9.0</div>
+                    <div className="text-[10px] text-muted-foreground/70">Last updated: 2025-12-10</div>
                     <div>문의: 010-2144-6755</div>
                 </div>
             </div>

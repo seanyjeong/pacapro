@@ -16,8 +16,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="ko">
-            <body className="bg-gray-50">
+        <html lang="ko" suppressHydrationWarning>
+            <body className="bg-background text-foreground">
                 <Providers>
                     <DynamicManifest />
                     <DynamicTitle />

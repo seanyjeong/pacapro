@@ -1,6 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
 import { useState, type ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { VersionChecker } from './version-checker';
@@ -24,10 +25,17 @@ export function Providers({ children }: ProvidersProps) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <VersionChecker />
-      {children}
-      <Toaster position="top-right" richColors />
-    </QueryClientProvider>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      enableSystem={false}
+      storageKey="paca-theme"
+    >
+      <QueryClientProvider client={queryClient}>
+        <VersionChecker />
+        {children}
+        <Toaster position="top-right" richColors />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

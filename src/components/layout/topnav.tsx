@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Bell, User, LogOut, Menu, Users, UserCog, Download } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api/auth';
 import apiClient from '@/lib/api/client';
@@ -140,7 +141,7 @@ export function TopNav() {
     };
 
     return (
-        <header className="h-16 bg-white border-b border-gray-200 fixed top-0 right-0 left-0 md:left-64 z-10 no-print">
+        <header className="h-16 bg-card border-b border-border fixed top-0 right-0 left-0 md:left-64 z-10 no-print">
             <div className="h-full px-4 md:px-6 flex items-center justify-between">
                 {/* Left: Mobile Menu + Search */}
                 <div className="flex items-center space-x-4 flex-1">
@@ -151,25 +152,25 @@ export function TopNav() {
 
                     {/* Search Bar */}
                     <div className="relative max-w-md w-full" ref={searchRef}>
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => searchResults.length > 0 && setShowResults(true)}
                             placeholder="학생, 강사, 전화번호 검색..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                         />
 
                         {/* 검색 결과 드롭다운 */}
                         {showResults && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
                                 {searching ? (
-                                    <div className="p-4 text-center text-gray-500 text-sm">
+                                    <div className="p-4 text-center text-muted-foreground text-sm">
                                         검색 중...
                                     </div>
                                 ) : searchResults.length === 0 ? (
-                                    <div className="p-4 text-center text-gray-500 text-sm">
+                                    <div className="p-4 text-center text-muted-foreground text-sm">
                                         검색 결과가 없습니다
                                     </div>
                                 ) : (
@@ -178,32 +179,32 @@ export function TopNav() {
                                             <li key={`${result.type}-${result.id}`}>
                                                 <button
                                                     onClick={() => handleResultClick(result)}
-                                                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors text-left"
+                                                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-muted transition-colors text-left"
                                                 >
                                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                                        result.type === 'student' ? 'bg-blue-100' : 'bg-green-100'
+                                                        result.type === 'student' ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-green-100 dark:bg-green-900/30'
                                                     }`}>
                                                         {result.type === 'student' ? (
-                                                            <Users className="w-5 h-5 text-blue-600" />
+                                                            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                                         ) : (
-                                                            <UserCog className="w-5 h-5 text-green-600" />
+                                                            <UserCog className="w-5 h-5 text-green-600 dark:text-green-400" />
                                                         )}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-medium text-gray-900">{result.name}</span>
+                                                            <span className="font-medium text-foreground">{result.name}</span>
                                                             <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                                                result.type === 'student' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                                                                result.type === 'student' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
                                                             }`}>
                                                                 {result.type === 'student' ? '학생' : '강사'}
                                                             </span>
                                                             {result.status !== 'active' && (
-                                                                <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                                                                <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                                                                     {result.status === 'paused' ? '휴원' : result.status === 'withdrawn' ? '퇴원' : result.status === 'trial' ? '체험' : result.status}
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="text-sm text-gray-500 truncate">
+                                                        <div className="text-sm text-muted-foreground truncate">
                                                             {result.subtext}
                                                             {result.phone && ` · ${result.phone}`}
                                                         </div>
@@ -224,7 +225,7 @@ export function TopNav() {
                     {showInstallButton && (
                         <button
                             onClick={handleInstallClick}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
                             title="바탕화면에 앱 설치"
                         >
                             <Download className="w-4 h-4" />
@@ -232,8 +233,11 @@ export function TopNav() {
                         </button>
                     )}
 
+                    {/* Theme Toggle */}
+                    <ThemeToggle />
+
                     {/* Notifications */}
-                    <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                    <button className="relative p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors">
                         <Bell className="w-5 h-5" />
                         <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                     </button>
@@ -242,16 +246,16 @@ export function TopNav() {
                     <div className="relative">
                         <button
                             onClick={() => setShowUserMenu(!showUserMenu)}
-                            className="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="flex items-center space-x-3 p-2 hover:bg-muted rounded-lg transition-colors"
                         >
-                            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                                <User className="w-5 h-5 text-primary-600" />
+                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                                <User className="w-5 h-5 text-primary" />
                             </div>
                             <div className="hidden md:block text-left">
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className="text-sm font-medium text-foreground">
                                     {user?.name || '사용자'}
                                 </div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs text-muted-foreground">
                                     {user ? getRoleLabel(user.role || '', user.position) : '사용자'}
                                 </div>
                             </div>
@@ -259,10 +263,10 @@ export function TopNav() {
 
                         {/* User Dropdown */}
                         {showUserMenu && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                            <div className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-lg border border-border py-1">
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-foreground hover:bg-muted"
                                 >
                                     <LogOut className="w-4 h-4" />
                                     <span>로그아웃</span>
