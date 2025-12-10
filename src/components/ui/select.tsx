@@ -69,7 +69,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
         disabled={disabled}
         onClick={() => !disabled && setOpen(!open)}
         className={cn(
-          'flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-10 w-full items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
           className
         )}
         {...props}
@@ -92,7 +92,7 @@ const SelectValue = ({ placeholder }: SelectValueProps) => {
   // items에서 라벨을 찾고, 없으면 placeholder 사용 (value는 표시하지 않음)
   const displayLabel = items.get(value);
   const displayText = displayLabel || placeholder || '';
-  return <span className={cn(!displayLabel && 'text-gray-500')}>{displayText}</span>;
+  return <span className={cn(!displayLabel && 'text-muted-foreground')}>{displayText}</span>;
 };
 
 // Select Content
@@ -132,7 +132,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
       <div
         ref={contentRef}
         className={cn(
-          'absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white py-1 text-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+          'absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-popover py-1 text-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
           className
         )}
         {...props}
@@ -164,8 +164,8 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
         ref={ref}
         onClick={() => context.onValueChange(value)}
         className={cn(
-          'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-gray-100 focus:bg-gray-100',
-          isSelected && 'bg-gray-100',
+          'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-muted focus:bg-muted',
+          isSelected && 'bg-muted',
           className
         )}
         {...props}

@@ -37,7 +37,7 @@ export function DialogContent({ children, className }: DialogContentProps) {
   return (
     <div
       className={cn(
-        'relative bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto',
+        'relative bg-card rounded-lg shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto',
         className
       )}
       onClick={(e) => e.stopPropagation()}
@@ -54,7 +54,7 @@ interface DialogHeaderProps {
 
 export function DialogHeader({ children, className }: DialogHeaderProps) {
   return (
-    <div className={cn('px-6 py-4 border-b border-gray-200', className)}>
+    <div className={cn('px-6 py-4 border-b border-border', className)}>
       {children}
     </div>
   );
@@ -67,7 +67,7 @@ interface DialogTitleProps {
 
 export function DialogTitle({ children, className }: DialogTitleProps) {
   return (
-    <h2 className={cn('text-lg font-semibold text-gray-900', className)}>
+    <h2 className={cn('text-lg font-semibold text-foreground', className)}>
       {children}
     </h2>
   );
@@ -80,7 +80,7 @@ interface DialogDescriptionProps {
 
 export function DialogDescription({ children, className }: DialogDescriptionProps) {
   return (
-    <p className={cn('text-sm text-gray-500 mt-1', className)}>
+    <p className={cn('text-sm text-muted-foreground mt-1', className)}>
       {children}
     </p>
   );
@@ -93,7 +93,7 @@ interface DialogFooterProps {
 
 export function DialogFooter({ children, className }: DialogFooterProps) {
   return (
-    <div className={cn('px-6 py-4 border-t border-gray-200 flex justify-end space-x-3', className)}>
+    <div className={cn('px-6 py-4 border-t border-border flex justify-end space-x-3', className)}>
       {children}
     </div>
   );

@@ -51,9 +51,9 @@ interface ScheduleCalendarV2Props {
 }
 
 const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; bgColor: string }[] = [
-  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600', bgColor: 'bg-orange-50 hover:bg-orange-100 border-orange-200' },
-  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-blue-600', bgColor: 'bg-blue-50 hover:bg-blue-100 border-blue-200' },
-  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600', bgColor: 'bg-purple-50 hover:bg-purple-100 border-purple-200' },
+  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-950 hover:bg-orange-100 dark:hover:bg-orange-900 border-orange-200 dark:border-orange-800' },
+  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 border-blue-200 dark:border-blue-800' },
+  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-950 hover:bg-purple-100 dark:hover:bg-purple-900 border-purple-200 dark:border-purple-800' },
 ];
 
 export function ScheduleCalendarV2({
@@ -212,7 +212,7 @@ export function ScheduleCalendarV2({
                     {/* 상담 예약 표시 */}
                     {inMonth && consultations?.[dateStr] && consultations[dateStr].length > 0 && (
                       <span
-                        className="flex items-center gap-0.5 text-xs text-pink-600 bg-pink-50 px-1 rounded"
+                        className="flex items-center gap-0.5 text-xs text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950 px-1 rounded"
                         title={`상담 ${consultations[dateStr].length}건`}
                       >
                         <PhoneCall className="h-3 w-3" />
@@ -248,7 +248,7 @@ export function ScheduleCalendarV2({
                             className={cn(
                               'flex items-center gap-1 px-1 py-0.5 rounded text-xs border transition-all cursor-pointer',
                               bgColor,
-                              draggedStudent && 'ring-1 ring-dashed ring-gray-400'
+                              draggedStudent && 'ring-1 ring-dashed ring-muted-foreground'
                             )}
                           >
                             <Icon className={cn('h-3 w-3', color)} />
@@ -263,7 +263,7 @@ export function ScheduleCalendarV2({
                                       ? 'text-green-600'
                                       : attendedInstructors > 0
                                       ? 'text-yellow-600'
-                                      : 'text-gray-500'
+                                      : 'text-muted-foreground'
                                   )}
                                   title={`출근 ${attendedInstructors}명 / 배정 ${scheduledInstructors}명`}
                                 >
@@ -280,7 +280,7 @@ export function ScheduleCalendarV2({
                               )}
                               {/* 학생 수 */}
                               {studentCount > 0 && (
-                                <span className="flex items-center gap-0.5 text-gray-600">
+                                <span className="flex items-center gap-0.5 text-muted-foreground">
                                   <User className="h-3 w-3" />
                                   {studentCount}
                                 </span>
@@ -315,7 +315,7 @@ export function ScheduleCalendarV2({
               <span>= 체험생</span>
             </div>
             <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-gray-600" />
+              <User className="h-4 w-4 text-muted-foreground" />
               <span>= 학생 수</span>
             </div>
             <div className="flex items-center gap-2">
