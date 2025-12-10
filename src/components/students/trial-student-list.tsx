@@ -84,8 +84,8 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto" />
-          <p className="text-gray-500 mt-2">로딩 중...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto" />
+          <p className="text-muted-foreground mt-2">로딩 중...</p>
         </CardContent>
       </Card>
     );
@@ -95,9 +95,9 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">체험생이 없습니다</h3>
-          <p className="text-gray-500 mb-4">
+          <Sparkles className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-foreground mb-2">체험생이 없습니다</h3>
+          <p className="text-muted-foreground mb-4">
             체험 수업을 원하는 학생을 등록해보세요.
           </p>
           <Button onClick={() => router.push('/students/new?is_trial=true')}>
@@ -113,36 +113,36 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
     <Card>
       <CardContent className="p-0">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b">
+          <thead className="bg-muted border-b border-border">
             <tr>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">이름</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">학년</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">연락처</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">체험 일정</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-gray-600">남은 횟수</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600">액션</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">이름</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학년</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">연락처</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">체험 일정</th>
+              <th className="text-center py-3 px-4 text-sm font-semibold text-muted-foreground">남은 횟수</th>
+              <th className="text-right py-3 px-4 text-sm font-semibold text-muted-foreground">액션</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-border bg-card">
             {students.map((student) => {
               const trialDates = parseTrialDates(student.trial_dates);
               const remaining = student.trial_remaining ?? 0;
               const total = trialDates.length || 2; // 체험 일정 수 기준
 
               return (
-                <tr key={student.id} className="hover:bg-gray-50">
+                <tr key={student.id} className="hover:bg-muted">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
-                        <User className="w-4 h-4 text-purple-600" />
+                      <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                        <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                       </div>
-                      <span className="font-medium text-gray-900">{student.name}</span>
+                      <span className="font-medium text-foreground">{student.name}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-600">
+                  <td className="py-3 px-4 text-sm text-muted-foreground">
                     {student.grade || '-'}
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-600">
+                  <td className="py-3 px-4 text-sm text-muted-foreground">
                     {student.phone || '-'}
                   </td>
                   <td className="py-3 px-4">
@@ -154,7 +154,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                         </Badge>
                       ))}
                       {trialDates.length === 0 && (
-                        <span className="text-gray-400 text-sm">미정</span>
+                        <span className="text-muted-foreground text-sm">미정</span>
                       )}
                     </div>
                   </td>
@@ -187,7 +187,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
                         onClick={() => handleDelete(student)}
                         disabled={deletingId === student.id}
                       >

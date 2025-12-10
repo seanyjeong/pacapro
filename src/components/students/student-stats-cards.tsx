@@ -77,36 +77,36 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
       title: '전체 학생',
       value: stats.total,
       icon: Users,
-      bgColor: 'bg-blue-100',
-      iconColor: 'text-blue-600',
+      bgColor: 'bg-blue-100 dark:bg-blue-900',
+      iconColor: 'text-blue-600 dark:text-blue-400',
     },
     {
       title: '재원',
       value: stats.active,
       icon: UserCheck,
-      bgColor: 'bg-green-100',
-      iconColor: 'text-green-600',
+      bgColor: 'bg-green-100 dark:bg-green-900',
+      iconColor: 'text-green-600 dark:text-green-400',
     },
     {
       title: '휴원',
       value: stats.paused,
       icon: UserX,
-      bgColor: 'bg-yellow-100',
-      iconColor: 'text-yellow-600',
+      bgColor: 'bg-yellow-100 dark:bg-yellow-900',
+      iconColor: 'text-yellow-600 dark:text-yellow-400',
     },
     {
       title: '졸업',
       value: stats.graduated,
       icon: GraduationCap,
-      bgColor: 'bg-purple-100',
-      iconColor: 'text-purple-600',
+      bgColor: 'bg-purple-100 dark:bg-purple-900',
+      iconColor: 'text-purple-600 dark:text-purple-400',
     },
     {
       title: '체험',
       value: stats.trial,
       icon: Sparkles,
-      bgColor: 'bg-pink-100',
-      iconColor: 'text-pink-600',
+      bgColor: 'bg-pink-100 dark:bg-pink-900',
+      iconColor: 'text-pink-600 dark:text-pink-400',
     },
   ];
 
@@ -122,8 +122,8 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
                   <Icon className={`w-5 h-5 ${card.iconColor}`} />
                 </div>
                 <div>
-                  <div className="text-xs text-gray-600">{card.title}</div>
-                  <div className="text-xl font-bold text-gray-900">
+                  <div className="text-xs text-muted-foreground">{card.title}</div>
+                  <div className="text-xl font-bold text-foreground">
                     {loading ? '-' : card.value}명
                   </div>
                 </div>

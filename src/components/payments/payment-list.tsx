@@ -31,7 +31,7 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
       <Card>
         <CardContent className="p-12 text-center">
           <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">학원비 목록을 불러오는 중...</p>
+          <p className="text-muted-foreground">학원비 목록을 불러오는 중...</p>
         </CardContent>
       </Card>
     );
@@ -41,7 +41,7 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <div className="text-gray-400 mb-4">
+          <div className="text-muted-foreground mb-4">
             <svg
               className="w-16 h-16 mx-auto"
               fill="none"
@@ -56,8 +56,8 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
               />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">학원비 내역이 없습니다</h3>
-          <p className="text-gray-600">
+          <h3 className="text-lg font-semibold text-foreground mb-2">학원비 내역이 없습니다</h3>
+          <p className="text-muted-foreground">
             학원비를 청구하시면 여기에 표시됩니다.
           </p>
         </CardContent>
@@ -70,40 +70,40 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   학생 정보
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   청구 내역
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   금액
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   납부 기한
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   상태
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-border">
               {payments.map((payment) => {
                 const overdue = isOverdue(payment);
                 return (
                   <tr
                     key={payment.id}
                     onClick={() => onPaymentClick(payment.id)}
-                    className={`hover:bg-gray-50 cursor-pointer transition-colors ${
-                      overdue ? 'bg-red-50' : ''
+                    className={`hover:bg-muted cursor-pointer transition-colors ${
+                      overdue ? 'bg-red-50 dark:bg-red-950' : ''
                     }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="font-medium text-gray-900">{payment.student_name}</div>
-                        <div className="text-sm text-gray-500">{payment.student_number}</div>
+                        <div className="font-medium text-foreground">{payment.student_name}</div>
+                        <div className="text-sm text-muted-foreground">{payment.student_number}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -116,12 +116,12 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
                           >
                             {PAYMENT_TYPE_LABELS[payment.payment_type]}
                           </span>
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-muted-foreground">
                             {formatYearMonth(payment.year_month)}
                           </span>
                         </div>
                         {payment.description && (
-                          <div className="text-sm text-gray-500 mt-1">
+                          <div className="text-sm text-muted-foreground mt-1">
                             {payment.description}
                           </div>
                         )}
@@ -129,11 +129,11 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="font-semibold text-gray-900">
+                        <div className="font-semibold text-foreground">
                           {formatPaymentAmount(payment.final_amount)}
                         </div>
                         {(payment.discount_amount > 0 || payment.additional_amount > 0) && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-muted-foreground">
                             {payment.base_amount !== payment.final_amount && (
                               <>
                                 기본: {formatPaymentAmount(payment.base_amount)}
@@ -150,16 +150,16 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={overdue ? 'text-red-600 font-semibold' : 'text-gray-900'}>
+                      <div className={overdue ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-foreground'}>
                         {formatDate(payment.due_date)}
                       </div>
                       {payment.paid_date && (
-                        <div className="text-sm text-green-600">
+                        <div className="text-sm text-green-600 dark:text-green-400">
                           납부: {formatDate(payment.paid_date)}
                         </div>
                       )}
                       {overdue && (
-                        <div className="text-xs text-red-600 font-medium mt-1">연체</div>
+                        <div className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">연체</div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -172,7 +172,7 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
                           {PAYMENT_STATUS_LABELS[payment.payment_status]}
                         </span>
                         {payment.payment_method && payment.payment_status === 'paid' && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {PAYMENT_METHOD_LABELS[payment.payment_method]}
                           </span>
                         )}

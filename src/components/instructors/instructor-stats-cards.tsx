@@ -24,29 +24,29 @@ export function InstructorStatsCards({ instructors }: InstructorStatsCardsProps)
       title: '전체 강사',
       value: stats.total,
       icon: Users,
-      bgColor: 'bg-blue-100',
-      iconColor: 'text-blue-600',
+      bgColor: 'bg-blue-100 dark:bg-blue-900',
+      iconColor: 'text-blue-600 dark:text-blue-400',
     },
     {
       title: '재직',
       value: stats.active,
       icon: UserCheck,
-      bgColor: 'bg-green-100',
-      iconColor: 'text-green-600',
+      bgColor: 'bg-green-100 dark:bg-green-900',
+      iconColor: 'text-green-600 dark:text-green-400',
     },
     {
       title: '휴직',
       value: stats.on_leave,
       icon: UserX,
-      bgColor: 'bg-gray-100',
-      iconColor: 'text-gray-600',
+      bgColor: 'bg-muted',
+      iconColor: 'text-muted-foreground',
     },
     {
       title: '퇴사',
       value: stats.retired,
       icon: UserMinus,
-      bgColor: 'bg-red-100',
-      iconColor: 'text-red-600',
+      bgColor: 'bg-red-100 dark:bg-red-900',
+      iconColor: 'text-red-600 dark:text-red-400',
     },
   ];
 
@@ -62,8 +62,8 @@ export function InstructorStatsCards({ instructors }: InstructorStatsCardsProps)
                   <Icon className={`w-6 h-6 ${card.iconColor}`} />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">{card.title}</div>
-                  <div className="text-2xl font-bold text-gray-900">{card.value}명</div>
+                  <div className="text-sm text-muted-foreground">{card.title}</div>
+                  <div className="text-2xl font-bold text-foreground">{card.value}명</div>
                 </div>
               </div>
             </CardContent>

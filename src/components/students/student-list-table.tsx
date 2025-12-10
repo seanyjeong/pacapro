@@ -35,7 +35,7 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
       <Card>
         <CardContent className="p-12 text-center">
           <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">학생 목록을 불러오는 중...</p>
+          <p className="text-muted-foreground">학생 목록을 불러오는 중...</p>
         </CardContent>
       </Card>
     );
@@ -45,7 +45,7 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <div className="text-gray-400 mb-4">
+          <div className="text-muted-foreground mb-4">
             <svg
               className="w-16 h-16 mx-auto"
               fill="none"
@@ -60,8 +60,8 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
               />
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">학생이 없습니다</h3>
-          <p className="text-gray-600">
+          <h3 className="text-lg font-semibold text-foreground mb-2">학생이 없습니다</h3>
+          <p className="text-muted-foreground">
             학생을 등록하시면 여기에 표시됩니다.
           </p>
         </CardContent>
@@ -74,35 +74,35 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-muted border-b border-border">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   학생 정보
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   성별
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   유형
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   입시유형
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   수업일
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   월 학원비
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   상태
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   등록일
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-card divide-y divide-border">
               {students.map((student) => {
                 // discount_rate는 string이므로 parseFloat
                 const discountRate = parseFloat(student.discount_rate) || 0;
@@ -111,7 +111,7 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                   <tr
                     key={student.id}
                     onClick={() => onStudentClick(student.id)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="hover:bg-muted cursor-pointer transition-colors"
                   >
                     {/* 학생 정보 */}
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -128,7 +128,7 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                           </span>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                          <div className="text-sm font-medium text-foreground flex items-center gap-2">
                             {student.name}
                             {!!student.is_trial && (
                               <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs flex items-center gap-1 px-1.5 py-0">
@@ -137,10 +137,10 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                               </Badge>
                             )}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-muted-foreground">
                             {formatStudentNumber(student.student_number)}
                           </div>
-                          <div className="text-xs text-gray-400 flex items-center mt-1">
+                          <div className="text-xs text-muted-foreground flex items-center mt-1">
                             <Phone className="w-3 h-3 mr-1" />
                             {formatPhoneNumber(student.phone)}
                           </div>
@@ -159,15 +159,15 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                           {GENDER_LABELS[student.gender]}
                         </span>
                       ) : (
-                        <span className="text-gray-400 text-sm">-</span>
+                        <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </td>
 
                     {/* 학생 유형/학년 */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-foreground">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                          student.student_type === 'exam' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                          student.student_type === 'exam' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                         }`}>
                           {STUDENT_TYPE_LABELS[student.student_type]}
                         </span>
@@ -179,10 +179,10 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                         student.admission_type === 'regular'
-                          ? 'bg-blue-100 text-blue-800'
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                           : student.admission_type === 'early'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-orange-100 text-orange-800'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
                       }`}>
                         {ADMISSION_TYPE_LABELS[student.admission_type] || student.admission_type}
                       </span>
@@ -190,17 +190,17 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
 
                     {/* 수업일 */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-foreground">
                         {formatClassDays(student.class_days)}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-muted-foreground">
                         주 {student.weekly_count}회
                       </div>
                     </td>
 
                     {/* 월 학원비 */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-foreground">
                         {formatCurrency(student.monthly_tuition)}
                       </div>
                       {discountRate > 0 && (
@@ -223,7 +223,7 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
 
                     {/* 등록일 */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500 flex items-center">
+                      <div className="text-sm text-muted-foreground flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
                         {formatDate(student.enrollment_date)}
                       </div>

@@ -36,7 +36,7 @@ export function StatsCard({
                         <div
                             className={cn(
                                 'flex items-center space-x-1 text-sm font-medium',
-                                trend.isPositive ? 'text-green-600' : 'text-red-600'
+                                trend.isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                             )}
                         >
                             <span>{trend.isPositive ? '↑' : '↓'}</span>
@@ -47,8 +47,8 @@ export function StatsCard({
 
                 {/* Content */}
                 <div className="mt-4">
-                    <div className="text-sm text-gray-600 mb-1">{title}</div>
-                    <div className="text-3xl font-bold text-gray-900">{value}</div>
+                    <div className="text-sm text-muted-foreground mb-1">{title}</div>
+                    <div className="text-3xl font-bold text-foreground">{value}</div>
                 </div>
             </CardContent>
         </Card>
