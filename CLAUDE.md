@@ -143,6 +143,11 @@ mysql -u paca -pq141171616! paca   # MySQL 접속 (비밀번호: q141171616!)
 - 강사 CRUD
 - 출퇴근 기록
 - 급여 관리
+  - 출근 체크 시 급여 자동 계산/업데이트
+  - 급여 재계산 기능 (미지급 상태만, 현재 단가 기반)
+  - 개별/일괄 지급 처리 (비밀번호 확인 필수)
+  - 급여 명세서 PDF 다운로드
+  - 4대보험/3.3% 세금 자동 계산
 
 ### 알림톡/SMS
 - Naver Cloud SENS API 연동
@@ -185,7 +190,9 @@ mysql -u paca -pq141171616! paca   # MySQL 접속 (비밀번호: q141171616!)
 │   ├── paymentScheduler.js         # 월별 학원비 생성 (매월 1일)
 │   ├── notificationScheduler.js    # 알림톡 자동 발송 (매시간 체크)
 │   └── gradePromotionScheduler.js  # 학년 진급 (매년 3월 1일)
-├── utils/naverSens.js      # 네이버 SENS API 유틸
+├── utils/
+│   ├── naverSens.js       # 네이버 SENS API 유틸
+│   └── salaryCalculator.js # 급여 계산 유틸 (4대보험, 3.3%)
 └── migrations/             # DB 마이그레이션 SQL
 ```
 
@@ -203,6 +210,9 @@ mysql -u paca -pq141171616! paca   # MySQL 접속 (비밀번호: q141171616!)
 │   ├── settings/          # 설정 (알림톡 포함)
 │   └── reports/           # 대시보드/리포트
 ├── src/components/         # 기능별 컴포넌트
+│   ├── modals/            # 공통 모달 (비밀번호 확인 등)
+│   ├── salaries/          # 급여 관련 컴포넌트
+│   └── ...
 ├── src/lib/api/            # API 클라이언트
 └── src/hooks/              # React Query 훅
 ```
@@ -249,14 +259,14 @@ mysql -u paca -pq141171616! paca   # MySQL 접속 (비밀번호: q141171616!)
 
 | 경로 | 설명 |
 |------|------|
-| `/auth` | 로그인, 회원가입 |
+| `/auth` | 로그인, 회원가입, 비밀번호 확인 |
 | `/students` | 학생 CRUD, 휴식/복귀/퇴원/졸업 |
 | `/students/auto-promote` | 학년 자동 진급 |
 | `/instructors` | 강사 CRUD |
 | `/payments` | 학원비 관리 |
 | `/schedules` | 수업 일정, 출석 |
 | `/seasons` | 시즌 관리 |
-| `/salaries` | 급여 관리 |
+| `/salaries` | 급여 관리, 재계산, 일괄 지급 |
 | `/notifications` | 알림톡 설정/발송 |
 | `/sms` | SMS/MMS 발송 |
 | `/search` | 전역 검색 |
@@ -399,6 +409,16 @@ const dbTimeSlot = timeSlotMap[frontendTimeSlot] || frontendTimeSlot;
 | `src/app/seasons/[id]/enroll/page.tsx` | 시즌 학생 등록 모달 (할인 입력) |
 | `routes/seasons.js` | 백엔드 시즌 API (등록/취소/환불) |
 | `src/components/payments/payment-record-modal.tsx` | 납부 모달 (할인 입력) |
+
+### 급여 관련 주요 파일
+| 파일 | 설명 |
+|------|------|
+| `src/app/salaries/page.tsx` | 급여 목록 (일괄 지급처리, PDF 다운로드) |
+| `src/app/salaries/[id]/page.tsx` | 급여 상세/명세서 (재계산, 개별 지급) |
+| `src/lib/api/salaries.ts` | 급여 API 클라이언트 |
+| `routes/salaries.js` | 백엔드 급여 API (재계산, 일괄 지급) |
+| `utils/salaryCalculator.js` | 급여 계산 유틸 (4대보험, 3.3%) |
+| `src/components/modals/password-confirm-modal.tsx` | 비밀번호 확인 모달 |
 
 ## 버전 이력
 
