@@ -250,42 +250,42 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
 
         <div ref={printRef} className="space-y-4 py-4 px-2">
           {/* 학생 정보 */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">학생 정보</h3>
+          <div className="bg-muted rounded-lg p-4">
+            <h3 className="font-semibold text-foreground mb-2">학생 정보</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-600">학생명</div>
+              <div className="text-muted-foreground">학생명</div>
               <div className="font-medium">{enrollment.student_name}</div>
-              <div className="text-gray-600">시즌</div>
+              <div className="text-muted-foreground">시즌</div>
               <div className="font-medium">{enrollment.season_name}</div>
-              <div className="text-gray-600">시즌 기간</div>
+              <div className="text-muted-foreground">시즌 기간</div>
               <div className="font-medium text-xs">
                 {formatDate(enrollment.season_start_date)} ~ {formatDate(enrollment.season_end_date)}
               </div>
-              <div className="text-gray-600">퇴원일</div>
+              <div className="text-muted-foreground">퇴원일</div>
               <div className="font-medium text-red-600">{formatDate(cancellationDate)}</div>
             </div>
           </div>
 
           {/* 수업일 계산 */}
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">수업일 계산</h3>
+          <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+            <h3 className="font-semibold text-foreground mb-2">수업일 계산</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-gray-600">전체 수업일</div>
+              <div className="text-muted-foreground">전체 수업일</div>
               <div className="font-medium">{refund.totalClassDays}일</div>
-              <div className="text-gray-600">이용 수업일</div>
+              <div className="text-muted-foreground">이용 수업일</div>
               <div className="font-medium">{refund.attendedDays}일 ({refund.usedRate}%)</div>
-              <div className="text-gray-600">남은 수업일</div>
+              <div className="text-muted-foreground">남은 수업일</div>
               <div className="font-medium text-blue-600">{refund.remainingDays}일 ({refund.refundRate}%)</div>
             </div>
             {/* 진행률 바 */}
             <div className="mt-3">
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   className={`h-full ${progressPercent >= 50 ? 'bg-red-500' : progressPercent >= 33 ? 'bg-yellow-500' : 'bg-green-500'}`}
                   style={{ width: `${progressPercent}%` }}
                 />
               </div>
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>0%</span>
                 <span className="text-yellow-600">33%</span>
                 <span className="text-red-600">50%</span>
@@ -295,48 +295,48 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
           </div>
 
           {/* 금액 계산 */}
-          <div className="bg-green-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-2">금액 계산</h3>
+          <div className="bg-green-50 dark:bg-green-950 rounded-lg p-4">
+            <h3 className="font-semibold text-foreground mb-2">금액 계산</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">납부 금액</span>
+                <span className="text-muted-foreground">납부 금액</span>
                 <span className="font-medium">{formatCurrency(refund.paidAmount)}</span>
               </div>
               {refund.discountAmount > 0 && (
-                <div className="flex justify-between text-xs text-gray-500">
+                <div className="flex justify-between text-xs text-muted-foreground">
                   <span>(원래 시즌비: {formatCurrency(refund.originalFee)}, 할인: -{formatCurrency(refund.discountAmount)})</span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-gray-600">이용 금액 ({refund.usedRate}%)</span>
+                <span className="text-muted-foreground">이용 금액 ({refund.usedRate}%)</span>
                 <span className="font-medium text-red-600">-{formatCurrency(refund.usedAmount)}</span>
               </div>
-              <div className="border-t pt-2 flex justify-between">
-                <span className="text-gray-600">환불 금액</span>
+              <div className="border-t border-border pt-2 flex justify-between">
+                <span className="text-muted-foreground">환불 금액</span>
                 <span className="font-bold">{formatCurrency(refund.refundAmount)}</span>
               </div>
             </div>
           </div>
 
           {/* 부가세 옵션 */}
-          <div className="border rounded-lg p-4">
+          <div className="border border-border rounded-lg p-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={includeVat}
                 onChange={(e) => setIncludeVat(e.target.checked)}
-                className="w-5 h-5 rounded border-gray-300"
+                className="w-5 h-5 rounded border-border"
               />
               <div>
-                <div className="font-medium">부가세 10% 제외</div>
-                <div className="text-xs text-gray-500">
+                <div className="font-medium text-foreground">부가세 10% 제외</div>
+                <div className="text-xs text-muted-foreground">
                   카드 결제 후 현금 환불 시 (매출 세금 고려)
                 </div>
               </div>
             </label>
             {includeVat && (
               <div className="mt-3 pl-8 space-y-1 text-sm">
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-muted-foreground">
                   <span>환불 금액</span>
                   <span>{formatCurrency(refund.refundAmount)}</span>
                 </div>
@@ -344,7 +344,7 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
                   <span>부가세 (10%)</span>
                   <span>-{formatCurrency(refund.vatAmount)}</span>
                 </div>
-                <div className="flex justify-between font-bold border-t pt-1">
+                <div className="flex justify-between font-bold border-t border-border pt-1">
                   <span>부가세 제외 후</span>
                   <span>{formatCurrency(refund.refundAfterVat)}</span>
                 </div>
@@ -354,15 +354,15 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
 
           {/* 학원법 기준 안내 */}
           {isOverHalf && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                 <div>
-                  <div className="font-semibold text-yellow-800">학원법 기준 안내</div>
-                  <div className="text-sm text-yellow-700 mt-1">
+                  <div className="font-semibold text-yellow-800 dark:text-yellow-300">학원법 기준 안내</div>
+                  <div className="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
                     진행률 {refund.progressRate}% - {refund.legalRefundReason}
                   </div>
-                  <div className="text-sm text-yellow-700">
+                  <div className="text-sm text-yellow-700 dark:text-yellow-400">
                     학원법 기준 환불금: <strong>{formatCurrency(refund.legalRefundAmount)}</strong>
                   </div>
                 </div>
@@ -371,9 +371,9 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
           )}
 
           {/* 최종 환불금액 */}
-          <div className="bg-primary-50 rounded-lg p-4">
+          <div className="bg-primary-50 dark:bg-primary-950 rounded-lg p-4">
             <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-gray-900">최종 환불금액</span>
+              <span className="text-lg font-semibold text-foreground">최종 환불금액</span>
               <span className="text-2xl font-bold text-primary-600">
                 {formatCurrency(finalAmount)}
               </span>

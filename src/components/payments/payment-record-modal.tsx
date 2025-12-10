@@ -95,44 +95,44 @@ export function PaymentRecordModal({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
-      <Card className="w-full max-w-md bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <Card className="w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl">납부 기록</CardTitle>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-1 hover:bg-muted rounded-full transition-colors"
             >
-              <X className="w-5 h-5 text-gray-500" />
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* 학생 정보 */}
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-500">학생</p>
-              <p className="text-lg font-semibold text-gray-900">{studentName}</p>
+            <div className="p-4 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">학생</p>
+              <p className="text-lg font-semibold text-foreground">{studentName}</p>
               <div className="mt-2 flex justify-between text-sm">
-                <span className="text-gray-500">청구 금액</span>
+                <span className="text-muted-foreground">청구 금액</span>
                 <span className="font-medium">{finalAmountInt.toLocaleString()}원</span>
               </div>
               {paidAmountInt > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">기납부 금액</span>
+                  <span className="text-muted-foreground">기납부 금액</span>
                   <span className="font-medium text-green-600">{paidAmountInt.toLocaleString()}원</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm mt-1 pt-1 border-t">
-                <span className="text-gray-700 font-medium">미납 금액</span>
+              <div className="flex justify-between text-sm mt-1 pt-1 border-t border-border">
+                <span className="text-foreground font-medium">미납 금액</span>
                 <span className="font-bold text-primary-600">{remainingAmount.toLocaleString()}원</span>
               </div>
             </div>
 
             {/* 할인 금액 (선택) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                할인 금액 <span className="text-gray-400 text-xs font-normal">(선택사항)</span>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                할인 금액 <span className="text-muted-foreground text-xs font-normal">(선택사항)</span>
               </label>
               <div className="relative">
                 <input
@@ -147,18 +147,18 @@ export function PaymentRecordModal({
                       paid_amount: newRemaining // 할인 적용 시 납부 금액 자동 조정
                     });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 pr-10"
+                  className="w-full px-4 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 pr-10"
                   placeholder="0"
                   min="0"
                   max={remainingAmount}
                   step="10000"
                 />
-                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">원</span>
+                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">원</span>
               </div>
               {formData.discount_amount > 0 && (
                 <p className="mt-2 text-sm">
-                  <span className="text-gray-500">미납금: </span>
-                  <span className="line-through text-gray-400 mr-1">{remainingAmount.toLocaleString()}원</span>
+                  <span className="text-muted-foreground">미납금: </span>
+                  <span className="line-through text-muted-foreground/70 mr-1">{remainingAmount.toLocaleString()}원</span>
                   <span className="text-red-500 mr-1">-{formData.discount_amount.toLocaleString()}원</span>
                   <span className="font-bold text-blue-600">→ {actualRemainingAmount.toLocaleString()}원</span>
                 </p>
@@ -167,14 +167,14 @@ export function PaymentRecordModal({
 
             {/* 납부 금액 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 납부 금액 <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
                 value={formData.paid_amount}
                 onChange={(e) => setFormData({ ...formData, paid_amount: Math.floor(Number(e.target.value)) })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-lg font-semibold focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-4 py-3 border border-border bg-background rounded-lg text-lg font-semibold focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="0"
                 min="0"
                 step="1000"
@@ -191,7 +191,7 @@ export function PaymentRecordModal({
                   <button
                     type="button"
                     onClick={() => handleQuickAmount(100000)}
-                    className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+                    className="px-3 py-1 text-xs bg-muted text-foreground rounded-full hover:bg-muted/80 transition-colors"
                   >
                     10만원
                   </button>
@@ -200,7 +200,7 @@ export function PaymentRecordModal({
                   <button
                     type="button"
                     onClick={() => handleQuickAmount(50000)}
-                    className="px-3 py-1 text-xs bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
+                    className="px-3 py-1 text-xs bg-muted text-foreground rounded-full hover:bg-muted/80 transition-colors"
                   >
                     5만원
                   </button>
@@ -210,7 +210,7 @@ export function PaymentRecordModal({
 
             {/* 납부 방법 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 납부 방법 <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -221,8 +221,8 @@ export function PaymentRecordModal({
                     onClick={() => setFormData({ ...formData, payment_method: option.value })}
                     className={`flex items-center gap-2 px-4 py-3 border rounded-lg transition-all ${
                       formData.payment_method === option.value
-                        ? 'border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-200'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 ring-2 ring-primary-200 dark:ring-primary-800'
+                        : 'border-border hover:border-border hover:bg-muted'
                     }`}
                   >
                     {PAYMENT_METHOD_ICONS[option.value]}
@@ -234,16 +234,16 @@ export function PaymentRecordModal({
 
             {/* 납부일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 납부일 <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="date"
                   value={formData.payment_date}
                   onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full pl-10 pr-4 py-3 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   required
                 />
               </div>

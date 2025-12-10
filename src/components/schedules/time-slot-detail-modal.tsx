@@ -56,9 +56,9 @@ interface TimeSlotDetailModalProps {
 }
 
 const TIME_SLOT_INFO: Record<TimeSlot, { label: string; icon: typeof Sun; color: string; bgColor: string }> = {
-  morning: { label: '오전', icon: Sunrise, color: 'text-orange-600', bgColor: 'bg-orange-100' },
-  afternoon: { label: '오후', icon: Sun, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-  evening: { label: '저녁', icon: Moon, color: 'text-purple-600', bgColor: 'bg-purple-100' },
+  morning: { label: '오전', icon: Sunrise, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-100 dark:bg-orange-950' },
+  afternoon: { label: '오후', icon: Sun, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-100 dark:bg-blue-950' },
+  evening: { label: '저녁', icon: Moon, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-100 dark:bg-purple-950' },
 };
 
 const OTHER_SLOTS: Record<TimeSlot, TimeSlot[]> = {
@@ -379,14 +379,14 @@ export function TimeSlotDetailModal({
         <div className={cn('px-5 py-4 border-b shrink-0', slotInfo.bgColor)}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={cn('p-2 rounded-full bg-white/80')}>
+              <div className={cn('p-2 rounded-full bg-white/80 dark:bg-black/30')}>
                 <Icon className={cn('h-5 w-5', slotInfo.color)} />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-foreground">
                   {shortDate} ({dayOfWeek}) {slotInfo.label}반
                 </h2>
-                <p className="text-sm text-gray-600">학생 {students.length}명</p>
+                <p className="text-sm text-muted-foreground">학생 {students.length}명</p>
               </div>
             </div>
             <Button
@@ -411,12 +411,12 @@ export function TimeSlotDetailModal({
               {/* 강사 출결 섹션 */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <UserCog className="h-4 w-4 text-gray-500" />
-                  <h3 className="font-semibold text-gray-900">강사 출결</h3>
+                  <UserCog className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-semibold text-foreground">강사 출결</h3>
                 </div>
 
                 {instructors.length === 0 ? (
-                  <p className="text-sm text-gray-500 py-4 text-center">등록된 강사가 없습니다</p>
+                  <p className="text-sm text-muted-foreground py-4 text-center">등록된 강사가 없습니다</p>
                 ) : (
                   <div className="space-y-3">
                     {instructors.map((instructor) => {
@@ -426,15 +426,15 @@ export function TimeSlotDetailModal({
                       return (
                         <div
                           key={instructor.id}
-                          className="p-3 bg-gray-50 rounded-xl space-y-2"
+                          className="p-3 bg-muted rounded-xl space-y-2"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                                <UserCog className="h-4 w-4 text-indigo-600" />
+                              <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                                <UserCog className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                               </div>
                               <div>
-                                <span className="font-medium text-gray-900">{instructor.name}</span>
+                                <span className="font-medium text-foreground">{instructor.name}</span>
                                 {isHourly && (
                                   <span className="ml-2 text-xs text-orange-600 bg-orange-100 px-1.5 py-0.5 rounded">시급</span>
                                 )}
@@ -531,7 +531,7 @@ export function TimeSlotDetailModal({
                                     'px-2.5 py-1.5 rounded-full text-xs font-medium transition-all',
                                     attendance?.status === 'absent'
                                       ? 'bg-red-500 text-white'
-                                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                      : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                   )}
                                 >
                                   결근
@@ -565,7 +565,7 @@ export function TimeSlotDetailModal({
                           {/* 시급 강사: 시간 수정 (클릭하면 수정 가능) */}
                           {isHourly && (attendance?.checkIn || attendance?.checkOut) && (
                             <div className="flex items-center gap-2 pl-11">
-                              <Clock className="h-4 w-4 text-gray-400" />
+                              <Clock className="h-4 w-4 text-muted-foreground" />
                               <Input
                                 type="time"
                                 value={attendance?.checkIn || ''}
@@ -598,13 +598,13 @@ export function TimeSlotDetailModal({
               </div>
 
               {/* 구분선 */}
-              <div className="border-t border-gray-200" />
+              <div className="border-t border-border" />
 
               {/* 학생 목록 섹션 */}
               <div>
                 <div className="flex items-center gap-2 mb-3">
-                  <User className="h-4 w-4 text-gray-500" />
-                  <h3 className="font-semibold text-gray-900">학생 출결</h3>
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-semibold text-foreground">학생 출결</h3>
                   <Badge variant="secondary">{students.length}명</Badge>
                   <Button
                     size="sm"
@@ -619,10 +619,10 @@ export function TimeSlotDetailModal({
 
                 {/* 보충 학생 검색 */}
                 {showAddStudent && (
-                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center gap-2 mb-2">
-                      <Search className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-800">보충 학생 검색</span>
+                      <Search className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-sm font-medium text-blue-800 dark:text-blue-300">보충 학생 검색</span>
                       <Button
                         size="sm"
                         variant="ghost"
@@ -655,24 +655,24 @@ export function TimeSlotDetailModal({
                             key={student.id}
                             onClick={() => handleAddMakeupStudent(student.id, student.name)}
                             disabled={isAddingStudent}
-                            className="w-full flex items-center justify-between p-2 text-left text-sm bg-white rounded hover:bg-blue-100 transition-colors"
+                            className="w-full flex items-center justify-between p-2 text-left text-sm bg-card rounded hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
                           >
                             <span>{student.name}</span>
-                            <span className="text-xs text-gray-500">{student.grade}</span>
+                            <span className="text-xs text-muted-foreground">{student.grade}</span>
                           </button>
                         ))}
                       </div>
                     )}
                     {searchQuery.length > 0 && !isSearching && searchResults.length === 0 && (
-                      <p className="text-xs text-gray-500 mt-2 text-center">검색 결과가 없습니다</p>
+                      <p className="text-xs text-muted-foreground mt-2 text-center">검색 결과가 없습니다</p>
                     )}
                   </div>
                 )}
 
                 {students.length === 0 ? (
                   <div className="py-8 text-center">
-                    <User className="h-10 w-10 mx-auto text-gray-300 mb-2" />
-                    <p className="text-gray-500 text-sm">배정된 학생이 없습니다</p>
+                    <User className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
+                    <p className="text-muted-foreground text-sm">배정된 학생이 없습니다</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -691,17 +691,17 @@ export function TimeSlotDetailModal({
                         return (
                           <div
                             key={student.student_id}
-                            className="group p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors space-y-2"
+                            className="group p-3 bg-muted rounded-xl hover:bg-muted/80 transition-colors space-y-2"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                  <User className="h-4 w-4 text-gray-600" />
+                                <div className="w-8 h-8 rounded-full bg-muted-foreground/20 flex items-center justify-center">
+                                  <User className="h-4 w-4 text-muted-foreground" />
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="font-medium text-gray-900">{student.student_name}</span>
+                                  <span className="font-medium text-foreground">{student.student_name}</span>
                                   {student.grade && (
-                                    <span className="text-xs text-gray-500">{student.grade}</span>
+                                    <span className="text-xs text-muted-foreground">{student.grade}</span>
                                   )}
                                   {!!student.is_trial && (
                                     <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs flex items-center gap-1">
@@ -757,7 +757,7 @@ export function TimeSlotDetailModal({
                                       'px-2.5 py-1 rounded-full text-xs font-medium transition-all',
                                       isSelected
                                         ? `${status.color} text-white`
-                                        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                     )}
                                   >
                                     {status.label}
@@ -765,7 +765,7 @@ export function TimeSlotDetailModal({
                                 );
                               })}
                               {isSaving && (
-                                <Loader2 className="h-4 w-4 animate-spin text-gray-400 ml-1" />
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-1" />
                               )}
                             </div>
                           </div>

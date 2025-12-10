@@ -50,8 +50,8 @@ export default function MobileHomePage() {
 
   if (hasPermission === null) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">로딩 중...</div>
+      <div className="flex items-center justify-center min-h-screen bg-muted">
+        <div className="text-muted-foreground">로딩 중...</div>
       </div>
     );
   }
@@ -95,7 +95,7 @@ export default function MobileHomePage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 safe-area-inset">
+    <div className="min-h-screen bg-muted p-4 safe-area-inset">
       {/* 헤더 */}
       <header className="mb-6 text-center">
         <div className="flex justify-center mb-3">
@@ -107,11 +107,11 @@ export default function MobileHomePage() {
             className="rounded-xl shadow-md"
           />
         </div>
-        {academyName && <h1 className="text-2xl font-bold text-gray-900">{academyName}</h1>}
+        {academyName && <h1 className="text-2xl font-bold text-foreground">{academyName}</h1>}
         {userName && (
-          <p className="text-gray-600 mt-1">{userName}님 안녕하세요</p>
+          <p className="text-muted-foreground mt-1">{userName}님 안녕하세요</p>
         )}
-        <p className="text-sm text-gray-500 mt-1">{today}</p>
+        <p className="text-sm text-muted-foreground/70 mt-1">{today}</p>
       </header>
 
       {/* 메뉴 버튼 */}
@@ -142,7 +142,7 @@ export default function MobileHomePage() {
         <Button
           variant="outline"
           onClick={handleLogout}
-          className="w-full py-6 text-gray-600 border-gray-300"
+          className="w-full py-6"
         >
           <LogOut className="h-5 w-5 mr-2" />
           로그아웃

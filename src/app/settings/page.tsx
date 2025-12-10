@@ -682,10 +682,10 @@ export default function SettingsPage() {
             <CardTitle>시스템 정보</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="space-y-3 text-sm text-gray-600">
+        <CardContent className="space-y-3 text-sm text-muted-foreground">
           <div className="flex justify-between">
             <span>버전</span>
-            <span className="font-medium text-foreground">v2.9.4</span>
+            <span className="font-medium text-foreground">v2.9.5</span>
           </div>
           <div className="flex justify-between">
             <span>마지막 업데이트</span>
