@@ -420,10 +420,55 @@ const dbTimeSlot = timeSlotMap[frontendTimeSlot] || frontendTimeSlot;
 | `utils/salaryCalculator.js` | 급여 계산 유틸 (4대보험, 3.3%) |
 | `src/components/modals/password-confirm-modal.tsx` | 비밀번호 확인 모달 |
 
+## 다크모드 TODO (v2.9.6에서 수정 필요)
+
+아직 다크모드 적용 안 된 파일들 (bg-white, text-gray-* 남아있음):
+
+### 우선순위 높음
+- `src/app/settings/page.tsx` - 설정 페이지 전체
+- `src/app/sms/page.tsx` - SMS 발송 페이지
+- `src/app/consultations/settings/page.tsx` - 상담 설정
+- `src/components/students/student-form.tsx` - 학생 등록/수정 폼
+- `src/components/instructors/instructor-form.tsx` - 강사 등록/수정 폼
+- `src/components/students/student-filters.tsx` - 학생 필터
+- `src/components/instructors/instructor-filters.tsx` - 강사 필터
+
+### 우선순위 중간
+- `src/app/salaries/[id]/page.tsx` - 급여 상세
+- `src/app/students/[id]/page.tsx` - 학생 상세
+- `src/app/instructors/[id]/page.tsx` - 강사 상세
+- `src/components/students/student-payments.tsx` - 학생 결제 내역
+- `src/components/students/student-seasons.tsx` - 학생 시즌 탭
+- `src/components/schedules/bulk-schedule-modal.tsx` - 일괄 스케줄 모달
+- `src/components/schedules/extra-day-request-modal.tsx` - 보충 신청 모달
+
+### 색상 변환 규칙
+```
+bg-white → bg-card 또는 bg-background
+bg-gray-50/100 → bg-muted
+text-gray-900/700 → text-foreground
+text-gray-600/500/400 → text-muted-foreground
+border-gray-* → border-border
+hover:bg-gray-50/100 → hover:bg-muted
+```
+
 ## 버전 이력
 
-### 현재 버전: v2.9.1 (2025-12-10)
+### 현재 버전: v2.9.5 (2025-12-10)
 
+- **v2.9.5** (2025-12-10): 다크모드 개선 (모달, 모바일 페이지)
+  - payment-record-modal 다크모드 적용
+  - time-slot-detail-modal 다크모드 적용
+  - refund-modal 다크모드 적용
+  - 모바일 홈 페이지(/m) 다크모드 적용
+  - 설정 페이지 시스템 정보 섹션 다크모드 적용
+- **v2.9.4** (2025-12-10): 다크모드 개선 (UI 컴포넌트)
+  - 스케줄 캘린더 TIME_SLOTS 다크모드 적용
+  - Select, Dialog, Input, Textarea, Button, Tabs 컴포넌트 다크모드
+  - Card 컴포넌트 bg-white → bg-card 변경
+  - 대시보드 페이지 다크모드 개선
+- **v2.9.3** (2025-12-10): 다크모드 Card 컴포넌트 수정
+  - Card UI 컴포넌트 bg-white → bg-card 변경
 - **v2.9.1** (2025-12-10): 다크모드 전체 적용
   - 테이블 컴포넌트 다크모드 적용 (학생, 강사, 학원비, 급여, 체험생)
   - 통계 카드 다크모드 적용 (학생, 강사, 대시보드)
