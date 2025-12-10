@@ -39,15 +39,15 @@ export default function InstructorsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">강사 관리</h1>
-          <p className="text-gray-600 mt-1">강사 등록 및 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">강사 관리</h1>
+          <p className="text-muted-foreground mt-1">강사 등록 및 관리</p>
         </div>
 
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
             <Button onClick={reload}>다시 시도</Button>
           </CardContent>
         </Card>
@@ -60,8 +60,8 @@ export default function InstructorsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">강사 관리</h1>
-          <p className="text-gray-600 mt-1">강사 등록 및 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">강사 관리</h1>
+          <p className="text-muted-foreground mt-1">강사 등록 및 관리</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" onClick={reload}>
@@ -93,8 +93,8 @@ export default function InstructorsPage() {
         <div className="flex-1">
           <InstructorSearch value={searchQuery} onChange={handleSearch} />
         </div>
-        <div className="text-sm text-gray-600">
-          총 <span className="font-semibold text-gray-900">{instructors.length}</span>명
+        <div className="text-sm text-muted-foreground">
+          총 <span className="font-semibold text-foreground">{instructors.length}</span>명
         </div>
       </div>
 
@@ -107,13 +107,13 @@ export default function InstructorsPage() {
 
       {/* 안내 */}
       {!loading && instructors.length === 0 && !searchQuery && !filters.status && !filters.salary_type && (
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <CardContent className="p-4">
             <div className="flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-blue-900 mb-1">시작하기</h4>
-                <p className="text-sm text-blue-800">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">시작하기</h4>
+                <p className="text-sm text-blue-800 dark:text-blue-200">
                   강사를 등록하시면 급여, 출퇴근 등을 관리할 수 있습니다.
                   <br />
                   우측 상단의 "강사 등록" 버튼을 클릭하여 첫 강사를 등록해보세요.

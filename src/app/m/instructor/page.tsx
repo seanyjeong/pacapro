@@ -18,10 +18,10 @@ const TIME_SLOTS: { value: TimeSlot; label: string }[] = [
 ];
 
 const STATUS_BUTTONS: { value: AttendanceStatus; label: string; color: string; activeColor: string }[] = [
-  { value: 'present', label: '출근', color: 'bg-gray-100 text-gray-600', activeColor: 'bg-green-500 text-white' },
-  { value: 'late', label: '지각', color: 'bg-gray-100 text-gray-600', activeColor: 'bg-yellow-500 text-white' },
-  { value: 'half_day', label: '반차', color: 'bg-gray-100 text-gray-600', activeColor: 'bg-blue-500 text-white' },
-  { value: 'absent', label: '결근', color: 'bg-gray-100 text-gray-600', activeColor: 'bg-red-500 text-white' },
+  { value: 'present', label: '출근', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-green-500 text-white' },
+  { value: 'late', label: '지각', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-yellow-500 text-white' },
+  { value: 'half_day', label: '반차', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-blue-500 text-white' },
+  { value: 'absent', label: '결근', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-red-500 text-white' },
 ];
 
 interface InstructorSlotData {
@@ -181,8 +181,8 @@ export default function MobileInstructorPage() {
 
   if (hasPermission === null || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">로딩 중...</div>
+      <div className="flex items-center justify-center min-h-screen bg-muted">
+        <div className="text-muted-foreground">로딩 중...</div>
       </div>
     );
   }
@@ -199,9 +199,9 @@ export default function MobileInstructorPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-muted">
       {/* 헤더 */}
-      <header className="bg-green-500 text-white p-4 sticky top-0 z-10 safe-area-inset">
+      <header className="bg-green-500 dark:bg-green-600 text-white p-4 sticky top-0 z-10 safe-area-inset">
         <div className="flex items-center gap-3">
           <button onClick={() => router.push('/m')} className="p-2 -ml-2">
             <ArrowLeft className="h-6 w-6" />
@@ -225,8 +225,8 @@ export default function MobileInstructorPage() {
       <main className="p-4 pb-28">
         {totalInstructors === 0 ? (
           <div className="text-center py-12">
-            <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-gray-500">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">
               {formattedDate}에<br />
               배정된 강사가 없습니다.
             </p>
@@ -234,11 +234,11 @@ export default function MobileInstructorPage() {
         ) : (
           <>
             {/* 요약 정보 */}
-            <div className="bg-white rounded-xl p-4 mb-4 shadow-sm">
+            <div className="bg-card rounded-xl p-4 mb-4 shadow-sm">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm text-gray-500">{formattedDate}</p>
-                  <p className="font-semibold">체크됨: {attendances.size}건</p>
+                  <p className="text-sm text-muted-foreground">{formattedDate}</p>
+                  <p className="font-semibold text-foreground">체크됨: {attendances.size}건</p>
                 </div>
               </div>
             </div>
@@ -252,7 +252,7 @@ export default function MobileInstructorPage() {
                 <div key={slot.value} className="mb-6">
                   {/* 시간대 헤더 */}
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                       <Clock className="h-5 w-5" />
                       {slot.label} ({instructors.length}명)
                     </h2>
@@ -260,7 +260,7 @@ export default function MobileInstructorPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleAllPresent(slot.value)}
-                      className="text-green-600 border-green-300"
+                      className="text-green-600 dark:text-green-400 border-green-300 dark:border-green-700"
                     >
                       <Check className="h-4 w-4 mr-1" />
                       전체 출근
@@ -276,13 +276,13 @@ export default function MobileInstructorPage() {
                       return (
                         <div
                           key={key}
-                          className="bg-white rounded-xl p-4 shadow-sm"
+                          className="bg-card rounded-xl p-4 shadow-sm"
                         >
                           <div className="flex items-center gap-3 mb-3">
-                            <div className="bg-green-100 p-2 rounded-full">
-                              <User className="h-5 w-5 text-green-600" />
+                            <div className="bg-green-100 dark:bg-green-900 p-2 rounded-full">
+                              <User className="h-5 w-5 text-green-600 dark:text-green-400" />
                             </div>
-                            <p className="font-semibold text-lg">{instructor.instructor_name}</p>
+                            <p className="font-semibold text-lg text-foreground">{instructor.instructor_name}</p>
                           </div>
 
                           {/* 상태 버튼 */}
@@ -312,7 +312,7 @@ export default function MobileInstructorPage() {
 
       {/* 저장 버튼 (하단 고정) */}
       {totalInstructors > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 safe-area-inset">
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 safe-area-inset">
           <Button
             onClick={handleSave}
             disabled={saving || attendances.size === 0}

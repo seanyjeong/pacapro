@@ -355,8 +355,8 @@ export default function ConsultationsPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">상담 관리</h1>
-          <p className="text-gray-500">상담 신청 내역을 관리합니다.</p>
+          <h1 className="text-2xl font-bold text-foreground">상담 관리</h1>
+          <p className="text-muted-foreground">상담 신청 내역을 관리합니다.</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => setDirectRegisterOpen(true)} className="gap-2">
@@ -385,7 +385,7 @@ export default function ConsultationsPage() {
             <div className="text-2xl font-bold">
               {Object.values(stats).reduce((a, b) => a + b, 0)}
             </div>
-            <p className="text-sm text-gray-500">전체</p>
+            <p className="text-sm text-muted-foreground">전체</p>
           </CardContent>
         </Card>
         {(['pending', 'confirmed', 'completed', 'cancelled'] as const).map((status) => (
@@ -395,8 +395,8 @@ export default function ConsultationsPage() {
             onClick={() => setStatusFilter(statusFilter === status ? '' : status)}
           >
             <CardContent className="pt-4">
-              <div className="text-2xl font-bold">{stats[status] || 0}</div>
-              <p className="text-sm text-gray-500">{CONSULTATION_STATUS_LABELS[status]}</p>
+              <div className="text-2xl font-bold text-foreground">{stats[status] || 0}</div>
+              <p className="text-sm text-muted-foreground">{CONSULTATION_STATUS_LABELS[status]}</p>
             </CardContent>
           </Card>
         ))}
@@ -441,7 +441,7 @@ export default function ConsultationsPage() {
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             </div>
           ) : consultations.length === 0 ? (
-            <div className="text-center py-16 text-gray-500">
+            <div className="text-center py-16 text-muted-foreground">
               상담 신청이 없습니다.
             </div>
           ) : (
@@ -449,20 +449,20 @@ export default function ConsultationsPage() {
               {consultations.map((c) => (
                 <div
                   key={c.id}
-                  className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="p-4 hover:bg-muted cursor-pointer transition-colors"
                   onClick={() => openDetailModal(c)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium">{c.student_name}</span>
-                        <span className="text-sm text-gray-500">{c.student_grade}</span>
+                        <span className="font-medium text-foreground">{c.student_name}</span>
+                        <span className="text-sm text-muted-foreground">{c.student_grade}</span>
                         <StatusBadge status={c.status} />
                         <Badge variant="outline">
                           {CONSULTATION_TYPE_LABELS[c.consultation_type]}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Phone className="h-3.5 w-3.5" />
                           {c.student_phone || c.parent_phone}
@@ -571,9 +571,9 @@ export default function ConsultationsPage() {
               </div>
 
               {/* 일정 */}
-              <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">상담 일정</h4>
-                <div className="flex items-center gap-4 text-blue-800">
+              <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">상담 일정</h4>
+                <div className="flex items-center gap-4 text-blue-800 dark:text-blue-200">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     {format(parseISO(selectedConsultation.preferred_date), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
@@ -587,13 +587,13 @@ export default function ConsultationsPage() {
 
               {/* 학생 정보 */}
               <div>
-                <h4 className="font-medium mb-2">학생 정보</h4>
+                <h4 className="font-medium text-foreground mb-2">학생 정보</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <p><span className="text-gray-500">이름:</span> {selectedConsultation.student_name}</p>
-                  <p><span className="text-gray-500">연락처:</span> {selectedConsultation.student_phone || selectedConsultation.parent_phone}</p>
-                  <p><span className="text-gray-500">학년:</span> {selectedConsultation.student_grade}</p>
+                  <p className="text-foreground"><span className="text-muted-foreground">이름:</span> {selectedConsultation.student_name}</p>
+                  <p className="text-foreground"><span className="text-muted-foreground">연락처:</span> {selectedConsultation.student_phone || selectedConsultation.parent_phone}</p>
+                  <p className="text-foreground"><span className="text-muted-foreground">학년:</span> {selectedConsultation.student_grade}</p>
                   {selectedConsultation.student_school && (
-                    <p><span className="text-gray-500">학교:</span> {selectedConsultation.student_school}</p>
+                    <p className="text-foreground"><span className="text-muted-foreground">학교:</span> {selectedConsultation.student_school}</p>
                   )}
                 </div>
               </div>
@@ -625,20 +625,20 @@ export default function ConsultationsPage() {
 
                 return (
                   <div>
-                    <h4 className="font-medium mb-3">성적 정보</h4>
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                    <h4 className="font-medium text-foreground mb-3">성적 정보</h4>
+                    <div className="bg-muted rounded-lg p-4 space-y-4">
                       {/* 기본 정보: 내신 평균 + 입시 유형 */}
                       <div className="flex gap-6">
                         {hasSchoolGradeAvg && (
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-500 text-sm">내신 평균</span>
-                            <span className="font-semibold text-blue-600">{gradeDisplay(scores.schoolGradeAvg)}</span>
+                            <span className="text-muted-foreground text-sm">내신 평균</span>
+                            <span className="font-semibold text-blue-600 dark:text-blue-400">{gradeDisplay(scores.schoolGradeAvg)}</span>
                           </div>
                         )}
                         {hasAdmissionType && (
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-500 text-sm">입시 유형</span>
-                            <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700">{admissionTypeLabel}</span>
+                            <span className="text-muted-foreground text-sm">입시 유형</span>
+                            <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">{admissionTypeLabel}</span>
                           </div>
                         )}
                       </div>
@@ -646,7 +646,7 @@ export default function ConsultationsPage() {
                       {/* 모의고사 등급 표 */}
                       {hasMockGrades && (
                         <div>
-                          <p className="text-sm text-gray-500 mb-2">모의고사 등급</p>
+                          <p className="text-sm text-muted-foreground mb-2">모의고사 등급</p>
                           <div className="grid grid-cols-4 gap-2">
                             {['korean', 'math', 'english', 'exploration'].map((subject) => {
                               const labels: Record<string, string> = {
@@ -657,13 +657,13 @@ export default function ConsultationsPage() {
                               };
                               const value = scores.mockTestGrades?.[subject as keyof typeof scores.mockTestGrades];
                               return (
-                                <div key={subject} className="bg-white rounded-lg p-3 text-center border">
-                                  <div className="text-xs text-gray-500 mb-1">{labels[subject]}</div>
-                                  <div className={`font-bold text-lg ${value === -1 ? 'text-gray-400' : 'text-gray-800'}`}>
+                                <div key={subject} className="bg-card rounded-lg p-3 text-center border border-border">
+                                  <div className="text-xs text-muted-foreground mb-1">{labels[subject]}</div>
+                                  <div className={`font-bold text-lg ${value === -1 ? 'text-muted-foreground' : 'text-foreground'}`}>
                                     {value === -1 ? '-' : value ?? '-'}
                                   </div>
                                   {value !== -1 && value !== null && value !== undefined && (
-                                    <div className="text-xs text-gray-400">등급</div>
+                                    <div className="text-xs text-muted-foreground">등급</div>
                                   )}
                                 </div>
                               );
@@ -679,24 +679,24 @@ export default function ConsultationsPage() {
               {/* 기타 정보 */}
               <div className="space-y-2 text-sm">
                 {selectedConsultation.target_school && (
-                  <p><span className="text-gray-500">목표 학교:</span> {selectedConsultation.target_school}</p>
+                  <p className="text-foreground"><span className="text-muted-foreground">목표 학교:</span> {selectedConsultation.target_school}</p>
                 )}
                 {selectedConsultation.referrer_student && (
-                  <p><span className="text-gray-500">추천 원생:</span> {selectedConsultation.referrer_student}</p>
+                  <p className="text-foreground"><span className="text-muted-foreground">추천 원생:</span> {selectedConsultation.referrer_student}</p>
                 )}
                 {selectedConsultation.referralSources && selectedConsultation.referralSources.length > 0 && (
-                  <p><span className="text-gray-500">알게 된 경로:</span> {selectedConsultation.referralSources.join(', ')}</p>
+                  <p className="text-foreground"><span className="text-muted-foreground">알게 된 경로:</span> {selectedConsultation.referralSources.join(', ')}</p>
                 )}
               </div>
 
               {/* 문의 내용 */}
               {selectedConsultation.inquiry_content && (
                 <div>
-                  <h4 className="font-medium mb-2 flex items-center gap-1">
+                  <h4 className="font-medium text-foreground mb-2 flex items-center gap-1">
                     <MessageSquare className="h-4 w-4" />
                     문의 내용
                   </h4>
-                  <p className="text-sm bg-gray-50 rounded p-3 whitespace-pre-wrap">
+                  <p className="text-sm bg-muted rounded p-3 whitespace-pre-wrap text-foreground">
                     {selectedConsultation.inquiry_content}
                   </p>
                 </div>
@@ -705,15 +705,15 @@ export default function ConsultationsPage() {
               {/* 관리자 메모 */}
               {selectedConsultation.admin_notes && (
                 <div>
-                  <h4 className="font-medium mb-2">관리자 메모</h4>
-                  <p className="text-sm bg-yellow-50 rounded p-3 whitespace-pre-wrap">
+                  <h4 className="font-medium text-foreground mb-2">관리자 메모</h4>
+                  <p className="text-sm bg-yellow-50 dark:bg-yellow-950 rounded p-3 whitespace-pre-wrap text-foreground">
                     {selectedConsultation.admin_notes}
                   </p>
                 </div>
               )}
 
               {/* 신청일 */}
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 신청일: {format(parseISO(selectedConsultation.created_at), 'yyyy-MM-dd HH:mm')}
               </p>
 
@@ -734,8 +734,8 @@ export default function ConsultationsPage() {
 
               {/* 체험 학생으로 등록된 경우 */}
               {selectedConsultation.linked_student_id && selectedConsultation.linked_student_is_trial && (
-                <div className="bg-green-50 rounded-lg p-4">
-                  <p className="text-green-800 flex items-center gap-2">
+                <div className="bg-green-50 dark:bg-green-950 rounded-lg p-4">
+                  <p className="text-green-800 dark:text-green-200 flex items-center gap-2">
                     <Sparkles className="h-4 w-4" />
                     체험 학생으로 등록 완료
                     {selectedConsultation.linked_student_name && (
@@ -784,9 +784,9 @@ export default function ConsultationsPage() {
           <div className="space-y-4 px-6 py-4">
             {/* 현재 일정 표시 */}
             {selectedConsultation && (
-              <div className="bg-gray-50 rounded-lg p-3 text-sm">
-                <span className="text-gray-500">현재 일정: </span>
-                <span className="font-medium">
+              <div className="bg-muted rounded-lg p-3 text-sm">
+                <span className="text-muted-foreground">현재 일정: </span>
+                <span className="font-medium text-foreground">
                   {selectedConsultation.preferred_date} {selectedConsultation.preferred_time.substring(0, 5)}
                 </span>
               </div>
@@ -810,9 +810,9 @@ export default function ConsultationsPage() {
             </div>
 
             {/* 일정 변경 */}
-            <div className="border-t pt-4">
+            <div className="border-t border-border pt-4">
               <Label className="text-sm font-medium">일정 변경 (선택)</Label>
-              <p className="text-xs text-gray-500 mb-2">변경이 필요한 경우에만 선택하세요</p>
+              <p className="text-xs text-muted-foreground mb-2">변경이 필요한 경우에만 선택하세요</p>
 
               <div className="space-y-3">
                 <div>
@@ -857,10 +857,10 @@ export default function ConsultationsPage() {
                         })}
                       </div>
                     ) : (
-                      <p className="text-sm text-orange-600 py-2">해당 요일은 휴무입니다</p>
+                      <p className="text-sm text-orange-600 dark:text-orange-400 py-2">해당 요일은 휴무입니다</p>
                     )}
                     {editBookedTimes.length > 0 && editTimeOptions.length > 0 && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         * 취소선 표시된 시간은 이미 예약됨
                       </p>
                     )}
@@ -974,7 +974,7 @@ export default function ConsultationsPage() {
             <div>
               <Label>상담 시간 *</Label>
               {loadingBookedTimes ? (
-                <div className="flex items-center gap-2 py-2 text-sm text-gray-500">
+                <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   예약 현황 확인 중...
                 </div>
@@ -994,7 +994,7 @@ export default function ConsultationsPage() {
                             variant={isSelected ? 'default' : 'outline'}
                             disabled={isBooked}
                             onClick={() => !isBooked && setDirectForm({ ...directForm, preferredTime: time })}
-                            className={isBooked ? 'opacity-50 line-through text-gray-400' : ''}
+                            className={isBooked ? 'opacity-50 line-through text-muted-foreground' : ''}
                           >
                             {time}
                           </Button>
@@ -1002,16 +1002,16 @@ export default function ConsultationsPage() {
                       })}
                     </div>
                   ) : (
-                    <p className="text-sm text-orange-600 py-2">해당 요일은 휴무입니다</p>
+                    <p className="text-sm text-orange-600 dark:text-orange-400 py-2">해당 요일은 휴무입니다</p>
                   )}
                   {bookedTimes.length > 0 && timeOptions.length > 0 && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       * 취소선 표시된 시간은 이미 예약됨
                     </p>
                   )}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 py-2">날짜를 먼저 선택하세요</p>
+                <p className="text-sm text-muted-foreground py-2">날짜를 먼저 선택하세요</p>
               )}
             </div>
 
@@ -1127,7 +1127,7 @@ export default function ConsultationsPage() {
               </div>
             </div>
 
-            <div className="bg-blue-50 rounded-lg p-3 text-sm text-blue-800">
+            <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
               체험 학생으로 등록되면:
               <ul className="mt-1 ml-4 list-disc">
                 <li>학생 관리에 체험생으로 추가됩니다</li>

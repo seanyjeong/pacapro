@@ -74,15 +74,15 @@ export default function StudentsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">학생 관리</h1>
-          <p className="text-gray-600 mt-1">학생 등록 및 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">학생 관리</h1>
+          <p className="text-muted-foreground mt-1">학생 등록 및 관리</p>
         </div>
 
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
             <Button onClick={handleReload}>다시 시도</Button>
           </CardContent>
         </Card>
@@ -92,10 +92,10 @@ export default function StudentsPage() {
 
   // 탭 정의
   const tabs = [
-    { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-green-600' },
-    { id: 'paused' as const, label: '휴원생', icon: Users, color: 'text-yellow-600' },
-    { id: 'withdrawn' as const, label: '퇴원생', icon: UserX, color: 'text-gray-600' },
-    { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600' },
+    { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-green-600 dark:text-green-400' },
+    { id: 'paused' as const, label: '휴원생', icon: Users, color: 'text-yellow-600 dark:text-yellow-400' },
+    { id: 'withdrawn' as const, label: '퇴원생', icon: UserX, color: 'text-muted-foreground' },
+    { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600 dark:text-purple-400' },
   ];
 
   return (
@@ -103,8 +103,8 @@ export default function StudentsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">학생 관리</h1>
-          <p className="text-gray-600 mt-1">학생 등록 및 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">학생 관리</h1>
+          <p className="text-muted-foreground mt-1">학생 등록 및 관리</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" onClick={handleReload}>
@@ -122,7 +122,7 @@ export default function StudentsPage() {
       </div>
 
       {/* 탭 네비게이션 */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="-mb-px flex space-x-8">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -134,8 +134,8 @@ export default function StudentsPage() {
                 className={cn(
                   'flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors',
                   isActive
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                 )}
               >
                 <Icon className={cn('w-4 h-4', isActive ? tab.color : '')} />
@@ -174,8 +174,8 @@ export default function StudentsPage() {
         <div className="flex-1">
           <StudentSearch value={searchQuery} onChange={handleSearch} />
         </div>
-        <div className="text-sm text-gray-600">
-          총 <span className="font-semibold text-gray-900">{students.length}</span>명
+        <div className="text-sm text-muted-foreground">
+          총 <span className="font-semibold text-foreground">{students.length}</span>명
         </div>
       </div>
 
@@ -196,13 +196,13 @@ export default function StudentsPage() {
 
       {/* 안내 */}
       {!loading && students.length === 0 && !searchQuery && !filters.grade && !filters.student_type && (
-        <Card className="bg-blue-50 border-blue-200">
+        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
           <CardContent className="p-4">
             <div className="flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
               <div className="flex-1">
-                <h4 className="text-sm font-semibold text-blue-900 mb-1">시작하기</h4>
-                <p className="text-sm text-blue-800">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">시작하기</h4>
+                <p className="text-sm text-blue-800 dark:text-blue-200">
                   학생을 등록하시면 학원비, 성적, 출석 등을 관리할 수 있습니다.
                   <br />
                   우측 상단의 "학생 등록" 버튼을 클릭하여 첫 학생을 등록해보세요.

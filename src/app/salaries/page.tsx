@@ -254,14 +254,14 @@ export default function SalariesPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">급여 관리</h1>
-          <p className="text-gray-600 mt-1">강사 급여 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">급여 관리</h1>
+          <p className="text-muted-foreground mt-1">강사 급여 관리</p>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
             <Button onClick={reload}>다시 시도</Button>
           </CardContent>
         </Card>
@@ -278,8 +278,8 @@ export default function SalariesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">급여 관리</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-foreground">급여 관리</h1>
+          <p className="text-muted-foreground mt-1">
             강사 출근 체크 시 급여가 자동으로 계산됩니다
           </p>
         </div>
@@ -317,26 +317,11 @@ export default function SalariesPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">총 급여 기록</p>
-                <p className="text-2xl font-bold text-gray-900">{salaries.length}건</p>
+                <p className="text-sm text-muted-foreground">총 급여 기록</p>
+                <p className="text-2xl font-bold text-foreground">{salaries.length}건</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Banknote className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">지급 완료</p>
-                <p className="text-2xl font-bold text-green-600">{paidCount}건</p>
-                <p className="text-xs text-gray-500 mt-1">{totalPaid.toLocaleString()}원</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <Banknote className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <Banknote className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
           </CardContent>
@@ -346,12 +331,27 @@ export default function SalariesPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">미지급</p>
-                <p className="text-2xl font-bold text-yellow-600">{pendingCount}건</p>
-                <p className="text-xs text-gray-500 mt-1">{totalUnpaid.toLocaleString()}원</p>
+                <p className="text-sm text-muted-foreground">지급 완료</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{paidCount}건</p>
+                <p className="text-xs text-muted-foreground mt-1">{totalPaid.toLocaleString()}원</p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
-                <AlertCircle className="w-6 h-6 text-yellow-600" />
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <Banknote className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">미지급</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{pendingCount}건</p>
+                <p className="text-xs text-muted-foreground mt-1">{totalUnpaid.toLocaleString()}원</p>
+              </div>
+              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
           </CardContent>
@@ -360,24 +360,24 @@ export default function SalariesPage() {
         <Card>
           <CardContent className="p-6">
             <div>
-              <p className="text-sm text-gray-600">총 지급액</p>
-              <p className="text-2xl font-bold text-gray-900">{totalPaid.toLocaleString()}원</p>
-              <p className="text-xs text-gray-500 mt-1">이번 달 기준</p>
+              <p className="text-sm text-muted-foreground">총 지급액</p>
+              <p className="text-2xl font-bold text-foreground">{totalPaid.toLocaleString()}원</p>
+              <p className="text-xs text-muted-foreground mt-1">이번 달 기준</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* 안내 메시지 */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Banknote className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
+              <Banknote className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h4 className="font-medium text-blue-900">급여 자동 계산</h4>
-              <p className="text-sm text-blue-700 mt-1">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100">급여 자동 계산</h4>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                 강사 출근 체크 시 급여가 자동으로 계산되어 아래 목록에 표시됩니다.
                 급여 상세를 클릭하면 출근 내역과 함께 급여 명세서를 확인할 수 있습니다.
               </p>
@@ -391,11 +391,11 @@ export default function SalariesPage() {
         <CardContent className="p-4">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">강사</label>
+              <label className="text-sm text-muted-foreground">강사</label>
               <select
                 value={filters.instructor_id || ''}
                 onChange={(e) => updateFilters({ instructor_id: e.target.value ? Number(e.target.value) : undefined })}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                className="px-3 py-1 border border-border rounded-md text-sm bg-card text-foreground"
               >
                 <option value="">전체</option>
                 {instructors.map((instructor) => (
@@ -407,11 +407,11 @@ export default function SalariesPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">지급 상태</label>
+              <label className="text-sm text-muted-foreground">지급 상태</label>
               <select
                 value={filters.payment_status || ''}
                 onChange={(e) => updateFilters({ payment_status: e.target.value as any })}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                className="px-3 py-1 border border-border rounded-md text-sm bg-card text-foreground"
               >
                 <option value="">전체</option>
                 {PAYMENT_STATUS_OPTIONS.map((option) => (

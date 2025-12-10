@@ -118,15 +118,15 @@ function PaymentsPageContent() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">학원비 관리</h1>
-          <p className="text-gray-600 mt-1">학원비 청구 및 납부 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">학원비 관리</h1>
+          <p className="text-muted-foreground mt-1">학원비 청구 및 납부 관리</p>
         </div>
 
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
             <Button onClick={reload}>다시 시도</Button>
           </CardContent>
         </Card>
@@ -149,10 +149,10 @@ function PaymentsPageContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             {viewOnly ? '미납 학원비' : '학원비 관리'}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-muted-foreground mt-1">
             {viewOnly ? '미납 학원비 현황 조회' : '학원비 청구 및 납부 관리'}
           </p>
         </div>
@@ -186,11 +186,11 @@ function PaymentsPageContent() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">미납 건수</p>
-                    <p className="text-2xl font-bold text-red-600">{filteredPayments.length}건</p>
+                    <p className="text-sm text-muted-foreground">미납 건수</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{filteredPayments.length}건</p>
                   </div>
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <AlertCircle className="w-6 h-6 text-red-600" />
+                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
                   </div>
                 </div>
               </CardContent>
@@ -200,11 +200,11 @@ function PaymentsPageContent() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">미납 금액</p>
-                    <p className="text-2xl font-bold text-red-600">{unpaidAmount.toLocaleString()}원</p>
+                    <p className="text-sm text-muted-foreground">미납 금액</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{unpaidAmount.toLocaleString()}원</p>
                   </div>
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <Banknote className="w-6 h-6 text-red-600" />
+                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                    <Banknote className="w-6 h-6 text-red-600 dark:text-red-400" />
                   </div>
                 </div>
               </CardContent>
@@ -216,25 +216,11 @@ function PaymentsPageContent() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">총 청구</p>
-                    <p className="text-2xl font-bold text-gray-900">{filteredPayments.length}건</p>
+                    <p className="text-sm text-muted-foreground">총 청구</p>
+                    <p className="text-2xl font-bold text-foreground">{filteredPayments.length}건</p>
                   </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Banknote className="w-6 h-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">완납</p>
-                    <p className="text-2xl font-bold text-green-600">{paidCount}건</p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <Banknote className="w-6 h-6 text-green-600" />
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <Banknote className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
               </CardContent>
@@ -244,11 +230,25 @@ function PaymentsPageContent() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600">미납</p>
-                    <p className="text-2xl font-bold text-red-600">{unpaidCount}건</p>
+                    <p className="text-sm text-muted-foreground">완납</p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{paidCount}건</p>
                   </div>
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <AlertCircle className="w-6 h-6 text-red-600" />
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                    <Banknote className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">미납</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{unpaidCount}건</p>
+                  </div>
+                  <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
                   </div>
                 </div>
               </CardContent>
@@ -257,11 +257,11 @@ function PaymentsPageContent() {
             <Card>
               <CardContent className="p-6">
                 <div>
-                  <p className="text-sm text-gray-600">납부율</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                  <p className="text-sm text-muted-foreground">납부율</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {filteredPayments.length > 0 ? Math.round((paidCount / filteredPayments.length) * 100) : 0}%
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {paidAmount.toLocaleString()} / {totalAmount.toLocaleString()}원
                   </p>
                 </div>
@@ -275,22 +275,22 @@ function PaymentsPageContent() {
         <CardContent className="p-4">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="학생 이름 검색..."
                 value={filters.search || ''}
                 onChange={(e) => updateFilters({ search: e.target.value })}
-                className="pl-9 pr-3 py-1.5 border border-gray-300 rounded-md text-sm w-48"
+                className="pl-9 pr-3 py-1.5 border border-border rounded-md text-sm w-48 bg-card text-foreground"
               />
             </div>
 
             <div>
-              <label className="text-sm text-gray-600">납부 상태</label>
+              <label className="text-sm text-muted-foreground">납부 상태</label>
               <select
                 value={filters.payment_status || ''}
                 onChange={(e) => updateFilters({ payment_status: e.target.value as any })}
-                className="ml-2 px-3 py-1 border border-gray-300 rounded-md text-sm"
+                className="ml-2 px-3 py-1 border border-border rounded-md text-sm bg-card text-foreground"
               >
                 <option value="">전체</option>
                 {PAYMENT_STATUS_OPTIONS.map((option) => (
@@ -302,11 +302,11 @@ function PaymentsPageContent() {
             </div>
 
             <div>
-              <label className="text-sm text-gray-600">청구 유형</label>
+              <label className="text-sm text-muted-foreground">청구 유형</label>
               <select
                 value={filters.payment_type || ''}
                 onChange={(e) => updateFilters({ payment_type: e.target.value as any })}
-                className="ml-2 px-3 py-1 border border-gray-300 rounded-md text-sm"
+                className="ml-2 px-3 py-1 border border-border rounded-md text-sm bg-card text-foreground"
               >
                 <option value="">전체</option>
                 {PAYMENT_TYPE_OPTIONS.map((option) => (
@@ -318,7 +318,7 @@ function PaymentsPageContent() {
             </div>
 
             <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">청구 월</label>
+              <label className="text-sm text-muted-foreground">청구 월</label>
               <input
                 type="month"
                 value={filters.year && filters.month ? `${filters.year}-${String(filters.month).padStart(2, '0')}` : ''}
@@ -326,7 +326,7 @@ function PaymentsPageContent() {
                   const [year, month] = e.target.value.split('-');
                   updateFilters({ year: parseInt(year), month: parseInt(month) });
                 }}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm"
+                className="px-3 py-1 border border-border rounded-md text-sm bg-card text-foreground"
               />
             </div>
 
@@ -347,13 +347,13 @@ export default function PaymentsPage() {
     <Suspense fallback={
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">학원비 관리</h1>
-          <p className="text-gray-600 mt-1">학원비 청구 및 납부 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">학원비 관리</h1>
+          <p className="text-muted-foreground mt-1">학원비 청구 및 납부 관리</p>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
-            <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">학원비 정보를 불러오는 중...</p>
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">학원비 정보를 불러오는 중...</p>
           </CardContent>
         </Card>
       </div>

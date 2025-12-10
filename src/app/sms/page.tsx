@@ -260,20 +260,20 @@ export default function SMSPage() {
     switch (status) {
       case 'sent':
       case 'delivered':
-        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-green-100 text-green-800"><CheckCircle className="w-3 h-3" /> 발송</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"><CheckCircle className="w-3 h-3" /> 발송</span>;
       case 'failed':
-        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-red-100 text-red-800"><XCircle className="w-3 h-3" /> 실패</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"><XCircle className="w-3 h-3" /> 실패</span>;
       default:
-        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800"><Clock className="w-3 h-3" /> 대기</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"><Clock className="w-3 h-3" /> 대기</span>;
     }
   };
 
   const getTypeBadge = (type: string) => {
     const typeUpper = type?.toUpperCase() || 'SMS';
     const colors: Record<string, string> = {
-      SMS: 'bg-gray-100 text-gray-700',
-      LMS: 'bg-blue-100 text-blue-700',
-      MMS: 'bg-purple-100 text-purple-700',
+      SMS: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+      LMS: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300',
+      MMS: 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300',
     };
     return <span className={`px-1.5 py-0.5 rounded text-xs ${colors[typeUpper] || colors.SMS}`}>{typeUpper}</span>;
   };
@@ -297,33 +297,33 @@ export default function SMSPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center gap-3 mb-6">
-        <MessageSquare className="w-8 h-8 text-green-600" />
+        <MessageSquare className="w-8 h-8 text-green-600 dark:text-green-400" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">문자 보내기</h1>
-          <p className="text-gray-500">학생/학부모에게 공지, 안내 문자를 발송합니다</p>
+          <h1 className="text-2xl font-bold text-foreground">문자 보내기</h1>
+          <p className="text-muted-foreground">학생/학부모에게 공지, 안내 문자를 발송합니다</p>
         </div>
       </div>
 
       {/* 문자 발송 폼 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold mb-4">문자 작성</h2>
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">문자 작성</h2>
 
         {/* STEP 1: 발송 대상 선택 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">1. 발송 대상</label>
+          <label className="block text-sm font-medium text-foreground mb-2">1. 발송 대상</label>
           <div className="grid grid-cols-3 gap-3">
             <button
               type="button"
               onClick={() => handleModeChange('all')}
               className={`p-4 rounded-lg border-2 transition-all ${
                 sendMode === 'all'
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-green-500 bg-green-50 dark:bg-green-950'
+                  : 'border-border hover:border-muted-foreground'
               }`}
             >
-              <Users className={`w-6 h-6 mx-auto mb-2 ${sendMode === 'all' ? 'text-green-600' : 'text-gray-400'}`} />
-              <div className="text-sm font-medium">모두</div>
-              <div className="text-xs text-gray-500">전체 발송</div>
+              <Users className={`w-6 h-6 mx-auto mb-2 ${sendMode === 'all' ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
+              <div className="text-sm font-medium text-foreground">모두</div>
+              <div className="text-xs text-muted-foreground">전체 발송</div>
             </button>
 
             <button
@@ -331,13 +331,13 @@ export default function SMSPage() {
               onClick={() => handleModeChange('individual')}
               className={`p-4 rounded-lg border-2 transition-all ${
                 sendMode === 'individual'
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+                  : 'border-border hover:border-muted-foreground'
               }`}
             >
-              <User className={`w-6 h-6 mx-auto mb-2 ${sendMode === 'individual' ? 'text-blue-600' : 'text-gray-400'}`} />
-              <div className="text-sm font-medium">개별</div>
-              <div className="text-xs text-gray-500">학생 선택</div>
+              <User className={`w-6 h-6 mx-auto mb-2 ${sendMode === 'individual' ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground'}`} />
+              <div className="text-sm font-medium text-foreground">개별</div>
+              <div className="text-xs text-muted-foreground">학생 선택</div>
             </button>
 
             <button
@@ -345,13 +345,13 @@ export default function SMSPage() {
               onClick={() => handleModeChange('custom')}
               className={`p-4 rounded-lg border-2 transition-all ${
                 sendMode === 'custom'
-                  ? 'border-orange-500 bg-orange-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-orange-500 bg-orange-50 dark:bg-orange-950'
+                  : 'border-border hover:border-muted-foreground'
               }`}
             >
-              <Phone className={`w-6 h-6 mx-auto mb-2 ${sendMode === 'custom' ? 'text-orange-600' : 'text-gray-400'}`} />
-              <div className="text-sm font-medium">직접 입력</div>
-              <div className="text-xs text-gray-500">번호 직접 입력</div>
+              <Phone className={`w-6 h-6 mx-auto mb-2 ${sendMode === 'custom' ? 'text-orange-600 dark:text-orange-400' : 'text-muted-foreground'}`} />
+              <div className="text-sm font-medium text-foreground">직접 입력</div>
+              <div className="text-xs text-muted-foreground">번호 직접 입력</div>
             </button>
           </div>
         </div>
@@ -359,7 +359,7 @@ export default function SMSPage() {
         {/* 모두 선택 시 학년 필터 */}
         {sendMode === 'all' && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               <GraduationCap className="w-4 h-4 inline mr-1" />
               학년 선택
             </label>
@@ -369,8 +369,8 @@ export default function SMSPage() {
                 onClick={() => setGradeFilter('all')}
                 className={`p-2 rounded-lg border-2 transition-all text-sm ${
                   gradeFilter === 'all'
-                    ? 'border-green-500 bg-green-50 text-green-700'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300'
+                    : 'border-border hover:border-muted-foreground text-foreground'
                 }`}
               >
                 전체
@@ -380,8 +380,8 @@ export default function SMSPage() {
                 onClick={() => setGradeFilter('junior')}
                 className={`p-2 rounded-lg border-2 transition-all text-sm ${
                   gradeFilter === 'junior'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+                    : 'border-border hover:border-muted-foreground text-foreground'
                 }`}
               >
                 선행반 (1-2학년)
@@ -391,8 +391,8 @@ export default function SMSPage() {
                 onClick={() => setGradeFilter('senior')}
                 className={`p-2 rounded-lg border-2 transition-all text-sm ${
                   gradeFilter === 'senior'
-                    ? 'border-purple-500 bg-purple-50 text-purple-700'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300'
+                    : 'border-border hover:border-muted-foreground text-foreground'
                 }`}
               >
                 3학년 (고3/N수)
@@ -404,20 +404,20 @@ export default function SMSPage() {
         {/* STEP 2: 개별 선택 시 학생 검색 */}
         {sendMode === 'individual' && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">2. 학생 선택</label>
+            <label className="block text-sm font-medium text-foreground mb-2">2. 학생 선택</label>
 
             {/* 선택된 학생 */}
             {selectedStudent ? (
-              <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
+              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg mb-3">
                 <div>
-                  <span className="font-medium text-blue-900">{selectedStudent.name}</span>
-                  <div className="text-xs text-blue-600 mt-1">
+                  <span className="font-medium text-blue-900 dark:text-blue-100">{selectedStudent.name}</span>
+                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
                     학생: {selectedStudent.phone || '미등록'} / 학부모: {selectedStudent.parent_phone || '미등록'}
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedStudent(null)}
-                  className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                  className="p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -426,23 +426,23 @@ export default function SMSPage() {
               <>
                 {/* 검색 입력 */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full pl-10 pr-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="학생 이름으로 검색..."
                   />
                 </div>
 
                 {/* 검색 결과 */}
                 {searchQuery && (
-                  <div className="mt-2 border rounded-lg max-h-48 overflow-y-auto">
+                  <div className="mt-2 border border-border rounded-lg max-h-48 overflow-y-auto bg-card">
                     {searching ? (
-                      <div className="p-3 text-center text-gray-500">검색 중...</div>
+                      <div className="p-3 text-center text-muted-foreground">검색 중...</div>
                     ) : searchResults.length === 0 ? (
-                      <div className="p-3 text-center text-gray-500">검색 결과가 없습니다</div>
+                      <div className="p-3 text-center text-muted-foreground">검색 결과가 없습니다</div>
                     ) : (
                       searchResults.map(student => (
                         <button
@@ -452,10 +452,10 @@ export default function SMSPage() {
                             setSearchQuery('');
                             setSearchResults([]);
                           }}
-                          className="w-full text-left p-3 hover:bg-gray-50 border-b last:border-0"
+                          className="w-full text-left p-3 hover:bg-muted border-b border-border last:border-0"
                         >
-                          <div className="font-medium">{student.name}</div>
-                          <div className="text-xs text-gray-500">
+                          <div className="font-medium text-foreground">{student.name}</div>
+                          <div className="text-xs text-muted-foreground">
                             학생: {student.phone || '미등록'} / 학부모: {student.parent_phone || '미등록'}
                           </div>
                         </button>
@@ -471,7 +471,7 @@ export default function SMSPage() {
         {/* STEP 2/3: 수신자 타입 (모두/개별 선택 시) */}
         {(sendMode === 'all' || (sendMode === 'individual' && selectedStudent)) && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               {sendMode === 'all' ? '2' : '3'}. 수신자 선택
             </label>
             <div className="grid grid-cols-2 gap-3">
@@ -480,16 +480,16 @@ export default function SMSPage() {
                 onClick={() => setRecipientType('student')}
                 className={`p-3 rounded-lg border-2 transition-all ${
                   recipientType === 'student'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950'
+                    : 'border-border hover:border-muted-foreground'
                 }`}
               >
-                <div className="text-sm font-medium">학생에게</div>
+                <div className="text-sm font-medium text-foreground">학생에게</div>
                 {sendMode === 'all' && (
-                  <div className="text-xs text-gray-500">{recipientsCount.students}명</div>
+                  <div className="text-xs text-muted-foreground">{recipientsCount.students}명</div>
                 )}
                 {sendMode === 'individual' && selectedStudent && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     {selectedStudent.phone || '전화번호 미등록'}
                   </div>
                 )}
@@ -500,16 +500,16 @@ export default function SMSPage() {
                 onClick={() => setRecipientType('parent')}
                 className={`p-3 rounded-lg border-2 transition-all ${
                   recipientType === 'parent'
-                    ? 'border-purple-500 bg-purple-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-950'
+                    : 'border-border hover:border-muted-foreground'
                 }`}
               >
-                <div className="text-sm font-medium">학부모에게</div>
+                <div className="text-sm font-medium text-foreground">학부모에게</div>
                 {sendMode === 'all' && (
-                  <div className="text-xs text-gray-500">{recipientsCount.parents}명</div>
+                  <div className="text-xs text-muted-foreground">{recipientsCount.parents}명</div>
                 )}
                 {sendMode === 'individual' && selectedStudent && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted-foreground">
                     {selectedStudent.parent_phone || '전화번호 미등록'}
                   </div>
                 )}
@@ -521,17 +521,17 @@ export default function SMSPage() {
         {/* 직접 입력 시 전화번호 입력 */}
         {sendMode === 'custom' && (
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               2. 전화번호 입력 (쉼표 또는 줄바꿈으로 구분)
             </label>
             <textarea
               value={customPhones}
               onChange={(e) => setCustomPhones(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-green-500 focus:border-green-500"
               placeholder="010-1234-5678, 010-9876-5432&#10;또는 줄바꿈으로 구분"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               * 전화번호는 하이픈(-)을 포함하여 입력해주세요 (예: 010-1234-5678)
             </p>
           </div>
@@ -539,32 +539,32 @@ export default function SMSPage() {
 
         {/* 문자 내용 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-foreground mb-1">
             {sendMode === 'custom' ? '3' : sendMode === 'individual' && selectedStudent ? '4' : '3'}. 문자 내용
           </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={5}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-green-500 focus:border-green-500"
             placeholder="안녕하세요, OO학원입니다.&#10;&#10;내용을 입력해주세요..."
           />
           <div className="flex justify-between items-center mt-2">
             <div className="flex items-center gap-2">
               {isMMS && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-purple-100 text-purple-700">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
                   <Image className="w-3 h-3" />
                   MMS (이미지 첨부)
                 </span>
               )}
               {isLMS && (
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-orange-100 text-orange-700">
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300">
                   <AlertCircle className="w-3 h-3" />
                   LMS (80byte 초과)
                 </span>
               )}
             </div>
-            <span className={`text-sm ${isMMS ? 'text-purple-600' : isLMS ? 'text-orange-600' : 'text-gray-500'}`}>
+            <span className={`text-sm ${isMMS ? 'text-purple-600 dark:text-purple-400' : isLMS ? 'text-orange-600 dark:text-orange-400' : 'text-muted-foreground'}`}>
               {contentBytes} / {isMMS ? '2000' : isLMS ? '2000' : '80'} byte
             </span>
           </div>
@@ -572,7 +572,7 @@ export default function SMSPage() {
 
         {/* 이미지 첨부 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-foreground mb-2">
             이미지 첨부 (선택, 최대 3장)
           </label>
 
@@ -584,7 +584,7 @@ export default function SMSPage() {
                   <img
                     src={img.preview}
                     alt={img.name}
-                    className="w-20 h-20 object-cover rounded-lg border"
+                    className="w-20 h-20 object-cover rounded-lg border border-border"
                   />
                   <button
                     onClick={() => removeImage(index)}
@@ -611,14 +611,14 @@ export default function SMSPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center gap-2 px-4 py-2 border border-border rounded-lg text-sm text-foreground hover:bg-muted"
               >
                 <Image className="w-4 h-4" />
                 이미지 추가
               </button>
             </>
           )}
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             * JPG, PNG 형식, 300KB 이하 | 이미지 첨부 시 MMS로 발송됩니다
           </p>
         </div>
@@ -637,15 +637,15 @@ export default function SMSPage() {
       </div>
 
       {/* 발신번호 안내 */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+          <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-blue-800">발신번호 안내</p>
-            <p className="text-sm text-blue-700 mt-1">
+            <p className="text-sm font-medium text-blue-800 dark:text-blue-200">발신번호 안내</p>
+            <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
               문자는 <strong>설정 &gt; 알림톡 및 SMS 설정</strong>에서 선택한 서비스로 발송됩니다.
             </p>
-            <ul className="text-sm text-blue-600 mt-2 space-y-1">
+            <ul className="text-sm text-blue-600 dark:text-blue-400 mt-2 space-y-1">
               <li>• <strong>SENS</strong>: 학원 기본 정보의 전화번호가 Naver Cloud SENS에 등록되어 있어야 합니다.</li>
               <li>• <strong>솔라피</strong>: 솔라피 설정의 발신번호로 발송됩니다.</li>
             </ul>
@@ -654,38 +654,38 @@ export default function SMSPage() {
       </div>
 
       {/* 최근 발송 내역 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold mb-4">최근 발송 내역</h2>
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">최근 발송 내역</h2>
 
         {logsLoading ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 dark:border-green-400 mx-auto"></div>
           </div>
         ) : logs.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">발송 내역이 없습니다</p>
+          <p className="text-muted-foreground text-center py-8">발송 내역이 없습니다</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-2">발송시간</th>
-                  <th className="text-left py-2 px-2">유형</th>
-                  <th className="text-left py-2 px-2">수신자</th>
-                  <th className="text-left py-2 px-2">전화번호</th>
-                  <th className="text-left py-2 px-2">내용</th>
-                  <th className="text-left py-2 px-2">상태</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 px-2 text-foreground">발송시간</th>
+                  <th className="text-left py-2 px-2 text-foreground">유형</th>
+                  <th className="text-left py-2 px-2 text-foreground">수신자</th>
+                  <th className="text-left py-2 px-2 text-foreground">전화번호</th>
+                  <th className="text-left py-2 px-2 text-foreground">내용</th>
+                  <th className="text-left py-2 px-2 text-foreground">상태</th>
                 </tr>
               </thead>
               <tbody>
                 {logs.map(log => (
-                  <tr key={log.id} className="border-b last:border-0">
-                    <td className="py-2 px-2 text-gray-500 whitespace-nowrap">
+                  <tr key={log.id} className="border-b border-border last:border-0">
+                    <td className="py-2 px-2 text-muted-foreground whitespace-nowrap">
                       {log.sent_at ? new Date(log.sent_at).toLocaleString('ko-KR') : '-'}
                     </td>
                     <td className="py-2 px-2">{getTypeBadge(log.message_type)}</td>
-                    <td className="py-2 px-2">{log.recipient_name || '-'}</td>
-                    <td className="py-2 px-2">{log.recipient_phone}</td>
-                    <td className="py-2 px-2 max-w-[200px] truncate" title={log.message_content}>
+                    <td className="py-2 px-2 text-foreground">{log.recipient_name || '-'}</td>
+                    <td className="py-2 px-2 text-foreground">{log.recipient_phone}</td>
+                    <td className="py-2 px-2 max-w-[200px] truncate text-foreground" title={log.message_content}>
                       {log.message_content}
                     </td>
                     <td className="py-2 px-2">{getStatusBadge(log.status)}</td>

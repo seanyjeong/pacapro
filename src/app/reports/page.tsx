@@ -165,11 +165,11 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">리포트</h1>
+        <h1 className="text-3xl font-bold text-foreground">리포트</h1>
         <Card>
           <CardContent className="p-12 text-center">
-            <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">리포트를 생성하는 중...</p>
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-muted-foreground">리포트를 생성하는 중...</p>
           </CardContent>
         </Card>
       </div>
@@ -180,15 +180,15 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">리포트</h1>
-          <p className="text-gray-600 mt-1">학원 운영 현황 리포트</p>
+          <h1 className="text-3xl font-bold text-foreground">리포트</h1>
+          <p className="text-muted-foreground mt-1">학원 운영 현황 리포트</p>
         </div>
         <div className="flex items-center gap-3">
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md"
+            className="px-3 py-2 border border-border rounded-md bg-card text-foreground"
           />
           <div className="relative">
             <Button
@@ -210,33 +210,33 @@ export default function ReportsPage() {
                   className="fixed inset-0 z-10"
                   onClick={() => setShowExportMenu(false)}
                 />
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-20">
+                <div className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-lg border border-border z-20">
                   <div className="py-1">
                     <button
                       onClick={() => handleExport('revenue')}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
                     >
                       <TrendingUp className="w-4 h-4 text-green-600" />
                       수입 내역
                     </button>
                     <button
                       onClick={() => handleExport('expenses')}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
                     >
                       <TrendingDown className="w-4 h-4 text-red-600" />
                       지출 내역
                     </button>
                     <button
                       onClick={() => handleExport('payments')}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
                     >
                       <Banknote className="w-4 h-4 text-blue-600" />
                       납부 내역
                     </button>
-                    <hr className="my-1" />
+                    <hr className="my-1 border-border" />
                     <button
                       onClick={() => handleExport('financial')}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center gap-2 text-foreground"
                     >
                       <Download className="w-4 h-4 text-purple-600" />
                       {selectedMonth.split('-')[0]}년 재무 리포트
@@ -254,11 +254,11 @@ export default function ReportsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">재원생</p>
-                <p className="text-3xl font-bold text-gray-900">{stats.students.active}</p>
-                <p className="text-xs text-gray-500 mt-1">총 {stats.students.total}명</p>
+                <p className="text-sm text-muted-foreground">재원생</p>
+                <p className="text-3xl font-bold text-foreground">{stats.students.active}</p>
+                <p className="text-xs text-muted-foreground mt-1">총 {stats.students.total}명</p>
               </div>
-              <Users className="w-10 h-10 text-blue-600" />
+              <Users className="w-10 h-10 text-blue-600 dark:text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -267,15 +267,15 @@ export default function ReportsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">총 수입</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm text-muted-foreground">총 수입</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {formatAmount(totalIncome)}원
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   학원비 {formatAmount(stats.payments.paidAmount)}원 + 기타 {formatAmount(stats.otherIncomes.totalAmount)}원
                 </p>
               </div>
-              <TrendingUp className="w-10 h-10 text-green-600" />
+              <TrendingUp className="w-10 h-10 text-green-600 dark:text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -284,13 +284,13 @@ export default function ReportsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">총 지출</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-sm text-muted-foreground">총 지출</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {formatAmount(stats.expenses.totalAmount)}원
                 </p>
-                <p className="text-xs text-gray-500 mt-1">{stats.expenses.total}건</p>
+                <p className="text-xs text-muted-foreground mt-1">{stats.expenses.total}건</p>
               </div>
-              <TrendingDown className="w-10 h-10 text-red-600" />
+              <TrendingDown className="w-10 h-10 text-red-600 dark:text-red-400" />
             </div>
           </CardContent>
         </Card>
@@ -299,13 +299,13 @@ export default function ReportsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">순이익</p>
-                <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <p className="text-sm text-muted-foreground">순이익</p>
+                <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
                   {formatAmount(netProfit)}원
                 </p>
-                <p className="text-xs text-gray-500 mt-1">마진율 {profitMargin}%</p>
+                <p className="text-xs text-muted-foreground mt-1">마진율 {profitMargin}%</p>
               </div>
-              <Banknote className="w-10 h-10 text-blue-600" />
+              <Banknote className="w-10 h-10 text-blue-600 dark:text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -319,22 +319,22 @@ export default function ReportsPage() {
           <CardContent className="space-y-4">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">청구 금액</span>
-                <span className="font-semibold">{formatAmount(stats.payments.totalAmount)}원</span>
+                <span className="text-sm text-muted-foreground">청구 금액</span>
+                <span className="font-semibold text-foreground">{formatAmount(stats.payments.totalAmount)}원</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-blue-600 h-2 rounded-full" style={{ width: '100%' }}></div>
+              <div className="w-full bg-muted rounded-full h-2">
+                <div className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full" style={{ width: '100%' }}></div>
               </div>
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">수납 완료</span>
-                <span className="font-semibold text-green-600">{formatAmount(stats.payments.paidAmountFromBilled)}원</span>
+                <span className="text-sm text-muted-foreground">수납 완료</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">{formatAmount(stats.payments.paidAmountFromBilled)}원</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
-                  className="bg-green-600 h-2 rounded-full"
+                  className="bg-green-600 dark:bg-green-500 h-2 rounded-full"
                   style={{ width: `${stats.payments.totalAmount > 0 ? (stats.payments.paidAmountFromBilled / stats.payments.totalAmount) * 100 : 0}%` }}
                 ></div>
               </div>
@@ -342,14 +342,14 @@ export default function ReportsPage() {
 
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">미수납 금액</span>
-                <span className="font-semibold text-red-600">
+                <span className="text-sm text-muted-foreground">미수납 금액</span>
+                <span className="font-semibold text-red-600 dark:text-red-400">
                   {formatAmount(stats.payments.totalAmount - stats.payments.paidAmountFromBilled)}원
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
-                  className="bg-red-600 h-2 rounded-full"
+                  className="bg-red-600 dark:bg-red-500 h-2 rounded-full"
                   style={{
                     width: `${stats.payments.totalAmount > 0 ? ((stats.payments.totalAmount - stats.payments.paidAmountFromBilled) / stats.payments.totalAmount) * 100 : 0}%`
                   }}
@@ -357,10 +357,10 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t border-border">
               <div className="flex justify-between items-center mb-2">
-                <span className="font-semibold text-gray-900">수납률</span>
-                <span className="text-xl font-bold text-primary-600">
+                <span className="font-semibold text-foreground">수납률</span>
+                <span className="text-xl font-bold text-primary">
                   {stats.payments.totalAmount > 0
                     ? Math.round((stats.payments.paidAmountFromBilled / stats.payments.totalAmount) * 100)
                     : 0}%
@@ -368,12 +368,12 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t border-border">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-gray-600">기타수입</span>
-                <span className="font-semibold text-green-600">{formatAmount(stats.otherIncomes.totalAmount)}원</span>
+                <span className="text-sm text-muted-foreground">기타수입</span>
+                <span className="font-semibold text-green-600 dark:text-green-400">{formatAmount(stats.otherIncomes.totalAmount)}원</span>
               </div>
-              <p className="text-xs text-gray-500">{stats.otherIncomes.total}건 (의류, 신발, 용품, 음료/간식 등)</p>
+              <p className="text-xs text-muted-foreground">{stats.otherIncomes.total}건 (의류, 신발, 용품, 음료/간식 등)</p>
             </div>
           </CardContent>
         </Card>
@@ -383,38 +383,38 @@ export default function ReportsPage() {
             <CardTitle>학생 현황</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center py-3 border-b">
+            <div className="flex justify-between items-center py-3 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="text-gray-700">재원생</span>
+                <span className="text-foreground">재원생</span>
               </div>
-              <span className="font-semibold text-lg">{stats.students.active}명</span>
+              <span className="font-semibold text-lg text-foreground">{stats.students.active}명</span>
             </div>
 
-            <div className="flex justify-between items-center py-3 border-b">
+            <div className="flex justify-between items-center py-3 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                <span className="text-gray-700">휴원생</span>
+                <span className="text-foreground">휴원생</span>
               </div>
-              <span className="font-semibold text-lg">{stats.students.paused}명</span>
+              <span className="font-semibold text-lg text-foreground">{stats.students.paused}명</span>
             </div>
 
-            <div className="flex justify-between items-center py-3 border-b">
+            <div className="flex justify-between items-center py-3 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                <span className="text-gray-700">강사 수</span>
+                <span className="text-foreground">강사 수</span>
               </div>
-              <span className="font-semibold text-lg">{stats.instructors.active}명</span>
+              <span className="font-semibold text-lg text-foreground">{stats.instructors.active}명</span>
             </div>
 
-            <div className="pt-4 border-t">
+            <div className="pt-4 border-t border-border">
               <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-900">평균 월 수강료</span>
-                <span className="text-xl font-bold text-primary-600">
+                <span className="font-semibold text-foreground">평균 월 수강료</span>
+                <span className="text-xl font-bold text-primary">
                   {formatAmount(stats.students.avgMonthlyTuition)}원
                 </span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">재원생 기준 (0원 제외)</p>
+              <p className="text-xs text-muted-foreground mt-1">재원생 기준 (0원 제외)</p>
             </div>
           </CardContent>
         </Card>
@@ -426,35 +426,35 @@ export default function ReportsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="p-4 bg-green-50 rounded-lg">
+            <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
               <div className="flex justify-between items-center mb-3">
-                <span className="font-semibold text-gray-900">총 수입</span>
-                <span className="text-xl font-bold text-green-600">
+                <span className="font-semibold text-foreground">총 수입</span>
+                <span className="text-xl font-bold text-green-600 dark:text-green-400">
                   +{formatAmount(totalIncome)}원
                 </span>
               </div>
               <div className="space-y-1 text-sm">
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-muted-foreground">
                   <span>학원비 수납</span>
                   <span>+{formatAmount(stats.payments.paidAmount)}원</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-muted-foreground">
                   <span>기타수입</span>
                   <span>+{formatAmount(stats.otherIncomes.totalAmount)}원</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-between items-center p-4 bg-red-50 rounded-lg">
-              <span className="font-semibold text-gray-900">총 지출</span>
-              <span className="text-xl font-bold text-red-600">
+            <div className="flex justify-between items-center p-4 bg-red-50 dark:bg-red-950 rounded-lg">
+              <span className="font-semibold text-foreground">총 지출</span>
+              <span className="text-xl font-bold text-red-600 dark:text-red-400">
                 -{formatAmount(stats.expenses.totalAmount)}원
               </span>
             </div>
 
-            <div className={`flex justify-between items-center p-4 rounded-lg ${netProfit >= 0 ? 'bg-blue-50' : 'bg-red-50'}`}>
-              <span className="font-semibold text-gray-900">순이익</span>
-              <span className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+            <div className={`flex justify-between items-center p-4 rounded-lg ${netProfit >= 0 ? 'bg-blue-50 dark:bg-blue-950' : 'bg-red-50 dark:bg-red-950'}`}>
+              <span className="font-semibold text-foreground">순이익</span>
+              <span className={`text-2xl font-bold ${netProfit >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-red-600 dark:text-red-400'}`}>
                 {netProfit >= 0 ? '+' : ''}{formatAmount(netProfit)}원
               </span>
             </div>
