@@ -263,7 +263,7 @@ export default function ConductPage({ params }: PageProps) {
   if (!consultation) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-gray-500">상담 정보를 찾을 수 없습니다.</p>
+        <p className="text-muted-foreground">상담 정보를 찾을 수 없습니다.</p>
         <Link href="/consultations">
           <Button variant="outline" className="mt-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -275,9 +275,9 @@ export default function ConductPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-background pb-20">
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
+      <div className="sticky top-0 z-10 bg-card border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -288,10 +288,10 @@ export default function ConductPage({ params }: PageProps) {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-foreground">
                   상담 진행: {consultation.student_name} ({consultation.student_grade})
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {format(parseISO(consultation.preferred_date), 'yyyy년 M월 d일 (EEEE)', { locale: ko })} {consultation.preferred_time}
                 </p>
               </div>
@@ -314,10 +314,10 @@ export default function ConductPage({ params }: PageProps) {
           {/* 진행률 */}
           <div className="mt-3">
             <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-gray-600">진행률</span>
+              <span className="text-muted-foreground">진행률</span>
               <span className="font-medium">{progressPercent}%</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-muted rounded-full h-2">
               <div
                 className="bg-primary-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
@@ -343,45 +343,45 @@ export default function ConductPage({ params }: PageProps) {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-gray-500">학생명</span>
+                    <span className="text-muted-foreground">학생명</span>
                     <p className="font-medium">{consultation.student_name}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">학년</span>
+                    <span className="text-muted-foreground">학년</span>
                     <p className="font-medium">{consultation.student_grade}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center text-sm">
-                  <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                  <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
                   <span>{consultation.parent_phone}</span>
                 </div>
 
                 {consultation.student_school && (
                   <div className="flex items-center text-sm">
-                    <School className="h-4 w-4 mr-2 text-gray-400" />
+                    <School className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span>{consultation.student_school}</span>
                   </div>
                 )}
 
                 {consultation.target_school && (
                   <div className="flex items-center text-sm">
-                    <Target className="h-4 w-4 mr-2 text-gray-400" />
+                    <Target className="h-4 w-4 mr-2 text-muted-foreground" />
                     <span>목표: {consultation.target_school}</span>
                   </div>
                 )}
 
                 {consultation.referral_sources && consultation.referral_sources.length > 0 && (
                   <div className="text-sm">
-                    <span className="text-gray-500">알게 된 경로</span>
+                    <span className="text-muted-foreground">알게 된 경로</span>
                     <p className="font-medium">{consultation.referral_sources.join(', ')}</p>
                   </div>
                 )}
 
                 {consultation.inquiry_content && (
                   <div className="text-sm">
-                    <span className="text-gray-500">문의 내용</span>
-                    <p className="text-gray-700 mt-1">{consultation.inquiry_content}</p>
+                    <span className="text-muted-foreground">문의 내용</span>
+                    <p className="text-foreground mt-1">{consultation.inquiry_content}</p>
                   </div>
                 )}
               </CardContent>
@@ -414,7 +414,7 @@ export default function ConductPage({ params }: PageProps) {
                     <div className="flex gap-4">
                       {hasSchoolGradeAvg && (
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-sm">내신</span>
+                          <span className="text-muted-foreground text-sm">내신</span>
                           <span className="font-bold text-blue-600">
                             {scores.schoolGradeAvg === -1 ? '미응시' : `${scores.schoolGradeAvg}등급`}
                           </span>
@@ -422,8 +422,8 @@ export default function ConductPage({ params }: PageProps) {
                       )}
                       {hasAdmissionType && (
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-500 text-sm">입시</span>
-                          <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-sm">
+                          <span className="text-muted-foreground text-sm">입시</span>
+                          <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-sm">
                             {admissionTypeLabel}
                           </span>
                         </div>
@@ -433,7 +433,7 @@ export default function ConductPage({ params }: PageProps) {
                     {/* 모의고사 등급 표 */}
                     {hasMockGrades && (
                       <div>
-                        <p className="text-sm text-gray-500 mb-2">모의고사</p>
+                        <p className="text-sm text-muted-foreground mb-2">모의고사</p>
                         <div className="grid grid-cols-4 gap-1.5">
                           {['korean', 'math', 'english', 'exploration'].map((subject) => {
                             const labels: Record<string, string> = {
@@ -444,9 +444,9 @@ export default function ConductPage({ params }: PageProps) {
                             };
                             const value = scores.mockTestGrades?.[subject as keyof typeof scores.mockTestGrades];
                             return (
-                              <div key={subject} className="bg-gray-50 rounded p-2 text-center">
-                                <div className="text-xs text-gray-500">{labels[subject]}</div>
-                                <div className={`font-bold ${value === -1 ? 'text-gray-400 text-sm' : 'text-gray-800'}`}>
+                              <div key={subject} className="bg-muted rounded p-2 text-center">
+                                <div className="text-xs text-muted-foreground">{labels[subject]}</div>
+                                <div className={`font-bold ${value === -1 ? 'text-muted-foreground text-sm' : 'text-foreground'}`}>
                                   {value === -1 ? '-' : value ?? '-'}
                                 </div>
                               </div>
@@ -487,22 +487,22 @@ export default function ConductPage({ params }: PageProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 {Object.entries(groupedChecklist).map(([category, items]) => (
-                  <div key={category} className="border rounded-lg overflow-hidden">
+                  <div key={category} className="border border-border rounded-lg overflow-hidden">
                     {/* 카테고리 헤더 */}
                     <button
                       onClick={() => toggleCategory(category)}
-                      className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className="w-full flex items-center justify-between px-4 py-3 bg-muted hover:bg-muted/80 transition-colors"
                     >
                       <div className="flex items-center">
-                        <span className="font-medium text-gray-900">{category}</span>
+                        <span className="font-medium text-foreground">{category}</span>
                         <Badge variant="secondary" className="ml-2">
                           {items.filter(i => i.checked).length}/{items.length}
                         </Badge>
                       </div>
                       {expandedCategories[category] ? (
-                        <ChevronUp className="h-5 w-5 text-gray-500" />
+                        <ChevronUp className="h-5 w-5 text-muted-foreground" />
                       ) : (
-                        <ChevronDown className="h-5 w-5 text-gray-500" />
+                        <ChevronDown className="h-5 w-5 text-muted-foreground" />
                       )}
                     </button>
 
@@ -519,9 +519,9 @@ export default function ConductPage({ params }: PageProps) {
                               {item.checked ? (
                                 <CheckSquare className="h-5 w-5 text-primary-600 flex-shrink-0 mt-0.5" />
                               ) : (
-                                <Square className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                                <Square className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
                               )}
-                              <span className={`ml-3 ${item.checked ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                              <span className={`ml-3 ${item.checked ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                                 {item.text}
                               </span>
                             </div>
@@ -531,7 +531,7 @@ export default function ConductPage({ params }: PageProps) {
                               <div className="ml-8">
                                 {item.input.type === 'text' ? (
                                   <div className="flex items-center space-x-2">
-                                    <Label className="text-sm text-gray-500 min-w-fit">{item.input.label}:</Label>
+                                    <Label className="text-sm text-muted-foreground min-w-fit">{item.input.label}:</Label>
                                     <Input
                                       value={item.input.value}
                                       onChange={(e) => updateInputValue(item.id, null, e.target.value)}
@@ -541,7 +541,7 @@ export default function ConductPage({ params }: PageProps) {
                                   </div>
                                 ) : item.input.type === 'radio' && item.input.options && (
                                   <div className="flex items-center space-x-3">
-                                    <Label className="text-sm text-gray-500">{item.input.label}:</Label>
+                                    <Label className="text-sm text-muted-foreground">{item.input.label}:</Label>
                                     <div className="flex items-center space-x-4">
                                       {item.input.options.map((option) => (
                                         <label key={option} className="flex items-center cursor-pointer">
@@ -569,7 +569,7 @@ export default function ConductPage({ params }: PageProps) {
                                   <div key={idx}>
                                     {inp.type === 'text' ? (
                                       <div className="flex items-center space-x-2">
-                                        <Label className="text-sm text-gray-500 min-w-fit">{inp.label}:</Label>
+                                        <Label className="text-sm text-muted-foreground min-w-fit">{inp.label}:</Label>
                                         <Input
                                           value={inp.value}
                                           onChange={(e) => updateInputValue(item.id, idx, e.target.value)}
@@ -579,7 +579,7 @@ export default function ConductPage({ params }: PageProps) {
                                       </div>
                                     ) : inp.type === 'radio' && inp.options && (
                                       <div className="flex items-center space-x-3">
-                                        <Label className="text-sm text-gray-500">{inp.label}:</Label>
+                                        <Label className="text-sm text-muted-foreground">{inp.label}:</Label>
                                         <div className="flex items-center space-x-4">
                                           {inp.options.map((option) => (
                                             <label key={option} className="flex items-center cursor-pointer">
@@ -614,9 +614,9 @@ export default function ConductPage({ params }: PageProps) {
       </div>
 
       {/* 하단 액션 바 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
+      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-muted-foreground">
             체크된 항목: {checklist.filter(c => c.checked).length}/{checklist.length}
           </div>
           <div className="flex items-center space-x-3">
@@ -661,7 +661,7 @@ export default function ConductPage({ params }: PageProps) {
                 value={studentPhone}
                 onChange={(e) => setStudentPhone(e.target.value)}
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 학생 본인 전화번호가 있으면 입력하세요. 없으면 학부모 번호로 등록됩니다.
               </p>
             </div>
@@ -678,7 +678,7 @@ export default function ConductPage({ params }: PageProps) {
 
               {trialDates.map((trialDate, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500 w-8">{index + 1}회</span>
+                  <span className="text-sm text-muted-foreground w-8">{index + 1}회</span>
                   <Input
                     type="date"
                     value={trialDate.date}

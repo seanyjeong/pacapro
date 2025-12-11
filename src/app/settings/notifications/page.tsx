@@ -193,8 +193,8 @@ export default function NotificationSettingsPage() {
       <div className="flex items-center gap-3 mb-6">
         <Bell className="w-8 h-8 text-blue-600" />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">알림톡 및 SMS 설정</h1>
-          <p className="text-gray-500">KakaoTalk 알림톡과 SMS 발송을 위한 설정</p>
+          <h1 className="text-2xl font-bold text-foreground">알림톡 및 SMS 설정</h1>
+          <p className="text-muted-foreground">KakaoTalk 알림톡과 SMS 발송을 위한 설정</p>
         </div>
       </div>
 
@@ -205,12 +205,12 @@ export default function NotificationSettingsPage() {
       )}
 
       {/* 서비스 선택 탭 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">서비스 선택</h2>
+          <h2 className="text-lg font-semibold text-foreground">서비스 선택</h2>
           <button
             onClick={() => setShowPriceModal(true)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
           >
             <DollarSign className="w-4 h-4" />
             가격 비교
@@ -222,7 +222,7 @@ export default function NotificationSettingsPage() {
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === 'sens'
                 ? 'bg-green-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-muted text-foreground hover:bg-muted/80'
             }`}
           >
             네이버 SENS
@@ -232,14 +232,14 @@ export default function NotificationSettingsPage() {
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
               activeTab === 'solapi'
                 ? 'bg-purple-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-muted text-foreground hover:bg-muted/80'
             }`}
           >
             솔라피 (Solapi)
           </button>
         </div>
-        <p className="text-sm text-gray-500">
-          현재 사용 중: <strong>{settings.service_type === 'solapi' ? '솔라피' : '네이버 SENS'}</strong>
+        <p className="text-sm text-muted-foreground">
+          현재 사용 중: <strong className="text-foreground">{settings.service_type === 'solapi' ? '솔라피' : '네이버 SENS'}</strong>
           {settings.service_type !== activeTab && (
             <span className="text-amber-600 ml-2">(변경 후 저장 필요)</span>
           )}
@@ -249,89 +249,89 @@ export default function NotificationSettingsPage() {
       {/* 가격 비교 모달 */}
       {showPriceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowPriceModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">서비스별 가격 비교</h3>
-              <button onClick={() => setShowPriceModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+          <div className="bg-card rounded-xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground">서비스별 가격 비교</h3>
+              <button onClick={() => setShowPriceModal(false)} className="p-1 hover:bg-muted rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-4">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-3 px-2">메시지 유형</th>
-                    <th className="text-center py-3 px-2 bg-green-50 text-green-700">SENS</th>
-                    <th className="text-center py-3 px-2 bg-purple-50 text-purple-700">솔라피</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-3 px-2 text-foreground">메시지 유형</th>
+                    <th className="text-center py-3 px-2 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300">SENS</th>
+                    <th className="text-center py-3 px-2 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300">솔라피</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b">
-                    <td className="py-3 px-2 font-medium">단문 SMS (90byte)</td>
-                    <td className="text-center py-3 px-2 bg-green-50">
-                      <span className="text-green-600 font-medium">50건 무료</span>
-                      <br /><span className="text-gray-500 text-xs">초과 시 9원</span>
+                  <tr className="border-b border-border">
+                    <td className="py-3 px-2 font-medium text-foreground">단문 SMS (90byte)</td>
+                    <td className="text-center py-3 px-2 bg-green-50 dark:bg-green-950">
+                      <span className="text-green-600 dark:text-green-400 font-medium">50건 무료</span>
+                      <br /><span className="text-muted-foreground text-xs">초과 시 9원</span>
                     </td>
-                    <td className="text-center py-3 px-2 bg-purple-50">18원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50 dark:bg-purple-950 text-foreground">18원</td>
                   </tr>
-                  <tr className="border-b">
-                    <td className="py-3 px-2 font-medium">장문 LMS (2,000byte)</td>
-                    <td className="text-center py-3 px-2 bg-green-50">
-                      <span className="text-green-600 font-medium">10건 무료</span>
-                      <br /><span className="text-gray-500 text-xs">초과 시 30원</span>
+                  <tr className="border-b border-border">
+                    <td className="py-3 px-2 font-medium text-foreground">장문 LMS (2,000byte)</td>
+                    <td className="text-center py-3 px-2 bg-green-50 dark:bg-green-950">
+                      <span className="text-green-600 dark:text-green-400 font-medium">10건 무료</span>
+                      <br /><span className="text-muted-foreground text-xs">초과 시 30원</span>
                     </td>
-                    <td className="text-center py-3 px-2 bg-purple-50">45원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50 dark:bg-purple-950 text-foreground">45원</td>
                   </tr>
-                  <tr className="border-b">
-                    <td className="py-3 px-2 font-medium">사진 MMS</td>
-                    <td className="text-center py-3 px-2 bg-green-50">100원</td>
-                    <td className="text-center py-3 px-2 bg-purple-50">110원</td>
+                  <tr className="border-b border-border">
+                    <td className="py-3 px-2 font-medium text-foreground">사진 MMS</td>
+                    <td className="text-center py-3 px-2 bg-green-50 dark:bg-green-950 text-foreground">100원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50 dark:bg-purple-950 text-foreground">110원</td>
                   </tr>
-                  <tr className="border-b bg-yellow-50">
-                    <td className="py-3 px-2 font-medium">카카오 알림톡</td>
-                    <td className="text-center py-3 px-2 font-semibold text-green-700">7.5원</td>
-                    <td className="text-center py-3 px-2">13원</td>
+                  <tr className="border-b border-border bg-yellow-50 dark:bg-yellow-950">
+                    <td className="py-3 px-2 font-medium text-foreground">카카오 알림톡</td>
+                    <td className="text-center py-3 px-2 font-semibold text-green-700 dark:text-green-300">7.5원</td>
+                    <td className="text-center py-3 px-2 text-foreground">13원</td>
                   </tr>
-                  <tr className="border-b">
-                    <td className="py-3 px-2 font-medium">카카오 친구톡</td>
-                    <td className="text-center py-3 px-2 bg-green-50">~15원</td>
-                    <td className="text-center py-3 px-2 bg-purple-50">19원</td>
+                  <tr className="border-b border-border">
+                    <td className="py-3 px-2 font-medium text-foreground">카카오 친구톡</td>
+                    <td className="text-center py-3 px-2 bg-green-50 dark:bg-green-950 text-foreground">~15원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50 dark:bg-purple-950 text-foreground">19원</td>
                   </tr>
                   <tr>
-                    <td className="py-3 px-2 font-medium">친구톡 이미지</td>
-                    <td className="text-center py-3 px-2 bg-green-50">~25원</td>
-                    <td className="text-center py-3 px-2 bg-purple-50">29원</td>
+                    <td className="py-3 px-2 font-medium text-foreground">친구톡 이미지</td>
+                    <td className="text-center py-3 px-2 bg-green-50 dark:bg-green-950 text-foreground">~25원</td>
+                    <td className="text-center py-3 px-2 bg-purple-50 dark:bg-purple-950 text-foreground">29원</td>
                   </tr>
                 </tbody>
               </table>
 
               {/* 장단점 비교 */}
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                  <p className="font-medium text-green-800 mb-2">SENS 장단점</p>
+                <div className="p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="font-medium text-green-800 dark:text-green-200 mb-2">SENS 장단점</p>
                   <div className="text-xs space-y-1">
-                    <p className="text-green-700">✓ 저렴한 가격</p>
-                    <p className="text-green-700">✓ 네이버 클라우드 통합</p>
-                    <p className="text-red-600">✗ 가입 절차 복잡</p>
-                    <p className="text-red-600">✗ 설정이 다소 어려움</p>
+                    <p className="text-green-700 dark:text-green-300">✓ 저렴한 가격</p>
+                    <p className="text-green-700 dark:text-green-300">✓ 네이버 클라우드 통합</p>
+                    <p className="text-red-600 dark:text-red-400">✗ 가입 절차 복잡</p>
+                    <p className="text-red-600 dark:text-red-400">✗ 설정이 다소 어려움</p>
                   </div>
                 </div>
-                <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                  <p className="font-medium text-purple-800 mb-2">솔라피 장단점</p>
+                <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <p className="font-medium text-purple-800 dark:text-purple-200 mb-2">솔라피 장단점</p>
                   <div className="text-xs space-y-1">
-                    <p className="text-green-700">✓ 가입/설정 간편</p>
-                    <p className="text-green-700">✓ 직관적인 UI</p>
-                    <p className="text-red-600">✗ SENS 대비 비싼 가격</p>
-                    <p className="text-red-600">✗ 대량 발송 시 비용 부담</p>
+                    <p className="text-green-700 dark:text-green-300">✓ 가입/설정 간편</p>
+                    <p className="text-green-700 dark:text-green-300">✓ 직관적인 UI</p>
+                    <p className="text-red-600 dark:text-red-400">✗ SENS 대비 비싼 가격</p>
+                    <p className="text-red-600 dark:text-red-400">✗ 대량 발송 시 비용 부담</p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <p className="text-xs text-amber-800">
+              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-xs text-amber-800 dark:text-amber-200">
                   * 가격은 변동될 수 있으며, 대량 발송 시 할인이 적용될 수 있습니다.
                 </p>
-                <p className="text-xs text-amber-800 mt-1">
+                <p className="text-xs text-amber-800 dark:text-amber-200 mt-1">
                   * 정확한 가격은 각 공식 사이트에서 확인하세요.
                 </p>
               </div>
@@ -361,102 +361,102 @@ export default function NotificationSettingsPage() {
 
       {/* SENS 설정 */}
       {activeTab === 'sens' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           <div className="flex items-center gap-2 mb-4">
             <Key className="w-5 h-5 text-green-600" />
-            <h2 className="text-lg font-semibold">네이버 SENS API 설정</h2>
+            <h2 className="text-lg font-semibold text-foreground">네이버 SENS API 설정</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Naver Cloud Access Key
               </label>
               <input
                 type="text"
                 value={settings.naver_access_key}
                 onChange={e => setSettings(prev => ({ ...prev, naver_access_key: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="Access Key ID"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 Naver Cloud Secret Key
               </label>
               <input
                 type="password"
                 value={settings.naver_secret_key}
                 onChange={e => setSettings(prev => ({ ...prev, naver_secret_key: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder={settings.has_secret_key ? '저장됨 (변경하려면 새로 입력)' : 'Secret Key'}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 알림톡 Service ID
               </label>
               <input
                 type="text"
                 value={settings.naver_service_id}
                 onChange={e => setSettings(prev => ({ ...prev, naver_service_id: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="ncp:kkobizmsg:kr:..."
               />
-              <p className="text-xs text-gray-500 mt-1">알림톡 전용 (SENS &gt; 알림톡 &gt; 프로젝트)</p>
+              <p className="text-xs text-muted-foreground mt-1">알림톡 전용 (SENS &gt; 알림톡 &gt; 프로젝트)</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 SMS Service ID
               </label>
               <input
                 type="text"
                 value={settings.sms_service_id}
                 onChange={e => setSettings(prev => ({ ...prev, sms_service_id: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="ncp:sms:kr:..."
               />
-              <p className="text-xs text-gray-500 mt-1">SMS 전용 (SENS &gt; SMS &gt; 프로젝트)</p>
+              <p className="text-xs text-muted-foreground mt-1">SMS 전용 (SENS &gt; SMS &gt; 프로젝트)</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 KakaoTalk 채널 ID
               </label>
               <input
                 type="text"
                 value={settings.kakao_channel_id}
                 onChange={e => setSettings(prev => ({ ...prev, kakao_channel_id: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="@채널ID"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 템플릿 코드 (Naver에서 승인받은 코드)
               </label>
               <input
                 type="text"
                 value={settings.template_code}
                 onChange={e => setSettings(prev => ({ ...prev, template_code: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="예: A06"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 템플릿 본문 (승인받은 템플릿 내용 그대로 입력)
               </label>
               <textarea
                 value={settings.template_content}
                 onChange={e => setSettings(prev => ({ ...prev, template_content: e.target.value }))}
                 rows={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm"
                 placeholder={`수강료안내
 #{이름} 학생의 수강료 납부일이,
 #{날짜} 일입니다
@@ -469,89 +469,89 @@ export default function NotificationSettingsPage() {
 
       {/* 솔라피 설정 */}
       {activeTab === 'solapi' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           <div className="flex items-center gap-2 mb-4">
             <Key className="w-5 h-5 text-purple-600" />
-            <h2 className="text-lg font-semibold">솔라피 API 설정</h2>
+            <h2 className="text-lg font-semibold text-foreground">솔라피 API 설정</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 API Key
               </label>
               <input
                 type="text"
                 value={settings.solapi_api_key}
                 onChange={e => setSettings(prev => ({ ...prev, solapi_api_key: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="API Key"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 API Secret
               </label>
               <input
                 type="password"
                 value={settings.solapi_api_secret}
                 onChange={e => setSettings(prev => ({ ...prev, solapi_api_secret: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder={settings.has_solapi_secret ? '저장됨 (변경하려면 새로 입력)' : 'API Secret'}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 카카오 채널 ID (pfId)
               </label>
               <input
                 type="text"
                 value={settings.solapi_pfid}
                 onChange={e => setSettings(prev => ({ ...prev, solapi_pfid: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="KA01PF..."
               />
-              <p className="text-xs text-gray-500 mt-1">솔라피 콘솔에서 확인 가능</p>
+              <p className="text-xs text-muted-foreground mt-1">솔라피 콘솔에서 확인 가능</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 발신번호
               </label>
               <input
                 type="text"
                 value={settings.solapi_sender_phone}
                 onChange={e => setSettings(prev => ({ ...prev, solapi_sender_phone: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="010-1234-5678"
               />
-              <p className="text-xs text-gray-500 mt-1">솔라피에 등록된 발신번호</p>
+              <p className="text-xs text-muted-foreground mt-1">솔라피에 등록된 발신번호</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 템플릿 ID
               </label>
               <input
                 type="text"
                 value={settings.solapi_template_id}
                 onChange={e => setSettings(prev => ({ ...prev, solapi_template_id: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                 placeholder="KA01TP..."
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 템플릿 본문 (솔라피용)
               </label>
               <textarea
                 value={settings.solapi_template_content}
                 onChange={e => setSettings(prev => ({ ...prev, solapi_template_content: e.target.value }))}
                 rows={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
                 placeholder={`수강료안내
 #{이름} 학생의 수강료 납부일이,
 #{날짜} 일입니다`}
@@ -562,33 +562,33 @@ export default function NotificationSettingsPage() {
       )}
 
       {/* 사용 가능한 변수 (공통) */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm font-medium text-blue-800 mb-2">사용 가능한 변수</p>
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">사용 가능한 변수</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
             <div className="flex items-center gap-2">
-              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{이름}'}</code>
-              <span className="text-gray-600">학생 이름</span>
+              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{이름}'}</code>
+              <span className="text-muted-foreground">학생 이름</span>
             </div>
             <div className="flex items-center gap-2">
-              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{날짜}'}</code>
-              <span className="text-gray-600">납부일 (예: 1일)</span>
+              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{날짜}'}</code>
+              <span className="text-muted-foreground">납부일 (예: 1일)</span>
             </div>
             <div className="flex items-center gap-2">
-              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{교육비}'}</code>
-              <span className="text-gray-600">학원비</span>
+              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{교육비}'}</code>
+              <span className="text-muted-foreground">학원비</span>
             </div>
             <div className="flex items-center gap-2">
-              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{월}'}</code>
-              <span className="text-gray-600">청구 월</span>
+              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{월}'}</code>
+              <span className="text-muted-foreground">청구 월</span>
             </div>
             <div className="flex items-center gap-2">
-              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{학원명}'}</code>
-              <span className="text-gray-600">학원 이름</span>
+              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원명}'}</code>
+              <span className="text-muted-foreground">학원 이름</span>
             </div>
             <div className="flex items-center gap-2">
-              <code className="bg-white px-2 py-1 rounded border text-blue-700">{'#{학원전화}'}</code>
-              <span className="text-gray-600">학원 전화</span>
+              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원전화}'}</code>
+              <span className="text-muted-foreground">학원 전화</span>
             </div>
           </div>
         </div>
@@ -596,7 +596,7 @@ export default function NotificationSettingsPage() {
         {/* 카카오톡 스타일 미리보기 */}
         {currentTemplateContent && (
           <div className="mt-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">미리보기</p>
+            <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
             {/* 카카오톡 채팅창 스타일 */}
             <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
               {/* 상단 헤더 */}
@@ -647,16 +647,16 @@ export default function NotificationSettingsPage() {
       </div>
 
       {/* 발송 설정 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold mb-4">발송 설정</h2>
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">발송 설정</h2>
 
         <div className="space-y-4">
           {/* SENS 활성화 토글 */}
           {activeTab === 'sens' && (
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">SENS 알림톡 활성화</p>
-                <p className="text-sm text-gray-500">활성화해야 자동 발송이 실행됩니다</p>
+                <p className="font-medium text-foreground">SENS 알림톡 활성화</p>
+                <p className="text-sm text-muted-foreground">활성화해야 자동 발송이 실행됩니다</p>
               </div>
               <button
                 onClick={() => setSettings(prev => ({ ...prev, is_enabled: !prev.is_enabled }))}
@@ -671,8 +671,8 @@ export default function NotificationSettingsPage() {
           {activeTab === 'solapi' && (
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-gray-900">솔라피 알림톡 활성화</p>
-                <p className="text-sm text-gray-500">n8n에서 이 설정을 확인하여 발송 여부를 결정합니다</p>
+                <p className="font-medium text-foreground">솔라피 알림톡 활성화</p>
+                <p className="text-sm text-muted-foreground">n8n에서 이 설정을 확인하여 발송 여부를 결정합니다</p>
               </div>
               <button
                 onClick={() => setSettings(prev => ({ ...prev, solapi_enabled: !prev.solapi_enabled }))}
@@ -687,10 +687,10 @@ export default function NotificationSettingsPage() {
           {activeTab === 'sens' && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   자동 발송 날짜 (여러 날짜 선택 가능)
                 </label>
-                <div className="p-3 border border-gray-300 rounded-lg bg-gray-50">
+                <div className="p-3 border border-border rounded-lg bg-muted">
                   <div className="grid grid-cols-7 gap-2">
                     {[...Array(28)].map((_, i) => {
                       const day = i + 1;
@@ -703,7 +703,7 @@ export default function NotificationSettingsPage() {
                           className={`p-2 text-sm rounded-lg transition-colors ${
                             isSelected
                               ? 'bg-blue-600 text-white font-medium'
-                              : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100'
+                              : 'bg-card border border-border text-foreground hover:bg-muted/80'
                           }`}
                         >
                           {day}
@@ -712,27 +712,27 @@ export default function NotificationSettingsPage() {
                     })}
                   </div>
                   {selectedDays.length > 0 && (
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="text-sm text-blue-700">
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-sm text-blue-700 dark:text-blue-300">
                         <span className="font-medium">선택된 날짜:</span> 매월 {selectedDays.join('일, ')}일
                       </p>
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   선택한 날짜마다 미납자에게 자동으로 알림이 발송됩니다 (매월 반복)
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   자동 발송 시간 (한국 시간)
                 </label>
                 <div className="flex items-center gap-3">
                   <select
                     value={settings.auto_send_hour}
                     onChange={e => setSettings(prev => ({ ...prev, auto_send_hour: parseInt(e.target.value) }))}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     {[...Array(24)].map((_, hour) => (
                       <option key={hour} value={hour}>
@@ -740,7 +740,7 @@ export default function NotificationSettingsPage() {
                       </option>
                     ))}
                   </select>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-muted-foreground">
                     매월 선택한 날짜의 {settings.auto_send_hour.toString().padStart(2, '0')}시 정각에 발송
                   </span>
                 </div>
@@ -753,26 +753,26 @@ export default function NotificationSettingsPage() {
             <>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">자동 발송 활성화</p>
-                  <p className="text-sm text-gray-500">오늘 수업 있는 미납자에게 자동으로 알림톡 발송</p>
+                  <p className="font-medium text-foreground">자동 발송 활성화</p>
+                  <p className="text-sm text-muted-foreground">오늘 수업 있는 미납자에게 자동으로 알림톡 발송</p>
                 </div>
                 <button
                   onClick={() => setSettings(prev => ({ ...prev, solapi_auto_enabled: !prev.solapi_auto_enabled }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_auto_enabled ? 'bg-purple-600' : 'bg-gray-200'}`}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_auto_enabled ? 'bg-purple-600' : 'bg-muted'}`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   자동 발송 시간 (한국 시간)
                 </label>
                 <div className="flex items-center gap-3">
                   <select
                     value={settings.solapi_auto_hour ?? 10}
                     onChange={e => setSettings(prev => ({ ...prev, solapi_auto_hour: parseInt(e.target.value) }))}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   >
                     {[...Array(24)].map((_, hour) => (
                       <option key={hour} value={hour}>
@@ -780,17 +780,17 @@ export default function NotificationSettingsPage() {
                       </option>
                     ))}
                   </select>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-muted-foreground">
                     매일 {(settings.solapi_auto_hour ?? 10).toString().padStart(2, '0')}시에 오늘 수업 있는 미납자에게 발송
                   </span>
                 </div>
               </div>
 
-              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                <p className="text-sm text-purple-800">
+              <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+                <p className="text-sm text-purple-800 dark:text-purple-200">
                   <strong>발송 대상:</strong> 오늘 수업이 예정된 미납 학생
                 </p>
-                <p className="text-xs text-purple-600 mt-1">
+                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
                   예: 월/수/금 수업인 학생은 월/수/금에만 알림톡을 받습니다.
                 </p>
               </div>
@@ -810,10 +810,10 @@ export default function NotificationSettingsPage() {
       </div>
 
       {/* 테스트 발송 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Send className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-semibold">테스트 발송</h2>
+          <Send className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold text-foreground">테스트 발송</h2>
         </div>
 
         <div className="flex gap-3">
@@ -821,7 +821,7 @@ export default function NotificationSettingsPage() {
             type="tel"
             value={testPhone}
             onChange={e => setTestPhone(e.target.value)}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="010-1234-5678"
           />
           <button
@@ -841,13 +841,13 @@ export default function NotificationSettingsPage() {
       </div>
 
       {/* 미납자 수동 발송 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Users className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-semibold">미납자 수동 발송</h2>
+          <Users className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold text-foreground">미납자 수동 발송</h2>
         </div>
 
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-muted-foreground mb-4">
           현재 월({new Date().getMonth() + 1}월) 미납자에게 알림톡을 즉시 발송합니다.
         </p>
 
@@ -868,23 +868,23 @@ export default function NotificationSettingsPage() {
       </div>
 
       {/* 설정 가이드 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold mb-4">설정 가이드</h2>
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">설정 가이드</h2>
 
         <div className="space-y-2">
           {/* SENS 가이드 */}
           {activeTab === 'sens' && (
             <>
-              <div className="border rounded-lg">
+              <div className="border border-border rounded-lg">
                 <button
                   onClick={() => toggleGuide('naver')}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-muted"
                 >
-                  <span className="font-medium">1. Naver Cloud Platform 가입 및 SENS 서비스 등록</span>
+                  <span className="font-medium text-foreground">1. Naver Cloud Platform 가입 및 SENS 서비스 등록</span>
                   {openGuides['naver'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </button>
                 {openGuides['naver'] && (
-                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                  <div className="px-4 pb-4 text-sm text-muted-foreground space-y-2">
                     <p>1. <a href="https://www.ncloud.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">Naver Cloud Platform <ExternalLink className="w-3 h-3" /></a> 접속 후 회원가입</p>
                     <p>2. 콘솔 → Products & Services → SENS 선택</p>
                     <p>3. 프로젝트 생성 후 Service ID 확인</p>
@@ -893,16 +893,16 @@ export default function NotificationSettingsPage() {
                 )}
               </div>
 
-              <div className="border rounded-lg">
+              <div className="border border-border rounded-lg">
                 <button
                   onClick={() => toggleGuide('kakao')}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-muted"
                 >
-                  <span className="font-medium">2. KakaoTalk 비즈니스 채널 생성</span>
+                  <span className="font-medium text-foreground">2. KakaoTalk 비즈니스 채널 생성</span>
                   {openGuides['kakao'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </button>
                 {openGuides['kakao'] && (
-                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                  <div className="px-4 pb-4 text-sm text-muted-foreground space-y-2">
                     <p>1. <a href="https://center-pf.kakao.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">카카오 비즈니스 센터 <ExternalLink className="w-3 h-3" /></a> 접속</p>
                     <p>2. 카카오톡 채널 생성 (비즈니스 채널)</p>
                     <p>3. 채널 ID 확인 (예: @학원이름)</p>
@@ -911,21 +911,21 @@ export default function NotificationSettingsPage() {
                 )}
               </div>
 
-              <div className="border rounded-lg">
+              <div className="border border-border rounded-lg">
                 <button
                   onClick={() => toggleGuide('template')}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-muted"
                 >
-                  <span className="font-medium">3. 알림톡 템플릿 등록 및 승인</span>
+                  <span className="font-medium text-foreground">3. 알림톡 템플릿 등록 및 승인</span>
                   {openGuides['template'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </button>
                 {openGuides['template'] && (
-                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                  <div className="px-4 pb-4 text-sm text-muted-foreground space-y-2">
                     <p>1. Naver Cloud SENS 콘솔 → 알림톡 → 템플릿 관리</p>
                     <p>2. 새 템플릿 등록 (아래 예시 참고)</p>
                     <p>3. 카카오 심사 대기 (영업일 기준 2-3일 소요)</p>
                     <p>4. 승인 완료 후 템플릿 코드를 위 설정에 입력</p>
-                    <div className="mt-3 p-3 bg-gray-100 rounded text-xs font-mono whitespace-pre-wrap">
+                    <div className="mt-3 p-3 bg-muted rounded text-xs font-mono whitespace-pre-wrap text-foreground">
 {`[#{학원명}] 학원비 납부 안내
 
 안녕하세요, #{학생명} 학부모님.
@@ -947,16 +947,16 @@ export default function NotificationSettingsPage() {
           {/* 솔라피 가이드 */}
           {activeTab === 'solapi' && (
             <>
-              <div className="border rounded-lg">
+              <div className="border border-border rounded-lg">
                 <button
                   onClick={() => toggleGuide('solapi-signup')}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-muted"
                 >
-                  <span className="font-medium">1. 솔라피 가입 및 API Key 발급</span>
+                  <span className="font-medium text-foreground">1. 솔라피 가입 및 API Key 발급</span>
                   {openGuides['solapi-signup'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </button>
                 {openGuides['solapi-signup'] && (
-                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                  <div className="px-4 pb-4 text-sm text-muted-foreground space-y-2">
                     <p>1. <a href="https://solapi.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-1">솔라피 <ExternalLink className="w-3 h-3" /></a> 접속 후 회원가입</p>
                     <p>2. 사업자등록증 인증 (알림톡 발송에 필요)</p>
                     <p>3. 콘솔 → API Key 메뉴에서 API Key/Secret 발급</p>
@@ -965,16 +965,16 @@ export default function NotificationSettingsPage() {
                 )}
               </div>
 
-              <div className="border rounded-lg">
+              <div className="border border-border rounded-lg">
                 <button
                   onClick={() => toggleGuide('solapi-channel')}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-muted"
                 >
-                  <span className="font-medium">2. 카카오톡 채널 연동</span>
+                  <span className="font-medium text-foreground">2. 카카오톡 채널 연동</span>
                   {openGuides['solapi-channel'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </button>
                 {openGuides['solapi-channel'] && (
-                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                  <div className="px-4 pb-4 text-sm text-muted-foreground space-y-2">
                     <p>1. 솔라피 콘솔 → 알림톡 → 채널 관리</p>
                     <p>2. 카카오톡 채널 연동 (카카오 비즈니스 채널 필요)</p>
                     <p>3. 채널 ID (pfId) 확인 후 위 설정에 입력</p>
@@ -982,16 +982,16 @@ export default function NotificationSettingsPage() {
                 )}
               </div>
 
-              <div className="border rounded-lg">
+              <div className="border border-border rounded-lg">
                 <button
                   onClick={() => toggleGuide('solapi-template')}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50"
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-muted"
                 >
-                  <span className="font-medium">3. 알림톡 템플릿 등록</span>
+                  <span className="font-medium text-foreground">3. 알림톡 템플릿 등록</span>
                   {openGuides['solapi-template'] ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                 </button>
                 {openGuides['solapi-template'] && (
-                  <div className="px-4 pb-4 text-sm text-gray-600 space-y-2">
+                  <div className="px-4 pb-4 text-sm text-muted-foreground space-y-2">
                     <p>1. 솔라피 콘솔 → 알림톡 → 템플릿 관리</p>
                     <p>2. 새 템플릿 등록</p>
                     <p>3. 카카오 심사 대기 (영업일 기준 1-2일)</p>
@@ -1005,30 +1005,30 @@ export default function NotificationSettingsPage() {
       </div>
 
       {/* 최근 발송 내역 */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold mb-4">최근 발송 내역</h2>
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+        <h2 className="text-lg font-semibold text-foreground mb-4">최근 발송 내역</h2>
 
         {logs.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">발송 내역이 없습니다</p>
+          <p className="text-muted-foreground text-center py-8">발송 내역이 없습니다</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="text-left py-2 px-2">발송시간</th>
-                  <th className="text-left py-2 px-2">수신자</th>
-                  <th className="text-left py-2 px-2">전화번호</th>
-                  <th className="text-left py-2 px-2">상태</th>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 px-2 text-muted-foreground">발송시간</th>
+                  <th className="text-left py-2 px-2 text-muted-foreground">수신자</th>
+                  <th className="text-left py-2 px-2 text-muted-foreground">전화번호</th>
+                  <th className="text-left py-2 px-2 text-muted-foreground">상태</th>
                 </tr>
               </thead>
               <tbody>
                 {logs.map(log => (
-                  <tr key={log.id} className="border-b last:border-0">
-                    <td className="py-2 px-2 text-gray-500">
+                  <tr key={log.id} className="border-b border-border last:border-0">
+                    <td className="py-2 px-2 text-muted-foreground">
                       {log.sent_at ? new Date(log.sent_at).toLocaleString('ko-KR') : '-'}
                     </td>
-                    <td className="py-2 px-2">{log.recipient_name || log.student_name || '-'}</td>
-                    <td className="py-2 px-2">{log.recipient_phone}</td>
+                    <td className="py-2 px-2 text-foreground">{log.recipient_name || log.student_name || '-'}</td>
+                    <td className="py-2 px-2 text-foreground">{log.recipient_phone}</td>
                     <td className="py-2 px-2">{getStatusBadge(log.status)}</td>
                   </tr>
                 ))}

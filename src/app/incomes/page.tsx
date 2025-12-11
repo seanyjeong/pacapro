@@ -184,11 +184,11 @@ export default function IncomesPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">수입 관리</h1>
+        <h1 className="text-3xl font-bold text-foreground">수입 관리</h1>
         <Card>
           <CardContent className="p-12 text-center">
             <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">수입 내역을 불러오는 중...</p>
+            <p className="text-muted-foreground">수입 내역을 불러오는 중...</p>
           </CardContent>
         </Card>
       </div>
@@ -199,15 +199,15 @@ export default function IncomesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">수입 관리</h1>
-          <p className="text-gray-600 mt-1">학원비 수납 및 기타 수입 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">수입 관리</h1>
+          <p className="text-muted-foreground mt-1">학원비 수납 및 기타 수입 관리</p>
         </div>
         <div className="flex items-center gap-3">
           <input
             type="month"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md"
+            className="px-3 py-2 border border-border bg-background text-foreground rounded-md"
           />
           <Button variant="outline" onClick={handleExportRevenue} disabled={exporting}>
             {exporting ? (
@@ -232,7 +232,7 @@ export default function IncomesPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">총 수입</p>
+                <p className="text-sm text-muted-foreground">총 수입</p>
                 <p className="text-2xl font-bold text-green-600">{formatAmount(totalIncome)}원</p>
               </div>
               <TrendingUp className="w-8 h-8 text-green-600" />
@@ -244,9 +244,9 @@ export default function IncomesPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">학원비 수납</p>
+                <p className="text-sm text-muted-foreground">학원비 수납</p>
                 <p className="text-2xl font-bold text-blue-600">{formatAmount(totalTuition)}원</p>
-                <p className="text-xs text-gray-500">{tuitionPayments.length}건</p>
+                <p className="text-xs text-muted-foreground">{tuitionPayments.length}건</p>
               </div>
               <CreditCard className="w-8 h-8 text-blue-600" />
             </div>
@@ -257,9 +257,9 @@ export default function IncomesPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">기타 수입</p>
+                <p className="text-sm text-muted-foreground">기타 수입</p>
                 <p className="text-2xl font-bold text-purple-600">{formatAmount(totalOther)}원</p>
-                <p className="text-xs text-gray-500">{otherIncomes.length}건</p>
+                <p className="text-xs text-muted-foreground">{otherIncomes.length}건</p>
               </div>
               <Banknote className="w-8 h-8 text-purple-600" />
             </div>
@@ -269,16 +269,16 @@ export default function IncomesPage() {
         <Card>
           <CardContent className="p-6">
             <div>
-              <p className="text-sm text-gray-600">수입 비율</p>
+              <p className="text-sm text-muted-foreground">수입 비율</p>
               <div className="flex items-center gap-2 mt-2">
-                <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div className="flex-1 bg-muted rounded-full h-3 overflow-hidden">
                   <div
                     className="h-full bg-blue-500"
                     style={{ width: totalIncome > 0 ? `${(totalTuition / totalIncome) * 100}%` : '0%' }}
                   />
                 </div>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 학원비 {totalIncome > 0 ? Math.round((totalTuition / totalIncome) * 100) : 0}% / 기타 {totalIncome > 0 ? Math.round((totalOther / totalIncome) * 100) : 0}%
               </p>
             </div>
@@ -296,22 +296,22 @@ export default function IncomesPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">날짜 *</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">날짜 *</label>
                   <input
                     type="date"
                     value={formData.income_date}
                     onChange={(e) => setFormData({ ...formData, income_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">카테고리 *</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">카테고리 *</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                   >
                     <option value="clothing">의류</option>
                     <option value="shoes">신발</option>
@@ -324,12 +324,12 @@ export default function IncomesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">금액 *</label>
+                <label className="block text-sm font-medium text-foreground mb-1">금액 *</label>
                 <input
                   type="number"
                   value={formData.amount || ''}
                   onChange={(e) => setFormData({ ...formData, amount: Math.floor(Number(e.target.value)) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                   min="0"
                   step="1000"
                   placeholder="0"
@@ -338,22 +338,22 @@ export default function IncomesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
+                <label className="block text-sm font-medium text-foreground mb-1">설명</label>
                 <input
                   type="text"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                   placeholder="예: 운동복 판매, 음료수 판매 등"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">결제 방법</label>
+                <label className="block text-sm font-medium text-foreground mb-1">결제 방법</label>
                 <select
                   value={formData.payment_method}
                   onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                 >
                   <option value="cash">현금</option>
                   <option value="card">카드</option>
@@ -362,11 +362,11 @@ export default function IncomesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
+                <label className="block text-sm font-medium text-foreground mb-1">메모</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                   rows={3}
                 />
               </div>
@@ -381,14 +381,14 @@ export default function IncomesPage() {
       )}
 
       {/* 탭 메뉴 */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('all')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'all'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             전체 ({tuitionPayments.length + otherIncomes.length})
@@ -398,7 +398,7 @@ export default function IncomesPage() {
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'tuition'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             학원비 수납 ({tuitionPayments.length})
@@ -408,7 +408,7 @@ export default function IncomesPage() {
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'other'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             기타 수입 ({otherIncomes.length})
@@ -428,31 +428,31 @@ export default function IncomesPage() {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">학생</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">청구월</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">금액</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">납부일</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">결제방법</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">학생</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">청구월</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">금액</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">납부일</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">결제방법</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card divide-y divide-border">
                   {tuitionPayments.map((payment) => (
-                    <tr key={`tuition-${payment.id}`} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                    <tr key={`tuition-${payment.id}`} className="hover:bg-muted/50">
+                      <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground">
                         {payment.student_name}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
                         {payment.year_month}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap font-semibold text-blue-600">
                         +{formatAmount(payment.final_amount)}원
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
                         {payment.paid_date?.split('T')[0] || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {PAYMENT_METHOD_MAP[payment.payment_method] || payment.payment_method || '-'}
                       </td>
                     </tr>
@@ -476,32 +476,32 @@ export default function IncomesPage() {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">날짜</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">카테고리</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">설명</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">금액</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">결제</th>
-                    {canEditIncomes && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">관리</th>}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">날짜</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">카테고리</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">설명</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">금액</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">결제</th>
+                    {canEditIncomes && <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">관리</th>}
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card divide-y divide-border">
                   {otherIncomes.map((income) => (
-                    <tr key={`other-${income.id}`} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                    <tr key={`other-${income.id}`} className="hover:bg-muted/50">
+                      <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
                         {income.income_date.split('T')[0]}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">
+                        <span className="px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded">
                           {CATEGORY_MAP[income.category] || income.category}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-gray-900">{income.description || '-'}</td>
+                      <td className="px-6 py-4 text-foreground">{income.description || '-'}</td>
                       <td className="px-6 py-4 whitespace-nowrap font-semibold text-purple-600">
                         +{formatAmount(income.amount)}원
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                         {PAYMENT_METHOD_MAP[income.payment_method || 'cash']}
                       </td>
                       {canEditIncomes && (
@@ -509,13 +509,13 @@ export default function IncomesPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleEdit(income)}
-                              className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                              className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 rounded"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDelete(income.id)}
-                              className="p-1 text-red-600 hover:bg-red-50 rounded"
+                              className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900 rounded"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -535,9 +535,9 @@ export default function IncomesPage() {
       {tuitionPayments.length === 0 && otherIncomes.length === 0 && !showForm && (
         <Card>
           <CardContent className="p-12 text-center">
-            <Banknote className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">이번 달 수입이 없습니다</h3>
-            <p className="text-gray-600">수입이 발생하면 여기에 표시됩니다.</p>
+            <Banknote className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">이번 달 수입이 없습니다</h3>
+            <p className="text-muted-foreground">수입이 발생하면 여기에 표시됩니다.</p>
           </CardContent>
         </Card>
       )}

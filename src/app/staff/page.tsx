@@ -85,14 +85,14 @@ export default function StaffPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">직원 관리</h1>
-          <p className="text-gray-600 mt-1">강사에게 관리 권한 부여</p>
+          <h1 className="text-3xl font-bold text-foreground">직원 관리</h1>
+          <p className="text-muted-foreground mt-1">강사에게 관리 권한 부여</p>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
             <Button onClick={loadData}>다시 시도</Button>
           </CardContent>
         </Card>
@@ -106,8 +106,8 @@ export default function StaffPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">직원 관리</h1>
-          <p className="text-gray-600 mt-1">등록된 강사에게 관리 권한을 부여합니다</p>
+          <h1 className="text-3xl font-bold text-foreground">직원 관리</h1>
+          <p className="text-muted-foreground mt-1">등록된 강사에게 관리 권한을 부여합니다</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={loadData}>
@@ -127,10 +127,10 @@ export default function StaffPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">등록된 직원</p>
-                <p className="text-2xl font-bold text-gray-900">{staffList.length}명</p>
+                <p className="text-sm text-muted-foreground">등록된 직원</p>
+                <p className="text-2xl font-bold text-foreground">{staffList.length}명</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                 <Users className="w-6 h-6 text-blue-600" />
               </div>
             </div>
@@ -141,10 +141,10 @@ export default function StaffPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">활성 계정</p>
+                <p className="text-sm text-muted-foreground">활성 계정</p>
                 <p className="text-2xl font-bold text-green-600">{activeCount}명</p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
                 <Shield className="w-6 h-6 text-green-600" />
               </div>
             </div>
@@ -155,10 +155,10 @@ export default function StaffPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">권한 부여 가능</p>
+                <p className="text-sm text-muted-foreground">권한 부여 가능</p>
                 <p className="text-2xl font-bold text-purple-600">{availableInstructors.length}명</p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
                 <UserPlus className="w-6 h-6 text-purple-600" />
               </div>
             </div>
@@ -167,15 +167,15 @@ export default function StaffPage() {
       </div>
 
       {/* 안내 메시지 */}
-      <Card className="bg-blue-50 border-blue-200">
+      <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Shield className="w-4 h-4 text-blue-600" />
+            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center flex-shrink-0">
+              <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h4 className="font-medium text-blue-900">권한 관리 안내</h4>
-              <p className="text-sm text-blue-700 mt-1">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100">권한 관리 안내</h4>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                 등록된 강사 중에서 관리 권한이 필요한 분에게 로그인 계정을 부여할 수 있습니다.
                 각 페이지별로 보기/수정 권한을 개별 설정할 수 있습니다.
               </p>

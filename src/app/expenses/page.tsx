@@ -104,11 +104,11 @@ export default function ExpensesPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">지출 관리</h1>
+        <h1 className="text-3xl font-bold text-foreground">지출 관리</h1>
         <Card>
           <CardContent className="p-12 text-center">
             <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">지출 목록을 불러오는 중...</p>
+            <p className="text-muted-foreground">지출 목록을 불러오는 중...</p>
           </CardContent>
         </Card>
       </div>
@@ -119,8 +119,8 @@ export default function ExpensesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">지출 관리</h1>
-          <p className="text-gray-600 mt-1">학원 운영 지출 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">지출 관리</h1>
+          <p className="text-muted-foreground mt-1">학원 운영 지출 관리</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleExportExpenses} disabled={exporting}>
@@ -145,8 +145,8 @@ export default function ExpensesPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">총 지출 건수</p>
-                <p className="text-2xl font-bold text-gray-900">{expenses.length}건</p>
+                <p className="text-sm text-muted-foreground">총 지출 건수</p>
+                <p className="text-2xl font-bold text-foreground">{expenses.length}건</p>
               </div>
               <TrendingDown className="w-8 h-8 text-red-600" />
             </div>
@@ -157,7 +157,7 @@ export default function ExpensesPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">총 지출 금액</p>
+                <p className="text-sm text-muted-foreground">총 지출 금액</p>
                 <p className="text-2xl font-bold text-red-600">{formatAmount(totalExpenses)}원</p>
               </div>
               <Banknote className="w-8 h-8 text-red-600" />
@@ -168,8 +168,8 @@ export default function ExpensesPage() {
         <Card>
           <CardContent className="p-6">
             <div>
-              <p className="text-sm text-gray-600">월 평균 지출</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-muted-foreground">월 평균 지출</p>
+              <p className="text-2xl font-bold text-foreground">
                 {expenses.length > 0 ? formatAmount(totalExpenses / 12) : 0}원
               </p>
             </div>
@@ -186,22 +186,22 @@ export default function ExpensesPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">지출일 *</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">지출일 *</label>
                   <input
                     type="date"
                     value={formData.expense_date}
                     onChange={(e) => setFormData({ ...formData, expense_date: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">카테고리 *</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">카테고리 *</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                   >
                     <option value="utilities">공과금</option>
                     <option value="rent">임대료</option>
@@ -215,34 +215,34 @@ export default function ExpensesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">금액 *</label>
+                <label className="block text-sm font-medium text-foreground mb-1">금액 *</label>
                 <input
                   type="number"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                   min="0"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
+                <label className="block text-sm font-medium text-foreground mb-1">설명</label>
                 <input
                   type="text"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                   placeholder="지출 내역 설명"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">지불 방법</label>
+                <label className="block text-sm font-medium text-foreground mb-1">지불 방법</label>
                 <select
                   value={formData.payment_method}
                   onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                 >
                   <option value="account">계좌이체</option>
                   <option value="card">카드</option>
@@ -252,11 +252,11 @@ export default function ExpensesPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
+                <label className="block text-sm font-medium text-foreground mb-1">메모</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                   rows={3}
                 />
               </div>
@@ -274,36 +274,36 @@ export default function ExpensesPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-muted border-b border-border">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">날짜</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">카테고리</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">설명</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">금액</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">지불방법</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">날짜</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">카테고리</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">설명</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">금액</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">지불방법</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-card divide-y divide-border">
                 {expenses.map((expense) => (
-                  <tr key={expense.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{expense.expense_date}</td>
+                  <tr key={expense.id} className="hover:bg-muted/50">
+                    <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{expense.expense_date}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded">
+                        <span className="px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded">
                           {categoryMap[expense.category] || expense.category}
                         </span>
                         {expense.category === 'salary' && expense.instructor_name && (
-                          <span className="ml-2 text-sm font-medium text-gray-700">
+                          <span className="ml-2 text-sm font-medium text-foreground">
                             ({expense.instructor_name})
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-gray-900">{expense.description || '-'}</td>
+                    <td className="px-6 py-4 text-foreground">{expense.description || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap font-semibold text-red-600">
                       -{formatAmount(expense.amount)}원
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                       {expense.payment_method === 'account' && '계좌이체'}
                       {expense.payment_method === 'card' && '카드'}
                       {expense.payment_method === 'cash' && '현금'}
@@ -320,9 +320,9 @@ export default function ExpensesPage() {
       {expenses.length === 0 && (
         <Card>
           <CardContent className="p-12 text-center">
-            <Banknote className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">등록된 지출이 없습니다</h3>
-            <p className="text-gray-600">지출을 등록하시면 여기에 표시됩니다.</p>
+            <Banknote className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">등록된 지출이 없습니다</h3>
+            <p className="text-muted-foreground">지출을 등록하시면 여기에 표시됩니다.</p>
           </CardContent>
         </Card>
       )}

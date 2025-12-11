@@ -52,10 +52,10 @@ interface SchedulesBySlot {
 
 type TimeSlot = 'morning' | 'afternoon' | 'evening';
 
-const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; bgColor: string; defaultStart: string; defaultEnd: string }[] = [
-  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600', bgColor: 'bg-orange-50', defaultStart: '09:00', defaultEnd: '12:00' },
-  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-blue-600', bgColor: 'bg-blue-50', defaultStart: '13:00', defaultEnd: '17:00' },
-  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600', bgColor: 'bg-purple-50', defaultStart: '18:00', defaultEnd: '21:00' },
+const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; bgColor: string; darkBgColor: string; defaultStart: string; defaultEnd: string }[] = [
+  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50', darkBgColor: 'dark:bg-orange-950', defaultStart: '09:00', defaultEnd: '12:00' },
+  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50', darkBgColor: 'dark:bg-blue-950', defaultStart: '13:00', defaultEnd: '17:00' },
+  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50', darkBgColor: 'dark:bg-purple-950', defaultStart: '18:00', defaultEnd: '21:00' },
 ];
 
 interface InstructorSchedulePanelProps {
@@ -221,7 +221,7 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
   if (!date) {
     return (
       <Card>
-        <CardContent className="p-8 text-center text-gray-500">
+        <CardContent className="p-8 text-center text-muted-foreground">
           <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>날짜를 선택하세요</p>
         </CardContent>
@@ -254,7 +254,7 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
             </Button>
           )}
         </div>
-        <p className="text-sm text-gray-600">{formattedDate}</p>
+        <p className="text-sm text-muted-foreground">{formattedDate}</p>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -266,7 +266,7 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
           <>
             {/* 타임슬롯 탭 */}
             <div className="flex gap-2">
-              {TIME_SLOTS.map(({ slot, label, icon: Icon, color, bgColor }) => {
+              {TIME_SLOTS.map(({ slot, label, icon: Icon, color, bgColor, darkBgColor }) => {
                 const count = Object.values(selections[slot]).filter((s) => s.selected).length;
                 return (
                   <button
@@ -275,8 +275,8 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
                     className={cn(
                       'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border transition-all',
                       activeSlot === slot
-                        ? `${bgColor} border-current ${color} font-medium`
-                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                        ? `${bgColor} ${darkBgColor} border-current ${color} font-medium`
+                        : 'bg-muted border-border text-muted-foreground hover:bg-muted/80'
                     )}
                   >
                     <Icon className="w-4 h-4" />
@@ -294,7 +294,7 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
             {/* 강사 목록 */}
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
               {instructors.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-muted-foreground">
                   <User className="w-10 h-10 mx-auto mb-2 opacity-50" />
                   <p>등록된 강사가 없습니다</p>
                 </div>
@@ -310,8 +310,8 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
                       className={cn(
                         'p-3 rounded-lg border transition-all',
                         isSelected
-                          ? `${activeSlotInfo.bgColor} border-current`
-                          : 'bg-white border-gray-200 hover:border-gray-300'
+                          ? `${activeSlotInfo.bgColor} ${activeSlotInfo.darkBgColor} border-current`
+                          : 'bg-card border-border hover:border-muted-foreground'
                       )}
                     >
                       <div className="flex items-center justify-between">
@@ -322,13 +322,13 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
                           <div
                             className={cn(
                               'w-8 h-8 rounded-full flex items-center justify-center transition-colors',
-                              isSelected ? 'bg-white' : 'bg-gray-100'
+                              isSelected ? 'bg-white dark:bg-gray-800' : 'bg-muted'
                             )}
                           >
                             {isSelected ? (
                               <Check className={cn('w-4 h-4', activeSlotInfo.color)} />
                             ) : (
-                              <User className="w-4 h-4 text-gray-400" />
+                              <User className="w-4 h-4 text-muted-foreground" />
                             )}
                           </div>
                           <div>
@@ -348,14 +348,14 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
                       {/* 시급제 강사 시간 입력 */}
                       {isSelected && isHourly && (
                         <div className="mt-3 pl-11 flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-400" />
+                          <Clock className="w-4 h-4 text-muted-foreground" />
                           <Input
                             type="time"
                             value={selection?.startTime || ''}
                             onChange={(e) => updateTime(instructor.id, 'startTime', e.target.value)}
                             className="w-28 h-8 text-sm"
                           />
-                          <span className="text-gray-400">~</span>
+                          <span className="text-muted-foreground">~</span>
                           <Input
                             type="time"
                             value={selection?.endTime || ''}
@@ -371,8 +371,8 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
             </div>
 
             {/* 버튼 영역 */}
-            <div className="flex items-center justify-between pt-4 border-t">
-              <span className="text-sm text-gray-600">
+            <div className="flex items-center justify-between pt-4 border-t border-border">
+              <span className="text-sm text-muted-foreground">
                 총 {totalSelectedCount}명 배정
               </span>
               <div className="flex gap-2">

@@ -75,20 +75,20 @@ function NewStudentContent() {
           목록으로
         </Button>
 
-        <h1 className="text-3xl font-bold text-gray-900">학생 등록</h1>
-        <p className="text-gray-600 mt-1">새로운 학생 정보를 등록합니다</p>
+        <h1 className="text-3xl font-bold text-foreground">학생 등록</h1>
+        <p className="text-muted-foreground mt-1">새로운 학생 정보를 등록합니다</p>
       </div>
 
       {/* Form */}
       <StudentForm mode="create" initialIsTrial={isTrial} onSubmit={handleSubmit} onCancel={handleCancel} />
 
       {/* 안내 */}
-      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
         <div className="flex items-start space-x-3">
-          <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+          <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
           <div className="flex-1">
-            <h4 className="text-sm font-semibold text-blue-900 mb-1">안내사항</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
+            <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">안내사항</h4>
+            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
               <li>• 학번을 입력하지 않으면 자동으로 생성됩니다.</li>
               <li>• 필수 항목(*)은 반드시 입력해야 합니다.</li>
               <li>• 등록 후 학생 상세 페이지에서 수정할 수 있습니다.</li>

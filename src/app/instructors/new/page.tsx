@@ -32,13 +32,13 @@ export default function NewInstructorPage() {
       <div className="flex items-center space-x-4">
         <button
           onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-muted rounded-lg transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">강사 등록</h1>
-          <p className="text-gray-600 mt-1">새로운 강사를 등록합니다</p>
+          <h1 className="text-3xl font-bold text-foreground">강사 등록</h1>
+          <p className="text-muted-foreground mt-1">새로운 강사를 등록합니다</p>
         </div>
       </div>
 

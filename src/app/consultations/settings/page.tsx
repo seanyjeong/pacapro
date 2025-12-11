@@ -518,7 +518,7 @@ export default function ConsultationSettingsPage() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold">상담 예약 설정</h1>
-            <p className="text-gray-500">{academyName}</p>
+            <p className="text-muted-foreground">{academyName}</p>
           </div>
         </div>
       </div>
@@ -547,7 +547,7 @@ export default function ConsultationSettingsPage() {
             <div className="flex-1">
               <Label>페이지 주소 (slug)</Label>
               <div className="flex gap-2 mt-1">
-                <div className="flex items-center bg-gray-100 px-3 rounded-l-md border border-r-0 text-gray-500 text-sm">
+                <div className="flex items-center bg-muted px-3 rounded-l-md border border-r-0 border-border text-muted-foreground text-sm">
                   {typeof window !== 'undefined' ? window.location.origin : ''}/c/
                 </div>
                 <Input
@@ -563,15 +563,15 @@ export default function ConsultationSettingsPage() {
                   {checkingSlug ? <Loader2 className="h-4 w-4 animate-spin" /> : '중복 확인'}
                 </Button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 영문 소문자, 숫자, 하이픈(-)만 사용 가능
               </p>
             </div>
           </div>
 
           {slug && (
-            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-              <span className="text-sm text-blue-800 flex-1">
+            <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <span className="text-sm text-blue-800 dark:text-blue-200 flex-1">
                 {typeof window !== 'undefined' ? `${window.location.origin}/c/${slug}` : ''}
               </span>
               <Button variant="outline" size="sm" onClick={copyLink}>
@@ -686,8 +686,8 @@ export default function ConsultationSettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* 기본 시간 일괄 설정 */}
-          <div className="p-4 bg-blue-50 rounded-lg space-y-3">
-            <p className="text-sm font-medium text-blue-900">기본 시간 일괄 설정</p>
+          <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg space-y-3">
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-100">기본 시간 일괄 설정</p>
             <div className="flex items-center gap-3 flex-wrap">
               <Select
                 value={defaultStartTime}
@@ -727,7 +727,7 @@ export default function ConsultationSettingsPage() {
 
           {/* 개별 요일 설정 */}
           {weeklyHours.map((hour) => (
-            <div key={hour.dayOfWeek} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+            <div key={hour.dayOfWeek} className="flex items-center gap-4 p-3 bg-muted rounded-lg">
               <div className="w-12 text-center font-medium">
                 {DAY_LABELS[hour.dayOfWeek]}
               </div>
@@ -766,7 +766,7 @@ export default function ConsultationSettingsPage() {
                   </Select>
                 </>
               ) : (
-                <span className="text-gray-400">휴무</span>
+                <span className="text-muted-foreground">휴무</span>
               )}
             </div>
           ))}
@@ -889,22 +889,22 @@ export default function ConsultationSettingsPage() {
         <CardContent className="space-y-4">
           {/* 카테고리별 체크리스트 표시 */}
           {checklistCategories.map((category) => (
-            <div key={category} className="border rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-3">{category}</h4>
+            <div key={category} className="border border-border rounded-lg p-4">
+              <h4 className="font-medium text-foreground mb-3">{category}</h4>
               <div className="space-y-2">
                 {checklistTemplate
                   .filter(item => item.category === category)
                   .map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                    <div key={item.id} className="flex items-center justify-between p-2 bg-muted rounded">
                       <div className="flex-1">
                         <span className="text-sm">{item.text}</span>
                         {item.input && (
-                          <span className="text-xs text-gray-500 ml-2">
+                          <span className="text-xs text-muted-foreground ml-2">
                             ({item.input.type === 'text' ? '텍스트 입력' : `선택: ${item.input.options?.join(', ')}`})
                           </span>
                         )}
                         {item.inputs && (
-                          <span className="text-xs text-gray-500 ml-2">
+                          <span className="text-xs text-muted-foreground ml-2">
                             (다중 입력)
                           </span>
                         )}
