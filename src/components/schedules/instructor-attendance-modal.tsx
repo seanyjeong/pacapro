@@ -26,12 +26,12 @@ export function InstructorAttendanceModal({
     >
       {/* Modal content */}
       <div
-        className="relative bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden"
+        className="relative bg-card rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">강사 출근 체크</h2>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <h2 className="text-lg font-semibold text-foreground">강사 출근 체크</h2>
             <Button
               variant="ghost"
               size="sm"

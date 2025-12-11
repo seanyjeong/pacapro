@@ -812,13 +812,13 @@ export default function ConsultationSettingsPage() {
           {blockedSlots.length > 0 && (
             <div className="space-y-2">
               {blockedSlots.map((slot) => (
-                <div key={slot.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                <div key={slot.id} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950 rounded-lg">
                   <div>
-                    <span className="font-medium">
+                    <span className="font-medium text-foreground">
                       {format(parseISO(slot.blocked_date), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
                     </span>
                     {slot.reason && (
-                      <span className="text-sm text-gray-500 ml-2">- {slot.reason}</span>
+                      <span className="text-sm text-muted-foreground ml-2">- {slot.reason}</span>
                     )}
                   </div>
                   <Button
