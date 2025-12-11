@@ -39,8 +39,8 @@ export function InstructorFiltersComponent({
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-gray-600" />
-            <h3 className="text-sm font-semibold text-gray-900">필터</h3>
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">필터</h3>
           </div>
           {hasActiveFilters && (
             <Button variant="outline" size="sm" onClick={onReset}>
@@ -53,11 +53,11 @@ export function InstructorFiltersComponent({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* 급여타입 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">급여타입</label>
+            <label className="block text-sm font-medium text-foreground mb-2">급여타입</label>
             <select
               value={filters.salary_type || ''}
               onChange={(e) => handleChange('salary_type', e.target.value || undefined)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
             >
               <option value="">전체</option>
               {SALARY_TYPE_OPTIONS.map((option) => (
@@ -70,11 +70,11 @@ export function InstructorFiltersComponent({
 
           {/* 강사 유형 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">강사 유형</label>
+            <label className="block text-sm font-medium text-foreground mb-2">강사 유형</label>
             <select
               value={filters.instructor_type || ''}
               onChange={(e) => handleChange('instructor_type', e.target.value || undefined)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
             >
               <option value="">전체</option>
               {INSTRUCTOR_TYPE_OPTIONS.map((option) => (
@@ -87,11 +87,11 @@ export function InstructorFiltersComponent({
 
           {/* 성별 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">성별</label>
+            <label className="block text-sm font-medium text-foreground mb-2">성별</label>
             <select
               value={filters.gender || ''}
               onChange={(e) => handleChange('gender', e.target.value || undefined)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
             >
               <option value="">전체</option>
               {GENDER_OPTIONS.map((option) => (
@@ -104,11 +104,11 @@ export function InstructorFiltersComponent({
 
           {/* 상태 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">상태</label>
+            <label className="block text-sm font-medium text-foreground mb-2">상태</label>
             <select
               value={filters.status || ''}
               onChange={(e) => handleChange('status', e.target.value || undefined)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
             >
               <option value="">전체</option>
               {INSTRUCTOR_STATUS_OPTIONS.map((option) => (

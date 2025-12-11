@@ -200,8 +200,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">설정</h1>
-        <p className="text-gray-600 mt-1">학원 및 계정 설정 관리</p>
+        <h1 className="text-3xl font-bold text-foreground">설정</h1>
+        <p className="text-muted-foreground mt-1">학원 및 계정 설정 관리</p>
       </div>
 
       {/* 내 정보 */}
@@ -215,29 +215,29 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
+              <label className="block text-sm font-medium text-foreground mb-1">이름</label>
               <input
                 type="text"
                 value={user?.name || ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground"
                 disabled
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">이메일</label>
+              <label className="block text-sm font-medium text-foreground mb-1">이메일</label>
               <input
                 type="email"
                 value={user?.email || ''}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground"
                 disabled
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">권한</label>
+              <label className="block text-sm font-medium text-foreground mb-1">권한</label>
               <input
                 type="text"
                 value={user?.role === 'owner' ? '원장' : user?.role === 'admin' ? '관리자' : '강사'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                className="w-full px-3 py-2 border border-border rounded-md bg-muted text-foreground"
                 disabled
               />
             </div>
@@ -259,54 +259,54 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">학원명</label>
+              <label className="block text-sm font-medium text-foreground mb-1">학원명</label>
               <input
                 type="text"
                 value={academySettings.academy_name}
                 onChange={(e) => setAcademySettings({ ...academySettings, academy_name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                 placeholder="예: 파카학원"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">전화번호</label>
+              <label className="block text-sm font-medium text-foreground mb-1">전화번호</label>
               <input
                 type="tel"
                 value={academySettings.phone}
                 onChange={(e) => setAcademySettings({ ...academySettings, phone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                 placeholder="010-0000-0000"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">주소</label>
+              <label className="block text-sm font-medium text-foreground mb-1">주소</label>
               <input
                 type="text"
                 value={academySettings.address}
                 onChange={(e) => setAcademySettings({ ...academySettings, address: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                 placeholder="학원 주소"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">사업자등록번호</label>
+              <label className="block text-sm font-medium text-foreground mb-1">사업자등록번호</label>
               <input
                 type="text"
                 value={academySettings.business_number}
                 onChange={(e) => setAcademySettings({ ...academySettings, business_number: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                 placeholder="000-00-00000"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 기본 납부일 <span className="text-red-500">*</span>
               </label>
               <div className="flex items-center gap-2">
                 <select
                   value={academySettings.tuition_due_day}
                   onChange={(e) => setAcademySettings({ ...academySettings, tuition_due_day: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
                 >
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
                     <option key={day} value={day}>
@@ -315,7 +315,7 @@ export default function SettingsPage() {
                   ))}
                 </select>
               </div>
-              <p className="text-xs text-gray-500 mt-1">학생별로 다른 납부일을 설정할 수 있습니다</p>
+              <p className="text-xs text-muted-foreground mt-1">학생별로 다른 납부일을 설정할 수 있습니다</p>
             </div>
           </div>
         </CardContent>
@@ -328,13 +328,13 @@ export default function SettingsPage() {
             <Clock className="w-5 h-5 text-indigo-600" />
             <CardTitle>수업 시간대 설정</CardTitle>
           </div>
-          <p className="text-sm text-gray-500 mt-1">오전/오후/저녁 수업 시간을 설정합니다.</p>
+          <p className="text-sm text-muted-foreground mt-1">오전/오후/저녁 수업 시간을 설정합니다.</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* 오전반 */}
-            <div className="p-4 bg-orange-50 rounded-lg">
-              <label className="block text-sm font-medium text-orange-800 mb-3">
+            <div className="p-4 bg-orange-50 dark:bg-orange-950 rounded-lg">
+              <label className="block text-sm font-medium text-orange-800 dark:text-orange-200 mb-3">
                 🌅 오전반
               </label>
               <div className="flex items-center gap-2">
@@ -344,20 +344,20 @@ export default function SettingsPage() {
                     const { end } = parseTimeRange(academySettings.morning_class_time);
                     setAcademySettings({ ...academySettings, morning_class_time: formatTimeRange(e.target.value, end) });
                   }}
-                  className="flex-1 px-2 py-2 border border-orange-200 rounded-md text-sm"
+                  className="flex-1 px-2 py-2 border border-orange-200 dark:border-orange-800 rounded-md text-sm bg-background text-foreground"
                 >
                   {TIME_OPTIONS.map(time => (
                     <option key={time} value={time}>{time}</option>
                   ))}
                 </select>
-                <span className="text-gray-500">~</span>
+                <span className="text-muted-foreground">~</span>
                 <select
                   value={parseTimeRange(academySettings.morning_class_time).end}
                   onChange={(e) => {
                     const { start } = parseTimeRange(academySettings.morning_class_time);
                     setAcademySettings({ ...academySettings, morning_class_time: formatTimeRange(start, e.target.value) });
                   }}
-                  className="flex-1 px-2 py-2 border border-orange-200 rounded-md text-sm"
+                  className="flex-1 px-2 py-2 border border-orange-200 dark:border-orange-800 rounded-md text-sm bg-background text-foreground"
                 >
                   {TIME_OPTIONS.map(time => (
                     <option key={time} value={time}>{time}</option>
@@ -367,8 +367,8 @@ export default function SettingsPage() {
             </div>
 
             {/* 오후반 */}
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <label className="block text-sm font-medium text-blue-800 mb-3">
+            <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <label className="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-3">
                 ☀️ 오후반
               </label>
               <div className="flex items-center gap-2">
@@ -378,20 +378,20 @@ export default function SettingsPage() {
                     const { end } = parseTimeRange(academySettings.afternoon_class_time);
                     setAcademySettings({ ...academySettings, afternoon_class_time: formatTimeRange(e.target.value, end) });
                   }}
-                  className="flex-1 px-2 py-2 border border-blue-200 rounded-md text-sm"
+                  className="flex-1 px-2 py-2 border border-blue-200 dark:border-blue-800 rounded-md text-sm bg-background text-foreground"
                 >
                   {TIME_OPTIONS.map(time => (
                     <option key={time} value={time}>{time}</option>
                   ))}
                 </select>
-                <span className="text-gray-500">~</span>
+                <span className="text-muted-foreground">~</span>
                 <select
                   value={parseTimeRange(academySettings.afternoon_class_time).end}
                   onChange={(e) => {
                     const { start } = parseTimeRange(academySettings.afternoon_class_time);
                     setAcademySettings({ ...academySettings, afternoon_class_time: formatTimeRange(start, e.target.value) });
                   }}
-                  className="flex-1 px-2 py-2 border border-blue-200 rounded-md text-sm"
+                  className="flex-1 px-2 py-2 border border-blue-200 dark:border-blue-800 rounded-md text-sm bg-background text-foreground"
                 >
                   {TIME_OPTIONS.map(time => (
                     <option key={time} value={time}>{time}</option>
@@ -401,8 +401,8 @@ export default function SettingsPage() {
             </div>
 
             {/* 저녁반 */}
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <label className="block text-sm font-medium text-purple-800 mb-3">
+            <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
+              <label className="block text-sm font-medium text-purple-800 dark:text-purple-200 mb-3">
                 🌙 저녁반
               </label>
               <div className="flex items-center gap-2">
@@ -412,20 +412,20 @@ export default function SettingsPage() {
                     const { end } = parseTimeRange(academySettings.evening_class_time);
                     setAcademySettings({ ...academySettings, evening_class_time: formatTimeRange(e.target.value, end) });
                   }}
-                  className="flex-1 px-2 py-2 border border-purple-200 rounded-md text-sm"
+                  className="flex-1 px-2 py-2 border border-purple-200 dark:border-purple-800 rounded-md text-sm bg-background text-foreground"
                 >
                   {TIME_OPTIONS.map(time => (
                     <option key={time} value={time}>{time}</option>
                   ))}
                 </select>
-                <span className="text-gray-500">~</span>
+                <span className="text-muted-foreground">~</span>
                 <select
                   value={parseTimeRange(academySettings.evening_class_time).end}
                   onChange={(e) => {
                     const { start } = parseTimeRange(academySettings.evening_class_time);
                     setAcademySettings({ ...academySettings, evening_class_time: formatTimeRange(start, e.target.value) });
                   }}
-                  className="flex-1 px-2 py-2 border border-purple-200 rounded-md text-sm"
+                  className="flex-1 px-2 py-2 border border-purple-200 dark:border-purple-800 rounded-md text-sm bg-background text-foreground"
                 >
                   {TIME_OPTIONS.map(time => (
                     <option key={time} value={time}>{time}</option>
@@ -444,20 +444,20 @@ export default function SettingsPage() {
             <DollarSign className="w-5 h-5 text-blue-600" />
             <CardTitle>입시반 학원비 설정</CardTitle>
           </div>
-          <p className="text-sm text-gray-500 mt-1">주 수업 횟수별 월 학원비를 설정합니다.</p>
+          <p className="text-sm text-muted-foreground mt-1">주 수업 횟수별 월 학원비를 설정합니다.</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
             {weeklyKeys.map((key, index) => (
               <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1 text-center">
+                <label className="block text-sm font-medium text-foreground mb-1 text-center">
                   {weeklyLabels[index]}
                 </label>
                 <input
                   type="number"
                   value={academySettings.exam_tuition[key] || ''}
                   onChange={(e) => handleTuitionChange('exam_tuition', key, Number(e.target.value))}
-                  className="w-full px-2 py-2 border border-gray-300 rounded-md text-center text-sm"
+                  className="w-full px-2 py-2 border border-border bg-background text-foreground rounded-md text-center text-sm"
                   min="0"
                   step="10000"
                   placeholder="0"
@@ -475,20 +475,20 @@ export default function SettingsPage() {
             <DollarSign className="w-5 h-5 text-purple-600" />
             <CardTitle>공무원/성인반 학원비 설정</CardTitle>
           </div>
-          <p className="text-sm text-gray-500 mt-1">주 수업 횟수별 월 학원비를 설정합니다.</p>
+          <p className="text-sm text-muted-foreground mt-1">주 수업 횟수별 월 학원비를 설정합니다.</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
             {weeklyKeys.map((key, index) => (
               <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-1 text-center">
+                <label className="block text-sm font-medium text-foreground mb-1 text-center">
                   {weeklyLabels[index]}
                 </label>
                 <input
                   type="number"
                   value={academySettings.adult_tuition[key] || ''}
                   onChange={(e) => handleTuitionChange('adult_tuition', key, Number(e.target.value))}
-                  className="w-full px-2 py-2 border border-gray-300 rounded-md text-center text-sm"
+                  className="w-full px-2 py-2 border border-border bg-background text-foreground rounded-md text-center text-sm"
                   min="0"
                   step="10000"
                   placeholder="0"
@@ -506,47 +506,47 @@ export default function SettingsPage() {
             <Calendar className="w-5 h-5 text-green-600" />
             <CardTitle>시즌비 설정</CardTitle>
           </div>
-          <p className="text-sm text-gray-500 mt-1">입시 유형별 시즌비를 설정합니다.</p>
+          <p className="text-sm text-muted-foreground mt-1">입시 유형별 시즌비를 설정합니다.</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <label className="block text-sm font-medium text-blue-800 mb-2">
+            <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <label className="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
                 입시 - 수시
               </label>
               <input
                 type="number"
                 value={academySettings.season_fees.exam_early || ''}
                 onChange={(e) => handleSeasonFeeChange('exam_early', Number(e.target.value))}
-                className="w-full px-3 py-2 border border-blue-200 rounded-md text-center"
+                className="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded-md text-center bg-background text-foreground"
                 min="0"
                 step="10000"
                 placeholder="0"
               />
             </div>
-            <div className="p-4 bg-indigo-50 rounded-lg">
-              <label className="block text-sm font-medium text-indigo-800 mb-2">
+            <div className="p-4 bg-indigo-50 dark:bg-indigo-950 rounded-lg">
+              <label className="block text-sm font-medium text-indigo-800 dark:text-indigo-200 mb-2">
                 입시 - 정시
               </label>
               <input
                 type="number"
                 value={academySettings.season_fees.exam_regular || ''}
                 onChange={(e) => handleSeasonFeeChange('exam_regular', Number(e.target.value))}
-                className="w-full px-3 py-2 border border-indigo-200 rounded-md text-center"
+                className="w-full px-3 py-2 border border-indigo-200 dark:border-indigo-800 rounded-md text-center bg-background text-foreground"
                 min="0"
                 step="10000"
                 placeholder="0"
               />
             </div>
-            <div className="p-4 bg-purple-50 rounded-lg">
-              <label className="block text-sm font-medium text-purple-800 mb-2">
+            <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
+              <label className="block text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">
                 공무원
               </label>
               <input
                 type="number"
                 value={academySettings.season_fees.civil_service || ''}
                 onChange={(e) => handleSeasonFeeChange('civil_service', Number(e.target.value))}
-                className="w-full px-3 py-2 border border-purple-200 rounded-md text-center"
+                className="w-full px-3 py-2 border border-purple-200 dark:border-purple-800 rounded-md text-center bg-background text-foreground"
                 min="0"
                 step="10000"
                 placeholder="0"
@@ -563,19 +563,19 @@ export default function SettingsPage() {
             <Banknote className="w-5 h-5 text-emerald-600" />
             <CardTitle>급여 설정</CardTitle>
           </div>
-          <p className="text-sm text-gray-500 mt-1">강사 급여 지급 관련 설정입니다.</p>
+          <p className="text-sm text-muted-foreground mt-1">강사 급여 지급 관련 설정입니다.</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 급여 지급일 */}
-            <div className="p-4 bg-emerald-50 rounded-lg">
-              <label className="block text-sm font-medium text-emerald-800 mb-2">
+            <div className="p-4 bg-emerald-50 dark:bg-emerald-950 rounded-lg">
+              <label className="block text-sm font-medium text-emerald-800 dark:text-emerald-200 mb-2">
                 급여 지급일
               </label>
               <select
                 value={academySettings.salary_payment_day}
                 onChange={(e) => setAcademySettings({ ...academySettings, salary_payment_day: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-emerald-200 rounded-md"
+                className="w-full px-3 py-2 border border-emerald-200 dark:border-emerald-800 rounded-md bg-background text-foreground"
               >
                 <option value={1}>매월 1일</option>
                 <option value={5}>매월 5일</option>
@@ -584,16 +584,16 @@ export default function SettingsPage() {
                 <option value={20}>매월 20일</option>
                 <option value={0}>매월 말일</option>
               </select>
-              <p className="text-xs text-emerald-600 mt-2">모든 강사의 급여 지급일입니다.</p>
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2">모든 강사의 급여 지급일입니다.</p>
             </div>
 
             {/* 급여 정산 방식 */}
-            <div className="p-4 bg-teal-50 rounded-lg">
-              <label className="block text-sm font-medium text-teal-800 mb-2">
+            <div className="p-4 bg-teal-50 dark:bg-teal-950 rounded-lg">
+              <label className="block text-sm font-medium text-teal-800 dark:text-teal-200 mb-2">
                 급여 정산 방식
               </label>
               <div className="space-y-3">
-                <label className="flex items-center p-3 bg-white rounded-md border border-teal-200 cursor-pointer hover:bg-teal-50 transition-colors">
+                <label className="flex items-center p-3 bg-card rounded-md border border-teal-200 dark:border-teal-800 cursor-pointer hover:bg-muted transition-colors">
                   <input
                     type="radio"
                     name="salary_month_type"
@@ -603,11 +603,11 @@ export default function SettingsPage() {
                     className="w-4 h-4 text-teal-600"
                   />
                   <div className="ml-3">
-                    <div className="font-medium text-gray-900">익월 정산</div>
-                    <div className="text-xs text-gray-500">10월 근무 → 11월 급여일에 지급</div>
+                    <div className="font-medium text-foreground">익월 정산</div>
+                    <div className="text-xs text-muted-foreground">10월 근무 → 11월 급여일에 지급</div>
                   </div>
                 </label>
-                <label className="flex items-center p-3 bg-white rounded-md border border-teal-200 cursor-pointer hover:bg-teal-50 transition-colors">
+                <label className="flex items-center p-3 bg-card rounded-md border border-teal-200 dark:border-teal-800 cursor-pointer hover:bg-muted transition-colors">
                   <input
                     type="radio"
                     name="salary_month_type"
@@ -617,8 +617,8 @@ export default function SettingsPage() {
                     className="w-4 h-4 text-teal-600"
                   />
                   <div className="ml-3">
-                    <div className="font-medium text-gray-900">당월 정산</div>
-                    <div className="text-xs text-gray-500">10월 근무 → 10월 급여일에 지급</div>
+                    <div className="font-medium text-foreground">당월 정산</div>
+                    <div className="text-xs text-muted-foreground">10월 근무 → 10월 급여일에 지급</div>
                   </div>
                 </label>
               </div>
@@ -626,17 +626,17 @@ export default function SettingsPage() {
           </div>
 
           {/* 설명 박스 */}
-          <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h4 className="font-medium text-gray-700 mb-2">급여 정산 예시</h4>
+          <div className="mt-4 p-4 bg-muted rounded-lg border border-border">
+            <h4 className="font-medium text-foreground mb-2">급여 정산 예시</h4>
             {(() => {
               const payDay = academySettings.salary_payment_day === 0 ? '말일' : `${academySettings.salary_payment_day}일`;
               return academySettings.salary_month_type === 'next' ? (
-                <div className="text-sm text-gray-600 space-y-1">
+                <div className="text-sm text-muted-foreground space-y-1">
                   <p>• <span className="font-medium">11월 {payDay} 급여</span>: 10월 근무분 정산</p>
                   <p>• <span className="font-medium">12월 {payDay} 급여</span>: 11월 근무분 정산</p>
                 </div>
               ) : (
-                <div className="text-sm text-gray-600 space-y-1">
+                <div className="text-sm text-muted-foreground space-y-1">
                   <p>• <span className="font-medium">11월 {payDay} 급여</span>: 11월 근무분 정산</p>
                   <p>• <span className="font-medium">12월 {payDay} 급여</span>: 12월 근무분 정산</p>
                 </div>
@@ -655,19 +655,19 @@ export default function SettingsPage() {
       </div>
 
       {/* 알림톡 및 SMS 설정 */}
-      <Card className="border-yellow-300 bg-yellow-50 hover:shadow-md transition-shadow">
+      <Card className="border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950 hover:shadow-md transition-shadow">
         <Link href="/settings/notifications">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-yellow-600" />
-                <CardTitle className="text-yellow-800">알림톡 및 SMS 설정</CardTitle>
+                <MessageSquare className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                <CardTitle className="text-yellow-800 dark:text-yellow-200">알림톡 및 SMS 설정</CardTitle>
               </div>
-              <ChevronRight className="w-5 h-5 text-yellow-600" />
+              <ChevronRight className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-yellow-700">
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
               KakaoTalk 알림톡과 SMS 발송을 위한 Naver Cloud SENS API 설정을 관리합니다.
             </p>
           </CardContent>
@@ -685,11 +685,11 @@ export default function SettingsPage() {
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <div className="flex justify-between">
             <span>버전</span>
-            <span className="font-medium text-foreground">v2.9.5</span>
+            <span className="font-medium text-foreground">v2.9.6</span>
           </div>
           <div className="flex justify-between">
             <span>마지막 업데이트</span>
-            <span className="font-medium text-foreground">2025-12-10</span>
+            <span className="font-medium text-foreground">2025-12-11</span>
           </div>
           <div className="flex justify-between">
             <span>데이터베이스</span>
@@ -697,26 +697,26 @@ export default function SettingsPage() {
           </div>
           <div className="flex justify-between">
             <span>문의사항</span>
-            <span className="font-medium text-gray-900">010-2144-6755</span>
+            <span className="font-medium text-foreground">010-2144-6755</span>
           </div>
         </CardContent>
       </Card>
 
       {/* 학년 진급 안내 - owner only */}
       {user?.role === 'owner' && (
-        <Card className="border-purple-300 bg-purple-50">
+        <Card className="border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-purple-600" />
-              <CardTitle className="text-purple-700">학년 자동 진급</CardTitle>
+              <GraduationCap className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <CardTitle className="text-purple-700 dark:text-purple-300">학년 자동 진급</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="p-4 bg-purple-100 rounded-lg border border-purple-200">
-              <p className="text-sm text-purple-700 mb-3">
+            <div className="p-4 bg-purple-100 dark:bg-purple-900 rounded-lg border border-purple-200 dark:border-purple-700">
+              <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
                 매년 <strong>3월 1일 오전 1시</strong>에 자동으로 진급 처리됩니다.
               </p>
-              <ul className="text-xs text-purple-600 space-y-1">
+              <ul className="text-xs text-purple-600 dark:text-purple-400 space-y-1">
                 <li>• 중1→중2→중3→고1→고2→고3→N수</li>
                 <li>• N수생은 유지됨</li>
                 <li>• 졸업 처리: 학생 상세 페이지에서 개별 처리</li>
@@ -728,24 +728,24 @@ export default function SettingsPage() {
 
       {/* 스케줄 관리 도구 - owner only */}
       {user?.role === 'owner' && (
-        <Card className="border-orange-300 bg-orange-50">
+        <Card className="border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-orange-600" />
-              <CardTitle className="text-orange-700">스케줄 관리 도구</CardTitle>
+              <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              <CardTitle className="text-orange-700 dark:text-orange-300">스케줄 관리 도구</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 bg-orange-100 rounded-lg border border-orange-200">
-              <h4 className="font-bold text-orange-800 mb-2">스케줄 일괄 정리</h4>
-              <p className="text-sm text-orange-700 mb-4">
+            <div className="p-4 bg-orange-100 dark:bg-orange-900 rounded-lg border border-orange-200 dark:border-orange-700">
+              <h4 className="font-bold text-orange-800 dark:text-orange-200 mb-2">스케줄 일괄 정리</h4>
+              <p className="text-sm text-orange-700 dark:text-orange-300 mb-4">
                 잘못된 시간대(아침/점심)의 스케줄을 삭제하고, 저녁 시간대로 재배정합니다.
                 <br />
                 수업요일과 맞지 않는 스케줄도 함께 정리됩니다.
               </p>
               <Button
                 variant="outline"
-                className="border-orange-400 text-orange-700 hover:bg-orange-200"
+                className="border-orange-400 dark:border-orange-600 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800"
                 disabled={loading}
                 onClick={async () => {
                   if (!confirm('스케줄을 정리하시겠습니까?\n\n정리 내용:\n- 아침/점심 시간대 스케줄 → 저녁으로 이동\n- 수업요일 불일치 스케줄 삭제\n- 올바른 스케줄로 재배정')) {
@@ -785,31 +785,31 @@ export default function SettingsPage() {
 
       {/* 위험 구역 - 데이터베이스 초기화 */}
       {user?.role === 'owner' && (
-        <Card className="border-red-300 bg-red-50">
+        <Card className="border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-              <CardTitle className="text-red-700">위험 구역</CardTitle>
+              <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              <CardTitle className="text-red-700 dark:text-red-300">위험 구역</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 bg-red-100 rounded-lg border border-red-200">
-              <h4 className="font-bold text-red-800 mb-2">데이터베이스 초기화</h4>
-              <p className="text-sm text-red-700 mb-4">
+            <div className="p-4 bg-red-100 dark:bg-red-900 rounded-lg border border-red-200 dark:border-red-700">
+              <h4 className="font-bold text-red-800 dark:text-red-200 mb-2">데이터베이스 초기화</h4>
+              <p className="text-sm text-red-700 dark:text-red-300 mb-4">
                 모든 학생, 강사, 학원비, 급여, 스케줄, 시즌 데이터가 삭제됩니다.
                 <br />
                 <strong>이 작업은 되돌릴 수 없습니다!</strong>
               </p>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-red-800 mb-1">
+                  <label className="block text-sm font-medium text-red-800 dark:text-red-200 mb-1">
                     확인을 위해 &quot;초기화&quot;를 입력하세요
                   </label>
                   <input
                     type="text"
                     value={resetConfirmation}
                     onChange={(e) => setResetConfirmation(e.target.value)}
-                    className="w-full px-3 py-2 border border-red-300 rounded-md bg-white"
+                    className="w-full px-3 py-2 border border-red-300 dark:border-red-700 rounded-md bg-background text-foreground"
                     placeholder="초기화"
                   />
                 </div>

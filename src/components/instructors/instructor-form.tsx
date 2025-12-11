@@ -152,7 +152,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 이름 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 이름 <span className="text-red-500">*</span>
               </label>
               <input
@@ -160,8 +160,8 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 placeholder="홍길동"
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.name ? 'border-red-500' : 'border-border'
                 }`}
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
@@ -169,7 +169,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
 
             {/* 전화번호 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 전화번호 <span className="text-red-500">*</span>
               </label>
               <input
@@ -177,8 +177,8 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                 value={formData.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
                 placeholder="010-1234-5678"
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  errors.phone ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.phone ? 'border-red-500' : 'border-border'
                 }`}
               />
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -186,11 +186,11 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
 
             {/* 성별 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">성별</label>
+              <label className="block text-sm font-medium text-foreground mb-2">성별</label>
               <select
                 value={formData.gender || ''}
                 onChange={(e) => handleChange('gender', e.target.value || undefined)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">선택</option>
                 {GENDER_OPTIONS.map((option) => (
@@ -203,40 +203,40 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
 
             {/* 이메일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">이메일</label>
+              <label className="block text-sm font-medium text-foreground mb-2">이메일</label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 placeholder="instructor@example.com"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
             {/* 주민번호 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">주민번호</label>
+              <label className="block text-sm font-medium text-foreground mb-2">주민번호</label>
               <input
                 type="text"
                 value={formData.resident_number}
                 onChange={(e) => handleChange('resident_number', e.target.value)}
                 placeholder="000000-0000000"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
-              <p className="text-xs text-gray-500 mt-1">세무 신고용 (선택사항)</p>
+              <p className="text-xs text-muted-foreground mt-1">세무 신고용 (선택사항)</p>
             </div>
 
             {/* 입사일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 입사일 <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
                 value={formData.hire_date}
                 onChange={(e) => handleChange('hire_date', e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  errors.hire_date ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.hire_date ? 'border-red-500' : 'border-border'
                 }`}
               />
               {errors.hire_date && <p className="text-red-500 text-sm mt-1">{errors.hire_date}</p>}
@@ -244,13 +244,13 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
 
             {/* 주소 */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">주소</label>
+              <label className="block text-sm font-medium text-foreground mb-2">주소</label>
               <input
                 type="text"
                 value={formData.address}
                 onChange={(e) => handleChange('address', e.target.value)}
                 placeholder="서울시 강남구..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
@@ -266,14 +266,14 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 급여타입 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 급여타입 <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.salary_type}
                 onChange={(e) => handleChange('salary_type', e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  errors.salary_type ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.salary_type ? 'border-red-500' : 'border-border'
                 }`}
               >
                 {SALARY_TYPE_OPTIONS.map((option) => (
@@ -287,13 +287,13 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
 
             {/* 세금타입 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 세금타입 <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.tax_type}
                 onChange={(e) => handleChange('tax_type', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {TAX_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -306,13 +306,13 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
             {/* 강사 유형 (시급제일 때만 표시) */}
             {formData.salary_type === 'hourly' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   강사 유형 <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.instructor_type || 'teacher'}
                   onChange={(e) => handleChange('instructor_type', e.target.value as InstructorType)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   {INSTRUCTOR_TYPE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -320,7 +320,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   수업강사: 수업 시간대별 출결 / 사무보조: 출퇴근 시간 기록
                 </p>
               </div>
@@ -331,7 +331,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
               formData.salary_type === 'per_class' ||
               formData.salary_type === 'mixed') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   {formData.salary_type === 'per_class' ? '수업료' : '시급'} <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -341,8 +341,8 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                   placeholder="0"
                   min="0"
                   step="1000"
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                    errors.hourly_rate ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.hourly_rate ? 'border-red-500' : 'border-border'
                   }`}
                 />
                 {errors.hourly_rate && <p className="text-red-500 text-sm mt-1">{errors.hourly_rate}</p>}
@@ -352,7 +352,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
             {/* 월급 (조건부 표시) */}
             {(formData.salary_type === 'monthly' || formData.salary_type === 'mixed') && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   월급 <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -362,8 +362,8 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                   placeholder="0"
                   min="0"
                   step="100000"
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                    errors.base_salary ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.base_salary ? 'border-red-500' : 'border-border'
                   }`}
                 />
                 {errors.base_salary && <p className="text-red-500 text-sm mt-1">{errors.base_salary}</p>}
@@ -382,7 +382,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
           <CardContent className="space-y-4">
             {/* 출근 요일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 출근 요일 <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2">
@@ -400,7 +400,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                     className={`px-4 py-2 rounded-lg border transition-colors ${
                       (formData.work_days || []).includes(day.value)
                         ? 'bg-primary-500 text-white border-primary-500'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        : 'bg-card text-foreground border-border hover:bg-muted'
                     }`}
                   >
                     {day.label}
@@ -413,35 +413,35 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
             {/* 근무 시간 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   출근 시간 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="time"
                   value={formData.work_start_time || '09:00'}
                   onChange={(e) => handleChange('work_start_time', e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                    errors.work_start_time ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.work_start_time ? 'border-red-500' : 'border-border'
                   }`}
                 />
                 {errors.work_start_time && <p className="text-red-500 text-sm mt-1">{errors.work_start_time}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   퇴근 시간 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="time"
                   value={formData.work_end_time || '18:00'}
                   onChange={(e) => handleChange('work_end_time', e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                    errors.work_end_time ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.work_end_time ? 'border-red-500' : 'border-border'
                   }`}
                 />
                 {errors.work_end_time && <p className="text-red-500 text-sm mt-1">{errors.work_end_time}</p>}
               </div>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               설정된 근무 시간 외 출근 또는 초과 근무 시 관리자 승인이 필요합니다.
             </p>
           </CardContent>
@@ -457,25 +457,25 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 은행명 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">은행명</label>
+              <label className="block text-sm font-medium text-foreground mb-2">은행명</label>
               <input
                 type="text"
                 value={formData.bank_name}
                 onChange={(e) => handleChange('bank_name', e.target.value)}
                 placeholder="국민은행"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
             {/* 계좌번호 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">계좌번호</label>
+              <label className="block text-sm font-medium text-foreground mb-2">계좌번호</label>
               <input
                 type="text"
                 value={formData.account_number}
                 onChange={(e) => handleChange('account_number', e.target.value)}
                 placeholder="123-456-789012"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
@@ -490,24 +490,24 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
         <CardContent className="space-y-4">
           {/* 메모 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">메모</label>
+            <label className="block text-sm font-medium text-foreground mb-2">메모</label>
             <textarea
               value={formData.notes}
               onChange={(e) => handleChange('notes', e.target.value)}
               placeholder="특이사항이나 메모를 입력하세요..."
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
           {/* 상태 (수정 모드일 때만) */}
           {mode === 'edit' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">상태</label>
+              <label className="block text-sm font-medium text-foreground mb-2">상태</label>
               <select
                 value={formData.status}
                 onChange={(e) => handleChange('status', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {INSTRUCTOR_STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -522,8 +522,8 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
 
       {/* 에러 메시지 */}
       {errors.submit && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm">{errors.submit}</p>
+        <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-red-600 dark:text-red-400 text-sm">{errors.submit}</p>
         </div>
       )}
 

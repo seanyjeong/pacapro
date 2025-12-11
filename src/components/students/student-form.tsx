@@ -456,7 +456,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* 체험생 등록 옵션 (신규 등록 시에만) */}
       {mode === 'create' && (
-        <Card className={isTrial ? 'border-purple-300 bg-purple-50' : ''}>
+        <Card className={isTrial ? 'border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950' : ''}>
           <CardHeader>
             <CardTitle className="flex items-center">
               <Sparkles className={`w-5 h-5 mr-2 ${isTrial ? 'text-purple-600' : 'text-gray-400'}`} />
@@ -479,7 +479,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 }}
                 className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
               />
-              <label htmlFor="isTrial" className="text-sm font-medium text-gray-700">
+              <label htmlFor="isTrial" className="text-sm font-medium text-foreground">
                 체험 수업 학생으로 등록 (2회 무료 체험)
               </label>
             </div>
@@ -488,8 +488,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
             {isTrial && (
               <div className="ml-6 space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-gray-700">
-                    체험 일정 <span className="text-gray-500 text-xs">(최대 2회)</span>
+                  <label className="block text-sm font-medium text-foreground">
+                    체험 일정 <span className="text-muted-foreground text-xs">(최대 2회)</span>
                   </label>
                   {trialDates.length < 2 && (
                     <Button
@@ -506,25 +506,25 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 </div>
 
                 {trialDates.length === 0 ? (
-                  <p className="text-sm text-gray-500 py-2">
+                  <p className="text-sm text-muted-foreground py-2">
                     체험 일정을 추가하세요. 일정은 나중에 추가할 수도 있습니다.
                   </p>
                 ) : (
                   <div className="space-y-2">
                     {trialDates.map((td, idx) => (
-                      <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-purple-200">
+                      <div key={idx} className="flex items-center gap-2 p-3 bg-card rounded-lg border border-purple-200 dark:border-purple-700">
                         <Calendar className="w-4 h-4 text-purple-500" />
                         <span className="text-sm font-medium text-purple-700">{idx + 1}회차</span>
                         <input
                           type="date"
                           value={td.date}
                           onChange={(e) => updateTrialDate(idx, 'date', e.target.value)}
-                          className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+                          className="flex-1 px-3 py-1.5 border border-border bg-background text-foreground rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
                         />
                         <select
                           value={td.time_slot}
                           onChange={(e) => updateTrialDate(idx, 'time_slot', e.target.value as TrialDate['time_slot'])}
-                          className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+                          className="px-3 py-1.5 border border-border bg-background text-foreground rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
                         >
                           {Object.entries(timeSlotLabels).map(([value, label]) => (
                             <option key={value} value={value}>{label}</option>
@@ -542,9 +542,9 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   </div>
                 )}
 
-                <div className="bg-purple-100 border border-purple-200 rounded-md p-3 text-sm text-purple-800">
+                <div className="bg-purple-100 dark:bg-purple-900 border border-purple-200 dark:border-purple-700 rounded-md p-3 text-sm text-purple-800 dark:text-purple-200">
                   <p className="font-medium">체험생 안내</p>
-                  <ul className="mt-1 text-xs text-purple-700 list-disc list-inside space-y-0.5">
+                  <ul className="mt-1 text-xs text-purple-700 dark:text-purple-300 list-disc list-inside space-y-0.5">
                     <li>체험 수업은 무료로 진행됩니다 (학원비 0원)</li>
                     <li>출석 체크 시 남은 체험 횟수가 자동으로 차감됩니다</li>
                     <li>체험 완료 후 정식 등록으로 전환할 수 있습니다</li>
@@ -558,7 +558,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
       {/* 체험생 일정 수정 (수정 모드 + 체험생일 때) */}
       {mode === 'edit' && isTrial && (
-        <Card className="border-purple-300 bg-purple-50">
+        <Card className="border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Sparkles className="w-5 h-5 mr-2 text-purple-600" />
@@ -567,8 +567,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">
-                체험 일정 <span className="text-gray-500 text-xs">(최대 2회)</span>
+              <label className="block text-sm font-medium text-foreground">
+                체험 일정 <span className="text-muted-foreground text-xs">(최대 2회)</span>
               </label>
               {trialDates.length < 2 && (
                 <Button
@@ -576,7 +576,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   variant="outline"
                   size="sm"
                   onClick={addTrialDate}
-                  className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                  className="text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900"
                 >
                   <Plus className="w-4 h-4 mr-1" />
                   일정 추가
@@ -585,25 +585,25 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
             </div>
 
             {trialDates.length === 0 ? (
-              <p className="text-sm text-gray-500 py-2">
+              <p className="text-sm text-muted-foreground py-2">
                 체험 일정을 추가하세요.
               </p>
             ) : (
               <div className="space-y-2">
                 {trialDates.map((td, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-3 bg-white rounded-lg border border-purple-200">
+                  <div key={idx} className="flex items-center gap-2 p-3 bg-card rounded-lg border border-purple-200 dark:border-purple-700">
                     <Calendar className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm font-medium text-purple-700">{idx + 1}회차</span>
+                    <span className="text-sm font-medium text-purple-700 dark:text-purple-300">{idx + 1}회차</span>
                     <input
                       type="date"
                       value={td.date}
                       onChange={(e) => updateTrialDate(idx, 'date', e.target.value)}
-                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+                      className="flex-1 px-3 py-1.5 border border-border bg-background text-foreground rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
                     />
                     <select
                       value={td.time_slot}
                       onChange={(e) => updateTrialDate(idx, 'time_slot', e.target.value as TrialDate['time_slot'])}
-                      className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
+                      className="px-3 py-1.5 border border-border bg-background text-foreground rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
                     >
                       {Object.entries(timeSlotLabels).map(([value, label]) => (
                         <option key={value} value={value}>{label}</option>
@@ -612,7 +612,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                     <button
                       type="button"
                       onClick={() => removeTrialDate(idx)}
-                      className="p-1 text-gray-400 hover:text-red-500"
+                      className="p-1 text-muted-foreground hover:text-red-500"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -621,7 +621,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
               </div>
             )}
 
-            <div className="text-xs text-purple-600">
+            <div className="text-xs text-purple-600 dark:text-purple-400">
               * 일정 수정 시 기존 미출석 스케줄은 삭제되고 새 일정으로 재배정됩니다.
             </div>
           </CardContent>
@@ -637,7 +637,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 이름 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 이름 <span className="text-red-500">*</span>
               </label>
               <input
@@ -646,8 +646,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 placeholder="홍길동"
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.name ? 'border-red-500' : 'border-border'
                 }`}
               />
               {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
@@ -655,7 +655,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
             {/* 성별 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">성별</label>
+              <label className="block text-sm font-medium text-foreground mb-2">성별</label>
               <div className="flex gap-4">
                 {GENDER_OPTIONS.map((option) => (
                   <label key={option.value} className="flex items-center">
@@ -667,7 +667,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                       onChange={(e) => handleChange('gender', e.target.value as Gender)}
                       className="mr-2 text-primary-600 focus:ring-primary-500"
                     />
-                    <span className="text-gray-700">{option.label}</span>
+                    <span className="text-foreground">{option.label}</span>
                   </label>
                 ))}
               </div>
@@ -675,21 +675,21 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
             {/* 학번 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                학번 {mode === 'create' && <span className="text-gray-500 text-xs">(자동생성 가능)</span>}
+              <label className="block text-sm font-medium text-foreground mb-2">
+                학번 {mode === 'create' && <span className="text-muted-foreground text-xs">(자동생성 가능)</span>}
               </label>
               <input
                 type="text"
                 value={formData.student_number || ''}
                 onChange={(e) => handleChange('student_number', e.target.value)}
                 placeholder="2024001"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
 
             {/* 전화번호 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 전화번호 <span className="text-red-500">*</span>
               </label>
               <input
@@ -699,29 +699,29 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 onChange={(e) => handleChange('phone', formatPhoneNumber(e.target.value))}
                 placeholder="010-1234-5678"
                 maxLength={13}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  errors.phone ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.phone ? 'border-red-500' : 'border-border'
                 }`}
               />
-              <p className="text-xs text-gray-500 mt-1">하이픈(-) 포함 형식으로 입력하세요</p>
+              <p className="text-xs text-muted-foreground mt-1">하이픈(-) 포함 형식으로 입력하세요</p>
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
 
             {/* 학부모 전화번호 - 입시생일 때만 표시 */}
             {formData.student_type === 'exam' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">학부모 전화번호</label>
+                <label className="block text-sm font-medium text-foreground mb-2">학부모 전화번호</label>
                 <input
                   type="tel"
                   value={formData.parent_phone || ''}
                   onChange={(e) => handleChange('parent_phone', formatPhoneNumber(e.target.value))}
                   placeholder="010-9876-5432"
                   maxLength={13}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                    errors.parent_phone ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.parent_phone ? 'border-red-500' : 'border-border'
                   }`}
                 />
-                <p className="text-xs text-gray-500 mt-1">하이픈(-) 포함 형식으로 입력하세요</p>
+                <p className="text-xs text-muted-foreground mt-1">하이픈(-) 포함 형식으로 입력하세요</p>
                 {errors.parent_phone && <p className="text-red-500 text-sm mt-1">{errors.parent_phone}</p>}
               </div>
             )}
@@ -729,13 +729,13 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
             {/* 학교 - 입시생일 때만 표시 */}
             {formData.student_type === 'exam' && (
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">학교</label>
+                <label className="block text-sm font-medium text-foreground mb-2">학교</label>
                 <input
                   type="text"
                   value={formData.school || ''}
                   onChange={(e) => handleChange('school', e.target.value)}
                   placeholder="서울고등학교"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             )}
@@ -752,13 +752,13 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 학생 유형 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 학생 유형 <span className="text-red-500">*</span>
               </label>
               <select
                 value={formData.student_type}
                 onChange={(e) => handleChange('student_type', e.target.value as StudentType)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {STUDENT_TYPE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -771,15 +771,15 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
             {/* 학년 - 입시생일 때만 표시 */}
             {formData.student_type === 'exam' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   학년 <span className="text-red-500">*</span>
                 </label>
                 <select
                   id="field-grade"
                   value={formData.grade || ''}
                   onChange={(e) => handleChange('grade', e.target.value as Grade || undefined)}
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                    errors.grade ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.grade ? 'border-red-500' : 'border-border'
                   }`}
                 >
                   <option value="">선택하세요</option>
@@ -796,7 +796,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
             {/* 나이 - 성인일 때만 표시 */}
             {formData.student_type === 'adult' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   나이 <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -807,8 +807,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   placeholder="25"
                   min="1"
                   max="100"
-                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                    errors.age ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                    errors.age ? 'border-red-500' : 'border-border'
                   }`}
                 />
                 {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
@@ -817,13 +817,13 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
             {/* 입시유형 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 {formData.student_type === 'exam' ? '입시유형' : '목표'}
               </label>
               <select
                 value={formData.admission_type}
                 onChange={(e) => handleChange('admission_type', e.target.value as AdmissionType)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {admissionOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -844,8 +844,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
         <CardContent className="space-y-4">
           {/* 수업요일 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              수업요일 <span className="text-gray-500 text-xs">(선택하면 주 수업횟수가 자동 계산됩니다)</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              수업요일 <span className="text-muted-foreground text-xs">(선택하면 주 수업횟수가 자동 계산됩니다)</span>
             </label>
             <div className="flex flex-wrap gap-2">
               {WEEKDAY_OPTIONS.map((option) => (
@@ -856,7 +856,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   className={`px-4 py-2 rounded-lg border transition-colors ${
                     formData.class_days.includes(option.value)
                       ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+                      : 'bg-card text-foreground border-border hover:border-primary-500'
                   }`}
                 >
                   {option.label}
@@ -867,8 +867,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
           {/* 수업 시간대 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              수업 시간대 <span className="text-gray-500 text-xs">(스케줄 배정 시간대)</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              수업 시간대 <span className="text-muted-foreground text-xs">(스케줄 배정 시간대)</span>
             </label>
             <div className="flex flex-wrap gap-2">
               {[
@@ -883,7 +883,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   className={`px-4 py-2 rounded-lg border transition-colors ${
                     formData.time_slot === slot.value
                       ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+                      : 'bg-card text-foreground border-border hover:border-primary-500'
                   }`}
                 >
                   {slot.label}
@@ -895,20 +895,20 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 주 수업횟수 - 자동 계산 (읽기 전용) */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">주 수업횟수</label>
-              <div className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 font-medium">
+              <label className="block text-sm font-medium text-foreground mb-2">주 수업횟수</label>
+              <div className="w-full px-4 py-2 border border-border rounded-lg bg-muted text-foreground font-medium">
                 주 {formData.weekly_count}회
               </div>
             </div>
 
             {/* 등록일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">등록일</label>
+              <label className="block text-sm font-medium text-foreground mb-2">등록일</label>
               <input
                 type="date"
                 value={formData.enrollment_date || ''}
                 onChange={(e) => handleChange('enrollment_date', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
@@ -926,12 +926,12 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           </CardHeader>
           <CardContent className="space-y-4">
             {seasonsLoading ? (
-              <div className="flex items-center text-gray-500 py-4">
+              <div className="flex items-center text-muted-foreground py-4">
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 시즌 정보 로딩 중...
               </div>
             ) : availableSeasons.length === 0 ? (
-              <div className="text-gray-500 py-4">
+              <div className="text-muted-foreground py-4">
                 현재 진행중인 시즌이 없습니다.
               </div>
             ) : (
@@ -948,9 +948,9 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                         setSelectedSeasonId(null);
                       }
                     }}
-                    className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                    className="w-4 h-4 text-primary-600 border-border rounded focus:ring-primary-500"
                   />
-                  <label htmlFor="enrollInSeason" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="enrollInSeason" className="text-sm font-medium text-foreground">
                     시즌에 함께 등록하기
                   </label>
                 </div>
@@ -959,13 +959,13 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 {enrollInSeason && (
                   <div className="ml-6 space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
                         등록할 시즌 선택
                       </label>
                       <select
                         value={selectedSeasonId || ''}
                         onChange={(e) => setSelectedSeasonId(e.target.value ? parseInt(e.target.value) : null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                        className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:ring-primary-500 focus:border-primary-500"
                       >
                         <option value="">시즌을 선택하세요</option>
                         {availableSeasons.map((season) => (
@@ -977,9 +977,9 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                     </div>
 
                     {selectedSeasonId && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 text-sm text-yellow-800">
+                      <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-md p-3 text-sm text-yellow-800 dark:text-yellow-200">
                         <p>학생 등록 완료 후 시즌 등록 페이지에서 상세 설정이 가능합니다.</p>
-                        <p className="mt-1 text-xs text-yellow-600">
+                        <p className="mt-1 text-xs text-yellow-600 dark:text-yellow-400">
                           (등록일이 시즌 시작일 이후인 경우 시즌비가 자동으로 일할계산됩니다)
                         </p>
                       </div>
@@ -1002,8 +1002,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* 월 학원비 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  월 학원비 <span className="text-gray-500 text-xs">(수업횟수에 따라 자동 설정)</span>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  월 학원비 <span className="text-muted-foreground text-xs">(수업횟수에 따라 자동 설정)</span>
                 </label>
                 <input
                   type="number"
@@ -1012,13 +1012,13 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   placeholder="0"
                   min="0"
                   step="10000"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
 
               {/* 할인율 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">할인율 (%)</label>
+                <label className="block text-sm font-medium text-foreground mb-2">할인율 (%)</label>
                 <input
                   type="number"
                   value={formData.discount_rate || 0}
@@ -1027,19 +1027,19 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   min="0"
                   max="100"
                   step="1"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
 
               {/* 납부일 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  납부일 <span className="text-gray-500 text-xs">(비워두면 학원 기본값 사용)</span>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  납부일 <span className="text-muted-foreground text-xs">(비워두면 학원 기본값 사용)</span>
                 </label>
                 <select
                   value={formData.payment_due_day || ''}
                   onChange={(e) => handleChange('payment_due_day', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">학원 기본값 ({academySettings.tuition_due_day || 5}일)</option>
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
@@ -1054,7 +1054,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           {/* 할인 사유 - 할인율이 있을 때만 표시 */}
           {(formData.discount_rate || 0) > 0 && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 할인 사유 <span className="text-red-500">*</span>
               </label>
               <input
@@ -1062,8 +1062,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 value={formData.discount_reason || ''}
                 onChange={(e) => handleChange('discount_reason', e.target.value)}
                 placeholder="예: 형제자매 할인, 장기등록 할인, 추천인 할인 등"
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  errors.discount_reason ? 'border-red-500' : 'border-gray-300'
+                className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+                  errors.discount_reason ? 'border-red-500' : 'border-border'
                 }`}
               />
               {errors.discount_reason && <p className="text-red-500 text-sm mt-1">{errors.discount_reason}</p>}
@@ -1071,10 +1071,10 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           )}
 
           {/* 실납부액 표시 */}
-          <div className="p-4 bg-gray-50 rounded-lg">
+          <div className="p-4 bg-muted rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">월 학원비</span>
-              <span className="font-medium">{formatCurrency(formData.monthly_tuition || 0)}</span>
+              <span className="text-muted-foreground">월 학원비</span>
+              <span className="font-medium text-foreground">{formatCurrency(formData.monthly_tuition || 0)}</span>
             </div>
             {(formData.discount_rate || 0) > 0 && (
               <div className="flex justify-between items-center text-red-600 mt-2">
@@ -1082,8 +1082,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 <span>-{formatCurrency(Math.round((formData.monthly_tuition || 0) * ((formData.discount_rate || 0) / 100)))}</span>
               </div>
             )}
-            <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-200">
-              <span className="font-semibold text-gray-900">실납부액</span>
+            <div className="flex justify-between items-center mt-3 pt-3 border-t border-border">
+              <span className="font-semibold text-foreground">실납부액</span>
               <span className="font-bold text-lg text-primary-600">{formatCurrency(finalTuition)}</span>
             </div>
           </div>
@@ -1099,46 +1099,46 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
         <CardContent className="space-y-4">
           {/* 주소 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">주소</label>
+            <label className="block text-sm font-medium text-foreground mb-2">주소</label>
             <input
               type="text"
               value={formData.address || ''}
               onChange={(e) => handleChange('address', e.target.value)}
               placeholder="서울시 강남구..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
           {/* 비고 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">비고</label>
+            <label className="block text-sm font-medium text-foreground mb-2">비고</label>
             <input
               type="text"
               value={formData.notes || ''}
               onChange={(e) => handleChange('notes', e.target.value)}
               placeholder="간단한 특이사항..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
           {/* 학생 메모 (상담 내용 등 상세 기록용) */}
           <div className="col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              학생 메모 <span className="text-gray-500 text-xs">(상담 내용, 특이사항 등 상세 기록)</span>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              학생 메모 <span className="text-muted-foreground text-xs">(상담 내용, 특이사항 등 상세 기록)</span>
             </label>
             <textarea
               value={formData.memo || ''}
               onChange={(e) => handleChange('memo', e.target.value)}
               placeholder="상담 내용, 학생 특성, 주의사항 등을 자유롭게 기록하세요..."
               rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
 
           {/* 상태 (수정 모드일 때만) */}
           {mode === 'edit' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">상태</label>
+              <label className="block text-sm font-medium text-foreground mb-2">상태</label>
               <select
                 value={formData.status}
                 onChange={(e) => {
@@ -1155,7 +1155,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                     handleChange('rest_start_date', new Date().toISOString().split('T')[0]);
                   }
                 }}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -1168,29 +1168,29 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
           {/* 휴식 설정 (휴원 상태일 때만 표시) */}
           {mode === 'edit' && formData.status === 'paused' && (
-            <div className="col-span-2 p-4 bg-yellow-50 border border-yellow-200 rounded-lg space-y-4">
-              <h4 className="font-medium text-yellow-800 flex items-center gap-2">
+            <div className="col-span-2 p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg space-y-4">
+              <h4 className="font-medium text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
                 <span className="text-lg">⏸️</span> 휴식 설정
               </h4>
 
               <div className="grid grid-cols-2 gap-4">
                 {/* 휴식 시작일 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     휴식 시작일 <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"
                     value={formData.rest_start_date || ''}
                     onChange={(e) => handleChange('rest_start_date', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                     required
                   />
                 </div>
 
                 {/* 휴식 종료일 */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     휴식 종료일
                   </label>
                   <div className="flex items-center gap-2">
@@ -1199,12 +1199,12 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                       value={formData.rest_end_date || ''}
                       onChange={(e) => handleChange('rest_end_date', e.target.value)}
                       disabled={isIndefiniteRest}
-                      className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
-                        isIndefiniteRest ? 'bg-gray-100 text-gray-400' : ''
+                      className={`flex-1 px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 ${
+                        isIndefiniteRest ? 'opacity-50' : ''
                       }`}
                     />
                   </div>
-                  <label className="flex items-center gap-2 mt-2 text-sm text-gray-600 cursor-pointer">
+                  <label className="flex items-center gap-2 mt-2 text-sm text-muted-foreground cursor-pointer">
                     <input
                       type="checkbox"
                       checked={isIndefiniteRest}
@@ -1214,7 +1214,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                           handleChange('rest_end_date', '');
                         }
                       }}
-                      className="rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                      className="rounded border-border text-yellow-600 focus:ring-yellow-500"
                     />
                     무기한 휴식
                   </label>
@@ -1223,17 +1223,17 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
               {/* 휴식 사유 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">휴식 사유</label>
+                <label className="block text-sm font-medium text-foreground mb-2">휴식 사유</label>
                 <input
                   type="text"
                   value={formData.rest_reason || ''}
                   onChange={(e) => handleChange('rest_reason', e.target.value)}
                   placeholder="예: 개인 사정, 부상, 여행 등"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                  className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 />
               </div>
 
-              <p className="text-xs text-yellow-700">
+              <p className="text-xs text-yellow-700 dark:text-yellow-300">
                 💡 휴식 기간 동안 학원비 이월/환불 처리는 학생 상세 페이지에서 별도로 진행할 수 있습니다.
               </p>
             </div>
@@ -1243,8 +1243,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
       {/* 에러 메시지 */}
       {errors.submit && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-600 text-sm">{errors.submit}</p>
+        <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-red-600 dark:text-red-400 text-sm">{errors.submit}</p>
         </div>
       )}
 
