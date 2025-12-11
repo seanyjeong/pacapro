@@ -45,3 +45,6 @@ nul
 **/public/workbox-*.js
 **/public/sw.js
 **/public/sw.js.map
+
+# Playwright screenshots
+.playwright-mcp/
