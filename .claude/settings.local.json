@@ -31,7 +31,8 @@
       "mcp__n8n-mcp__list_workflows",
       "mcp__n8n-mcp__get_workflow",
       "mcp__n8n-mcp__update_workflow",
-      "Bash(sudo -S systemctl:*)"
+      "Bash(sudo -S systemctl:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
