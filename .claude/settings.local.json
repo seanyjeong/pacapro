@@ -30,7 +30,8 @@
       "Bash(sudo -S docker ps:*)",
       "mcp__n8n-mcp__list_workflows",
       "mcp__n8n-mcp__get_workflow",
-      "mcp__n8n-mcp__update_workflow"
+      "mcp__n8n-mcp__update_workflow",
+      "Bash(sudo -S systemctl:*)"
     ],
     "deny": [],
     "ask": []

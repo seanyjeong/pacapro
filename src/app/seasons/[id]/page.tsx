@@ -220,7 +220,7 @@ export default function SeasonDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -235,7 +235,7 @@ export default function SeasonDetailPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               {error || '시즌을 찾을 수 없습니다.'}
             </h3>
             <Button onClick={() => router.push('/seasons')}>목록으로</Button>
@@ -261,23 +261,23 @@ export default function SeasonDetailPage() {
           </Button>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold text-gray-900">{season.season_name}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{season.season_name}</h1>
               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                season.season_type === 'early' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
+                season.season_type === 'early' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
               }`}>
                 {SEASON_TYPE_LABELS[season.season_type]}
               </span>
               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                 season.status === 'active'
-                  ? 'bg-green-100 text-green-800'
+                  ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                   : season.status === 'draft'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
+                  : 'bg-muted text-muted-foreground'
               }`}>
                 {SEASON_STATUS_LABELS[season.status] || season.status}
               </span>
             </div>
-            <p className="text-gray-600">{new Date(season.season_start_date).getFullYear()}년</p>
+            <p className="text-muted-foreground">{new Date(season.season_start_date).getFullYear()}년</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -299,7 +299,7 @@ export default function SeasonDetailPage() {
             <div className="flex items-center space-x-3">
               <Calendar className="w-8 h-8 text-blue-500" />
               <div>
-                <p className="text-sm text-gray-500">시즌 기간</p>
+                <p className="text-sm text-muted-foreground">시즌 기간</p>
                 <p className="font-medium">{season.season_start_date}</p>
                 <p className="font-medium">~ {season.season_end_date}</p>
               </div>
@@ -311,7 +311,7 @@ export default function SeasonDetailPage() {
             <div className="flex items-center space-x-3">
               <DollarSign className="w-8 h-8 text-green-500" />
               <div>
-                <p className="text-sm text-gray-500">시즌비</p>
+                <p className="text-sm text-muted-foreground">시즌비</p>
                 <p className="text-xl font-bold">{formatSeasonFee(season.default_season_fee)}</p>
               </div>
             </div>
@@ -322,7 +322,7 @@ export default function SeasonDetailPage() {
             <div className="flex items-center space-x-3">
               <Trophy className="w-8 h-8 text-orange-500" />
               <div>
-                <p className="text-sm text-gray-500">운영 요일</p>
+                <p className="text-sm text-muted-foreground">운영 요일</p>
                 <p className="font-medium">{formatOperatingDays(operatingDays)}</p>
               </div>
             </div>
@@ -333,7 +333,7 @@ export default function SeasonDetailPage() {
             <div className="flex items-center space-x-3">
               <Users className="w-8 h-8 text-purple-500" />
               <div>
-                <p className="text-sm text-gray-500">등록 학생</p>
+                <p className="text-sm text-muted-foreground">등록 학생</p>
                 <p className="text-xl font-bold">{enrolledStudents.length}명</p>
               </div>
             </div>
@@ -350,17 +350,17 @@ export default function SeasonDetailPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500">비시즌 종강일</p>
+                <p className="text-sm text-muted-foreground">비시즌 종강일</p>
                 <p className="font-medium">{season.non_season_end_date || '-'}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">연속등록 허용</p>
+                <p className="text-sm text-muted-foreground">연속등록 허용</p>
                 <p className="font-medium">{season.allows_continuous ? '허용' : '불허'}</p>
               </div>
-              {season.allows_continuous && (
+              {!!season.allows_continuous && (
                 <>
                   <div>
-                    <p className="text-sm text-gray-500">연속등록 할인</p>
+                    <p className="text-sm text-muted-foreground">연속등록 할인</p>
                     <p className="font-medium">
                       {season.continuous_discount_type === 'none' && '없음'}
                       {season.continuous_discount_type === 'free' && '무료'}
@@ -368,7 +368,7 @@ export default function SeasonDetailPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">연속등록 대상 시즌</p>
+                    <p className="text-sm text-muted-foreground">연속등록 대상 시즌</p>
                     <p className="font-medium">
                       {season.continuous_to_season_type === 'early' && '수시'}
                       {season.continuous_to_season_type === 'regular' && '정시'}
@@ -398,15 +398,15 @@ export default function SeasonDetailPage() {
                       <div className="flex gap-1">
                         {slotArray.length > 0 ? slotArray.map(slot => (
                           <span key={slot} className={`px-3 py-1 rounded-full text-sm ${
-                            slot === 'morning' ? 'bg-yellow-100 text-yellow-800' :
-                            slot === 'afternoon' ? 'bg-blue-100 text-blue-800' :
-                            slot === 'evening' ? 'bg-purple-100 text-purple-800' :
-                            'bg-gray-100 text-gray-600'
+                            slot === 'morning' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' :
+                            slot === 'afternoon' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' :
+                            slot === 'evening' ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200' :
+                            'bg-muted text-muted-foreground'
                           }`}>
                             {TIME_SLOT_LABELS[slot] || slot}
                           </span>
                         )) : (
-                          <span className="px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-600">미설정</span>
+                          <span className="px-3 py-1 rounded-full text-sm bg-muted text-muted-foreground">미설정</span>
                         )}
                       </div>
                     </div>
@@ -414,7 +414,7 @@ export default function SeasonDetailPage() {
                 })}
               </div>
             ) : (
-              <p className="text-gray-500">설정된 시간대가 없습니다.</p>
+              <p className="text-muted-foreground">설정된 시간대가 없습니다.</p>
             )}
           </CardContent>
         </Card>
@@ -430,21 +430,21 @@ export default function SeasonDetailPage() {
         </CardHeader>
         <CardContent>
           {enrolledStudents.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Users className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="w-12 h-12 mx-auto mb-2 text-muted-foreground/50" />
               <p>등록된 학생이 없습니다.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">학생명</th>
-                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">시즌비</th>
-                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">등록일</th>
-                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">납부상태</th>
-                    <th className="text-left py-2 px-3 text-sm font-medium text-gray-500">시간대</th>
-                    <th className="text-right py-2 px-3 text-sm font-medium text-gray-500">관리</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">학생명</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">시즌비</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">등록일</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">납부상태</th>
+                    <th className="text-left py-2 px-3 text-sm font-medium text-muted-foreground">시간대</th>
+                    <th className="text-right py-2 px-3 text-sm font-medium text-muted-foreground">관리</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -455,8 +455,8 @@ export default function SeasonDetailPage() {
                     const hasDiscount = discountAmount > 0;
 
                     return (
-                      <tr key={enrollment.id} className="border-b last:border-0 hover:bg-gray-50">
-                        <td className="py-2 px-3 font-medium">{enrollment.student_name}</td>
+                      <tr key={enrollment.id} className="border-b border-border last:border-0 hover:bg-muted/50">
+                        <td className="py-2 px-3 font-medium text-foreground">{enrollment.student_name}</td>
                         <td className="py-2 px-3">
                           {hasDiscount ? (
                             <div className="flex flex-col">
@@ -472,16 +472,16 @@ export default function SeasonDetailPage() {
                             <span>{formatSeasonFee(enrollment.season_fee)}</span>
                           )}
                         </td>
-                        <td className="py-2 px-3 text-sm text-gray-600">
+                        <td className="py-2 px-3 text-sm text-muted-foreground">
                           {enrollment.registration_date || enrollment.registered_at?.split('T')[0] || '-'}
                         </td>
                         <td className="py-2 px-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            enrollment.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
-                            enrollment.payment_status === 'partial' ? 'bg-yellow-100 text-yellow-800' :
-                            enrollment.payment_status === 'pending' ? 'bg-red-100 text-red-800' :
-                            enrollment.payment_status === 'cancelled' ? 'bg-gray-100 text-gray-500' :
-                            'bg-gray-100 text-gray-600'
+                            enrollment.payment_status === 'paid' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
+                            enrollment.payment_status === 'partial' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' :
+                            enrollment.payment_status === 'pending' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' :
+                            enrollment.payment_status === 'cancelled' ? 'bg-muted text-muted-foreground' :
+                            'bg-muted text-muted-foreground'
                           }`}>
                             {enrollment.payment_status === 'paid' && '완납'}
                             {enrollment.payment_status === 'partial' && '일부납부'}
@@ -506,7 +506,7 @@ export default function SeasonDetailPage() {
                                     className={`px-2 py-1 text-xs rounded transition-colors ${
                                       isSelected
                                         ? 'bg-primary-500 text-white'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                     } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                                   >
                                     {TIME_SLOT_LABELS[slot]}
