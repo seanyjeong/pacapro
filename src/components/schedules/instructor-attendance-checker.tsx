@@ -25,10 +25,10 @@ const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
 };
 
 const ATTENDANCE_STATUS_COLORS: Record<AttendanceStatus, string> = {
-  present: 'bg-green-100 text-green-800 border-green-300',
-  absent: 'bg-red-100 text-red-800 border-red-300',
-  late: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  half_day: 'bg-blue-100 text-blue-800 border-blue-300',
+  present: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700',
+  absent: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700',
+  late: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700',
+  half_day: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700',
 };
 
 interface InstructorAttendanceCheckerProps {
@@ -206,8 +206,8 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
-          <p className="text-gray-600">강사 목록을 불러오는 중...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground">강사 목록을 불러오는 중...</p>
         </CardContent>
       </Card>
     );
@@ -241,7 +241,7 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
         <CardContent>
           {/* 시간대 선택 */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">시간대 선택</label>
+            <label className="block text-sm font-medium text-foreground mb-3">시간대 선택</label>
             <div className="flex gap-2">
               {(['morning', 'afternoon', 'evening'] as TimeSlot[]).map(slot => (
                 <button
@@ -251,7 +251,7 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
                     'flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors',
                     selectedTimeSlot === slot
                       ? 'bg-primary-600 text-white border-primary-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      : 'bg-card text-foreground border-border hover:bg-muted'
                   )}
                   onClick={() => setSelectedTimeSlot(slot)}
                 >
@@ -265,26 +265,26 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
           </div>
 
           {/* 통계 */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-4 bg-muted rounded-lg">
             <div className="text-center">
-              <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-gray-500">전체</p>
+              <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+              <p className="text-sm text-muted-foreground">전체</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{stats.present}</p>
-              <p className="text-sm text-gray-500">출근</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.present}</p>
+              <p className="text-sm text-muted-foreground">출근</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-red-600">{stats.absent}</p>
-              <p className="text-sm text-gray-500">결근</p>
+              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.absent}</p>
+              <p className="text-sm text-muted-foreground">결근</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-yellow-600">{stats.late}</p>
-              <p className="text-sm text-gray-500">지각</p>
+              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.late}</p>
+              <p className="text-sm text-muted-foreground">지각</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-600">{stats.halfDay}</p>
-              <p className="text-sm text-gray-500">반차</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.halfDay}</p>
+              <p className="text-sm text-muted-foreground">반차</p>
             </div>
           </div>
         </CardContent>
@@ -309,7 +309,7 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
         </CardHeader>
         <CardContent>
           {currentSlotInstructors.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               <UserCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>등록된 강사가 없습니다.</p>
               <p className="text-sm mt-1">강사 관리에서 강사를 먼저 등록해주세요.</p>
@@ -325,7 +325,7 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
                     key={instructor.id}
                     className={cn(
                       'p-4 border rounded-lg transition-colors',
-                      isChecked ? 'border-primary-300 bg-primary-50/50' : 'border-gray-200'
+                      isChecked ? 'border-primary-300 bg-primary-50/50 dark:bg-primary-950/50' : 'border-border'
                     )}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -337,8 +337,8 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
                           {instructor.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{instructor.name}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="font-medium text-foreground">{instructor.name}</p>
+                          <p className="text-sm text-muted-foreground">
                             {isChecked ? ATTENDANCE_STATUS_LABELS[edited!.status] : '미체크'}
                           </p>
                         </div>
@@ -363,7 +363,7 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
                             'px-3 py-2 rounded-lg border text-sm font-medium transition-all',
                             edited?.status === status
                               ? ATTENDANCE_STATUS_COLORS[status]
-                              : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                              : 'bg-card text-muted-foreground border-border hover:bg-muted'
                           )}
                           onClick={() => handleStatusChange(instructor.id, status)}
                         >
@@ -374,21 +374,21 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
 
                     {/* 시간 입력 (출근 또는 지각일 때만) */}
                     {isChecked && (edited?.status === 'present' || edited?.status === 'late') && (
-                      <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-gray-100">
+                      <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-border">
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">출근 시간</label>
+                          <label className="block text-xs text-muted-foreground mb-1">출근 시간</label>
                           <input
                             type="time"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
                             value={edited?.checkInTime || ''}
                             onChange={(e) => handleTimeChange(instructor.id, 'checkInTime', e.target.value)}
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-gray-500 mb-1">퇴근 시간</label>
+                          <label className="block text-xs text-muted-foreground mb-1">퇴근 시간</label>
                           <input
                             type="time"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
                             value={edited?.checkOutTime || ''}
                             onChange={(e) => handleTimeChange(instructor.id, 'checkOutTime', e.target.value)}
                           />

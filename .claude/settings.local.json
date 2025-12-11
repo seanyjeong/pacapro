@@ -21,7 +21,16 @@
       "mcp__playwright__browser_evaluate",
       "mcp__playwright__browser_console_messages",
       "mcp__playwright__browser_wait_for",
-      "mcp__playwright__browser_resize"
+      "mcp__playwright__browser_resize",
+      "Bash(sudo -S docker compose:*)",
+      "Bash(sudo -S docker exec:*)",
+      "Bash(sudo docker exec:*)",
+      "Bash(printf:*)",
+      "Bash(sudo -S sh -c \"docker exec n8n-postgres-1 psql -U n8nuser -d n8ndb -c \"\"SELECT email FROM \"\"\"user\"\"\";\"\"\")",
+      "Bash(sudo -S docker ps:*)",
+      "mcp__n8n-mcp__list_workflows",
+      "mcp__n8n-mcp__get_workflow",
+      "mcp__n8n-mcp__update_workflow"
     ],
     "deny": [],
     "ask": []
