@@ -61,13 +61,13 @@ export function isOverdue(payment: Payment): boolean {
 export function getPaymentStatusColor(status: string): string {
   switch (status) {
     case 'paid':
-      return 'text-green-600 bg-green-50';
+      return 'text-green-700 dark:text-green-200 bg-green-100 dark:bg-green-900 border-green-200 dark:border-green-700';
     case 'partial':
-      return 'text-yellow-600 bg-yellow-50';
+      return 'text-yellow-700 dark:text-yellow-200 bg-yellow-100 dark:bg-yellow-900 border-yellow-200 dark:border-yellow-700';
     case 'pending':
-      return 'text-red-600 bg-red-50';
+      return 'text-red-700 dark:text-red-200 bg-red-100 dark:bg-red-900 border-red-200 dark:border-red-700';
     default:
-      return 'text-gray-600 bg-gray-50';
+      return 'text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
   }
 }
 
@@ -77,15 +77,15 @@ export function getPaymentStatusColor(status: string): string {
 export function getPaymentTypeColor(type: string): string {
   switch (type) {
     case 'monthly':
-      return 'text-blue-600 bg-blue-50';
+      return 'text-blue-700 dark:text-blue-200 bg-blue-100 dark:bg-blue-900 border-blue-200 dark:border-blue-700';
     case 'season':
-      return 'text-purple-600 bg-purple-50';
+      return 'text-purple-700 dark:text-purple-200 bg-purple-100 dark:bg-purple-900 border-purple-200 dark:border-purple-700';
     case 'material':
-      return 'text-orange-600 bg-orange-50';
+      return 'text-orange-700 dark:text-orange-200 bg-orange-100 dark:bg-orange-900 border-orange-200 dark:border-orange-700';
     case 'other':
-      return 'text-gray-600 bg-gray-50';
+      return 'text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
     default:
-      return 'text-gray-600 bg-gray-50';
+      return 'text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
   }
 }
 

@@ -47,11 +47,11 @@ export function formatCurrency(amount: number | string | null | undefined): stri
  */
 export function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    active: 'bg-green-100 text-green-800 border-green-200',
-    inactive: 'bg-gray-100 text-gray-800 border-gray-200',
-    resigned: 'bg-red-100 text-red-800 border-red-200',
+    active: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700',
+    inactive: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700',
+    resigned: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 border-red-200 dark:border-red-700',
   };
-  return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  return colors[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
 }
 
 /**
@@ -59,10 +59,10 @@ export function getStatusColor(status: string): string {
  */
 export function getPaymentStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    paid: 'bg-green-100 text-green-800 border-green-200',
+    pending: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700',
+    paid: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700',
   };
-  return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  return colors[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
 }
 
 /**

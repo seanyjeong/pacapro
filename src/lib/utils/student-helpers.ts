@@ -120,13 +120,13 @@ export function calculateDiscountAmount(tuition: number | string, discountRate: 
  */
 export function getStatusColor(status: StudentStatus): string {
   const colors: Record<StudentStatus, string> = {
-    active: 'bg-green-100 text-green-800 border-green-200',
-    paused: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    graduated: 'bg-blue-100 text-blue-800 border-blue-200',
-    withdrawn: 'bg-gray-100 text-gray-800 border-gray-200',
-    trial: 'bg-purple-100 text-purple-800 border-purple-200',
+    active: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700',
+    paused: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700',
+    graduated: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700',
+    withdrawn: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700',
+    trial: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-700',
   };
-  return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  return colors[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
 }
 
 /**
@@ -134,12 +134,12 @@ export function getStatusColor(status: StudentStatus): string {
  */
 export function getPaymentStatusColor(status: string): string {
   const colors: Record<string, string> = {
-    unpaid: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    partial: 'bg-orange-100 text-orange-800 border-orange-200',
-    paid: 'bg-green-100 text-green-800 border-green-200',
-    overdue: 'bg-red-100 text-red-800 border-red-200',
+    unpaid: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700',
+    partial: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 border-orange-200 dark:border-orange-700',
+    paid: 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700',
+    overdue: 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 border-red-200 dark:border-red-700',
   };
-  return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  return colors[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
 }
 
 /**
