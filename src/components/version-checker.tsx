@@ -37,28 +37,31 @@ export function VersionChecker() {
             // 새로고침 시도 기록 (세션 스토리지는 새로고침 후에도 유지됨)
             sessionStorage.setItem('version_reload_attempt', APP_VERSION);
 
-            // 서비스 워커 캐시 클리어
-            if ('caches' in window) {
-                caches.keys().then((names) => {
-                    names.forEach((name) => {
-                        caches.delete(name);
-                        console.log(`[VersionChecker] 캐시 삭제: ${name}`);
-                    });
-                }).then(() => {
+            // 서비스 워커 캐시 클리어 및 새로고침
+            const clearCacheAndReload = async () => {
+                try {
+                    if ('caches' in window) {
+                        const names = await caches.keys();
+                        await Promise.all(names.map(name => {
+                            console.log(`[VersionChecker] 캐시 삭제: ${name}`);
+                            return caches.delete(name);
+                        }));
+                    }
+
                     // 서비스 워커 업데이트 강제
                     if ('serviceWorker' in navigator) {
-                        navigator.serviceWorker.getRegistrations().then((registrations) => {
-                            registrations.forEach((registration) => {
-                                registration.update();
-                            });
-                        });
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        registrations.forEach(registration => registration.update());
                     }
-                    // 페이지 새로고침 (캐시 무시)
-                    window.location.reload();
-                });
-            } else {
+                } catch (e) {
+                    console.error('[VersionChecker] 캐시 클리어 실패:', e);
+                }
+
+                // 페이지 새로고침
                 window.location.reload();
-            }
+            };
+
+            clearCacheAndReload();
         }
     }, []);
 
