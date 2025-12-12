@@ -7,13 +7,18 @@ import { TopNav } from './topnav';
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
-    // 공개 페이지 (로그인 불필요): /c/, /m/, /login, /register, /forgot-password, /reset-password
-    const isPublicPage = pathname?.startsWith('/c/') ||
-                         pathname?.startsWith('/m') ||
-                         pathname === '/login' ||
-                         pathname === '/register' ||
-                         pathname === '/forgot-password' ||
-                         pathname === '/reset-password';
+    // 인증 페이지 (로그인, 회원가입, 비밀번호 찾기): 사이드바 없이 children만 반환
+    const isAuthPage = pathname === '/login' ||
+                       pathname === '/register' ||
+                       pathname === '/forgot-password' ||
+                       pathname === '/reset-password';
+
+    if (isAuthPage) {
+        return <>{children}</>;
+    }
+
+    // 공개 페이지 (상담 신청, 모바일): 간소화된 레이아웃
+    const isPublicPage = pathname?.startsWith('/c/') || pathname?.startsWith('/m');
 
     if (isPublicPage) {
         return (
