@@ -20,8 +20,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CheckCircle, Save, UserCheck, Calendar, UserPlus, Search, X } from 'lucide-react';
+import { CheckCircle, Save, UserCheck, Calendar, UserPlus, Search, X, HelpCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// 공결 사유 옵션
+const EXCUSED_REASONS = [
+  { value: '질병', label: '질병' },
+  { value: '학교시험', label: '학교 시험' },
+];
+
+// 결석 사유 옵션
+const ABSENT_REASONS = [
+  { value: '개인사정', label: '개인 사정' },
+  { value: '무단결석', label: '무단 결석' },
+  { value: '기타', label: '기타' },
+];
 import {
   getAttendanceStatusLabel,
   getAttendanceStatusColor,
@@ -61,6 +74,16 @@ export function AttendanceChecker({
   const [isSearching, setIsSearching] = useState(false);
   const [isAddingStudent, setIsAddingStudent] = useState(false);
 
+  // 결석/공결 사유 모달 상태
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [reasonModalData, setReasonModalData] = useState<{
+    studentId: number;
+    studentName: string;
+    status: 'absent' | 'excused';
+    reason: string;
+    customReason: string;
+  } | null>(null);
+
   const [editedAttendances, setEditedAttendances] = useState<Map<number, EditedAttendanceData>>(
     new Map(
       attendances.map((a) => [
@@ -78,7 +101,20 @@ export function AttendanceChecker({
     }))
   );
 
-  const handleStatusChange = (studentId: number, status: AttendanceStatus | null) => {
+  const handleStatusChange = (studentId: number, status: AttendanceStatus | null, studentName?: string) => {
+    // 결석 또는 공결 선택 시 사유 모달 표시
+    if ((status === 'absent' || status === 'excused') && studentName) {
+      setReasonModalData({
+        studentId,
+        studentName,
+        status,
+        reason: '',
+        customReason: '',
+      });
+      setShowReasonModal(true);
+      return;
+    }
+
     setEditedAttendances((prev) => {
       const newMap = new Map(prev);
       const current = newMap.get(studentId) || { status: null };
@@ -87,9 +123,42 @@ export function AttendanceChecker({
       if (status !== 'makeup') {
         newData.makeup_date = undefined;
       }
+      // 결석/공결이 아닌 상태로 변경되면 notes 초기화
+      if (status !== 'absent' && status !== 'excused') {
+        newData.notes = undefined;
+      }
       newMap.set(studentId, newData);
       return newMap;
     });
+  };
+
+  // 사유 모달 확인 핸들러
+  const handleReasonConfirm = () => {
+    if (!reasonModalData) return;
+
+    const { studentId, status, reason, customReason } = reasonModalData;
+    const finalNotes = reason === '기타' ? customReason : reason;
+
+    setEditedAttendances((prev) => {
+      const newMap = new Map(prev);
+      const current = newMap.get(studentId) || { status: null };
+      newMap.set(studentId, {
+        ...current,
+        status,
+        notes: finalNotes,
+        makeup_date: undefined,
+      });
+      return newMap;
+    });
+
+    setShowReasonModal(false);
+    setReasonModalData(null);
+  };
+
+  // 사유 모달 취소 핸들러
+  const handleReasonCancel = () => {
+    setShowReasonModal(false);
+    setReasonModalData(null);
   };
 
   const handleMakeupDateChange = (studentId: number, makeupDate: string) => {
@@ -346,7 +415,8 @@ export function AttendanceChecker({
                         onValueChange={(value) =>
                           handleStatusChange(
                             attendance.student_id,
-                            value === 'none' ? null : (value as AttendanceStatus)
+                            value === 'none' ? null : (value as AttendanceStatus),
+                            attendance.student_name
                           )
                         }
                         disabled={readOnly || isFromMakeup}
@@ -366,7 +436,10 @@ export function AttendanceChecker({
                             {ATTENDANCE_STATUS_LABELS.late}
                           </SelectItem>
                           <SelectItem value="excused">
-                            {ATTENDANCE_STATUS_LABELS.excused}
+                            <span className="flex items-center gap-1">
+                              {ATTENDANCE_STATUS_LABELS.excused}
+                              <span className="text-xs text-muted-foreground">(공식적 결석)</span>
+                            </span>
                           </SelectItem>
                           <SelectItem value="makeup">
                             {ATTENDANCE_STATUS_LABELS.makeup}
@@ -391,17 +464,32 @@ export function AttendanceChecker({
                       )}
                     </div>
 
-                    {/* 메모 */}
-                    <div>
-                      <Textarea
-                        value={currentNotes}
-                        onChange={(e) =>
-                          handleNotesChange(attendance.student_id, e.target.value)
-                        }
-                        placeholder="메모 (선택사항)"
-                        rows={1}
-                        disabled={readOnly}
-                      />
+                    {/* 메모 / 사유 표시 */}
+                    <div className="space-y-2">
+                      {/* 결석/공결 사유 표시 */}
+                      {(currentStatus === 'absent' || currentStatus === 'excused') && currentNotes && (
+                        <div className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-md text-sm",
+                          currentStatus === 'excused'
+                            ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        )}>
+                          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                          <span>사유: {currentNotes}</span>
+                        </div>
+                      )}
+                      {/* 일반 메모 (결석/공결이 아닐 때) */}
+                      {currentStatus !== 'absent' && currentStatus !== 'excused' && (
+                        <Textarea
+                          value={currentNotes}
+                          onChange={(e) =>
+                            handleNotesChange(attendance.student_id, e.target.value)
+                          }
+                          placeholder="메모 (선택사항)"
+                          rows={1}
+                          disabled={readOnly}
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -479,6 +567,171 @@ export function AttendanceChecker({
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 결석/공결 사유 입력 모달 */}
+      {showReasonModal && reasonModalData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md">
+            {/* 헤더 */}
+            <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                {reasonModalData.status === 'excused' ? (
+                  <>
+                    <AlertCircle className="h-5 w-5 text-blue-500" />
+                    공결 사유 입력
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    결석 사유 입력
+                  </>
+                )}
+              </h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReasonCancel}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* 본문 */}
+            <div className="p-4 space-y-4">
+              {/* 학생 정보 */}
+              <div className="text-center py-2">
+                <p className="font-medium text-lg">{reasonModalData.studentName}</p>
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "mt-1",
+                    reasonModalData.status === 'excused'
+                      ? "bg-blue-50 text-blue-700 border-blue-300 dark:bg-blue-900/30 dark:text-blue-400"
+                      : "bg-red-50 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400"
+                  )}
+                >
+                  {reasonModalData.status === 'excused' ? '공결' : '결석'}
+                </Badge>
+              </div>
+
+              {/* 공결 설명 */}
+              {reasonModalData.status === 'excused' && (
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <HelpCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-blue-800 dark:text-blue-300">
+                      <p className="font-semibold mb-1">공결이란?</p>
+                      <p className="text-blue-700 dark:text-blue-400">
+                        <strong>공식적 결석</strong>으로, 원장님의 승인이 필요합니다.
+                      </p>
+                      <p className="text-blue-600 dark:text-blue-500 mt-1">
+                        승인되지 않은 결석은 <strong>일반 결석</strong>으로 처리됩니다.
+                      </p>
+                      <p className="text-blue-600 dark:text-blue-500 mt-1 text-xs">
+                        ※ 공결은 출석으로 인정되지 않으며, 월말 정산 시 보충/5주차로 상쇄 후 남은 횟수에 대해 다음 달 학원비에서 차감됩니다.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 결석 설명 */}
+              {reasonModalData.status === 'absent' && (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                    <div className="text-sm text-red-800 dark:text-red-300">
+                      <p className="font-semibold mb-1">결석 안내</p>
+                      <p className="text-red-700 dark:text-red-400">
+                        일반 결석은 <strong>학생 본인 책임</strong>이며, 별도의 보상이 없습니다.
+                      </p>
+                      <p className="text-red-600 dark:text-red-500 mt-1 text-xs">
+                        ※ 공식적 사유가 있는 경우 &apos;공결&apos;로 선택해주세요.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 사유 선택 */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">사유 선택</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(reasonModalData.status === 'excused' ? EXCUSED_REASONS : ABSENT_REASONS).map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setReasonModalData({ ...reasonModalData, reason: option.value, customReason: '' })}
+                      className={cn(
+                        "p-3 border rounded-lg text-sm font-medium transition-all",
+                        reasonModalData.reason === option.value
+                          ? reasonModalData.status === 'excused'
+                            ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "border-red-500 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                  {/* 기타 옵션 */}
+                  <button
+                    type="button"
+                    onClick={() => setReasonModalData({ ...reasonModalData, reason: '기타', customReason: '' })}
+                    className={cn(
+                      "p-3 border rounded-lg text-sm font-medium transition-all col-span-2",
+                      reasonModalData.reason === '기타'
+                        ? reasonModalData.status === 'excused'
+                          ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                          : "border-red-500 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                    )}
+                  >
+                    기타 (직접 입력)
+                  </button>
+                </div>
+              </div>
+
+              {/* 기타 사유 입력 */}
+              {reasonModalData.reason === '기타' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">사유 입력</label>
+                  <Textarea
+                    value={reasonModalData.customReason}
+                    onChange={(e) => setReasonModalData({ ...reasonModalData, customReason: e.target.value })}
+                    placeholder="사유를 입력하세요..."
+                    rows={2}
+                    className="resize-none"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* 푸터 */}
+            <div className="flex gap-2 p-4 border-t dark:border-gray-700">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={handleReasonCancel}
+              >
+                취소
+              </Button>
+              <Button
+                className={cn(
+                  "flex-1",
+                  reasonModalData.status === 'excused'
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : "bg-red-600 hover:bg-red-700"
+                )}
+                onClick={handleReasonConfirm}
+                disabled={!reasonModalData.reason || (reasonModalData.reason === '기타' && !reasonModalData.customReason.trim())}
+              >
+                확인
+              </Button>
             </div>
           </div>
         </div>
