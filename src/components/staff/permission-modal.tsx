@@ -63,14 +63,14 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
       onClick={onClose}
     >
       <Card className="w-full max-w-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <CardHeader className="flex flex-row items-center justify-between border-b">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <Shield className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+              <Shield className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <CardTitle className="text-lg">{staff.name} 권한 설정</CardTitle>
-              <p className="text-sm text-gray-500">{staff.position || '직급 미지정'}</p>
+              <p className="text-sm text-muted-foreground">{staff.position || '직급 미지정'}</p>
             </div>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -80,7 +80,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* 빠른 설정 */}
-            <div className="flex gap-2 pb-4 border-b">
+            <div className="flex gap-2 pb-4 border-b border-border">
               <Button
                 type="button"
                 variant="outline"
@@ -111,29 +111,29 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
             </div>
 
             {/* 권한 테이블 */}
-            <div className="border rounded-md overflow-hidden">
+            <div className="border border-border rounded-md overflow-hidden">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-muted">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
                       페이지
                     </th>
-                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 w-20">
+                    <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground w-20">
                       보기
                     </th>
-                    <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 w-20">
+                    <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground w-20">
                       수정
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y">
+                <tbody className="divide-y divide-border bg-card">
                   {PERMISSION_PAGES.map((page) => {
                     const perm = (permissions as any)[page.key] || { view: false, edit: false };
                     return (
-                      <tr key={page.key} className="hover:bg-gray-50">
+                      <tr key={page.key} className="hover:bg-muted">
                         <td className="px-4 py-3">
-                          <div className="text-sm font-medium text-gray-900">{page.label}</div>
-                          <div className="text-xs text-gray-500">{page.description}</div>
+                          <div className="text-sm font-medium text-foreground">{page.label}</div>
+                          <div className="text-xs text-muted-foreground">{page.description}</div>
                         </td>
                         <td className="px-4 py-3 text-center">
                           <input
@@ -142,7 +142,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                             onChange={(e) =>
                               handlePermissionChange(page.key, 'view', e.target.checked)
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
                           />
                         </td>
                         <td className="px-4 py-3 text-center">
@@ -152,7 +152,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                             onChange={(e) =>
                               handlePermissionChange(page.key, 'edit', e.target.checked)
                             }
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
                           />
                         </td>
                       </tr>

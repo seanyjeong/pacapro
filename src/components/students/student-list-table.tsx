@@ -212,13 +212,24 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
 
                     {/* 상태 */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                          student.status
-                        )}`}
-                      >
-                        {STATUS_LABELS[student.status] || student.status}
-                      </span>
+                      <div>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
+                            student.status
+                          )}`}
+                        >
+                          {STATUS_LABELS[student.status] || student.status}
+                        </span>
+                        {/* 휴원생 휴식기간 표시 */}
+                        {student.status === 'paused' && student.rest_start_date && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {formatDate(student.rest_start_date)}
+                            {student.rest_end_date
+                              ? ` ~ ${formatDate(student.rest_end_date)}`
+                              : ' ~ (무기한)'}
+                          </div>
+                        )}
+                      </div>
                     </td>
 
                     {/* 등록일 */}

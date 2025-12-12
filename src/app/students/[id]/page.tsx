@@ -151,7 +151,7 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">학생 정보를 불러오는 중...</p>
+            <p className="text-muted-foreground">학생 정보를 불러오는 중...</p>
           </CardContent>
         </Card>
       </div>
@@ -170,8 +170,8 @@ export default function StudentDetailPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">학생 정보를 불러올 수 없습니다</h3>
-            <p className="text-gray-600 mb-4">{error || '학생을 찾을 수 없습니다.'}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">학생 정보를 불러올 수 없습니다</h3>
+            <p className="text-muted-foreground mb-4">{error || '학생을 찾을 수 없습니다.'}</p>
             <Button onClick={reload}>다시 시도</Button>
           </CardContent>
         </Card>
@@ -190,8 +190,8 @@ export default function StudentDetailPage() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">학생 상세</h1>
-            <p className="text-gray-600 mt-1">{student.name} 학생의 상세 정보</p>
+            <h1 className="text-3xl font-bold text-foreground">학생 상세</h1>
+            <p className="text-muted-foreground mt-1">{student.name} 학생의 상세 정보</p>
           </div>
         </div>
       </div>
@@ -200,14 +200,14 @@ export default function StudentDetailPage() {
       <StudentCard student={student} onEdit={handleEdit} onDelete={handleDelete} onGraduate={handleGraduate} onWithdraw={handleWithdraw} />
 
       {/* 탭 메뉴 */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-border">
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('performance')}
             className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'performance'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             성적 기록 (추후)
@@ -217,12 +217,12 @@ export default function StudentDetailPage() {
             className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'payments'
                 ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             납부 내역
             {payments.length > 0 && (
-              <span className="ml-2 bg-gray-100 text-gray-900 py-0.5 px-2.5 rounded-full text-xs">
+              <span className="ml-2 bg-muted text-foreground py-0.5 px-2.5 rounded-full text-xs">
                 {payments.length}
               </span>
             )}
@@ -234,7 +234,7 @@ export default function StudentDetailPage() {
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === 'seasons'
                   ? 'border-primary-500 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
               }`}
             >
               시즌 등록

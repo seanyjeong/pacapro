@@ -90,7 +90,7 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw 
             </div>
             <div className="flex-1">
               <div className="flex items-center space-x-3 mb-2">
-                <h2 className="text-2xl font-bold text-gray-900">{student.name}</h2>
+                <h2 className="text-2xl font-bold text-foreground">{student.name}</h2>
                 <span
                   className={`inline-flex px-3 py-1 text-sm font-medium rounded-full border ${getStatusColor(
                     student.status
@@ -99,17 +99,17 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw 
                   {STATUS_LABELS[student.status]}
                 </span>
               </div>
-              <div className="text-gray-600 space-y-1">
+              <div className="text-muted-foreground space-y-1">
                 <p className="text-lg">학번: {formatStudentNumber(student.student_number)}</p>
                 <p>
                   <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full mr-2 ${
-                    student.student_type === 'exam' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                    student.student_type === 'exam' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                   }`}>
                     {STUDENT_TYPE_LABELS[student.student_type]}
                   </span>
                   {student.gender && (
                     <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full mr-2 ${
-                      student.gender === 'male' ? 'bg-sky-100 text-sky-800' : 'bg-pink-100 text-pink-800'
+                      student.gender === 'male' ? 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200' : 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
                     }`}>
                       {GENDER_LABELS[student.gender]}
                     </span>
@@ -122,18 +122,18 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw 
           </div>
 
           {/* 연락처 정보 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
             <div>
-              <div className="text-sm text-gray-500 mb-1">학생 연락처</div>
-              <div className="flex items-center text-gray-900">
-                <Phone className="w-4 h-4 mr-2 text-gray-400" />
+              <div className="text-sm text-muted-foreground mb-1">학생 연락처</div>
+              <div className="flex items-center text-foreground">
+                <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
                 {formatPhoneNumber(student.phone)}
               </div>
             </div>
             <div>
-              <div className="text-sm text-gray-500 mb-1">학부모 연락처</div>
-              <div className="flex items-center text-gray-900">
-                <Phone className="w-4 h-4 mr-2 text-gray-400" />
+              <div className="text-sm text-muted-foreground mb-1">학부모 연락처</div>
+              <div className="flex items-center text-foreground">
+                <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
                 {formatPhoneNumber(student.parent_phone)}
               </div>
             </div>
@@ -141,22 +141,22 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw 
 
           {/* 수업 정보 */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">수업 정보</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-3">수업 정보</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-start">
-                <Calendar className="w-5 h-5 mr-3 text-gray-400 mt-0.5" />
+                <Calendar className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
                 <div>
-                  <div className="text-sm text-gray-500">수업 요일</div>
-                  <div className="text-gray-900 font-medium">
+                  <div className="text-sm text-muted-foreground">수업 요일</div>
+                  <div className="text-foreground font-medium">
                     {formatClassDays(student.class_days)} (주 {student.weekly_count}회)
                   </div>
                 </div>
               </div>
               <div className="flex items-start">
-                <Banknote className="w-5 h-5 mr-3 text-gray-400 mt-0.5" />
+                <Banknote className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
                 <div>
-                  <div className="text-sm text-gray-500">월 학원비</div>
-                  <div className="text-gray-900 font-medium">
+                  <div className="text-sm text-muted-foreground">월 학원비</div>
+                  <div className="text-foreground font-medium">
                     {formatCurrency(student.monthly_tuition)}
                     {parseFloat(student.discount_rate) > 0 && (
                       <>
@@ -174,30 +174,30 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw 
 
           {/* 기타 정보 */}
           <div>
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">기타 정보</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-3">기타 정보</h3>
             <div className="space-y-3">
               {student.address && (
                 <div className="flex items-start">
-                  <MapPin className="w-5 h-5 mr-3 text-gray-400 mt-0.5" />
+                  <MapPin className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
                   <div>
-                    <div className="text-sm text-gray-500">주소</div>
-                    <div className="text-gray-900">{student.address}</div>
+                    <div className="text-sm text-muted-foreground">주소</div>
+                    <div className="text-foreground">{student.address}</div>
                   </div>
                 </div>
               )}
               <div className="flex items-start">
-                <Calendar className="w-5 h-5 mr-3 text-gray-400 mt-0.5" />
+                <Calendar className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
                 <div>
-                  <div className="text-sm text-gray-500">등록일</div>
-                  <div className="text-gray-900">{formatDate(student.enrollment_date)}</div>
+                  <div className="text-sm text-muted-foreground">등록일</div>
+                  <div className="text-foreground">{formatDate(student.enrollment_date)}</div>
                 </div>
               </div>
               {student.notes && (
                 <div className="flex items-start">
-                  <Mail className="w-5 h-5 mr-3 text-gray-400 mt-0.5" />
+                  <Mail className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
                   <div>
-                    <div className="text-sm text-gray-500">메모</div>
-                    <div className="text-gray-900 whitespace-pre-wrap">{student.notes}</div>
+                    <div className="text-sm text-muted-foreground">메모</div>
+                    <div className="text-foreground whitespace-pre-wrap">{student.notes}</div>
                   </div>
                 </div>
               )}

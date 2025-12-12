@@ -130,17 +130,17 @@ export function StaffFormModal({
           </Button>
         </CardHeader>
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
             {/* 강사 선택 (신규만) */}
             {!isEdit && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   강사 선택 <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.instructor_id}
                   onChange={(e) => setFormData((prev) => ({ ...prev, instructor_id: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">강사를 선택하세요</option>
                   {availableInstructors.map((instructor) => (
@@ -157,38 +157,42 @@ export function StaffFormModal({
 
             {/* 이메일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 이메일 (로그인 ID) <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-muted"
                 placeholder="example@email.com"
                 disabled={isEdit}
+                autoComplete="off"
+                name="staff-email"
               />
               {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
             </div>
 
             {/* 비밀번호 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 비밀번호 {!isEdit && <span className="text-red-500">*</span>}
-                {isEdit && <span className="text-gray-500 text-xs">(변경시에만 입력)</span>}
+                {isEdit && <span className="text-muted-foreground text-xs">(변경시에만 입력)</span>}
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 pr-10 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="8자 이상"
+                  autoComplete="new-password"
+                  name="staff-password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -198,12 +202,12 @@ export function StaffFormModal({
 
             {/* 직급 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">직급</label>
+              <label className="block text-sm font-medium text-foreground mb-1">직급</label>
               <input
                 type="text"
                 value={formData.position}
                 onChange={(e) => setFormData((prev) => ({ ...prev, position: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="부원장, 경리, 실장 등"
               />
             </div>
@@ -211,7 +215,7 @@ export function StaffFormModal({
             {/* 권한 설정 */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-medium text-gray-700">페이지 권한</label>
+                <label className="block text-sm font-medium text-foreground">페이지 권한</label>
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -243,32 +247,32 @@ export function StaffFormModal({
                 </div>
               </div>
 
-              <div className="border rounded-md overflow-hidden">
+              <div className="border border-border rounded-md overflow-hidden">
                 <table className="w-full">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-muted">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
                         페이지
                       </th>
-                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 w-20">
+                      <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground w-20">
                         보기
                       </th>
-                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 w-20">
+                      <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground w-20">
                         수정
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y">
+                  <tbody className="divide-y divide-border bg-card">
                     {PERMISSION_PAGES.map((page) => {
                       const perm = (formData.permissions as any)[page.key] || {
                         view: false,
                         edit: false,
                       };
                       return (
-                        <tr key={page.key} className="hover:bg-gray-50">
+                        <tr key={page.key} className="hover:bg-muted">
                           <td className="px-4 py-2">
-                            <div className="text-sm font-medium text-gray-900">{page.label}</div>
-                            <div className="text-xs text-gray-500">{page.description}</div>
+                            <div className="text-sm font-medium text-foreground">{page.label}</div>
+                            <div className="text-xs text-muted-foreground">{page.description}</div>
                           </td>
                           <td className="px-4 py-2 text-center">
                             <input
@@ -277,7 +281,7 @@ export function StaffFormModal({
                               onChange={(e) =>
                                 handlePermissionChange(page.key, 'view', e.target.checked)
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
                             />
                           </td>
                           <td className="px-4 py-2 text-center">
@@ -287,7 +291,7 @@ export function StaffFormModal({
                               onChange={(e) =>
                                 handlePermissionChange(page.key, 'edit', e.target.checked)
                               }
-                              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                              className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
                             />
                           </td>
                         </tr>
