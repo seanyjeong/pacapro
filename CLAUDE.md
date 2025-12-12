@@ -454,8 +454,16 @@ hover:bg-gray-50/100 → hover:bg-muted
 
 ## 버전 이력
 
-### 현재 버전: v2.9.13 (2025-12-12)
+### 현재 버전: v2.9.14 (2025-12-12)
 
+- **v2.9.14** (2025-12-12): 비밀번호 찾기/재설정 기능
+  - forgot-password 페이지 추가 (이메일 입력 → 재설정 링크 발송)
+  - reset-password 페이지 추가 (토큰 검증 → 새 비밀번호 설정)
+  - 백엔드 API 추가: POST /auth/forgot-password, POST /auth/reset-password, GET /auth/verify-reset-token
+  - Gmail SMTP 연동 (nodemailer)
+  - 재설정 링크 1시간 유효, 토큰 해시 저장 (보안)
+  - users 테이블에 reset_token, reset_token_expires 컬럼 추가
+  - 로그인 페이지에 "비밀번호를 잊으셨나요?" 링크 추가
 - **v2.9.13** (2025-12-12): 모달 닫기 개선 + 시스템 규정집 문서화
   - 모달 바깥 클릭 시 닫히도록 수정 (dialog.tsx DOM 구조 변경)
   - P-ACA 시스템 규정집 작성 (`docs/PACA-RULES.md`)
