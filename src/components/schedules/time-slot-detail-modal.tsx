@@ -15,7 +15,8 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, Sun, Sunrise, Moon, X, UserCog, Check, Clock, UserPlus, Search, Sparkles } from 'lucide-react';
+import { Loader2, User, Sun, Sunrise, Moon, X, UserCog, Check, Clock, UserPlus, Search, Sparkles, AlertCircle } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import type { TimeSlot } from '@/lib/types/schedule';
@@ -81,6 +82,18 @@ const STUDENT_ATTENDANCE_STATUS = [
   { value: 'excused', label: '공결', color: 'bg-blue-500' },
 ];
 
+// 공결 사유 옵션
+const EXCUSED_REASONS = [
+  { value: '질병', label: '질병' },
+  { value: '학교시험', label: '학교 시험' },
+];
+
+// 결석 사유 옵션
+const ABSENT_REASONS = [
+  { value: '개인사정', label: '개인 사정' },
+  { value: '무단결석', label: '무단 결석' },
+];
+
 // 근무시간 계산 (HH:MM 형식)
 function calculateHours(checkIn: string, checkOut: string): string {
   if (!checkIn || !checkOut) return '';
@@ -115,10 +128,17 @@ export function TimeSlotDetailModal({
     checkIn?: string;
     checkOut?: string;
   }>>({});
-  const [studentAttendances, setStudentAttendances] = useState<Record<number, string>>({});
+  const [studentAttendances, setStudentAttendances] = useState<Record<number, { status: string; notes?: string }>>({});
   const [savingInstructor, setSavingInstructor] = useState(false);
   const [savingStudent, setSavingStudent] = useState<number | null>(null);
   const [movingStudent, setMovingStudent] = useState<number | null>(null);
+  // 결석/공결 사유 입력 상태
+  const [reasonInput, setReasonInput] = useState<{
+    studentId: number;
+    status: 'absent' | 'excused';
+    reason: string;
+    customReason: string;
+  } | null>(null);
 
   // 보충 학생 추가 관련 상태
   const [showAddStudent, setShowAddStudent] = useState(false);
@@ -148,10 +168,13 @@ export function TimeSlotDetailModal({
       setScheduleId(response.schedule?.id || null);
 
       // 기존 출결 상태 초기화
-      const attendanceMap: Record<number, string> = {};
+      const attendanceMap: Record<number, { status: string; notes?: string }> = {};
       studentList.forEach(s => {
         if (s.attendance_status) {
-          attendanceMap[s.student_id] = s.attendance_status;
+          attendanceMap[s.student_id] = {
+            status: s.attendance_status,
+            notes: (s as any).notes || undefined,
+          };
         }
       });
       setStudentAttendances(attendanceMap);
@@ -282,16 +305,27 @@ export function TimeSlotDetailModal({
   };
 
   // 학생 출결 상태 변경
-  const handleStudentAttendance = async (studentId: number, status: string) => {
+  const handleStudentAttendance = async (studentId: number, status: string, notes?: string) => {
     if (!scheduleId) return;
 
-    const currentStatus = studentAttendances[studentId];
+    // 결석/공결 선택 시 사유 입력 요청
+    if ((status === 'absent' || status === 'excused') && !notes) {
+      setReasonInput({
+        studentId,
+        status: status as 'absent' | 'excused',
+        reason: '',
+        customReason: '',
+      });
+      return;
+    }
+
+    const currentData = studentAttendances[studentId];
     // 같은 상태 클릭하면 취소 (토글)
-    const newStatus = currentStatus === status ? '' : status;
+    const newStatus = currentData?.status === status ? '' : status;
 
     setStudentAttendances(prev => ({
       ...prev,
-      [studentId]: newStatus,
+      [studentId]: { status: newStatus, notes },
     }));
 
     try {
@@ -300,6 +334,7 @@ export function TimeSlotDetailModal({
         attendance_records: [{
           student_id: studentId,
           attendance_status: newStatus || null,
+          notes: notes || null,
         }],
       });
     } catch (err) {
@@ -307,11 +342,25 @@ export function TimeSlotDetailModal({
       // 롤백
       setStudentAttendances(prev => ({
         ...prev,
-        [studentId]: currentStatus || '',
+        [studentId]: currentData || { status: '' },
       }));
     } finally {
       setSavingStudent(null);
     }
+  };
+
+  // 사유 선택 후 출결 저장
+  const handleReasonConfirm = () => {
+    if (!reasonInput) return;
+    const { studentId, status, reason, customReason } = reasonInput;
+    const finalNotes = reason === '기타' ? customReason : reason;
+    handleStudentAttendance(studentId, status, finalNotes);
+    setReasonInput(null);
+  };
+
+  // 사유 입력 취소
+  const handleReasonCancel = () => {
+    setReasonInput(null);
   };
 
   // 학생 검색
@@ -685,8 +734,11 @@ export function TimeSlotDetailModal({
                         return 0;
                       })
                       .map((student) => {
-                        const currentStatus = studentAttendances[student.student_id] || '';
+                        const currentData = studentAttendances[student.student_id];
+                        const currentStatus = currentData?.status || '';
+                        const currentNotes = currentData?.notes || '';
                         const isSaving = savingStudent === student.student_id;
+                        const isReasonInputOpen = reasonInput?.studentId === student.student_id;
 
                         return (
                           <div
@@ -703,12 +755,28 @@ export function TimeSlotDetailModal({
                                   {student.grade && (
                                     <span className="text-xs text-muted-foreground">{student.grade}</span>
                                   )}
-                                  {!!student.is_trial && (
-                                    <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs flex items-center gap-1">
-                                      <Sparkles className="h-3 w-3" />
-                                      체험 {(2 - (student.trial_remaining ?? 2)) + 1}/2
-                                    </Badge>
-                                  )}
+                                  {!!student.is_trial && (() => {
+                                    const remaining = student.trial_remaining ?? 2;
+                                    const isAttended = currentStatus === 'present' || currentStatus === 'late';
+                                    // 출석된 상태면 "이번 수업 = 사용 횟수", 아니면 "다음 수업 = 사용 횟수 + 1"
+                                    const usedCount = 2 - remaining;
+                                    const currentSession = isAttended ? usedCount : usedCount + 1;
+
+                                    return (
+                                      <Badge className={cn(
+                                        "text-xs flex items-center gap-1",
+                                        remaining === 0
+                                          ? "bg-gray-100 text-gray-500 border-gray-200"
+                                          : "bg-purple-100 text-purple-700 border-purple-200"
+                                      )}>
+                                        <Sparkles className="h-3 w-3" />
+                                        {remaining === 0
+                                          ? "체험완료"
+                                          : `체험 ${currentSession}/2`
+                                        }
+                                      </Badge>
+                                    );
+                                  })()}
                                   {student.season_type && (
                                     <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">
                                       시즌
@@ -745,7 +813,7 @@ export function TimeSlotDetailModal({
                             </div>
 
                             {/* 출결 상태 버튼 */}
-                            <div className="flex items-center gap-1 pl-11">
+                            <div className="flex items-center gap-1 pl-11 flex-wrap">
                               {STUDENT_ATTENDANCE_STATUS.map((status) => {
                                 const isSelected = currentStatus === status.value;
                                 return (
@@ -768,6 +836,107 @@ export function TimeSlotDetailModal({
                                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-1" />
                               )}
                             </div>
+
+                            {/* 결석/공결 사유 표시 */}
+                            {(currentStatus === 'absent' || currentStatus === 'excused') && currentNotes && (
+                              <div className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 ml-11 rounded-md text-xs",
+                                currentStatus === 'excused'
+                                  ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                  : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                              )}>
+                                <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                                <span>사유: {currentNotes}</span>
+                              </div>
+                            )}
+
+                            {/* 사유 입력 UI */}
+                            {isReasonInputOpen && reasonInput && (
+                              <div className={cn(
+                                "ml-11 mt-2 p-3 rounded-lg border space-y-2",
+                                reasonInput.status === 'excused'
+                                  ? "bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800"
+                                  : "bg-red-50 border-red-200 dark:bg-red-950 dark:border-red-800"
+                              )}>
+                                <div className="flex items-center gap-2">
+                                  <AlertCircle className={cn(
+                                    "h-4 w-4",
+                                    reasonInput.status === 'excused' ? "text-blue-600" : "text-red-600"
+                                  )} />
+                                  <span className={cn(
+                                    "text-sm font-medium",
+                                    reasonInput.status === 'excused' ? "text-blue-800 dark:text-blue-300" : "text-red-800 dark:text-red-300"
+                                  )}>
+                                    {reasonInput.status === 'excused' ? '공결' : '결석'} 사유
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {(reasonInput.status === 'excused' ? EXCUSED_REASONS : ABSENT_REASONS).map((option) => (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      onClick={() => setReasonInput({ ...reasonInput, reason: option.value, customReason: '' })}
+                                      className={cn(
+                                        "px-2.5 py-1 rounded-full text-xs font-medium transition-all border",
+                                        reasonInput.reason === option.value
+                                          ? reasonInput.status === 'excused'
+                                            ? "bg-blue-500 text-white border-blue-500"
+                                            : "bg-red-500 text-white border-red-500"
+                                          : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                      )}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  ))}
+                                  <button
+                                    type="button"
+                                    onClick={() => setReasonInput({ ...reasonInput, reason: '기타', customReason: '' })}
+                                    className={cn(
+                                      "px-2.5 py-1 rounded-full text-xs font-medium transition-all border",
+                                      reasonInput.reason === '기타'
+                                        ? reasonInput.status === 'excused'
+                                          ? "bg-blue-500 text-white border-blue-500"
+                                          : "bg-red-500 text-white border-red-500"
+                                        : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                    )}
+                                  >
+                                    기타
+                                  </button>
+                                </div>
+                                {reasonInput.reason === '기타' && (
+                                  <Textarea
+                                    value={reasonInput.customReason}
+                                    onChange={(e) => setReasonInput({ ...reasonInput, customReason: e.target.value })}
+                                    placeholder="사유 입력..."
+                                    rows={1}
+                                    className="text-sm resize-none"
+                                  />
+                                )}
+                                <div className="flex gap-2 pt-1">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs flex-1"
+                                    onClick={handleReasonCancel}
+                                  >
+                                    취소
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className={cn(
+                                      "h-7 text-xs flex-1",
+                                      reasonInput.status === 'excused'
+                                        ? "bg-blue-600 hover:bg-blue-700"
+                                        : "bg-red-600 hover:bg-red-700"
+                                    )}
+                                    onClick={handleReasonConfirm}
+                                    disabled={!reasonInput.reason || (reasonInput.reason === '기타' && !reasonInput.customReason.trim())}
+                                  >
+                                    확인
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
