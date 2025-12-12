@@ -7,8 +7,13 @@ import { TopNav } from './topnav';
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
-    // /c/, /m/ 경로는 공개/모바일 페이지이므로 사이드바/TopNav 없이 렌더링
-    const isPublicPage = pathname?.startsWith('/c/') || pathname?.startsWith('/m');
+    // 공개 페이지 (로그인 불필요): /c/, /m/, /login, /register, /forgot-password, /reset-password
+    const isPublicPage = pathname?.startsWith('/c/') ||
+                         pathname?.startsWith('/m') ||
+                         pathname === '/login' ||
+                         pathname === '/register' ||
+                         pathname === '/forgot-password' ||
+                         pathname === '/reset-password';
 
     if (isPublicPage) {
         return (

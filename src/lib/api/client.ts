@@ -35,7 +35,11 @@ class APIClient {
                 if (error.response?.status === 401) {
                     // 토큰 만료 또는 인증 실패 - 조용히 처리 (토스트 없음)
                     this.clearAuth();
-                    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
+                    if (typeof window !== 'undefined' &&
+                        !window.location.pathname.startsWith('/login') &&
+                        !window.location.pathname.startsWith('/register') &&
+                        !window.location.pathname.startsWith('/forgot-password') &&
+                        !window.location.pathname.startsWith('/reset-password')) {
                         window.location.href = '/login';
                     }
                     return Promise.reject(error); // 여기서 바로 리턴 (아래 에러 처리 안 함)
