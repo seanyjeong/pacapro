@@ -74,6 +74,25 @@ DB는 영어(`morning/afternoon/evening`), 프론트는 한글(`오전/오후/�
 
 상세: `docs/SECURITY-ENCRYPTION.md`
 
+### 복호화 작업 현황 (2025-12-12 기준)
+
+| 라우터 | 상태 | 복호화 필드 |
+|--------|------|-------------|
+| students.js | ✅ 완료 | name, phone, parent_phone, address |
+| instructors.js | ✅ 완료 | name, phone, address, resident_number, account_number, account_holder |
+| schedules.js | ✅ 완료 | student_name, instructor_name (출결 모달 포함) |
+| payments.js | ✅ 완료 | student_name |
+| salaries.js | ✅ 완료 | instructor_name |
+| consultations.js | ✅ 완료 | student_name |
+| users.js | ✅ 완료 | name, phone (직원관리) |
+| seasons.js | ⏳ 검토필요 | student_name? |
+| expenses.js | ⏳ 검토필요 | - |
+| incomes.js | ⏳ 검토필요 | - |
+| auth.js | ⏳ 검토필요 | name? |
+| settings.js | ⏳ 검토필요 | - |
+
+**주의**: 암호화된 필드는 SQL LIKE 검색 불가 → 메모리 필터링 필요
+
 ---
 
 ## 주요 파일
