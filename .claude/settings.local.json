@@ -32,7 +32,16 @@
       "mcp__n8n-mcp__get_workflow",
       "mcp__n8n-mcp__update_workflow",
       "Bash(sudo -S systemctl:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "mcp__n8n-mcp__list_executions",
+      "Bash(TZ=UTC date:*)",
+      "Bash(sudo systemctl status:*)",
+      "Bash(lscpu:*)",
+      "Bash(sshpass -p 'Qq141171616!' ssh -o StrictHostKeyChecking=no root@211.37.174.218 'echo \"\"=== CPU ===\"\" && lscpu | grep -E \"\"Model name|CPU\\(s\\)|Thread|Core\"\" | head -6 && echo -e \"\"\\n=== RAM ===\"\" && free -h && echo -e \"\"\\n=== Storage ===\"\" && df -h / && echo -e \"\"\\n=== OS ===\"\" && cat /etc/os-release 2>/dev/null | grep PRETTY_NAME || cat /etc/redhat-release 2>/dev/null')",
+      "WebSearch",
+      "Bash(sudo dmidecode:*)",
+      "Bash(sudo -S dmidecode:*)",
+      "Bash(sudo -S lshw:*)"
     ],
     "deny": [],
     "ask": []

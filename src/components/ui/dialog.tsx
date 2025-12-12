@@ -15,13 +15,11 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 
   return (
     <div className="fixed inset-0 z-50">
-      {/* Backdrop */}
+      {/* Backdrop + Content Container */}
       <div
-        className="fixed inset-0 bg-black/50"
+        className="fixed inset-0 bg-black/50 flex items-center justify-center p-4"
         onClick={() => onOpenChange(false)}
-      />
-      {/* Content */}
-      <div className="fixed inset-0 flex items-center justify-center p-4">
+      >
         {children}
       </div>
     </div>
