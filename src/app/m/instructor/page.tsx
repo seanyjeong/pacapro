@@ -18,10 +18,10 @@ const TIME_SLOTS: { value: TimeSlot; label: string }[] = [
 ];
 
 const STATUS_BUTTONS: { value: AttendanceStatus; label: string; color: string; activeColor: string }[] = [
-  { value: 'present', label: '출근', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-green-500 text-white' },
-  { value: 'late', label: '지각', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-yellow-500 text-white' },
-  { value: 'half_day', label: '반차', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-blue-500 text-white' },
-  { value: 'absent', label: '결근', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-red-500 text-white' },
+  { value: 'present', label: '출근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-600 dark:bg-emerald-500 text-white' },
+  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500 dark:bg-amber-400 text-white' },
+  { value: 'half_day', label: '반차', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-violet-500 dark:bg-violet-400 text-white' },
+  { value: 'absent', label: '결근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500 dark:bg-red-400 text-white' },
 ];
 
 interface InstructorSlotData {
@@ -201,22 +201,22 @@ export default function MobileInstructorPage() {
   return (
     <div className="min-h-screen bg-muted">
       {/* 헤더 */}
-      <header className="bg-green-500 dark:bg-green-600 text-white p-4 sticky top-0 z-10 safe-area-inset">
+      <header className="bg-card border-b border-border p-4 sticky top-0 z-10 safe-area-inset">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/m')} className="p-2 -ml-2">
+          <button onClick={() => router.push('/m')} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition">
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-xl font-bold">강사 출근체크</h1>
+          <h1 className="text-xl font-bold text-foreground">강사 출근체크</h1>
         </div>
 
         {/* 날짜 선택 */}
         <div className="mt-4 flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
+          <Calendar className="h-5 w-5 text-muted-foreground" />
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="bg-white/20 rounded-lg px-3 py-2 text-white flex-1 [color-scheme:dark]"
+            className="bg-secondary border border-border rounded-lg px-3 py-2 text-foreground flex-1"
           />
         </div>
       </header>
@@ -279,8 +279,8 @@ export default function MobileInstructorPage() {
                           className="bg-card rounded-xl p-4 shadow-sm"
                         >
                           <div className="flex items-center gap-3 mb-3">
-                            <div className="bg-green-100 dark:bg-green-900 p-2 rounded-full">
-                              <User className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            <div className="bg-violet-50 dark:bg-violet-950/50 p-2 rounded-full">
+                              <User className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                             </div>
                             <p className="font-semibold text-lg text-foreground">{instructor.instructor_name}</p>
                           </div>
@@ -316,7 +316,7 @@ export default function MobileInstructorPage() {
           <Button
             onClick={handleSave}
             disabled={saving || attendances.size === 0}
-            className="w-full py-6 text-lg bg-green-500 hover:bg-green-600"
+            className="w-full py-6 text-lg"
           >
             {saving ? '저장 중...' : `저장 (${attendances.size}건 체크됨)`}
           </Button>

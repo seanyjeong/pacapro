@@ -112,12 +112,12 @@ export default function MobileUnpaidPage() {
   return (
     <div className="min-h-screen bg-muted">
       {/* 헤더 */}
-      <header className="bg-red-500 dark:bg-red-600 text-white p-4 sticky top-0 z-10 safe-area-inset">
+      <header className="bg-card border-b border-border p-4 sticky top-0 z-10 safe-area-inset">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/m')} className="p-2 -ml-2">
+          <button onClick={() => router.push('/m')} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition">
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-xl font-bold">미납자 확인</h1>
+          <h1 className="text-xl font-bold text-foreground">미납자 확인</h1>
         </div>
       </header>
 
@@ -166,8 +166,8 @@ export default function MobileUnpaidPage() {
                   >
                     {/* 학생 정보 */}
                     <div className="flex items-center gap-3">
-                      <div className="bg-red-100 dark:bg-red-900 p-2 rounded-full">
-                        <User className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      <div className="bg-amber-50 dark:bg-amber-950/50 p-2 rounded-full">
+                        <User className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold text-lg text-foreground">{payment.student_name}</p>
@@ -225,7 +225,7 @@ export default function MobileUnpaidPage() {
                 취소
               </Button>
               <Button
-                className="flex-1 py-6 bg-green-500 hover:bg-green-600"
+                className="flex-1 py-6"
                 onClick={handleMarkPaid}
                 disabled={processing}
               >

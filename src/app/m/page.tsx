@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { canEdit, canView } from '@/lib/utils/permissions';
-import { UserCheck, Users, CreditCard, LogOut } from 'lucide-react';
+import { UserCheck, Users, CreditCard, LogOut, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 
@@ -50,7 +50,7 @@ export default function MobileHomePage() {
 
   if (hasPermission === null) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-muted">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="text-muted-foreground">로딩 중...</div>
       </div>
     );
@@ -66,7 +66,8 @@ export default function MobileHomePage() {
       icon: UserCheck,
       label: '학생 출석체크',
       description: '날짜/시간대별 출석 관리',
-      color: 'bg-blue-500 hover:bg-blue-600',
+      iconBg: 'bg-blue-50 dark:bg-blue-950/50',
+      iconColor: 'text-blue-600 dark:text-blue-400',
       permission: canEdit('schedules'),
     },
     {
@@ -74,7 +75,8 @@ export default function MobileHomePage() {
       icon: Users,
       label: '강사 출근체크',
       description: '강사 출퇴근 기록',
-      color: 'bg-green-500 hover:bg-green-600',
+      iconBg: 'bg-violet-50 dark:bg-violet-950/50',
+      iconColor: 'text-violet-600 dark:text-violet-400',
       permission: canEdit('schedules'),
     },
     {
@@ -82,40 +84,48 @@ export default function MobileHomePage() {
       icon: CreditCard,
       label: '미납자 확인',
       description: '미납 학생 목록 조회',
-      color: 'bg-red-500 hover:bg-red-600',
+      iconBg: 'bg-amber-50 dark:bg-amber-950/50',
+      iconColor: 'text-amber-600 dark:text-amber-400',
       permission: canView('payments'),
     },
   ];
 
-  const today = new Date().toLocaleDateString('ko-KR', {
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-    weekday: 'long',
   });
+  const weekdayStr = today.toLocaleDateString('ko-KR', { weekday: 'long' });
 
   return (
-    <div className="min-h-screen bg-muted p-4 safe-area-inset">
+    <div className="min-h-screen bg-background p-5 safe-area-inset">
       {/* 헤더 */}
-      <header className="mb-6 text-center">
-        <div className="flex justify-center mb-3">
-          <Image
-            src="/icons/icon-96x96.png"
-            alt="P-ACA"
-            width={64}
-            height={64}
-            className="rounded-xl shadow-md"
-          />
+      <header className="mb-8 text-center">
+        <div className="flex justify-center mb-4">
+          <div className="p-3 bg-primary/10 rounded-2xl">
+            <Image
+              src="/icons/icon-96x96.png"
+              alt="P-ACA"
+              width={56}
+              height={56}
+              className="rounded-xl"
+            />
+          </div>
         </div>
-        {academyName && <h1 className="text-2xl font-bold text-foreground">{academyName}</h1>}
+        {academyName && (
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{academyName}</h1>
+        )}
         {userName && (
           <p className="text-muted-foreground mt-1">{userName}님 안녕하세요</p>
         )}
-        <p className="text-sm text-muted-foreground/70 mt-1">{today}</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          {dateStr} <span className="text-primary font-medium">{weekdayStr}</span>
+        </p>
       </header>
 
       {/* 메뉴 버튼 */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {menuItems.map((item) => {
           if (!item.permission) return null;
 
@@ -123,32 +133,39 @@ export default function MobileHomePage() {
             <button
               key={item.href}
               onClick={() => router.push(item.href)}
-              className={`w-full ${item.color} text-white rounded-2xl p-5 flex items-center gap-4 shadow-lg active:scale-[0.98] transition-all`}
+              className="w-full bg-card border border-border/60 rounded-2xl p-5 flex items-center gap-4
+                         shadow-sm hover:shadow-md hover:border-border
+                         active:scale-[0.98] transition-all duration-200 group"
             >
-              <div className="bg-white/20 p-3 rounded-xl">
-                <item.icon className="h-7 w-7" />
+              <div className={`p-3.5 rounded-xl ${item.iconBg}`}>
+                <item.icon className={`h-6 w-6 ${item.iconColor}`} />
               </div>
-              <div className="text-left">
-                <span className="text-lg font-semibold block">{item.label}</span>
-                <span className="text-sm text-white/80">{item.description}</span>
+              <div className="text-left flex-1">
+                <span className="text-lg font-semibold text-foreground block">{item.label}</span>
+                <span className="text-sm text-muted-foreground">{item.description}</span>
               </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
             </button>
           );
         })}
       </div>
 
       {/* 로그아웃 버튼 */}
-      <div className="mt-8">
+      <div className="mt-10">
         <Button
-          variant="outline"
+          variant="ghost"
           onClick={handleLogout}
-          className="w-full py-6"
+          className="w-full py-6 text-muted-foreground hover:text-foreground"
         >
           <LogOut className="h-5 w-5 mr-2" />
           로그아웃
         </Button>
       </div>
 
+      {/* 버전 정보 */}
+      <div className="mt-4 text-center">
+        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v2.9.17</p>
+      </div>
     </div>
   );
 }

@@ -22,10 +22,10 @@ const TIME_SLOTS: { value: TimeSlot; label: string }[] = [
 ];
 
 const STATUS_BUTTONS: { value: AttendanceStatus; label: string; color: string; activeColor: string }[] = [
-  { value: 'present', label: '출석', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-green-500 text-white' },
-  { value: 'late', label: '지각', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-yellow-500 text-white' },
-  { value: 'absent', label: '결석', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-red-500 text-white' },
-  { value: 'excused', label: '공결', color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400', activeColor: 'bg-blue-500 text-white' },
+  { value: 'present', label: '출석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-600 dark:bg-emerald-500 text-white' },
+  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500 dark:bg-amber-400 text-white' },
+  { value: 'absent', label: '결석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500 dark:bg-red-400 text-white' },
+  { value: 'excused', label: '공결', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-blue-500 dark:bg-blue-400 text-white' },
 ];
 
 export default function MobileAttendancePage() {
@@ -197,22 +197,22 @@ export default function MobileAttendancePage() {
   return (
     <div className="min-h-screen bg-muted">
       {/* 헤더 */}
-      <header className="bg-blue-500 dark:bg-blue-600 text-white p-4 sticky top-0 z-10 safe-area-inset">
+      <header className="bg-card border-b border-border p-4 sticky top-0 z-10 safe-area-inset">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/m')} className="p-2 -ml-2">
+          <button onClick={() => router.push('/m')} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition">
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-xl font-bold">학생 출석체크</h1>
+          <h1 className="text-xl font-bold text-foreground">학생 출석체크</h1>
         </div>
 
         {/* 날짜 선택 */}
         <div className="mt-4 flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
+          <Calendar className="h-5 w-5 text-muted-foreground" />
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="bg-white/20 rounded-lg px-3 py-2 text-white flex-1 [color-scheme:dark]"
+            className="bg-secondary border border-border rounded-lg px-3 py-2 text-foreground flex-1"
           />
         </div>
 
@@ -224,8 +224,8 @@ export default function MobileAttendancePage() {
               onClick={() => setTimeSlot(slot.value)}
               className={`flex-1 py-2.5 rounded-lg font-medium transition ${
                 timeSlot === slot.value
-                  ? 'bg-white text-blue-500 dark:bg-gray-100 dark:text-blue-600'
-                  : 'bg-white/20 text-white'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
               }`}
             >
               {slot.label}
@@ -340,7 +340,7 @@ export default function MobileAttendancePage() {
           <Button
             onClick={handleSave}
             disabled={saving || attendances.size === 0}
-            className="w-full py-6 text-lg bg-blue-500 hover:bg-blue-600"
+            className="w-full py-6 text-lg"
           >
             {saving ? '저장 중...' : `저장 (${attendances.size}명 체크됨)`}
           </Button>
