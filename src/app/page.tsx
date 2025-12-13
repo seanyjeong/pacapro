@@ -2,14 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCog, TrendingUp, AlertCircle, Banknote, ChevronRight, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Users, UserCog, TrendingUp, AlertCircle, Banknote, ChevronRight, ArrowUpRight, ArrowDownRight, Clock, Calendar } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { dashboardAPI } from '@/lib/api/dashboard';
+import { schedulesApi } from '@/lib/api/schedules';
+import { getConsultations } from '@/lib/api/consultations';
 import { DashboardStats } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils/format';
-import { canView, isOwner, isAdmin } from '@/lib/utils/permissions';
+import { canView, canEdit, isOwner, isAdmin } from '@/lib/utils/permissions';
+import type { Consultation } from '@/lib/types/consultation';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -17,9 +20,21 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // 오늘 강사 일정
+    const [instructorsBySlot, setInstructorsBySlot] = useState<{
+        morning: { id: number; name: string }[];
+        afternoon: { id: number; name: string }[];
+        evening: { id: number; name: string }[];
+    }>({ morning: [], afternoon: [], evening: [] });
+
+    // 오늘 상담 일정
+    const [todayConsultations, setTodayConsultations] = useState<Consultation[]>([]);
+
     // 권한 체크 - 클라이언트에서만 실행 (hydration 에러 방지)
     const [canViewFinance, setCanViewFinance] = useState(false);
     const [canViewUnpaid, setCanViewUnpaid] = useState(false);
+    const [canViewSchedules, setCanViewSchedules] = useState(false);
+    const [canViewConsultations, setCanViewConsultations] = useState(false);
 
     useEffect(() => {
         // 모바일 기기 감지 → /m 으로 리다이렉트
@@ -31,8 +46,44 @@ export default function DashboardPage() {
 
         setCanViewFinance(isOwner() || isAdmin() || canView('dashboard_finance'));
         setCanViewUnpaid(isOwner() || isAdmin() || canView('dashboard_unpaid'));
+        setCanViewSchedules(isOwner() || isAdmin() || canEdit('schedules'));
+        setCanViewConsultations(isOwner() || isAdmin() || canView('consultations'));
         loadDashboard();
+        loadTodayData();
     }, [router]);
+
+    const loadTodayData = async () => {
+        const today = new Date().toISOString().split('T')[0];
+
+        // 오늘 강사 일정 로드
+        try {
+            const instructorData = await schedulesApi.getInstructorAttendanceByDate(today);
+            if (instructorData.instructors_by_slot) {
+                setInstructorsBySlot(instructorData.instructors_by_slot);
+            } else if (instructorData.instructors) {
+                // 시간대별 분류가 없으면 전체를 모든 시간대에 표시
+                setInstructorsBySlot({
+                    morning: instructorData.instructors,
+                    afternoon: instructorData.instructors,
+                    evening: instructorData.instructors,
+                });
+            }
+        } catch (err) {
+            console.error('Failed to load instructor schedules:', err);
+        }
+
+        // 오늘 상담 일정 로드
+        try {
+            const consultationData = await getConsultations({
+                startDate: today,
+                endDate: today,
+                status: 'confirmed',
+            });
+            setTodayConsultations(consultationData.consultations || []);
+        } catch (err) {
+            console.error('Failed to load consultations:', err);
+        }
+    };
 
     const loadDashboard = async () => {
         try {
@@ -185,24 +236,55 @@ export default function DashboardPage() {
                             </button>
                         )}
 
-                        {/* 전체 학생 현황 */}
-                        <button
-                            onClick={() => router.push('/students')}
-                            className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50 rounded-xl border border-blue-200/60 dark:border-blue-800/40 hover:border-blue-300 dark:hover:border-blue-700 transition-all duration-200 group"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                    <Users className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="text-left">
-                                    <div className="font-semibold text-foreground">전체 학생</div>
-                                    <div className="text-sm text-muted-foreground">
-                                        수강 {stats.students.active_students ?? 0}명 · 휴원 {stats.students.paused_students ?? 0}명
+                        {/* 오늘 강사 일정 */}
+                        {canViewSchedules && (instructorsBySlot.morning.length > 0 || instructorsBySlot.afternoon.length > 0 || instructorsBySlot.evening.length > 0) && (
+                            <button
+                                onClick={() => router.push('/schedules')}
+                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/50 dark:to-purple-950/50 rounded-xl border border-violet-200/60 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-200 group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 bg-gradient-to-br from-violet-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20">
+                                        <Clock className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-semibold text-foreground">오늘 강사 일정</div>
+                                        <div className="text-sm text-muted-foreground flex flex-wrap gap-x-2">
+                                            {instructorsBySlot.morning.length > 0 && (
+                                                <span>오전 {instructorsBySlot.morning.map(i => i.name).join(', ')}</span>
+                                            )}
+                                            {instructorsBySlot.afternoon.length > 0 && (
+                                                <span>오후 {instructorsBySlot.afternoon.map(i => i.name).join(', ')}</span>
+                                            )}
+                                            {instructorsBySlot.evening.length > 0 && (
+                                                <span>저녁 {instructorsBySlot.evening.map(i => i.name).join(', ')}</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
-                        </button>
+                                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                            </button>
+                        )}
+
+                        {/* 오늘 상담 일정 */}
+                        {canViewConsultations && todayConsultations.length > 0 && (
+                            <button
+                                onClick={() => router.push('/consultations')}
+                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-teal-50 dark:from-cyan-950/50 dark:to-teal-950/50 rounded-xl border border-cyan-200/60 dark:border-cyan-800/40 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-200 group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                                        <Calendar className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-semibold text-foreground">오늘 상담 일정</div>
+                                        <div className="text-sm text-muted-foreground">
+                                            {todayConsultations.length}건 · {todayConsultations.map(c => `${c.preferred_time} ${c.student_name}`).join(', ')}
+                                        </div>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                            </button>
+                        )}
                     </CardContent>
                 </Card>
 
