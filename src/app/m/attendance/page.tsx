@@ -316,12 +316,12 @@ export default function MobileAttendancePage() {
                           )}
                           {(student as { is_trial?: boolean }).is_trial && (
                             <span className="text-xs bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-300 px-2 py-0.5 rounded-full">
-                              체험 {(student as { trial_remaining?: number }).trial_remaining !== undefined && `(${(student as { trial_remaining?: number }).trial_remaining}회)`}
+                              체험{(student as { trial_remaining?: number }).trial_remaining != null && (student as { trial_remaining?: number }).trial_remaining! >= 0 ? ` (${(student as { trial_remaining?: number }).trial_remaining}회)` : ''}
                             </span>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {(student as { grade?: string }).grade || ''}
+                          {(student as { grade?: string }).grade && (student as { grade?: string }).grade !== '0' ? (student as { grade?: string }).grade : ''}
                           {student.student_number && ` (${student.student_number})`}
                         </p>
                       </div>
