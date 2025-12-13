@@ -48,7 +48,8 @@
       "mcp__playwright__browser_press_key",
       "mcp__playwright__browser_close",
       "Bash(wc:*)",
-      "mcp__playwright__browser_hover"
+      "mcp__playwright__browser_hover",
+      "Bash(sudo -S journalctl:*)"
     ],
     "deny": [],
     "ask": []

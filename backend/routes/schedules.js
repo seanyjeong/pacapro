@@ -1428,6 +1428,21 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
         for (const record of attendance_records) {
             const { student_id, attendance_status, makeup_date, notes } = record;
 
+            // attendance_status가 'none'이면 기존 출석 기록 삭제
+            if (attendance_status === 'none') {
+                console.log(`[Attendance] Deleting attendance for student ${student_id}`);
+                await connection.query(
+                    `DELETE FROM attendance WHERE class_schedule_id = ? AND student_id = ?`,
+                    [scheduleId, student_id]
+                );
+                processedRecords.push({
+                    student_id,
+                    attendance_status: null,
+                    deleted: true
+                });
+                continue;
+            }
+
             // attendance_status가 null이거나 없으면 스킵 (중복 클릭 방지)
             if (!attendance_status) {
                 console.log(`[Attendance] Skipping student ${student_id} - no attendance_status`);

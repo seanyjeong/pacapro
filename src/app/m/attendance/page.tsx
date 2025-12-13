@@ -328,7 +328,7 @@ export default function MobileAttendancePage() {
                               보충
                             </span>
                           )}
-                          {(student as { is_trial?: boolean }).is_trial && (() => {
+                          {!!(student as { is_trial?: boolean }).is_trial && (() => {
                             const remaining = (student as { trial_remaining?: number }).trial_remaining ?? 2;
                             // 현재 세션 = 총 2회 - 남은 회차 + 1 (아직 출석 안 한 상태 기준)
                             const currentSession = Math.max(1, 2 - remaining + 1);
