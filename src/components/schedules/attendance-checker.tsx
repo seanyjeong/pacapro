@@ -102,6 +102,20 @@ export function AttendanceChecker({
   );
 
   const handleStatusChange = (studentId: number, status: AttendanceStatus | null, studentName?: string) => {
+    // 현재 상태 확인
+    const current = editedAttendances.get(studentId);
+    const currentStatus = current?.status || null;
+
+    // 같은 상태를 다시 선택하면 토글 (해제)
+    if (status !== null && status === currentStatus) {
+      setEditedAttendances((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(studentId, { status: null, makeup_date: undefined, notes: undefined });
+        return newMap;
+      });
+      return;
+    }
+
     // 결석 또는 공결 선택 시 사유 모달 표시
     if ((status === 'absent' || status === 'excused') && studentName) {
       setReasonModalData({
@@ -184,6 +198,8 @@ export function AttendanceChecker({
 
     let hasError = false;
     editedAttendances.forEach((data, studentId) => {
+      const original = attendances.find((a) => a.student_id === studentId);
+
       if (data.status) {
         // 보충 상태인데 날짜가 없으면 경고
         if (data.status === 'makeup' && !data.makeup_date) {
@@ -196,6 +212,12 @@ export function AttendanceChecker({
           attendance_status: data.status,
           makeup_date: data.makeup_date,
           notes: data.notes,
+        });
+      } else if (original?.attendance_status) {
+        // 원래 출석 기록이 있었는데 해제된 경우 → 삭제 요청
+        submissions.push({
+          student_id: studentId,
+          attendance_status: 'none' as AttendanceStatus,
         });
       }
     });
