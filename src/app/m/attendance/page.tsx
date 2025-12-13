@@ -44,6 +44,7 @@ export default function MobileAttendancePage() {
   const [students, setStudents] = useState<(Attendance & { phone?: string; parent_phone?: string; grade?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [attendances, setAttendances] = useState<Map<number, AttendanceStatus>>(new Map());
+  const [originalAttendances, setOriginalAttendances] = useState<Map<number, AttendanceStatus>>(new Map());
   const [saving, setSaving] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
@@ -101,10 +102,12 @@ export default function MobileAttendancePage() {
           }
         });
         setAttendances(initialMap);
+        setOriginalAttendances(new Map(initialMap)); // 원본 저장
       } else {
         setSchedule(null);
         setStudents([]);
         setAttendances(new Map());
+        setOriginalAttendances(new Map());
       }
     } catch (err) {
       console.error('Failed to load schedule:', err);
@@ -132,7 +135,15 @@ export default function MobileAttendancePage() {
       return;
     }
 
-    if (attendances.size === 0) {
+    // 삭제된 출석 찾기 (원본에 있었는데 현재에 없는 것)
+    const deletedStudentIds: number[] = [];
+    originalAttendances.forEach((_, studentId) => {
+      if (!attendances.has(studentId)) {
+        deletedStudentIds.push(studentId);
+      }
+    });
+
+    if (attendances.size === 0 && deletedStudentIds.length === 0) {
       toast.error('출석 체크할 학생을 선택해주세요.');
       return;
     }
@@ -140,10 +151,20 @@ export default function MobileAttendancePage() {
     setSaving(true);
     try {
       const records: AttendanceSubmission[] = [];
+
+      // 현재 출석 상태 추가
       attendances.forEach((status, studentId) => {
         records.push({
           student_id: studentId,
           attendance_status: status,
+        });
+      });
+
+      // 삭제된 출석 추가 (status: 'none')
+      deletedStudentIds.forEach((studentId) => {
+        records.push({
+          student_id: studentId,
+          attendance_status: 'none' as AttendanceStatus, // 삭제를 의미
         });
       });
 
