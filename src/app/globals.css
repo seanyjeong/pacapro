@@ -2,8 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Pretendard 폰트 - 모던 한글 최적화 */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
 @layer base {
   :root {
+    /* 기본 색상 */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -24,6 +28,26 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* 확장 색상 - 모던 미니멀 */
+    --primary-light: 217 91% 60%;
+    --accent-cyan: 186 100% 42%;
+    --accent-violet: 263 70% 58%;
+    --accent-emerald: 160 84% 39%;
+    --accent-amber: 38 92% 50%;
+
+    /* 그라데이션 */
+    --gradient-primary: linear-gradient(135deg, hsl(221.2, 83.2%, 53.3%) 0%, hsl(217, 91%, 60%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(220, 14%, 98%) 100%);
+
+    /* 정교한 그림자 */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    --shadow-glow: 0 0 40px -10px hsla(217, 91%, 60%, 0.4);
+
+    /* 폰트 */
+    --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
 
   /* 다크 테마 (Tech Innovation 스타일) */
@@ -47,6 +71,10 @@
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 216 100% 50%;
+
+    /* 다크 그라데이션 */
+    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 12%) 0%, hsl(0, 0%, 8%) 100%);
+    --shadow-glow: 0 0 40px -10px hsla(217, 91%, 60%, 0.25);
   }
 }
 
@@ -90,4 +118,50 @@
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #666;
+}
+
+/* 유틸리티 클래스 - 모던 미니멀 */
+@layer utilities {
+  /* 스태거 애니메이션 */
+  .stagger-children > * {
+    animation: slide-up 0.5s ease-out backwards;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 80ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 160ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 240ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 320ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 400ms; }
+
+  /* 호버 리프트 효과 */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* 글래스모피즘 */
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .dark .glass {
+    background: rgba(30, 30, 30, 0.8);
+  }
+
+  /* 그라데이션 텍스트 */
+  .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* 글로우 효과 */
+  .glow {
+    box-shadow: var(--shadow-glow);
+  }
 }
