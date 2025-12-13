@@ -314,15 +314,25 @@ export default function MobileAttendancePage() {
                               보충
                             </span>
                           )}
-                          {(student as { is_trial?: boolean }).is_trial && (
-                            <span className="text-xs bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-300 px-2 py-0.5 rounded-full">
-                              체험{(student as { trial_remaining?: number }).trial_remaining != null && (student as { trial_remaining?: number }).trial_remaining! >= 0 ? ` (${(student as { trial_remaining?: number }).trial_remaining}회)` : ''}
-                            </span>
-                          )}
+                          {(student as { is_trial?: boolean }).is_trial && (() => {
+                            const remaining = (student as { trial_remaining?: number }).trial_remaining ?? 2;
+                            const isAttended = currentStatus === 'present' || currentStatus === 'late';
+                            const usedCount = 2 - remaining;
+                            const currentSession = isAttended ? usedCount : usedCount + 1;
+
+                            return (
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                remaining === 0
+                                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                                  : 'bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-300'
+                              }`}>
+                                {remaining === 0 ? '체험완료' : `체험 ${currentSession}/2`}
+                              </span>
+                            );
+                          })()}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {(student as { grade?: string }).grade && (student as { grade?: string }).grade !== '0' ? (student as { grade?: string }).grade : ''}
-                          {student.student_number && ` (${student.student_number})`}
+                          {(student as { grade?: string }).grade && String((student as { grade?: string }).grade) !== '0' && String((student as { grade?: string }).grade) !== 'null' ? (student as { grade?: string }).grade : ''}
                         </p>
                       </div>
 
