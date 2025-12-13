@@ -1428,17 +1428,17 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
         for (const record of attendance_records) {
             const { student_id, attendance_status, makeup_date, notes } = record;
 
-            // attendance_status가 'none'이면 기존 출석 기록 삭제
+            // attendance_status가 'none'이면 출석 상태만 NULL로 (학생은 목록에 유지)
             if (attendance_status === 'none') {
-                console.log(`[Attendance] Deleting attendance for student ${student_id}`);
+                console.log(`[Attendance] Clearing attendance status for student ${student_id}`);
                 await connection.query(
-                    `DELETE FROM attendance WHERE class_schedule_id = ? AND student_id = ?`,
+                    `UPDATE attendance SET attendance_status = NULL, notes = NULL WHERE class_schedule_id = ? AND student_id = ?`,
                     [scheduleId, student_id]
                 );
                 processedRecords.push({
                     student_id,
                     attendance_status: null,
-                    deleted: true
+                    cleared: true
                 });
                 continue;
             }
@@ -1957,7 +1957,7 @@ router.post('/date/:date/instructor-attendance', verifyToken, checkPermission('s
 
         await connection.beginTransaction();
 
-        const validStatuses = ['present', 'absent', 'late', 'half_day'];
+        const validStatuses = ['present', 'absent', 'late', 'half_day', 'none'];
         const processedRecords = [];
 
         for (const record of attendances) {
@@ -1970,6 +1970,23 @@ router.post('/date/:date/instructor-attendance', verifyToken, checkPermission('s
                     error: 'Validation Error',
                     message: `Invalid attendance_status: ${attendance_status}`
                 });
+            }
+
+            // attendance_status가 'none'이면 출근 상태만 NULL로 (강사는 목록에 유지)
+            if (attendance_status === 'none') {
+                console.log(`[InstructorAttendance] Clearing attendance status for instructor ${instructor_id}`);
+                await connection.query(
+                    `UPDATE instructor_attendance SET attendance_status = NULL, check_in_time = NULL, check_out_time = NULL
+                     WHERE instructor_id = ? AND work_date = ? AND time_slot = ?`,
+                    [instructor_id, workDate, time_slot]
+                );
+                processedRecords.push({
+                    instructor_id,
+                    time_slot,
+                    attendance_status: null,
+                    cleared: true
+                });
+                continue;
             }
 
             if (!['morning', 'afternoon', 'evening'].includes(time_slot)) {
