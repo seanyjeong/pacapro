@@ -42,6 +42,7 @@ export default function MobileInstructorPage() {
   });
   const [loading, setLoading] = useState(true);
   const [attendances, setAttendances] = useState<Map<string, AttendanceStatus>>(new Map()); // key: `${instructor_id}-${time_slot}`
+  const [deletedAttendances, setDeletedAttendances] = useState<Set<string>>(new Set()); // 삭제할 출결 키
   const [saving, setSaving] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 
@@ -117,6 +118,7 @@ export default function MobileInstructorPage() {
 
       setInstructorsBySlot(slotData);
       setAttendances(initialMap);
+      setDeletedAttendances(new Set()); // 삭제 목록 초기화
     } catch (err) {
       console.error('Failed to load instructor attendance:', err);
       toast.error('강사 출근 현황을 불러오는데 실패했습니다.');
@@ -127,32 +129,58 @@ export default function MobileInstructorPage() {
 
   const handleStatusChange = (instructorId: number, timeSlot: TimeSlot, status: AttendanceStatus) => {
     const key = `${instructorId}-${timeSlot}`;
+    // 해당 강사에게 기존 기록이 있는지 확인
+    const instructor = instructorsBySlot[timeSlot].find((i) => i.instructor_id === instructorId);
+    const hasExistingRecord = !!instructor?.current_status;
+
     setAttendances((prev) => {
       const newMap = new Map(prev);
       if (newMap.get(key) === status) {
         newMap.delete(key); // 토글 해제
+        // 기존 DB 기록이 있었다면 삭제 목록에 추가
+        if (hasExistingRecord) {
+          setDeletedAttendances((prevDeleted) => new Set(prevDeleted).add(key));
+        }
       } else {
         newMap.set(key, status);
+        // 다시 상태를 설정하면 삭제 목록에서 제거
+        setDeletedAttendances((prevDeleted) => {
+          const newSet = new Set(prevDeleted);
+          newSet.delete(key);
+          return newSet;
+        });
       }
       return newMap;
     });
   };
 
   const handleSave = async () => {
-    if (attendances.size === 0) {
-      toast.error('출근 체크할 강사를 선택해주세요.');
+    if (attendances.size === 0 && deletedAttendances.size === 0) {
+      toast.error('변경사항이 없습니다.');
       return;
     }
 
     setSaving(true);
     try {
       const records: InstructorAttendanceSubmission[] = [];
+
+      // 출결 상태 저장
       attendances.forEach((status, key) => {
         const [instructorId, timeSlot] = key.split('-');
         records.push({
           instructor_id: parseInt(instructorId),
           time_slot: timeSlot as TimeSlot,
           attendance_status: status,
+        });
+      });
+
+      // 삭제할 출결 기록 ('none' 상태로 전송)
+      deletedAttendances.forEach((key) => {
+        const [instructorId, timeSlot] = key.split('-');
+        records.push({
+          instructor_id: parseInt(instructorId),
+          time_slot: timeSlot as TimeSlot,
+          attendance_status: 'none' as any, // 'none'은 삭제를 의미
         });
       });
 
@@ -315,10 +343,10 @@ export default function MobileInstructorPage() {
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 safe-area-inset">
           <Button
             onClick={handleSave}
-            disabled={saving || attendances.size === 0}
+            disabled={saving || (attendances.size === 0 && deletedAttendances.size === 0)}
             className="w-full py-6 text-lg"
           >
-            {saving ? '저장 중...' : `저장 (${attendances.size}건 체크됨)`}
+            {saving ? '저장 중...' : `저장 (${attendances.size}건 체크${deletedAttendances.size > 0 ? `, ${deletedAttendances.size}건 삭제` : ''})`}
           </Button>
         </div>
       )}

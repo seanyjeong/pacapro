@@ -167,3 +167,4 @@ DB는 영어(`morning/afternoon/evening`), 프론트는 한글(`오전/오후/�
 | docs/SECURITY-ENCRYPTION.md | 암호화 설계 |
 | docs/SERVER-MIGRATION.md | 서버 이전 가이드 |
 | docs/EXCUSED-CREDIT-FEATURE.md | 공결 크레딧 자동화 (TODO: 사유 입력 UI) |
+ㅁ
