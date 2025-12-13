@@ -234,7 +234,7 @@ export function TimeSlotDetailModal({
         attendances: [{
           instructor_id: instructorId,
           time_slot: timeSlot,
-          attendance_status: newStatus || 'none',
+          attendance_status: newStatus || 'absent',
           check_in_time: current?.checkIn || null,
           check_out_time: current?.checkOut || null,
         }],
@@ -333,7 +333,7 @@ export function TimeSlotDetailModal({
       await apiClient.post(`/schedules/${scheduleId}/attendance`, {
         attendance_records: [{
           student_id: studentId,
-          attendance_status: newStatus || 'none',
+          attendance_status: newStatus || null,
           notes: notes || null,
         }],
       });

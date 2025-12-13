@@ -1957,7 +1957,7 @@ router.post('/date/:date/instructor-attendance', verifyToken, checkPermission('s
 
         await connection.beginTransaction();
 
-        const validStatuses = ['present', 'absent', 'late', 'half_day', 'none'];
+        const validStatuses = ['present', 'absent', 'late', 'half_day'];
         const processedRecords = [];
 
         for (const record of attendances) {
@@ -1993,23 +1993,6 @@ router.post('/date/:date/instructor-attendance', verifyToken, checkPermission('s
                     error: 'Not Found',
                     message: `Instructor with ID ${instructor_id} not found`
                 });
-            }
-
-            // attendance_status가 'none'이면 기존 출근 기록 삭제
-            if (attendance_status === 'none') {
-                console.log(`[InstructorAttendance] Deleting attendance for instructor ${instructor_id} on ${workDate} ${time_slot}`);
-                await connection.query(
-                    `DELETE FROM instructor_attendance WHERE instructor_id = ? AND work_date = ? AND time_slot = ?`,
-                    [instructor_id, workDate, time_slot]
-                );
-                processedRecords.push({
-                    instructor_id,
-                    instructor_name: decrypt(instructors[0].name),
-                    time_slot,
-                    attendance_status: null,
-                    deleted: true
-                });
-                continue;
             }
 
             await connection.query(
