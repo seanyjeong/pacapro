@@ -139,8 +139,8 @@ function calculateProRatedFee(params) {
     // Step 3: 비시즌 종강일까지 수업 횟수 계산
     const classCountUntilEnd = countClassDays(startDate, nonSeasonEndDate, weeklyDays);
 
-    // Step 4: 해당 월 전체 수업 횟수 계산
-    const totalMonthlyClasses = countClassDays(startDate, lastDayOfMonth, weeklyDays);
+    // Step 4: 해당 월 전체 수업 횟수 (4주 고정: 주간횟수 × 4)
+    const totalMonthlyClasses = weeklyDays.length * 4;
 
     // Step 5: 회당 단가 계산
     const perClassFee = monthlyFee / totalMonthlyClasses;
@@ -169,75 +169,148 @@ function calculateProRatedFee(params) {
 }
 
 /**
- * 시즌 중도 해지 환불 계산
+ * 시즌 중도 해지 환불 계산 (개선된 버전)
+ * - 실제 납부 금액 기준 계산
+ * - 부가세 옵션
+ * - 학원법 기준 안내 표시
+ *
  * @param {object} params - 계산 파라미터
- * @param {number} params.seasonFee - 시즌비
+ * @param {number} params.paidAmount - 실제 납부한 금액 (할인 적용 후)
+ * @param {number} params.originalFee - 원래 시즌비 (할인 전)
  * @param {Date} params.seasonStartDate - 시즌 시작일
  * @param {Date} params.seasonEndDate - 시즌 종료일
- * @param {Date} params.cancellationDate - 해지 요청일
+ * @param {Date} params.cancellationDate - 해지 요청일 (퇴원일)
  * @param {Array<number>} params.weeklyDays - 수업 요일
- * @param {string} params.refundPolicy - 환불 정책 ('legal' | 'prorated')
+ * @param {boolean} params.includeVat - 부가세 10% 제외 여부
  * @returns {object} 환불 계산 결과
  */
 function calculateSeasonRefund(params) {
     const {
-        seasonFee,
+        paidAmount,          // 실제 납부 금액
+        originalFee,         // 원래 시즌비 (없으면 paidAmount 사용)
         seasonStartDate,
         seasonEndDate,
         cancellationDate,
         weeklyDays,
-        refundPolicy = 'legal' // 기본값: 학원법 준수
+        includeVat = false   // 부가세 제외 여부
     } = params;
+
+    // 하위 호환성: seasonFee가 있으면 paidAmount로 사용
+    const actualPaidAmount = paidAmount || params.seasonFee || 0;
+    const actualOriginalFee = originalFee || params.seasonFee || actualPaidAmount;
 
     // Step 1: 시즌 전체 수업일 계산
     const totalClassDays = countClassDays(seasonStartDate, seasonEndDate, weeklyDays);
 
-    // Step 2: 실제 수업 받은 일수 계산
-    const attendedDays = countClassDays(seasonStartDate, cancellationDate, weeklyDays);
+    // Step 2: 이용한 수업일수 계산 (시작일 ~ 퇴원일 전날까지)
+    const cancellationDateObj = new Date(cancellationDate);
+    const dayBeforeCancellation = new Date(cancellationDateObj);
+    dayBeforeCancellation.setDate(dayBeforeCancellation.getDate() - 1);
+
+    const attendedDays = countClassDays(seasonStartDate, dayBeforeCancellation, weeklyDays);
+    const remainingDays = totalClassDays - attendedDays;
 
     // Step 3: 진행률 계산
     const progressRate = attendedDays / totalClassDays;
 
-    // Step 4: 환불 정책 적용
-    let refundRate = 0;
-    let refundReason = '';
+    // Step 4: 학원법 기준 환불 계산 (참고용)
+    let legalRefundRate = 0;
+    let legalRefundReason = '';
+    let legalRefundAmount = 0;
 
-    if (refundPolicy === 'legal') {
-        // 학원법 기준
-        if (progressRate < 1/3) {
-            refundRate = 2/3;
-            refundReason = '총 학습시간 1/3 경과 전: 2/3 환불';
-        } else if (progressRate < 1/2) {
-            refundRate = 1/2;
-            refundReason = '총 학습시간 1/2 경과 전: 1/2 환불';
-        } else {
-            refundRate = 0;
-            refundReason = '총 학습시간 1/2 경과 후: 환불 불가';
-        }
-    } else if (refundPolicy === 'prorated') {
-        // 일할 환불
-        refundRate = (totalClassDays - attendedDays) / totalClassDays;
-        refundReason = '일할 환불 정책';
+    if (progressRate < 1/3) {
+        legalRefundRate = 2/3;
+        legalRefundReason = '총 학습시간 1/3 경과 전: 2/3 환불';
+    } else if (progressRate < 1/2) {
+        legalRefundRate = 1/2;
+        legalRefundReason = '총 학습시간 1/2 경과 전: 1/2 환불';
+    } else {
+        legalRefundRate = 0;
+        legalRefundReason = '총 학습시간 1/2 경과 후: 환불 불가';
+    }
+    legalRefundAmount = truncateToThousands(actualPaidAmount * legalRefundRate);
+
+    // Step 5: 일할계산 기준 환불 (실제 납부금액 기준)
+    const usedRate = attendedDays / totalClassDays;
+    const usedAmount = truncateToThousands(actualPaidAmount * usedRate);  // 이용료
+    let refundAmount = actualPaidAmount - usedAmount;  // 기본 환불금
+
+    // Step 6: 부가세 제외 (선택)
+    let vatAmount = 0;
+    let refundAfterVat = refundAmount;
+    if (includeVat) {
+        // 환불금에서 부가세 10% 제외 (내가 낼 세금)
+        vatAmount = truncateToThousands(refundAmount / 11);  // 부가세 = 환불금 / 1.1 * 0.1
+        refundAfterVat = refundAmount - vatAmount;
     }
 
-    const refundAmount = truncateToThousands(seasonFee * refundRate);
-    const usedAmount = seasonFee - refundAmount;
-
     return {
-        refundAmount,
-        usedAmount,
+        // 기본 정보
+        paidAmount: actualPaidAmount,
+        originalFee: actualOriginalFee,
+        discountAmount: actualOriginalFee - actualPaidAmount,
+
+        // 수업일 정보
         totalClassDays,
         attendedDays,
-        remainingDays: totalClassDays - attendedDays,
-        progressRate: (progressRate * 100).toFixed(2) + '%',
-        refundRate: (refundRate * 100).toFixed(2) + '%',
-        refundReason,
+        remainingDays,
+        progressRate: (progressRate * 100).toFixed(1),
+
+        // 일할계산 기준 (실제 환불)
+        usedAmount,
+        usedRate: (usedRate * 100).toFixed(1),
+        refundAmount,
+        refundRate: ((remainingDays / totalClassDays) * 100).toFixed(1),
+
+        // 부가세 옵션
+        includeVat,
+        vatAmount,
+        refundAfterVat,
+
+        // 학원법 기준 (참고)
+        legalRefundRate: (legalRefundRate * 100).toFixed(0),
+        legalRefundReason,
+        legalRefundAmount,
+
+        // 최종 환불금 (부가세 적용 여부에 따라)
+        finalRefundAmount: includeVat ? refundAfterVat : refundAmount,
+
+        // 상세 계산 내역
         calculationDetails: {
-            seasonFee: seasonFee.toLocaleString() + '원',
-            perClassFee: Math.floor(seasonFee / totalClassDays).toLocaleString() + '원',
-            formula: `${seasonFee.toLocaleString()}원 × ${(refundRate * 100).toFixed(0)}% = ${refundAmount.toLocaleString()}원`
+            paidAmount: actualPaidAmount.toLocaleString() + '원',
+            perClassFee: Math.floor(actualPaidAmount / totalClassDays).toLocaleString() + '원',
+            usedFormula: `${actualPaidAmount.toLocaleString()}원 × (${attendedDays}일/${totalClassDays}일) = ${usedAmount.toLocaleString()}원`,
+            refundFormula: `${actualPaidAmount.toLocaleString()}원 - ${usedAmount.toLocaleString()}원 = ${refundAmount.toLocaleString()}원`,
+            vatFormula: includeVat ? `${refundAmount.toLocaleString()}원 - 부가세 ${vatAmount.toLocaleString()}원 = ${refundAfterVat.toLocaleString()}원` : null
         }
     };
+}
+
+/**
+ * 특정 월의 수업 횟수 계산 (5주차 판단용)
+ * @param {number} year - 연도
+ * @param {number} month - 월 (1-12)
+ * @param {Array<number>} classDays - 수업 요일 배열 [2,4] = 화목
+ * @returns {number} 해당 월의 실제 수업 횟수
+ */
+function countMonthlyClassDays(year, month, classDays) {
+    // month는 1-12로 받아서 0-11로 변환
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);  // 해당 월의 마지막 날
+    return countClassDays(startDate, endDate, classDays);
+}
+
+/**
+ * 5주차 보너스 수업 횟수 계산
+ * @param {number} year - 연도
+ * @param {number} month - 월 (1-12)
+ * @param {Array<number>} classDays - 수업 요일 배열 [2,4] = 화목
+ * @returns {number} 5주차 보너스 수업 횟수 (기대수업 초과분)
+ */
+function getFifthWeekClassCount(year, month, classDays) {
+    const expectedClasses = classDays.length * 4;  // 주2회면 8회
+    const actualClasses = countMonthlyClassDays(year, month, classDays);
+    return Math.max(0, actualClasses - expectedClasses);  // 초과분만 반환
 }
 
 /**
@@ -356,6 +429,8 @@ module.exports = {
     calculateProRatedFee,
     calculateSeasonRefund,
     countClassDays,
+    countMonthlyClassDays,
+    getFifthWeekClassCount,
     parseWeeklyDays,
     formatWeeklyDays,
     previewSeasonTransition

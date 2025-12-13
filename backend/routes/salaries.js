@@ -3,6 +3,18 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { calculateInstructorSalary } = require('../utils/salaryCalculator');
+const { decrypt } = require('../utils/encryption');
+
+// 강사 이름 복호화 헬퍼
+function decryptInstructorName(obj) {
+    if (!obj) return obj;
+    if (obj.instructor_name) obj.instructor_name = decrypt(obj.instructor_name);
+    if (obj.name) obj.name = decrypt(obj.name);
+    return obj;
+}
+function decryptSalaryArray(arr) {
+    return arr.map(item => decryptInstructorName({...item}));
+}
 
 /**
  * GET /paca/salaries
@@ -57,7 +69,7 @@ router.get('/', verifyToken, checkPermission('salaries', 'view'), async (req, re
 
         res.json({
             message: `Found ${salaries.length} salary records`,
-            salaries
+            salaries: decryptSalaryArray(salaries)
         });
     } catch (error) {
         console.error('Error fetching salaries:', error);
@@ -477,6 +489,142 @@ router.post('/', verifyToken, checkPermission('salaries', 'edit'), async (req, r
 });
 
 /**
+ * POST /paca/salaries/:id/recalculate
+ * 급여 재계산 (미지급 상태만 가능)
+ * - 현재 강사 단가와 출근 기록으로 급여 재계산
+ * Access: owner, admin (salaries.edit)
+ */
+router.post('/:id/recalculate', verifyToken, checkPermission('salaries', 'edit'), async (req, res) => {
+    const salaryId = parseInt(req.params.id);
+
+    try {
+        // 1. 급여 조회 + 강사 정보 조인
+        const [salaries] = await db.query(
+            `SELECT s.*, i.salary_type, i.hourly_rate, i.base_salary, i.tax_type as instructor_tax_type,
+                    i.morning_class_rate, i.afternoon_class_rate, i.evening_class_rate, i.academy_id
+             FROM salary_records s
+             JOIN instructors i ON s.instructor_id = i.id
+             WHERE s.id = ? AND i.academy_id = ?`,
+            [salaryId, req.user.academyId]
+        );
+
+        if (salaries.length === 0) {
+            return res.status(404).json({ error: 'Not Found', message: '급여 기록을 찾을 수 없습니다' });
+        }
+
+        const salary = salaries[0];
+
+        // 2. 지급 완료된 급여는 재계산 불가
+        if (salary.payment_status === 'paid') {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '이미 지급 완료된 급여는 재계산할 수 없습니다'
+            });
+        }
+
+        // 3. 해당 월의 출근 기록 조회
+        const [attendances] = await db.query(
+            `SELECT time_slot, attendance_status, check_in_time, check_out_time
+             FROM instructor_attendance
+             WHERE instructor_id = ? AND DATE_FORMAT(work_date, '%Y-%m') = ?
+             AND attendance_status IN ('present', 'late', 'half_day')`,
+            [salary.instructor_id, salary.year_month]
+        );
+
+        // 4. 수업 횟수 계산
+        let morningClasses = 0, afternoonClasses = 0, eveningClasses = 0;
+        let totalHours = 0;
+        for (const att of attendances) {
+            if (att.time_slot === 'morning') morningClasses++;
+            else if (att.time_slot === 'afternoon') afternoonClasses++;
+            else if (att.time_slot === 'evening') eveningClasses++;
+
+            // 근무 시간 계산
+            if (att.check_in_time && att.check_out_time) {
+                const [inH, inM] = att.check_in_time.split(':').map(Number);
+                const [outH, outM] = att.check_out_time.split(':').map(Number);
+                const hours = (outH * 60 + outM - inH * 60 - inM) / 60;
+                if (hours > 0) totalHours += hours;
+            } else {
+                totalHours += 3; // 기본 3시간
+            }
+        }
+
+        // 5. 기본급 계산 (강사의 현재 단가 사용)
+        let baseAmount = 0;
+        const salaryType = salary.salary_type;
+        const hourlyRate = parseFloat(salary.hourly_rate) || 0;
+
+        if (salaryType === 'per_class' || salaryType === 'mixed') {
+            // per_class: morning/afternoon/evening_class_rate 사용, 없으면 hourly_rate를 fallback으로 사용
+            const morningRate = parseFloat(salary.morning_class_rate) || hourlyRate;
+            const afternoonRate = parseFloat(salary.afternoon_class_rate) || hourlyRate;
+            const eveningRate = parseFloat(salary.evening_class_rate) || hourlyRate;
+
+            baseAmount =
+                (morningClasses * morningRate) +
+                (afternoonClasses * afternoonRate) +
+                (eveningClasses * eveningRate);
+
+            if (salaryType === 'mixed') {
+                baseAmount += (parseFloat(salary.base_salary) || 0);
+            }
+        } else if (salaryType === 'monthly') {
+            baseAmount = parseFloat(salary.base_salary) || 0;
+        } else if (salaryType === 'hourly') {
+            baseAmount = hourlyRate * totalHours;
+        }
+
+        // 6. 세금 계산
+        const taxType = salary.tax_type || salary.instructor_tax_type || 'none';
+        let taxAmount = 0;
+
+        if (taxType === '3.3%') {
+            taxAmount = Math.floor(baseAmount * 0.033);
+        } else if (taxType === 'insurance') {
+            // 4대보험: 국민연금 4.5% + 건강보험 3.545% + 고용보험 0.9% = 약 8.945%
+            taxAmount = Math.floor(baseAmount * 0.08945);
+        }
+
+        // 7. 실수령액 계산 (인센티브/공제액은 기존 값 유지)
+        const incentiveAmount = parseFloat(salary.incentive_amount) || 0;
+        const totalDeduction = parseFloat(salary.total_deduction) || 0;
+        const netSalary = baseAmount + incentiveAmount - totalDeduction - taxAmount;
+
+        // 8. 급여 업데이트
+        await db.query(
+            `UPDATE salary_records
+             SET base_amount = ?, tax_amount = ?, net_salary = ?, updated_at = NOW()
+             WHERE id = ?`,
+            [baseAmount, taxAmount, netSalary, salaryId]
+        );
+
+        const totalClasses = morningClasses + afternoonClasses + eveningClasses;
+
+        res.json({
+            message: '급여가 재계산되었습니다',
+            salary: {
+                id: salaryId,
+                base_amount: baseAmount,
+                tax_amount: taxAmount,
+                net_salary: netSalary,
+                incentive_amount: incentiveAmount,
+                total_deduction: totalDeduction,
+                morning_classes: morningClasses,
+                afternoon_classes: afternoonClasses,
+                evening_classes: eveningClasses,
+                total_classes: totalClasses,
+                total_hours: Math.round(totalHours * 100) / 100
+            }
+        });
+
+    } catch (error) {
+        console.error('Error recalculating salary:', error);
+        res.status(500).json({ error: 'Server Error', message: '급여 재계산에 실패했습니다' });
+    }
+});
+
+/**
  * POST /paca/salaries/:id/pay
  * Record salary payment
  * Access: owner
@@ -576,9 +724,9 @@ router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
     const salaryId = parseInt(req.params.id);
 
     try {
-        // Verify exists and belongs to academy
+        // Verify exists and belongs to academy (급여 정보도 함께 가져옴)
         const [salaries] = await db.query(
-            `SELECT s.id, i.academy_id
+            `SELECT s.id, s.base_amount, s.incentive_amount, s.total_deduction, s.tax_amount, i.academy_id
             FROM salary_records s
             JOIN instructors i ON s.instructor_id = i.id
             WHERE s.id = ?`,
@@ -628,6 +776,21 @@ router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             });
         }
 
+        // 인센티브나 공제액이 변경되면 실수령액 재계산
+        if (incentive_amount !== undefined || total_deduction !== undefined) {
+            // 기존 급여 정보 가져오기
+            const currentSalary = salaries[0];
+            const newIncentive = incentive_amount !== undefined ? parseFloat(incentive_amount) : parseFloat(currentSalary.incentive_amount) || 0;
+            const newDeduction = total_deduction !== undefined ? parseFloat(total_deduction) : parseFloat(currentSalary.total_deduction) || 0;
+            const baseAmount = parseFloat(currentSalary.base_amount) || 0;
+            const taxAmount = parseFloat(currentSalary.tax_amount) || 0;
+
+            // 실수령액 = 기본급 + 인센티브 - 공제액 - 세금
+            const netSalary = baseAmount + newIncentive - newDeduction - taxAmount;
+            updates.push('net_salary = ?');
+            params.push(netSalary);
+        }
+
         updates.push('updated_at = NOW()');
         params.push(salaryId);
 
@@ -656,6 +819,104 @@ router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update salary record'
+        });
+    }
+});
+
+/**
+ * POST /paca/salaries/bulk-pay
+ * Bulk record salary payments (mark all pending as paid)
+ * Access: owner
+ */
+router.post('/bulk-pay', verifyToken, requireRole('owner'), async (req, res) => {
+    try {
+        const { year_month, salary_ids, payment_date } = req.body;
+
+        // salary_ids가 제공되면 해당 ID들만, 아니면 year_month로 필터
+        let salariesToPay = [];
+
+        if (salary_ids && salary_ids.length > 0) {
+            // 특정 ID 목록으로 지급
+            const [rows] = await db.query(
+                `SELECT s.id, s.instructor_id, s.net_salary, s.year_month, i.academy_id, i.name as instructor_name
+                FROM salary_records s
+                JOIN instructors i ON s.instructor_id = i.id
+                WHERE s.id IN (?) AND s.payment_status = 'pending' AND i.academy_id = ?`,
+                [salary_ids, req.user.academyId]
+            );
+            salariesToPay = rows;
+        } else if (year_month) {
+            // year_month로 필터링
+            const [rows] = await db.query(
+                `SELECT s.id, s.instructor_id, s.net_salary, s.year_month, i.academy_id, i.name as instructor_name
+                FROM salary_records s
+                JOIN instructors i ON s.instructor_id = i.id
+                WHERE s.\`year_month\` = ? AND s.payment_status = 'pending' AND i.academy_id = ?`,
+                [year_month, req.user.academyId]
+            );
+            salariesToPay = rows;
+        } else {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: 'Either year_month or salary_ids is required'
+            });
+        }
+
+        if (salariesToPay.length === 0) {
+            return res.status(200).json({
+                message: 'No pending salaries to pay',
+                paid_count: 0,
+                salaries: []
+            });
+        }
+
+        const actualPaymentDate = payment_date || new Date().toISOString().split('T')[0];
+        const paidIds = salariesToPay.map(s => s.id);
+
+        // 일괄 업데이트
+        await db.query(
+            `UPDATE salary_records
+            SET payment_status = 'paid', payment_date = ?, updated_at = NOW()
+            WHERE id IN (?)`,
+            [actualPaymentDate, paidIds]
+        );
+
+        // 지출 기록 일괄 추가
+        const expenseValues = salariesToPay.map(s => [
+            s.academy_id,
+            actualPaymentDate,
+            'salary',
+            s.net_salary,
+            s.id,
+            s.instructor_id,
+            `급여 지급 (${s.year_month})`,
+            req.user.userId
+        ]);
+
+        if (expenseValues.length > 0) {
+            await db.query(
+                `INSERT INTO expenses (
+                    academy_id, expense_date, category, amount, salary_id, instructor_id, description, recorded_by
+                ) VALUES ?`,
+                [expenseValues]
+            );
+        }
+
+        res.json({
+            message: `${salariesToPay.length}건의 급여가 지급 처리되었습니다`,
+            paid_count: salariesToPay.length,
+            salaries: salariesToPay.map(s => ({
+                id: s.id,
+                instructor_name: s.instructor_name,
+                net_salary: s.net_salary,
+                year_month: s.year_month
+            }))
+        });
+    } catch (error) {
+        console.error('Error bulk paying salaries:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'Failed to bulk pay salaries'
         });
     }
 });

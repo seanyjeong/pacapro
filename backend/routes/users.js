@@ -2,6 +2,18 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole } = require('../middleware/auth');
+const { decrypt } = require('../utils/encryption');
+
+// 복호화 헬퍼
+function decryptUserFields(obj) {
+    if (!obj) return obj;
+    if (obj.name) obj.name = decrypt(obj.name);
+    if (obj.phone) obj.phone = decrypt(obj.phone);
+    return obj;
+}
+function decryptArray(arr) {
+    return arr.map(item => decryptUserFields({...item}));
+}
 
 /**
  * GET /paca/users/pending
@@ -29,7 +41,7 @@ router.get('/pending', verifyToken, requireRole('owner', 'admin'), async (req, r
 
         res.json({
             message: `Found ${users.length} pending users`,
-            users
+            users: decryptArray(users)
         });
     } catch (error) {
         console.error('Error fetching pending users:', error);
@@ -82,7 +94,7 @@ router.post('/approve/:id', verifyToken, requireRole('owner', 'admin'), async (r
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name,
+                name: decrypt(user.name),
                 approval_status: 'approved'
             }
         });
@@ -137,7 +149,7 @@ router.post('/reject/:id', verifyToken, requireRole('owner', 'admin'), async (re
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name,
+                name: decrypt(user.name),
                 approval_status: 'rejected'
             }
         });
@@ -193,7 +205,7 @@ router.get('/', verifyToken, requireRole('owner', 'admin'), async (req, res) => 
 
         res.json({
             message: `Found ${users.length} users`,
-            users
+            users: decryptArray(users)
         });
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -240,7 +252,7 @@ router.get('/:id', verifyToken, requireRole('owner', 'admin'), async (req, res) 
             });
         }
 
-        res.json({ user: users[0] });
+        res.json({ user: decryptUserFields({...users[0]}) });
     } catch (error) {
         console.error('Error fetching user:', error);
         res.status(500).json({

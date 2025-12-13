@@ -8,6 +8,20 @@ const router = express.Router();
 const ExcelJS = require('exceljs');
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
+const { decrypt } = require('../utils/encryption');
+
+// 이름 필드 복호화 헬퍼
+function decryptNames(obj) {
+    if (!obj) return obj;
+    if (obj.student_name) obj.student_name = decrypt(obj.student_name);
+    if (obj.instructor_name) obj.instructor_name = decrypt(obj.instructor_name);
+    if (obj.resident_number) obj.resident_number = decrypt(obj.resident_number);
+    if (obj.name) obj.name = decrypt(obj.name);
+    return obj;
+}
+function decryptArray(arr) {
+    return arr.map(item => decryptNames({...item}));
+}
 
 // 카테고리 라벨 (한글)
 const EXPENSE_CATEGORY_LABELS = {
@@ -115,7 +129,7 @@ router.get('/revenue', verifyToken, checkPermission('reports', 'view'), async (r
         }
 
         // 학원비 수입 (student_payments)
-        const [tuitionPayments] = await db.query(`
+        const [tuitionPaymentsRaw] = await db.query(`
             SELECT
                 sp.paid_date as date,
                 '학원비' as category,
@@ -133,6 +147,7 @@ router.get('/revenue', verifyToken, checkPermission('reports', 'view'), async (r
             ${dateFilter ? dateFilter.replace(/oi\.income_date/g, 'sp.paid_date').replace('OR sp.paid_date BETWEEN ? AND ?', '') : ''}
             ORDER BY sp.paid_date DESC
         `, params.slice(0, start_date && end_date ? 3 : (year && month ? 3 : 1)));
+        const tuitionPayments = decryptArray(tuitionPaymentsRaw);
 
         // 기타 수입 (other_incomes)
         const incomeParams = [req.user.academyId];
@@ -144,7 +159,7 @@ router.get('/revenue', verifyToken, checkPermission('reports', 'view'), async (r
             incomeParams.push(startOfMonth, endOfMonth);
         }
 
-        const [otherIncomes] = await db.query(`
+        const [otherIncomesRaw] = await db.query(`
             SELECT
                 oi.income_date as date,
                 oi.category,
@@ -161,6 +176,7 @@ router.get('/revenue', verifyToken, checkPermission('reports', 'view'), async (r
             ${year && month && !start_date ? 'AND oi.income_date BETWEEN ? AND ?' : ''}
             ORDER BY oi.income_date DESC
         `, incomeParams);
+        const otherIncomes = decryptArray(otherIncomesRaw);
 
         // Excel 생성
         const workbook = new ExcelJS.Workbook();
@@ -336,7 +352,7 @@ router.get('/expenses', verifyToken, checkPermission('reports', 'view'), async (
             params.push(startOfMonth, endOfMonth);
         }
 
-        const [expenses] = await db.query(`
+        const [expensesRaw] = await db.query(`
             SELECT
                 e.expense_date,
                 e.category,
@@ -351,6 +367,7 @@ router.get('/expenses', verifyToken, checkPermission('reports', 'view'), async (
             ${dateFilter}
             ORDER BY e.expense_date DESC
         `, params);
+        const expenses = decryptArray(expensesRaw);
 
         // Excel 생성
         const workbook = new ExcelJS.Workbook();
@@ -707,7 +724,7 @@ router.get('/payments', verifyToken, checkPermission('reports', 'view'), async (
             params.push(status);
         }
 
-        const [payments] = await db.query(`
+        const [paymentsRaw] = await db.query(`
             SELECT
                 p.id,
                 p.year_month,
@@ -732,6 +749,7 @@ router.get('/payments', verifyToken, checkPermission('reports', 'view'), async (
             ${statusFilter}
             ORDER BY p.due_date DESC, s.name
         `, params);
+        const payments = decryptArray(paymentsRaw);
 
         // Excel 생성
         const workbook = new ExcelJS.Workbook();
@@ -885,12 +903,12 @@ router.get('/salaries', verifyToken, checkPermission('reports', 'view'), async (
         const academy = academyInfo[0] || { name: 'P-ACA', phone: '', address: '' };
 
         // 급여 내역 조회
-        const [salaries] = await db.query(`
+        const [salariesRaw] = await db.query(`
             SELECT
                 s.id,
                 s.year_month,
                 i.name as instructor_name,
-                i.instructor_type,
+                i.resident_number,
                 s.base_amount,
                 s.incentive_amount,
                 s.total_deduction,
@@ -907,6 +925,7 @@ router.get('/salaries', verifyToken, checkPermission('reports', 'view'), async (
             ${statusFilter}
             ORDER BY s.year_month DESC, i.name ASC
         `, params);
+        const salaries = decryptArray(salariesRaw);
 
         // Excel 생성
         const workbook = new ExcelJS.Workbook();
@@ -943,7 +962,7 @@ router.get('/salaries', verifyToken, checkPermission('reports', 'view'), async (
 
         // ========== 컬럼 헤더 ==========
         const headerRow = sheet.getRow(5);
-        const headers = ['월', '이름', '구분', '기본급', '인센티브', '공제액', '세금', '실수령액'];
+        const headers = ['월', '이름', '주민번호', '기본급', '인센티브', '공제액', '세금', '실수령액'];
         headers.forEach((header, index) => {
             const cell = headerRow.getCell(index + 1);
             cell.value = header;
@@ -966,18 +985,12 @@ router.get('/salaries', verifyToken, checkPermission('reports', 'view'), async (
         // 컬럼 너비 설정
         sheet.getColumn(1).width = 12;  // 월
         sheet.getColumn(2).width = 15;  // 이름
-        sheet.getColumn(3).width = 10;  // 구분
+        sheet.getColumn(3).width = 18;  // 주민번호
         sheet.getColumn(4).width = 14;  // 기본급
         sheet.getColumn(5).width = 14;  // 인센티브
         sheet.getColumn(6).width = 14;  // 공제액
         sheet.getColumn(7).width = 14;  // 세금
         sheet.getColumn(8).width = 15;  // 실수령액
-
-        const INSTRUCTOR_TYPE_LABELS = {
-            full_time: '정규직',
-            part_time: '파트타임',
-            freelance: '프리랜서'
-        };
 
         // ========== 데이터 행 ==========
         let totalBase = 0, totalIncentive = 0, totalDeduction = 0, totalTax = 0, totalNet = 0;
@@ -1002,7 +1015,7 @@ router.get('/salaries', verifyToken, checkPermission('reports', 'view'), async (
             const [y, m] = salary.year_month.split('-');
             row.getCell(1).value = `${y}년 ${parseInt(m)}월`;
             row.getCell(2).value = salary.instructor_name;
-            row.getCell(3).value = INSTRUCTOR_TYPE_LABELS[salary.instructor_type] || salary.instructor_type;
+            row.getCell(3).value = salary.resident_number || '-';
             row.getCell(4).value = baseAmount;
             row.getCell(5).value = incentiveAmount;
             row.getCell(6).value = totalDeductionAmt;

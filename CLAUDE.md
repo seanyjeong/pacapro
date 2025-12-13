@@ -15,8 +15,8 @@ git add . && git commit -m "메시지" && git push  # 자동 배포
 
 ### 백엔드 (로컬 서버)
 ```bash
-# Git 불필요! 코드 수정 후 재시작만
-echo 'q141171616!' | sudo -S systemctl restart paca
+# pacapro/backend/ 에서 수정 후 재시작
+sudo systemctl restart paca
 sudo journalctl -u paca -f  # 로그
 ```
 
@@ -74,22 +74,28 @@ DB는 영어(`morning/afternoon/evening`), 프론트는 한글(`오전/오후/�
 
 상세: `docs/SECURITY-ENCRYPTION.md`
 
-### 복호화 작업 현황 (2025-12-12 기준)
+### 복호화 작업 현황 (2025-12-13 기준)
 
 | 라우터 | 상태 | 복호화 필드 |
 |--------|------|-------------|
 | students.js | ✅ 완료 | name, phone, parent_phone, address |
 | instructors.js | ✅ 완료 | name, phone, address, resident_number, account_number, account_holder |
-| schedules.js | ✅ 완료 | student_name, instructor_name (출결 모달 포함) |
+| schedules.js | ✅ 완료 | student_name, instructor_name |
 | payments.js | ✅ 완료 | student_name |
 | salaries.js | ✅ 완료 | instructor_name |
 | consultations.js | ✅ 완료 | student_name |
-| users.js | ✅ 완료 | name, phone (직원관리) |
-| seasons.js | ⏳ 검토필요 | student_name? |
-| expenses.js | ⏳ 검토필요 | - |
-| incomes.js | ⏳ 검토필요 | - |
-| auth.js | ⏳ 검토필요 | name? |
-| settings.js | ⏳ 검토필요 | - |
+| users.js | ✅ 완료 | name, phone |
+| seasons.js | ✅ 완료 | student_name, student_phone, parent_phone |
+| staff.js | ✅ 완료 | name, instructor_name, phone |
+| reports.js | ✅ 완료 | student_name, phone, parent_phone |
+| exports.js | ✅ 완료 | student_name, instructor_name |
+| search.js | ✅ 완료 | name, phone (메모리 필터링) |
+| performance.js | ✅ 완료 | student_name |
+| classes.js | ✅ 완료 | instructor_name |
+| auth.js | ✅ 완료 | name |
+| notifications.js | ⏳ 검토필요 | - |
+| sms.js | ⏳ 검토필요 | - |
+| public.js | ⏳ 검토필요 | - |
 
 **주의**: 암호화된 필드는 SQL LIKE 검색 불가 → 메모리 필터링 필요
 
@@ -99,14 +105,14 @@ DB는 영어(`morning/afternoon/evening`), 프론트는 한글(`오전/오후/�
 
 | 기능 | 백엔드 | 프론트 |
 |------|--------|--------|
-| 학생 | routes/students.js | app/students/ |
-| 강사 | routes/instructors.js | app/instructors/ |
-| 학원비 | routes/payments.js | app/payments/ |
-| 급여 | routes/salaries.js | app/salaries/ |
-| 스케줄 | routes/schedules.js | app/schedules/ |
-| 시즌 | routes/seasons.js | app/seasons/ |
-| 상담 | routes/consultations.js | app/consultations/ |
-| 암호화 | utils/encryption.js | - |
+| 학생 | backend/routes/students.js | src/app/students/ |
+| 강사 | backend/routes/instructors.js | src/app/instructors/ |
+| 학원비 | backend/routes/payments.js | src/app/payments/ |
+| 급여 | backend/routes/salaries.js | src/app/salaries/ |
+| 스케줄 | backend/routes/schedules.js | src/app/schedules/ |
+| 시즌 | backend/routes/seasons.js | src/app/seasons/ |
+| 상담 | backend/routes/consultations.js | src/app/consultations/ |
+| 암호화 | backend/utils/encryption.js | - |
 
 ---
 

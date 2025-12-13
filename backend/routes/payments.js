@@ -3,6 +3,18 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { truncateToThousands, calculateProRatedFee, parseWeeklyDays } = require('../utils/seasonCalculator');
+const { decrypt } = require('../utils/encryption');
+
+// 학생 이름 복호화 헬퍼
+function decryptStudentName(obj) {
+    if (!obj) return obj;
+    if (obj.student_name) obj.student_name = decrypt(obj.student_name);
+    if (obj.name) obj.name = decrypt(obj.name);
+    return obj;
+}
+function decryptPaymentArray(arr) {
+    return arr.map(item => decryptStudentName({...item}));
+}
 
 /**
  * 비시즌 종강 일할 계산 (다음 달 비시즌 종강일까지의 수업료)
@@ -105,7 +117,7 @@ async function calculateNonSeasonEndProrated(params) {
  */
 router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, res) => {
     try {
-        const { student_id, payment_status, payment_type, year, month } = req.query;
+        const { student_id, payment_status, payment_type, year, month, paid_year, paid_month } = req.query;
 
         let query = `
             SELECT
@@ -113,6 +125,7 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
                 p.student_id,
                 s.name as student_name,
                 s.student_number,
+                s.grade,
                 p.year_month,
                 p.payment_type,
                 p.base_amount,
@@ -153,6 +166,12 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
             params.push(`${year}-${String(month).padStart(2, '0')}`);
         }
 
+        // paid_year, paid_month: 실제 납부일 기준 필터 (리포트 매출용)
+        if (paid_year && paid_month) {
+            query += ` AND DATE_FORMAT(p.paid_date, '%Y-%m') = ?`;
+            params.push(`${paid_year}-${String(paid_month).padStart(2, '0')}`);
+        }
+
         // 미납/부분납 먼저, 완납은 맨 뒤로 정렬
         query += ' ORDER BY CASE WHEN p.payment_status = \'paid\' THEN 1 ELSE 0 END, p.due_date DESC';
 
@@ -160,7 +179,7 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
 
         res.json({
             message: `Found ${payments.length} payment records`,
-            payments
+            payments: decryptPaymentArray(payments)
         });
     } catch (error) {
         console.error('Error fetching payments:', error);
@@ -205,13 +224,76 @@ router.get('/unpaid', verifyToken, checkPermission('payments', 'view'), async (r
 
         res.json({
             message: `Found ${payments.length} unpaid payments`,
-            payments
+            payments: decryptPaymentArray(payments)
         });
     } catch (error) {
         console.error('Error fetching unpaid payments:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '미납 내역을 불러오는데 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * GET /paca/payments/unpaid-today
+ * Get unpaid payments for students who have class today
+ * 오늘 수업이 있는 학생 중 미납자만 반환
+ * Access: owner, admin, n8n service account
+ */
+router.get('/unpaid-today', verifyToken, async (req, res) => {
+    try {
+        // 오늘 요일 (0=일, 1=월, ..., 6=토)
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const year = today.getFullYear();
+        const month = today.getMonth() + 1;
+        const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
+
+        const [payments] = await db.query(
+            `SELECT
+                p.id,
+                p.student_id,
+                s.name as student_name,
+                s.student_number,
+                s.grade,
+                s.phone,
+                s.parent_phone,
+                s.class_days,
+                p.year_month,
+                p.payment_type,
+                p.base_amount,
+                p.discount_amount,
+                p.additional_amount,
+                p.final_amount,
+                p.due_date,
+                p.payment_status,
+                DATEDIFF(CURDATE(), p.due_date) as days_overdue
+            FROM student_payments p
+            JOIN students s ON p.student_id = s.id
+            WHERE p.academy_id = ?
+            AND p.payment_status IN ('pending', 'partial')
+            AND p.year_month = ?
+            AND s.status = 'active'
+            AND s.deleted_at IS NULL
+            AND JSON_CONTAINS(COALESCE(s.class_days, '[]'), ?)
+            ORDER BY s.name ASC`,
+            [req.user.academyId, yearMonth, JSON.stringify(dayOfWeek)]
+        );
+
+        res.json({
+            message: `오늘(${['일','월','화','수','목','금','토'][dayOfWeek]}요일) 수업 있는 미납자 ${payments.length}명`,
+            date: today.toISOString().split('T')[0],
+            day_of_week: dayOfWeek,
+            day_name: ['일','월','화','수','목','금','토'][dayOfWeek],
+            count: payments.length,
+            payments: decryptPaymentArray(payments)
+        });
+    } catch (error) {
+        console.error('Error fetching unpaid-today payments:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '오늘 미납 내역을 불러오는데 실패했습니다.'
         });
     }
 });
@@ -247,7 +329,7 @@ router.get('/:id', verifyToken, checkPermission('payments', 'view'), async (req,
         }
 
         res.json({
-            payment: payments[0]
+            payment: decryptStudentName(payments[0])
         });
     } catch (error) {
         console.error('Error fetching payment:', error);
@@ -608,7 +690,7 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
     const paymentId = parseInt(req.params.id);
 
     try {
-        const { paid_amount, payment_method, payment_date, notes } = req.body;
+        const { paid_amount, payment_method, payment_date, notes, discount_amount } = req.body;
 
         if (paid_amount === undefined || paid_amount === null || !payment_method) {
             return res.status(400).json({
@@ -642,8 +724,19 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
             });
         }
 
+        // 추가 할인 적용 시 final_amount 감소
+        let additionalDiscount = 0;
+        let newFinalAmount = parseFloat(payment.final_amount);
+        let newDiscountAmount = parseFloat(payment.discount_amount) || 0;
+
+        if (discount_amount && parseFloat(discount_amount) > 0) {
+            additionalDiscount = parseFloat(discount_amount);
+            newFinalAmount = Math.max(0, newFinalAmount - additionalDiscount);
+            newDiscountAmount += additionalDiscount;
+        }
+
         // Calculate amounts
-        const totalDue = parseFloat(payment.final_amount);
+        const totalDue = newFinalAmount;
         const currentPaidAmount = parseFloat(payment.paid_amount) || 0;
         const newPaidAmount = currentPaidAmount + parseFloat(paid_amount);
 
@@ -671,10 +764,18 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
             paymentStatus = 'partial';
         }
 
+        // 할인 적용 시 notes에 기록
+        let paymentNote = notes || `납부: ${paid_amount}원`;
+        if (additionalDiscount > 0) {
+            paymentNote = `납부: ${paid_amount}원 (할인 ${additionalDiscount}원 적용)`;
+        }
+
         await db.query(
             `UPDATE student_payments
             SET
                 paid_amount = ?,
+                final_amount = ?,
+                discount_amount = ?,
                 payment_status = ?,
                 payment_method = ?,
                 paid_date = ?,
@@ -683,10 +784,12 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
             WHERE id = ?`,
             [
                 newPaidAmount,
+                newFinalAmount,
+                newDiscountAmount,
                 paymentStatus,
                 payment_method,
                 payment_date || new Date().toISOString().split('T')[0],
-                notes || `납부: ${paid_amount}원`,
+                paymentNote,
                 paymentId
             ]
         );

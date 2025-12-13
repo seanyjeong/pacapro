@@ -2,6 +2,18 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
+const { decrypt } = require('../utils/encryption');
+
+// 이름 필드 복호화 헬퍼
+function decryptNames(obj) {
+    if (!obj) return obj;
+    if (obj.student_name) obj.student_name = decrypt(obj.student_name);
+    if (obj.recorded_by_name) obj.recorded_by_name = decrypt(obj.recorded_by_name);
+    return obj;
+}
+function decryptIncomeArray(arr) {
+    return arr.map(item => decryptNames({...item}));
+}
 
 // 카테고리 한글 매핑
 const CATEGORY_LABELS = {
@@ -79,7 +91,7 @@ router.get('/', verifyToken, checkPermission('incomes', 'view'), async (req, res
         res.json({
             message: `Found ${incomes.length} income records`,
             total_amount: totalAmount,
-            incomes
+            incomes: decryptIncomeArray(incomes)
         });
     } catch (error) {
         console.error('Error fetching incomes:', error);
@@ -131,7 +143,7 @@ router.get('/:id', verifyToken, checkPermission('incomes', 'view'), async (req, 
 
         res.json({
             message: '기타수입 내역을 불러왔습니다.',
-            income: incomes[0]
+            income: decryptNames({...incomes[0]})
         });
     } catch (error) {
         console.error('Error fetching income:', error);
@@ -225,7 +237,7 @@ router.post('/', verifyToken, checkPermission('incomes', 'edit'), async (req, re
 
         res.status(201).json({
             message: '기타수입이 등록되었습니다.',
-            income: newIncome[0]
+            income: decryptNames({...newIncome[0]})
         });
     } catch (error) {
         console.error('Error creating income:', error);
@@ -332,7 +344,7 @@ router.put('/:id', verifyToken, checkPermission('incomes', 'edit'), async (req, 
 
         res.json({
             message: '기타수입 내역이 수정되었습니다.',
-            income: updated[0]
+            income: decryptNames({...updated[0]})
         });
     } catch (error) {
         console.error('Error updating income:', error);

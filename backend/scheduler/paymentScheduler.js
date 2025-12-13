@@ -90,11 +90,12 @@ async function generateMonthlyPayments() {
                 let notes = null;
 
                 try {
+                    // 휴식 이월(carryover) + 공결(excused) 크레딧 모두 조회
                     const [pendingCredits] = await db.query(`
-                        SELECT id, remaining_amount FROM rest_credits
+                        SELECT id, remaining_amount, credit_type FROM rest_credits
                         WHERE student_id = ?
                         AND academy_id = ?
-                        AND credit_type = 'carryover'
+                        AND credit_type IN ('carryover', 'excused')
                         AND status IN ('pending', 'partial')
                         AND remaining_amount > 0
                         ORDER BY created_at ASC
@@ -119,7 +120,8 @@ async function generateMonthlyPayments() {
                             WHERE id = ?
                         `, [newRemaining, newStatus, credit.id]);
 
-                        notes = `[이월 차감] 휴식 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
+                        const creditTypeLabel = credit.credit_type === 'excused' ? '공결' : '휴식';
+                        notes = `[크레딧 차감] ${creditTypeLabel} 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
                         totalWithCarryover++;
                     }
                 } catch (err) {

@@ -7,6 +7,8 @@
 
 ## 복호화 작업 현황
 
+> 마지막 업데이트: 2025-12-13
+
 | 라우터 | 상태 | 암호화 필드 |
 |--------|------|-------------|
 | students.js | ✅ 완료 | name, phone, parent_phone, address |
@@ -16,21 +18,21 @@
 | salaries.js | ✅ 완료 | instructor_name |
 | consultations.js | ✅ 완료 | student_name |
 | users.js | ✅ 완료 | name, phone |
-| seasons.js | ⏳ 검토필요 | student_name? |
-| staff.js | ⏳ 검토필요 | name? |
-| auth.js | ⏳ 검토필요 | name? |
-| reports.js | ⏳ 검토필요 | name? |
-| exports.js | ⏳ 검토필요 | name? |
-| search.js | ⏳ 검토필요 | name? |
+| seasons.js | ✅ 완료 | student_name, student_phone, parent_phone |
+| staff.js | ✅ 완료 | name, instructor_name, instructor_phone, phone |
+| reports.js | ✅ 완료 | student_name, phone, parent_phone |
+| exports.js | ✅ 완료 | student_name, instructor_name, resident_number |
+| search.js | ✅ 완료 | name, phone, parent_phone (메모리 필터링) |
+| performance.js | ✅ 완료 | student_name, recorded_by_name |
+| classes.js | ✅ 완료 | instructor_name |
+| auth.js | ✅ 완료 | name (decryptFields 사용) |
 | notifications.js | ⏳ 검토필요 | - |
 | sms.js | ⏳ 검토필요 | - |
-| classes.js | ⏳ 검토필요 | - |
+| public.js | ⏳ 검토필요 | - |
 | expenses.js | ❌ 해당없음 | - |
 | incomes.js | ❌ 해당없음 | - |
 | settings.js | ❌ 해당없음 | - |
 | onboarding.js | ❌ 해당없음 | - |
-| performance.js | ⏳ 검토필요 | student_name? |
-| public.js | ⏳ 검토필요 | - |
 
 ---
 

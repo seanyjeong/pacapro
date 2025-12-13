@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { updateSalaryFromAttendance } = require('../utils/salaryCalculator');
+const { encrypt, decrypt, encryptFields, decryptFields, decryptArrayFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
 
 /**
  * GET /paca/instructors
@@ -11,13 +12,14 @@ const { updateSalaryFromAttendance } = require('../utils/salaryCalculator');
  */
 router.get('/', verifyToken, checkPermission('instructors', 'view'), async (req, res) => {
     try {
-        const { status, salary_type, instructor_type, search } = req.query;
+        const { status, salary_type, instructor_type, search, gender } = req.query;
 
         let query = `
             SELECT
                 i.id,
                 i.name,
                 i.phone,
+                i.gender,
                 i.hire_date,
                 i.salary_type,
                 i.instructor_type,
@@ -57,13 +59,21 @@ router.get('/', verifyToken, checkPermission('instructors', 'view'), async (req,
             params.push(searchTerm, searchTerm);
         }
 
+        if (gender) {
+            query += ' AND i.gender = ?';
+            params.push(gender);
+        }
+
         query += ' ORDER BY i.hire_date DESC';
 
         const [instructors] = await db.query(query, params);
 
+        // 민감 필드 복호화
+        const decryptedInstructors = decryptArrayFields(instructors, ENCRYPTED_FIELDS.instructors);
+
         res.json({
-            message: `Found ${instructors.length} instructors`,
-            instructors
+            message: `Found ${decryptedInstructors.length} instructors`,
+            instructors: decryptedInstructors
         });
     } catch (error) {
         console.error('Error fetching instructors:', error);
@@ -98,9 +108,15 @@ router.get('/overtime/pending', verifyToken, checkPermission('overtime_approval'
             ORDER BY oa.created_at DESC
         `, [req.user.academyId]);
 
+        // 강사 이름 복호화
+        const decryptedRequests = requests.map(r => ({
+            ...r,
+            instructor_name: decrypt(r.instructor_name)
+        }));
+
         res.json({
             message: `Found ${requests.length} pending requests`,
-            requests
+            requests: decryptedRequests
         });
     } catch (error) {
         console.error('Error fetching overtime requests:', error);
@@ -310,7 +326,8 @@ router.get('/:id', verifyToken, checkPermission('instructors', 'view'), async (r
             });
         }
 
-        const instructor = instructors[0];
+        // 민감 필드 복호화
+        const instructor = decryptFields(instructors[0], ENCRYPTED_FIELDS.instructors);
 
         // Get recent attendance records
         const [attendances] = await db.query(
@@ -373,7 +390,9 @@ router.post('/', verifyToken, checkPermission('instructors', 'edit'), async (req
         const {
             name,
             phone,
+            gender,
             email,
+            resident_number,  // 주민번호 (세무용)
             hire_date,
             salary_type,
             instructor_type,  // 'teacher' | 'assistant'
@@ -457,13 +476,22 @@ router.post('/', verifyToken, checkPermission('instructors', 'edit'), async (req
             }
         }
 
+        // 민감 필드 암호화
+        const encryptedName = encrypt(name);
+        const encryptedPhone = encrypt(phone);
+        const encryptedResidentNumber = resident_number ? encrypt(resident_number) : null;
+        const encryptedAccountNumber = account_number ? encrypt(account_number) : null;
+        const encryptedAddress = address ? encrypt(address) : null;
+
         // Insert instructor
         const [result] = await db.query(
             `INSERT INTO instructors (
                 academy_id,
                 name,
                 phone,
+                gender,
                 email,
+                resident_number,
                 hire_date,
                 salary_type,
                 instructor_type,
@@ -478,12 +506,14 @@ router.post('/', verifyToken, checkPermission('instructors', 'edit'), async (req
                 work_start_time,
                 work_end_time,
                 status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
             [
                 req.user.academyId,
-                name,
-                phone,
+                encryptedName,
+                encryptedPhone,
+                gender || null,
                 email || null,
+                encryptedResidentNumber,
                 hire_date || new Date().toISOString().split('T')[0],
                 salary_type,
                 finalInstructorType,
@@ -491,8 +521,8 @@ router.post('/', verifyToken, checkPermission('instructors', 'edit'), async (req
                 base_salary || 0,
                 tax_type,
                 bank_name || null,
-                account_number || null,
-                address || null,
+                encryptedAccountNumber,
+                encryptedAddress,
                 notes || null,
                 work_days ? JSON.stringify(work_days) : null,
                 work_start_time || null,
@@ -544,7 +574,9 @@ router.put('/:id', verifyToken, checkPermission('instructors', 'edit'), async (r
         const {
             name,
             phone,
+            gender,
             email,
+            resident_number,  // 주민번호 (세무용)
             hire_date,
             salary_type,
             instructor_type,  // 'teacher' | 'assistant'
@@ -583,15 +615,23 @@ router.put('/:id', verifyToken, checkPermission('instructors', 'edit'), async (r
 
         if (name !== undefined) {
             updates.push('name = ?');
-            params.push(name);
+            params.push(encrypt(name));  // 암호화
         }
         if (phone !== undefined) {
             updates.push('phone = ?');
-            params.push(phone);
+            params.push(encrypt(phone));  // 암호화
+        }
+        if (gender !== undefined) {
+            updates.push('gender = ?');
+            params.push(gender || null);
         }
         if (email !== undefined) {
             updates.push('email = ?');
             params.push(email);
+        }
+        if (resident_number !== undefined) {
+            updates.push('resident_number = ?');
+            params.push(resident_number ? encrypt(resident_number) : null);  // 암호화
         }
         if (hire_date !== undefined) {
             updates.push('hire_date = ?');
@@ -619,11 +659,11 @@ router.put('/:id', verifyToken, checkPermission('instructors', 'edit'), async (r
         }
         if (account_number !== undefined) {
             updates.push('account_number = ?');
-            params.push(account_number);
+            params.push(account_number ? encrypt(account_number) : null);  // 암호화
         }
         if (address !== undefined) {
             updates.push('address = ?');
-            params.push(address);
+            params.push(address ? encrypt(address) : null);  // 암호화
         }
         if (notes !== undefined) {
             updates.push('notes = ?');

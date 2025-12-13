@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
+const { encrypt, decrypt, encryptFields, decryptFields, decryptArrayFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
 
 /**
  * 학생을 해당 월의 스케줄에 자동 배정
@@ -174,13 +175,14 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
  */
 router.get('/', verifyToken, async (req, res) => {
     try {
-        const { grade, student_type, admission_type, status, search } = req.query;
+        const { grade, student_type, admission_type, status, gender, search, is_trial } = req.query;
 
         let query = `
             SELECT
                 s.id,
                 s.student_number,
                 s.name,
+                s.gender,
                 s.student_type,
                 s.phone,
                 s.parent_phone,
@@ -199,6 +201,12 @@ router.get('/', verifyToken, async (req, res) => {
                 s.rest_start_date,
                 s.rest_end_date,
                 s.rest_reason,
+                s.is_trial,
+                s.trial_remaining,
+                s.trial_dates,
+                s.time_slot,
+                s.is_season_registered,
+                s.current_season_id,
                 s.created_at
             FROM students s
             WHERE s.academy_id = ?
@@ -206,6 +214,14 @@ router.get('/', verifyToken, async (req, res) => {
         `;
 
         const params = [req.user.academyId];
+
+        // 체험생 필터
+        if (is_trial === 'true') {
+            query += ' AND s.is_trial = TRUE';
+        } else if (is_trial === 'false') {
+            query += ' AND (s.is_trial = FALSE OR s.is_trial IS NULL)';
+        }
+        // is_trial 파라미터가 없으면 모든 학생 반환
 
         if (grade) {
             query += ' AND s.grade = ?';
@@ -222,24 +238,42 @@ router.get('/', verifyToken, async (req, res) => {
             params.push(admission_type);
         }
 
+        if (gender) {
+            query += ' AND s.gender = ?';
+            params.push(gender);
+        }
+
         if (status) {
             query += ' AND s.status = ?';
             params.push(status);
         }
 
-        if (search) {
-            query += ' AND (s.name LIKE ? OR s.student_number LIKE ? OR s.phone LIKE ?)';
-            const searchTerm = `%${search}%`;
-            params.push(searchTerm, searchTerm, searchTerm);
-        }
+        // search는 복호화 후 메모리에서 필터링 (암호화된 데이터 검색 불가)
+        // DB 쿼리에서는 제외
 
         query += ' ORDER BY s.enrollment_date DESC';
 
         const [students] = await db.query(query, params);
 
+        // 민감 필드 복호화
+        let decryptedStudents = decryptArrayFields(students, ENCRYPTED_FIELDS.students);
+
+        // search 파라미터가 있으면 복호화된 데이터에서 필터링
+        if (search) {
+            const searchLower = search.toLowerCase();
+            decryptedStudents = decryptedStudents.filter(s => {
+                const name = (s.name || '').toLowerCase();
+                const phone = (s.phone || '').toLowerCase();
+                const studentNumber = (s.student_number || '').toLowerCase();
+                return name.includes(searchLower) ||
+                       phone.includes(searchLower) ||
+                       studentNumber.includes(searchLower);
+            });
+        }
+
         res.json({
-            message: `Found ${students.length} students`,
-            students
+            message: `Found ${decryptedStudents.length} students`,
+            students: decryptedStudents
         });
     } catch (error) {
         console.error('Error fetching students:', error);
@@ -279,7 +313,8 @@ router.get('/:id', verifyToken, async (req, res) => {
             });
         }
 
-        const student = students[0];
+        // 민감 필드 복호화
+        const student = decryptFields(students[0], ENCRYPTED_FIELDS.students);
 
         // Get performance records
         const [performances] = await db.query(
@@ -339,6 +374,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
         const {
             student_number,
             name,
+            gender,
             student_type,
             phone,
             parent_phone,
@@ -354,7 +390,15 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             payment_due_day,
             enrollment_date,
             address,
-            notes
+            notes,
+            // 체험생 관련 필드
+            is_trial,
+            trial_remaining,
+            trial_dates,
+            // 시간대
+            time_slot,
+            // 메모
+            memo
         } = req.body;
 
         // Validation
@@ -384,11 +428,20 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
         }
 
         // Validate admission_type
-        const validAdmissionTypes = ['regular', 'early', 'civil_service'];
+        const validAdmissionTypes = ['regular', 'early', 'civil_service', 'military_academy', 'police_university'];
         if (admission_type && !validAdmissionTypes.includes(admission_type)) {
             return res.status(400).json({
                 error: 'Validation Error',
-                message: 'admission_type must be regular, early, or civil_service'
+                message: 'admission_type must be regular, early, civil_service, military_academy, or police_university'
+            });
+        }
+
+        // Validate time_slot
+        const validTimeSlots = ['morning', 'afternoon', 'evening'];
+        if (time_slot && !validTimeSlots.includes(time_slot)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: 'time_slot must be morning, afternoon, or evening'
             });
         }
 
@@ -403,6 +456,51 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 return res.status(400).json({
                     error: 'Validation Error',
                     message: 'Student number already exists'
+                });
+            }
+        }
+
+        // Check for duplicate student (same name + phone)
+        const [duplicateStudent] = await db.query(
+            `SELECT id, name, phone, school FROM students
+             WHERE academy_id = ?
+             AND name = ?
+             AND phone = ?
+             AND deleted_at IS NULL`,
+            [req.user.academyId, name, phone]
+        );
+
+        if (duplicateStudent.length > 0) {
+            return res.status(400).json({
+                error: 'Duplicate Error',
+                message: `이미 등록된 학생입니다. (이름: ${name}, 전화: ${phone})`
+            });
+        }
+
+        // Check for same name (warning only, not blocking)
+        const [sameNameStudent] = await db.query(
+            `SELECT id, name, phone, gender FROM students
+             WHERE academy_id = ?
+             AND name = ?
+             AND deleted_at IS NULL`,
+            [req.user.academyId, name]
+        );
+
+        // 같은 이름 + 같은 성별인데, 전화번호가 다른 경우 경고
+        const confirmForce = req.body.confirm_force;
+        if (sameNameStudent.length > 0 && !confirmForce) {
+            const existingStudent = sameNameStudent[0];
+            // 같은 성별인 경우만 경고 (성별이 없으면 무조건 경고)
+            if (!gender || !existingStudent.gender || gender === existingStudent.gender) {
+                return res.status(409).json({
+                    error: 'Same Name Warning',
+                    code: 'SAME_NAME_EXISTS',
+                    message: `같은 이름의 학생이 이미 존재합니다.`,
+                    existingStudent: {
+                        name: existingStudent.name,
+                        phone: existingStudent.phone,
+                        gender: existingStudent.gender
+                    }
                 });
             }
         }
@@ -427,12 +525,19 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             }
         }
 
+        // 민감 필드 암호화
+        const encryptedName = encrypt(name);
+        const encryptedPhone = encrypt(phone);
+        const encryptedParentPhone = parent_phone ? encrypt(parent_phone) : null;
+        const encryptedAddress = address ? encrypt(address) : null;
+
         // Insert student
         const [result] = await db.query(
             `INSERT INTO students (
                 academy_id,
                 student_number,
                 name,
+                gender,
                 student_type,
                 phone,
                 parent_phone,
@@ -449,28 +554,40 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 enrollment_date,
                 address,
                 notes,
-                status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')`,
+                status,
+                is_trial,
+                trial_remaining,
+                trial_dates,
+                time_slot,
+                memo
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 req.user.academyId,
                 finalStudentNumber,
-                name,
+                encryptedName,
+                gender || null,
                 student_type || 'exam',
-                phone,
-                parent_phone,
+                encryptedPhone,
+                encryptedParentPhone,
                 school || null,
                 grade || null,
                 age || null,
                 admission_type || 'regular',
                 JSON.stringify(class_days || []),
                 weekly_count || 0,
-                monthly_tuition || 0,
+                is_trial ? 0 : (monthly_tuition || 0),  // 체험생은 학원비 0
                 discount_rate || 0,
                 discount_reason || null,
                 payment_due_day || null,
                 enrollment_date || new Date().toISOString().split('T')[0],
-                address || null,
-                notes || null
+                encryptedAddress,
+                notes || null,
+                is_trial ? 'trial' : 'active',
+                is_trial ? true : false,
+                is_trial ? (trial_remaining || 2) : null,
+                is_trial ? JSON.stringify(trial_dates || []) : null,
+                time_slot || 'evening',
+                memo || null
             ]
         );
 
@@ -482,9 +599,9 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
 
         const createdStudent = students[0];
 
-        // 첫 달 학원비 자동 생성 (일할계산)
+        // 첫 달 학원비 자동 생성 (일할계산) - 체험생은 제외
         let firstPayment = null;
-        if (monthly_tuition && monthly_tuition > 0) {
+        if (!is_trial && monthly_tuition && monthly_tuition > 0) {
             const enrollDate = new Date(enrollment_date || new Date().toISOString().split('T')[0]);
             const year = enrollDate.getFullYear();
             const month = enrollDate.getMonth() + 1;
@@ -584,27 +701,76 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             firstPayment = payments[0];
         }
 
-        // 자동 스케줄 배정 (등록일 이후 해당 월의 수업에 배정)
+        // 자동 스케줄 배정
         let autoAssignResult = null;
-        const parsedClassDays = class_days || [];
-        if (parsedClassDays.length > 0) {
+
+        console.log('[Student Create] is_trial:', is_trial, 'trial_dates:', trial_dates);
+
+        if (is_trial && trial_dates && trial_dates.length > 0) {
+            // 체험생: trial_dates에 지정된 날짜들에 배정
+            console.log('[Trial] Starting schedule assignment for', trial_dates.length, 'dates');
             try {
-                autoAssignResult = await autoAssignStudentToSchedules(
-                    db,
-                    result.insertId,
-                    req.user.academyId,
-                    parsedClassDays,
-                    enrollment_date || new Date().toISOString().split('T')[0],
-                    'evening'  // 기본 시간대: 저녁
-                );
+                let trialAssigned = 0;
+                for (const trialDate of trial_dates) {
+                    const { date, time_slot } = trialDate;
+                    if (!date || !time_slot) continue;
+
+                    // 해당 날짜의 스케줄 찾기 또는 생성
+                    let [schedules] = await db.query(
+                        `SELECT id FROM class_schedules
+                         WHERE academy_id = ? AND class_date = ? AND time_slot = ?`,
+                        [req.user.academyId, date, time_slot]
+                    );
+
+                    let scheduleId;
+                    if (schedules.length === 0) {
+                        // 스케줄 없으면 생성
+                        const [createResult] = await db.query(
+                            `INSERT INTO class_schedules (academy_id, class_date, time_slot)
+                             VALUES (?, ?, ?)`,
+                            [req.user.academyId, date, time_slot]
+                        );
+                        scheduleId = createResult.insertId;
+                    } else {
+                        scheduleId = schedules[0].id;
+                    }
+
+                    // 출석 레코드 생성
+                    await db.query(
+                        `INSERT INTO attendance (class_schedule_id, student_id, attendance_status)
+                         VALUES (?, ?, NULL)
+                         ON DUPLICATE KEY UPDATE attendance_status = attendance_status`,
+                        [scheduleId, result.insertId]
+                    );
+                    trialAssigned++;
+                }
+                autoAssignResult = { assigned: trialAssigned, created: 0 };
+                console.log('[Trial] Assigned', trialAssigned, 'schedules');
             } catch (assignError) {
-                console.error('Auto-assign failed:', assignError);
-                // 배정 실패해도 학생 생성은 성공으로 처리
+                console.error('Trial schedule assign failed:', assignError);
+            }
+        } else if (!is_trial) {
+            // 정식 학생: 기존 로직 (등록일 이후 해당 월의 수업에 배정)
+            const parsedClassDays = class_days || [];
+            if (parsedClassDays.length > 0) {
+                try {
+                    autoAssignResult = await autoAssignStudentToSchedules(
+                        db,
+                        result.insertId,
+                        req.user.academyId,
+                        parsedClassDays,
+                        enrollment_date || new Date().toISOString().split('T')[0],
+                        time_slot || 'evening'  // 선택한 시간대 (기본: 저녁)
+                    );
+                } catch (assignError) {
+                    console.error('Auto-assign failed:', assignError);
+                    // 배정 실패해도 학생 생성은 성공으로 처리
+                }
             }
         }
 
         res.status(201).json({
-            message: 'Student created successfully',
+            message: is_trial ? 'Trial student created successfully' : 'Student created successfully',
             student: createdStudent,
             firstPayment,
             autoAssigned: autoAssignResult
@@ -627,9 +793,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
     const studentId = parseInt(req.params.id);
 
     try {
-        // Check if student exists and get current class_days
+        // Check if student exists and get current class_days, status, time_slot
         const [students] = await db.query(
-            'SELECT id, class_days FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            'SELECT id, class_days, status, time_slot FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
             [studentId, req.user.academyId]
         );
 
@@ -640,7 +806,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             });
         }
 
-        // 기존 class_days 파싱
+        // 기존 class_days, status, time_slot 파싱
+        const oldStatus = students[0].status;
+        const oldTimeSlot = students[0].time_slot || 'evening';
         const oldClassDays = students[0].class_days
             ? (typeof students[0].class_days === 'string'
                 ? JSON.parse(students[0].class_days)
@@ -650,6 +818,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         const {
             student_number,
             name,
+            gender,
             student_type,
             phone,
             parent_phone,
@@ -669,7 +838,15 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             status,
             rest_start_date,
             rest_end_date,
-            rest_reason
+            rest_reason,
+            // 체험생 관련 필드
+            is_trial,
+            trial_remaining,
+            trial_dates,
+            // 시간대
+            time_slot,
+            // 메모
+            memo
         } = req.body;
 
         // Validate student_type
@@ -690,10 +867,20 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         }
 
         // Validate admission_type
-        if (admission_type && !['regular', 'early', 'civil_service'].includes(admission_type)) {
+        const validAdmissionTypes = ['regular', 'early', 'civil_service', 'military_academy', 'police_university'];
+        if (admission_type && !validAdmissionTypes.includes(admission_type)) {
             return res.status(400).json({
                 error: 'Validation Error',
-                message: 'admission_type must be regular, early, or civil_service'
+                message: 'admission_type must be regular, early, civil_service, military_academy, or police_university'
+            });
+        }
+
+        // Validate time_slot
+        const validTimeSlots = ['morning', 'afternoon', 'evening'];
+        if (time_slot && !validTimeSlots.includes(time_slot)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: 'time_slot must be morning, afternoon, or evening'
             });
         }
 
@@ -722,7 +909,11 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         }
         if (name !== undefined) {
             updates.push('name = ?');
-            params.push(name);
+            params.push(encrypt(name));  // 암호화
+        }
+        if (gender !== undefined) {
+            updates.push('gender = ?');
+            params.push(gender);
         }
         if (student_type !== undefined) {
             updates.push('student_type = ?');
@@ -730,11 +921,11 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         }
         if (phone !== undefined) {
             updates.push('phone = ?');
-            params.push(phone);
+            params.push(encrypt(phone));  // 암호화
         }
         if (parent_phone !== undefined) {
             updates.push('parent_phone = ?');
-            params.push(parent_phone);
+            params.push(parent_phone ? encrypt(parent_phone) : null);  // 암호화
         }
         if (school !== undefined) {
             updates.push('school = ?');
@@ -782,11 +973,15 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         }
         if (address !== undefined) {
             updates.push('address = ?');
-            params.push(address);
+            params.push(address ? encrypt(address) : null);  // 암호화
         }
         if (notes !== undefined) {
             updates.push('notes = ?');
             params.push(notes);
+        }
+        if (memo !== undefined) {
+            updates.push('memo = ?');
+            params.push(memo);
         }
         if (status !== undefined) {
             updates.push('status = ?');
@@ -811,6 +1006,24 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             updates.push('rest_reason = ?');
             params.push(rest_reason || null);
         }
+        // 체험생 관련 필드
+        if (is_trial !== undefined) {
+            updates.push('is_trial = ?');
+            params.push(is_trial);
+        }
+        if (trial_remaining !== undefined) {
+            updates.push('trial_remaining = ?');
+            params.push(trial_remaining);
+        }
+        if (trial_dates !== undefined) {
+            updates.push('trial_dates = ?');
+            params.push(JSON.stringify(trial_dates));
+        }
+        // 시간대
+        if (time_slot !== undefined) {
+            updates.push('time_slot = ?');
+            params.push(time_slot);
+        }
 
         if (updates.length === 0) {
             return res.status(400).json({
@@ -833,6 +1046,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             [studentId]
         );
 
+        // 현재 시간대 결정 (새 값 또는 기존 값)
+        const currentTimeSlot = time_slot || oldTimeSlot;
+
         // class_days가 변경되었으면 스케줄 재배정
         let reassignResult = null;
         if (class_days !== undefined) {
@@ -852,7 +1068,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                         req.user.academyId,
                         oldClassDays,
                         newClassDays,
-                        'evening'
+                        currentTimeSlot
                     );
                 } catch (reassignError) {
                     console.error('Reassign failed:', reassignError);
@@ -861,10 +1077,292 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
+        // time_slot만 변경되었으면 스케줄 재배정 (class_days 변경 없이)
+        let timeSlotReassignResult = null;
+        if (time_slot !== undefined && time_slot !== oldTimeSlot && class_days === undefined) {
+            const currentClassDays = updatedStudents[0].class_days
+                ? (typeof updatedStudents[0].class_days === 'string'
+                    ? JSON.parse(updatedStudents[0].class_days)
+                    : updatedStudents[0].class_days)
+                : [];
+
+            if (currentClassDays.length > 0) {
+                try {
+                    timeSlotReassignResult = await reassignStudentSchedules(
+                        db,
+                        studentId,
+                        req.user.academyId,
+                        currentClassDays,
+                        currentClassDays,
+                        time_slot
+                    );
+                } catch (reassignError) {
+                    console.error('Time slot reassign failed:', reassignError);
+                    // 재배정 실패해도 업데이트는 성공으로 처리
+                }
+            }
+        }
+
+        // 체험생 trial_dates가 변경되었으면 스케줄 재배정
+        let trialAssignResult = null;
+        if (is_trial && trial_dates !== undefined && trial_dates.length > 0) {
+            try {
+                // 기존 미출석 스케줄 삭제
+                await db.query(
+                    `DELETE a FROM attendance a
+                     JOIN class_schedules cs ON a.class_schedule_id = cs.id
+                     WHERE a.student_id = ?
+                     AND cs.academy_id = ?
+                     AND a.attendance_status IS NULL`,
+                    [studentId, req.user.academyId]
+                );
+
+                // 새 스케줄 배정
+                let trialAssigned = 0;
+                for (const trialDate of trial_dates) {
+                    const { date, time_slot } = trialDate;
+                    if (!date || !time_slot) continue;
+
+                    let [schedules] = await db.query(
+                        `SELECT id FROM class_schedules
+                         WHERE academy_id = ? AND class_date = ? AND time_slot = ?`,
+                        [req.user.academyId, date, time_slot]
+                    );
+
+                    let scheduleId;
+                    if (schedules.length === 0) {
+                        const [createResult] = await db.query(
+                            `INSERT INTO class_schedules (academy_id, class_date, time_slot)
+                             VALUES (?, ?, ?)`,
+                            [req.user.academyId, date, time_slot]
+                        );
+                        scheduleId = createResult.insertId;
+                    } else {
+                        scheduleId = schedules[0].id;
+                    }
+
+                    await db.query(
+                        `INSERT INTO attendance (class_schedule_id, student_id, attendance_status)
+                         VALUES (?, ?, NULL)
+                         ON DUPLICATE KEY UPDATE attendance_status = attendance_status`,
+                        [scheduleId, studentId]
+                    );
+                    trialAssigned++;
+                }
+                trialAssignResult = { assigned: trialAssigned };
+            } catch (trialError) {
+                console.error('Trial schedule reassign failed:', trialError);
+            }
+        }
+
+        // 휴원 처리 (active → paused) 시 학원비 조정
+        let paymentAdjustment = null;
+        if (status === 'paused' && oldStatus === 'active') {
+            try {
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth() + 1;
+
+                // 학생의 주간 수업 횟수 (weekly_count) 가져오기
+                const studentData = updatedStudents[0];
+                const weeklyCount = studentData.weekly_count || 2;
+                const monthlyTotal = weeklyCount * 4; // 월 총 수업 횟수
+                const monthlyTuition = studentData.monthly_tuition || 0;
+
+                // 이번 달 출석 횟수 조회
+                const [attendanceCount] = await db.query(
+                    `SELECT COUNT(*) as count FROM attendance a
+                     JOIN class_schedules cs ON a.class_schedule_id = cs.id
+                     WHERE a.student_id = ?
+                     AND cs.academy_id = ?
+                     AND YEAR(cs.class_date) = ?
+                     AND MONTH(cs.class_date) = ?
+                     AND a.attendance_status IN ('present', 'late')`,
+                    [studentId, req.user.academyId, currentYear, currentMonth]
+                );
+                const attendedCount = attendanceCount[0].count;
+
+                // 이번 달 학원비 조회
+                const [currentPayment] = await db.query(
+                    `SELECT id, amount, status, paid_amount FROM payments
+                     WHERE student_id = ?
+                     AND academy_id = ?
+                     AND year = ?
+                     AND month = ?`,
+                    [studentId, req.user.academyId, currentYear, currentMonth]
+                );
+
+                if (currentPayment.length > 0) {
+                    const payment = currentPayment[0];
+                    const proratedAmount = Math.floor((monthlyTuition * attendedCount / monthlyTotal) / 1000) * 1000;
+
+                    if (payment.status === 'paid') {
+                        // 납부 완료 상태: 남은 수업 횟수만큼 이월 크레딧 생성
+                        const remainingCount = monthlyTotal - attendedCount;
+                        const creditAmount = Math.floor((monthlyTuition * remainingCount / monthlyTotal) / 1000) * 1000;
+
+                        if (creditAmount > 0) {
+                            await db.query(
+                                `INSERT INTO rest_credits (student_id, academy_id, original_amount, remaining_amount, reason, created_at)
+                                 VALUES (?, ?, ?, ?, ?, NOW())`,
+                                [studentId, req.user.academyId, creditAmount, creditAmount,
+                                 `${currentYear}년 ${currentMonth}월 휴원 이월 (${remainingCount}/${monthlyTotal}회)`]
+                            );
+                            paymentAdjustment = {
+                                type: 'credit',
+                                message: `납부완료 학원비 이월: ${creditAmount.toLocaleString()}원 (${remainingCount}회분)`,
+                                creditAmount
+                            };
+                        }
+                    } else {
+                        // 미납 상태: 출석 횟수만큼 일할계산으로 금액 수정
+                        if (attendedCount === 0) {
+                            // 수업 안 받았으면 학원비 삭제
+                            await db.query(
+                                'DELETE FROM payments WHERE id = ?',
+                                [payment.id]
+                            );
+                            paymentAdjustment = {
+                                type: 'deleted',
+                                message: '수업 미진행으로 학원비 삭제됨'
+                            };
+                        } else {
+                            // 출석한 만큼만 금액 수정
+                            await db.query(
+                                `UPDATE payments SET amount = ?, description = ?, updated_at = NOW()
+                                 WHERE id = ?`,
+                                [proratedAmount,
+                                 `${currentYear}년 ${currentMonth}월 수강료 (휴원 일할: ${attendedCount}/${monthlyTotal}회)`,
+                                 payment.id]
+                            );
+                            paymentAdjustment = {
+                                type: 'prorated',
+                                message: `일할계산 적용: ${proratedAmount.toLocaleString()}원 (${attendedCount}/${monthlyTotal}회)`,
+                                originalAmount: payment.amount,
+                                proratedAmount
+                            };
+                        }
+                    }
+                }
+            } catch (paymentError) {
+                console.error('Payment adjustment failed:', paymentError);
+            }
+        }
+
+        // 퇴원 처리 (→ withdrawn) 시 미납 학원비 삭제 + 시즌 등록 취소
+        let withdrawalInfo = null;
+        if (status === 'withdrawn') {
+            try {
+                // 미납 학원비 확인
+                const [unpaidPayments] = await db.query(
+                    `SELECT id, final_amount FROM student_payments
+                     WHERE student_id = ?
+                     AND academy_id = ?
+                     AND payment_status != 'paid'`,
+                    [studentId, req.user.academyId]
+                );
+
+                if (unpaidPayments.length > 0) {
+                    const totalUnpaid = unpaidPayments.reduce((sum, p) => sum + parseFloat(p.final_amount || 0), 0);
+
+                    // 미납 학원비 삭제
+                    await db.query(
+                        `DELETE FROM student_payments WHERE student_id = ? AND academy_id = ? AND payment_status != 'paid'`,
+                        [studentId, req.user.academyId]
+                    );
+
+                    withdrawalInfo = {
+                        deletedPayments: unpaidPayments.length,
+                        totalUnpaidAmount: totalUnpaid,
+                        message: `미납 학원비 ${unpaidPayments.length}건 (${totalUnpaid.toLocaleString()}원) 삭제됨`
+                    };
+                }
+
+                // 시즌 등록 취소 (진행 중인 시즌만)
+                const [seasonEnrollments] = await db.query(
+                    `SELECT ss.id, ss.season_id, ss.season_fee, ss.payment_status, s.season_name
+                     FROM student_seasons ss
+                     JOIN seasons s ON ss.season_id = s.id
+                     WHERE ss.student_id = ?
+                     AND s.academy_id = ?
+                     AND ss.status IN ('registered', 'active')`,
+                    [studentId, req.user.academyId]
+                );
+
+                if (seasonEnrollments.length > 0) {
+                    // 시즌 등록 상태를 'cancelled'로 변경
+                    const enrollmentIds = seasonEnrollments.map(e => e.id);
+                    await db.query(
+                        `UPDATE student_seasons SET status = 'cancelled', updated_at = NOW() WHERE id IN (?)`,
+                        [enrollmentIds]
+                    );
+
+                    withdrawalInfo = withdrawalInfo || {};
+                    withdrawalInfo.cancelledSeasons = seasonEnrollments.map(e => ({
+                        id: e.id,
+                        season_name: e.season_name,
+                        season_fee: e.season_fee,
+                        payment_status: e.payment_status
+                    }));
+                    withdrawalInfo.seasonMessage = `시즌 등록 ${seasonEnrollments.length}건 취소됨`;
+                }
+
+                // 미래 스케줄(출석 기록)에서 제거
+                const today = new Date().toISOString().split('T')[0];
+                const [scheduleDeleteResult] = await db.query(
+                    `DELETE a FROM attendance a
+                     JOIN class_schedules cs ON a.class_schedule_id = cs.id
+                     WHERE a.student_id = ?
+                     AND cs.academy_id = ?
+                     AND cs.class_date >= ?
+                     AND (a.attendance_status IS NULL OR a.attendance_status = 'absent')`,
+                    [studentId, req.user.academyId, today]
+                );
+
+                if (scheduleDeleteResult.affectedRows > 0) {
+                    withdrawalInfo = withdrawalInfo || {};
+                    withdrawalInfo.deletedSchedules = scheduleDeleteResult.affectedRows;
+                    withdrawalInfo.scheduleMessage = `스케줄 ${scheduleDeleteResult.affectedRows}건 삭제됨`;
+                }
+            } catch (withdrawError) {
+                console.error('Withdrawal payment cleanup failed:', withdrawError);
+            }
+        }
+
+        // 휴원 처리 (→ paused) 시 미래 스케줄에서 제거
+        let pauseInfo = null;
+        if (status === 'paused' && oldStatus !== 'paused') {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const [deleteResult] = await db.query(
+                    `DELETE a FROM attendance a
+                     JOIN class_schedules cs ON a.class_schedule_id = cs.id
+                     WHERE a.student_id = ?
+                     AND cs.academy_id = ?
+                     AND cs.class_date > ?
+                     AND a.attendance_status IS NULL`,
+                    [studentId, req.user.academyId, today]
+                );
+
+                if (deleteResult.affectedRows > 0) {
+                    pauseInfo = {
+                        deletedSchedules: deleteResult.affectedRows,
+                        message: `미래 스케줄 ${deleteResult.affectedRows}건 삭제됨`
+                    };
+                }
+            } catch (pauseError) {
+                console.error('Pause schedule cleanup failed:', pauseError);
+            }
+        }
+
         res.json({
             message: 'Student updated successfully',
             student: updatedStudents[0],
-            scheduleReassigned: reassignResult
+            scheduleReassigned: reassignResult,
+            trialScheduleAssigned: trialAssignResult,
+            paymentAdjustment,
+            withdrawalInfo,
+            pauseInfo
         });
     } catch (error) {
         console.error('Error updating student:', error);
@@ -877,16 +1375,16 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
 
 /**
  * DELETE /paca/students/:id
- * Soft delete student
- * Access: owner, admin
+ * Hard delete student (완전 삭제)
+ * Access: owner only
  */
-router.delete('/:id', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
+router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
     const studentId = parseInt(req.params.id);
 
     try {
         // Check if student exists
         const [students] = await db.query(
-            'SELECT id, name FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            'SELECT id, name FROM students WHERE id = ? AND academy_id = ?',
             [studentId, req.user.academyId]
         );
 
@@ -897,14 +1395,43 @@ router.delete('/:id', verifyToken, checkPermission('students', 'edit'), async (r
             });
         }
 
-        // Soft delete
-        await db.query(
-            'UPDATE students SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?',
-            [studentId]
-        );
+        const connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            // 관련 데이터 삭제 (출석, 학원비, 성적 등)
+            // 테이블 존재 여부와 관계없이 에러 무시하고 삭제 시도
+            const tablesToDelete = [
+                'attendance',
+                'student_payments',
+                'student_performance',
+                'student_seasons',
+                'rest_credits',
+                'notification_logs'
+            ];
+
+            for (const table of tablesToDelete) {
+                try {
+                    await connection.query(`DELETE FROM ${table} WHERE student_id = ?`, [studentId]);
+                } catch (tableErr) {
+                    // 테이블이 없거나 컬럼이 없으면 무시
+                    console.log(`Skip delete from ${table}: ${tableErr.message}`);
+                }
+            }
+
+            // 학생 삭제
+            await connection.query('DELETE FROM students WHERE id = ?', [studentId]);
+
+            await connection.commit();
+        } catch (err) {
+            await connection.rollback();
+            throw err;
+        } finally {
+            connection.release();
+        }
 
         res.json({
-            message: 'Student deleted successfully',
+            message: 'Student deleted permanently',
             student: {
                 id: studentId,
                 name: students[0].name
@@ -914,7 +1441,77 @@ router.delete('/:id', verifyToken, checkPermission('students', 'edit'), async (r
         console.error('Error deleting student:', error);
         res.status(500).json({
             error: 'Server Error',
-            message: 'Failed to delete student'
+            message: 'Failed to delete student: ' + (error.message || 'Unknown error'),
+            detail: error.sqlMessage || null
+        });
+    }
+});
+
+/**
+ * POST /paca/students/:id/withdraw
+ * 퇴원 처리
+ * Access: owner, admin
+ */
+router.post('/:id/withdraw', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
+    const studentId = parseInt(req.params.id);
+    const { reason, withdrawal_date } = req.body;
+
+    try {
+        // Check if student exists
+        const [students] = await db.query(
+            'SELECT id, name, status FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            [studentId, req.user.academyId]
+        );
+
+        if (students.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Student not found'
+            });
+        }
+
+        if (students[0].status === 'withdrawn') {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '이미 퇴원 처리된 학생입니다'
+            });
+        }
+
+        // 퇴원 처리
+        await db.query(
+            `UPDATE students
+             SET status = 'withdrawn',
+                 withdrawal_date = ?,
+                 withdrawal_reason = ?,
+                 updated_at = NOW()
+             WHERE id = ?`,
+            [withdrawal_date || new Date().toISOString().split('T')[0], reason || null, studentId]
+        );
+
+        // 미래 스케줄에서 제거 (오늘 이후)
+        const today = new Date().toISOString().split('T')[0];
+        await db.query(
+            `DELETE a FROM attendance a
+             JOIN class_schedules cs ON a.class_schedule_id = cs.id
+             WHERE a.student_id = ? AND cs.class_date > ? AND a.attendance_status IS NULL`,
+            [studentId, today]
+        );
+
+        res.json({
+            message: '퇴원 처리되었습니다',
+            student: {
+                id: studentId,
+                name: students[0].name,
+                status: 'withdrawn',
+                withdrawal_date: withdrawal_date || today,
+                withdrawal_reason: reason
+            }
+        });
+    } catch (error) {
+        console.error('Error withdrawing student:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'Failed to withdraw student'
         });
     }
 });
@@ -1036,6 +1633,146 @@ router.post('/grade-upgrade', verifyToken, checkPermission('students', 'edit'), 
 });
 
 /**
+ * POST /paca/students/auto-promote
+ * 학년 자동 진급 (3월 신학기)
+ * Access: owner only
+ *
+ * 진급 규칙:
+ * - 중1 → 중2, 중2 → 중3, 중3 → 고1
+ * - 고1 → 고2, 고2 → 고3, 고3 → N수
+ * - N수 → N수 (유지)
+ *
+ * Body (선택):
+ * - dry_run: true면 실제 변경 없이 미리보기만
+ * - graduate_student_ids: 고3 중 졸업 처리할 학생 ID 배열 (status를 'graduated'로 변경)
+ */
+router.post('/auto-promote', verifyToken, requireRole('owner'), async (req, res) => {
+    try {
+        const { dry_run = false, graduate_student_ids = [] } = req.body;
+        const academyId = req.user.academyId;
+
+        // 학년 진급 매핑
+        const GRADE_PROMOTION_MAP = {
+            '중1': '중2',
+            '중2': '중3',
+            '중3': '고1',
+            '고1': '고2',
+            '고2': '고3',
+            '고3': 'N수',
+            'N수': 'N수'
+        };
+
+        // 해당 학원의 active/paused 학생 조회 (graduated 제외)
+        const [students] = await db.query(`
+            SELECT id, name, grade, status
+            FROM students
+            WHERE academy_id = ?
+              AND deleted_at IS NULL
+              AND status IN ('active', 'paused')
+              AND grade IS NOT NULL
+            ORDER BY grade
+        `, [academyId]);
+
+        if (students.length === 0) {
+            return res.json({
+                message: '진급 대상 학생이 없습니다',
+                promoted: 0,
+                graduated: 0,
+                details: []
+            });
+        }
+
+        const promotionDetails = [];
+        let promotedCount = 0;
+        let graduatedCount = 0;
+
+        const connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        try {
+            for (const student of students) {
+                const currentGrade = student.grade;
+                const newGrade = GRADE_PROMOTION_MAP[currentGrade];
+
+                // 졸업 처리 대상인지 확인 (고3 학생 중)
+                const shouldGraduate = currentGrade === '고3' &&
+                    graduate_student_ids.includes(student.id);
+
+                if (shouldGraduate) {
+                    // 졸업 처리
+                    if (!dry_run) {
+                        await connection.query(
+                            `UPDATE students SET status = 'graduated', updated_at = NOW() WHERE id = ?`,
+                            [student.id]
+                        );
+                    }
+                    promotionDetails.push({
+                        studentId: student.id,
+                        name: student.name,
+                        from: currentGrade,
+                        to: '졸업',
+                        action: 'graduated'
+                    });
+                    graduatedCount++;
+                } else if (newGrade && currentGrade !== newGrade) {
+                    // 진급 처리
+                    if (!dry_run) {
+                        await connection.query(
+                            `UPDATE students SET grade = ?, updated_at = NOW() WHERE id = ?`,
+                            [newGrade, student.id]
+                        );
+                    }
+                    promotionDetails.push({
+                        studentId: student.id,
+                        name: student.name,
+                        from: currentGrade,
+                        to: newGrade,
+                        action: 'promoted'
+                    });
+                    promotedCount++;
+                }
+            }
+
+            if (!dry_run) {
+                await connection.commit();
+            } else {
+                await connection.rollback();
+            }
+        } catch (err) {
+            await connection.rollback();
+            throw err;
+        } finally {
+            connection.release();
+        }
+
+        // 진급 요약
+        const summary = {};
+        promotionDetails.forEach(d => {
+            const key = `${d.from} → ${d.to}`;
+            summary[key] = (summary[key] || 0) + 1;
+        });
+
+        res.json({
+            message: dry_run
+                ? `진급 미리보기: ${promotedCount}명 진급, ${graduatedCount}명 졸업 예정`
+                : `진급 완료: ${promotedCount}명 진급, ${graduatedCount}명 졸업 처리`,
+            dry_run,
+            promoted: promotedCount,
+            graduated: graduatedCount,
+            summary,
+            details: promotionDetails
+        });
+
+    } catch (error) {
+        console.error('Auto-promote error:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'Failed to auto-promote students'
+        });
+    }
+});
+
+/**
  * GET /paca/students/:id/seasons
  * Get student's season enrollment history
  * Access: owner, admin, teacher
@@ -1119,14 +1856,15 @@ router.get('/search', verifyToken, async (req, res) => {
     try {
         const { q } = req.query;
 
-        if (!q || q.length < 2) {
+        if (!q || q.length < 1) {
             return res.status(400).json({
                 error: 'Validation Error',
-                message: 'Search query must be at least 2 characters'
+                message: 'Search query is required'
             });
         }
 
-        const [students] = await db.query(
+        // 암호화된 데이터 검색을 위해 모든 학생을 가져온 후 메모리에서 필터링
+        const [allStudents] = await db.query(
             `SELECT
                 id,
                 student_number,
@@ -1137,11 +1875,27 @@ router.get('/search', verifyToken, async (req, res) => {
             FROM students
             WHERE academy_id = ?
             AND deleted_at IS NULL
-            AND (name LIKE ? OR student_number LIKE ? OR phone LIKE ?)
-            ORDER BY name
-            LIMIT 20`,
-            [req.user.academyId, `%${q}%`, `%${q}%`, `%${q}%`]
+            AND status = 'active'`,
+            [req.user.academyId]
         );
+
+        // 복호화 후 검색
+        const searchLower = q.toLowerCase();
+        const students = allStudents
+            .map(s => ({
+                ...s,
+                name: s.name ? decrypt(s.name) : s.name,
+                phone: s.phone ? decrypt(s.phone) : s.phone
+            }))
+            .filter(s => {
+                const name = (s.name || '').toLowerCase();
+                const phone = (s.phone || '').toLowerCase();
+                const studentNumber = (s.student_number || '').toLowerCase();
+                return name.includes(searchLower) ||
+                       phone.includes(searchLower) ||
+                       studentNumber.includes(searchLower);
+            })
+            .slice(0, 20);
 
         res.json({
             message: `Found ${students.length} students`,
@@ -1416,19 +2170,21 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
                 const dayNameToNum = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 0 };
                 const classDayNums = classDays.map(d => dayNameToNum[d]).filter(d => d !== undefined);
 
-                let totalClassDays = 0;
-                let remainingClassDays = 0;
+                // 4주 고정: 월 총 수업일 = 주간 횟수 × 4
+                const weeklyCount = classDayNums.length || 2;  // 기본값 주2회
+                let totalClassDays = weeklyCount * 4;
 
-                for (let day = 1; day <= lastDayOfMonth; day++) {
+                // 남은 수업일: 복귀일부터 말일까지 실제 수업요일 카운트
+                let remainingClassDays = 0;
+                for (let day = currentDay; day <= lastDayOfMonth; day++) {
                     const date = new Date(year, month - 1, day);
                     const dayOfWeek = date.getDay();
                     if (classDayNums.length === 0 || classDayNums.includes(dayOfWeek)) {
-                        totalClassDays++;
-                        if (day >= currentDay) {
-                            remainingClassDays++;
-                        }
+                        remainingClassDays++;
                     }
                 }
+                // 남은 수업일이 총 수업일을 초과하지 않도록 (1일 복귀 시)
+                remainingClassDays = Math.min(remainingClassDays, totalClassDays);
 
                 const baseAmount = parseFloat(student.monthly_tuition);
                 const discountRate = parseFloat(student.discount_rate) || 0;

@@ -6,10 +6,10 @@ const mysql = require('mysql2/promise');
 
 // Create MySQL connection pool
 const pool = mysql.createPool({
-    host: process.env.DB_HOST || '211.37.174.218',
+    host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'Qq141171616!',
+    user: process.env.DB_USER || 'paca',
+    password: process.env.DB_PASSWORD || 'q141171616!',
     database: process.env.DB_NAME || 'paca',
     waitForConnections: true,
     connectionLimit: 10,
@@ -20,14 +20,21 @@ const pool = mysql.createPool({
     dateStrings: true // DATE 타입을 문자열로 반환
 });
 
-// Test connection on startup
+// Test connection on startup and set timezone
 pool.getConnection()
-    .then(connection => {
-        console.log('Database connection pool created');
+    .then(async connection => {
+        // MySQL 세션 타임존을 한국 시간으로 설정
+        await connection.query("SET time_zone = '+09:00'");
         connection.release();
     })
     .catch(err => {
-        console.error('Error creating database connection pool:', err.message);
+        // DB 연결 실패 시 프로세스 종료
+        process.exit(1);
     });
+
+// 모든 연결에 타임존 설정 적용
+pool.on('connection', (connection) => {
+    connection.query("SET time_zone = '+09:00'");
+});
 
 module.exports = pool;

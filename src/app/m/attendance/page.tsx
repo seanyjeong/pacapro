@@ -117,78 +117,92 @@ export default function MobileAttendancePage() {
     }
   };
 
-  const handleStatusChange = (studentId: number, status: AttendanceStatus) => {
+  // 출석 상태 변경 및 자동 저장
+  const handleStatusChange = async (studentId: number, status: AttendanceStatus) => {
+    if (!schedule || saving) return;
+
+    const currentStatus = attendances.get(studentId);
+    const isToggleOff = currentStatus === status;
+    const newStatus = isToggleOff ? 'none' : status;
+
+    // UI 즉시 업데이트
     setAttendances((prev) => {
       const newMap = new Map(prev);
-      if (newMap.get(studentId) === status) {
-        newMap.delete(studentId); // 토글 해제
+      if (isToggleOff) {
+        newMap.delete(studentId);
       } else {
         newMap.set(studentId, status);
       }
       return newMap;
     });
-  };
 
-  const handleSave = async () => {
-    if (!schedule) {
-      toast.error('저장할 스케줄이 없습니다.');
-      return;
-    }
-
-    // 삭제된 출석 찾기 (원본에 있었는데 현재에 없는 것)
-    const deletedStudentIds: number[] = [];
-    originalAttendances.forEach((_, studentId) => {
-      if (!attendances.has(studentId)) {
-        deletedStudentIds.push(studentId);
-      }
-    });
-
-    if (attendances.size === 0 && deletedStudentIds.length === 0) {
-      toast.error('출석 체크할 학생을 선택해주세요.');
-      return;
-    }
-
+    // 자동 저장
     setSaving(true);
     try {
-      const records: AttendanceSubmission[] = [];
-
-      // 현재 출석 상태 추가
-      attendances.forEach((status, studentId) => {
-        records.push({
-          student_id: studentId,
-          attendance_status: status,
-        });
-      });
-
-      // 삭제된 출석 추가 (status: 'none')
-      deletedStudentIds.forEach((studentId) => {
-        records.push({
-          student_id: studentId,
-          attendance_status: 'none' as AttendanceStatus, // 삭제를 의미
-        });
-      });
-
       await schedulesApi.submitAttendance(schedule.id, {
-        attendance_records: records,
+        attendance_records: [{
+          student_id: studentId,
+          attendance_status: newStatus,
+        }],
       });
-
-      toast.success('출석이 저장되었습니다.');
-      loadSchedule(); // 새로고침
+      // 원본 상태 업데이트
+      setOriginalAttendances((prev) => {
+        const newMap = new Map(prev);
+        if (isToggleOff) {
+          newMap.delete(studentId);
+        } else {
+          newMap.set(studentId, status);
+        }
+        return newMap;
+      });
     } catch (err) {
       console.error('Failed to save attendance:', err);
       toast.error('저장에 실패했습니다.');
+      // 실패 시 원래 상태로 복구
+      setAttendances((prev) => {
+        const newMap = new Map(prev);
+        if (currentStatus) {
+          newMap.set(studentId, currentStatus);
+        } else {
+          newMap.delete(studentId);
+        }
+        return newMap;
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  // 전체 출석 처리
-  const handleAllPresent = () => {
+  // 전체 출석 처리 (자동 저장)
+  const handleAllPresent = async () => {
+    if (!schedule || saving) return;
+
+    const records: AttendanceSubmission[] = students.map((s) => ({
+      student_id: s.student_id,
+      attendance_status: 'present' as AttendanceStatus,
+    }));
+
+    // UI 즉시 업데이트
     const newMap = new Map<number, AttendanceStatus>();
     students.forEach((s) => {
       newMap.set(s.student_id, 'present');
     });
     setAttendances(newMap);
+
+    setSaving(true);
+    try {
+      await schedulesApi.submitAttendance(schedule.id, {
+        attendance_records: records,
+      });
+      setOriginalAttendances(new Map(newMap));
+      toast.success('전체 출석 처리되었습니다.');
+    } catch (err) {
+      console.error('Failed to save attendance:', err);
+      toast.error('저장에 실패했습니다.');
+      loadSchedule(); // 실패 시 새로고침
+    } finally {
+      setSaving(false);
+    }
   };
 
   // 전화걸기
@@ -256,7 +270,7 @@ export default function MobileAttendancePage() {
       </header>
 
       {/* 학생 목록 */}
-      <main className="p-4 pb-28">
+      <main className="p-4 pb-8">
         {!schedule ? (
           <div className="text-center py-12">
             <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
@@ -316,9 +330,8 @@ export default function MobileAttendancePage() {
                           )}
                           {(student as { is_trial?: boolean }).is_trial && (() => {
                             const remaining = (student as { trial_remaining?: number }).trial_remaining ?? 2;
-                            const isAttended = currentStatus === 'present' || currentStatus === 'late';
-                            const usedCount = 2 - remaining;
-                            const currentSession = isAttended ? usedCount : usedCount + 1;
+                            // 현재 세션 = 총 2회 - 남은 회차 + 1 (아직 출석 안 한 상태 기준)
+                            const currentSession = Math.max(1, 2 - remaining + 1);
 
                             return (
                               <span className={`text-xs px-2 py-0.5 rounded-full ${
@@ -332,7 +345,10 @@ export default function MobileAttendancePage() {
                           })()}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {(student as { grade?: string }).grade && String((student as { grade?: string }).grade) !== '0' && String((student as { grade?: string }).grade) !== 'null' ? (student as { grade?: string }).grade : ''}
+                          {(() => {
+                            const g = String((student as { grade?: string }).grade ?? '');
+                            return g && g !== '0' && g !== 'null' ? g : null;
+                          })()}
                         </p>
                       </div>
 
@@ -370,16 +386,10 @@ export default function MobileAttendancePage() {
         )}
       </main>
 
-      {/* 저장 버튼 (하단 고정) */}
-      {schedule && students.length > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 safe-area-inset">
-          <Button
-            onClick={handleSave}
-            disabled={saving || attendances.size === 0}
-            className="w-full py-6 text-lg"
-          >
-            {saving ? '저장 중...' : `저장 (${attendances.size}명 체크됨)`}
-          </Button>
+      {/* 저장 중 인디케이터 */}
+      {saving && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm shadow-lg">
+          저장 중...
         </div>
       )}
     </div>

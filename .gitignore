@@ -3,6 +3,10 @@ node_modules/
 .pnp/
 .pnp.js
 
+# Backend (Express.js)
+backend/node_modules/
+backend/.env
+
 # Next.js
 .next/
 out/
@@ -48,3 +52,6 @@ nul
 
 # Playwright screenshots
 .playwright-mcp/
+
+# Backup folders
+backend_old_backup/

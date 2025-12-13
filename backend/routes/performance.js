@@ -2,6 +2,19 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
+const { decrypt } = require('../utils/encryption');
+
+// 이름 필드 복호화 헬퍼
+function decryptNames(obj) {
+    if (!obj) return obj;
+    if (obj.student_name) obj.student_name = decrypt(obj.student_name);
+    if (obj.recorded_by_name) obj.recorded_by_name = decrypt(obj.recorded_by_name);
+    if (obj.name) obj.name = decrypt(obj.name);
+    return obj;
+}
+function decryptArray(arr) {
+    return arr.map(item => decryptNames({...item}));
+}
 
 /**
  * GET /paca/performance
@@ -60,7 +73,7 @@ router.get('/', verifyToken, async (req, res) => {
 
         res.json({
             message: `Found ${performances.length} performance records`,
-            performances
+            performances: decryptArray(performances)
         });
     } catch (error) {
         console.error('Error fetching performance records:', error);
@@ -112,7 +125,7 @@ router.get('/:id', verifyToken, async (req, res) => {
             });
         }
 
-        res.json({ performance: performances[0] });
+        res.json({ performance: decryptNames({...performances[0]}) });
     } catch (error) {
         console.error('Error fetching performance record:', error);
         res.status(500).json({
@@ -161,10 +174,11 @@ router.get('/student/:student_id', verifyToken, async (req, res) => {
             [studentId]
         );
 
+        const decryptedStudent = decryptNames({...students[0]});
         res.json({
-            message: `${students[0].name} 학생의 성적 기록 ${performances.length}건을 불러왔습니다.`,
-            student: students[0],
-            performances
+            message: `${decryptedStudent.name} 학생의 성적 기록 ${performances.length}건을 불러왔습니다.`,
+            student: decryptedStudent,
+            performances: decryptArray(performances)
         });
     } catch (error) {
         console.error('Error fetching student performance records:', error);
@@ -267,7 +281,7 @@ router.post('/', verifyToken, async (req, res) => {
 
         res.status(201).json({
             message: '성적 기록이 생성되었습니다.',
-            performance: performances[0]
+            performance: decryptNames({...performances[0]})
         });
     } catch (error) {
         console.error('Error creating performance record:', error);
@@ -385,7 +399,7 @@ router.put('/:id', verifyToken, async (req, res) => {
 
         res.json({
             message: '성적 기록이 수정되었습니다.',
-            performance: performances[0]
+            performance: decryptNames({...performances[0]})
         });
     } catch (error) {
         console.error('Error updating performance record:', error);
@@ -428,7 +442,7 @@ router.delete('/:id', verifyToken, checkPermission('students', 'edit'), async (r
             message: '성적 기록이 삭제되었습니다.',
             performance: {
                 id: performanceId,
-                student_name: existing[0].student_name
+                student_name: decrypt(existing[0].student_name)
             }
         });
     } catch (error) {

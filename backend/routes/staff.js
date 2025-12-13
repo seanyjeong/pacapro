@@ -10,6 +10,20 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 const { verifyToken, requireRole } = require('../middleware/auth');
+const { decrypt } = require('../utils/encryption');
+
+// 복호화 헬퍼
+function decryptStaffFields(obj) {
+    if (!obj) return obj;
+    if (obj.name) obj.name = decrypt(obj.name);
+    if (obj.instructor_name) obj.instructor_name = decrypt(obj.instructor_name);
+    if (obj.instructor_phone) obj.instructor_phone = decrypt(obj.instructor_phone);
+    if (obj.phone) obj.phone = decrypt(obj.phone);
+    return obj;
+}
+function decryptArray(arr) {
+    return arr.map(item => decryptStaffFields({...item}));
+}
 
 /**
  * GET /paca/staff
@@ -38,11 +52,14 @@ router.get('/', verifyToken, requireRole('owner'), async (req, res) => {
             ORDER BY u.created_at DESC
         `, [req.user.academyId]);
 
-        // Parse permissions JSON
-        const staffWithParsedPermissions = staff.map(s => ({
-            ...s,
-            permissions: s.permissions ? (typeof s.permissions === 'string' ? JSON.parse(s.permissions) : s.permissions) : {}
-        }));
+        // Parse permissions JSON and decrypt
+        const staffWithParsedPermissions = staff.map(s => {
+            const decrypted = decryptStaffFields({...s});
+            return {
+                ...decrypted,
+                permissions: decrypted.permissions ? (typeof decrypted.permissions === 'string' ? JSON.parse(decrypted.permissions) : decrypted.permissions) : {}
+            };
+        });
 
         res.json({
             message: `Found ${staff.length} staff members`,
@@ -82,7 +99,7 @@ router.get('/available-instructors', verifyToken, requireRole('owner'), async (r
 
         res.json({
             message: `Found ${instructors.length} available instructors`,
-            instructors
+            instructors: decryptArray(instructors)
         });
     } catch (error) {
         console.error('Error fetching available instructors:', error);
@@ -206,7 +223,7 @@ router.post('/', verifyToken, requireRole('owner'), async (req, res) => {
             staff: {
                 id: result.insertId,
                 email,
-                name: instructors[0].name,
+                name: decrypt(instructors[0].name),
                 position,
                 permissions,
                 instructor_id
@@ -264,7 +281,7 @@ router.get('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             });
         }
 
-        const staffMember = staff[0];
+        const staffMember = decryptStaffFields({...staff[0]});
         staffMember.permissions = staffMember.permissions
             ? (typeof staffMember.permissions === 'string' ? JSON.parse(staffMember.permissions) : staffMember.permissions)
             : {};

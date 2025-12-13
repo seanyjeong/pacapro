@@ -3,6 +3,27 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { updateSalaryFromAttendance } = require('../utils/salaryCalculator');
+const { decrypt } = require('../utils/encryption');
+
+// 스케줄 결과에서 암호화된 이름 필드 복호화
+function decryptScheduleNames(schedules) {
+    if (!Array.isArray(schedules)) return schedules;
+    return schedules.map(schedule => ({
+        ...schedule,
+        instructor_name: schedule.instructor_name ? decrypt(schedule.instructor_name) : schedule.instructor_name,
+        student_name: schedule.student_name ? decrypt(schedule.student_name) : schedule.student_name,
+    }));
+}
+
+// 단일 스케줄 복호화
+function decryptSchedule(schedule) {
+    if (!schedule) return schedule;
+    return {
+        ...schedule,
+        instructor_name: schedule.instructor_name ? decrypt(schedule.instructor_name) : schedule.instructor_name,
+        student_name: schedule.student_name ? decrypt(schedule.student_name) : schedule.student_name,
+    };
+}
 
 /**
  * GET /paca/schedules
@@ -27,7 +48,10 @@ router.get('/', verifyToken, async (req, res) => {
                 i.name AS instructor_name,
                 (SELECT COUNT(DISTINCT a.student_id) FROM attendance a
                  JOIN students s ON a.student_id = s.id AND s.deleted_at IS NULL
-                 WHERE a.class_schedule_id = cs.id) AS student_count
+                 WHERE a.class_schedule_id = cs.id) AS student_count,
+                (SELECT COUNT(DISTINCT a.student_id) FROM attendance a
+                 JOIN students s ON a.student_id = s.id AND s.deleted_at IS NULL AND s.is_trial = TRUE
+                 WHERE a.class_schedule_id = cs.id) AS trial_count
             FROM class_schedules cs
             LEFT JOIN instructors i ON cs.instructor_id = i.id
             WHERE cs.academy_id = ?
@@ -64,7 +88,7 @@ router.get('/', verifyToken, async (req, res) => {
 
         res.json({
             message: `Found ${schedules.length} schedules`,
-            schedules
+            schedules: decryptScheduleNames(schedules)
         });
     } catch (error) {
         console.error('Error fetching schedules:', error);
@@ -128,11 +152,12 @@ router.get('/instructor/:instructor_id', verifyToken, async (req, res) => {
         query += ' ORDER BY cs.class_date ASC, cs.time_slot ASC';
 
         const [schedules] = await db.query(query, params);
+        const decryptedInstructor = { ...instructors[0], name: decrypt(instructors[0].name) };
 
         res.json({
-            message: `Found ${schedules.length} schedules for ${instructors[0].name}`,
-            instructor: instructors[0],
-            schedules
+            message: `Found ${schedules.length} schedules for ${decryptedInstructor.name}`,
+            instructor: decryptedInstructor,
+            schedules: decryptScheduleNames(schedules)
         });
     } catch (error) {
         console.error('Error fetching instructor schedules:', error);
@@ -174,11 +199,15 @@ router.get('/slot', verifyToken, async (req, res) => {
 
         const schedule = schedules[0] || null;
 
-        // 스케줄이 있으면 배정된 학생 조회 (시즌 정보 포함)
+        // 스케줄이 있으면 배정된 학생 조회 (시즌 정보, 체험생 정보, 전화번호, 보충 여부 포함)
         let students = [];
         if (schedule) {
             const [attendanceRecords] = await db.query(
-                `SELECT DISTINCT a.student_id, s.name as student_name, a.attendance_status,
+                `SELECT DISTINCT a.student_id, s.name as student_name, s.grade, a.attendance_status,
+                        a.notes,
+                        s.is_trial, s.trial_remaining,
+                        s.phone, s.parent_phone,
+                        a.is_makeup,
                         (SELECT se2.season_type
                          FROM student_seasons ss2
                          JOIN seasons se2 ON ss2.season_id = se2.id
@@ -195,14 +224,20 @@ router.get('/slot', verifyToken, async (req, res) => {
                  ORDER BY season_type IS NOT NULL DESC, s.name`,
                 [date, schedule.id]
             );
-            students = attendanceRecords;
+            // 복호화
+            students = attendanceRecords.map(s => ({
+                ...s,
+                student_name: s.student_name ? decrypt(s.student_name) : s.student_name,
+                phone: s.phone ? decrypt(s.phone) : s.phone,
+                parent_phone: s.parent_phone ? decrypt(s.parent_phone) : s.parent_phone
+            }));
         }
 
         // 해당 요일에 수업이 있는 학생 중 아직 배정되지 않은 학생 조회
         // class_days는 숫자 배열로 저장됨 (0=일, 1=월, 2=화, ...)
         const dayOfWeek = new Date(date + 'T00:00:00').getDay();
 
-        const [availableStudents] = await db.query(
+        const [availableStudentsRaw] = await db.query(
             `SELECT s.id, s.name, s.grade, s.student_type, s.class_days
              FROM students s
              WHERE s.academy_id = ?
@@ -218,8 +253,18 @@ router.get('/slot', verifyToken, async (req, res) => {
             [req.user.academyId, JSON.stringify(dayOfWeek), date, req.user.academyId]
         );
 
+        // 복호화
+        const availableStudents = availableStudentsRaw.map(s => ({
+            ...s,
+            name: s.name ? decrypt(s.name) : s.name
+        }));
+
         res.json({
-            schedule: schedule ? { ...schedule, students } : null,
+            schedule: schedule ? {
+                ...schedule,
+                instructor_name: schedule.instructor_name ? decrypt(schedule.instructor_name) : schedule.instructor_name,
+                students
+            } : null,
             available_students: availableStudents
         });
     } catch (error) {
@@ -280,14 +325,15 @@ router.post('/slot/student', verifyToken, checkPermission('schedules', 'edit'), 
             });
         }
 
-        // 출석 기록 생성
+        // 출석 기록 생성 (보충 학생이면 is_makeup = 1)
+        const is_makeup = req.body.is_makeup ? 1 : 0;
         await db.query(
-            `INSERT INTO attendance (class_schedule_id, student_id, attendance_status)
-             VALUES (?, ?, NULL)`,
-            [scheduleId, student_id]
+            `INSERT INTO attendance (class_schedule_id, student_id, attendance_status, is_makeup)
+             VALUES (?, ?, NULL, ?)`,
+            [scheduleId, student_id, is_makeup]
         );
 
-        res.json({ message: '학생이 배정되었습니다.' });
+        res.json({ message: is_makeup ? '보충 학생이 추가되었습니다.' : '학생이 배정되었습니다.' });
     } catch (error) {
         console.error('Error adding student to slot:', error);
         res.status(500).json({
@@ -438,9 +484,14 @@ router.get('/:id', verifyToken, async (req, res) => {
             });
         }
 
+        const schedule = schedules[0];
         res.json({
             message: 'Schedule found',
-            schedule: schedules[0]
+            schedule: {
+                ...schedule,
+                instructor_name: schedule.instructor_name ? decrypt(schedule.instructor_name) : schedule.instructor_name,
+                instructor_phone: schedule.instructor_phone ? decrypt(schedule.instructor_phone) : schedule.instructor_phone
+            }
         });
     } catch (error) {
         console.error('Error fetching schedule:', error);
@@ -478,7 +529,7 @@ router.post('/bulk', verifyToken, checkPermission('schedules', 'edit'), async (r
 
         let targetDates = [];
         let scheduleTitle = title || '수업';
-        let useTimeSlot = time_slot || 'afternoon';
+        let useTimeSlot = time_slot || 'evening';
         let useClassId = class_id || null;
         let useSeasonId = null;
         let useTargetGrade = null;
@@ -611,7 +662,7 @@ router.post('/bulk', verifyToken, checkPermission('schedules', 'edit'), async (r
             }
 
             scheduleTitle = title || `${month}월 수업`;
-            useTimeSlot = time_slot || 'afternoon';
+            useTimeSlot = time_slot || 'evening';
 
             // 해당 월의 수업요일에 맞는 날짜들 계산
             const firstDay = new Date(year, month - 1, 1);
@@ -654,11 +705,11 @@ router.post('/bulk', verifyToken, checkPermission('schedules', 'edit'), async (r
 
                 const classInfo = classes[0];
                 scheduleTitle = title || classInfo.class_name;
-                useTimeSlot = time_slot || classInfo.default_time_slot || 'afternoon';
+                useTimeSlot = time_slot || classInfo.default_time_slot || 'evening';
             } else {
                 // 반 없이 요일 기반으로 생성
                 scheduleTitle = title || `${month}월 수업`;
-                useTimeSlot = time_slot || 'afternoon';
+                useTimeSlot = time_slot || 'evening';
             }
 
             // 해당 월의 요일에 맞는 날짜들 계산
@@ -1151,8 +1202,10 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
             // 현재 시간대에 맞는 학년 찾기
             let targetGrades = [];
             if (gradeTimeSlots) {
-                for (const [grade, timeSlot] of Object.entries(gradeTimeSlots)) {
-                    if (timeSlot === schedule.time_slot) {
+                for (const [grade, timeSlots] of Object.entries(gradeTimeSlots)) {
+                    // timeSlots가 배열인 경우 includes로 체크, 문자열인 경우 직접 비교
+                    const slots = Array.isArray(timeSlots) ? timeSlots : [timeSlots];
+                    if (slots.includes(schedule.time_slot)) {
                         targetGrades.push(grade);
                     }
                 }
@@ -1261,10 +1314,10 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
             [classDateStr, req.user.academyId]
         );
 
-        // 4. Create student list with attendance info
+        // 4. Create student list with attendance info (decrypt names)
         const studentsWithInfo = students.map(student => ({
             student_id: student.student_id,
-            student_name: student.student_name,
+            student_name: decrypt(student.student_name),
             student_number: student.student_number,
             student_type: student.student_type,
             attendance_status: student.attendance_status || null,
@@ -1284,7 +1337,7 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
                     : makeup.original_date?.toISOString().split('T')[0];
                 studentsWithInfo.push({
                     student_id: makeup.student_id,
-                    student_name: makeup.student_name,
+                    student_name: decrypt(makeup.student_name),
                     student_number: makeup.student_number,
                     student_type: makeup.student_type,
                     attendance_status: 'present', // 보충으로 온 학생은 기본적으로 출석 처리 제안
@@ -1304,7 +1357,7 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
                 id: schedule.id,
                 class_date: schedule.class_date,
                 time_slot: schedule.time_slot,
-                instructor_name: schedule.instructor_name,
+                instructor_name: decrypt(schedule.instructor_name),
                 title: schedule.title,
                 attendance_taken: schedule.attendance_taken
             },
@@ -1337,8 +1390,13 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
     try {
         const { attendance_records } = req.body;
 
+        // 디버깅 로그
+        console.log(`[Attendance] Schedule ${scheduleId}, received:`, JSON.stringify(attendance_records));
+
         // Validation
         if (!Array.isArray(attendance_records) || attendance_records.length === 0) {
+            console.log(`[Attendance] Validation failed - empty or not array`);
+            connection.release();
             return res.status(400).json({
                 error: 'Validation Error',
                 message: 'attendance_records must be a non-empty array'
@@ -1369,6 +1427,12 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
 
         for (const record of attendance_records) {
             const { student_id, attendance_status, makeup_date, notes } = record;
+
+            // attendance_status가 null이거나 없으면 스킵 (중복 클릭 방지)
+            if (!attendance_status) {
+                console.log(`[Attendance] Skipping student ${student_id} - no attendance_status`);
+                continue;
+            }
 
             // Validate attendance_status
             if (!validStatuses.includes(attendance_status)) {
@@ -1404,7 +1468,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
 
             // Verify student exists and belongs to academy
             const [students] = await connection.query(
-                'SELECT id, name FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+                'SELECT id, name, is_trial, trial_remaining FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
                 [student_id, req.user.academyId]
             );
 
@@ -1416,6 +1480,16 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                     message: `Student with ID ${student_id} not found`
                 });
             }
+
+            const student = students[0];
+
+            // 기존 출석 상태 확인 (이미 출석 처리된 경우 중복 차감 방지)
+            const [existingAttendance] = await connection.query(
+                `SELECT attendance_status FROM attendance WHERE class_schedule_id = ? AND student_id = ?`,
+                [scheduleId, student_id]
+            );
+            const wasAlreadyPresent = existingAttendance.length > 0 &&
+                ['present', 'late'].includes(existingAttendance[0].attendance_status);
 
             // UPSERT attendance record with makeup_date
             await connection.query(
@@ -1431,12 +1505,25 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                 [scheduleId, student_id, attendance_status, attendance_status === 'makeup' ? makeup_date : null, notes || null, req.user.id]
             );
 
+            // 체험생이고 출석(present) 또는 지각(late)인 경우 trial_remaining 차감
+            const isAttended = ['present', 'late'].includes(attendance_status);
+            if (student.is_trial && isAttended && !wasAlreadyPresent && student.trial_remaining > 0) {
+                await connection.query(
+                    'UPDATE students SET trial_remaining = trial_remaining - 1 WHERE id = ?',
+                    [student_id]
+                );
+            }
+
             processedRecords.push({
                 student_id,
-                student_name: students[0].name,
+                student_name: decrypt(student.name),
                 attendance_status,
                 makeup_date: attendance_status === 'makeup' ? makeup_date : null,
-                notes: notes || ''
+                notes: notes || '',
+                is_trial: student.is_trial,
+                trial_remaining: student.is_trial && isAttended && !wasAlreadyPresent
+                    ? student.trial_remaining - 1
+                    : student.trial_remaining
             });
         }
 
@@ -1519,6 +1606,12 @@ router.get('/:id/instructor-attendance', verifyToken, async (req, res) => {
             [schedule.class_date, req.user.academyId]
         );
 
+        // 강사 출결 복호화
+        const decryptedAttendances = attendances.map(a => ({
+            ...a,
+            instructor_name: a.instructor_name ? decrypt(a.instructor_name) : a.instructor_name
+        }));
+
         res.json({
             message: 'Instructor attendance retrieved',
             schedule: {
@@ -1526,9 +1619,9 @@ router.get('/:id/instructor-attendance', verifyToken, async (req, res) => {
                 class_date: schedule.class_date,
                 time_slot: schedule.time_slot,
                 instructor_id: schedule.instructor_id,
-                instructor_name: schedule.instructor_name
+                instructor_name: decrypt(schedule.instructor_name)
             },
-            attendances
+            attendances: decryptedAttendances
         });
     } catch (error) {
         console.error('Error fetching instructor attendance:', error);
@@ -1635,7 +1728,7 @@ router.post('/:id/instructor-attendance', verifyToken, checkPermission('schedule
 
             processedRecords.push({
                 instructor_id,
-                instructor_name: instructors[0].name,
+                instructor_name: decrypt(instructors[0].name),
                 time_slot: useTimeSlot,
                 attendance_status,
                 check_in_time,
@@ -1743,11 +1836,11 @@ router.get('/date/:date/instructor-attendance', verifyToken, async (req, res) =>
             evening: []
         };
 
-        // 배정된 강사 추가
+        // 배정된 강사 추가 (복호화)
         scheduledInstructors.forEach(s => {
             instructorsBySlot[s.time_slot].push({
                 id: s.instructor_id,
-                name: s.name,
+                name: s.name ? decrypt(s.name) : s.name,
                 salary_type: s.salary_type,
                 scheduled_start_time: s.scheduled_start_time,
                 scheduled_end_time: s.scheduled_end_time,
@@ -1755,14 +1848,14 @@ router.get('/date/:date/instructor-attendance', verifyToken, async (req, res) =>
             });
         });
 
-        // 승인된 미배정 출근 강사 추가 (중복 체크)
+        // 승인된 미배정 출근 강사 추가 (중복 체크, 복호화)
         approvedExtraDays.forEach(s => {
             if (s.time_slot) {
                 const existing = instructorsBySlot[s.time_slot].find(i => i.id === s.instructor_id);
                 if (!existing) {
                     instructorsBySlot[s.time_slot].push({
                         id: s.instructor_id,
-                        name: s.name,
+                        name: s.name ? decrypt(s.name) : s.name,
                         salary_type: s.salary_type,
                         scheduled_start_time: s.scheduled_start_time,
                         scheduled_end_time: s.scheduled_end_time,
@@ -1791,12 +1884,24 @@ router.get('/date/:date/instructor-attendance', verifyToken, async (req, res) =>
             [workDate, req.user.academyId]
         );
 
+        // 출결 기록 복호화
+        const decryptedAttendances = attendances.map(a => ({
+            ...a,
+            instructor_name: a.instructor_name ? decrypt(a.instructor_name) : a.instructor_name
+        }));
+
+        // 전체 강사 목록 복호화
+        const decryptedInstructors = allActiveInstructors.map(i => ({
+            ...i,
+            name: i.name ? decrypt(i.name) : i.name
+        }));
+
         res.json({
             message: 'Instructor attendance retrieved',
             date: workDate,
-            attendances,
-            instructors: allActiveInstructors,  // 전체 강사 목록 (참고용)
-            instructors_by_slot: instructorsBySlot  // 배정된 강사만
+            attendances: decryptedAttendances,
+            instructors: decryptedInstructors,  // 전체 강사 목록 (참고용)
+            instructors_by_slot: instructorsBySlot  // 배정된 강사만 (이미 복호화됨)
         });
     } catch (error) {
         console.error('Error fetching instructor attendance by date:', error);
@@ -1890,7 +1995,7 @@ router.post('/date/:date/instructor-attendance', verifyToken, checkPermission('s
 
             processedRecords.push({
                 instructor_id,
-                instructor_name: instructors[0].name,
+                instructor_name: decrypt(instructors[0].name),
                 time_slot,
                 attendance_status
             });
@@ -1978,17 +2083,20 @@ router.get('/date/:date/instructor-schedules', verifyToken, checkPermission('sch
             schedulesBySlot[s.time_slot].push({
                 id: s.id,
                 instructor_id: s.instructor_id,
-                instructor_name: s.instructor_name,
+                instructor_name: decrypt(s.instructor_name),
                 salary_type: s.salary_type,
                 scheduled_start_time: s.scheduled_start_time,
                 scheduled_end_time: s.scheduled_end_time
             });
         });
 
+        // Decrypt instructor names
+        const decryptedInstructors = instructors.map(i => ({ ...i, name: decrypt(i.name) }));
+
         res.json({
             message: 'Instructor schedules retrieved',
             date: workDate,
-            instructors,
+            instructors: decryptedInstructors,
             schedules: schedulesBySlot
         });
     } catch (error) {
@@ -2087,7 +2195,7 @@ router.post('/date/:date/instructor-schedules', verifyToken, checkPermission('sc
 
             insertedSchedules.push({
                 instructor_id,
-                instructor_name: instructors[0].name,
+                instructor_name: decrypt(instructors[0].name),
                 time_slot,
                 scheduled_start_time,
                 scheduled_end_time
@@ -2207,6 +2315,172 @@ router.get('/instructor-schedules/month', verifyToken, checkPermission('schedule
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch monthly instructor schedules'
+        });
+    }
+});
+
+/**
+ * POST /paca/schedules/fix-all
+ * 잘못된 스케줄 일괄 정리 (owner 전용)
+ * - morning/afternoon 시간대 스케줄 삭제 (시즌 학생 제외)
+ * - 수업요일 불일치 스케줄 삭제
+ * - evening 시간대로 재배정
+ */
+router.post('/fix-all', verifyToken, requireRole('owner'), async (req, res) => {
+    const connection = await db.getConnection();
+
+    try {
+        const results = {
+            deleted_attendance: 0,
+            deleted_empty_schedules: 0,
+            created_schedules: 0,
+            assigned_attendance: 0,
+            details: []
+        };
+
+        // 1. 잘못된 스케줄 조회 (일반 학생의 morning/afternoon 또는 요일 불일치)
+        // 11월 1일부터 모든 날짜 대상 (과거 포함)
+        const [wrongSchedules] = await connection.query(`
+            SELECT
+                a.id as attendance_id,
+                a.student_id,
+                s.name as student_name,
+                s.grade,
+                s.class_days,
+                cs.id as schedule_id,
+                cs.class_date,
+                cs.time_slot,
+                DAYOFWEEK(cs.class_date) - 1 as day_of_week
+            FROM attendance a
+            JOIN class_schedules cs ON a.class_schedule_id = cs.id
+            JOIN students s ON a.student_id = s.id
+            LEFT JOIN student_seasons ss ON s.id = ss.student_id AND ss.is_cancelled = 0
+            WHERE cs.academy_id = ?
+            AND cs.class_date >= '2025-11-01'
+            AND s.status = 'active'
+            AND s.deleted_at IS NULL
+            AND ss.id IS NULL
+            AND a.attendance_status IS NULL
+            AND (
+                cs.time_slot IN ('morning', 'afternoon')
+                OR NOT JSON_CONTAINS(COALESCE(s.class_days, '[]'), CAST(DAYOFWEEK(cs.class_date) - 1 AS CHAR))
+            )
+            ORDER BY s.name, cs.class_date
+        `, [req.user.academyId]);
+
+        results.details.push(`발견된 잘못된 스케줄: ${wrongSchedules.length}개`);
+
+        // 2. 잘못된 출석 기록 삭제
+        if (wrongSchedules.length > 0) {
+            const attendanceIds = wrongSchedules.map(w => w.attendance_id);
+            const [deleteResult] = await connection.query(
+                `DELETE FROM attendance WHERE id IN (?)`,
+                [attendanceIds]
+            );
+            results.deleted_attendance = deleteResult.affectedRows;
+        }
+
+        // 3. 빈 스케줄 삭제 (11월 1일 이후)
+        const [emptyScheduleResult] = await connection.query(`
+            DELETE cs FROM class_schedules cs
+            LEFT JOIN attendance a ON cs.id = a.class_schedule_id
+            WHERE cs.academy_id = ?
+            AND a.id IS NULL
+            AND cs.class_date >= '2025-11-01'
+        `, [req.user.academyId]);
+        results.deleted_empty_schedules = emptyScheduleResult.affectedRows;
+
+        // 4. 올바른 스케줄로 재배정
+        const [activeStudents] = await connection.query(`
+            SELECT s.id, s.name, s.academy_id, s.class_days
+            FROM students s
+            LEFT JOIN student_seasons ss ON s.id = ss.student_id AND ss.is_cancelled = 0
+            WHERE s.academy_id = ?
+            AND s.status = 'active'
+            AND s.deleted_at IS NULL
+            AND s.class_days IS NOT NULL
+            AND s.class_days != '[]'
+            AND ss.id IS NULL
+        `, [req.user.academyId]);
+
+        results.details.push(`재배정 대상 학생: ${activeStudents.length}명`);
+
+        // 11월과 12월 모두 재배정 (2025년)
+        const monthsToProcess = [
+            { year: 2025, month: 10 },  // 11월 (0-indexed)
+            { year: 2025, month: 11 }   // 12월
+        ];
+
+        for (const student of activeStudents) {
+            const classDays = typeof student.class_days === 'string'
+                ? JSON.parse(student.class_days)
+                : student.class_days;
+
+            if (!Array.isArray(classDays) || classDays.length === 0) continue;
+
+            for (const { year, month } of monthsToProcess) {
+                const firstDay = 1;
+                const lastDay = new Date(year, month + 1, 0).getDate();
+
+                for (let day = firstDay; day <= lastDay; day++) {
+                    const currentDate = new Date(year, month, day);
+                    const dayOfWeek = currentDate.getDay();
+
+                    if (classDays.includes(dayOfWeek)) {
+                        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+                        // evening 스케줄 조회 또는 생성
+                        let [schedules] = await connection.query(
+                            `SELECT id FROM class_schedules
+                             WHERE academy_id = ? AND class_date = ? AND time_slot = 'evening'`,
+                            [student.academy_id, dateStr]
+                        );
+
+                        let scheduleId;
+                        if (schedules.length === 0) {
+                            const [result] = await connection.query(
+                                `INSERT INTO class_schedules (academy_id, class_date, time_slot, attendance_taken)
+                                 VALUES (?, ?, 'evening', false)`,
+                                [student.academy_id, dateStr]
+                            );
+                            scheduleId = result.insertId;
+                            results.created_schedules++;
+                        } else {
+                            scheduleId = schedules[0].id;
+                        }
+
+                        // 이미 배정되어 있는지 확인
+                        const [existing] = await connection.query(
+                            `SELECT id FROM attendance WHERE class_schedule_id = ? AND student_id = ?`,
+                            [scheduleId, student.id]
+                        );
+
+                        if (existing.length === 0) {
+                            await connection.query(
+                                `INSERT INTO attendance (class_schedule_id, student_id, attendance_status)
+                                 VALUES (?, ?, NULL)`,
+                                [scheduleId, student.id]
+                            );
+                            results.assigned_attendance++;
+                        }
+                    }
+                }
+            }
+        }
+
+        connection.release();
+
+        res.json({
+            message: '스케줄 정리 완료',
+            results
+        });
+
+    } catch (error) {
+        connection.release();
+        console.error('Error fixing schedules:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: error.message || 'Failed to fix schedules'
         });
     }
 });

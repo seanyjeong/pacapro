@@ -1,12 +1,14 @@
 /**
  * Search Routes
  * 통합 검색 API
+ * NOTE: 암호화된 필드는 SQL LIKE 검색 불가 → 메모리 필터링 사용
  */
 
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken } = require('../middleware/auth');
+const { decrypt } = require('../utils/encryption');
 
 /**
  * GET /paca/search
@@ -24,44 +26,59 @@ router.get('/', verifyToken, async (req, res) => {
             });
         }
 
-        const searchTerm = `%${q.trim()}%`;
+        const searchQuery = q.trim().toLowerCase();
         const academyId = req.user.academyId;
 
-        // 학생 검색 (이름, 학번, 전화번호, 부모 전화번호)
-        const [students] = await db.query(
-            `SELECT
-                id, name, student_number, phone, parent_phone, school, status,
-                'student' as type
+        // 학생 전체 조회 후 메모리 필터링 (암호화 필드는 SQL LIKE 불가)
+        const [allStudents] = await db.query(
+            `SELECT id, name, student_number, phone, parent_phone, school, status
             FROM students
-            WHERE academy_id = ?
-            AND deleted_at IS NULL
-            AND (
-                name LIKE ?
-                OR student_number LIKE ?
-                OR phone LIKE ?
-                OR parent_phone LIKE ?
-            )
-            ORDER BY name
-            LIMIT 10`,
-            [academyId, searchTerm, searchTerm, searchTerm, searchTerm]
+            WHERE academy_id = ? AND deleted_at IS NULL`,
+            [academyId]
         );
 
-        // 강사 검색 (이름, 전화번호)
-        const [instructors] = await db.query(
-            `SELECT
-                id, name, phone, specialization, status,
-                'instructor' as type
+        // 강사 전체 조회 후 메모리 필터링
+        const [allInstructors] = await db.query(
+            `SELECT id, name, phone, status
             FROM instructors
-            WHERE academy_id = ?
-            AND deleted_at IS NULL
-            AND (
-                name LIKE ?
-                OR phone LIKE ?
-            )
-            ORDER BY name
-            LIMIT 10`,
-            [academyId, searchTerm, searchTerm]
+            WHERE academy_id = ? AND deleted_at IS NULL`,
+            [academyId]
         );
+
+        // 복호화 및 필터링
+        const students = allStudents
+            .map(s => ({
+                ...s,
+                name: decrypt(s.name),
+                phone: decrypt(s.phone),
+                parent_phone: decrypt(s.parent_phone)
+            }))
+            .filter(s => {
+                const name = (s.name || '').toLowerCase();
+                const studentNumber = (s.student_number || '').toLowerCase();
+                const phone = (s.phone || '').replace(/-/g, '');
+                const parentPhone = (s.parent_phone || '').replace(/-/g, '');
+                const queryClean = searchQuery.replace(/-/g, '');
+                return name.includes(searchQuery) ||
+                       studentNumber.includes(searchQuery) ||
+                       phone.includes(queryClean) ||
+                       parentPhone.includes(queryClean);
+            })
+            .slice(0, 10);
+
+        const instructors = allInstructors
+            .map(i => ({
+                ...i,
+                name: decrypt(i.name),
+                phone: decrypt(i.phone)
+            }))
+            .filter(i => {
+                const name = (i.name || '').toLowerCase();
+                const phone = (i.phone || '').replace(/-/g, '');
+                const queryClean = searchQuery.replace(/-/g, '');
+                return name.includes(searchQuery) || phone.includes(queryClean);
+            })
+            .slice(0, 10);
 
         // 결과 합치기
         const results = [
@@ -77,7 +94,7 @@ router.get('/', verifyToken, async (req, res) => {
                 id: i.id,
                 type: 'instructor',
                 name: i.name,
-                subtext: i.specialization || '강사',
+                subtext: '강사',
                 phone: i.phone,
                 status: i.status
             }))
@@ -89,7 +106,7 @@ router.get('/', verifyToken, async (req, res) => {
             results
         });
     } catch (error) {
-        console.error('Error searching:', error);
+        console.error('Search error:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '검색에 실패했습니다.'

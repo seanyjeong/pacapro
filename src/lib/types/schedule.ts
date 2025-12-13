@@ -4,7 +4,7 @@
 
 export type TimeSlot = 'morning' | 'afternoon' | 'evening';
 
-export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused' | 'makeup';
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused' | 'makeup' | 'none';
 
 export interface ClassSchedule {
   id: number;
@@ -106,6 +106,7 @@ export const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
   late: '지각',
   excused: '공결',
   makeup: '보충',
+  none: '',
 };
 
 export const ATTENDANCE_STATUS_COLORS: Record<AttendanceStatus, string> = {
@@ -114,6 +115,7 @@ export const ATTENDANCE_STATUS_COLORS: Record<AttendanceStatus, string> = {
   late: 'bg-yellow-100 text-yellow-800',
   excused: 'bg-blue-100 text-blue-800',
   makeup: 'bg-purple-100 text-purple-800',
+  none: '',
 };
 
 // 요일 라벨 (0=일요일 ~ 6=토요일)

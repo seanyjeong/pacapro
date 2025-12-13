@@ -5,13 +5,33 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'jeong-paca-secret';
+const N8N_API_KEY = process.env.N8N_API_KEY || 'paca-n8n-api-key-2024';
 
 /**
- * Verify JWT Token
+ * Verify JWT Token or N8N API Key
  */
 const verifyToken = async (req, res, next) => {
     try {
+        // Check for N8N API Key first
+        const apiKey = req.headers['x-api-key'];
+        if (apiKey && apiKey === N8N_API_KEY) {
+            // N8N 서비스 계정으로 처리 (academy_id는 쿼리에서 받음)
+            const academyId = req.query.academy_id || req.body.academy_id || null;
+            req.user = {
+                id: 0,
+                email: 'n8n@system',
+                name: 'N8N Service',
+                role: 'admin',
+                academyId: academyId,
+                academy_id: academyId, // 호환성 위해 둘 다 설정
+                position: 'system',
+                permissions: {},
+                isServiceAccount: true
+            };
+            return next();
+        }
+
         // Get token from header
         const authHeader = req.headers.authorization;
 
@@ -66,7 +86,7 @@ const verifyToken = async (req, res, next) => {
                     ? JSON.parse(user.permissions)
                     : user.permissions;
             } catch (e) {
-                console.error('Failed to parse permissions:', e);
+                // Failed to parse permissions
             }
         }
 
@@ -77,6 +97,7 @@ const verifyToken = async (req, res, next) => {
             name: user.name,
             role: user.role,
             academyId: user.academy_id,
+            academy_id: user.academy_id, // 호환성 위해 둘 다 설정
             position: user.position,
             permissions: permissions,
             instructorId: user.instructor_id
@@ -98,7 +119,6 @@ const verifyToken = async (req, res, next) => {
             });
         }
 
-        console.error('Auth middleware error:', error);
         return res.status(500).json({
             error: 'Internal Server Error',
             message: 'Authentication error'
@@ -118,10 +138,7 @@ const requireRole = (...roles) => {
             });
         }
 
-        console.log(`[requireRole] User: ${req.user.email}, Role: "${req.user.role}", Required: ${roles.join(' or ')}`);
-
         if (!roles.includes(req.user.role)) {
-            console.log(`[requireRole] ACCESS DENIED - User role "${req.user.role}" not in [${roles.join(', ')}]`);
             return res.status(403).json({
                 error: 'Forbidden',
                 message: `Required role: ${roles.join(' or ')}`
@@ -154,7 +171,6 @@ const checkAcademyAccess = async (req, res, next) => {
 
         next();
     } catch (error) {
-        console.error('Academy access check error:', error);
         return res.status(500).json({
             error: 'Internal Server Error',
             message: 'Access check error'

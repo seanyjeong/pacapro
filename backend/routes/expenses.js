@@ -2,6 +2,18 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
+const { decrypt } = require('../utils/encryption');
+
+// 이름 필드 복호화 헬퍼
+function decryptNames(obj) {
+    if (!obj) return obj;
+    if (obj.instructor_name) obj.instructor_name = decrypt(obj.instructor_name);
+    if (obj.recorded_by_name) obj.recorded_by_name = decrypt(obj.recorded_by_name);
+    return obj;
+}
+function decryptExpenseArray(arr) {
+    return arr.map(item => decryptNames({...item}));
+}
 
 /**
  * GET /paca/expenses
@@ -70,7 +82,7 @@ router.get('/', verifyToken, checkPermission('expenses', 'view'), async (req, re
         res.json({
             message: `Found ${expenses.length} expense records`,
             total_amount: totalAmount,
-            expenses
+            expenses: decryptExpenseArray(expenses)
         });
     } catch (error) {
         console.error('Error fetching expenses:', error);
@@ -111,7 +123,7 @@ router.get('/:id', verifyToken, checkPermission('expenses', 'view'), async (req,
             });
         }
 
-        res.json({ expense: expenses[0] });
+        res.json({ expense: decryptNames({...expenses[0]}) });
     } catch (error) {
         console.error('Error fetching expense:', error);
         res.status(500).json({
@@ -306,7 +318,7 @@ router.post('/', verifyToken, checkPermission('expenses', 'edit'), async (req, r
 
         res.status(201).json({
             message: '지출이 등록되었습니다.',
-            expense: expenses[0]
+            expense: decryptNames({...expenses[0]})
         });
     } catch (error) {
         console.error('Error creating expense:', error);
@@ -451,7 +463,7 @@ router.put('/:id', verifyToken, checkPermission('expenses', 'edit'), async (req,
 
         res.json({
             message: '지출 내역이 수정되었습니다.',
-            expense: expenses[0]
+            expense: decryptNames({...expenses[0]})
         });
     } catch (error) {
         console.error('Error updating expense:', error);

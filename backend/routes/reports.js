@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
+const { decrypt } = require('../utils/encryption');
 
 /**
  * GET /paca/reports/dashboard
@@ -13,7 +14,7 @@ router.get('/dashboard', verifyToken, requireRole('owner', 'admin', 'staff'), as
         const academyId = req.user.academyId;
         const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
-        // Get student counts
+        // Get student counts (체험생 제외)
         const [studentStats] = await db.query(
             `SELECT
                 COUNT(*) as total_students,
@@ -21,7 +22,7 @@ router.get('/dashboard', verifyToken, requireRole('owner', 'admin', 'staff'), as
                 SUM(CASE WHEN status = 'paused' THEN 1 ELSE 0 END) as paused_students,
                 SUM(CASE WHEN status = 'withdrawn' THEN 1 ELSE 0 END) as withdrawn_students
             FROM students
-            WHERE academy_id = ? AND deleted_at IS NULL`,
+            WHERE academy_id = ? AND deleted_at IS NULL AND (is_trial = 0 OR is_trial IS NULL)`,
             [academyId]
         );
 
@@ -500,10 +501,10 @@ router.get('/attendance', verifyToken, checkPermission('reports', 'view'), async
             [start_date, end_date, academyId]
         );
 
-        // Calculate attendance rate for each student
+        // Calculate attendance rate for each student (학생 이름 복호화 포함)
         const studentStats = byStudent.map(student => ({
             student_id: student.student_id,
-            student_name: student.student_name,
+            student_name: decrypt(student.student_name),
             student_number: student.student_number,
             total_days: student.total_days,
             present_days: student.present_days,
@@ -592,10 +593,10 @@ router.get('/payments/unpaid', verifyToken, checkPermission('reports', 'view'), 
             },
             by_student: byStudent.map(s => ({
                 student_id: s.student_id,
-                student_name: s.student_name,
+                student_name: decrypt(s.student_name),
                 student_number: s.student_number,
-                phone: s.phone,
-                parent_phone: s.parent_phone,
+                phone: decrypt(s.phone),
+                parent_phone: decrypt(s.parent_phone),
                 unpaid_count: s.unpaid_count,
                 unpaid_amount: parseFloat(s.unpaid_amount)
             }))
