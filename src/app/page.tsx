@@ -2,17 +2,20 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCog, TrendingUp, AlertCircle, Banknote, ChevronRight, ArrowUpRight, ArrowDownRight, Clock, Calendar } from 'lucide-react';
+import { Users, UserCog, TrendingUp, AlertCircle, Banknote, ChevronRight, ArrowUpRight, ArrowDownRight, Clock, Calendar, PlayCircle } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { dashboardAPI } from '@/lib/api/dashboard';
 import { schedulesApi } from '@/lib/api/schedules';
 import { getConsultations } from '@/lib/api/consultations';
+import { studentsAPI } from '@/lib/api/students';
 import { DashboardStats } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils/format';
 import { canView, canEdit, isOwner, isAdmin } from '@/lib/utils/permissions';
 import type { Consultation } from '@/lib/types/consultation';
+import { StudentResumeModal, type RestEndedStudent } from '@/components/students/student-resume-modal';
 
 export default function DashboardPage() {
     const router = useRouter();
@@ -29,6 +32,11 @@ export default function DashboardPage() {
 
     // 오늘 상담 일정
     const [todayConsultations, setTodayConsultations] = useState<Consultation[]>([]);
+
+    // 휴원 종료 대기 학생
+    const [restEndedStudents, setRestEndedStudents] = useState<RestEndedStudent[]>([]);
+    const [showRestEndedModal, setShowRestEndedModal] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState<RestEndedStudent | null>(null);
 
     // 권한 체크 - 클라이언트에서만 실행 (hydration 에러 방지)
     const [canViewFinance, setCanViewFinance] = useState(false);
@@ -82,6 +90,14 @@ export default function DashboardPage() {
             setTodayConsultations(consultationData.consultations || []);
         } catch (err) {
             console.error('Failed to load consultations:', err);
+        }
+
+        // 휴원 종료 대기 학생 로드
+        try {
+            const restEndedData = await studentsAPI.getRestEndedStudents();
+            setRestEndedStudents(restEndedData.students || []);
+        } catch (err) {
+            console.error('Failed to load rest-ended students:', err);
         }
     };
 
@@ -236,6 +252,27 @@ export default function DashboardPage() {
                             </button>
                         )}
 
+                        {/* 휴원 종료 대기 */}
+                        {stats.rest_ended_students && stats.rest_ended_students.count > 0 && (
+                            <button
+                                onClick={() => setShowRestEndedModal(true)}
+                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/50 dark:to-yellow-950/50 rounded-xl border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200 group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="w-11 h-11 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
+                                        <PlayCircle className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-semibold text-foreground">휴원 종료 대기</div>
+                                        <div className="text-sm text-muted-foreground">
+                                            {stats.rest_ended_students.count}명 복귀 처리 필요
+                                        </div>
+                                    </div>
+                                </div>
+                                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                            </button>
+                        )}
+
                         {/* 오늘 강사 일정 */}
                         {canViewSchedules && (instructorsBySlot.morning.length > 0 || instructorsBySlot.afternoon.length > 0 || instructorsBySlot.evening.length > 0) && (
                             <button
@@ -370,6 +407,52 @@ export default function DashboardPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* 휴원 종료 대기 학생 목록 모달 */}
+            <Dialog open={showRestEndedModal} onOpenChange={setShowRestEndedModal}>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>휴원 종료 대기 학생</DialogTitle>
+                        <DialogDescription>
+                            복귀할 학생을 선택해주세요.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-6 px-6 max-h-96 overflow-y-auto space-y-2">
+                        {restEndedStudents.length === 0 ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                                휴원 종료 대기 중인 학생이 없습니다.
+                            </div>
+                        ) : (
+                            restEndedStudents.map(student => (
+                                <button
+                                    key={student.id}
+                                    onClick={() => {
+                                        setSelectedStudent(student);
+                                        setShowRestEndedModal(false);
+                                    }}
+                                    className="w-full p-3 text-left rounded-lg border hover:bg-muted/50 transition-colors"
+                                >
+                                    <div className="font-medium">{student.name}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                        {student.grade} · 종료일: {student.rest_end_date} ({student.days_overdue}일 경과)
+                                    </div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* 복귀 처리 모달 */}
+            <StudentResumeModal
+                open={!!selectedStudent}
+                onClose={() => setSelectedStudent(null)}
+                student={selectedStudent}
+                onSuccess={() => {
+                    loadDashboard();
+                    loadTodayData();
+                }}
+            />
         </div>
     );
 }

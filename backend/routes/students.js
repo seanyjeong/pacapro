@@ -169,6 +169,58 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
 }
 
 /**
+ * GET /paca/students/rest-ended
+ * 휴원 종료일이 지난 학생 목록 조회 (복귀 대기)
+ * Access: owner, admin, staff
+ */
+router.get('/rest-ended', verifyToken, requireRole('owner', 'admin', 'staff'), async (req, res) => {
+    try {
+        const academyId = req.user.academyId;
+        const today = new Date().toISOString().split('T')[0];
+
+        const [students] = await db.query(
+            `SELECT
+                id, name, phone, school, grade,
+                rest_start_date, rest_end_date, rest_reason,
+                class_days, time_slot, monthly_tuition, discount_rate
+             FROM students
+             WHERE academy_id = ?
+             AND deleted_at IS NULL
+             AND status = 'paused'
+             AND rest_end_date IS NOT NULL
+             AND rest_end_date < ?
+             ORDER BY rest_end_date ASC`,
+            [academyId, today]
+        );
+
+        // 이름, 전화번호 복호화 및 경과일 계산
+        const decryptedStudents = students.map(s => {
+            const restEndDate = new Date(s.rest_end_date);
+            const todayDate = new Date(today);
+            const daysOverdue = Math.floor((todayDate - restEndDate) / (1000 * 60 * 60 * 24));
+
+            return {
+                ...s,
+                name: decrypt(s.name),
+                phone: s.phone ? decrypt(s.phone) : null,
+                days_overdue: daysOverdue
+            };
+        });
+
+        res.json({
+            message: 'Success',
+            students: decryptedStudents
+        });
+    } catch (error) {
+        console.error('Error fetching rest-ended students:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'Failed to fetch rest-ended students'
+        });
+    }
+});
+
+/**
  * GET /paca/students
  * Get all students with optional filters
  * Access: owner, admin, teacher
@@ -2077,10 +2129,16 @@ router.post('/:id/rest', verifyToken, checkPermission('students', 'edit'), async
  * POST /paca/students/:id/resume
  * 학생 휴식 복귀 처리
  * - 복귀 시 해당 월 학원비가 없으면 일할계산하여 자동 생성
+ * - resume_date: 복귀 날짜 (YYYY-MM-DD) - 없으면 오늘 날짜 사용
  * Access: owner, admin
  */
 router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
     const studentId = parseInt(req.params.id);
+    const { resume_date } = req.body;
+
+    // 복귀 날짜 설정 (없으면 오늘)
+    const resumeDate = resume_date ? new Date(resume_date + 'T00:00:00') : new Date();
+    const resumeDateStr = resumeDate.toISOString().split('T')[0];
 
     try {
         // 학생 존재 확인 (수강료 정보 포함)
@@ -2131,13 +2189,12 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
         let reassignResult = null;
         if (classDays.length > 0) {
             try {
-                const today = new Date().toISOString().split('T')[0];
                 reassignResult = await autoAssignStudentToSchedules(
                     db,
                     studentId,
                     req.user.academyId,
                     classDays,
-                    today,
+                    resumeDateStr,  // 복귀 날짜 기준
                     'evening'
                 );
             } catch (assignError) {
@@ -2148,10 +2205,9 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
         // 복귀 시 해당 월 학원비 자동 생성 (일할계산)
         let paymentCreated = null;
         try {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            const currentDay = today.getDate();
+            const year = resumeDate.getFullYear();
+            const month = resumeDate.getMonth() + 1;
+            const currentDay = resumeDate.getDate();
             const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
 
             // 이미 해당 월 학원비가 있는지 확인
@@ -2199,7 +2255,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
                 const finalAmount = proRatedAmount - discountAmount;
 
                 // 납부기한: 복귀일 + 7일
-                const dueDate = new Date(today);
+                const dueDate = new Date(resumeDate);
                 dueDate.setDate(dueDate.getDate() + 7);
 
                 const description = `${month}월 학원비 (${currentDay}일 복귀, 일할계산)`;
@@ -2247,11 +2303,12 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
 
         res.json({
             message: paymentCreated
-                ? `복귀 처리가 완료되었습니다. ${paymentCreated.yearMonth} 학원비 ${paymentCreated.finalAmount.toLocaleString()}원이 생성되었습니다.`
-                : '복귀 처리가 완료되었습니다.',
+                ? `${resumeDateStr} 복귀 처리가 완료되었습니다. ${paymentCreated.yearMonth} 학원비 ${paymentCreated.finalAmount.toLocaleString()}원이 생성되었습니다.`
+                : `${resumeDateStr} 복귀 처리가 완료되었습니다.`,
             student: updatedStudents[0],
             scheduleAssigned: reassignResult,
-            paymentCreated
+            paymentCreated,
+            resumeDate: resumeDateStr
         });
     } catch (error) {
         console.error('Error resuming student:', error);

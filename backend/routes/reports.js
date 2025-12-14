@@ -26,6 +26,19 @@ router.get('/dashboard', verifyToken, requireRole('owner', 'admin', 'staff'), as
             [academyId]
         );
 
+        // 휴원 종료일이 지난 학생 수 (복귀 대기)
+        const today = new Date().toISOString().split('T')[0];
+        const [restEndedStats] = await db.query(
+            `SELECT COUNT(*) as count
+             FROM students
+             WHERE academy_id = ?
+             AND deleted_at IS NULL
+             AND status = 'paused'
+             AND rest_end_date IS NOT NULL
+             AND rest_end_date < ?`,
+            [academyId, today]
+        );
+
         // Get instructor counts
         const [instructorStats] = await db.query(
             `SELECT
@@ -111,6 +124,9 @@ router.get('/dashboard', verifyToken, requireRole('owner', 'admin', 'staff'), as
             unpaid_payments: {
                 count: unpaidStats[0].unpaid_count,
                 amount: parseFloat(unpaidStats[0].unpaid_amount)
+            },
+            rest_ended_students: {
+                count: restEndedStats[0].count
             }
         });
     } catch (error) {

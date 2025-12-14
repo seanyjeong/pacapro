@@ -129,4 +129,57 @@ export const studentsAPI = {
       graduate_student_ids: graduateStudentIds
     });
   },
+
+  /**
+   * 휴원 종료 대기 학생 목록 조회
+   * GET /paca/students/rest-ended
+   */
+  getRestEndedStudents: async (): Promise<{
+    message: string;
+    students: Array<{
+      id: number;
+      name: string;
+      phone: string | null;
+      school: string | null;
+      grade: string | null;
+      rest_start_date: string;
+      rest_end_date: string;
+      rest_reason: string | null;
+      class_days: number[] | string;
+      time_slot: string | null;
+      monthly_tuition: string;
+      discount_rate: string;
+      days_overdue: number;
+    }>;
+  }> => {
+    return await apiClient.get('/students/rest-ended');
+  },
+
+  /**
+   * 학생 복귀 처리 (날짜 지정 가능)
+   * POST /paca/students/:id/resume
+   * @param id - 학생 ID
+   * @param resumeDate - 복귀 날짜 (YYYY-MM-DD) - 없으면 오늘
+   */
+  resumeStudent: async (id: number, resumeDate?: string): Promise<{
+    message: string;
+    student: Student;
+    scheduleAssigned: {
+      assigned: number;
+      created: number;
+    } | null;
+    paymentCreated: {
+      id: number;
+      yearMonth: string;
+      baseAmount: number;
+      finalAmount: number;
+      remainingClassDays: number;
+      totalClassDays: number;
+    } | null;
+    resumeDate: string;
+  }> => {
+    return await apiClient.post(`/students/${id}/resume`, {
+      resume_date: resumeDate
+    });
+  },
 };

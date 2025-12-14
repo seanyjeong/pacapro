@@ -272,6 +272,9 @@ export interface DashboardStats {
     count: number;
     amount: number;
   };
+  rest_ended_students?: {
+    count: number;
+  };
 }
 
 // ===== Reports =====
