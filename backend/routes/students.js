@@ -2222,9 +2222,18 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
                 const lastDayOfMonth = new Date(year, month, 0).getDate();
                 const remainingDays = lastDayOfMonth - currentDay + 1;
 
-                // 수업 요일 기준 일할 계산
-                const dayNameToNum = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 0 };
-                const classDayNums = classDays.map(d => dayNameToNum[d]).filter(d => d !== undefined);
+                // 수업 요일 기준 일할 계산 (숫자 배열 또는 한글 배열 처리)
+                let classDayNums = [];
+                if (Array.isArray(classDays) && classDays.length > 0) {
+                    if (typeof classDays[0] === 'number') {
+                        // 이미 숫자 배열 [1, 5] (월=1, 금=5)
+                        classDayNums = classDays;
+                    } else {
+                        // 한글 요일 배열 ['월', '금']
+                        const dayNameToNum = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 0 };
+                        classDayNums = classDays.map(d => dayNameToNum[d]).filter(d => d !== undefined);
+                    }
+                }
 
                 // 4주 고정: 월 총 수업일 = 주간 횟수 × 4
                 const weeklyCount = classDayNums.length || 2;  // 기본값 주2회
