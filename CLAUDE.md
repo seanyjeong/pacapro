@@ -15,15 +15,35 @@ git add . && git commit -m "메시지" && git push  # 자동 배포
 
 ### 백엔드 (로컬 서버)
 ```bash
-# pacapro/backend/ 에서 수정 후 재시작
-sudo systemctl restart paca
-sudo journalctl -u paca -f  # 로그
+# 재시작 (sudo 비밀번호 자동 입력)
+echo 'q141171616!' | sudo -S systemctl restart paca
+
+# 로그 확인
+echo 'q141171616!' | sudo -S journalctl -u paca -f
 ```
 
-### DB
+### DB 접근 (CLI가 안 될 때 Node.js 사용)
 ```bash
+# CLI 방식 (비밀번호에 ! 있어서 불안정)
 mysql -u paca -pq141171616! paca
+
+# Node.js 방식 (안정적 - CLI 안 될 때 사용)
+node -e "
+const mysql = require('./backend/node_modules/mysql2/promise');
+async function run() {
+    const conn = await mysql.createConnection({
+        host: 'localhost', user: 'paca',
+        password: 'q141171616!', database: 'paca'
+    });
+    const [rows] = await conn.execute('SELECT * FROM students LIMIT 1');
+    console.log(rows);
+    await conn.end();
+}
+run();
+"
 ```
+
+> **참고**: MySQL CLI에서 `year_month` 같은 예약어는 백틱(\`)으로 감싸야 함
 
 ---
 
@@ -135,9 +155,10 @@ DB는 영어(`morning/afternoon/evening`), 프론트는 한글(`오전/오후/�
 
 ---
 
-## 현재 버전: v2.9.16 (2025-12-12)
+## 현재 버전: v2.9.19 (2025-12-15)
 
 ### 최근 변경
+- **v2.9.19**: 휴원 종료 대기 학생 관리 (대시보드 표시 + 복귀 모달 + 날짜 지정 복귀)
 - **v2.9.16**: 강사출결 복호화, 학생검색 메모리필터링, 출결 사유 인라인UI, 체험생 회차 표시 수정
 - **v2.9.15**: 결석/공결 사유 입력 UI, 공결 설명 추가
 - **v2.9.14**: 비밀번호 찾기/재설정 기능
