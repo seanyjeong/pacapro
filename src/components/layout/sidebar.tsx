@@ -205,24 +205,35 @@ export function Sidebar() {
                 </Link>
                 {/* 푸시 알림 토글 */}
                 {mounted && pushSupported && (
-                    <button
-                        onClick={handlePushToggle}
-                        disabled={pushLoading}
-                        className={`p-2 rounded-lg transition-colors ${
-                            pushSubscribed
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                        } disabled:opacity-50`}
-                        title={pushSubscribed ? '푸시 알림 끄기' : '푸시 알림 켜기'}
-                    >
-                        {pushLoading ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                        ) : pushSubscribed ? (
-                            <Bell className="w-5 h-5" />
-                        ) : (
-                            <BellOff className="w-5 h-5" />
-                        )}
-                    </button>
+                    <div className="relative group">
+                        <button
+                            onClick={handlePushToggle}
+                            disabled={pushLoading}
+                            className={`p-2 rounded-lg transition-colors ${
+                                pushSubscribed
+                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                            } disabled:opacity-50`}
+                        >
+                            {pushLoading ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : pushSubscribed ? (
+                                <Bell className="w-5 h-5" />
+                            ) : (
+                                <BellOff className="w-5 h-5" />
+                            )}
+                        </button>
+                        {/* 툴팁 */}
+                        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 px-3 py-2 bg-popover border border-border rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50">
+                            <p className="text-sm font-medium text-foreground">
+                                {pushSubscribed ? '미납자 알림 ON' : '미납자 알림 OFF'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                {pushSubscribed ? '클릭하여 끄기' : '클릭하여 켜기'}
+                            </p>
+                            <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-popover border-l border-t border-border rotate-45" />
+                        </div>
+                    </div>
                 )}
             </div>
 
