@@ -174,18 +174,26 @@ async function sendPushToAcademyAdmins(academyId, academyName, students) {
 
 /**
  * 스케줄러 초기화
- * 매일 아침 7시 (한국 시간)에 실행
+ * 매일 오후 6시, 9시 (한국 시간)에 실행
  */
 function initPushScheduler() {
-    // 매시간 정각에 실행 (7시에만 동작)
-    cron.schedule('0 7 * * *', async () => {
-        console.log('[PushScheduler] 정기 실행 시작');
+    // 오후 6시 실행
+    cron.schedule('0 18 * * *', async () => {
+        console.log('[PushScheduler] 오후 6시 정기 실행');
         await sendUnpaidAttendancePush();
     }, {
         timezone: 'Asia/Seoul'
     });
 
-    console.log('[PushScheduler] 스케줄러 초기화 완료 (매일 07:00 KST)');
+    // 오후 9시 실행
+    cron.schedule('0 21 * * *', async () => {
+        console.log('[PushScheduler] 오후 9시 정기 실행');
+        await sendUnpaidAttendancePush();
+    }, {
+        timezone: 'Asia/Seoul'
+    });
+
+    console.log('[PushScheduler] 스케줄러 초기화 완료 (매일 18:00, 21:00 KST)');
 }
 
 module.exports = {

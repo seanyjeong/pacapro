@@ -161,7 +161,7 @@ DB는 영어(`morning/afternoon/evening`), 프론트는 한글(`오전/오후/�
 | paymentScheduler.js | 매월 1일 | 월별 학원비 자동 생성 |
 | notificationScheduler.js | 매시간 | SENS 알림톡 자동발송 |
 | gradePromotionScheduler.js | 매년 3/1 01:00 | 학년 자동 진급 |
-| pushScheduler.js | 매일 07:00 | PWA 푸시 알림 (미납자 출석 알림) |
+| pushScheduler.js | 매일 18:00, 21:00 | PWA 푸시 알림 (미납자 출석 알림) |
 
 ---
 
