@@ -448,6 +448,212 @@ async function sendNewConsultationPush(academyId, academyName, consultation) {
     }
 }
 
+// ============================================
+// 예약 변경 API - 예약번호로 접근 (비로그인)
+// ============================================
+
+// GET /paca/public/reservation/:reservationNumber - 예약 정보 조회
+router.get('/reservation/:reservationNumber', async (req, res) => {
+    try {
+        const { reservationNumber } = req.params;
+
+        const [consultations] = await db.query(
+            `SELECT c.id, c.student_name, c.parent_phone, c.student_grade,
+                    c.preferred_date, c.preferred_time, c.status,
+                    c.reservation_number, a.name as academy_name, a.slug
+             FROM consultations c
+             JOIN academies a ON c.academy_id = a.id
+             WHERE c.reservation_number = ?`,
+            [reservationNumber]
+        );
+
+        if (consultations.length === 0) {
+            return res.status(404).json({ error: '예약을 찾을 수 없습니다.' });
+        }
+
+        const consultation = consultations[0];
+
+        // 취소된 예약은 조회만 가능
+        if (consultation.status === 'cancelled') {
+            return res.status(400).json({
+                error: '취소된 예약입니다.',
+                status: 'cancelled'
+            });
+        }
+
+        // 완료된 예약은 수정 불가
+        if (consultation.status === 'completed') {
+            return res.status(400).json({
+                error: '이미 완료된 상담입니다.',
+                status: 'completed'
+            });
+        }
+
+        res.json({
+            id: consultation.id,
+            reservationNumber: consultation.reservation_number,
+            studentName: consultation.student_name, // 암호화된 상태로 반환
+            studentGrade: consultation.student_grade,
+            preferredDate: consultation.preferred_date,
+            preferredTime: consultation.preferred_time.substring(0, 5), // HH:MM
+            status: consultation.status,
+            academyName: consultation.academy_name,
+            academySlug: consultation.slug
+        });
+    } catch (error) {
+        console.error('예약 조회 오류:', error);
+        res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+    }
+});
+
+// PUT /paca/public/reservation/:reservationNumber - 예약 수정 (날짜/시간 변경)
+router.put('/reservation/:reservationNumber', async (req, res) => {
+    try {
+        const { reservationNumber } = req.params;
+        const { preferredDate, preferredTime } = req.body;
+
+        if (!preferredDate || !preferredTime) {
+            return res.status(400).json({ error: '날짜와 시간을 선택해주세요.' });
+        }
+
+        // 예약 조회
+        const [consultations] = await db.query(
+            `SELECT c.*, a.name as academy_name, a.id as academy_id
+             FROM consultations c
+             JOIN academies a ON c.academy_id = a.id
+             WHERE c.reservation_number = ?`,
+            [reservationNumber]
+        );
+
+        if (consultations.length === 0) {
+            return res.status(404).json({ error: '예약을 찾을 수 없습니다.' });
+        }
+
+        const consultation = consultations[0];
+
+        // 취소/완료된 예약은 수정 불가
+        if (consultation.status === 'cancelled' || consultation.status === 'completed') {
+            return res.status(400).json({
+                error: '수정할 수 없는 상태입니다.',
+                status: consultation.status
+            });
+        }
+
+        // 해당 시간대 예약 가능 여부 확인
+        const timeToCheck = preferredTime.length === 5 ? preferredTime + ':00' : preferredTime;
+        const [existingCount] = await db.query(
+            `SELECT COUNT(*) as count FROM consultations
+             WHERE academy_id = ? AND preferred_date = ? AND preferred_time = ?
+             AND status NOT IN ('cancelled') AND id != ?`,
+            [consultation.academy_id, preferredDate, timeToCheck, consultation.id]
+        );
+
+        const [settings] = await db.query(
+            `SELECT max_reservations_per_slot FROM consultation_settings WHERE academy_id = ?`,
+            [consultation.academy_id]
+        );
+
+        const maxReservations = settings[0]?.max_reservations_per_slot || 1;
+
+        if (existingCount[0].count >= maxReservations) {
+            return res.status(409).json({
+                error: '선택하신 시간대는 이미 예약이 완료되었습니다.'
+            });
+        }
+
+        // 예약 수정 (상태를 pending으로 리셋)
+        await db.query(
+            `UPDATE consultations
+             SET preferred_date = ?, preferred_time = ?, status = 'pending'
+             WHERE id = ?`,
+            [preferredDate, timeToCheck, consultation.id]
+        );
+
+        // 관리자에게 PWA 푸시 알림 발송
+        sendReservationChangePush(consultation.academy_id, consultation.academy_name, {
+            reservationNumber,
+            studentName: consultation.student_name,
+            oldDate: consultation.preferred_date,
+            oldTime: consultation.preferred_time,
+            newDate: preferredDate,
+            newTime: preferredTime
+        }).catch(err => console.error('[ReservationChangePush] 오류:', err));
+
+        res.json({
+            message: '예약이 수정되었습니다. 관리자 확인 후 다시 확정됩니다.',
+            newStatus: 'pending'
+        });
+    } catch (error) {
+        console.error('예약 수정 오류:', error);
+        res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+    }
+});
+
+/**
+ * 예약 변경 시 관리자에게 PWA 푸시 알림 발송
+ */
+async function sendReservationChangePush(academyId, academyName, info) {
+    try {
+        const { decrypt } = require('../utils/encryption');
+
+        // 관리자의 구독 조회
+        const [subscriptions] = await db.query(
+            `SELECT ps.*
+             FROM push_subscriptions ps
+             JOIN users u ON ps.user_id = u.id
+             WHERE u.academy_id = ?
+               AND u.role IN ('owner', 'admin')`,
+            [academyId]
+        );
+
+        if (subscriptions.length === 0) {
+            console.log('[ReservationChangePush] 구독자 없음');
+            return;
+        }
+
+        const studentName = decrypt(info.studentName) || info.studentName;
+        const newDateStr = new Date(info.newDate).toLocaleDateString('ko-KR', {
+            month: 'long',
+            day: 'numeric'
+        });
+
+        const payload = JSON.stringify({
+            title: '📅 상담 일정 변경',
+            body: `${studentName} - ${newDateStr} ${info.newTime}`,
+            icon: '/icons/icon-192x192.png',
+            badge: '/icons/icon-72x72.png',
+            data: {
+                type: 'consultation_changed',
+                url: '/consultations',
+                academyId,
+                reservationNumber: info.reservationNumber
+            }
+        });
+
+        for (const sub of subscriptions) {
+            const pushSubscription = {
+                endpoint: sub.endpoint,
+                keys: {
+                    p256dh: sub.p256dh,
+                    auth: sub.auth
+                }
+            };
+
+            try {
+                await webpush.sendNotification(pushSubscription, payload);
+            } catch (error) {
+                if (error.statusCode === 410 || error.statusCode === 404) {
+                    await db.query('DELETE FROM push_subscriptions WHERE id = ?', [sub.id]);
+                }
+            }
+        }
+
+        console.log(`[ReservationChangePush] 학원 ${academyId}: 일정 변경 알림 발송 완료`);
+    } catch (error) {
+        console.error('[ReservationChangePush] 오류:', error);
+    }
+}
+
 // GET /paca/public/check-slug/:slug - slug 사용 가능 여부 확인
 router.get('/check-slug/:slug', async (req, res) => {
   try {

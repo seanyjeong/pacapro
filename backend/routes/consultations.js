@@ -3,6 +3,11 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, checkPermission } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const { sendAlimtalkSolapi } = require('../utils/solapi');
+const { decryptApiKey } = require('../utils/naverSens');
+
+// 암호화 키 (환경변수에서 가져옴)
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 
 // 이름 필드 복호화 헬퍼
 function decryptConsultationNames(obj) {
@@ -17,6 +22,128 @@ function decryptConsultationNames(obj) {
 }
 function decryptConsultationArray(arr) {
     return arr.map(item => decryptConsultationNames({...item}));
+}
+
+/**
+ * 예약번호 생성 (C + YYYYMMDD + 3자리 일련번호)
+ * 예: C20251215001
+ */
+async function generateReservationNumber() {
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+    const prefix = `C${dateStr}`;
+
+    // 오늘 날짜의 마지막 예약번호 조회
+    const [rows] = await db.query(
+        `SELECT reservation_number FROM consultations
+         WHERE reservation_number LIKE ?
+         ORDER BY reservation_number DESC LIMIT 1`,
+        [`${prefix}%`]
+    );
+
+    let seq = 1;
+    if (rows.length > 0 && rows[0].reservation_number) {
+        const lastSeq = parseInt(rows[0].reservation_number.slice(-3));
+        seq = lastSeq + 1;
+    }
+
+    return `${prefix}${seq.toString().padStart(3, '0')}`;
+}
+
+/**
+ * 상담확정 알림톡 발송 (솔라피 직접 호출)
+ */
+async function sendConfirmationAlimtalk(consultation, academyId) {
+    try {
+        const { student_name, parent_phone, preferred_date, preferred_time, reservation_number } = consultation;
+
+        // 솔라피 설정 조회
+        const [settings] = await db.query(
+            `SELECT solapi_api_key, solapi_api_secret, solapi_pfid, solapi_sender_phone,
+                    solapi_consultation_template_id, solapi_consultation_template_content
+             FROM notification_settings WHERE academy_id = ?`,
+            [academyId]
+        );
+
+        if (settings.length === 0) {
+            console.log('[ConsultationAlimtalk] 알림 설정 없음');
+            return false;
+        }
+
+        const setting = settings[0];
+
+        // 필수 설정 체크
+        if (!setting.solapi_api_key || !setting.solapi_api_secret || !setting.solapi_pfid) {
+            console.log('[ConsultationAlimtalk] 솔라피 설정 미완료');
+            return false;
+        }
+
+        if (!setting.solapi_consultation_template_id) {
+            console.log('[ConsultationAlimtalk] 상담확정 템플릿 ID 미설정');
+            return false;
+        }
+
+        // Secret 복호화
+        const decryptedSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
+        if (!decryptedSecret) {
+            console.log('[ConsultationAlimtalk] API Secret 복호화 실패');
+            return false;
+        }
+
+        // 복호화
+        const name = decrypt(student_name) || student_name;
+        const phone = decrypt(parent_phone) || parent_phone;
+
+        // 날짜 포맷 (2025년 12월 15일)
+        const date = new Date(preferred_date);
+        const dateStr = `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+
+        // 시간 포맷 (14:00)
+        const timeStr = preferred_time.substring(0, 5);
+
+        // 템플릿 변수 치환
+        let content = setting.solapi_consultation_template_content || '';
+        content = content
+            .replace(/#{이름}/g, name)
+            .replace(/#{날짜}/g, dateStr)
+            .replace(/#{시간}/g, timeStr)
+            .replace(/#{예약번호}/g, reservation_number);
+
+        console.log('[ConsultationAlimtalk] 발송:', { name, phone, dateStr, timeStr, reservation_number });
+
+        // 솔라피 알림톡 발송
+        const result = await sendAlimtalkSolapi(
+            {
+                solapi_api_key: setting.solapi_api_key,
+                solapi_api_secret: decryptedSecret,
+                solapi_pfid: setting.solapi_pfid,
+                solapi_sender_phone: setting.solapi_sender_phone
+            },
+            setting.solapi_consultation_template_id,
+            [{ phone, content }]
+        );
+
+        if (result.success) {
+            console.log('[ConsultationAlimtalk] 발송 성공:', reservation_number);
+
+            // 발송 로그 기록
+            await db.query(
+                `INSERT INTO notification_logs
+                (academy_id, recipient_name, recipient_phone, message_type, template_code,
+                 message_content, status, request_id, sent_at)
+                VALUES (?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
+                [academyId, name, phone, setting.solapi_consultation_template_id, content, result.groupId || null]
+            );
+
+            return true;
+        } else {
+            console.error('[ConsultationAlimtalk] 발송 실패:', result.error);
+            return false;
+        }
+    } catch (error) {
+        console.error('[ConsultationAlimtalk] 오류:', error.message);
+        return false;
+    }
 }
 
 // ============================================
@@ -252,15 +379,19 @@ router.put('/:id', verifyToken, async (req, res) => {
     const academyId = req.user.academy_id;
     const { status, adminNotes, preferredDate, preferredTime, checklist, consultationMemo } = req.body;
 
-    // 기존 상담 확인
+    // 기존 상담 확인 (현재 상태 포함)
     const [existing] = await db.query(
-      'SELECT id FROM consultations WHERE id = ? AND academy_id = ?',
+      'SELECT * FROM consultations WHERE id = ? AND academy_id = ?',
       [id, academyId]
     );
 
     if (existing.length === 0) {
       return res.status(404).json({ error: '상담 신청을 찾을 수 없습니다.' });
     }
+
+    const currentConsultation = existing[0];
+    const wasNotConfirmed = currentConsultation.status !== 'confirmed';
+    const willBeConfirmed = status === 'confirmed';
 
     const updates = [];
     const params = [];
@@ -297,6 +428,14 @@ router.put('/:id', verifyToken, async (req, res) => {
       params.push(consultationMemo);
     }
 
+    // 상태가 confirmed로 변경되면서 예약번호가 없으면 자동 부여
+    let reservationNumber = currentConsultation.reservation_number;
+    if (wasNotConfirmed && willBeConfirmed && !reservationNumber) {
+      reservationNumber = await generateReservationNumber();
+      updates.push('reservation_number = ?');
+      params.push(reservationNumber);
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({ error: '수정할 내용이 없습니다.' });
     }
@@ -308,7 +447,27 @@ router.put('/:id', verifyToken, async (req, res) => {
       params
     );
 
-    res.json({ message: '상담 정보가 수정되었습니다.' });
+    // 상태가 confirmed로 변경되면 알림톡 발송
+    if (wasNotConfirmed && willBeConfirmed) {
+      // 업데이트된 정보로 알림톡 발송
+      const updatedConsultation = {
+        ...currentConsultation,
+        preferred_date: preferredDate || currentConsultation.preferred_date,
+        preferred_time: preferredTime ? preferredTime + ':00' : currentConsultation.preferred_time,
+        reservation_number: reservationNumber
+      };
+
+      // 비동기로 알림톡 발송 (에러가 나도 응답은 성공)
+      sendConfirmationAlimtalk(updatedConsultation, academyId).catch(err => {
+        console.error('[ConsultationAlimtalk] 비동기 발송 오류:', err);
+      });
+    }
+
+    res.json({
+      message: '상담 정보가 수정되었습니다.',
+      reservationNumber: reservationNumber || null,
+      alimtalkSent: wasNotConfirmed && willBeConfirmed
+    });
   } catch (error) {
     console.error('상담 수정 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });

@@ -25,6 +25,9 @@ export default function NotificationSettingsPage() {
     solapi_sender_phone: '',
     solapi_template_id: '',
     solapi_template_content: '',
+    // 상담확정 알림톡
+    solapi_consultation_template_id: '',
+    solapi_consultation_template_content: '',
     // 공통
     is_enabled: false,        // SENS 활성화
     solapi_enabled: false,    // 솔라피 활성화
@@ -549,7 +552,7 @@ export default function NotificationSettingsPage() {
 
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">
-                템플릿 본문 (솔라피용)
+                미납자 알림 템플릿 본문
               </label>
               <textarea
                 value={settings.solapi_template_content}
@@ -561,6 +564,113 @@ export default function NotificationSettingsPage() {
 #{날짜} 일입니다`}
               />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 상담확정 알림톡 설정 */}
+      {activeTab === 'solapi' && (
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Bell className="w-5 h-5 text-green-600" />
+            <h2 className="text-lg font-semibold text-foreground">상담확정 알림톡 설정</h2>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            상담 예약이 확정되면 학부모에게 자동으로 알림톡을 발송합니다.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1">
+                상담확정 템플릿 ID
+              </label>
+              <input
+                type="text"
+                value={settings.solapi_consultation_template_id}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_consultation_template_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                placeholder="KA01TP..."
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">
+                상담확정 템플릿 본문
+              </label>
+              <textarea
+                value={settings.solapi_consultation_template_content}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_consultation_template_content: e.target.value }))}
+                rows={6}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm"
+                placeholder={`안녕하세요 맥스체대입시입니다.
+#{이름} 님의 상담예약이 확정되었습니다.
+#{날짜} #{시간}
+예약번호 : #{예약번호}
+예약 일정 변경시 버튼을 눌러서 수정 하시면됩니다.`}
+              />
+            </div>
+
+            <div className="md:col-span-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+              <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">상담확정 알림톡 변수</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{이름}'}</code>
+                  <span className="text-muted-foreground">학생명</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{날짜}'}</code>
+                  <span className="text-muted-foreground">상담일</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{시간}'}</code>
+                  <span className="text-muted-foreground">상담시간</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{예약번호}'}</code>
+                  <span className="text-muted-foreground">예약번호</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 상담확정 알림톡 미리보기 */}
+            {settings.solapi_consultation_template_content && (
+              <div className="md:col-span-2">
+                <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
+                <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
+                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
+                      </svg>
+                    </div>
+                    <span className="font-medium text-gray-800 text-sm">알림톡</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-600 mb-1">P-ACA 체대입시</p>
+                      <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                          {settings.solapi_consultation_template_content
+                            .replace(/#{이름}/g, '홍길동')
+                            .replace(/#{날짜}/g, '2025년 12월 20일')
+                            .replace(/#{시간}/g, '14:00')
+                            .replace(/#{예약번호}/g, 'C20251215001')
+                          }
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

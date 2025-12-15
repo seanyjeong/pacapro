@@ -27,6 +27,10 @@ export interface NotificationSettings {
   solapi_template_content: string;
   has_solapi_secret?: boolean;
 
+  // 상담확정 알림톡 설정
+  solapi_consultation_template_id: string;
+  solapi_consultation_template_content: string;
+
   // 공통 설정
   is_enabled: boolean;        // SENS 활성화
   solapi_enabled: boolean;    // 솔라피 활성화

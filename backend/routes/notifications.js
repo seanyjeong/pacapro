@@ -99,7 +99,10 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), async 
                 naver_secret_key: maskedSecret,
                 has_secret_key: !!setting.naver_secret_key,
                 solapi_api_secret: maskedSolapiSecret,
-                has_solapi_secret: !!setting.solapi_api_secret
+                has_solapi_secret: !!setting.solapi_api_secret,
+                // 상담확정 알림톡 설정
+                solapi_consultation_template_id: setting.solapi_consultation_template_id || '',
+                solapi_consultation_template_content: setting.solapi_consultation_template_content || ''
             }
         });
     } catch (error) {
@@ -134,6 +137,9 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
             solapi_sender_phone,
             solapi_template_id,
             solapi_template_content,
+            // 상담확정 알림톡 설정
+            solapi_consultation_template_id,
+            solapi_consultation_template_content,
             // 공통 설정
             is_enabled,
             solapi_enabled,
@@ -173,9 +179,10 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                 (academy_id, service_type,
                  naver_access_key, naver_secret_key, naver_service_id, sms_service_id, kakao_channel_id,
                  solapi_api_key, solapi_api_secret, solapi_pfid, solapi_sender_phone, solapi_template_id, solapi_template_content,
+                 solapi_consultation_template_id, solapi_consultation_template_content,
                  template_code, template_content, is_enabled, solapi_enabled, solapi_auto_enabled, solapi_auto_hour,
                  auto_send_day, auto_send_days, auto_send_hour)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     req.user.academyId,
                     service_type || 'sens',
@@ -190,6 +197,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_sender_phone || null,
                     solapi_template_id || null,
                     solapi_template_content || null,
+                    solapi_consultation_template_id || null,
+                    solapi_consultation_template_content || null,
                     template_code || null,
                     template_content || null,
                     is_enabled || false,
@@ -217,6 +226,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_sender_phone = ?,
                     solapi_template_id = ?,
                     solapi_template_content = ?,
+                    solapi_consultation_template_id = ?,
+                    solapi_consultation_template_content = ?,
                     template_code = ?,
                     template_content = ?,
                     is_enabled = ?,
@@ -240,6 +251,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_sender_phone || null,
                     solapi_template_id || null,
                     solapi_template_content || null,
+                    solapi_consultation_template_id || null,
+                    solapi_consultation_template_content || null,
                     template_code || null,
                     template_content || null,
                     is_enabled || false,
