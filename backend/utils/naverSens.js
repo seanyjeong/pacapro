@@ -174,7 +174,7 @@ function createUnpaidNotificationMessage(payment, student, academy, customTempla
         '학원전화': academy.phone || '',
         // 납부 관련
         '월': payment.month || '',
-        '교육비': payment.amount ? payment.amount.toLocaleString() : '0',
+        '교육비': payment.amount ? Math.floor(Number(payment.amount)).toLocaleString() : '0',
         '날짜': payment.due_date || '',
         '납부기한': payment.due_date || ''
     };
