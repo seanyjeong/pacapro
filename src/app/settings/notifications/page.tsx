@@ -70,6 +70,16 @@ export default function NotificationSettingsPage() {
   // 가이드 아코디언 상태
   const [openGuides, setOpenGuides] = useState<Record<string, boolean>>({});
 
+  // 템플릿 섹션 펼치기/접기 상태
+  const [openTemplates, setOpenTemplates] = useState<Record<string, boolean>>({
+    unpaid: true,
+    consultation: false,
+  });
+
+  const toggleTemplate = (key: string) => {
+    setOpenTemplates(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
   useEffect(() => {
     loadSettings();
     loadLogs();
@@ -474,12 +484,13 @@ export default function NotificationSettingsPage() {
         </div>
       )}
 
-      {/* 솔라피 설정 */}
+      {/* 솔라피 API 설정 (공통) */}
       {activeTab === 'solapi' && (
         <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           <div className="flex items-center gap-2 mb-4">
             <Key className="w-5 h-5 text-purple-600" />
             <h2 className="text-lg font-semibold text-foreground">솔라피 API 설정</h2>
+            <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded">공통</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -536,229 +547,269 @@ export default function NotificationSettingsPage() {
               />
               <p className="text-xs text-muted-foreground mt-1">솔라피에 등록된 발신번호</p>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                템플릿 ID
-              </label>
-              <input
-                type="text"
-                value={settings.solapi_template_id}
-                onChange={e => setSettings(prev => ({ ...prev, solapi_template_id: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                placeholder="KA01TP..."
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-foreground mb-1">
-                미납자 알림 템플릿 본문
-              </label>
-              <textarea
-                value={settings.solapi_template_content}
-                onChange={e => setSettings(prev => ({ ...prev, solapi_template_content: e.target.value }))}
-                rows={6}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
-                placeholder={`수강료안내
-#{이름} 학생의 수강료 납부일이,
-#{날짜} 일입니다`}
-              />
-            </div>
           </div>
         </div>
       )}
 
-      {/* 상담확정 알림톡 설정 */}
+      {/* 미납자 알림톡 템플릿 */}
       {activeTab === 'solapi' && (
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Bell className="w-5 h-5 text-green-600" />
-            <h2 className="text-lg font-semibold text-foreground">상담확정 알림톡 설정</h2>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            상담 예약이 확정되면 학부모에게 자동으로 알림톡을 발송합니다.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                상담확정 템플릿 ID
-              </label>
-              <input
-                type="text"
-                value={settings.solapi_consultation_template_id}
-                onChange={e => setSettings(prev => ({ ...prev, solapi_consultation_template_id: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="KA01TP..."
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-foreground mb-1">
-                상담확정 템플릿 본문
-              </label>
-              <textarea
-                value={settings.solapi_consultation_template_content}
-                onChange={e => setSettings(prev => ({ ...prev, solapi_consultation_template_content: e.target.value }))}
-                rows={6}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm"
-                placeholder={`안녕하세요 맥스체대입시입니다.
-#{이름} 님의 상담예약이 확정되었습니다.
-#{날짜} #{시간}
-예약번호 : #{예약번호}
-예약 일정 변경시 버튼을 눌러서 수정 하시면됩니다.`}
-              />
-            </div>
-
-            <div className="md:col-span-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-              <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">상담확정 알림톡 변수</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                <div className="flex items-center gap-2">
-                  <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{이름}'}</code>
-                  <span className="text-muted-foreground">학생명</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{날짜}'}</code>
-                  <span className="text-muted-foreground">상담일</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{시간}'}</code>
-                  <span className="text-muted-foreground">상담시간</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{예약번호}'}</code>
-                  <span className="text-muted-foreground">예약번호</span>
-                </div>
+        <div className="bg-card rounded-lg shadow-sm border border-orange-200 dark:border-orange-800 overflow-hidden">
+          <button
+            onClick={() => toggleTemplate('unpaid')}
+            className="w-full flex items-center justify-between p-4 hover:bg-muted transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-foreground">미납자 알림톡</h3>
+                <p className="text-sm text-muted-foreground">학원비 미납 안내 메시지</p>
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              {settings.solapi_template_id && (
+                <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded">설정됨</span>
+              )}
+              {openTemplates.unpaid ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
+            </div>
+          </button>
 
-            {/* 상담확정 알림톡 미리보기 */}
-            {settings.solapi_consultation_template_content && (
-              <div className="md:col-span-2">
-                <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
-                <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
-                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
-                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
-                      </svg>
+          {openTemplates.unpaid && (
+            <div className="p-4 pt-0 border-t border-border">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    템플릿 ID
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.solapi_template_id}
+                    onChange={e => setSettings(prev => ({ ...prev, solapi_template_id: e.target.value }))}
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    placeholder="KA01TP..."
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    템플릿 본문 (미리보기용)
+                  </label>
+                  <textarea
+                    value={settings.solapi_template_content}
+                    onChange={e => setSettings(prev => ({ ...prev, solapi_template_content: e.target.value }))}
+                    rows={5}
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 font-mono text-sm"
+                    placeholder={`안녕하세요, 맥스체대입시입니다.
+#{이름} 학생의 #{월}월 학원비가 미납되었습니다.
+금액: #{금액}원`}
+                  />
+                </div>
+
+                <div className="md:col-span-2 p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+                  <p className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">사용 가능한 변수</p>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{이름}'}</code>
+                      <span className="text-muted-foreground">학생명</span>
                     </div>
-                    <span className="font-medium text-gray-800 text-sm">알림톡</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                        </svg>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{월}'}</code>
+                      <span className="text-muted-foreground">청구 월</span>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-xs text-gray-600 mb-1">P-ACA 체대입시</p>
-                      <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
-                        <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                          {settings.solapi_consultation_template_content
-                            .replace(/#{이름}/g, '홍길동')
-                            .replace(/#{날짜}/g, '2025년 12월 20일')
-                            .replace(/#{시간}/g, '14:00')
-                            .replace(/#{예약번호}/g, 'C20251215001')
-                          }
-                        </p>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{금액}'}</code>
+                      <span className="text-muted-foreground">미납 금액</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{날짜}'}</code>
+                      <span className="text-muted-foreground">납부일</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{학원명}'}</code>
+                      <span className="text-muted-foreground">학원 이름</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{학원전화}'}</code>
+                      <span className="text-muted-foreground">학원 전화</span>
                     </div>
                   </div>
                 </div>
+
+                {/* 미납자 알림톡 미리보기 */}
+                {settings.solapi_template_content && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
+                    <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
+                      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
+                        <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                          <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
+                          </svg>
+                        </div>
+                        <span className="font-medium text-gray-800 text-sm">알림톡</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-gray-600 mb-1">맥스체대입시</p>
+                          <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                              {settings.solapi_template_content
+                                .replace(/#{이름}/g, '홍길동')
+                                .replace(/#{학생명}/g, '홍길동')
+                                .replace(/#{월}/g, '12')
+                                .replace(/#{금액}/g, '300,000')
+                                .replace(/#{날짜}/g, '10일')
+                                .replace(/#{학원명}/g, '맥스체대입시')
+                                .replace(/#{학원전화}/g, '010-0000-0000')
+                              }
+                            </p>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* 사용 가능한 변수 (공통) */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">사용 가능한 변수</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-            <div className="flex items-center gap-2">
-              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{이름}'}</code>
-              <span className="text-muted-foreground">학생 이름</span>
+      {/* 상담확정 알림톡 템플릿 */}
+      {activeTab === 'solapi' && (
+        <div className="bg-card rounded-lg shadow-sm border border-green-200 dark:border-green-800 overflow-hidden">
+          <button
+            onClick={() => toggleTemplate('consultation')}
+            className="w-full flex items-center justify-between p-4 hover:bg-muted transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                <Bell className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="text-left">
+                <h3 className="font-semibold text-foreground">상담확정 알림톡</h3>
+                <p className="text-sm text-muted-foreground">상담 예약 확정 안내 메시지</p>
+              </div>
             </div>
             <div className="flex items-center gap-2">
-              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{날짜}'}</code>
-              <span className="text-muted-foreground">납부일 (예: 1일)</span>
+              {settings.solapi_consultation_template_id && (
+                <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded">설정됨</span>
+              )}
+              {openTemplates.consultation ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
             </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{교육비}'}</code>
-              <span className="text-muted-foreground">학원비</span>
+          </button>
+
+          {openTemplates.consultation && (
+            <div className="p-4 pt-0 border-t border-border">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    템플릿 ID
+                  </label>
+                  <input
+                    type="text"
+                    value={settings.solapi_consultation_template_id}
+                    onChange={e => setSettings(prev => ({ ...prev, solapi_consultation_template_id: e.target.value }))}
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="KA01TP..."
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-foreground mb-1">
+                    템플릿 본문 (미리보기용)
+                  </label>
+                  <textarea
+                    value={settings.solapi_consultation_template_content}
+                    onChange={e => setSettings(prev => ({ ...prev, solapi_consultation_template_content: e.target.value }))}
+                    rows={5}
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm"
+                    placeholder={`안녕하세요, 맥스체대입시입니다.
+
+#{이름}님의 상담 예약이 확정되었습니다.
+
+■ 상담 일시: #{날짜} #{시간}
+■ 예약번호: #{예약번호}
+
+일정 변경이 필요하시면 아래 버튼을 눌러주세요.`}
+                  />
+                </div>
+
+                <div className="md:col-span-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200 mb-2">사용 가능한 변수</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{이름}'}</code>
+                      <span className="text-muted-foreground">학생명</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{날짜}'}</code>
+                      <span className="text-muted-foreground">상담일</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{시간}'}</code>
+                      <span className="text-muted-foreground">상담시간</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="bg-card px-2 py-1 rounded border border-border text-green-700 dark:text-green-300">{'#{예약번호}'}</code>
+                      <span className="text-muted-foreground">예약번호</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 상담확정 알림톡 미리보기 */}
+                {settings.solapi_consultation_template_content && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
+                    <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
+                      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
+                        <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                          <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
+                          </svg>
+                        </div>
+                        <span className="font-medium text-gray-800 text-sm">알림톡</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-gray-600 mb-1">맥스체대입시</p>
+                          <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                            <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                              {settings.solapi_consultation_template_content
+                                .replace(/#{이름}/g, '홍길동')
+                                .replace(/#{날짜}/g, '12월 20일')
+                                .replace(/#{시간}/g, '14:00')
+                                .replace(/#{예약번호}/g, 'C20251215001')
+                              }
+                            </p>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{월}'}</code>
-              <span className="text-muted-foreground">청구 월</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원명}'}</code>
-              <span className="text-muted-foreground">학원 이름</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원전화}'}</code>
-              <span className="text-muted-foreground">학원 전화</span>
-            </div>
-          </div>
+          )}
         </div>
-
-        {/* 카카오톡 스타일 미리보기 */}
-        {currentTemplateContent && (
-          <div className="mt-4">
-            <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
-            {/* 카카오톡 채팅창 스타일 */}
-            <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
-              {/* 상단 헤더 */}
-              <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
-                <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
-                  </svg>
-                </div>
-                <span className="font-medium text-gray-800 text-sm">알림톡</span>
-              </div>
-
-              {/* 메시지 말풍선 */}
-              <div className="flex gap-2">
-                {/* 프로필 */}
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                    </svg>
-                  </div>
-                </div>
-
-                {/* 말풍선 */}
-                <div className="flex-1">
-                  <p className="text-xs text-gray-600 mb-1">P-ACA 체대입시</p>
-                  <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
-                    <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
-                      {currentTemplateContent
-                        .replace(/#{이름}/g, '홍길동')
-                        .replace(/#{학생명}/g, '홍길동')
-                        .replace(/#{날짜}/g, '10일')
-                        .replace(/#{납부기한}/g, '10일')
-                        .replace(/#{교육비}/g, '300,000')
-                        .replace(/#{금액}/g, '300,000')
-                        .replace(/#{월}/g, '12')
-                        .replace(/#{학원명}/g, 'P-ACA 체대입시')
-                        .replace(/#{학원전화}/g, '010-0000-0000')
-                      }
-                    </p>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* 발송 설정 */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
