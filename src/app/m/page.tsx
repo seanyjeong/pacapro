@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { canEdit, canView } from '@/lib/utils/permissions';
-import { UserCheck, Users, CreditCard, LogOut, ChevronRight, Bell, BellOff, Loader2 } from 'lucide-react';
+import { UserCheck, Users, CreditCard, LogOut, ChevronRight, ChevronDown, Bell, BellOff, Loader2, CalendarClock, MessageSquarePlus, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import {
@@ -15,6 +15,7 @@ import {
   unsubscribeFromPush,
   getCurrentSubscription,
 } from '@/lib/api/push';
+import { notificationSettingsAPI, NotificationSettings } from '@/lib/api/notificationSettings';
 
 export default function MobileHomePage() {
   const router = useRouter();
@@ -26,6 +27,14 @@ export default function MobileHomePage() {
   const [pushSupported, setPushSupported] = useState(false);
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  const [pushExpanded, setPushExpanded] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    unpaid_attendance: true,
+    consultation_reminder: true,
+    new_consultation: true,
+    pause_ending: true,
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   useEffect(() => {
     // 로그인 체크
@@ -65,6 +74,30 @@ export default function MobileHomePage() {
     if (supported) {
       const subscription = await getCurrentSubscription();
       setPushSubscribed(!!subscription);
+
+      // 알림 설정 조회
+      try {
+        const settings = await notificationSettingsAPI.get();
+        setNotificationSettings(settings);
+      } catch {
+        // 설정 조회 실패 시 기본값 유지
+      }
+    }
+  };
+
+  const handleSettingToggle = async (key: keyof NotificationSettings) => {
+    setSettingsLoading(true);
+    try {
+      const newSettings = {
+        ...notificationSettings,
+        [key]: !notificationSettings[key],
+      };
+      await notificationSettingsAPI.update(newSettings);
+      setNotificationSettings(newSettings);
+    } catch (error) {
+      console.error('알림 설정 저장 실패:', error);
+    } finally {
+      setSettingsLoading(false);
     }
   };
 
@@ -219,8 +252,12 @@ export default function MobileHomePage() {
 
       {/* 푸시 알림 설정 */}
       {pushSupported && (
-        <div className="mt-8 bg-card border border-border/60 rounded-2xl p-5">
-          <div className="flex items-center justify-between">
+        <div className="mt-8 bg-card border border-border/60 rounded-2xl overflow-hidden">
+          {/* 헤더 */}
+          <div
+            className="p-5 flex items-center justify-between cursor-pointer"
+            onClick={() => pushSubscribed && setPushExpanded(!pushExpanded)}
+          >
             <div className="flex items-center gap-3">
               {pushSubscribed ? (
                 <Bell className="h-5 w-5 text-green-600" />
@@ -230,24 +267,71 @@ export default function MobileHomePage() {
               <div>
                 <p className="font-medium text-foreground">푸시 알림</p>
                 <p className="text-xs text-muted-foreground">
-                  {pushSubscribed ? '미납자 출석 알림 받는 중' : '알림을 받으려면 활성화하세요'}
+                  {pushSubscribed
+                    ? `${Object.values(notificationSettings).filter(Boolean).length}개 알림 활성화됨`
+                    : '알림을 받으려면 활성화하세요'}
                 </p>
               </div>
             </div>
-            <button
-              onClick={handlePushToggle}
-              disabled={pushLoading}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                pushSubscribed
-                  ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-                  : 'bg-blue-600 text-white'
-              } disabled:opacity-50`}
-            >
-              {pushLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : pushSubscribed ? '끄기' : '켜기'}
-            </button>
+            <div className="flex items-center gap-2">
+              {pushSubscribed && (
+                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${pushExpanded ? 'rotate-180' : ''}`} />
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePushToggle();
+                }}
+                disabled={pushLoading}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  pushSubscribed
+                    ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                    : 'bg-blue-600 text-white'
+                } disabled:opacity-50`}
+              >
+                {pushLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : pushSubscribed ? '끄기' : '켜기'}
+              </button>
+            </div>
           </div>
+
+          {/* 알림 종류 설정 (펼치기) */}
+          {pushSubscribed && pushExpanded && (
+            <div className="border-t border-border/60 p-4 space-y-3 bg-muted/30">
+              {[
+                { key: 'unpaid_attendance' as const, icon: CreditCard, title: '미납자 출석 알림', desc: '18:00, 21:00' },
+                { key: 'consultation_reminder' as const, icon: CalendarClock, title: '상담 30분 전 알림', desc: '상담 리마인더' },
+                { key: 'new_consultation' as const, icon: MessageSquarePlus, title: '새 상담 예약', desc: '즉시 알림' },
+                { key: 'pause_ending' as const, icon: UserPlus, title: '휴원 종료 알림', desc: '09:00' },
+              ].map((item) => (
+                <div key={item.key} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <item.icon className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">{item.desc}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleSettingToggle(item.key)}
+                    disabled={settingsLoading}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${
+                      notificationSettings[item.key]
+                        ? 'bg-blue-600'
+                        : 'bg-gray-300 dark:bg-gray-600'
+                    } disabled:opacity-50`}
+                  >
+                    <span
+                      className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                        notificationSettings[item.key] ? 'left-6' : 'left-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
