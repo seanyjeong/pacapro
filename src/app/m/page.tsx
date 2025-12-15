@@ -109,15 +109,6 @@ export default function MobileHomePage() {
     }
   };
 
-  const handleTestPush = async () => {
-    try {
-      await pushAPI.sendTest();
-      alert('테스트 알림을 발송했습니다!');
-    } catch {
-      alert('테스트 발송에 실패했습니다.');
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -257,14 +248,6 @@ export default function MobileHomePage() {
               ) : pushSubscribed ? '끄기' : '켜기'}
             </button>
           </div>
-          {pushSubscribed && (
-            <button
-              onClick={handleTestPush}
-              className="mt-3 w-full py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-colors"
-            >
-              테스트 알림 보내기
-            </button>
-          )}
         </div>
       )}
 
