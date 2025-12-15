@@ -678,6 +678,122 @@ export default function NotificationSettingsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* 발송 설정 */}
+                <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+                  <h4 className="font-medium text-foreground mb-4">발송 설정</h4>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">알림톡 활성화</p>
+                        <p className="text-sm text-muted-foreground">미납자 알림톡 발송 기능 활성화</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, solapi_enabled: !prev.solapi_enabled }))}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_enabled ? 'bg-orange-600' : 'bg-muted'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">자동 발송</p>
+                        <p className="text-sm text-muted-foreground">오늘 수업 있는 미납자에게 자동 발송</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, solapi_auto_enabled: !prev.solapi_auto_enabled }))}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_auto_enabled ? 'bg-orange-600' : 'bg-muted'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        자동 발송 시간
+                      </label>
+                      <div className="flex items-center gap-3">
+                        <select
+                          value={settings.solapi_auto_hour ?? 10}
+                          onChange={e => setSettings(prev => ({ ...prev, solapi_auto_hour: parseInt(e.target.value) }))}
+                          className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        >
+                          {[...Array(24)].map((_, hour) => (
+                            <option key={hour} value={hour}>
+                              {hour.toString().padStart(2, '0')}:00
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-sm text-muted-foreground">
+                          매일 {(settings.solapi_auto_hour ?? 10).toString().padStart(2, '0')}시에 발송
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
+                      <p className="text-sm text-orange-800 dark:text-orange-200">
+                        <strong>발송 대상:</strong> 오늘 수업이 예정된 미납 학생
+                      </p>
+                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                        예: 월/수/금 수업인 학생은 월/수/금에만 알림톡을 받습니다.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 테스트 및 수동 발송 */}
+                <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+                  <h4 className="font-medium text-foreground mb-4">테스트 및 수동 발송</h4>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">테스트 발송</label>
+                      <div className="flex gap-3">
+                        <input
+                          type="tel"
+                          value={testPhone}
+                          onChange={e => setTestPhone(e.target.value)}
+                          className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          placeholder="010-1234-5678"
+                        />
+                        <button
+                          onClick={handleTest}
+                          disabled={testing || !settings.solapi_enabled}
+                          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {testing ? '발송 중...' : '테스트'}
+                        </button>
+                      </div>
+                      {!settings.solapi_enabled && (
+                        <p className="text-sm text-amber-600 mt-1">알림톡을 활성화해야 테스트 발송이 가능합니다</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">미납자 수동 발송</label>
+                      <button
+                        onClick={handleSendUnpaid}
+                        disabled={sendingUnpaid || !settings.solapi_enabled}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {sendingUnpaid ? '발송 중...' : `${new Date().getMonth() + 1}월 미납자에게 즉시 발송`}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 저장 버튼 */}
+                <div className="md:col-span-2 pt-4 border-t border-border">
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {saving ? '저장 중...' : '미납자 알림톡 설정 저장'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -805,19 +921,36 @@ export default function NotificationSettingsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* 발송 안내 */}
+                <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>자동 발송:</strong> 상담 예약을 &apos;확정&apos;으로 변경하면 자동으로 발송됩니다.
+                  </p>
+                </div>
+
+                {/* 저장 버튼 */}
+                <div className="md:col-span-2 pt-4 border-t border-border">
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {saving ? '저장 중...' : '상담확정 알림톡 설정 저장'}
+                  </button>
+                </div>
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* 발송 설정 */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <h2 className="text-lg font-semibold text-foreground mb-4">발송 설정</h2>
+      {/* SENS 발송 설정 - SENS 탭에서만 표시 */}
+      {activeTab === 'sens' && (
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">SENS 발송 설정</h2>
 
-        <div className="space-y-4">
-          {/* SENS 활성화 토글 */}
-          {activeTab === 'sens' && (
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-foreground">SENS 알림톡 활성화</p>
@@ -830,207 +963,115 @@ export default function NotificationSettingsPage() {
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.is_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
-          )}
 
-          {/* 솔라피 활성화 토글 */}
-          {activeTab === 'solapi' && (
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-foreground">솔라피 알림톡 활성화</p>
-                <p className="text-sm text-muted-foreground">n8n에서 이 설정을 확인하여 발송 여부를 결정합니다</p>
-              </div>
-              <button
-                onClick={() => setSettings(prev => ({ ...prev, solapi_enabled: !prev.solapi_enabled }))}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_enabled ? 'bg-purple-600' : 'bg-muted'}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-              </button>
-            </div>
-          )}
-
-          {/* SENS 선택시에만 자동 발송 스케줄 설정 표시 */}
-          {activeTab === 'sens' && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  자동 발송 날짜 (여러 날짜 선택 가능)
-                </label>
-                <div className="p-3 border border-border rounded-lg bg-muted">
-                  <div className="grid grid-cols-7 gap-2">
-                    {[...Array(28)].map((_, i) => {
-                      const day = i + 1;
-                      const isSelected = selectedDays.includes(day);
-                      return (
-                        <button
-                          key={day}
-                          type="button"
-                          onClick={() => toggleDay(day)}
-                          className={`p-2 text-sm rounded-lg transition-colors ${
-                            isSelected
-                              ? 'bg-blue-600 text-white font-medium'
-                              : 'bg-card border border-border text-foreground hover:bg-muted/80'
-                          }`}
-                        >
-                          {day}
-                        </button>
-                      );
-                    })}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                자동 발송 날짜 (여러 날짜 선택 가능)
+              </label>
+              <div className="p-3 border border-border rounded-lg bg-muted">
+                <div className="grid grid-cols-7 gap-2">
+                  {[...Array(28)].map((_, i) => {
+                    const day = i + 1;
+                    const isSelected = selectedDays.includes(day);
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => toggleDay(day)}
+                        className={`p-2 text-sm rounded-lg transition-colors ${
+                          isSelected
+                            ? 'bg-blue-600 text-white font-medium'
+                            : 'bg-card border border-border text-foreground hover:bg-muted/80'
+                        }`}
+                      >
+                        {day}
+                      </button>
+                    );
+                  })}
+                </div>
+                {selectedDays.length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <span className="font-medium">선택된 날짜:</span> 매월 {selectedDays.join('일, ')}일
+                    </p>
                   </div>
-                  {selectedDays.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        <span className="font-medium">선택된 날짜:</span> 매월 {selectedDays.join('일, ')}일
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  선택한 날짜마다 미납자에게 자동으로 알림이 발송됩니다 (매월 반복)
-                </p>
+                )}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                선택한 날짜마다 미납자에게 자동으로 알림이 발송됩니다 (매월 반복)
+              </p>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  자동 발송 시간 (한국 시간)
-                </label>
-                <div className="flex items-center gap-3">
-                  <select
-                    value={settings.auto_send_hour}
-                    onChange={e => setSettings(prev => ({ ...prev, auto_send_hour: parseInt(e.target.value) }))}
-                    className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {[...Array(24)].map((_, hour) => (
-                      <option key={hour} value={hour}>
-                        {hour.toString().padStart(2, '0')}:00
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-sm text-muted-foreground">
-                    매월 선택한 날짜의 {settings.auto_send_hour.toString().padStart(2, '0')}시 정각에 발송
-                  </span>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* 솔라피 자동발송 설정 */}
-          {activeTab === 'solapi' && (
-            <>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-foreground">자동 발송 활성화</p>
-                  <p className="text-sm text-muted-foreground">오늘 수업 있는 미납자에게 자동으로 알림톡 발송</p>
-                </div>
-                <button
-                  onClick={() => setSettings(prev => ({ ...prev, solapi_auto_enabled: !prev.solapi_auto_enabled }))}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_auto_enabled ? 'bg-purple-600' : 'bg-muted'}`}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                자동 발송 시간 (한국 시간)
+              </label>
+              <div className="flex items-center gap-3">
+                <select
+                  value={settings.auto_send_hour}
+                  onChange={e => setSettings(prev => ({ ...prev, auto_send_hour: parseInt(e.target.value) }))}
+                  className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  {[...Array(24)].map((_, hour) => (
+                    <option key={hour} value={hour}>
+                      {hour.toString().padStart(2, '0')}:00
+                    </option>
+                  ))}
+                </select>
+                <span className="text-sm text-muted-foreground">
+                  매월 선택한 날짜의 {settings.auto_send_hour.toString().padStart(2, '0')}시 정각에 발송
+                </span>
+              </div>
+            </div>
+
+            {/* 테스트 발송 */}
+            <div className="border-t border-border pt-4">
+              <label className="block text-sm font-medium text-foreground mb-2">테스트 발송</label>
+              <div className="flex gap-3">
+                <input
+                  type="tel"
+                  value={testPhone}
+                  onChange={e => setTestPhone(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="010-1234-5678"
+                />
+                <button
+                  onClick={handleTest}
+                  disabled={testing || !settings.is_enabled}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testing ? '발송 중...' : '테스트'}
                 </button>
               </div>
+              {!settings.is_enabled && (
+                <p className="text-sm text-amber-600 mt-1">SENS 알림톡을 활성화해야 테스트 발송이 가능합니다</p>
+              )}
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  자동 발송 시간 (한국 시간)
-                </label>
-                <div className="flex items-center gap-3">
-                  <select
-                    value={settings.solapi_auto_hour ?? 10}
-                    onChange={e => setSettings(prev => ({ ...prev, solapi_auto_hour: parseInt(e.target.value) }))}
-                    className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  >
-                    {[...Array(24)].map((_, hour) => (
-                      <option key={hour} value={hour}>
-                        {hour.toString().padStart(2, '0')}:00
-                      </option>
-                    ))}
-                  </select>
-                  <span className="text-sm text-muted-foreground">
-                    매일 {(settings.solapi_auto_hour ?? 10).toString().padStart(2, '0')}시에 오늘 수업 있는 미납자에게 발송
-                  </span>
-                </div>
-              </div>
+            {/* 미납자 수동 발송 */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">미납자 수동 발송</label>
+              <button
+                onClick={handleSendUnpaid}
+                disabled={sendingUnpaid || !settings.is_enabled}
+                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {sendingUnpaid ? '발송 중...' : `${new Date().getMonth() + 1}월 미납자에게 즉시 발송`}
+              </button>
+            </div>
+          </div>
 
-              <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
-                <p className="text-sm text-purple-800 dark:text-purple-200">
-                  <strong>발송 대상:</strong> 오늘 수업이 예정된 미납 학생
-                </p>
-                <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                  예: 월/수/금 수업인 학생은 월/수/금에만 알림톡을 받습니다.
-                </p>
-              </div>
-            </>
-          )}
+          <div className="mt-6">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {saving ? '저장 중...' : 'SENS 설정 저장'}
+            </button>
+          </div>
         </div>
-
-        <div className="mt-6">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving ? '저장 중...' : '설정 저장'}
-          </button>
-        </div>
-      </div>
-
-      {/* 테스트 발송 */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Send className="w-5 h-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold text-foreground">테스트 발송</h2>
-        </div>
-
-        <div className="flex gap-3">
-          <input
-            type="tel"
-            value={testPhone}
-            onChange={e => setTestPhone(e.target.value)}
-            className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="010-1234-5678"
-          />
-          <button
-            onClick={handleTest}
-            disabled={testing || (activeTab === 'sens' ? !settings.is_enabled : !settings.solapi_enabled)}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {testing ? '발송 중...' : '테스트 발송'}
-          </button>
-        </div>
-        {activeTab === 'sens' && !settings.is_enabled && (
-          <p className="text-sm text-amber-600 mt-2">SENS 알림톡을 활성화해야 테스트 발송이 가능합니다</p>
-        )}
-        {activeTab === 'solapi' && !settings.solapi_enabled && (
-          <p className="text-sm text-amber-600 mt-2">솔라피 알림톡을 활성화해야 테스트 발송이 가능합니다</p>
-        )}
-      </div>
-
-      {/* 미납자 수동 발송 */}
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Users className="w-5 h-5 text-muted-foreground" />
-          <h2 className="text-lg font-semibold text-foreground">미납자 수동 발송</h2>
-        </div>
-
-        <p className="text-sm text-muted-foreground mb-4">
-          현재 월({new Date().getMonth() + 1}월) 미납자에게 알림톡을 즉시 발송합니다.
-        </p>
-
-        <button
-          onClick={handleSendUnpaid}
-          disabled={sendingUnpaid || (activeTab === 'sens' ? !settings.is_enabled : !settings.solapi_enabled)}
-          className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {sendingUnpaid ? '발송 중...' : '미납자에게 알림 발송'}
-        </button>
-
-        {activeTab === 'sens' && !settings.is_enabled && (
-          <p className="text-sm text-amber-600 mt-2">SENS 알림톡을 활성화해야 발송이 가능합니다</p>
-        )}
-        {activeTab === 'solapi' && !settings.solapi_enabled && (
-          <p className="text-sm text-amber-600 mt-2">솔라피 알림톡을 활성화해야 발송이 가능합니다</p>
-        )}
-      </div>
+      )}
 
       {/* 설정 가이드 */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
