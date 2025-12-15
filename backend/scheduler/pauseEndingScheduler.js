@@ -108,7 +108,7 @@ async function sendPushToAcademyAdmins(academyId, academyName, students) {
             `SELECT ps.*
              FROM push_subscriptions ps
              JOIN users u ON ps.user_id = u.id
-             LEFT JOIN notification_settings ns ON u.id = ns.user_id
+             LEFT JOIN user_notification_settings ns ON u.id = ns.user_id
              WHERE u.academy_id = ?
                AND u.role IN ('owner', 'admin')
                AND (ns.pause_ending IS NULL OR ns.pause_ending = TRUE)`,

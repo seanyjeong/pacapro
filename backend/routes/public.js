@@ -393,7 +393,7 @@ async function sendNewConsultationPush(academyId, academyName, consultation) {
             `SELECT ps.*
              FROM push_subscriptions ps
              JOIN users u ON ps.user_id = u.id
-             LEFT JOIN notification_settings ns ON u.id = ns.user_id
+             LEFT JOIN user_notification_settings ns ON u.id = ns.user_id
              WHERE u.academy_id = ?
                AND u.role IN ('owner', 'admin')
                AND (ns.new_consultation IS NULL OR ns.new_consultation = TRUE)`,

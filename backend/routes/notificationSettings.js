@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
         const userId = req.user.id;
 
         const [rows] = await db.query(
-            'SELECT unpaid_attendance, consultation_reminder, new_consultation, pause_ending FROM notification_settings WHERE user_id = ?',
+            'SELECT unpaid_attendance, consultation_reminder, new_consultation, pause_ending FROM user_notification_settings WHERE user_id = ?',
             [userId]
         );
 
@@ -61,7 +61,7 @@ router.put('/', async (req, res) => {
 
         // UPSERT: 있으면 업데이트, 없으면 생성
         await db.query(
-            `INSERT INTO notification_settings (user_id, unpaid_attendance, consultation_reminder, new_consultation, pause_ending)
+            `INSERT INTO user_notification_settings (user_id, unpaid_attendance, consultation_reminder, new_consultation, pause_ending)
              VALUES (?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE
                 unpaid_attendance = VALUES(unpaid_attendance),
