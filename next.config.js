@@ -4,6 +4,9 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   register: true,
   scope: "/",
   sw: "sw.js",
+  workboxOptions: {
+    importScripts: ['/sw-push.js'],
+  },
 });
 
 /** @type {import('next').NextConfig} */

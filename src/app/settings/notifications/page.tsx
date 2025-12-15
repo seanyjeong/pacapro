@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign } from 'lucide-react';
 import { notificationsAPI, NotificationSettings, NotificationLog } from '@/lib/api/notifications';
+import PushNotificationSettings from '@/components/push-notification-settings';
 
 type ServiceType = 'sens' | 'solapi';
 
@@ -203,6 +204,9 @@ export default function NotificationSettingsPage() {
           {message.text}
         </div>
       )}
+
+      {/* PWA 푸시 알림 설정 */}
+      <PushNotificationSettings />
 
       {/* 서비스 선택 탭 */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">

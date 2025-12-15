@@ -145,6 +145,7 @@ const notificationRoutes = require('./routes/notifications');
 const smsRoutes = require('./routes/sms');
 const publicRoutes = require('./routes/public');
 const consultationRoutes = require('./routes/consultations');
+const pushRoutes = require('./routes/push');
 
 // Register Routes
 app.use('/paca/auth', authRoutes);
@@ -168,6 +169,7 @@ app.use('/paca/notifications', notificationRoutes);
 app.use('/paca/sms', smsRoutes);
 app.use('/paca/public', publicRoutes);
 app.use('/paca/consultations', consultationRoutes);
+app.use('/paca/push', pushRoutes);
 
 // ==========================================
 // Error Handling
@@ -227,6 +229,7 @@ const { initScheduler } = require('./scheduler/paymentScheduler');
 const { initNotificationScheduler } = require('./scheduler/notificationScheduler');
 const { initGradePromotionScheduler } = require('./scheduler/gradePromotionScheduler');
 const { initScheduler: initExcusedCreditScheduler } = require('./scheduler/excusedCreditScheduler');
+const { initPushScheduler } = require('./scheduler/pushScheduler');
 
 // ==========================================
 // Start Server
@@ -246,6 +249,7 @@ app.listen(PORT, () => {
     initNotificationScheduler();
     initGradePromotionScheduler();
     initExcusedCreditScheduler();
+    initPushScheduler();
 });
 
 // Graceful Shutdown
