@@ -16,6 +16,7 @@ import {
   getCurrentSubscription,
 } from '@/lib/api/push';
 import { notificationSettingsAPI, NotificationSettings } from '@/lib/api/notificationSettings';
+import PWAInstallPrompt from '@/components/pwa-install-prompt';
 
 export default function MobileHomePage() {
   const router = useRouter();
@@ -349,8 +350,11 @@ export default function MobileHomePage() {
 
       {/* 버전 정보 */}
       <div className="mt-4 text-center">
-        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v2.9.21</p>
+        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v2.9.22</p>
       </div>
+
+      {/* PWA 설치 프롬프트 */}
+      <PWAInstallPrompt />
     </div>
   );
 }
