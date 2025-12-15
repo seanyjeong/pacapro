@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, BellOff, Smartphone, Send, Trash2, CheckCircle } from 'lucide-react';
+import { Bell, BellOff, Smartphone, CheckCircle } from 'lucide-react';
 import {
   pushAPI,
   isPushSupported,
@@ -20,7 +20,6 @@ export default function PushNotificationSettings() {
   const [subscriptions, setSubscriptions] = useState<PushSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [enabling, setEnabling] = useState(false);
-  const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -128,25 +127,6 @@ export default function PushNotificationSettings() {
     }
   };
 
-  const handleTest = async () => {
-    setTesting(true);
-    setMessage(null);
-
-    try {
-      const result = await pushAPI.sendTest();
-      if (result.success > 0) {
-        setMessage({ type: 'success', text: `테스트 알림을 발송했습니다. (성공: ${result.success}, 실패: ${result.failed})` });
-      } else {
-        setMessage({ type: 'error', text: '테스트 알림 발송에 실패했습니다.' });
-      }
-    } catch (error) {
-      console.error('테스트 발송 실패:', error);
-      setMessage({ type: 'error', text: '테스트 알림 발송에 실패했습니다.' });
-    } finally {
-      setTesting(false);
-    }
-  };
-
   const getDeviceName = (): string => {
     const ua = navigator.userAgent;
     if (/iPhone/.test(ua)) return 'iPhone';
@@ -237,24 +217,6 @@ export default function PushNotificationSettings() {
           </button>
         </div>
 
-        {/* 테스트 발송 */}
-        {subscribed && (
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium text-foreground">테스트 알림 발송</p>
-              <p className="text-sm text-muted-foreground">푸시 알림이 정상적으로 작동하는지 확인합니다</p>
-            </div>
-            <button
-              onClick={handleTest}
-              disabled={testing}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Send className="w-4 h-4" />
-              {testing ? '발송 중...' : '테스트'}
-            </button>
-          </div>
-        )}
-
         {/* 등록된 기기 목록 */}
         {subscriptions.length > 0 && (
           <div className="mt-4">
@@ -279,7 +241,7 @@ export default function PushNotificationSettings() {
         <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
           <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">푸시 알림 안내</p>
           <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
-            <li>오늘 출석 예정인 미납 학생이 있으면 아침에 알림을 보내드립니다</li>
+            <li>오늘 출석 예정인 미납 학생이 있으면 오후 6시, 9시에 알림을 보내드립니다</li>
             <li>PWA 앱으로 설치하면 더 안정적으로 알림을 받을 수 있습니다</li>
             <li>알림이 오지 않으면 브라우저/시스템 알림 설정을 확인해주세요</li>
           </ul>

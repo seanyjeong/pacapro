@@ -23,9 +23,20 @@ import {
     Building2,
     MessageSquare,
     PhoneCall,
+    Bell,
+    BellOff,
+    Loader2,
 } from 'lucide-react';
 import type { Permissions } from '@/lib/types/staff';
 import apiClient from '@/lib/api/client';
+import {
+    pushAPI,
+    isPushSupported,
+    requestNotificationPermission,
+    subscribeToPush,
+    unsubscribeFromPush,
+    getCurrentSubscription,
+} from '@/lib/api/push';
 
 interface NavItem {
     title: string;
@@ -69,6 +80,11 @@ export function Sidebar() {
     const [user, setUser] = useState<UserState | null>(null);
     const [academyName, setAcademyName] = useState<string>('');
 
+    // 푸시 알림 상태
+    const [pushSupported, setPushSupported] = useState(false);
+    const [pushSubscribed, setPushSubscribed] = useState(false);
+    const [pushLoading, setPushLoading] = useState(false);
+
     // 클라이언트에서만 사용자 정보 로드 (hydration 문제 방지)
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -87,7 +103,49 @@ export function Sidebar() {
 
         // 학원명 로드
         loadAcademyName();
+
+        // 푸시 알림 상태 체크
+        checkPushStatus();
     }, []);
+
+    const checkPushStatus = async () => {
+        const supported = isPushSupported();
+        setPushSupported(supported);
+        if (supported) {
+            const subscription = await getCurrentSubscription();
+            setPushSubscribed(!!subscription);
+        }
+    };
+
+    const handlePushToggle = async () => {
+        setPushLoading(true);
+        try {
+            if (pushSubscribed) {
+                const subscription = await getCurrentSubscription();
+                if (subscription?.endpoint) {
+                    await pushAPI.unsubscribe(subscription.endpoint);
+                }
+                await unsubscribeFromPush();
+                setPushSubscribed(false);
+            } else {
+                const perm = await requestNotificationPermission();
+                if (perm !== 'granted') {
+                    alert('알림 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해주세요.');
+                    return;
+                }
+                const vapidPublicKey = await pushAPI.getVapidPublicKey();
+                const subscription = await subscribeToPush(vapidPublicKey);
+                if (subscription) {
+                    await pushAPI.subscribe(subscription, 'PC');
+                    setPushSubscribed(true);
+                }
+            }
+        } catch (error) {
+            console.error('푸시 설정 오류:', error);
+        } finally {
+            setPushLoading(false);
+        }
+    };
 
     const loadAcademyName = async () => {
         try {
@@ -134,7 +192,7 @@ export function Sidebar() {
     return (
         <aside className="hidden md:flex md:w-64 md:flex-col fixed left-0 top-0 h-full bg-card border-r border-border no-print">
             {/* Logo */}
-            <div className="h-16 flex items-center px-6 border-b border-border">
+            <div className="h-16 flex items-center justify-between px-6 border-b border-border">
                 <Link href="/" className="flex items-center space-x-2">
                     <Image
                         src="/icons/icon-96x96.png"
@@ -145,6 +203,27 @@ export function Sidebar() {
                     />
                     <span className="text-xl font-bold text-foreground">P-ACA</span>
                 </Link>
+                {/* 푸시 알림 토글 */}
+                {mounted && pushSupported && (
+                    <button
+                        onClick={handlePushToggle}
+                        disabled={pushLoading}
+                        className={`p-2 rounded-lg transition-colors ${
+                            pushSubscribed
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                        } disabled:opacity-50`}
+                        title={pushSubscribed ? '푸시 알림 끄기' : '푸시 알림 켜기'}
+                    >
+                        {pushLoading ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : pushSubscribed ? (
+                            <Bell className="w-5 h-5" />
+                        ) : (
+                            <BellOff className="w-5 h-5" />
+                        )}
+                    </button>
+                )}
             </div>
 
             {/* Academy Name */}

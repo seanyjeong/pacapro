@@ -80,7 +80,8 @@
       "Bash(python3:*)",
       "Bash(wkhtmltopdf:*)",
       "Bash(sudo -S -k systemctl restart paca)",
-      "Bash(sudo -S whoami:*)"
+      "Bash(sudo -S whoami:*)",
+      "Bash(npx web-push:*)"
     ],
     "deny": [],
     "ask": []
