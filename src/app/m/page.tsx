@@ -3,15 +3,29 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { canEdit, canView } from '@/lib/utils/permissions';
-import { UserCheck, Users, CreditCard, LogOut, ChevronRight } from 'lucide-react';
+import { UserCheck, Users, CreditCard, LogOut, ChevronRight, Bell, BellOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import {
+  pushAPI,
+  isPushSupported,
+  getNotificationPermission,
+  requestNotificationPermission,
+  subscribeToPush,
+  unsubscribeFromPush,
+  getCurrentSubscription,
+} from '@/lib/api/push';
 
 export default function MobileHomePage() {
   const router = useRouter();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [userName, setUserName] = useState<string>('');
   const [academyName, setAcademyName] = useState<string>('');
+
+  // 푸시 알림 상태
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
 
   useEffect(() => {
     // 로그인 체크
@@ -40,7 +54,69 @@ export default function MobileHomePage() {
     if (!canAccess) {
       router.push('/login');
     }
+
+    // 푸시 알림 상태 체크
+    checkPushStatus();
   }, [router]);
+
+  const checkPushStatus = async () => {
+    const supported = isPushSupported();
+    setPushSupported(supported);
+    if (supported) {
+      const subscription = await getCurrentSubscription();
+      setPushSubscribed(!!subscription);
+    }
+  };
+
+  const getDeviceName = (): string => {
+    const ua = navigator.userAgent;
+    if (/iPhone/.test(ua)) return 'iPhone';
+    if (/iPad/.test(ua)) return 'iPad';
+    if (/Android/.test(ua)) return 'Android';
+    return '모바일';
+  };
+
+  const handlePushToggle = async () => {
+    setPushLoading(true);
+    try {
+      if (pushSubscribed) {
+        // 비활성화
+        const subscription = await getCurrentSubscription();
+        if (subscription?.endpoint) {
+          await pushAPI.unsubscribe(subscription.endpoint);
+        }
+        await unsubscribeFromPush();
+        setPushSubscribed(false);
+      } else {
+        // 활성화
+        const perm = await requestNotificationPermission();
+        if (perm !== 'granted') {
+          alert('알림 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해주세요.');
+          return;
+        }
+        const vapidPublicKey = await pushAPI.getVapidPublicKey();
+        const subscription = await subscribeToPush(vapidPublicKey);
+        if (subscription) {
+          await pushAPI.subscribe(subscription, getDeviceName());
+          setPushSubscribed(true);
+        }
+      }
+    } catch (error) {
+      console.error('푸시 설정 오류:', error);
+      alert('푸시 알림 설정에 실패했습니다.');
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  const handleTestPush = async () => {
+    try {
+      await pushAPI.sendTest();
+      alert('테스트 알림을 발송했습니다!');
+    } catch {
+      alert('테스트 발송에 실패했습니다.');
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -150,8 +226,50 @@ export default function MobileHomePage() {
         })}
       </div>
 
+      {/* 푸시 알림 설정 */}
+      {pushSupported && (
+        <div className="mt-8 bg-card border border-border/60 rounded-2xl p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {pushSubscribed ? (
+                <Bell className="h-5 w-5 text-green-600" />
+              ) : (
+                <BellOff className="h-5 w-5 text-muted-foreground" />
+              )}
+              <div>
+                <p className="font-medium text-foreground">푸시 알림</p>
+                <p className="text-xs text-muted-foreground">
+                  {pushSubscribed ? '미납자 출석 알림 받는 중' : '알림을 받으려면 활성화하세요'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handlePushToggle}
+              disabled={pushLoading}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                pushSubscribed
+                  ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
+                  : 'bg-blue-600 text-white'
+              } disabled:opacity-50`}
+            >
+              {pushLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : pushSubscribed ? '끄기' : '켜기'}
+            </button>
+          </div>
+          {pushSubscribed && (
+            <button
+              onClick={handleTestPush}
+              className="mt-3 w-full py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950 rounded-lg transition-colors"
+            >
+              테스트 알림 보내기
+            </button>
+          )}
+        </div>
+      )}
+
       {/* 로그아웃 버튼 */}
-      <div className="mt-10">
+      <div className="mt-6">
         <Button
           variant="ghost"
           onClick={handleLogout}
@@ -164,7 +282,7 @@ export default function MobileHomePage() {
 
       {/* 버전 정보 */}
       <div className="mt-4 text-center">
-        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v2.9.17</p>
+        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v2.9.21</p>
       </div>
     </div>
   );
