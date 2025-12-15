@@ -198,6 +198,10 @@ export function ManualCreditModal({
           </DialogTitle>
           <DialogDescription>
             {studentName} 학생에게 크레딧을 수동으로 생성합니다.
+            <br />
+            <span className="text-blue-600 dark:text-blue-400">
+              생성된 크레딧은 다음 달 수강료 생성 시 자동으로 차감됩니다.
+            </span>
           </DialogDescription>
         </DialogHeader>
 

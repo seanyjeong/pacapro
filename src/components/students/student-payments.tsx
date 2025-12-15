@@ -120,15 +120,20 @@ export function StudentPaymentsComponent({
       {canUseCredit && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Coins className="w-5 h-5 text-blue-600" />
-              크레딧
-              {pendingTotal > 0 && (
-                <span className="ml-2 text-sm font-normal text-blue-600 dark:text-blue-400">
-                  (미사용: {pendingTotal.toLocaleString()}원)
-                </span>
-              )}
-            </CardTitle>
+            <div>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Coins className="w-5 h-5 text-blue-600" />
+                크레딧
+                {pendingTotal > 0 && (
+                  <span className="ml-2 text-sm font-normal text-blue-600 dark:text-blue-400">
+                    (미사용: {pendingTotal.toLocaleString()}원)
+                  </span>
+                )}
+              </CardTitle>
+              <p className="text-xs text-muted-foreground mt-1">
+                미사용 크레딧은 다음 달 수강료 생성 시 자동 차감됩니다.
+              </p>
+            </div>
             <Button
               size="sm"
               onClick={() => setCreditModalOpen(true)}
