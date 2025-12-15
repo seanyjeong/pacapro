@@ -107,12 +107,15 @@ async function sendUnpaidAttendancePush() {
  */
 async function sendPushToAcademyAdmins(academyId, academyName, students) {
     try {
-        // 해당 학원의 관리자 구독 조회
+        // unpaid_attendance 알림을 활성화한 관리자의 구독만 조회
         const [subscriptions] = await db.query(
             `SELECT ps.*
              FROM push_subscriptions ps
              JOIN users u ON ps.user_id = u.id
-             WHERE u.academy_id = ? AND u.role IN ('owner', 'admin')`,
+             LEFT JOIN notification_settings ns ON u.id = ns.user_id
+             WHERE u.academy_id = ?
+               AND u.role IN ('owner', 'admin')
+               AND (ns.unpaid_attendance IS NULL OR ns.unpaid_attendance = TRUE)`,
             [academyId]
         );
 

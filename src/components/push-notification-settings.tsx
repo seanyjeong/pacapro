@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, BellOff, Smartphone, CheckCircle } from 'lucide-react';
+import { Bell, BellOff, Smartphone, CheckCircle, CreditCard, CalendarClock, MessageSquarePlus, UserCheck } from 'lucide-react';
 import {
   pushAPI,
   isPushSupported,
@@ -12,6 +12,7 @@ import {
   getCurrentSubscription,
   PushSubscription,
 } from '@/lib/api/push';
+import { notificationSettingsAPI, NotificationSettings } from '@/lib/api/notificationSettings';
 
 export default function PushNotificationSettings() {
   const [supported, setSupported] = useState(false);
@@ -21,6 +22,15 @@ export default function PushNotificationSettings() {
   const [loading, setLoading] = useState(true);
   const [enabling, setEnabling] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // 알림 종류별 설정
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+    unpaid_attendance: true,
+    consultation_reminder: true,
+    new_consultation: true,
+    pause_ending: true,
+  });
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   useEffect(() => {
     checkStatus();
@@ -48,6 +58,14 @@ export default function PushNotificationSettings() {
       // 서버의 구독 목록 조회
       const subs = await pushAPI.getSubscriptions();
       setSubscriptions(subs);
+
+      // 알림 설정 조회
+      try {
+        const settings = await notificationSettingsAPI.get();
+        setNotificationSettings(settings);
+      } catch {
+        // 설정 조회 실패 시 기본값 유지
+      }
     } catch (error) {
       console.error('푸시 상태 확인 실패:', error);
     } finally {
@@ -127,6 +145,23 @@ export default function PushNotificationSettings() {
     }
   };
 
+  const handleSettingToggle = async (key: keyof NotificationSettings) => {
+    setSettingsLoading(true);
+    try {
+      const newSettings = {
+        ...notificationSettings,
+        [key]: !notificationSettings[key],
+      };
+      await notificationSettingsAPI.update(newSettings);
+      setNotificationSettings(newSettings);
+    } catch (error) {
+      console.error('알림 설정 저장 실패:', error);
+      setMessage({ type: 'error', text: '알림 설정 저장에 실패했습니다.' });
+    } finally {
+      setSettingsLoading(false);
+    }
+  };
+
   const getDeviceName = (): string => {
     const ua = navigator.userAgent;
     if (/iPhone/.test(ua)) return 'iPhone';
@@ -136,6 +171,33 @@ export default function PushNotificationSettings() {
     if (/Mac/.test(ua)) return 'Mac';
     return '알 수 없는 기기';
   };
+
+  const notificationTypes = [
+    {
+      key: 'unpaid_attendance' as const,
+      icon: CreditCard,
+      title: '미납자 출석 알림',
+      description: '오늘 수업 예정인 미납 학생 알림 (18:00, 21:00)',
+    },
+    {
+      key: 'consultation_reminder' as const,
+      icon: CalendarClock,
+      title: '상담 30분 전 알림',
+      description: '상담 시작 30분 전 리마인더',
+    },
+    {
+      key: 'new_consultation' as const,
+      icon: MessageSquarePlus,
+      title: '새 상담 예약 알림',
+      description: '홈페이지에서 상담 신청 시 즉시 알림',
+    },
+    {
+      key: 'pause_ending' as const,
+      icon: UserCheck,
+      title: '휴원 종료 알림',
+      description: '휴원 종료 예정 학생 알림 (09:00)',
+    },
+  ];
 
   if (loading) {
     return (
@@ -198,7 +260,7 @@ export default function PushNotificationSettings() {
               </p>
               <p className="text-sm text-muted-foreground">
                 {subscribed
-                  ? '미납자 출석 시 알림을 받습니다'
+                  ? '아래에서 받을 알림을 선택하세요'
                   : '알림을 받으려면 활성화하세요'}
               </p>
             </div>
@@ -213,9 +275,45 @@ export default function PushNotificationSettings() {
                 : 'bg-blue-600 text-white hover:bg-blue-700'
             } disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {enabling ? '처리 중...' : subscribed ? '비활성화' : '활성화'}
+            {enabling ? '처리 중...' : subscribed ? '전체 비활성화' : '활성화'}
           </button>
         </div>
+
+        {/* 알림 종류별 설정 */}
+        {subscribed && (
+          <div className="space-y-2">
+            <p className="font-medium text-foreground">알림 종류 설정</p>
+            {notificationTypes.map((type) => (
+              <div
+                key={type.key}
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <type.icon className="w-5 h-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{type.title}</p>
+                    <p className="text-xs text-muted-foreground">{type.description}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleSettingToggle(type.key)}
+                  disabled={settingsLoading}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                    notificationSettings[type.key]
+                      ? 'bg-blue-600'
+                      : 'bg-gray-300 dark:bg-gray-600'
+                  } disabled:opacity-50`}
+                >
+                  <span
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                      notificationSettings[type.key] ? 'left-7' : 'left-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* 등록된 기기 목록 */}
         {subscriptions.length > 0 && (
@@ -241,9 +339,9 @@ export default function PushNotificationSettings() {
         <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
           <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">푸시 알림 안내</p>
           <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
-            <li>오늘 출석 예정인 미납 학생이 있으면 오후 6시, 9시에 알림을 보내드립니다</li>
             <li>PWA 앱으로 설치하면 더 안정적으로 알림을 받을 수 있습니다</li>
             <li>알림이 오지 않으면 브라우저/시스템 알림 설정을 확인해주세요</li>
+            <li>위 토글로 원하는 알림만 선택적으로 받을 수 있습니다</li>
           </ul>
         </div>
       </div>

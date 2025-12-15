@@ -1,6 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const webpush = require('web-push');
+
+// VAPID 설정
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+        process.env.VAPID_EMAIL || 'mailto:admin@example.com',
+        process.env.VAPID_PUBLIC_KEY,
+        process.env.VAPID_PRIVATE_KEY
+    );
+}
 
 // ============================================
 // 공개 API - 인증 불필요
@@ -351,10 +361,13 @@ router.post('/consultation/:slug/apply', async (req, res) => {
 
     const consultationId = result.insertId;
 
-    // TODO: 알림톡 발송 (추후 구현)
-    // if (academy.send_confirmation_alimtalk) {
-    //   await sendConfirmationAlimtalk(consultationId, academy.id);
-    // }
+    // 새 상담 예약 푸시 알림 발송 (비동기)
+    sendNewConsultationPush(academy.id, academy.name, {
+      studentName,
+      preferredDate,
+      preferredTime,
+      consultationId
+    }).catch(err => console.error('[NewConsultationPush] 오류:', err));
 
     res.status(201).json({
       message: '상담 신청이 완료되었습니다.',
@@ -369,6 +382,71 @@ router.post('/consultation/:slug/apply', async (req, res) => {
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
+
+/**
+ * 새 상담 예약 푸시 알림 발송
+ */
+async function sendNewConsultationPush(academyId, academyName, consultation) {
+    try {
+        // new_consultation 알림을 활성화한 관리자의 구독만 조회
+        const [subscriptions] = await db.query(
+            `SELECT ps.*
+             FROM push_subscriptions ps
+             JOIN users u ON ps.user_id = u.id
+             LEFT JOIN notification_settings ns ON u.id = ns.user_id
+             WHERE u.academy_id = ?
+               AND u.role IN ('owner', 'admin')
+               AND (ns.new_consultation IS NULL OR ns.new_consultation = TRUE)`,
+            [academyId]
+        );
+
+        if (subscriptions.length === 0) {
+            return;
+        }
+
+        const dateStr = new Date(consultation.preferredDate).toLocaleDateString('ko-KR', {
+            month: 'long',
+            day: 'numeric'
+        });
+        const timeStr = consultation.preferredTime;
+
+        const payload = JSON.stringify({
+            title: '📝 새 상담 예약',
+            body: `${consultation.studentName} - ${dateStr} ${timeStr}`,
+            icon: '/icons/icon-192x192.png',
+            badge: '/icons/icon-72x72.png',
+            data: {
+                type: 'new_consultation',
+                url: '/consultations',
+                academyId,
+                consultationId: consultation.consultationId
+            }
+        });
+
+        for (const sub of subscriptions) {
+            const pushSubscription = {
+                endpoint: sub.endpoint,
+                keys: {
+                    p256dh: sub.p256dh,
+                    auth: sub.auth
+                }
+            };
+
+            try {
+                await webpush.sendNotification(pushSubscription, payload);
+            } catch (error) {
+                // 만료된 구독 삭제
+                if (error.statusCode === 410 || error.statusCode === 404) {
+                    await db.query('DELETE FROM push_subscriptions WHERE id = ?', [sub.id]);
+                }
+            }
+        }
+
+        console.log(`[NewConsultationPush] 학원 ${academyId}: 새 상담 알림 발송 완료`);
+    } catch (error) {
+        console.error('[NewConsultationPush] 오류:', error);
+    }
+}
 
 // GET /paca/public/check-slug/:slug - slug 사용 가능 여부 확인
 router.get('/check-slug/:slug', async (req, res) => {
