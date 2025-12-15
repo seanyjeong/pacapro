@@ -518,15 +518,15 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
                 console.error(`Failed to calculate non-season prorated for student ${student.id}:`, err);
             }
 
-            // 휴식 이월 크레딧 확인 및 적용
+            // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 확인 및 적용
             let carryoverAmount = 0;
             let restCreditId = null;
             try {
                 const [pendingCredits] = await db.query(
-                    `SELECT id, remaining_amount FROM rest_credits
+                    `SELECT id, remaining_amount, credit_type FROM rest_credits
                      WHERE student_id = ?
                      AND academy_id = ?
-                     AND credit_type = 'carryover'
+                     AND credit_type IN ('carryover', 'excused', 'manual')
                      AND status IN ('pending', 'partial')
                      AND remaining_amount > 0
                      ORDER BY created_at ASC`,
@@ -840,7 +840,7 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
 
         res.json({
             message: '납부가 기록되었습니다.',
-            payment: updated[0]
+            payment: decryptStudentName(updated[0])
         });
     } catch (error) {
         console.error('=== Error recording payment ===');
@@ -984,7 +984,7 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
 
         res.json({
             message: '납부 내역이 수정되었습니다.',
-            payment: updated[0]
+            payment: decryptStudentName(updated[0])
         });
     } catch (error) {
         console.error('Error updating payment:', error);

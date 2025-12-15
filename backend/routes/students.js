@@ -388,9 +388,12 @@ router.get('/:id', verifyToken, async (req, res) => {
         const [payments] = await db.query(
             `SELECT
                 id,
+                \`year_month\`,
                 payment_type,
                 base_amount,
+                discount_amount,
                 final_amount,
+                paid_amount,
                 paid_date,
                 due_date,
                 payment_status,
@@ -2374,6 +2377,212 @@ router.get('/:id/rest-credits', verifyToken, async (req, res) => {
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch rest credits'
+        });
+    }
+});
+
+/**
+ * 천원 단위 절삭
+ */
+function truncateToThousands(amount) {
+    return Math.floor(amount / 1000) * 1000;
+}
+
+/**
+ * 기간 내 수업 횟수 계산
+ * @param {string} startDate - 시작일 (YYYY-MM-DD)
+ * @param {string} endDate - 종료일 (YYYY-MM-DD)
+ * @param {array} classDays - 수업 요일 배열 (0=일, 1=월, ..., 6=토)
+ * @returns {object} { count: 수업횟수, dates: 수업일 배열 }
+ */
+function countClassDaysInPeriod(startDate, endDate, classDays) {
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T00:00:00');
+    const classDates = [];
+
+    const current = new Date(start);
+    while (current <= end) {
+        const dayOfWeek = current.getDay();
+        if (classDays.includes(dayOfWeek)) {
+            classDates.push(new Date(current));
+        }
+        current.setDate(current.getDate() + 1);
+    }
+
+    return {
+        count: classDates.length,
+        dates: classDates.map(d => {
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            const month = d.getMonth() + 1;
+            const day = d.getDate();
+            const dayName = dayNames[d.getDay()];
+            return `${month}/${day}(${dayName})`;
+        })
+    };
+}
+
+/**
+ * POST /paca/students/:id/manual-credit
+ * 수동 크레딧 생성
+ * Access: owner, admin (payments edit 권한)
+ *
+ * Body (날짜로 입력):
+ * {
+ *   start_date: "2024-12-10",
+ *   end_date: "2024-12-15",
+ *   reason: "시험기간",
+ *   notes?: "추가 메모"
+ * }
+ *
+ * Body (회차로 입력):
+ * {
+ *   class_count: 3,
+ *   reason: "시험기간",
+ *   notes?: "추가 메모"
+ * }
+ */
+router.post('/:id/manual-credit', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
+    const studentId = parseInt(req.params.id);
+    const { start_date, end_date, class_count, reason, notes } = req.body;
+
+    try {
+        // 유효성 검사
+        if (!reason || reason.trim() === '') {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '사유는 필수입니다.'
+            });
+        }
+
+        // 날짜 입력과 회차 입력 중 하나는 있어야 함
+        const hasDateInput = start_date && end_date;
+        const hasCountInput = class_count && class_count > 0;
+
+        if (!hasDateInput && !hasCountInput) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '날짜 기간 또는 회차를 입력해주세요.'
+            });
+        }
+
+        if (hasCountInput && (class_count < 1 || class_count > 12)) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '회차는 1~12 사이여야 합니다.'
+            });
+        }
+
+        // 학생 정보 조회
+        const [students] = await db.query(
+            `SELECT id, name, monthly_tuition, weekly_count, class_days
+             FROM students
+             WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
+            [studentId, req.user.academyId]
+        );
+
+        if (students.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: '학생을 찾을 수 없습니다.'
+            });
+        }
+
+        const student = students[0];
+        const monthlyTuition = parseFloat(student.monthly_tuition) || 0;
+        const weeklyCount = student.weekly_count || 2;
+        const classDays = student.class_days || [];
+
+        if (monthlyTuition <= 0) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '월 수강료가 설정되지 않은 학생입니다.'
+            });
+        }
+
+        // 1회 금액 계산
+        const perClassFee = truncateToThousands(monthlyTuition / (weeklyCount * 4));
+
+        let finalClassCount = 0;
+        let classDatesInfo = null;
+        let periodInfo = null;
+
+        if (hasDateInput) {
+            // 날짜로 입력 - 수업 횟수 자동 계산
+            if (classDays.length === 0) {
+                return res.status(400).json({
+                    error: 'Bad Request',
+                    message: '학생의 수업 요일이 설정되지 않았습니다. 회차로 입력해주세요.'
+                });
+            }
+
+            const result = countClassDaysInPeriod(start_date, end_date, classDays);
+            finalClassCount = result.count;
+            classDatesInfo = result.dates;
+            periodInfo = { start_date, end_date };
+
+            if (finalClassCount === 0) {
+                return res.status(400).json({
+                    error: 'Bad Request',
+                    message: '해당 기간에 수업일이 없습니다.'
+                });
+            }
+        } else {
+            // 회차로 직접 입력
+            finalClassCount = class_count;
+        }
+
+        // 크레딧 금액 계산
+        const creditAmount = truncateToThousands(perClassFee * finalClassCount);
+
+        // rest_credits 테이블에 삽입
+        const today = new Date().toISOString().split('T')[0];
+        const noteText = `[수동 크레딧] ${reason}${classDatesInfo ? ` (${classDatesInfo.join(', ')})` : ''}${notes ? '\n' + notes : ''}`;
+
+        const [result] = await db.query(
+            `INSERT INTO rest_credits (
+                student_id, academy_id, source_payment_id,
+                rest_start_date, rest_end_date, rest_days,
+                credit_amount, remaining_amount,
+                credit_type, status, notes, created_at
+            ) VALUES (?, ?, NULL, ?, ?, ?, ?, ?, 'manual', 'pending', ?, NOW())`,
+            [
+                studentId,
+                req.user.academyId,
+                periodInfo?.start_date || today,
+                periodInfo?.end_date || today,
+                finalClassCount,
+                creditAmount,
+                creditAmount,
+                noteText
+            ]
+        );
+
+        // 생성된 크레딧 조회
+        const [newCredits] = await db.query(
+            'SELECT * FROM rest_credits WHERE id = ?',
+            [result.insertId]
+        );
+
+        // 학생명 복호화
+        const studentName = decrypt(student.name);
+
+        res.status(201).json({
+            message: `${studentName} 학생에게 ${creditAmount.toLocaleString()}원 크레딧이 생성되었습니다.`,
+            credit: newCredits[0],
+            calculation: {
+                monthly_tuition: monthlyTuition,
+                weekly_count: weeklyCount,
+                per_class_fee: perClassFee,
+                class_count: finalClassCount,
+                class_dates: classDatesInfo,
+                total_credit: creditAmount
+            }
+        });
+    } catch (error) {
+        console.error('Error creating manual credit:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '크레딧 생성에 실패했습니다.'
         });
     }
 });

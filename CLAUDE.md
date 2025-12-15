@@ -22,6 +22,15 @@ echo 'q141171616!' | sudo -S systemctl restart paca
 echo 'q141171616!' | sudo -S journalctl -u paca -f
 ```
 
+### sudo 팁 (안 될 때)
+```bash
+# -k 옵션 추가하면 캐시된 자격증명 초기화되어 더 안정적
+echo 'q141171616!' | sudo -S -k docker stop container_name
+
+# 여러 명령 연속 실행 시 sh -c 사용
+echo 'q141171616!' | sudo -S sh -c "docker stop x && docker rm x"
+```
+
 ### DB 접근 (CLI가 안 될 때 Node.js 사용)
 ```bash
 # CLI 방식 (비밀번호에 ! 있어서 불안정)

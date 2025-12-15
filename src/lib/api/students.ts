@@ -13,6 +13,9 @@ import type {
   StudentUpdateResponse,
   StudentDeleteResponse,
   StudentFilters,
+  ManualCreditRequest,
+  ManualCreditResponse,
+  RestCreditsResponse,
 } from '@/lib/types/student';
 
 export const studentsAPI = {
@@ -181,5 +184,21 @@ export const studentsAPI = {
     return await apiClient.post(`/students/${id}/resume`, {
       resume_date: resumeDate
     });
+  },
+
+  /**
+   * 학생 크레딧 목록 조회
+   * GET /paca/students/:id/rest-credits
+   */
+  getRestCredits: async (id: number): Promise<RestCreditsResponse> => {
+    return await apiClient.get(`/students/${id}/rest-credits`);
+  },
+
+  /**
+   * 수동 크레딧 생성
+   * POST /paca/students/:id/manual-credit
+   */
+  createManualCredit: async (id: number, data: ManualCreditRequest): Promise<ManualCreditResponse> => {
+    return await apiClient.post(`/students/${id}/manual-credit`, data);
   },
 };

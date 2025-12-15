@@ -177,7 +177,7 @@ router.get('/work-summary/:instructorId/:yearMonth', verifyToken, checkPermissio
             message: 'Work summary retrieved',
             instructor: {
                 id: instructor.id,
-                name: instructor.name,
+                name: decrypt(instructor.name),
                 salary_type: instructor.salary_type,
                 hourly_rate: instructor.hourly_rate,
                 base_salary: instructor.base_salary,
@@ -307,7 +307,7 @@ router.get('/:id', verifyToken, checkPermission('salaries', 'view'), async (req,
         }
 
         res.json({
-            salary: salary,
+            salary: decryptInstructorName(salary),
             attendance_summary: {
                 work_year_month: attendanceYearMonth,
                 attendance_days: Object.keys(dailyBreakdown).length,
@@ -371,7 +371,7 @@ router.post('/calculate', verifyToken, checkPermission('salaries', 'edit'), asyn
             message: 'Salary calculated successfully',
             instructor: {
                 id: instructor.id,
-                name: instructor.name,
+                name: decrypt(instructor.name),
                 salary_type: instructor.salary_type
             },
             salary: salaryData
@@ -477,7 +477,7 @@ router.post('/', verifyToken, checkPermission('salaries', 'edit'), async (req, r
 
         res.status(201).json({
             message: 'Salary record created successfully',
-            salary: created[0]
+            salary: decryptInstructorName(created[0])
         });
     } catch (error) {
         console.error('Error creating salary:', error);
@@ -704,7 +704,7 @@ router.post('/:id/pay', verifyToken, requireRole('owner'), async (req, res) => {
 
         res.json({
             message: 'Salary payment recorded successfully',
-            salary: updated[0]
+            salary: decryptInstructorName(updated[0])
         });
     } catch (error) {
         console.error('Error recording salary payment:', error);
@@ -812,7 +812,7 @@ router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
 
         res.json({
             message: 'Salary record updated successfully',
-            salary: updated[0]
+            salary: decryptInstructorName(updated[0])
         });
     } catch (error) {
         console.error('Error updating salary:', error);

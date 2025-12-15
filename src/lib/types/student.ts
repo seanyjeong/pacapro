@@ -346,7 +346,7 @@ export function formatDiscountRate(rate: string | number): string {
 
 // ===== 휴식 크레딧 관련 타입 =====
 
-export type RestCreditType = 'carryover' | 'refund';
+export type RestCreditType = 'carryover' | 'refund' | 'excused' | 'manual';
 export type RestCreditStatus = 'pending' | 'partial' | 'applied' | 'refunded' | 'cancelled';
 
 // 휴식 크레딧 인터페이스
@@ -394,8 +394,10 @@ export interface RestCreditsResponse {
 
 // 휴식 크레딧 타입 레이블
 export const REST_CREDIT_TYPE_LABELS: Record<RestCreditType, string> = {
-  carryover: '이월 차감',
+  carryover: '이월',
   refund: '환불',
+  excused: '공결',
+  manual: '수동',
 };
 
 // 휴식 크레딧 상태 레이블
@@ -406,3 +408,31 @@ export const REST_CREDIT_STATUS_LABELS: Record<RestCreditStatus, string> = {
   refunded: '환불완료',
   cancelled: '취소',
 };
+
+// ===== 수동 크레딧 관련 타입 =====
+
+// 수동 크레딧 생성 요청 DTO
+export interface ManualCreditRequest {
+  // 날짜로 입력 시
+  start_date?: string;  // YYYY-MM-DD
+  end_date?: string;    // YYYY-MM-DD
+  // 회차로 입력 시
+  class_count?: number; // 1~12
+  // 공통
+  reason: string;
+  notes?: string;
+}
+
+// 수동 크레딧 생성 응답
+export interface ManualCreditResponse {
+  message: string;
+  credit: RestCredit;
+  calculation: {
+    monthly_tuition: number;
+    weekly_count: number;
+    per_class_fee: number;
+    class_count: number;
+    class_dates: string[] | null;
+    total_credit: number;
+  };
+}

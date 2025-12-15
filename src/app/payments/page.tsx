@@ -7,14 +7,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Plus, Download, AlertCircle, Banknote, Bell, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentList } from '@/components/payments/payment-list';
+import { ManualCreditModal } from '@/components/students/manual-credit-modal';
 import { usePayments } from '@/hooks/use-payments';
 import { paymentsAPI } from '@/lib/api/payments';
+import { studentsAPI } from '@/lib/api/students';
 import { notificationsAPI } from '@/lib/api/notifications';
 import { usePermissions } from '@/lib/utils/permissions';
 import {
   PAYMENT_STATUS_OPTIONS,
   PAYMENT_TYPE_OPTIONS,
 } from '@/lib/types/payment';
+import type { Payment } from '@/lib/types/payment';
+import { parseClassDays } from '@/lib/types/student';
 
 function PaymentsPageContent() {
   const router = useRouter();
@@ -35,6 +39,17 @@ function PaymentsPageContent() {
   }, [searchParams, initialFiltersApplied, updateFilters]);
   const [bulkCharging, setBulkCharging] = useState(false);
   const [sendingNotification, setSendingNotification] = useState(false);
+
+  // 크레딧 모달 상태
+  const [creditModalOpen, setCreditModalOpen] = useState(false);
+  const [creditStudentInfo, setCreditStudentInfo] = useState<{
+    studentId: number;
+    studentName: string;
+    monthlyTuition: number;
+    weeklyCount: number;
+    classDays: number[];
+  } | null>(null);
+
   const { canEdit, canView } = usePermissions();
   const canEditPayments = canEdit('payments');
   const canViewPayments = canView('payments');
@@ -112,6 +127,31 @@ function PaymentsPageContent() {
     } finally {
       setSendingNotification(false);
     }
+  };
+
+  // 크레딧 버튼 클릭 핸들러
+  const handleCreditClick = async (payment: Payment) => {
+    try {
+      // 학생 정보 조회
+      const result = await studentsAPI.getStudent(payment.student_id);
+      const student = result.student;
+      setCreditStudentInfo({
+        studentId: student.id,
+        studentName: student.name,
+        monthlyTuition: parseFloat(student.monthly_tuition) || 0,
+        weeklyCount: student.weekly_count || 2,
+        classDays: parseClassDays(student.class_days || []),
+      });
+      setCreditModalOpen(true);
+    } catch (err: any) {
+      toast.error('학생 정보를 불러오는데 실패했습니다.');
+      console.error('Failed to fetch student:', err);
+    }
+  };
+
+  // 크레딧 생성 성공 핸들러
+  const handleCreditSuccess = () => {
+    reload();
   };
 
   if (error && !loading) {
@@ -337,7 +377,30 @@ function PaymentsPageContent() {
         </CardContent>
       </Card>
 
-      <PaymentList payments={filteredPayments} loading={loading} onPaymentClick={handlePaymentClick} />
+      <PaymentList
+        payments={filteredPayments}
+        loading={loading}
+        onPaymentClick={handlePaymentClick}
+        onCreditClick={canEditPayments ? handleCreditClick : undefined}
+        showCreditButton={canEditPayments}
+      />
+
+      {/* 크레딧 모달 */}
+      {creditStudentInfo && (
+        <ManualCreditModal
+          open={creditModalOpen}
+          onClose={() => {
+            setCreditModalOpen(false);
+            setCreditStudentInfo(null);
+          }}
+          studentId={creditStudentInfo.studentId}
+          studentName={creditStudentInfo.studentName}
+          monthlyTuition={creditStudentInfo.monthlyTuition}
+          weeklyCount={creditStudentInfo.weeklyCount}
+          classDays={creditStudentInfo.classDays}
+          onSuccess={handleCreditSuccess}
+        />
+      )}
     </div>
   );
 }

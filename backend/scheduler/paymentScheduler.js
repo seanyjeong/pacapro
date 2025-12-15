@@ -90,12 +90,12 @@ async function generateMonthlyPayments() {
                 let notes = null;
 
                 try {
-                    // 휴식 이월(carryover) + 공결(excused) 크레딧 모두 조회
+                    // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 모두 조회
                     const [pendingCredits] = await db.query(`
                         SELECT id, remaining_amount, credit_type FROM rest_credits
                         WHERE student_id = ?
                         AND academy_id = ?
-                        AND credit_type IN ('carryover', 'excused')
+                        AND credit_type IN ('carryover', 'excused', 'manual')
                         AND status IN ('pending', 'partial')
                         AND remaining_amount > 0
                         ORDER BY created_at ASC

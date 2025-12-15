@@ -164,9 +164,16 @@ router.get('/overtime/history', verifyToken, checkPermission('instructors', 'vie
 
         const [requests] = await db.query(query, params);
 
+        // 복호화
+        const decryptedRequests = requests.map(r => ({
+            ...r,
+            instructor_name: r.instructor_name ? decrypt(r.instructor_name) : r.instructor_name,
+            approved_by_name: r.approved_by_name ? decrypt(r.approved_by_name) : r.approved_by_name
+        }));
+
         res.json({
             message: `Found ${requests.length} overtime records`,
-            requests
+            requests: decryptedRequests
         });
     } catch (error) {
         console.error('Error fetching overtime history:', error);

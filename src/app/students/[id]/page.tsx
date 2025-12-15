@@ -249,7 +249,15 @@ export default function StudentDetailPage() {
           <StudentPerformanceComponent performances={performances} loading={false} />
         )}
         {activeTab === 'payments' && (
-          <StudentPaymentsComponent payments={payments} loading={false} />
+          <StudentPaymentsComponent
+            payments={payments}
+            loading={false}
+            studentId={studentId}
+            studentName={student.name}
+            monthlyTuition={parseFloat(student.monthly_tuition) || 0}
+            weeklyCount={student.weekly_count || 2}
+            classDays={student.class_days}
+          />
         )}
         {activeTab === 'seasons' && (
           <StudentSeasonsComponent studentId={studentId} studentType={student.student_type} />

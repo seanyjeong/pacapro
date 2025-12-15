@@ -4,6 +4,8 @@
  */
 
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Coins } from 'lucide-react';
 import type { Payment } from '@/lib/types/payment';
 import {
   formatPaymentAmount,
@@ -23,9 +25,11 @@ interface PaymentListProps {
   payments: Payment[];
   loading?: boolean;
   onPaymentClick: (id: number) => void;
+  onCreditClick?: (payment: Payment) => void;
+  showCreditButton?: boolean;
 }
 
-export function PaymentList({ payments, loading, onPaymentClick }: PaymentListProps) {
+export function PaymentList({ payments, loading, onPaymentClick, onCreditClick, showCreditButton = false }: PaymentListProps) {
   if (loading) {
     return (
       <Card>
@@ -87,6 +91,11 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   상태
                 </th>
+                {showCreditButton && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    작업
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-card divide-y divide-border">
@@ -178,6 +187,22 @@ export function PaymentList({ payments, loading, onPaymentClick }: PaymentListPr
                         )}
                       </div>
                     </td>
+                    {showCreditButton && onCreditClick && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onCreditClick(payment);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950"
+                        >
+                          <Coins className="w-4 h-4 mr-1" />
+                          크레딧
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
