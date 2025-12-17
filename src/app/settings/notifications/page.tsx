@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign } from 'lucide-react';
-import { notificationsAPI, NotificationSettings, NotificationLog } from '@/lib/api/notifications';
+import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign, Plus, Trash2, Image } from 'lucide-react';
+import { notificationsAPI, NotificationSettings, NotificationLog, ConsultationButton } from '@/lib/api/notifications';
 import PushNotificationSettings from '@/components/push-notification-settings';
 
 type ServiceType = 'sens' | 'solapi';
@@ -28,6 +28,8 @@ export default function NotificationSettingsPage() {
     // 상담확정 알림톡
     solapi_consultation_template_id: '',
     solapi_consultation_template_content: '',
+    solapi_consultation_buttons: [],
+    solapi_consultation_image_url: '',
     // 공통
     is_enabled: false,        // SENS 활성화
     solapi_enabled: false,    // 솔라피 활성화
@@ -140,6 +142,38 @@ export default function NotificationSettingsPage() {
     } finally {
       setTesting(false);
     }
+  };
+
+  // 상담확정 버튼 추가
+  const addConsultationButton = () => {
+    const newButton: ConsultationButton = {
+      buttonType: 'WL',
+      buttonName: '',
+      linkMo: '',
+      linkPc: '',
+    };
+    setSettings(prev => ({
+      ...prev,
+      solapi_consultation_buttons: [...(prev.solapi_consultation_buttons || []), newButton],
+    }));
+  };
+
+  // 상담확정 버튼 삭제
+  const removeConsultationButton = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      solapi_consultation_buttons: prev.solapi_consultation_buttons.filter((_, i) => i !== index),
+    }));
+  };
+
+  // 상담확정 버튼 수정
+  const updateConsultationButton = (index: number, field: keyof ConsultationButton, value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      solapi_consultation_buttons: prev.solapi_consultation_buttons.map((btn, i) =>
+        i === index ? { ...btn, [field]: value } : btn
+      ),
+    }));
   };
 
   // 상담확정 알림톡 테스트
@@ -943,6 +977,113 @@ export default function NotificationSettingsPage() {
                     </div>
                   </div>
                 )}
+
+                {/* 이미지 URL 설정 */}
+                <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Image className="w-4 h-4 text-muted-foreground" />
+                    <h4 className="font-medium text-foreground">이미지 설정 (선택)</h4>
+                  </div>
+                  <input
+                    type="url"
+                    value={settings.solapi_consultation_image_url || ''}
+                    onChange={(e) => setSettings(prev => ({ ...prev, solapi_consultation_image_url: e.target.value }))}
+                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="https://example.com/image.jpg (이미지 알림톡인 경우)"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">이미지 알림톡 템플릿인 경우에만 입력하세요</p>
+                </div>
+
+                {/* 버튼 설정 */}
+                <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium text-foreground">버튼 설정</h4>
+                    <button
+                      type="button"
+                      onClick={addConsultationButton}
+                      disabled={(settings.solapi_consultation_buttons?.length || 0) >= 5}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="w-4 h-4" />
+                      버튼 추가
+                    </button>
+                  </div>
+
+                  {(settings.solapi_consultation_buttons?.length || 0) === 0 ? (
+                    <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                      버튼이 없습니다. 템플릿에 버튼이 있다면 위의 &quot;버튼 추가&quot; 버튼을 클릭하세요.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {settings.solapi_consultation_buttons?.map((button, index) => (
+                        <div key={index} className="p-4 bg-muted/30 rounded-lg border border-border">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-foreground">버튼 {index + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeConsultationButton(index)}
+                              className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">버튼 타입</label>
+                              <select
+                                value={button.buttonType}
+                                onChange={(e) => updateConsultationButton(index, 'buttonType', e.target.value)}
+                                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                              >
+                                <option value="WL">웹링크 (WL)</option>
+                                <option value="AL">앱링크 (AL)</option>
+                                <option value="BK">봇키워드 (BK)</option>
+                                <option value="MD">메시지전달 (MD)</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">버튼 이름</label>
+                              <input
+                                type="text"
+                                value={button.buttonName || ''}
+                                onChange={(e) => updateConsultationButton(index, 'buttonName', e.target.value)}
+                                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                                placeholder="예: 일정 변경하기"
+                              />
+                            </div>
+                            {button.buttonType === 'WL' && (
+                              <>
+                                <div>
+                                  <label className="block text-xs text-muted-foreground mb-1">모바일 링크</label>
+                                  <input
+                                    type="url"
+                                    value={button.linkMo || ''}
+                                    onChange={(e) => updateConsultationButton(index, 'linkMo', e.target.value)}
+                                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                                    placeholder="https://..."
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-muted-foreground mb-1">PC 링크 (선택)</label>
+                                  <input
+                                    type="url"
+                                    value={button.linkPc || ''}
+                                    onChange={(e) => updateConsultationButton(index, 'linkPc', e.target.value)}
+                                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                                    placeholder="https://... (미입력시 모바일 링크 사용)"
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-2">
+                    * 솔라피에서 등록한 템플릿의 버튼과 동일하게 설정해야 합니다
+                  </p>
+                </div>
 
                 {/* 발송 안내 */}
                 <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">

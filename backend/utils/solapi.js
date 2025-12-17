@@ -46,10 +46,11 @@ function getSolapiAuthHeader(apiKey, apiSecret) {
  * 알림톡 발송 (솔라피)
  * @param {Object} settings - 솔라피 설정
  * @param {string} templateId - 템플릿 ID
- * @param {Array} recipients - 수신자 목록 [{phone, variables}]
+ * @param {Array} recipients - 수신자 목록 [{phone, content, buttons}]
+ * @param {Array} buttons - 버튼 배열 (선택) [{buttonType, buttonName, linkMo, linkPc}]
  * @returns {Object} - 발송 결과
  */
-async function sendAlimtalkSolapi(settings, templateId, recipients) {
+async function sendAlimtalkSolapi(settings, templateId, recipients, buttons = null) {
     const {
         solapi_api_key: apiKey,
         solapi_api_secret: apiSecret,
@@ -64,15 +65,30 @@ async function sendAlimtalkSolapi(settings, templateId, recipients) {
 
     // 메시지 구성
     // 솔라피는 variables가 아니라 text에 변수가 치환된 전체 내용을 보내야 함
-    const messages = recipients.map(r => ({
-        to: r.phone.replace(/-/g, ''),  // 010-1234-5678 -> 01012345678
-        from: settings.solapi_sender_phone?.replace(/-/g, '') || '',  // 발신번호
-        text: r.content || '',  // 변수가 치환된 전체 메시지 내용
-        kakaoOptions: {
+    const messages = recipients.map(r => {
+        const kakaoOptions = {
             pfId: pfId,
             templateId: templateId
+        };
+
+        // 버튼이 있으면 추가 (수신자별 버튼 또는 공통 버튼)
+        const messageButtons = r.buttons || buttons;
+        if (messageButtons && messageButtons.length > 0) {
+            kakaoOptions.buttons = messageButtons;
         }
-    }));
+
+        // 이미지 URL이 있으면 추가
+        if (r.imageUrl) {
+            kakaoOptions.imageUrl = r.imageUrl;
+        }
+
+        return {
+            to: r.phone.replace(/-/g, ''),  // 010-1234-5678 -> 01012345678
+            from: settings.solapi_sender_phone?.replace(/-/g, '') || '',  // 발신번호
+            text: r.content || '',  // 변수가 치환된 전체 메시지 내용
+            kakaoOptions
+        };
+    });
 
     const body = {
         messages: messages

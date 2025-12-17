@@ -60,7 +60,8 @@ async function sendConfirmationAlimtalk(consultation, academyId) {
         // 솔라피 설정 조회
         const [settings] = await db.query(
             `SELECT solapi_api_key, solapi_api_secret, solapi_pfid, solapi_sender_phone,
-                    solapi_consultation_template_id, solapi_consultation_template_content
+                    solapi_consultation_template_id, solapi_consultation_template_content,
+                    solapi_consultation_buttons, solapi_consultation_image_url
              FROM notification_settings WHERE academy_id = ?`,
             [academyId]
         );
@@ -109,9 +110,22 @@ async function sendConfirmationAlimtalk(consultation, academyId) {
             .replace(/#{시간}/g, timeStr)
             .replace(/#{예약번호}/g, reservation_number);
 
-        console.log('[ConsultationAlimtalk] 발송:', { name, phone, dateStr, timeStr, reservation_number });
+        // 버튼 설정 파싱
+        let buttons = null;
+        if (setting.solapi_consultation_buttons) {
+            try {
+                buttons = JSON.parse(setting.solapi_consultation_buttons);
+            } catch (e) {
+                console.error('[ConsultationAlimtalk] 버튼 설정 파싱 오류:', e);
+            }
+        }
 
-        // 솔라피 알림톡 발송
+        // 이미지 URL
+        const imageUrl = setting.solapi_consultation_image_url || null;
+
+        console.log('[ConsultationAlimtalk] 발송:', { name, phone, dateStr, timeStr, reservation_number, hasButtons: !!buttons, hasImage: !!imageUrl });
+
+        // 솔라피 알림톡 발송 (버튼/이미지 포함)
         const result = await sendAlimtalkSolapi(
             {
                 solapi_api_key: setting.solapi_api_key,
@@ -120,7 +134,7 @@ async function sendConfirmationAlimtalk(consultation, academyId) {
                 solapi_sender_phone: setting.solapi_sender_phone
             },
             setting.solapi_consultation_template_id,
-            [{ phone, content }]
+            [{ phone, content, buttons, imageUrl }]
         );
 
         if (result.success) {

@@ -102,7 +102,9 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), async 
                 has_solapi_secret: !!setting.solapi_api_secret,
                 // 상담확정 알림톡 설정
                 solapi_consultation_template_id: setting.solapi_consultation_template_id || '',
-                solapi_consultation_template_content: setting.solapi_consultation_template_content || ''
+                solapi_consultation_template_content: setting.solapi_consultation_template_content || '',
+                solapi_consultation_buttons: setting.solapi_consultation_buttons ? JSON.parse(setting.solapi_consultation_buttons) : [],
+                solapi_consultation_image_url: setting.solapi_consultation_image_url || ''
             }
         });
     } catch (error) {
@@ -140,6 +142,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
             // 상담확정 알림톡 설정
             solapi_consultation_template_id,
             solapi_consultation_template_content,
+            solapi_consultation_buttons,
+            solapi_consultation_image_url,
             // 공통 설정
             is_enabled,
             solapi_enabled,
@@ -179,10 +183,10 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                 (academy_id, service_type,
                  naver_access_key, naver_secret_key, naver_service_id, sms_service_id, kakao_channel_id,
                  solapi_api_key, solapi_api_secret, solapi_pfid, solapi_sender_phone, solapi_template_id, solapi_template_content,
-                 solapi_consultation_template_id, solapi_consultation_template_content,
+                 solapi_consultation_template_id, solapi_consultation_template_content, solapi_consultation_buttons, solapi_consultation_image_url,
                  template_code, template_content, is_enabled, solapi_enabled, solapi_auto_enabled, solapi_auto_hour,
                  auto_send_day, auto_send_days, auto_send_hour)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     req.user.academyId,
                     service_type || 'sens',
@@ -199,6 +203,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_template_content || null,
                     solapi_consultation_template_id || null,
                     solapi_consultation_template_content || null,
+                    solapi_consultation_buttons ? JSON.stringify(solapi_consultation_buttons) : null,
+                    solapi_consultation_image_url || null,
                     template_code || null,
                     template_content || null,
                     is_enabled || false,
@@ -228,6 +234,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_template_content = ?,
                     solapi_consultation_template_id = ?,
                     solapi_consultation_template_content = ?,
+                    solapi_consultation_buttons = ?,
+                    solapi_consultation_image_url = ?,
                     template_code = ?,
                     template_content = ?,
                     is_enabled = ?,
@@ -253,6 +261,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_template_content || null,
                     solapi_consultation_template_id || null,
                     solapi_consultation_template_content || null,
+                    solapi_consultation_buttons ? JSON.stringify(solapi_consultation_buttons) : null,
+                    solapi_consultation_image_url || null,
                     template_code || null,
                     template_content || null,
                     is_enabled || false,
@@ -1195,7 +1205,20 @@ router.post('/test-consultation', verifyToken, checkPermission('settings', 'edit
             .replace(/#{시간}/g, timeStr)
             .replace(/#{예약번호}/g, testReservationNumber);
 
-        // 솔라피 알림톡 발송
+        // 버튼 설정 파싱
+        let buttons = null;
+        if (setting.solapi_consultation_buttons) {
+            try {
+                buttons = JSON.parse(setting.solapi_consultation_buttons);
+            } catch (e) {
+                console.error('버튼 설정 파싱 오류:', e);
+            }
+        }
+
+        // 이미지 URL
+        const imageUrl = setting.solapi_consultation_image_url || null;
+
+        // 솔라피 알림톡 발송 (버튼/이미지 포함)
         const result = await sendAlimtalkSolapi(
             {
                 solapi_api_key: setting.solapi_api_key,
@@ -1204,7 +1227,7 @@ router.post('/test-consultation', verifyToken, checkPermission('settings', 'edit
                 solapi_sender_phone: setting.solapi_sender_phone
             },
             setting.solapi_consultation_template_id,
-            [{ phone, content }]
+            [{ phone, content, buttons, imageUrl }]
         );
 
         if (result.success) {

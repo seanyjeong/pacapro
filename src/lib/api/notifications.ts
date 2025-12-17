@@ -4,6 +4,14 @@
 
 import apiClient from './client';
 
+// 알림톡 버튼 타입
+export interface ConsultationButton {
+  buttonType: 'WL' | 'AL' | 'BK' | 'MD';  // WL: 웹링크, AL: 앱링크, BK: 봇키워드, MD: 메시지전달
+  buttonName: string;
+  linkMo?: string;  // 모바일 링크
+  linkPc?: string;  // PC 링크
+}
+
 export interface NotificationSettings {
   // 서비스 타입 선택
   service_type: 'sens' | 'solapi';
@@ -30,6 +38,8 @@ export interface NotificationSettings {
   // 상담확정 알림톡 설정
   solapi_consultation_template_id: string;
   solapi_consultation_template_content: string;
+  solapi_consultation_buttons: ConsultationButton[];
+  solapi_consultation_image_url: string;
 
   // 공통 설정
   is_enabled: boolean;        // SENS 활성화
