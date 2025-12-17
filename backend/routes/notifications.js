@@ -1304,6 +1304,155 @@ router.post('/test-consultation', verifyToken, checkPermission('settings', 'edit
 });
 
 /**
+ * POST /paca/notifications/test-trial
+ * 체험수업 알림톡 테스트 발송
+ */
+router.post('/test-trial', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { phone } = req.body;
+
+        if (!phone || !isValidPhoneNumber(phone)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '유효한 전화번호를 입력해주세요.'
+            });
+        }
+
+        // 설정 조회
+        const [settings] = await db.query(
+            'SELECT * FROM notification_settings WHERE academy_id = ?',
+            [req.user.academyId]
+        );
+
+        if (settings.length === 0) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '알림 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        const setting = settings[0];
+
+        // 솔라피 설정 확인
+        if (!setting.solapi_api_key || !setting.solapi_api_secret || !setting.solapi_pfid) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '솔라피 API 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        if (!setting.solapi_trial_template_id) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '체험수업 템플릿 ID를 먼저 설정해주세요.'
+            });
+        }
+
+        // Secret 복호화
+        const decryptedSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
+        if (!decryptedSecret) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '솔라피 API Secret이 올바르지 않습니다.'
+            });
+        }
+
+        // 학원명 조회
+        const [academy] = await db.query(
+            'SELECT name FROM academies WHERE id = ?',
+            [req.user.academyId]
+        );
+        const academyName = academy[0]?.name || '학원';
+
+        // 테스트 체험일정 생성 (오늘 + 2일, 오늘 + 4일)
+        const today = new Date();
+        const date1 = new Date(today);
+        date1.setDate(date1.getDate() + 2);
+        const date2 = new Date(today);
+        date2.setDate(date2.getDate() + 4);
+
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const formatDate = (d) => {
+            const m = d.getMonth() + 1;
+            const day = d.getDate();
+            const dayName = dayNames[d.getDay()];
+            return `${m}/${day}(${dayName})`;
+        };
+
+        // 체험일정 문자열 (1회차 완료 표시)
+        const scheduleText = `✓ 1회차: ${formatDate(date1)} 18:30\n2회차: ${formatDate(date2)} 18:30`;
+
+        // 템플릿 변수 치환
+        let content = setting.solapi_trial_template_content || '';
+        content = content
+            .replace(/#{이름}/g, '테스트학생')
+            .replace(/#{학원명}/g, academyName)
+            .replace(/#{체험일정}/g, scheduleText);
+
+        // 버튼 설정 파싱
+        let buttons = null;
+        if (setting.solapi_trial_buttons) {
+            try {
+                buttons = JSON.parse(setting.solapi_trial_buttons);
+            } catch (e) {
+                console.error('버튼 설정 파싱 오류:', e);
+            }
+        }
+
+        // 이미지 URL
+        const imageUrl = setting.solapi_trial_image_url || null;
+
+        // 솔라피 알림톡 발송
+        const result = await sendAlimtalkSolapi(
+            {
+                solapi_api_key: setting.solapi_api_key,
+                solapi_api_secret: decryptedSecret,
+                solapi_pfid: setting.solapi_pfid,
+                solapi_sender_phone: setting.solapi_sender_phone
+            },
+            setting.solapi_trial_template_id,
+            [{ phone, content, buttons, imageUrl }]
+        );
+
+        if (result.success) {
+            // 로그 기록
+            await db.query(
+                `INSERT INTO notification_logs
+                (academy_id, recipient_name, recipient_phone, message_type, template_code,
+                 message_content, status, request_id, sent_at)
+                VALUES (?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
+                [
+                    req.user.academyId,
+                    '테스트(체험수업)',
+                    phone,
+                    setting.solapi_trial_template_id,
+                    content,
+                    result.groupId || null
+                ]
+            );
+
+            res.json({
+                message: '체험수업 테스트 메시지가 발송되었습니다.',
+                success: true,
+                groupId: result.groupId
+            });
+        } else {
+            res.status(400).json({
+                error: 'Send Failed',
+                message: '메시지 발송에 실패했습니다: ' + (result.error || '알 수 없는 오류'),
+                details: result
+            });
+        }
+    } catch (error) {
+        console.error('체험수업 테스트 발송 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '테스트 발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
  * GET /paca/notifications/stats
  * 발송 통계
  */

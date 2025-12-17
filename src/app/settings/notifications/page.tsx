@@ -69,8 +69,10 @@ export default function NotificationSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testingConsultation, setTestingConsultation] = useState(false);
+  const [testingTrial, setTestingTrial] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [testPhoneConsultation, setTestPhoneConsultation] = useState('');
+  const [testPhoneTrial, setTestPhoneTrial] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [sendingUnpaid, setSendingUnpaid] = useState(false);
 
@@ -192,6 +194,26 @@ export default function NotificationSettingsPage() {
       setMessage({ type: 'error', text: err.response?.data?.message || '상담확정 테스트 발송에 실패했습니다.' });
     } finally {
       setTestingConsultation(false);
+    }
+  };
+
+  // 체험수업 알림톡 테스트
+  const handleTestTrial = async () => {
+    if (!testPhoneTrial) {
+      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
+      return;
+    }
+    setTestingTrial(true);
+    setMessage(null);
+    try {
+      await notificationsAPI.sendTestTrial(testPhoneTrial);
+      setMessage({ type: 'success', text: '체험수업 테스트 메시지가 발송되었습니다.' });
+      loadLogs();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || '체험수업 테스트 발송에 실패했습니다.' });
+    } finally {
+      setTestingTrial(false);
     }
   };
 
@@ -1187,39 +1209,37 @@ export default function NotificationSettingsPage() {
                 rows={5}
                 className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
                 placeholder={`안녕하세요, #{학원명}입니다.
-
 #{이름}님의 체험수업 일정을 안내드립니다.
 
-■ 체험수업 일시: #{날짜} #{시간}
+■ 체험수업 일시
+#{체험일정}
 
-문의사항은 #{학원전화}로 연락주세요.`}
+일정 변경은 카카오톡 채널로 문의해주세요.`}
               />
             </div>
 
             <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">사용 가능한 변수</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
                 <div className="flex items-center gap-2">
                   <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{이름}'}</code>
                   <span className="text-muted-foreground">학생명</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{날짜}'}</code>
-                  <span className="text-muted-foreground">수업일</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{시간}'}</code>
-                  <span className="text-muted-foreground">수업시간</span>
-                </div>
-                <div className="flex items-center gap-2">
                   <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원명}'}</code>
-                  <span className="text-muted-foreground">학원이름</span>
+                  <span className="text-muted-foreground">학원 이름</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원전화}'}</code>
-                  <span className="text-muted-foreground">학원전화</span>
+                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{체험일정}'}</code>
+                  <span className="text-muted-foreground">1·2회차 일정</span>
                 </div>
               </div>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                * 체험일정은 자동 생성됩니다 (예: 1회차: 12/10(화) 18:30 / 2회차: 12/12(목) 18:30)
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                * 시간은 학원 설정의 시간대(오전/오후/저녁)에 맞게 변환됩니다
+              </p>
             </div>
 
             {/* 체험수업 알림톡 미리보기 */}
@@ -1244,15 +1264,13 @@ export default function NotificationSettingsPage() {
                       </div>
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-gray-600 mb-1">학원</p>
+                      <p className="text-xs text-gray-600 mb-1">맥스체대입시</p>
                       <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
                         <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                           {settings.solapi_trial_template_content
                             .replace(/#{이름}/g, '홍길동')
-                            .replace(/#{날짜}/g, '12월 20일')
-                            .replace(/#{시간}/g, '14:00')
                             .replace(/#{학원명}/g, '맥스체대입시')
-                            .replace(/#{학원전화}/g, '010-0000-0000')
+                            .replace(/#{체험일정}/g, '✓ 1회차: 12/18(수) 18:30\n2회차: 12/20(금) 18:30')
                           }
                         </p>
                       </div>
@@ -1373,8 +1391,32 @@ export default function NotificationSettingsPage() {
             {/* 발송 안내 */}
             <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>수동 발송:</strong> 체험수업 알림톡은 학생 상세 페이지에서 수동으로 발송할 수 있습니다.
+                <strong>발송 방법:</strong> 체험수업 알림톡은 학생 상세 페이지에서 수동으로 발송하거나, 체험수업 예약 시 자동 발송됩니다.
               </p>
+            </div>
+
+            {/* 테스트 발송 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <h4 className="font-medium text-foreground mb-4">테스트 발송</h4>
+              <div className="flex gap-3">
+                <input
+                  type="tel"
+                  value={testPhoneTrial}
+                  onChange={e => setTestPhoneTrial(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="010-1234-5678"
+                />
+                <button
+                  onClick={handleTestTrial}
+                  disabled={testingTrial || !settings.solapi_trial_template_id}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testingTrial ? '발송 중...' : '테스트'}
+                </button>
+              </div>
+              {!settings.solapi_trial_template_id && (
+                <p className="text-sm text-amber-600 mt-1">템플릿 ID를 먼저 설정해야 테스트 발송이 가능합니다</p>
+              )}
             </div>
 
             {/* 저장 버튼 */}
