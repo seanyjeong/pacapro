@@ -1464,6 +1464,252 @@ router.post('/test-trial', verifyToken, checkPermission('settings', 'edit'), asy
 });
 
 /**
+ * POST /paca/notifications/send-trial-today-auto
+ * 체험수업 자동발송 - 현재 시간에 발송 설정된 모든 학원 처리 (n8n 매시간 호출)
+ * Access: n8n service account (X-API-Key 인증)
+ */
+router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
+    try {
+        // 현재 시간 (한국 시간)
+        const now = new Date();
+        const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+        const currentHour = koreaTime.getHours();
+        const todayStr = koreaTime.toISOString().split('T')[0]; // YYYY-MM-DD
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+        console.log(`[체험수업 자동발송] ${todayStr} ${currentHour}시 시작`);
+
+        // 현재 시간에 발송 설정된 학원들 조회
+        const [academySettings] = await db.query(
+            `SELECT ns.*, a.name as academy_name, a.phone as academy_phone
+             FROM notification_settings ns
+             JOIN academies a ON ns.academy_id = a.id
+             WHERE ns.solapi_enabled = 1
+             AND ns.solapi_trial_auto_enabled = 1
+             AND ns.solapi_trial_auto_hour = ?`,
+            [currentHour]
+        );
+
+        if (academySettings.length === 0) {
+            return res.json({
+                message: `${currentHour}시에 체험수업 발송 설정된 학원이 없습니다.`,
+                current_hour: currentHour,
+                academies_processed: 0
+            });
+        }
+
+        const results = [];
+
+        // 각 학원별로 처리
+        for (const setting of academySettings) {
+            const academyId = setting.academy_id;
+            const academyResult = {
+                academy_id: academyId,
+                academy_name: setting.academy_name,
+                sent: 0,
+                failed: 0,
+                skipped: false,
+                error: null,
+                students: []
+            };
+
+            try {
+                // 솔라피 Secret 복호화
+                const decryptedSolapiSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
+                if (!decryptedSolapiSecret) {
+                    academyResult.skipped = true;
+                    academyResult.error = '솔라피 API Secret 복호화 실패';
+                    results.push(academyResult);
+                    continue;
+                }
+
+                // 템플릿 확인
+                if (!setting.solapi_trial_template_id) {
+                    academyResult.skipped = true;
+                    academyResult.error = '체험수업 템플릿 ID 미설정';
+                    results.push(academyResult);
+                    continue;
+                }
+
+                // 오늘 체험수업이 있는 체험생 조회
+                // trial_dates는 JSON 배열로 저장됨 (예: ["2025-12-17", "2025-12-19"])
+                const [trialStudentsRaw] = await db.query(
+                    `SELECT
+                        s.id AS student_id,
+                        s.name,
+                        s.phone,
+                        s.parent_phone,
+                        s.trial_dates,
+                        s.trial_remaining,
+                        s.trial_total
+                    FROM students s
+                    WHERE s.academy_id = ?
+                    AND s.status = 'trial'
+                    AND s.deleted_at IS NULL
+                    AND JSON_CONTAINS(COALESCE(s.trial_dates, '[]'), ?)
+                    AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)`,
+                    [academyId, JSON.stringify(todayStr)]
+                );
+
+                // 복호화
+                const trialStudents = decryptStudentArray(trialStudentsRaw);
+
+                if (trialStudents.length === 0) {
+                    academyResult.skipped = true;
+                    academyResult.error = '오늘 체험수업 있는 학생 없음';
+                    results.push(academyResult);
+                    continue;
+                }
+
+                // 유효한 전화번호 필터링
+                const validRecipients = trialStudents
+                    .map(s => {
+                        const phone = isValidPhoneNumber(s.parent_phone) ? s.parent_phone : s.phone;
+                        return { ...s, effectivePhone: phone };
+                    })
+                    .filter(s => isValidPhoneNumber(s.effectivePhone));
+
+                if (validRecipients.length === 0) {
+                    academyResult.skipped = true;
+                    academyResult.error = '유효한 전화번호 없음';
+                    results.push(academyResult);
+                    continue;
+                }
+
+                // 메시지 준비 (학원별 템플릿 사용)
+                const templateContent = setting.solapi_trial_template_content || '';
+                const templateCode = setting.solapi_trial_template_id;
+
+                // 버튼 설정 파싱
+                let buttons = null;
+                if (setting.solapi_trial_buttons) {
+                    try {
+                        buttons = JSON.parse(setting.solapi_trial_buttons);
+                    } catch (e) {
+                        console.error('버튼 설정 파싱 오류:', e);
+                    }
+                }
+
+                // 이미지 URL
+                const imageUrl = setting.solapi_trial_image_url || null;
+
+                const recipients = validRecipients.map(s => {
+                    // 체험일정 문자열 생성
+                    let scheduleText = '';
+                    try {
+                        const trialDates = JSON.parse(s.trial_dates || '[]');
+                        const totalSessions = s.trial_total || trialDates.length;
+                        const completedSessions = totalSessions - (s.trial_remaining || 0);
+
+                        scheduleText = trialDates.map((dateStr, idx) => {
+                            const d = new Date(dateStr);
+                            const m = d.getMonth() + 1;
+                            const day = d.getDate();
+                            const dayName = dayNames[d.getDay()];
+                            const isCompleted = idx < completedSessions;
+                            const prefix = isCompleted ? '✓ ' : '';
+                            return `${prefix}${idx + 1}회차: ${m}/${day}(${dayName})`;
+                        }).join('\n');
+                    } catch (e) {
+                        scheduleText = '체험일정 정보 없음';
+                    }
+
+                    // 템플릿 변수 치환
+                    let content = templateContent;
+                    content = content
+                        .replace(/#{이름}/g, s.name)
+                        .replace(/#{학원명}/g, setting.academy_name || '학원')
+                        .replace(/#{체험일정}/g, scheduleText);
+
+                    return {
+                        phone: s.effectivePhone,
+                        content,
+                        buttons,
+                        imageUrl,
+                        studentId: s.student_id,
+                        studentName: s.name
+                    };
+                });
+
+                // 솔라피 알림톡 발송 (학원별 API 키 사용)
+                const result = await sendAlimtalkSolapi(
+                    {
+                        solapi_api_key: setting.solapi_api_key,
+                        solapi_api_secret: decryptedSolapiSecret,
+                        solapi_pfid: setting.solapi_pfid,
+                        solapi_sender_phone: setting.solapi_sender_phone
+                    },
+                    templateCode,
+                    recipients
+                );
+
+                // 로그 기록
+                for (const recipient of recipients) {
+                    await db.query(
+                        `INSERT INTO notification_logs
+                        (academy_id, student_id, recipient_name, recipient_phone,
+                         message_type, template_code, message_content, status, request_id,
+                         error_message, sent_at)
+                        VALUES (?, ?, ?, ?, 'alimtalk', ?, ?, ?, ?, ?, NOW())`,
+                        [
+                            academyId,
+                            recipient.studentId,
+                            recipient.studentName,
+                            recipient.phone,
+                            templateCode,
+                            recipient.content,
+                            result.success ? 'sent' : 'failed',
+                            result.groupId || null,
+                            result.success ? null : (result.error || 'Unknown error')
+                        ]
+                    );
+
+                    academyResult.students.push(recipient.studentName);
+
+                    if (result.success) {
+                        academyResult.sent++;
+                    } else {
+                        academyResult.failed++;
+                    }
+                }
+
+                if (!result.success) {
+                    academyResult.error = result.error;
+                }
+
+            } catch (academyError) {
+                academyResult.error = academyError.message;
+                academyResult.failed = 1;
+            }
+
+            results.push(academyResult);
+        }
+
+        const totalSent = results.reduce((sum, r) => sum + r.sent, 0);
+        const totalFailed = results.reduce((sum, r) => sum + r.failed, 0);
+
+        console.log(`[체험수업 자동발송] 완료 - ${totalSent}명 성공, ${totalFailed}명 실패`);
+
+        res.json({
+            message: `${currentHour}시 체험수업 자동발송 완료`,
+            date: todayStr,
+            current_hour: currentHour,
+            academies_processed: academySettings.length,
+            total_sent: totalSent,
+            total_failed: totalFailed,
+            results: results
+        });
+    } catch (error) {
+        console.error('체험수업 자동발송 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '자동발송 처리에 실패했습니다.',
+            details: error.message
+        });
+    }
+});
+
+/**
  * GET /paca/notifications/stats
  * 발송 통계
  */
