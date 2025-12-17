@@ -110,11 +110,23 @@ async function sendConfirmationAlimtalk(consultation, academyId) {
             .replace(/#{시간}/g, timeStr)
             .replace(/#{예약번호}/g, reservation_number);
 
-        // 버튼 설정 파싱
+        // 버튼 설정 파싱 및 변수 치환
         let buttons = null;
         if (setting.solapi_consultation_buttons) {
             try {
                 buttons = JSON.parse(setting.solapi_consultation_buttons);
+                // 버튼 링크의 변수 치환
+                buttons = buttons.map(btn => ({
+                    ...btn,
+                    linkMo: btn.linkMo?.replace(/#{이름}/g, name)
+                        .replace(/#{날짜}/g, dateStr)
+                        .replace(/#{시간}/g, timeStr)
+                        .replace(/#{예약번호}/g, reservation_number),
+                    linkPc: btn.linkPc?.replace(/#{이름}/g, name)
+                        .replace(/#{날짜}/g, dateStr)
+                        .replace(/#{시간}/g, timeStr)
+                        .replace(/#{예약번호}/g, reservation_number),
+                }));
             } catch (e) {
                 console.error('[ConsultationAlimtalk] 버튼 설정 파싱 오류:', e);
             }

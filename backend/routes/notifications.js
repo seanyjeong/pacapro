@@ -1205,11 +1205,23 @@ router.post('/test-consultation', verifyToken, checkPermission('settings', 'edit
             .replace(/#{시간}/g, timeStr)
             .replace(/#{예약번호}/g, testReservationNumber);
 
-        // 버튼 설정 파싱
+        // 버튼 설정 파싱 및 변수 치환
         let buttons = null;
         if (setting.solapi_consultation_buttons) {
             try {
                 buttons = JSON.parse(setting.solapi_consultation_buttons);
+                // 버튼 링크의 변수 치환
+                buttons = buttons.map(btn => ({
+                    ...btn,
+                    linkMo: btn.linkMo?.replace(/#{이름}/g, '테스트학생')
+                        .replace(/#{날짜}/g, dateStr)
+                        .replace(/#{시간}/g, timeStr)
+                        .replace(/#{예약번호}/g, testReservationNumber),
+                    linkPc: btn.linkPc?.replace(/#{이름}/g, '테스트학생')
+                        .replace(/#{날짜}/g, dateStr)
+                        .replace(/#{시간}/g, timeStr)
+                        .replace(/#{예약번호}/g, testReservationNumber),
+                }));
             } catch (e) {
                 console.error('버튼 설정 파싱 오류:', e);
             }
