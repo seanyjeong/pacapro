@@ -15,6 +15,7 @@ import type {
   PaymentUpdateResponse,
   PaymentDeleteResponse,
   UnpaidPaymentsResponse,
+  UnpaidTodayResponse,
   BulkChargeResponse,
   PaymentStatsResponse,
   PaymentFilters,
@@ -46,6 +47,14 @@ export const paymentsAPI = {
    */
   getUnpaidPayments: async (): Promise<UnpaidPaymentsResponse> => {
     return await apiClient.get<UnpaidPaymentsResponse>('/payments/unpaid');
+  },
+
+  /**
+   * 오늘 출석 예정인 학생 중 미납자 조회
+   * GET /paca/payments/unpaid-today
+   */
+  getUnpaidTodayPayments: async (): Promise<UnpaidTodayResponse> => {
+    return await apiClient.get<UnpaidTodayResponse>('/payments/unpaid-today');
   },
 
   /**

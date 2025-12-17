@@ -116,6 +116,15 @@ export interface UnpaidPaymentsResponse {
   payments: UnpaidPayment[];
 }
 
+export interface UnpaidTodayResponse {
+  message: string;
+  date: string;
+  day_of_week: number;
+  day_name: string;
+  count: number;
+  payments: UnpaidPayment[];
+}
+
 export interface BulkChargeResponse {
   message: string;
   created: number;

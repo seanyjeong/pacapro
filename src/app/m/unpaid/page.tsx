@@ -18,6 +18,7 @@ export default function MobileUnpaidPage() {
   const [canMarkPaid, setCanMarkPaid] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<UnpaidPayment | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [dayName, setDayName] = useState<string>('');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -46,8 +47,9 @@ export default function MobileUnpaidPage() {
   const loadUnpaidPayments = async () => {
     setLoading(true);
     try {
-      const response = await paymentsAPI.getUnpaidPayments();
+      const response = await paymentsAPI.getUnpaidTodayPayments();
       setPayments(response.payments || []);
+      setDayName(response.day_name || '');
     } catch (err) {
       console.error('Failed to load unpaid payments:', err);
       toast.error('미납 목록을 불러오는데 실패했습니다.');
@@ -117,7 +119,12 @@ export default function MobileUnpaidPage() {
           <button onClick={() => router.push('/m')} className="p-2 -ml-2 text-muted-foreground hover:text-foreground transition">
             <ArrowLeft className="h-6 w-6" />
           </button>
-          <h1 className="text-xl font-bold text-foreground">미납자 확인</h1>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">오늘 출석 미납자</h1>
+            {dayName && (
+              <p className="text-sm text-muted-foreground">{dayName}요일 수업 학생 중</p>
+            )}
+          </div>
         </div>
       </header>
 
@@ -126,7 +133,9 @@ export default function MobileUnpaidPage() {
         {payments.length === 0 ? (
           <div className="text-center py-12">
             <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">미납자가 없습니다.</p>
+            <p className="text-muted-foreground">
+              {dayName ? `오늘(${dayName}요일) 수업 학생 중 미납자가 없습니다.` : '미납자가 없습니다.'}
+            </p>
           </div>
         ) : (
           <>
@@ -135,12 +144,12 @@ export default function MobileUnpaidPage() {
               <div className="flex justify-between items-center">
                 {canViewAmount ? (
                   <div>
-                    <p className="text-sm text-muted-foreground">총 미납</p>
+                    <p className="text-sm text-muted-foreground">오늘 수업 미납</p>
                     <p className="font-bold text-2xl text-red-600 dark:text-red-400">{formatAmount(totalUnpaid)}원</p>
                   </div>
                 ) : (
                   <div>
-                    <p className="text-sm text-muted-foreground">미납 현황</p>
+                    <p className="text-sm text-muted-foreground">오늘 수업 미납</p>
                     <p className="font-semibold text-lg text-foreground">확인 필요</p>
                   </div>
                 )}
