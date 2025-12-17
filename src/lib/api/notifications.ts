@@ -41,6 +41,12 @@ export interface NotificationSettings {
   solapi_consultation_buttons: ConsultationButton[];
   solapi_consultation_image_url: string;
 
+  // 체험수업 알림톡 설정
+  solapi_trial_template_id: string;
+  solapi_trial_template_content: string;
+  solapi_trial_buttons: ConsultationButton[];
+  solapi_trial_image_url: string;
+
   // 공통 설정
   is_enabled: boolean;        // SENS 활성화
   solapi_enabled: boolean;    // 솔라피 활성화

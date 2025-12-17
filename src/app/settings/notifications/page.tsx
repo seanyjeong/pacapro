@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign, Plus, Trash2, Image } from 'lucide-react';
+import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign, Plus, Trash2, Image, GraduationCap } from 'lucide-react';
 import { notificationsAPI, NotificationSettings, NotificationLog, ConsultationButton } from '@/lib/api/notifications';
 import PushNotificationSettings from '@/components/push-notification-settings';
 
 type ServiceType = 'sens' | 'solapi';
+type TemplateType = 'unpaid' | 'consultation' | 'trial';
 
 export default function NotificationSettingsPage() {
   const [settings, setSettings] = useState<NotificationSettings>({
@@ -30,6 +31,11 @@ export default function NotificationSettingsPage() {
     solapi_consultation_template_content: '',
     solapi_consultation_buttons: [],
     solapi_consultation_image_url: '',
+    // 체험수업 알림톡
+    solapi_trial_template_id: '',
+    solapi_trial_template_content: '',
+    solapi_trial_buttons: [],
+    solapi_trial_image_url: '',
     // 공통
     is_enabled: false,        // SENS 활성화
     solapi_enabled: false,    // 솔라피 활성화
@@ -74,15 +80,8 @@ export default function NotificationSettingsPage() {
   // 가이드 아코디언 상태
   const [openGuides, setOpenGuides] = useState<Record<string, boolean>>({});
 
-  // 템플릿 섹션 펼치기/접기 상태
-  const [openTemplates, setOpenTemplates] = useState<Record<string, boolean>>({
-    unpaid: true,
-    consultation: false,
-  });
-
-  const toggleTemplate = (key: string) => {
-    setOpenTemplates(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  // 현재 선택된 템플릿 탭
+  const [activeTemplate, setActiveTemplate] = useState<TemplateType>('unpaid');
 
   useEffect(() => {
     loadSettings();
@@ -194,6 +193,38 @@ export default function NotificationSettingsPage() {
     } finally {
       setTestingConsultation(false);
     }
+  };
+
+  // 체험수업 버튼 추가
+  const addTrialButton = () => {
+    const newButton: ConsultationButton = {
+      buttonType: 'WL',
+      buttonName: '',
+      linkMo: '',
+      linkPc: '',
+    };
+    setSettings(prev => ({
+      ...prev,
+      solapi_trial_buttons: [...(prev.solapi_trial_buttons || []), newButton],
+    }));
+  };
+
+  // 체험수업 버튼 삭제
+  const removeTrialButton = (index: number) => {
+    setSettings(prev => ({
+      ...prev,
+      solapi_trial_buttons: prev.solapi_trial_buttons.filter((_, i) => i !== index),
+    }));
+  };
+
+  // 체험수업 버튼 수정
+  const updateTrialButton = (index: number, field: keyof ConsultationButton, value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      solapi_trial_buttons: prev.solapi_trial_buttons.map((btn, i) =>
+        i === index ? { ...btn, [field]: value } : btn
+      ),
+    }));
   };
 
   // 미납자 수동 발송
@@ -607,36 +638,64 @@ export default function NotificationSettingsPage() {
         </div>
       )}
 
-      {/* 미납자 알림톡 템플릿 */}
+      {/* 템플릿 선택 탭 */}
       {activeTab === 'solapi' && (
-        <div className="bg-card rounded-lg shadow-sm border border-orange-200 dark:border-orange-800 overflow-hidden">
-          <button
-            onClick={() => toggleTemplate('unpaid')}
-            className="w-full flex items-center justify-between p-4 hover:bg-muted transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-foreground">미납자 알림톡</h3>
-                <p className="text-sm text-muted-foreground">학원비 미납 안내 메시지</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">알림톡 템플릿 설정</h2>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setActiveTemplate('unpaid')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                activeTemplate === 'unpaid'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-muted text-foreground hover:bg-muted/80'
+              }`}
+            >
+              <DollarSign className="w-4 h-4" />
+              미납자 알림톡
               {settings.solapi_template_id && (
-                <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded">설정됨</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'unpaid' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
               )}
-              {openTemplates.unpaid ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
-            </div>
-          </button>
+            </button>
+            <button
+              onClick={() => setActiveTemplate('consultation')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                activeTemplate === 'consultation'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-muted text-foreground hover:bg-muted/80'
+              }`}
+            >
+              <Bell className="w-4 h-4" />
+              상담확정 알림톡
+              {settings.solapi_consultation_template_id && (
+                <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'consultation' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTemplate('trial')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                activeTemplate === 'trial'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-muted text-foreground hover:bg-muted/80'
+              }`}
+            >
+              <GraduationCap className="w-4 h-4" />
+              체험수업 알림톡
+              {settings.solapi_trial_template_id && (
+                <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'trial' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
-          {openTemplates.unpaid && (
-            <div className="p-4 pt-0 border-t border-border">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    템플릿 ID
+      {/* 미납자 알림톡 템플릿 */}
+      {activeTab === 'solapi' && activeTemplate === 'unpaid' && (
+        <div className="bg-card rounded-lg shadow-sm border border-orange-200 dark:border-orange-800 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">
+                템플릿 ID
                   </label>
                   <input
                     type="text"
@@ -840,52 +899,27 @@ export default function NotificationSettingsPage() {
                   </div>
                 </div>
 
-                {/* 저장 버튼 */}
-                <div className="md:col-span-2 pt-4 border-t border-border">
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                  >
-                    {saving ? '저장 중...' : '미납자 알림톡 설정 저장'}
-                  </button>
-                </div>
-              </div>
+            {/* 저장 버튼 */}
+            <div className="md:col-span-2 pt-4 border-t border-border">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {saving ? '저장 중...' : '미납자 알림톡 설정 저장'}
+              </button>
             </div>
-          )}
+          </div>
         </div>
       )}
 
       {/* 상담확정 알림톡 템플릿 */}
-      {activeTab === 'solapi' && (
-        <div className="bg-card rounded-lg shadow-sm border border-green-200 dark:border-green-800 overflow-hidden">
-          <button
-            onClick={() => toggleTemplate('consultation')}
-            className="w-full flex items-center justify-between p-4 hover:bg-muted transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
-                <Bell className="w-5 h-5 text-green-600 dark:text-green-400" />
-              </div>
-              <div className="text-left">
-                <h3 className="font-semibold text-foreground">상담확정 알림톡</h3>
-                <p className="text-sm text-muted-foreground">상담 예약 확정 안내 메시지</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {settings.solapi_consultation_template_id && (
-                <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded">설정됨</span>
-              )}
-              {openTemplates.consultation ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
-            </div>
-          </button>
-
-          {openTemplates.consultation && (
-            <div className="p-4 pt-0 border-t border-border">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    템플릿 ID
+      {activeTab === 'solapi' && activeTemplate === 'consultation' && (
+        <div className="bg-card rounded-lg shadow-sm border border-green-200 dark:border-green-800 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">
+                템플릿 ID
                   </label>
                   <input
                     type="text"
@@ -1116,19 +1150,244 @@ export default function NotificationSettingsPage() {
                   )}
                 </div>
 
-                {/* 저장 버튼 */}
-                <div className="md:col-span-2 pt-4 border-t border-border">
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                  >
-                    {saving ? '저장 중...' : '상담확정 알림톡 설정 저장'}
-                  </button>
+            {/* 저장 버튼 */}
+            <div className="md:col-span-2 pt-4 border-t border-border">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {saving ? '저장 중...' : '상담확정 알림톡 설정 저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 체험수업 알림톡 템플릿 */}
+      {activeTab === 'solapi' && activeTemplate === 'trial' && (
+        <div className="bg-card rounded-lg shadow-sm border border-blue-200 dark:border-blue-800 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 ID</label>
+              <input
+                type="text"
+                value={settings.solapi_trial_template_id}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_trial_template_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="KA01TP..."
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
+              <textarea
+                value={settings.solapi_trial_template_content}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_trial_template_content: e.target.value }))}
+                rows={5}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                placeholder={`안녕하세요, #{학원명}입니다.
+
+#{이름}님의 체험수업 일정을 안내드립니다.
+
+■ 체험수업 일시: #{날짜} #{시간}
+
+문의사항은 #{학원전화}로 연락주세요.`}
+              />
+            </div>
+
+            <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">사용 가능한 변수</p>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{이름}'}</code>
+                  <span className="text-muted-foreground">학생명</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{날짜}'}</code>
+                  <span className="text-muted-foreground">수업일</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{시간}'}</code>
+                  <span className="text-muted-foreground">수업시간</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원명}'}</code>
+                  <span className="text-muted-foreground">학원이름</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원전화}'}</code>
+                  <span className="text-muted-foreground">학원전화</span>
                 </div>
               </div>
             </div>
-          )}
+
+            {/* 체험수업 알림톡 미리보기 */}
+            {settings.solapi_trial_template_content && (
+              <div className="md:col-span-2">
+                <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
+                <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
+                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
+                      </svg>
+                    </div>
+                    <span className="font-medium text-gray-800 text-sm">알림톡</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-600 mb-1">학원</p>
+                      <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                          {settings.solapi_trial_template_content
+                            .replace(/#{이름}/g, '홍길동')
+                            .replace(/#{날짜}/g, '12월 20일')
+                            .replace(/#{시간}/g, '14:00')
+                            .replace(/#{학원명}/g, '맥스체대입시')
+                            .replace(/#{학원전화}/g, '010-0000-0000')
+                          }
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 이미지 URL 설정 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <Image className="w-4 h-4 text-muted-foreground" />
+                <h4 className="font-medium text-foreground">이미지 설정 (선택)</h4>
+              </div>
+              <input
+                type="url"
+                value={settings.solapi_trial_image_url || ''}
+                onChange={(e) => setSettings(prev => ({ ...prev, solapi_trial_image_url: e.target.value }))}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://example.com/image.jpg (이미지 알림톡인 경우)"
+              />
+              <p className="text-xs text-muted-foreground mt-1">이미지 알림톡 템플릿인 경우에만 입력하세요</p>
+            </div>
+
+            {/* 버튼 설정 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-foreground">버튼 설정</h4>
+                <button
+                  type="button"
+                  onClick={addTrialButton}
+                  disabled={(settings.solapi_trial_buttons?.length || 0) >= 5}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4" />
+                  버튼 추가
+                </button>
+              </div>
+
+              {(settings.solapi_trial_buttons?.length || 0) === 0 ? (
+                <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  버튼이 없습니다. 템플릿에 버튼이 있다면 위의 &quot;버튼 추가&quot; 버튼을 클릭하세요.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {settings.solapi_trial_buttons?.map((button, index) => (
+                    <div key={index} className="p-4 bg-muted/30 rounded-lg border border-border">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-foreground">버튼 {index + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeTrialButton(index)}
+                          className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">버튼 타입</label>
+                          <select
+                            value={button.buttonType}
+                            onChange={(e) => updateTrialButton(index, 'buttonType', e.target.value)}
+                            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                          >
+                            <option value="WL">웹링크 (WL)</option>
+                            <option value="AL">앱링크 (AL)</option>
+                            <option value="BK">봇키워드 (BK)</option>
+                            <option value="MD">메시지전달 (MD)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">버튼 이름</label>
+                          <input
+                            type="text"
+                            value={button.buttonName || ''}
+                            onChange={(e) => updateTrialButton(index, 'buttonName', e.target.value)}
+                            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                            placeholder="예: 일정 확인하기"
+                          />
+                        </div>
+                        {button.buttonType === 'WL' && (
+                          <>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">모바일 링크</label>
+                              <input
+                                type="url"
+                                value={button.linkMo || ''}
+                                onChange={(e) => updateTrialButton(index, 'linkMo', e.target.value)}
+                                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                                placeholder="https://..."
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">PC 링크 (선택)</label>
+                              <input
+                                type="url"
+                                value={button.linkPc || ''}
+                                onChange={(e) => updateTrialButton(index, 'linkPc', e.target.value)}
+                                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                                placeholder="https://... (미입력시 모바일 링크 사용)"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                * 솔라피에서 등록한 템플릿의 버튼과 동일하게 설정해야 합니다
+              </p>
+            </div>
+
+            {/* 발송 안내 */}
+            <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                <strong>수동 발송:</strong> 체험수업 알림톡은 학생 상세 페이지에서 수동으로 발송할 수 있습니다.
+              </p>
+            </div>
+
+            {/* 저장 버튼 */}
+            <div className="md:col-span-2 pt-4 border-t border-border">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {saving ? '저장 중...' : '체험수업 알림톡 설정 저장'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

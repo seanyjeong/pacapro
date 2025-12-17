@@ -1527,6 +1527,24 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                     'UPDATE students SET trial_remaining = trial_remaining - 1 WHERE id = ?',
                     [student_id]
                 );
+
+                // trial_dates의 attended 상태도 업데이트
+                if (student.trial_dates) {
+                    try {
+                        let trialDates = JSON.parse(student.trial_dates);
+                        // 첫 번째 attended가 false인 항목을 true로 변경
+                        const idx = trialDates.findIndex(td => !td.attended);
+                        if (idx !== -1) {
+                            trialDates[idx].attended = true;
+                            await connection.query(
+                                'UPDATE students SET trial_dates = ? WHERE id = ?',
+                                [JSON.stringify(trialDates), student_id]
+                            );
+                        }
+                    } catch (e) {
+                        console.error('Failed to update trial_dates:', e);
+                    }
+                }
             }
 
             processedRecords.push({
