@@ -1220,25 +1220,28 @@ export default function NotificationSettingsPage() {
 
             <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">사용 가능한 변수</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+              <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
                   <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{이름}'}</code>
-                  <span className="text-muted-foreground">학생명</span>
+                  <span className="text-muted-foreground">→</span>
+                  <span className="text-foreground font-medium">홍길동</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원명}'}</code>
-                  <span className="text-muted-foreground">학원 이름</span>
+                  <span className="text-muted-foreground">→</span>
+                  <span className="text-foreground font-medium">맥스체대입시</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{체험일정}'}</code>
-                  <span className="text-muted-foreground">1·2회차 일정</span>
+                <div className="flex items-start gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300 shrink-0">{'#{체험일정}'}</code>
+                  <span className="text-muted-foreground">→</span>
+                  <span className="text-foreground font-medium whitespace-pre-line">{'✓ 1회차: 12/18(수) 18:30\n2회차: 12/20(금) 18:30'}</span>
                 </div>
               </div>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                * 체험일정은 자동 생성됩니다 (예: 1회차: 12/10(화) 18:30 / 2회차: 12/12(목) 18:30)
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-3">
+                * 체험일정은 학생의 실제 체험 날짜로 자동 생성됩니다
               </p>
               <p className="text-xs text-blue-600 dark:text-blue-400">
-                * 시간은 학원 설정의 시간대(오전/오후/저녁)에 맞게 변환됩니다
+                * 완료된 회차는 ✓ 체크 표시가 붙습니다
               </p>
             </div>
 
