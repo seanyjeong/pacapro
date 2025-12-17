@@ -751,7 +751,7 @@ export default function NotificationSettingsPage() {
                   <textarea
                     value={settings.solapi_template_content}
                     onChange={e => setSettings(prev => ({ ...prev, solapi_template_content: e.target.value }))}
-                    rows={5}
+                    rows={10}
                     className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 font-mono text-sm"
                     placeholder={`안녕하세요, 맥스체대입시입니다.
 #{이름} 학생의 #{월}월 학원비가 미납되었습니다.
@@ -975,7 +975,7 @@ export default function NotificationSettingsPage() {
                   <textarea
                     value={settings.solapi_consultation_template_content}
                     onChange={e => setSettings(prev => ({ ...prev, solapi_consultation_template_content: e.target.value }))}
-                    rows={5}
+                    rows={10}
                     className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm"
                     placeholder={`안녕하세요, 맥스체대입시입니다.
 
@@ -1223,7 +1223,7 @@ export default function NotificationSettingsPage() {
               <textarea
                 value={settings.solapi_trial_template_content}
                 onChange={e => setSettings(prev => ({ ...prev, solapi_trial_template_content: e.target.value }))}
-                rows={5}
+                rows={10}
                 className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
                 placeholder={`안녕하세요, #{학원명}입니다.
 #{이름}님의 체험수업 일정을 안내드립니다.
