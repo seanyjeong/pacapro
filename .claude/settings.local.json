@@ -89,7 +89,10 @@
       "Bash(sudo -S cp:*)",
       "Bash(sudo -S -k sh -c 'cat > /etc/caddy/Caddyfile << EOF\n:80 {\n    respond \"\"\"\"Caddy is working\"\"\"\"\n}\n\ncode.sean8320.dedyn.io {\n    reverse_proxy localhost:8080\n}\n\nn8n.sean8320.dedyn.io {\n    reverse_proxy localhost:5678\n}\n\nnocodb.sean8320.dedyn.io {\n    reverse_proxy localhost:8380\n}\n\ndev.sean8320.dedyn.io {\n    reverse_proxy localhost:3000\n}\n\nchejump.com {\n    reverse_proxy localhost:8320\n}\n\nsean8320.dedyn.io {\n    handle /screenshots/* {\n        uri strip_prefix /screenshots\n        reverse_proxy localhost:8321\n    }\n    respond \"\"\"\"Hello from sean8320.dedyn.io\"\"\"\"\n}\nEOF')",
       "Bash(sudo -S -k systemctl reload caddy:*)",
-      "Bash(sudo -S -k systemctl status caddy:*)"
+      "Bash(sudo -S -k systemctl status caddy:*)",
+      "Bash(node check-trial.js:*)",
+      "Bash(sudo -S sh -c \"systemctl restart paca\")",
+      "Bash(systemctl is-active:*)"
     ],
     "deny": [],
     "ask": []

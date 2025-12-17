@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign, Plus, Trash2, Image, GraduationCap } from 'lucide-react';
 import { notificationsAPI, NotificationSettings, NotificationLog, ConsultationButton } from '@/lib/api/notifications';
 import PushNotificationSettings from '@/components/push-notification-settings';
+import apiClient from '@/lib/api/client';
 
 type ServiceType = 'sens' | 'solapi';
 type TemplateType = 'unpaid' | 'consultation' | 'trial';
@@ -85,10 +86,25 @@ export default function NotificationSettingsPage() {
   // 현재 선택된 템플릿 탭
   const [activeTemplate, setActiveTemplate] = useState<TemplateType>('unpaid');
 
+  // 학원명 (미리보기용)
+  const [academyName, setAcademyName] = useState<string>('파카체대입시');
+
   useEffect(() => {
     loadSettings();
     loadLogs();
+    loadAcademyName();
   }, []);
+
+  const loadAcademyName = async () => {
+    try {
+      const response = await apiClient.get<{ settings: { academy_name?: string } }>('/settings/academy');
+      if (response.settings?.academy_name) {
+        setAcademyName(response.settings.academy_name);
+      }
+    } catch {
+      // 실패 시 기본값 유지
+    }
+  };
 
   const loadSettings = async () => {
     try {
@@ -795,7 +811,7 @@ export default function NotificationSettingsPage() {
                           </div>
                         </div>
                         <div className="flex-1">
-                          <p className="text-xs text-gray-600 mb-1">맥스체대입시</p>
+                          <p className="text-xs text-gray-600 mb-1">{academyName}</p>
                           <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
                             <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                               {settings.solapi_template_content
@@ -804,7 +820,7 @@ export default function NotificationSettingsPage() {
                                 .replace(/#{월}/g, '12')
                                 .replace(/#{금액}/g, '300,000')
                                 .replace(/#{날짜}/g, '10일')
-                                .replace(/#{학원명}/g, '맥스체대입시')
+                                .replace(/#{학원명}/g, academyName)
                                 .replace(/#{학원전화}/g, '010-0000-0000')
                               }
                             </p>
@@ -1016,7 +1032,7 @@ export default function NotificationSettingsPage() {
                           </div>
                         </div>
                         <div className="flex-1">
-                          <p className="text-xs text-gray-600 mb-1">맥스체대입시</p>
+                          <p className="text-xs text-gray-600 mb-1">{academyName}</p>
                           <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
                             <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                               {settings.solapi_consultation_template_content
@@ -1024,6 +1040,7 @@ export default function NotificationSettingsPage() {
                                 .replace(/#{날짜}/g, '12월 20일')
                                 .replace(/#{시간}/g, '14:00')
                                 .replace(/#{예약번호}/g, 'C20251215001')
+                                .replace(/#{학원명}/g, academyName)
                               }
                             </p>
                           </div>
@@ -1229,7 +1246,7 @@ export default function NotificationSettingsPage() {
                 <div className="flex items-center gap-2">
                   <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300">{'#{학원명}'}</code>
                   <span className="text-muted-foreground">→</span>
-                  <span className="text-foreground font-medium">맥스체대입시</span>
+                  <span className="text-foreground font-medium">{academyName}</span>
                 </div>
                 <div className="flex items-start gap-2">
                   <code className="bg-card px-2 py-1 rounded border border-border text-blue-700 dark:text-blue-300 shrink-0">{'#{체험일정}'}</code>
@@ -1267,12 +1284,12 @@ export default function NotificationSettingsPage() {
                       </div>
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs text-gray-600 mb-1">맥스체대입시</p>
+                      <p className="text-xs text-gray-600 mb-1">{academyName}</p>
                       <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
                         <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                           {settings.solapi_trial_template_content
                             .replace(/#{이름}/g, '홍길동')
-                            .replace(/#{학원명}/g, '맥스체대입시')
+                            .replace(/#{학원명}/g, academyName)
                             .replace(/#{체험일정}/g, '✓ 1회차: 12/18(수) 18:30\n2회차: 12/20(금) 18:30')
                           }
                         </p>
