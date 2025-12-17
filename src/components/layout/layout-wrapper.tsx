@@ -17,8 +17,8 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         return <>{children}</>;
     }
 
-    // 공개 페이지 (상담 신청, 모바일): 간소화된 레이아웃
-    const isPublicPage = pathname?.startsWith('/c/') || pathname?.startsWith('/m');
+    // 공개 페이지 (상담 신청, 예약 변경, 모바일): 간소화된 레이아웃
+    const isPublicPage = pathname?.startsWith('/c/') || pathname?.startsWith('/m') || pathname?.startsWith('/consultation/');
 
     if (isPublicPage) {
         return (

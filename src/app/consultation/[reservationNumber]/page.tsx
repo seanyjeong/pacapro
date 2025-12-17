@@ -211,7 +211,7 @@ export default function ReservationChangePage({
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">학생명</span>
-              <span className="font-medium text-gray-900">{reservation?.studentGrade}</span>
+              <span className="font-medium text-gray-900">{reservation?.studentName} ({reservation?.studentGrade})</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">현재 일정</span>
