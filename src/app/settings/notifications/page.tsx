@@ -37,6 +37,8 @@ export default function NotificationSettingsPage() {
     solapi_trial_template_content: '',
     solapi_trial_buttons: [],
     solapi_trial_image_url: '',
+    solapi_trial_auto_enabled: false,
+    solapi_trial_auto_hour: 9,
     // 공통
     is_enabled: false,        // SENS 활성화
     solapi_enabled: false,    // 솔라피 활성화
@@ -1408,11 +1410,55 @@ export default function NotificationSettingsPage() {
               </p>
             </div>
 
-            {/* 발송 안내 */}
-            <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                <strong>발송 방법:</strong> 체험수업 알림톡은 학생 상세 페이지에서 수동으로 발송하거나, 체험수업 예약 시 자동 발송됩니다.
-              </p>
+            {/* 자동 발송 설정 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <h4 className="font-medium text-foreground mb-4">자동 발송 설정</h4>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">자동 발송</p>
+                    <p className="text-sm text-muted-foreground">체험수업이 있는 날 지정 시간에 자동 발송</p>
+                  </div>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, solapi_trial_auto_enabled: !prev.solapi_trial_auto_enabled }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_trial_auto_enabled ? 'bg-blue-600' : 'bg-muted'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_trial_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    자동 발송 시간
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={settings.solapi_trial_auto_hour ?? 9}
+                      onChange={e => setSettings(prev => ({ ...prev, solapi_trial_auto_hour: parseInt(e.target.value) }))}
+                      className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {[...Array(24)].map((_, hour) => (
+                        <option key={hour} value={hour}>
+                          {hour.toString().padStart(2, '0')}:00
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-sm text-muted-foreground">
+                      체험수업 당일 {(settings.solapi_trial_auto_hour ?? 9).toString().padStart(2, '0')}시에 발송
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>발송 대상:</strong> 오늘 체험수업이 예정된 체험생
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                    예: 체험수업이 12/20에 있으면, 12/20 {(settings.solapi_trial_auto_hour ?? 9).toString().padStart(2, '0')}시에 알림톡 발송
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* 테스트 발송 */}
