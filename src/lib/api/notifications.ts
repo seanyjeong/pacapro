@@ -112,11 +112,19 @@ export const notificationsAPI = {
   },
 
   /**
-   * 테스트 메시지 발송
+   * 테스트 메시지 발송 (미납자 알림톡)
    */
   sendTest: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
     const response = await apiClient.post<SendResponse>('/notifications/test', { phone });
     return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
+   * 상담확정 알림톡 테스트 발송
+   */
+  sendTestConsultation: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-consultation', { phone });
+    return { success: response.success || false, groupId: response.groupId };
   },
 
   /**

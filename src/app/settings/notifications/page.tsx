@@ -60,7 +60,9 @@ export default function NotificationSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [testingConsultation, setTestingConsultation] = useState(false);
   const [testPhone, setTestPhone] = useState('');
+  const [testPhoneConsultation, setTestPhoneConsultation] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [sendingUnpaid, setSendingUnpaid] = useState(false);
 
@@ -137,6 +139,26 @@ export default function NotificationSettingsPage() {
       setMessage({ type: 'error', text: err.response?.data?.message || '테스트 발송에 실패했습니다.' });
     } finally {
       setTesting(false);
+    }
+  };
+
+  // 상담확정 알림톡 테스트
+  const handleTestConsultation = async () => {
+    if (!testPhoneConsultation) {
+      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
+      return;
+    }
+    setTestingConsultation(true);
+    setMessage(null);
+    try {
+      await notificationsAPI.sendTestConsultation(testPhoneConsultation);
+      setMessage({ type: 'success', text: '상담확정 테스트 메시지가 발송되었습니다.' });
+      loadLogs();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || '상담확정 테스트 발송에 실패했습니다.' });
+    } finally {
+      setTestingConsultation(false);
     }
   };
 
@@ -927,6 +949,30 @@ export default function NotificationSettingsPage() {
                   <p className="text-sm text-blue-800 dark:text-blue-200">
                     <strong>자동 발송:</strong> 상담 예약을 &apos;확정&apos;으로 변경하면 자동으로 발송됩니다.
                   </p>
+                </div>
+
+                {/* 테스트 발송 */}
+                <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+                  <h4 className="font-medium text-foreground mb-4">테스트 발송</h4>
+                  <div className="flex gap-3">
+                    <input
+                      type="tel"
+                      value={testPhoneConsultation}
+                      onChange={e => setTestPhoneConsultation(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="010-1234-5678"
+                    />
+                    <button
+                      onClick={handleTestConsultation}
+                      disabled={testingConsultation || !settings.solapi_consultation_template_id}
+                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {testingConsultation ? '발송 중...' : '테스트'}
+                    </button>
+                  </div>
+                  {!settings.solapi_consultation_template_id && (
+                    <p className="text-sm text-amber-600 mt-1">템플릿 ID를 먼저 설정해야 테스트 발송이 가능합니다</p>
+                  )}
                 </div>
 
                 {/* 저장 버튼 */}

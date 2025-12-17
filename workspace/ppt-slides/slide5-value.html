@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+html { background: #ffffff; }
+body {
+  width: 720pt; height: 405pt; margin: 0; padding: 0;
+  background: #1a365d; font-family: Arial, sans-serif;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.title {
+  color: #ffffff; font-size: 26pt; font-weight: bold;
+  margin: 0 0 30pt 0; text-align: center;
+}
+.flow-container {
+  display: flex; align-items: center; gap: 8pt;
+}
+.flow-box {
+  background: #ffffff; border-radius: 10pt; padding: 15pt;
+  text-align: center; width: 110pt;
+}
+.flow-title {
+  color: #2b6cb0; font-size: 12pt; font-weight: bold; margin: 0 0 5pt 0;
+}
+.flow-desc {
+  color: #4a5568; font-size: 10pt; margin: 0;
+}
+.arrow {
+  color: #63b3ed; font-size: 22pt; margin: 0;
+}
+.result-box {
+  background: #48bb78; border-radius: 10pt; padding: 15pt;
+  text-align: center; width: 110pt;
+}
+.result-title {
+  color: #ffffff; font-size: 12pt; font-weight: bold; margin: 0 0 5pt 0;
+}
+.result-desc {
+  color: #c6f6d5; font-size: 10pt; margin: 0;
+}
+</style>
+</head>
+<body>
+<p class="title">데이터가 만드는 선순환</p>
+<div class="flow-container">
+  <div class="flow-box">
+    <p class="flow-title">운동 기록</p>
+    <p class="flow-desc">매일 30초</p>
+  </div>
+  <p class="arrow">→</p>
+  <div class="flow-box">
+    <p class="flow-title">성장 시각화</p>
+    <p class="flow-desc">그래프 확인</p>
+  </div>
+  <p class="arrow">→</p>
+  <div class="flow-box">
+    <p class="flow-title">학부모 신뢰</p>
+    <p class="flow-desc">눈에 보이는 결과</p>
+  </div>
+  <p class="arrow">→</p>
+  <div class="result-box">
+    <p class="result-title">재등록+추천</p>
+    <p class="result-desc">학원 성장</p>
+  </div>
+</div>
+</body>
+</html>

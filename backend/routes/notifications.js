@@ -1127,6 +1127,125 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
 });
 
 /**
+ * POST /paca/notifications/test-consultation
+ * 상담확정 알림톡 테스트 발송
+ */
+router.post('/test-consultation', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { phone } = req.body;
+
+        if (!phone || !isValidPhoneNumber(phone)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '유효한 전화번호를 입력해주세요.'
+            });
+        }
+
+        // 설정 조회
+        const [settings] = await db.query(
+            'SELECT * FROM notification_settings WHERE academy_id = ?',
+            [req.user.academyId]
+        );
+
+        if (settings.length === 0) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '알림 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        const setting = settings[0];
+
+        // 솔라피 설정 확인
+        if (!setting.solapi_api_key || !setting.solapi_api_secret || !setting.solapi_pfid) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '솔라피 API 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        if (!setting.solapi_consultation_template_id) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '상담확정 템플릿 ID를 먼저 설정해주세요.'
+            });
+        }
+
+        // Secret 복호화
+        const decryptedSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
+        if (!decryptedSecret) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '솔라피 API Secret이 올바르지 않습니다.'
+            });
+        }
+
+        // 테스트 데이터로 메시지 생성
+        const testDate = new Date();
+        testDate.setDate(testDate.getDate() + 3); // 3일 후
+        const dateStr = `${testDate.getMonth() + 1}월 ${testDate.getDate()}일`;
+        const timeStr = '14:00';
+        const testReservationNumber = 'TEST001';
+
+        // 템플릿 변수 치환
+        let content = setting.solapi_consultation_template_content || '';
+        content = content
+            .replace(/#{이름}/g, '테스트학생')
+            .replace(/#{날짜}/g, dateStr)
+            .replace(/#{시간}/g, timeStr)
+            .replace(/#{예약번호}/g, testReservationNumber);
+
+        // 솔라피 알림톡 발송
+        const result = await sendAlimtalkSolapi(
+            {
+                solapi_api_key: setting.solapi_api_key,
+                solapi_api_secret: decryptedSecret,
+                solapi_pfid: setting.solapi_pfid,
+                solapi_sender_phone: setting.solapi_sender_phone
+            },
+            setting.solapi_consultation_template_id,
+            [{ phone, content }]
+        );
+
+        if (result.success) {
+            // 로그 기록
+            await db.query(
+                `INSERT INTO notification_logs
+                (academy_id, recipient_name, recipient_phone, message_type, template_code,
+                 message_content, status, request_id, sent_at)
+                VALUES (?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
+                [
+                    req.user.academyId,
+                    '테스트(상담확정)',
+                    phone,
+                    setting.solapi_consultation_template_id,
+                    content,
+                    result.groupId || null
+                ]
+            );
+
+            res.json({
+                message: '상담확정 테스트 메시지가 발송되었습니다.',
+                success: true,
+                groupId: result.groupId
+            });
+        } else {
+            res.status(400).json({
+                error: 'Send Failed',
+                message: '메시지 발송에 실패했습니다: ' + (result.error || '알 수 없는 오류'),
+                details: result
+            });
+        }
+    } catch (error) {
+        console.error('상담확정 테스트 발송 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '테스트 발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
  * GET /paca/notifications/stats
  * 발송 통계
  */

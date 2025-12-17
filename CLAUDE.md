@@ -31,6 +31,23 @@ echo 'q141171616!' | sudo -S -k docker stop container_name
 echo 'q141171616!' | sudo -S sh -c "docker stop x && docker rm x"
 ```
 
+### 개발 서버 (실시간 프리뷰)
+```bash
+# dev 서버 시작
+npm run dev -- -H 0.0.0.0
+
+# 접속 URL
+https://dev.sean8320.dedyn.io
+```
+
+**개발 워크플로우:**
+1. code-server에서 코드 수정
+2. 저장 (Ctrl+S)
+3. `dev.sean8320.dedyn.io` 새로고침 → 바로 확인 (Hot Reload)
+4. 잘 되면 git push → Vercel 배포
+
+**테스트 계정:** `admin@paca.com` / `0000`
+
 ### DB 접근 (CLI가 안 될 때 Node.js 사용)
 ```bash
 # CLI 방식 (비밀번호에 ! 있어서 불안정)
