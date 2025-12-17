@@ -333,7 +333,7 @@ export default function ConsultationPage() {
       {/* 헤더 */}
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {pageInfo.settings?.pageTitle || `${pageInfo.academy?.name} 상담 예약`}
+          {pageInfo.academy?.name} 상담예약
         </h1>
         {pageInfo.settings?.pageDescription && (
           <p className="text-sm text-gray-600">{pageInfo.settings.pageDescription}</p>
