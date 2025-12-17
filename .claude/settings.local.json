@@ -92,7 +92,8 @@
       "Bash(sudo -S -k systemctl status caddy:*)",
       "Bash(node check-trial.js:*)",
       "Bash(sudo -S sh -c \"systemctl restart paca\")",
-      "Bash(systemctl is-active:*)"
+      "Bash(systemctl is-active:*)",
+      "mcp__n8n-mcp__create_workflow"
     ],
     "deny": [],
     "ask": []
