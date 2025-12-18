@@ -1544,9 +1544,7 @@ export default function NotificationSettingsPage() {
                 placeholder={`안녕하세요 #{학원명}입니다.
 #{이름} 학생의 #{월}월 납부일이 #{날짜}입니다.
 #{교육비}원이 미납되어 알려드립니다.
-바쁘시겠지만, 납부 부탁드립니다.
-계좌: 하나 432-890083-82807 정으뜸
-카드납부시 학원으로 보내주시면됩니다.`}
+바쁘시겠지만, 납부 부탁드립니다.`}
               />
             </div>
 
@@ -1622,52 +1620,26 @@ export default function NotificationSettingsPage() {
               </div>
             )}
 
-            {/* 자동 발송 설정 */}
+            {/* 발송 안내 */}
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <h4 className="font-medium text-foreground mb-4">자동 발송 설정</h4>
+              <h4 className="font-medium text-foreground mb-4">발송 안내</h4>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">자동 발송</p>
-                    <p className="text-sm text-muted-foreground">두 번째 수업일부터 미납 학생에게 자동 발송</p>
-                  </div>
-                  <button
-                    onClick={() => setSettings(prev => ({ ...prev, solapi_overdue_auto_enabled: !prev.solapi_overdue_auto_enabled }))}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_overdue_auto_enabled ? 'bg-red-600' : 'bg-muted'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_overdue_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    자동 발송 시간
-                  </label>
-                  <div className="flex items-center gap-3">
-                    <select
-                      value={settings.solapi_overdue_auto_hour ?? 9}
-                      onChange={e => setSettings(prev => ({ ...prev, solapi_overdue_auto_hour: parseInt(e.target.value) }))}
-                      className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                    >
-                      {[...Array(24)].map((_, hour) => (
-                        <option key={hour} value={hour}>
-                          {hour.toString().padStart(2, '0')}:00
-                        </option>
-                      ))}
-                    </select>
-                    <span className="text-sm text-muted-foreground">
-                      매일 {(settings.solapi_overdue_auto_hour ?? 9).toString().padStart(2, '0')}시에 발송
-                    </span>
-                  </div>
-                </div>
-
+              <div className="space-y-3">
                 <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
                   <p className="text-sm text-red-800 dark:text-red-200">
                     <strong>발송 대상:</strong> 해당 월 두 번째 수업일부터 미납 상태인 학생
                   </p>
                   <p className="text-xs text-red-600 dark:text-red-400 mt-1">
                     * 첫 수업일에는 &apos;납부 안내 알림톡&apos;이 발송됩니다
+                  </p>
+                </div>
+
+                <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <strong>발송 시간:</strong> 납부 안내 알림톡과 동일한 시간에 발송됩니다
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    * 납부 안내 알림톡 탭에서 자동 발송 시간을 설정하세요
                   </p>
                 </div>
               </div>
