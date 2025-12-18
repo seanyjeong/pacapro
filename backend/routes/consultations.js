@@ -784,7 +784,8 @@ router.get('/settings/info', verifyToken, async (req, res) => {
               : setting.referral_sources)
           : ['블로그/인터넷 검색', '지인 소개', '현수막/전단지', 'SNS', '기타'],
         sendConfirmationAlimtalk: setting.send_confirmation_alimtalk ?? true,
-        confirmationTemplateCode: setting.confirmation_template_code || ''
+        confirmationTemplateCode: setting.confirmation_template_code || '',
+        minAdvanceHours: setting.min_advance_hours ?? 4
       },
       weeklyHours: weeklyHours.map(h => ({
         dayOfWeek: h.day_of_week,
@@ -814,7 +815,8 @@ router.put('/settings/info', verifyToken, async (req, res) => {
       advanceDays,
       referralSources,
       sendConfirmationAlimtalk,
-      confirmationTemplateCode
+      confirmationTemplateCode,
+      minAdvanceHours
     } = req.body;
 
     // slug 업데이트 (학원 테이블)
@@ -842,8 +844,9 @@ router.put('/settings/info', verifyToken, async (req, res) => {
       `INSERT INTO consultation_settings (
         academy_id, is_enabled, page_title, page_description,
         slot_duration, max_reservations_per_slot, advance_days,
-        referral_sources, send_confirmation_alimtalk, confirmation_template_code
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        referral_sources, send_confirmation_alimtalk, confirmation_template_code,
+        min_advance_hours
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         is_enabled = VALUES(is_enabled),
         page_title = VALUES(page_title),
@@ -853,7 +856,8 @@ router.put('/settings/info', verifyToken, async (req, res) => {
         advance_days = VALUES(advance_days),
         referral_sources = VALUES(referral_sources),
         send_confirmation_alimtalk = VALUES(send_confirmation_alimtalk),
-        confirmation_template_code = VALUES(confirmation_template_code)`,
+        confirmation_template_code = VALUES(confirmation_template_code),
+        min_advance_hours = VALUES(min_advance_hours)`,
       [
         academyId,
         isEnabled ?? true,
@@ -864,7 +868,8 @@ router.put('/settings/info', verifyToken, async (req, res) => {
         advanceDays || 30,
         referralSources ? JSON.stringify(referralSources) : '["블로그/인터넷 검색", "지인 소개", "현수막/전단지", "SNS", "기타"]',
         sendConfirmationAlimtalk ?? true,
-        confirmationTemplateCode || null
+        confirmationTemplateCode || null,
+        minAdvanceHours ?? 4
       ]
     );
 

@@ -179,6 +179,7 @@ export interface ConsultationSettings {
   slotDuration: number;
   maxReservationsPerSlot: number;
   advanceDays: number;
+  minAdvanceHours: number;
   referralSources: string[];
   sendConfirmationAlimtalk: boolean;
   confirmationTemplateCode: string;

@@ -72,6 +72,7 @@ export default function ConsultationSettingsPage() {
     slotDuration: 30,
     maxReservationsPerSlot: 1,
     advanceDays: 30,
+    minAdvanceHours: 4,
     referralSources: ['블로그/인터넷 검색', '지인 소개', '현수막/전단지', 'SNS', '기타'],
     sendConfirmationAlimtalk: true
   });
@@ -663,6 +664,32 @@ export default function ConsultationSettingsPage() {
                   <SelectItem value="60">2개월</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label>최소 예약 시간</Label>
+              <Select
+                value={settings.minAdvanceHours?.toString() || '4'}
+                onValueChange={(v) => setSettings({ ...settings, minAdvanceHours: parseInt(v) })}
+              >
+                <SelectTrigger>
+                  <span>
+                    {settings.minAdvanceHours === 0 ? '제한 없음' : `${settings.minAdvanceHours || 4}시간 전`}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">제한 없음</SelectItem>
+                  <SelectItem value="1">1시간 전</SelectItem>
+                  <SelectItem value="2">2시간 전</SelectItem>
+                  <SelectItem value="3">3시간 전</SelectItem>
+                  <SelectItem value="4">4시간 전</SelectItem>
+                  <SelectItem value="6">6시간 전</SelectItem>
+                  <SelectItem value="12">12시간 전</SelectItem>
+                  <SelectItem value="24">24시간 전</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                예약 시간 기준으로 최소 이 시간 전에 예약해야 합니다
+              </p>
             </div>
           </div>
 

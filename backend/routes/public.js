@@ -103,7 +103,7 @@ router.get('/consultation/:slug/slots', async (req, res) => {
 
     // 학원 정보 조회
     const [academies] = await db.query(
-      `SELECT a.id, cs.slot_duration, cs.max_reservations_per_slot, cs.is_enabled
+      `SELECT a.id, cs.slot_duration, cs.max_reservations_per_slot, cs.is_enabled, cs.min_advance_hours
        FROM academies a
        LEFT JOIN consultation_settings cs ON a.id = cs.academy_id
        WHERE a.slug = ?`,
@@ -122,6 +122,7 @@ router.get('/consultation/:slug/slots', async (req, res) => {
 
     const slotDuration = academy.slot_duration || 30;
     const maxReservations = academy.max_reservations_per_slot || 1;
+    const minAdvanceHours = academy.min_advance_hours ?? 4;
 
     // 해당 날짜의 요일 확인 (0=일, 1=월, ...)
     const targetDate = new Date(date);
@@ -190,19 +191,16 @@ router.get('/consultation/:slug/slots', async (req, res) => {
       const reservationCount = reservation ? reservation.count : 0;
       const isFullyBooked = reservationCount >= maxReservations;
 
-      // 과거 시간 체크 (오늘인 경우)
+      // 최소 N시간 전 예약 체크 (DB 설정값 사용)
       const now = new Date();
-      const koreaOffset = 9 * 60; // UTC+9
-      const koreaTime = new Date(now.getTime() + koreaOffset * 60 * 1000);
-      const today = koreaTime.toISOString().split('T')[0];
 
-      let isPast = false;
-      if (date === today) {
-        const currentHours = koreaTime.getUTCHours();
-        const currentMins = koreaTime.getUTCMinutes();
-        const currentTotalMins = currentHours * 60 + currentMins;
-        isPast = currentMinutes <= currentTotalMins;
-      }
+      // 슬롯 시간 (한국 시간 기준)
+      const slotDateTime = new Date(`${date}T${timeStr}+09:00`);
+
+      // 최소 예약 가능 시간 (현재 시간 + minAdvanceHours)
+      const minBookableTime = new Date(now.getTime() + (minAdvanceHours * 60 * 60 * 1000));
+
+      const isPast = slotDateTime <= minBookableTime;
 
       slots.push({
         time: timeStr.substring(0, 5), // HH:MM 형식
