@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign, Plus, Trash2, Image, GraduationCap } from 'lucide-react';
+import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign, Plus, Trash2, Image, GraduationCap, AlertCircle } from 'lucide-react';
 import { notificationsAPI, NotificationSettings, NotificationLog, ConsultationButton } from '@/lib/api/notifications';
 import PushNotificationSettings from '@/components/push-notification-settings';
 import apiClient from '@/lib/api/client';
 
 type ServiceType = 'sens' | 'solapi';
-type TemplateType = 'unpaid' | 'consultation' | 'trial';
+type TemplateType = 'unpaid' | 'consultation' | 'trial' | 'overdue';
 
 export default function NotificationSettingsPage() {
   const [settings, setSettings] = useState<NotificationSettings>({
@@ -39,6 +39,13 @@ export default function NotificationSettingsPage() {
     solapi_trial_image_url: '',
     solapi_trial_auto_enabled: false,
     solapi_trial_auto_hour: 9,
+    // 미납자 알림톡
+    solapi_overdue_template_id: '',
+    solapi_overdue_template_content: '',
+    solapi_overdue_buttons: [],
+    solapi_overdue_image_url: '',
+    solapi_overdue_auto_enabled: false,
+    solapi_overdue_auto_hour: 9,
     // 공통
     is_enabled: false,        // SENS 활성화
     solapi_enabled: false,    // 솔라피 활성화
@@ -695,6 +702,20 @@ export default function NotificationSettingsPage() {
               납부 안내 알림톡
               {settings.solapi_template_id && (
                 <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'unpaid' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTemplate('overdue')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                activeTemplate === 'overdue'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-muted text-foreground hover:bg-muted/80'
+              }`}
+            >
+              <AlertCircle className="w-4 h-4" />
+              미납자 알림톡
+              {settings.solapi_overdue_template_id && (
+                <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'overdue' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
               )}
             </button>
             <button
@@ -1492,6 +1513,174 @@ export default function NotificationSettingsPage() {
                 className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
                 {saving ? '저장 중...' : '체험수업 알림톡 설정 저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 미납자 알림톡 템플릿 */}
+      {activeTab === 'solapi' && activeTemplate === 'overdue' && (
+        <div className="bg-card rounded-lg shadow-sm border border-red-200 dark:border-red-800 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 ID</label>
+              <input
+                type="text"
+                value={settings.solapi_overdue_template_id}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_overdue_template_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="KA01TP..."
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
+              <textarea
+                value={settings.solapi_overdue_template_content}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_overdue_template_content: e.target.value }))}
+                rows={10}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-sm"
+                placeholder={`안녕하세요 #{학원명}입니다.
+#{이름} 학생의 #{월}월 납부일이 #{날짜}입니다.
+#{교육비}원이 미납되어 알려드립니다.
+바쁘시겠지만, 납부 부탁드립니다.
+계좌: 하나 432-890083-82807 정으뜸
+카드납부시 학원으로 보내주시면됩니다.`}
+              />
+            </div>
+
+            <div className="md:col-span-2 p-3 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
+              <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">사용 가능한 변수</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-red-700 dark:text-red-300">{'#{이름}'}</code>
+                  <span className="text-muted-foreground">학생명</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-red-700 dark:text-red-300">{'#{월}'}</code>
+                  <span className="text-muted-foreground">청구 월</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-red-700 dark:text-red-300">{'#{교육비}'}</code>
+                  <span className="text-muted-foreground">교육비</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-red-700 dark:text-red-300">{'#{날짜}'}</code>
+                  <span className="text-muted-foreground">납부일</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-red-700 dark:text-red-300">{'#{학원명}'}</code>
+                  <span className="text-muted-foreground">학원 이름</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-red-700 dark:text-red-300">{'#{학원전화}'}</code>
+                  <span className="text-muted-foreground">학원 전화</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 미납자 알림톡 미리보기 */}
+            {settings.solapi_overdue_template_content && (
+              <div className="md:col-span-2">
+                <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
+                <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
+                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
+                      </svg>
+                    </div>
+                    <span className="font-medium text-gray-800 text-sm">알림톡</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-600 mb-1">{academyName}</p>
+                      <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                          {settings.solapi_overdue_template_content
+                            .replace(/#{이름}/g, '홍길동')
+                            .replace(/#{월}/g, '12')
+                            .replace(/#{교육비}/g, '300,000')
+                            .replace(/#{날짜}/g, '10일')
+                            .replace(/#{학원명}/g, academyName)
+                            .replace(/#{학원전화}/g, '010-0000-0000')
+                          }
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 자동 발송 설정 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <h4 className="font-medium text-foreground mb-4">자동 발송 설정</h4>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">자동 발송</p>
+                    <p className="text-sm text-muted-foreground">두 번째 수업일부터 미납 학생에게 자동 발송</p>
+                  </div>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, solapi_overdue_auto_enabled: !prev.solapi_overdue_auto_enabled }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_overdue_auto_enabled ? 'bg-red-600' : 'bg-muted'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_overdue_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    자동 발송 시간
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={settings.solapi_overdue_auto_hour ?? 9}
+                      onChange={e => setSettings(prev => ({ ...prev, solapi_overdue_auto_hour: parseInt(e.target.value) }))}
+                      className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    >
+                      {[...Array(24)].map((_, hour) => (
+                        <option key={hour} value={hour}>
+                          {hour.toString().padStart(2, '0')}:00
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-sm text-muted-foreground">
+                      매일 {(settings.solapi_overdue_auto_hour ?? 9).toString().padStart(2, '0')}시에 발송
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-red-50 dark:bg-red-950 rounded-lg border border-red-200 dark:border-red-800">
+                  <p className="text-sm text-red-800 dark:text-red-200">
+                    <strong>발송 대상:</strong> 해당 월 두 번째 수업일부터 미납 상태인 학생
+                  </p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                    * 첫 수업일에는 &apos;납부 안내 알림톡&apos;이 발송됩니다
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 저장 버튼 */}
+            <div className="md:col-span-2 pt-4 border-t border-border">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {saving ? '저장 중...' : '미납자 알림톡 설정 저장'}
               </button>
             </div>
           </div>

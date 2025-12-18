@@ -49,6 +49,14 @@ export interface NotificationSettings {
   solapi_trial_auto_enabled: boolean;  // 체험수업 자동발송 활성화
   solapi_trial_auto_hour: number;      // 체험수업 자동발송 시간 (0-23)
 
+  // 미납자 알림톡 설정
+  solapi_overdue_template_id: string;
+  solapi_overdue_template_content: string;
+  solapi_overdue_buttons: ConsultationButton[];
+  solapi_overdue_image_url: string;
+  solapi_overdue_auto_enabled: boolean;  // 미납자 자동발송 활성화
+  solapi_overdue_auto_hour: number;      // 미납자 자동발송 시간 (0-23)
+
   // 공통 설정
   is_enabled: boolean;        // SENS 활성화
   solapi_enabled: boolean;    // 솔라피 활성화

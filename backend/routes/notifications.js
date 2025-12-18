@@ -111,7 +111,14 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), async 
                 solapi_trial_buttons: setting.solapi_trial_buttons ? JSON.parse(setting.solapi_trial_buttons) : [],
                 solapi_trial_image_url: setting.solapi_trial_image_url || '',
                 solapi_trial_auto_enabled: setting.solapi_trial_auto_enabled || false,
-                solapi_trial_auto_hour: setting.solapi_trial_auto_hour ?? 9
+                solapi_trial_auto_hour: setting.solapi_trial_auto_hour ?? 9,
+                // 미납자 알림톡 설정
+                solapi_overdue_template_id: setting.solapi_overdue_template_id || '',
+                solapi_overdue_template_content: setting.solapi_overdue_template_content || '',
+                solapi_overdue_buttons: setting.solapi_overdue_buttons ? JSON.parse(setting.solapi_overdue_buttons) : [],
+                solapi_overdue_image_url: setting.solapi_overdue_image_url || '',
+                solapi_overdue_auto_enabled: setting.solapi_overdue_auto_enabled || false,
+                solapi_overdue_auto_hour: setting.solapi_overdue_auto_hour ?? 9
             }
         });
     } catch (error) {
@@ -158,6 +165,13 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
             solapi_trial_image_url,
             solapi_trial_auto_enabled,
             solapi_trial_auto_hour,
+            // 미납자 알림톡 설정
+            solapi_overdue_template_id,
+            solapi_overdue_template_content,
+            solapi_overdue_buttons,
+            solapi_overdue_image_url,
+            solapi_overdue_auto_enabled,
+            solapi_overdue_auto_hour,
             // 공통 설정
             is_enabled,
             solapi_enabled,
@@ -200,9 +214,11 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                  solapi_consultation_template_id, solapi_consultation_template_content, solapi_consultation_buttons, solapi_consultation_image_url,
                  solapi_trial_template_id, solapi_trial_template_content, solapi_trial_buttons, solapi_trial_image_url,
                  solapi_trial_auto_enabled, solapi_trial_auto_hour,
+                 solapi_overdue_template_id, solapi_overdue_template_content, solapi_overdue_buttons, solapi_overdue_image_url,
+                 solapi_overdue_auto_enabled, solapi_overdue_auto_hour,
                  template_code, template_content, is_enabled, solapi_enabled, solapi_auto_enabled, solapi_auto_hour,
                  auto_send_day, auto_send_days, auto_send_hour)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     req.user.academyId,
                     service_type || 'sens',
@@ -227,6 +243,12 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_trial_image_url || null,
                     solapi_trial_auto_enabled || false,
                     solapi_trial_auto_hour ?? 9,
+                    solapi_overdue_template_id || null,
+                    solapi_overdue_template_content || null,
+                    solapi_overdue_buttons ? JSON.stringify(solapi_overdue_buttons) : null,
+                    solapi_overdue_image_url || null,
+                    solapi_overdue_auto_enabled || false,
+                    solapi_overdue_auto_hour ?? 9,
                     template_code || null,
                     template_content || null,
                     is_enabled || false,
@@ -264,6 +286,12 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_trial_image_url = ?,
                     solapi_trial_auto_enabled = ?,
                     solapi_trial_auto_hour = ?,
+                    solapi_overdue_template_id = ?,
+                    solapi_overdue_template_content = ?,
+                    solapi_overdue_buttons = ?,
+                    solapi_overdue_image_url = ?,
+                    solapi_overdue_auto_enabled = ?,
+                    solapi_overdue_auto_hour = ?,
                     template_code = ?,
                     template_content = ?,
                     is_enabled = ?,
@@ -297,6 +325,12 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_trial_image_url || null,
                     solapi_trial_auto_enabled || false,
                     solapi_trial_auto_hour ?? 9,
+                    solapi_overdue_template_id || null,
+                    solapi_overdue_template_content || null,
+                    solapi_overdue_buttons ? JSON.stringify(solapi_overdue_buttons) : null,
+                    solapi_overdue_image_url || null,
+                    solapi_overdue_auto_enabled || false,
+                    solapi_overdue_auto_hour ?? 9,
                     template_code || null,
                     template_content || null,
                     is_enabled || false,

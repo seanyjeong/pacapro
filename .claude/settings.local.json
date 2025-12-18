@@ -93,7 +93,11 @@
       "Bash(node check-trial.js:*)",
       "Bash(sudo -S sh -c \"systemctl restart paca\")",
       "Bash(systemctl is-active:*)",
-      "mcp__n8n-mcp__create_workflow"
+      "mcp__n8n-mcp__create_workflow",
+      "Skill(pdf)",
+      "Bash(fc-list:*)",
+      "Bash(ls:*)",
+      "Bash(lsof:*)"
     ],
     "deny": [],
     "ask": []

@@ -2,7 +2,19 @@
 
 ## 프로젝트 개요
 
-P-ACA(Papa Academy) - 체대입시 학원관리시스템
+**P-ACA** = **P**hysical **A**cademy **C**omprehensive **A**dministration
+체대입시 학원 종합관리 시스템
+
+### 자매 시스템
+| 시스템 | 발음 | 풀네임 | 역할 |
+|--------|------|--------|------|
+| **P-ACA** | 파카 | Physical Academy Comprehensive Administration | 학원 종합관리 |
+| **P-EAK** | 피크 | Physical Excellence Achievement Keeper | 실기 훈련관리 |
+
+> "파카로 학원 관리, 피크로 기록 정점!"
+
+---
+
 - **프론트**: Next.js 15 + TailwindCSS (Vercel: pacapro.vercel.app)
 - **백엔드**: Express.js + MySQL (로컬: chejump.com:8320)
 
