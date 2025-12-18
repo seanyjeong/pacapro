@@ -98,11 +98,20 @@ export default function ConsultationsPage() {
     if (!hourConfig || !hourConfig.isAvailable) return [];
 
     const startHour = parseInt(hourConfig.startTime?.substring(0, 2) || '09');
+    const startMin = parseInt(hourConfig.startTime?.substring(3, 5) || '00');
     const endHour = parseInt(hourConfig.endTime?.substring(0, 2) || '18');
+    const endMin = parseInt(hourConfig.endTime?.substring(3, 5) || '00');
 
     const times: string[] = [];
-    for (let h = startHour; h < endHour; h++) {
-      times.push(`${h.toString().padStart(2, '0')}:00`);
+    let currentMin = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+
+    // 30분 단위로 생성
+    while (currentMin < endMinutes) {
+      const h = Math.floor(currentMin / 60);
+      const m = currentMin % 60;
+      times.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+      currentMin += 30;
     }
     return times;
   };
@@ -281,11 +290,7 @@ export default function ConsultationsPage() {
       return;
     }
 
-    // 이미 예약된 시간인지 확인
-    if (bookedTimes.includes(directForm.preferredTime)) {
-      toast.error('해당 시간에 이미 상담이 예약되어 있습니다.');
-      return;
-    }
+    // 관리자 직접 등록은 동시 상담 허용 (친구끼리 같이 상담 등)
 
     setRegistering(true);
     try {
@@ -845,12 +850,12 @@ export default function ConsultationsPage() {
                               key={time}
                               type="button"
                               size="sm"
-                              variant={isSelected ? 'default' : 'outline'}
-                              disabled={isBooked}
-                              onClick={() => !isBooked && setNewTime(time)}
-                              className={`${isBooked ? 'opacity-50 line-through text-gray-400' : ''} ${isCurrent ? 'ring-2 ring-blue-300' : ''}`}
+                              variant={isSelected ? 'default' : isBooked ? 'secondary' : 'outline'}
+                              onClick={() => setNewTime(time)}
+                              className={`${isCurrent ? 'ring-2 ring-blue-300' : ''} ${isBooked ? 'border-orange-300 dark:border-orange-700' : ''}`}
                             >
                               {time}
+                              {isBooked && <span className="ml-1 text-xs text-orange-600 dark:text-orange-400">●</span>}
                               {isCurrent && <span className="ml-1 text-xs">(현재)</span>}
                             </Button>
                           );
@@ -861,7 +866,7 @@ export default function ConsultationsPage() {
                     )}
                     {editBookedTimes.length > 0 && editTimeOptions.length > 0 && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        * 취소선 표시된 시간은 이미 예약됨
+                        * <span className="text-orange-600 dark:text-orange-400">●</span> 표시: 기존 상담 있음 (동시 상담 가능)
                       </p>
                     )}
                   </div>
@@ -991,12 +996,12 @@ export default function ConsultationsPage() {
                             key={time}
                             type="button"
                             size="sm"
-                            variant={isSelected ? 'default' : 'outline'}
-                            disabled={isBooked}
-                            onClick={() => !isBooked && setDirectForm({ ...directForm, preferredTime: time })}
-                            className={isBooked ? 'opacity-50 line-through text-muted-foreground' : ''}
+                            variant={isSelected ? 'default' : isBooked ? 'secondary' : 'outline'}
+                            onClick={() => setDirectForm({ ...directForm, preferredTime: time })}
+                            className={isBooked ? 'border-orange-300 dark:border-orange-700' : ''}
                           >
                             {time}
+                            {isBooked && <span className="ml-1 text-xs text-orange-600 dark:text-orange-400">●</span>}
                           </Button>
                         );
                       })}
@@ -1006,7 +1011,7 @@ export default function ConsultationsPage() {
                   )}
                   {bookedTimes.length > 0 && timeOptions.length > 0 && (
                     <p className="text-xs text-muted-foreground">
-                      * 취소선 표시된 시간은 이미 예약됨
+                      * <span className="text-orange-600 dark:text-orange-400">●</span> 표시: 기존 상담 있음 (동시 상담 가능)
                     </p>
                   )}
                 </div>
