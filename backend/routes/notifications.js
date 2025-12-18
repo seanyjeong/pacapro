@@ -1197,8 +1197,8 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
                     await sendAndLog(firstTimeRecipients, noticeTemplateCode, noticeTemplateContent, '납부안내');
                 }
 
-                // 미납자 알림톡 발송 (두 번째 수업일 이후)
-                if (repeatRecipients.length > 0 && overdueTemplateCode) {
+                // 미납자 알림톡 발송 (두 번째 수업일 이후) - solapi_overdue_auto_enabled 체크
+                if (repeatRecipients.length > 0 && overdueTemplateCode && setting.solapi_overdue_auto_enabled) {
                     await sendAndLog(repeatRecipients, overdueTemplateCode, overdueTemplateContent, '미납자');
                 }
 
