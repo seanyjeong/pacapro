@@ -533,21 +533,6 @@ router.post('/direct', verifyToken, async (req, res) => {
       return res.status(400).json({ error: '학생명, 전화번호, 학년, 상담일시는 필수입니다.' });
     }
 
-    // 중복 시간 체크
-    const timeToCheck = preferredTime.length === 5 ? preferredTime + ':00' : preferredTime;
-    const [existing] = await db.query(
-      `SELECT id FROM consultations
-       WHERE academy_id = ?
-         AND preferred_date = ?
-         AND preferred_time = ?
-         AND status NOT IN ('cancelled', 'no_show')`,
-      [academyId, preferredDate, timeToCheck]
-    );
-
-    if (existing.length > 0) {
-      return res.status(400).json({ error: '해당 시간에 이미 상담이 예약되어 있습니다.' });
-    }
-
     // 상담 등록 (관리자 등록이므로 바로 confirmed 상태)
     // parent_name, parent_phone은 NOT NULL이라 학생 정보로 대체
     const [result] = await db.query(

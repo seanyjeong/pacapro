@@ -205,12 +205,6 @@ export default function ConsultationsPage() {
   const handleStatusChange = async () => {
     if (!selectedConsultation) return;
 
-    // 일정 변경 시 중복 체크
-    if (newDate && newTime && editBookedTimes.includes(newTime)) {
-      toast.error('해당 시간에 이미 상담이 예약되어 있습니다.');
-      return;
-    }
-
     setUpdating(true);
     try {
       const updateData: {
