@@ -2587,4 +2587,149 @@ router.post('/:id/manual-credit', verifyToken, checkPermission('payments', 'edit
     }
 });
 
+/**
+ * GET /paca/students/:id/credits
+ * 학생의 크레딧 목록 조회
+ */
+router.get('/:id/credits', verifyToken, async (req, res) => {
+    const studentId = parseInt(req.params.id);
+
+    try {
+        const [credits] = await db.query(
+            `SELECT id, credit_amount, remaining_amount, credit_type, status,
+                    rest_start_date, rest_end_date, rest_days, notes, created_at
+             FROM rest_credits
+             WHERE student_id = ? AND academy_id = ?
+             ORDER BY created_at DESC`,
+            [studentId, req.user.academyId]
+        );
+
+        res.json({ credits });
+    } catch (error) {
+        console.error('Error fetching credits:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '크레딧 조회에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * PUT /paca/students/:id/credits/:creditId
+ * 크레딧 수정
+ */
+router.put('/:id/credits/:creditId', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
+    const studentId = parseInt(req.params.id);
+    const creditId = parseInt(req.params.creditId);
+    const { credit_amount, notes, status } = req.body;
+
+    try {
+        // 크레딧 존재 및 권한 확인
+        const [existing] = await db.query(
+            `SELECT * FROM rest_credits WHERE id = ? AND student_id = ? AND academy_id = ?`,
+            [creditId, studentId, req.user.academyId]
+        );
+
+        if (existing.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: '크레딧을 찾을 수 없습니다.'
+            });
+        }
+
+        const credit = existing[0];
+
+        // 이미 사용된 크레딧은 금액 수정 불가
+        if (credit.status === 'used' && credit_amount !== undefined && credit_amount !== credit.credit_amount) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '이미 사용된 크레딧은 금액을 수정할 수 없습니다.'
+            });
+        }
+
+        // 업데이트
+        const updateFields = [];
+        const updateValues = [];
+
+        if (credit_amount !== undefined) {
+            updateFields.push('credit_amount = ?', 'remaining_amount = ?');
+            updateValues.push(credit_amount, credit_amount);
+        }
+        if (notes !== undefined) {
+            updateFields.push('notes = ?');
+            updateValues.push(notes);
+        }
+        if (status !== undefined) {
+            updateFields.push('status = ?');
+            updateValues.push(status);
+        }
+
+        if (updateFields.length === 0) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '수정할 내용이 없습니다.'
+            });
+        }
+
+        updateValues.push(creditId);
+
+        await db.query(
+            `UPDATE rest_credits SET ${updateFields.join(', ')} WHERE id = ?`,
+            updateValues
+        );
+
+        res.json({ message: '크레딧이 수정되었습니다.' });
+    } catch (error) {
+        console.error('Error updating credit:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '크레딧 수정에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * DELETE /paca/students/:id/credits/:creditId
+ * 크레딧 삭제
+ */
+router.delete('/:id/credits/:creditId', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
+    const studentId = parseInt(req.params.id);
+    const creditId = parseInt(req.params.creditId);
+
+    try {
+        // 크레딧 존재 및 권한 확인
+        const [existing] = await db.query(
+            `SELECT * FROM rest_credits WHERE id = ? AND student_id = ? AND academy_id = ?`,
+            [creditId, studentId, req.user.academyId]
+        );
+
+        if (existing.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: '크레딧을 찾을 수 없습니다.'
+            });
+        }
+
+        const credit = existing[0];
+
+        // 이미 사용된 크레딧은 삭제 불가
+        if (credit.status === 'used') {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '이미 사용된 크레딧은 삭제할 수 없습니다.'
+            });
+        }
+
+        await db.query('DELETE FROM rest_credits WHERE id = ?', [creditId]);
+
+        res.json({ message: '크레딧이 삭제되었습니다.' });
+    } catch (error) {
+        console.error('Error deleting credit:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '크레딧 삭제에 실패했습니다.'
+        });
+    }
+});
+
 module.exports = router;

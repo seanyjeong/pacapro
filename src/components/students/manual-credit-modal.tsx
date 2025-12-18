@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,9 +14,11 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Calendar, Hash, AlertTriangle, Calculator } from 'lucide-react';
+import { CreditCard, Calendar, Hash, AlertTriangle, Calculator, List, Trash2, Pencil, Loader2 } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
 import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
 
 interface ManualCreditModalProps {
   open: boolean;
@@ -27,6 +29,19 @@ interface ManualCreditModalProps {
   weeklyCount: number;
   classDays: number[];
   onSuccess: () => void;
+}
+
+interface Credit {
+  id: number;
+  credit_amount: number;
+  remaining_amount: number;
+  credit_type: string;
+  status: string;
+  rest_start_date: string;
+  rest_end_date: string;
+  rest_days: number;
+  notes: string;
+  created_at: string;
 }
 
 // 요일 이름
@@ -64,6 +79,20 @@ const REASON_PRESETS = [
   { value: '기타', label: '기타' },
 ];
 
+// 크레딧 타입 라벨
+const CREDIT_TYPE_LABELS: Record<string, string> = {
+  carryover: '이월',
+  refund: '환불',
+  manual: '수동',
+};
+
+// 크레딧 상태 라벨
+const CREDIT_STATUS_LABELS: Record<string, string> = {
+  pending: '대기',
+  used: '사용됨',
+  expired: '만료',
+};
+
 export function ManualCreditModal({
   open,
   onClose,
@@ -74,6 +103,9 @@ export function ManualCreditModal({
   classDays,
   onSuccess,
 }: ManualCreditModalProps) {
+  // 메인 탭: 'create' | 'manage'
+  const [mainTab, setMainTab] = useState<'create' | 'manage'>('create');
+
   // 입력 모드: 'date' | 'count'
   const [inputMode, setInputMode] = useState<'date' | 'count'>('date');
 
@@ -91,6 +123,15 @@ export function ManualCreditModal({
 
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
+
+  // 크레딧 목록
+  const [credits, setCredits] = useState<Credit[]>([]);
+  const [loadingCredits, setLoadingCredits] = useState(false);
+
+  // 수정 모드
+  const [editingCredit, setEditingCredit] = useState<Credit | null>(null);
+  const [editAmount, setEditAmount] = useState<number>(0);
+  const [editNotes, setEditNotes] = useState<string>('');
 
   // 1회 금액 계산
   const perClassFee = useMemo(() => {
@@ -123,6 +164,26 @@ export function ManualCreditModal({
 
   // 최종 사유
   const finalReason = reason === '기타' ? customReason : reason;
+
+  // 크레딧 목록 로드
+  const loadCredits = async () => {
+    try {
+      setLoadingCredits(true);
+      const response = await studentsAPI.getCredits(studentId);
+      setCredits(response.credits || []);
+    } catch (err) {
+      console.error('크레딧 목록 로드 실패:', err);
+    } finally {
+      setLoadingCredits(false);
+    }
+  };
+
+  // 탭 변경 시 크레딧 목록 로드
+  useEffect(() => {
+    if (open && mainTab === 'manage') {
+      loadCredits();
+    }
+  }, [open, mainTab, studentId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,7 +224,11 @@ export function ManualCreditModal({
       });
 
       onSuccess();
-      handleClose();
+      resetForm();
+      // 크레딧 목록 새로고침
+      if (mainTab === 'manage') {
+        loadCredits();
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || '크레딧 생성 중 오류가 발생했습니다.');
     } finally {
@@ -171,7 +236,46 @@ export function ManualCreditModal({
     }
   };
 
-  const handleClose = () => {
+  const handleDelete = async (creditId: number) => {
+    if (!confirm('이 크레딧을 삭제하시겠습니까?')) return;
+
+    try {
+      await studentsAPI.deleteCredit(studentId, creditId);
+      toast.success('크레딧이 삭제되었습니다.');
+      loadCredits();
+      onSuccess();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '크레딧 삭제에 실패했습니다.');
+    }
+  };
+
+  const handleEdit = (credit: Credit) => {
+    setEditingCredit(credit);
+    setEditAmount(credit.credit_amount);
+    setEditNotes(credit.notes || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingCredit) return;
+
+    try {
+      setProcessing(true);
+      await studentsAPI.updateCredit(studentId, editingCredit.id, {
+        credit_amount: editAmount,
+        notes: editNotes,
+      });
+      toast.success('크레딧이 수정되었습니다.');
+      setEditingCredit(null);
+      loadCredits();
+      onSuccess();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '크레딧 수정에 실패했습니다.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const resetForm = () => {
     setInputMode('date');
     setStartDate('');
     setEndDate('');
@@ -180,6 +284,12 @@ export function ManualCreditModal({
     setCustomReason('');
     setNotes('');
     setError('');
+  };
+
+  const handleClose = () => {
+    resetForm();
+    setMainTab('create');
+    setEditingCredit(null);
     onClose();
   };
 
@@ -190,191 +300,326 @@ export function ManualCreditModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-blue-600" />
-            수동 크레딧 생성
+            크레딧 관리
           </DialogTitle>
           <DialogDescription>
-            {studentName} 학생에게 크레딧을 수동으로 생성합니다.
-            <br />
-            <span className="text-blue-600 dark:text-blue-400">
-              생성된 크레딧은 다음 달 수강료 생성 시 자동으로 차감됩니다.
-            </span>
+            {studentName} 학생의 크레딧을 관리합니다.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="py-6 px-6 space-y-4">
-            {/* 학생 정보 */}
-            <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
-              <div>월 수강료: <span className="font-medium">{monthlyTuition.toLocaleString()}원</span></div>
-              <div>주당 횟수: <span className="font-medium">{weeklyCount}회</span> (월 {weeklyCount * 4}회)</div>
-              <div>수업 요일: <span className="font-medium">{classDaysText}</span></div>
-              <div className="pt-1 border-t border-border mt-2">
-                <span className="text-blue-600 dark:text-blue-400 font-medium">
-                  1회 금액: {perClassFee.toLocaleString()}원
-                </span>
-              </div>
-            </div>
+        {/* 메인 탭 */}
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as 'create' | 'manage')}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="create" className="flex items-center gap-1">
+              <CreditCard className="w-4 h-4" />
+              새 크레딧
+            </TabsTrigger>
+            <TabsTrigger value="manage" className="flex items-center gap-1">
+              <List className="w-4 h-4" />
+              크레딧 목록
+            </TabsTrigger>
+          </TabsList>
 
-            {/* 입력 모드 탭 */}
-            <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'date' | 'count')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="date" className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  날짜로 입력
-                </TabsTrigger>
-                <TabsTrigger value="count" className="flex items-center gap-1">
-                  <Hash className="w-4 h-4" />
-                  회차로 입력
-                </TabsTrigger>
-              </TabsList>
-
-              {/* 날짜로 입력 */}
-              <TabsContent value="date" className="space-y-3 mt-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="startDate">시작일</Label>
-                    <Input
-                      id="startDate"
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="endDate">종료일</Label>
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      min={startDate}
-                    />
+          {/* 새 크레딧 생성 */}
+          <TabsContent value="create">
+            <form onSubmit={handleSubmit}>
+              <div className="py-4 space-y-4">
+                {/* 학생 정보 */}
+                <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
+                  <div>월 수강료: <span className="font-medium">{monthlyTuition.toLocaleString()}원</span></div>
+                  <div>주당 횟수: <span className="font-medium">{weeklyCount}회</span> (월 {weeklyCount * 4}회)</div>
+                  <div>수업 요일: <span className="font-medium">{classDaysText}</span></div>
+                  <div className="pt-1 border-t border-border mt-2">
+                    <span className="text-blue-600 dark:text-blue-400 font-medium">
+                      1회 금액: {perClassFee.toLocaleString()}원
+                    </span>
                   </div>
                 </div>
 
-                {/* 날짜 계산 결과 */}
-                {startDate && endDate && (
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
-                    <div className="flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 mb-1">
-                      <Calculator className="w-4 h-4" />
-                      계산 결과
+                {/* 입력 모드 탭 */}
+                <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'date' | 'count')}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="date" className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      날짜로 입력
+                    </TabsTrigger>
+                    <TabsTrigger value="count" className="flex items-center gap-1">
+                      <Hash className="w-4 h-4" />
+                      회차로 입력
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* 날짜로 입력 */}
+                  <TabsContent value="date" className="space-y-3 mt-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="startDate">시작일</Label>
+                        <Input
+                          id="startDate"
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => setStartDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="endDate">종료일</Label>
+                        <Input
+                          id="endDate"
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          min={startDate}
+                        />
+                      </div>
                     </div>
-                    {dateCalculation.count > 0 ? (
-                      <>
-                        <div className="text-blue-600 dark:text-blue-500">
-                          해당 기간 수업일: {dateCalculation.dates.join(', ')}
+
+                    {/* 날짜 계산 결과 */}
+                    {startDate && endDate && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
+                        <div className="flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 mb-1">
+                          <Calculator className="w-4 h-4" />
+                          계산 결과
                         </div>
-                        <div className="text-blue-600 dark:text-blue-500">
-                          수업 횟수: <span className="font-medium">{dateCalculation.count}회</span>
-                        </div>
-                        <div className="text-blue-700 dark:text-blue-400 font-medium mt-1">
-                          총 크레딧: {dateCalculation.totalCredit.toLocaleString()}원
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-orange-600 dark:text-orange-400">
-                        해당 기간에 수업일이 없습니다.
+                        {dateCalculation.count > 0 ? (
+                          <>
+                            <div className="text-blue-600 dark:text-blue-500">
+                              해당 기간 수업일: {dateCalculation.dates.join(', ')}
+                            </div>
+                            <div className="text-blue-600 dark:text-blue-500">
+                              수업 횟수: <span className="font-medium">{dateCalculation.count}회</span>
+                            </div>
+                            <div className="text-blue-700 dark:text-blue-400 font-medium mt-1">
+                              총 크레딧: {dateCalculation.totalCredit.toLocaleString()}원
+                            </div>
+                          </>
+                        ) : (
+                          <div className="text-orange-600 dark:text-orange-400">
+                            해당 기간에 수업일이 없습니다.
+                          </div>
+                        )}
                       </div>
                     )}
+                  </TabsContent>
+
+                  {/* 회차로 입력 */}
+                  <TabsContent value="count" className="space-y-3 mt-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="classCount">회차</Label>
+                      <Input
+                        id="classCount"
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={classCount}
+                        onChange={(e) => setClassCount(parseInt(e.target.value) || 1)}
+                      />
+                      <p className="text-xs text-muted-foreground">1~12 사이의 값을 입력하세요.</p>
+                    </div>
+
+                    {/* 회차 계산 결과 */}
+                    <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
+                      <div className="flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 mb-1">
+                        <Calculator className="w-4 h-4" />
+                        계산 결과
+                      </div>
+                      <div className="text-blue-600 dark:text-blue-500">
+                        {perClassFee.toLocaleString()}원 x {classCount}회
+                      </div>
+                      <div className="text-blue-700 dark:text-blue-400 font-medium mt-1">
+                        총 크레딧: {countCalculation.totalCredit.toLocaleString()}원
+                      </div>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+
+                {/* 사유 선택 */}
+                <div className="space-y-2">
+                  <Label>사유</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {REASON_PRESETS.map((preset) => (
+                      <Button
+                        key={preset.value}
+                        type="button"
+                        variant={reason === preset.value ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setReason(preset.value)}
+                      >
+                        {preset.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {reason === '기타' && (
+                    <Input
+                      placeholder="사유를 직접 입력하세요"
+                      value={customReason}
+                      onChange={(e) => setCustomReason(e.target.value)}
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+
+                {/* 메모 */}
+                <div className="space-y-1">
+                  <Label htmlFor="notes">추가 메모 (선택)</Label>
+                  <Textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="추가 설명이 필요한 경우 입력하세요"
+                    rows={2}
+                  />
+                </div>
+
+                {/* 에러 메시지 */}
+                {error && (
+                  <div className="flex items-center gap-1 text-sm text-red-600 dark:text-red-400">
+                    <AlertTriangle className="w-4 h-4" />
+                    {error}
                   </div>
                 )}
-              </TabsContent>
-
-              {/* 회차로 입력 */}
-              <TabsContent value="count" className="space-y-3 mt-3">
-                <div className="space-y-1">
-                  <Label htmlFor="classCount">회차</Label>
-                  <Input
-                    id="classCount"
-                    type="number"
-                    min={1}
-                    max={12}
-                    value={classCount}
-                    onChange={(e) => setClassCount(parseInt(e.target.value) || 1)}
-                  />
-                  <p className="text-xs text-muted-foreground">1~12 사이의 값을 입력하세요.</p>
-                </div>
-
-                {/* 회차 계산 결과 */}
-                <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
-                  <div className="flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 mb-1">
-                    <Calculator className="w-4 h-4" />
-                    계산 결과
-                  </div>
-                  <div className="text-blue-600 dark:text-blue-500">
-                    {perClassFee.toLocaleString()}원 x {classCount}회
-                  </div>
-                  <div className="text-blue-700 dark:text-blue-400 font-medium mt-1">
-                    총 크레딧: {countCalculation.totalCredit.toLocaleString()}원
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            {/* 사유 선택 */}
-            <div className="space-y-2">
-              <Label>사유</Label>
-              <div className="flex flex-wrap gap-2">
-                {REASON_PRESETS.map((preset) => (
-                  <Button
-                    key={preset.value}
-                    type="button"
-                    variant={reason === preset.value ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setReason(preset.value)}
-                  >
-                    {preset.label}
-                  </Button>
-                ))}
               </div>
-              {reason === '기타' && (
-                <Input
-                  placeholder="사유를 직접 입력하세요"
-                  value={customReason}
-                  onChange={(e) => setCustomReason(e.target.value)}
-                  className="mt-2"
-                />
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleClose}>
+                  취소
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={processing || currentCalculation.count === 0}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  {processing ? '생성 중...' : `${currentCalculation.totalCredit?.toLocaleString() || 0}원 크레딧 생성`}
+                </Button>
+              </DialogFooter>
+            </form>
+          </TabsContent>
+
+          {/* 크레딧 목록 */}
+          <TabsContent value="manage">
+            <div className="py-4 space-y-3">
+              {loadingCredits ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : credits.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  등록된 크레딧이 없습니다.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {credits.map((credit) => (
+                    <div
+                      key={credit.id}
+                      className="p-3 border rounded-lg space-y-2"
+                    >
+                      {editingCredit?.id === credit.id ? (
+                        // 수정 모드
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <Label>금액</Label>
+                            <Input
+                              type="number"
+                              value={editAmount}
+                              onChange={(e) => setEditAmount(parseInt(e.target.value) || 0)}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label>메모</Label>
+                            <Textarea
+                              value={editNotes}
+                              onChange={(e) => setEditNotes(e.target.value)}
+                              rows={2}
+                            />
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setEditingCredit(null)}
+                            >
+                              취소
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={handleSaveEdit}
+                              disabled={processing}
+                            >
+                              {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : '저장'}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        // 보기 모드
+                        <>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="font-medium text-lg">
+                                {credit.credit_amount.toLocaleString()}원
+                              </span>
+                              <span className="ml-2 text-xs px-2 py-0.5 rounded bg-muted">
+                                {CREDIT_TYPE_LABELS[credit.credit_type] || credit.credit_type}
+                              </span>
+                              <span className={`ml-1 text-xs px-2 py-0.5 rounded ${
+                                credit.status === 'pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300' :
+                                credit.status === 'used' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+                                'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                              }`}>
+                                {CREDIT_STATUS_LABELS[credit.status] || credit.status}
+                              </span>
+                            </div>
+                            {credit.status !== 'used' && (
+                              <div className="flex gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleEdit(credit)}
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-red-600 hover:text-red-700"
+                                  onClick={() => handleDelete(credit.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {credit.rest_start_date && (
+                              <div>
+                                기간: {format(new Date(credit.rest_start_date), 'M/d', { locale: ko })} ~ {format(new Date(credit.rest_end_date), 'M/d', { locale: ko })}
+                                {credit.rest_days > 0 && ` (${credit.rest_days}회)`}
+                              </div>
+                            )}
+                            {credit.notes && (
+                              <div className="mt-1 text-xs">{credit.notes}</div>
+                            )}
+                            <div className="text-xs mt-1">
+                              생성: {format(new Date(credit.created_at), 'yyyy-MM-dd HH:mm', { locale: ko })}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 
-            {/* 메모 */}
-            <div className="space-y-1">
-              <Label htmlFor="notes">추가 메모 (선택)</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="추가 설명이 필요한 경우 입력하세요"
-                rows={2}
-              />
-            </div>
-
-            {/* 에러 메시지 */}
-            {error && (
-              <div className="flex items-center gap-1 text-sm text-red-600 dark:text-red-400">
-                <AlertTriangle className="w-4 h-4" />
-                {error}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              취소
-            </Button>
-            <Button
-              type="submit"
-              disabled={processing || currentCalculation.count === 0}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {processing ? '생성 중...' : `${currentCalculation.totalCredit?.toLocaleString() || 0}원 크레딧 생성`}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleClose}>
+                닫기
+              </Button>
+            </DialogFooter>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

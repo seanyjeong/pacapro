@@ -201,4 +201,28 @@ export const studentsAPI = {
   createManualCredit: async (id: number, data: ManualCreditRequest): Promise<ManualCreditResponse> => {
     return await apiClient.post(`/students/${id}/manual-credit`, data);
   },
+
+  /**
+   * 학생 크레딧 목록 조회 (새 API)
+   * GET /paca/students/:id/credits
+   */
+  getCredits: async (id: number): Promise<{ credits: any[] }> => {
+    return await apiClient.get(`/students/${id}/credits`);
+  },
+
+  /**
+   * 크레딧 수정
+   * PUT /paca/students/:id/credits/:creditId
+   */
+  updateCredit: async (studentId: number, creditId: number, data: { credit_amount?: number; notes?: string; status?: string }): Promise<{ message: string }> => {
+    return await apiClient.put(`/students/${studentId}/credits/${creditId}`, data);
+  },
+
+  /**
+   * 크레딧 삭제
+   * DELETE /paca/students/:id/credits/:creditId
+   */
+  deleteCredit: async (studentId: number, creditId: number): Promise<{ message: string }> => {
+    return await apiClient.delete(`/students/${studentId}/credits/${creditId}`);
+  },
 };
