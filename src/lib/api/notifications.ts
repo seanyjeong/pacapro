@@ -162,6 +162,14 @@ export const notificationsAPI = {
   },
 
   /**
+   * 미납자 알림톡 테스트 발송
+   */
+  sendTestOverdue: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-overdue', { phone });
+    return { success: response.success || false, groupId: response.groupId };
+  },
+
+  /**
    * 미납자 일괄 알림 발송
    */
   sendUnpaid: async (year: number, month: number): Promise<{ sent: number; failed: number }> => {

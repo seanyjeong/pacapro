@@ -80,9 +80,11 @@ export default function NotificationSettingsPage() {
   const [testing, setTesting] = useState(false);
   const [testingConsultation, setTestingConsultation] = useState(false);
   const [testingTrial, setTestingTrial] = useState(false);
+  const [testingOverdue, setTestingOverdue] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [testPhoneConsultation, setTestPhoneConsultation] = useState('');
   const [testPhoneTrial, setTestPhoneTrial] = useState('');
+  const [testPhoneOverdue, setTestPhoneOverdue] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [sendingUnpaid, setSendingUnpaid] = useState(false);
 
@@ -94,6 +96,10 @@ export default function NotificationSettingsPage() {
 
   // 현재 선택된 템플릿 탭
   const [activeTemplate, setActiveTemplate] = useState<TemplateType>('unpaid');
+
+  // 접기/펼치기 상태
+  const [showPushSection, setShowPushSection] = useState(false);
+  const [showSolapiSettingsSection, setShowSolapiSettingsSection] = useState(true);
 
   // 학원명 (미리보기용)
   const [academyName, setAcademyName] = useState<string>('파카체대입시');
@@ -242,6 +248,26 @@ export default function NotificationSettingsPage() {
     }
   };
 
+  // 미납자 알림톡 테스트
+  const handleTestOverdue = async () => {
+    if (!testPhoneOverdue) {
+      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
+      return;
+    }
+    setTestingOverdue(true);
+    setMessage(null);
+    try {
+      await notificationsAPI.sendTestOverdue(testPhoneOverdue);
+      setMessage({ type: 'success', text: '미납자 테스트 메시지가 발송되었습니다.' });
+      loadLogs();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || '미납자 테스트 발송에 실패했습니다.' });
+    } finally {
+      setTestingOverdue(false);
+    }
+  };
+
   // 체험수업 버튼 추가
   const addTrialButton = () => {
     const newButton: ConsultationButton = {
@@ -352,8 +378,28 @@ export default function NotificationSettingsPage() {
         </div>
       )}
 
-      {/* PWA 푸시 알림 설정 */}
-      <PushNotificationSettings />
+      {/* PWA 푸시 알림 설정 - 접기/펼치기 */}
+      <div className="bg-card rounded-lg shadow-sm border border-border">
+        <button
+          onClick={() => setShowPushSection(!showPushSection)}
+          className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors rounded-lg"
+        >
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-blue-600" />
+            <span className="font-semibold text-foreground">PWA 푸시 알림 설정</span>
+          </div>
+          {showPushSection ? (
+            <ChevronUp className="w-5 h-5 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="w-5 h-5 text-muted-foreground" />
+          )}
+        </button>
+        {showPushSection && (
+          <div className="border-t border-border">
+            <PushNotificationSettings />
+          </div>
+        )}
+      </div>
 
       {/* 서비스 선택 탭 */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-6">
@@ -685,6 +731,116 @@ export default function NotificationSettingsPage() {
         </div>
       )}
 
+      {/* 솔라피 알림톡 통합 설정 - 접기/펼치기 */}
+      {activeTab === 'solapi' && (
+        <div className="bg-card rounded-lg shadow-sm border border-purple-200 dark:border-purple-800">
+          <button
+            onClick={() => setShowSolapiSettingsSection(!showSolapiSettingsSection)}
+            className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors rounded-lg"
+          >
+            <div className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-purple-600" />
+              <span className="font-semibold text-foreground">알림톡 발송 설정</span>
+              {settings.solapi_enabled && (
+                <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">활성화됨</span>
+              )}
+            </div>
+            {showSolapiSettingsSection ? (
+              <ChevronUp className="w-5 h-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-muted-foreground" />
+            )}
+          </button>
+          {showSolapiSettingsSection && (
+            <div className="border-t border-border p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">알림톡 활성화</p>
+                    <p className="text-sm text-muted-foreground">모든 알림톡 발송 기능 활성화</p>
+                  </div>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, solapi_enabled: !prev.solapi_enabled }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_enabled ? 'bg-purple-600' : 'bg-muted'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                {!settings.solapi_enabled && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      알림톡이 비활성화되어 있습니다. 활성화해야 모든 알림톡을 발송할 수 있습니다.
+                    </p>
+                  </div>
+                )}
+
+                {settings.solapi_enabled && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-foreground">자동 발송</p>
+                        <p className="text-sm text-muted-foreground">오늘 수업 있는 미납자에게 자동 발송</p>
+                      </div>
+                      <button
+                        onClick={() => setSettings(prev => ({ ...prev, solapi_auto_enabled: !prev.solapi_auto_enabled }))}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_auto_enabled ? 'bg-purple-600' : 'bg-muted'}`}
+                      >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+
+                    {settings.solapi_auto_enabled && (
+                      <div>
+                        <label className="block text-sm font-medium text-foreground mb-2">
+                          자동 발송 시간
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <select
+                            value={settings.solapi_auto_hour ?? 10}
+                            onChange={e => setSettings(prev => ({ ...prev, solapi_auto_hour: parseInt(e.target.value) }))}
+                            className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          >
+                            {[...Array(24)].map((_, hour) => (
+                              <option key={hour} value={hour}>
+                                {hour.toString().padStart(2, '0')}:00
+                              </option>
+                            ))}
+                          </select>
+                          <span className="text-sm text-muted-foreground">
+                            매일 {(settings.solapi_auto_hour ?? 10).toString().padStart(2, '0')}시에 발송
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+                      <p className="text-sm text-purple-800 dark:text-purple-200">
+                        <strong>발송 대상:</strong> 오늘 수업이 예정된 미납 학생
+                      </p>
+                      <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                        • 첫 수업일: 납부 안내 알림톡 발송<br/>
+                        • 두 번째 수업일 이후: 미납자 알림톡 발송 (설정된 경우)
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                <div className="pt-4 border-t border-border">
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    {saving ? '저장 중...' : '발송 설정 저장'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 템플릿 선택 탭 */}
       {activeTab === 'solapi' && (
         <div className="bg-card rounded-lg shadow-sm border border-border p-4">
@@ -853,70 +1009,6 @@ export default function NotificationSettingsPage() {
                     </div>
                   </div>
                 )}
-
-                {/* 발송 설정 */}
-                <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-                  <h4 className="font-medium text-foreground mb-4">발송 설정</h4>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">알림톡 활성화</p>
-                        <p className="text-sm text-muted-foreground">납부 안내 알림톡 발송 기능 활성화</p>
-                      </div>
-                      <button
-                        onClick={() => setSettings(prev => ({ ...prev, solapi_enabled: !prev.solapi_enabled }))}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_enabled ? 'bg-orange-600' : 'bg-muted'}`}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-foreground">자동 발송</p>
-                        <p className="text-sm text-muted-foreground">오늘 수업 있는 미납자에게 자동 발송</p>
-                      </div>
-                      <button
-                        onClick={() => setSettings(prev => ({ ...prev, solapi_auto_enabled: !prev.solapi_auto_enabled }))}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_auto_enabled ? 'bg-orange-600' : 'bg-muted'}`}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                      </button>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        자동 발송 시간
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <select
-                          value={settings.solapi_auto_hour ?? 10}
-                          onChange={e => setSettings(prev => ({ ...prev, solapi_auto_hour: parseInt(e.target.value) }))}
-                          className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        >
-                          {[...Array(24)].map((_, hour) => (
-                            <option key={hour} value={hour}>
-                              {hour.toString().padStart(2, '0')}:00
-                            </option>
-                          ))}
-                        </select>
-                        <span className="text-sm text-muted-foreground">
-                          매일 {(settings.solapi_auto_hour ?? 10).toString().padStart(2, '0')}시에 발송
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
-                      <p className="text-sm text-orange-800 dark:text-orange-200">
-                        <strong>발송 대상:</strong> 오늘 수업이 예정된 미납 학생
-                      </p>
-                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                        예: 월/수/금 수업인 학생은 월/수/금에만 알림톡을 받습니다.
-                      </p>
-                    </div>
-                  </div>
-                </div>
 
                 {/* 테스트 및 수동 발송 */}
                 <div className="md:col-span-2 border-t border-border pt-4 mt-2">
@@ -1200,13 +1292,16 @@ export default function NotificationSettingsPage() {
                     />
                     <button
                       onClick={handleTestConsultation}
-                      disabled={testingConsultation || !settings.solapi_consultation_template_id}
+                      disabled={testingConsultation || !settings.solapi_enabled || !settings.solapi_consultation_template_id}
                       className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {testingConsultation ? '발송 중...' : '테스트'}
                     </button>
                   </div>
-                  {!settings.solapi_consultation_template_id && (
+                  {!settings.solapi_enabled && (
+                    <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>
+                  )}
+                  {settings.solapi_enabled && !settings.solapi_consultation_template_id && (
                     <p className="text-sm text-amber-600 mt-1">템플릿 ID를 먼저 설정해야 테스트 발송이 가능합니다</p>
                   )}
                 </div>
@@ -1494,13 +1589,16 @@ export default function NotificationSettingsPage() {
                 />
                 <button
                   onClick={handleTestTrial}
-                  disabled={testingTrial || !settings.solapi_trial_template_id}
+                  disabled={testingTrial || !settings.solapi_enabled || !settings.solapi_trial_template_id}
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {testingTrial ? '발송 중...' : '테스트'}
                 </button>
               </div>
-              {!settings.solapi_trial_template_id && (
+              {!settings.solapi_enabled && (
+                <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>
+              )}
+              {settings.solapi_enabled && !settings.solapi_trial_template_id && (
                 <p className="text-sm text-amber-600 mt-1">템플릿 ID를 먼저 설정해야 테스트 발송이 가능합니다</p>
               )}
             </div>
@@ -1643,6 +1741,33 @@ export default function NotificationSettingsPage() {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* 테스트 발송 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <h4 className="font-medium text-foreground mb-3">테스트 발송</h4>
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  value={testPhoneOverdue}
+                  onChange={e => setTestPhoneOverdue(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  placeholder="테스트 전화번호 (예: 01012345678)"
+                />
+                <button
+                  onClick={handleTestOverdue}
+                  disabled={testingOverdue || !settings.solapi_enabled || !settings.solapi_overdue_template_id}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {testingOverdue ? '발송 중...' : '테스트'}
+                </button>
+              </div>
+              {!settings.solapi_enabled && (
+                <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>
+              )}
+              {settings.solapi_enabled && !settings.solapi_overdue_template_id && (
+                <p className="text-sm text-amber-600 mt-1">템플릿 ID를 먼저 설정해야 테스트 발송이 가능합니다</p>
+              )}
             </div>
 
             {/* 저장 버튼 */}

@@ -1527,6 +1527,145 @@ router.post('/test-trial', verifyToken, checkPermission('settings', 'edit'), asy
 });
 
 /**
+ * POST /paca/notifications/test-overdue
+ * 미납자 알림톡 테스트 발송
+ */
+router.post('/test-overdue', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { phone } = req.body;
+
+        if (!phone || !isValidPhoneNumber(phone)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '유효한 전화번호를 입력해주세요.'
+            });
+        }
+
+        // 설정 조회
+        const [settings] = await db.query(
+            'SELECT * FROM notification_settings WHERE academy_id = ?',
+            [req.user.academyId]
+        );
+
+        if (settings.length === 0) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '알림 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        const setting = settings[0];
+
+        // 솔라피 설정 확인
+        if (!setting.solapi_api_key || !setting.solapi_api_secret || !setting.solapi_pfid) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '솔라피 API 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        if (!setting.solapi_overdue_template_id) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '미납자 템플릿 ID를 먼저 설정해주세요.'
+            });
+        }
+
+        // Secret 복호화
+        const decryptedSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
+        if (!decryptedSecret) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '솔라피 API Secret이 올바르지 않습니다.'
+            });
+        }
+
+        // 학원 정보 조회
+        const [academy] = await db.query(
+            'SELECT name, phone FROM academies WHERE id = ?',
+            [req.user.academyId]
+        );
+        const academyName = academy[0]?.name || '학원';
+        const academyPhone = academy[0]?.phone || '';
+
+        // 테스트 데이터
+        const now = new Date();
+        const testMonth = now.getMonth() + 1;
+
+        // 템플릿 변수 치환
+        let content = setting.solapi_overdue_template_content || '';
+        content = content
+            .replace(/#{이름}/g, '테스트학생')
+            .replace(/#{월}/g, String(testMonth))
+            .replace(/#{교육비}/g, '300,000')
+            .replace(/#{날짜}/g, '10일')
+            .replace(/#{학원명}/g, academyName)
+            .replace(/#{학원전화}/g, academyPhone);
+
+        // 버튼 설정 파싱
+        let buttons = null;
+        if (setting.solapi_overdue_buttons) {
+            try {
+                buttons = JSON.parse(setting.solapi_overdue_buttons);
+            } catch (e) {
+                console.error('버튼 설정 파싱 오류:', e);
+            }
+        }
+
+        // 이미지 URL
+        const imageUrl = setting.solapi_overdue_image_url || null;
+
+        // 솔라피 알림톡 발송
+        const result = await sendAlimtalkSolapi(
+            {
+                solapi_api_key: setting.solapi_api_key,
+                solapi_api_secret: decryptedSecret,
+                solapi_pfid: setting.solapi_pfid,
+                solapi_sender_phone: setting.solapi_sender_phone
+            },
+            setting.solapi_overdue_template_id,
+            [{ phone, content, buttons, imageUrl }]
+        );
+
+        if (result.success) {
+            // 로그 기록
+            await db.query(
+                `INSERT INTO notification_logs
+                (academy_id, recipient_name, recipient_phone, message_type, template_code,
+                 message_content, status, request_id, sent_at)
+                VALUES (?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
+                [
+                    req.user.academyId,
+                    '테스트(미납자)',
+                    phone,
+                    setting.solapi_overdue_template_id,
+                    content,
+                    result.groupId || null
+                ]
+            );
+
+            res.json({
+                message: '미납자 테스트 메시지가 발송되었습니다.',
+                success: true,
+                groupId: result.groupId
+            });
+        } else {
+            res.status(400).json({
+                error: 'Send Failed',
+                message: '메시지 발송에 실패했습니다: ' + (result.error || '알 수 없는 오류'),
+                details: result
+            });
+        }
+    } catch (error) {
+        console.error('미납자 테스트 발송 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '테스트 발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
  * POST /paca/notifications/send-trial-today-auto
  * 체험수업 자동발송 - 현재 시간에 발송 설정된 모든 학원 처리 (n8n 매시간 호출)
  * Access: n8n service account (X-API-Key 인증)
