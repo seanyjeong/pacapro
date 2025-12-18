@@ -773,7 +773,7 @@ export default function NotificationSettingsPage() {
                       <span className="text-muted-foreground">청구 월</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{금액}'}</code>
+                      <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{교육비}'}</code>
                       <span className="text-muted-foreground">미납 금액</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -818,9 +818,8 @@ export default function NotificationSettingsPage() {
                             <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                               {settings.solapi_template_content
                                 .replace(/#{이름}/g, '홍길동')
-                                .replace(/#{학생명}/g, '홍길동')
                                 .replace(/#{월}/g, '12')
-                                .replace(/#{금액}/g, '300,000')
+                                .replace(/#{교육비}/g, '300,000')
                                 .replace(/#{날짜}/g, '10일')
                                 .replace(/#{학원명}/g, academyName)
                                 .replace(/#{학원전화}/g, '010-0000-0000')
@@ -1688,11 +1687,11 @@ export default function NotificationSettingsPage() {
                     <div className="mt-3 p-3 bg-muted rounded text-xs font-mono whitespace-pre-wrap text-foreground">
 {`[#{학원명}] 학원비 납부 안내
 
-안녕하세요, #{학생명} 학부모님.
+안녕하세요, #{이름} 학부모님.
 
-#{월}월 학원비 #{금액}원이 아직 납부되지 않았습니다.
+#{월}월 학원비 #{교육비}원이 아직 납부되지 않았습니다.
 
-납부기한: #{납부기한}
+납부일: #{날짜}
 
 문의: #{학원전화}
 

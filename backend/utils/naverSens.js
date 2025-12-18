@@ -164,29 +164,27 @@ function replaceTemplateVariables(template, variables) {
  * @returns {Object} - {content, variables}
  */
 function createUnpaidNotificationMessage(payment, student, academy, customTemplate) {
-    // 변수 매핑 (다양한 변수명 지원)
+    // 변수 매핑
     const variables = {
         // 학생 관련
         '이름': student.name || '',
-        '학생명': student.name || '',
         // 학원 관련
         '학원명': academy.name || '',
         '학원전화': academy.phone || '',
         // 납부 관련
         '월': payment.month || '',
         '교육비': payment.amount ? Math.floor(Number(payment.amount)).toLocaleString() : '0',
-        '날짜': payment.due_date || '',
-        '납부기한': payment.due_date || ''
+        '날짜': payment.due_date || ''
     };
 
     // 사용자 정의 템플릿이 있으면 사용, 없으면 기본 템플릿
     const template = customTemplate || `[#{학원명}] 학원비 납부 안내
 
-안녕하세요, #{학생명} 학부모님.
+안녕하세요, #{이름} 학부모님.
 
 #{월}월 학원비 #{교육비}원이 아직 납부되지 않았습니다.
 
-납부기한: #{납부기한}
+납부일: #{날짜}
 
 문의: #{학원전화}
 
