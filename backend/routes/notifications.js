@@ -100,6 +100,9 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), async 
                 has_secret_key: !!setting.naver_secret_key,
                 solapi_api_secret: maskedSolapiSecret,
                 has_solapi_secret: !!setting.solapi_api_secret,
+                // 납부 안내 알림톡 버튼/이미지
+                solapi_buttons: setting.solapi_buttons ? JSON.parse(setting.solapi_buttons) : [],
+                solapi_image_url: setting.solapi_image_url || '',
                 // 상담확정 알림톡 설정
                 solapi_consultation_template_id: setting.solapi_consultation_template_id || '',
                 solapi_consultation_template_content: setting.solapi_consultation_template_content || '',
@@ -153,6 +156,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
             solapi_sender_phone,
             solapi_template_id,
             solapi_template_content,
+            solapi_buttons,
+            solapi_image_url,
             // 상담확정 알림톡 설정
             solapi_consultation_template_id,
             solapi_consultation_template_content,
@@ -211,6 +216,7 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                 (academy_id, service_type,
                  naver_access_key, naver_secret_key, naver_service_id, sms_service_id, kakao_channel_id,
                  solapi_api_key, solapi_api_secret, solapi_pfid, solapi_sender_phone, solapi_template_id, solapi_template_content,
+                 solapi_buttons, solapi_image_url,
                  solapi_consultation_template_id, solapi_consultation_template_content, solapi_consultation_buttons, solapi_consultation_image_url,
                  solapi_trial_template_id, solapi_trial_template_content, solapi_trial_buttons, solapi_trial_image_url,
                  solapi_trial_auto_enabled, solapi_trial_auto_hour,
@@ -218,7 +224,7 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                  solapi_overdue_auto_enabled, solapi_overdue_auto_hour,
                  template_code, template_content, is_enabled, solapi_enabled, solapi_auto_enabled, solapi_auto_hour,
                  auto_send_day, auto_send_days, auto_send_hour)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     req.user.academyId,
                     service_type || 'sens',
@@ -233,6 +239,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_sender_phone || null,
                     solapi_template_id || null,
                     solapi_template_content || null,
+                    solapi_buttons ? JSON.stringify(solapi_buttons) : null,
+                    solapi_image_url || null,
                     solapi_consultation_template_id || null,
                     solapi_consultation_template_content || null,
                     solapi_consultation_buttons ? JSON.stringify(solapi_consultation_buttons) : null,
@@ -276,6 +284,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_sender_phone = ?,
                     solapi_template_id = ?,
                     solapi_template_content = ?,
+                    solapi_buttons = ?,
+                    solapi_image_url = ?,
                     solapi_consultation_template_id = ?,
                     solapi_consultation_template_content = ?,
                     solapi_consultation_buttons = ?,
@@ -315,6 +325,8 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_sender_phone || null,
                     solapi_template_id || null,
                     solapi_template_content || null,
+                    solapi_buttons ? JSON.stringify(solapi_buttons) : null,
+                    solapi_image_url || null,
                     solapi_consultation_template_id || null,
                     solapi_consultation_template_content || null,
                     solapi_consultation_buttons ? JSON.stringify(solapi_consultation_buttons) : null,

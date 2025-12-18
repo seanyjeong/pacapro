@@ -33,6 +33,8 @@ export interface NotificationSettings {
   solapi_sender_phone: string;  // 발신번호
   solapi_template_id: string;
   solapi_template_content: string;
+  solapi_buttons: ConsultationButton[];
+  solapi_image_url: string;
   has_solapi_secret?: boolean;
 
   // 상담확정 알림톡 설정
