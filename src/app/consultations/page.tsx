@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
   Calendar, Clock, User, Phone, Search, Filter, Settings,
@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import Link from 'next/link';
 
@@ -50,6 +51,7 @@ export default function ConsultationsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week'>('all');
 
   // 상세 모달
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
@@ -126,14 +128,35 @@ export default function ConsultationsPage() {
   ]);
   const [convertingToTrial, setConvertingToTrial] = useState(false);
 
+  // 날짜 필터 계산
+  const getDateRange = () => {
+    const today = new Date();
+    const todayStr = format(today, 'yyyy-MM-dd');
+
+    if (dateFilter === 'today') {
+      return { startDate: todayStr, endDate: todayStr };
+    } else if (dateFilter === 'week') {
+      const weekStart = startOfWeek(today, { weekStartsOn: 1 }); // 월요일 시작
+      const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+      return {
+        startDate: format(weekStart, 'yyyy-MM-dd'),
+        endDate: format(weekEnd, 'yyyy-MM-dd')
+      };
+    }
+    return { startDate: undefined, endDate: undefined };
+  };
+
   // 데이터 로드
   const loadData = async () => {
     setLoading(true);
     try {
+      const { startDate, endDate } = getDateRange();
       const response = await getConsultations({
         search: search || undefined,
         status: statusFilter || undefined,
         consultationType: typeFilter || undefined,
+        startDate,
+        endDate,
         page: pagination.page,
         limit: pagination.limit
       });
@@ -151,7 +174,7 @@ export default function ConsultationsPage() {
 
   useEffect(() => {
     loadData();
-  }, [search, statusFilter, typeFilter, pagination.page]);
+  }, [search, statusFilter, typeFilter, dateFilter, pagination.page]);
 
   // 운영 시간 설정 로드
   useEffect(() => {
@@ -400,6 +423,15 @@ export default function ConsultationsPage() {
           </Card>
         ))}
       </div>
+
+      {/* 날짜 탭 */}
+      <Tabs value={dateFilter} onValueChange={(v) => setDateFilter(v as 'all' | 'today' | 'week')}>
+        <TabsList>
+          <TabsTrigger value="all">전체</TabsTrigger>
+          <TabsTrigger value="today">오늘</TabsTrigger>
+          <TabsTrigger value="week">이번 주</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* 필터 */}
       <Card>
