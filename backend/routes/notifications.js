@@ -1101,76 +1101,105 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
                     continue;
                 }
 
-                // 메시지 준비 (학원별 템플릿 사용)
-                const templateContent = setting.solapi_template_content || setting.template_content;
-                const templateCode = setting.solapi_template_id;
-
-                const recipients = validRecipients.map(p => {
-                    const monthFromYearMonth = p.year_month ? p.year_month.split('-')[1] : month.toString();
-                    const msg = createUnpaidNotificationMessage(
-                        {
-                            month: monthFromYearMonth,
-                            amount: p.amount,
-                            due_date: dueDayText
-                        },
-                        { name: p.student_name },
-                        { name: setting.academy_name || '', phone: setting.academy_phone || '' },
-                        templateContent
-                    );
-
-                    return {
-                        phone: p.effectivePhone,
-                        content: msg.content,
-                        studentId: p.student_id,
-                        paymentId: p.payment_id,
-                        studentName: p.student_name
-                    };
-                });
-
-                // 솔라피 알림톡 발송 (학원별 API 키 사용)
-                const result = await sendAlimtalkSolapi(
-                    {
-                        solapi_api_key: setting.solapi_api_key,
-                        solapi_api_secret: decryptedSolapiSecret,
-                        solapi_pfid: setting.solapi_pfid,
-                        solapi_sender_phone: setting.solapi_sender_phone
-                    },
-                    templateCode,
-                    recipients
+                // 이번 달에 이미 알림을 받은 학생 조회 (첫 수업일 vs 두 번째 수업일 구분)
+                const studentIds = validRecipients.map(p => p.student_id);
+                const [existingLogs] = await db.query(
+                    `SELECT DISTINCT student_id FROM notification_logs
+                     WHERE academy_id = ? AND student_id IN (?)
+                     AND YEAR(sent_at) = ? AND MONTH(sent_at) = ?
+                     AND status = 'sent'`,
+                    [academyId, studentIds, year, month]
                 );
+                const studentsWithPriorNotification = new Set(existingLogs.map(l => l.student_id));
 
-                // 로그 기록
-                for (const recipient of recipients) {
-                    await db.query(
-                        `INSERT INTO notification_logs
-                        (academy_id, student_id, payment_id, recipient_name, recipient_phone,
-                         message_type, template_code, message_content, status, request_id,
-                         error_message, sent_at)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-                        [
-                            academyId,
-                            recipient.studentId,
-                            recipient.paymentId,
-                            recipient.studentName,
-                            recipient.phone,
-                            'alimtalk',
-                            templateCode,
-                            recipient.content,
-                            result.success ? 'sent' : 'failed',
-                            result.groupId || null,
-                            result.success ? null : (result.error || 'Unknown error')
-                        ]
+                // 첫 수업일 (납부 안내) vs 두 번째 수업일 이후 (미납자) 분류
+                const firstTimeRecipients = validRecipients.filter(p => !studentsWithPriorNotification.has(p.student_id));
+                const repeatRecipients = validRecipients.filter(p => studentsWithPriorNotification.has(p.student_id));
+
+                // 납부 안내 템플릿 (첫 수업일)
+                const noticeTemplateContent = setting.solapi_template_content || setting.template_content;
+                const noticeTemplateCode = setting.solapi_template_id;
+
+                // 미납자 템플릿 (두 번째 수업일 이후)
+                const overdueTemplateContent = setting.solapi_overdue_template_content || noticeTemplateContent;
+                const overdueTemplateCode = setting.solapi_overdue_template_id || noticeTemplateCode;
+
+                // 발송 함수
+                const sendAndLog = async (recipients, templateCode, templateContent, templateType) => {
+                    if (recipients.length === 0) return;
+
+                    const messages = recipients.map(p => {
+                        const monthFromYearMonth = p.year_month ? p.year_month.split('-')[1] : month.toString();
+                        const msg = createUnpaidNotificationMessage(
+                            {
+                                month: monthFromYearMonth,
+                                amount: p.amount,
+                                due_date: dueDayText
+                            },
+                            { name: p.student_name },
+                            { name: setting.academy_name || '', phone: setting.academy_phone || '' },
+                            templateContent
+                        );
+
+                        return {
+                            phone: p.effectivePhone,
+                            content: msg.content,
+                            studentId: p.student_id,
+                            paymentId: p.payment_id,
+                            studentName: p.student_name
+                        };
+                    });
+
+                    const result = await sendAlimtalkSolapi(
+                        {
+                            solapi_api_key: setting.solapi_api_key,
+                            solapi_api_secret: decryptedSolapiSecret,
+                            solapi_pfid: setting.solapi_pfid,
+                            solapi_sender_phone: setting.solapi_sender_phone
+                        },
+                        templateCode,
+                        messages
                     );
 
-                    if (result.success) {
-                        academyResult.sent++;
-                    } else {
-                        academyResult.failed++;
+                    // 로그 기록
+                    for (const recipient of messages) {
+                        await db.query(
+                            `INSERT INTO notification_logs
+                            (academy_id, student_id, payment_id, recipient_name, recipient_phone,
+                             message_type, template_code, message_content, status, request_id,
+                             error_message, sent_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                            [
+                                academyId,
+                                recipient.studentId,
+                                recipient.paymentId,
+                                recipient.studentName,
+                                recipient.phone,
+                                'alimtalk',
+                                templateCode,
+                                recipient.content,
+                                result.success ? 'sent' : 'failed',
+                                result.groupId || null,
+                                result.success ? null : (result.error || 'Unknown error')
+                            ]
+                        );
+
+                        if (result.success) {
+                            academyResult.sent++;
+                        } else {
+                            academyResult.failed++;
+                        }
                     }
+                };
+
+                // 납부 안내 알림톡 발송 (첫 수업일)
+                if (firstTimeRecipients.length > 0 && noticeTemplateCode) {
+                    await sendAndLog(firstTimeRecipients, noticeTemplateCode, noticeTemplateContent, '납부안내');
                 }
 
-                if (!result.success) {
-                    academyResult.error = result.error;
+                // 미납자 알림톡 발송 (두 번째 수업일 이후)
+                if (repeatRecipients.length > 0 && overdueTemplateCode) {
+                    await sendAndLog(repeatRecipients, overdueTemplateCode, overdueTemplateContent, '미납자');
                 }
 
             } catch (academyError) {
