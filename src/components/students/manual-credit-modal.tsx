@@ -327,7 +327,7 @@ export function ManualCreditModal({
           {/* 새 크레딧 생성 */}
           <TabsContent value="create">
             <form onSubmit={handleSubmit}>
-              <div className="py-4 space-y-4">
+              <div className="py-6 px-6 space-y-4">
                 {/* 학생 정보 */}
                 <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
                   <div>월 수강료: <span className="font-medium">{monthlyTuition.toLocaleString()}원</span></div>
@@ -500,7 +500,7 @@ export function ManualCreditModal({
 
           {/* 크레딧 목록 */}
           <TabsContent value="manage">
-            <div className="py-4 space-y-3">
+            <div className="py-6 px-6 space-y-3">
               {loadingCredits ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
