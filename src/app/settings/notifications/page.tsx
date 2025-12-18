@@ -692,7 +692,7 @@ export default function NotificationSettingsPage() {
               }`}
             >
               <DollarSign className="w-4 h-4" />
-              미납자 알림톡
+              납부 안내 알림톡
               {settings.solapi_template_id && (
                 <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'unpaid' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
               )}
@@ -729,7 +729,7 @@ export default function NotificationSettingsPage() {
         </div>
       )}
 
-      {/* 미납자 알림톡 템플릿 */}
+      {/* 납부 안내 알림톡 템플릿 */}
       {activeTab === 'solapi' && activeTemplate === 'unpaid' && (
         <div className="bg-card rounded-lg shadow-sm border border-orange-200 dark:border-orange-800 p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -774,7 +774,7 @@ export default function NotificationSettingsPage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{교육비}'}</code>
-                      <span className="text-muted-foreground">미납 금액</span>
+                      <span className="text-muted-foreground">교육비</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <code className="bg-card px-2 py-1 rounded border border-border text-orange-700 dark:text-orange-300">{'#{날짜}'}</code>
@@ -791,7 +791,7 @@ export default function NotificationSettingsPage() {
                   </div>
                 </div>
 
-                {/* 미납자 알림톡 미리보기 */}
+                {/* 납부 안내 알림톡 미리보기 */}
                 {settings.solapi_template_content && (
                   <div className="md:col-span-2">
                     <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
@@ -841,7 +841,7 @@ export default function NotificationSettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-medium text-foreground">알림톡 활성화</p>
-                        <p className="text-sm text-muted-foreground">미납자 알림톡 발송 기능 활성화</p>
+                        <p className="text-sm text-muted-foreground">납부 안내 알림톡 발송 기능 활성화</p>
                       </div>
                       <button
                         onClick={() => setSettings(prev => ({ ...prev, solapi_enabled: !prev.solapi_enabled }))}
@@ -945,7 +945,7 @@ export default function NotificationSettingsPage() {
                 disabled={saving}
                 className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
-                {saving ? '저장 중...' : '미납자 알림톡 설정 저장'}
+                {saving ? '저장 중...' : '납부 안내 알림톡 설정 저장'}
               </button>
             </div>
           </div>
