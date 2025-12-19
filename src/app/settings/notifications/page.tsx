@@ -1301,6 +1301,19 @@ export default function NotificationSettingsPage() {
                         <div className="flex-1">
                           <p className="text-xs text-gray-600 mb-1">{academyName}</p>
                           <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                            {/* 이미지 미리보기 */}
+                            {settings.solapi_image_url && (
+                              <div className="mb-2 -mx-1 -mt-1">
+                                <img
+                                  src={settings.solapi_image_url}
+                                  alt="알림톡 이미지"
+                                  className="w-full h-32 object-cover rounded-t-lg"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
                             <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                               {settings.solapi_template_content
                                 .replace(/#{이름}/g, '홍길동')
@@ -1311,6 +1324,19 @@ export default function NotificationSettingsPage() {
                                 .replace(/#{학원전화}/g, '010-0000-0000')
                               }
                             </p>
+                            {/* 버튼 미리보기 */}
+                            {settings.solapi_buttons && settings.solapi_buttons.length > 0 && (
+                              <div className="mt-3 pt-2 border-t border-gray-200 space-y-1.5">
+                                {settings.solapi_buttons.map((btn, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="text-center py-2 px-3 bg-gray-100 rounded-md text-sm text-blue-600 font-medium hover:bg-gray-200 cursor-pointer"
+                                  >
+                                    {btn.buttonName || '버튼'}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
                         </div>
@@ -1457,6 +1483,19 @@ export default function NotificationSettingsPage() {
                         <div className="flex-1">
                           <p className="text-xs text-gray-600 mb-1">{academyName}</p>
                           <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                            {/* 이미지 미리보기 */}
+                            {settings.solapi_consultation_image_url && (
+                              <div className="mb-2 -mx-1 -mt-1">
+                                <img
+                                  src={settings.solapi_consultation_image_url}
+                                  alt="알림톡 이미지"
+                                  className="w-full h-32 object-cover rounded-t-lg"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            )}
                             <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                               {settings.solapi_consultation_template_content
                                 .replace(/#{이름}/g, '홍길동')
@@ -1466,6 +1505,19 @@ export default function NotificationSettingsPage() {
                                 .replace(/#{학원명}/g, academyName)
                               }
                             </p>
+                            {/* 버튼 미리보기 */}
+                            {settings.solapi_consultation_buttons && settings.solapi_consultation_buttons.length > 0 && (
+                              <div className="mt-3 pt-2 border-t border-gray-200 space-y-1.5">
+                                {settings.solapi_consultation_buttons.map((btn, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="text-center py-2 px-3 bg-gray-100 rounded-md text-sm text-blue-600 font-medium hover:bg-gray-200 cursor-pointer"
+                                  >
+                                    {btn.buttonName || '버튼'}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
                         </div>
@@ -1714,6 +1766,19 @@ export default function NotificationSettingsPage() {
                     <div className="flex-1">
                       <p className="text-xs text-gray-600 mb-1">{academyName}</p>
                       <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                        {/* 이미지 미리보기 */}
+                        {settings.solapi_trial_image_url && (
+                          <div className="mb-2 -mx-1 -mt-1">
+                            <img
+                              src={settings.solapi_trial_image_url}
+                              alt="알림톡 이미지"
+                              className="w-full h-32 object-cover rounded-t-lg"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
                         <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                           {settings.solapi_trial_template_content
                             .replace(/#{이름}/g, '홍길동')
@@ -1721,6 +1786,19 @@ export default function NotificationSettingsPage() {
                             .replace(/#{체험일정}/g, '✓ 1회차: 12/18(수) 18:30\n2회차: 12/20(금) 18:30')
                           }
                         </p>
+                        {/* 버튼 미리보기 */}
+                        {settings.solapi_trial_buttons && settings.solapi_trial_buttons.length > 0 && (
+                          <div className="mt-3 pt-2 border-t border-gray-200 space-y-1.5">
+                            {settings.solapi_trial_buttons.map((btn, idx) => (
+                              <div
+                                key={idx}
+                                className="text-center py-2 px-3 bg-gray-100 rounded-md text-sm text-blue-600 font-medium hover:bg-gray-200 cursor-pointer"
+                              >
+                                {btn.buttonName || '버튼'}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
                     </div>
@@ -2013,6 +2091,19 @@ export default function NotificationSettingsPage() {
                     <div className="flex-1">
                       <p className="text-xs text-gray-600 mb-1">{academyName}</p>
                       <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                        {/* 이미지 미리보기 */}
+                        {settings.solapi_overdue_image_url && (
+                          <div className="mb-2 -mx-1 -mt-1">
+                            <img
+                              src={settings.solapi_overdue_image_url}
+                              alt="알림톡 이미지"
+                              className="w-full h-32 object-cover rounded-t-lg"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
                         <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
                           {settings.solapi_overdue_template_content
                             .replace(/#{이름}/g, '홍길동')
@@ -2023,6 +2114,19 @@ export default function NotificationSettingsPage() {
                             .replace(/#{학원전화}/g, '010-0000-0000')
                           }
                         </p>
+                        {/* 버튼 미리보기 */}
+                        {settings.solapi_overdue_buttons && settings.solapi_overdue_buttons.length > 0 && (
+                          <div className="mt-3 pt-2 border-t border-gray-200 space-y-1.5">
+                            {settings.solapi_overdue_buttons.map((btn, idx) => (
+                              <div
+                                key={idx}
+                                className="text-center py-2 px-3 bg-gray-100 rounded-md text-sm text-blue-600 font-medium hover:bg-gray-200 cursor-pointer"
+                              >
+                                {btn.buttonName || '버튼'}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 mt-1">오전 9:00</p>
                     </div>
