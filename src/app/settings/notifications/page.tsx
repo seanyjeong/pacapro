@@ -829,36 +829,10 @@ export default function NotificationSettingsPage() {
                 placeholder="@채널ID"
               />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                템플릿 코드 (Naver에서 승인받은 코드)
-              </label>
-              <input
-                type="text"
-                value={settings.template_code}
-                onChange={e => setSettings(prev => ({ ...prev, template_code: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="예: A06"
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-foreground mb-1">
-                템플릿 본문 (승인받은 템플릿 내용 그대로 입력)
-              </label>
-              <textarea
-                value={settings.template_content}
-                onChange={e => setSettings(prev => ({ ...prev, template_content: e.target.value }))}
-                rows={6}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm"
-                placeholder={`수강료안내
-#{이름} 학생의 수강료 납부일이,
-#{날짜} 일입니다
-계좌 ○○은행 000-000000-00000 홍길동`}
-              />
-            </div>
           </div>
+          <p className="text-sm text-muted-foreground mt-4">
+            ※ 템플릿 코드와 본문은 아래 &apos;알림톡 템플릿 설정&apos; 섹션의 각 템플릿 탭에서 설정합니다.
+          </p>
         </div>
       )}
 

@@ -26,6 +26,13 @@ import {
     Bell,
     BellOff,
     Loader2,
+    ChevronDown,
+    ChevronRight,
+    GraduationCap,
+    CircleDollarSign,
+    MessageCircle,
+    Cog,
+    BellRing,
 } from 'lucide-react';
 import type { Permissions } from '@/lib/types/staff';
 import apiClient from '@/lib/api/client';
@@ -43,27 +50,66 @@ interface NavItem {
     href: string;
     icon: React.ComponentType<{ className?: string }>;
     badge?: string;
-    permissionKey?: string; // 권한 체크를 위한 키
-    ownerOnly?: boolean; // 원장만 볼 수 있는 메뉴
+    permissionKey?: string;
+    ownerOnly?: boolean;
 }
 
-const navItems: NavItem[] = [
-    { title: '대시보드', href: '/', icon: LayoutDashboard },
-    { title: '학생', href: '/students', icon: Users, permissionKey: 'students' },
-    { title: '강사', href: '/instructors', icon: UserCog, permissionKey: 'instructors' },
-    { title: '수업', href: '/schedules', icon: Calendar, permissionKey: 'schedules' },
-    { title: '학원비', href: '/payments', icon: CreditCard, permissionKey: 'payments' },
-    { title: '급여', href: '/salaries', icon: Wallet, permissionKey: 'salaries' },
-    { title: '시즌', href: '/seasons', icon: Trophy, permissionKey: 'seasons' },
-    { title: '지출', href: '/expenses', icon: Receipt, permissionKey: 'expenses' },
-    { title: '수입', href: '/incomes', icon: TrendingUp, permissionKey: 'incomes' },
-    { title: '성적기록 (추후)', href: '/performance', icon: Award },
-    { title: '리포트', href: '/reports', icon: BarChart3, permissionKey: 'reports' },
-    { title: '상담', href: '/consultations', icon: PhoneCall, permissionKey: 'settings' },
-    { title: '문자 보내기', href: '/sms', icon: MessageSquare, permissionKey: 'settings' },
-    { title: '직원관리', href: '/staff', icon: UserCheck, ownerOnly: true },
-    { title: '설정', href: '/settings', icon: Settings, permissionKey: 'settings' },
+interface NavCategory {
+    title: string;
+    icon: React.ComponentType<{ className?: string }>;
+    items: NavItem[];
+    defaultOpen?: boolean;
+}
+
+// 카테고리별 메뉴 구조
+const navCategories: NavCategory[] = [
+    {
+        title: '학원 운영',
+        icon: GraduationCap,
+        defaultOpen: true,
+        items: [
+            { title: '학생', href: '/students', icon: Users, permissionKey: 'students' },
+            { title: '강사', href: '/instructors', icon: UserCog, permissionKey: 'instructors' },
+            { title: '수업', href: '/schedules', icon: Calendar, permissionKey: 'schedules' },
+            { title: '시즌', href: '/seasons', icon: Trophy, permissionKey: 'seasons' },
+        ],
+    },
+    {
+        title: '재무 관리',
+        icon: CircleDollarSign,
+        defaultOpen: true,
+        items: [
+            { title: '학원비', href: '/payments', icon: CreditCard, permissionKey: 'payments' },
+            { title: '급여', href: '/salaries', icon: Wallet, permissionKey: 'salaries' },
+            { title: '지출', href: '/expenses', icon: Receipt, permissionKey: 'expenses' },
+            { title: '수입', href: '/incomes', icon: TrendingUp, permissionKey: 'incomes' },
+        ],
+    },
+    {
+        title: '커뮤니케이션',
+        icon: MessageCircle,
+        defaultOpen: false,
+        items: [
+            { title: '상담', href: '/consultations', icon: PhoneCall, permissionKey: 'settings' },
+            { title: '문자 보내기', href: '/sms', icon: MessageSquare, permissionKey: 'settings' },
+            { title: '알림톡 설정', href: '/settings/notifications', icon: BellRing, permissionKey: 'settings' },
+        ],
+    },
+    {
+        title: '관리',
+        icon: Cog,
+        defaultOpen: false,
+        items: [
+            { title: '리포트', href: '/reports', icon: BarChart3, permissionKey: 'reports' },
+            { title: '성적기록 (추후)', href: '/performance', icon: Award },
+            { title: '직원관리', href: '/staff', icon: UserCheck, ownerOnly: true },
+            { title: '설정', href: '/settings', icon: Settings, permissionKey: 'settings' },
+        ],
+    },
 ];
+
+// 대시보드는 별도 (항상 상단)
+const dashboardItem: NavItem = { title: '대시보드', href: '/', icon: LayoutDashboard };
 
 const adminNavItems: NavItem[] = [
     { title: '사용자 승인', href: '/admin/users', icon: Shield },
@@ -84,6 +130,9 @@ export function Sidebar() {
     const [pushSupported, setPushSupported] = useState(false);
     const [pushSubscribed, setPushSubscribed] = useState(false);
     const [pushLoading, setPushLoading] = useState(false);
+
+    // 카테고리 펼침 상태
+    const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
     // 클라이언트에서만 사용자 정보 로드 (hydration 문제 방지)
     useEffect(() => {
@@ -106,7 +155,46 @@ export function Sidebar() {
 
         // 푸시 알림 상태 체크
         checkPushStatus();
+
+        // 저장된 카테고리 상태 로드 또는 기본값 설정
+        const savedState = localStorage.getItem('sidebar_expanded');
+        if (savedState) {
+            setExpandedCategories(JSON.parse(savedState));
+        } else {
+            // 기본 펼침 상태 설정
+            const defaultState: Record<string, boolean> = {};
+            navCategories.forEach(cat => {
+                defaultState[cat.title] = cat.defaultOpen ?? false;
+            });
+            setExpandedCategories(defaultState);
+        }
     }, []);
+
+    // 현재 경로에 맞는 카테고리 자동 펼침
+    useEffect(() => {
+        if (!mounted) return;
+
+        navCategories.forEach(category => {
+            const hasActiveItem = category.items.some(
+                item => pathname === item.href || pathname.startsWith(item.href + '/')
+            );
+            if (hasActiveItem) {
+                setExpandedCategories(prev => {
+                    const newState = { ...prev, [category.title]: true };
+                    localStorage.setItem('sidebar_expanded', JSON.stringify(newState));
+                    return newState;
+                });
+            }
+        });
+    }, [pathname, mounted]);
+
+    const toggleCategory = (title: string) => {
+        setExpandedCategories(prev => {
+            const newState = { ...prev, [title]: !prev[title] };
+            localStorage.setItem('sidebar_expanded', JSON.stringify(newState));
+            return newState;
+        });
+    };
 
     const checkPushStatus = async () => {
         const supported = isPushSupported();
@@ -189,6 +277,11 @@ export function Sidebar() {
         return true;
     };
 
+    // 카테고리 내 접근 가능한 아이템이 있는지 확인
+    const hasAccessibleItems = (category: NavCategory): boolean => {
+        return category.items.some(item => canAccessMenu(item));
+    };
+
     return (
         <aside className="hidden md:flex md:w-64 md:flex-col fixed left-0 top-0 h-full bg-card border-r border-border no-print">
             {/* Logo */}
@@ -249,35 +342,91 @@ export function Sidebar() {
 
             {/* Navigation */}
             <nav className="flex-1 overflow-y-auto py-4 px-3">
-                {/* Main Menu */}
-                <ul className="space-y-1">
-                    {navItems.filter(canAccessMenu).map((item) => {
-                        const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                        const Icon = item.icon;
+                {/* 대시보드 (항상 상단) */}
+                <ul className="space-y-1 mb-2">
+                    <li>
+                        <Link
+                            href={dashboardItem.href}
+                            className={cn(
+                                'flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                                pathname === dashboardItem.href
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-foreground hover:bg-muted'
+                            )}
+                        >
+                            <LayoutDashboard className={cn('w-5 h-5', pathname === dashboardItem.href ? 'text-primary' : 'text-muted-foreground')} />
+                            <span>{dashboardItem.title}</span>
+                        </Link>
+                    </li>
+                </ul>
+
+                {/* 카테고리별 메뉴 */}
+                <div className="space-y-1">
+                    {navCategories.filter(hasAccessibleItems).map((category) => {
+                        const CategoryIcon = category.icon;
+                        const isExpanded = expandedCategories[category.title];
+                        const hasActiveChild = category.items.some(
+                            item => pathname === item.href || pathname.startsWith(item.href + '/')
+                        );
 
                         return (
-                            <li key={item.href}>
-                                <Link
-                                    href={item.href}
+                            <div key={category.title}>
+                                {/* 카테고리 헤더 */}
+                                <button
+                                    onClick={() => toggleCategory(category.title)}
                                     className={cn(
-                                        'flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                                        isActive
-                                            ? 'bg-primary/10 text-primary'
+                                        'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                                        hasActiveChild
+                                            ? 'bg-primary/5 text-primary'
                                             : 'text-foreground hover:bg-muted'
                                     )}
                                 >
-                                    <Icon className={cn('w-5 h-5', isActive ? 'text-primary' : 'text-muted-foreground')} />
-                                    <span>{item.title}</span>
-                                    {item.badge && (
-                                        <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                            {item.badge}
-                                        </span>
+                                    <div className="flex items-center space-x-3">
+                                        <CategoryIcon className={cn('w-5 h-5', hasActiveChild ? 'text-primary' : 'text-muted-foreground')} />
+                                        <span>{category.title}</span>
+                                    </div>
+                                    {isExpanded ? (
+                                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                    ) : (
+                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
                                     )}
-                                </Link>
-                            </li>
+                                </button>
+
+                                {/* 서브메뉴 */}
+                                {isExpanded && (
+                                    <ul className="ml-4 mt-1 space-y-1 border-l border-border pl-3">
+                                        {category.items.filter(canAccessMenu).map((item) => {
+                                            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                                            const Icon = item.icon;
+
+                                            return (
+                                                <li key={item.href}>
+                                                    <Link
+                                                        href={item.href}
+                                                        className={cn(
+                                                            'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                                                            isActive
+                                                                ? 'bg-primary/10 text-primary font-medium'
+                                                                : 'text-foreground/80 hover:bg-muted hover:text-foreground'
+                                                        )}
+                                                    >
+                                                        <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                                                        <span>{item.title}</span>
+                                                        {item.badge && (
+                                                            <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                                {item.badge}
+                                                            </span>
+                                                        )}
+                                                    </Link>
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                )}
+                            </div>
                         );
                     })}
-                </ul>
+                </div>
 
                 {/* Admin Menu (Admin only) */}
                 {mounted && isAdmin && (
