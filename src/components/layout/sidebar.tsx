@@ -83,6 +83,7 @@ const navCategories: NavCategory[] = [
             { title: '급여', href: '/salaries', icon: Wallet, permissionKey: 'salaries' },
             { title: '지출', href: '/expenses', icon: Receipt, permissionKey: 'expenses' },
             { title: '수입', href: '/incomes', icon: TrendingUp, permissionKey: 'incomes' },
+            { title: '리포트', href: '/reports', icon: BarChart3, permissionKey: 'reports' },
         ],
     },
     {
@@ -100,7 +101,6 @@ const navCategories: NavCategory[] = [
         icon: Cog,
         defaultOpen: false,
         items: [
-            { title: '리포트', href: '/reports', icon: BarChart3, permissionKey: 'reports' },
             { title: '성적기록 (추후)', href: '/performance', icon: Award },
             { title: '직원관리', href: '/staff', icon: UserCheck, ownerOnly: true },
             { title: '설정', href: '/settings', icon: Settings, permissionKey: 'settings' },

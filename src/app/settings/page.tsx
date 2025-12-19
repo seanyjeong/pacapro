@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, User, Building, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle, Loader2, ChevronRight, MessageSquare, GraduationCap } from 'lucide-react';
-import Link from 'next/link';
+import { Save, User, Building, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle, Loader2, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 
@@ -653,26 +652,6 @@ export default function SettingsPage() {
           {loading ? '저장 중...' : '학원 설정 저장'}
         </Button>
       </div>
-
-      {/* 알림톡 및 SMS 설정 */}
-      <Card className="border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950 hover:shadow-md transition-shadow">
-        <Link href="/settings/notifications">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                <CardTitle className="text-yellow-800 dark:text-yellow-200">알림톡 및 SMS 설정</CardTitle>
-              </div>
-              <ChevronRight className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300">
-              KakaoTalk 알림톡과 SMS 발송을 위한 Naver Cloud SENS API 설정을 관리합니다.
-            </p>
-          </CardContent>
-        </Link>
-      </Card>
 
       {/* 시스템 정보 */}
       <Card>
