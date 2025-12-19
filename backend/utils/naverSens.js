@@ -96,12 +96,27 @@ async function sendAlimtalk(settings, templateCode, recipients) {
     const signature = generateSignature('POST', uri, timestamp, accessKey, secretKey);
 
     // 메시지 구성
-    const messages = recipients.map(r => ({
-        countryCode: '82',
-        to: r.phone.replace(/^0/, '').replace(/-/g, ''),  // 010-1234-5678 -> 1012345678
-        content: r.content || '',  // 템플릿 변수가 치환된 내용
-        ...(r.variables && { templateParameter: r.variables })  // 템플릿 변수
-    }));
+    const messages = recipients.map(r => {
+        const msg = {
+            countryCode: '82',
+            to: r.phone.replace(/^0/, '').replace(/-/g, ''),  // 010-1234-5678 -> 1012345678
+            content: r.content || '',  // 템플릿 변수가 치환된 내용
+            ...(r.variables && { templateParameter: r.variables })  // 템플릿 변수
+        };
+
+        // 버튼 추가 (SENS API 구조: type, name, linkMobile, linkPc)
+        // 솔라피 구조(buttonType, buttonName, linkMo)와 호환되도록 처리
+        if (r.buttons && r.buttons.length > 0) {
+            msg.buttons = r.buttons.map(btn => ({
+                type: btn.buttonType || btn.type,
+                name: btn.buttonName || btn.name,
+                ...(btn.linkMo || btn.linkMobile) && { linkMobile: btn.linkMo || btn.linkMobile },
+                ...(btn.linkPc && { linkPc: btn.linkPc })
+            }));
+        }
+
+        return msg;
+    });
 
     const body = {
         plusFriendId: channelId,

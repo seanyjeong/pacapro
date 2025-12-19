@@ -70,9 +70,31 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), async 
                     template_content: '',
                     is_enabled: false,
                     solapi_enabled: false,
-                    auto_send_day: 0,
-                    auto_send_days: '',
-                    auto_send_hour: 9
+                    // SENS 수업일 기반 자동발송
+                    sens_auto_enabled: false,
+                    sens_auto_hour: 10,
+                    // SENS 납부안내 버튼/이미지
+                    sens_buttons: [],
+                    sens_image_url: '',
+                    // SENS 상담확정
+                    sens_consultation_template_code: '',
+                    sens_consultation_template_content: '',
+                    sens_consultation_buttons: [],
+                    sens_consultation_image_url: '',
+                    // SENS 체험수업
+                    sens_trial_template_code: '',
+                    sens_trial_template_content: '',
+                    sens_trial_buttons: [],
+                    sens_trial_image_url: '',
+                    sens_trial_auto_enabled: false,
+                    sens_trial_auto_hour: 9,
+                    // SENS 미납자
+                    sens_overdue_template_code: '',
+                    sens_overdue_template_content: '',
+                    sens_overdue_buttons: [],
+                    sens_overdue_image_url: '',
+                    sens_overdue_auto_enabled: false,
+                    sens_overdue_auto_hour: 9
                 }
             });
         }
@@ -121,7 +143,32 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), async 
                 solapi_overdue_buttons: setting.solapi_overdue_buttons ? JSON.parse(setting.solapi_overdue_buttons) : [],
                 solapi_overdue_image_url: setting.solapi_overdue_image_url || '',
                 solapi_overdue_auto_enabled: setting.solapi_overdue_auto_enabled || false,
-                solapi_overdue_auto_hour: setting.solapi_overdue_auto_hour ?? 9
+                solapi_overdue_auto_hour: setting.solapi_overdue_auto_hour ?? 9,
+                // SENS 수업일 기반 자동발송
+                sens_auto_enabled: setting.sens_auto_enabled || false,
+                sens_auto_hour: setting.sens_auto_hour ?? 10,
+                // SENS 납부안내 버튼/이미지
+                sens_buttons: setting.sens_buttons ? JSON.parse(setting.sens_buttons) : [],
+                sens_image_url: setting.sens_image_url || '',
+                // SENS 상담확정 알림톡 설정
+                sens_consultation_template_code: setting.sens_consultation_template_code || '',
+                sens_consultation_template_content: setting.sens_consultation_template_content || '',
+                sens_consultation_buttons: setting.sens_consultation_buttons ? JSON.parse(setting.sens_consultation_buttons) : [],
+                sens_consultation_image_url: setting.sens_consultation_image_url || '',
+                // SENS 체험수업 알림톡 설정
+                sens_trial_template_code: setting.sens_trial_template_code || '',
+                sens_trial_template_content: setting.sens_trial_template_content || '',
+                sens_trial_buttons: setting.sens_trial_buttons ? JSON.parse(setting.sens_trial_buttons) : [],
+                sens_trial_image_url: setting.sens_trial_image_url || '',
+                sens_trial_auto_enabled: setting.sens_trial_auto_enabled || false,
+                sens_trial_auto_hour: setting.sens_trial_auto_hour ?? 9,
+                // SENS 미납자 알림톡 설정
+                sens_overdue_template_code: setting.sens_overdue_template_code || '',
+                sens_overdue_template_content: setting.sens_overdue_template_content || '',
+                sens_overdue_buttons: setting.sens_overdue_buttons ? JSON.parse(setting.sens_overdue_buttons) : [],
+                sens_overdue_image_url: setting.sens_overdue_image_url || '',
+                sens_overdue_auto_enabled: setting.sens_overdue_auto_enabled || false,
+                sens_overdue_auto_hour: setting.sens_overdue_auto_hour ?? 9
             }
         });
     } catch (error) {
@@ -182,9 +229,31 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
             solapi_enabled,
             solapi_auto_enabled,
             solapi_auto_hour,
-            auto_send_day,
-            auto_send_days,
-            auto_send_hour
+            // SENS 수업일 기반 자동발송
+            sens_auto_enabled,
+            sens_auto_hour,
+            // SENS 납부안내 버튼/이미지
+            sens_buttons,
+            sens_image_url,
+            // SENS 상담확정
+            sens_consultation_template_code,
+            sens_consultation_template_content,
+            sens_consultation_buttons,
+            sens_consultation_image_url,
+            // SENS 체험수업
+            sens_trial_template_code,
+            sens_trial_template_content,
+            sens_trial_buttons,
+            sens_trial_image_url,
+            sens_trial_auto_enabled,
+            sens_trial_auto_hour,
+            // SENS 미납자
+            sens_overdue_template_code,
+            sens_overdue_template_content,
+            sens_overdue_buttons,
+            sens_overdue_image_url,
+            sens_overdue_auto_enabled,
+            sens_overdue_auto_hour
         } = req.body;
 
         // 기존 설정 확인
@@ -223,8 +292,13 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                  solapi_overdue_template_id, solapi_overdue_template_content, solapi_overdue_buttons, solapi_overdue_image_url,
                  solapi_overdue_auto_enabled, solapi_overdue_auto_hour,
                  template_code, template_content, is_enabled, solapi_enabled, solapi_auto_enabled, solapi_auto_hour,
-                 auto_send_day, auto_send_days, auto_send_hour)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 sens_auto_enabled, sens_auto_hour, sens_buttons, sens_image_url,
+                 sens_consultation_template_code, sens_consultation_template_content, sens_consultation_buttons, sens_consultation_image_url,
+                 sens_trial_template_code, sens_trial_template_content, sens_trial_buttons, sens_trial_image_url,
+                 sens_trial_auto_enabled, sens_trial_auto_hour,
+                 sens_overdue_template_code, sens_overdue_template_content, sens_overdue_buttons, sens_overdue_image_url,
+                 sens_overdue_auto_enabled, sens_overdue_auto_hour)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     req.user.academyId,
                     service_type || 'sens',
@@ -263,9 +337,27 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_enabled || false,
                     solapi_auto_enabled || false,
                     solapi_auto_hour ?? 10,
-                    auto_send_day || 0,
-                    auto_send_days || '',
-                    auto_send_hour ?? 9
+                    // SENS 새 필드
+                    sens_auto_enabled || false,
+                    sens_auto_hour ?? 10,
+                    sens_buttons ? JSON.stringify(sens_buttons) : null,
+                    sens_image_url || null,
+                    sens_consultation_template_code || null,
+                    sens_consultation_template_content || null,
+                    sens_consultation_buttons ? JSON.stringify(sens_consultation_buttons) : null,
+                    sens_consultation_image_url || null,
+                    sens_trial_template_code || null,
+                    sens_trial_template_content || null,
+                    sens_trial_buttons ? JSON.stringify(sens_trial_buttons) : null,
+                    sens_trial_image_url || null,
+                    sens_trial_auto_enabled || false,
+                    sens_trial_auto_hour ?? 9,
+                    sens_overdue_template_code || null,
+                    sens_overdue_template_content || null,
+                    sens_overdue_buttons ? JSON.stringify(sens_overdue_buttons) : null,
+                    sens_overdue_image_url || null,
+                    sens_overdue_auto_enabled || false,
+                    sens_overdue_auto_hour ?? 9
                 ]
             );
         } else {
@@ -308,9 +400,26 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_enabled = ?,
                     solapi_auto_enabled = ?,
                     solapi_auto_hour = ?,
-                    auto_send_day = ?,
-                    auto_send_days = ?,
-                    auto_send_hour = ?
+                    sens_auto_enabled = ?,
+                    sens_auto_hour = ?,
+                    sens_buttons = ?,
+                    sens_image_url = ?,
+                    sens_consultation_template_code = ?,
+                    sens_consultation_template_content = ?,
+                    sens_consultation_buttons = ?,
+                    sens_consultation_image_url = ?,
+                    sens_trial_template_code = ?,
+                    sens_trial_template_content = ?,
+                    sens_trial_buttons = ?,
+                    sens_trial_image_url = ?,
+                    sens_trial_auto_enabled = ?,
+                    sens_trial_auto_hour = ?,
+                    sens_overdue_template_code = ?,
+                    sens_overdue_template_content = ?,
+                    sens_overdue_buttons = ?,
+                    sens_overdue_image_url = ?,
+                    sens_overdue_auto_enabled = ?,
+                    sens_overdue_auto_hour = ?
                 WHERE academy_id = ?`,
                 [
                     service_type || 'sens',
@@ -349,9 +458,27 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     solapi_enabled || false,
                     solapi_auto_enabled || false,
                     solapi_auto_hour ?? 10,
-                    auto_send_day || 0,
-                    auto_send_days || '',
-                    auto_send_hour ?? 9,
+                    // SENS 새 필드
+                    sens_auto_enabled || false,
+                    sens_auto_hour ?? 10,
+                    sens_buttons ? JSON.stringify(sens_buttons) : null,
+                    sens_image_url || null,
+                    sens_consultation_template_code || null,
+                    sens_consultation_template_content || null,
+                    sens_consultation_buttons ? JSON.stringify(sens_consultation_buttons) : null,
+                    sens_consultation_image_url || null,
+                    sens_trial_template_code || null,
+                    sens_trial_template_content || null,
+                    sens_trial_buttons ? JSON.stringify(sens_trial_buttons) : null,
+                    sens_trial_image_url || null,
+                    sens_trial_auto_enabled || false,
+                    sens_trial_auto_hour ?? 9,
+                    sens_overdue_template_code || null,
+                    sens_overdue_template_content || null,
+                    sens_overdue_buttons ? JSON.stringify(sens_overdue_buttons) : null,
+                    sens_overdue_image_url || null,
+                    sens_overdue_auto_enabled || false,
+                    sens_overdue_auto_hour ?? 9,
                     req.user.academyId
                 ]
             );
@@ -1959,6 +2086,710 @@ router.get('/stats', verifyToken, checkPermission('settings', 'view'), async (re
         res.status(500).json({
             error: 'Server Error',
             message: '발송 통계 조회에 실패했습니다.'
+        });
+    }
+});
+
+// =====================================================
+// SENS 테스트 API (솔라피와 동일한 구조)
+// =====================================================
+
+/**
+ * POST /paca/notifications/test-sens-consultation
+ * SENS 상담확정 알림톡 테스트 발송
+ */
+router.post('/test-sens-consultation', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { phone } = req.body;
+
+        if (!phone || !isValidPhoneNumber(phone)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '유효한 전화번호를 입력해주세요.'
+            });
+        }
+
+        const [settings] = await db.query(
+            'SELECT * FROM notification_settings WHERE academy_id = ?',
+            [req.user.academyId]
+        );
+
+        if (settings.length === 0) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '알림 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        const setting = settings[0];
+
+        // SENS 설정 확인
+        if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: 'SENS API 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        if (!setting.sens_consultation_template_code) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '상담확정 템플릿 코드를 먼저 설정해주세요.'
+            });
+        }
+
+        // Secret 복호화
+        const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
+        if (!decryptedSecret) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: 'SENS API Secret이 올바르지 않습니다.'
+            });
+        }
+
+        // 테스트 데이터로 메시지 생성
+        const testDate = new Date();
+        testDate.setDate(testDate.getDate() + 3);
+        const dateStr = `${testDate.getMonth() + 1}월 ${testDate.getDate()}일`;
+        const timeStr = '14:00';
+        const testReservationNumber = 'TEST001';
+
+        // 템플릿 변수 치환
+        let content = setting.sens_consultation_template_content || '';
+        content = content
+            .replace(/#{이름}/g, '테스트학생')
+            .replace(/#{날짜}/g, dateStr)
+            .replace(/#{시간}/g, timeStr)
+            .replace(/#{예약번호}/g, testReservationNumber);
+
+        // 버튼 설정 파싱 및 변수 치환
+        let buttons = null;
+        if (setting.sens_consultation_buttons) {
+            try {
+                buttons = JSON.parse(setting.sens_consultation_buttons);
+                buttons = buttons.map(btn => ({
+                    ...btn,
+                    linkMo: btn.linkMo?.replace(/#{이름}/g, '테스트학생')
+                        .replace(/#{날짜}/g, dateStr)
+                        .replace(/#{시간}/g, timeStr)
+                        .replace(/#{예약번호}/g, testReservationNumber),
+                    linkPc: btn.linkPc?.replace(/#{이름}/g, '테스트학생')
+                        .replace(/#{날짜}/g, dateStr)
+                        .replace(/#{시간}/g, timeStr)
+                        .replace(/#{예약번호}/g, testReservationNumber)
+                }));
+            } catch (e) {
+                console.error('버튼 파싱 오류:', e);
+            }
+        }
+
+        // SENS 알림톡 발송
+        const result = await sendAlimtalk(
+            {
+                naver_access_key: setting.naver_access_key,
+                naver_secret_key: decryptedSecret,
+                naver_service_id: setting.naver_service_id,
+                kakao_channel_id: setting.kakao_channel_id
+            },
+            setting.sens_consultation_template_code,
+            [{ phone, content, buttons }]
+        );
+
+        if (result.success) {
+            res.json({
+                message: 'SENS 상담확정 테스트 발송 성공',
+                success: true,
+                requestId: result.requestId
+            });
+        } else {
+            res.status(400).json({
+                error: 'Send Failed',
+                message: result.error || '발송에 실패했습니다.'
+            });
+        }
+    } catch (error) {
+        console.error('SENS 상담확정 테스트 발송 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'SENS 상담확정 테스트 발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/notifications/test-sens-trial
+ * SENS 체험수업 알림톡 테스트 발송
+ */
+router.post('/test-sens-trial', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { phone } = req.body;
+
+        if (!phone || !isValidPhoneNumber(phone)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '유효한 전화번호를 입력해주세요.'
+            });
+        }
+
+        const [settings] = await db.query(
+            'SELECT * FROM notification_settings WHERE academy_id = ?',
+            [req.user.academyId]
+        );
+
+        if (settings.length === 0) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '알림 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        const setting = settings[0];
+
+        // SENS 설정 확인
+        if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: 'SENS API 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        if (!setting.sens_trial_template_code) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '체험수업 템플릿 코드를 먼저 설정해주세요.'
+            });
+        }
+
+        // Secret 복호화
+        const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
+        if (!decryptedSecret) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: 'SENS API Secret이 올바르지 않습니다.'
+            });
+        }
+
+        // 학원 정보 조회
+        const [academies] = await db.query(
+            'SELECT name, phone FROM academies WHERE id = ?',
+            [req.user.academyId]
+        );
+        const academyName = academies.length > 0 ? academies[0].name : '테스트학원';
+
+        // 테스트 체험일정 생성
+        const today = new Date();
+        const trialSchedule = `✓ 1회차: ${today.getMonth() + 1}/${today.getDate()}(${['일', '월', '화', '수', '목', '금', '토'][today.getDay()]})\n2회차: ${today.getMonth() + 1}/${today.getDate() + 2}(${['일', '월', '화', '수', '목', '금', '토'][(today.getDay() + 2) % 7]})`;
+
+        // 템플릿 변수 치환
+        let content = setting.sens_trial_template_content || '';
+        content = content
+            .replace(/#{이름}/g, '테스트학생')
+            .replace(/#{학원명}/g, academyName)
+            .replace(/#{체험일정}/g, trialSchedule);
+
+        // 버튼 설정 파싱
+        let buttons = null;
+        if (setting.sens_trial_buttons) {
+            try {
+                buttons = JSON.parse(setting.sens_trial_buttons);
+            } catch (e) {
+                console.error('버튼 파싱 오류:', e);
+            }
+        }
+
+        // SENS 알림톡 발송
+        const result = await sendAlimtalk(
+            {
+                naver_access_key: setting.naver_access_key,
+                naver_secret_key: decryptedSecret,
+                naver_service_id: setting.naver_service_id,
+                kakao_channel_id: setting.kakao_channel_id
+            },
+            setting.sens_trial_template_code,
+            [{ phone, content, buttons }]
+        );
+
+        if (result.success) {
+            res.json({
+                message: 'SENS 체험수업 테스트 발송 성공',
+                success: true,
+                requestId: result.requestId
+            });
+        } else {
+            res.status(400).json({
+                error: 'Send Failed',
+                message: result.error || '발송에 실패했습니다.'
+            });
+        }
+    } catch (error) {
+        console.error('SENS 체험수업 테스트 발송 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'SENS 체험수업 테스트 발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/notifications/test-sens-overdue
+ * SENS 미납자 알림톡 테스트 발송
+ */
+router.post('/test-sens-overdue', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { phone } = req.body;
+
+        if (!phone || !isValidPhoneNumber(phone)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '유효한 전화번호를 입력해주세요.'
+            });
+        }
+
+        const [settings] = await db.query(
+            'SELECT * FROM notification_settings WHERE academy_id = ?',
+            [req.user.academyId]
+        );
+
+        if (settings.length === 0) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '알림 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        const setting = settings[0];
+
+        // SENS 설정 확인
+        if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: 'SENS API 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        if (!setting.sens_overdue_template_code) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '미납자 템플릿 코드를 먼저 설정해주세요.'
+            });
+        }
+
+        // Secret 복호화
+        const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
+        if (!decryptedSecret) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: 'SENS API Secret이 올바르지 않습니다.'
+            });
+        }
+
+        // 학원 정보 조회
+        const [academies] = await db.query(
+            'SELECT name, phone FROM academies WHERE id = ?',
+            [req.user.academyId]
+        );
+        const academyName = academies.length > 0 ? academies[0].name : '테스트학원';
+        const academyPhone = academies.length > 0 ? academies[0].phone : '02-1234-5678';
+
+        // 테스트 데이터
+        const today = new Date();
+        const monthStr = `${today.getMonth() + 1}`;
+        const dateStr = `${today.getMonth() + 1}월 ${today.getDate()}일`;
+
+        // 템플릿 변수 치환
+        let content = setting.sens_overdue_template_content || '';
+        content = content
+            .replace(/#{이름}/g, '테스트학생')
+            .replace(/#{월}/g, monthStr)
+            .replace(/#{교육비}/g, '500,000')
+            .replace(/#{날짜}/g, dateStr)
+            .replace(/#{학원명}/g, academyName)
+            .replace(/#{학원전화}/g, academyPhone);
+
+        // 버튼 설정 파싱
+        let buttons = null;
+        if (setting.sens_overdue_buttons) {
+            try {
+                buttons = JSON.parse(setting.sens_overdue_buttons);
+            } catch (e) {
+                console.error('버튼 파싱 오류:', e);
+            }
+        }
+
+        // SENS 알림톡 발송
+        const result = await sendAlimtalk(
+            {
+                naver_access_key: setting.naver_access_key,
+                naver_secret_key: decryptedSecret,
+                naver_service_id: setting.naver_service_id,
+                kakao_channel_id: setting.kakao_channel_id
+            },
+            setting.sens_overdue_template_code,
+            [{ phone, content, buttons }]
+        );
+
+        if (result.success) {
+            res.json({
+                message: 'SENS 미납자 테스트 발송 성공',
+                success: true,
+                requestId: result.requestId
+            });
+        } else {
+            res.status(400).json({
+                error: 'Send Failed',
+                message: result.error || '발송에 실패했습니다.'
+            });
+        }
+    } catch (error) {
+        console.error('SENS 미납자 테스트 발송 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'SENS 미납자 테스트 발송에 실패했습니다.'
+        });
+    }
+});
+
+// =====================================================
+// SENS 자동발송 API (n8n 워크플로우에서 호출)
+// =====================================================
+
+/**
+ * POST /paca/notifications/send-unpaid-today-auto-sens
+ * SENS 납부안내/미납자 자동발송 (수업 있는 날 기준)
+ * n8n 워크플로우에서 매시간 호출
+ */
+router.post('/send-unpaid-today-auto-sens', async (req, res) => {
+    try {
+        // API Key 검증
+        const apiKey = req.headers['x-api-key'];
+        if (apiKey !== 'paca-n8n-api-key-2024') {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const now = new Date();
+        const currentHour = now.getHours();
+        const todayDay = now.getDay(); // 0=일, 1=월, ...
+        const dayMap = ['일', '월', '화', '수', '목', '금', '토'];
+        const todayDayStr = dayMap[todayDay];
+
+        console.log(`[SENS 자동발송] 시작 - ${now.toISOString()}, 현재 시간: ${currentHour}시, 오늘: ${todayDayStr}요일`);
+
+        // 현재 시간에 발송 설정된 학원들 조회
+        const [academySettings] = await db.query(
+            `SELECT ns.*, a.name as academy_name, a.phone as academy_phone
+             FROM notification_settings ns
+             JOIN academies a ON ns.academy_id = a.id
+             WHERE ns.is_enabled = 1
+             AND ns.sens_auto_enabled = 1
+             AND ns.sens_auto_hour = ?`,
+            [currentHour]
+        );
+
+        console.log(`[SENS 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
+
+        const results = [];
+
+        for (const setting of academySettings) {
+            try {
+                // SENS 설정 확인
+                if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
+                    console.log(`[SENS 자동발송] ${setting.academy_name}: SENS 설정 미완료`);
+                    continue;
+                }
+
+                // Secret 복호화
+                const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
+                if (!decryptedSecret) {
+                    console.log(`[SENS 자동발송] ${setting.academy_name}: Secret 복호화 실패`);
+                    continue;
+                }
+
+                // 오늘 수업이 있는 미납 학생 조회
+                const [unpaidStudents] = await db.query(
+                    `SELECT DISTINCT s.id, s.name, s.phone, s.parent_phone, s.class_days,
+                            p.id as payment_id, p.amount, p.year, p.month,
+                            (SELECT COUNT(*) FROM notification_logs nl
+                             WHERE nl.payment_id = p.id AND nl.status = 'sent') as sent_count
+                     FROM students s
+                     JOIN payments p ON s.id = p.student_id
+                     WHERE s.academy_id = ?
+                       AND s.status = 'active'
+                       AND p.status = 'unpaid'
+                       AND JSON_CONTAINS(COALESCE(s.class_days, '[]'), ?)
+                     ORDER BY s.name`,
+                    [setting.academy_id, JSON.stringify(todayDayStr)]
+                );
+
+                console.log(`[SENS 자동발송] ${setting.academy_name}: 오늘 수업 있는 미납자 ${unpaidStudents.length}명`);
+
+                let sentCount = 0;
+                let failCount = 0;
+
+                for (const student of unpaidStudents) {
+                    // 복호화
+                    const studentName = student.name ? decryptField(student.name, ENCRYPTION_KEY) : '';
+                    const studentPhone = student.phone ? decryptField(student.phone, ENCRYPTION_KEY) : '';
+                    const parentPhone = student.parent_phone ? decryptField(student.parent_phone, ENCRYPTION_KEY) : '';
+
+                    // 전화번호 우선순위: 학부모 > 학생
+                    const recipientPhone = parentPhone || studentPhone;
+                    if (!recipientPhone || !isValidPhoneNumber(recipientPhone)) {
+                        console.log(`[SENS 자동발송] ${studentName}: 유효한 전화번호 없음`);
+                        continue;
+                    }
+
+                    // 첫 발송인지 재발송인지 판단
+                    const isFirstSend = student.sent_count === 0;
+
+                    // 템플릿 선택
+                    let templateCode, templateContent, templateButtons;
+                    if (isFirstSend) {
+                        // 첫 발송: 납부 안내 템플릿
+                        templateCode = setting.template_code;
+                        templateContent = setting.template_content;
+                        templateButtons = setting.sens_buttons;
+                    } else {
+                        // 재발송: 미납자 템플릿 (활성화된 경우에만)
+                        if (!setting.sens_overdue_auto_enabled) {
+                            continue;
+                        }
+                        templateCode = setting.sens_overdue_template_code;
+                        templateContent = setting.sens_overdue_template_content;
+                        templateButtons = setting.sens_overdue_buttons;
+                    }
+
+                    if (!templateCode) {
+                        continue;
+                    }
+
+                    // 변수 치환
+                    const dateStr = `${now.getMonth() + 1}월 ${now.getDate()}일`;
+                    let content = templateContent || '';
+                    content = content
+                        .replace(/#{이름}/g, studentName)
+                        .replace(/#{월}/g, String(student.month))
+                        .replace(/#{교육비}/g, Math.floor(Number(student.amount)).toLocaleString())
+                        .replace(/#{날짜}/g, dateStr)
+                        .replace(/#{학원명}/g, setting.academy_name)
+                        .replace(/#{학원전화}/g, setting.academy_phone || '');
+
+                    // 버튼 파싱
+                    let buttons = null;
+                    if (templateButtons) {
+                        try {
+                            buttons = typeof templateButtons === 'string'
+                                ? JSON.parse(templateButtons)
+                                : templateButtons;
+                        } catch (e) {}
+                    }
+
+                    // SENS 알림톡 발송
+                    const result = await sendAlimtalk(
+                        {
+                            naver_access_key: setting.naver_access_key,
+                            naver_secret_key: decryptedSecret,
+                            naver_service_id: setting.naver_service_id,
+                            kakao_channel_id: setting.kakao_channel_id
+                        },
+                        templateCode,
+                        [{ phone: recipientPhone, content, buttons }]
+                    );
+
+                    if (result.success) {
+                        sentCount++;
+                        // 로그 기록
+                        await db.query(
+                            `INSERT INTO notification_logs
+                             (academy_id, student_id, payment_id, recipient_name, recipient_phone,
+                              message_type, template_code, message_content, status, request_id, sent_at)
+                             VALUES (?, ?, ?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
+                            [setting.academy_id, student.id, student.payment_id,
+                             studentName, recipientPhone, templateCode, content, result.requestId]
+                        );
+                    } else {
+                        failCount++;
+                    }
+                }
+
+                results.push({
+                    academy: setting.academy_name,
+                    sent: sentCount,
+                    failed: failCount
+                });
+
+            } catch (academyError) {
+                console.error(`[SENS 자동발송] ${setting.academy_name} 오류:`, academyError);
+            }
+        }
+
+        res.json({
+            message: 'SENS 자동발송 완료',
+            results
+        });
+
+    } catch (error) {
+        console.error('[SENS 자동발송] 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'SENS 자동발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/notifications/send-trial-today-auto-sens
+ * SENS 체험수업 자동발송 (수업 있는 날 기준)
+ * n8n 워크플로우에서 매시간 호출
+ */
+router.post('/send-trial-today-auto-sens', async (req, res) => {
+    try {
+        // API Key 검증
+        const apiKey = req.headers['x-api-key'];
+        if (apiKey !== 'paca-n8n-api-key-2024') {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const now = new Date();
+        const currentHour = now.getHours();
+        const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
+
+        console.log(`[SENS 체험수업 자동발송] 시작 - ${now.toISOString()}, 현재 시간: ${currentHour}시`);
+
+        // 현재 시간에 발송 설정된 학원들 조회
+        const [academySettings] = await db.query(
+            `SELECT ns.*, a.name as academy_name
+             FROM notification_settings ns
+             JOIN academies a ON ns.academy_id = a.id
+             WHERE ns.is_enabled = 1
+             AND ns.sens_trial_auto_enabled = 1
+             AND ns.sens_trial_auto_hour = ?`,
+            [currentHour]
+        );
+
+        console.log(`[SENS 체험수업 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
+
+        const results = [];
+
+        for (const setting of academySettings) {
+            try {
+                // SENS 설정 확인
+                if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
+                    continue;
+                }
+
+                if (!setting.sens_trial_template_code) {
+                    continue;
+                }
+
+                // Secret 복호화
+                const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
+                if (!decryptedSecret) continue;
+
+                // 오늘 체험수업이 있는 학생 조회
+                const [trialStudents] = await db.query(
+                    `SELECT s.id, s.name, s.phone, s.parent_phone, s.trial_dates
+                     FROM students s
+                     WHERE s.academy_id = ?
+                       AND s.status = 'trial'
+                       AND s.trial_dates IS NOT NULL
+                       AND JSON_CONTAINS(s.trial_dates, ?)`,
+                    [setting.academy_id, JSON.stringify(todayStr)]
+                );
+
+                console.log(`[SENS 체험수업 자동발송] ${setting.academy_name}: 오늘 체험 ${trialStudents.length}명`);
+
+                let sentCount = 0;
+                let failCount = 0;
+
+                for (const student of trialStudents) {
+                    // 복호화
+                    const studentName = student.name ? decryptField(student.name, ENCRYPTION_KEY) : '';
+                    const parentPhone = student.parent_phone ? decryptField(student.parent_phone, ENCRYPTION_KEY) : '';
+                    const studentPhone = student.phone ? decryptField(student.phone, ENCRYPTION_KEY) : '';
+
+                    const recipientPhone = parentPhone || studentPhone;
+                    if (!recipientPhone || !isValidPhoneNumber(recipientPhone)) continue;
+
+                    // 체험일정 문자열 생성
+                    let trialSchedule = '';
+                    if (student.trial_dates) {
+                        try {
+                            const dates = JSON.parse(student.trial_dates);
+                            trialSchedule = dates.map((date, idx) => {
+                                const d = new Date(date);
+                                const dayStr = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()];
+                                const isToday = date === todayStr;
+                                return `${isToday ? '✓ ' : ''}${idx + 1}회차: ${d.getMonth() + 1}/${d.getDate()}(${dayStr})`;
+                            }).join('\n');
+                        } catch (e) {}
+                    }
+
+                    // 변수 치환
+                    let content = setting.sens_trial_template_content || '';
+                    content = content
+                        .replace(/#{이름}/g, studentName)
+                        .replace(/#{학원명}/g, setting.academy_name)
+                        .replace(/#{체험일정}/g, trialSchedule);
+
+                    // 버튼 파싱
+                    let buttons = null;
+                    if (setting.sens_trial_buttons) {
+                        try {
+                            buttons = typeof setting.sens_trial_buttons === 'string'
+                                ? JSON.parse(setting.sens_trial_buttons)
+                                : setting.sens_trial_buttons;
+                        } catch (e) {}
+                    }
+
+                    // SENS 알림톡 발송
+                    const result = await sendAlimtalk(
+                        {
+                            naver_access_key: setting.naver_access_key,
+                            naver_secret_key: decryptedSecret,
+                            naver_service_id: setting.naver_service_id,
+                            kakao_channel_id: setting.kakao_channel_id
+                        },
+                        setting.sens_trial_template_code,
+                        [{ phone: recipientPhone, content, buttons }]
+                    );
+
+                    if (result.success) {
+                        sentCount++;
+                        // 로그 기록
+                        await db.query(
+                            `INSERT INTO notification_logs
+                             (academy_id, student_id, recipient_name, recipient_phone,
+                              message_type, template_code, message_content, status, request_id, sent_at)
+                             VALUES (?, ?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
+                            [setting.academy_id, student.id, studentName, recipientPhone,
+                             setting.sens_trial_template_code, content, result.requestId]
+                        );
+                    } else {
+                        failCount++;
+                    }
+                }
+
+                results.push({
+                    academy: setting.academy_name,
+                    sent: sentCount,
+                    failed: failCount
+                });
+
+            } catch (academyError) {
+                console.error(`[SENS 체험수업 자동발송] ${setting.academy_name} 오류:`, academyError);
+            }
+        }
+
+        res.json({
+            message: 'SENS 체험수업 자동발송 완료',
+            results
+        });
+
+    } catch (error) {
+        console.error('[SENS 체험수업 자동발송] 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'SENS 체험수업 자동발송에 실패했습니다.'
         });
     }
 });

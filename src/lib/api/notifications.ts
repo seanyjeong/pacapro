@@ -16,57 +16,84 @@ export interface NotificationSettings {
   // 서비스 타입 선택
   service_type: 'sens' | 'solapi';
 
-  // SENS 설정
+  // ===== SENS 설정 =====
   naver_access_key: string;
   naver_secret_key: string;
   naver_service_id: string;  // 알림톡용 Service ID
   sms_service_id: string;    // SMS용 Service ID
   kakao_channel_id: string;
-  template_code: string;
-  template_content: string;  // 템플릿 본문 (변수: #{이름}, #{날짜}, #{금액} 등)
   has_secret_key?: boolean;
 
-  // 솔라피 설정
+  // SENS 납부안내 (기존 template_code, template_content 재사용)
+  template_code: string;
+  template_content: string;
+  sens_buttons: ConsultationButton[];
+  sens_image_url: string;
+  sens_auto_enabled: boolean;  // 수업일 기반 자동발송 활성화
+  sens_auto_hour: number;      // 자동발송 시간 (0-23)
+
+  // SENS 상담확정
+  sens_consultation_template_code: string;
+  sens_consultation_template_content: string;
+  sens_consultation_buttons: ConsultationButton[];
+  sens_consultation_image_url: string;
+
+  // SENS 체험수업
+  sens_trial_template_code: string;
+  sens_trial_template_content: string;
+  sens_trial_buttons: ConsultationButton[];
+  sens_trial_image_url: string;
+  sens_trial_auto_enabled: boolean;
+  sens_trial_auto_hour: number;
+
+  // SENS 미납자
+  sens_overdue_template_code: string;
+  sens_overdue_template_content: string;
+  sens_overdue_buttons: ConsultationButton[];
+  sens_overdue_image_url: string;
+  sens_overdue_auto_enabled: boolean;
+  sens_overdue_auto_hour: number;
+
+  // ===== 솔라피 설정 =====
   solapi_api_key: string;
   solapi_api_secret: string;
   solapi_pfid: string;  // 카카오 채널 ID
   solapi_sender_phone: string;  // 발신번호
+  has_solapi_secret?: boolean;
+
+  // 솔라피 납부안내
   solapi_template_id: string;
   solapi_template_content: string;
   solapi_buttons: ConsultationButton[];
   solapi_image_url: string;
-  has_solapi_secret?: boolean;
+  solapi_auto_enabled: boolean;  // 수업일 기반 자동발송 활성화
+  solapi_auto_hour: number;      // 자동발송 시간 (0-23)
 
-  // 상담확정 알림톡 설정
+  // 솔라피 상담확정
   solapi_consultation_template_id: string;
   solapi_consultation_template_content: string;
   solapi_consultation_buttons: ConsultationButton[];
   solapi_consultation_image_url: string;
 
-  // 체험수업 알림톡 설정
+  // 솔라피 체험수업
   solapi_trial_template_id: string;
   solapi_trial_template_content: string;
   solapi_trial_buttons: ConsultationButton[];
   solapi_trial_image_url: string;
-  solapi_trial_auto_enabled: boolean;  // 체험수업 자동발송 활성화
-  solapi_trial_auto_hour: number;      // 체험수업 자동발송 시간 (0-23)
+  solapi_trial_auto_enabled: boolean;
+  solapi_trial_auto_hour: number;
 
-  // 미납자 알림톡 설정
+  // 솔라피 미납자
   solapi_overdue_template_id: string;
   solapi_overdue_template_content: string;
   solapi_overdue_buttons: ConsultationButton[];
   solapi_overdue_image_url: string;
-  solapi_overdue_auto_enabled: boolean;  // 미납자 자동발송 활성화
-  solapi_overdue_auto_hour: number;      // 미납자 자동발송 시간 (0-23)
+  solapi_overdue_auto_enabled: boolean;
+  solapi_overdue_auto_hour: number;
 
-  // 공통 설정
+  // ===== 공통 설정 =====
   is_enabled: boolean;        // SENS 활성화
   solapi_enabled: boolean;    // 솔라피 활성화
-  solapi_auto_enabled: boolean;  // 솔라피 자동발송 활성화
-  solapi_auto_hour: number;      // 솔라피 자동발송 시간 (0-23)
-  auto_send_day: number;
-  auto_send_days: string;  // 콤마로 구분된 자동발송 날짜들 (예: "5,15,25")
-  auto_send_hour: number;  // 자동발송 시간 (0-23, 한국시간)
 }
 
 export interface NotificationLog {
@@ -164,11 +191,35 @@ export const notificationsAPI = {
   },
 
   /**
-   * 미납자 알림톡 테스트 발송
+   * 미납자 알림톡 테스트 발송 (솔라피)
    */
   sendTestOverdue: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
     const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-overdue', { phone });
     return { success: response.success || false, groupId: response.groupId };
+  },
+
+  /**
+   * SENS 상담확정 알림톡 테스트 발송
+   */
+  sendTestSensConsultation: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-consultation', { phone });
+    return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
+   * SENS 체험수업 알림톡 테스트 발송
+   */
+  sendTestSensTrial: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-trial', { phone });
+    return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
+   * SENS 미납자 알림톡 테스트 발송
+   */
+  sendTestSensOverdue: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-overdue', { phone });
+    return { success: response.success || false, requestId: response.requestId };
   },
 
   /**

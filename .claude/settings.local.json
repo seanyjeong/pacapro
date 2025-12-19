@@ -97,7 +97,10 @@
       "Skill(pdf)",
       "Bash(fc-list:*)",
       "Bash(ls:*)",
-      "Bash(lsof:*)"
+      "Bash(lsof:*)",
+      "WebFetch(domain:api.ncloud-docs.com)",
+      "mcp__n8n-mcp__activate_workflow",
+      "mcp__n8n-mcp__deactivate_workflow"
     ],
     "deny": [],
     "ask": []
