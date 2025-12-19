@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Save, User, Building, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle, Loader2, GraduationCap } from 'lucide-react';
+import { Save, User, Building, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 
@@ -680,87 +680,6 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* 학년 진급 안내 - owner only */}
-      {user?.role === 'owner' && (
-        <Card className="border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-              <CardTitle className="text-purple-700 dark:text-purple-300">학년 자동 진급</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="p-4 bg-purple-100 dark:bg-purple-900 rounded-lg border border-purple-200 dark:border-purple-700">
-              <p className="text-sm text-purple-700 dark:text-purple-300 mb-3">
-                매년 <strong>3월 1일 오전 1시</strong>에 자동으로 진급 처리됩니다.
-              </p>
-              <ul className="text-xs text-purple-600 dark:text-purple-400 space-y-1">
-                <li>• 중1→중2→중3→고1→고2→고3→N수</li>
-                <li>• N수생은 유지됨</li>
-                <li>• 졸업 처리: 학생 상세 페이지에서 개별 처리</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 스케줄 관리 도구 - owner only */}
-      {user?.role === 'owner' && (
-        <Card className="border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              <CardTitle className="text-orange-700 dark:text-orange-300">스케줄 관리 도구</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 bg-orange-100 dark:bg-orange-900 rounded-lg border border-orange-200 dark:border-orange-700">
-              <h4 className="font-bold text-orange-800 dark:text-orange-200 mb-2">스케줄 일괄 정리</h4>
-              <p className="text-sm text-orange-700 dark:text-orange-300 mb-4">
-                잘못된 시간대(아침/점심)의 스케줄을 삭제하고, 저녁 시간대로 재배정합니다.
-                <br />
-                수업요일과 맞지 않는 스케줄도 함께 정리됩니다.
-              </p>
-              <Button
-                variant="outline"
-                className="border-orange-400 dark:border-orange-600 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-800"
-                disabled={loading}
-                onClick={async () => {
-                  if (!confirm('스케줄을 정리하시겠습니까?\n\n정리 내용:\n- 아침/점심 시간대 스케줄 → 저녁으로 이동\n- 수업요일 불일치 스케줄 삭제\n- 올바른 스케줄로 재배정')) {
-                    return;
-                  }
-                  try {
-                    setLoading(true);
-                    const result = await apiClient.post<{
-                      message: string;
-                      results: {
-                        deleted_attendance: number;
-                        deleted_empty_schedules: number;
-                        created_schedules: number;
-                        assigned_attendance: number;
-                        details: string[];
-                      };
-                    }>('/schedules/fix-all');
-                    toast.success('스케줄 정리 완료', {
-                      description: `삭제: ${result.results.deleted_attendance}개, 재배정: ${result.results.assigned_attendance}개`
-                    });
-                  } catch (err) {
-                    toast.error('스케줄 정리 실패', {
-                      description: err instanceof Error ? err.message : '알 수 없는 오류'
-                    });
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-              >
-                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Calendar className="w-4 h-4 mr-2" />}
-                스케줄 정리 실행
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* 위험 구역 - 데이터베이스 초기화 */}
       {user?.role === 'owner' && (
