@@ -51,7 +51,7 @@ export const smsAPI = {
     content: string;
     customPhones?: string[];
     images?: { name: string; data: string }[];  // MMS 이미지 (base64)
-    gradeFilter?: 'all' | 'junior' | 'senior';  // 학년 필터
+    gradeFilter?: 'all' | 'junior' | 'senior' | 'pending';  // 학년/상태 필터
   }): Promise<SendSMSResponse> => {
     return apiClient.post<SendSMSResponse>('/sms/send', params);
   },

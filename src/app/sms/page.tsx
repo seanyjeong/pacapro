@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { MessageSquare, Send, Users, User, Phone, CheckCircle, XCircle, Clock, AlertCircle, Search, X, Image, GraduationCap } from 'lucide-react';
+import { MessageSquare, Send, Users, User, Phone, CheckCircle, XCircle, Clock, AlertCircle, Search, X, Image, GraduationCap, UserPlus } from 'lucide-react';
 import { smsAPI } from '@/lib/api/sms';
 import apiClient from '@/lib/api/client';
 import { toast } from 'sonner';
@@ -9,7 +9,7 @@ import { debounce } from 'lodash';
 
 type SendMode = 'all' | 'individual' | 'custom';
 type RecipientType = 'student' | 'parent';
-type GradeFilter = 'all' | 'junior' | 'senior';
+type GradeFilter = 'all' | 'junior' | 'senior' | 'pending';
 
 interface Student {
   id: number;
@@ -361,9 +361,9 @@ export default function SMSPage() {
           <div className="mb-6">
             <label className="block text-sm font-medium text-foreground mb-2">
               <GraduationCap className="w-4 h-4 inline mr-1" />
-              학년 선택
+              발송 대상 선택
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <button
                 type="button"
                 onClick={() => setGradeFilter('all')}
@@ -396,6 +396,17 @@ export default function SMSPage() {
                 }`}
               >
                 3학년 (고3/N수)
+              </button>
+              <button
+                type="button"
+                onClick={() => setGradeFilter('pending')}
+                className={`p-2 rounded-lg border-2 transition-all text-sm ${
+                  gradeFilter === 'pending'
+                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300'
+                    : 'border-border hover:border-muted-foreground text-foreground'
+                }`}
+              >
+                미등록관리
               </button>
             </div>
           </div>

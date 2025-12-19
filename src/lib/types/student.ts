@@ -68,6 +68,8 @@ export interface Student {
   time_slot: 'morning' | 'afternoon' | 'evening' | null; // 수업 시간대
   // 메모
   memo: string | null; // 학생 메모
+  // 상담일
+  consultation_date: string | null; // 상담 완료일
   created_at: string;
   updated_at: string;
   deleted_at: string | null;

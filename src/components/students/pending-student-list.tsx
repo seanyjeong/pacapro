@@ -77,7 +77,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
     }
   };
 
-  // 등록일 포맷팅
+  // 상담일 포맷팅
   const formatDate = (date: string | null) => {
     if (!date) return '-';
     return new Date(date).toLocaleDateString('ko-KR', {
@@ -122,7 +122,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학년</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">연락처</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학부모 연락처</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">등록일</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">상담일</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">메모</th>
               <th className="text-right py-3 px-4 text-sm font-semibold text-muted-foreground">액션</th>
             </tr>
@@ -148,7 +148,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                   {student.parent_phone || '-'}
                 </td>
                 <td className="py-3 px-4 text-sm text-muted-foreground">
-                  {formatDate(student.created_at)}
+                  {formatDate(student.consultation_date || student.created_at)}
                 </td>
                 <td className="py-3 px-4">
                   {student.memo ? (

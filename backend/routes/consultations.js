@@ -651,8 +651,8 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
     const [studentResult] = await db.query(
       `INSERT INTO students (
         academy_id, name, grade, phone, parent_phone, status,
-        is_trial, trial_remaining, trial_dates, class_days, monthly_tuition, created_at
-      ) VALUES (?, ?, ?, ?, ?, 'trial', 1, ?, ?, '[]', 0, NOW())`,
+        is_trial, trial_remaining, trial_dates, class_days, monthly_tuition, consultation_date, created_at
+      ) VALUES (?, ?, ?, ?, ?, 'trial', 1, ?, ?, '[]', 0, ?, NOW())`,
       [
         academyId,
         consultation.student_name,
@@ -660,7 +660,8 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
         phone,
         parentPhone,
         trialDates.length,  // 체험 횟수 = 선택한 일정 수
-        JSON.stringify(trialDatesJson)
+        JSON.stringify(trialDatesJson),
+        consultation.preferred_date  // 상담일
       ]
     );
 
@@ -745,8 +746,8 @@ router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
     const [studentResult] = await db.query(
       `INSERT INTO students (
         academy_id, name, grade, school, phone, parent_phone, status,
-        is_trial, memo, class_days, monthly_tuition, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, '[]', 0, NOW())`,
+        is_trial, memo, class_days, monthly_tuition, consultation_date, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, '[]', 0, ?, NOW())`,
       [
         academyId,
         consultation.student_name,
@@ -754,7 +755,8 @@ router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
         consultation.student_school,
         phone,
         parentPhone,
-        memo || consultation.inquiry_content || null
+        memo || consultation.inquiry_content || null,
+        consultation.preferred_date  // 상담일
       ]
     );
 

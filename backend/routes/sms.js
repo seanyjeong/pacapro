@@ -147,6 +147,9 @@ router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (re
             } else if (gradeFilter === 'senior') {
                 // 3학년반: 고3 + N수
                 query += ` AND s.grade IN ('고3', 'N수')`;
+            } else if (gradeFilter === 'pending') {
+                // 미등록관리 학생 (status = 'pending')
+                query = query.replace("s.status = 'active'", "s.status = 'pending'");
             }
 
             const [students] = await db.query(query, queryParams);
@@ -390,6 +393,9 @@ router.get('/recipients-count', verifyToken, async (req, res) => {
             query += ` AND s.grade IN ('중1', '중2', '중3', '고1', '고2')`;
         } else if (gradeFilter === 'senior') {
             query += ` AND s.grade IN ('고3', 'N수')`;
+        } else if (gradeFilter === 'pending') {
+            // 미등록관리 학생 (status = 'pending')
+            query = query.replace("s.status = 'active'", "s.status = 'pending'");
         }
 
         const [students] = await db.query(query, [req.user.academyId]);
