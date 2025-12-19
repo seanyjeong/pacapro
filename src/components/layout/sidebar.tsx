@@ -70,7 +70,7 @@ const navCategories: NavCategory[] = [
         items: [
             { title: '학생', href: '/students', icon: Users, permissionKey: 'students' },
             { title: '강사', href: '/instructors', icon: UserCog, permissionKey: 'instructors' },
-            { title: '수업', href: '/schedules', icon: Calendar, permissionKey: 'schedules' },
+            { title: '수업스케줄', href: '/schedules', icon: Calendar, permissionKey: 'schedules' },
             { title: '시즌', href: '/seasons', icon: Trophy, permissionKey: 'seasons' },
         ],
     },

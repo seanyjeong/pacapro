@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Calendar, List, Loader2, CalendarPlus, UserCheck, UserCog, Bell, PhoneCall } from 'lucide-react';
+import { Plus, Calendar, List, Loader2, CalendarPlus, UserCheck, UserCog, Bell, PhoneCall, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import { ScheduleCalendarV2 } from '@/components/schedules/schedule-calendar-v2';
 import { ScheduleList } from '@/components/schedules/schedule-list';
 import { BulkScheduleModal } from '@/components/schedules/bulk-schedule-modal';
@@ -66,10 +66,26 @@ export default function SchedulesPage() {
   const [canViewOvertimeApproval, setCanViewOvertimeApproval] = useState(false);
   const [canEditSchedules, setCanEditSchedules] = useState(false);
 
+  // 강사 근무 배정 패널 펼침 상태
+  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
+
   useEffect(() => {
     setCanViewOvertimeApproval(canView('overtime_approval'));
     setCanEditSchedules(canEdit('schedules'));
+    // localStorage에서 패널 상태 복원
+    const savedPanelState = localStorage.getItem('instructor_panel_expanded');
+    if (savedPanelState !== null) {
+      setIsPanelExpanded(savedPanelState === 'true');
+    }
   }, []);
+
+  const togglePanel = () => {
+    setIsPanelExpanded(prev => {
+      const newState = !prev;
+      localStorage.setItem('instructor_panel_expanded', String(newState));
+      return newState;
+    });
+  };
 
   // 데이터 조회
   const { data: schedules = [], isLoading, refetch } = useSchedules(filters);
@@ -251,9 +267,9 @@ export default function SchedulesPage() {
 
           {/* 캘린더 뷰 */}
           <TabsContent value="calendar" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-              {/* 캘린더 (3/4 너비) */}
-              <div className="lg:col-span-3">
+            <div className="flex gap-4">
+              {/* 캘린더 (펼침 상태에 따라 너비 변경) */}
+              <div className={`flex-1 transition-all duration-300 ${isPanelExpanded ? '' : 'w-full'}`}>
                 <ScheduleCalendarV2
                   schedules={schedules}
                   selectedDate={selectedDate}
@@ -267,15 +283,34 @@ export default function SchedulesPage() {
                 />
               </div>
 
-              {/* 강사 근무 배정 패널 (1/4 너비) */}
-              <div className="lg:col-span-1">
-                <InstructorSchedulePanel
-                  date={selectedDate}
-                  onRequestExtraDay={() => setExtraDayModalOpen(true)}
-                  onSave={() => {
-                    loadInstructorStats();
-                  }}
-                />
+              {/* 강사 근무 배정 패널 (접기/펼치기) */}
+              <div className={`hidden lg:flex flex-col transition-all duration-300 ${isPanelExpanded ? 'w-80' : 'w-10'}`}>
+                {/* 토글 버튼 */}
+                <button
+                  onClick={togglePanel}
+                  className="flex items-center justify-center h-10 mb-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                  title={isPanelExpanded ? '패널 접기' : '강사 근무 배정 펼치기'}
+                >
+                  {isPanelExpanded ? (
+                    <>
+                      <PanelRightClose className="w-4 h-4 mr-2" />
+                      <span className="text-sm">접기</span>
+                    </>
+                  ) : (
+                    <PanelRightOpen className="w-4 h-4" />
+                  )}
+                </button>
+
+                {/* 패널 내용 */}
+                {isPanelExpanded && (
+                  <InstructorSchedulePanel
+                    date={selectedDate}
+                    onRequestExtraDay={() => setExtraDayModalOpen(true)}
+                    onSave={() => {
+                      loadInstructorStats();
+                    }}
+                  />
+                )}
               </div>
             </div>
           </TabsContent>
