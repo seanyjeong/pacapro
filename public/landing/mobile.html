@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0f1a">
+  <title>P-ACA - 체대입시 학원관리</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Pretendard:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Pretendard';
+      src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    }
+
+    :root {
+      --bg-deep: #0a0f1a;
+      --bg-card: #111827;
+      --bg-elevated: #1a2235;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59, 130, 246, 0.4);
+      --accent: #22d3ee;
+      --accent-glow: rgba(34, 211, 238, 0.3);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --kakao: #fee500;
+      --gradient-hero: linear-gradient(135deg, #0a0f1a 0%, #1a1f35 50%, #0f172a 100%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y proximity;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ============ HEADER ============ */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 0.875rem 1.25rem;
+      background: rgba(10, 15, 26, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      text-decoration: none;
+    }
+
+    .logo-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .logo-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.75rem;
+      letter-spacing: 0.05em;
+      color: var(--text);
+      background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-cta {
+      background: var(--primary);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.875rem;
+      box-shadow: 0 4px 15px var(--primary-glow);
+      transition: all 0.2s;
+    }
+
+    .header-cta:active {
+      transform: scale(0.96);
+    }
+
+    /* ============ HERO ============ */
+    .hero {
+      min-height: 100svh;
+      padding: 5.5rem 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      scroll-snap-align: start;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      right: -50%;
+      width: 120%;
+      height: 100%;
+      background: radial-gradient(ellipse, var(--primary-glow) 0%, transparent 60%);
+      pointer-events: none;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 200px;
+      background: linear-gradient(to top, var(--bg-deep), transparent);
+      pointer-events: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.05); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+    }
+
+    .pain-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .pain-pill {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 0.375rem 0.75rem;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      animation: fadeSlideUp 0.6s ease backwards;
+    }
+
+    .pain-pill:nth-child(2) { animation-delay: 0.1s; }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.625rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      animation: fadeSlideUp 0.6s ease 0.2s backwards;
+    }
+
+    .hero-title {
+      font-family: 'Pretendard', sans-serif;
+      font-size: 2.75rem;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+      animation: fadeSlideUp 0.6s ease 0.3s backwards;
+    }
+
+    .hero-title .highlight {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+      animation: fadeSlideUp 0.6s ease 0.4s backwards;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 1.125rem;
+      box-shadow: 0 8px 30px var(--primary-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+      transition: all 0.2s;
+      animation: fadeSlideUp 0.6s ease 0.5s backwards;
+    }
+
+    .hero-cta:active {
+      transform: scale(0.97);
+    }
+
+    .hero-cta svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .hero-preview {
+      margin-top: 2.5rem;
+      position: relative;
+      z-index: 10;
+      animation: fadeSlideUp 0.8s ease 0.6s backwards;
+    }
+
+    .hero-preview img {
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    /* ============ FEATURES ============ */
+    .features {
+      padding: 4rem 1.5rem;
+      scroll-snap-align: start;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .section-tag {
+      display: inline-block;
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      padding: 0.375rem 0.875rem;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 20px;
+      padding: 1.25rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .feature-card:active {
+      transform: scale(0.98);
+    }
+
+    .feature-card:active::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(34,211,238,0.1));
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      margin-bottom: 0.875rem;
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.375rem;
+    }
+
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    /* ============ MOBILE SECTION ============ */
+    .mobile-section {
+      padding: 4rem 1.5rem;
+      background: linear-gradient(180deg, var(--bg-deep) 0%, var(--bg-card) 50%, var(--bg-deep) 100%);
+      scroll-snap-align: start;
+    }
+
+    .phone-showcase {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .phone-frame {
+      width: 200px;
+      height: 410px;
+      background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+      border-radius: 36px;
+      padding: 10px;
+      box-shadow:
+        0 30px 60px rgba(0,0,0,0.4),
+        inset 0 0 0 2px #3a3a3a,
+        inset 0 0 0 4px #1a1a1a;
+      position: relative;
+    }
+
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 20px;
+      background: #0a0a0a;
+      border-radius: 10px;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      background: white;
+      border-radius: 28px;
+      overflow: hidden;
+    }
+
+    .phone-screen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+    }
+
+    .mobile-features {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .mobile-feature {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      background: var(--bg-elevated);
+      padding: 1rem;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+
+    .mobile-feature-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--success), #16a34a);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    .mobile-feature span {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    /* ============ KAKAO SECTION ============ */
+    .kakao-section {
+      padding: 4rem 1.5rem;
+      scroll-snap-align: start;
+    }
+
+    .kakao-preview {
+      margin-bottom: 2rem;
+    }
+
+    .kakao-message {
+      background: var(--kakao);
+      border-radius: 20px;
+      padding: 1.25rem;
+      color: #1a1a1a;
+      box-shadow: 0 20px 50px rgba(254, 229, 0, 0.15);
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .kakao-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding-bottom: 0.875rem;
+      margin-bottom: 0.875rem;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .kakao-header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+    }
+
+    .kakao-sender {
+      font-weight: 800;
+      font-size: 1rem;
+    }
+
+    .kakao-body {
+      font-size: 0.875rem;
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+
+    .kakao-body .name {
+      font-weight: 800;
+      color: #1a5fb4;
+    }
+
+    .kakao-body .amount {
+      font-weight: 800;
+      color: #c01c28;
+    }
+
+    .kakao-btn {
+      display: block;
+      background: #1a1a1a;
+      color: var(--kakao);
+      text-align: center;
+      padding: 0.875rem;
+      border-radius: 10px;
+      font-weight: 800;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .kakao-benefits {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .kakao-benefit {
+      display: flex;
+      gap: 0.875rem;
+      align-items: flex-start;
+    }
+
+    .kakao-check {
+      width: 24px;
+      height: 24px;
+      background: var(--success);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      margin-top: 0.125rem;
+    }
+
+    .kakao-benefit-text h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 0.125rem;
+    }
+
+    .kakao-benefit-text p {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    /* ============ SCREENSHOTS ============ */
+    .screenshots {
+      padding: 4rem 0 4rem 1.5rem;
+      background: var(--bg-card);
+      scroll-snap-align: start;
+    }
+
+    .screenshots .section-header {
+      padding-right: 1.5rem;
+    }
+
+    .screenshot-scroll {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding-bottom: 1.5rem;
+      padding-right: 1.5rem;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .screenshot-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .screenshot-card {
+      flex-shrink: 0;
+      width: 280px;
+      background: var(--bg-deep);
+      border-radius: 16px;
+      overflow: hidden;
+      scroll-snap-align: start;
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.3s;
+    }
+
+    .screenshot-card:active {
+      transform: scale(0.98);
+    }
+
+    .screenshot-card img {
+      width: 100%;
+      display: block;
+    }
+
+    .screenshot-card .caption {
+      padding: 1rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .scroll-hint {
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      animation: sway 2s ease-in-out infinite;
+    }
+
+    @keyframes sway {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(5px); }
+    }
+
+    /* ============ SAAS SECTION ============ */
+    .saas-section {
+      padding: 4rem 1.5rem;
+      scroll-snap-align: start;
+    }
+
+    .saas-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .saas-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .saas-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .saas-card h3 {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .saas-card p {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .security-banner {
+      background: linear-gradient(135deg, rgba(34,197,94,0.1), rgba(59,130,246,0.1));
+      border: 1px solid var(--success);
+      border-radius: 16px;
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .security-badge {
+      display: inline-block;
+      background: rgba(34,197,94,0.2);
+      color: var(--success);
+      padding: 0.375rem 1rem;
+      border-radius: 100px;
+      font-weight: 800;
+      font-size: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .security-banner p {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    /* ============ CTA SECTION ============ */
+    .cta-section {
+      padding: 5rem 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      scroll-snap-align: start;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300%;
+      height: 300%;
+      background: radial-gradient(ellipse, var(--primary-glow) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 10;
+    }
+
+    .cta-section h2 {
+      font-size: 2rem;
+      font-weight: 900;
+      margin-bottom: 0.75rem;
+    }
+
+    .cta-section p {
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+      color: white;
+      padding: 1.125rem 2.5rem;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 1.125rem;
+      box-shadow: 0 10px 40px var(--primary-glow);
+      transition: all 0.2s;
+    }
+
+    .cta-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* ============ FOOTER ============ */
+    footer {
+      padding: 2rem 1.5rem;
+      background: var(--bg-card);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      text-align: center;
+    }
+
+    footer p {
+      color: var(--text-dim);
+      font-size: 0.8rem;
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* ============ MODAL ============ */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      margin: 1rem;
+      max-width: 320px;
+      transform: scale(0.9) translateY(20px);
+      transition: all 0.3s;
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-emoji {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: bounce 2s ease infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .modal-content h3 {
+      font-size: 1.75rem;
+      font-weight: 900;
+      margin-bottom: 0.75rem;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .modal-content p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .modal-close {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.875rem 2rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* ============ DIAGONAL ACCENT ============ */
+    .diagonal-accent {
+      position: absolute;
+      width: 200%;
+      height: 4px;
+      background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
+      transform: rotate(-3deg);
+      left: -50%;
+      opacity: 0.5;
+    }
+
+    /* ============ LIGHTBOX ============ */
+    .lightbox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .lightbox.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 44px;
+      height: 44px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .lightbox-image-container {
+      width: 100%;
+      height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .lightbox-image {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      transform: scale(0.9);
+      transition: transform 0.3s;
+    }
+
+    .lightbox.active .lightbox-image {
+      transform: scale(1);
+    }
+
+    .lightbox-caption {
+      color: white;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-top: 1rem;
+    }
+
+    .lightbox-nav {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .lightbox-nav button {
+      width: 50px;
+      height: 50px;
+      background: var(--primary);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .lightbox-nav button:active {
+      transform: scale(0.95);
+    }
+
+    .lightbox-dots {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .lightbox-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transition: all 0.3s;
+    }
+
+    .lightbox-dot.active {
+      background: var(--primary);
+      transform: scale(1.2);
+    }
+
+    .screenshot-card {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <a href="#" class="logo">
+      <img src="p-aca.png" alt="P-ACA" class="logo-img">
+      <span class="logo-text">P-ACA</span>
+    </a>
+    <a href="#" class="header-cta" onclick="openModal(event)">시작하기</a>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="pain-pills">
+        <span class="pain-pill">엑셀 지겹죠?</span>
+        <span class="pain-pill">미납 문자 또 보내야해요?</span>
+      </div>
+      <p class="hero-badge">Physical Academy Comprehensive Administration</p>
+      <h1 class="hero-title">
+        학원 관리,<br>
+        <span class="highlight">P-ACA</span>로 끝
+      </h1>
+      <p class="hero-subtitle">
+        체대입시 학원 종합관리 시스템<br>
+        학원비 · 급여 · 스케줄 · 알림톡
+      </p>
+      <a href="#" class="hero-cta" onclick="openModal(event)">
+        무료로 시작하기
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+        </svg>
+      </a>
+    </div>
+    <div class="hero-preview">
+      <img src="paca-dashboard-full.png" alt="P-ACA 대시보드">
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="section-header">
+      <span class="section-tag">핵심 기능</span>
+      <h2 class="section-title">필요한 건 다 있어요</h2>
+      <p class="section-subtitle">클릭 몇 번으로 끝나는 학원 관리</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">💳</div>
+        <h3>학원비 관리</h3>
+        <p>자동 청구, 미납 현황, 부분납부까지</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>급여 관리</h3>
+        <p>출근 체크하면 급여 자동 계산</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>스케줄 관리</h3>
+        <p>캘린더로 한눈에 보는 일정</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>카카오 알림톡</h3>
+        <p>미납 알림 자동 발송</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile Section -->
+  <section class="mobile-section">
+    <div class="section-header">
+      <span class="section-tag">📲 PWA 앱</span>
+      <h2 class="section-title">모바일에서도</h2>
+      <p class="section-subtitle">스마트폰에서 앱처럼 사용</p>
+    </div>
+    <div class="phone-showcase">
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <img src="paca-mobile-phone.png" alt="P-ACA 모바일">
+        </div>
+      </div>
+    </div>
+    <div class="mobile-features">
+      <div class="mobile-feature">
+        <div class="mobile-feature-icon">✓</div>
+        <span>학생 출석체크 - 탭 한 번으로</span>
+      </div>
+      <div class="mobile-feature">
+        <div class="mobile-feature-icon">✓</div>
+        <span>강사 출근체크 - 현장에서 바로</span>
+      </div>
+      <div class="mobile-feature">
+        <div class="mobile-feature-icon">✓</div>
+        <span>미납자 확인 - 실시간 조회</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Kakao Section -->
+  <section class="kakao-section">
+    <div class="section-header">
+      <span class="section-tag" style="background: rgba(254,229,0,0.2); color: #a16207;">💬 알림톡</span>
+      <h2 class="section-title">카카오톡으로 자동 발송</h2>
+      <p class="section-subtitle">미납 알림 전화할 필요 없어요</p>
+    </div>
+    <div class="kakao-preview">
+      <div class="kakao-message">
+        <div class="kakao-header">
+          <img src="p-aca.png" alt="P-ACA">
+          <span class="kakao-sender">테스트체대입시</span>
+        </div>
+        <div class="kakao-body">
+          안녕하세요, 테스트체대입시입니다.<br><br>
+          <span class="name">김철수</span> 학생의 12월 학원비 안내드립니다.<br><br>
+          금액: <span class="amount">350,000원</span><br>
+          납부일: 매월 5일
+        </div>
+        <a href="#" class="kakao-btn">학원비 납부하기</a>
+      </div>
+    </div>
+    <div class="kakao-benefits">
+      <div class="kakao-benefit">
+        <div class="kakao-check">✓</div>
+        <div class="kakao-benefit-text">
+          <h4>미납자 자동 알림</h4>
+          <p>수업 있는 날만 미납자에게 자동 발송</p>
+        </div>
+      </div>
+      <div class="kakao-benefit">
+        <div class="kakao-check">✓</div>
+        <div class="kakao-benefit-text">
+          <h4>상담 / 체험수업 알림</h4>
+          <p>예약 시 학부모에게 자동 안내</p>
+        </div>
+      </div>
+      <div class="kakao-benefit">
+        <div class="kakao-check">✓</div>
+        <div class="kakao-benefit-text">
+          <h4>SENS / 솔라피 지원</h4>
+          <p>원하는 서비스로 연동 가능</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Screenshots -->
+  <section class="screenshots">
+    <div class="section-header">
+      <span class="section-tag">실제 화면</span>
+      <h2 class="section-title">직접 확인해 보세요</h2>
+      <p class="section-subtitle">깔끔하고 직관적인 인터페이스</p>
+    </div>
+    <div class="screenshot-scroll">
+      <div class="screenshot-card" onclick="openLightbox(0)">
+        <img src="paca-payments-full.png" alt="학원비 관리">
+        <div class="caption">학원비 관리</div>
+      </div>
+      <div class="screenshot-card" onclick="openLightbox(1)">
+        <img src="paca-schedules-full.png" alt="스케줄 관리">
+        <div class="caption">스케줄 관리</div>
+      </div>
+      <div class="screenshot-card" onclick="openLightbox(2)">
+        <img src="paca-salaries-full.png" alt="급여 관리">
+        <div class="caption">급여 관리</div>
+      </div>
+      <div class="screenshot-card" onclick="openLightbox(3)">
+        <img src="paca-dashboard-full.png" alt="대시보드">
+        <div class="caption">대시보드</div>
+      </div>
+    </div>
+    <p class="scroll-hint">← 옆으로 스와이프 →</p>
+  </section>
+
+  <!-- SaaS Section -->
+  <section class="saas-section">
+    <div class="section-header">
+      <span class="section-tag">☁️ 클라우드</span>
+      <h2 class="section-title">설치 없이 바로 사용</h2>
+    </div>
+    <div class="saas-grid">
+      <div class="saas-card">
+        <div class="saas-icon">☁️</div>
+        <h3>설치 불필요</h3>
+        <p>브라우저만 있으면 OK</p>
+      </div>
+      <div class="saas-card">
+        <div class="saas-icon">🔄</div>
+        <h3>자동 업데이트</h3>
+        <p>새 기능 자동 반영</p>
+      </div>
+      <div class="saas-card">
+        <div class="saas-icon">🔐</div>
+        <h3>철저한 보안</h3>
+        <p>AES-256 암호화</p>
+      </div>
+      <div class="saas-card">
+        <div class="saas-icon">💾</div>
+        <h3>자동 백업</h3>
+        <p>데이터 안전 보호</p>
+      </div>
+    </div>
+    <div class="security-banner">
+      <span class="security-badge">🛡️ AES-256-GCM</span>
+      <p>학생 정보, 연락처 등 민감정보 안전하게 보호</p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-content">
+      <h2>지금 바로 시작하세요</h2>
+      <p>더 이상 엑셀과 씨름하지 마세요</p>
+      <a href="#" class="cta-btn" onclick="openModal(event)">무료 회원가입</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 P-ACA<br>문의: <a href="tel:010-2144-6755">010-2144-6755</a></p>
+  </footer>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-content">
+      <div class="modal-emoji">🚀</div>
+      <h3>Coming Soon!</h3>
+      <p>P-ACA가 곧 오픈합니다!<br>조금만 기다려주세요.</p>
+      <button class="modal-close" onclick="closeModal()">확인</button>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <div class="lightbox-image-container">
+      <img src="" alt="" class="lightbox-image" id="lightboxImage">
+    </div>
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+    <div class="lightbox-nav">
+      <button onclick="prevSlide()">‹</button>
+      <button onclick="nextSlide()">›</button>
+    </div>
+    <div class="lightbox-dots" id="lightboxDots"></div>
+  </div>
+
+  <script>
+    function openModal(e) {
+      if (e) e.preventDefault();
+      document.getElementById('modal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+
+    // Intersection Observer for scroll animations
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.feature-card, .mobile-feature, .kakao-benefit, .saas-card').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'all 0.5s ease';
+      observer.observe(el);
+    });
+
+    // Lightbox
+    const slides = [
+      { src: 'paca-payments-full.png', caption: '학원비 관리' },
+      { src: 'paca-schedules-full.png', caption: '스케줄 관리' },
+      { src: 'paca-salaries-full.png', caption: '급여 관리' },
+      { src: 'paca-dashboard-full.png', caption: '대시보드' }
+    ];
+    let currentSlide = 0;
+
+    function openLightbox(index) {
+      currentSlide = index;
+      updateLightbox();
+      document.getElementById('lightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    function updateLightbox() {
+      document.getElementById('lightboxImage').src = slides[currentSlide].src;
+      document.getElementById('lightboxImage').alt = slides[currentSlide].caption;
+      document.getElementById('lightboxCaption').textContent = slides[currentSlide].caption;
+
+      // Update dots
+      const dotsHtml = slides.map((_, i) =>
+        `<div class="lightbox-dot ${i === currentSlide ? 'active' : ''}" onclick="goToSlide(${i})"></div>`
+      ).join('');
+      document.getElementById('lightboxDots').innerHTML = dotsHtml;
+    }
+
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % slides.length;
+      updateLightbox();
+    }
+
+    function prevSlide() {
+      currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+      updateLightbox();
+    }
+
+    function goToSlide(index) {
+      currentSlide = index;
+      updateLightbox();
+    }
+
+    // 라이트박스 배경 클릭 시 닫기
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+      if (e.target === this || e.target.classList.contains('lightbox-image-container')) {
+        closeLightbox();
+      }
+    });
+
+    // 스와이프 제스처
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const lightbox = document.getElementById('lightbox');
+
+    lightbox.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    lightbox.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+      const diff = touchStartX - touchEndX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) nextSlide();
+        else prevSlide();
+      }
+    }
+  </script>
+</body>
+</html>
