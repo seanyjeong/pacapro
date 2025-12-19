@@ -17,6 +17,7 @@ const {
     sendSMSSolapi,
     sendMMSSolapi
 } = require('../utils/solapi');
+const { decryptArrayFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 if (!ENCRYPTION_KEY) {
@@ -152,7 +153,10 @@ router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (re
                 query = query.replace("s.status = 'active'", "s.status = 'pending'");
             }
 
-            const [students] = await db.query(query, queryParams);
+            let [students] = await db.query(query, queryParams);
+
+            // 암호화된 필드 복호화 (phone, parent_phone)
+            students = decryptArrayFields(students, ['student_phone', 'parent_phone', 'name']);
 
             if (target === 'all') {
                 // 모두: 학부모 전화 우선, 없으면 학생 전화
@@ -398,7 +402,10 @@ router.get('/recipients-count', verifyToken, async (req, res) => {
             query = query.replace("s.status = 'active'", "s.status = 'pending'");
         }
 
-        const [students] = await db.query(query, [req.user.academyId]);
+        let [students] = await db.query(query, [req.user.academyId]);
+
+        // 암호화된 필드 복호화 (phone, parent_phone)
+        students = decryptArrayFields(students, ['student_phone', 'parent_phone']);
 
         // 각 카테고리별 유효한 전화번호 수 계산
         const studentPhones = new Set();
