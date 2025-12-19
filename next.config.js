@@ -6,6 +6,8 @@ const withPWA = require("@ducanh2912/next-pwa").default({
   sw: "sw.js",
   workboxOptions: {
     importScripts: ['/sw-push.js'],
+    // /landing 경로는 서비스 워커에서 제외 (정적 HTML 페이지)
+    navigateFallbackDenylist: [/^\/landing/],
   },
 });
 
