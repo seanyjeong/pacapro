@@ -51,7 +51,8 @@ export const smsAPI = {
     content: string;
     customPhones?: string[];
     images?: { name: string; data: string }[];  // MMS 이미지 (base64)
-    gradeFilter?: 'all' | 'junior' | 'senior' | 'pending';  // 학년/상태 필터
+    statusFilter?: 'active' | 'pending';  // 상태 필터
+    gradeFilter?: 'all' | 'junior' | 'senior';  // 학년 필터
   }): Promise<SendSMSResponse> => {
     return apiClient.post<SendSMSResponse>('/sms/send', params);
   },
@@ -59,10 +60,11 @@ export const smsAPI = {
   /**
    * 수신자 수 조회
    */
-  getRecipientsCount: async (gradeFilter?: string): Promise<RecipientsCountResponse> => {
-    return apiClient.get<RecipientsCountResponse>('/sms/recipients-count', {
-      params: gradeFilter ? { gradeFilter } : {}
-    });
+  getRecipientsCount: async (statusFilter?: string, gradeFilter?: string): Promise<RecipientsCountResponse> => {
+    const params: Record<string, string> = {};
+    if (statusFilter) params.statusFilter = statusFilter;
+    if (gradeFilter) params.gradeFilter = gradeFilter;
+    return apiClient.get<RecipientsCountResponse>('/sms/recipients-count', { params });
   },
 
   /**

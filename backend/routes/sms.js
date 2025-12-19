@@ -32,12 +32,13 @@ if (!ENCRYPTION_KEY) {
  *   content,
  *   customPhones?: [],
  *   images?: [{name, data}],
+ *   statusFilter?: 'active' | 'pending',  // 상태 필터 (재원생/미등록관리)
  *   gradeFilter?: 'all' | 'junior' | 'senior'  // 학년 필터 (선행반/3학년)
  * }
  */
 router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
     try {
-        const { target, content, customPhones, images, gradeFilter = 'all' } = req.body;
+        const { target, content, customPhones, images, statusFilter = 'active', gradeFilter = 'all' } = req.body;
 
         if (!content || content.trim().length === 0) {
             return res.status(400).json({
@@ -136,10 +137,10 @@ router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (re
                     s.grade
                 FROM students s
                 WHERE s.academy_id = ?
-                  AND s.status = 'active'
+                  AND s.status = ?
                   AND s.deleted_at IS NULL
             `;
-            const queryParams = [req.user.academyId];
+            const queryParams = [req.user.academyId, statusFilter];
 
             // 학년 필터 적용
             if (gradeFilter === 'junior') {
@@ -148,9 +149,6 @@ router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (re
             } else if (gradeFilter === 'senior') {
                 // 3학년반: 고3 + N수
                 query += ` AND s.grade IN ('고3', 'N수')`;
-            } else if (gradeFilter === 'pending') {
-                // 미등록관리 학생 (status = 'pending')
-                query = query.replace("s.status = 'active'", "s.status = 'pending'");
             }
 
             let [students] = await db.query(query, queryParams);
@@ -374,13 +372,13 @@ router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (re
 /**
  * GET /paca/sms/recipients-count
  * 대상별 수신자 수 조회
- * query: { gradeFilter?: 'all' | 'junior' | 'senior' }
+ * query: { statusFilter?: 'active' | 'pending', gradeFilter?: 'all' | 'junior' | 'senior' }
  */
 router.get('/recipients-count', verifyToken, async (req, res) => {
     try {
-        const { gradeFilter = 'all' } = req.query;
+        const { statusFilter = 'active', gradeFilter = 'all' } = req.query;
 
-        // 활성 학생 목록 조회
+        // 학생 목록 조회
         let query = `
             SELECT
                 s.phone AS student_phone,
@@ -388,21 +386,20 @@ router.get('/recipients-count', verifyToken, async (req, res) => {
                 s.grade
             FROM students s
             WHERE s.academy_id = ?
-              AND s.status = 'active'
+              AND s.status = ?
               AND s.deleted_at IS NULL
         `;
+
+        const queryParams = [req.user.academyId, statusFilter];
 
         // 학년 필터 적용
         if (gradeFilter === 'junior') {
             query += ` AND s.grade IN ('중1', '중2', '중3', '고1', '고2')`;
         } else if (gradeFilter === 'senior') {
             query += ` AND s.grade IN ('고3', 'N수')`;
-        } else if (gradeFilter === 'pending') {
-            // 미등록관리 학생 (status = 'pending')
-            query = query.replace("s.status = 'active'", "s.status = 'pending'");
         }
 
-        let [students] = await db.query(query, [req.user.academyId]);
+        let [students] = await db.query(query, queryParams);
 
         // 암호화된 필드 복호화 (phone, parent_phone)
         students = decryptArrayFields(students, ['student_phone', 'parent_phone']);

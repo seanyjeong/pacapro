@@ -9,7 +9,8 @@ import { debounce } from 'lodash';
 
 type SendMode = 'all' | 'individual' | 'custom';
 type RecipientType = 'student' | 'parent';
-type GradeFilter = 'all' | 'junior' | 'senior' | 'pending';
+type StatusFilter = 'active' | 'pending';
+type GradeFilter = 'all' | 'junior' | 'senior';
 
 interface Student {
   id: number;
@@ -29,6 +30,8 @@ export default function SMSPage() {
   const [sendMode, setSendMode] = useState<SendMode>('all');
   // 수신자 타입: 학생 / 학부모
   const [recipientType, setRecipientType] = useState<RecipientType>('parent');
+  // 상태 필터: 재원생 / 미등록관리
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
   // 학년 필터: 전체 / 선행반 / 3학년
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
 
@@ -54,16 +57,16 @@ export default function SMSPage() {
     loadLogs();
   }, []);
 
-  // 학년 필터 변경 시 수신자 수 다시 로드
+  // 필터 변경 시 수신자 수 다시 로드
   useEffect(() => {
     if (sendMode === 'all') {
       loadRecipientsCount();
     }
-  }, [gradeFilter, sendMode]);
+  }, [statusFilter, gradeFilter, sendMode]);
 
   const loadRecipientsCount = async () => {
     try {
-      const data = await smsAPI.getRecipientsCount(gradeFilter);
+      const data = await smsAPI.getRecipientsCount(statusFilter, gradeFilter);
       setRecipientsCount(data);
     } catch (error) {
       console.error('수신자 수 조회 실패:', error);
@@ -243,6 +246,7 @@ export default function SMSPage() {
           target: recipientType === 'student' ? 'students' : 'parents',
           content,
           images: imageData,
+          statusFilter,
           gradeFilter,
         });
       }
@@ -356,58 +360,82 @@ export default function SMSPage() {
           </div>
         </div>
 
-        {/* 모두 선택 시 학년 필터 */}
+        {/* 모두 선택 시 상태/학년 필터 */}
         {sendMode === 'all' && (
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-foreground mb-2">
-              <GraduationCap className="w-4 h-4 inline mr-1" />
-              발송 대상 선택
-            </label>
-            <div className="grid grid-cols-4 gap-3">
-              <button
-                type="button"
-                onClick={() => setGradeFilter('all')}
-                className={`p-2 rounded-lg border-2 transition-all text-sm ${
-                  gradeFilter === 'all'
-                    ? 'border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300'
-                    : 'border-border hover:border-muted-foreground text-foreground'
-                }`}
-              >
-                전체
-              </button>
-              <button
-                type="button"
-                onClick={() => setGradeFilter('junior')}
-                className={`p-2 rounded-lg border-2 transition-all text-sm ${
-                  gradeFilter === 'junior'
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
-                    : 'border-border hover:border-muted-foreground text-foreground'
-                }`}
-              >
-                선행반 (1-2학년)
-              </button>
-              <button
-                type="button"
-                onClick={() => setGradeFilter('senior')}
-                className={`p-2 rounded-lg border-2 transition-all text-sm ${
-                  gradeFilter === 'senior'
-                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300'
-                    : 'border-border hover:border-muted-foreground text-foreground'
-                }`}
-              >
-                3학년 (고3/N수)
-              </button>
-              <button
-                type="button"
-                onClick={() => setGradeFilter('pending')}
-                className={`p-2 rounded-lg border-2 transition-all text-sm ${
-                  gradeFilter === 'pending'
-                    ? 'border-orange-500 bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300'
-                    : 'border-border hover:border-muted-foreground text-foreground'
-                }`}
-              >
-                미등록관리
-              </button>
+          <div className="mb-6 space-y-4">
+            {/* 상태 필터: 재원생 / 미등록관리 */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <UserPlus className="w-4 h-4 inline mr-1" />
+                학생 상태
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('active')}
+                  className={`p-2 rounded-lg border-2 transition-all text-sm ${
+                    statusFilter === 'active'
+                      ? 'border-green-500 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300'
+                      : 'border-border hover:border-muted-foreground text-foreground'
+                  }`}
+                >
+                  재원생
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusFilter('pending')}
+                  className={`p-2 rounded-lg border-2 transition-all text-sm ${
+                    statusFilter === 'pending'
+                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300'
+                      : 'border-border hover:border-muted-foreground text-foreground'
+                  }`}
+                >
+                  미등록관리
+                </button>
+              </div>
+            </div>
+
+            {/* 학년 필터: 전체 / 1-2학년 / 3학년 */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <GraduationCap className="w-4 h-4 inline mr-1" />
+                학년 필터
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setGradeFilter('all')}
+                  className={`p-2 rounded-lg border-2 transition-all text-sm ${
+                    gradeFilter === 'all'
+                      ? 'border-gray-500 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                      : 'border-border hover:border-muted-foreground text-foreground'
+                  }`}
+                >
+                  전체
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGradeFilter('junior')}
+                  className={`p-2 rounded-lg border-2 transition-all text-sm ${
+                    gradeFilter === 'junior'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+                      : 'border-border hover:border-muted-foreground text-foreground'
+                  }`}
+                >
+                  1-2학년
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGradeFilter('senior')}
+                  className={`p-2 rounded-lg border-2 transition-all text-sm ${
+                    gradeFilter === 'senior'
+                      ? 'border-purple-500 bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300'
+                      : 'border-border hover:border-muted-foreground text-foreground'
+                  }`}
+                >
+                  3학년·N수
+                </button>
+              </div>
             </div>
           </div>
         )}
