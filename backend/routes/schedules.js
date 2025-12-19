@@ -1545,6 +1545,15 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                         console.error('Failed to update trial_dates:', e);
                     }
                 }
+
+                // 체험 횟수가 0이 되면 미등록관리(pending)로 자동 변경
+                if (student.trial_remaining - 1 <= 0) {
+                    await connection.query(
+                        'UPDATE students SET status = ?, is_trial = 0 WHERE id = ?',
+                        ['pending', student_id]
+                    );
+                    console.log(`체험생 ${student_id} 체험 완료 → 미등록관리로 자동 변경`);
+                }
             }
 
             processedRecords.push({

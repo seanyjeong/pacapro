@@ -715,6 +715,67 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
   }
 });
 
+// POST /paca/consultations/:id/convert-to-pending - 상담 완료 → 미등록관리 (체험 없이)
+router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const academyId = req.user.academy_id;
+    const { studentPhone, memo } = req.body;
+
+    // 상담 정보 조회
+    const [consultations] = await db.query(
+      'SELECT * FROM consultations WHERE id = ? AND academy_id = ?',
+      [id, academyId]
+    );
+
+    if (consultations.length === 0) {
+      return res.status(404).json({ error: '상담 신청을 찾을 수 없습니다.' });
+    }
+
+    const consultation = consultations[0];
+
+    // 이미 학생으로 연결되어 있는지 확인
+    if (consultation.linked_student_id) {
+      return res.status(400).json({ error: '이미 학생으로 등록되어 있습니다.' });
+    }
+
+    // 미등록관리 학생 등록 (pending 상태)
+    const phone = studentPhone || consultation.parent_phone;
+    const parentPhone = consultation.parent_phone;
+    const [studentResult] = await db.query(
+      `INSERT INTO students (
+        academy_id, name, grade, school, phone, parent_phone, status,
+        is_trial, memo, class_days, monthly_tuition, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, '[]', 0, NOW())`,
+      [
+        academyId,
+        consultation.student_name,
+        consultation.student_grade,
+        consultation.student_school,
+        phone,
+        parentPhone,
+        memo || consultation.inquiry_content || null
+      ]
+    );
+
+    const studentId = studentResult.insertId;
+
+    // 상담 상태 업데이트 (completed + 학생 연결)
+    await db.query(
+      `UPDATE consultations SET status = 'completed', linked_student_id = ? WHERE id = ?`,
+      [studentId, id]
+    );
+
+    res.json({
+      message: '미등록관리 학생으로 등록되었습니다.',
+      studentId
+    });
+  } catch (error) {
+    console.error('미등록관리 학생 등록 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
 // ================== 상담 설정 ==================
 
 // GET /paca/consultations/settings - 상담 설정 조회

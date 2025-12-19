@@ -5,17 +5,18 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Download, AlertCircle, Users, UserCheck, UserX, Sparkles } from 'lucide-react';
+import { Plus, Download, AlertCircle, Users, UserCheck, UserX, Sparkles, Clock } from 'lucide-react';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
 import { StudentFiltersComponent } from '@/components/students/student-filters';
 import { StudentSearch } from '@/components/students/student-search';
 import { StudentListTable } from '@/components/students/student-list-table';
 import { TrialStudentList } from '@/components/students/trial-student-list';
+import { PendingStudentList } from '@/components/students/pending-student-list';
 import { useStudents } from '@/hooks/use-students';
 import { cn } from '@/lib/utils';
 
 // 탭 타입
-type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial';
+type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending';
 
 export default function StudentsPage() {
   const router = useRouter();
@@ -42,6 +43,8 @@ export default function StudentsPage() {
       updateFilters({ status: 'paused', is_trial: undefined });
     } else if (activeTab === 'withdrawn') {
       updateFilters({ status: 'withdrawn', is_trial: undefined });
+    } else if (activeTab === 'pending') {
+      updateFilters({ status: 'pending', is_trial: undefined });
     }
   }, [activeTab]);
 
@@ -96,6 +99,7 @@ export default function StudentsPage() {
     { id: 'paused' as const, label: '휴원생', icon: Users, color: 'text-yellow-600 dark:text-yellow-400' },
     { id: 'withdrawn' as const, label: '퇴원생', icon: UserX, color: 'text-muted-foreground' },
     { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600 dark:text-purple-400' },
+    { id: 'pending' as const, label: '미등록관리', icon: Clock, color: 'text-orange-600 dark:text-orange-400' },
   ];
 
   return (
@@ -149,8 +153,8 @@ export default function StudentsPage() {
       {/* 통계 카드 - 모든 탭에서 전체 현황 표시 */}
       <StudentStatsCards refreshTrigger={statsRefreshTrigger} />
 
-      {/* 체험생 탭이 아닐 때만 필터 표시 */}
-      {activeTab !== 'trial' && (
+      {/* 체험생/미등록관리 탭이 아닐 때만 필터 표시 */}
+      {activeTab !== 'trial' && activeTab !== 'pending' && (
         <StudentFiltersComponent
           filters={filters}
           onFilterChange={updateFilters}
@@ -183,6 +187,12 @@ export default function StudentsPage() {
       {activeTab === 'trial' ? (
         <TrialStudentList
           students={students.filter(s => s.is_trial)}
+          loading={loading}
+          onReload={handleReload}
+        />
+      ) : activeTab === 'pending' ? (
+        <PendingStudentList
+          students={students}
           loading={loading}
           onReload={handleReload}
         />

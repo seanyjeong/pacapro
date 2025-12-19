@@ -15,7 +15,7 @@ export type Grade = '고1' | '고2' | '고3' | 'N수';
 export type AdmissionType = 'regular' | 'early' | 'civil_service' | 'military_academy' | 'police_university';
 
 // 학생 상태 (status) - DB enum
-export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn' | 'trial';
+export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn' | 'trial' | 'pending';
 
 // 성별 (gender)
 export type Gender = 'male' | 'female';
@@ -221,6 +221,7 @@ export const STATUS_LABELS: Record<StudentStatus, string> = {
   graduated: '졸업',
   withdrawn: '퇴원',
   trial: '체험',
+  pending: '미등록관리',
 };
 
 export const GENDER_LABELS: Record<Gender, string> = {
@@ -298,6 +299,7 @@ export const STATUS_OPTIONS = [
   { value: 'graduated' as StudentStatus, label: '졸업' },
   { value: 'withdrawn' as StudentStatus, label: '퇴원' },
   { value: 'trial' as StudentStatus, label: '체험' },
+  { value: 'pending' as StudentStatus, label: '미등록관리' },
 ];
 
 // 요일 옵션 (체크박스용)

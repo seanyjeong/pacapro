@@ -215,3 +215,15 @@ export async function convertToTrialStudent(
     { trialDates, studentPhone }
   );
 }
+
+// 상담 완료 → 미등록관리 학생 등록 (체험 없이)
+export async function convertToPendingStudent(
+  consultationId: number,
+  studentPhone?: string,
+  memo?: string
+): Promise<{ message: string; studentId: number }> {
+  return apiClient.post<{ message: string; studentId: number }>(
+    `/consultations/${consultationId}/convert-to-pending`,
+    { studentPhone, memo }
+  );
+}

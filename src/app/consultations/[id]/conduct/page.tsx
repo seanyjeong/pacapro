@@ -7,7 +7,7 @@ import { ko } from 'date-fns/locale';
 import {
   ArrowLeft, Save, User, Phone, School, Target, Calendar, Clock,
   CheckSquare, Square, ChevronDown, ChevronUp, Loader2, Sparkles, Plus, Trash2,
-  GraduationCap
+  GraduationCap, UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 
 import apiClient from '@/lib/api/client';
-import { convertToTrialStudent } from '@/lib/api/consultations';
+import { convertToTrialStudent, convertToPendingStudent } from '@/lib/api/consultations';
 import type { Consultation, ChecklistItem, ChecklistTemplate } from '@/lib/types/consultation';
 import { CONSULTATION_STATUS_LABELS, CONSULTATION_STATUS_COLORS } from '@/lib/types/consultation';
 
@@ -78,6 +78,12 @@ export default function ConductPage({ params }: PageProps) {
   ]);
   const [studentPhone, setStudentPhone] = useState('');
   const [convertingToTrial, setConvertingToTrial] = useState(false);
+
+  // 미등록관리 모달
+  const [pendingModalOpen, setPendingModalOpen] = useState(false);
+  const [pendingStudentPhone, setPendingStudentPhone] = useState('');
+  const [pendingMemo, setPendingMemo] = useState('');
+  const [convertingToPending, setConvertingToPending] = useState(false);
 
   // 상담 정보 로드
   useEffect(() => {
@@ -237,6 +243,28 @@ export default function ConductPage({ params }: PageProps) {
       toast.error(err.message || '체험 등록에 실패했습니다.');
     } finally {
       setConvertingToTrial(false);
+    }
+  };
+
+  // 미등록관리 학생 등록
+  const handleConvertToPending = async () => {
+    if (!consultation) return;
+
+    setConvertingToPending(true);
+    try {
+      await convertToPendingStudent(
+        consultation.id,
+        pendingStudentPhone || undefined,
+        pendingMemo || consultationMemo || undefined
+      );
+      toast.success('미등록관리 학생으로 등록되었습니다.');
+      setPendingModalOpen(false);
+      router.push('/consultations');
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      toast.error(err.message || '미등록관리 등록에 실패했습니다.');
+    } finally {
+      setConvertingToPending(false);
     }
   };
 
@@ -629,6 +657,15 @@ export default function ConductPage({ params }: PageProps) {
               저장
             </Button>
             <Button
+              variant="outline"
+              className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-950"
+              onClick={() => setPendingModalOpen(true)}
+              disabled={!!consultation?.linked_student_id}
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              {consultation?.linked_student_id ? '등록 완료' : '미등록관리로 완료'}
+            </Button>
+            <Button
               variant="default"
               className="bg-green-600 hover:bg-green-700"
               onClick={() => setTrialModalOpen(true)}
@@ -737,6 +774,65 @@ export default function ConductPage({ params }: PageProps) {
                 <Sparkles className="h-4 w-4 mr-2" />
               )}
               체험 등록
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 미등록관리 모달 */}
+      <Dialog open={pendingModalOpen} onOpenChange={setPendingModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>미등록관리로 완료</DialogTitle>
+            <DialogDescription>
+              {consultation?.student_name}님의 상담을 완료하고 미등록관리 학생으로 등록합니다.
+              <br />
+              나중에 체험 등록 또는 정식 등록할 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-6 px-6">
+            {/* 학생 전화번호 입력 */}
+            <div className="space-y-2">
+              <Label>학생 전화번호 (선택)</Label>
+              <Input
+                type="tel"
+                placeholder="010-0000-0000"
+                value={pendingStudentPhone}
+                onChange={(e) => setPendingStudentPhone(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                없으면 학부모 번호로 등록됩니다.
+              </p>
+            </div>
+
+            {/* 메모 */}
+            <div className="space-y-2">
+              <Label>메모 (선택)</Label>
+              <Textarea
+                placeholder="추가 메모가 있으면 입력하세요..."
+                value={pendingMemo}
+                onChange={(e) => setPendingMemo(e.target.value)}
+                className="min-h-[80px]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingModalOpen(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={handleConvertToPending}
+              disabled={convertingToPending}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {convertingToPending ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Clock className="h-4 w-4 mr-2" />
+              )}
+              미등록관리로 완료
             </Button>
           </DialogFooter>
         </DialogContent>

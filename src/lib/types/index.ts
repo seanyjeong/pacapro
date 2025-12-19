@@ -17,7 +17,7 @@ export interface APIResponse<T> {
 
 // ===== Student Types (DB 스키마 기반) =====
 
-export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn';
+export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn' | 'trial' | 'pending';
 export type StudentType = 'exam' | 'adult';
 export type Grade = '고1' | '고2' | '고3' | 'N수';
 export type AdmissionType = 'regular' | 'early' | 'civil_service';
