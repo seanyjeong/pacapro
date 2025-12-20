@@ -234,6 +234,13 @@ export default function ConductPage({ params }: PageProps) {
 
     setConvertingToTrial(true);
     try {
+      // 먼저 체크리스트와 메모 저장
+      await apiClient.put(`/consultations/${consultation.id}`, {
+        checklist,
+        consultationMemo
+      });
+
+      // 체험 등록
       await convertToTrialStudent(consultation.id, trialDates, studentPhone || undefined);
       toast.success('체험 학생으로 등록되었습니다.');
       setTrialModalOpen(false);
@@ -252,6 +259,13 @@ export default function ConductPage({ params }: PageProps) {
 
     setConvertingToPending(true);
     try {
+      // 먼저 체크리스트와 메모 저장
+      await apiClient.put(`/consultations/${consultation.id}`, {
+        checklist,
+        consultationMemo
+      });
+
+      // 미등록관리 등록
       await convertToPendingStudent(
         consultation.id,
         pendingStudentPhone || undefined,

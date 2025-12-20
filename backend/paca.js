@@ -234,6 +234,7 @@ const { initScheduler: initExcusedCreditScheduler } = require('./scheduler/excus
 const { initPushScheduler } = require('./scheduler/pushScheduler');
 const { initConsultationReminderScheduler } = require('./scheduler/consultationReminderScheduler');
 const { initPauseEndingScheduler } = require('./scheduler/pauseEndingScheduler');
+const { initTrialExpireScheduler } = require('./scheduler/trialExpireScheduler');
 
 // ==========================================
 // Start Server
@@ -256,6 +257,7 @@ app.listen(PORT, () => {
     initPushScheduler();
     initConsultationReminderScheduler();
     initPauseEndingScheduler();
+    initTrialExpireScheduler();
 });
 
 // Graceful Shutdown

@@ -650,13 +650,15 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
     const parentPhone = consultation.parent_phone;
     const [studentResult] = await db.query(
       `INSERT INTO students (
-        academy_id, name, grade, phone, parent_phone, status,
+        academy_id, name, grade, school, gender, phone, parent_phone, status,
         is_trial, trial_remaining, trial_dates, class_days, monthly_tuition, consultation_date, created_at
-      ) VALUES (?, ?, ?, ?, ?, 'trial', 1, ?, ?, '[]', 0, ?, NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'trial', 1, ?, ?, '[]', 0, ?, NOW())`,
       [
         academyId,
         consultation.student_name,
         consultation.student_grade,
+        consultation.student_school || null,  // 학교명 추가
+        consultation.gender || null,  // 성별 추가
         phone,
         parentPhone,
         trialDates.length,  // 체험 횟수 = 선택한 일정 수

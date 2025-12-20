@@ -83,6 +83,7 @@ export interface Consultation {
   student_phone?: string;
   student_grade: StudentGrade;
   student_school?: string;
+  gender?: 'male' | 'female';
 
   // 성적 정보
   academic_scores?: AcademicScores;
@@ -138,6 +139,7 @@ export interface ConsultationFormData {
   studentPhone?: string;
   studentGrade?: StudentGrade;
   studentSchool?: string;
+  gender?: 'male' | 'female';
   schoolGrade?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   mockTestGrade?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
   mockTestGrades?: MockTestGrades;

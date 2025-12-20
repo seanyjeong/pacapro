@@ -234,6 +234,7 @@ router.post('/consultation/:slug/apply', async (req, res) => {
       studentPhone,
       studentGrade,
       studentSchool,
+      gender,
       academicScores,
       mockTestGrades,
       schoolGradeAvg,
@@ -332,12 +333,12 @@ router.post('/consultation/:slug/apply', async (req, res) => {
       `INSERT INTO consultations (
         academy_id, consultation_type,
         parent_name, parent_phone,
-        student_name, student_grade, student_school,
+        student_name, student_grade, student_school, gender,
         academic_scores, target_school, referrer_student,
         referral_sources, inquiry_content,
         preferred_date, preferred_time,
         linked_student_id, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         academy.id,
         consultationType || 'new_registration',
@@ -346,6 +347,7 @@ router.post('/consultation/:slug/apply', async (req, res) => {
         studentName,
         studentGrade,
         studentSchool || null,
+        gender || null,  // 성별 추가
         JSON.stringify(fullAcademicScores),
         targetSchool || null,
         referrerStudent || null,

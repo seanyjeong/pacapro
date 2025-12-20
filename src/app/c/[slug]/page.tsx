@@ -64,6 +64,7 @@ export default function ConsultationPage() {
     studentPhone: '',
     studentGrade: undefined,
     studentSchool: '',
+    gender: undefined,
     mockTestGrades: {
       korean: undefined,
       math: undefined,
@@ -178,6 +179,10 @@ export default function ConsultationPage() {
     }
     if (!formData.studentSchool?.trim()) {
       toast.error('학교를 입력해주세요.');
+      return false;
+    }
+    if (!formData.gender) {
+      toast.error('성별을 선택해주세요.');
       return false;
     }
     // 성적 정보 필수 체크
@@ -394,7 +399,7 @@ export default function ConsultationPage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label className="text-xs">학년 <span className="text-red-500">*</span></Label>
                 <div className="mt-1">
@@ -404,6 +409,21 @@ export default function ConsultationPage() {
                     options={GRADE_OPTIONS.map(g => ({ value: g, label: g }))}
                     placeholder="선택"
                     onChange={(v) => setFormData({ ...formData, studentGrade: v as StudentGrade })}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">성별 <span className="text-red-500">*</span></Label>
+                <div className="mt-1">
+                  <CustomDropdown
+                    id="gender"
+                    value={formData.gender || ''}
+                    options={[
+                      { value: 'male', label: '남' },
+                      { value: 'female', label: '여' }
+                    ]}
+                    placeholder="선택"
+                    onChange={(v) => setFormData({ ...formData, gender: v as 'male' | 'female' })}
                   />
                 </div>
               </div>

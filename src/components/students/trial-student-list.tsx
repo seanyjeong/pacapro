@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles, Pencil } from 'lucide-react';
+import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles, Pencil, Clock } from 'lucide-react';
 import type { Student, TrialDate } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 
@@ -24,6 +24,7 @@ interface TrialStudentListProps {
 export function TrialStudentList({ students, loading, onReload }: TrialStudentListProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [movingToPendingId, setMovingToPendingId] = useState<number | null>(null);
 
   // 체험 일정 파싱
   const parseTrialDates = (trialDates: TrialDate[] | string | null): TrialDate[] => {
@@ -80,6 +81,28 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
     }
   };
 
+  // 미등록관리로 이동 처리
+  const handleMoveToPending = async (student: Student) => {
+    if (!confirm(`${student.name} 학생을 미등록관리로 이동하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      setMovingToPendingId(student.id);
+      await apiClient.put(`/students/${student.id}`, {
+        status: 'pending',
+        is_trial: false
+      });
+      toast.success(`${student.name} 학생을 미등록관리로 이동했습니다.`);
+      onReload();
+    } catch (error) {
+      console.error('Failed to move to pending:', error);
+      toast.error('미등록관리로 이동에 실패했습니다.');
+    } finally {
+      setMovingToPendingId(null);
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -117,6 +140,8 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
             <tr>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">이름</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학년</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">성별</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학교</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">연락처</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">체험 일정</th>
               <th className="text-center py-3 px-4 text-sm font-semibold text-muted-foreground">남은 횟수</th>
@@ -141,6 +166,12 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                   </td>
                   <td className="py-3 px-4 text-sm text-muted-foreground">
                     {student.grade || '-'}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-muted-foreground">
+                    {student.gender === 'male' ? '남' : student.gender === 'female' ? '여' : '-'}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-muted-foreground">
+                    {student.school || '-'}
                   </td>
                   <td className="py-3 px-4 text-sm text-muted-foreground">
                     {student.phone || '-'}
@@ -175,6 +206,20 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                         title="체험 일정 수정"
                       >
                         <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-950"
+                        onClick={() => handleMoveToPending(student)}
+                        disabled={movingToPendingId === student.id}
+                        title="미등록관리로 이동"
+                      >
+                        {movingToPendingId === student.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Clock className="w-4 h-4" />
+                        )}
                       </Button>
                       <Button
                         size="sm"
