@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, checkPermission } = require('../middleware/auth');
-const { decrypt } = require('../utils/encryption');
+const { decrypt, encrypt } = require('../utils/encryption');
 const { sendAlimtalkSolapi } = require('../utils/solapi');
 const { decryptApiKey } = require('../utils/naverSens');
 
@@ -648,6 +648,12 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
     // 체험 학생 등록 (학생 전화번호 우선, 없으면 학부모 전화번호)
     const phone = studentPhone || consultation.parent_phone;
     const parentPhone = consultation.parent_phone;
+
+    // 민감 정보 암호화
+    const encryptedName = encrypt(consultation.student_name);
+    const encryptedPhone = phone ? encrypt(phone) : null;
+    const encryptedParentPhone = parentPhone ? encrypt(parentPhone) : null;
+
     const [studentResult] = await db.query(
       `INSERT INTO students (
         academy_id, name, grade, school, gender, phone, parent_phone, status,
@@ -655,12 +661,12 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'trial', 1, ?, ?, '[]', 0, ?, NOW())`,
       [
         academyId,
-        consultation.student_name,
+        encryptedName,
         consultation.student_grade,
         consultation.student_school || null,  // 학교명 추가
         consultation.gender || null,  // 성별 추가
-        phone,
-        parentPhone,
+        encryptedPhone,
+        encryptedParentPhone,
         trialDates.length,  // 체험 횟수 = 선택한 일정 수
         JSON.stringify(trialDatesJson),
         consultation.preferred_date  // 상담일
@@ -745,18 +751,25 @@ router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
     // 미등록관리 학생 등록 (pending 상태)
     const phone = studentPhone || consultation.parent_phone;
     const parentPhone = consultation.parent_phone;
+
+    // 민감 정보 암호화
+    const encryptedName = encrypt(consultation.student_name);
+    const encryptedPhone = phone ? encrypt(phone) : null;
+    const encryptedParentPhone = parentPhone ? encrypt(parentPhone) : null;
+
     const [studentResult] = await db.query(
       `INSERT INTO students (
-        academy_id, name, grade, school, phone, parent_phone, status,
+        academy_id, name, grade, school, gender, phone, parent_phone, status,
         is_trial, memo, class_days, monthly_tuition, consultation_date, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'pending', 0, ?, '[]', 0, ?, NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?, '[]', 0, ?, NOW())`,
       [
         academyId,
-        consultation.student_name,
+        encryptedName,
         consultation.student_grade,
         consultation.student_school,
-        phone,
-        parentPhone,
+        consultation.gender || null,  // 성별 추가
+        encryptedPhone,
+        encryptedParentPhone,
         memo || consultation.inquiry_content || null,
         consultation.preferred_date  // 상담일
       ]
