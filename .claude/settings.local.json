@@ -101,7 +101,8 @@
       "WebFetch(domain:api.ncloud-docs.com)",
       "mcp__n8n-mcp__activate_workflow",
       "mcp__n8n-mcp__deactivate_workflow",
-      "Skill(frontend-design)"
+      "Skill(frontend-design)",
+      "Bash(sudo -S -k journalctl:*)"
     ],
     "deny": [],
     "ask": []

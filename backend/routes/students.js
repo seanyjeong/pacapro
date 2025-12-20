@@ -1410,9 +1410,12 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
+        // 민감 필드 복호화 후 응답
+        const decryptedStudent = decryptFields(updatedStudents[0], ENCRYPTED_FIELDS.students);
+
         res.json({
             message: 'Student updated successfully',
-            student: updatedStudents[0],
+            student: decryptedStudent,
             scheduleReassigned: reassignResult,
             trialScheduleAssigned: trialAssignResult,
             paymentAdjustment,

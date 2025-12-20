@@ -649,10 +649,17 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
     const phone = studentPhone || consultation.parent_phone;
     const parentPhone = consultation.parent_phone;
 
-    // 민감 정보 암호화
-    const encryptedName = encrypt(consultation.student_name);
-    const encryptedPhone = phone ? encrypt(phone) : null;
-    const encryptedParentPhone = parentPhone ? encrypt(parentPhone) : null;
+    // 민감 정보 암호화 (이미 암호화된 값이면 그대로 사용)
+    const isAlreadyEncrypted = (val) => val && typeof val === 'string' && val.startsWith('ENC:');
+    const encryptedName = isAlreadyEncrypted(consultation.student_name)
+      ? consultation.student_name
+      : encrypt(consultation.student_name);
+    const encryptedPhone = phone
+      ? (isAlreadyEncrypted(phone) ? phone : encrypt(phone))
+      : null;
+    const encryptedParentPhone = parentPhone
+      ? (isAlreadyEncrypted(parentPhone) ? parentPhone : encrypt(parentPhone))
+      : null;
 
     const [studentResult] = await db.query(
       `INSERT INTO students (
@@ -752,10 +759,17 @@ router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
     const phone = studentPhone || consultation.parent_phone;
     const parentPhone = consultation.parent_phone;
 
-    // 민감 정보 암호화
-    const encryptedName = encrypt(consultation.student_name);
-    const encryptedPhone = phone ? encrypt(phone) : null;
-    const encryptedParentPhone = parentPhone ? encrypt(parentPhone) : null;
+    // 민감 정보 암호화 (이미 암호화된 값이면 그대로 사용)
+    const isAlreadyEncrypted = (val) => val && typeof val === 'string' && val.startsWith('ENC:');
+    const encryptedName = isAlreadyEncrypted(consultation.student_name)
+      ? consultation.student_name
+      : encrypt(consultation.student_name);
+    const encryptedPhone = phone
+      ? (isAlreadyEncrypted(phone) ? phone : encrypt(phone))
+      : null;
+    const encryptedParentPhone = parentPhone
+      ? (isAlreadyEncrypted(parentPhone) ? parentPhone : encrypt(parentPhone))
+      : null;
 
     const [studentResult] = await db.query(
       `INSERT INTO students (
