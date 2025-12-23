@@ -73,7 +73,6 @@ export default function ConductPage({ params }: PageProps) {
   // 체험 등록 모달
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [trialDates, setTrialDates] = useState<{ date: string; timeSlot: string }[]>([
-    { date: '', timeSlot: '' },
     { date: '', timeSlot: '' }
   ]);
   const [studentPhone, setStudentPhone] = useState('');
