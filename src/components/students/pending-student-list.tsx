@@ -38,8 +38,8 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
     try {
       const res = await apiClient.get<{ consultation: ConsultationInfo }>(`/consultations/by-student/${student.id}`);
       if (res.consultation?.id) {
-        // 상담 진행 페이지로 이동
-        router.push(`/consultations/${res.consultation.id}/conduct`);
+        // 상담 진행 페이지로 이동 (돌아올 곳 기억)
+        router.push(`/consultations/${res.consultation.id}/conduct?from=pending`);
       } else {
         toast.error('상담 정보를 찾을 수 없습니다.');
       }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
@@ -58,6 +58,13 @@ interface PageProps {
 export default function ConductPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromPage = searchParams.get('from');
+
+  // 돌아갈 페이지 결정
+  const backUrl = fromPage === 'pending' ? '/students?tab=pending' : '/consultations';
+  const backLabel = fromPage === 'pending' ? '미등록관리로' : '목록으로';
+
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -119,14 +126,14 @@ export default function ConductPage({ params }: PageProps) {
       } catch (error) {
         console.error('상담 정보 로드 오류:', error);
         toast.error('상담 정보를 불러오는데 실패했습니다.');
-        router.push('/consultations');
+        router.push(backUrl);
       } finally {
         setLoading(false);
       }
     };
 
     loadConsultation();
-  }, [resolvedParams.id, router]);
+  }, [resolvedParams.id, router, backUrl]);
 
   // 체크리스트 체크 토글
   const toggleCheck = (itemId: number) => {
@@ -243,7 +250,7 @@ export default function ConductPage({ params }: PageProps) {
       await convertToTrialStudent(consultation.id, trialDates, studentPhone || undefined);
       toast.success('체험 학생으로 등록되었습니다.');
       setTrialModalOpen(false);
-      router.push('/consultations');
+      router.push(backUrl);
     } catch (error: unknown) {
       const err = error as { message?: string };
       toast.error(err.message || '체험 등록에 실패했습니다.');
@@ -272,7 +279,7 @@ export default function ConductPage({ params }: PageProps) {
       );
       toast.success('미등록관리 학생으로 등록되었습니다.');
       setPendingModalOpen(false);
-      router.push('/consultations');
+      router.push(backUrl);
     } catch (error: unknown) {
       const err = error as { message?: string };
       toast.error(err.message || '미등록관리 등록에 실패했습니다.');
@@ -305,10 +312,10 @@ export default function ConductPage({ params }: PageProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <p className="text-muted-foreground">상담 정보를 찾을 수 없습니다.</p>
-        <Link href="/consultations">
+        <Link href={backUrl}>
           <Button variant="outline" className="mt-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            목록으로
+            {backLabel}
           </Button>
         </Link>
       </div>
@@ -322,10 +329,10 @@ export default function ConductPage({ params }: PageProps) {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/consultations">
+              <Link href={backUrl}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  목록으로
+                  {backLabel}
                 </Button>
               </Link>
               <div>
