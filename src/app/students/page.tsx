@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Download, AlertCircle, Users, UserCheck, UserX, Sparkles, Clock } from 'lucide-react';
+import { Plus, Download, AlertCircle, Users, UserCheck, UserX, Sparkles, Clock, Loader2 } from 'lucide-react';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
 import { StudentFiltersComponent } from '@/components/students/student-filters';
 import { StudentSearch } from '@/components/students/student-search';
@@ -18,11 +18,26 @@ import { cn } from '@/lib/utils';
 // 탭 타입
 type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending';
 
-export default function StudentsPage() {
+// 내부 컴포넌트 (useSearchParams 사용)
+function StudentsPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as StudentTab | null;
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<StudentTab>('active');
+  const [activeTab, setActiveTab] = useState<StudentTab>(
+    tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending'].includes(tabParam)
+      ? tabParam
+      : 'active'
+  );
   const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
+
+  // URL 파라미터로 탭 변경 시 적용
+  useEffect(() => {
+    if (tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   // useStudents 훅 사용 (초기값: 재원생만)
   const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents({ status: 'active', is_trial: false });
@@ -223,5 +238,29 @@ export default function StudentsPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+// 로딩 폴백
+function LoadingFallback() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">학생 관리</h1>
+        <p className="text-muted-foreground mt-1">학생 등록 및 관리</p>
+      </div>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    </div>
+  );
+}
+
+// 메인 페이지 (Suspense로 감싸서 export)
+export default function StudentsPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <StudentsPageContent />
+    </Suspense>
   );
 }
