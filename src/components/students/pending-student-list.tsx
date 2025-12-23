@@ -29,6 +29,13 @@ interface PendingStudentListProps {
   onReload: () => void;
 }
 
+interface ChecklistItem {
+  id: number;
+  category: string;
+  text: string;
+  checked: boolean;
+}
+
 interface ConsultationInfo {
   id: number;
   student_name: string;
@@ -36,12 +43,18 @@ interface ConsultationInfo {
   parent_phone: string;
   student_grade: string;
   student_school: string;
+  gender?: string;
   consultation_type: string;
   preferred_date: string;
   preferred_time: string;
   status: string;
-  memo: string;
-  checklist: string;
+  target_school?: string;
+  referrer_student?: string;
+  referral_sources?: string[];
+  inquiry_content?: string;
+  checklist?: ChecklistItem[];
+  consultation_memo?: string;
+  admin_notes?: string;
 }
 
 export function PendingStudentList({ students, loading, onReload }: PendingStudentListProps) {
@@ -248,25 +261,16 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
 
       {/* 상담 정보 모달 */}
       <Dialog open={consultationModalOpen} onOpenChange={setConsultationModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>상담 정보</DialogTitle>
+            <DialogTitle className="text-lg">
+              {consultationInfo?.student_name} 상담 정보
+            </DialogTitle>
           </DialogHeader>
           {consultationInfo && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">학생명</span>
-                  <p className="font-medium">{consultationInfo.student_name}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">학부모명</span>
-                  <p className="font-medium">{consultationInfo.parent_name}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">연락처</span>
-                  <p className="font-medium">{consultationInfo.parent_phone}</p>
-                </div>
+            <div className="space-y-6 py-4">
+              {/* 기본 정보 */}
+              <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">학년</span>
                   <p className="font-medium">{consultationInfo.student_grade || '-'}</p>
@@ -277,15 +281,89 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                 </div>
                 <div>
                   <span className="text-muted-foreground">상담일</span>
-                  <p className="font-medium">
-                    {consultationInfo.preferred_date} {consultationInfo.preferred_time}
+                  <p className="font-medium">{consultationInfo.preferred_date}</p>
+                </div>
+                {consultationInfo.target_school && (
+                  <div>
+                    <span className="text-muted-foreground">목표 대학</span>
+                    <p className="font-medium">{consultationInfo.target_school}</p>
+                  </div>
+                )}
+                {consultationInfo.referrer_student && (
+                  <div>
+                    <span className="text-muted-foreground">소개 학생</span>
+                    <p className="font-medium">{consultationInfo.referrer_student}</p>
+                  </div>
+                )}
+                {consultationInfo.referral_sources && consultationInfo.referral_sources.length > 0 && (
+                  <div>
+                    <span className="text-muted-foreground">유입 경로</span>
+                    <p className="font-medium">{consultationInfo.referral_sources.join(', ')}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* 문의 내용 */}
+              {consultationInfo.inquiry_content && (
+                <div>
+                  <h4 className="font-medium mb-2">문의 내용</h4>
+                  <p className="text-sm p-3 bg-muted rounded-lg whitespace-pre-wrap">
+                    {consultationInfo.inquiry_content}
                   </p>
                 </div>
-              </div>
-              {consultationInfo.memo && (
+              )}
+
+              {/* 상담 체크리스트 */}
+              {consultationInfo.checklist && consultationInfo.checklist.length > 0 && (
                 <div>
-                  <span className="text-sm text-muted-foreground">메모</span>
-                  <p className="text-sm mt-1 p-2 bg-muted rounded">{consultationInfo.memo}</p>
+                  <h4 className="font-medium mb-2">상담 체크리스트</h4>
+                  <div className="space-y-2">
+                    {Object.entries(
+                      consultationInfo.checklist.reduce((acc, item) => {
+                        if (!acc[item.category]) acc[item.category] = [];
+                        acc[item.category].push(item);
+                        return acc;
+                      }, {} as Record<string, ChecklistItem[]>)
+                    ).map(([category, items]) => (
+                      <div key={category} className="p-3 bg-muted rounded-lg">
+                        <p className="font-medium text-sm mb-1">{category}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {items.map((item) => (
+                            <span
+                              key={item.id}
+                              className={`text-xs px-2 py-1 rounded ${
+                                item.checked
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                  : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                              }`}
+                            >
+                              {item.checked ? '✓ ' : ''}{item.text}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 상담 메모 */}
+              {consultationInfo.consultation_memo && (
+                <div>
+                  <h4 className="font-medium mb-2">상담 메모</h4>
+                  <p className="text-sm p-3 bg-muted rounded-lg whitespace-pre-wrap">
+                    {consultationInfo.consultation_memo}
+                  </p>
+                </div>
+              )}
+
+              {/* 관리자 메모 */}
+              {consultationInfo.admin_notes && (
+                <div>
+                  <h4 className="font-medium mb-2">관리자 메모</h4>
+                  <p className="text-sm p-3 bg-muted rounded-lg whitespace-pre-wrap">
+                    {consultationInfo.admin_notes}
+                  </p>
                 </div>
               )}
             </div>

@@ -29,19 +29,24 @@ router.get('/', verifyToken, async (req, res) => {
         const searchQuery = q.trim().toLowerCase();
         const academyId = req.user.academyId;
 
-        // 학생 전체 조회 후 메모리 필터링 (암호화 필드는 SQL LIKE 불가)
+        // 학생 조회 (LIMIT으로 메모리 부하 제한)
+        // NOTE: 암호화 필드는 SQL LIKE 불가 → 메모리 필터링 필수
+        // 성능 개선: 최대 500명까지만 로드 (대부분의 학원은 이 이하)
         const [allStudents] = await db.query(
             `SELECT id, name, student_number, phone, parent_phone, school, status
             FROM students
-            WHERE academy_id = ? AND deleted_at IS NULL`,
+            WHERE academy_id = ? AND deleted_at IS NULL
+            ORDER BY status = 'active' DESC, id DESC
+            LIMIT 500`,
             [academyId]
         );
 
-        // 강사 전체 조회 후 메모리 필터링
+        // 강사 조회 (LIMIT 적용)
         const [allInstructors] = await db.query(
             `SELECT id, name, phone, status
             FROM instructors
-            WHERE academy_id = ? AND deleted_at IS NULL`,
+            WHERE academy_id = ? AND deleted_at IS NULL
+            LIMIT 100`,
             [academyId]
         );
 

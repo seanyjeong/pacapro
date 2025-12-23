@@ -34,6 +34,7 @@ router.get('/', verifyToken, async (req, res) => {
     try {
         const { start_date, end_date, instructor_id, time_slot } = req.query;
 
+        // 서브쿼리를 LEFT JOIN으로 변경하여 성능 최적화
         let query = `
             SELECT
                 cs.id,
@@ -46,14 +47,19 @@ router.get('/', verifyToken, async (req, res) => {
                 cs.notes,
                 cs.created_at,
                 i.name AS instructor_name,
-                (SELECT COUNT(DISTINCT a.student_id) FROM attendance a
-                 JOIN students s ON a.student_id = s.id AND s.deleted_at IS NULL
-                 WHERE a.class_schedule_id = cs.id) AS student_count,
-                (SELECT COUNT(DISTINCT a.student_id) FROM attendance a
-                 JOIN students s ON a.student_id = s.id AND s.deleted_at IS NULL AND s.is_trial = TRUE
-                 WHERE a.class_schedule_id = cs.id) AS trial_count
+                COALESCE(ac.student_count, 0) AS student_count,
+                COALESCE(ac.trial_count, 0) AS trial_count
             FROM class_schedules cs
             LEFT JOIN instructors i ON cs.instructor_id = i.id
+            LEFT JOIN (
+                SELECT
+                    a.class_schedule_id,
+                    COUNT(DISTINCT a.student_id) AS student_count,
+                    SUM(CASE WHEN s.is_trial = TRUE THEN 1 ELSE 0 END) AS trial_count
+                FROM attendance a
+                JOIN students s ON a.student_id = s.id AND s.deleted_at IS NULL
+                GROUP BY a.class_schedule_id
+            ) ac ON cs.id = ac.class_schedule_id
             WHERE cs.academy_id = ?
         `;
 
@@ -1482,8 +1488,9 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
             }
 
             // Verify student exists and belongs to academy
+            // FOR UPDATE로 행 잠금하여 동시 출석체크 시 중복 차감 방지
             const [students] = await connection.query(
-                'SELECT id, name, is_trial, trial_remaining FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+                'SELECT id, name, is_trial, trial_remaining, trial_dates FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL FOR UPDATE',
                 [student_id, req.user.academyId]
             );
 

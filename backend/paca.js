@@ -5,6 +5,14 @@
  */
 
 require('dotenv').config();
+
+// 환경변수 검증 (서버 시작 전 필수!)
+const { validateEnv } = require('./utils/env-validator');
+if (!validateEnv()) {
+    console.error('[PACA] 환경변수 검증 실패. 서버를 시작할 수 없습니다.');
+    process.exit(1);
+}
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -23,12 +31,31 @@ app.set('trust proxy', 1);
 // ==========================================
 
 // CORS Configuration (MUST be before helmet!)
+// 개발 환경: 모든 도메인 허용 / 프로덕션: 화이트리스트 적용
+const isDev = process.env.NODE_ENV === 'development';
+
+const ALLOWED_ORIGINS = [
+    'https://pacapro.vercel.app',
+    'https://chejump.com',
+    'https://dev.sean8320.dedyn.io',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    process.env.CORS_ORIGIN // 추가 도메인 (환경변수)
+].filter(Boolean);
+
 const corsOptions = {
-  origin: '*',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  // allowedHeaders: '*',  // 아예 지워도 cors 패키지가 자동으로 맞춰줌
-  credentials: false,
-  optionsSuccessStatus: 200
+    origin: isDev ? '*' : (origin, callback) => {
+        // 서버-서버 요청 (origin 없음) 또는 화이트리스트
+        if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn(`[CORS] 차단된 origin: ${origin}`);
+            callback(null, false); // 에러 대신 false 반환 (연결 거부)
+        }
+    },
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 // 프리플라이트 확실히 처리하고 싶으면 한 줄 더
@@ -55,18 +82,36 @@ if (process.env.NODE_ENV === 'development') {
     app.use(morgan('combined'));
 }
 
-// Rate Limiting - 비활성화 (내부용 시스템)
-// const limiter = rateLimit({
-//     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-//     max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 10000,
-//     standardHeaders: true,
-//     legacyHeaders: false,
-//     validate: {
-//         trustProxy: false,
-//         xForwardedForHeader: false
-//     }
-// });
-// app.use('/paca', limiter);
+// Rate Limiting - 공개 API에만 적용 (내부 API는 제외)
+// 공개 API: 15분에 30회 (상담 신청, 학원 정보 조회 등)
+const publicLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15분
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        error: 'Too Many Requests',
+        message: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
+    },
+    skip: (req) => isDev // 개발 환경에서는 스킵
+});
+
+// 로그인 API: 15분에 10회 (브루트포스 방지)
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        error: 'Too Many Requests',
+        message: '로그인 시도 횟수가 초과되었습니다. 15분 후 다시 시도해주세요.'
+    },
+    skip: (req) => isDev
+});
+
+// 레이트 리미팅 적용
+app.use('/paca/public', publicLimiter);
+app.use('/paca/auth/login', loginLimiter);
 
 // ==========================================
 // Database Connection
@@ -147,6 +192,7 @@ const publicRoutes = require('./routes/public');
 const consultationRoutes = require('./routes/consultations');
 const pushRoutes = require('./routes/push');
 const notificationSettingsRoutes = require('./routes/notificationSettings');
+const tossRoutes = require('./routes/toss');
 
 // Register Routes
 app.use('/paca/auth', authRoutes);
@@ -172,6 +218,7 @@ app.use('/paca/public', publicRoutes);
 app.use('/paca/consultations', consultationRoutes);
 app.use('/paca/push', pushRoutes);
 app.use('/paca/notification-settings', notificationSettingsRoutes);
+app.use('/paca/toss', tossRoutes);
 
 // ==========================================
 // Error Handling
@@ -239,7 +286,7 @@ const { initTrialExpireScheduler } = require('./scheduler/trialExpireScheduler')
 // ==========================================
 // Start Server
 // ==========================================
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log('==========================================');
     console.log('🏋️  P-ACA Backend Server');
     console.log('==========================================');
@@ -261,18 +308,41 @@ app.listen(PORT, () => {
 });
 
 // Graceful Shutdown
-process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
-    app.close(() => {
-        console.log('HTTP server closed');
-        db.end();
-        process.exit(0);
-    });
-});
+let isShuttingDown = false;
 
-process.on('SIGINT', () => {
-    console.log('\nSIGINT signal received: closing HTTP server');
-    process.exit(0);
-});
+async function gracefulShutdown(signal) {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
+    console.log(`\n[${signal}] Graceful shutdown 시작...`);
+
+    // 새 요청 거부
+    server.close(() => {
+        console.log('[SHUTDOWN] HTTP 서버 종료 완료');
+    });
+
+    // 진행 중인 요청 완료 대기 (최대 30초)
+    const shutdownTimeout = setTimeout(() => {
+        console.error('[SHUTDOWN] 타임아웃 - 강제 종료');
+        process.exit(1);
+    }, 30000);
+
+    try {
+        // DB 연결 풀 종료
+        await db.end();
+        console.log('[SHUTDOWN] DB 연결 풀 종료 완료');
+
+        clearTimeout(shutdownTimeout);
+        console.log('[SHUTDOWN] 정상 종료');
+        process.exit(0);
+    } catch (err) {
+        console.error('[SHUTDOWN] 종료 중 에러:', err.message);
+        clearTimeout(shutdownTimeout);
+        process.exit(1);
+    }
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 module.exports = app;

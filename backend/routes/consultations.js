@@ -330,6 +330,18 @@ router.get('/by-student/:studentId', verifyToken, async (req, res) => {
       parent_phone: decrypt(consultation.parent_phone),
     };
 
+    // JSON 필드 파싱
+    try {
+      if (decrypted.checklist && typeof decrypted.checklist === 'string') {
+        decrypted.checklist = JSON.parse(decrypted.checklist);
+      }
+      if (decrypted.referral_sources && typeof decrypted.referral_sources === 'string') {
+        decrypted.referral_sources = JSON.parse(decrypted.referral_sources);
+      }
+    } catch (e) {
+      console.error('JSON 파싱 오류:', e);
+    }
+
     res.json({ consultation: decrypted });
   } catch (error) {
     console.error('학생 상담 조회 오류:', error);

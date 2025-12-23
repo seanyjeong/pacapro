@@ -6,11 +6,20 @@
 const crypto = require('crypto');
 
 // 환경변수에서 암호화 키 가져오기 (32바이트 = 256비트)
-const ENCRYPTION_KEY = process.env.DATA_ENCRYPTION_KEY || 'paca-default-encryption-key-32b!'; // 32자
+// 주의: 기본값 제거됨! env-validator.js에서 개발환경 기본값 설정됨
+const ENCRYPTION_KEY = process.env.DATA_ENCRYPTION_KEY;
+
+// 프로덕션 환경에서 키 없으면 경고 (서버는 시작하지만 암호화 실패할 것)
+if (!ENCRYPTION_KEY && process.env.NODE_ENV !== 'development') {
+    console.error('[ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.');
+}
 
 // 암호화 키를 32바이트로 맞추기
 function getKey() {
     const key = ENCRYPTION_KEY;
+    if (!key) {
+        throw new Error('[ENCRYPTION] DATA_ENCRYPTION_KEY가 설정되지 않았습니다.');
+    }
     if (key.length === 32) {
         return Buffer.from(key, 'utf8');
     }

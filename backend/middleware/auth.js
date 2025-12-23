@@ -5,8 +5,18 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'jeong-paca-secret';
-const N8N_API_KEY = process.env.N8N_API_KEY || 'paca-n8n-api-key-2024';
+// 환경변수에서 시크릿 가져오기
+// 주의: 기본값 제거됨! env-validator.js에서 개발환경 기본값 설정됨
+const JWT_SECRET = process.env.JWT_SECRET;
+const N8N_API_KEY = process.env.N8N_API_KEY;
+
+// 시크릿 미설정 경고
+if (!JWT_SECRET) {
+    console.error('[AUTH] ⚠️ JWT_SECRET 미설정! 인증 기능이 작동하지 않습니다.');
+}
+if (!N8N_API_KEY) {
+    console.warn('[AUTH] ⚠️ N8N_API_KEY 미설정. N8N 연동이 작동하지 않습니다.');
+}
 
 /**
  * Verify JWT Token or N8N API Key

@@ -102,7 +102,21 @@
       "mcp__n8n-mcp__activate_workflow",
       "mcp__n8n-mcp__deactivate_workflow",
       "Skill(frontend-design)",
-      "Bash(sudo -S -k journalctl:*)"
+      "Bash(sudo -S -k journalctl:*)",
+      "WebFetch(domain:docs.tossplace.com)",
+      "WebFetch(domain:toss.tech)",
+      "WebFetch(domain:tossplace.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(git clone:*)",
+      "WebFetch(domain:toss.oopy.io)",
+      "Bash(zip:*)",
+      "Bash(tar:*)",
+      "mcp__playwright__browser_file_upload",
+      "Skill(feature-planner)",
+      "Bash(mkdir:*)",
+      "Bash(git fetch:*)",
+      "Bash(timeout 120 git push origin main)",
+      "Bash(git remote set-url:*)"
     ],
     "deny": [],
     "ask": []

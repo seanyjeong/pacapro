@@ -372,10 +372,8 @@ router.post('/consultation/:slug/apply', async (req, res) => {
     res.status(201).json({
       message: '상담 신청이 완료되었습니다.',
       consultationId,
-      linkedStudent: linkedStudentId ? {
-        id: linkedStudentId,
-        name: existingStudents[0].name
-      } : null
+      // 보안: 학생 이름은 노출하지 않음 (id만 반환)
+      linkedStudent: linkedStudentId ? { id: linkedStudentId } : null
     });
   } catch (error) {
     console.error('상담 신청 오류:', error);
