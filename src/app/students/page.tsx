@@ -24,12 +24,13 @@ function StudentsPageContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab') as StudentTab | null;
 
+  // 초기 탭 결정 (URL 파라미터 우선)
+  const initialTab: StudentTab = tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending'].includes(tabParam)
+    ? tabParam
+    : 'active';
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<StudentTab>(
-    tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending'].includes(tabParam)
-      ? tabParam
-      : 'active'
-  );
+  const [activeTab, setActiveTab] = useState<StudentTab>(initialTab);
   const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
 
   // URL 파라미터로 탭 변경 시 적용
@@ -39,8 +40,11 @@ function StudentsPageContent() {
     }
   }, [tabParam]);
 
-  // useStudents 훅 사용 (초기값: 재원생만)
-  const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents({ status: 'active', is_trial: false });
+  // useStudents 훅 사용 (초기값: URL 탭 파라미터에 맞게 설정)
+  const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents({
+    status: initialTab,
+    is_trial: undefined
+  });
 
   // 통계 카드도 함께 갱신하는 리로드
   const handleReload = () => {
