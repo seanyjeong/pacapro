@@ -301,6 +301,42 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
+// GET /paca/consultations/by-student/:studentId - 학생과 연결된 상담 조회
+// 주의: /:id 보다 먼저 정의해야 함!
+router.get('/by-student/:studentId', verifyToken, async (req, res) => {
+  try {
+    const academyId = req.user.academy_id;
+    const { studentId } = req.params;
+
+    const [consultations] = await db.query(
+      `SELECT * FROM consultations
+       WHERE academy_id = ? AND linked_student_id = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [academyId, studentId]
+    );
+
+    if (consultations.length === 0) {
+      return res.status(404).json({ error: '연결된 상담 정보가 없습니다.' });
+    }
+
+    const consultation = consultations[0];
+
+    // 민감 정보 복호화
+    const decrypted = {
+      ...consultation,
+      parent_name: decrypt(consultation.parent_name),
+      student_name: decrypt(consultation.student_name),
+      parent_phone: decrypt(consultation.parent_phone),
+    };
+
+    res.json({ consultation: decrypted });
+  } catch (error) {
+    console.error('학생 상담 조회 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
 // GET /paca/consultations/booked-times - 특정 날짜의 예약된 시간 목록 조회
 // 주의: /:id 보다 먼저 정의해야 함!
 router.get('/booked-times', verifyToken, async (req, res) => {

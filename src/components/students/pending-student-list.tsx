@@ -13,7 +13,13 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Clock, MessageSquare, Sparkles } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Loader2, User, UserPlus, Trash2, Clock, MessageSquare, Sparkles, FileText } from 'lucide-react';
 import type { Student } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 
@@ -23,9 +29,42 @@ interface PendingStudentListProps {
   onReload: () => void;
 }
 
+interface ConsultationInfo {
+  id: number;
+  student_name: string;
+  parent_name: string;
+  parent_phone: string;
+  student_grade: string;
+  student_school: string;
+  consultation_type: string;
+  preferred_date: string;
+  preferred_time: string;
+  status: string;
+  memo: string;
+  checklist: string;
+}
+
 export function PendingStudentList({ students, loading, onReload }: PendingStudentListProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [consultationModalOpen, setConsultationModalOpen] = useState(false);
+  const [consultationInfo, setConsultationInfo] = useState<ConsultationInfo | null>(null);
+  const [loadingConsultation, setLoadingConsultation] = useState(false);
+
+  // 상담 정보 조회
+  const handleViewConsultation = async (student: Student) => {
+    setLoadingConsultation(true);
+    try {
+      const res = await apiClient.get<{ consultation: ConsultationInfo }>(`/consultations/by-student/${student.id}`);
+      setConsultationInfo(res.consultation);
+      setConsultationModalOpen(true);
+    } catch (error) {
+      console.error('Failed to load consultation:', error);
+      toast.error('상담 정보를 찾을 수 없습니다.');
+    } finally {
+      setLoadingConsultation(false);
+    }
+  };
 
   // 정식 등록 처리 (active 상태로 변경)
   const handleRegister = (student: Student) => {
@@ -163,6 +202,14 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                   <div className="flex items-center justify-end gap-2">
                     <Button
                       size="sm"
+                      variant="ghost"
+                      onClick={() => handleViewConsultation(student)}
+                      title="상담 정보 보기"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => handleTrialRegister(student)}
                       title="체험생으로 등록"
@@ -198,6 +245,53 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
           </tbody>
         </table>
       </CardContent>
+
+      {/* 상담 정보 모달 */}
+      <Dialog open={consultationModalOpen} onOpenChange={setConsultationModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>상담 정보</DialogTitle>
+          </DialogHeader>
+          {consultationInfo && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="text-muted-foreground">학생명</span>
+                  <p className="font-medium">{consultationInfo.student_name}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">학부모명</span>
+                  <p className="font-medium">{consultationInfo.parent_name}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">연락처</span>
+                  <p className="font-medium">{consultationInfo.parent_phone}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">학년</span>
+                  <p className="font-medium">{consultationInfo.student_grade || '-'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">학교</span>
+                  <p className="font-medium">{consultationInfo.student_school || '-'}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">상담일</span>
+                  <p className="font-medium">
+                    {consultationInfo.preferred_date} {consultationInfo.preferred_time}
+                  </p>
+                </div>
+              </div>
+              {consultationInfo.memo && (
+                <div>
+                  <span className="text-sm text-muted-foreground">메모</span>
+                  <p className="text-sm mt-1 p-2 bg-muted rounded">{consultationInfo.memo}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
