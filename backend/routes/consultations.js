@@ -714,9 +714,10 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
       );
     }
 
-    // 상담 상태 업데이트 (completed + 학생 연결)
+    // 상담 상태 업데이트 (확정 상태 유지 + 학생 연결)
+    // NOTE: 체험 등록 시 completed로 변경하면 다시 confirmed로 바꿀 때 알림톡 중복 발송됨
     await db.query(
-      `UPDATE consultations SET status = 'completed', linked_student_id = ? WHERE id = ?`,
+      `UPDATE consultations SET status = 'confirmed', linked_student_id = ? WHERE id = ?`,
       [studentId, id]
     );
 

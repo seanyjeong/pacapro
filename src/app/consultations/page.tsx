@@ -123,10 +123,24 @@ export default function ConsultationsPage() {
   // 체험 등록 모달
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [trialDates, setTrialDates] = useState<{ date: string; timeSlot: string }[]>([
-    { date: '', timeSlot: '' },
     { date: '', timeSlot: '' }
   ]);
   const [convertingToTrial, setConvertingToTrial] = useState(false);
+
+  // 체험 일정 추가
+  const addTrialDate = () => {
+    setTrialDates([...trialDates, { date: '', timeSlot: '' }]);
+  };
+
+  // 체험 일정 삭제
+  const removeTrialDate = (index: number) => {
+    if (trialDates.length <= 1) {
+      toast.error('최소 1개의 체험 일정이 필요합니다.');
+      return;
+    }
+    const newDates = trialDates.filter((_, i) => i !== index);
+    setTrialDates(newDates);
+  };
 
   // 날짜 필터 계산
   const getDateRange = () => {
@@ -336,20 +350,41 @@ export default function ConsultationsPage() {
   const handleConvertToTrial = async () => {
     if (!selectedConsultation) return;
 
-    // 검증
-    if (!trialDates[0].date || !trialDates[0].timeSlot ||
-        !trialDates[1].date || !trialDates[1].timeSlot) {
-      toast.error('체험 일정 2개를 모두 선택해주세요.');
+    // 모든 일정이 입력되었는지 검증
+    const incompleteDate = trialDates.find(d => !d.date || !d.timeSlot);
+    if (incompleteDate) {
+      toast.error('모든 체험 일정의 날짜와 시간대를 선택해주세요.');
       return;
+    }
+
+    // 중복 날짜 검증
+    const dateSet = new Set<string>();
+    for (const d of trialDates) {
+      const key = `${d.date}-${d.timeSlot}`;
+      if (dateSet.has(key)) {
+        toast.error('같은 날짜, 같은 시간대의 체험 일정이 중복됩니다.');
+        return;
+      }
+      dateSet.add(key);
+    }
+
+    // 같은 날짜 체크 (시간대 다르더라도)
+    const dateOnlySet = new Set<string>();
+    for (const d of trialDates) {
+      if (dateOnlySet.has(d.date)) {
+        toast.error('같은 날에 여러 체험 수업을 등록할 수 없습니다.');
+        return;
+      }
+      dateOnlySet.add(d.date);
     }
 
     setConvertingToTrial(true);
     try {
-      const result = await convertToTrialStudent(selectedConsultation.id, trialDates);
+      await convertToTrialStudent(selectedConsultation.id, trialDates);
       toast.success('체험 학생으로 등록되었습니다.');
       setTrialModalOpen(false);
       setDetailOpen(false);
-      setTrialDates([{ date: '', timeSlot: '' }, { date: '', timeSlot: '' }]);
+      setTrialDates([{ date: '', timeSlot: '' }]);
       loadData();
     } catch (error: unknown) {
       const err = error as { message?: string };
@@ -1071,91 +1106,68 @@ export default function ConsultationsPage() {
 
       {/* 체험 일정 선택 모달 */}
       <Dialog open={trialModalOpen} onOpenChange={setTrialModalOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>체험 수업 일정 선택</DialogTitle>
             <DialogDescription>
-              {selectedConsultation?.student_name}님의 체험 수업 일정 2회를 선택해주세요.
+              {selectedConsultation?.student_name}님의 체험 수업 일정을 선택해주세요.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            {/* 첫 번째 체험일 */}
+          <div className="space-y-4 py-6 px-6 max-h-[60vh] overflow-y-auto">
+            {/* 체험 일정 선택 */}
             <div className="space-y-3">
-              <Label className="text-base font-medium">첫 번째 체험일</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm">날짜</Label>
-                  <Input
-                    type="date"
-                    value={trialDates[0].date}
-                    onChange={(e) => {
-                      const newDates = [...trialDates];
-                      newDates[0].date = e.target.value;
-                      setTrialDates(newDates);
-                    }}
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm">시간대</Label>
-                  <Select
-                    value={trialDates[0].timeSlot}
-                    onValueChange={(v) => {
-                      const newDates = [...trialDates];
-                      newDates[0].timeSlot = v;
-                      setTrialDates(newDates);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="시간대 선택" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="morning">오전 (09:00~12:00)</SelectItem>
-                      <SelectItem value="afternoon">오후 (13:00~17:00)</SelectItem>
-                      <SelectItem value="evening">저녁 (18:00~21:00)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="flex items-center justify-between">
+                <Label>체험 일정 ({trialDates.length}회)</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addTrialDate}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  추가
+                </Button>
               </div>
-            </div>
 
-            {/* 두 번째 체험일 */}
-            <div className="space-y-3">
-              <Label className="text-base font-medium">두 번째 체험일</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm">날짜</Label>
+              {trialDates.map((trialDate, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground w-8">{index + 1}회</span>
                   <Input
                     type="date"
-                    value={trialDates[1].date}
+                    value={trialDate.date}
                     onChange={(e) => {
                       const newDates = [...trialDates];
-                      newDates[1].date = e.target.value;
+                      newDates[index] = { ...newDates[index], date: e.target.value };
                       setTrialDates(newDates);
                     }}
+                    className="flex-1"
                   />
-                </div>
-                <div>
-                  <Label className="text-sm">시간대</Label>
                   <Select
-                    value={trialDates[1].timeSlot}
+                    value={trialDate.timeSlot}
                     onValueChange={(v) => {
                       const newDates = [...trialDates];
-                      newDates[1].timeSlot = v;
+                      newDates[index] = { ...newDates[index], timeSlot: v };
                       setTrialDates(newDates);
                     }}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="시간대 선택" />
+                    <SelectTrigger className="w-24">
+                      <span>{trialDate.timeSlot === 'morning' ? '오전' : trialDate.timeSlot === 'afternoon' ? '오후' : trialDate.timeSlot === 'evening' ? '저녁' : '시간대'}</span>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="morning">오전 (09:00~12:00)</SelectItem>
-                      <SelectItem value="afternoon">오후 (13:00~17:00)</SelectItem>
-                      <SelectItem value="evening">저녁 (18:00~21:00)</SelectItem>
+                      <SelectItem value="morning">오전</SelectItem>
+                      <SelectItem value="afternoon">오후</SelectItem>
+                      <SelectItem value="evening">저녁</SelectItem>
                     </SelectContent>
                   </Select>
+                  {trialDates.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeTrialDate(index)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-              </div>
+              ))}
             </div>
 
             <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
@@ -1163,7 +1175,7 @@ export default function ConsultationsPage() {
               <ul className="mt-1 ml-4 list-disc">
                 <li>학생 관리에 체험생으로 추가됩니다</li>
                 <li>출석 체크 시 체험 횟수가 차감됩니다</li>
-                <li>2회 체험 후 정식 등록을 권유합니다</li>
+                <li>체험 완료 후 정식 등록을 권유합니다</li>
               </ul>
             </div>
           </div>
