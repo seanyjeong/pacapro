@@ -13,12 +13,6 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Loader2, User, UserPlus, Trash2, Clock, MessageSquare, Sparkles, FileText } from 'lucide-react';
 import type { Student } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
@@ -29,53 +23,31 @@ interface PendingStudentListProps {
   onReload: () => void;
 }
 
-interface ChecklistItem {
-  id: number;
-  category: string;
-  text: string;
-  checked: boolean;
-}
-
 interface ConsultationInfo {
   id: number;
-  student_name: string;
-  parent_name: string;
-  parent_phone: string;
-  student_grade: string;
-  student_school: string;
-  gender?: string;
-  consultation_type: string;
-  preferred_date: string;
-  preferred_time: string;
-  status: string;
-  target_school?: string;
-  referrer_student?: string;
-  referral_sources?: string[];
-  inquiry_content?: string;
-  checklist?: ChecklistItem[];
-  consultation_memo?: string;
-  admin_notes?: string;
 }
 
 export function PendingStudentList({ students, loading, onReload }: PendingStudentListProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [consultationModalOpen, setConsultationModalOpen] = useState(false);
-  const [consultationInfo, setConsultationInfo] = useState<ConsultationInfo | null>(null);
-  const [loadingConsultation, setLoadingConsultation] = useState(false);
+  const [loadingConsultationId, setLoadingConsultationId] = useState<number | null>(null);
 
-  // 상담 정보 조회
+  // 상담 정보 조회 - 상담 진행 페이지로 이동
   const handleViewConsultation = async (student: Student) => {
-    setLoadingConsultation(true);
+    setLoadingConsultationId(student.id);
     try {
       const res = await apiClient.get<{ consultation: ConsultationInfo }>(`/consultations/by-student/${student.id}`);
-      setConsultationInfo(res.consultation);
-      setConsultationModalOpen(true);
+      if (res.consultation?.id) {
+        // 상담 진행 페이지로 이동
+        router.push(`/consultations/${res.consultation.id}/conduct`);
+      } else {
+        toast.error('상담 정보를 찾을 수 없습니다.');
+      }
     } catch (error) {
       console.error('Failed to load consultation:', error);
       toast.error('상담 정보를 찾을 수 없습니다.');
     } finally {
-      setLoadingConsultation(false);
+      setLoadingConsultationId(null);
     }
   };
 
@@ -218,8 +190,13 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                       variant="ghost"
                       onClick={() => handleViewConsultation(student)}
                       title="상담 정보 보기"
+                      disabled={loadingConsultationId === student.id}
                     >
-                      <FileText className="w-4 h-4" />
+                      {loadingConsultationId === student.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <FileText className="w-4 h-4" />
+                      )}
                     </Button>
                     <Button
                       size="sm"
@@ -258,118 +235,6 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
           </tbody>
         </table>
       </CardContent>
-
-      {/* 상담 정보 모달 */}
-      <Dialog open={consultationModalOpen} onOpenChange={setConsultationModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-lg">
-              {consultationInfo?.student_name} 상담 정보
-            </DialogTitle>
-          </DialogHeader>
-          {consultationInfo && (
-            <div className="space-y-6 py-4">
-              {/* 기본 정보 */}
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">학년</span>
-                  <p className="font-medium">{consultationInfo.student_grade || '-'}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">학교</span>
-                  <p className="font-medium">{consultationInfo.student_school || '-'}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">상담일</span>
-                  <p className="font-medium">{consultationInfo.preferred_date}</p>
-                </div>
-                {consultationInfo.target_school && (
-                  <div>
-                    <span className="text-muted-foreground">목표 대학</span>
-                    <p className="font-medium">{consultationInfo.target_school}</p>
-                  </div>
-                )}
-                {consultationInfo.referrer_student && (
-                  <div>
-                    <span className="text-muted-foreground">소개 학생</span>
-                    <p className="font-medium">{consultationInfo.referrer_student}</p>
-                  </div>
-                )}
-                {consultationInfo.referral_sources && consultationInfo.referral_sources.length > 0 && (
-                  <div>
-                    <span className="text-muted-foreground">유입 경로</span>
-                    <p className="font-medium">{consultationInfo.referral_sources.join(', ')}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* 문의 내용 */}
-              {consultationInfo.inquiry_content && (
-                <div>
-                  <h4 className="font-medium mb-2">문의 내용</h4>
-                  <p className="text-sm p-3 bg-muted rounded-lg whitespace-pre-wrap">
-                    {consultationInfo.inquiry_content}
-                  </p>
-                </div>
-              )}
-
-              {/* 상담 체크리스트 */}
-              {consultationInfo.checklist && consultationInfo.checklist.length > 0 && (
-                <div>
-                  <h4 className="font-medium mb-2">상담 체크리스트</h4>
-                  <div className="space-y-2">
-                    {Object.entries(
-                      consultationInfo.checklist.reduce((acc, item) => {
-                        if (!acc[item.category]) acc[item.category] = [];
-                        acc[item.category].push(item);
-                        return acc;
-                      }, {} as Record<string, ChecklistItem[]>)
-                    ).map(([category, items]) => (
-                      <div key={category} className="p-3 bg-muted rounded-lg">
-                        <p className="font-medium text-sm mb-1">{category}</p>
-                        <div className="flex flex-wrap gap-2">
-                          {items.map((item) => (
-                            <span
-                              key={item.id}
-                              className={`text-xs px-2 py-1 rounded ${
-                                item.checked
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                  : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                              }`}
-                            >
-                              {item.checked ? '✓ ' : ''}{item.text}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* 상담 메모 */}
-              {consultationInfo.consultation_memo && (
-                <div>
-                  <h4 className="font-medium mb-2">상담 메모</h4>
-                  <p className="text-sm p-3 bg-muted rounded-lg whitespace-pre-wrap">
-                    {consultationInfo.consultation_memo}
-                  </p>
-                </div>
-              )}
-
-              {/* 관리자 메모 */}
-              {consultationInfo.admin_notes && (
-                <div>
-                  <h4 className="font-medium mb-2">관리자 메모</h4>
-                  <p className="text-sm p-3 bg-muted rounded-lg whitespace-pre-wrap">
-                    {consultationInfo.admin_notes}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }
