@@ -1535,13 +1535,15 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                     [student_id]
                 );
 
-                // trial_dates의 attended 상태도 업데이트
+                // trial_dates의 attended 상태도 업데이트 (현재 출석 체크하는 날짜 기준)
                 if (student.trial_dates) {
                     try {
                         let trialDates = JSON.parse(student.trial_dates);
-                        // 첫 번째 attended가 false인 항목을 true로 변경
-                        const idx = trialDates.findIndex(td => !td.attended);
-                        if (idx !== -1) {
+                        // 현재 스케줄 날짜를 YYYY-MM-DD 형식으로 변환
+                        const classDate = new Date(schedule.class_date).toISOString().split('T')[0];
+                        // 현재 날짜에 해당하는 항목 찾기
+                        const idx = trialDates.findIndex(td => td.date === classDate);
+                        if (idx !== -1 && !trialDates[idx].attended) {
                             trialDates[idx].attended = true;
                             await connection.query(
                                 'UPDATE students SET trial_dates = ? WHERE id = ?',

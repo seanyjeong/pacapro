@@ -756,27 +756,31 @@ export function TimeSlotDetailModal({
                                   {student.grade && (
                                     <span className="text-xs text-muted-foreground">{student.grade}</span>
                                   )}
-                                  {!!student.is_trial && (() => {
-                                    // 총 체험 횟수: trial_dates 배열 길이 또는 기본값 2
-                                    const totalSessions = student.trial_dates?.length || 2;
-                                    const remaining = student.trial_remaining ?? totalSessions;
-                                    const isAttended = currentStatus === 'present' || currentStatus === 'late';
-                                    // 사용한 횟수 = 총 횟수 - 남은 횟수
-                                    const usedCount = totalSessions - remaining;
-                                    // 출석된 상태면 "사용 횟수", 아니면 "다음 수업 = 사용 횟수 + 1"
-                                    const currentSession = isAttended ? usedCount : usedCount + 1;
+                                  {(() => {
+                                    // trial_dates에서 현재 날짜가 체험 수업인지 확인
+                                    const trialDates = student.trial_dates || [];
+                                    const currentDateIndex = trialDates.findIndex(t => t.date === date);
+
+                                    // 현재 날짜가 trial_dates에 없으면 체험 태그 표시 안함
+                                    if (currentDateIndex === -1) return null;
+
+                                    const totalSessions = trialDates.length;
+                                    const sessionNumber = currentDateIndex + 1; // 1-based index
+                                    const isLastSession = sessionNumber === totalSessions;
+                                    const currentDateTrial = trialDates[currentDateIndex];
+                                    const isAttended = currentDateTrial.attended || currentStatus === 'present' || currentStatus === 'late';
 
                                     return (
                                       <Badge className={cn(
                                         "text-xs flex items-center gap-1",
-                                        remaining === 0
-                                          ? "bg-gray-100 text-gray-500 border-gray-200"
-                                          : "bg-purple-100 text-purple-700 border-purple-200"
+                                        isLastSession && isAttended
+                                          ? "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                                          : "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-400 dark:border-purple-800"
                                       )}>
                                         <Sparkles className="h-3 w-3" />
-                                        {remaining === 0
+                                        {isLastSession && isAttended
                                           ? "체험완료"
-                                          : `체험 ${currentSession}/${totalSessions}`
+                                          : `체험 ${sessionNumber}/${totalSessions}`
                                         }
                                       </Badge>
                                     );
