@@ -54,11 +54,17 @@ router.get('/', verifyToken, async (req, res) => {
             LEFT JOIN (
                 SELECT
                     a.class_schedule_id,
+                    cs_inner.class_date,
                     COUNT(DISTINCT a.student_id) AS student_count,
-                    SUM(CASE WHEN s.is_trial = TRUE THEN 1 ELSE 0 END) AS trial_count
+                    SUM(CASE
+                        WHEN s.trial_dates IS NOT NULL
+                        AND JSON_SEARCH(s.trial_dates, 'one', DATE_FORMAT(cs_inner.class_date, '%Y-%m-%d'), NULL, '$[*].date') IS NOT NULL
+                        THEN 1 ELSE 0
+                    END) AS trial_count
                 FROM attendance a
                 JOIN students s ON a.student_id = s.id AND s.deleted_at IS NULL
-                GROUP BY a.class_schedule_id
+                JOIN class_schedules cs_inner ON a.class_schedule_id = cs_inner.id
+                GROUP BY a.class_schedule_id, cs_inner.class_date
             ) ac ON cs.id = ac.class_schedule_id
             WHERE cs.academy_id = ?
         `;
