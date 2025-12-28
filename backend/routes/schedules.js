@@ -211,7 +211,7 @@ router.get('/slot', verifyToken, async (req, res) => {
             const [attendanceRecords] = await db.query(
                 `SELECT DISTINCT a.student_id, s.name as student_name, s.grade, a.attendance_status,
                         a.notes,
-                        s.is_trial, s.trial_remaining,
+                        s.is_trial, s.trial_remaining, s.trial_dates,
                         s.phone, s.parent_phone,
                         a.is_makeup,
                         (SELECT se2.season_type

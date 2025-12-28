@@ -20,8 +20,8 @@ const pool = mysql.createPool({
     password: DB_PASSWORD,
     database: DB_NAME,
     waitForConnections: true,
-    connectionLimit: parseInt(process.env.DB_POOL_SIZE) || 10,
-    queueLimit: parseInt(process.env.DB_QUEUE_LIMIT) || 50,
+    connectionLimit: parseInt(process.env.DB_POOL_SIZE) || 50,
+    queueLimit: parseInt(process.env.DB_QUEUE_LIMIT) || 100,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
     connectTimeout: 10000, // 연결 타임아웃 10초

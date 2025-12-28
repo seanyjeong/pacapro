@@ -30,6 +30,7 @@ interface AttendanceStudent {
   season_type?: string | null;  // 'regular' | 'rolling' | null
   is_trial?: boolean | null;  // 체험생 여부
   trial_remaining?: number | null;  // 남은 체험 횟수
+  trial_dates?: Array<{ date: string; attended: boolean; time_slot: string }> | null;  // 체험 수업 날짜들
   is_makeup?: boolean | number | null;  // 보충 학생 여부
 }
 
@@ -756,10 +757,13 @@ export function TimeSlotDetailModal({
                                     <span className="text-xs text-muted-foreground">{student.grade}</span>
                                   )}
                                   {!!student.is_trial && (() => {
-                                    const remaining = student.trial_remaining ?? 2;
+                                    // 총 체험 횟수: trial_dates 배열 길이 또는 기본값 2
+                                    const totalSessions = student.trial_dates?.length || 2;
+                                    const remaining = student.trial_remaining ?? totalSessions;
                                     const isAttended = currentStatus === 'present' || currentStatus === 'late';
-                                    // 출석된 상태면 "이번 수업 = 사용 횟수", 아니면 "다음 수업 = 사용 횟수 + 1"
-                                    const usedCount = 2 - remaining;
+                                    // 사용한 횟수 = 총 횟수 - 남은 횟수
+                                    const usedCount = totalSessions - remaining;
+                                    // 출석된 상태면 "사용 횟수", 아니면 "다음 수업 = 사용 횟수 + 1"
                                     const currentSession = isAttended ? usedCount : usedCount + 1;
 
                                     return (
@@ -772,7 +776,7 @@ export function TimeSlotDetailModal({
                                         <Sparkles className="h-3 w-3" />
                                         {remaining === 0
                                           ? "체험완료"
-                                          : `체험 ${currentSession}/2`
+                                          : `체험 ${currentSession}/${totalSessions}`
                                         }
                                       </Badge>
                                     );

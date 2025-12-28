@@ -116,7 +116,15 @@
       "Bash(mkdir:*)",
       "Bash(git fetch:*)",
       "Bash(timeout 120 git push origin main)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(ps aux:*)",
+      "Bash(sudo -S mysqladmin:*)",
+      "Bash(sudo -S bash -c 'cat >> /etc/mysql/mysql.conf.d/mysqld.cnf << EOF\n\n# P-ACA 성능 최적화 \\(2024-12-24\\)\ninnodb_buffer_pool_size = 2G\ninnodb_log_file_size = 256M\ninnodb_flush_log_at_trx_commit = 2\nmax_connections = 200\nEOF')",
+      "Bash(sudo -S -k bash -c 'echo \"\"\"\"\n# P-ACA 성능 최적화 \\(2024-12-24\\)\ninnodb_buffer_pool_size = 2G\ninnodb_log_file_size = 256M\ninnodb_flush_log_at_trx_commit = 2\nmax_connections = 200\n\"\"\"\" >> /etc/mysql/mysql.conf.d/mysqld.cnf')",
+      "Bash(sudo -S sh -c \"systemctl restart paca && echo done\")",
+      "Bash(node /tmp/stress-test-heavy.js:*)",
+      "Bash(node /tmp/stress-extreme.js:*)",
+      "Bash(node /tmp/stress-with-data.js:*)"
     ],
     "deny": [],
     "ask": []
