@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Clock, MessageSquare, Sparkles, FileText } from 'lucide-react';
+import { Loader2, User, UserPlus, Trash2, Clock, MessageSquare, Sparkles, FileText, Check, X } from 'lucide-react';
 import type { Student } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 
@@ -25,6 +25,12 @@ interface PendingStudentListProps {
 
 interface ConsultationInfo {
   id: number;
+}
+
+interface TrialDate {
+  date: string;
+  attended: boolean;
+  time_slot: string;
 }
 
 export function PendingStudentList({ students, loading, onReload }: PendingStudentListProps) {
@@ -111,6 +117,27 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
     });
   };
 
+  // 체험 날짜 파싱
+  const parseTrialDates = (trialDates: Student['trial_dates']): TrialDate[] => {
+    if (!trialDates) return [];
+    if (typeof trialDates === 'string') {
+      try {
+        return JSON.parse(trialDates);
+      } catch {
+        return [];
+      }
+    }
+    return trialDates as TrialDate[];
+  };
+
+  // 체험 날짜 포맷팅 (짧게)
+  const formatTrialDate = (date: string) => {
+    return new Date(date).toLocaleDateString('ko-KR', {
+      month: 'numeric',
+      day: 'numeric',
+    });
+  };
+
   if (loading) {
     return (
       <Card>
@@ -147,6 +174,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">연락처</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학부모 연락처</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">상담일</th>
+              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">체험 일정</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">메모</th>
               <th className="text-right py-3 px-4 text-sm font-semibold text-muted-foreground">액션</th>
             </tr>
@@ -173,6 +201,36 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                 </td>
                 <td className="py-3 px-4 text-sm text-muted-foreground">
                   {formatDate(student.consultation_date || student.created_at)}
+                </td>
+                <td className="py-3 px-4">
+                  {(() => {
+                    const trialDates = parseTrialDates(student.trial_dates);
+                    if (trialDates.length === 0) {
+                      return <span className="text-sm text-muted-foreground">-</span>;
+                    }
+                    return (
+                      <div className="flex flex-wrap gap-1">
+                        {trialDates.map((trial, idx) => (
+                          <Badge
+                            key={idx}
+                            variant="outline"
+                            className={`text-xs flex items-center gap-1 ${
+                              trial.attended
+                                ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
+                                : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700'
+                            }`}
+                          >
+                            {formatTrialDate(trial.date)}
+                            {trial.attended ? (
+                              <Check className="h-3 w-3" />
+                            ) : (
+                              <X className="h-3 w-3 opacity-50" />
+                            )}
+                          </Badge>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td className="py-3 px-4">
                   {student.memo ? (
