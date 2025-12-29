@@ -362,6 +362,9 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
     if (!validate()) return;
 
     // 시즌 등록 정보 및 체험생 정보 포함
+    // 체험 남은 횟수 계산: attended가 false인 것의 개수 (새 날짜는 attended 없음 = false 취급)
+    const trialRemaining = trialDates.filter(td => !td.attended).length || trialDates.length || 2;
+
     const submitData = {
       ...formData,
       enroll_in_season: enrollInSeason && !!selectedSeasonId,
@@ -369,7 +372,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
       confirm_force: forceSubmit, // 강제 등록 플래그
       // 체험생 정보
       is_trial: isTrial,
-      trial_remaining: isTrial ? 2 : undefined,
+      trial_remaining: isTrial ? trialRemaining : undefined,
       trial_dates: isTrial ? trialDates : undefined,
       // 시간대
       time_slot: formData.time_slot,
