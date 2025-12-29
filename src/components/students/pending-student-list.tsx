@@ -75,7 +75,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
   // 체험 등록 처리 (trial 상태로 변경)
   const handleTrialRegister = async (student: Student) => {
     try {
-      await apiClient.patch(`/students/${student.id}`, {
+      await apiClient.put(`/students/${student.id}`, {
         status: 'trial',
         is_trial: true,
         trial_remaining: 2,
