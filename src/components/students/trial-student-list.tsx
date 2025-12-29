@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles, Pencil, Clock } from 'lucide-react';
+import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles, Pencil, Clock, Check } from 'lucide-react';
 import type { Student, TrialDate } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 
@@ -179,9 +179,18 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                   <td className="py-3 px-4">
                     <div className="flex flex-wrap gap-1">
                       {trialDates.map((td, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
-                          <Calendar className="w-3 h-3 mr-1" />
+                        <Badge
+                          key={idx}
+                          variant="outline"
+                          className={`text-xs flex items-center gap-1 ${
+                            td.attended
+                              ? 'bg-green-50 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
+                              : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700'
+                          }`}
+                        >
+                          <Calendar className="w-3 h-3" />
                           {td.date} {getTimeSlotLabel(td.time_slot)}
+                          {td.attended && <Check className="w-3 h-3" />}
                         </Badge>
                       ))}
                       {trialDates.length === 0 && (
