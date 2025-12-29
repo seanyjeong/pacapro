@@ -38,7 +38,7 @@ if (!ENCRYPTION_KEY) {
  */
 router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
     try {
-        const { target, content, customPhones, images, statusFilter = 'active', gradeFilter = 'all' } = req.body;
+        const { target, content, customPhones, images, statusFilter = 'active', gradeFilter = 'all', senderNumberId } = req.body;
 
         if (!content || content.trim().length === 0) {
             return res.status(400).json({
@@ -82,7 +82,27 @@ router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (re
                     message: '솔라피 API Secret이 올바르지 않습니다.'
                 });
             }
-            fromPhone = setting.solapi_sender_phone;
+
+            // 선택한 발신번호 또는 기본 발신번호 가져오기
+            if (senderNumberId) {
+                const [senderNum] = await db.query(
+                    `SELECT phone FROM sender_numbers
+                     WHERE id = ? AND academy_id = ? AND service_type = 'solapi'`,
+                    [senderNumberId, req.user.academyId]
+                );
+                if (senderNum.length > 0) {
+                    fromPhone = senderNum[0].phone;
+                }
+            }
+            if (!fromPhone) {
+                // 기본 발신번호 조회
+                const [defaultSender] = await db.query(
+                    `SELECT phone FROM sender_numbers
+                     WHERE academy_id = ? AND service_type = 'solapi' AND is_default = 1`,
+                    [req.user.academyId]
+                );
+                fromPhone = defaultSender[0]?.phone || setting.solapi_sender_phone;
+            }
             if (!fromPhone) {
                 return res.status(400).json({
                     error: 'Configuration Error',
@@ -104,18 +124,42 @@ router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (re
                     message: 'API Secret Key가 올바르지 않습니다.'
                 });
             }
-            // 학원 정보에서 발신번호 가져오기
-            const [academy] = await db.query(
-                'SELECT phone FROM academies WHERE id = ?',
-                [req.user.academyId]
-            );
-            if (!academy[0]?.phone) {
+
+            // 선택한 발신번호 또는 기본 발신번호 가져오기
+            if (senderNumberId) {
+                const [senderNum] = await db.query(
+                    `SELECT phone FROM sender_numbers
+                     WHERE id = ? AND academy_id = ? AND service_type = 'sens'`,
+                    [senderNumberId, req.user.academyId]
+                );
+                if (senderNum.length > 0) {
+                    fromPhone = senderNum[0].phone;
+                }
+            }
+            if (!fromPhone) {
+                // 기본 발신번호 조회
+                const [defaultSender] = await db.query(
+                    `SELECT phone FROM sender_numbers
+                     WHERE academy_id = ? AND service_type = 'sens' AND is_default = 1`,
+                    [req.user.academyId]
+                );
+                if (defaultSender.length > 0) {
+                    fromPhone = defaultSender[0].phone;
+                } else {
+                    // 학원 정보에서 발신번호 가져오기 (기존 호환성)
+                    const [academy] = await db.query(
+                        'SELECT phone FROM academies WHERE id = ?',
+                        [req.user.academyId]
+                    );
+                    fromPhone = academy[0]?.phone;
+                }
+            }
+            if (!fromPhone) {
                 return res.status(400).json({
                     error: 'Configuration Error',
-                    message: '학원 전화번호가 설정되지 않았습니다. 설정 > 학원 기본 정보에서 전화번호를 입력해주세요.'
+                    message: '발신번호가 설정되지 않았습니다. 설정 > 학원 기본 정보에서 전화번호를 입력하거나 발신번호를 등록해주세요.'
                 });
             }
-            fromPhone = academy[0].phone;
         }
 
         // 수신자 목록 조회
@@ -477,6 +521,211 @@ router.get('/logs', verifyToken, async (req, res) => {
         res.status(500).json({
             error: 'Server Error',
             message: 'SMS 발송 내역 조회에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * GET /paca/sms/sender-numbers
+ * 발신번호 목록 조회
+ */
+router.get('/sender-numbers', verifyToken, async (req, res) => {
+    try {
+        const { serviceType } = req.query;
+
+        let query = `
+            SELECT id, service_type, phone, label, is_default, created_at
+            FROM sender_numbers
+            WHERE academy_id = ?
+        `;
+        const params = [req.user.academyId];
+
+        if (serviceType) {
+            query += ' AND service_type = ?';
+            params.push(serviceType);
+        }
+
+        query += ' ORDER BY is_default DESC, created_at ASC';
+
+        const [senderNumbers] = await db.query(query, params);
+
+        res.json({ senderNumbers });
+    } catch (error) {
+        console.error('발신번호 목록 조회 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '발신번호 목록 조회에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/sms/sender-numbers
+ * 발신번호 추가
+ */
+router.post('/sender-numbers', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { serviceType, phone, label } = req.body;
+
+        if (!serviceType || !phone) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '서비스 타입과 발신번호는 필수입니다.'
+            });
+        }
+
+        // 전화번호 형식 검증
+        if (!isValidPhoneNumber(phone)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)'
+            });
+        }
+
+        // 중복 체크
+        const [existing] = await db.query(
+            `SELECT id FROM sender_numbers
+             WHERE academy_id = ? AND service_type = ? AND phone = ?`,
+            [req.user.academyId, serviceType, phone]
+        );
+
+        if (existing.length > 0) {
+            return res.status(400).json({
+                error: 'Duplicate Error',
+                message: '이미 등록된 발신번호입니다.'
+            });
+        }
+
+        // 첫 번째 발신번호면 기본으로 설정
+        const [count] = await db.query(
+            `SELECT COUNT(*) as cnt FROM sender_numbers
+             WHERE academy_id = ? AND service_type = ?`,
+            [req.user.academyId, serviceType]
+        );
+        const isDefault = count[0].cnt === 0 ? 1 : 0;
+
+        const [result] = await db.query(
+            `INSERT INTO sender_numbers (academy_id, service_type, phone, label, is_default)
+             VALUES (?, ?, ?, ?, ?)`,
+            [req.user.academyId, serviceType, phone, label || null, isDefault]
+        );
+
+        res.json({
+            message: '발신번호가 추가되었습니다.',
+            senderNumber: {
+                id: result.insertId,
+                service_type: serviceType,
+                phone,
+                label,
+                is_default: isDefault
+            }
+        });
+    } catch (error) {
+        console.error('발신번호 추가 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '발신번호 추가에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * PUT /paca/sms/sender-numbers/:id
+ * 발신번호 수정
+ */
+router.put('/sender-numbers/:id', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { label, isDefault } = req.body;
+
+        // 소유권 확인
+        const [existing] = await db.query(
+            `SELECT * FROM sender_numbers WHERE id = ? AND academy_id = ?`,
+            [id, req.user.academyId]
+        );
+
+        if (existing.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: '발신번호를 찾을 수 없습니다.'
+            });
+        }
+
+        const updates = [];
+        const params = [];
+
+        if (label !== undefined) {
+            updates.push('label = ?');
+            params.push(label);
+        }
+
+        if (isDefault !== undefined && isDefault) {
+            // 기본 발신번호 변경: 기존 기본 해제 후 새로 설정
+            await db.query(
+                `UPDATE sender_numbers SET is_default = 0
+                 WHERE academy_id = ? AND service_type = ?`,
+                [req.user.academyId, existing[0].service_type]
+            );
+            updates.push('is_default = 1');
+        }
+
+        if (updates.length > 0) {
+            params.push(id);
+            await db.query(
+                `UPDATE sender_numbers SET ${updates.join(', ')} WHERE id = ?`,
+                params
+            );
+        }
+
+        res.json({ message: '발신번호가 수정되었습니다.' });
+    } catch (error) {
+        console.error('발신번호 수정 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '발신번호 수정에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * DELETE /paca/sms/sender-numbers/:id
+ * 발신번호 삭제
+ */
+router.delete('/sender-numbers/:id', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // 소유권 확인
+        const [existing] = await db.query(
+            `SELECT * FROM sender_numbers WHERE id = ? AND academy_id = ?`,
+            [id, req.user.academyId]
+        );
+
+        if (existing.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: '발신번호를 찾을 수 없습니다.'
+            });
+        }
+
+        await db.query('DELETE FROM sender_numbers WHERE id = ?', [id]);
+
+        // 삭제한 번호가 기본이었으면 다른 번호를 기본으로
+        if (existing[0].is_default) {
+            await db.query(
+                `UPDATE sender_numbers SET is_default = 1
+                 WHERE academy_id = ? AND service_type = ?
+                 ORDER BY created_at ASC LIMIT 1`,
+                [req.user.academyId, existing[0].service_type]
+            );
+        }
+
+        res.json({ message: '발신번호가 삭제되었습니다.' });
+    } catch (error) {
+        console.error('발신번호 삭제 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '발신번호 삭제에 실패했습니다.'
         });
     }
 });

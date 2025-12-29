@@ -42,6 +42,19 @@ interface LogsResponse {
   };
 }
 
+interface SenderNumber {
+  id: number;
+  service_type: 'solapi' | 'sens';
+  phone: string;
+  label: string | null;
+  is_default: number;
+  created_at: string;
+}
+
+interface SenderNumbersResponse {
+  senderNumbers: SenderNumber[];
+}
+
 export const smsAPI = {
   /**
    * SMS/MMS 발송
@@ -53,6 +66,7 @@ export const smsAPI = {
     images?: { name: string; data: string }[];  // MMS 이미지 (base64)
     statusFilter?: 'active' | 'pending';  // 상태 필터
     gradeFilter?: 'all' | 'junior' | 'senior';  // 학년 필터
+    senderNumberId?: number;  // 선택한 발신번호 ID
   }): Promise<SendSMSResponse> => {
     return apiClient.post<SendSMSResponse>('/sms/send', params);
   },
@@ -75,5 +89,42 @@ export const smsAPI = {
     limit?: number;
   }): Promise<LogsResponse> => {
     return apiClient.get<LogsResponse>('/sms/logs', { params });
+  },
+
+  /**
+   * 발신번호 목록 조회
+   */
+  getSenderNumbers: async (serviceType?: 'solapi' | 'sens'): Promise<SenderNumbersResponse> => {
+    const params: Record<string, string> = {};
+    if (serviceType) params.serviceType = serviceType;
+    return apiClient.get<SenderNumbersResponse>('/sms/sender-numbers', { params });
+  },
+
+  /**
+   * 발신번호 추가
+   */
+  addSenderNumber: async (params: {
+    serviceType: 'solapi' | 'sens';
+    phone: string;
+    label?: string;
+  }): Promise<{ message: string; senderNumber: SenderNumber }> => {
+    return apiClient.post('/sms/sender-numbers', params);
+  },
+
+  /**
+   * 발신번호 수정
+   */
+  updateSenderNumber: async (id: number, params: {
+    label?: string;
+    isDefault?: boolean;
+  }): Promise<{ message: string }> => {
+    return apiClient.put(`/sms/sender-numbers/${id}`, params);
+  },
+
+  /**
+   * 발신번호 삭제
+   */
+  deleteSenderNumber: async (id: number): Promise<{ message: string }> => {
+    return apiClient.delete(`/sms/sender-numbers/${id}`);
   },
 };

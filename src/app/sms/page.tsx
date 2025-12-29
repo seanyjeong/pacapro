@@ -25,6 +25,14 @@ interface ImageFile {
   preview: string;  // URL for preview
 }
 
+interface SenderNumber {
+  id: number;
+  service_type: 'solapi' | 'sens';
+  phone: string;
+  label: string | null;
+  is_default: number;
+}
+
 export default function SMSPage() {
   // 발송 모드: 모두 / 개별 / 직접입력
   const [sendMode, setSendMode] = useState<SendMode>('all');
@@ -52,10 +60,39 @@ export default function SMSPage() {
   const [searching, setSearching] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  // 발신번호 관련
+  const [senderNumbers, setSenderNumbers] = useState<SenderNumber[]>([]);
+  const [selectedSenderId, setSelectedSenderId] = useState<number | null>(null);
+  const [serviceType, setServiceType] = useState<'solapi' | 'sens'>('sens');
+
   useEffect(() => {
     loadRecipientsCount();
     loadLogs();
+    loadServiceTypeAndSenderNumbers();
   }, []);
+
+  const loadServiceTypeAndSenderNumbers = async () => {
+    try {
+      // 알림톡 설정에서 service_type 가져오기
+      const settingsResponse = await apiClient.get<{ settings: { service_type?: string } }>('/notifications/settings');
+      const svcType = (settingsResponse.settings?.service_type || 'sens') as 'solapi' | 'sens';
+      setServiceType(svcType);
+
+      // 해당 서비스의 발신번호 목록 가져오기
+      const { senderNumbers: numbers } = await smsAPI.getSenderNumbers(svcType);
+      setSenderNumbers(numbers);
+
+      // 기본 발신번호 선택
+      const defaultSender = numbers.find(n => n.is_default === 1);
+      if (defaultSender) {
+        setSelectedSenderId(defaultSender.id);
+      } else if (numbers.length > 0) {
+        setSelectedSenderId(numbers[0].id);
+      }
+    } catch (error) {
+      console.error('발신번호 로드 실패:', error);
+    }
+  };
 
   // 필터 변경 시 수신자 수 다시 로드
   useEffect(() => {
@@ -230,6 +267,7 @@ export default function SMSPage() {
           content,
           customPhones: phones,
           images: imageData,
+          senderNumberId: selectedSenderId || undefined,
         });
       } else if (sendMode === 'individual') {
         // 개별 발송
@@ -239,6 +277,7 @@ export default function SMSPage() {
           content,
           customPhones: [targetPhone!],
           images: imageData,
+          senderNumberId: selectedSenderId || undefined,
         });
       } else {
         // 모두 (학생 또는 학부모)
@@ -248,6 +287,7 @@ export default function SMSPage() {
           images: imageData,
           statusFilter,
           gradeFilter,
+          senderNumberId: selectedSenderId || undefined,
         });
       }
 
@@ -359,6 +399,30 @@ export default function SMSPage() {
             </button>
           </div>
         </div>
+
+        {/* 발신번호 선택 */}
+        {senderNumbers.length > 0 && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-foreground mb-2">
+              <Phone className="w-4 h-4 inline mr-1" />
+              발신번호 선택
+            </label>
+            <select
+              value={selectedSenderId || ''}
+              onChange={(e) => setSelectedSenderId(e.target.value ? Number(e.target.value) : null)}
+              className="w-full px-3 py-2 border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            >
+              {senderNumbers.map((sender) => (
+                <option key={sender.id} value={sender.id}>
+                  {sender.phone}{sender.label ? ` (${sender.label})` : ''}{sender.is_default ? ' [기본]' : ''}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground mt-1">
+              * 발신번호는 설정 &gt; 알림톡 및 SMS 설정에서 관리할 수 있습니다.
+            </p>
+          </div>
+        )}
 
         {/* 모두 선택 시 상태/학년 필터 */}
         {sendMode === 'all' && (

@@ -1,10 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign, Plus, Trash2, Image, GraduationCap, AlertCircle } from 'lucide-react';
+import { Bell, Key, Send, ChevronDown, ChevronUp, CheckCircle, XCircle, Clock, ExternalLink, Users, X, DollarSign, Plus, Trash2, Image, GraduationCap, AlertCircle, Phone, Star } from 'lucide-react';
 import { notificationsAPI, NotificationSettings, NotificationLog, ConsultationButton } from '@/lib/api/notifications';
 import PushNotificationSettings from '@/components/push-notification-settings';
 import apiClient from '@/lib/api/client';
+import { smsAPI } from '@/lib/api/sms';
+
+interface SenderNumber {
+  id: number;
+  service_type: 'solapi' | 'sens';
+  phone: string;
+  label: string | null;
+  is_default: number;
+}
 
 type ServiceType = 'sens' | 'solapi';
 type TemplateType = 'unpaid' | 'consultation' | 'trial' | 'overdue';
@@ -123,11 +132,22 @@ export default function NotificationSettingsPage() {
   // 학원명 (미리보기용)
   const [academyName, setAcademyName] = useState<string>('파카체대입시');
 
+  // 발신번호 관리
+  const [senderNumbers, setSenderNumbers] = useState<SenderNumber[]>([]);
+  const [newSenderPhone, setNewSenderPhone] = useState('');
+  const [newSenderLabel, setNewSenderLabel] = useState('');
+  const [addingSender, setAddingSender] = useState(false);
+
   useEffect(() => {
     loadSettings();
     loadLogs();
     loadAcademyName();
   }, []);
+
+  // 탭 변경 시 해당 서비스의 발신번호 로드
+  useEffect(() => {
+    loadSenderNumbers();
+  }, [activeTab]);
 
   const loadAcademyName = async () => {
     try {
@@ -137,6 +157,60 @@ export default function NotificationSettingsPage() {
       }
     } catch {
       // 실패 시 기본값 유지
+    }
+  };
+
+  const loadSenderNumbers = async () => {
+    try {
+      const { senderNumbers: numbers } = await smsAPI.getSenderNumbers(activeTab);
+      setSenderNumbers(numbers);
+    } catch {
+      setSenderNumbers([]);
+    }
+  };
+
+  const handleAddSenderNumber = async () => {
+    if (!newSenderPhone.trim()) {
+      setMessage({ type: 'error', text: '발신번호를 입력해주세요.' });
+      return;
+    }
+    setAddingSender(true);
+    try {
+      await smsAPI.addSenderNumber({
+        serviceType: activeTab,
+        phone: newSenderPhone.trim(),
+        label: newSenderLabel.trim() || undefined
+      });
+      setNewSenderPhone('');
+      setNewSenderLabel('');
+      loadSenderNumbers();
+      setMessage({ type: 'success', text: '발신번호가 추가되었습니다.' });
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || '발신번호 추가에 실패했습니다.' });
+    } finally {
+      setAddingSender(false);
+    }
+  };
+
+  const handleSetDefaultSender = async (id: number) => {
+    try {
+      await smsAPI.updateSenderNumber(id, { isDefault: true });
+      loadSenderNumbers();
+      setMessage({ type: 'success', text: '기본 발신번호가 변경되었습니다.' });
+    } catch {
+      setMessage({ type: 'error', text: '기본 발신번호 변경에 실패했습니다.' });
+    }
+  };
+
+  const handleDeleteSenderNumber = async (id: number) => {
+    if (!confirm('이 발신번호를 삭제하시겠습니까?')) return;
+    try {
+      await smsAPI.deleteSenderNumber(id);
+      loadSenderNumbers();
+      setMessage({ type: 'success', text: '발신번호가 삭제되었습니다.' });
+    } catch {
+      setMessage({ type: 'error', text: '발신번호 삭제에 실패했습니다.' });
     }
   };
 
@@ -829,6 +903,88 @@ export default function NotificationSettingsPage() {
                 placeholder="@채널ID"
               />
             </div>
+
+            {/* SENS 발신번호 관리 */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <Phone className="w-4 h-4 inline mr-1" />
+                발신번호 관리
+              </label>
+
+              {/* 등록된 발신번호 목록 */}
+              {senderNumbers.length > 0 && (
+                <div className="mb-3 space-y-2">
+                  {senderNumbers.map((sender) => (
+                    <div
+                      key={sender.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border ${
+                        sender.is_default
+                          ? 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700'
+                          : 'bg-background border-border'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {sender.is_default && (
+                          <Star className="w-4 h-4 text-green-600 dark:text-green-400 fill-current" />
+                        )}
+                        <span className="font-medium text-foreground">{sender.phone}</span>
+                        {sender.label && (
+                          <span className="text-xs text-muted-foreground">({sender.label})</span>
+                        )}
+                        {sender.is_default && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">기본</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!sender.is_default && (
+                          <button
+                            onClick={() => handleSetDefaultSender(sender.id)}
+                            className="text-xs px-2 py-1 rounded border border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950"
+                          >
+                            기본으로 설정
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteSenderNumber(sender.id)}
+                          className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 새 발신번호 추가 */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newSenderPhone}
+                  onChange={e => setNewSenderPhone(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="010-1234-5678"
+                />
+                <input
+                  type="text"
+                  value={newSenderLabel}
+                  onChange={e => setNewSenderLabel(e.target.value)}
+                  className="w-32 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  placeholder="라벨 (선택)"
+                />
+                <button
+                  onClick={handleAddSenderNumber}
+                  disabled={addingSender || !newSenderPhone.trim()}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  {addingSender ? '추가 중...' : '추가'}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                * SENS에 등록된 발신번호를 추가하세요. 문자 보내기에서 발신번호를 선택할 수 있습니다.
+              </p>
+            </div>
           </div>
           <p className="text-sm text-muted-foreground mt-4">
             ※ 템플릿 코드와 본문은 아래 &apos;알림톡 템플릿 설정&apos; 섹션의 각 템플릿 탭에서 설정합니다.
@@ -886,18 +1042,86 @@ export default function NotificationSettingsPage() {
               <p className="text-xs text-muted-foreground mt-1">솔라피 콘솔에서 확인 가능</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                발신번호
+            {/* 발신번호 관리 */}
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
+                <Phone className="w-4 h-4 inline mr-1" />
+                발신번호 관리
               </label>
-              <input
-                type="text"
-                value={settings.solapi_sender_phone}
-                onChange={e => setSettings(prev => ({ ...prev, solapi_sender_phone: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                placeholder="010-1234-5678"
-              />
-              <p className="text-xs text-muted-foreground mt-1">솔라피에 등록된 발신번호</p>
+
+              {/* 등록된 발신번호 목록 */}
+              {senderNumbers.length > 0 && (
+                <div className="mb-3 space-y-2">
+                  {senderNumbers.map((sender) => (
+                    <div
+                      key={sender.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border ${
+                        sender.is_default
+                          ? 'bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700'
+                          : 'bg-background border-border'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {sender.is_default && (
+                          <Star className="w-4 h-4 text-purple-600 dark:text-purple-400 fill-current" />
+                        )}
+                        <span className="font-medium text-foreground">{sender.phone}</span>
+                        {sender.label && (
+                          <span className="text-xs text-muted-foreground">({sender.label})</span>
+                        )}
+                        {sender.is_default && (
+                          <span className="text-xs px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">기본</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {!sender.is_default && (
+                          <button
+                            onClick={() => handleSetDefaultSender(sender.id)}
+                            className="text-xs px-2 py-1 rounded border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950"
+                          >
+                            기본으로 설정
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDeleteSenderNumber(sender.id)}
+                          className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 새 발신번호 추가 */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newSenderPhone}
+                  onChange={e => setNewSenderPhone(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="010-1234-5678"
+                />
+                <input
+                  type="text"
+                  value={newSenderLabel}
+                  onChange={e => setNewSenderLabel(e.target.value)}
+                  className="w-32 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="라벨 (선택)"
+                />
+                <button
+                  onClick={handleAddSenderNumber}
+                  disabled={addingSender || !newSenderPhone.trim()}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  {addingSender ? '추가 중...' : '추가'}
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                * 솔라피에 등록된 발신번호를 추가하세요. 문자 보내기에서 발신번호를 선택할 수 있습니다.
+              </p>
             </div>
           </div>
         </div>
