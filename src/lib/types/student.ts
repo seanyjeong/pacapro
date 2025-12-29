@@ -26,6 +26,7 @@ export type Gender = 'male' | 'female';
 export interface TrialDate {
   date: string; // YYYY-MM-DD
   time_slot: 'morning' | 'afternoon' | 'evening';
+  attended?: boolean; // 출석 여부
 }
 
 // 기본 학생 인터페이스 - DB 스키마 매칭
