@@ -72,12 +72,44 @@ export default function ConsultationsPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // 정보 수정 모달
+  const [editInfoModalOpen, setEditInfoModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    studentName: '',
+    studentGrade: '',
+    studentSchool: '',
+    gender: '' as '' | 'male' | 'female',
+    schoolGradeAvg: undefined as number | undefined,
+    admissionType: '' as '' | 'early' | 'regular' | 'both',
+    mockTestGrades: {
+      korean: undefined as number | undefined,
+      math: undefined as number | undefined,
+      english: undefined as number | undefined,
+      exploration: undefined as number | undefined
+    },
+    targetSchool: '',
+    referrerStudent: ''
+  });
+  const [savingInfo, setSavingInfo] = useState(false);
+
   // 직접 등록 모달
   const [directRegisterOpen, setDirectRegisterOpen] = useState(false);
   const [directForm, setDirectForm] = useState({
     studentName: '',
     phone: '',
     grade: '',
+    gender: '' as '' | 'male' | 'female',
+    studentSchool: '',
+    schoolGradeAvg: undefined as number | undefined,
+    admissionType: '' as '' | 'early' | 'regular' | 'both',
+    mockTestGrades: {
+      korean: undefined as number | undefined,
+      math: undefined as number | undefined,
+      english: undefined as number | undefined,
+      exploration: undefined as number | undefined
+    },
+    targetSchool: '',
+    referrerStudent: '',
     preferredDate: '',
     preferredTime: '',
     notes: ''
@@ -293,6 +325,56 @@ export default function ConsultationsPage() {
     }
   };
 
+  // 정보 수정 모달 열기
+  const openEditInfoModal = (c: Consultation) => {
+    const scores = c.academicScores || {};
+    setEditForm({
+      studentName: c.student_name || '',
+      studentGrade: c.student_grade || '',
+      studentSchool: c.student_school || '',
+      gender: (c.gender as '' | 'male' | 'female') || '',
+      schoolGradeAvg: scores.schoolGradeAvg ?? undefined,
+      admissionType: (scores.admissionType as '' | 'early' | 'regular' | 'both') || '',
+      mockTestGrades: {
+        korean: scores.mockTestGrades?.korean ?? undefined,
+        math: scores.mockTestGrades?.math ?? undefined,
+        english: scores.mockTestGrades?.english ?? undefined,
+        exploration: scores.mockTestGrades?.exploration ?? undefined
+      },
+      targetSchool: c.target_school || '',
+      referrerStudent: c.referrer_student || ''
+    });
+    setEditInfoModalOpen(true);
+  };
+
+  // 정보 수정 저장
+  const handleSaveInfo = async () => {
+    if (!selectedConsultation) return;
+
+    setSavingInfo(true);
+    try {
+      await updateConsultation(selectedConsultation.id, {
+        studentName: editForm.studentName,
+        studentGrade: editForm.studentGrade,
+        studentSchool: editForm.studentSchool,
+        gender: editForm.gender || undefined,
+        schoolGradeAvg: editForm.schoolGradeAvg,
+        admissionType: editForm.admissionType || undefined,
+        mockTestGrades: editForm.mockTestGrades,
+        targetSchool: editForm.targetSchool,
+        referrerStudent: editForm.referrerStudent
+      });
+      toast.success('정보가 수정되었습니다.');
+      setEditInfoModalOpen(false);
+      setDetailOpen(false);
+      loadData();
+    } catch (error) {
+      toast.error('수정에 실패했습니다.');
+    } finally {
+      setSavingInfo(false);
+    }
+  };
+
   // 날짜 변경 시 예약된 시간 조회
   const handleDateChange = async (date: string) => {
     setDirectForm({ ...directForm, preferredDate: date, preferredTime: '' });
@@ -332,6 +414,18 @@ export default function ConsultationsPage() {
         studentName: '',
         phone: '',
         grade: '',
+        gender: '',
+        studentSchool: '',
+        schoolGradeAvg: undefined,
+        admissionType: '',
+        mockTestGrades: {
+          korean: undefined,
+          math: undefined,
+          english: undefined,
+          exploration: undefined
+        },
+        targetSchool: '',
+        referrerStudent: '',
         preferredDate: '',
         preferredTime: '',
         notes: ''
@@ -817,6 +911,14 @@ export default function ConsultationsPage() {
             <Button
               variant="outline"
               onClick={() => {
+                if (selectedConsultation) openEditInfoModal(selectedConsultation);
+              }}
+            >
+              정보 수정
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
                 setNewStatus(selectedConsultation?.status || 'pending');
                 setAdminNotes(selectedConsultation?.admin_notes || '');
                 setStatusModalOpen(true);
@@ -984,7 +1086,7 @@ export default function ConsultationsPage() {
 
       {/* 직접 등록 모달 */}
       <Dialog open={directRegisterOpen} onOpenChange={setDirectRegisterOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>상담 직접 등록</DialogTitle>
             <DialogDescription>
@@ -993,92 +1095,209 @@ export default function ConsultationsPage() {
           </DialogHeader>
 
           <div className="space-y-4 px-6 py-4">
-            <div>
-              <Label>학생명 *</Label>
-              <Input
-                value={directForm.studentName}
-                onChange={(e) => setDirectForm({ ...directForm, studentName: e.target.value })}
-                placeholder="학생 이름"
-              />
+            {/* 필수 정보 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>학생명 *</Label>
+                <Input
+                  value={directForm.studentName}
+                  onChange={(e) => setDirectForm({ ...directForm, studentName: e.target.value })}
+                  placeholder="학생 이름"
+                />
+              </div>
+              <div>
+                <Label>전화번호 *</Label>
+                <Input
+                  value={directForm.phone}
+                  onChange={(e) => setDirectForm({ ...directForm, phone: e.target.value })}
+                  placeholder="010-1234-5678"
+                />
+              </div>
             </div>
 
-            <div>
-              <Label>전화번호 *</Label>
-              <Input
-                value={directForm.phone}
-                onChange={(e) => setDirectForm({ ...directForm, phone: e.target.value })}
-                placeholder="010-1234-5678"
-              />
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>학년 *</Label>
+                <Select
+                  value={directForm.grade}
+                  onValueChange={(v) => setDirectForm({ ...directForm, grade: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['중1', '중2', '중3', '고1', '고2', '고3', 'N수'].map((g) => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>성별</Label>
+                <Select
+                  value={directForm.gender}
+                  onValueChange={(v) => setDirectForm({ ...directForm, gender: v as 'male' | 'female' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">남</SelectItem>
+                    <SelectItem value="female">여</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>학교</Label>
+                <Input
+                  value={directForm.studentSchool}
+                  onChange={(e) => setDirectForm({ ...directForm, studentSchool: e.target.value })}
+                  placeholder="OO고"
+                />
+              </div>
             </div>
 
-            <div>
-              <Label>학년 *</Label>
-              <Select
-                value={directForm.grade}
-                onValueChange={(v) => setDirectForm({ ...directForm, grade: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="학년 선택" />
-                </SelectTrigger>
-                <SelectContent>
-                  {['중1', '중2', '중3', '고1', '고2', '고3', 'N수'].map((g) => (
-                    <SelectItem key={g} value={g}>{g}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>상담 날짜 *</Label>
-              <Input
-                type="date"
-                value={directForm.preferredDate}
-                onChange={(e) => handleDateChange(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <Label>상담 시간 *</Label>
-              {loadingBookedTimes ? (
-                <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  예약 현황 확인 중...
+            {/* 성적 정보 */}
+            <div className="border-t pt-4">
+              <Label className="text-sm font-medium">성적 정보 (선택)</Label>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground">내신 평균</Label>
+                  <Select
+                    value={directForm.schoolGradeAvg?.toString() || ''}
+                    onValueChange={(v) => setDirectForm({ ...directForm, schoolGradeAvg: v === 'none' ? -1 : v ? parseInt(v) : undefined })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">미응시</SelectItem>
+                      {[1,2,3,4,5,6,7,8,9].map((g) => (
+                        <SelectItem key={g} value={g.toString()}>{g}등급</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              ) : directForm.preferredDate ? (
-                <div className="space-y-2">
-                  {/* 시간 버튼 */}
-                  {timeOptions.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {timeOptions.map((time) => {
-                        const isBooked = bookedTimes.includes(time);
-                        const isSelected = directForm.preferredTime === time;
-                        return (
-                          <Button
-                            key={time}
-                            type="button"
-                            size="sm"
-                            variant={isSelected ? 'default' : isBooked ? 'secondary' : 'outline'}
-                            onClick={() => setDirectForm({ ...directForm, preferredTime: time })}
-                            className={isBooked ? 'border-orange-300 dark:border-orange-700' : ''}
-                          >
-                            {time}
-                            {isBooked && <span className="ml-1 text-xs text-orange-600 dark:text-orange-400">●</span>}
-                          </Button>
-                        );
-                      })}
+                <div>
+                  <Label className="text-xs text-muted-foreground">입시 유형</Label>
+                  <Select
+                    value={directForm.admissionType}
+                    onValueChange={(v) => setDirectForm({ ...directForm, admissionType: v as 'early' | 'regular' | 'both' })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="early">수시</SelectItem>
+                      <SelectItem value="regular">정시</SelectItem>
+                      <SelectItem value="both">수시+정시</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* 모의고사 등급 */}
+              <div className="mt-3">
+                <Label className="text-xs text-muted-foreground">모의고사 등급</Label>
+                <div className="grid grid-cols-4 gap-2 mt-1">
+                  {(['korean', 'math', 'english', 'exploration'] as const).map((subject) => {
+                    const labels = { korean: '국어', math: '수학', english: '영어', exploration: '탐구' };
+                    return (
+                      <div key={subject}>
+                        <Label className="text-xs text-center block mb-1 text-muted-foreground">{labels[subject]}</Label>
+                        <Select
+                          value={directForm.mockTestGrades[subject]?.toString() || ''}
+                          onValueChange={(v) => setDirectForm({
+                            ...directForm,
+                            mockTestGrades: {
+                              ...directForm.mockTestGrades,
+                              [subject]: v === 'none' ? -1 : v ? parseInt(v) : undefined
+                            }
+                          })}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="-" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">미응시</SelectItem>
+                            {[1,2,3,4,5,6,7,8,9].map((g) => (
+                              <SelectItem key={g} value={g.toString()}>{g}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* 추가 정보 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">목표 학교</Label>
+                <Input
+                  value={directForm.targetSchool}
+                  onChange={(e) => setDirectForm({ ...directForm, targetSchool: e.target.value })}
+                  placeholder="목표 대학교"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">추천 재원생</Label>
+                <Input
+                  value={directForm.referrerStudent}
+                  onChange={(e) => setDirectForm({ ...directForm, referrerStudent: e.target.value })}
+                  placeholder="재원생 이름"
+                />
+              </div>
+            </div>
+
+            {/* 상담 일정 */}
+            <div className="border-t pt-4">
+              <Label className="text-sm font-medium">상담 일정 *</Label>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground">날짜</Label>
+                  <Input
+                    type="date"
+                    value={directForm.preferredDate}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">시간</Label>
+                  {loadingBookedTimes ? (
+                    <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
                     </div>
+                  ) : directForm.preferredDate ? (
+                    timeOptions.length > 0 ? (
+                      <Select
+                        value={directForm.preferredTime}
+                        onValueChange={(v) => setDirectForm({ ...directForm, preferredTime: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="시간 선택" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((time) => {
+                            const isBooked = bookedTimes.includes(time);
+                            return (
+                              <SelectItem key={time} value={time}>
+                                {time} {isBooked && '(예약있음)'}
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <p className="text-sm text-orange-600 py-2">휴무일</p>
+                    )
                   ) : (
-                    <p className="text-sm text-orange-600 dark:text-orange-400 py-2">해당 요일은 휴무입니다</p>
-                  )}
-                  {bookedTimes.length > 0 && timeOptions.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      * <span className="text-orange-600 dark:text-orange-400">●</span> 표시: 기존 상담 있음 (동시 상담 가능)
-                    </p>
+                    <p className="text-sm text-muted-foreground py-2">날짜 먼저 선택</p>
                   )}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground py-2">날짜를 먼저 선택하세요</p>
-              )}
+              </div>
             </div>
 
             <div>
@@ -1099,6 +1318,177 @@ export default function ConsultationsPage() {
             <Button onClick={handleDirectRegister} disabled={registering}>
               {registering ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               등록
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 정보 수정 모달 */}
+      <Dialog open={editInfoModalOpen} onOpenChange={setEditInfoModalOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>상담 정보 수정</DialogTitle>
+            <DialogDescription>
+              {selectedConsultation?.student_name}님의 정보를 수정합니다.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 px-6 py-4">
+            {/* 기본 정보 */}
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>학생명</Label>
+                <Input
+                  value={editForm.studentName}
+                  onChange={(e) => setEditForm({ ...editForm, studentName: e.target.value })}
+                  placeholder="학생 이름"
+                />
+              </div>
+              <div>
+                <Label>학년</Label>
+                <Select
+                  value={editForm.studentGrade}
+                  onValueChange={(v) => setEditForm({ ...editForm, studentGrade: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {['중1', '중2', '중3', '고1', '고2', '고3', 'N수'].map((g) => (
+                      <SelectItem key={g} value={g}>{g}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>성별</Label>
+                <Select
+                  value={editForm.gender}
+                  onValueChange={(v) => setEditForm({ ...editForm, gender: v as 'male' | 'female' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">남</SelectItem>
+                    <SelectItem value="female">여</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label>학교</Label>
+              <Input
+                value={editForm.studentSchool}
+                onChange={(e) => setEditForm({ ...editForm, studentSchool: e.target.value })}
+                placeholder="학교명"
+              />
+            </div>
+
+            {/* 성적 정보 */}
+            <div className="border-t pt-4">
+              <Label className="text-sm font-medium">성적 정보</Label>
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground">내신 평균</Label>
+                  <Select
+                    value={editForm.schoolGradeAvg?.toString() || ''}
+                    onValueChange={(v) => setEditForm({ ...editForm, schoolGradeAvg: v === 'none' ? -1 : v ? parseInt(v) : undefined })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">미응시</SelectItem>
+                      {[1,2,3,4,5,6,7,8,9].map((g) => (
+                        <SelectItem key={g} value={g.toString()}>{g}등급</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">입시 유형</Label>
+                  <Select
+                    value={editForm.admissionType}
+                    onValueChange={(v) => setEditForm({ ...editForm, admissionType: v as 'early' | 'regular' | 'both' })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="early">수시</SelectItem>
+                      <SelectItem value="regular">정시</SelectItem>
+                      <SelectItem value="both">수시+정시</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* 모의고사 등급 */}
+              <div className="mt-3">
+                <Label className="text-xs text-muted-foreground">모의고사 등급</Label>
+                <div className="grid grid-cols-4 gap-2 mt-1">
+                  {(['korean', 'math', 'english', 'exploration'] as const).map((subject) => {
+                    const labels = { korean: '국어', math: '수학', english: '영어', exploration: '탐구' };
+                    return (
+                      <div key={subject}>
+                        <Label className="text-xs text-center block mb-1 text-muted-foreground">{labels[subject]}</Label>
+                        <Select
+                          value={editForm.mockTestGrades[subject]?.toString() || ''}
+                          onValueChange={(v) => setEditForm({
+                            ...editForm,
+                            mockTestGrades: {
+                              ...editForm.mockTestGrades,
+                              [subject]: v === 'none' ? -1 : v ? parseInt(v) : undefined
+                            }
+                          })}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue placeholder="-" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">미응시</SelectItem>
+                            {[1,2,3,4,5,6,7,8,9].map((g) => (
+                              <SelectItem key={g} value={g.toString()}>{g}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* 추가 정보 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs text-muted-foreground">목표 학교</Label>
+                <Input
+                  value={editForm.targetSchool}
+                  onChange={(e) => setEditForm({ ...editForm, targetSchool: e.target.value })}
+                  placeholder="목표 대학교"
+                />
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">추천 재원생</Label>
+                <Input
+                  value={editForm.referrerStudent}
+                  onChange={(e) => setEditForm({ ...editForm, referrerStudent: e.target.value })}
+                  placeholder="재원생 이름"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditInfoModalOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handleSaveInfo} disabled={savingInfo}>
+              {savingInfo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              저장
             </Button>
           </DialogFooter>
         </DialogContent>

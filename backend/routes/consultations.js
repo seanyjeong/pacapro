@@ -446,12 +446,18 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 });
 
-// PUT /paca/consultations/:id - 상담 수정 (상태, 메모, 체크리스트)
+// PUT /paca/consultations/:id - 상담 수정 (상태, 메모, 체크리스트, 학생정보)
 router.put('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const academyId = req.user.academy_id;
-    const { status, adminNotes, preferredDate, preferredTime, checklist, consultationMemo } = req.body;
+    const {
+      status, adminNotes, preferredDate, preferredTime, checklist, consultationMemo,
+      // 학생 정보 수정 필드 추가
+      studentName, studentGrade, studentSchool, gender,
+      mockTestGrades, schoolGradeAvg, admissionType,
+      targetSchool, referrerStudent
+    } = req.body;
 
     // 기존 상담 확인 (현재 상태 포함)
     const [existing] = await db.query(
@@ -500,6 +506,58 @@ router.put('/:id', verifyToken, async (req, res) => {
     if (consultationMemo !== undefined) {
       updates.push('consultation_memo = ?');
       params.push(consultationMemo);
+    }
+
+    // 학생 정보 수정
+    if (studentName !== undefined) {
+      updates.push('student_name = ?');
+      params.push(studentName);
+      // parent_name도 같이 업데이트
+      updates.push('parent_name = ?');
+      params.push(studentName);
+    }
+
+    if (studentGrade !== undefined) {
+      updates.push('student_grade = ?');
+      params.push(studentGrade);
+    }
+
+    if (studentSchool !== undefined) {
+      updates.push('student_school = ?');
+      params.push(studentSchool || null);
+    }
+
+    if (gender !== undefined) {
+      updates.push('gender = ?');
+      params.push(gender || null);
+    }
+
+    if (targetSchool !== undefined) {
+      updates.push('target_school = ?');
+      params.push(targetSchool || null);
+    }
+
+    if (referrerStudent !== undefined) {
+      updates.push('referrer_student = ?');
+      params.push(referrerStudent || null);
+    }
+
+    // 성적 정보 수정 (mockTestGrades, schoolGradeAvg, admissionType 중 하나라도 있으면)
+    if (mockTestGrades !== undefined || schoolGradeAvg !== undefined || admissionType !== undefined) {
+      // 기존 academic_scores 파싱
+      let existingScores = {};
+      try {
+        existingScores = currentConsultation.academic_scores ? JSON.parse(currentConsultation.academic_scores) : {};
+      } catch (e) {}
+
+      const newScores = {
+        mockTestGrades: mockTestGrades !== undefined ? mockTestGrades : existingScores.mockTestGrades,
+        schoolGradeAvg: schoolGradeAvg !== undefined ? schoolGradeAvg : existingScores.schoolGradeAvg,
+        admissionType: admissionType !== undefined ? admissionType : existingScores.admissionType
+      };
+
+      updates.push('academic_scores = ?');
+      params.push(JSON.stringify(newScores));
     }
 
     // 상태가 confirmed로 변경되면서 예약번호가 없으면 자동 부여
@@ -574,28 +632,45 @@ router.delete('/:id', verifyToken, async (req, res) => {
 router.post('/direct', verifyToken, async (req, res) => {
   try {
     const academyId = req.user.academy_id;
-    const { studentName, phone, grade, preferredDate, preferredTime, notes } = req.body;
+    const {
+      studentName, phone, grade, preferredDate, preferredTime, notes,
+      gender, studentSchool, schoolGradeAvg, admissionType, mockTestGrades,
+      targetSchool, referrerStudent
+    } = req.body;
 
     // 필수 필드 검증
     if (!studentName || !phone || !grade || !preferredDate || !preferredTime) {
       return res.status(400).json({ error: '학생명, 전화번호, 학년, 상담일시는 필수입니다.' });
     }
 
+    // 성적 정보 JSON 구성
+    const academicScores = {
+      mockTestGrades: mockTestGrades || {},
+      schoolGradeAvg: schoolGradeAvg ?? null,
+      admissionType: admissionType || null
+    };
+
     // 상담 등록 (관리자 등록이므로 바로 confirmed 상태)
     // parent_name, parent_phone은 NOT NULL이라 학생 정보로 대체
     const [result] = await db.query(
       `INSERT INTO consultations (
         academy_id, consultation_type, parent_name, parent_phone,
-        student_name, student_grade,
+        student_name, student_grade, student_school, gender,
+        academic_scores, target_school, referrer_student,
         preferred_date, preferred_time, status, admin_notes,
         checklist, consultation_memo, created_at
-      ) VALUES (?, 'new_registration', ?, ?, ?, ?, ?, ?, 'confirmed', ?, NULL, NULL, NOW())`,
+      ) VALUES (?, 'new_registration', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, NULL, NULL, NOW())`,
       [
         academyId,
         studentName,  // parent_name에 학생명
         phone,        // parent_phone에 전화번호
         studentName,
         grade,
+        studentSchool || null,
+        gender || null,
+        JSON.stringify(academicScores),
+        targetSchool || null,
+        referrerStudent || null,
         preferredDate,
         preferredTime + ':00',
         notes || null

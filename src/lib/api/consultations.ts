@@ -97,7 +97,7 @@ export async function getConsultation(id: number): Promise<Consultation> {
   return apiClient.get<Consultation>(`/consultations/${id}`);
 }
 
-// 상담 수정 (상태, 메모, 일정, 체크리스트)
+// 상담 수정 (상태, 메모, 일정, 체크리스트, 학생정보)
 export async function updateConsultation(
   id: number,
   data: {
@@ -107,6 +107,21 @@ export async function updateConsultation(
     preferredTime?: string;
     checklist?: { id: number; text: string; checked: boolean }[];
     consultationMemo?: string;
+    // 학생 정보 수정 필드
+    studentName?: string;
+    studentGrade?: string;
+    studentSchool?: string;
+    gender?: 'male' | 'female' | '';
+    mockTestGrades?: {
+      korean?: number;
+      math?: number;
+      english?: number;
+      exploration?: number;
+    };
+    schoolGradeAvg?: number;
+    admissionType?: 'early' | 'regular' | 'both' | '';
+    targetSchool?: string;
+    referrerStudent?: string;
   }
 ): Promise<{ message: string }> {
   return apiClient.put<{ message: string }>(`/consultations/${id}`, data);
@@ -197,6 +212,18 @@ export async function createDirectConsultation(data: {
   studentName: string;
   phone: string;
   grade: string;
+  gender?: 'male' | 'female' | '';
+  studentSchool?: string;
+  schoolGradeAvg?: number;
+  admissionType?: 'early' | 'regular' | 'both' | '';
+  mockTestGrades?: {
+    korean?: number;
+    math?: number;
+    english?: number;
+    exploration?: number;
+  };
+  targetSchool?: string;
+  referrerStudent?: string;
   preferredDate: string;
   preferredTime: string;
   notes?: string;
