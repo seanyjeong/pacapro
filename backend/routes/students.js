@@ -259,6 +259,7 @@ router.get('/', verifyToken, async (req, res) => {
                 s.time_slot,
                 s.is_season_registered,
                 s.current_season_id,
+                s.memo,
                 s.created_at
             FROM students s
             WHERE s.academy_id = ?
