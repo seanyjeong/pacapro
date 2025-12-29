@@ -285,15 +285,15 @@ export default function DashboardPage() {
                                     </div>
                                     <div className="text-left">
                                         <div className="font-semibold text-foreground">오늘 강사 일정</div>
-                                        <div className="text-sm text-muted-foreground flex flex-wrap gap-x-2">
+                                        <div className="text-sm text-muted-foreground flex flex-wrap gap-x-3">
                                             {instructorsBySlot.morning.length > 0 && (
-                                                <span>오전 {instructorsBySlot.morning.map(i => i.name).join(', ')}</span>
+                                                <span><span className="font-medium text-orange-600 dark:text-orange-400">오전</span> {instructorsBySlot.morning.map(i => i.name).join(', ')}</span>
                                             )}
                                             {instructorsBySlot.afternoon.length > 0 && (
-                                                <span>오후 {instructorsBySlot.afternoon.map(i => i.name).join(', ')}</span>
+                                                <span><span className="font-medium text-blue-600 dark:text-blue-400">오후</span> {instructorsBySlot.afternoon.map(i => i.name).join(', ')}</span>
                                             )}
                                             {instructorsBySlot.evening.length > 0 && (
-                                                <span>저녁 {instructorsBySlot.evening.map(i => i.name).join(', ')}</span>
+                                                <span><span className="font-medium text-purple-600 dark:text-purple-400">저녁</span> {instructorsBySlot.evening.map(i => i.name).join(', ')}</span>
                                             )}
                                         </div>
                                     </div>
