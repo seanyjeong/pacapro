@@ -770,7 +770,8 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
 
     // 체험 학생 등록 (학생 전화번호 우선, 없으면 학부모 전화번호)
     const phone = studentPhone || consultation.parent_phone;
-    const parentPhone = consultation.parent_phone;
+    // 학생 전화번호가 있으면 학부모 전화번호는 비워둠 (같은 번호 중복 방지)
+    const parentPhone = studentPhone ? null : consultation.parent_phone;
 
     // 민감 정보 암호화 (이미 암호화된 값이면 그대로 사용)
     const isAlreadyEncrypted = (val) => val && typeof val === 'string' && val.startsWith('ENC:');
@@ -881,7 +882,8 @@ router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
 
     // 미등록관리 학생 등록 (pending 상태)
     const phone = studentPhone || consultation.parent_phone;
-    const parentPhone = consultation.parent_phone;
+    // 학생 전화번호가 있으면 학부모 전화번호는 비워둠 (같은 번호 중복 방지)
+    const parentPhone = studentPhone ? null : consultation.parent_phone;
 
     // 민감 정보 암호화 (이미 암호화된 값이면 그대로 사용)
     const isAlreadyEncrypted = (val) => val && typeof val === 'string' && val.startsWith('ENC:');
