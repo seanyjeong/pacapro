@@ -15,6 +15,7 @@ import { PendingStudentList } from '@/components/students/pending-student-list';
 import { SchoolStudentList } from '@/components/students/school-student-list';
 import { useStudents } from '@/hooks/use-students';
 import { cn } from '@/lib/utils';
+import type { StudentStatus } from '@/lib/types/student';
 
 // 탭 타입
 type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending' | 'bySchool';
@@ -41,9 +42,15 @@ function StudentsPageContent() {
     }
   }, [tabParam]);
 
+  // 탭을 status로 변환 (bySchool은 전체 학생 조회)
+  const getStatusFromTab = (tab: StudentTab): StudentStatus | undefined => {
+    if (tab === 'bySchool') return undefined;
+    return tab as StudentStatus;
+  };
+
   // useStudents 훅 사용 (초기값: URL 탭 파라미터에 맞게 설정)
   const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents({
-    status: initialTab,
+    status: getStatusFromTab(initialTab),
     is_trial: undefined
   });
 
