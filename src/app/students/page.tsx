@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Download, AlertCircle, Users, UserCheck, UserX, Sparkles, Clock, Loader2, School } from 'lucide-react';
+import { Plus, Download, AlertCircle, Users, UserCheck, UserX, Sparkles, Clock, Loader2, School, GraduationCap } from 'lucide-react';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
 import { StudentFiltersComponent } from '@/components/students/student-filters';
 import { StudentSearch } from '@/components/students/student-search';
@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import type { StudentStatus } from '@/lib/types/student';
 
 // 탭 타입
-type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending' | 'bySchool';
+type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending' | 'graduated' | 'bySchool';
 
 // 내부 컴포넌트 (useSearchParams 사용)
 function StudentsPageContent() {
@@ -27,7 +27,7 @@ function StudentsPageContent() {
   const tabParam = searchParams.get('tab') as StudentTab | null;
 
   // 초기 탭 결정 (URL 파라미터 우선)
-  const initialTab: StudentTab = tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending', 'bySchool'].includes(tabParam)
+  const initialTab: StudentTab = tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending', 'graduated', 'bySchool'].includes(tabParam)
     ? tabParam
     : 'active';
 
@@ -37,7 +37,7 @@ function StudentsPageContent() {
 
   // URL 파라미터로 탭 변경 시 적용
   useEffect(() => {
-    if (tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending', 'bySchool'].includes(tabParam)) {
+    if (tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending', 'graduated', 'bySchool'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
@@ -72,6 +72,8 @@ function StudentsPageContent() {
       updateFilters({ status: 'withdrawn', is_trial: undefined });
     } else if (activeTab === 'pending') {
       updateFilters({ status: 'pending', is_trial: undefined });
+    } else if (activeTab === 'graduated') {
+      updateFilters({ status: 'graduated', is_trial: undefined });
     } else if (activeTab === 'bySchool') {
       // 학교별 탭: 모든 학생 (재원+체험+미등록) 가져오기
       updateFilters({ status: undefined, is_trial: undefined });
@@ -84,6 +86,8 @@ function StudentsPageContent() {
     paused: students.filter(s => s.status === 'paused').length,
     withdrawn: students.filter(s => s.status === 'withdrawn').length,
     trial: students.filter(s => s.status === 'trial').length,
+    pending: students.filter(s => s.status === 'pending').length,
+    graduated: students.filter(s => s.status === 'graduated').length,
   };
 
   // 검색어 필터링 적용
@@ -128,6 +132,7 @@ function StudentsPageContent() {
     { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-green-600 dark:text-green-400' },
     { id: 'paused' as const, label: '휴원생', icon: Users, color: 'text-yellow-600 dark:text-yellow-400' },
     { id: 'withdrawn' as const, label: '퇴원생', icon: UserX, color: 'text-muted-foreground' },
+    { id: 'graduated' as const, label: '졸업생', icon: GraduationCap, color: 'text-indigo-600 dark:text-indigo-400' },
     { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600 dark:text-purple-400' },
     { id: 'pending' as const, label: '미등록관리', icon: Clock, color: 'text-orange-600 dark:text-orange-400' },
     { id: 'bySchool' as const, label: '학교별', icon: School, color: 'text-blue-600 dark:text-blue-400' },
