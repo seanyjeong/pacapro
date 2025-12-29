@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users, UserCheck, UserX, GraduationCap, Sparkles } from 'lucide-react';
+import { Users, UserCheck, UserX, GraduationCap, Sparkles, Clock } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
 import type { Student } from '@/lib/types/student';
 
@@ -22,6 +22,7 @@ interface StudentStats {
   paused: number;
   graduated: number;
   trial: number;
+  pending: number;
 }
 
 export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStatsCardsProps) {
@@ -31,6 +32,7 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
     paused: 0,
     graduated: 0,
     trial: 0,
+    pending: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -53,14 +55,16 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
       const active = students.filter((s) => s.status === 'active').length;
       const paused = students.filter((s) => s.status === 'paused').length;
       const graduated = students.filter((s) => s.status === 'graduated').length;
+      const pending = students.filter((s) => s.status === 'pending').length;
 
       const newStats = {
-        // 전체 = 재원 + 휴원 + 졸업 (퇴원생, 체험생 제외)
+        // 전체 = 재원 + 휴원 + 졸업 (퇴원생, 체험생, 미등록 제외)
         total: active + paused + graduated,
         active,
         paused,
         graduated,
         trial: trials.length,
+        pending,
       };
 
       setStats(newStats);
@@ -108,10 +112,17 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
       bgColor: 'bg-pink-100 dark:bg-pink-900',
       iconColor: 'text-pink-600 dark:text-pink-400',
     },
+    {
+      title: '미등록',
+      value: stats.pending,
+      icon: Clock,
+      bgColor: 'bg-orange-100 dark:bg-orange-900',
+      iconColor: 'text-orange-600 dark:text-orange-400',
+    },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
