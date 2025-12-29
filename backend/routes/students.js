@@ -1304,9 +1304,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
-        // 퇴원 처리 (→ withdrawn) 시 미납 학원비 삭제 + 시즌 등록 취소
+        // 퇴원/졸업 처리 (→ withdrawn/graduated) 시 미납 학원비 삭제 + 시즌 등록 취소 + 스케줄 삭제
         let withdrawalInfo = null;
-        if (status === 'withdrawn') {
+        if (status === 'withdrawn' || status === 'graduated') {
             try {
                 // 미납 학원비 확인
                 const [unpaidPayments] = await db.query(
@@ -1762,6 +1762,18 @@ router.post('/auto-promote', verifyToken, requireRole('owner'), async (req, res)
                         await connection.query(
                             `UPDATE students SET status = 'graduated', updated_at = NOW() WHERE id = ?`,
                             [student.id]
+                        );
+
+                        // 졸업생 미래 스케줄 삭제
+                        const today = new Date().toISOString().split('T')[0];
+                        await connection.query(
+                            `DELETE a FROM attendance a
+                             JOIN class_schedules cs ON a.class_schedule_id = cs.id
+                             WHERE a.student_id = ?
+                             AND cs.academy_id = ?
+                             AND cs.class_date >= ?
+                             AND (a.attendance_status IS NULL OR a.attendance_status = 'absent')`,
+                            [student.id, academyId, today]
                         );
                     }
                     promotionDetails.push({
