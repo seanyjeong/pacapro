@@ -13,8 +13,9 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Clock, MessageSquare, Sparkles, FileText, Check, X, Pencil, Save } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, User, UserPlus, Trash2, Clock, MessageSquare, Sparkles, FileText, Check, X, Save, StickyNote } from 'lucide-react';
 import type { Student } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 
@@ -26,6 +27,8 @@ interface PendingStudentListProps {
 
 interface ConsultationInfo {
   id: number;
+  inquiry_content?: string;
+  consultation_memo?: string;
 }
 
 interface TrialDate {
@@ -34,40 +37,66 @@ interface TrialDate {
   time_slot: string;
 }
 
+interface MemoModalData {
+  student: Student;
+  inquiryContent: string;
+  consultationMemo: string;
+}
+
 export function PendingStudentList({ students, loading, onReload }: PendingStudentListProps) {
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [loadingConsultationId, setLoadingConsultationId] = useState<number | null>(null);
-  const [editingMemoId, setEditingMemoId] = useState<number | null>(null);
-  const [memoValue, setMemoValue] = useState('');
-  const [savingMemoId, setSavingMemoId] = useState<number | null>(null);
 
-  // 메모 편집 시작
-  const handleEditMemo = (student: Student) => {
-    setEditingMemoId(student.id);
-    setMemoValue(student.memo || '');
+  // 메모 모달 상태
+  const [memoModalOpen, setMemoModalOpen] = useState(false);
+  const [memoModalData, setMemoModalData] = useState<MemoModalData | null>(null);
+  const [memoModalLoading, setMemoModalLoading] = useState(false);
+  const [pendingMemo, setPendingMemo] = useState('');
+  const [savingMemo, setSavingMemo] = useState(false);
+
+  // 메모 모달 열기
+  const handleOpenMemoModal = async (student: Student) => {
+    setMemoModalOpen(true);
+    setMemoModalLoading(true);
+    setPendingMemo(student.memo || '');
+
+    try {
+      // 상담 정보 가져오기
+      const res = await apiClient.get<{ consultation: ConsultationInfo }>(`/consultations/by-student/${student.id}`);
+      setMemoModalData({
+        student,
+        inquiryContent: res.consultation?.inquiry_content || '',
+        consultationMemo: res.consultation?.consultation_memo || '',
+      });
+    } catch {
+      // 상담 정보가 없을 수 있음
+      setMemoModalData({
+        student,
+        inquiryContent: '',
+        consultationMemo: '',
+      });
+    } finally {
+      setMemoModalLoading(false);
+    }
   };
 
   // 메모 저장
-  const handleSaveMemo = async (studentId: number) => {
+  const handleSaveMemo = async () => {
+    if (!memoModalData) return;
+
     try {
-      setSavingMemoId(studentId);
-      await apiClient.put(`/students/${studentId}`, { memo: memoValue });
+      setSavingMemo(true);
+      await apiClient.put(`/students/${memoModalData.student.id}`, { memo: pendingMemo });
       toast.success('메모가 저장되었습니다.');
-      setEditingMemoId(null);
+      setMemoModalOpen(false);
       onReload();
     } catch (error) {
       console.error('Failed to save memo:', error);
       toast.error('메모 저장에 실패했습니다.');
     } finally {
-      setSavingMemoId(null);
+      setSavingMemo(false);
     }
-  };
-
-  // 메모 편집 취소
-  const handleCancelMemo = () => {
-    setEditingMemoId(null);
-    setMemoValue('');
   };
 
   // 상담 정보 조회 - 상담 진행 페이지로 이동
@@ -270,62 +299,22 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                     );
                   })()}
                 </td>
-                <td className="py-3 px-4">
-                  {editingMemoId === student.id ? (
-                    <div className="flex items-center gap-1">
-                      <Input
-                        value={memoValue}
-                        onChange={(e) => setMemoValue(e.target.value)}
-                        className="h-7 text-sm"
-                        placeholder="메모 입력..."
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveMemo(student.id);
-                          if (e.key === 'Escape') handleCancelMemo();
-                        }}
-                        autoFocus
-                      />
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={() => handleSaveMemo(student.id)}
-                        disabled={savingMemoId === student.id}
-                      >
-                        {savingMemoId === student.id ? (
-                          <Loader2 className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Save className="w-3 h-3 text-green-600" />
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={handleCancelMemo}
-                      >
-                        <X className="w-3 h-3 text-red-600" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-1 group">
-                      <span
-                        className="text-sm text-muted-foreground line-clamp-1 flex-1 cursor-pointer hover:text-foreground"
-                        title={student.memo || '클릭하여 메모 추가'}
-                        onClick={() => handleEditMemo(student)}
-                      >
-                        {student.memo || '-'}
+                <td className="py-3 px-4 max-w-[120px]">
+                  <button
+                    onClick={() => handleOpenMemoModal(student)}
+                    className="text-left w-full group"
+                  >
+                    {student.memo ? (
+                      <span className="text-sm text-muted-foreground truncate block group-hover:text-foreground transition-colors">
+                        {student.memo.length > 12 ? student.memo.slice(0, 12) + '...' : student.memo}
                       </span>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleEditMemo(student)}
-                        title="메모 편집"
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  )}
+                    ) : (
+                      <span className="text-sm text-muted-foreground/50 group-hover:text-muted-foreground transition-colors flex items-center gap-1">
+                        <StickyNote className="w-3 h-3" />
+                        메모
+                      </span>
+                    )}
+                  </button>
                 </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex items-center justify-end gap-2">
@@ -379,6 +368,83 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
           </tbody>
         </table>
       </CardContent>
+
+      {/* 메모 모달 */}
+      <Dialog open={memoModalOpen} onOpenChange={setMemoModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <StickyNote className="w-5 h-5" />
+              {memoModalData?.student.name} 메모
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {memoModalLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <>
+                {/* 상담 신청 문의 */}
+                {memoModalData?.inquiryContent && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-blue-500" />
+                      상담 신청 문의
+                    </label>
+                    <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm border border-blue-200 dark:border-blue-800">
+                      {memoModalData.inquiryContent}
+                    </div>
+                  </div>
+                )}
+
+                {/* 상담 메모 */}
+                {memoModalData?.consultationMemo && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-green-500" />
+                      상담 메모
+                    </label>
+                    <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg text-sm border border-green-200 dark:border-green-800">
+                      {memoModalData.consultationMemo}
+                    </div>
+                  </div>
+                )}
+
+                {/* 미등록관리 메모 (수정 가능) */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                    <StickyNote className="w-4 h-4 text-orange-500" />
+                    미등록관리 메모
+                    <span className="text-xs text-muted-foreground/70">(수정 가능)</span>
+                  </label>
+                  <Textarea
+                    value={pendingMemo}
+                    onChange={(e) => setPendingMemo(e.target.value)}
+                    placeholder="메모를 입력하세요..."
+                    className="min-h-[100px] resize-none"
+                  />
+                </div>
+
+                {/* 저장 버튼 */}
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button variant="outline" onClick={() => setMemoModalOpen(false)}>
+                    취소
+                  </Button>
+                  <Button onClick={handleSaveMemo} disabled={savingMemo}>
+                    {savingMemo ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    저장
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

@@ -124,7 +124,8 @@
       "Bash(sudo -S sh -c \"systemctl restart paca && echo done\")",
       "Bash(node /tmp/stress-test-heavy.js:*)",
       "Bash(node /tmp/stress-extreme.js:*)",
-      "Bash(node /tmp/stress-with-data.js:*)"
+      "Bash(node /tmp/stress-with-data.js:*)",
+      "Bash(crontab:*)"
     ],
     "deny": [],
     "ask": []
