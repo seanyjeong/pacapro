@@ -75,10 +75,16 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
   // 체험 등록 처리 (trial 상태로 변경)
   const handleTrialRegister = async (student: Student) => {
     try {
+      // 기존 체험 일정에서 남은 횟수 계산
+      const trialDates = parseTrialDates(student.trial_dates);
+      const remainingCount = trialDates.length > 0
+        ? trialDates.filter(t => !t.attended).length
+        : 2; // 체험 일정이 없으면 기본 2회
+
       await apiClient.put(`/students/${student.id}`, {
         status: 'trial',
         is_trial: true,
-        trial_remaining: 2,
+        trial_remaining: remainingCount,
       });
       toast.success(`${student.name} 학생을 체험생으로 등록했습니다.`);
       onReload();
