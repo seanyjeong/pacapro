@@ -13,7 +13,8 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Clock, MessageSquare, Sparkles, FileText, Check, X } from 'lucide-react';
+import { Loader2, User, UserPlus, Trash2, Clock, MessageSquare, Sparkles, FileText, Check, X, Pencil, Save } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import type { Student } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 
@@ -37,6 +38,37 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [loadingConsultationId, setLoadingConsultationId] = useState<number | null>(null);
+  const [editingMemoId, setEditingMemoId] = useState<number | null>(null);
+  const [memoValue, setMemoValue] = useState('');
+  const [savingMemoId, setSavingMemoId] = useState<number | null>(null);
+
+  // 메모 편집 시작
+  const handleEditMemo = (student: Student) => {
+    setEditingMemoId(student.id);
+    setMemoValue(student.memo || '');
+  };
+
+  // 메모 저장
+  const handleSaveMemo = async (studentId: number) => {
+    try {
+      setSavingMemoId(studentId);
+      await apiClient.put(`/students/${studentId}`, { memo: memoValue });
+      toast.success('메모가 저장되었습니다.');
+      setEditingMemoId(null);
+      onReload();
+    } catch (error) {
+      console.error('Failed to save memo:', error);
+      toast.error('메모 저장에 실패했습니다.');
+    } finally {
+      setSavingMemoId(null);
+    }
+  };
+
+  // 메모 편집 취소
+  const handleCancelMemo = () => {
+    setEditingMemoId(null);
+    setMemoValue('');
+  };
 
   // 상담 정보 조회 - 상담 진행 페이지로 이동
   const handleViewConsultation = async (student: Student) => {
@@ -239,12 +271,60 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                   })()}
                 </td>
                 <td className="py-3 px-4">
-                  {student.memo ? (
-                    <span className="text-sm text-muted-foreground line-clamp-1" title={student.memo}>
-                      {student.memo}
-                    </span>
+                  {editingMemoId === student.id ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        value={memoValue}
+                        onChange={(e) => setMemoValue(e.target.value)}
+                        className="h-7 text-sm"
+                        placeholder="메모 입력..."
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveMemo(student.id);
+                          if (e.key === 'Escape') handleCancelMemo();
+                        }}
+                        autoFocus
+                      />
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        onClick={() => handleSaveMemo(student.id)}
+                        disabled={savingMemoId === student.id}
+                      >
+                        {savingMemoId === student.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Save className="w-3 h-3 text-green-600" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        onClick={handleCancelMemo}
+                      >
+                        <X className="w-3 h-3 text-red-600" />
+                      </Button>
+                    </div>
                   ) : (
-                    <span className="text-sm text-muted-foreground">-</span>
+                    <div className="flex items-center gap-1 group">
+                      <span
+                        className="text-sm text-muted-foreground line-clamp-1 flex-1 cursor-pointer hover:text-foreground"
+                        title={student.memo || '클릭하여 메모 추가'}
+                        onClick={() => handleEditMemo(student)}
+                      >
+                        {student.memo || '-'}
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleEditMemo(student)}
+                        title="메모 편집"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                    </div>
                   )}
                 </td>
                 <td className="py-3 px-4 text-right">
