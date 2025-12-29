@@ -265,7 +265,7 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
         ) : (
           <>
             {/* 타임슬롯 탭 */}
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 overflow-hidden">
               {TIME_SLOTS.map(({ slot, label, icon: Icon, color, bgColor, darkBgColor }) => {
                 const count = Object.values(selections[slot]).filter((s) => s.selected).length;
                 return (
@@ -273,16 +273,16 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
                     key={slot}
                     onClick={() => setActiveSlot(slot)}
                     className={cn(
-                      'flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg border transition-all',
+                      'flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg border transition-all whitespace-nowrap text-sm',
                       activeSlot === slot
                         ? `${bgColor} ${darkBgColor} border-current ${color} font-medium`
                         : 'bg-muted border-border text-muted-foreground hover:bg-muted/80'
                     )}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
                     <span>{label}</span>
                     {count > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                      <Badge variant="secondary" className="h-4 px-1 text-[10px] shrink-0">
                         {count}
                       </Badge>
                     )}
