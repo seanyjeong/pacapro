@@ -414,7 +414,7 @@ export default function SMSPage() {
             >
               {senderNumbers.map((sender) => (
                 <option key={sender.id} value={sender.id}>
-                  {sender.phone}{sender.label ? ` (${sender.label})` : ''}{sender.is_default ? ' [기본]' : ''}
+                  {sender.phone}{sender.label ? ` (${sender.label})` : ''}{sender.is_default === 1 ? ' [기본]' : ''}
                 </option>
               ))}
             </select>

@@ -918,25 +918,25 @@ export default function NotificationSettingsPage() {
                     <div
                       key={sender.id}
                       className={`flex items-center justify-between p-3 rounded-lg border ${
-                        sender.is_default
+                        sender.is_default === 1
                           ? 'bg-green-50 dark:bg-green-950 border-green-300 dark:border-green-700'
                           : 'bg-background border-border'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        {sender.is_default && (
+                        {sender.is_default === 1 && (
                           <Star className="w-4 h-4 text-green-600 dark:text-green-400 fill-current" />
                         )}
                         <span className="font-medium text-foreground">{sender.phone}</span>
                         {sender.label && (
                           <span className="text-xs text-muted-foreground">({sender.label})</span>
                         )}
-                        {sender.is_default && (
+                        {sender.is_default === 1 && (
                           <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">기본</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        {!sender.is_default && (
+                        {sender.is_default !== 1 && (
                           <button
                             onClick={() => handleSetDefaultSender(sender.id)}
                             className="text-xs px-2 py-1 rounded border border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950"
@@ -1056,25 +1056,25 @@ export default function NotificationSettingsPage() {
                     <div
                       key={sender.id}
                       className={`flex items-center justify-between p-3 rounded-lg border ${
-                        sender.is_default
+                        sender.is_default === 1
                           ? 'bg-purple-50 dark:bg-purple-950 border-purple-300 dark:border-purple-700'
                           : 'bg-background border-border'
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        {sender.is_default && (
+                        {sender.is_default === 1 && (
                           <Star className="w-4 h-4 text-purple-600 dark:text-purple-400 fill-current" />
                         )}
                         <span className="font-medium text-foreground">{sender.phone}</span>
                         {sender.label && (
                           <span className="text-xs text-muted-foreground">({sender.label})</span>
                         )}
-                        {sender.is_default && (
+                        {sender.is_default === 1 && (
                           <span className="text-xs px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">기본</span>
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        {!sender.is_default && (
+                        {sender.is_default !== 1 && (
                           <button
                             onClick={() => handleSetDefaultSender(sender.id)}
                             className="text-xs px-2 py-1 rounded border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950"
