@@ -4,6 +4,7 @@ const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { updateSalaryFromAttendance } = require('../utils/salaryCalculator');
 const { decrypt } = require('../utils/encryption');
+const { validateAttendance } = require('../utils/attendanceValidator');
 
 // 스케줄 결과에서 암호화된 이름 필드 복호화
 function decryptScheduleNames(schedules) {
@@ -334,6 +335,16 @@ router.post('/slot/student', verifyToken, checkPermission('schedules', 'edit'), 
             return res.status(400).json({
                 error: 'Bad Request',
                 message: '이미 해당 수업에 배정된 학생입니다.'
+            });
+        }
+
+        // [보안] 학생이 현재 학원 소속인지 검증
+        const validation = await validateAttendance(student_id, scheduleId);
+        if (!validation.valid) {
+            console.error(`[SECURITY] Blocked: ${validation.error}`);
+            return res.status(403).json({
+                error: 'Forbidden',
+                message: '해당 학생은 이 학원 소속이 아닙니다.'
             });
         }
 
