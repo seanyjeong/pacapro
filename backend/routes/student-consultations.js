@@ -8,6 +8,7 @@ const router = express.Router();
 const pool = require('../config/database');
 const peakPool = require('../config/peak-database');
 const { decrypt } = require('../utils/encryption');
+const { verifyToken } = require('../middleware/auth');
 
 // 암호화 필드 복호화 헬퍼
 const decryptStudentFields = (student) => {
@@ -24,7 +25,7 @@ const decryptStudentFields = (student) => {
  * GET /student-consultations/:studentId
  * 학생별 상담 목록 조회
  */
-router.get('/:studentId', async (req, res) => {
+router.get('/:studentId', verifyToken, async (req, res) => {
   try {
     const { studentId } = req.params;
     const academyId = req.user?.academy_id || 2;
@@ -57,7 +58,7 @@ router.get('/:studentId', async (req, res) => {
  * P-EAK 실기 기록 조회
  * 주의: /:studentId/:id 보다 먼저 정의해야 함!
  */
-router.get('/:studentId/peak-records', async (req, res) => {
+router.get('/:studentId/peak-records', verifyToken, async (req, res) => {
   try {
     const { studentId } = req.params;
     const { type = 'latest', date } = req.query; // type: 'latest' or 'average'
@@ -151,7 +152,7 @@ router.get('/:studentId/peak-records', async (req, res) => {
  * 이전 상담 대비 변화량 조회
  * 주의: /:studentId/:id 보다 먼저 정의해야 함!
  */
-router.get('/:studentId/compare/:id', async (req, res) => {
+router.get('/:studentId/compare/:id', verifyToken, async (req, res) => {
   try {
     const { studentId, id } = req.params;
     const academyId = req.user?.academy_id || 2;
@@ -266,7 +267,7 @@ router.get('/:studentId/compare/:id', async (req, res) => {
  * GET /student-consultations/:studentId/:id
  * 상담 상세 조회
  */
-router.get('/:studentId/:id', async (req, res) => {
+router.get('/:studentId/:id', verifyToken, async (req, res) => {
   try {
     const { studentId, id } = req.params;
     const academyId = req.user?.academy_id || 2;
@@ -300,7 +301,7 @@ router.get('/:studentId/:id', async (req, res) => {
  * POST /student-consultations
  * 상담 생성
  */
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   try {
     const academyId = req.user?.academy_id || 2;
     const createdBy = req.user?.id;
@@ -353,7 +354,7 @@ router.post('/', async (req, res) => {
         target_university_2 || null,
         target_memo || null,
         general_memo || null,
-        createdBy,
+        createdBy || null,
       ]
     );
 
@@ -379,7 +380,7 @@ router.post('/', async (req, res) => {
  * PUT /student-consultations/:id
  * 상담 수정
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const academyId = req.user?.academy_id || 2;
@@ -446,7 +447,7 @@ router.put('/:id', async (req, res) => {
  * DELETE /student-consultations/:id
  * 상담 삭제
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const academyId = req.user?.academy_id || 2;

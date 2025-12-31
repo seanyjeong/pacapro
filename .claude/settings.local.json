@@ -143,7 +143,11 @@
       "Bash(src/components/layout/sidebar.tsx )",
       "Bash(src/components/students/student-consultations.tsx )",
       "Bash(src/components/version-checker.tsx )",
-      "Bash(src/lib/types/consultation.ts)"
+      "Bash(src/lib/types/consultation.ts)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjMsImlhdCI6MTc2NzE5MTYxNCwiZXhwIjoxNzY3Mjc4MDE0fQ.IW7L34ho-RfPUUtb2qfyBSzGeWjKQccWXaQ2p0DnuYE\")",
+      "Bash(__NEW_LINE__ echo \"=== 1. POST /consultations/learning \\(재원생 상담 등록\\) ===\")",
+      "Bash(__NEW_LINE__ echo \"=== 2. GET /student-consultations/1 \\(학생 상담 이력 조회\\) ===\")",
+      "Bash(__NEW_LINE__ echo \"=== 3. GET /student-consultations/1/peak-records \\(P-EAK 실기 기록\\) ===\")"
     ],
     "deny": [],
     "ask": []
