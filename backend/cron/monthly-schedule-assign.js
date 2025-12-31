@@ -11,6 +11,7 @@
  * 3. 시스템 cron: 0 5 0 1 * * cd /path/to/backend && node cron/monthly-schedule-assign.js
  */
 
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const db = require('../config/database');
 
 const DEFAULT_TIME_SLOT = 'evening';
