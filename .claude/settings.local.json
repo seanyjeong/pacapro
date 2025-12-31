@@ -128,7 +128,22 @@
       "Bash(crontab:*)",
       "Bash(node /tmp/check-attendance.js:*)",
       "Bash(node /tmp/fix-data.js:*)",
-      "Bash(node /tmp/cleanup-and-connect.js:*)"
+      "Bash(node /tmp/cleanup-and-connect.js:*)",
+      "Bash(sudo -n systemctl:*)",
+      "Bash(pgrep:*)",
+      "Bash(backend/config/peak-database.js )",
+      "Bash(backend/paca.js )",
+      "Bash(backend/routes/consultations.js )",
+      "Bash(backend/routes/student-consultations.js )",
+      "Bash(package.json )",
+      "Bash(src/app/consultations/[id]/conduct/page.tsx )",
+      "Bash(src/app/consultations/calendar/page.tsx )",
+      "Bash(src/app/settings/page.tsx )",
+      "Bash(src/app/students/[id]/page.tsx )",
+      "Bash(src/components/layout/sidebar.tsx )",
+      "Bash(src/components/students/student-consultations.tsx )",
+      "Bash(src/components/version-checker.tsx )",
+      "Bash(src/lib/types/consultation.ts)"
     ],
     "deny": [],
     "ask": []

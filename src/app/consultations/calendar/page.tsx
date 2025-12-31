@@ -87,10 +87,10 @@ export default function ConsultationCalendarPage() {
   const loadStudents = async () => {
     setStudentsLoading(true);
     try {
-      const response = await apiClient.get('/students', {
+      const response = await apiClient.get<{ students: Array<{ id: number; name: string; grade: string }> }>('/students', {
         params: { status: 'active', limit: 500 }
-      }) as { data: { students: Array<{ id: number; name: string; grade: string }> } };
-      setStudents(response.data.students || []);
+      });
+      setStudents(response.students || []);
     } catch (error) {
       console.error('학생 목록 로드 오류:', error);
     } finally {
