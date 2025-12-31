@@ -125,7 +125,10 @@
       "Bash(node /tmp/stress-test-heavy.js:*)",
       "Bash(node /tmp/stress-extreme.js:*)",
       "Bash(node /tmp/stress-with-data.js:*)",
-      "Bash(crontab:*)"
+      "Bash(crontab:*)",
+      "Bash(node /tmp/check-attendance.js:*)",
+      "Bash(node /tmp/fix-data.js:*)",
+      "Bash(node /tmp/cleanup-and-connect.js:*)"
     ],
     "deny": [],
     "ask": []

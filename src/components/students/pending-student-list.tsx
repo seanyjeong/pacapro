@@ -129,6 +129,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
       student_type: student.student_type || 'exam',
       grade: student.grade || '',
       school: student.school || '',
+      gender: student.gender || '',
     });
     router.push(`/students/new?${params.toString()}`);
   };

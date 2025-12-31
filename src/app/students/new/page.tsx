@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
@@ -8,12 +8,30 @@ import { Button } from '@/components/ui/button';
 import { StudentForm } from '@/components/students/student-form';
 import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
-import type { StudentFormData } from '@/lib/types/student';
+import apiClient from '@/lib/api/client';
+import type { StudentFormData, Student, Gender, StudentType, Grade } from '@/lib/types/student';
 
 function NewStudentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isTrial = searchParams.get('is_trial') === 'true';
+
+  // 미등록관리에서 넘어온 경우 학생 정보 초기값 설정
+  const fromPendingId = searchParams.get('from_pending');
+  const initialData = useMemo(() => {
+    if (!fromPendingId) return undefined;
+
+    return {
+      id: parseInt(fromPendingId),
+      name: searchParams.get('name') || '',
+      phone: searchParams.get('phone') || '',
+      parent_phone: searchParams.get('parent_phone') || '',
+      student_type: (searchParams.get('student_type') || 'exam') as StudentType,
+      grade: (searchParams.get('grade') || '') as Grade,
+      school: searchParams.get('school') || '',
+      gender: (searchParams.get('gender') || undefined) as Gender | undefined,
+    } as Partial<Student>;
+  }, [fromPendingId, searchParams]);
 
   const handleSubmit = async (data: StudentFormData) => {
     try {
@@ -45,6 +63,16 @@ function NewStudentContent() {
         }
       } else {
         toast.success(`${newStudent.name} 학생이 등록되었습니다!`);
+      }
+
+      // 3. 미등록관리에서 온 경우, 기존 pending 학생 삭제
+      if (fromPendingId) {
+        try {
+          await apiClient.delete(`/students/${fromPendingId}`);
+        } catch (deleteError) {
+          console.error('Failed to delete pending student:', deleteError);
+          // 삭제 실패해도 등록은 성공했으므로 진행
+        }
       }
 
       // 학생 목록으로 이동
@@ -80,7 +108,13 @@ function NewStudentContent() {
       </div>
 
       {/* Form */}
-      <StudentForm mode="create" initialIsTrial={isTrial} onSubmit={handleSubmit} onCancel={handleCancel} />
+      <StudentForm
+        mode="create"
+        initialData={initialData as Student | undefined}
+        initialIsTrial={isTrial}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+      />
 
       {/* 안내 */}
       <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
