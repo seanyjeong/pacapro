@@ -33,13 +33,16 @@ import {
   createDirectConsultation, convertToTrialStudent, getBookedTimes,
   getConsultationSettings
 } from '@/lib/api/consultations';
-import type { WeeklyHour } from '@/lib/types/consultation';
+import type { WeeklyHour, LearningType } from '@/lib/types/consultation';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 import {
   CONSULTATION_TYPE_LABELS,
   CONSULTATION_STATUS_LABELS,
-  CONSULTATION_STATUS_COLORS
+  CONSULTATION_STATUS_COLORS,
+  LEARNING_TYPE_LABELS
 } from '@/lib/types/consultation';
+import apiClient from '@/lib/api/client';
+import { UserCheck, GraduationCap } from 'lucide-react';
 
 export default function ConsultationsPage() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -117,6 +120,22 @@ export default function ConsultationsPage() {
   const [registering, setRegistering] = useState(false);
   const [bookedTimes, setBookedTimes] = useState<string[]>([]);
   const [loadingBookedTimes, setLoadingBookedTimes] = useState(false);
+
+  // 유형 선택 모달 (신규/재원생)
+  const [typeSelectOpen, setTypeSelectOpen] = useState(false);
+
+  // 재원생 상담 등록 모달
+  const [learningModalOpen, setLearningModalOpen] = useState(false);
+  const [students, setStudents] = useState<Array<{ id: number; name: string; grade: string }>>([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [learningForm, setLearningForm] = useState({
+    studentId: '',
+    preferredDate: '',
+    preferredTime: '10:00',
+    learningType: 'regular' as LearningType,
+    adminNotes: ''
+  });
+  const [submittingLearning, setSubmittingLearning] = useState(false);
 
   // 운영 시간 설정
   const [weeklyHours, setWeeklyHours] = useState<WeeklyHour[]>([]);
@@ -440,6 +459,55 @@ export default function ConsultationsPage() {
     }
   };
 
+  // 재원생 목록 로드
+  const loadStudents = async () => {
+    setStudentsLoading(true);
+    try {
+      const response = await apiClient.get<{ students: Array<{ id: number; name: string; grade: string }> }>('/students', {
+        params: { status: 'active', limit: 500 }
+      });
+      setStudents(response.students || []);
+    } catch (error) {
+      console.error('학생 목록 로드 오류:', error);
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  // 재원생 상담 등록 제출
+  const handleLearningSubmit = async () => {
+    if (!learningForm.studentId || !learningForm.preferredDate || !learningForm.preferredTime) {
+      toast.error('학생, 날짜, 시간을 모두 선택해주세요.');
+      return;
+    }
+
+    setSubmittingLearning(true);
+    try {
+      await apiClient.post('/consultations/learning', {
+        studentId: parseInt(learningForm.studentId),
+        preferredDate: learningForm.preferredDate,
+        preferredTime: learningForm.preferredTime,
+        learningType: learningForm.learningType,
+        adminNotes: learningForm.adminNotes
+      });
+      toast.success('재원생 상담이 등록되었습니다.');
+      setLearningModalOpen(false);
+      setLearningForm({
+        studentId: '',
+        preferredDate: '',
+        preferredTime: '10:00',
+        learningType: 'regular',
+        adminNotes: ''
+      });
+      loadData();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      toast.error(err.response?.data?.error || '상담 등록에 실패했습니다.');
+    } finally {
+      setSubmittingLearning(false);
+    }
+  };
+
   // 체험 학생 등록
   const handleConvertToTrial = async () => {
     if (!selectedConsultation) return;
@@ -510,7 +578,7 @@ export default function ConsultationsPage() {
           <p className="text-muted-foreground">상담 신청 내역을 관리합니다.</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setDirectRegisterOpen(true)} className="gap-2">
+          <Button onClick={() => setTypeSelectOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
             직접 등록
           </Button>
@@ -1084,7 +1152,52 @@ export default function ConsultationsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 직접 등록 모달 */}
+      {/* 유형 선택 모달 (신규/재원생) */}
+      <Dialog open={typeSelectOpen} onOpenChange={setTypeSelectOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>상담 유형 선택</DialogTitle>
+            <DialogDescription>
+              등록할 상담 유형을 선택하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <button
+              onClick={() => {
+                setTypeSelectOpen(false);
+                setDirectRegisterOpen(true);
+              }}
+              className="flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-all"
+            >
+              <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                <GraduationCap className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="text-center">
+                <div className="font-semibold">신규 상담</div>
+                <div className="text-xs text-muted-foreground">신규 학생 상담</div>
+              </div>
+            </button>
+            <button
+              onClick={() => {
+                setTypeSelectOpen(false);
+                setLearningModalOpen(true);
+                loadStudents();
+              }}
+              className="flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-all"
+            >
+              <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center">
+                <UserCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div className="text-center">
+                <div className="font-semibold">재원생 상담</div>
+                <div className="text-xs text-muted-foreground">기존 학생 상담</div>
+              </div>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* 직접 등록 모달 (신규 상담) */}
       <Dialog open={directRegisterOpen} onOpenChange={setDirectRegisterOpen}>
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
@@ -1577,6 +1690,114 @@ export default function ConsultationsPage() {
             <Button onClick={handleConvertToTrial} disabled={convertingToTrial}>
               {convertingToTrial ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               체험 학생 등록
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 재원생 상담 등록 모달 */}
+      <Dialog open={learningModalOpen} onOpenChange={setLearningModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-emerald-600" />
+              재원생 상담 등록
+            </DialogTitle>
+            <DialogDescription>
+              기존 재원생의 상담 일정을 등록합니다.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* 학생 선택 */}
+            <div>
+              <Label>학생 선택 *</Label>
+              {studentsLoading ? (
+                <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  학생 목록 로딩 중...
+                </div>
+              ) : (
+                <Select
+                  value={learningForm.studentId}
+                  onValueChange={(v) => setLearningForm({ ...learningForm, studentId: v })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="학생을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {students.map((s) => (
+                      <SelectItem key={s.id} value={s.id.toString()}>
+                        {s.name} ({s.grade})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* 날짜/시간 */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>상담 날짜 *</Label>
+                <Input
+                  type="date"
+                  value={learningForm.preferredDate}
+                  onChange={(e) => setLearningForm({ ...learningForm, preferredDate: e.target.value })}
+                  min={format(new Date(), 'yyyy-MM-dd')}
+                />
+              </div>
+              <div>
+                <Label>상담 시간 *</Label>
+                <Input
+                  type="time"
+                  value={learningForm.preferredTime}
+                  onChange={(e) => setLearningForm({ ...learningForm, preferredTime: e.target.value })}
+                />
+              </div>
+            </div>
+
+            {/* 상담 유형 */}
+            <div>
+              <Label>상담 유형</Label>
+              <Select
+                value={learningForm.learningType}
+                onValueChange={(v) => setLearningForm({ ...learningForm, learningType: v as LearningType })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(LEARNING_TYPE_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>{label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 메모 */}
+            <div>
+              <Label>메모</Label>
+              <Textarea
+                value={learningForm.adminNotes}
+                onChange={(e) => setLearningForm({ ...learningForm, adminNotes: e.target.value })}
+                placeholder="상담 관련 메모 (선택)"
+                rows={2}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLearningModalOpen(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={handleLearningSubmit}
+              disabled={submittingLearning}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {submittingLearning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              등록
             </Button>
           </DialogFooter>
         </DialogContent>
