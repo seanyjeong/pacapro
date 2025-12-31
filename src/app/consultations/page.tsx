@@ -1154,14 +1154,14 @@ export default function ConsultationsPage() {
 
       {/* 유형 선택 모달 (신규/재원생) */}
       <Dialog open={typeSelectOpen} onOpenChange={setTypeSelectOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="px-6 pt-6">
             <DialogTitle>상담 유형 선택</DialogTitle>
             <DialogDescription>
               등록할 상담 유형을 선택하세요.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="grid grid-cols-2 gap-4 px-6 py-6">
             <button
               onClick={() => {
                 setTypeSelectOpen(false);
@@ -1698,7 +1698,7 @@ export default function ConsultationsPage() {
       {/* 재원생 상담 등록 모달 */}
       <Dialog open={learningModalOpen} onOpenChange={setLearningModalOpen}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
+          <DialogHeader className="px-6 pt-6">
             <DialogTitle className="flex items-center gap-2">
               <UserCheck className="h-5 w-5 text-emerald-600" />
               재원생 상담 등록
@@ -1708,7 +1708,7 @@ export default function ConsultationsPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 px-6 py-4">
             {/* 학생 선택 */}
             <div>
               <Label>학생 선택 *</Label>
@@ -1787,7 +1787,7 @@ export default function ConsultationsPage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="px-6 pb-6">
             <Button variant="outline" onClick={() => setLearningModalOpen(false)}>
               취소
             </Button>
