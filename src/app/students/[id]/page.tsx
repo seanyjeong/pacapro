@@ -10,6 +10,7 @@ import { StudentCard } from '@/components/students/student-card';
 import { StudentPerformanceComponent } from '@/components/students/student-performance';
 import { StudentPaymentsComponent } from '@/components/students/student-payments';
 import { StudentSeasonsComponent } from '@/components/students/student-seasons';
+import { StudentConsultationsComponent } from '@/components/students/student-consultations';
 import { useStudent } from '@/hooks/use-students';
 import { studentsAPI } from '@/lib/api/students';
 
@@ -18,7 +19,7 @@ export default function StudentDetailPage() {
   const params = useParams();
   const studentId = parseInt(params.id as string);
 
-  const [activeTab, setActiveTab] = useState<'performance' | 'payments' | 'seasons'>('performance');
+  const [activeTab, setActiveTab] = useState<'performance' | 'payments' | 'seasons' | 'consultations'>('performance');
 
   // useStudent 훅 사용
   const { student, performances, payments, loading, error, reload } = useStudent(studentId);
@@ -240,6 +241,17 @@ export default function StudentDetailPage() {
               시즌 등록
             </button>
           )}
+          {/* 상담 기록 탭 */}
+          <button
+            onClick={() => setActiveTab('consultations')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'consultations'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            상담 기록
+          </button>
         </nav>
       </div>
 
@@ -261,6 +273,9 @@ export default function StudentDetailPage() {
         )}
         {activeTab === 'seasons' && (
           <StudentSeasonsComponent studentId={studentId} studentType={student.student_type} />
+        )}
+        {activeTab === 'consultations' && (
+          <StudentConsultationsComponent studentId={studentId} studentName={student.name} />
         )}
       </div>
     </div>

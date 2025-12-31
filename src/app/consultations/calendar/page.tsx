@@ -18,12 +18,18 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 
 import { getConsultations } from '@/lib/api/consultations';
-import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
+import type { Consultation, ConsultationStatus, LearningType } from '@/lib/types/consultation';
 import {
   CONSULTATION_TYPE_LABELS,
   CONSULTATION_STATUS_LABELS,
-  CONSULTATION_STATUS_COLORS
+  CONSULTATION_STATUS_COLORS,
+  LEARNING_TYPE_LABELS
 } from '@/lib/types/consultation';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import apiClient from '@/lib/api/client';
+import { Plus, UserCheck } from 'lucide-react';
 
 export default function ConsultationCalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -36,6 +42,19 @@ export default function ConsultationCalendarPage() {
   // 상담 상세 모달
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+
+  // 재원생 상담 등록 모달
+  const [learningModalOpen, setLearningModalOpen] = useState(false);
+  const [learningModalDate, setLearningModalDate] = useState<Date | null>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [learningForm, setLearningForm] = useState({
+    studentId: '',
+    preferredTime: '10:00',
+    learningType: 'regular' as LearningType,
+    adminNotes: ''
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   // 데이터 로드
   const loadData = async () => {
@@ -63,6 +82,63 @@ export default function ConsultationCalendarPage() {
   useEffect(() => {
     loadData();
   }, [currentMonth]);
+
+  // 재원생 목록 로드
+  const loadStudents = async () => {
+    setStudentsLoading(true);
+    try {
+      const response = await apiClient.get('/students', {
+        params: { status: 'active', limit: 500 }
+      }) as { data: { students: Array<{ id: number; name: string; grade: string }> } };
+      setStudents(response.data.students || []);
+    } catch (error) {
+      console.error('학생 목록 로드 오류:', error);
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  // 재원생 상담 등록 모달 열기
+  const openLearningModal = (date: Date) => {
+    setLearningModalDate(date);
+    setLearningForm({
+      studentId: '',
+      preferredTime: '10:00',
+      learningType: 'regular',
+      adminNotes: ''
+    });
+    setLearningModalOpen(true);
+    if (students.length === 0) {
+      loadStudents();
+    }
+  };
+
+  // 재원생 상담 등록 제출
+  const handleLearningSubmit = async () => {
+    if (!learningForm.studentId || !learningModalDate) {
+      toast.error('학생을 선택해주세요.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await apiClient.post('/consultations/learning', {
+        studentId: parseInt(learningForm.studentId),
+        preferredDate: format(learningModalDate, 'yyyy-MM-dd'),
+        preferredTime: learningForm.preferredTime,
+        learningType: learningForm.learningType,
+        adminNotes: learningForm.adminNotes || null
+      });
+
+      toast.success('재원생 상담이 등록되었습니다.');
+      setLearningModalOpen(false);
+      loadData();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || '상담 등록에 실패했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   // 날짜별 상담 그룹화
   const getConsultationsForDate = (date: Date): Consultation[] => {
@@ -103,8 +179,20 @@ export default function ConsultationCalendarPage() {
     </Badge>
   );
 
-  // 상태별 색상 점
-  const getStatusDot = (status: ConsultationStatus) => {
+  // 상태별 색상 점 (신규 상담)
+  const getStatusDot = (status: ConsultationStatus, isLearning: boolean = false) => {
+    if (isLearning) {
+      // 재원생 상담은 초록 계열
+      const colors: Record<ConsultationStatus, string> = {
+        pending: 'bg-emerald-300',
+        confirmed: 'bg-emerald-500',
+        completed: 'bg-emerald-700',
+        cancelled: 'bg-gray-400',
+        no_show: 'bg-red-500'
+      };
+      return colors[status] || 'bg-emerald-400';
+    }
+    // 신규 상담은 파랑 계열
     const colors: Record<ConsultationStatus, string> = {
       pending: 'bg-yellow-400',
       confirmed: 'bg-blue-500',
@@ -113,6 +201,14 @@ export default function ConsultationCalendarPage() {
       no_show: 'bg-red-500'
     };
     return colors[status] || 'bg-gray-400';
+  };
+
+  // 상담 유형 표시 (재원생/신규)
+  const getConsultationTypeIcon = (c: Consultation) => {
+    if (c.consultation_type === 'learning') {
+      return <UserCheck className="h-3 w-3 text-emerald-600" />;
+    }
+    return null;
   };
 
   return (
@@ -196,34 +292,49 @@ export default function ConsultationCalendarPage() {
                   const dayConsultations = getConsultationsForDate(date);
                   const isToday = isSameDay(date, new Date());
                   const dayOfWeek = date.getDay();
+                  const newCount = dayConsultations.filter(c => c.consultation_type !== 'learning').length;
+                  const learningCount = dayConsultations.filter(c => c.consultation_type === 'learning').length;
 
                   return (
                     <div
                       key={date.toISOString()}
-                      className={`min-h-[100px] border rounded-lg p-1 cursor-pointer transition-colors ${
+                      className={`min-h-[100px] border rounded-lg p-1 transition-colors group relative ${
                         dayConsultations.length > 0 ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       } ${isToday ? 'bg-blue-50 border-blue-300' : 'border-gray-200'}`}
-                      onClick={() => handleDateClick(date)}
                     >
-                      <div className={`text-sm font-medium mb-1 ${
-                        dayOfWeek === 0 ? 'text-red-500' :
-                        dayOfWeek === 6 ? 'text-blue-500' :
-                        'text-gray-700'
-                      }`}>
-                        {format(date, 'd')}
+                      <div className="flex items-center justify-between mb-1">
+                        <div
+                          className={`text-sm font-medium cursor-pointer ${
+                            dayOfWeek === 0 ? 'text-red-500' :
+                            dayOfWeek === 6 ? 'text-blue-500' :
+                            'text-gray-700'
+                          }`}
+                          onClick={() => handleDateClick(date)}
+                        >
+                          {format(date, 'd')}
+                        </div>
+                        {/* 재원생 상담 추가 버튼 */}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openLearningModal(date); }}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-emerald-100"
+                          title="재원생 상담 등록"
+                        >
+                          <Plus className="h-3.5 w-3.5 text-emerald-600" />
+                        </button>
                       </div>
 
                       {/* 상담 목록 */}
-                      <div className="space-y-1">
+                      <div className="space-y-1 cursor-pointer" onClick={() => handleDateClick(date)}>
                         {dayConsultations.slice(0, 3).map((c) => {
-                          // 완료/취소/노쇼는 줄그음 표시
                           const isDone = ['completed', 'cancelled', 'no_show'].includes(c.status);
+                          const isLearning = c.consultation_type === 'learning';
                           return (
                             <div
                               key={c.id}
                               className={`flex items-center gap-1 text-xs truncate ${isDone ? 'opacity-60' : ''}`}
                             >
-                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusDot(c.status)}`} />
+                              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusDot(c.status, isLearning)}`} />
+                              {isLearning && <UserCheck className="h-2.5 w-2.5 text-emerald-600 flex-shrink-0" />}
                               <span className={`truncate ${isDone ? 'line-through text-gray-400' : ''}`}>
                                 {c.student_name}
                               </span>
@@ -242,26 +353,45 @@ export default function ConsultationCalendarPage() {
               </div>
 
               {/* 범례 */}
-              <div className="flex items-center gap-4 mt-4 pt-4 border-t justify-center">
-                <div className="flex items-center gap-1 text-xs">
-                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                  <span>대기중</span>
+              <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t justify-center">
+                <div className="flex items-center gap-3 text-xs border-r pr-4">
+                  <span className="text-gray-500 font-medium">신규:</span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <span>대기</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+                    <span>확정</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs">
-                  <div className="w-3 h-3 rounded-full bg-blue-500" />
-                  <span>확정</span>
+                <div className="flex items-center gap-3 text-xs border-r pr-4">
+                  <span className="text-emerald-600 font-medium flex items-center gap-1">
+                    <UserCheck className="h-3 w-3" />
+                    재원생:
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-emerald-300" />
+                    <span>대기</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-emerald-500" />
+                    <span>확정</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-xs">
-                  <div className="w-3 h-3 rounded-full bg-green-500" />
-                  <span>완료</span>
-                </div>
-                <div className="flex items-center gap-1 text-xs">
-                  <div className="w-3 h-3 rounded-full bg-gray-400" />
-                  <span>취소</span>
-                </div>
-                <div className="flex items-center gap-1 text-xs">
-                  <div className="w-3 h-3 rounded-full bg-red-500" />
-                  <span>노쇼</span>
+                <div className="flex items-center gap-3 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                    <span>완료</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-gray-400" />
+                    <span>취소</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <span>노쇼</span>
+                  </div>
                 </div>
               </div>
             </>
@@ -311,22 +441,33 @@ export default function ConsultationCalendarPage() {
                     <div className="space-y-2 pl-2">
                       {consultations.map((c) => {
                         const isDone = ['completed', 'cancelled', 'no_show'].includes(c.status);
+                        const isLearning = c.consultation_type === 'learning';
                         return (
                           <div
                             key={c.id}
                             onClick={() => openDetailModal(c)}
                             className="cursor-pointer"
                           >
-                            <Card className={`hover:shadow-md transition-all cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 ${isDone ? 'opacity-60' : ''}`}>
+                            <Card className={`hover:shadow-md transition-all cursor-pointer ${
+                              isLearning
+                                ? 'hover:border-emerald-300 hover:bg-emerald-50/30 border-l-2 border-l-emerald-500'
+                                : 'hover:border-blue-300 hover:bg-blue-50/30'
+                            } ${isDone ? 'opacity-60' : ''}`}>
                               <CardContent className="p-4">
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                    <div className={`w-2.5 h-2.5 rounded-full ${getStatusDot(c.status)}`} />
+                                    <div className={`w-2.5 h-2.5 rounded-full ${getStatusDot(c.status, isLearning)}`} />
+                                    {isLearning && <UserCheck className="h-3.5 w-3.5 text-emerald-600" />}
                                     <span className={`font-medium ${isDone ? 'line-through text-gray-400' : 'text-gray-900'}`}>
                                       {c.student_name}
                                     </span>
                                     <span className="text-sm text-gray-500">{c.student_grade}</span>
                                     <StatusBadge status={c.status} />
+                                    {isLearning && c.learning_type && (
+                                      <Badge variant="outline" className="text-emerald-700 border-emerald-300 text-xs">
+                                        {LEARNING_TYPE_LABELS[c.learning_type]}
+                                      </Badge>
+                                    )}
                                   </div>
                                   <span className="text-sm text-gray-500 flex items-center gap-1.5">
                                     <Phone className="h-3.5 w-3.5" />
@@ -361,11 +502,16 @@ export default function ConsultationCalendarPage() {
           {selectedConsultation && (
             <div className="space-y-6 px-6 py-4">
               {/* 상태 */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <StatusBadge status={selectedConsultation.status} />
-                <Badge variant="outline">
+                <Badge variant="outline" className={selectedConsultation.consultation_type === 'learning' ? 'text-emerald-700 border-emerald-300' : ''}>
                   {CONSULTATION_TYPE_LABELS[selectedConsultation.consultation_type]}
                 </Badge>
+                {selectedConsultation.consultation_type === 'learning' && selectedConsultation.learning_type && (
+                  <Badge className="bg-emerald-100 text-emerald-800">
+                    {LEARNING_TYPE_LABELS[selectedConsultation.learning_type]}
+                  </Badge>
+                )}
                 {selectedConsultation.linked_student_name && !selectedConsultation.linked_student_is_trial && (
                   <Badge variant="secondary" className="gap-1">
                     <Link2 className="h-3 w-3" />
@@ -551,6 +697,125 @@ export default function ConsultationCalendarPage() {
               목록으로
             </Button>
             <Button onClick={() => setDetailModalOpen(false)}>닫기</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 재원생 상담 등록 모달 */}
+      <Dialog open={learningModalOpen} onOpenChange={setLearningModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCheck className="h-5 w-5 text-emerald-600" />
+              재원생 상담 등록
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="py-4 px-6 space-y-4">
+            {/* 날짜 표시 */}
+            <div className="bg-emerald-50 rounded-lg p-3">
+              <p className="text-sm text-emerald-800 flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4" />
+                {learningModalDate && format(learningModalDate, 'yyyy년 M월 d일 (EEE)', { locale: ko })}
+              </p>
+            </div>
+
+            {/* 학생 선택 */}
+            <div className="space-y-2">
+              <Label>학생 선택 *</Label>
+              {studentsLoading ? (
+                <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  학생 목록 로딩중...
+                </div>
+              ) : (
+                <Select
+                  value={learningForm.studentId}
+                  onValueChange={(v) => setLearningForm(prev => ({ ...prev, studentId: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="학생을 선택하세요" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {students.map((s) => (
+                      <SelectItem key={s.id} value={s.id.toString()}>
+                        {s.name} ({s.grade})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* 상담 시간 */}
+            <div className="space-y-2">
+              <Label>상담 시간 *</Label>
+              <Select
+                value={learningForm.preferredTime}
+                onValueChange={(v) => setLearningForm(prev => ({ ...prev, preferredTime: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: 12 }, (_, i) => i + 9).map((hour) => (
+                    <SelectItem key={hour} value={`${hour.toString().padStart(2, '0')}:00`}>
+                      {hour.toString().padStart(2, '0')}:00
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 상담 유형 */}
+            <div className="space-y-2">
+              <Label>상담 유형 *</Label>
+              <Select
+                value={learningForm.learningType}
+                onValueChange={(v) => setLearningForm(prev => ({ ...prev, learningType: v as LearningType }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(LEARNING_TYPE_LABELS).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* 메모 */}
+            <div className="space-y-2">
+              <Label>메모 (선택)</Label>
+              <Input
+                placeholder="상담 메모를 입력하세요"
+                value={learningForm.adminNotes}
+                onChange={(e) => setLearningForm(prev => ({ ...prev, adminNotes: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLearningModalOpen(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={handleLearningSubmit}
+              disabled={submitting || !learningForm.studentId}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  등록중...
+                </>
+              ) : (
+                '등록'
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

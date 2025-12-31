@@ -25,8 +25,8 @@ import Link from 'next/link';
 
 import apiClient from '@/lib/api/client';
 import { convertToTrialStudent, convertToPendingStudent } from '@/lib/api/consultations';
-import type { Consultation, ChecklistItem, ChecklistTemplate } from '@/lib/types/consultation';
-import { CONSULTATION_STATUS_LABELS, CONSULTATION_STATUS_COLORS } from '@/lib/types/consultation';
+import type { Consultation, ChecklistItem, ChecklistTemplate, LearningType } from '@/lib/types/consultation';
+import { CONSULTATION_STATUS_LABELS, CONSULTATION_STATUS_COLORS, LEARNING_TYPE_LABELS } from '@/lib/types/consultation';
 
 // 기본 체크리스트 템플릿 (체대입시 특화)
 const DEFAULT_CHECKLIST_TEMPLATE: ChecklistTemplate[] = [
@@ -91,6 +91,44 @@ export default function ConductPage({ params }: PageProps) {
   const [pendingMemo, setPendingMemo] = useState('');
   const [convertingToPending, setConvertingToPending] = useState(false);
 
+  // 재원생 상담용 상태
+  const [linkedStudent, setLinkedStudent] = useState<{
+    id: number;
+    name: string;
+    grade: string;
+    school?: string;
+    student_type?: string;
+  } | null>(null);
+  const [peakRecords, setPeakRecords] = useState<Record<string, {
+    value: number;
+    unit: string;
+    direction: string;
+    measured_at: string;
+  }>>({});
+  const [peakLoading, setPeakLoading] = useState(false);
+  const [learningForm, setLearningForm] = useState({
+    admissionType: 'early' as 'early' | 'regular',
+    schoolGradeAvg: '' as string,
+    mockTestScores: {
+      march: { korean: '', math: '', english: '', exploration1: '', exploration2: '' },
+      june: { korean: '', math: '', english: '', exploration1: '', exploration2: '' },
+      september: { korean: '', math: '', english: '', exploration1: '', exploration2: '' }
+    } as Record<string, Record<string, string>>,
+    academicMemo: '',
+    physicalRecordType: 'latest' as 'latest' | 'average',
+    physicalMemo: '',
+    targetUniversity1: '',
+    targetUniversity2: '',
+    targetMemo: '',
+    generalMemo: ''
+  });
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
+    '학업': true,
+    '실기': true,
+    '목표': true,
+    '기타': true
+  });
+
   // 상담 정보 로드
   useEffect(() => {
     const loadConsultation = async () => {
@@ -99,28 +137,44 @@ export default function ConductPage({ params }: PageProps) {
         setConsultation(data);
         setConsultationMemo(data.consultation_memo || '');
 
-        // 체크리스트 설정 로드 또는 기본값 사용
-        if (data.checklist && data.checklist.length > 0) {
-          setChecklist(data.checklist);
-        } else {
-          // 설정에서 템플릿 로드 시도
+        // 재원생 상담인 경우 학생 정보 및 P-EAK 기록 로드
+        if (data.consultation_type === 'learning' && data.linked_student_id) {
+          // 학생 정보 로드
           try {
-            const settingsResponse = await apiClient.get<{ settings: { checklist_template?: ChecklistTemplate[] } }>('/consultations/settings/info');
-            const template = settingsResponse.settings?.checklist_template || DEFAULT_CHECKLIST_TEMPLATE;
-            setChecklist(template.map(item => ({
-              ...item,
-              checked: false,
-              input: item.input ? { ...item.input, value: item.input.value || '' } : undefined,
-              inputs: item.inputs?.map(inp => ({ ...inp, value: inp.value || '' }))
-            })));
-          } catch {
-            // 기본 템플릿 사용
-            setChecklist(DEFAULT_CHECKLIST_TEMPLATE.map(item => ({
-              ...item,
-              checked: false,
-              input: item.input ? { ...item.input, value: '' } : undefined,
-              inputs: item.inputs?.map(inp => ({ ...inp, value: '' }))
-            })));
+            const studentData = await apiClient.get<{ student: typeof linkedStudent }>(`/students/${data.linked_student_id}`);
+            setLinkedStudent(studentData.student);
+          } catch (err) {
+            console.error('학생 정보 로드 오류:', err);
+          }
+
+          // P-EAK 기록 로드
+          loadPeakRecords(data.linked_student_id);
+        }
+
+        // 체크리스트 설정 로드 또는 기본값 사용 (신규 상담인 경우에만)
+        if (data.consultation_type !== 'learning') {
+          if (data.checklist && data.checklist.length > 0) {
+            setChecklist(data.checklist);
+          } else {
+            // 설정에서 템플릿 로드 시도
+            try {
+              const settingsResponse = await apiClient.get<{ settings: { checklist_template?: ChecklistTemplate[] } }>('/consultations/settings/info');
+              const template = settingsResponse.settings?.checklist_template || DEFAULT_CHECKLIST_TEMPLATE;
+              setChecklist(template.map(item => ({
+                ...item,
+                checked: false,
+                input: item.input ? { ...item.input, value: item.input.value || '' } : undefined,
+                inputs: item.inputs?.map(inp => ({ ...inp, value: inp.value || '' }))
+              })));
+            } catch {
+              // 기본 템플릿 사용
+              setChecklist(DEFAULT_CHECKLIST_TEMPLATE.map(item => ({
+                ...item,
+                checked: false,
+                input: item.input ? { ...item.input, value: '' } : undefined,
+                inputs: item.inputs?.map(inp => ({ ...inp, value: '' }))
+              })));
+            }
           }
         }
       } catch (error) {
@@ -134,6 +188,26 @@ export default function ConductPage({ params }: PageProps) {
 
     loadConsultation();
   }, [resolvedParams.id, router, backUrl]);
+
+  // P-EAK 기록 로드
+  const loadPeakRecords = async (studentId: number, type: 'latest' | 'average' = 'latest') => {
+    setPeakLoading(true);
+    try {
+      const response = await apiClient.get<{
+        found: boolean;
+        records: typeof peakRecords;
+      }>(`/student-consultations/${studentId}/peak-records`, {
+        params: { type }
+      });
+      if (response.found) {
+        setPeakRecords(response.records);
+      }
+    } catch (err) {
+      console.error('P-EAK 기록 로드 오류:', err);
+    } finally {
+      setPeakLoading(false);
+    }
+  };
 
   // 체크리스트 체크 토글
   const toggleCheck = (itemId: number) => {
@@ -169,20 +243,53 @@ export default function ConductPage({ params }: PageProps) {
     }));
   };
 
+  // 섹션 토글 (재원생 상담용)
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
   // 저장
   const handleSave = async () => {
     if (!consultation) return;
 
     setSaving(true);
     try {
-      await apiClient.put(`/consultations/${consultation.id}`, {
-        checklist,
-        consultationMemo,
-        status: 'completed' // 상담 완료 상태로 변경
-      });
-      // 상태 업데이트
-      setConsultation({ ...consultation, status: 'completed' });
-      toast.success('상담이 완료 처리되었습니다.');
+      if (consultation.consultation_type === 'learning' && consultation.linked_student_id) {
+        // 재원생 상담 저장 - student_consultations 테이블에 저장
+        await apiClient.post('/student-consultations', {
+          student_id: consultation.linked_student_id,
+          consultation_id: consultation.id,
+          consultation_date: consultation.preferred_date,
+          consultation_type: consultation.learning_type || 'regular',
+          admission_type: learningForm.admissionType,
+          school_grade_avg: learningForm.schoolGradeAvg ? parseFloat(learningForm.schoolGradeAvg) : null,
+          mock_test_scores: learningForm.mockTestScores,
+          academic_memo: learningForm.academicMemo,
+          physical_record_type: learningForm.physicalRecordType,
+          physical_records: peakRecords,
+          physical_memo: learningForm.physicalMemo,
+          target_university_1: learningForm.targetUniversity1,
+          target_university_2: learningForm.targetUniversity2,
+          target_memo: learningForm.targetMemo,
+          general_memo: learningForm.generalMemo
+        });
+        toast.success('상담 기록이 저장되었습니다.');
+        // 상담 상태도 업데이트
+        setConsultation({ ...consultation, status: 'completed' });
+      } else {
+        // 신규 상담 저장
+        await apiClient.put(`/consultations/${consultation.id}`, {
+          checklist,
+          consultationMemo,
+          status: 'completed' // 상담 완료 상태로 변경
+        });
+        // 상태 업데이트
+        setConsultation({ ...consultation, status: 'completed' });
+        toast.success('상담이 완료 처리되었습니다.');
+      }
     } catch (error) {
       console.error('저장 오류:', error);
       toast.error('저장에 실패했습니다.');
@@ -336,8 +443,13 @@ export default function ConductPage({ params }: PageProps) {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-xl font-bold text-foreground">
-                  상담 진행: {consultation.student_name} ({consultation.student_grade})
+                <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+                  {consultation.consultation_type === 'learning' ? '재원생 상담' : '상담 진행'}: {consultation.student_name} ({consultation.student_grade})
+                  {consultation.consultation_type === 'learning' && consultation.learning_type && (
+                    <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                      {LEARNING_TYPE_LABELS[consultation.learning_type]}
+                    </Badge>
+                  )}
                 </h1>
                 <p className="text-sm text-muted-foreground">
                   {format(parseISO(consultation.preferred_date), 'yyyy년 M월 d일 (EEEE)', { locale: ko })} {consultation.preferred_time}
@@ -359,25 +471,338 @@ export default function ConductPage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* 진행률 */}
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-muted-foreground">진행률</span>
-              <span className="font-medium">{progressPercent}%</span>
+          {/* 진행률 - 신규 상담에만 표시 */}
+          {consultation.consultation_type !== 'learning' && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-sm mb-1">
+                <span className="text-muted-foreground">진행률</span>
+                <span className="font-medium">{progressPercent}%</span>
+              </div>
+              <div className="w-full bg-muted rounded-full h-2">
+                <div
+                  className="bg-primary-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-primary-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* 본문 */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 재원생 상담 UI */}
+        {consultation.consultation_type === 'learning' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 왼쪽 컬럼: 학업 + 목표 */}
+            <div className="space-y-6">
+              {/* 학업 섹션 */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <button
+                    onClick={() => toggleSection('학업')}
+                    className="w-full flex items-center justify-between"
+                  >
+                    <CardTitle className="text-lg flex items-center">
+                      <GraduationCap className="h-5 w-5 mr-2 text-blue-600" />
+                      학업
+                    </CardTitle>
+                    {expandedSections['학업'] ? (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </button>
+                </CardHeader>
+                {expandedSections['학업'] && (
+                  <CardContent className="space-y-4">
+                    {/* 입시 유형 & 내신 */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">입시 유형</Label>
+                        <Select
+                          value={learningForm.admissionType}
+                          onValueChange={(v) => setLearningForm({ ...learningForm, admissionType: v as 'early' | 'regular' })}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <span>{learningForm.admissionType === 'early' ? '수시' : '정시'}</span>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="early">수시</SelectItem>
+                            <SelectItem value="regular">정시</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">내신 평균</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="1"
+                          max="9"
+                          placeholder="예: 3.5"
+                          value={learningForm.schoolGradeAvg}
+                          onChange={(e) => setLearningForm({ ...learningForm, schoolGradeAvg: e.target.value })}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    {/* 모의고사 성적 표 */}
+                    <div>
+                      <Label className="text-sm text-muted-foreground mb-2 block">모의고사 성적 (등급)</Label>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm border border-border rounded-lg">
+                          <thead>
+                            <tr className="bg-muted">
+                              <th className="p-2 text-left font-medium">회차</th>
+                              <th className="p-2 text-center font-medium">국어</th>
+                              <th className="p-2 text-center font-medium">수학</th>
+                              <th className="p-2 text-center font-medium">영어</th>
+                              <th className="p-2 text-center font-medium">탐구1</th>
+                              <th className="p-2 text-center font-medium">탐구2</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(['march', 'june', 'september'] as const).map((month) => (
+                              <tr key={month} className="border-t border-border">
+                                <td className="p-2 font-medium">
+                                  {month === 'march' ? '3월' : month === 'june' ? '6월' : '9월'}
+                                </td>
+                                {(['korean', 'math', 'english', 'exploration1', 'exploration2'] as const).map((subject) => (
+                                  <td key={subject} className="p-1">
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      max="9"
+                                      className="h-8 text-center w-12"
+                                      value={learningForm.mockTestScores[month]?.[subject] || ''}
+                                      onChange={(e) => {
+                                        setLearningForm({
+                                          ...learningForm,
+                                          mockTestScores: {
+                                            ...learningForm.mockTestScores,
+                                            [month]: {
+                                              ...learningForm.mockTestScores[month],
+                                              [subject]: e.target.value
+                                            }
+                                          }
+                                        });
+                                      }}
+                                    />
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* 학업 메모 */}
+                    <div>
+                      <Label className="text-sm text-muted-foreground">학업 메모</Label>
+                      <Textarea
+                        placeholder="학업 관련 메모..."
+                        value={learningForm.academicMemo}
+                        onChange={(e) => setLearningForm({ ...learningForm, academicMemo: e.target.value })}
+                        className="mt-1 min-h-[80px]"
+                      />
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+
+              {/* 목표 섹션 */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <button
+                    onClick={() => toggleSection('목표')}
+                    className="w-full flex items-center justify-between"
+                  >
+                    <CardTitle className="text-lg flex items-center">
+                      <Target className="h-5 w-5 mr-2 text-purple-600" />
+                      목표
+                    </CardTitle>
+                    {expandedSections['목표'] ? (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </button>
+                </CardHeader>
+                {expandedSections['목표'] && (
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm text-muted-foreground">목표 대학 1</Label>
+                        <Input
+                          placeholder="예: 한국체육대학교"
+                          value={learningForm.targetUniversity1}
+                          onChange={(e) => setLearningForm({ ...learningForm, targetUniversity1: e.target.value })}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm text-muted-foreground">목표 대학 2</Label>
+                        <Input
+                          placeholder="예: 경희대학교"
+                          value={learningForm.targetUniversity2}
+                          onChange={(e) => setLearningForm({ ...learningForm, targetUniversity2: e.target.value })}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">목표 메모</Label>
+                      <Textarea
+                        placeholder="목표 관련 메모..."
+                        value={learningForm.targetMemo}
+                        onChange={(e) => setLearningForm({ ...learningForm, targetMemo: e.target.value })}
+                        className="mt-1 min-h-[80px]"
+                      />
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            </div>
+
+            {/* 오른쪽 컬럼: 실기 + 기타 */}
+            <div className="space-y-6">
+              {/* 실기 섹션 */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <button
+                    onClick={() => toggleSection('실기')}
+                    className="w-full flex items-center justify-between"
+                  >
+                    <CardTitle className="text-lg flex items-center">
+                      <Sparkles className="h-5 w-5 mr-2 text-orange-600" />
+                      실기 (P-EAK)
+                    </CardTitle>
+                    {expandedSections['실기'] ? (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </button>
+                </CardHeader>
+                {expandedSections['실기'] && (
+                  <CardContent className="space-y-4">
+                    {/* 기록 조회 타입 */}
+                    <div className="flex items-center gap-4">
+                      <Label className="text-sm text-muted-foreground">기록 타입:</Label>
+                      <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="recordType"
+                            checked={learningForm.physicalRecordType === 'latest'}
+                            onChange={() => {
+                              setLearningForm({ ...learningForm, physicalRecordType: 'latest' });
+                              if (consultation.linked_student_id) {
+                                loadPeakRecords(consultation.linked_student_id, 'latest');
+                              }
+                            }}
+                          />
+                          <span className="text-sm">최근 기록</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="recordType"
+                            checked={learningForm.physicalRecordType === 'average'}
+                            onChange={() => {
+                              setLearningForm({ ...learningForm, physicalRecordType: 'average' });
+                              if (consultation.linked_student_id) {
+                                loadPeakRecords(consultation.linked_student_id, 'average');
+                              }
+                            }}
+                          />
+                          <span className="text-sm">평균 기록</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* P-EAK 기록 표시 */}
+                    {peakLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
+                        <span className="ml-2 text-sm text-muted-foreground">P-EAK 기록 로딩 중...</span>
+                      </div>
+                    ) : Object.keys(peakRecords).length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {Object.entries(peakRecords).map(([name, record]) => (
+                          <div key={name} className="bg-muted rounded-lg p-3 text-center">
+                            <div className="text-xs text-muted-foreground mb-1">{name}</div>
+                            <div className="text-lg font-bold text-foreground">
+                              {record.value} <span className="text-sm font-normal">{record.unit}</span>
+                            </div>
+                            {record.measured_at && (
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {format(new Date(record.measured_at), 'MM/dd')}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        P-EAK에서 기록을 찾을 수 없습니다.
+                      </div>
+                    )}
+
+                    {/* 실기 메모 */}
+                    <div>
+                      <Label className="text-sm text-muted-foreground">실기 메모</Label>
+                      <Textarea
+                        placeholder="실기 관련 메모..."
+                        value={learningForm.physicalMemo}
+                        onChange={(e) => setLearningForm({ ...learningForm, physicalMemo: e.target.value })}
+                        className="mt-1 min-h-[80px]"
+                      />
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+
+              {/* 기타 섹션 */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <button
+                    onClick={() => toggleSection('기타')}
+                    className="w-full flex items-center justify-between"
+                  >
+                    <CardTitle className="text-lg flex items-center">
+                      <Calendar className="h-5 w-5 mr-2 text-green-600" />
+                      기타
+                    </CardTitle>
+                    {expandedSections['기타'] ? (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </button>
+                </CardHeader>
+                {expandedSections['기타'] && (
+                  <CardContent>
+                    <div>
+                      <Label className="text-sm text-muted-foreground">종합 메모</Label>
+                      <Textarea
+                        placeholder="상담 종합 메모..."
+                        value={learningForm.generalMemo}
+                        onChange={(e) => setLearningForm({ ...learningForm, generalMemo: e.target.value })}
+                        className="mt-1 min-h-[150px]"
+                      />
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            </div>
+          </div>
+        ) : (
+          /* 신규 상담 UI */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 왼쪽: 기본 정보 + 메모 */}
           <div className="space-y-6">
             {/* 기본 정보 */}
@@ -659,42 +1084,69 @@ export default function ConductPage({ params }: PageProps) {
             </Card>
           </div>
         </div>
+        )}
       </div>
 
       {/* 하단 액션 바 */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
-            체크된 항목: {checklist.filter(c => c.checked).length}/{checklist.length}
-          </div>
-          <div className="flex items-center space-x-3">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              저장
-            </Button>
-            <Button
-              variant="outline"
-              className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-950"
-              onClick={() => setPendingModalOpen(true)}
-              disabled={!!consultation?.linked_student_id}
-            >
-              <Clock className="h-4 w-4 mr-2" />
-              {consultation?.linked_student_id ? '등록 완료' : '미등록관리로 완료'}
-            </Button>
-            <Button
-              variant="default"
-              className="bg-green-600 hover:bg-green-700"
-              onClick={() => setTrialModalOpen(true)}
-              disabled={!!consultation?.linked_student_id}
-            >
-              <Sparkles className="h-4 w-4 mr-2" />
-              {consultation?.linked_student_id ? '이미 체험 등록됨' : '체험 등록'}
-            </Button>
-          </div>
+          {consultation.consultation_type === 'learning' ? (
+            <>
+              <div className="text-sm text-muted-foreground">
+                {linkedStudent?.name || consultation.student_name} ({consultation.student_grade}) 재원생 상담
+              </div>
+              <div className="flex items-center space-x-3">
+                <Link href={backUrl}>
+                  <Button variant="outline">
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    돌아가기
+                  </Button>
+                </Link>
+                <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  상담 기록 저장
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm text-muted-foreground">
+                체크된 항목: {checklist.filter(c => c.checked).length}/{checklist.length}
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  저장
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-950"
+                  onClick={() => setPendingModalOpen(true)}
+                  disabled={!!consultation?.linked_student_id}
+                >
+                  <Clock className="h-4 w-4 mr-2" />
+                  {consultation?.linked_student_id ? '등록 완료' : '미등록관리로 완료'}
+                </Button>
+                <Button
+                  variant="default"
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => setTrialModalOpen(true)}
+                  disabled={!!consultation?.linked_student_id}
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {consultation?.linked_student_id ? '이미 체험 등록됨' : '체험 등록'}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

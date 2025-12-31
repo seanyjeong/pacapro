@@ -1187,10 +1187,13 @@ router.get('/calendar/events', verifyToken, async (req, res) => {
     }
 
     const [consultations] = await db.query(
-      `SELECT id, student_name, parent_name, preferred_date, preferred_time, status, consultation_type
-       FROM consultations
-       WHERE academy_id = ? AND preferred_date >= ? AND preferred_date <= ?
-       ORDER BY preferred_date, preferred_time`,
+      `SELECT c.id, c.student_name, c.parent_name, c.preferred_date, c.preferred_time,
+              c.status, c.consultation_type, c.learning_type, c.linked_student_id,
+              s.name as linked_student_name
+       FROM consultations c
+       LEFT JOIN students s ON c.linked_student_id = s.id
+       WHERE c.academy_id = ? AND c.preferred_date >= ? AND c.preferred_date <= ?
+       ORDER BY c.preferred_date, c.preferred_time`,
       [academyId, startDate, endDate]
     );
 
@@ -1207,6 +1210,66 @@ router.get('/calendar/events', verifyToken, async (req, res) => {
     res.json({ events: eventsByDate });
   } catch (error) {
     console.error('캘린더 조회 오류:', error);
+    res.status(500).json({ error: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// POST /paca/consultations/learning - 재원생 상담 일정 등록
+router.post('/learning', verifyToken, async (req, res) => {
+  try {
+    const academyId = req.user.academy_id;
+    const {
+      studentId,
+      preferredDate,
+      preferredTime,
+      learningType, // regular, admission, parent, counseling
+      adminNotes
+    } = req.body;
+
+    // 필수 필드 검증
+    if (!studentId || !preferredDate || !preferredTime || !learningType) {
+      return res.status(400).json({ error: '학생, 날짜, 시간, 상담유형은 필수입니다.' });
+    }
+
+    // 학생 정보 조회
+    const [students] = await db.query(
+      'SELECT id, name, phone, grade FROM students WHERE id = ? AND academy_id = ?',
+      [studentId, academyId]
+    );
+
+    if (students.length === 0) {
+      return res.status(404).json({ error: '학생을 찾을 수 없습니다.' });
+    }
+
+    const student = students[0];
+
+    // 상담 일정 등록 (consultation_type = 'learning')
+    const [result] = await db.query(
+      `INSERT INTO consultations (
+        academy_id, consultation_type, learning_type, linked_student_id,
+        parent_name, parent_phone, student_name, student_grade,
+        preferred_date, preferred_time, status, admin_notes, created_at
+      ) VALUES (?, 'learning', ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, NOW())`,
+      [
+        academyId,
+        learningType,
+        studentId,
+        student.name,  // 이미 암호화된 값
+        student.phone || '',  // 이미 암호화된 값
+        student.name,  // 이미 암호화된 값
+        student.grade,
+        preferredDate,
+        preferredTime + ':00',
+        adminNotes || null
+      ]
+    );
+
+    res.status(201).json({
+      message: '재원생 상담 일정이 등록되었습니다.',
+      id: result.insertId
+    });
+  } catch (error) {
+    console.error('재원생 상담 등록 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
