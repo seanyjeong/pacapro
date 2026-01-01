@@ -296,7 +296,7 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
             AND s.status = 'active'
             AND s.deleted_at IS NULL
             AND JSON_CONTAINS(COALESCE(s.class_days, '[]'), ?)
-            HAVING today_attendance IS NULL OR today_attendance != 'absent'
+            HAVING today_attendance IS NULL OR today_attendance NOT IN ('absent', 'excused')
             ORDER BY s.name ASC`,
             [todayStr, req.user.academyId, req.user.academyId, yearMonth, JSON.stringify(dayOfWeek)]
         );
