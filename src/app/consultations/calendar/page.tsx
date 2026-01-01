@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { getConsultations } from '@/lib/api/consultations';
 import type { Consultation, ConsultationStatus, LearningType } from '@/lib/types/consultation';
@@ -31,8 +32,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import apiClient from '@/lib/api/client';
 import { Plus, UserCheck } from 'lucide-react';
 
+// Suspense로 감싸기 위한 래퍼
 export default function ConsultationCalendarPage() {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    }>
+      <ConsultationCalendarContent />
+    </Suspense>
+  );
+}
+
+function ConsultationCalendarContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromSchedule = searchParams.get('from') === 'schedule';
+  const dateParam = searchParams.get('date');
+
+  // 쿼리 파라미터에서 날짜가 있으면 해당 월로 초기화
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    if (dateParam) {
+      try {
+        return parseISO(dateParam);
+      } catch {
+        return new Date();
+      }
+    }
+    return new Date();
+  });
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -82,6 +111,25 @@ export default function ConsultationCalendarPage() {
   useEffect(() => {
     loadData();
   }, [currentMonth]);
+
+  // 스케줄에서 특정 날짜로 이동한 경우, 해당 날짜 상담 목록 자동 표시
+  useEffect(() => {
+    if (dateParam && consultations.length > 0) {
+      try {
+        const targetDate = parseISO(dateParam);
+        const dayConsultations = consultations.filter(c =>
+          isSameDay(parseISO(c.preferred_date), targetDate)
+        );
+        if (dayConsultations.length > 0) {
+          setSelectedDate(targetDate);
+          setSelectedConsultations(dayConsultations);
+          setDayListModalOpen(true);
+        }
+      } catch (e) {
+        console.error('날짜 파싱 오류:', e);
+      }
+    }
+  }, [dateParam, consultations]);
 
   // 재원생 목록 로드
   const loadStudents = async () => {
@@ -216,12 +264,21 @@ export default function ConsultationCalendarPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href="/consultations">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              목록으로
-            </Button>
-          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-2"
+            onClick={() => {
+              if (fromSchedule) {
+                router.push('/schedules');
+              } else {
+                router.push('/consultations');
+              }
+            }}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {fromSchedule ? '수업 스케줄로' : '목록으로'}
+          </Button>
           <div>
             <h1 className="text-2xl font-bold">상담 달력</h1>
             <p className="text-gray-500">월별 상담 일정을 확인합니다.</p>

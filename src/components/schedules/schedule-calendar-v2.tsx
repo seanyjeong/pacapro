@@ -48,6 +48,7 @@ interface ScheduleCalendarV2Props {
   consultations?: Record<string, Consultation[]>;  // 날짜별 상담 예약
   currentYear: number;   // 부모에서 관리하는 연도
   currentMonth: number;  // 부모에서 관리하는 월
+  onConsultationClick?: (date: string) => void;  // 상담 클릭 시 상담 달력으로 이동
 }
 
 const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; bgColor: string }[] = [
@@ -67,6 +68,7 @@ export function ScheduleCalendarV2({
   consultations,
   currentYear,
   currentMonth,
+  onConsultationClick,
 }: ScheduleCalendarV2Props) {
   const [draggedStudent, setDraggedStudent] = useState<{
     studentId: number;
@@ -212,8 +214,12 @@ export function ScheduleCalendarV2({
                     {/* 상담 예약 표시 */}
                     {inMonth && consultations?.[dateStr] && consultations[dateStr].length > 0 && (
                       <span
-                        className="flex items-center gap-0.5 text-xs text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950 px-1 rounded"
-                        title={`상담 ${consultations[dateStr].length}건`}
+                        className="flex items-center gap-0.5 text-xs text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950 px-1 rounded cursor-pointer hover:bg-pink-100 dark:hover:bg-pink-900 transition-colors"
+                        title={`상담 ${consultations[dateStr].length}건 - 클릭하여 상담 달력으로 이동`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onConsultationClick?.(dateStr);
+                        }}
                       >
                         <PhoneCall className="h-3 w-3" />
                         {consultations[dateStr].length}

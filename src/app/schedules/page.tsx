@@ -195,6 +195,11 @@ export default function SchedulesPage() {
     setSlotModalOpen(true);
   };
 
+  // 상담 클릭 핸들러 - 상담 달력으로 이동
+  const handleConsultationClick = (date: string) => {
+    router.push(`/consultations/calendar?from=schedule&date=${date}`);
+  };
+
   return (
     <div className="container mx-auto py-8 space-y-6">
       {/* 헤더 */}
@@ -280,6 +285,7 @@ export default function SchedulesPage() {
                   consultations={consultations}
                   currentYear={currentYear}
                   currentMonth={currentMonth}
+                  onConsultationClick={handleConsultationClick}
                 />
               </div>
 
