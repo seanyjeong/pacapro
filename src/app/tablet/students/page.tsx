@@ -196,6 +196,7 @@ function TabletStudentsPageContent() {
           students={students}
           loading={loading}
           onStudentClick={handleStudentClick}
+          hideMonthlyTuition
         />
       )}
 

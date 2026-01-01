@@ -3,8 +3,21 @@
  * 학원비 목록 컴포넌트
  */
 
+'use client';
+
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Coins, Check, Loader2 } from 'lucide-react';
 import type { Payment } from '@/lib/types/payment';
 import {
@@ -30,6 +43,8 @@ interface PaymentListProps {
   onPaymentMark?: (payment: Payment, method: 'account' | 'card' | 'cash') => Promise<void>;
   showPaymentMarkButton?: boolean;
   markingPaymentId?: number | null;
+  hideDueDate?: boolean;
+  confirmBeforePayment?: boolean;
 }
 
 export function PaymentList({
@@ -41,7 +56,39 @@ export function PaymentList({
   onPaymentMark,
   showPaymentMarkButton = false,
   markingPaymentId = null,
+  hideDueDate = false,
+  confirmBeforePayment = false,
 }: PaymentListProps) {
+  // 확인 다이얼로그 상태
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingPayment, setPendingPayment] = useState<{
+    payment: Payment;
+    method: 'account' | 'card' | 'cash';
+  } | null>(null);
+
+  const methodLabels = {
+    account: '계좌이체',
+    card: '카드결제',
+    cash: '현금결제',
+  };
+
+  const handlePaymentMarkClick = (payment: Payment, method: 'account' | 'card' | 'cash') => {
+    if (confirmBeforePayment) {
+      setPendingPayment({ payment, method });
+      setConfirmDialogOpen(true);
+    } else {
+      onPaymentMark?.(payment, method);
+    }
+  };
+
+  const handleConfirmPayment = () => {
+    if (pendingPayment && onPaymentMark) {
+      onPaymentMark(pendingPayment.payment, pendingPayment.method);
+    }
+    setConfirmDialogOpen(false);
+    setPendingPayment(null);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -97,9 +144,11 @@ export function PaymentList({
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   금액
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  납부 기한
-                </th>
+                {!hideDueDate && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    납부 기한
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   상태
                 </th>
@@ -175,19 +224,21 @@ export function PaymentList({
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className={overdue ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-foreground'}>
-                        {formatDate(payment.due_date)}
-                      </div>
-                      {payment.paid_date && (
-                        <div className="text-sm text-green-600 dark:text-green-400">
-                          납부: {formatDate(payment.paid_date)}
+                    {!hideDueDate && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className={overdue ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-foreground'}>
+                          {formatDate(payment.due_date)}
                         </div>
-                      )}
-                      {overdue && (
-                        <div className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">연체</div>
-                      )}
-                    </td>
+                        {payment.paid_date && (
+                          <div className="text-sm text-green-600 dark:text-green-400">
+                            납부: {formatDate(payment.paid_date)}
+                          </div>
+                        )}
+                        {overdue && (
+                          <div className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">연체</div>
+                        )}
+                      </td>
+                    )}
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
                         <span
@@ -239,7 +290,7 @@ export function PaymentList({
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onPaymentMark(payment, 'account');
+                                handlePaymentMarkClick(payment, 'account');
                               }}
                               className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950 px-2"
                               title="계좌이체"
@@ -251,7 +302,7 @@ export function PaymentList({
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onPaymentMark(payment, 'card');
+                                handlePaymentMarkClick(payment, 'card');
                               }}
                               className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-950 px-2"
                               title="카드결제"
@@ -263,7 +314,7 @@ export function PaymentList({
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                onPaymentMark(payment, 'cash');
+                                handlePaymentMarkClick(payment, 'cash');
                               }}
                               className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950 px-2"
                               title="현금결제"
@@ -281,6 +332,31 @@ export function PaymentList({
           </table>
         </div>
       </CardContent>
+
+      {/* 납부 처리 확인 다이얼로그 */}
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>납부 처리 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingPayment && (
+                <>
+                  <span className="font-semibold">{pendingPayment.payment.student_name}</span>님의{' '}
+                  <span className="font-semibold">{formatYearMonth(pendingPayment.payment.year_month)}</span> 학원비{' '}
+                  <span className="font-semibold text-primary">{formatPaymentAmount(pendingPayment.payment.final_amount)}</span>을{' '}
+                  <span className="font-semibold text-blue-600">{methodLabels[pendingPayment.method]}</span>로 납부 처리하시겠습니까?
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmPayment}>
+              납부 처리
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

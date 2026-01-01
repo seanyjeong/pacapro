@@ -276,6 +276,8 @@ function TabletPaymentsPageContent() {
         showPaymentMarkButton={true}
         onPaymentMark={handlePaymentMark}
         markingPaymentId={markingPaymentId}
+        hideDueDate
+        confirmBeforePayment
       />
     </div>
   );

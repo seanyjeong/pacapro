@@ -27,9 +27,10 @@ interface StudentListTableProps {
   students: Student[];
   loading?: boolean;
   onStudentClick: (id: number) => void;
+  hideMonthlyTuition?: boolean;
 }
 
-export function StudentListTable({ students, loading, onStudentClick }: StudentListTableProps) {
+export function StudentListTable({ students, loading, onStudentClick, hideMonthlyTuition }: StudentListTableProps) {
   if (loading) {
     return (
       <Card>
@@ -91,9 +92,11 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   수업일
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                  월 학원비
-                </th>
+                {!hideMonthlyTuition && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    월 학원비
+                  </th>
+                )}
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   상태
                 </th>
@@ -201,16 +204,18 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                     </td>
 
                     {/* 월 학원비 */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-foreground">
-                        {formatCurrency(student.monthly_tuition)}
-                      </div>
-                      {discountRate > 0 && (
-                        <div className="text-xs text-red-500">
-                          {discountRate}% 할인
+                    {!hideMonthlyTuition && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-foreground">
+                          {formatCurrency(student.monthly_tuition)}
                         </div>
-                      )}
-                    </td>
+                        {discountRate > 0 && (
+                          <div className="text-xs text-red-500">
+                            {discountRate}% 할인
+                          </div>
+                        )}
+                      </td>
+                    )}
 
                     {/* 상태 */}
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -269,10 +269,10 @@ export default function TabletConsultationsPage() {
                 {(consultation.status === 'pending' || consultation.status === 'confirmed') && (
                   <div className="mt-4 pt-3 border-t border-border">
                     <Button
-                      onClick={() => router.push(`/consultations/${consultation.id}/conduct`)}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => router.push(`/tablet/consultations/${consultation.id}/conduct`)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-base"
                     >
-                      <Play className="w-4 h-4 mr-2" />
+                      <Play className="w-5 h-5 mr-2" />
                       상담 진행
                     </Button>
                   </div>
