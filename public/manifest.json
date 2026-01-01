@@ -3,10 +3,10 @@
   "short_name": "P-ACA",
   "description": "체육입시 학원관리시스템",
   "start_url": "/",
-  "display": "fullscreen",
+  "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
-  "orientation": "portrait",
+  "theme_color": "#f97316",
+  "orientation": "any",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",

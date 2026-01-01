@@ -26,7 +26,7 @@ DO NOT skip quality gates or proceed with failing checks
 ---
 
 ## 핵심 기능
-[text](vscode-terminal:/-41252115/3) [text](PLAN_student-consultation.md)
+
 ### 1. 상담 유형
 | 유형 | 코드 | 설명 | UI 특징 |
 |------|------|------|---------|
