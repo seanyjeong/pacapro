@@ -257,6 +257,7 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
         const year = today.getFullYear();
         const month = today.getMonth() + 1;
         const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
+        const todayStr = today.toISOString().split('T')[0];
 
         const [payments] = await db.query(
             `SELECT
@@ -276,7 +277,17 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
                 p.final_amount,
                 p.due_date,
                 p.payment_status,
-                DATEDIFF(CURDATE(), p.due_date) as days_overdue
+                DATEDIFF(CURDATE(), p.due_date) as days_overdue,
+                (
+                    SELECT a.attendance_status
+                    FROM attendance a
+                    JOIN class_schedules cs ON a.schedule_id = cs.id
+                    WHERE a.student_id = s.id
+                    AND cs.date = ?
+                    AND cs.academy_id = ?
+                    ORDER BY a.id DESC
+                    LIMIT 1
+                ) as today_attendance
             FROM student_payments p
             JOIN students s ON p.student_id = s.id
             WHERE p.academy_id = ?
@@ -285,13 +296,14 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
             AND s.status = 'active'
             AND s.deleted_at IS NULL
             AND JSON_CONTAINS(COALESCE(s.class_days, '[]'), ?)
+            HAVING today_attendance IS NULL OR today_attendance != 'absent'
             ORDER BY s.name ASC`,
-            [req.user.academyId, yearMonth, JSON.stringify(dayOfWeek)]
+            [todayStr, req.user.academyId, req.user.academyId, yearMonth, JSON.stringify(dayOfWeek)]
         );
 
         res.json({
             message: `오늘(${['일','월','화','수','목','금','토'][dayOfWeek]}요일) 수업 있는 미납자 ${payments.length}명`,
-            date: today.toISOString().split('T')[0],
+            date: todayStr,
             day_of_week: dayOfWeek,
             day_name: ['일','월','화','수','목','금','토'][dayOfWeek],
             count: payments.length,
