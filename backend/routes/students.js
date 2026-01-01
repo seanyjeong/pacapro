@@ -2676,6 +2676,13 @@ router.put('/:id/credits/:creditId', verifyToken, checkPermission('payments', 'e
             updateValues.push(notes);
         }
         if (status !== undefined) {
+            // applied 상태는 학원비 적용 시에만 자동으로 변경되어야 함
+            if (status === 'applied') {
+                return res.status(400).json({
+                    error: 'Bad Request',
+                    message: "'applied' 상태는 학원비 적용 시 자동으로 변경됩니다. 수동 변경 불가."
+                });
+            }
             updateFields.push('status = ?');
             updateValues.push(status);
         }

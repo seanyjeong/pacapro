@@ -409,7 +409,7 @@ export const REST_CREDIT_TYPE_LABELS: Record<RestCreditType, string> = {
 export const REST_CREDIT_STATUS_LABELS: Record<RestCreditStatus, string> = {
   pending: '미적용',
   partial: '부분적용',
-  applied: '적용완료',
+  applied: '이월차감',
   refunded: '환불완료',
   cancelled: '취소',
 };

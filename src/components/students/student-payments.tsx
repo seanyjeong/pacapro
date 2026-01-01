@@ -155,14 +155,16 @@ export function StudentPaymentsComponent({
                 {credits.map((credit) => (
                   <div
                     key={credit.id}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    className={`flex items-center justify-between p-3 bg-muted/50 rounded-lg ${
+                      credit.status === 'applied' ? 'opacity-60' : ''
+                    }`}
                   >
                     <div className="flex items-center gap-3">
                       <span className={`px-2 py-0.5 text-xs font-medium rounded border ${getCreditTypeBadgeColor(credit.credit_type)}`}>
                         {REST_CREDIT_TYPE_LABELS[credit.credit_type] || credit.credit_type}
                       </span>
                       <div>
-                        <div className="text-sm font-medium">
+                        <div className={`text-sm font-medium ${credit.status === 'applied' ? 'line-through text-muted-foreground' : ''}`}>
                           {credit.credit_amount.toLocaleString()}원
                           {credit.remaining_amount !== credit.credit_amount && (
                             <span className="text-muted-foreground ml-1">
