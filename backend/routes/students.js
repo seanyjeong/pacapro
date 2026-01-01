@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { encrypt, decrypt, encryptFields, decryptFields, decryptArrayFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
+const { calculateDueDate } = require('../utils/dueDateCalculator');
 
 /**
  * 학생을 해당 월의 스케줄에 자동 배정
@@ -713,11 +714,15 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             const discountAmount = Math.round(proRatedAmount * discountRateNum / 100);
             const finalAmount = proRatedAmount - discountAmount;
 
-            // 납부일 계산
-            const dueDate = new Date(year, month - 1, Math.min(studentDueDay, lastDayOfMonth));
-            if (dueDate < enrollDate) {
-                // 납부일이 등록일보다 이전이면 다음 달 납부일로
-                dueDate.setMonth(dueDate.getMonth() + 1);
+            // 납부일 계산 (스케줄러와 동일한 로직 사용)
+            let dueDateStr = calculateDueDate(year, month, studentDueDay, parsedClassDays);
+            let dueDateObj = new Date(dueDateStr);
+
+            // 납부일이 등록일보다 이전이면 다음 달 납부일로
+            if (dueDateObj < enrollDate) {
+                const nextMonth = month === 12 ? 1 : month + 1;
+                const nextYear = month === 12 ? year + 1 : year;
+                dueDateStr = calculateDueDate(nextYear, nextMonth, studentDueDay, parsedClassDays);
             }
 
             // 학원비 레코드 생성
@@ -744,7 +749,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                     proRatedAmount,
                     discountAmount,
                     finalAmount,
-                    dueDate.toISOString().split('T')[0],
+                    dueDateStr,
                     `${month}월 학원비 (${enrollDay}일 등록, 일할계산)`,
                     req.user.userId
                 ]
