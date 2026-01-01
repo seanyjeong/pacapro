@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     display: isTablet ? 'standalone' : 'fullscreen',
     background_color: '#ffffff',
     theme_color: '#3b82f6',
-    orientation: isTablet ? 'any' : 'portrait',
+    orientation: isTablet ? undefined : 'portrait',
     icons: [
       {
         src: '/icons/icon-72x72.png',

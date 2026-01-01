@@ -138,21 +138,21 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
       <OrientationContext.Provider value={orientation}>
         <div className="min-h-screen flex bg-slate-100">
           {/* 축소형 사이드바 */}
-          <aside className="w-20 bg-[#1a2b4a] text-white flex flex-col fixed h-full z-20 pb-4">
+          <aside className="w-20 bg-[#1a2b4a] text-white flex flex-col fixed h-screen z-20">
             {/* 로고 */}
-            <div className="h-16 flex items-center justify-center border-b border-[#243a5e]">
+            <div className="h-14 flex items-center justify-center border-b border-[#243a5e] shrink-0">
               <Image
                 src="/icons/icon-96x96.png"
                 alt="P-ACA"
-                width={48}
-                height={48}
+                width={40}
+                height={40}
                 className="rounded-xl"
               />
             </div>
 
             {/* 네비게이션 */}
-            <nav className="flex-1 py-4 overflow-y-auto">
-              <div className="space-y-1 px-2">
+            <nav className="flex-1 py-2 overflow-y-auto min-h-0">
+              <div className="space-y-0.5 px-1.5">
                 {navigation
                   .filter(item => !item.adminOnly || isAdmin)
                   .map((item) => {
@@ -162,15 +162,15 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                       <Link
                         key={item.name}
                         href={item.href}
-                        className={`flex flex-col items-center py-3 px-1 rounded-lg transition-all duration-200 ${
+                        className={`flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 ${
                           isActive
                             ? 'bg-blue-500/15 text-orange-400'
                             : 'text-slate-300 hover:bg-[#243a5e] hover:text-white'
                         }`}
                         title={item.name}
                       >
-                        <item.icon size={22} />
-                        <span className="text-[10px] mt-1 text-center leading-tight">{item.name}</span>
+                        <item.icon size={20} />
+                        <span className="text-[9px] mt-0.5 text-center leading-tight">{item.name}</span>
                       </Link>
                     );
                   })}
@@ -178,16 +178,16 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
             </nav>
 
             {/* 사용자 & 로그아웃 */}
-            <div className="border-t border-[#243a5e] p-2">
+            <div className="border-t border-[#243a5e] p-1.5 shrink-0 pb-4">
               <button
                 onClick={handleLogout}
-                className="flex flex-col items-center py-2 px-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#243a5e] transition w-full"
+                className="flex flex-col items-center py-1.5 px-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#243a5e] transition w-full"
                 title="로그아웃"
               >
-                <LogOut size={20} />
-                <span className="text-[10px] mt-1">로그아웃</span>
+                <LogOut size={18} />
+                <span className="text-[9px] mt-0.5">로그아웃</span>
               </button>
-              <p className="text-[8px] text-slate-500 text-center mt-2">{APP_VERSION}</p>
+              <p className="text-[8px] text-slate-500 text-center mt-1">{APP_VERSION}</p>
             </div>
           </aside>
 

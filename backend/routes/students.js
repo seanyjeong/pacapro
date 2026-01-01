@@ -825,9 +825,12 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             }
         }
 
+        // 민감 필드 복호화
+        const decryptedStudent = decryptFields(createdStudent, ENCRYPTED_FIELDS.students);
+
         res.status(201).json({
             message: is_trial ? 'Trial student created successfully' : 'Student created successfully',
-            student: createdStudent,
+            student: decryptedStudent,
             firstPayment,
             autoAssigned: autoAssignResult
         });
