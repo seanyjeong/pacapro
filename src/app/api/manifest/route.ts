@@ -11,10 +11,10 @@ export async function GET(request: Request) {
     short_name: academyName.length > 12 ? academyName.substring(0, 12) : academyName,
     description: '체육입시 학원관리시스템',
     start_url: isTablet ? '/tablet' : '/',
-    display: 'fullscreen',
+    display: isTablet ? 'standalone' : 'fullscreen',
     background_color: '#ffffff',
     theme_color: '#3b82f6',
-    orientation: isTablet ? 'landscape-primary' : 'portrait',
+    orientation: isTablet ? 'any' : 'portrait',
     icons: [
       {
         src: '/icons/icon-72x72.png',
