@@ -19,25 +19,24 @@ import {
   MessageSquare
 } from 'lucide-react';
 
-const APP_VERSION = 'v3.1.11';
+const APP_VERSION = 'v3.1.12';
 
-// Navigation items
+// Navigation items (대시보드 제거)
 const navigation = [
-  { name: '대시보드', href: '/tablet', icon: LayoutDashboard },
   { name: '출석체크', href: '/tablet/attendance', icon: CalendarCheck },
   { name: '학생조회', href: '/tablet/students', icon: Users },
   { name: '결제확인', href: '/tablet/payments', icon: CreditCard },
   { name: '스케줄', href: '/tablet/schedule', icon: Calendar },
-  { name: '상담예약', href: '/tablet/consultations', icon: MessageSquare, adminOnly: true },
+  { name: '상담예약', href: '/tablet/consultations', icon: MessageSquare },
   { name: '설정', href: '/tablet/settings', icon: Settings, adminOnly: true },
 ];
 
-// Bottom tab items (세로 모드용 - 5개)
+// Bottom tab items (세로 모드용 - 5개, 대시보드 제거)
 const bottomTabs = [
-  { name: '대시보드', href: '/tablet', icon: LayoutDashboard },
   { name: '출석체크', href: '/tablet/attendance', icon: CalendarCheck },
   { name: '학생', href: '/tablet/students', icon: Users },
   { name: '결제', href: '/tablet/payments', icon: CreditCard },
+  { name: '상담', href: '/tablet/consultations', icon: MessageSquare },
   { name: '더보기', href: '#more', icon: Menu },
 ];
 

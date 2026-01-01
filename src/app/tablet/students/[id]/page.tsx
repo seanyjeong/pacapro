@@ -258,24 +258,14 @@ export default function TabletStudentDetailPage() {
             <CreditCard className="text-blue-500" size={20} />
             <h3 className="font-bold text-slate-800">납부 현황</h3>
           </div>
-          <div className="space-y-2">
+          {paymentSummary && paymentSummary.total_unpaid > 0 ? (
             <div className="flex justify-between">
-              <span className="text-slate-500">월 수업료</span>
-              <span className="text-slate-800">{formatCurrency(student.monthly_tuition || 0)}</span>
+              <span className="text-slate-500">미납금</span>
+              <span className="text-red-600 font-bold">{formatCurrency(paymentSummary.total_unpaid)}</span>
             </div>
-            {student.discount_rate > 0 && (
-              <div className="flex justify-between">
-                <span className="text-slate-500">할인율</span>
-                <span className="text-blue-500">{student.discount_rate}%</span>
-              </div>
-            )}
-            {paymentSummary && paymentSummary.total_unpaid > 0 && (
-              <div className="flex justify-between">
-                <span className="text-slate-500">미납금</span>
-                <span className="text-red-600">{formatCurrency(paymentSummary.total_unpaid)}</span>
-              </div>
-            )}
-          </div>
+          ) : (
+            <p className="text-green-600 font-medium">납부 완료</p>
+          )}
         </div>
 
         {/* 수업 정보 */}
