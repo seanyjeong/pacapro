@@ -166,7 +166,7 @@ export default function TabletStudentDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="animate-spin text-orange-500" size={32} />
+        <RefreshCw className="animate-spin text-blue-500" size={32} />
       </div>
     );
   }
@@ -178,7 +178,7 @@ export default function TabletStudentDetailPage() {
         <p className="text-slate-500">학생 정보를 찾을 수 없습니다</p>
         <button
           onClick={() => router.back()}
-          className="mt-4 px-4 py-2 bg-orange-500 text-white rounded-xl"
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-xl"
         >
           돌아가기
         </button>
@@ -255,7 +255,7 @@ export default function TabletStudentDetailPage() {
         {/* 납부 현황 */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <CreditCard className="text-orange-500" size={20} />
+            <CreditCard className="text-blue-500" size={20} />
             <h3 className="font-bold text-slate-800">납부 현황</h3>
           </div>
           <div className="space-y-2">
@@ -266,7 +266,7 @@ export default function TabletStudentDetailPage() {
             {student.discount_rate > 0 && (
               <div className="flex justify-between">
                 <span className="text-slate-500">할인율</span>
-                <span className="text-orange-500">{student.discount_rate}%</span>
+                <span className="text-blue-500">{student.discount_rate}%</span>
               </div>
             )}
             {paymentSummary && paymentSummary.total_unpaid > 0 && (

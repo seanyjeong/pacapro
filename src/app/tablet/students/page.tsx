@@ -100,7 +100,7 @@ export default function TabletStudentsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="학생 이름, 학교로 검색"
-            className="w-full pl-12 pr-12 py-3 bg-slate-100 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="w-full pl-12 pr-12 py-3 bg-slate-100 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {search && (
             <button
@@ -126,7 +126,7 @@ export default function TabletStudentsPage() {
             onClick={() => setStatusFilter(filter.key)}
             className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition ${
               statusFilter === filter.key
-                ? 'bg-orange-500 text-white'
+                ? 'bg-blue-500 text-white'
                 : 'bg-white text-slate-600 shadow-sm'
             }`}
           >
@@ -143,7 +143,7 @@ export default function TabletStudentsPage() {
         </p>
         <button
           onClick={fetchStudents}
-          className="p-2 text-slate-400 active:text-orange-500"
+          className="p-2 text-slate-400 active:text-blue-500"
         >
           <RefreshCw size={18} />
         </button>
@@ -152,7 +152,7 @@ export default function TabletStudentsPage() {
       {/* 학생 목록 */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="animate-spin text-orange-500" size={32} />
+          <RefreshCw className="animate-spin text-blue-500" size={32} />
         </div>
       ) : filteredStudents.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 shadow-sm text-center">

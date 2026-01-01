@@ -90,7 +90,7 @@ export default function TabletConsultationsPage() {
           <div className="text-center">
             <p className="text-xl font-bold text-slate-800">{formatDate(selectedDate)}</p>
             {isToday && (
-              <span className="text-sm text-orange-500 font-medium">오늘</span>
+              <span className="text-sm text-blue-500 font-medium">오늘</span>
             )}
           </div>
 
@@ -132,7 +132,7 @@ export default function TabletConsultationsPage() {
       {/* 상담 목록 */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="animate-spin text-orange-500" size={32} />
+          <RefreshCw className="animate-spin text-blue-500" size={32} />
         </div>
       ) : consultations.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
@@ -180,7 +180,7 @@ export default function TabletConsultationsPage() {
                   </div>
 
                   {consultation.inquiry_type && (
-                    <p className="text-sm text-orange-500">문의: {consultation.inquiry_type}</p>
+                    <p className="text-sm text-blue-500">문의: {consultation.inquiry_type}</p>
                   )}
 
                   {consultation.notes && (

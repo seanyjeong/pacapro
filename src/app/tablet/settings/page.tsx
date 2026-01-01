@@ -67,7 +67,7 @@ export default function TabletSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="animate-spin text-orange-500" size={32} />
+        <RefreshCw className="animate-spin text-blue-500" size={32} />
       </div>
     );
   }
@@ -77,14 +77,14 @@ export default function TabletSettingsPage() {
       {/* 사용자 정보 */}
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
-            <User size={32} className="text-orange-500" />
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+            <User size={32} className="text-blue-500" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-800">{user?.name || '사용자'}</h2>
             <p className="text-slate-500">{user?.email}</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="px-2 py-0.5 bg-orange-100 text-orange-600 text-sm rounded-full">
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-sm rounded-full">
                 {getRoleLabel(user?.role || '')}
               </span>
               <span className="text-sm text-slate-400">{user?.academy_name}</span>

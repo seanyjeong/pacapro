@@ -163,7 +163,7 @@ export default function TabletDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
       </div>
     );
   }
@@ -178,7 +178,7 @@ export default function TabletDashboard() {
             <p className="text-slate-500">{dayStr}요일</p>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold text-orange-500">{stats.todaySchedules}</p>
+            <p className="text-3xl font-bold text-blue-500">{stats.todaySchedules}</p>
             <p className="text-sm text-slate-500">오늘 수업</p>
           </div>
         </div>
@@ -236,8 +236,8 @@ export default function TabletDashboard() {
           className="bg-white rounded-2xl p-5 shadow-sm active:scale-98 transition"
         >
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-              <CreditCard className="text-orange-600" size={24} />
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <CreditCard className="text-blue-600" size={24} />
             </div>
             <div>
               <p className="text-2xl font-bold text-slate-800">{stats.unpaidCount}</p>
@@ -270,7 +270,7 @@ export default function TabletDashboard() {
                 </div>
                 <div className="w-full bg-slate-200 rounded-full h-2">
                   <div
-                    className="bg-orange-500 h-2 rounded-full transition-all"
+                    className="bg-blue-500 h-2 rounded-full transition-all"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
@@ -285,7 +285,7 @@ export default function TabletDashboard() {
       <div className={`grid gap-4 ${orientation === 'landscape' ? 'grid-cols-4' : 'grid-cols-2'}`}>
         <Link
           href="/tablet/attendance"
-          className="bg-orange-500 text-white rounded-2xl p-6 shadow-sm active:scale-98 transition"
+          className="bg-blue-500 text-white rounded-2xl p-6 shadow-sm active:scale-98 transition"
         >
           <CalendarCheck size={32} className="mb-2" />
           <p className="font-bold">출석체크</p>

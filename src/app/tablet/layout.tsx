@@ -97,7 +97,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
           <aside className="w-20 bg-[#1a2b4a] text-white flex flex-col fixed h-full z-20">
             {/* 로고 */}
             <div className="h-16 flex items-center justify-center border-b border-[#243a5e]">
-              <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
                 P
               </div>
             </div>
@@ -116,7 +116,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                         href={item.href}
                         className={`flex flex-col items-center py-3 px-1 rounded-lg transition-all duration-200 ${
                           isActive
-                            ? 'bg-orange-500/15 text-orange-400'
+                            ? 'bg-blue-500/15 text-orange-400'
                             : 'text-slate-300 hover:bg-[#243a5e] hover:text-white'
                         }`}
                         title={item.name}
@@ -156,7 +156,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                     <p className="text-sm font-medium text-slate-800">{user.name}</p>
                     <p className="text-xs text-slate-500">{getRoleDisplayName(user.role, user.position)}</p>
                   </div>
-                  <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
                     {user.name.charAt(0)}
                   </div>
                 </div>
@@ -180,7 +180,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
         {/* 헤더 */}
         <header className="h-16 bg-[#1a2b4a] flex items-center justify-between px-4 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white font-bold">
+            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold">
               P
             </div>
             <div>
@@ -194,7 +194,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                 <p className="text-sm font-medium text-white">{user.name}</p>
                 <p className="text-[10px] text-slate-400">{getRoleDisplayName(user.role, user.position)}</p>
               </div>
-              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
                 {user.name.charAt(0)}
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                 key={tab.name}
                 href={tab.href}
                 className={`flex flex-col items-center justify-center py-2 px-3 min-w-[64px] ${
-                  isActive ? 'text-orange-500' : 'text-slate-400'
+                  isActive ? 'text-blue-500' : 'text-slate-400'
                 }`}
               >
                 <tab.icon size={24} />
@@ -263,7 +263,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                         href={item.href}
                         onClick={() => setShowMoreMenu(false)}
                         className={`flex flex-col items-center p-4 rounded-xl transition ${
-                          isActive ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-600'
+                          isActive ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-600'
                         }`}
                       >
                         <item.icon size={28} />

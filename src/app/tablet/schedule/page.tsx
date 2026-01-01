@@ -169,7 +169,7 @@ export default function TabletSchedulePage() {
               {viewMode === 'day' ? formatDate(selectedDate) : formatWeekRange(selectedDate)}
             </p>
             {isToday && viewMode === 'day' && (
-              <span className="text-sm text-orange-500 font-medium">오늘</span>
+              <span className="text-sm text-blue-500 font-medium">오늘</span>
             )}
           </div>
 
@@ -187,7 +187,7 @@ export default function TabletSchedulePage() {
             onClick={() => setViewMode('day')}
             className={`flex-1 py-2 rounded-xl font-medium transition ${
               viewMode === 'day'
-                ? 'bg-orange-500 text-white'
+                ? 'bg-blue-500 text-white'
                 : 'bg-slate-100 text-slate-600'
             }`}
           >
@@ -197,7 +197,7 @@ export default function TabletSchedulePage() {
             onClick={() => setViewMode('week')}
             className={`flex-1 py-2 rounded-xl font-medium transition ${
               viewMode === 'week'
-                ? 'bg-orange-500 text-white'
+                ? 'bg-blue-500 text-white'
                 : 'bg-slate-100 text-slate-600'
             }`}
           >
@@ -216,7 +216,7 @@ export default function TabletSchedulePage() {
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-1">
-            <Calendar size={18} className="text-orange-500" />
+            <Calendar size={18} className="text-blue-500" />
             <span className="text-sm text-slate-500">수업 수</span>
           </div>
           <p className="text-2xl font-bold text-slate-800">{schedules.length}개</p>
@@ -233,7 +233,7 @@ export default function TabletSchedulePage() {
       {/* 스케줄 목록 */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <RefreshCw className="animate-spin text-orange-500" size={32} />
+          <RefreshCw className="animate-spin text-blue-500" size={32} />
         </div>
       ) : schedules.length === 0 ? (
         <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
