@@ -57,6 +57,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<{ name: string; role?: string; position?: string | null } | null>(null);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [debugInfo, setDebugInfo] = useState({ w: 0, h: 0, type: '' });
 
   useEffect(() => {
     const currentUser = authAPI.getCurrentUser();
@@ -68,17 +69,23 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
+    const updateOrientation = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const type = screen.orientation?.type || 'unknown';
+      const isLandscape = w > h;
+
+      setDebugInfo({ w, h, type });
+      setOrientation(isLandscape ? 'landscape' : 'portrait');
+    };
+
     const handleResize = () => {
       // 태블릿에서 orientationchange 후 약간의 딜레이가 필요할 수 있음
-      setTimeout(() => {
-        const isLandscape = window.innerWidth > window.innerHeight;
-        setOrientation(isLandscape ? 'landscape' : 'portrait');
-      }, 100);
+      setTimeout(updateOrientation, 100);
     };
 
     // 초기 설정
-    const isLandscape = window.innerWidth > window.innerHeight;
-    setOrientation(isLandscape ? 'landscape' : 'portrait');
+    updateOrientation();
 
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
@@ -211,7 +218,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
             />
             <div>
               <h1 className="text-white font-bold">P-ACA</h1>
-              <p className="text-[10px] text-slate-400">{APP_VERSION}</p>
+              <p className="text-[10px] text-slate-400">{APP_VERSION} | {debugInfo.w}x{debugInfo.h} | {orientation}</p>
             </div>
           </div>
           {user && (
