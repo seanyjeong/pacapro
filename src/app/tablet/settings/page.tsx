@@ -1,17 +1,18 @@
 'use client';
 
+/**
+ * 태블릿 설정 페이지
+ * - PC 컴포넌트 재사용
+ * - 간단한 사용자 정보 및 로그아웃 기능
+ */
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { User, LogOut, RefreshCw, Settings, Info, Loader2 } from 'lucide-react';
 import apiClient from '@/lib/api/client';
-import {
-  Settings,
-  User,
-  LogOut,
-  Moon,
-  Sun,
-  RefreshCw,
-  ChevronRight
-} from 'lucide-react';
 
 interface UserInfo {
   id: number;
@@ -64,74 +65,114 @@ export default function TabletSettingsPage() {
     return labels[role] || role;
   };
 
+  const getRoleColor = (role: string) => {
+    const colors: Record<string, string> = {
+      owner: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+      admin: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+      staff: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      instructor: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+    };
+    return colors[role] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+  };
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <RefreshCw className="animate-spin text-blue-500" size={32} />
+      <div className="flex items-center justify-center h-full min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">로딩 중...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">설정</h1>
+          <p className="text-muted-foreground">계정 및 앱 설정</p>
+        </div>
+      </div>
+
       {/* 사용자 정보 */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-            <User size={32} className="text-blue-500" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">{user?.name || '사용자'}</h2>
-            <p className="text-slate-500">{user?.email}</p>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-sm rounded-full">
-                {getRoleLabel(user?.role || '')}
-              </span>
-              <span className="text-sm text-slate-400">{user?.academy_name}</span>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            내 계정
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+              <User className="w-8 h-8 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-foreground">{user?.name || '사용자'}</h2>
+              <p className="text-muted-foreground">{user?.email}</p>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge className={getRoleColor(user?.role || '')}>
+                  {getRoleLabel(user?.role || '')}
+                </Badge>
+                <span className="text-sm text-muted-foreground">{user?.academy_name}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* 설정 메뉴 */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100">
-          <h3 className="font-bold text-slate-800">앱 설정</h3>
-        </div>
-
-        <button
-          className="w-full flex items-center justify-between p-4 active:bg-slate-50 transition"
-          onClick={() => window.location.reload()}
-        >
-          <div className="flex items-center gap-3">
-            <RefreshCw size={20} className="text-slate-400" />
-            <span className="text-slate-700">앱 새로고침</span>
-          </div>
-          <ChevronRight size={20} className="text-slate-300" />
-        </button>
-      </div>
+      {/* 앱 설정 */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            앱 설정
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <Button
+            variant="outline"
+            className="w-full justify-start"
+            onClick={() => window.location.reload()}
+          >
+            <RefreshCw className="w-4 h-4 mr-3" />
+            앱 새로고침
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* 버전 정보 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <span className="text-slate-500">버전</span>
-          <span className="text-slate-800">P-ACA Tablet v1.0.0</span>
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Info className="w-5 h-5" />
+            앱 정보
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">버전</span>
+            <span className="text-foreground font-medium">P-ACA Tablet v1.0.0</span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 로그아웃 */}
-      <button
+      <Button
+        variant="destructive"
+        className="w-full"
         onClick={handleLogout}
         disabled={loggingOut}
-        className="w-full bg-red-500 text-white rounded-2xl p-4 shadow-sm font-medium flex items-center justify-center gap-2 active:bg-red-600 transition disabled:opacity-50"
       >
         {loggingOut ? (
-          <RefreshCw className="animate-spin" size={20} />
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
         ) : (
-          <LogOut size={20} />
+          <LogOut className="w-4 h-4 mr-2" />
         )}
-        <span>{loggingOut ? '로그아웃 중...' : '로그아웃'}</span>
-      </button>
+        {loggingOut ? '로그아웃 중...' : '로그아웃'}
+      </Button>
     </div>
   );
 }

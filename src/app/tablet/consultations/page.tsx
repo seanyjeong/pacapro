@@ -1,65 +1,68 @@
 'use client';
 
+/**
+ * 태블릿 상담 관리 페이지
+ * - PC 컴포넌트 재사용
+ * - 조회 기능 위주 (태블릿은 현장 확인 용도)
+ */
+
 import { useState, useEffect } from 'react';
-import { useOrientation } from '@/components/tablet/orientation-context';
-import apiClient from '@/lib/api/client';
+import { format, parseISO } from 'date-fns';
+import { ko } from 'date-fns/locale';
 import {
-  MessageSquare,
-  Calendar,
-  Clock,
-  User,
-  Phone,
-  ChevronLeft,
-  ChevronRight,
-  RefreshCw
+  Calendar, Clock, Phone, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight,
+  MessageSquare, AlertCircle, X
 } from 'lucide-react';
-
-interface Consultation {
-  id: number;
-  student_name: string;
-  student_phone: string;
-  parent_phone: string;
-  grade: string;
-  school: string;
-  consultation_date: string;
-  consultation_time: string;
-  status: string;
-  notes: string | null;
-  inquiry_type: string | null;
-}
-
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  pending: { label: '대기', color: 'bg-yellow-100 text-yellow-700' },
-  confirmed: { label: '확정', color: 'bg-blue-100 text-blue-700' },
-  completed: { label: '완료', color: 'bg-green-100 text-green-700' },
-  cancelled: { label: '취소', color: 'bg-red-100 text-red-700' },
-  no_show: { label: '노쇼', color: 'bg-gray-100 text-gray-700' },
-};
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getConsultations } from '@/lib/api/consultations';
+import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
+import {
+  CONSULTATION_TYPE_LABELS,
+  CONSULTATION_STATUS_LABELS,
+  CONSULTATION_STATUS_COLORS
+} from '@/lib/types/consultation';
 
 export default function TabletConsultationsPage() {
-  const orientation = useOrientation();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<Record<string, number>>({});
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [search, setSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState<'today' | 'all'>('today');
 
-  useEffect(() => {
-    fetchConsultations();
-  }, [selectedDate]);
-
-  const fetchConsultations = async () => {
+  // 데이터 로드
+  const loadData = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get<{ consultations: Consultation[] }>('/consultations', {
-        params: { date: selectedDate }
-      });
-      setConsultations(res.consultations || []);
+      const params: {
+        search?: string;
+        startDate?: string;
+        endDate?: string;
+      } = {};
+
+      if (search) params.search = search;
+
+      if (dateFilter === 'today') {
+        params.startDate = selectedDate;
+        params.endDate = selectedDate;
+      }
+
+      const response = await getConsultations(params);
+      setConsultations(response.consultations || []);
+      setStats(response.stats || {});
     } catch (error) {
-      console.error('Failed to fetch consultations:', error);
-      setConsultations([]);
+      console.error('데이터 로드 오류:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadData();
+  }, [selectedDate, dateFilter, search]);
 
   const handleDateChange = (delta: number) => {
     const date = new Date(selectedDate);
@@ -69,129 +72,200 @@ export default function TabletConsultationsPage() {
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00');
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    return `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
+    return format(d, 'M월 d일 (EEE)', { locale: ko });
   };
 
   const isToday = selectedDate === new Date().toISOString().split('T')[0];
 
-  return (
-    <div className="space-y-4">
-      {/* 날짜 선택 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => handleDateChange(-1)}
-            className="p-3 rounded-xl bg-slate-100 active:bg-slate-200 transition"
-          >
-            <ChevronLeft size={24} />
-          </button>
+  // 상태 배지
+  const StatusBadge = ({ status }: { status: ConsultationStatus }) => (
+    <Badge className={CONSULTATION_STATUS_COLORS[status]}>
+      {CONSULTATION_STATUS_LABELS[status]}
+    </Badge>
+  );
 
-          <div className="text-center">
-            <p className="text-xl font-bold text-slate-800">{formatDate(selectedDate)}</p>
-            {isToday && (
-              <span className="text-sm text-blue-500 font-medium">오늘</span>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">상담 일정</h1>
+          <p className="text-muted-foreground">오늘의 상담 일정 확인</p>
+        </div>
+        <Button variant="outline" onClick={loadData}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          새로고침
+        </Button>
+      </div>
+
+      {/* 날짜 선택 */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleDateChange(-1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">
+                {formatDate(selectedDate)}
+              </p>
+              {isToday && (
+                <Badge variant="secondary" className="mt-1">오늘</Badge>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleDateChange(1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">
+              {Object.values(stats).reduce((a, b) => a + b, 0)}
+            </p>
+            <p className="text-sm text-muted-foreground">전체</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-yellow-50 dark:bg-yellow-950">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.pending || 0}</p>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">대기중</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-blue-50 dark:bg-blue-950">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.confirmed || 0}</p>
+            <p className="text-sm text-blue-700 dark:text-blue-300">확정</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-green-50 dark:bg-green-950">
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completed || 0}</p>
+            <p className="text-sm text-green-700 dark:text-green-300">완료</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 필터 탭 */}
+      <Tabs value={dateFilter} onValueChange={(v) => setDateFilter(v as 'today' | 'all')}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="today">오늘</TabsTrigger>
+          <TabsTrigger value="all">전체</TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* 검색 */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="이름, 전화번호로 검색..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-10 py-2 border border-border rounded-lg text-sm bg-card text-foreground"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="w-4 h-4" />
+              </button>
             )}
           </div>
-
-          <button
-            onClick={() => handleDateChange(1)}
-            className="p-3 rounded-xl bg-slate-100 active:bg-slate-200 transition"
-          >
-            <ChevronRight size={24} />
-          </button>
-        </div>
-      </div>
-
-      {/* 통계 */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl p-3 shadow-sm text-center">
-          <p className="text-2xl font-bold text-slate-800">{consultations.length}</p>
-          <p className="text-xs text-slate-500">전체</p>
-        </div>
-        <div className="bg-yellow-50 rounded-xl p-3 shadow-sm text-center">
-          <p className="text-2xl font-bold text-yellow-600">
-            {consultations.filter(c => c.status === 'pending').length}
-          </p>
-          <p className="text-xs text-yellow-600">대기</p>
-        </div>
-        <div className="bg-blue-50 rounded-xl p-3 shadow-sm text-center">
-          <p className="text-2xl font-bold text-blue-600">
-            {consultations.filter(c => c.status === 'confirmed').length}
-          </p>
-          <p className="text-xs text-blue-600">확정</p>
-        </div>
-        <div className="bg-green-50 rounded-xl p-3 shadow-sm text-center">
-          <p className="text-2xl font-bold text-green-600">
-            {consultations.filter(c => c.status === 'completed').length}
-          </p>
-          <p className="text-xs text-green-600">완료</p>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* 상담 목록 */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="animate-spin text-blue-500" size={32} />
-        </div>
-      ) : consultations.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-          <MessageSquare size={48} className="mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500">예정된 상담이 없습니다</p>
-        </div>
+      {consultations.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              {dateFilter === 'today' ? '오늘 예정된 상담이 없습니다' : '상담 일정이 없습니다'}
+            </p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className={`grid gap-3 ${
-          orientation === 'landscape' ? 'grid-cols-2' : 'grid-cols-1'
-        }`}>
-          {consultations.map(consultation => {
-            const statusConfig = STATUS_CONFIG[consultation.status] || STATUS_CONFIG.pending;
-
-            return (
-              <div
-                key={consultation.id}
-                className="bg-white rounded-2xl p-4 shadow-sm"
-              >
+        <div className="space-y-3">
+          {consultations.map((consultation) => (
+            <Card key={consultation.id}>
+              <CardContent className="p-4">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-slate-400" />
-                    <span className="font-medium text-slate-800">{consultation.consultation_time}</span>
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-medium text-foreground">
+                      {consultation.preferred_time?.substring(0, 5)}
+                    </span>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-sm ${statusConfig.color}`}>
-                    {statusConfig.label}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={consultation.status} />
+                    <Badge variant="outline">
+                      {CONSULTATION_TYPE_LABELS[consultation.consultation_type]}
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* 학생 정보 */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <User size={16} className="text-slate-400" />
-                    <span className="font-bold text-slate-800">{consultation.student_name}</span>
-                    <span className="text-sm text-slate-500">{consultation.grade}</span>
+                    <span className="font-bold text-foreground">{consultation.student_name}</span>
+                    <span className="text-sm text-muted-foreground">{consultation.student_grade}</span>
                   </div>
 
-                  {consultation.school && (
-                    <p className="text-sm text-slate-500 pl-6">{consultation.school}</p>
+                  {consultation.student_school && (
+                    <p className="text-sm text-muted-foreground">{consultation.student_school}</p>
                   )}
 
-                  <div className="flex items-center gap-2">
-                    <Phone size={16} className="text-slate-400" />
-                    <span className="text-sm text-slate-600">{consultation.parent_phone || consultation.student_phone || '-'}</span>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Phone className="w-4 h-4" />
+                    <span>{consultation.student_phone || consultation.parent_phone || '-'}</span>
                   </div>
 
-                  {consultation.inquiry_type && (
-                    <p className="text-sm text-blue-500">문의: {consultation.inquiry_type}</p>
+                  {dateFilter === 'all' && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      <span>{format(parseISO(consultation.preferred_date), 'M/d (EEE)', { locale: ko })}</span>
+                    </div>
                   )}
 
-                  {consultation.notes && (
-                    <p className="text-sm text-slate-500 bg-slate-50 rounded-lg p-2 mt-2">
-                      {consultation.notes}
+                  {consultation.inquiry_content && (
+                    <p className="text-sm text-muted-foreground bg-muted rounded-lg p-2 mt-2">
+                      {consultation.inquiry_content}
                     </p>
                   )}
                 </div>
-              </div>
-            );
-          })}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>

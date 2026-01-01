@@ -1,362 +1,275 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useOrientation } from '@/components/tablet/orientation-context';
-import apiClient from '@/lib/api/client';
-import {
-  Calendar,
-  Clock,
-  Users,
-  ChevronLeft,
-  ChevronRight,
-  RefreshCw,
-  User
-} from 'lucide-react';
+/**
+ * 태블릿 수업 관리 페이지
+ * - PC 컴포넌트 재사용
+ * - 태블릿에 최적화된 레이아웃
+ */
 
-interface Schedule {
-  id: number;
-  class_date: string;
-  time_slot: string;
-  instructor_id: number | null;
-  instructor_name: string | null;
-  student_count: number;
-  students?: Array<{
-    student_id: number;
-    student_name: string;
-    grade: string;
-    attendance_status: string | null;
-  }>;
-}
-
-type ViewMode = 'day' | 'week';
-
-const TIME_SLOT_LABELS: Record<string, string> = {
-  morning: '오전',
-  afternoon: '오후',
-  evening: '저녁'
-};
-
-const TIME_SLOT_COLORS: Record<string, string> = {
-  morning: 'bg-amber-100 border-amber-300',
-  afternoon: 'bg-sky-100 border-sky-300',
-  evening: 'bg-violet-100 border-violet-300'
-};
-
-const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar, List, Loader2, ChevronLeft, ChevronRight, Users, Clock, UserCheck, AlertCircle } from 'lucide-react';
+import { ScheduleCalendarV2 } from '@/components/schedules/schedule-calendar-v2';
+import { ScheduleList } from '@/components/schedules/schedule-list';
+import { TimeSlotDetailModal } from '@/components/schedules/time-slot-detail-modal';
+import { useSchedules } from '@/hooks/use-schedules';
+import { schedulesApi, type DailyInstructorStats } from '@/lib/api/schedules';
+import { getCalendarEvents } from '@/lib/api/consultations';
+import type { ScheduleFilters, TimeSlot } from '@/lib/types/schedule';
+import type { Consultation } from '@/lib/types/consultation';
+import { getMonthRange, getToday } from '@/lib/utils/schedule-helpers';
 
 export default function TabletSchedulePage() {
-  const orientation = useOrientation();
-  const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>('day');
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
-  const [expandedSchedule, setExpandedSchedule] = useState<number | null>(null);
+  const router = useRouter();
+  const [selectedDate, setSelectedDate] = useState<string | null>(getToday());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [filters, setFilters] = useState<ScheduleFilters>(() => {
+    const { start, end } = getMonthRange(
+      new Date().getFullYear(),
+      new Date().getMonth()
+    );
+    return { start_date: start, end_date: end };
+  });
 
-  const fetchSchedules = useCallback(async () => {
-    setLoading(true);
+  // 타임슬롯 상세 모달
+  const [slotModalOpen, setSlotModalOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{ date: string; slot: TimeSlot } | null>(null);
+
+  // 캘린더 강사 통계
+  const [instructorStats, setInstructorStats] = useState<Record<string, DailyInstructorStats>>({});
+
+  // 상담 일정
+  const [consultations, setConsultations] = useState<Record<string, Consultation[]>>({});
+
+  // 데이터 조회
+  const { data: schedules = [], isLoading, refetch } = useSchedules(filters);
+
+  // 월별 강사 통계 조회
+  const loadInstructorStats = useCallback(async () => {
     try {
-      let startDate = selectedDate;
-      let endDate = selectedDate;
-
-      if (viewMode === 'week') {
-        const date = new Date(selectedDate);
-        const dayOfWeek = date.getDay();
-        const monday = new Date(date);
-        monday.setDate(date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        startDate = monday.toISOString().split('T')[0];
-        endDate = sunday.toISOString().split('T')[0];
-      }
-
-      const res = await apiClient.get<{ schedules: Schedule[] }>('/schedules', {
-        params: { start_date: startDate, end_date: endDate }
-      });
-      setSchedules(res.schedules || []);
-    } catch (error) {
-      console.error('Failed to fetch schedules:', error);
-      setSchedules([]);
-    } finally {
-      setLoading(false);
+      const response = await schedulesApi.getMonthlyInstructorStats(currentYear, currentMonth);
+      setInstructorStats(response.schedules || {});
+    } catch (err) {
+      console.error('Failed to load instructor stats:', err);
     }
-  }, [selectedDate, viewMode]);
+  }, [currentYear, currentMonth]);
+
+  // 월별 상담 일정 조회
+  const loadConsultations = useCallback(async () => {
+    try {
+      const { start, end } = getMonthRange(currentYear, currentMonth);
+      const response = await getCalendarEvents(start, end);
+      setConsultations(response.events || {});
+    } catch (err) {
+      console.error('Failed to load consultations:', err);
+    }
+  }, [currentYear, currentMonth]);
 
   useEffect(() => {
-    fetchSchedules();
-  }, [fetchSchedules]);
+    loadInstructorStats();
+    loadConsultations();
+  }, [loadInstructorStats, loadConsultations]);
 
-  const handleDateChange = (delta: number) => {
-    const date = new Date(selectedDate);
-    if (viewMode === 'day') {
-      date.setDate(date.getDate() + delta);
-    } else {
-      date.setDate(date.getDate() + (delta * 7));
-    }
-    setSelectedDate(date.toISOString().split('T')[0]);
+  // 선택된 날짜의 수업 필터링
+  const selectedDateSchedules = useMemo(() => {
+    if (!selectedDate) return schedules;
+    return schedules.filter((schedule) => schedule.class_date === selectedDate);
+  }, [schedules, selectedDate]);
+
+  // 월 변경 핸들러
+  const handleMonthChange = (year: number, month: number) => {
+    setCurrentYear(year);
+    setCurrentMonth(month);
+    const { start, end } = getMonthRange(year, month);
+    setFilters((prev) => ({ ...prev, start_date: start, end_date: end }));
   };
+
+  // 수업 클릭 핸들러
+  const handleScheduleClick = (scheduleId: number) => {
+    router.push(`/schedules/${scheduleId}`);
+  };
+
+  // 타임슬롯 클릭 핸들러
+  const handleSlotClick = (date: string, slot: TimeSlot) => {
+    setSelectedSlot({ date, slot });
+    setSlotModalOpen(true);
+  };
+
+  // 통계 계산
+  const totalStudents = useMemo(() => {
+    return selectedDateSchedules.reduce((sum, s) => sum + (s.student_count || 0), 0);
+  }, [selectedDateSchedules]);
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00');
-    return `${d.getMonth() + 1}월 ${d.getDate()}일 (${DAY_LABELS[d.getDay()]})`;
-  };
-
-  const formatWeekRange = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const dayOfWeek = date.getDay();
-    const monday = new Date(date);
-    monday.setDate(date.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-
-    return `${monday.getMonth() + 1}/${monday.getDate()} - ${sunday.getMonth() + 1}/${sunday.getDate()}`;
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    return `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
   };
 
   const isToday = selectedDate === new Date().toISOString().split('T')[0];
 
-  // 일별 뷰: 시간대별 그룹화
-  const schedulesByTimeSlot = schedules.reduce((acc, schedule) => {
-    const slot = schedule.time_slot;
-    if (!acc[slot]) acc[slot] = [];
-    acc[slot].push(schedule);
-    return acc;
-  }, {} as Record<string, Schedule[]>);
-
-  // 주간 뷰: 날짜별 그룹화
-  const schedulesByDate = schedules.reduce((acc, schedule) => {
-    const date = schedule.class_date;
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(schedule);
-    return acc;
-  }, {} as Record<string, Schedule[]>);
-
-  const handleScheduleClick = async (scheduleId: number) => {
-    if (expandedSchedule === scheduleId) {
-      setExpandedSchedule(null);
-      return;
-    }
-
-    // 학생 목록 가져오기
-    try {
-      const res = await apiClient.get<{ schedule: Schedule }>(`/schedules/${scheduleId}`);
-      const updatedSchedule = res.schedule;
-      setSchedules(prev =>
-        prev.map(s => s.id === scheduleId ? { ...s, students: updatedSchedule.students } : s)
-      );
-      setExpandedSchedule(scheduleId);
-    } catch (error) {
-      console.error('Failed to fetch schedule details:', error);
-    }
-  };
-
-  const getTotalStudents = () => {
-    return schedules.reduce((sum, s) => sum + (s.student_count || 0), 0);
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px]">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      {/* 날짜 선택 및 뷰 모드 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <button
-            onClick={() => handleDateChange(-1)}
-            className="p-3 rounded-xl bg-slate-100 active:bg-slate-200 transition"
-          >
-            <ChevronLeft size={24} />
-          </button>
-
-          <div className="text-center">
-            <p className="text-xl font-bold text-slate-800">
-              {viewMode === 'day' ? formatDate(selectedDate) : formatWeekRange(selectedDate)}
-            </p>
-            {isToday && viewMode === 'day' && (
-              <span className="text-sm text-blue-500 font-medium">오늘</span>
-            )}
-          </div>
-
-          <button
-            onClick={() => handleDateChange(1)}
-            className="p-3 rounded-xl bg-slate-100 active:bg-slate-200 transition"
-          >
-            <ChevronRight size={24} />
-          </button>
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">수업 관리</h1>
+          <p className="text-muted-foreground">수업 일정 확인</p>
         </div>
-
-        {/* 뷰 모드 전환 */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => setViewMode('day')}
-            className={`flex-1 py-2 rounded-xl font-medium transition ${
-              viewMode === 'day'
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-100 text-slate-600'
-            }`}
-          >
-            일별
-          </button>
-          <button
-            onClick={() => setViewMode('week')}
-            className={`flex-1 py-2 rounded-xl font-medium transition ${
-              viewMode === 'week'
-                ? 'bg-blue-500 text-white'
-                : 'bg-slate-100 text-slate-600'
-            }`}
-          >
-            주간
-          </button>
-          <button
-            onClick={fetchSchedules}
-            className="p-2 rounded-xl bg-slate-100 text-slate-600 active:bg-slate-200"
-          >
-            <RefreshCw size={20} />
-          </button>
-        </div>
+        <Button variant="outline" onClick={() => refetch()}>
+          새로고침
+        </Button>
       </div>
 
-      {/* 요약 통계 */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <Calendar size={18} className="text-blue-500" />
-            <span className="text-sm text-slate-500">수업 수</span>
+      {/* 날짜 선택 */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                const date = new Date(selectedDate || getToday());
+                date.setDate(date.getDate() - 1);
+                setSelectedDate(date.toISOString().split('T')[0]);
+              }}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">
+                {selectedDate ? formatDate(selectedDate) : '날짜 선택'}
+              </p>
+              {isToday && (
+                <Badge variant="secondary" className="mt-1">오늘</Badge>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                const date = new Date(selectedDate || getToday());
+                date.setDate(date.getDate() + 1);
+                setSelectedDate(date.toISOString().split('T')[0]);
+              }}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-          <p className="text-2xl font-bold text-slate-800">{schedules.length}개</p>
-        </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <Users size={18} className="text-blue-500" />
-            <span className="text-sm text-slate-500">총 학생</span>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{getTotalStudents()}명</p>
-        </div>
+        </CardContent>
+      </Card>
+
+      {/* 통계 */}
+      <div className="grid grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">수업 수</p>
+                <p className="text-xl font-bold text-foreground">{selectedDateSchedules.length}개</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <Users className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">총 학생</p>
+                <p className="text-xl font-bold text-foreground">{totalStudents}명</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* 스케줄 목록 */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="animate-spin text-blue-500" size={32} />
-        </div>
-      ) : schedules.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-          <Calendar size={48} className="mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500">배정된 수업이 없습니다</p>
-        </div>
-      ) : viewMode === 'day' ? (
-        /* 일별 뷰 */
-        <div className="space-y-4">
-          {(['morning', 'afternoon', 'evening'] as const).map(slot => {
-            const slotSchedules = schedulesByTimeSlot[slot] || [];
-            if (slotSchedules.length === 0) return null;
+      {/* 탭 */}
+      <Tabs defaultValue="calendar" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="calendar" className="flex items-center gap-2">
+            <Calendar className="h-4 w-4" />
+            캘린더
+          </TabsTrigger>
+          <TabsTrigger value="list" className="flex items-center gap-2">
+            <List className="h-4 w-4" />
+            목록
+          </TabsTrigger>
+        </TabsList>
 
-            return (
-              <div key={slot} className="space-y-2">
-                <div className="flex items-center gap-2 px-2">
-                  <Clock size={16} className="text-slate-400" />
-                  <span className="font-medium text-slate-700">{TIME_SLOT_LABELS[slot]}</span>
-                  <span className="text-sm text-slate-400">({slotSchedules.length}개)</span>
-                </div>
+        {/* 캘린더 뷰 */}
+        <TabsContent value="calendar">
+          <Card>
+            <CardContent className="p-4">
+              <ScheduleCalendarV2
+                schedules={schedules}
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+                onMonthChange={handleMonthChange}
+                onSlotClick={handleSlotClick}
+                instructorStats={instructorStats}
+                consultations={consultations}
+                currentYear={currentYear}
+                currentMonth={currentMonth}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                <div className={`grid gap-3 ${orientation === 'landscape' ? 'grid-cols-3' : 'grid-cols-1'}`}>
-                  {slotSchedules.map(schedule => (
-                    <div
-                      key={schedule.id}
-                      className={`bg-white rounded-2xl shadow-sm overflow-hidden border-l-4 ${TIME_SLOT_COLORS[slot]}`}
-                    >
-                      <button
-                        onClick={() => handleScheduleClick(schedule.id)}
-                        className="w-full p-4 text-left active:bg-slate-50 transition"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Users size={18} className="text-slate-500" />
-                            <span className="font-bold text-slate-800">{schedule.student_count}명</span>
-                          </div>
-                          {schedule.instructor_name && (
-                            <span className="text-sm text-slate-500">
-                              {schedule.instructor_name}
-                            </span>
-                          )}
-                        </div>
-                      </button>
+        {/* 목록 뷰 */}
+        <TabsContent value="list">
+          {selectedDateSchedules.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">선택한 날짜에 수업이 없습니다</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <ScheduleList
+              schedules={selectedDateSchedules}
+              onScheduleClick={(schedule) => handleScheduleClick(schedule.id)}
+              emptyMessage="수업이 없습니다."
+            />
+          )}
+        </TabsContent>
+      </Tabs>
 
-                      {/* 학생 목록 (확장시) */}
-                      {expandedSchedule === schedule.id && schedule.students && (
-                        <div className="border-t border-slate-100 p-3 bg-slate-50">
-                          <div className="space-y-2">
-                            {schedule.students.map(student => (
-                              <div
-                                key={student.student_id}
-                                className="flex items-center gap-2 py-1"
-                              >
-                                <User size={14} className="text-slate-400" />
-                                <span className="text-sm text-slate-700">{student.student_name}</span>
-                                <span className="text-xs text-slate-400">{student.grade}</span>
-                                {student.attendance_status && (
-                                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                    student.attendance_status === 'present' ? 'bg-green-100 text-green-700' :
-                                    student.attendance_status === 'absent' ? 'bg-red-100 text-red-700' :
-                                    'bg-yellow-100 text-yellow-700'
-                                  }`}>
-                                    {student.attendance_status === 'present' ? '출석' :
-                                     student.attendance_status === 'absent' ? '결석' :
-                                     student.attendance_status === 'late' ? '지각' : '사유'}
-                                  </span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* 주간 뷰 */
-        <div className="space-y-4">
-          {Object.entries(schedulesByDate)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([date, dateSchedules]) => (
-              <div key={date} className="space-y-2">
-                <div className="flex items-center gap-2 px-2">
-                  <Calendar size={16} className="text-slate-400" />
-                  <span className="font-medium text-slate-700">{formatDate(date)}</span>
-                  <span className="text-sm text-slate-400">({dateSchedules.length}개)</span>
-                </div>
-
-                <div className={`grid gap-3 ${orientation === 'landscape' ? 'grid-cols-3' : 'grid-cols-1'}`}>
-                  {dateSchedules.map(schedule => (
-                    <div
-                      key={schedule.id}
-                      className={`bg-white rounded-2xl p-4 shadow-sm border-l-4 ${TIME_SLOT_COLORS[schedule.time_slot]}`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className={`px-2 py-1 rounded-lg text-sm font-medium ${
-                            schedule.time_slot === 'morning' ? 'bg-amber-100 text-amber-700' :
-                            schedule.time_slot === 'afternoon' ? 'bg-sky-100 text-sky-700' :
-                            'bg-violet-100 text-violet-700'
-                          }`}>
-                            {TIME_SLOT_LABELS[schedule.time_slot]}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <Users size={16} className="text-slate-500" />
-                            <span className="font-medium text-slate-800">{schedule.student_count}명</span>
-                          </div>
-                        </div>
-                        {schedule.instructor_name && (
-                          <span className="text-sm text-slate-500">{schedule.instructor_name}</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-        </div>
-      )}
+      {/* 타임슬롯 상세 모달 */}
+      <TimeSlotDetailModal
+        open={slotModalOpen}
+        date={selectedSlot?.date || null}
+        timeSlot={selectedSlot?.slot || null}
+        onClose={() => {
+          setSlotModalOpen(false);
+          setSelectedSlot(null);
+        }}
+        onStudentMoved={() => refetch()}
+      />
     </div>
   );
 }

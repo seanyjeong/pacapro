@@ -1,220 +1,244 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import Link from 'next/link';
-import { useOrientation } from '@/components/tablet/orientation-context';
-import apiClient from '@/lib/api/client';
-import {
-  Search,
-  User,
-  Phone,
-  GraduationCap,
-  RefreshCw,
-  ChevronRight,
-  X
-} from 'lucide-react';
+/**
+ * 태블릿 학생 관리 페이지
+ * - PC 컴포넌트 재사용
+ * - 태블릿에 최적화된 레이아웃
+ */
 
-interface Student {
-  id: number;
-  name: string;
-  grade: string;
-  gender: string;
-  school: string;
-  phone: string | null;
-  parent_phone: string | null;
-  status: string;
-  is_trial: boolean;
-  trial_remaining: number;
-  student_type: string;
-  class_days: number[];
-  memo: string | null;
-}
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle, Users, UserCheck, UserX, Sparkles, Clock, Loader2, School, GraduationCap, RefreshCw, Search, X } from 'lucide-react';
+import { StudentStatsCards } from '@/components/students/student-stats-cards';
+import { StudentListTable } from '@/components/students/student-list-table';
+import { TrialStudentList } from '@/components/students/trial-student-list';
+import { PendingStudentList } from '@/components/students/pending-student-list';
+import { useStudents } from '@/hooks/use-students';
+import { cn } from '@/lib/utils';
+import type { StudentStatus } from '@/lib/types/student';
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  active: { label: '재원', color: 'bg-green-100 text-green-700' },
-  paused: { label: '휴원', color: 'bg-yellow-100 text-yellow-700' },
-  withdrawn: { label: '퇴원', color: 'bg-red-100 text-red-700' },
-  graduated: { label: '졸업', color: 'bg-blue-100 text-blue-700' },
-  trial: { label: '체험', color: 'bg-purple-100 text-purple-700' },
-  pending: { label: '대기', color: 'bg-gray-100 text-gray-700' },
-};
+// 탭 타입
+type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending' | 'graduated';
 
-const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+// 내부 컴포넌트 (useSearchParams 사용)
+function TabletStudentsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as StudentTab | null;
 
-export default function TabletStudentsPage() {
-  const orientation = useOrientation();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('active');
+  // 초기 탭 결정 (URL 파라미터 우선)
+  const initialTab: StudentTab = tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending', 'graduated'].includes(tabParam)
+    ? tabParam
+    : 'active';
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<StudentTab>(initialTab);
+  const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
+
+  // URL 파라미터로 탭 변경 시 적용
   useEffect(() => {
-    fetchStudents();
-  }, [statusFilter]);
-
-  const fetchStudents = async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, string> = {};
-      if (statusFilter && statusFilter !== 'all') {
-        params.status = statusFilter;
-      }
-
-      const res = await apiClient.get<{ students: Student[] }>('/students', {
-        params
-      });
-      setStudents(res.students || []);
-    } catch (error) {
-      console.error('Failed to fetch students:', error);
-      setStudents([]);
-    } finally {
-      setLoading(false);
+    if (tabParam && ['active', 'paused', 'withdrawn', 'trial', 'pending', 'graduated'].includes(tabParam)) {
+      setActiveTab(tabParam);
     }
+  }, [tabParam]);
+
+  // 탭을 status로 변환
+  const getStatusFromTab = (tab: StudentTab): StudentStatus | undefined => {
+    return tab as StudentStatus;
   };
 
-  // 검색 필터링 (클라이언트 사이드)
-  const filteredStudents = useMemo(() => {
-    if (!search.trim()) return students;
+  // useStudents 훅 사용
+  const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents({
+    status: getStatusFromTab(initialTab),
+    is_trial: undefined
+  });
 
-    const searchLower = search.toLowerCase();
-    return students.filter(s =>
-      s.name.toLowerCase().includes(searchLower) ||
-      s.school?.toLowerCase().includes(searchLower) ||
-      s.grade?.toLowerCase().includes(searchLower)
+  // 통계 카드도 함께 갱신하는 리로드
+  const handleReload = () => {
+    reload();
+    setStatsRefreshTrigger(prev => prev + 1);
+  };
+
+  // 탭 변경 시 필터 업데이트
+  useEffect(() => {
+    updateFilters({ status: activeTab as StudentStatus, is_trial: undefined });
+  }, [activeTab]);
+
+  // 검색어 필터링 적용
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    updateFilters({ search: query });
+  };
+
+  // 학생 클릭 → 상세 페이지로 이동
+  const handleStudentClick = (id: number) => {
+    router.push(`/tablet/students/${id}`);
+  };
+
+  // 에러 화면
+  if (error && !loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">학생 관리</h1>
+          <p className="text-muted-foreground">학생 조회</p>
+        </div>
+
+        <Card>
+          <CardContent className="p-12 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={handleReload}>다시 시도</Button>
+          </CardContent>
+        </Card>
+      </div>
     );
-  }, [students, search]);
+  }
 
-  const formatClassDays = (days: number[]) => {
-    if (!days || days.length === 0) return '-';
-    return days.map(d => DAY_LABELS[d]).join(', ');
-  };
+  // 탭 정의
+  const tabs = [
+    { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-green-600 dark:text-green-400' },
+    { id: 'paused' as const, label: '휴원', icon: Users, color: 'text-yellow-600 dark:text-yellow-400' },
+    { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600 dark:text-purple-400' },
+    { id: 'pending' as const, label: '미등록', icon: Clock, color: 'text-orange-600 dark:text-orange-400' },
+  ];
 
   return (
-    <div className="space-y-4">
-      {/* 검색바 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="학생 이름, 학교로 검색"
-            className="w-full pl-12 pr-12 py-3 bg-slate-100 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-            >
-              <X size={20} />
-            </button>
-          )}
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">학생 관리</h1>
+          <p className="text-muted-foreground">학생 조회</p>
         </div>
+        <Button variant="outline" onClick={handleReload}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          새로고침
+        </Button>
       </div>
 
-      {/* 상태 필터 */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {[
-          { key: 'active', label: '재원생' },
-          { key: 'trial', label: '체험생' },
-          { key: 'paused', label: '휴원' },
-          { key: 'all', label: '전체' },
-        ].map(filter => (
-          <button
-            key={filter.key}
-            onClick={() => setStatusFilter(filter.key)}
-            className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition ${
-              statusFilter === filter.key
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-slate-600 shadow-sm'
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
+      {/* 탭 네비게이션 */}
+      <div className="border-b border-border">
+        <nav className="-mb-px flex space-x-6 overflow-x-auto">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
+                  isActive
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                )}
+              >
+                <Icon className={cn('w-4 h-4', isActive ? tab.color : '')} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* 결과 개수 */}
-      <div className="flex items-center justify-between px-2">
-        <p className="text-sm text-slate-500">
-          {filteredStudents.length}명
-          {search && ` (검색: "${search}")`}
-        </p>
-        <button
-          onClick={fetchStudents}
-          className="p-2 text-slate-400 active:text-blue-500"
-        >
-          <RefreshCw size={18} />
-        </button>
-      </div>
+      {/* 통계 카드 */}
+      <StudentStatsCards refreshTrigger={statsRefreshTrigger} />
 
-      {/* 학생 목록 */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="animate-spin text-blue-500" size={32} />
-        </div>
-      ) : filteredStudents.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-          <User size={48} className="mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500">
-            {search ? '검색 결과가 없습니다' : '학생이 없습니다'}
-          </p>
-        </div>
+      {/* 검색 */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="학생 이름, 학교로 검색..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 border border-border rounded-lg text-sm bg-card text-foreground"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => handleSearch('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <div className="text-sm text-muted-foreground whitespace-nowrap">
+              총 <span className="font-semibold text-foreground">{students.length}</span>명
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 학생 목록 - 탭에 따라 다른 컴포넌트 표시 */}
+      {activeTab === 'trial' ? (
+        <TrialStudentList
+          students={students.filter(s => s.is_trial)}
+          loading={loading}
+          onReload={handleReload}
+        />
+      ) : activeTab === 'pending' ? (
+        <PendingStudentList
+          students={students}
+          loading={loading}
+          onReload={handleReload}
+        />
       ) : (
-        <div className={`grid gap-3 ${
-          orientation === 'landscape' ? 'grid-cols-3' : 'grid-cols-1'
-        }`}>
-          {filteredStudents.map(student => (
-            <Link
-              key={student.id}
-              href={`/tablet/students/${student.id}`}
-              className="bg-white rounded-2xl p-4 shadow-sm active:bg-slate-50 transition flex items-center gap-4"
-            >
-              {/* 아바타 */}
-              <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg ${
-                student.gender === 'male' ? 'bg-blue-500' : 'bg-pink-500'
-              }`}>
-                {student.name.charAt(0)}
-              </div>
+        <StudentListTable
+          students={students}
+          loading={loading}
+          onStudentClick={handleStudentClick}
+        />
+      )}
 
-              {/* 정보 */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="font-bold text-slate-800 truncate">{student.name}</p>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                    STATUS_LABELS[student.status]?.color || 'bg-gray-100 text-gray-700'
-                  }`}>
-                    {STATUS_LABELS[student.status]?.label || student.status}
-                  </span>
-                  {student.is_trial && (
-                    <span className="px-2 py-0.5 bg-purple-100 text-purple-600 text-xs rounded-full">
-                      체험 {student.trial_remaining}회
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 text-sm text-slate-500">
-                  <span className="flex items-center gap-1">
-                    <GraduationCap size={14} />
-                    {student.grade}
-                  </span>
-                  {student.school && (
-                    <span className="truncate">{student.school}</span>
-                  )}
-                </div>
-
-                <p className="text-xs text-slate-400 mt-1">
-                  수업: {formatClassDays(student.class_days)}
+      {/* 안내 */}
+      {!loading && students.length === 0 && !searchQuery && (
+        <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+          <CardContent className="p-4">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">안내</h4>
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  해당 상태의 학생이 없습니다.
                 </p>
               </div>
-
-              {/* 화살표 */}
-              <ChevronRight size={20} className="text-slate-300" />
-            </Link>
-          ))}
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
+  );
+}
+
+// 로딩 폴백
+function LoadingFallback() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">학생 관리</h1>
+        <p className="text-muted-foreground">학생 조회</p>
+      </div>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    </div>
+  );
+}
+
+// 메인 페이지 (Suspense로 감싸서 export)
+export default function TabletStudentsPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <TabletStudentsPageContent />
+    </Suspense>
   );
 }

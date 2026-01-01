@@ -1,342 +1,293 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { useOrientation } from '@/components/tablet/orientation-context';
-import apiClient from '@/lib/api/client';
+/**
+ * 태블릿 학원비 관리 페이지
+ * - PC 컴포넌트 재사용
+ * - 태블릿에 최적화된 레이아웃
+ */
+
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, AlertCircle, Banknote, Search, ChevronLeft, ChevronRight, X, RefreshCw } from 'lucide-react';
+import { PaymentList } from '@/components/payments/payment-list';
+import { usePayments } from '@/hooks/use-payments';
+import { formatCurrency } from '@/lib/utils/format';
 import {
-  CreditCard,
-  Search,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  RefreshCw,
-  X,
-  User
-} from 'lucide-react';
+  PAYMENT_STATUS_OPTIONS,
+} from '@/lib/types/payment';
 
-interface Payment {
-  id: number;
-  student_id: number;
-  student_name: string;
-  year_month: string;
-  total_amount: number;
-  paid_amount: number;
-  remaining_amount: number;
-  payment_status: string;
-  payment_date: string | null;
-  payment_method: string | null;
-}
+function TabletPaymentsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [initialFiltersApplied, setInitialFiltersApplied] = useState(false);
 
-interface PaymentStats {
-  total: number;
-  paid: number;
-  unpaid: number;
-  partial: number;
-  totalAmount: number;
-  paidAmount: number;
-  unpaidAmount: number;
-}
+  // 년/월 상태
+  const [yearMonth, setYearMonth] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  });
 
-const STATUS_CONFIG = {
-  paid: { label: '완납', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
-  unpaid: { label: '미납', color: 'bg-red-100 text-red-700', icon: XCircle },
-  partial: { label: '부분납', color: 'bg-yellow-100 text-yellow-700', icon: AlertCircle },
-  pending: { label: '대기', color: 'bg-gray-100 text-gray-700', icon: AlertCircle },
-};
+  const { payments, loading, error, filters, updateFilters, reload } = usePayments({
+    year: yearMonth.year,
+    month: yearMonth.month
+  });
 
-export default function TabletPaymentsPage() {
-  const orientation = useOrientation();
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [yearMonth, setYearMonth] = useState(() => new Date().toISOString().slice(0, 7));
-
+  // URL에서 status 파라미터 읽기
   useEffect(() => {
-    fetchPayments();
+    if (!initialFiltersApplied) {
+      const statusFromUrl = searchParams.get('status');
+      if (statusFromUrl === 'unpaid') {
+        updateFilters({ payment_status: 'pending' as const });
+      }
+      setInitialFiltersApplied(true);
+    }
+  }, [searchParams, initialFiltersApplied, updateFilters]);
+
+  // 년/월 변경 시 필터 업데이트
+  useEffect(() => {
+    updateFilters({ year: yearMonth.year, month: yearMonth.month });
   }, [yearMonth]);
 
-  const fetchPayments = async () => {
-    setLoading(true);
-    try {
-      const res = await apiClient.get<{ payments: Payment[] }>('/payments', {
-        params: { year_month: yearMonth }
-      });
-      setPayments(res.payments || []);
-    } catch (error) {
-      console.error('Failed to fetch payments:', error);
-      setPayments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 통계 계산
-  const stats: PaymentStats = useMemo(() => {
-    return payments.reduce((acc, p) => {
-      acc.total++;
-      acc.totalAmount += p.total_amount || 0;
-      acc.paidAmount += p.paid_amount || 0;
-
-      if (p.payment_status === 'paid') {
-        acc.paid++;
-      } else if (p.payment_status === 'unpaid') {
-        acc.unpaid++;
-        acc.unpaidAmount += p.remaining_amount || 0;
-      } else if (p.payment_status === 'partial') {
-        acc.partial++;
-        acc.unpaidAmount += p.remaining_amount || 0;
-      }
-
-      return acc;
-    }, {
-      total: 0,
-      paid: 0,
-      unpaid: 0,
-      partial: 0,
-      totalAmount: 0,
-      paidAmount: 0,
-      unpaidAmount: 0
-    });
-  }, [payments]);
-
   // 필터링
-  const filteredPayments = useMemo(() => {
-    let result = payments;
+  const filteredPayments = payments.filter(p => {
+    if (filters.search && !p.student_name?.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    return true;
+  });
 
-    // 상태 필터
-    if (statusFilter !== 'all') {
-      result = result.filter(p => p.payment_status === statusFilter);
-    }
-
-    // 검색 필터
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      result = result.filter(p =>
-        p.student_name?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return result;
-  }, [payments, statusFilter, search]);
+  const handlePaymentClick = (id: number) => {
+    router.push(`/payments/${id}`);
+  };
 
   const handleMonthChange = (delta: number) => {
-    const [year, month] = yearMonth.split('-').map(Number);
-    const newDate = new Date(year, month - 1 + delta, 1);
-    setYearMonth(newDate.toISOString().slice(0, 7));
+    setYearMonth(prev => {
+      const date = new Date(prev.year, prev.month - 1 + delta, 1);
+      return { year: date.getFullYear(), month: date.getMonth() + 1 };
+    });
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+  const formatMonth = (year: number, month: number) => {
+    return `${year}년 ${month}월`;
   };
 
-  const formatMonth = (ym: string) => {
-    const [year, month] = ym.split('-');
-    return `${year}년 ${parseInt(month)}월`;
+  const isCurrentMonth = () => {
+    const now = new Date();
+    return yearMonth.year === now.getFullYear() && yearMonth.month === now.getMonth() + 1;
   };
 
-  const isCurrentMonth = yearMonth === new Date().toISOString().slice(0, 7);
+  if (error && !loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">학원비 관리</h1>
+          <p className="text-muted-foreground">학원비 조회</p>
+        </div>
+
+        <Card>
+          <CardContent className="p-12 text-center">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={reload}>다시 시도</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // 통계 계산
+  const paidCount = filteredPayments.filter((p) => p.payment_status === 'paid').length;
+  const unpaidCount = filteredPayments.filter((p) => p.payment_status === 'pending').length;
+  const partialCount = filteredPayments.filter((p) => p.payment_status === 'partial').length;
+  const totalAmount = Math.floor(filteredPayments.reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
+  const paidAmount = Math.floor(filteredPayments
+    .filter((p) => p.payment_status === 'paid')
+    .reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
+  const unpaidAmount = Math.floor(filteredPayments
+    .filter((p) => p.payment_status !== 'paid')
+    .reduce((sum, p) => sum + parseFloat(String(p.final_amount)) - parseFloat(String(p.paid_amount || 0)), 0));
 
   return (
-    <div className="space-y-4">
-      {/* 월 선택 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => handleMonthChange(-1)}
-            className="p-3 rounded-xl bg-slate-100 active:bg-slate-200 transition"
-          >
-            <ChevronLeft size={24} />
-          </button>
-
-          <div className="text-center">
-            <p className="text-xl font-bold text-slate-800">{formatMonth(yearMonth)}</p>
-            {isCurrentMonth && (
-              <span className="text-sm text-blue-500 font-medium">이번달</span>
-            )}
-          </div>
-
-          <button
-            onClick={() => handleMonthChange(1)}
-            className="p-3 rounded-xl bg-slate-100 active:bg-slate-200 transition"
-          >
-            <ChevronRight size={24} />
-          </button>
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">학원비 관리</h1>
+          <p className="text-muted-foreground">학원비 조회</p>
         </div>
+        <Button variant="outline" onClick={reload}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          새로고침
+        </Button>
       </div>
+
+      {/* 월 선택 */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleMonthChange(-1)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            <div className="text-center">
+              <p className="text-lg font-bold text-foreground">
+                {formatMonth(yearMonth.year, yearMonth.month)}
+              </p>
+              {isCurrentMonth() && (
+                <Badge variant="secondary" className="mt-1">이번달</Badge>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => handleMonthChange(1)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 통계 카드 */}
-      <div className={`grid gap-3 ${orientation === 'landscape' ? 'grid-cols-4' : 'grid-cols-2'}`}>
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <CreditCard size={18} className="text-slate-500" />
-            <span className="text-sm text-slate-500">전체</span>
-          </div>
-          <p className="text-2xl font-bold text-slate-800">{stats.total}명</p>
-          <p className="text-sm text-slate-400">{formatCurrency(stats.totalAmount)}</p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">총 청구</p>
+                <p className="text-xl font-bold text-foreground">{filteredPayments.length}건</p>
+              </div>
+              <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <Banknote className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-green-50 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <CheckCircle2 size={18} className="text-green-600" />
-            <span className="text-sm text-green-600">완납</span>
-          </div>
-          <p className="text-2xl font-bold text-green-700">{stats.paid}명</p>
-          <p className="text-sm text-green-500">{formatCurrency(stats.paidAmount)}</p>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">완납</p>
+                <p className="text-xl font-bold text-green-600 dark:text-green-400">{paidCount}건</p>
+              </div>
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <Banknote className="w-5 h-5 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-red-50 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <XCircle size={18} className="text-red-600" />
-            <span className="text-sm text-red-600">미납</span>
-          </div>
-          <p className="text-2xl font-bold text-red-700">{stats.unpaid}명</p>
-          <p className="text-sm text-red-500">{formatCurrency(stats.unpaidAmount)}</p>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">미납</p>
+                <p className="text-xl font-bold text-red-600 dark:text-red-400">{unpaidCount}건</p>
+              </div>
+              <div className="w-10 h-10 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-yellow-50 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertCircle size={18} className="text-yellow-600" />
-            <span className="text-sm text-yellow-600">부분납</span>
-          </div>
-          <p className="text-2xl font-bold text-yellow-700">{stats.partial}명</p>
-        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div>
+              <p className="text-sm text-muted-foreground">납부율</p>
+              <p className="text-xl font-bold text-foreground">
+                {filteredPayments.length > 0 ? Math.round((paidCount / filteredPayments.length) * 100) : 0}%
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {formatCurrency(paidAmount)} / {formatCurrency(totalAmount)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* 검색바 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="학생 이름으로 검색"
-            className="w-full pl-12 pr-12 py-3 bg-slate-100 rounded-xl text-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
-            >
-              <X size={20} />
-            </button>
-          )}
-        </div>
-      </div>
+      {/* 검색 및 필터 */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="학생 이름 검색..."
+                value={filters.search || ''}
+                onChange={(e) => updateFilters({ search: e.target.value })}
+                className="w-full pl-10 pr-10 py-2 border border-border rounded-lg text-sm bg-card text-foreground"
+              />
+              {filters.search && (
+                <button
+                  onClick={() => updateFilters({ search: '' })}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
 
-      {/* 상태 필터 */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {[
-          { key: 'all', label: '전체' },
-          { key: 'unpaid', label: '미납' },
-          { key: 'partial', label: '부분납' },
-          { key: 'paid', label: '완납' },
-        ].map(filter => (
-          <button
-            key={filter.key}
-            onClick={() => setStatusFilter(filter.key)}
-            className={`px-4 py-2 rounded-xl font-medium whitespace-nowrap transition ${
-              statusFilter === filter.key
-                ? 'bg-blue-500 text-white'
-                : 'bg-white text-slate-600 shadow-sm'
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
-        <div className="flex-1" />
-        <button
-          onClick={fetchPayments}
-          className="p-2 text-slate-400 active:text-blue-500"
-        >
-          <RefreshCw size={18} />
-        </button>
-      </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted-foreground whitespace-nowrap">납부 상태</label>
+              <select
+                value={filters.payment_status || ''}
+                onChange={(e) => updateFilters({ payment_status: e.target.value as any })}
+                className="px-3 py-2 border border-border rounded-lg text-sm bg-card text-foreground"
+              >
+                <option value="">전체</option>
+                {PAYMENT_STATUS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 결제 목록 */}
-      {loading ? (
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="animate-spin text-blue-500" size={32} />
-        </div>
-      ) : filteredPayments.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-          <CreditCard size={48} className="mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500">
-            {search ? '검색 결과가 없습니다' : '결제 내역이 없습니다'}
-          </p>
-        </div>
-      ) : (
-        <div className={`grid gap-3 ${
-          orientation === 'landscape' ? 'grid-cols-3' : 'grid-cols-1'
-        }`}>
-          {filteredPayments.map(payment => {
-            const config = STATUS_CONFIG[payment.payment_status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
-            const StatusIcon = config.icon;
-
-            return (
-              <div
-                key={payment.id}
-                className="bg-white rounded-2xl p-4 shadow-sm"
-              >
-                {/* 학생 정보 */}
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-                    <User size={18} className="text-slate-500" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-800 truncate">{payment.student_name}</p>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs ${config.color}`}>
-                      <StatusIcon size={12} />
-                      {config.label}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 금액 정보 */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">총 금액</span>
-                    <span className="font-medium text-slate-800">{formatCurrency(payment.total_amount)}</span>
-                  </div>
-
-                  {payment.paid_amount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">납부</span>
-                      <span className="text-green-600">{formatCurrency(payment.paid_amount)}</span>
-                    </div>
-                  )}
-
-                  {payment.remaining_amount > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">미납</span>
-                      <span className="text-red-600 font-medium">{formatCurrency(payment.remaining_amount)}</span>
-                    </div>
-                  )}
-
-                  {payment.payment_date && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">납부일</span>
-                      <span className="text-slate-600">
-                        {new Date(payment.payment_date).toLocaleDateString('ko-KR')}
-                      </span>
-                    </div>
-                  )}
-
-                  {payment.payment_method && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">결제방법</span>
-                      <span className="text-slate-600">{payment.payment_method}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <PaymentList
+        payments={filteredPayments}
+        loading={loading}
+        onPaymentClick={handlePaymentClick}
+      />
     </div>
+  );
+}
+
+// 로딩 폴백
+function LoadingFallback() {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">학원비 관리</h1>
+        <p className="text-muted-foreground">학원비 조회</p>
+      </div>
+      <Card>
+        <CardContent className="p-12 text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">학원비 정보를 불러오는 중...</p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+export default function TabletPaymentsPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <TabletPaymentsPageContent />
+    </Suspense>
   );
 }
