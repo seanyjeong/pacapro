@@ -12,10 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, List, Loader2, ChevronLeft, ChevronRight, Users, Clock, UserCheck, AlertCircle } from 'lucide-react';
+import { Calendar, List, Loader2, ChevronLeft, ChevronRight, Users, Clock, UserCheck, AlertCircle, UserCog } from 'lucide-react';
 import { ScheduleCalendarV2 } from '@/components/schedules/schedule-calendar-v2';
 import { ScheduleList } from '@/components/schedules/schedule-list';
 import { TimeSlotDetailModal } from '@/components/schedules/time-slot-detail-modal';
+import { InstructorScheduleModal } from '@/components/schedules/instructor-schedule-modal';
 import { useSchedules } from '@/hooks/use-schedules';
 import { schedulesApi, type DailyInstructorStats } from '@/lib/api/schedules';
 import { getCalendarEvents } from '@/lib/api/consultations';
@@ -39,6 +40,9 @@ export default function TabletSchedulePage() {
   // 타임슬롯 상세 모달
   const [slotModalOpen, setSlotModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ date: string; slot: TimeSlot } | null>(null);
+
+  // 강사 배정 모달
+  const [instructorModalOpen, setInstructorModalOpen] = useState(false);
 
   // 캘린더 강사 통계
   const [instructorStats, setInstructorStats] = useState<Record<string, DailyInstructorStats>>({});
@@ -153,14 +157,21 @@ export default function TabletSchedulePage() {
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
-            <div className="text-center">
+            <button
+              className="text-center flex-1 mx-4 py-2 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors"
+              onClick={() => setInstructorModalOpen(true)}
+            >
               <p className="text-lg font-bold text-foreground">
                 {selectedDate ? formatDate(selectedDate) : '날짜 선택'}
               </p>
               {isToday && (
                 <Badge variant="secondary" className="mt-1">오늘</Badge>
               )}
-            </div>
+              <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+                <UserCog className="h-3 w-3" />
+                탭하여 강사 배정
+              </p>
+            </button>
 
             <Button
               variant="outline"
@@ -269,6 +280,17 @@ export default function TabletSchedulePage() {
           setSelectedSlot(null);
         }}
         onStudentMoved={() => refetch()}
+      />
+
+      {/* 강사 배정 모달 */}
+      <InstructorScheduleModal
+        open={instructorModalOpen}
+        date={selectedDate}
+        onClose={() => setInstructorModalOpen(false)}
+        onSave={() => {
+          loadInstructorStats();
+          refetch();
+        }}
       />
     </div>
   );

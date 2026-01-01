@@ -87,12 +87,10 @@ export default function TabletConductPage({ params }: PageProps) {
   const [trialDates, setTrialDates] = useState<{ date: string; timeSlot: string }[]>([
     { date: '', timeSlot: '' }
   ]);
-  const [studentPhone, setStudentPhone] = useState('');
   const [convertingToTrial, setConvertingToTrial] = useState(false);
 
   // 미등록관리 모달
   const [pendingModalOpen, setPendingModalOpen] = useState(false);
-  const [pendingStudentPhone, setPendingStudentPhone] = useState('');
   const [pendingMemo, setPendingMemo] = useState('');
   const [convertingToPending, setConvertingToPending] = useState(false);
 
@@ -345,7 +343,7 @@ export default function TabletConductPage({ params }: PageProps) {
         consultationMemo
       });
 
-      await convertToTrialStudent(consultation.id, trialDates, studentPhone || undefined);
+      await convertToTrialStudent(consultation.id, trialDates);
       toast.success('체험 학생으로 등록되었습니다.');
       setTrialModalOpen(false);
       router.push(backUrl);
@@ -370,7 +368,7 @@ export default function TabletConductPage({ params }: PageProps) {
 
       await convertToPendingStudent(
         consultation.id,
-        pendingStudentPhone || undefined,
+        undefined,
         pendingMemo || consultationMemo || undefined
       );
       toast.success('미등록관리 학생으로 등록되었습니다.');
@@ -1083,19 +1081,6 @@ export default function TabletConductPage({ params }: PageProps) {
           </DialogHeader>
 
           <div className="space-y-4 py-6 px-6 max-h-[60vh] overflow-y-auto">
-            <div className="space-y-2">
-              <Label>학생 전화번호</Label>
-              <Input
-                type="tel"
-                placeholder="010-0000-0000"
-                value={studentPhone}
-                onChange={(e) => setStudentPhone(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                학생 본인 전화번호가 있으면 입력하세요. 없으면 학부모 번호로 등록됩니다.
-              </p>
-            </div>
-
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>체험 일정 ({trialDates.length}회)</Label>
@@ -1184,19 +1169,6 @@ export default function TabletConductPage({ params }: PageProps) {
           </DialogHeader>
 
           <div className="space-y-4 py-6 px-6">
-            <div className="space-y-2">
-              <Label>학생 전화번호 (선택)</Label>
-              <Input
-                type="tel"
-                placeholder="010-0000-0000"
-                value={pendingStudentPhone}
-                onChange={(e) => setPendingStudentPhone(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                없으면 학부모 번호로 등록됩니다.
-              </p>
-            </div>
-
             <div className="space-y-2">
               <Label>메모 (선택)</Label>
               <Textarea
