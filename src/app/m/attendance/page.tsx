@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { canEdit } from '@/lib/utils/permissions';
 import { schedulesApi } from '@/lib/api/schedules';
-import { ArrowLeft, Check, X, Clock, AlertCircle, Calendar, Phone } from 'lucide-react';
+import { ArrowLeft, Check, X, Clock, AlertCircle, Calendar, Phone, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type {
@@ -14,6 +14,19 @@ import type {
   ClassSchedule,
   AttendanceSubmission,
 } from '@/lib/types/schedule';
+
+// 공결 사유 옵션
+const EXCUSED_REASONS = [
+  { value: '질병', label: '질병' },
+  { value: '학교시험', label: '학교 시험' },
+];
+
+// 결석 사유 옵션
+const ABSENT_REASONS = [
+  { value: '개인사정', label: '개인 사정' },
+  { value: '무단결석', label: '무단 결석' },
+  { value: '기타', label: '기타' },
+];
 
 const TIME_SLOTS: { value: TimeSlot; label: string }[] = [
   { value: 'morning', label: '오전' },
@@ -45,8 +58,19 @@ export default function MobileAttendancePage() {
   const [loading, setLoading] = useState(true);
   const [attendances, setAttendances] = useState<Map<number, AttendanceStatus>>(new Map());
   const [originalAttendances, setOriginalAttendances] = useState<Map<number, AttendanceStatus>>(new Map());
+  const [attendanceNotes, setAttendanceNotes] = useState<Map<number, string>>(new Map());
   const [saving, setSaving] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+
+  // 결석/공결 사유 모달 상태
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [reasonModalData, setReasonModalData] = useState<{
+    studentId: number;
+    studentName: string;
+    status: 'absent' | 'excused';
+    reason: string;
+    customReason: string;
+  } | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -94,20 +118,29 @@ export default function MobileAttendancePage() {
         }));
         setStudents(studentList as unknown as (Attendance & { phone?: string; parent_phone?: string; grade?: string; is_season_student?: boolean })[]);
 
-        // 기존 출석 상태 로드
+        // 기존 출석 상태 및 notes 로드
         const initialMap = new Map<number, AttendanceStatus>();
+        const notesMap = new Map<number, string>();
+        const scheduleStudents = (response.schedule?.students || []) as Array<{ student_id: number; notes?: string }>;
         studentList.forEach((s) => {
           if (s.attendance_status) {
             initialMap.set(s.student_id, s.attendance_status);
           }
+          // API 응답에서 notes 로드
+          const apiStudent = scheduleStudents.find((st) => st.student_id === s.student_id);
+          if (apiStudent?.notes) {
+            notesMap.set(s.student_id, apiStudent.notes);
+          }
         });
         setAttendances(initialMap);
         setOriginalAttendances(new Map(initialMap)); // 원본 저장
+        setAttendanceNotes(notesMap);
       } else {
         setSchedule(null);
         setStudents([]);
         setAttendances(new Map());
         setOriginalAttendances(new Map());
+        setAttendanceNotes(new Map());
       }
     } catch (err) {
       console.error('Failed to load schedule:', err);
@@ -118,12 +151,41 @@ export default function MobileAttendancePage() {
   };
 
   // 출석 상태 변경 및 자동 저장
-  const handleStatusChange = async (studentId: number, status: AttendanceStatus) => {
+  const handleStatusChange = async (studentId: number, status: AttendanceStatus, studentName?: string) => {
     if (!schedule || saving) return;
 
     const currentStatus = attendances.get(studentId);
     const isToggleOff = currentStatus === status;
-    const newStatus = isToggleOff ? 'none' : status;
+
+    // 같은 상태를 다시 선택하면 토글 (해제)
+    if (isToggleOff) {
+      await saveAttendance(studentId, 'none', undefined);
+      return;
+    }
+
+    // 결석 또는 공결 선택 시 사유 모달 표시
+    if ((status === 'absent' || status === 'excused') && studentName) {
+      setReasonModalData({
+        studentId,
+        studentName,
+        status,
+        reason: '',
+        customReason: '',
+      });
+      setShowReasonModal(true);
+      return;
+    }
+
+    // 출석/지각은 바로 저장
+    await saveAttendance(studentId, status, undefined);
+  };
+
+  // 실제 출석 저장 함수
+  const saveAttendance = async (studentId: number, status: AttendanceStatus | 'none', notes?: string) => {
+    if (!schedule) return;
+
+    const currentStatus = attendances.get(studentId);
+    const isToggleOff = status === 'none';
 
     // UI 즉시 업데이트
     setAttendances((prev) => {
@@ -131,10 +193,22 @@ export default function MobileAttendancePage() {
       if (isToggleOff) {
         newMap.delete(studentId);
       } else {
-        newMap.set(studentId, status);
+        newMap.set(studentId, status as AttendanceStatus);
       }
       return newMap;
     });
+
+    if (notes !== undefined) {
+      setAttendanceNotes((prev) => {
+        const newMap = new Map(prev);
+        if (notes) {
+          newMap.set(studentId, notes);
+        } else {
+          newMap.delete(studentId);
+        }
+        return newMap;
+      });
+    }
 
     // 자동 저장
     setSaving(true);
@@ -142,7 +216,8 @@ export default function MobileAttendancePage() {
       await schedulesApi.submitAttendance(schedule.id, {
         attendance_records: [{
           student_id: studentId,
-          attendance_status: newStatus,
+          attendance_status: status,
+          notes: notes,
         }],
       });
       // 원본 상태 업데이트
@@ -151,7 +226,7 @@ export default function MobileAttendancePage() {
         if (isToggleOff) {
           newMap.delete(studentId);
         } else {
-          newMap.set(studentId, status);
+          newMap.set(studentId, status as AttendanceStatus);
         }
         return newMap;
       });
@@ -171,6 +246,25 @@ export default function MobileAttendancePage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // 사유 모달 확인 핸들러
+  const handleReasonConfirm = async () => {
+    if (!reasonModalData) return;
+
+    const { studentId, status, reason, customReason } = reasonModalData;
+    const finalNotes = reason === '기타' ? customReason : reason;
+
+    setShowReasonModal(false);
+    setReasonModalData(null);
+
+    await saveAttendance(studentId, status, finalNotes);
+  };
+
+  // 사유 모달 취소 핸들러
+  const handleReasonCancel = () => {
+    setShowReasonModal(false);
+    setReasonModalData(null);
   };
 
   // 전체 출석 처리 (자동 저장)
@@ -364,12 +458,24 @@ export default function MobileAttendancePage() {
                       </button>
                     </div>
 
+                    {/* 결석/공결 사유 표시 */}
+                    {(currentStatus === 'absent' || currentStatus === 'excused') && attendanceNotes.get(student.student_id) && (
+                      <div className={`mb-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
+                        currentStatus === 'excused'
+                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                          : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                      }`}>
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                        <span>사유: {attendanceNotes.get(student.student_id)}</span>
+                      </div>
+                    )}
+
                     {/* 상태 버튼 */}
                     <div className="grid grid-cols-4 gap-2">
                       {STATUS_BUTTONS.map((btn) => (
                         <button
                           key={btn.value}
-                          onClick={() => handleStatusChange(student.student_id, btn.value)}
+                          onClick={() => handleStatusChange(student.student_id, btn.value, student.student_name)}
                           className={`py-3 rounded-lg font-medium text-sm transition-all active:scale-95 ${
                             currentStatus === btn.value ? btn.activeColor : btn.color
                           }`}
@@ -390,6 +496,150 @@ export default function MobileAttendancePage() {
       {saving && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm shadow-lg">
           저장 중...
+        </div>
+      )}
+
+      {/* 결석/공결 사유 입력 모달 */}
+      {showReasonModal && reasonModalData && (
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={handleReasonCancel}>
+          <div
+            className="bg-card w-full max-w-lg rounded-t-2xl p-5 pb-8 safe-area-pb animate-in slide-in-from-bottom duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 헤더 */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold flex items-center gap-2 text-foreground">
+                {reasonModalData.status === 'excused' ? (
+                  <>
+                    <AlertCircle className="h-5 w-5 text-blue-500" />
+                    공결 사유
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                    결석 사유
+                  </>
+                )}
+              </h3>
+              <button onClick={handleReasonCancel} className="p-2 text-muted-foreground">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* 학생 정보 */}
+            <div className="text-center py-3 mb-4">
+              <p className="font-semibold text-xl text-foreground">{reasonModalData.studentName}</p>
+              <span className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-medium ${
+                reasonModalData.status === 'excused'
+                  ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400'
+                  : 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400'
+              }`}>
+                {reasonModalData.status === 'excused' ? '공결' : '결석'}
+              </span>
+            </div>
+
+            {/* 공결 설명 */}
+            {reasonModalData.status === 'excused' && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
+                <div className="flex items-start gap-2">
+                  <HelpCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-800 dark:text-blue-300">
+                    <p className="font-semibold mb-1">공결이란?</p>
+                    <p className="text-blue-700 dark:text-blue-400">
+                      공식적 결석으로, 원장님의 승인이 필요합니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 결석 설명 */}
+            {reasonModalData.status === 'absent' && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-red-800 dark:text-red-300">
+                    <p className="font-semibold mb-1">결석 안내</p>
+                    <p className="text-red-700 dark:text-red-400">
+                      일반 결석은 학생 본인 책임이며, 별도의 보상이 없습니다.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 사유 선택 */}
+            <div className="space-y-2 mb-4">
+              <label className="text-sm font-medium text-foreground">사유 선택</label>
+              <div className="grid grid-cols-2 gap-2">
+                {(reasonModalData.status === 'excused' ? EXCUSED_REASONS : ABSENT_REASONS).map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setReasonModalData({ ...reasonModalData, reason: option.value, customReason: '' })}
+                    className={`p-4 border rounded-xl text-sm font-medium transition-all active:scale-95 ${
+                      reasonModalData.reason === option.value
+                        ? reasonModalData.status === 'excused'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                          : 'border-red-500 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                        : 'border-border bg-secondary text-foreground'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              {/* 기타 옵션 (공결에만) */}
+              {reasonModalData.status === 'excused' && (
+                <button
+                  type="button"
+                  onClick={() => setReasonModalData({ ...reasonModalData, reason: '기타', customReason: '' })}
+                  className={`w-full p-4 border rounded-xl text-sm font-medium transition-all active:scale-95 ${
+                    reasonModalData.reason === '기타'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                      : 'border-border bg-secondary text-foreground'
+                  }`}
+                >
+                  기타 (직접 입력)
+                </button>
+              )}
+            </div>
+
+            {/* 기타 사유 입력 */}
+            {reasonModalData.reason === '기타' && (
+              <div className="space-y-2 mb-4">
+                <label className="text-sm font-medium text-foreground">사유 입력</label>
+                <textarea
+                  value={reasonModalData.customReason}
+                  onChange={(e) => setReasonModalData({ ...reasonModalData, customReason: e.target.value })}
+                  placeholder="사유를 입력하세요..."
+                  rows={2}
+                  className="w-full px-4 py-3 bg-secondary border border-border rounded-xl text-foreground resize-none"
+                />
+              </div>
+            )}
+
+            {/* 버튼 */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleReasonCancel}
+                className="flex-1 py-4 rounded-xl font-medium bg-secondary text-muted-foreground active:scale-95 transition-all"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleReasonConfirm}
+                disabled={!reasonModalData.reason || (reasonModalData.reason === '기타' && !reasonModalData.customReason.trim())}
+                className={`flex-1 py-4 rounded-xl font-medium text-white active:scale-95 transition-all disabled:opacity-50 ${
+                  reasonModalData.status === 'excused'
+                    ? 'bg-blue-600'
+                    : 'bg-red-600'
+                }`}
+              >
+                확인
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
