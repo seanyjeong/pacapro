@@ -16,8 +16,7 @@ import {
   Menu,
   X,
   Settings,
-  MessageSquare,
-  RotateCcw
+  MessageSquare
 } from 'lucide-react';
 
 const APP_VERSION = 'v3.1.5';
@@ -58,6 +57,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<{ name: string; role?: string; position?: string | null } | null>(null);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [debugInfo, setDebugInfo] = useState({ w: 0, h: 0, type: '' });
 
   useEffect(() => {
     const currentUser = authAPI.getCurrentUser();
@@ -70,7 +70,12 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const updateOrientation = () => {
-      const isLandscape = window.innerWidth > window.innerHeight;
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      const type = screen.orientation?.type || 'unknown';
+      const isLandscape = w > h;
+
+      setDebugInfo({ w, h, type });
       setOrientation(isLandscape ? 'landscape' : 'portrait');
     };
 
@@ -101,10 +106,6 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
 
   const handleLogout = () => {
     authAPI.logout();
-  };
-
-  const toggleOrientation = () => {
-    setOrientation(prev => prev === 'portrait' ? 'landscape' : 'portrait');
   };
 
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
@@ -178,27 +179,17 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
               <h1 className="text-lg font-bold text-slate-800">
                 {currentPage?.name || 'P-ACA 태블릿'}
               </h1>
-              <div className="flex items-center gap-3">
-                {/* 화면 회전 버튼 */}
-                <button
-                  onClick={toggleOrientation}
-                  className="p-2 bg-slate-100 rounded-lg text-slate-600 hover:bg-slate-200 active:scale-95 transition"
-                  title="화면 회전"
-                >
-                  <RotateCcw size={20} />
-                </button>
-                {user && (
-                  <>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-slate-800">{user.name}</p>
-                      <p className="text-xs text-slate-500">{getRoleDisplayName(user.role, user.position)}</p>
-                    </div>
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                      {user.name.charAt(0)}
-                    </div>
-                  </>
-                )}
-              </div>
+              {user && (
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-slate-800">{user.name}</p>
+                    <p className="text-xs text-slate-500">{getRoleDisplayName(user.role, user.position)}</p>
+                  </div>
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {user.name.charAt(0)}
+                  </div>
+                </div>
+              )}
             </header>
 
             {/* 페이지 콘텐츠 */}
@@ -227,30 +218,20 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
             />
             <div>
               <h1 className="text-white font-bold">P-ACA</h1>
-              <p className="text-[10px] text-slate-400">{APP_VERSION}</p>
+              <p className="text-[10px] text-slate-400">{APP_VERSION} | {debugInfo.w}x{debugInfo.h} | {orientation}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            {/* 화면 회전 버튼 */}
-            <button
-              onClick={toggleOrientation}
-              className="p-2 bg-blue-500 rounded-lg text-white hover:bg-blue-600 active:scale-95 transition"
-              title="화면 회전"
-            >
-              <RotateCcw size={20} />
-            </button>
-            {user && (
-              <>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-white">{user.name}</p>
-                  <p className="text-[10px] text-slate-400">{getRoleDisplayName(user.role, user.position)}</p>
-                </div>
-                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {user.name.charAt(0)}
-                </div>
-              </>
-            )}
-          </div>
+          {user && (
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <p className="text-sm font-medium text-white">{user.name}</p>
+                <p className="text-[10px] text-slate-400">{getRoleDisplayName(user.role, user.position)}</p>
+              </div>
+              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                {user.name.charAt(0)}
+              </div>
+            </div>
+          )}
         </header>
 
         {/* 메인 콘텐츠 */}
