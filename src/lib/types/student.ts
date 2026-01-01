@@ -407,9 +407,9 @@ export const REST_CREDIT_TYPE_LABELS: Record<RestCreditType, string> = {
 
 // 휴식 크레딧 상태 레이블
 export const REST_CREDIT_STATUS_LABELS: Record<RestCreditStatus, string> = {
-  pending: '미적용',
-  partial: '부분적용',
-  applied: '이월차감',
+  pending: '미사용',
+  partial: '부분사용',
+  applied: '크레딧사용',
   refunded: '환불완료',
   cancelled: '취소',
 };

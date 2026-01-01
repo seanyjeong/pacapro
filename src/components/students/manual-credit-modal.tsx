@@ -82,14 +82,19 @@ const REASON_PRESETS = [
 // 크레딧 타입 라벨
 const CREDIT_TYPE_LABELS: Record<string, string> = {
   carryover: '이월',
-  refund: '환불',
+  excused: '공결',
   manual: '수동',
+  refund: '환불',
 };
 
 // 크레딧 상태 라벨
 const CREDIT_STATUS_LABELS: Record<string, string> = {
-  pending: '대기',
+  pending: '미사용',
+  partial: '부분사용',
+  applied: '크레딧사용',
   used: '사용됨',
+  refunded: '환불완료',
+  cancelled: '취소',
   expired: '만료',
 };
 
@@ -132,6 +137,11 @@ export function ManualCreditModal({
   const [editingCredit, setEditingCredit] = useState<Credit | null>(null);
   const [editAmount, setEditAmount] = useState<number>(0);
   const [editNotes, setEditNotes] = useState<string>('');
+
+  // 적용 모드
+  const [applyingCredit, setApplyingCredit] = useState<Credit | null>(null);
+  const [applyYearMonth, setApplyYearMonth] = useState<string>('');
+  const [applying, setApplying] = useState(false);
 
   // 1회 금액 계산
   const perClassFee = useMemo(() => {
@@ -275,6 +285,31 @@ export function ManualCreditModal({
     }
   };
 
+  // 적용 모달 열기
+  const openApplyModal = (credit: Credit) => {
+    setApplyingCredit(credit);
+    const now = new Date();
+    setApplyYearMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  // 적용 처리
+  const handleApplyCredit = async () => {
+    if (!applyingCredit || !applyYearMonth) return;
+
+    try {
+      setApplying(true);
+      const result = await studentsAPI.applyCredit(studentId, applyingCredit.id, applyYearMonth);
+      toast.success(result.message);
+      setApplyingCredit(null);
+      loadCredits();
+      onSuccess();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '크레딧 적용에 실패했습니다.');
+    } finally {
+      setApplying(false);
+    }
+  };
+
   const resetForm = () => {
     setInputMode('date');
     setStartDate('');
@@ -299,6 +334,7 @@ export function ManualCreditModal({
     : '미설정';
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -571,25 +607,37 @@ export function ManualCreditModal({
                                 {CREDIT_STATUS_LABELS[credit.status] || credit.status}
                               </span>
                             </div>
-                            {credit.status !== 'used' && (
-                              <div className="flex gap-1">
+                            <div className="flex gap-1">
+                              {(credit.status === 'pending' || credit.status === 'partial') && (
                                 <Button
                                   size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleEdit(credit)}
+                                  variant="outline"
+                                  className="h-7 px-2 text-xs text-blue-600 border-blue-300 hover:bg-blue-50"
+                                  onClick={() => openApplyModal(credit)}
                                 >
-                                  <Pencil className="w-4 h-4" />
+                                  적용
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-red-600 hover:text-red-700"
-                                  onClick={() => handleDelete(credit.id)}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            )}
+                              )}
+                              {credit.status !== 'used' && credit.status !== 'applied' && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleEdit(credit)}
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className="text-red-600 hover:text-red-700"
+                                    onClick={() => handleDelete(credit.id)}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {credit.rest_start_date && (
@@ -622,5 +670,66 @@ export function ManualCreditModal({
         </Tabs>
       </DialogContent>
     </Dialog>
+
+    {/* 적용 모달 */}
+    <Dialog open={!!applyingCredit} onOpenChange={(open) => !open && setApplyingCredit(null)}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>크레딧 적용</DialogTitle>
+          <DialogDescription>
+            크레딧을 적용할 월을 선택하세요.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-6 px-6 space-y-4">
+          {applyingCredit && (
+            <div className="p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 text-xs font-medium rounded bg-muted">
+                  {CREDIT_TYPE_LABELS[applyingCredit.credit_type] || applyingCredit.credit_type}
+                </span>
+                <span className="text-sm font-medium">
+                  {applyingCredit.remaining_amount.toLocaleString()}원
+                </span>
+              </div>
+              {applyingCredit.notes && (
+                <div className="text-xs text-muted-foreground">
+                  {applyingCredit.notes}
+                </div>
+              )}
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="applyYearMonth">적용할 월</Label>
+            <Input
+              id="applyYearMonth"
+              type="month"
+              value={applyYearMonth}
+              onChange={(e) => setApplyYearMonth(e.target.value)}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">
+              해당 월 학원비에서 크레딧 금액만큼 차감됩니다.
+            </p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setApplyingCredit(null)}
+            disabled={applying}
+          >
+            취소
+          </Button>
+          <Button
+            onClick={handleApplyCredit}
+            disabled={applying || !applyYearMonth}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            {applying ? '적용 중...' : '적용'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

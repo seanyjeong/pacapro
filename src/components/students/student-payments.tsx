@@ -8,10 +8,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { CreditCard, Plus, Coins } from 'lucide-react';
 import type { StudentPayment, RestCredit } from '@/lib/types/student';
 import { formatDate, formatCurrency, getPaymentStatusColor } from '@/lib/utils/student-helpers';
 import { PAYMENT_STATUS_LABELS, REST_CREDIT_TYPE_LABELS, REST_CREDIT_STATUS_LABELS, parseClassDays } from '@/lib/types/student';
+import { PAYMENT_METHOD_LABELS } from '@/lib/types/payment';
 import { studentsAPI } from '@/lib/api/students';
 import { ManualCreditModal } from './manual-credit-modal';
 
@@ -75,6 +79,12 @@ export function StudentPaymentsComponent({
   const [pendingTotal, setPendingTotal] = useState(0);
   const [creditModalOpen, setCreditModalOpen] = useState(false);
 
+  // 크레딧 적용 모달 상태
+  const [applyModalOpen, setApplyModalOpen] = useState(false);
+  const [selectedCredit, setSelectedCredit] = useState<RestCredit | null>(null);
+  const [applyYearMonth, setApplyYearMonth] = useState('');
+  const [applying, setApplying] = useState(false);
+
   // 크레딧 목록 조회
   const loadCredits = useCallback(async () => {
     if (!studentId) return;
@@ -98,6 +108,35 @@ export function StudentPaymentsComponent({
   // 크레딧 생성 성공 시
   const handleCreditSuccess = () => {
     loadCredits();
+  };
+
+  // 크레딧 적용 모달 열기
+  const openApplyModal = (credit: RestCredit) => {
+    setSelectedCredit(credit);
+    // 현재 월을 기본값으로
+    const now = new Date();
+    setApplyYearMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+    setApplyModalOpen(true);
+  };
+
+  // 크레딧 적용 처리
+  const handleApplyCredit = async () => {
+    if (!studentId || !selectedCredit || !applyYearMonth) return;
+
+    try {
+      setApplying(true);
+      const result = await studentsAPI.applyCredit(studentId, selectedCredit.id, applyYearMonth);
+      alert(result.message);
+      setApplyModalOpen(false);
+      setSelectedCredit(null);
+      loadCredits(); // 크레딧 목록 새로고침
+      window.location.reload(); // 페이지 새로고침으로 학원비도 갱신
+    } catch (err: any) {
+      console.error('Failed to apply credit:', err);
+      alert(err.response?.data?.message || '크레딧 적용에 실패했습니다.');
+    } finally {
+      setApplying(false);
+    }
   };
 
   // 크레딧 기능 사용 가능 여부
@@ -185,9 +224,21 @@ export function StudentPaymentsComponent({
                         )}
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded border ${getCreditStatusBadgeColor(credit.status)}`}>
-                      {REST_CREDIT_STATUS_LABELS[credit.status] || credit.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {(credit.status === 'pending' || credit.status === 'partial') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => openApplyModal(credit)}
+                        >
+                          적용
+                        </Button>
+                      )}
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded border ${getCreditStatusBadgeColor(credit.status)}`}>
+                        {REST_CREDIT_STATUS_LABELS[credit.status] || credit.status}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -275,7 +326,7 @@ export function StudentPaymentsComponent({
 
                         {/* 납부 방법 */}
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-foreground">{payment.payment_method || '-'}</div>
+                          <div className="text-sm text-foreground">{payment.payment_method ? PAYMENT_METHOD_LABELS[payment.payment_method] || payment.payment_method : '-'}</div>
                         </td>
 
                         {/* 납부일 */}
@@ -318,6 +369,61 @@ export function StudentPaymentsComponent({
           onSuccess={handleCreditSuccess}
         />
       )}
+
+      {/* 크레딧 적용 모달 */}
+      <Dialog open={applyModalOpen} onOpenChange={setApplyModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>크레딧 적용</DialogTitle>
+          </DialogHeader>
+          <div className="py-6 px-6 space-y-4">
+            {selectedCredit && (
+              <div className="p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`px-2 py-0.5 text-xs font-medium rounded border ${getCreditTypeBadgeColor(selectedCredit.credit_type)}`}>
+                    {REST_CREDIT_TYPE_LABELS[selectedCredit.credit_type] || selectedCredit.credit_type}
+                  </span>
+                  <span className="text-sm font-medium">
+                    {selectedCredit.remaining_amount.toLocaleString()}원
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {selectedCredit.notes}
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="applyYearMonth">적용할 월</Label>
+              <Input
+                id="applyYearMonth"
+                type="month"
+                value={applyYearMonth}
+                onChange={(e) => setApplyYearMonth(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                해당 월 학원비에서 크레딧 금액만큼 차감됩니다.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setApplyModalOpen(false)}
+              disabled={applying}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={handleApplyCredit}
+              disabled={applying || !applyYearMonth}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {applying ? '적용 중...' : '적용'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

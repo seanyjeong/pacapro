@@ -2755,4 +2755,131 @@ router.delete('/:id/credits/:creditId', verifyToken, checkPermission('payments',
     }
 });
 
+/**
+ * POST /paca/students/:id/credits/:creditId/apply
+ * 크레딧을 특정 월 학원비에 수동 적용
+ */
+router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
+    const studentId = parseInt(req.params.id);
+    const creditId = parseInt(req.params.creditId);
+    const { year_month } = req.body;
+
+    if (!year_month || !/^\d{4}-\d{2}$/.test(year_month)) {
+        return res.status(400).json({
+            error: 'Bad Request',
+            message: '적용할 월(year_month)을 YYYY-MM 형식으로 입력해주세요.'
+        });
+    }
+
+    try {
+        // 크레딧 조회
+        const [credits] = await db.query(
+            `SELECT * FROM rest_credits WHERE id = ? AND student_id = ? AND academy_id = ?`,
+            [creditId, studentId, req.user.academyId]
+        );
+
+        if (credits.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: '크레딧을 찾을 수 없습니다.'
+            });
+        }
+
+        const credit = credits[0];
+
+        // 이미 사용 완료된 크레딧은 적용 불가
+        if (credit.status === 'applied' || credit.remaining_amount <= 0) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '이미 사용 완료된 크레딧입니다.'
+            });
+        }
+
+        // 해당 월 학원비 조회
+        const [payments] = await db.query(
+            `SELECT * FROM student_payments
+             WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
+            [studentId, req.user.academyId, year_month]
+        );
+
+        if (payments.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: `${year_month} 학원비가 없습니다.`
+            });
+        }
+
+        const payment = payments[0];
+
+        // 이미 납부 완료된 학원비는 적용 불가
+        if (payment.payment_status === 'paid') {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '이미 납부 완료된 학원비에는 크레딧을 적용할 수 없습니다.'
+            });
+        }
+
+        // 적용할 금액 계산 (크레딧 잔액 vs 학원비 남은 금액)
+        const currentFinal = parseFloat(payment.final_amount);
+        const currentCarryover = parseFloat(payment.carryover_amount) || 0;
+        const payableAmount = currentFinal; // 현재 최종 금액
+        const applyAmount = Math.min(credit.remaining_amount, payableAmount);
+
+        if (applyAmount <= 0) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: '적용할 금액이 없습니다.'
+            });
+        }
+
+        // 학원비 업데이트
+        const newCarryover = currentCarryover + applyAmount;
+        const newFinal = currentFinal - applyAmount;
+        const creditTypeLabel = credit.credit_type === 'excused' ? '공결' :
+                               credit.credit_type === 'manual' ? '수동' : '휴식';
+        const newNotes = payment.notes
+            ? `${payment.notes}\n[크레딧 차감] ${creditTypeLabel} 크레딧 ${applyAmount.toLocaleString()}원 차감`
+            : `[크레딧 차감] ${creditTypeLabel} 크레딧 ${applyAmount.toLocaleString()}원 차감`;
+
+        await db.query(
+            `UPDATE student_payments SET
+                carryover_amount = ?,
+                final_amount = ?,
+                rest_credit_id = ?,
+                notes = ?,
+                updated_at = NOW()
+             WHERE id = ?`,
+            [newCarryover, newFinal, creditId, newNotes, payment.id]
+        );
+
+        // 크레딧 업데이트
+        const newRemaining = credit.remaining_amount - applyAmount;
+        const newStatus = newRemaining <= 0 ? 'applied' : 'partial';
+
+        await db.query(
+            `UPDATE rest_credits SET
+                remaining_amount = ?,
+                status = ?,
+                applied_to_payment_id = ?,
+                processed_at = NOW()
+             WHERE id = ?`,
+            [newRemaining, newStatus, payment.id, creditId]
+        );
+
+        res.json({
+            message: `${year_month} 학원비에 ${applyAmount.toLocaleString()}원 크레딧이 적용되었습니다.`,
+            applied_amount: applyAmount,
+            new_final_amount: newFinal,
+            credit_remaining: newRemaining
+        });
+
+    } catch (error) {
+        console.error('Error applying credit:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '크레딧 적용에 실패했습니다.'
+        });
+    }
+});
+
 module.exports = router;

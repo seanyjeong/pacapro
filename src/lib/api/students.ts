@@ -225,4 +225,17 @@ export const studentsAPI = {
   deleteCredit: async (studentId: number, creditId: number): Promise<{ message: string }> => {
     return await apiClient.delete(`/students/${studentId}/credits/${creditId}`);
   },
+
+  /**
+   * 크레딧 수동 적용
+   * POST /paca/students/:id/credits/:creditId/apply
+   */
+  applyCredit: async (studentId: number, creditId: number, yearMonth: string): Promise<{
+    message: string;
+    applied_amount: number;
+    new_final_amount: number;
+    credit_remaining: number;
+  }> => {
+    return await apiClient.post(`/students/${studentId}/credits/${creditId}/apply`, { year_month: yearMonth });
+  },
 };
