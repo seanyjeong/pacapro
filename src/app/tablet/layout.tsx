@@ -19,7 +19,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 
-const APP_VERSION = 'v3.1.12';
+const APP_VERSION = 'v3.1.13';
 
 // Navigation items (대시보드 제거)
 const navigation = [

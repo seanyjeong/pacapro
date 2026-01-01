@@ -8,14 +8,9 @@ import {
   ArrowLeft,
   User,
   Phone,
-  GraduationCap,
   Calendar,
-  CreditCard,
-  Clock,
   RefreshCw,
-  CheckCircle2,
-  XCircle,
-  School
+  CheckCircle2
 } from 'lucide-react';
 
 interface Student {
@@ -36,12 +31,6 @@ interface Student {
   discount_rate: number;
   memo: string | null;
   address: string | null;
-}
-
-interface PaymentSummary {
-  current_month_status: string;
-  unpaid_count: number;
-  total_unpaid: number;
 }
 
 interface AttendanceSummary {
@@ -69,7 +58,6 @@ export default function TabletStudentDetailPage() {
   const studentId = params.id as string;
 
   const [student, setStudent] = useState<Student | null>(null);
-  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
   const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -85,24 +73,6 @@ export default function TabletStudentDetailPage() {
       // Fetch student details
       const studentRes = await apiClient.get<{ student: Student }>(`/students/${studentId}`);
       setStudent(studentRes.student);
-
-      // Fetch payment summary
-      try {
-        const currentMonth = new Date().toISOString().slice(0, 7);
-        const paymentRes = await apiClient.get<{ payments: Array<{ payment_status: string; remaining_amount: number }> }>(
-          '/payments',
-          { params: { student_id: studentId, year_month: currentMonth } }
-        );
-        const payments = paymentRes.payments || [];
-        const unpaid = payments.filter(p => p.payment_status !== 'paid');
-        setPaymentSummary({
-          current_month_status: payments[0]?.payment_status || 'none',
-          unpaid_count: unpaid.length,
-          total_unpaid: unpaid.reduce((sum, p) => sum + (p.remaining_amount || 0), 0)
-        });
-      } catch {
-        // Payment fetch failed, skip
-      }
 
       // Fetch attendance summary (this month)
       try {
@@ -157,10 +127,6 @@ export default function TabletStudentDetailPage() {
   const formatClassDays = (days: number[]) => {
     if (!days || days.length === 0) return '-';
     return days.map(d => DAY_LABELS[d]).join(', ');
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원';
   };
 
   if (loading) {
@@ -225,7 +191,7 @@ export default function TabletStudentDetailPage() {
       </div>
 
       {/* 요약 카드 */}
-      <div className={`grid gap-4 ${orientation === 'landscape' ? 'grid-cols-3' : 'grid-cols-1'}`}>
+      <div className={`grid gap-4 ${orientation === 'landscape' ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {/* 출석 현황 */}
         <div className="bg-white rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
@@ -249,22 +215,6 @@ export default function TabletStudentDetailPage() {
             </div>
           ) : (
             <p className="text-slate-400 text-sm">출석 정보 없음</p>
-          )}
-        </div>
-
-        {/* 납부 현황 */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <CreditCard className="text-blue-500" size={20} />
-            <h3 className="font-bold text-slate-800">납부 현황</h3>
-          </div>
-          {paymentSummary && paymentSummary.total_unpaid > 0 ? (
-            <div className="flex justify-between">
-              <span className="text-slate-500">미납금</span>
-              <span className="text-red-600 font-bold">{formatCurrency(paymentSummary.total_unpaid)}</span>
-            </div>
-          ) : (
-            <p className="text-green-600 font-medium">납부 완료</p>
           )}
         </div>
 
