@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  // URL에서 학원 이름 파라미터 가져오기
+  // URL에서 파라미터 가져오기
   const { searchParams } = new URL(request.url);
   const academyName = searchParams.get('name') || 'P-ACA';
+  const isTablet = searchParams.get('tablet') === 'true';
 
   const manifest = {
-    name: academyName,
+    name: isTablet ? `${academyName} 태블릿` : academyName,
     short_name: academyName.length > 12 ? academyName.substring(0, 12) : academyName,
     description: '체육입시 학원관리시스템',
-    start_url: '/',
+    start_url: isTablet ? '/tablet' : '/',
     display: 'fullscreen',
     background_color: '#ffffff',
     theme_color: '#3b82f6',
-    orientation: 'portrait',
+    orientation: isTablet ? 'landscape-primary' : 'portrait',
     icons: [
       {
         src: '/icons/icon-72x72.png',

@@ -57,7 +57,31 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<{ name: string; role?: string; position?: string | null } | null>(null);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const [debugInfo, setDebugInfo] = useState({ w: 0, h: 0, type: '' });
+
+  // 태블릿용 manifest 설정 (가로 모드 고정)
+  useEffect(() => {
+    const userStr = localStorage.getItem('user');
+    let academyName = 'P-ACA';
+
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr);
+        academyName = userData.academy?.name || userData.academy_name || 'P-ACA';
+      } catch { /* ignore */ }
+    }
+
+    // 기존 manifest 링크 제거
+    const existingLink = document.querySelector('link[rel="manifest"]');
+    if (existingLink) {
+      existingLink.remove();
+    }
+
+    // 태블릿용 manifest 링크 추가
+    const newLink = document.createElement('link');
+    newLink.rel = 'manifest';
+    newLink.href = `/api/manifest?name=${encodeURIComponent(academyName)}&tablet=true`;
+    document.head.appendChild(newLink);
+  }, []);
 
   useEffect(() => {
     const currentUser = authAPI.getCurrentUser();
@@ -70,12 +94,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const updateOrientation = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const type = screen.orientation?.type || 'unknown';
-      const isLandscape = w > h;
-
-      setDebugInfo({ w, h, type });
+      const isLandscape = window.innerWidth > window.innerHeight;
       setOrientation(isLandscape ? 'landscape' : 'portrait');
     };
 
@@ -218,7 +237,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
             />
             <div>
               <h1 className="text-white font-bold">P-ACA</h1>
-              <p className="text-[10px] text-slate-400">{APP_VERSION} | {debugInfo.w}x{debugInfo.h} | {orientation}</p>
+              <p className="text-[10px] text-slate-400">{APP_VERSION}</p>
             </div>
           </div>
           {user && (

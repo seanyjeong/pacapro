@@ -137,9 +137,11 @@ export function StudentListTable({ students, loading, onStudentClick }: StudentL
                               </Badge>
                             )}
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {formatStudentNumber(student.student_number)}
-                          </div>
+                          {student.student_number && student.student_number !== '0' && student.student_number !== '00' && (
+                            <div className="text-sm text-muted-foreground">
+                              {formatStudentNumber(student.student_number)}
+                            </div>
+                          )}
                           <div className="text-xs text-muted-foreground flex items-center mt-1">
                             <Phone className="w-3 h-3 mr-1" />
                             {formatPhoneNumber(student.phone)}

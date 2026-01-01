@@ -151,7 +151,12 @@
       "Bash(done)",
       "Bash(node cron/monthly-schedule-assign.js:*)",
       "Bash(node scripts/fix-january-2026-due-dates.js:*)",
-      "Bash(node -r dotenv/config:*)"
+      "Bash(node -r dotenv/config:*)",
+      "Bash(git log:*)",
+      "Bash(node /tmp/check-vercel.js:*)",
+      "Bash(npx playwright test --version)",
+      "Bash(npx playwright test:*)",
+      "Bash(node check-vercel.js:*)"
     ],
     "deny": [],
     "ask": []
