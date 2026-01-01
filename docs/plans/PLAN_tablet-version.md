@@ -411,7 +411,7 @@ if (isTablet && !pathname.startsWith('/tablet')) {
 ---
 
 ## 8. Progress Tracking
-
+1
 | Phase | 상태 | 시작일 | 완료일 |
 |-------|------|--------|--------|
 | Phase 1 | ✅ 완료 | 2026-01-01 | 2026-01-01 |

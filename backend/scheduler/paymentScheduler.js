@@ -8,6 +8,7 @@
 
 const cron = require('node-cron');
 const db = require('../config/database');
+const { calculateDueDate } = require('../utils/dueDateCalculator');
 
 /**
  * 천원 단위 절삭
@@ -56,6 +57,7 @@ async function generateMonthlyPayments() {
                     s.name,
                     s.monthly_tuition,
                     s.discount_rate,
+                    s.class_days,
                     COALESCE(s.payment_due_day, ?) as due_day
                 FROM students s
                 WHERE s.academy_id = ?
@@ -130,11 +132,21 @@ async function generateMonthlyPayments() {
 
                 const finalAmount = truncateToThousands(baseAmount - discountAmount - carryoverAmount);
 
-                // 납부일 계산
-                const dueDay = student.due_day;
-                const lastDayOfMonth = new Date(currentYear, currentMonth, 0).getDate();
-                const actualDueDay = Math.min(dueDay, lastDayOfMonth);
-                const dueDate = new Date(currentYear, currentMonth - 1, actualDueDay);
+                // 납부일 계산 (납부일 이후 첫 출석일)
+                let classDays = [];
+                if (student.class_days) {
+                    if (Array.isArray(student.class_days)) {
+                        classDays = student.class_days;
+                    } else if (typeof student.class_days === 'string') {
+                        try {
+                            classDays = JSON.parse(student.class_days);
+                        } catch (e) {
+                            // JSON 파싱 실패 시 쉼표 구분 문자열로 시도
+                            classDays = student.class_days.split(',').map(d => parseInt(d.trim(), 10)).filter(d => !isNaN(d));
+                        }
+                    }
+                }
+                const dueDateStr = calculateDueDate(currentYear, currentMonth, student.due_day, classDays);
 
                 const description = carryoverAmount > 0
                     ? `${currentMonth}월 학원비 (이월 차감 적용)`
@@ -160,7 +172,7 @@ async function generateMonthlyPayments() {
                         carryoverAmount,
                         restCreditId,
                         finalAmount,
-                        dueDate.toISOString().split('T')[0],
+                        dueDateStr,
                         description,
                         notes,
                         existing[0].id
@@ -193,7 +205,7 @@ async function generateMonthlyPayments() {
                         carryoverAmount,
                         restCreditId,
                         finalAmount,
-                        dueDate.toISOString().split('T')[0],
+                        dueDateStr,
                         description,
                         notes
                     ]);

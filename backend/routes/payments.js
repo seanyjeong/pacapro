@@ -162,7 +162,7 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
         }
 
         if (year && month) {
-            query += ` AND DATE_FORMAT(p.due_date, '%Y-%m') = ?`;
+            query += ` AND p.year_month = ?`;
             params.push(`${year}-${String(month).padStart(2, '0')}`);
         }
 
@@ -1052,7 +1052,7 @@ router.get('/stats/summary', verifyToken, checkPermission('payments', 'view'), a
         const params = [req.user.academyId];
 
         if (year && month) {
-            dateFilter = ` AND DATE_FORMAT(p.due_date, '%Y-%m') = ?`;
+            dateFilter = ` AND p.year_month = ?`;
             params.push(`${year}-${String(month).padStart(2, '0')}`);
         }
 

@@ -6,17 +6,20 @@
  * - 태블릿에 최적화된 레이아웃
  */
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, AlertCircle, Banknote, Search, ChevronLeft, ChevronRight, X, RefreshCw } from 'lucide-react';
 import { PaymentList } from '@/components/payments/payment-list';
 import { usePayments } from '@/hooks/use-payments';
+import { paymentsAPI } from '@/lib/api/payments';
 import { formatCurrency } from '@/lib/utils/format';
 import {
   PAYMENT_STATUS_OPTIONS,
+  type Payment,
 } from '@/lib/types/payment';
 
 function TabletPaymentsPageContent() {
@@ -34,6 +37,28 @@ function TabletPaymentsPageContent() {
     year: yearMonth.year,
     month: yearMonth.month
   });
+
+  // 납부 처리 상태
+  const [markingPaymentId, setMarkingPaymentId] = useState<number | null>(null);
+
+  // 납부 처리 핸들러
+  const handlePaymentMark = useCallback(async (payment: Payment, method: 'account' | 'card' | 'cash') => {
+    try {
+      setMarkingPaymentId(payment.id);
+      await paymentsAPI.recordPayment(payment.id, {
+        paid_amount: payment.final_amount,
+        payment_method: method,
+        payment_date: new Date().toISOString().split('T')[0],
+      });
+      toast.success(`${payment.student_name}님 학원비 납부 완료`);
+      reload();
+    } catch (err) {
+      console.error('Payment mark error:', err);
+      toast.error('납부 처리 실패');
+    } finally {
+      setMarkingPaymentId(null);
+    }
+  }, [reload]);
 
   // URL에서 status 파라미터 읽기
   useEffect(() => {
@@ -261,6 +286,9 @@ function TabletPaymentsPageContent() {
         payments={filteredPayments}
         loading={loading}
         onPaymentClick={handlePaymentClick}
+        showPaymentMarkButton={true}
+        onPaymentMark={handlePaymentMark}
+        markingPaymentId={markingPaymentId}
       />
     </div>
   );

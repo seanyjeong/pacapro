@@ -5,7 +5,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Coins } from 'lucide-react';
+import { Coins, Check, Loader2 } from 'lucide-react';
 import type { Payment } from '@/lib/types/payment';
 import {
   formatPaymentAmount,
@@ -27,9 +27,21 @@ interface PaymentListProps {
   onPaymentClick: (id: number) => void;
   onCreditClick?: (payment: Payment) => void;
   showCreditButton?: boolean;
+  onPaymentMark?: (payment: Payment, method: 'account' | 'card' | 'cash') => Promise<void>;
+  showPaymentMarkButton?: boolean;
+  markingPaymentId?: number | null;
 }
 
-export function PaymentList({ payments, loading, onPaymentClick, onCreditClick, showCreditButton = false }: PaymentListProps) {
+export function PaymentList({
+  payments,
+  loading,
+  onPaymentClick,
+  onCreditClick,
+  showCreditButton = false,
+  onPaymentMark,
+  showPaymentMarkButton = false,
+  markingPaymentId = null,
+}: PaymentListProps) {
   if (loading) {
     return (
       <Card>
@@ -93,7 +105,12 @@ export function PaymentList({ payments, loading, onPaymentClick, onCreditClick, 
                 </th>
                 {showCreditButton && (
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    작업
+                    크레딧
+                  </th>
+                )}
+                {showPaymentMarkButton && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    납부처리
                   </th>
                 )}
               </tr>
@@ -201,6 +218,60 @@ export function PaymentList({ payments, loading, onPaymentClick, onCreditClick, 
                           <Coins className="w-4 h-4 mr-1" />
                           크레딧
                         </Button>
+                      </td>
+                    )}
+                    {showPaymentMarkButton && onPaymentMark && (
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {payment.payment_status === 'paid' ? (
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                            <Check className="w-4 h-4 mr-1" />
+                            완납
+                          </span>
+                        ) : markingPaymentId === payment.id ? (
+                          <span className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-muted text-muted-foreground">
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                            처리중...
+                          </span>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onPaymentMark(payment, 'account');
+                              }}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950 px-2"
+                              title="계좌이체"
+                            >
+                              계좌
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onPaymentMark(payment, 'card');
+                              }}
+                              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-950 px-2"
+                              title="카드결제"
+                            >
+                              카드
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onPaymentMark(payment, 'cash');
+                              }}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950 px-2"
+                              title="현금결제"
+                            >
+                              현금
+                            </Button>
+                          </div>
+                        )}
                       </td>
                     )}
                   </tr>

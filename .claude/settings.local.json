@@ -149,7 +149,9 @@
       "Bash(__NEW_LINE__ echo \"=== 2. GET /student-consultations/1 \\(학생 상담 이력 조회\\) ===\")",
       "Bash(__NEW_LINE__ echo \"=== 3. GET /student-consultations/1/peak-records \\(P-EAK 실기 기록\\) ===\")",
       "Bash(done)",
-      "Bash(node cron/monthly-schedule-assign.js:*)"
+      "Bash(node cron/monthly-schedule-assign.js:*)",
+      "Bash(node scripts/fix-january-2026-due-dates.js:*)",
+      "Bash(node -r dotenv/config:*)"
     ],
     "deny": [],
     "ask": []
