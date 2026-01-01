@@ -69,14 +69,31 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const handleResize = () => {
-      setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
+      // 태블릿에서 orientationchange 후 약간의 딜레이가 필요할 수 있음
+      setTimeout(() => {
+        const isLandscape = window.innerWidth > window.innerHeight;
+        setOrientation(isLandscape ? 'landscape' : 'portrait');
+      }, 100);
     };
-    handleResize();
+
+    // 초기 설정
+    const isLandscape = window.innerWidth > window.innerHeight;
+    setOrientation(isLandscape ? 'landscape' : 'portrait');
+
     window.addEventListener('resize', handleResize);
     window.addEventListener('orientationchange', handleResize);
+
+    // Screen Orientation API 지원 시 추가 리스너
+    if (screen.orientation) {
+      screen.orientation.addEventListener('change', handleResize);
+    }
+
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('orientationchange', handleResize);
+      if (screen.orientation) {
+        screen.orientation.removeEventListener('change', handleResize);
+      }
     };
   }, []);
 
@@ -211,12 +228,12 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
         </header>
 
         {/* 메인 콘텐츠 */}
-        <main className="flex-1 p-4 pb-28 overflow-y-auto">
+        <main className="flex-1 p-4 pb-32 overflow-y-auto">
           {children}
         </main>
 
         {/* 하단 탭 바 */}
-        <nav className="fixed bottom-0 left-0 right-0 h-20 bg-white border-t border-slate-200 flex items-center justify-around px-2 z-20 safe-area-pb">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around px-2 pt-2 pb-6 z-20 safe-area-pb">
           {bottomTabs.map((tab) => {
             if (tab.href === '#more') {
               return (

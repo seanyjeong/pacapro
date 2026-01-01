@@ -251,7 +251,7 @@ export default function TabletAttendancePage() {
                     </span>
                   )}
                 </div>
-                {student.grade && student.grade !== '0' && student.grade !== '00' && (
+                {student.grade && String(student.grade) !== '0' && String(student.grade) !== '00' && String(student.grade).trim() !== '' && (
                   <p className="text-sm text-slate-500">{student.grade}</p>
                 )}
               </div>
