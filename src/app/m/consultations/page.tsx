@@ -139,10 +139,10 @@ export default function MobileConsultationsPage() {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="font-medium text-foreground">{formatTime(consultation.preferred_time)}</span>
-                        {consultation.grade && (
+                        {consultation.student_grade && (
                           <>
                             <span className="text-muted-foreground/50">•</span>
-                            <span>{formatGrade(consultation.grade)}</span>
+                            <span>{formatGrade(consultation.student_grade)}</span>
                           </>
                         )}
                       </div>
@@ -216,14 +216,14 @@ export default function MobileConsultationsPage() {
               )}
 
               {/* 학년 */}
-              {selectedConsultation.grade && (
+              {selectedConsultation.student_grade && (
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900 rounded-full flex items-center justify-center">
                     <GraduationCap className="h-5 w-5 text-pink-600 dark:text-pink-400" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">학년</p>
-                    <p className="font-semibold text-foreground">{formatGrade(selectedConsultation.grade)}</p>
+                    <p className="font-semibold text-foreground">{formatGrade(selectedConsultation.student_grade)}</p>
                   </div>
                 </div>
               )}
