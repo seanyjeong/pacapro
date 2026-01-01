@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { authAPI } from '@/lib/api/auth';
 import { OrientationContext } from '@/components/tablet/orientation-context';
@@ -97,9 +98,13 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
           <aside className="w-20 bg-[#1a2b4a] text-white flex flex-col fixed h-full z-20">
             {/* 로고 */}
             <div className="h-16 flex items-center justify-center border-b border-[#243a5e]">
-              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                P
-              </div>
+              <Image
+                src="/icons/icon-96x96.png"
+                alt="P-ACA"
+                width={48}
+                height={48}
+                className="rounded-xl"
+              />
             </div>
 
             {/* 네비게이션 */}
@@ -180,9 +185,13 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
         {/* 헤더 */}
         <header className="h-16 bg-[#1a2b4a] flex items-center justify-between px-4 sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold">
-              P
-            </div>
+            <Image
+              src="/icons/icon-96x96.png"
+              alt="P-ACA"
+              width={40}
+              height={40}
+              className="rounded-xl"
+            />
             <div>
               <h1 className="text-white font-bold">P-ACA</h1>
               <p className="text-[10px] text-slate-400">{APP_VERSION}</p>
@@ -202,7 +211,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
         </header>
 
         {/* 메인 콘텐츠 */}
-        <main className="flex-1 p-4 pb-24 overflow-y-auto">
+        <main className="flex-1 p-4 pb-28 overflow-y-auto">
           {children}
         </main>
 

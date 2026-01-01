@@ -86,15 +86,19 @@ export default function TabletAttendancePage() {
 
     // 현재 학생의 출석 상태 확인
     const currentStudent = schedule.students.find(s => s.student_id === studentId);
-    // 같은 상태를 다시 클릭하면 null로 되돌리기 (토글)
-    const newStatus = currentStudent?.attendance_status === status ? null : status;
+    // 같은 상태를 다시 클릭하면 취소 (토글)
+    const isToggleOff = currentStudent?.attendance_status === status;
+    // 백엔드에 보낼 값: 취소시 'none', 그 외엔 상태값
+    const apiStatus = isToggleOff ? 'none' : status;
+    // UI에 표시할 값: 취소시 null
+    const uiStatus = isToggleOff ? null : status;
 
     setSaving(studentId);
     try {
       await apiClient.post(`/schedules/${schedule.id}/attendance`, {
         attendance_records: [{
           student_id: studentId,
-          attendance_status: newStatus
+          attendance_status: apiStatus
         }]
       });
 
@@ -105,7 +109,7 @@ export default function TabletAttendancePage() {
           ...prev,
           students: prev.students.map(s =>
             s.student_id === studentId
-              ? { ...s, attendance_status: newStatus }
+              ? { ...s, attendance_status: uiStatus }
               : s
           )
         };
