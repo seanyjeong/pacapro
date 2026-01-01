@@ -2,19 +2,19 @@
 
 /**
  * 태블릿 상담 관리 페이지
- * - PC 컴포넌트 재사용
- * - 조회 기능 위주 (태블릿은 현장 확인 용도)
+ * - 상담 목록 조회 및 바로 상담 진행 가능
  */
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
   Calendar, Clock, Phone, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight,
-  MessageSquare, AlertCircle, X
+  MessageSquare, X, Play
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getConsultations } from '@/lib/api/consultations';
@@ -26,6 +26,7 @@ import {
 } from '@/lib/types/consultation';
 
 export default function TabletConsultationsPage() {
+  const router = useRouter();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Record<string, number>>({});
@@ -216,7 +217,7 @@ export default function TabletConsultationsPage() {
       ) : (
         <div className="space-y-3">
           {consultations.map((consultation) => (
-            <Card key={consultation.id}>
+            <Card key={consultation.id} className="overflow-hidden">
               <CardContent className="p-4">
                 {/* 헤더 */}
                 <div className="flex items-center justify-between mb-3">
@@ -263,6 +264,19 @@ export default function TabletConsultationsPage() {
                     </p>
                   )}
                 </div>
+
+                {/* 상담 진행 버튼 */}
+                {(consultation.status === 'pending' || consultation.status === 'confirmed') && (
+                  <div className="mt-4 pt-3 border-t border-border">
+                    <Button
+                      onClick={() => router.push(`/consultations/${consultation.id}/conduct`)}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      상담 진행
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
