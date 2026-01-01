@@ -190,14 +190,14 @@ export default function MobileConsultationsPage() {
               </div>
 
               {/* 전화번호 */}
-              {selectedConsultation.phone && (
-                <a href={`tel:${selectedConsultation.phone}`} className="flex items-center gap-3 p-3 bg-muted rounded-xl">
+              {selectedConsultation.parent_phone && (
+                <a href={`tel:${selectedConsultation.parent_phone}`} className="flex items-center gap-3 p-3 bg-muted rounded-xl">
                   <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
                     <Phone className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">전화번호</p>
-                    <p className="font-semibold text-foreground">{selectedConsultation.phone}</p>
+                    <p className="font-semibold text-foreground">{selectedConsultation.parent_phone}</p>
                   </div>
                 </a>
               )}
