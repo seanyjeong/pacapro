@@ -90,14 +90,10 @@ function PaymentsPageContent() {
       const year = today.getFullYear();
       const month = today.getMonth() + 1;
 
-      // 납부기한: 해당 월의 12일 (납부일 5일 + 7일)
-      // month-1을 해야 해당 월이 됨 (JS Date는 month가 0부터 시작)
-      const dueDate = new Date(year, month - 1, 12).toISOString().split('T')[0];
-
+      // 납부기한은 백엔드에서 학생별로 계산 (학원 설정 + 출석일 기반)
       const result = await paymentsAPI.bulkMonthlyCharge({
         year,
         month,
-        due_date: dueDate,
       });
 
       const messages = [];

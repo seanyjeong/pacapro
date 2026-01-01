@@ -4,6 +4,7 @@ const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { truncateToThousands, calculateProRatedFee, parseWeeklyDays } = require('../utils/seasonCalculator');
 const { decrypt } = require('../utils/encryption');
+const { calculateDueDate } = require('../utils/dueDateCalculator');
 
 // 학생 이름 복호화 헬퍼
 function decryptStudentName(obj) {
@@ -457,14 +458,21 @@ router.post('/', verifyToken, checkPermission('payments', 'edit'), async (req, r
  */
 router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
     try {
-        const { year, month, due_date } = req.body;
+        const { year, month } = req.body;
 
-        if (!year || !month || !due_date) {
+        if (!year || !month) {
             return res.status(400).json({
                 error: 'Validation Error',
-                message: '필수 항목을 모두 입력해주세요. (연도, 월, 납부기한)'
+                message: '필수 항목을 모두 입력해주세요. (연도, 월)'
             });
         }
+
+        // 학원 설정에서 기본 납부일 가져오기
+        const [academySettings] = await db.query(
+            `SELECT tuition_due_day FROM academies WHERE id = ?`,
+            [req.user.academyId]
+        );
+        const defaultDueDay = academySettings[0]?.tuition_due_day || 1;
 
         // Get all active students
         const [students] = await db.query(
@@ -473,7 +481,9 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
                 name,
                 student_number,
                 monthly_tuition,
-                discount_rate
+                discount_rate,
+                class_days,
+                payment_due_day
             FROM students
             WHERE academy_id = ?
             AND status = 'active'
@@ -498,6 +508,16 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
         const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
 
         for (const student of students) {
+            // 학생별 납부기한 계산 (스케줄러와 동일한 로직)
+            const studentDueDay = student.payment_due_day || defaultDueDay;
+            let classDays = [];
+            try {
+                classDays = student.class_days ? JSON.parse(student.class_days) : [];
+            } catch (e) {
+                classDays = [];
+            }
+            const due_date = calculateDueDate(year, month, studentDueDay, classDays);
+
             const baseAmount = parseFloat(student.monthly_tuition) || 0;
             const discountRate = parseFloat(student.discount_rate) || 0;
             const discount = truncateToThousands(baseAmount * (discountRate / 100));

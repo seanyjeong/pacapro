@@ -59,7 +59,6 @@ export interface PaymentRecordData {
 export interface BulkMonthlyChargeData {
   year: number;
   month: number;
-  due_date: string;
 }
 
 // 학원비 필터 인터페이스
