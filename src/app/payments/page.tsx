@@ -25,7 +25,16 @@ function PaymentsPageContent() {
   const searchParams = useSearchParams();
   const [initialFiltersApplied, setInitialFiltersApplied] = useState(false);
 
-  const { payments, loading, error, filters, updateFilters, resetFilters, reload } = usePayments({});
+  // 현재 월 기본값
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth() + 1;
+
+  const { payments, loading, error, filters, updateFilters, resetFilters, reload } = usePayments({
+    year: currentYear,
+    month: currentMonth,
+    include_previous_unpaid: true, // 이전 달 미납자 포함
+  });
 
   // URL에서 status 파라미터 읽기 (대시보드에서 미납 확인하기 클릭 시) - 클라이언트 사이드에서만
   useEffect(() => {
@@ -174,14 +183,22 @@ function PaymentsPageContent() {
     );
   }
 
-  const paidCount = filteredPayments.filter((p) => p.payment_status === 'paid').length;
-  const unpaidCount = filteredPayments.filter((p) => p.payment_status === 'pending').length;
-  const partialCount = filteredPayments.filter((p) => p.payment_status === 'partial').length;
-  const totalAmount = Math.floor(filteredPayments.reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
-  const paidAmount = Math.floor(filteredPayments
+  // 통계는 선택된 월 기준 (이전 달 미납자는 제외)
+  const selectedYearMonth = filters.year && filters.month
+    ? `${filters.year}-${String(filters.month).padStart(2, '0')}`
+    : `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+
+  const currentMonthPayments = filteredPayments.filter((p) => p.year_month === selectedYearMonth);
+  const previousUnpaidPayments = filteredPayments.filter((p) => p.year_month !== selectedYearMonth);
+
+  const paidCount = currentMonthPayments.filter((p) => p.payment_status === 'paid').length;
+  const unpaidCount = currentMonthPayments.filter((p) => p.payment_status === 'pending').length;
+  const partialCount = currentMonthPayments.filter((p) => p.payment_status === 'partial').length;
+  const totalAmount = Math.floor(currentMonthPayments.reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
+  const paidAmount = Math.floor(currentMonthPayments
     .filter((p) => p.payment_status === 'paid')
     .reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
-  const unpaidAmount = Math.floor(filteredPayments
+  const unpaidAmount = Math.floor(currentMonthPayments
     .filter((p) => p.payment_status !== 'paid')
     .reduce((sum, p) => sum + parseFloat(String(p.final_amount)) - parseFloat(String(p.paid_amount || 0)), 0));
 
@@ -370,7 +387,14 @@ function PaymentsPageContent() {
               />
             </div>
 
-            <Button variant="outline" onClick={resetFilters} className="ml-auto">
+            <Button variant="outline" onClick={() => updateFilters({
+              year: currentYear,
+              month: currentMonth,
+              include_previous_unpaid: true,
+              payment_status: undefined,
+              payment_type: undefined,
+              search: undefined,
+            })} className="ml-auto">
               필터 초기화
             </Button>
           </div>

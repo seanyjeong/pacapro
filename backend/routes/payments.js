@@ -117,7 +117,7 @@ async function calculateNonSeasonEndProrated(params) {
  */
 router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, res) => {
     try {
-        const { student_id, payment_status, payment_type, year, month, paid_year, paid_month } = req.query;
+        const { student_id, payment_status, payment_type, year, month, paid_year, paid_month, include_previous_unpaid } = req.query;
 
         let query = `
             SELECT
@@ -162,8 +162,15 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
         }
 
         if (year && month) {
-            query += ` AND p.year_month = ?`;
-            params.push(`${year}-${String(month).padStart(2, '0')}`);
+            const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
+            if (include_previous_unpaid === 'true') {
+                // 해당 월 + 이전 달 미납자 (paid가 아닌 것)
+                query += ` AND (p.year_month = ? OR (p.year_month < ? AND p.payment_status != 'paid'))`;
+                params.push(yearMonth, yearMonth);
+            } else {
+                query += ` AND p.year_month = ?`;
+                params.push(yearMonth);
+            }
         }
 
         // paid_year, paid_month: 실제 납부일 기준 필터 (리포트 매출용)

@@ -34,6 +34,7 @@ export const paymentsAPI = {
     if (filters?.payment_type) params.append('payment_type', filters.payment_type);
     if (filters?.year) params.append('year', filters.year.toString());
     if (filters?.month) params.append('month', filters.month.toString());
+    if (filters?.include_previous_unpaid) params.append('include_previous_unpaid', 'true');
 
     const queryString = params.toString();
     const url = queryString ? `/payments?${queryString}` : '/payments';

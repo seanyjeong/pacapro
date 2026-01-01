@@ -70,6 +70,7 @@ export interface PaymentFilters {
   year?: number;
   month?: number;
   search?: string;
+  include_previous_unpaid?: boolean; // 이전 달 미납자 포함
 }
 
 // 학원비 통계

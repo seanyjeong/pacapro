@@ -42,7 +42,16 @@ export function usePayments(initialFilters?: PaymentFilters) {
   }, [JSON.stringify(filters)]);
 
   const updateFilters = (newFilters: Partial<PaymentFilters>) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
+    setFilters((prev) => {
+      const merged = { ...prev, ...newFilters };
+      // undefined 값은 제거
+      Object.keys(merged).forEach(key => {
+        if (merged[key as keyof PaymentFilters] === undefined) {
+          delete merged[key as keyof PaymentFilters];
+        }
+      });
+      return merged;
+    });
   };
 
   const resetFilters = () => {
