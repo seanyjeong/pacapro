@@ -63,6 +63,7 @@ export default function TabletDashboard() {
       // Fetch today's schedules with attendance
       const scheduleRes = await apiClient.get<{
         schedules: Array<{
+          id: number;
           time_slot: string;
           student_count: number;
           attendance_taken: boolean;
@@ -91,35 +92,38 @@ export default function TabletDashboard() {
         }
       });
 
-      // Fetch attendance details for today
-      const attendanceRes = await apiClient.get<{
-        schedules: Array<{
-          time_slot: string;
-          attendances: Array<{
-            attendance_status: string | null;
-          }>;
-        }>;
-      }>('/schedules/attendance', {
-        params: { date: today }
-      });
-
+      // Calculate attendance from schedules data
       let attendedCount = 0;
       let absentCount = 0;
       let notMarkedCount = 0;
 
-      (attendanceRes.schedules || []).forEach(schedule => {
-        const slot = schedule.time_slot as keyof TimeSlotStats;
-        (schedule.attendances || []).forEach(att => {
-          if (att.attendance_status === 'present') {
-            attendedCount++;
-            if (slotStats[slot]) slotStats[slot].attended++;
-          } else if (att.attendance_status === 'absent' || att.attendance_status === 'excused') {
-            absentCount++;
-          } else {
-            notMarkedCount++;
-          }
-        });
-      });
+      // Fetch detailed schedules with attendances
+      for (const schedule of schedules) {
+        try {
+          const detailRes = await apiClient.get<{
+            schedule: {
+              time_slot: string;
+              attendances: Array<{
+                attendance_status: string | null;
+              }>;
+            };
+          }>(`/schedules/${schedule.id}`);
+
+          const slot = detailRes.schedule.time_slot as keyof TimeSlotStats;
+          (detailRes.schedule.attendances || []).forEach(att => {
+            if (att.attendance_status === 'present' || att.attendance_status === 'late') {
+              attendedCount++;
+              if (slotStats[slot]) slotStats[slot].attended++;
+            } else if (att.attendance_status === 'absent' || att.attendance_status === 'excused') {
+              absentCount++;
+            } else {
+              notMarkedCount++;
+            }
+          });
+        } catch {
+          // Skip if schedule detail fetch fails
+        }
+      }
 
       // Fetch unpaid count
       const currentMonth = new Date().toISOString().slice(0, 7);
