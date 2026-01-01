@@ -48,11 +48,13 @@ export function calculateOverdueDays(dueDate: string): number {
 }
 
 /**
- * 납부 상태 확인
+ * 납부 상태 확인 - 해당 월이 지났으면 연체
  */
 export function isOverdue(payment: Payment): boolean {
   if (payment.payment_status === 'paid') return false;
-  return calculateOverdueDays(payment.due_date) > 0;
+  // year_month가 현재 월보다 이전이면 연체
+  const currentYearMonth = getCurrentYearMonth();
+  return payment.year_month < currentYearMonth;
 }
 
 /**
