@@ -84,12 +84,17 @@ export default function TabletAttendancePage() {
   const handleAttendance = async (studentId: number, status: string) => {
     if (!schedule) return;
 
+    // 현재 학생의 출석 상태 확인
+    const currentStudent = schedule.students.find(s => s.student_id === studentId);
+    // 같은 상태를 다시 클릭하면 null로 되돌리기 (토글)
+    const newStatus = currentStudent?.attendance_status === status ? null : status;
+
     setSaving(studentId);
     try {
       await apiClient.post(`/schedules/${schedule.id}/attendance`, {
         attendance_records: [{
           student_id: studentId,
-          attendance_status: status
+          attendance_status: newStatus
         }]
       });
 
@@ -100,7 +105,7 @@ export default function TabletAttendancePage() {
           ...prev,
           students: prev.students.map(s =>
             s.student_id === studentId
-              ? { ...s, attendance_status: status }
+              ? { ...s, attendance_status: newStatus }
               : s
           )
         };
@@ -242,7 +247,9 @@ export default function TabletAttendancePage() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-slate-500">{student.grade}</p>
+                {student.grade && student.grade !== '0' && student.grade !== '00' && (
+                  <p className="text-sm text-slate-500">{student.grade}</p>
+                )}
               </div>
 
               {/* 현재 상태 표시 */}
