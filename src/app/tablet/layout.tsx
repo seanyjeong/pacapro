@@ -19,7 +19,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 
-const APP_VERSION = 'v3.1.1';
+const APP_VERSION = 'v3.1.5';
 
 // Navigation items
 const navigation = [
@@ -112,7 +112,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
       <OrientationContext.Provider value={orientation}>
         <div className="min-h-screen flex bg-slate-100">
           {/* 축소형 사이드바 */}
-          <aside className="w-20 bg-[#1a2b4a] text-white flex flex-col fixed h-full z-20">
+          <aside className="w-20 bg-[#1a2b4a] text-white flex flex-col fixed h-full z-20 pb-4">
             {/* 로고 */}
             <div className="h-16 flex items-center justify-center border-b border-[#243a5e]">
               <Image
@@ -186,7 +186,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
             </header>
 
             {/* 페이지 콘텐츠 */}
-            <div className="p-6 min-h-[calc(100vh-56px)]">
+            <div className="p-6 pb-12 min-h-[calc(100vh-56px)]">
               {children}
             </div>
           </main>
@@ -228,12 +228,12 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
         </header>
 
         {/* 메인 콘텐츠 */}
-        <main className="flex-1 p-4 pb-32 overflow-y-auto">
+        <main className="flex-1 p-4 pb-40 overflow-y-auto">
           {children}
         </main>
 
         {/* 하단 탭 바 */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around px-2 pt-2 pb-6 z-20 safe-area-pb">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex items-center justify-around px-2 pt-2 pb-8 z-20" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
           {bottomTabs.map((tab) => {
             if (tab.href === '#more') {
               return (
