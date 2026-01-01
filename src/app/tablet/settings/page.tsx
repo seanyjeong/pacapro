@@ -336,7 +336,7 @@ export default function TabletSettingsPage() {
         <CardContent>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">버전</span>
-            <span className="text-foreground font-medium">P-ACA Tablet v3.1.14</span>
+            <span className="text-foreground font-medium">P-ACA Tablet v3.1.16</span>
           </div>
         </CardContent>
       </Card>
