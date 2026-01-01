@@ -213,7 +213,7 @@ export default function TabletStudentDetailPage() {
               }`}>
                 {STATUS_LABELS[student.status]?.label || student.status}
               </span>
-              {student.is_trial && (
+              {!!student.is_trial && (
                 <span className="px-3 py-1 bg-purple-100 text-purple-600 text-sm rounded-full">
                   체험 {student.trial_remaining}회 남음
                 </span>

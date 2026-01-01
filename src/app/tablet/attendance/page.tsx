@@ -240,12 +240,12 @@ export default function TabletAttendancePage() {
               <div className="mb-3">
                 <div className="flex items-center gap-2">
                   <p className="font-bold text-slate-800 truncate">{student.student_name}</p>
-                  {student.is_trial && (
+                  {!!student.is_trial && (
                     <span className="px-2 py-0.5 bg-purple-100 text-purple-600 text-xs rounded-full">
                       체험
                     </span>
                   )}
-                  {student.is_makeup && (
+                  {!!student.is_makeup && (
                     <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs rounded-full">
                       보충
                     </span>
