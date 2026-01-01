@@ -19,7 +19,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 
-const APP_VERSION = 'v3.1.7';
+const APP_VERSION = 'v3.1.8';
 
 // Navigation items
 const navigation = [

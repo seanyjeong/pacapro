@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { canEdit, canView } from '@/lib/utils/permissions';
-import { UserCheck, Users, CreditCard, LogOut, ChevronRight, ChevronDown, Bell, BellOff, Loader2, CalendarClock, MessageSquarePlus, UserPlus } from 'lucide-react';
+import { UserCheck, Users, CreditCard, LogOut, ChevronRight, ChevronDown, Bell, BellOff, Loader2, CalendarClock, MessageSquarePlus, UserPlus, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import {
@@ -189,6 +189,15 @@ export default function MobileHomePage() {
       iconColor: 'text-amber-600 dark:text-amber-400',
       permission: canView('payments'),
     },
+    {
+      href: '/m/consultations',
+      icon: MessageSquare,
+      label: '오늘 상담',
+      description: '오늘 예정된 상담 목록',
+      iconBg: 'bg-green-50 dark:bg-green-950/50',
+      iconColor: 'text-green-600 dark:text-green-400',
+      permission: canView('consultations'),
+    },
   ];
 
   const today = new Date();
@@ -350,7 +359,7 @@ export default function MobileHomePage() {
 
       {/* 버전 정보 */}
       <div className="mt-4 text-center">
-        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v2.9.22</p>
+        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v3.1.8</p>
       </div>
 
       {/* PWA 설치 프롬프트 */}

@@ -299,6 +299,9 @@ function PaymentsPageContent() {
                   <div>
                     <p className="text-sm text-muted-foreground">미납</p>
                     <p className="text-2xl font-bold text-red-600 dark:text-red-400">{unpaidCount}건</p>
+                    {previousUnpaidPayments.length > 0 && (
+                      <p className="text-xs text-orange-500 mt-1">+ 전달 미납 {previousUnpaidPayments.length}건</p>
+                    )}
                   </div>
                   <div className="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
                     <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />

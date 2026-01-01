@@ -16,7 +16,6 @@ import { Loader2, AlertCircle, Banknote, Search, ChevronLeft, ChevronRight, X, R
 import { PaymentList } from '@/components/payments/payment-list';
 import { usePayments } from '@/hooks/use-payments';
 import { paymentsAPI } from '@/lib/api/payments';
-import { formatCurrency } from '@/lib/utils/format';
 import {
   PAYMENT_STATUS_OPTIONS,
   type Payment,
@@ -35,7 +34,8 @@ function TabletPaymentsPageContent() {
 
   const { payments, loading, error, filters, updateFilters, reload } = usePayments({
     year: yearMonth.year,
-    month: yearMonth.month
+    month: yearMonth.month,
+    include_previous_unpaid: true
   });
 
   // 납부 처리 상태
@@ -122,17 +122,15 @@ function TabletPaymentsPageContent() {
     );
   }
 
-  // 통계 계산
-  const paidCount = filteredPayments.filter((p) => p.payment_status === 'paid').length;
-  const unpaidCount = filteredPayments.filter((p) => p.payment_status === 'pending').length;
-  const partialCount = filteredPayments.filter((p) => p.payment_status === 'partial').length;
-  const totalAmount = Math.floor(filteredPayments.reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
-  const paidAmount = Math.floor(filteredPayments
-    .filter((p) => p.payment_status === 'paid')
-    .reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
-  const unpaidAmount = Math.floor(filteredPayments
-    .filter((p) => p.payment_status !== 'paid')
-    .reduce((sum, p) => sum + parseFloat(String(p.final_amount)) - parseFloat(String(p.paid_amount || 0)), 0));
+  // 현재 월과 전달 미납 분리
+  const selectedYearMonth = `${yearMonth.year}-${String(yearMonth.month).padStart(2, '0')}`;
+  const currentMonthPayments = filteredPayments.filter((p) => p.year_month === selectedYearMonth);
+  const previousUnpaidPayments = filteredPayments.filter((p) => p.year_month !== selectedYearMonth && p.payment_status !== 'paid');
+
+  // 통계 계산 (현재 월 기준)
+  const paidCount = currentMonthPayments.filter((p) => p.payment_status === 'paid').length;
+  const unpaidCount = currentMonthPayments.filter((p) => p.payment_status === 'pending').length;
+  const partialCount = currentMonthPayments.filter((p) => p.payment_status === 'partial').length;
 
   return (
     <div className="space-y-6">
@@ -180,14 +178,14 @@ function TabletPaymentsPageContent() {
         </CardContent>
       </Card>
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 통계 카드 - 납부율 제거 (강사도 볼 수 있어서 매출 비공개) */}
+      <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">총 청구</p>
-                <p className="text-xl font-bold text-foreground">{filteredPayments.length}건</p>
+                <p className="text-xl font-bold text-foreground">{currentMonthPayments.length}건</p>
               </div>
               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                 <Banknote className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -216,24 +214,13 @@ function TabletPaymentsPageContent() {
               <div>
                 <p className="text-sm text-muted-foreground">미납</p>
                 <p className="text-xl font-bold text-red-600 dark:text-red-400">{unpaidCount}건</p>
+                {previousUnpaidPayments.length > 0 && (
+                  <p className="text-xs text-orange-500 mt-1">+ 전달 미납 {previousUnpaidPayments.length}건</p>
+                )}
               </div>
               <div className="w-10 h-10 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
                 <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div>
-              <p className="text-sm text-muted-foreground">납부율</p>
-              <p className="text-xl font-bold text-foreground">
-                {filteredPayments.length > 0 ? Math.round((paidCount / filteredPayments.length) * 100) : 0}%
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {formatCurrency(paidAmount)} / {formatCurrency(totalAmount)}
-              </p>
             </div>
           </CardContent>
         </Card>
