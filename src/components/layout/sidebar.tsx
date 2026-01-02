@@ -33,6 +33,8 @@ import {
     MessageCircle,
     Cog,
     BellRing,
+    ExternalLink,
+    Mountain,
 } from 'lucide-react';
 import type { Permissions } from '@/lib/types/staff';
 import apiClient from '@/lib/api/client';
@@ -467,6 +469,26 @@ export function Sidebar() {
                     </div>
                 )}
             </nav>
+
+            {/* P-EAK 바로가기 */}
+            <div className="px-3 pb-2">
+                <button
+                    onClick={() => {
+                        const token = localStorage.getItem('token');
+                        const peakUrl = token
+                          ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
+                          : 'https://peak-rose.vercel.app';
+                        window.open(peakUrl, '_blank');
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium bg-gradient-to-r from-orange-500/10 to-amber-500/10 hover:from-orange-500/20 hover:to-amber-500/20 border border-orange-500/20 transition-all group"
+                >
+                    <div className="flex items-center space-x-3">
+                        <Mountain className="w-5 h-5 text-orange-500" />
+                        <span className="text-orange-600 dark:text-orange-400">P-EAK 실기관리</span>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-orange-500/70 group-hover:text-orange-500" />
+                </button>
+            </div>
 
             {/* Footer */}
             <div className="p-4 border-t border-border">

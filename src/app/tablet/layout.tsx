@@ -16,7 +16,9 @@ import {
   Menu,
   X,
   Settings,
-  MessageSquare
+  MessageSquare,
+  Mountain,
+  ExternalLink
 } from 'lucide-react';
 
 const APP_VERSION = 'v3.1.16';
@@ -176,8 +178,22 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
               </div>
             </nav>
 
-            {/* 사용자 & 로그아웃 */}
-            <div className="border-t border-[#243a5e] p-1.5 shrink-0 pb-4">
+            {/* P-EAK & 로그아웃 */}
+            <div className="border-t border-[#243a5e] p-1.5 shrink-0 pb-4 space-y-1">
+              <button
+                onClick={() => {
+                  const token = localStorage.getItem('token');
+                  const peakUrl = token
+                    ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
+                    : 'https://peak-rose.vercel.app';
+                  window.open(peakUrl, '_blank');
+                }}
+                className="flex flex-col items-center py-1.5 px-1 rounded-lg text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition w-full"
+                title="P-EAK 실기관리"
+              >
+                <Mountain size={18} />
+                <span className="text-[9px] mt-0.5">P-EAK</span>
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex flex-col items-center py-1.5 px-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#243a5e] transition w-full"
@@ -322,6 +338,20 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                       </Link>
                     );
                   })}
+                <button
+                  onClick={() => {
+                    setShowMoreMenu(false);
+                    const token = localStorage.getItem('token');
+                    const peakUrl = token
+                    ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
+                    : 'https://peak-rose.vercel.app';
+                    window.open(peakUrl, '_blank');
+                  }}
+                  className="flex flex-col items-center p-4 rounded-xl bg-orange-50 text-orange-600"
+                >
+                  <Mountain size={28} />
+                  <span className="text-xs mt-2">P-EAK</span>
+                </button>
                 <button
                   onClick={() => {
                     setShowMoreMenu(false);
