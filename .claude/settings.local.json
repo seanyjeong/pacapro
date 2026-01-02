@@ -156,7 +156,9 @@
       "Bash(node /tmp/check-vercel.js:*)",
       "Bash(npx playwright test --version)",
       "Bash(npx playwright test:*)",
-      "Bash(node check-vercel.js:*)"
+      "Bash(node check-vercel.js:*)",
+      "Bash(xargs:*)",
+      "Bash(node /tmp/get-schema.js:*)"
     ],
     "deny": [],
     "ask": []
