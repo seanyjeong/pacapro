@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { canView } from '@/lib/utils/permissions';
 import { getConsultations } from '@/lib/api/consultations';
 import { ArrowLeft, MessageSquare, Clock, User, Phone, School, GraduationCap, X } from 'lucide-react';
-import type { Consultation } from '@/lib/types/consultation';
+import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 
 export default function MobileConsultationsPage() {
   const router = useRouter();
@@ -41,7 +41,6 @@ export default function MobileConsultationsPage() {
       const response = await getConsultations({
         startDate: today,
         endDate: today,
-        status: 'scheduled', // 예정된 상담만
       });
       // 시간순 정렬
       const sorted = (response.consultations || []).sort((a, b) => {
@@ -73,6 +72,35 @@ export default function MobileConsultationsPage() {
     if (gradeNum >= 1 && gradeNum <= 3) return `고${gradeNum}`;
     if (grade === 'N') return 'N수생';
     return grade;
+  };
+
+  // 끝난 상담 여부 (완료/취소/노쇼)
+  const isFinished = (status: ConsultationStatus) => {
+    return ['completed', 'cancelled', 'no_show'].includes(status);
+  };
+
+  // 상태별 라벨
+  const getStatusLabel = (status: ConsultationStatus) => {
+    const labels: Record<ConsultationStatus, string> = {
+      pending: '대기',
+      confirmed: '확정',
+      completed: '완료',
+      cancelled: '취소',
+      no_show: '노쇼',
+    };
+    return labels[status];
+  };
+
+  // 상태별 색상
+  const getStatusColor = (status: ConsultationStatus) => {
+    const colors: Record<ConsultationStatus, string> = {
+      pending: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/50',
+      confirmed: 'text-blue-600 bg-blue-100 dark:bg-blue-900/50',
+      completed: 'text-gray-500 bg-gray-100 dark:bg-gray-800',
+      cancelled: 'text-gray-500 bg-gray-100 dark:bg-gray-800',
+      no_show: 'text-red-500 bg-red-100 dark:bg-red-900/50',
+    };
+    return colors[status];
   };
 
   if (hasPermission === null || loading) {
@@ -114,7 +142,16 @@ export default function MobileConsultationsPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-muted-foreground">오늘 상담</p>
-                  <p className="font-bold text-2xl text-green-600 dark:text-green-400">{consultations.length}건</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="font-bold text-2xl text-green-600 dark:text-green-400">
+                      {consultations.filter(c => !isFinished(c.status)).length}건
+                    </p>
+                    {consultations.filter(c => isFinished(c.status)).length > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        (완료 {consultations.filter(c => isFinished(c.status)).length}건)
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
                   <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
@@ -124,32 +161,46 @@ export default function MobileConsultationsPage() {
 
             {/* 상담 카드 목록 */}
             <div className="space-y-3">
-              {consultations.map((consultation) => (
-                <button
-                  key={consultation.id}
-                  onClick={() => setSelectedConsultation(consultation)}
-                  className="w-full bg-card rounded-xl p-4 shadow-sm text-left transition-all active:scale-[0.98] hover:bg-muted"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="bg-green-50 dark:bg-green-950/50 p-2 rounded-full">
-                      <User className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-lg text-foreground truncate">{consultation.student_name}</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span className="font-medium text-foreground">{formatTime(consultation.preferred_time)}</span>
-                        {consultation.student_grade && (
-                          <>
-                            <span className="text-muted-foreground/50">•</span>
-                            <span>{formatGrade(consultation.student_grade)}</span>
-                          </>
-                        )}
+              {consultations.map((consultation) => {
+                const finished = isFinished(consultation.status);
+                return (
+                  <button
+                    key={consultation.id}
+                    onClick={() => setSelectedConsultation(consultation)}
+                    className={`w-full bg-card rounded-xl p-4 shadow-sm text-left transition-all active:scale-[0.98] hover:bg-muted ${finished ? 'opacity-60' : ''}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-full ${finished ? 'bg-gray-100 dark:bg-gray-800' : 'bg-green-50 dark:bg-green-950/50'}`}>
+                        <User className={`h-5 w-5 ${finished ? 'text-gray-400' : 'text-green-600 dark:text-green-400'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className={`font-semibold text-lg truncate ${finished ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                            {consultation.student_name}
+                          </p>
+                          {finished && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(consultation.status)}`}>
+                              {getStatusLabel(consultation.status)}
+                            </span>
+                          )}
+                        </div>
+                        <div className={`flex items-center gap-2 text-sm ${finished ? 'text-muted-foreground/70' : 'text-muted-foreground'}`}>
+                          <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className={`font-medium ${finished ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
+                            {formatTime(consultation.preferred_time)}
+                          </span>
+                          {consultation.student_grade && (
+                            <>
+                              <span className="text-muted-foreground/50">•</span>
+                              <span className={finished ? 'line-through' : ''}>{formatGrade(consultation.student_grade)}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           </>
         )}
