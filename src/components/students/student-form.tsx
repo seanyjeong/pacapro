@@ -1010,8 +1010,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 </label>
                 <input
                   type="number"
-                  value={formData.monthly_tuition}
-                  onChange={(e) => handleChange('monthly_tuition', parseInt(e.target.value) || 0)}
+                  value={formData.monthly_tuition || ''}
+                  onChange={(e) => handleChange('monthly_tuition', e.target.value === '' ? 0 : parseInt(e.target.value))}
                   placeholder="0"
                   min="0"
                   step="10000"
@@ -1024,8 +1024,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 <label className="block text-sm font-medium text-foreground mb-2">할인율 (%)</label>
                 <input
                   type="number"
-                  value={formData.discount_rate || 0}
-                  onChange={(e) => handleChange('discount_rate', parseFloat(e.target.value) || 0)}
+                  value={formData.discount_rate || ''}
+                  onChange={(e) => handleChange('discount_rate', e.target.value === '' ? 0 : parseFloat(e.target.value))}
                   placeholder="0"
                   min="0"
                   max="100"

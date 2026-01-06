@@ -277,8 +277,8 @@ export default function NewSeasonPage() {
                 type="number"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="0"
-                value={formData.season_fee}
-                onChange={e => handleChange('season_fee', parseInt(e.target.value) || 0)}
+                value={formData.season_fee || ''}
+                onChange={e => handleChange('season_fee', e.target.value === '' ? 0 : parseInt(e.target.value))}
                 min="0"
                 step="10000"
               />
@@ -307,8 +307,8 @@ export default function NewSeasonPage() {
                       type="number"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                       placeholder="0"
-                      value={formData.continuous_discount_rate || 0}
-                      onChange={e => handleChange('continuous_discount_rate', parseInt(e.target.value) || 0)}
+                      value={formData.continuous_discount_rate || ''}
+                      onChange={e => handleChange('continuous_discount_rate', e.target.value === '' ? 0 : parseInt(e.target.value))}
                       min="0"
                       max="100"
                     />

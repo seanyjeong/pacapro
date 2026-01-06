@@ -450,8 +450,12 @@ export function ManualCreditModal({
                         type="number"
                         min={1}
                         max={12}
-                        value={classCount}
-                        onChange={(e) => setClassCount(parseInt(e.target.value) || 1)}
+                        value={classCount || ''}
+                        onChange={(e) => setClassCount(e.target.value === '' ? 0 : parseInt(e.target.value))}
+                        onBlur={() => {
+                          if (!classCount || classCount < 1) setClassCount(1);
+                          if (classCount > 12) setClassCount(12);
+                        }}
                       />
                       <p className="text-xs text-muted-foreground">1~12 사이의 값을 입력하세요.</p>
                     </div>
@@ -559,8 +563,8 @@ export function ManualCreditModal({
                             <Label>금액</Label>
                             <Input
                               type="number"
-                              value={editAmount}
-                              onChange={(e) => setEditAmount(parseInt(e.target.value) || 0)}
+                              value={editAmount || ''}
+                              onChange={(e) => setEditAmount(e.target.value === '' ? 0 : parseInt(e.target.value))}
                             />
                           </div>
                           <div className="space-y-1">

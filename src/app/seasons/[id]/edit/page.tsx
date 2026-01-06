@@ -288,8 +288,8 @@ export default function EditSeasonPage() {
                 type="number"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 placeholder="예: 500000"
-                value={formData.season_fee}
-                onChange={e => handleChange('season_fee', parseInt(e.target.value) || 0)}
+                value={formData.season_fee || ''}
+                onChange={e => handleChange('season_fee', e.target.value === '' ? 0 : parseInt(e.target.value))}
                 min="0"
                 step="10000"
               />

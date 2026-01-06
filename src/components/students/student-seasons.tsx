@@ -494,8 +494,8 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                 </label>
                 <input
                   type="number"
-                  value={editData.season_fee}
-                  onChange={(e) => setEditData({ ...editData, season_fee: parseInt(e.target.value) || 0 })}
+                  value={editData.season_fee || ''}
+                  onChange={(e) => setEditData({ ...editData, season_fee: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                   min="0"
                   step="10000"
@@ -509,8 +509,8 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                 </label>
                 <input
                   type="number"
-                  value={editData.discount_amount}
-                  onChange={(e) => setEditData({ ...editData, discount_amount: parseInt(e.target.value) || 0 })}
+                  value={editData.discount_amount || ''}
+                  onChange={(e) => setEditData({ ...editData, discount_amount: e.target.value === '' ? 0 : parseInt(e.target.value) })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
                   min="0"
                   step="10000"
