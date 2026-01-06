@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Banknote, TrendingUp, Pencil, Trash2, CreditCard, FileSpreadsheet, Calendar, List } from 'lucide-react';
+import { Plus, Banknote, TrendingUp, Pencil, Trash2, CreditCard, FileSpreadsheet, Calendar, List, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 import { exportsApi } from '@/lib/api/exports';
@@ -72,6 +72,8 @@ export default function IncomesPage() {
   // 기타수입 폼 상태
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [selectedIncome, setSelectedIncome] = useState<OtherIncome | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [formData, setFormData] = useState({
     income_date: new Date().toISOString().split('T')[0],
     category: 'other',
@@ -178,6 +180,27 @@ export default function IncomesPage() {
     }
   };
 
+  // 검색 필터링 및 정렬 (최근 날짜가 위로)
+  const filteredTuitionPayments = tuitionPayments
+    .filter(p => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return p.student_name?.toLowerCase().includes(q) ||
+             p.year_month?.includes(q) ||
+             p.paid_date?.includes(q);
+    })
+    .sort((a, b) => (b.paid_date || '').localeCompare(a.paid_date || ''));
+
+  const filteredOtherIncomes = otherIncomes
+    .filter(inc => {
+      if (!searchQuery) return true;
+      const q = searchQuery.toLowerCase();
+      return inc.description?.toLowerCase().includes(q) ||
+             inc.income_date?.includes(q) ||
+             (CATEGORY_MAP[inc.category] || inc.category).toLowerCase().includes(q);
+    })
+    .sort((a, b) => (b.income_date || '').localeCompare(a.income_date || ''));
+
   // 통계 계산
   const totalTuition = tuitionPayments.reduce((sum, p) => sum + Math.floor(parseFloat(String(p.final_amount)) || 0), 0);
   const totalOther = otherIncomes.reduce((sum, inc) => sum + Math.floor(parseFloat(String(inc.amount)) || 0), 0);
@@ -225,6 +248,17 @@ export default function IncomesPage() {
               <Calendar className="w-4 h-4 mr-1" />
               달력
             </Button>
+          </div>
+          {/* 검색 */}
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-3 py-2 w-48 border border-border bg-background text-foreground rounded-md"
+            />
           </div>
           <input
             type="month"
@@ -471,7 +505,7 @@ export default function IncomesPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-card divide-y divide-border">
-                  {tuitionPayments.map((payment) => (
+                  {filteredTuitionPayments.map((payment) => (
                     <tr key={`tuition-${payment.id}`} className="hover:bg-muted/50">
                       <td className="px-6 py-4 whitespace-nowrap font-medium text-foreground">
                         {payment.student_name}
@@ -520,8 +554,12 @@ export default function IncomesPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-card divide-y divide-border">
-                  {otherIncomes.map((income) => (
-                    <tr key={`other-${income.id}`} className="hover:bg-muted/50">
+                  {filteredOtherIncomes.map((income) => (
+                    <tr
+                      key={`other-${income.id}`}
+                      className="hover:bg-muted/50 cursor-pointer"
+                      onClick={() => setSelectedIncome(income)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">
                         {income.income_date.split('T')[0]}
                       </td>
@@ -539,7 +577,7 @@ export default function IncomesPage() {
                       </td>
                       {canEditIncomes && (
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex gap-2">
+                          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => handleEdit(income)}
                               className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 rounded"
@@ -575,6 +613,80 @@ export default function IncomesPage() {
             </Card>
           )}
         </>
+      )}
+
+      {/* 기타수입 상세 모달 */}
+      {selectedIncome && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedIncome(null)}>
+          <div className="bg-card rounded-lg shadow-xl max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-lg font-semibold text-foreground">기타수입 상세</h3>
+              <button onClick={() => setSelectedIncome(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">날짜</p>
+                  <p className="font-medium text-foreground">{selectedIncome.income_date.split('T')[0]}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">카테고리</p>
+                  <span className="px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded">
+                    {CATEGORY_MAP[selectedIncome.category] || selectedIncome.category}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">금액</p>
+                  <p className="font-semibold text-purple-600">+{formatAmount(selectedIncome.amount)}원</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">결제방법</p>
+                  <p className="text-foreground">{PAYMENT_METHOD_MAP[selectedIncome.payment_method || 'cash']}</p>
+                </div>
+              </div>
+              {selectedIncome.description && (
+                <div>
+                  <p className="text-sm text-muted-foreground">설명</p>
+                  <p className="text-foreground">{selectedIncome.description}</p>
+                </div>
+              )}
+              {selectedIncome.notes && (
+                <div>
+                  <p className="text-sm text-muted-foreground">메모</p>
+                  <p className="text-foreground whitespace-pre-wrap bg-muted p-3 rounded">{selectedIncome.notes}</p>
+                </div>
+              )}
+            </div>
+            {canEditIncomes && (
+              <div className="flex justify-end gap-2 p-4 border-t border-border">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    handleEdit(selectedIncome);
+                    setSelectedIncome(null);
+                  }}
+                >
+                  <Pencil className="w-4 h-4 mr-1" />
+                  수정
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    handleDelete(selectedIncome.id);
+                    setSelectedIncome(null);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-1" />
+                  삭제
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
