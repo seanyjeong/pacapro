@@ -47,7 +47,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 <TopNav />
                 {/* 메인 콘텐츠 영역에 배경색 추가 (깊이감 부여) */}
                 <main className="flex-1 overflow-y-auto pt-16 bg-slate-50/50 dark:bg-background">
-                    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+                    <div className="p-4 md:p-6">
                         {children}
                     </div>
                 </main>
