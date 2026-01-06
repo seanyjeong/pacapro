@@ -141,7 +141,7 @@ export function TopNav() {
     };
 
     return (
-        <header className="h-16 bg-card border-b border-border fixed top-0 right-0 left-0 md:left-64 z-10 no-print">
+        <header className="h-16 bg-background/80 backdrop-blur-md border-b border-border/50 fixed top-0 right-0 left-0 md:left-64 z-10 no-print supports-[backdrop-filter]:bg-background/60">
             <div className="h-full px-4 md:px-6 flex items-center justify-between">
                 {/* Left: Mobile Menu + Search */}
                 <div className="flex items-center space-x-4 flex-1">
@@ -159,12 +159,12 @@ export function TopNav() {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onFocus={() => searchResults.length > 0 && setShowResults(true)}
                             placeholder="학생, 강사, 전화번호 검색..."
-                            className="w-full pl-10 pr-4 py-2 border border-input rounded-lg text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                            className="w-full pl-10 pr-4 py-2 border border-input rounded-lg text-sm bg-background/50 focus:bg-background transition-colors text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                         />
 
                         {/* 검색 결과 드롭다운 */}
                         {showResults && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-xl shadow-black/5 z-50 max-h-80 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
                                 {searching ? (
                                     <div className="p-4 text-center text-muted-foreground text-sm">
                                         검색 중...
@@ -263,10 +263,10 @@ export function TopNav() {
 
                         {/* User Dropdown */}
                         {showUserMenu && (
-                            <div className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-lg border border-border py-1">
+                            <div className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-xl border border-border py-1 animate-in fade-in zoom-in-95 duration-200">
                                 <button
                                     onClick={handleLogout}
-                                    className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-foreground hover:bg-muted"
+                                    className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
                                 >
                                     <LogOut className="w-4 h-4" />
                                     <span>로그아웃</span>

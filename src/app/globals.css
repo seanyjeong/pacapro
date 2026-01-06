@@ -36,9 +36,9 @@
     --accent-emerald: 160 84% 39%;
     --accent-amber: 38 92% 50%;
 
-    /* 그라데이션 */
+    /* 그라데이션 - Flat 스타일로 변경 (미니멀리즘) */
     --gradient-primary: linear-gradient(135deg, hsl(221.2, 83.2%, 53.3%) 0%, hsl(217, 91%, 60%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 100%) 0%, hsl(220, 14%, 98%) 100%);
+    --gradient-card: none; 
 
     /* 정교한 그림자 */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 3px 0 rgba(0, 0, 0, 0.05);
@@ -72,8 +72,8 @@
     --input: 0 0% 20%;
     --ring: 216 100% 50%;
 
-    /* 다크 그라데이션 */
-    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 12%) 0%, hsl(0, 0%, 8%) 100%);
+    /* 다크 그라데이션 - Flat 유지 */
+    --gradient-card: none;
     --shadow-glow: 0 0 40px -10px hsla(217, 91%, 60%, 0.25);
   }
 }
@@ -85,39 +85,51 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Custom Scrollbar */
+/* Modern Scrollbar - Minimal & Clean */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 99px;
+  transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 /* 다크 모드 스크롤바 */
-.dark ::-webkit-scrollbar-track {
-  background: #1a1a1a;
-}
-
 .dark ::-webkit-scrollbar-thumb {
-  background: #444;
+  background: hsl(var(--muted-foreground) / 0.4);
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #666;
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+
+/* 모바일 터치 스크롤 개선 */
+@media (max-width: 768px) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* 모바일에서는 스크롤바 숨기기 (깔끔함 유지) */
+  ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
 }
 
 /* 유틸리티 클래스 - 모던 미니멀 */
