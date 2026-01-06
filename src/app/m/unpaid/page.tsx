@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { canView, canEdit, isOwner } from '@/lib/utils/permissions';
 import { paymentsAPI } from '@/lib/api/payments';
-import { ArrowLeft, CreditCard, Calendar, User, Check, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Calendar, User, Check, X, Loader2, Banknote, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type { UnpaidPayment } from '@/lib/types/payment';
@@ -17,6 +17,7 @@ export default function MobileUnpaidPage() {
   const [canViewAmount, setCanViewAmount] = useState(false);
   const [canMarkPaid, setCanMarkPaid] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<UnpaidPayment | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'cash' | 'account'>('card');
   const [processing, setProcessing] = useState(false);
   const [dayName, setDayName] = useState<string>('');
 
@@ -83,11 +84,12 @@ export default function MobileUnpaidPage() {
       const unpaidAmount = (selectedPayment.final_amount || 0) - (selectedPayment.paid_amount || 0);
       await paymentsAPI.recordPayment(selectedPayment.id, {
         paid_amount: unpaidAmount,
-        payment_method: 'cash',  // 기본값
+        payment_method: selectedPaymentMethod,
         payment_date: new Date().toISOString().split('T')[0],
       });
       toast.success(`${selectedPayment.student_name} 완납 처리되었습니다.`);
       setSelectedPayment(null);
+      setSelectedPaymentMethod('card');  // 초기화
       loadUnpaidPayments();  // 목록 새로고침
     } catch (err) {
       console.error('Failed to mark as paid:', err);
@@ -214,20 +216,65 @@ export default function MobileUnpaidPage() {
               <h3 className="text-xl font-bold text-foreground">완납 처리</h3>
               <p className="text-muted-foreground mt-2">
                 <span className="font-semibold text-foreground">{selectedPayment.student_name}</span>님의<br />
-                {selectedPayment.year_month} 학원비를<br />
-                완납 처리하시겠습니까?
+                {selectedPayment.year_month} 학원비
               </p>
-              {canViewAmount && (
-                <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-3">
-                  {formatAmount((selectedPayment.final_amount || 0) - (selectedPayment.paid_amount || 0))}원
-                </p>
-              )}
+              {/* 납부 금액 표시 */}
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-3">
+                {formatAmount((selectedPayment.final_amount || 0) - (selectedPayment.paid_amount || 0))}원
+              </p>
             </div>
-            <div className="flex gap-3">
+
+            {/* 결제방법 선택 */}
+            <div>
+              <p className="text-sm text-muted-foreground mb-2 text-center">결제 방법</p>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaymentMethod('card')}
+                  className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                    selectedPaymentMethod === 'card'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  <span className="text-sm font-medium">카드</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaymentMethod('account')}
+                  className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                    selectedPaymentMethod === 'account'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <Building2 className="h-5 w-5" />
+                  <span className="text-sm font-medium">계좌</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaymentMethod('cash')}
+                  className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all ${
+                    selectedPaymentMethod === 'cash'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <Banknote className="h-5 w-5" />
+                  <span className="text-sm font-medium">현금</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
               <Button
                 variant="outline"
                 className="flex-1 py-6"
-                onClick={() => setSelectedPayment(null)}
+                onClick={() => {
+                  setSelectedPayment(null);
+                  setSelectedPaymentMethod('card');
+                }}
                 disabled={processing}
               >
                 <X className="h-5 w-5 mr-2" />
