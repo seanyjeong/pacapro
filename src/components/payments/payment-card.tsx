@@ -3,8 +3,10 @@
  * 학원비 상세 정보 카드
  */
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Pencil, Check, X } from 'lucide-react';
 import type { Payment } from '@/lib/types/payment';
 import {
   formatPaymentAmount,
@@ -26,11 +28,35 @@ interface PaymentCardProps {
   onRecordPayment?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onUpdatePaidDate?: (paidDate: string) => Promise<void>;
 }
 
-export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete }: PaymentCardProps) {
+export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpdatePaidDate }: PaymentCardProps) {
   const overdue = isOverdue(payment);
   const daysOverdue = overdue ? calculateOverdueDays(payment.due_date) : 0;
+
+  // 납부일 수정 상태
+  const [isEditingPaidDate, setIsEditingPaidDate] = useState(false);
+  const [editPaidDate, setEditPaidDate] = useState(payment.paid_date?.split('T')[0] || '');
+  const [savingPaidDate, setSavingPaidDate] = useState(false);
+
+  const handleSavePaidDate = async () => {
+    if (!onUpdatePaidDate || !editPaidDate) return;
+    try {
+      setSavingPaidDate(true);
+      await onUpdatePaidDate(editPaidDate);
+      setIsEditingPaidDate(false);
+    } catch (err) {
+      // Error handled by parent
+    } finally {
+      setSavingPaidDate(false);
+    }
+  };
+
+  const handleCancelEditPaidDate = () => {
+    setEditPaidDate(payment.paid_date?.split('T')[0] || '');
+    setIsEditingPaidDate(false);
+  };
 
   return (
     <Card>
@@ -111,7 +137,46 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete }: Paym
           {payment.paid_date && (
             <div>
               <p className="text-sm text-gray-500 mb-1">납부일</p>
-              <p className="font-medium text-green-600">{formatDate(payment.paid_date)}</p>
+              {isEditingPaidDate ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    value={editPaidDate}
+                    onChange={(e) => setEditPaidDate(e.target.value)}
+                    className="px-2 py-1 border border-border bg-background rounded text-sm"
+                    disabled={savingPaidDate}
+                  />
+                  <button
+                    onClick={handleSavePaidDate}
+                    disabled={savingPaidDate}
+                    className="p-1 text-green-600 hover:bg-green-50 rounded"
+                    title="저장"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={handleCancelEditPaidDate}
+                    disabled={savingPaidDate}
+                    className="p-1 text-gray-500 hover:bg-gray-100 rounded"
+                    title="취소"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-green-600">{formatDate(payment.paid_date)}</p>
+                  {onUpdatePaidDate && (
+                    <button
+                      onClick={() => setIsEditingPaidDate(true)}
+                      className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
+                      title="납부일 수정"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -275,15 +275,16 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
                 p.discount_amount,
                 p.additional_amount,
                 p.final_amount,
+                p.paid_amount,
                 p.due_date,
                 p.payment_status,
                 DATEDIFF(CURDATE(), p.due_date) as days_overdue,
                 (
                     SELECT a.attendance_status
                     FROM attendance a
-                    JOIN class_schedules cs ON a.schedule_id = cs.id
+                    JOIN class_schedules cs ON a.class_schedule_id = cs.id
                     WHERE a.student_id = s.id
-                    AND cs.date = ?
+                    AND cs.class_date = ?
                     AND cs.academy_id = ?
                     ORDER BY a.id DESC
                     LIMIT 1
@@ -292,12 +293,12 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
             JOIN students s ON p.student_id = s.id
             WHERE p.academy_id = ?
             AND p.payment_status IN ('pending', 'partial')
-            AND p.year_month = ?
+            AND p.year_month <= ?
             AND s.status = 'active'
             AND s.deleted_at IS NULL
             AND JSON_CONTAINS(COALESCE(s.class_days, '[]'), ?)
             HAVING today_attendance IS NULL OR today_attendance NOT IN ('absent', 'excused')
-            ORDER BY s.name ASC`,
+            ORDER BY p.year_month DESC, s.name ASC`,
             [todayStr, req.user.academyId, req.user.academyId, yearMonth, JSON.stringify(dayOfWeek)]
         );
 
@@ -935,6 +936,9 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             discount_amount,
             additional_amount,
             due_date,
+            paid_date,
+            paid_amount,
+            payment_method,
             payment_status,
             description,
             notes
@@ -980,6 +984,18 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
         if (due_date !== undefined) {
             updates.push('due_date = ?');
             params.push(due_date);
+        }
+        if (paid_date !== undefined) {
+            updates.push('paid_date = ?');
+            params.push(paid_date);
+        }
+        if (paid_amount !== undefined) {
+            updates.push('paid_amount = ?');
+            params.push(paid_amount);
+        }
+        if (payment_method !== undefined) {
+            updates.push('payment_method = ?');
+            params.push(payment_method);
         }
         if (payment_status !== undefined) {
             updates.push('payment_status = ?');

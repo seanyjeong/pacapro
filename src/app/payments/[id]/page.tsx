@@ -39,6 +39,18 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
     }
   };
 
+  const handleUpdatePaidDate = async (paidDate: string) => {
+    try {
+      await paymentsAPI.updatePayment(paymentId, { paid_date: paidDate } as any);
+      toast.success('납부일이 수정되었습니다.');
+      reload();
+    } catch (err: any) {
+      console.error('Failed to update paid date:', err);
+      toast.error(err.response?.data?.message || '납부일 수정에 실패했습니다.');
+      throw err;
+    }
+  };
+
   const handleEdit = () => {
     router.push(`/payments/${paymentId}/edit`);
   };
@@ -123,6 +135,7 @@ export default function PaymentDetailPage({ params }: { params: Promise<{ id: st
         onRecordPayment={canEditPayments && payment.payment_status !== 'paid' ? () => setShowRecordModal(true) : undefined}
         onEdit={canEditPayments ? handleEdit : undefined}
         onDelete={canDeletePayments ? handleDelete : undefined}
+        onUpdatePaidDate={canEditPayments && payment.paid_date ? handleUpdatePaidDate : undefined}
       />
 
       {/* 납부 기록 모달 */}
