@@ -131,6 +131,13 @@ export default function ExpensesPage() {
           <p className="text-muted-foreground mt-1">학원 운영 지출 관리</p>
         </div>
         <div className="flex items-center gap-2">
+          {/* 월 선택 */}
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="px-3 py-2 border border-border bg-background text-foreground rounded-md text-sm"
+          />
           {/* 뷰 모드 토글 */}
           <div className="flex items-center border rounded-lg p-1">
             <Button
