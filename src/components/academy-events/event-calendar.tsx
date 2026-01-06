@@ -15,6 +15,11 @@ interface EventCalendarProps {
     initialYearMonth?: string;
 }
 
+// 로컬 시간 기준 날짜 문자열 생성 (YYYY-MM-DD)
+const formatLocalDate = (date: Date): string => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 export function EventCalendar({
     events,
     onDateClick,
@@ -51,7 +56,7 @@ export function EventCalendar({
         // 이번 달
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = formatLocalDate(date);
             const dayEvents = events.filter(e => e.event_date === dateStr);
             days.push({ date, events: dayEvents });
         }
@@ -78,7 +83,9 @@ export function EventCalendar({
     };
 
     const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
-    const todayStr = new Date().toISOString().split('T')[0];
+
+    // 로컬 시간 기준 오늘 날짜
+    const todayStr = formatLocalDate(new Date());
 
     return (
         <div className="bg-card rounded-lg border border-border overflow-hidden">
@@ -120,7 +127,7 @@ export function EventCalendar({
                         return <div key={index} className="min-h-[100px] bg-muted/30 border-b border-r border-border" />;
                     }
 
-                    const dateStr = cell.date.toISOString().split('T')[0];
+                    const dateStr = formatLocalDate(cell.date);
                     const dayOfWeek = cell.date.getDay();
                     const isToday = dateStr === todayStr;
                     const hasHoliday = cell.events.some(e => e.is_holiday);

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Banknote, TrendingDown, FileSpreadsheet, Calendar, List } from 'lucide-react';
+import { Plus, Banknote, TrendingDown, FileSpreadsheet, Calendar, List, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 import { exportsApi } from '@/lib/api/exports';
@@ -31,6 +31,7 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const today = new Date();
@@ -65,23 +66,57 @@ export default function ExpensesPage() {
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      expense_date: new Date().toISOString().split('T')[0],
+      category: 'utilities',
+      amount: 0,
+      description: '',
+      payment_method: 'account',
+      notes: '',
+    });
+    setEditingId(null);
+    setShowForm(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await apiClient.post('/expenses', formData);
-      toast.success('지출이 등록되었습니다.');
-      setShowForm(false);
-      setFormData({
-        expense_date: new Date().toISOString().split('T')[0],
-        category: 'utilities',
-        amount: 0,
-        description: '',
-        payment_method: 'account',
-        notes: '',
-      });
+      if (editingId) {
+        await apiClient.put(`/expenses/${editingId}`, formData);
+        toast.success('지출이 수정되었습니다.');
+      } else {
+        await apiClient.post('/expenses', formData);
+        toast.success('지출이 등록되었습니다.');
+      }
+      resetForm();
       loadExpenses();
     } catch (err: any) {
-      toast.error(err.response?.data?.message || '지출 등록에 실패했습니다.');
+      toast.error(err.response?.data?.message || '지출 처리에 실패했습니다.');
+    }
+  };
+
+  const handleEdit = (expense: Expense) => {
+    setFormData({
+      expense_date: expense.expense_date.split('T')[0],
+      category: expense.category,
+      amount: Math.floor(expense.amount),
+      description: expense.description || '',
+      payment_method: expense.payment_method || 'account',
+      notes: expense.notes || '',
+    });
+    setEditingId(expense.id);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('이 지출 내역을 삭제하시겠습니까?')) return;
+    try {
+      await apiClient.delete(`/expenses/${id}`);
+      toast.success('삭제되었습니다.');
+      loadExpenses();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '삭제에 실패했습니다.');
     }
   };
 
@@ -168,9 +203,9 @@ export default function ExpensesPage() {
             엑셀 다운로드
           </Button>
           {canEditExpenses && (
-            <Button onClick={() => setShowForm(!showForm)}>
+            <Button onClick={() => { resetForm(); setShowForm(!showForm); }}>
               <Plus className="w-4 h-4 mr-2" />
-              {showForm ? '취소' : '지출 등록'}
+              {showForm && !editingId ? '취소' : '지출 등록'}
             </Button>
           )}
         </div>
@@ -216,7 +251,7 @@ export default function ExpensesPage() {
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>지출 등록</CardTitle>
+            <CardTitle>{editingId ? '지출 수정' : '지출 등록'}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -298,8 +333,8 @@ export default function ExpensesPage() {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>취소</Button>
-                <Button type="submit">등록</Button>
+                <Button type="button" variant="secondary" onClick={resetForm}>취소</Button>
+                <Button type="submit">{editingId ? '수정' : '등록'}</Button>
               </div>
             </form>
           </CardContent>
@@ -325,6 +360,7 @@ export default function ExpensesPage() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">설명</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">금액</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">지불방법</th>
+                      {canEditExpenses && <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">관리</th>}
                     </tr>
                   </thead>
                   <tbody className="bg-card divide-y divide-border">
@@ -353,6 +389,31 @@ export default function ExpensesPage() {
                           {expense.payment_method === 'cash' && '현금'}
                           {expense.payment_method === 'other' && '기타'}
                         </td>
+                        {canEditExpenses && (
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {!expense.salary_id && (
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleEdit(expense)}
+                                  className="p-1 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900 rounded"
+                                  title="수정"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(expense.id)}
+                                  className="p-1 text-red-600 hover:bg-red-100 dark:hover:bg-red-900 rounded"
+                                  title="삭제"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+                            {expense.salary_id && (
+                              <span className="text-xs text-muted-foreground">급여 연동</span>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>

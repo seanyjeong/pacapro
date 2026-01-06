@@ -158,7 +158,15 @@
       "Bash(npx playwright test:*)",
       "Bash(node check-vercel.js:*)",
       "Bash(xargs:*)",
-      "Bash(node /tmp/get-schema.js:*)"
+      "Bash(node /tmp/get-schema.js:*)",
+      "Bash({ sleep 0.1)",
+      "Bash(})",
+      "Bash(node /tmp/fix-trial-attended.js:*)",
+      "Bash(node:*)",
+      "Bash(sudo -n journalctl:*)",
+      "Bash(journalctl:*)",
+      "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"SELECT id, student_id, paid_date, payment_method, paid_amount FROM student_payments WHERE paid_date LIKE ''2026-01-05%'';\")",
+      "Bash(git restore:*)"
     ],
     "deny": [],
     "ask": []
