@@ -1428,7 +1428,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
 
         // Check if schedule exists
         const [schedules] = await connection.query(
-            'SELECT id, class_date FROM class_schedules WHERE id = ? AND academy_id = ?',
+            'SELECT id, class_date, time_slot FROM class_schedules WHERE id = ? AND academy_id = ?',
             [scheduleId, req.user.academyId]
         );
 
@@ -1454,6 +1454,62 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
             // attendance_status가 'none'이면 출석 상태만 NULL로 (학생은 목록에 유지)
             if (attendance_status === 'none') {
                 console.log(`[Attendance] Clearing attendance status for student ${student_id}`);
+
+                // 체험생의 경우 기존 출석 상태 확인하여 trial_remaining 복구
+                const [existingAtt] = await connection.query(
+                    `SELECT a.attendance_status, s.id, s.is_trial, s.trial_remaining, s.status as student_status
+                     FROM attendance a
+                     JOIN students s ON a.student_id = s.id
+                     WHERE a.class_schedule_id = ? AND a.student_id = ?`,
+                    [scheduleId, student_id]
+                );
+
+                if (existingAtt.length > 0) {
+                    const existing = existingAtt[0];
+                    const wasAttended = ['present', 'late'].includes(existing.attendance_status);
+
+                    // 체험생이었거나 현재 pending인데 원래 체험생이었던 경우, 출석했던 기록이 있으면 복구
+                    if (wasAttended && (existing.is_trial || existing.student_status === 'pending')) {
+                        // 현재 학생의 trial_dates 조회
+                        const [studentData] = await connection.query(
+                            'SELECT trial_dates FROM students WHERE id = ?',
+                            [student_id]
+                        );
+
+                        // trial_remaining 복구
+                        await connection.query(
+                            'UPDATE students SET trial_remaining = trial_remaining + 1, is_trial = 1, status = ? WHERE id = ?',
+                            ['trial', student_id]
+                        );
+
+                        // trial_dates의 attended 상태도 false로 복구
+                        if (studentData.length > 0 && studentData[0].trial_dates) {
+                            try {
+                                let trialDates = JSON.parse(studentData[0].trial_dates);
+                                const dateObj = new Date(schedule.class_date);
+                                const classDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+                                const classTimeSlot = schedule.time_slot;
+
+                                let idx = trialDates.findIndex(td => td.date === classDate && td.time_slot === classTimeSlot);
+                                if (idx === -1) {
+                                    idx = trialDates.findIndex(td => td.date === classDate && !td.time_slot);
+                                }
+                                if (idx !== -1 && trialDates[idx].attended) {
+                                    trialDates[idx].attended = false;
+                                    await connection.query(
+                                        'UPDATE students SET trial_dates = ? WHERE id = ?',
+                                        [JSON.stringify(trialDates), student_id]
+                                    );
+                                }
+                            } catch (e) {
+                                console.error('Failed to restore trial_dates attended status:', e);
+                            }
+                        }
+
+                        console.log(`[Attendance] 체험생 ${student_id} 출석 취소 → trial_remaining +1, 상태 trial로 복구`);
+                    }
+                }
+
                 await connection.query(
                     `UPDATE attendance SET attendance_status = NULL, notes = NULL WHERE class_schedule_id = ? AND student_id = ?`,
                     [scheduleId, student_id]
@@ -1552,14 +1608,20 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                     [student_id]
                 );
 
-                // trial_dates의 attended 상태도 업데이트 (현재 출석 체크하는 날짜 기준)
+                // trial_dates의 attended 상태도 업데이트 (현재 출석 체크하는 날짜 + 시간대 기준)
                 if (student.trial_dates) {
                     try {
                         let trialDates = JSON.parse(student.trial_dates);
-                        // 현재 스케줄 날짜를 YYYY-MM-DD 형식으로 변환
-                        const classDate = new Date(schedule.class_date).toISOString().split('T')[0];
-                        // 현재 날짜에 해당하는 항목 찾기
-                        const idx = trialDates.findIndex(td => td.date === classDate);
+                        // 현재 스케줄 날짜를 YYYY-MM-DD 형식으로 변환 (UTC 문제 방지)
+                        const dateObj = new Date(schedule.class_date);
+                        const classDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
+                        const classTimeSlot = schedule.time_slot;
+                        // 현재 날짜 + 시간대에 해당하는 항목 찾기
+                        let idx = trialDates.findIndex(td => td.date === classDate && td.time_slot === classTimeSlot);
+                        // time_slot이 없는 기존 데이터 호환: 날짜만으로도 매칭
+                        if (idx === -1) {
+                            idx = trialDates.findIndex(td => td.date === classDate && !td.time_slot);
+                        }
                         if (idx !== -1 && !trialDates[idx].attended) {
                             trialDates[idx].attended = true;
                             await connection.query(

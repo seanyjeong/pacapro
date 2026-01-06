@@ -194,6 +194,7 @@ const pushRoutes = require('./routes/push');
 const notificationSettingsRoutes = require('./routes/notificationSettings');
 const tossRoutes = require('./routes/toss');
 const studentConsultationRoutes = require('./routes/student-consultations');
+const academyEventRoutes = require('./routes/academyEvents');
 
 // Register Routes
 app.use('/paca/auth', authRoutes);
@@ -221,6 +222,7 @@ app.use('/paca/push', pushRoutes);
 app.use('/paca/notification-settings', notificationSettingsRoutes);
 app.use('/paca/toss', tossRoutes);
 app.use('/paca/student-consultations', studentConsultationRoutes);
+app.use('/paca/academy-events', academyEventRoutes);
 
 // ==========================================
 // Error Handling
