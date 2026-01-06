@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, Eye, EyeOff } from 'lucide-react';
+import { X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import { staffApi } from '@/lib/api/staff';
 import type { Staff, AvailableInstructor, Permissions } from '@/lib/types/staff';
-import { DEFAULT_PERMISSIONS, PERMISSION_PAGES } from '@/lib/types/staff';
+import { DEFAULT_PERMISSIONS, PERMISSION_CATEGORIES } from '@/lib/types/staff';
 import { toast } from 'sonner';
 
 interface StaffFormModalProps {
@@ -35,6 +35,9 @@ export function StaffFormModal({
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(
+    Object.fromEntries(PERMISSION_CATEGORIES.map(cat => [cat.title, true]))
+  );
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -101,20 +104,70 @@ export function StaffFormModal({
           [action]: value,
           // edit를 true로 하면 view도 자동으로 true
           ...(action === 'edit' && value ? { view: true } : {}),
+          // view를 false로 하면 edit도 자동으로 false
+          ...(action === 'view' && !value ? { edit: false } : {}),
         },
       },
     }));
   };
 
+  // 카테고리 전체 선택/해제
+  const handleCategoryChange = (categoryTitle: string, action: 'view' | 'edit', value: boolean) => {
+    const category = PERMISSION_CATEGORIES.find(cat => cat.title === categoryTitle);
+    if (!category) return;
+
+    setFormData((prev) => {
+      const newPermissions = { ...prev.permissions };
+      category.items.forEach((page) => {
+        newPermissions[page.key as keyof Permissions] = {
+          ...((prev.permissions as any)[page.key] || { view: false, edit: false }),
+          [action]: value,
+          // edit를 true로 하면 view도 자동으로 true
+          ...(action === 'edit' && value ? { view: true } : {}),
+          // view를 false로 하면 edit도 자동으로 false
+          ...(action === 'view' && !value ? { edit: false } : {}),
+        };
+      });
+      return { ...prev, permissions: newPermissions };
+    });
+  };
+
+  // 카테고리 내 모든 항목이 체크되어 있는지 확인
+  const isCategoryChecked = (categoryTitle: string, action: 'view' | 'edit'): boolean => {
+    const category = PERMISSION_CATEGORIES.find(cat => cat.title === categoryTitle);
+    if (!category) return false;
+    return category.items.every((page) => {
+      const perm = (formData.permissions as any)[page.key];
+      return perm?.[action] === true;
+    });
+  };
+
+  // 카테고리 내 일부 항목만 체크되어 있는지 확인 (indeterminate 상태)
+  const isCategoryIndeterminate = (categoryTitle: string, action: 'view' | 'edit'): boolean => {
+    const category = PERMISSION_CATEGORIES.find(cat => cat.title === categoryTitle);
+    if (!category) return false;
+    const checkedCount = category.items.filter((page) => {
+      const perm = (formData.permissions as any)[page.key];
+      return perm?.[action] === true;
+    }).length;
+    return checkedCount > 0 && checkedCount < category.items.length;
+  };
+
   const handleSelectAll = (action: 'view' | 'edit', value: boolean) => {
     const newPermissions: Permissions = {};
-    PERMISSION_PAGES.forEach((page) => {
-      newPermissions[page.key as keyof Permissions] = {
-        view: action === 'edit' && value ? true : (action === 'view' ? value : ((formData.permissions as any)[page.key]?.view || false)),
-        edit: action === 'edit' ? value : ((formData.permissions as any)[page.key]?.edit || false),
-      };
+    PERMISSION_CATEGORIES.forEach((category) => {
+      category.items.forEach((page) => {
+        newPermissions[page.key as keyof Permissions] = {
+          view: action === 'edit' && value ? true : (action === 'view' ? value : ((formData.permissions as any)[page.key]?.view || false)),
+          edit: action === 'edit' ? value : ((formData.permissions as any)[page.key]?.edit || false),
+        };
+      });
     });
     setFormData((prev) => ({ ...prev, permissions: newPermissions }));
+  };
+
+  const toggleCategory = (title: string) => {
+    setExpandedCategories(prev => ({ ...prev, [title]: !prev[title] }));
   };
 
   return (
@@ -123,7 +176,7 @@ export function StaffFormModal({
       onClick={onClose}
     >
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <CardHeader className="flex flex-row items-center justify-between border-b">
+        <CardHeader className="flex flex-row items-center justify-between border-b sticky top-0 bg-card z-10">
           <CardTitle>{isEdit ? '직원 정보 수정' : '권한 부여'}</CardTitle>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -247,58 +300,103 @@ export function StaffFormModal({
                 </div>
               </div>
 
-              <div className="border border-border rounded-md overflow-hidden">
-                <table className="w-full">
-                  <thead className="bg-muted">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">
-                        페이지
-                      </th>
-                      <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground w-20">
-                        보기
-                      </th>
-                      <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground w-20">
-                        수정
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border bg-card">
-                    {PERMISSION_PAGES.map((page) => {
-                      const perm = (formData.permissions as any)[page.key] || {
-                        view: false,
-                        edit: false,
-                      };
-                      return (
-                        <tr key={page.key} className="hover:bg-muted">
-                          <td className="px-4 py-2">
-                            <div className="text-sm font-medium text-foreground">{page.label}</div>
-                            <div className="text-xs text-muted-foreground">{page.description}</div>
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <input
-                              type="checkbox"
-                              checked={perm.view}
-                              onChange={(e) =>
-                                handlePermissionChange(page.key, 'view', e.target.checked)
-                              }
-                              className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
-                            />
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <input
-                              type="checkbox"
-                              checked={perm.edit}
-                              onChange={(e) =>
-                                handlePermissionChange(page.key, 'edit', e.target.checked)
-                              }
-                              className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              {/* 카테고리별 권한 테이블 */}
+              <div className="space-y-3">
+                {PERMISSION_CATEGORIES.map((category) => {
+                  const isExpanded = expandedCategories[category.title];
+                  const categoryViewChecked = isCategoryChecked(category.title, 'view');
+                  const categoryEditChecked = isCategoryChecked(category.title, 'edit');
+                  const categoryViewIndeterminate = isCategoryIndeterminate(category.title, 'view');
+                  const categoryEditIndeterminate = isCategoryIndeterminate(category.title, 'edit');
+
+                  return (
+                    <div key={category.title} className="border border-border rounded-lg overflow-hidden">
+                      {/* 카테고리 헤더 */}
+                      <div className="bg-muted">
+                        <div className="flex items-center">
+                          <button
+                            type="button"
+                            onClick={() => toggleCategory(category.title)}
+                            className="flex items-center gap-2 px-4 py-3 flex-1 text-left hover:bg-muted/80 transition-colors"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            )}
+                            <span className="font-semibold text-sm">{category.title}</span>
+                            <span className="text-xs text-muted-foreground">({category.items.length}개)</span>
+                          </button>
+                          <div className="flex items-center gap-6 px-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={categoryViewChecked}
+                                ref={(el) => {
+                                  if (el) el.indeterminate = categoryViewIndeterminate;
+                                }}
+                                onChange={(e) => handleCategoryChange(category.title, 'view', e.target.checked)}
+                                className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                              />
+                              <span className="text-xs text-muted-foreground">전체 보기</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={categoryEditChecked}
+                                ref={(el) => {
+                                  if (el) el.indeterminate = categoryEditIndeterminate;
+                                }}
+                                onChange={(e) => handleCategoryChange(category.title, 'edit', e.target.checked)}
+                                className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                              />
+                              <span className="text-xs text-muted-foreground">전체 수정</span>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 서브메뉴 */}
+                      {isExpanded && (
+                        <table className="w-full">
+                          <tbody className="divide-y divide-border bg-card">
+                            {category.items.map((page) => {
+                              const perm = (formData.permissions as any)[page.key] || { view: false, edit: false };
+                              return (
+                                <tr key={page.key} className="hover:bg-muted/50">
+                                  <td className="px-4 py-2.5 pl-10">
+                                    <div className="text-sm font-medium text-foreground">{page.label}</div>
+                                    <div className="text-xs text-muted-foreground">{page.description}</div>
+                                  </td>
+                                  <td className="px-4 py-2.5 text-center w-20">
+                                    <input
+                                      type="checkbox"
+                                      checked={perm.view}
+                                      onChange={(e) =>
+                                        handlePermissionChange(page.key, 'view', e.target.checked)
+                                      }
+                                      className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                    />
+                                  </td>
+                                  <td className="px-4 py-2.5 text-center w-20">
+                                    <input
+                                      type="checkbox"
+                                      checked={perm.edit}
+                                      onChange={(e) =>
+                                        handlePermissionChange(page.key, 'edit', e.target.checked)
+                                      }
+                                      className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
+                                    />
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 

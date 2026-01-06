@@ -74,7 +74,7 @@ const navCategories: NavCategory[] = [
             { title: '학생', href: '/students', icon: Users, permissionKey: 'students' },
             { title: '강사', href: '/instructors', icon: UserCog, permissionKey: 'instructors' },
             { title: '수업스케줄', href: '/schedules', icon: Calendar, permissionKey: 'schedules' },
-            { title: '학원일정', href: '/academy-events', icon: CalendarDays, permissionKey: 'schedules' },
+            { title: '학원일정', href: '/academy-events', icon: CalendarDays, permissionKey: 'academy_events' },
             { title: '시즌', href: '/seasons', icon: Trophy, permissionKey: 'seasons' },
         ],
     },
@@ -95,9 +95,9 @@ const navCategories: NavCategory[] = [
         icon: MessageCircle,
         defaultOpen: false,
         items: [
-            { title: '상담', href: '/consultations', icon: PhoneCall, permissionKey: 'settings' },
-            { title: '문자 보내기', href: '/sms', icon: MessageSquare, permissionKey: 'settings' },
-            { title: '알림톡 설정', href: '/settings/notifications', icon: BellRing, permissionKey: 'settings' },
+            { title: '상담', href: '/consultations', icon: PhoneCall, permissionKey: 'consultations' },
+            { title: '문자 보내기', href: '/sms', icon: MessageSquare, permissionKey: 'sms' },
+            { title: '알림톡 설정', href: '/settings/notifications', icon: BellRing, permissionKey: 'notifications' },
         ],
     },
     {
@@ -495,8 +495,8 @@ export function Sidebar() {
             {/* Footer */}
             <div className="p-4 border-t border-border">
                 <div className="text-xs text-muted-foreground text-center space-y-1">
-                    <div>P-ACA v3.1.25</div>
-                    <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-07</div>
+                    <div>P-ACA v3.1.26</div>
+                    <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-08</div>
                     <div>문의: 010-2144-6755</div>
                 </div>
             </div>
