@@ -881,9 +881,8 @@ router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
     }
 
     // 미등록관리 학생 등록 (pending 상태)
+    // 미등록관리 학생은 학부모 연락처 저장 안 함 (정식 등록 시 입력)
     const phone = studentPhone || consultation.parent_phone;
-    // 학생 전화번호가 있으면 학부모 전화번호는 비워둠 (같은 번호 중복 방지)
-    const parentPhone = studentPhone ? null : consultation.parent_phone;
 
     // 민감 정보 암호화 (이미 암호화된 값이면 그대로 사용)
     const isAlreadyEncrypted = (val) => val && typeof val === 'string' && val.startsWith('ENC:');
@@ -893,15 +892,12 @@ router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
     const encryptedPhone = phone
       ? (isAlreadyEncrypted(phone) ? phone : encrypt(phone))
       : null;
-    const encryptedParentPhone = parentPhone
-      ? (isAlreadyEncrypted(parentPhone) ? parentPhone : encrypt(parentPhone))
-      : null;
 
     const [studentResult] = await db.query(
       `INSERT INTO students (
         academy_id, name, grade, school, gender, phone, parent_phone, status,
         is_trial, memo, class_days, monthly_tuition, consultation_date, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?, '[]', 0, ?, NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, NULL, 'pending', 0, ?, '[]', 0, ?, NOW())`,
       [
         academyId,
         encryptedName,
@@ -909,7 +905,6 @@ router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
         consultation.student_school,
         consultation.gender || null,  // 성별 추가
         encryptedPhone,
-        encryptedParentPhone,
         memo || consultation.inquiry_content || null,
         consultation.preferred_date  // 상담일
       ]

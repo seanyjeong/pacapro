@@ -120,12 +120,11 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
 
   // 정식 등록 처리 (active 상태로 변경)
   const handleRegister = (student: Student) => {
-    // 학생 정보를 쿼리 파라미터로 전달
+    // 학생 정보를 쿼리 파라미터로 전달 (학부모 연락처는 정식 등록 시 입력)
     const params = new URLSearchParams({
       from_pending: student.id.toString(),
       name: student.name,
       phone: student.phone || '',
-      parent_phone: student.parent_phone || '',
       student_type: student.student_type || 'exam',
       grade: student.grade || '',
       school: student.school || '',
@@ -240,7 +239,6 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">이름</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학년</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">연락처</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학부모 연락처</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">상담일</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">체험 일정</th>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">메모</th>
@@ -263,9 +261,6 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                 </td>
                 <td className="py-3 px-4 text-sm text-muted-foreground">
                   {student.phone || '-'}
-                </td>
-                <td className="py-3 px-4 text-sm text-muted-foreground">
-                  {student.parent_phone || '-'}
                 </td>
                 <td className="py-3 px-4 text-sm text-muted-foreground">
                   {formatDate(student.consultation_date || student.created_at)}
