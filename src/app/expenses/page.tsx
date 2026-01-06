@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Banknote, TrendingDown, FileSpreadsheet, Calendar, List, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Banknote, TrendingDown, FileSpreadsheet, Calendar, List, Pencil, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 import { exportsApi } from '@/lib/api/exports';
@@ -33,6 +33,7 @@ export default function ExpensesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -365,7 +366,11 @@ export default function ExpensesPage() {
                   </thead>
                   <tbody className="bg-card divide-y divide-border">
                     {expenses.map((expense) => (
-                      <tr key={expense.id} className="hover:bg-muted/50">
+                      <tr
+                        key={expense.id}
+                        className="hover:bg-muted/50 cursor-pointer"
+                        onClick={() => setSelectedExpense(expense)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{expense.expense_date}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
@@ -390,7 +395,7 @@ export default function ExpensesPage() {
                           {expense.payment_method === 'other' && '기타'}
                         </td>
                         {canEditExpenses && (
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                             {!expense.salary_id && (
                               <div className="flex gap-2">
                                 <button
@@ -432,6 +437,89 @@ export default function ExpensesPage() {
             </Card>
           )}
         </>
+      )}
+
+      {/* 지출 상세 모달 */}
+      {selectedExpense && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedExpense(null)}>
+          <div className="bg-background rounded-lg shadow-xl w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">지출 상세</h2>
+              <button onClick={() => setSelectedExpense(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">지출일</p>
+                  <p className="font-medium text-foreground">{selectedExpense.expense_date}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">카테고리</p>
+                  <p className="font-medium text-foreground">
+                    <span className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded">
+                      {categoryMap[selectedExpense.category] || selectedExpense.category}
+                    </span>
+                    {selectedExpense.category === 'salary' && selectedExpense.instructor_name && (
+                      <span className="ml-2">({selectedExpense.instructor_name})</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">금액</p>
+                <p className="text-xl font-bold text-red-600">-{formatAmount(selectedExpense.amount)}원</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">설명</p>
+                <p className="font-medium text-foreground">{selectedExpense.description || '-'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">지불 방법</p>
+                <p className="font-medium text-foreground">
+                  {selectedExpense.payment_method === 'account' && '계좌이체'}
+                  {selectedExpense.payment_method === 'card' && '카드'}
+                  {selectedExpense.payment_method === 'cash' && '현금'}
+                  {selectedExpense.payment_method === 'other' && '기타'}
+                </p>
+              </div>
+              {selectedExpense.notes && (
+                <div>
+                  <p className="text-sm text-muted-foreground">메모</p>
+                  <p className="font-medium text-foreground whitespace-pre-wrap bg-muted p-3 rounded-md">{selectedExpense.notes}</p>
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t border-border flex justify-end gap-2">
+              {canEditExpenses && !selectedExpense.salary_id && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      handleEdit(selectedExpense);
+                      setSelectedExpense(null);
+                    }}
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    수정
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      handleDelete(selectedExpense.id);
+                      setSelectedExpense(null);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    삭제
+                  </Button>
+                </>
+              )}
+              <Button variant="secondary" onClick={() => setSelectedExpense(null)}>닫기</Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
