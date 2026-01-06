@@ -17,7 +17,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="ko" suppressHydrationWarning>
-            <body className="bg-background text-foreground">
+            <body className="bg-background text-foreground font-sans antialiased">
                 <Providers>
                     <DynamicManifest />
                     <DynamicTitle />

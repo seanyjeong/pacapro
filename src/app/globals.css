@@ -50,31 +50,39 @@
     --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
 
-  /* 다크 테마 (Tech Innovation 스타일) */
+  /* 다크 테마 (Tech Innovation 스타일 - Deep & Rich) */
   .dark {
-    --background: 0 0% 4%;
-    --foreground: 0 0% 100%;
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 216 100% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 7%;
-    --muted-foreground: 0 0% 40%;
-    --accent: 180 100% 50%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 62% 54%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 216 100% 50%;
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 217 32% 17%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
+    --ring: 224 76% 48%;
 
-    /* 다크 그라데이션 - Flat 유지 */
-    --gradient-card: none;
-    --shadow-glow: 0 0 40px -10px hsla(217, 91%, 60%, 0.25);
+    /* 다크 그라데이션 - 은은한 깊이감 */
+    --gradient-card: linear-gradient(180deg, hsl(222, 47%, 12%) 0%, hsl(222, 47%, 10%) 100%);
+    --shadow-glow: 0 0 40px -10px hsla(217, 91%, 60%, 0.15);
   }
 }
 

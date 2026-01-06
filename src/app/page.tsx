@@ -15,6 +15,7 @@ import { DashboardStats } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils/format';
 import { canView, canEdit, isOwner, isAdmin } from '@/lib/utils/permissions';
 import type { Consultation } from '@/lib/types/consultation';
+import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { StudentResumeModal, type RestEndedStudent } from '@/components/students/student-resume-modal';
 
 export default function DashboardPage() {
@@ -29,6 +30,7 @@ export default function DashboardPage() {
         afternoon: { id: number; name: string }[];
         evening: { id: number; name: string }[];
     }>({ morning: [], afternoon: [], evening: [] });
+
 
     // 오늘 상담 일정
     const [todayConsultations, setTodayConsultations] = useState<Consultation[]>([]);
@@ -120,14 +122,7 @@ export default function DashboardPage() {
     };
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">로딩 중...</p>
-                </div>
-            </div>
-        );
+        return <DashboardSkeleton />;
     }
 
     if (error) {
@@ -177,7 +172,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Stats Grid - 스태거 애니메이션 적용 */}
-            <div className={`grid grid-cols-1 md:grid-cols-2 ${canViewFinance ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-5 stagger-children`}>
+            <div className={`grid grid-cols-1 md:grid-cols-2 ${canViewFinance ? 'lg:grid-cols-4' : 'lg:grid-cols-2'} gap-6 stagger-children`}>
                 {/* 학생 현황 */}
                 <StatsCard
                     title="수강 학생"
@@ -235,7 +230,7 @@ export default function DashboardPage() {
                         {canViewUnpaid && stats.unpaid_payments.count > 0 && (
                             <button
                                 onClick={() => router.push('/payments?status=unpaid')}
-                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/50 dark:to-orange-950/50 rounded-xl border border-red-200/60 dark:border-red-800/40 hover:border-red-300 dark:hover:border-red-700 transition-all duration-200 group"
+                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/50 dark:to-orange-950/50 rounded-xl border border-red-200/60 dark:border-red-800/40 hover:border-red-300 dark:hover:border-red-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group"
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-11 h-11 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/20">
@@ -256,7 +251,7 @@ export default function DashboardPage() {
                         {stats.rest_ended_students && stats.rest_ended_students.count > 0 && (
                             <button
                                 onClick={() => setShowRestEndedModal(true)}
-                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/50 dark:to-yellow-950/50 rounded-xl border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-200 group"
+                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/50 dark:to-yellow-950/50 rounded-xl border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group"
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-11 h-11 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/20">
@@ -277,7 +272,7 @@ export default function DashboardPage() {
                         {canViewSchedules && (instructorsBySlot.morning.length > 0 || instructorsBySlot.afternoon.length > 0 || instructorsBySlot.evening.length > 0) && (
                             <button
                                 onClick={() => router.push('/schedules')}
-                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/50 dark:to-purple-950/50 rounded-xl border border-violet-200/60 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-200 group"
+                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/50 dark:to-purple-950/50 rounded-xl border border-violet-200/60 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group"
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-11 h-11 bg-gradient-to-br from-violet-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20">
@@ -306,7 +301,7 @@ export default function DashboardPage() {
                         {canViewConsultations && todayConsultations.length > 0 && (
                             <button
                                 onClick={() => router.push('/consultations')}
-                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-teal-50 dark:from-cyan-950/50 dark:to-teal-950/50 rounded-xl border border-cyan-200/60 dark:border-cyan-800/40 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-200 group"
+                                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-cyan-50 to-teal-50 dark:from-cyan-950/50 dark:to-teal-950/50 rounded-xl border border-cyan-200/60 dark:border-cyan-800/40 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group"
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-11 h-11 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
@@ -395,12 +390,25 @@ export default function DashboardPage() {
                                     </div>
                                 </>
                             ) : (
-                                <div className="text-center py-8">
-                                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                                <div className="text-center py-12 px-4 bg-muted/30 rounded-xl border border-dashed border-muted-foreground/20">
+                                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center animate-pulse-soft">
                                         <Users className="w-8 h-8 text-primary" />
                                     </div>
-                                    <p className="font-medium text-foreground">학생 {stats.students.active_students ?? 0}명 관리 중</p>
-                                    <p className="text-sm text-muted-foreground mt-1">강사 {stats.instructors.active_instructors ?? 0}명 근무 중</p>
+                                    <h3 className="text-lg font-semibold text-foreground mb-1">데이터 집계 중</h3>
+                                    <p className="text-muted-foreground mb-4 max-w-xs mx-auto">
+                                        아직 이번 달 재무 데이터가 없습니다.<br/>
+                                        학생과 강사 현황을 관리해보세요.
+                                    </p>
+                                    <div className="flex justify-center gap-4 text-sm">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border shadow-sm">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                            학생 {stats.students.active_students ?? 0}명
+                                        </div>
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border shadow-sm">
+                                            <div className="w-2 h-2 rounded-full bg-violet-500"></div>
+                                            강사 {stats.instructors.active_instructors ?? 0}명
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
