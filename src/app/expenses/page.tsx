@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Banknote, TrendingDown, FileSpreadsheet } from 'lucide-react';
+import { Plus, Banknote, TrendingDown, FileSpreadsheet, Calendar, List } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 import { exportsApi } from '@/lib/api/exports';
 import { usePermissions } from '@/lib/utils/permissions';
+import { ExpenseCalendar } from '@/components/expenses/expense-calendar';
 
 // 금액 포맷 함수 (소수점 제거 + 천단위 쉼표)
 const formatAmount = (amount: number) => Math.floor(amount).toLocaleString();
@@ -30,6 +31,11 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  });
   const [formData, setFormData] = useState({
     expense_date: new Date().toISOString().split('T')[0],
     category: 'utilities',
@@ -43,12 +49,14 @@ export default function ExpensesPage() {
 
   useEffect(() => {
     loadExpenses();
-  }, []);
+  }, [selectedMonth]);
 
   const loadExpenses = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get<{expenses: Expense[]}>('/expenses');
+      const [year, month] = selectedMonth.split('-');
+      const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+      const response = await apiClient.get<{expenses: Expense[]}>(`/expenses?start_date=${selectedMonth}-01&end_date=${selectedMonth}-${lastDay}`);
       setExpenses(response.expenses || []);
     } catch (err) {
       console.error('Failed to load expenses:', err);
@@ -122,7 +130,28 @@ export default function ExpensesPage() {
           <h1 className="text-3xl font-bold text-foreground">지출 관리</h1>
           <p className="text-muted-foreground mt-1">학원 운영 지출 관리</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          {/* 뷰 모드 토글 */}
+          <div className="flex items-center border rounded-lg p-1">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="h-8"
+            >
+              <List className="w-4 h-4 mr-1" />
+              리스트
+            </Button>
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('calendar')}
+              className="h-8"
+            >
+              <Calendar className="w-4 h-4 mr-1" />
+              달력
+            </Button>
+          </div>
           <Button variant="outline" onClick={handleExportExpenses} disabled={exporting}>
             {exporting ? (
               <div className="w-4 h-4 mr-2 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
@@ -270,61 +299,71 @@ export default function ExpensesPage() {
         </Card>
       )}
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted border-b border-border">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">날짜</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">카테고리</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">설명</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">금액</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">지불방법</th>
-                </tr>
-              </thead>
-              <tbody className="bg-card divide-y divide-border">
-                {expenses.map((expense) => (
-                  <tr key={expense.id} className="hover:bg-muted/50">
-                    <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{expense.expense_date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <span className="px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded">
-                          {categoryMap[expense.category] || expense.category}
-                        </span>
-                        {expense.category === 'salary' && expense.instructor_name && (
-                          <span className="ml-2 text-sm font-medium text-foreground">
-                            ({expense.instructor_name})
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-foreground">{expense.description || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap font-semibold text-red-600">
-                      -{formatAmount(expense.amount)}원
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {expense.payment_method === 'account' && '계좌이체'}
-                      {expense.payment_method === 'card' && '카드'}
-                      {expense.payment_method === 'cash' && '현금'}
-                      {expense.payment_method === 'other' && '기타'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      {viewMode === 'calendar' ? (
+        <ExpenseCalendar
+          expenses={expenses}
+          onMonthChange={(ym) => setSelectedMonth(ym)}
+          initialYearMonth={selectedMonth}
+        />
+      ) : (
+        <>
+          <Card>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-muted border-b border-border">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">날짜</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">카테고리</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">설명</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">금액</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase">지불방법</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-card divide-y divide-border">
+                    {expenses.map((expense) => (
+                      <tr key={expense.id} className="hover:bg-muted/50">
+                        <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{expense.expense_date}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <span className="px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded">
+                              {categoryMap[expense.category] || expense.category}
+                            </span>
+                            {expense.category === 'salary' && expense.instructor_name && (
+                              <span className="ml-2 text-sm font-medium text-foreground">
+                                ({expense.instructor_name})
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-foreground">{expense.description || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap font-semibold text-red-600">
+                          -{formatAmount(expense.amount)}원
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                          {expense.payment_method === 'account' && '계좌이체'}
+                          {expense.payment_method === 'card' && '카드'}
+                          {expense.payment_method === 'cash' && '현금'}
+                          {expense.payment_method === 'other' && '기타'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
 
-      {expenses.length === 0 && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Banknote className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">등록된 지출이 없습니다</h3>
-            <p className="text-muted-foreground">지출을 등록하시면 여기에 표시됩니다.</p>
-          </CardContent>
-        </Card>
+          {expenses.length === 0 && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Banknote className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">등록된 지출이 없습니다</h3>
+                <p className="text-muted-foreground">지출을 등록하시면 여기에 표시됩니다.</p>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );

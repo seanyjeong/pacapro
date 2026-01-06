@@ -4,10 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Download, AlertCircle, Banknote, Bell, Search, Calendar, List } from 'lucide-react';
+import { Plus, Download, AlertCircle, Banknote, Bell, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentList } from '@/components/payments/payment-list';
-import { PaymentCalendar } from '@/components/payments/payment-calendar';
 import { ManualCreditModal } from '@/components/students/manual-credit-modal';
 import { usePayments } from '@/hooks/use-payments';
 import { paymentsAPI } from '@/lib/api/payments';
@@ -49,7 +48,6 @@ function PaymentsPageContent() {
   }, [searchParams, initialFiltersApplied, updateFilters]);
   const [bulkCharging, setBulkCharging] = useState(false);
   const [sendingNotification, setSendingNotification] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // 크레딧 모달 상태
   const [creditModalOpen, setCreditModalOpen] = useState(false);
@@ -212,27 +210,6 @@ function PaymentsPageContent() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          {/* 뷰 모드 토글 */}
-          <div className="flex items-center border rounded-lg p-1">
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="px-3"
-            >
-              <List className="w-4 h-4 mr-1" />
-              리스트
-            </Button>
-            <Button
-              variant={viewMode === 'calendar' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('calendar')}
-              className="px-3"
-            >
-              <Calendar className="w-4 h-4 mr-1" />
-              달력
-            </Button>
-          </div>
           <Button variant="outline" onClick={reload}>
             새로고침
           </Button>
@@ -423,24 +400,13 @@ function PaymentsPageContent() {
         </CardContent>
       </Card>
 
-      {/* 뷰 모드에 따른 표시 */}
-      {viewMode === 'list' ? (
-        <PaymentList
-          payments={filteredPayments}
-          loading={loading}
-          onPaymentClick={handlePaymentClick}
-          onCreditClick={canEditPayments ? handleCreditClick : undefined}
-          showCreditButton={canEditPayments}
-        />
-      ) : (
-        <PaymentCalendar
-          payments={filteredPayments}
-          onPaymentClick={handlePaymentClick}
-          onMonthChange={(year, month) => updateFilters({ year, month })}
-          initialYear={filters.year}
-          initialMonth={filters.month}
-        />
-      )}
+      <PaymentList
+        payments={filteredPayments}
+        loading={loading}
+        onPaymentClick={handlePaymentClick}
+        onCreditClick={canEditPayments ? handleCreditClick : undefined}
+        showCreditButton={canEditPayments}
+      />
 
       {/* 크레딧 모달 */}
       {creditStudentInfo && (

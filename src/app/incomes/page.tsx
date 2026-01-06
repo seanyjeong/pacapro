@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Banknote, TrendingUp, Pencil, Trash2, CreditCard, FileSpreadsheet } from 'lucide-react';
+import { Plus, Banknote, TrendingUp, Pencil, Trash2, CreditCard, FileSpreadsheet, Calendar, List } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 import { exportsApi } from '@/lib/api/exports';
 import { usePermissions } from '@/lib/utils/permissions';
+import { IncomeCalendar } from '@/components/incomes/income-calendar';
 
 interface OtherIncome {
   id: number;
@@ -58,6 +59,7 @@ export default function IncomesPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'tuition' | 'other'>('all');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const today = new Date();
     return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -203,6 +205,27 @@ export default function IncomesPage() {
           <p className="text-muted-foreground mt-1">학원비 수납 및 기타 수입 관리</p>
         </div>
         <div className="flex items-center gap-3">
+          {/* 뷰 모드 토글 */}
+          <div className="flex items-center border rounded-lg p-1">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+              className="px-3"
+            >
+              <List className="w-4 h-4 mr-1" />
+              리스트
+            </Button>
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('calendar')}
+              className="px-3"
+            >
+              <Calendar className="w-4 h-4 mr-1" />
+              달력
+            </Button>
+          </div>
           <input
             type="month"
             value={selectedMonth}
@@ -380,30 +403,40 @@ export default function IncomesPage() {
         </Card>
       )}
 
-      {/* 탭 메뉴 */}
-      <div className="border-b border-border">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'all'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            전체 ({tuitionPayments.length + otherIncomes.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('tuition')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'tuition'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            학원비 수납 ({tuitionPayments.length})
-          </button>
-          <button
+      {/* 달력 뷰 */}
+      {viewMode === 'calendar' ? (
+        <IncomeCalendar
+          otherIncomes={otherIncomes}
+          tuitionPayments={tuitionPayments}
+          onMonthChange={(ym) => setSelectedMonth(ym)}
+          initialYearMonth={selectedMonth}
+        />
+      ) : (
+        <>
+          {/* 탭 메뉴 */}
+          <div className="border-b border-border">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'all'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                전체 ({tuitionPayments.length + otherIncomes.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('tuition')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'tuition'
+                    ? 'border-primary-500 text-primary-600'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                학원비 수납 ({tuitionPayments.length})
+              </button>
+              <button
             onClick={() => setActiveTab('other')}
             className={`py-4 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'other'
@@ -531,15 +564,17 @@ export default function IncomesPage() {
         </Card>
       )}
 
-      {/* 데이터 없음 */}
-      {tuitionPayments.length === 0 && otherIncomes.length === 0 && !showForm && (
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Banknote className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">이번 달 수입이 없습니다</h3>
-            <p className="text-muted-foreground">수입이 발생하면 여기에 표시됩니다.</p>
-          </CardContent>
-        </Card>
+          {/* 데이터 없음 */}
+          {tuitionPayments.length === 0 && otherIncomes.length === 0 && !showForm && (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Banknote className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">이번 달 수입이 없습니다</h3>
+                <p className="text-muted-foreground">수입이 발생하면 여기에 표시됩니다.</p>
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </div>
   );
