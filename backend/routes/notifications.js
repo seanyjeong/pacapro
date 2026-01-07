@@ -22,6 +22,7 @@ function decryptStudentInfo(obj) {
     if (obj.student_name) obj.student_name = decrypt(obj.student_name);
     if (obj.parent_phone) obj.parent_phone = decrypt(obj.parent_phone);
     if (obj.student_phone) obj.student_phone = decrypt(obj.student_phone);
+    if (obj.phone) obj.phone = decrypt(obj.phone);  // 체험수업 등에서 phone 필드 사용
     if (obj.name) obj.name = decrypt(obj.name);
     return obj;
 }
@@ -1873,7 +1874,7 @@ router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
                 }
 
                 // 오늘 체험수업이 있는 체험생 조회
-                // trial_dates는 JSON 배열로 저장됨 (예: ["2025-12-17", "2025-12-19"])
+                // trial_dates는 JSON 객체 배열 (예: [{date: "2025-12-17", time_slot: "evening", attended: true}])
                 const [trialStudentsRaw] = await db.query(
                     `SELECT
                         s.id AS student_id,
@@ -1881,15 +1882,14 @@ router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
                         s.phone,
                         s.parent_phone,
                         s.trial_dates,
-                        s.trial_remaining,
-                        s.trial_total
+                        s.trial_remaining
                     FROM students s
                     WHERE s.academy_id = ?
                     AND s.status = 'trial'
                     AND s.deleted_at IS NULL
-                    AND JSON_CONTAINS(COALESCE(s.trial_dates, '[]'), ?)
+                    AND JSON_SEARCH(COALESCE(s.trial_dates, '[]'), 'one', ?, NULL, '$[*].date') IS NOT NULL
                     AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)`,
-                    [academyId, JSON.stringify(todayStr)]
+                    [academyId, todayStr]
                 );
 
                 // 복호화
@@ -1938,20 +1938,28 @@ router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
                     // 체험일정 문자열 생성
                     let scheduleText = '';
                     try {
-                        const trialDates = JSON.parse(s.trial_dates || '[]');
-                        const totalSessions = s.trial_total || trialDates.length;
-                        const completedSessions = totalSessions - (s.trial_remaining || 0);
+                        // trial_dates가 이미 객체(배열)인 경우와 문자열인 경우 모두 처리
+                        let trialDates = s.trial_dates;
+                        if (typeof trialDates === 'string') {
+                            trialDates = JSON.parse(trialDates);
+                        }
+                        if (!Array.isArray(trialDates)) {
+                            trialDates = [];
+                        }
 
-                        scheduleText = trialDates.map((dateStr, idx) => {
+                        scheduleText = trialDates.map((item, idx) => {
+                            // 객체 형태: {date: "2026-01-07", time_slot: "evening", attended: true}
+                            const dateStr = typeof item === 'object' ? item.date : item;
+                            const isCompleted = typeof item === 'object' ? item.attended : false;
                             const d = new Date(dateStr);
                             const m = d.getMonth() + 1;
                             const day = d.getDate();
                             const dayName = dayNames[d.getDay()];
-                            const isCompleted = idx < completedSessions;
                             const prefix = isCompleted ? '✓ ' : '';
                             return `${prefix}${idx + 1}회차: ${m}/${day}(${dayName})`;
                         }).join('\n');
                     } catch (e) {
+                        console.error('[체험수업 자동발송] trial_dates 파싱 오류:', e.message, s.trial_dates);
                         scheduleText = '체험일정 정보 없음';
                     }
 
@@ -2692,8 +2700,8 @@ router.post('/send-trial-today-auto-sens', async (req, res) => {
                      WHERE s.academy_id = ?
                        AND s.status = 'trial'
                        AND s.trial_dates IS NOT NULL
-                       AND JSON_CONTAINS(s.trial_dates, ?)`,
-                    [setting.academy_id, JSON.stringify(todayStr)]
+                       AND JSON_SEARCH(s.trial_dates, 'one', ?, NULL, '$[*].date') IS NOT NULL`,
+                    [setting.academy_id, todayStr]
                 );
 
                 console.log(`[SENS 체험수업 자동발송] ${setting.academy_name}: 오늘 체험 ${trialStudents.length}명`);
