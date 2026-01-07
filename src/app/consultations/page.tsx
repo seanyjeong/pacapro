@@ -1473,6 +1473,7 @@ export default function ConsultationsPage() {
             </DialogDescription>
           </DialogHeader>
 
+          {editInfoConsultation && (
           <div className="space-y-4 px-6 py-4">
             {/* 기본 정보 */}
             <div className="grid grid-cols-3 gap-3">
@@ -1626,9 +1627,13 @@ export default function ConsultationsPage() {
               </div>
             </div>
           </div>
+          )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditInfoModalOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setEditInfoModalOpen(false);
+              setEditInfoConsultation(null);
+            }}>
               취소
             </Button>
             <Button onClick={handleSaveInfo} disabled={savingInfo}>
