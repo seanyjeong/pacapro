@@ -1487,6 +1487,7 @@ export default function ConsultationsPage() {
               <div>
                 <Label>학년</Label>
                 <Select
+                  key={`grade-${editInfoConsultation?.id}`}
                   value={editForm.studentGrade}
                   onValueChange={(v) => setEditForm({ ...editForm, studentGrade: v })}
                 >
@@ -1503,6 +1504,7 @@ export default function ConsultationsPage() {
               <div>
                 <Label>성별</Label>
                 <Select
+                  key={`gender-${editInfoConsultation?.id}`}
                   value={editForm.gender}
                   onValueChange={(v) => setEditForm({ ...editForm, gender: v as 'male' | 'female' })}
                 >
@@ -1533,6 +1535,7 @@ export default function ConsultationsPage() {
                 <div>
                   <Label className="text-xs text-muted-foreground">내신 평균</Label>
                   <Select
+                    key={`schoolGrade-${editInfoConsultation?.id}`}
                     value={editForm.schoolGradeAvg?.toString() || ''}
                     onValueChange={(v) => setEditForm({ ...editForm, schoolGradeAvg: v === 'none' ? -1 : v ? parseInt(v) : undefined })}
                   >
@@ -1550,6 +1553,7 @@ export default function ConsultationsPage() {
                 <div>
                   <Label className="text-xs text-muted-foreground">입시 유형</Label>
                   <Select
+                    key={`admission-${editInfoConsultation?.id}`}
                     value={editForm.admissionType}
                     onValueChange={(v) => setEditForm({ ...editForm, admissionType: v as 'early' | 'regular' | 'both' })}
                   >
@@ -1575,6 +1579,7 @@ export default function ConsultationsPage() {
                       <div key={subject}>
                         <Label className="text-xs text-center block mb-1 text-muted-foreground">{labels[subject]}</Label>
                         <Select
+                          key={`mock-${subject}-${editInfoConsultation?.id}`}
                           value={editForm.mockTestGrades[subject]?.toString() || ''}
                           onValueChange={(v) => setEditForm({
                             ...editForm,
