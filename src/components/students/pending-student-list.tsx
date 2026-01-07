@@ -374,7 +374,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
               {memoModalData?.student.name} 메모
             </DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-4">
+          <div className="py-6 px-6 space-y-4">
             {memoModalLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
