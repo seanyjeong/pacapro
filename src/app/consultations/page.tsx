@@ -1495,7 +1495,9 @@ export default function ConsultationsPage() {
                   onValueChange={(v) => setEditForm({ ...editForm, studentGrade: v })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="선택" />
+                    <span className="truncate">
+                      {editForm.studentGrade || editInfoConsultation?.student_grade || '선택'}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     {['중1', '중2', '중3', '고1', '고2', '고3', 'N수'].map((g) => (
@@ -1512,7 +1514,10 @@ export default function ConsultationsPage() {
                   onValueChange={(v) => setEditForm({ ...editForm, gender: v as 'male' | 'female' })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="선택" />
+                    <span className="truncate">
+                      {editForm.gender === 'male' ? '남' : editForm.gender === 'female' ? '여' :
+                       editInfoConsultation?.gender === 'male' ? '남' : editInfoConsultation?.gender === 'female' ? '여' : '선택'}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="male">남</SelectItem>
@@ -1543,7 +1548,14 @@ export default function ConsultationsPage() {
                     onValueChange={(v) => setEditForm({ ...editForm, schoolGradeAvg: v === 'none' ? -1 : v ? parseInt(v) : undefined })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="선택" />
+                      <span className="truncate">
+                        {(() => {
+                          const val = editForm.schoolGradeAvg ?? editInfoConsultation?.academicScores?.schoolGradeAvg;
+                          if (val === -1) return '미응시';
+                          if (val !== undefined && val !== null) return `${val}등급`;
+                          return '선택';
+                        })()}
+                      </span>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">미응시</SelectItem>
@@ -1561,7 +1573,15 @@ export default function ConsultationsPage() {
                     onValueChange={(v) => setEditForm({ ...editForm, admissionType: v as 'early' | 'regular' | 'both' })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="선택" />
+                      <span className="truncate">
+                        {(() => {
+                          const val = editForm.admissionType || editInfoConsultation?.academicScores?.admissionType;
+                          if (val === 'early') return '수시';
+                          if (val === 'regular') return '정시';
+                          if (val === 'both') return '수시+정시';
+                          return '선택';
+                        })()}
+                      </span>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="early">수시</SelectItem>
@@ -1594,7 +1614,14 @@ export default function ConsultationsPage() {
                           })}
                         >
                           <SelectTrigger className="h-8">
-                            <SelectValue placeholder="-" />
+                            <span className="truncate">
+                              {(() => {
+                                const val = editForm.mockTestGrades[subject] ?? editInfoConsultation?.academicScores?.mockTestGrades?.[subject];
+                                if (val === -1) return '미';
+                                if (val !== undefined && val !== null) return val.toString();
+                                return '-';
+                              })()}
+                            </span>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">미응시</SelectItem>
