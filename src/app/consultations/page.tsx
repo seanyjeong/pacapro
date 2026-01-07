@@ -346,6 +346,7 @@ export default function ConsultationsPage() {
 
   // 정보 수정 모달 열기
   const openEditInfoModal = (c: Consultation) => {
+    console.log('[정보수정] 전달된 데이터:', JSON.stringify(c, null, 2));
     const scores = c.academicScores || {};
     setEditForm({
       studentName: c.student_name || '',
@@ -980,9 +981,10 @@ export default function ConsultationsPage() {
               variant="outline"
               onClick={() => {
                 if (selectedConsultation) {
-                  // 상세 모달을 닫고 정보 수정 모달 열기
+                  // 먼저 데이터를 복사해두고 모달 처리
+                  const consultation = { ...selectedConsultation };
+                  openEditInfoModal(consultation);
                   setDetailOpen(false);
-                  openEditInfoModal(selectedConsultation);
                 }
               }}
             >
