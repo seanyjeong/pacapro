@@ -111,6 +111,7 @@ export async function updateConsultation(
     studentName?: string;
     studentGrade?: string;
     studentSchool?: string;
+    parentPhone?: string;
     gender?: 'male' | 'female' | '';
     mockTestGrades?: {
       korean?: number;

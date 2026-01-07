@@ -456,7 +456,7 @@ router.put('/:id', verifyToken, async (req, res) => {
       // 학생 정보 수정 필드 추가
       studentName, studentGrade, studentSchool, gender,
       mockTestGrades, schoolGradeAvg, admissionType,
-      targetSchool, referrerStudent
+      targetSchool, referrerStudent, parentPhone
     } = req.body;
 
     // 기존 상담 확인 (현재 상태 포함)
@@ -525,6 +525,11 @@ router.put('/:id', verifyToken, async (req, res) => {
     if (studentSchool !== undefined) {
       updates.push('student_school = ?');
       params.push(studentSchool || null);
+    }
+
+    if (parentPhone !== undefined) {
+      updates.push('parent_phone = ?');
+      params.push(parentPhone ? encrypt(parentPhone) : null);
     }
 
     if (gender !== undefined) {

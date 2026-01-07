@@ -83,6 +83,7 @@ export default function ConsultationsPage() {
     studentName: '',
     studentGrade: '',
     studentSchool: '',
+    parentPhone: '',
     gender: '' as '' | 'male' | 'female',
     schoolGradeAvg: undefined as number | undefined,
     admissionType: '' as '' | 'early' | 'regular' | 'both',
@@ -363,6 +364,7 @@ export default function ConsultationsPage() {
           studentName: editInfoConsultation.student_name || '',
           studentGrade: editInfoConsultation.student_grade || '',
           studentSchool: editInfoConsultation.student_school || '',
+          parentPhone: editInfoConsultation.parent_phone || '',
           gender: (editInfoConsultation.gender as '' | 'male' | 'female') || '',
           schoolGradeAvg: scores.schoolGradeAvg ?? undefined,
           admissionType: (scores.admissionType as '' | 'early' | 'regular' | 'both') || '',
@@ -392,6 +394,7 @@ export default function ConsultationsPage() {
         studentName: editForm.studentName,
         studentGrade: editForm.studentGrade,
         studentSchool: editForm.studentSchool,
+        parentPhone: editForm.parentPhone,
         gender: editForm.gender || undefined,
         schoolGradeAvg: editForm.schoolGradeAvg,
         admissionType: editForm.admissionType || undefined,
@@ -1527,13 +1530,23 @@ export default function ConsultationsPage() {
               </div>
             </div>
 
-            <div>
-              <Label>학교</Label>
-              <Input
-                value={editForm.studentSchool}
-                onChange={(e) => setEditForm({ ...editForm, studentSchool: e.target.value })}
-                placeholder="학교명"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>학교</Label>
+                <Input
+                  value={editForm.studentSchool}
+                  onChange={(e) => setEditForm({ ...editForm, studentSchool: e.target.value })}
+                  placeholder="학교명"
+                />
+              </div>
+              <div>
+                <Label>전화번호</Label>
+                <Input
+                  value={editForm.parentPhone}
+                  onChange={(e) => setEditForm({ ...editForm, parentPhone: e.target.value })}
+                  placeholder="010-0000-0000"
+                />
+              </div>
             </div>
 
             {/* 성적 정보 */}
