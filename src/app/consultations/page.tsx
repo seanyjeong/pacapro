@@ -373,10 +373,10 @@ export default function ConsultationsPage() {
         referrerStudent: editInfoConsultation.referrer_student || ''
       });
       console.log('[정보수정] editForm 설정 - studentGrade:', editInfoConsultation.student_grade);
-      // 다음 렌더링 사이클에서 모달 열기 (editForm 업데이트가 완료된 후)
-      requestAnimationFrame(() => {
+      // setTimeout으로 다음 이벤트 루프에서 모달 열기 (상태 업데이트 완료 보장)
+      setTimeout(() => {
         setEditInfoModalOpen(true);
-      });
+      }, 50);
     }
   }, [editInfoConsultation]);
 
