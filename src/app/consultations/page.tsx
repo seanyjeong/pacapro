@@ -77,6 +77,7 @@ export default function ConsultationsPage() {
 
   // 정보 수정 모달
   const [editInfoModalOpen, setEditInfoModalOpen] = useState(false);
+  const [editInfoConsultation, setEditInfoConsultation] = useState<Consultation | null>(null);
   const [editForm, setEditForm] = useState({
     studentName: '',
     studentGrade: '',
@@ -347,33 +348,41 @@ export default function ConsultationsPage() {
   // 정보 수정 모달 열기
   const openEditInfoModal = (c: Consultation) => {
     console.log('[정보수정] 전달된 데이터:', JSON.stringify(c, null, 2));
-    const scores = c.academicScores || {};
-    setEditForm({
-      studentName: c.student_name || '',
-      studentGrade: c.student_grade || '',
-      studentSchool: c.student_school || '',
-      gender: (c.gender as '' | 'male' | 'female') || '',
-      schoolGradeAvg: scores.schoolGradeAvg ?? undefined,
-      admissionType: (scores.admissionType as '' | 'early' | 'regular' | 'both') || '',
-      mockTestGrades: {
-        korean: scores.mockTestGrades?.korean ?? undefined,
-        math: scores.mockTestGrades?.math ?? undefined,
-        english: scores.mockTestGrades?.english ?? undefined,
-        exploration: scores.mockTestGrades?.exploration ?? undefined
-      },
-      targetSchool: c.target_school || '',
-      referrerStudent: c.referrer_student || ''
-    });
-    setEditInfoModalOpen(true);
+    // 상담 데이터를 저장하면 useEffect에서 editForm이 업데이트됨
+    setEditInfoConsultation({ ...c });
   };
+
+  // editInfoConsultation이 변경되면 editForm 업데이트 후 모달 열기
+  useEffect(() => {
+    if (editInfoConsultation) {
+      const scores = editInfoConsultation.academicScores || {};
+      setEditForm({
+        studentName: editInfoConsultation.student_name || '',
+        studentGrade: editInfoConsultation.student_grade || '',
+        studentSchool: editInfoConsultation.student_school || '',
+        gender: (editInfoConsultation.gender as '' | 'male' | 'female') || '',
+        schoolGradeAvg: scores.schoolGradeAvg ?? undefined,
+        admissionType: (scores.admissionType as '' | 'early' | 'regular' | 'both') || '',
+        mockTestGrades: {
+          korean: scores.mockTestGrades?.korean ?? undefined,
+          math: scores.mockTestGrades?.math ?? undefined,
+          english: scores.mockTestGrades?.english ?? undefined,
+          exploration: scores.mockTestGrades?.exploration ?? undefined
+        },
+        targetSchool: editInfoConsultation.target_school || '',
+        referrerStudent: editInfoConsultation.referrer_student || ''
+      });
+      setEditInfoModalOpen(true);
+    }
+  }, [editInfoConsultation]);
 
   // 정보 수정 저장
   const handleSaveInfo = async () => {
-    if (!selectedConsultation) return;
+    if (!editInfoConsultation) return;
 
     setSavingInfo(true);
     try {
-      await updateConsultation(selectedConsultation.id, {
+      await updateConsultation(editInfoConsultation.id, {
         studentName: editForm.studentName,
         studentGrade: editForm.studentGrade,
         studentSchool: editForm.studentSchool,
@@ -386,6 +395,7 @@ export default function ConsultationsPage() {
       });
       toast.success('정보가 수정되었습니다.');
       setEditInfoModalOpen(false);
+      setEditInfoConsultation(null);
       setDetailOpen(false);
       loadData();
     } catch (error) {
@@ -1443,12 +1453,19 @@ export default function ConsultationsPage() {
       </Dialog>
 
       {/* 정보 수정 모달 */}
-      <Dialog open={editInfoModalOpen} onOpenChange={setEditInfoModalOpen}>
+      <Dialog
+        key={`edit-info-${editInfoConsultation?.id || 'new'}`}
+        open={editInfoModalOpen}
+        onOpenChange={(open) => {
+          setEditInfoModalOpen(open);
+          if (!open) setEditInfoConsultation(null);
+        }}
+      >
         <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>상담 정보 수정</DialogTitle>
             <DialogDescription>
-              {selectedConsultation?.student_name}님의 정보를 수정합니다.
+              {editInfoConsultation?.student_name}님의 정보를 수정합니다.
             </DialogDescription>
           </DialogHeader>
 
