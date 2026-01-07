@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { format, parseISO, startOfWeek, endOfWeek, addDays } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
@@ -356,27 +357,28 @@ export default function ConsultationsPage() {
   useEffect(() => {
     if (editInfoConsultation) {
       const scores = editInfoConsultation.academicScores || {};
-      setEditForm({
-        studentName: editInfoConsultation.student_name || '',
-        studentGrade: editInfoConsultation.student_grade || '',
-        studentSchool: editInfoConsultation.student_school || '',
-        gender: (editInfoConsultation.gender as '' | 'male' | 'female') || '',
-        schoolGradeAvg: scores.schoolGradeAvg ?? undefined,
-        admissionType: (scores.admissionType as '' | 'early' | 'regular' | 'both') || '',
-        mockTestGrades: {
-          korean: scores.mockTestGrades?.korean ?? undefined,
-          math: scores.mockTestGrades?.math ?? undefined,
-          english: scores.mockTestGrades?.english ?? undefined,
-          exploration: scores.mockTestGrades?.exploration ?? undefined
-        },
-        targetSchool: editInfoConsultation.target_school || '',
-        referrerStudent: editInfoConsultation.referrer_student || ''
+      // flushSync로 동기적 렌더링 강제
+      flushSync(() => {
+        setEditForm({
+          studentName: editInfoConsultation.student_name || '',
+          studentGrade: editInfoConsultation.student_grade || '',
+          studentSchool: editInfoConsultation.student_school || '',
+          gender: (editInfoConsultation.gender as '' | 'male' | 'female') || '',
+          schoolGradeAvg: scores.schoolGradeAvg ?? undefined,
+          admissionType: (scores.admissionType as '' | 'early' | 'regular' | 'both') || '',
+          mockTestGrades: {
+            korean: scores.mockTestGrades?.korean ?? undefined,
+            math: scores.mockTestGrades?.math ?? undefined,
+            english: scores.mockTestGrades?.english ?? undefined,
+            exploration: scores.mockTestGrades?.exploration ?? undefined
+          },
+          targetSchool: editInfoConsultation.target_school || '',
+          referrerStudent: editInfoConsultation.referrer_student || ''
+        });
       });
-      console.log('[정보수정] editForm 설정 - studentGrade:', editInfoConsultation.student_grade);
-      // setTimeout으로 다음 이벤트 루프에서 모달 열기 (상태 업데이트 완료 보장)
-      setTimeout(() => {
-        setEditInfoModalOpen(true);
-      }, 50);
+      console.log('[정보수정] editForm 설정 완료 - studentGrade:', editInfoConsultation.student_grade);
+      // flushSync 후에는 바로 모달 열기 가능
+      setEditInfoModalOpen(true);
     }
   }, [editInfoConsultation]);
 
