@@ -1489,7 +1489,7 @@ export default function ConsultationsPage() {
                 <Label>학년</Label>
                 <Select
                   key={`grade-${editInfoConsultation?.id}`}
-                  value={editForm.studentGrade}
+                  value={editForm.studentGrade || editInfoConsultation?.student_grade || ''}
                   onValueChange={(v) => setEditForm({ ...editForm, studentGrade: v })}
                 >
                   <SelectTrigger>
@@ -1506,7 +1506,7 @@ export default function ConsultationsPage() {
                 <Label>성별</Label>
                 <Select
                   key={`gender-${editInfoConsultation?.id}`}
-                  value={editForm.gender}
+                  value={editForm.gender || editInfoConsultation?.gender || ''}
                   onValueChange={(v) => setEditForm({ ...editForm, gender: v as 'male' | 'female' })}
                 >
                   <SelectTrigger>
@@ -1537,7 +1537,7 @@ export default function ConsultationsPage() {
                   <Label className="text-xs text-muted-foreground">내신 평균</Label>
                   <Select
                     key={`schoolGrade-${editInfoConsultation?.id}`}
-                    value={editForm.schoolGradeAvg?.toString() || ''}
+                    value={editForm.schoolGradeAvg?.toString() || editInfoConsultation?.academicScores?.schoolGradeAvg?.toString() || ''}
                     onValueChange={(v) => setEditForm({ ...editForm, schoolGradeAvg: v === 'none' ? -1 : v ? parseInt(v) : undefined })}
                   >
                     <SelectTrigger>
@@ -1555,7 +1555,7 @@ export default function ConsultationsPage() {
                   <Label className="text-xs text-muted-foreground">입시 유형</Label>
                   <Select
                     key={`admission-${editInfoConsultation?.id}`}
-                    value={editForm.admissionType}
+                    value={editForm.admissionType || editInfoConsultation?.academicScores?.admissionType || ''}
                     onValueChange={(v) => setEditForm({ ...editForm, admissionType: v as 'early' | 'regular' | 'both' })}
                   >
                     <SelectTrigger>
@@ -1576,12 +1576,13 @@ export default function ConsultationsPage() {
                 <div className="grid grid-cols-4 gap-2 mt-1">
                   {(['korean', 'math', 'english', 'exploration'] as const).map((subject) => {
                     const labels = { korean: '국어', math: '수학', english: '영어', exploration: '탐구' };
+                    const mockValue = editForm.mockTestGrades[subject]?.toString() || editInfoConsultation?.academicScores?.mockTestGrades?.[subject]?.toString() || '';
                     return (
                       <div key={subject}>
                         <Label className="text-xs text-center block mb-1 text-muted-foreground">{labels[subject]}</Label>
                         <Select
                           key={`mock-${subject}-${editInfoConsultation?.id}`}
-                          value={editForm.mockTestGrades[subject]?.toString() || ''}
+                          value={mockValue}
                           onValueChange={(v) => setEditForm({
                             ...editForm,
                             mockTestGrades: {
