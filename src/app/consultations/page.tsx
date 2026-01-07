@@ -372,7 +372,11 @@ export default function ConsultationsPage() {
         targetSchool: editInfoConsultation.target_school || '',
         referrerStudent: editInfoConsultation.referrer_student || ''
       });
-      setEditInfoModalOpen(true);
+      console.log('[정보수정] editForm 설정 - studentGrade:', editInfoConsultation.student_grade);
+      // 다음 렌더링 사이클에서 모달 열기 (editForm 업데이트가 완료된 후)
+      requestAnimationFrame(() => {
+        setEditInfoModalOpen(true);
+      });
     }
   }, [editInfoConsultation]);
 
