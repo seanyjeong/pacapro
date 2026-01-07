@@ -580,7 +580,9 @@ router.put('/:id', verifyToken, async (req, res) => {
     );
 
     // 상태가 confirmed로 변경되면 알림톡 발송
-    if (wasNotConfirmed && willBeConfirmed) {
+    // 단, 재원생 상담(learning)은 알림톡 발송 제외
+    const isLearningConsultation = currentConsultation.consultation_type === 'learning';
+    if (wasNotConfirmed && willBeConfirmed && !isLearningConsultation) {
       // 업데이트된 정보로 알림톡 발송
       const updatedConsultation = {
         ...currentConsultation,
@@ -593,6 +595,8 @@ router.put('/:id', verifyToken, async (req, res) => {
       sendConfirmationAlimtalk(updatedConsultation, academyId).catch(err => {
         console.error('[ConsultationAlimtalk] 비동기 발송 오류:', err);
       });
+    } else if (isLearningConsultation) {
+      console.log('[ConsultationAlimtalk] 재원생 상담은 알림톡 발송 제외:', currentConsultation.id);
     }
 
     res.json({

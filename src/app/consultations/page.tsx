@@ -979,7 +979,11 @@ export default function ConsultationsPage() {
             <Button
               variant="outline"
               onClick={() => {
-                if (selectedConsultation) openEditInfoModal(selectedConsultation);
+                if (selectedConsultation) {
+                  // 상세 모달을 닫고 정보 수정 모달 열기
+                  setDetailOpen(false);
+                  openEditInfoModal(selectedConsultation);
+                }
               }}
             >
               정보 수정
