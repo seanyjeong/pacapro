@@ -107,6 +107,13 @@ export default function ConductPage({ params }: PageProps) {
     physical_memo: string | null;
     target_memo: string | null;
   }>>([]);
+  // 이전 메모 상세 모달
+  const [memoModal, setMemoModal] = useState<{
+    open: boolean;
+    date: string;
+    type: 'general' | 'academic' | 'physical' | 'target';
+    content: string;
+  }>({ open: false, date: '', type: 'general', content: '' });
   const [peakRecords, setPeakRecords] = useState<Record<string, {
     value: number;
     unit: string;
@@ -509,56 +516,7 @@ export default function ConductPage({ params }: PageProps) {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* 재원생 상담 UI */}
         {consultation.consultation_type === 'learning' ? (
-          <div className="space-y-6">
-            {/* 이전 상담 기록 */}
-            {previousConsultations.length > 0 && (
-              <Card className="border-amber-200 bg-amber-50/50">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-amber-600" />
-                    이전 상담 기록 ({previousConsultations.length}건)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                    {previousConsultations.map((prev) => (
-                      <div key={prev.id} className="bg-white rounded-lg p-3 border border-amber-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-amber-700 border-amber-300">
-                            {format(parseISO(prev.consultation_date), 'yyyy년 M월 d일', { locale: ko })}
-                          </Badge>
-                          <Badge variant="secondary" className="text-xs">
-                            {prev.consultation_type === 'regular' ? '정기상담' :
-                             prev.consultation_type === 'admission' ? '진학상담' :
-                             prev.consultation_type === 'parent' ? '학부모상담' : '고민상담'}
-                          </Badge>
-                        </div>
-                        {prev.general_memo && (
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{prev.general_memo}</p>
-                        )}
-                        {prev.academic_memo && (
-                          <p className="text-sm text-blue-700 mt-1">
-                            <span className="font-medium">학업:</span> {prev.academic_memo}
-                          </p>
-                        )}
-                        {prev.physical_memo && (
-                          <p className="text-sm text-orange-700 mt-1">
-                            <span className="font-medium">실기:</span> {prev.physical_memo}
-                          </p>
-                        )}
-                        {prev.target_memo && (
-                          <p className="text-sm text-purple-700 mt-1">
-                            <span className="font-medium">목표:</span> {prev.target_memo}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 왼쪽 컬럼: 학업 + 목표 */}
             <div className="space-y-6">
               {/* 학업 섹션 */}
@@ -579,6 +537,25 @@ export default function ConductPage({ params }: PageProps) {
                     )}
                   </button>
                 </CardHeader>
+                {/* 이전 학업 메모 */}
+                {previousConsultations.filter(p => p.academic_memo).length > 0 && (
+                  <div className="px-6 pb-2 flex flex-wrap gap-1.5">
+                    {previousConsultations.filter(p => p.academic_memo).slice(0, 5).map((prev) => (
+                      <button
+                        key={prev.id}
+                        onClick={() => setMemoModal({
+                          open: true,
+                          date: format(parseISO(prev.consultation_date), 'yyyy년 M월 d일', { locale: ko }),
+                          type: 'academic',
+                          content: prev.academic_memo || ''
+                        })}
+                        className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                      >
+                        {format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {expandedSections['학업'] && (
                   <CardContent className="space-y-4">
                     {/* 입시 유형 & 내신 */}
@@ -696,6 +673,25 @@ export default function ConductPage({ params }: PageProps) {
                     )}
                   </button>
                 </CardHeader>
+                {/* 이전 목표 메모 */}
+                {previousConsultations.filter(p => p.target_memo).length > 0 && (
+                  <div className="px-6 pb-2 flex flex-wrap gap-1.5">
+                    {previousConsultations.filter(p => p.target_memo).slice(0, 5).map((prev) => (
+                      <button
+                        key={prev.id}
+                        onClick={() => setMemoModal({
+                          open: true,
+                          date: format(parseISO(prev.consultation_date), 'yyyy년 M월 d일', { locale: ko }),
+                          type: 'target',
+                          content: prev.target_memo || ''
+                        })}
+                        className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+                      >
+                        {format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {expandedSections['목표'] && (
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -752,6 +748,25 @@ export default function ConductPage({ params }: PageProps) {
                     )}
                   </button>
                 </CardHeader>
+                {/* 이전 실기 메모 */}
+                {previousConsultations.filter(p => p.physical_memo).length > 0 && (
+                  <div className="px-6 pb-2 flex flex-wrap gap-1.5">
+                    {previousConsultations.filter(p => p.physical_memo).slice(0, 5).map((prev) => (
+                      <button
+                        key={prev.id}
+                        onClick={() => setMemoModal({
+                          open: true,
+                          date: format(parseISO(prev.consultation_date), 'yyyy년 M월 d일', { locale: ko }),
+                          type: 'physical',
+                          content: prev.physical_memo || ''
+                        })}
+                        className="text-xs px-2 py-1 rounded-full bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors"
+                      >
+                        {format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {expandedSections['실기'] && (
                   <CardContent className="space-y-4">
                     {/* 기록 조회 타입 */}
@@ -849,6 +864,25 @@ export default function ConductPage({ params }: PageProps) {
                     )}
                   </button>
                 </CardHeader>
+                {/* 이전 종합 메모 */}
+                {previousConsultations.filter(p => p.general_memo).length > 0 && (
+                  <div className="px-6 pb-2 flex flex-wrap gap-1.5">
+                    {previousConsultations.filter(p => p.general_memo).slice(0, 5).map((prev) => (
+                      <button
+                        key={prev.id}
+                        onClick={() => setMemoModal({
+                          open: true,
+                          date: format(parseISO(prev.consultation_date), 'yyyy년 M월 d일', { locale: ko }),
+                          type: 'general',
+                          content: prev.general_memo || ''
+                        })}
+                        className="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                      >
+                        {format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {expandedSections['기타'] && (
                   <CardContent>
                     <div>
@@ -864,7 +898,6 @@ export default function ConductPage({ params }: PageProps) {
                 )}
               </Card>
             </div>
-          </div>
           </div>
         ) : (
           /* 신규 상담 UI */
@@ -1152,6 +1185,29 @@ export default function ConductPage({ params }: PageProps) {
         </div>
         )}
       </div>
+
+      {/* 이전 메모 상세 모달 */}
+      <Dialog open={memoModal.open} onOpenChange={(open) => setMemoModal(prev => ({ ...prev, open }))}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {memoModal.type === 'academic' && <GraduationCap className="h-5 w-5 text-blue-600" />}
+              {memoModal.type === 'physical' && <Sparkles className="h-5 w-5 text-orange-600" />}
+              {memoModal.type === 'general' && <Calendar className="h-5 w-5 text-green-600" />}
+              {memoModal.type === 'target' && <Target className="h-5 w-5 text-purple-600" />}
+              {memoModal.date} 상담 메모
+            </DialogTitle>
+            <DialogDescription>
+              {memoModal.type === 'academic' ? '학업' :
+               memoModal.type === 'physical' ? '실기' :
+               memoModal.type === 'general' ? '종합' : '목표'} 메모
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm whitespace-pre-wrap">{memoModal.content}</p>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* 하단 액션 바 */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
