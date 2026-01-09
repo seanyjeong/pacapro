@@ -664,11 +664,11 @@ export default function SettingsPage() {
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <div className="flex justify-between">
             <span>버전</span>
-            <span className="font-medium text-foreground">v3.1.29</span>
+            <span className="font-medium text-foreground">v3.1.30</span>
           </div>
           <div className="flex justify-between">
             <span>마지막 업데이트</span>
-            <span className="font-medium text-foreground">2026-01-07</span>
+            <span className="font-medium text-foreground">2026-01-09</span>
           </div>
           <div className="flex justify-between">
             <span>데이터베이스</span>

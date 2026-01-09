@@ -840,6 +840,7 @@ export default function ConsultationsPage() {
                   <p className="text-foreground"><span className="text-muted-foreground">이름:</span> {selectedConsultation.student_name}</p>
                   <p className="text-foreground"><span className="text-muted-foreground">연락처:</span> {selectedConsultation.student_phone || selectedConsultation.parent_phone}</p>
                   <p className="text-foreground"><span className="text-muted-foreground">학년:</span> {selectedConsultation.student_grade}</p>
+                  <p className="text-foreground"><span className="text-muted-foreground">성별:</span> {selectedConsultation.gender === 'male' ? '남' : selectedConsultation.gender === 'female' ? '여' : '-'}</p>
                   {selectedConsultation.student_school && (
                     <p className="text-foreground"><span className="text-muted-foreground">학교:</span> {selectedConsultation.student_school}</p>
                   )}
