@@ -139,6 +139,12 @@ export function Sidebar() {
     // 카테고리 펼침 상태
     const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
+    // 상담 카운트 (pending + scheduled 상태)
+    const [consultationCounts, setConsultationCounts] = useState({
+        newInquiry: 0,
+        enrolled: 0
+    });
+
     // 클라이언트에서만 사용자 정보 로드 (hydration 문제 방지)
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -160,6 +166,9 @@ export function Sidebar() {
 
         // 푸시 알림 상태 체크
         checkPushStatus();
+
+        // 상담 카운트 로드
+        loadConsultationCounts();
 
         // 저장된 카테고리 상태 로드 또는 기본값 설정
         const savedState = localStorage.getItem('sidebar_expanded');
@@ -207,6 +216,22 @@ export function Sidebar() {
         if (supported) {
             const subscription = await getCurrentSubscription();
             setPushSubscribed(!!subscription);
+        }
+    };
+
+    // 상담 카운트 로드 (pending, scheduled 상태만)
+    const loadConsultationCounts = async () => {
+        try {
+            const [newRes, enrolledRes] = await Promise.all([
+                apiClient.get<{ pagination: { total: number } }>('/consultations?consultationType=new_registration&status=pending,scheduled&limit=1'),
+                apiClient.get<{ pagination: { total: number } }>('/consultations?consultationType=learning&status=pending,scheduled&limit=1')
+            ]);
+            setConsultationCounts({
+                newInquiry: newRes.pagination?.total || 0,
+                enrolled: enrolledRes.pagination?.total || 0
+            });
+        } catch (error) {
+            console.error('상담 카운트 로드 실패:', error);
         }
     };
 
@@ -417,6 +442,17 @@ export function Sidebar() {
                                                     >
                                                         <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
                                                         <span>{item.title}</span>
+                                                        {/* 상담 카운트 배지 */}
+                                                        {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
+                                                            <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                                {consultationCounts.newInquiry}
+                                                            </span>
+                                                        )}
+                                                        {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
+                                                            <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                                {consultationCounts.enrolled}
+                                                            </span>
+                                                        )}
                                                         {item.badge && (
                                                             <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                                                                 {item.badge}
@@ -496,7 +532,7 @@ export function Sidebar() {
             {/* Footer */}
             <div className="p-4 border-t border-border">
                 <div className="text-xs text-muted-foreground text-center space-y-1">
-                    <div>P-ACA v3.1.36</div>
+                    <div>P-ACA v3.1.37</div>
                     <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-09</div>
                     <div>문의: 010-2144-6755</div>
                 </div>
