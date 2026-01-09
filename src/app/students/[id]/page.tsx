@@ -11,6 +11,7 @@ import { StudentPerformanceComponent } from '@/components/students/student-perfo
 import { StudentPaymentsComponent } from '@/components/students/student-payments';
 import { StudentSeasonsComponent } from '@/components/students/student-seasons';
 import { StudentConsultationsComponent } from '@/components/students/student-consultations';
+import { StudentResumeModal, RestEndedStudent } from '@/components/students/student-resume-modal';
 import { useStudent } from '@/hooks/use-students';
 import { studentsAPI } from '@/lib/api/students';
 
@@ -20,6 +21,7 @@ export default function StudentDetailPage() {
   const studentId = parseInt(params.id as string);
 
   const [activeTab, setActiveTab] = useState<'performance' | 'payments' | 'seasons' | 'consultations'>('performance');
+  const [resumeModalOpen, setResumeModalOpen] = useState(false);
 
   // useStudent 훅 사용
   const { student, performances, payments, loading, error, reload } = useStudent(studentId);
@@ -140,6 +142,17 @@ export default function StudentDetailPage() {
     }
   };
 
+  // 복귀 처리 모달 열기
+  const handleResume = () => {
+    setResumeModalOpen(true);
+  };
+
+  // 복귀 처리 성공
+  const handleResumeSuccess = () => {
+    setResumeModalOpen(false);
+    reload();
+  };
+
   // 로딩 화면
   if (loading) {
     return (
@@ -198,7 +211,7 @@ export default function StudentDetailPage() {
       </div>
 
       {/* 학생 기본 정보 카드 */}
-      <StudentCard student={student} onEdit={handleEdit} onDelete={handleDelete} onGraduate={handleGraduate} onWithdraw={handleWithdraw} />
+      <StudentCard student={student} onEdit={handleEdit} onDelete={handleDelete} onGraduate={handleGraduate} onWithdraw={handleWithdraw} onResume={handleResume} />
 
       {/* 탭 메뉴 */}
       <div className="border-b border-border">
@@ -278,6 +291,30 @@ export default function StudentDetailPage() {
           <StudentConsultationsComponent studentId={studentId} studentName={student.name} />
         )}
       </div>
+
+      {/* 복귀 처리 모달 */}
+      {student.status === 'paused' && (
+        <StudentResumeModal
+          open={resumeModalOpen}
+          onClose={() => setResumeModalOpen(false)}
+          student={{
+            id: student.id,
+            name: student.name,
+            phone: student.phone,
+            school: student.school,
+            grade: student.grade,
+            rest_start_date: student.rest_start_date || '',
+            rest_end_date: student.rest_end_date,
+            rest_reason: student.rest_reason,
+            class_days: student.class_days,
+            time_slot: student.time_slot,
+            monthly_tuition: student.monthly_tuition,
+            discount_rate: student.discount_rate,
+            weekly_count: student.weekly_count,
+          }}
+          onSuccess={handleResumeSuccess}
+        />
+      )}
     </div>
   );
 }

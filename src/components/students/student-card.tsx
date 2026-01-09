@@ -5,7 +5,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Phone, Mail, MapPin, Calendar, Banknote, GraduationCap, UserMinus } from 'lucide-react';
+import { Edit, Trash2, Phone, Mail, MapPin, Calendar, Banknote, GraduationCap, UserMinus, RotateCcw } from 'lucide-react';
 import type { StudentDetail } from '@/lib/types/student';
 import {
   formatStudentNumber,
@@ -30,12 +30,14 @@ interface StudentCardProps {
   onDelete: () => void;
   onGraduate?: () => void;
   onWithdraw?: () => void;
+  onResume?: () => void;
 }
 
-export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw }: StudentCardProps) {
+export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw, onResume }: StudentCardProps) {
   const discountedTuition = calculateDiscountedTuition(student.monthly_tuition, student.discount_rate);
   const canGraduate = (student.grade === '고3' || student.grade === 'N수') && student.status === 'active';
   const canWithdraw = student.status === 'active' || student.status === 'paused';
+  const canResume = student.status === 'paused';
 
   return (
     <Card>
@@ -76,6 +78,17 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw 
               >
                 <UserMinus className="w-4 h-4 mr-1" />
                 퇴원 처리
+              </Button>
+            )}
+            {canResume && onResume && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onResume}
+                className="text-emerald-600 border-emerald-600 hover:bg-emerald-50"
+              >
+                <RotateCcw className="w-4 h-4 mr-1" />
+                복귀 처리
               </Button>
             )}
           </div>
