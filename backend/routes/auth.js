@@ -375,7 +375,7 @@ router.post('/verify-password', verifyToken, async (req, res) => {
         // 현재 로그인한 사용자의 비밀번호 해시 조회
         const [users] = await db.query(
             'SELECT password_hash FROM users WHERE id = ?',
-            [req.user.userId]
+            [req.user.id]
         );
 
         if (users.length === 0) {

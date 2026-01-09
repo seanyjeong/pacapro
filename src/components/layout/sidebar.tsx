@@ -95,7 +95,8 @@ const navCategories: NavCategory[] = [
         icon: MessageCircle,
         defaultOpen: false,
         items: [
-            { title: '상담', href: '/consultations', icon: PhoneCall, permissionKey: 'consultations' },
+            { title: '신규상담', href: '/consultations/new-inquiry', icon: PhoneCall, permissionKey: 'consultations' },
+            { title: '재원생상담', href: '/consultations/enrolled', icon: Users, permissionKey: 'consultations' },
             { title: '문자 보내기', href: '/sms', icon: MessageSquare, permissionKey: 'sms' },
             { title: '알림톡 설정', href: '/settings/notifications', icon: BellRing, permissionKey: 'notifications' },
         ],
@@ -495,7 +496,7 @@ export function Sidebar() {
             {/* Footer */}
             <div className="p-4 border-t border-border">
                 <div className="text-xs text-muted-foreground text-center space-y-1">
-                    <div>P-ACA v3.1.35</div>
+                    <div>P-ACA v3.1.36</div>
                     <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-09</div>
                     <div>문의: 010-2144-6755</div>
                 </div>
