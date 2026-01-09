@@ -1485,7 +1485,11 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                         // trial_dates의 attended 상태도 false로 복구
                         if (studentData.length > 0 && studentData[0].trial_dates) {
                             try {
-                                let trialDates = JSON.parse(studentData[0].trial_dates);
+                                let trialDates = studentData[0].trial_dates;
+                                // JSON 문자열인 경우 파싱 (MySQL JSON 타입은 이미 객체로 반환될 수 있음)
+                                if (typeof trialDates === 'string') {
+                                    trialDates = JSON.parse(trialDates);
+                                }
                                 const dateObj = new Date(schedule.class_date);
                                 const classDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
                                 const classTimeSlot = schedule.time_slot;
@@ -1611,7 +1615,11 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                 // trial_dates의 attended 상태도 업데이트 (현재 출석 체크하는 날짜 + 시간대 기준)
                 if (student.trial_dates) {
                     try {
-                        let trialDates = JSON.parse(student.trial_dates);
+                        let trialDates = student.trial_dates;
+                        // JSON 문자열인 경우 파싱 (MySQL JSON 타입은 이미 객체로 반환될 수 있음)
+                        if (typeof trialDates === 'string') {
+                            trialDates = JSON.parse(trialDates);
+                        }
                         // 현재 스케줄 날짜를 YYYY-MM-DD 형식으로 변환 (UTC 문제 방지)
                         const dateObj = new Date(schedule.class_date);
                         const classDate = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
