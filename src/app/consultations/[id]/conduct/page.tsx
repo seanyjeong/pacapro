@@ -539,8 +539,8 @@ export default function ConductPage({ params }: PageProps) {
                 </CardHeader>
                 {/* 이전 학업 메모 */}
                 {previousConsultations.filter(p => p.academic_memo).length > 0 && (
-                  <div className="px-6 pb-2 flex flex-wrap gap-1.5">
-                    {previousConsultations.filter(p => p.academic_memo).slice(0, 5).map((prev) => (
+                  <div className="px-6 pb-2 space-y-1">
+                    {previousConsultations.filter(p => p.academic_memo).slice(0, 3).map((prev) => (
                       <button
                         key={prev.id}
                         onClick={() => setMemoModal({
@@ -549,9 +549,10 @@ export default function ConductPage({ params }: PageProps) {
                           type: 'academic',
                           content: prev.academic_memo || ''
                         })}
-                        className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                        className="w-full text-left text-xs px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors flex items-center gap-2"
                       >
-                        {format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}
+                        <span className="font-medium shrink-0">{format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}</span>
+                        <span className="truncate text-blue-600">{prev.academic_memo?.slice(0, 30)}{(prev.academic_memo?.length || 0) > 30 ? '...' : ''}</span>
                       </button>
                     ))}
                   </div>
@@ -675,8 +676,8 @@ export default function ConductPage({ params }: PageProps) {
                 </CardHeader>
                 {/* 이전 목표 메모 */}
                 {previousConsultations.filter(p => p.target_memo).length > 0 && (
-                  <div className="px-6 pb-2 flex flex-wrap gap-1.5">
-                    {previousConsultations.filter(p => p.target_memo).slice(0, 5).map((prev) => (
+                  <div className="px-6 pb-2 space-y-1">
+                    {previousConsultations.filter(p => p.target_memo).slice(0, 3).map((prev) => (
                       <button
                         key={prev.id}
                         onClick={() => setMemoModal({
@@ -685,9 +686,10 @@ export default function ConductPage({ params }: PageProps) {
                           type: 'target',
                           content: prev.target_memo || ''
                         })}
-                        className="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors"
+                        className="w-full text-left text-xs px-2 py-1.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors flex items-center gap-2"
                       >
-                        {format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}
+                        <span className="font-medium shrink-0">{format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}</span>
+                        <span className="truncate text-purple-600">{prev.target_memo?.slice(0, 30)}{(prev.target_memo?.length || 0) > 30 ? '...' : ''}</span>
                       </button>
                     ))}
                   </div>
@@ -750,8 +752,8 @@ export default function ConductPage({ params }: PageProps) {
                 </CardHeader>
                 {/* 이전 실기 메모 */}
                 {previousConsultations.filter(p => p.physical_memo).length > 0 && (
-                  <div className="px-6 pb-2 flex flex-wrap gap-1.5">
-                    {previousConsultations.filter(p => p.physical_memo).slice(0, 5).map((prev) => (
+                  <div className="px-6 pb-2 space-y-1">
+                    {previousConsultations.filter(p => p.physical_memo).slice(0, 3).map((prev) => (
                       <button
                         key={prev.id}
                         onClick={() => setMemoModal({
@@ -760,9 +762,10 @@ export default function ConductPage({ params }: PageProps) {
                           type: 'physical',
                           content: prev.physical_memo || ''
                         })}
-                        className="text-xs px-2 py-1 rounded-full bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors"
+                        className="w-full text-left text-xs px-2 py-1.5 rounded bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors flex items-center gap-2"
                       >
-                        {format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}
+                        <span className="font-medium shrink-0">{format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}</span>
+                        <span className="truncate text-orange-600">{prev.physical_memo?.slice(0, 30)}{(prev.physical_memo?.length || 0) > 30 ? '...' : ''}</span>
                       </button>
                     ))}
                   </div>
@@ -866,8 +869,8 @@ export default function ConductPage({ params }: PageProps) {
                 </CardHeader>
                 {/* 이전 종합 메모 */}
                 {previousConsultations.filter(p => p.general_memo).length > 0 && (
-                  <div className="px-6 pb-2 flex flex-wrap gap-1.5">
-                    {previousConsultations.filter(p => p.general_memo).slice(0, 5).map((prev) => (
+                  <div className="px-6 pb-2 space-y-1">
+                    {previousConsultations.filter(p => p.general_memo).slice(0, 3).map((prev) => (
                       <button
                         key={prev.id}
                         onClick={() => setMemoModal({
@@ -876,9 +879,10 @@ export default function ConductPage({ params }: PageProps) {
                           type: 'general',
                           content: prev.general_memo || ''
                         })}
-                        className="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                        className="w-full text-left text-xs px-2 py-1.5 rounded bg-green-50 text-green-700 hover:bg-green-100 transition-colors flex items-center gap-2"
                       >
-                        {format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}
+                        <span className="font-medium shrink-0">{format(parseISO(prev.consultation_date), 'M/d', { locale: ko })}</span>
+                        <span className="truncate text-green-600">{prev.general_memo?.slice(0, 30)}{(prev.general_memo?.length || 0) > 30 ? '...' : ''}</span>
                       </button>
                     ))}
                   </div>
@@ -1188,7 +1192,7 @@ export default function ConductPage({ params }: PageProps) {
 
       {/* 이전 메모 상세 모달 */}
       <Dialog open={memoModal.open} onOpenChange={(open) => setMemoModal(prev => ({ ...prev, open }))}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md py-6 px-6">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {memoModal.type === 'academic' && <GraduationCap className="h-5 w-5 text-blue-600" />}
@@ -1203,8 +1207,8 @@ export default function ConductPage({ params }: PageProps) {
                memoModal.type === 'general' ? '종합' : '목표'} 메모
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm whitespace-pre-wrap">{memoModal.content}</p>
+          <div className="pt-4">
+            <p className="text-sm whitespace-pre-wrap leading-relaxed">{memoModal.content}</p>
           </div>
         </DialogContent>
       </Dialog>
