@@ -97,6 +97,16 @@ export default function ConductPage({ params }: PageProps) {
     school?: string;
     student_type?: string;
   } | null>(null);
+  // 이전 상담 기록
+  const [previousConsultations, setPreviousConsultations] = useState<Array<{
+    id: number;
+    consultation_date: string;
+    consultation_type: string;
+    general_memo: string | null;
+    academic_memo: string | null;
+    physical_memo: string | null;
+    target_memo: string | null;
+  }>>([]);
   const [peakRecords, setPeakRecords] = useState<Record<string, {
     value: number;
     unit: string;
@@ -143,6 +153,14 @@ export default function ConductPage({ params }: PageProps) {
             setLinkedStudent(studentData.student);
           } catch (err) {
             console.error('학생 정보 로드 오류:', err);
+          }
+
+          // 이전 상담 기록 로드
+          try {
+            const prevData = await apiClient.get<{ consultations: typeof previousConsultations }>(`/student-consultations/${data.linked_student_id}`);
+            setPreviousConsultations(prevData.consultations || []);
+          } catch (err) {
+            console.error('이전 상담 기록 로드 오류:', err);
           }
 
           // P-EAK 기록 로드
@@ -491,7 +509,56 @@ export default function ConductPage({ params }: PageProps) {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* 재원생 상담 UI */}
         {consultation.consultation_type === 'learning' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            {/* 이전 상담 기록 */}
+            {previousConsultations.length > 0 && (
+              <Card className="border-amber-200 bg-amber-50/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-amber-600" />
+                    이전 상담 기록 ({previousConsultations.length}건)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto">
+                    {previousConsultations.map((prev) => (
+                      <div key={prev.id} className="bg-white rounded-lg p-3 border border-amber-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="text-amber-700 border-amber-300">
+                            {format(parseISO(prev.consultation_date), 'yyyy년 M월 d일', { locale: ko })}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {prev.consultation_type === 'regular' ? '정기상담' :
+                             prev.consultation_type === 'admission' ? '진학상담' :
+                             prev.consultation_type === 'parent' ? '학부모상담' : '고민상담'}
+                          </Badge>
+                        </div>
+                        {prev.general_memo && (
+                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{prev.general_memo}</p>
+                        )}
+                        {prev.academic_memo && (
+                          <p className="text-sm text-blue-700 mt-1">
+                            <span className="font-medium">학업:</span> {prev.academic_memo}
+                          </p>
+                        )}
+                        {prev.physical_memo && (
+                          <p className="text-sm text-orange-700 mt-1">
+                            <span className="font-medium">실기:</span> {prev.physical_memo}
+                          </p>
+                        )}
+                        {prev.target_memo && (
+                          <p className="text-sm text-purple-700 mt-1">
+                            <span className="font-medium">목표:</span> {prev.target_memo}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* 왼쪽 컬럼: 학업 + 목표 */}
             <div className="space-y-6">
               {/* 학업 섹션 */}
@@ -797,6 +864,7 @@ export default function ConductPage({ params }: PageProps) {
                 )}
               </Card>
             </div>
+          </div>
           </div>
         ) : (
           /* 신규 상담 UI */

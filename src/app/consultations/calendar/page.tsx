@@ -6,7 +6,7 @@ import { ko } from 'date-fns/locale';
 import {
   Calendar as CalendarIcon, ChevronLeft, ChevronRight, Clock, User, Phone,
   List, Loader2, ArrowLeft, Link2, MessageSquare, CheckSquare, Sparkles,
-  GraduationCap
+  GraduationCap, FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,20 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { getConsultations } from '@/lib/api/consultations';
 import type { Consultation, ConsultationStatus, LearningType } from '@/lib/types/consultation';
+
+// 재원생 상담 메모 타입
+interface StudentConsultationMemo {
+  id: number;
+  student_id: number;
+  consultation_date: string;
+  consultation_type: string;
+  general_memo: string | null;
+  academic_memo: string | null;
+  physical_memo: string | null;
+  target_memo: string | null;
+  student_name: string;
+  grade: string;
+}
 import {
   CONSULTATION_TYPE_LABELS,
   CONSULTATION_STATUS_LABELS,
@@ -63,6 +77,7 @@ function ConsultationCalendarContent() {
     return new Date();
   });
   const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [studentMemos, setStudentMemos] = useState<StudentConsultationMemo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedConsultations, setSelectedConsultations] = useState<Consultation[]>([]);
@@ -92,14 +107,24 @@ function ConsultationCalendarContent() {
       // 현재 월의 시작과 끝 날짜
       const start = startOfMonth(currentMonth);
       const end = endOfMonth(currentMonth);
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(end, 'yyyy-MM-dd');
 
-      const response = await getConsultations({
-        startDate: format(start, 'yyyy-MM-dd'),
-        endDate: format(end, 'yyyy-MM-dd'),
-        limit: 100
-      });
+      // 상담 예약 + 재원생 상담 메모 동시 로드
+      const [consultationsRes, memosRes] = await Promise.all([
+        getConsultations({
+          startDate: startStr,
+          endDate: endStr,
+          limit: 100
+        }),
+        apiClient.get<{ consultations: StudentConsultationMemo[] }>(
+          '/student-consultations/calendar',
+          { params: { startDate: startStr, endDate: endStr } }
+        )
+      ]);
 
-      setConsultations(response.consultations);
+      setConsultations(consultationsRes.consultations);
+      setStudentMemos(memosRes.consultations || []);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
       toast.error('데이터를 불러오는데 실패했습니다.');
@@ -192,6 +217,13 @@ function ConsultationCalendarContent() {
   const getConsultationsForDate = (date: Date): Consultation[] => {
     return consultations.filter(c =>
       isSameDay(parseISO(c.preferred_date), date)
+    );
+  };
+
+  // 날짜별 상담 메모 가져오기
+  const getMemosForDate = (date: Date): StudentConsultationMemo[] => {
+    return studentMemos.filter(m =>
+      isSameDay(parseISO(m.consultation_date), date)
     );
   };
 
@@ -347,6 +379,7 @@ function ConsultationCalendarContent() {
                 {/* 날짜들 */}
                 {calendarDays.map((date) => {
                   const dayConsultations = getConsultationsForDate(date);
+                  const dayMemos = getMemosForDate(date);
                   const isToday = isSameDay(date, new Date());
                   const dayOfWeek = date.getDay();
                   const newCount = dayConsultations.filter(c => c.consultation_type !== 'learning').length;
@@ -356,19 +389,28 @@ function ConsultationCalendarContent() {
                     <div
                       key={date.toISOString()}
                       className={`min-h-[100px] border rounded-lg p-1 transition-colors group relative ${
-                        dayConsultations.length > 0 ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
+                        dayConsultations.length > 0 || dayMemos.length > 0 ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
                       } ${isToday ? 'bg-blue-50 border-blue-300' : 'border-gray-200'}`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <div
-                          className={`text-sm font-medium cursor-pointer ${
-                            dayOfWeek === 0 ? 'text-red-500' :
-                            dayOfWeek === 6 ? 'text-blue-500' :
-                            'text-gray-700'
-                          }`}
-                          onClick={() => handleDateClick(date)}
-                        >
-                          {format(date, 'd')}
+                        <div className="flex items-center gap-1">
+                          <div
+                            className={`text-sm font-medium cursor-pointer ${
+                              dayOfWeek === 0 ? 'text-red-500' :
+                              dayOfWeek === 6 ? 'text-blue-500' :
+                              'text-gray-700'
+                            }`}
+                            onClick={() => handleDateClick(date)}
+                          >
+                            {format(date, 'd')}
+                          </div>
+                          {/* 상담 메모 표시 */}
+                          {dayMemos.length > 0 && (
+                            <div className="flex items-center gap-0.5" title={`상담 메모 ${dayMemos.length}건`}>
+                              <FileText className="h-3 w-3 text-amber-500" />
+                              <span className="text-[10px] text-amber-600 font-medium">{dayMemos.length}</span>
+                            </div>
+                          )}
                         </div>
                         {/* 재원생 상담 추가 버튼 */}
                         <button
@@ -403,6 +445,21 @@ function ConsultationCalendarContent() {
                             +{dayConsultations.length - 3}건 더
                           </div>
                         )}
+                        {/* 상담 메모 미리보기 */}
+                        {dayMemos.slice(0, 2).map((m) => (
+                          <div
+                            key={`memo-${m.id}`}
+                            className="flex items-center gap-1 text-xs truncate text-amber-700 bg-amber-50 rounded px-1"
+                          >
+                            <FileText className="h-2.5 w-2.5 flex-shrink-0" />
+                            <span className="truncate">{m.student_name}</span>
+                          </div>
+                        ))}
+                        {dayMemos.length > 2 && (
+                          <div className="text-xs text-amber-500 pl-3">
+                            +{dayMemos.length - 2}건 메모
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -412,7 +469,7 @@ function ConsultationCalendarContent() {
               {/* 범례 */}
               <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t justify-center">
                 <div className="flex items-center gap-3 text-xs border-r pr-4">
-                  <span className="text-gray-500 font-medium">신규:</span>
+                  <span className="text-gray-500 font-medium">신규상담:</span>
                   <div className="flex items-center gap-1">
                     <div className="w-3 h-3 rounded-full bg-yellow-400" />
                     <span>대기</span>
@@ -435,6 +492,12 @@ function ConsultationCalendarContent() {
                     <div className="w-3 h-3 rounded-full bg-emerald-500" />
                     <span>확정</span>
                   </div>
+                </div>
+                <div className="flex items-center gap-3 text-xs border-r pr-4">
+                  <span className="text-amber-600 font-medium flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    상담메모
+                  </span>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
                   <div className="flex items-center gap-1">

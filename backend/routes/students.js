@@ -1167,6 +1167,34 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
+        // 수강료 변경 시 현재 월 이후 pending 결제 내역 자동 업데이트
+        if (monthly_tuition !== undefined || discount_rate !== undefined) {
+            try {
+                const newTuition = monthly_tuition !== undefined ? monthly_tuition : updatedStudents[0].monthly_tuition;
+                const newDiscountRate = discount_rate !== undefined ? discount_rate : (updatedStudents[0].discount_rate || 0);
+                const finalTuition = newTuition * (1 - newDiscountRate / 100);
+
+                const currentYearMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+
+                await db.query(
+                    `UPDATE student_payments
+                     SET base_amount = ?,
+                         final_amount = ?,
+                         updated_at = NOW()
+                     WHERE student_id = ?
+                       AND academy_id = ?
+                       AND \`year_month\` >= ?
+                       AND payment_status = 'pending'
+                       AND payment_type = 'monthly'`,
+                    [newTuition, finalTuition, studentId, req.user.academyId, currentYearMonth]
+                );
+                console.log(`[Student ${studentId}] Pending payments updated: ${newTuition}원 (할인 후: ${finalTuition}원)`);
+            } catch (paymentUpdateError) {
+                console.error('Payment update failed:', paymentUpdateError);
+                // 결제 업데이트 실패해도 학생 정보 업데이트는 성공으로 처리
+            }
+        }
+
         // 체험생 trial_dates가 변경되었으면 스케줄 재배정
         let trialAssignResult = null;
         if (is_trial && trial_dates !== undefined && trial_dates.length > 0) {

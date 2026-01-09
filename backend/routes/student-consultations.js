@@ -22,6 +22,45 @@ const decryptStudentFields = (student) => {
 };
 
 /**
+ * GET /student-consultations/calendar
+ * 월별 상담 기록 조회 (캘린더용)
+ */
+router.get('/calendar', verifyToken, async (req, res) => {
+  try {
+    const academyId = req.user?.academy_id || 2;
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'startDate, endDate 필수' });
+    }
+
+    const [consultations] = await pool.execute(
+      `SELECT sc.id, sc.student_id, sc.consultation_date, sc.consultation_type,
+              sc.general_memo, sc.academic_memo, sc.physical_memo, sc.target_memo,
+              s.name as student_name, s.grade
+       FROM student_consultations sc
+       JOIN students s ON sc.student_id = s.id
+       WHERE sc.academy_id = ?
+         AND sc.consultation_date >= ?
+         AND sc.consultation_date <= ?
+       ORDER BY sc.consultation_date DESC`,
+      [academyId, startDate, endDate]
+    );
+
+    // 학생 이름 복호화
+    const decryptedConsultations = consultations.map(c => ({
+      ...c,
+      student_name: c.student_name ? decrypt(c.student_name) : c.student_name,
+    }));
+
+    res.json({ consultations: decryptedConsultations });
+  } catch (error) {
+    console.error('Failed to get calendar consultations:', error);
+    res.status(500).json({ error: '캘린더 상담 조회 실패' });
+  }
+});
+
+/**
  * GET /student-consultations/:studentId
  * 학생별 상담 목록 조회
  */
