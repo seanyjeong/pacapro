@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { canEdit } from '@/lib/utils/permissions';
 import { schedulesApi } from '@/lib/api/schedules';
-import { ArrowLeft, Check, X, Clock, AlertCircle, Calendar, Phone, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Check, X, AlertCircle, Calendar, Phone, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type {
@@ -35,10 +35,10 @@ const TIME_SLOTS: { value: TimeSlot; label: string }[] = [
 ];
 
 const STATUS_BUTTONS: { value: AttendanceStatus; label: string; color: string; activeColor: string }[] = [
-  { value: 'present', label: '출석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-600 dark:bg-emerald-500 text-white' },
-  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500 dark:bg-amber-400 text-white' },
-  { value: 'absent', label: '결석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500 dark:bg-red-400 text-white' },
-  { value: 'excused', label: '공결', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-blue-500 dark:bg-blue-400 text-white' },
+  { value: 'present', label: '출석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-500/80 dark:bg-emerald-500/70 text-white' },
+  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500/80 dark:bg-amber-500/70 text-white' },
+  { value: 'absent', label: '결석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500/80 dark:bg-red-500/70 text-white' },
+  { value: 'excused', label: '공결', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-blue-500/80 dark:bg-blue-500/70 text-white' },
 ];
 
 export default function MobileAttendancePage() {
@@ -57,7 +57,7 @@ export default function MobileAttendancePage() {
   const [students, setStudents] = useState<(Attendance & { phone?: string; parent_phone?: string; grade?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [attendances, setAttendances] = useState<Map<number, AttendanceStatus>>(new Map());
-  const [originalAttendances, setOriginalAttendances] = useState<Map<number, AttendanceStatus>>(new Map());
+  const [, setOriginalAttendances] = useState<Map<number, AttendanceStatus>>(new Map());
   const [attendanceNotes, setAttendanceNotes] = useState<Map<number, string>>(new Map());
   const [saving, setSaving] = useState(false);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -391,7 +391,7 @@ export default function MobileAttendancePage() {
                   variant="outline"
                   size="sm"
                   onClick={handleAllPresent}
-                  className="text-green-600 dark:text-green-400 border-green-300 dark:border-green-700"
+                  className="text-green-600 dark:text-green-400 border-green-300 dark:border-green-800"
                 >
                   <Check className="h-4 w-4 mr-1" />
                   전체 출석
@@ -632,8 +632,8 @@ export default function MobileAttendancePage() {
                 disabled={!reasonModalData.reason || (reasonModalData.reason === '기타' && !reasonModalData.customReason.trim())}
                 className={`flex-1 py-4 rounded-xl font-medium text-white active:scale-95 transition-all disabled:opacity-50 ${
                   reasonModalData.status === 'excused'
-                    ? 'bg-blue-600'
-                    : 'bg-red-600'
+                    ? 'bg-blue-500/80 dark:bg-blue-500/70'
+                    : 'bg-red-500/80 dark:bg-red-500/70'
                 }`}
               >
                 확인

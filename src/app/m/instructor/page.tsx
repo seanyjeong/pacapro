@@ -18,10 +18,10 @@ const TIME_SLOTS: { value: TimeSlot; label: string }[] = [
 ];
 
 const STATUS_BUTTONS: { value: AttendanceStatus; label: string; color: string; activeColor: string }[] = [
-  { value: 'present', label: '출근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-600 dark:bg-emerald-500 text-white' },
-  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500 dark:bg-amber-400 text-white' },
-  { value: 'half_day', label: '반차', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-violet-500 dark:bg-violet-400 text-white' },
-  { value: 'absent', label: '결근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500 dark:bg-red-400 text-white' },
+  { value: 'present', label: '출근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-500/80 dark:bg-emerald-500/70 text-white' },
+  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500/80 dark:bg-amber-500/70 text-white' },
+  { value: 'half_day', label: '반차', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-violet-500/80 dark:bg-violet-500/70 text-white' },
+  { value: 'absent', label: '결근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500/80 dark:bg-red-500/70 text-white' },
 ];
 
 interface InstructorSlotData {
@@ -260,7 +260,7 @@ export default function MobileInstructorPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleAllPresent(slot.value)}
-                      className="text-green-600 dark:text-green-400 border-green-300 dark:border-green-700"
+                      className="text-green-600 dark:text-green-400 border-green-300 dark:border-green-800"
                     >
                       <Check className="h-4 w-4 mr-1" />
                       전체 출근

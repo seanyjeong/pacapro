@@ -1143,7 +1143,7 @@ export default function TabletConductPage({ params }: PageProps) {
             <Button
               onClick={handleConvertToTrial}
               disabled={convertingToTrial}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-green-600/80 dark:bg-green-600 hover:bg-green-700"
             >
               {convertingToTrial ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1187,7 +1187,7 @@ export default function TabletConductPage({ params }: PageProps) {
             <Button
               onClick={handleConvertToPending}
               disabled={convertingToPending}
-              className="bg-orange-600 hover:bg-orange-700"
+              className="bg-orange-600/80 dark:bg-orange-600 hover:bg-orange-700"
             >
               {convertingToPending ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

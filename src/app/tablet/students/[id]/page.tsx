@@ -41,12 +41,12 @@ interface AttendanceSummary {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  active: { label: '재원', color: 'bg-green-100 text-green-700' },
-  paused: { label: '휴원', color: 'bg-yellow-100 text-yellow-700' },
-  withdrawn: { label: '퇴원', color: 'bg-red-100 text-red-700' },
-  graduated: { label: '졸업', color: 'bg-blue-100 text-blue-700' },
-  trial: { label: '체험', color: 'bg-purple-100 text-purple-700' },
-  pending: { label: '대기', color: 'bg-gray-100 text-gray-700' },
+  active: { label: '재원', color: 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300' },
+  paused: { label: '휴원', color: 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300' },
+  withdrawn: { label: '퇴원', color: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' },
+  graduated: { label: '졸업', color: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' },
+  trial: { label: '체험', color: 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300' },
+  pending: { label: '대기', color: 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300' },
 };
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -155,10 +155,10 @@ export default function TabletStudentDetailPage() {
   return (
     <div className="space-y-4">
       {/* 헤더 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-slate-600 mb-4"
+          className="flex items-center gap-2 text-slate-600 dark:text-slate-300 mb-4"
         >
           <ArrowLeft size={20} />
           <span>목록으로</span>
@@ -166,26 +166,26 @@ export default function TabletStudentDetailPage() {
 
         <div className="flex items-center gap-4">
           <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl ${
-            student.gender === 'male' ? 'bg-blue-500' : 'bg-pink-500'
+            student.gender === 'male' ? 'bg-blue-500/80 dark:bg-blue-600' : 'bg-pink-500/80 dark:bg-pink-600'
           }`}>
             {student.name.charAt(0)}
           </div>
 
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-bold text-slate-800">{student.name}</h1>
+              <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{student.name}</h1>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                STATUS_LABELS[student.status]?.color || 'bg-gray-100 text-gray-700'
+                STATUS_LABELS[student.status]?.color || 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
               }`}>
                 {STATUS_LABELS[student.status]?.label || student.status}
               </span>
               {!!student.is_trial && (
-                <span className="px-3 py-1 bg-purple-100 text-purple-600 text-sm rounded-full">
+                <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 text-sm rounded-full">
                   체험 {student.trial_remaining}회 남음
                 </span>
               )}
             </div>
-            <p className="text-slate-500">{student.grade} · {student.school || '-'}</p>
+            <p className="text-slate-500 dark:text-slate-400">{student.grade} · {student.school || '-'}</p>
           </div>
         </div>
       </div>
@@ -193,45 +193,45 @@ export default function TabletStudentDetailPage() {
       {/* 요약 카드 */}
       <div className={`grid gap-4 ${orientation === 'landscape' ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {/* 출석 현황 */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <CheckCircle2 className="text-green-500" size={20} />
-            <h3 className="font-bold text-slate-800">이번달 출석</h3>
+            <CheckCircle2 className="text-green-500 dark:text-green-400" size={20} />
+            <h3 className="font-bold text-slate-800 dark:text-slate-100">이번달 출석</h3>
           </div>
           {attendanceSummary ? (
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span className="text-slate-500">출석률</span>
-                <span className="font-bold text-green-600">{attendanceSummary.rate}%</span>
+                <span className="text-slate-500 dark:text-slate-400">출석률</span>
+                <span className="font-bold text-green-600 dark:text-green-400">{attendanceSummary.rate}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">출석</span>
-                <span className="text-slate-800">{attendanceSummary.present}회</span>
+                <span className="text-slate-500 dark:text-slate-400">출석</span>
+                <span className="text-slate-800 dark:text-slate-100">{attendanceSummary.present}회</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">결석</span>
-                <span className="text-red-600">{attendanceSummary.absent}회</span>
+                <span className="text-slate-500 dark:text-slate-400">결석</span>
+                <span className="text-red-600 dark:text-red-400">{attendanceSummary.absent}회</span>
               </div>
             </div>
           ) : (
-            <p className="text-slate-400 text-sm">출석 정보 없음</p>
+            <p className="text-slate-400 dark:text-slate-500 text-sm">출석 정보 없음</p>
           )}
         </div>
 
         {/* 수업 정보 */}
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
-            <Calendar className="text-blue-500" size={20} />
-            <h3 className="font-bold text-slate-800">수업 정보</h3>
+            <Calendar className="text-blue-500 dark:text-blue-400" size={20} />
+            <h3 className="font-bold text-slate-800 dark:text-slate-100">수업 정보</h3>
           </div>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-slate-500">수업 요일</span>
-              <span className="text-slate-800">{formatClassDays(student.class_days)}</span>
+              <span className="text-slate-500 dark:text-slate-400">수업 요일</span>
+              <span className="text-slate-800 dark:text-slate-100">{formatClassDays(student.class_days)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-500">등록일</span>
-              <span className="text-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">등록일</span>
+              <span className="text-slate-800 dark:text-slate-100">
                 {student.enrollment_date ? new Date(student.enrollment_date).toLocaleDateString('ko-KR') : '-'}
               </span>
             </div>
@@ -240,25 +240,25 @@ export default function TabletStudentDetailPage() {
       </div>
 
       {/* 연락처 */}
-      <div className="bg-white rounded-2xl p-5 shadow-sm">
-        <h3 className="font-bold text-slate-800 mb-4">연락처</h3>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
+        <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-4">연락처</h3>
         <div className="grid gap-4 grid-cols-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-              <Phone size={18} className="text-slate-500" />
+            <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
+              <Phone size={18} className="text-slate-500 dark:text-slate-400" />
             </div>
             <div>
               <p className="text-xs text-slate-400">학생</p>
-              <p className="text-slate-800">{student.phone || '-'}</p>
+              <p className="text-slate-800 dark:text-slate-100">{student.phone || '-'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-              <Phone size={18} className="text-slate-500" />
+            <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
+              <Phone size={18} className="text-slate-500 dark:text-slate-400" />
             </div>
             <div>
               <p className="text-xs text-slate-400">학부모</p>
-              <p className="text-slate-800">{student.parent_phone || '-'}</p>
+              <p className="text-slate-800 dark:text-slate-100">{student.parent_phone || '-'}</p>
             </div>
           </div>
         </div>
@@ -266,9 +266,9 @@ export default function TabletStudentDetailPage() {
 
       {/* 메모 */}
       {student.memo && (
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-2">메모</h3>
-          <p className="text-slate-600 whitespace-pre-wrap">{student.memo}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
+          <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">메모</h3>
+          <p className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{student.memo}</p>
         </div>
       )}
     </div>

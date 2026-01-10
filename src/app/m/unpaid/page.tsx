@@ -69,9 +69,9 @@ export default function MobileUnpaidPage() {
 
   // 연체일수에 따른 색상
   const getOverdueColor = (days: number) => {
-    if (days >= 30) return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950';
-    if (days >= 14) return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950';
-    if (days >= 7) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950';
+    if (days >= 30) return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30';
+    if (days >= 14) return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30';
+    if (days >= 7) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/30';
     return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900';
   };
 
@@ -210,7 +210,7 @@ export default function MobileUnpaidPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-2xl w-full max-w-sm p-6 space-y-4">
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
               <h3 className="text-xl font-bold text-foreground">완납 처리</h3>

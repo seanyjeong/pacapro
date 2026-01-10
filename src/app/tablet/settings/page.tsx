@@ -165,12 +165,12 @@ export default function TabletSettingsPage() {
 
   const getRoleColor = (role: string) => {
     const colors: Record<string, string> = {
-      owner: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-      admin: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      staff: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      instructor: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+      owner: 'bg-purple-100/80 dark:bg-purple-900 text-purple-800 dark:text-purple-200',
+      admin: 'bg-blue-100/80 dark:bg-blue-900 text-blue-800 dark:text-blue-200',
+      staff: 'bg-green-100/80 dark:bg-green-900 text-green-800 dark:text-green-200',
+      instructor: 'bg-orange-100/80 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
     };
-    return colors[role] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+    return colors[role] || 'bg-gray-100/80 dark:bg-gray-900 text-gray-800 dark:text-gray-200';
   };
 
   if (loading) {
@@ -249,8 +249,8 @@ export default function TabletSettingsPage() {
                   disabled={pushLoading}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     pushSubscribed
-                      ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-                      : 'bg-blue-600 text-white'
+                      ? 'bg-red-100/80 dark:bg-red-900 text-red-700 dark:text-red-300'
+                      : 'bg-primary text-white'
                   } disabled:opacity-50`}
                 >
                   {pushLoading ? (
@@ -288,7 +288,7 @@ export default function TabletSettingsPage() {
                     disabled={settingsLoading}
                     className={`relative w-12 h-7 rounded-full transition-colors ${
                       notificationSettings[item.key]
-                        ? 'bg-blue-600'
+                        ? 'bg-primary'
                         : 'bg-gray-300 dark:bg-gray-600'
                     } disabled:opacity-50`}
                   >

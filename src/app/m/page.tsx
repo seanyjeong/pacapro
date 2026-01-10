@@ -9,7 +9,6 @@ import Image from 'next/image';
 import {
   pushAPI,
   isPushSupported,
-  getNotificationPermission,
   requestNotificationPermission,
   subscribeToPush,
   unsubscribeFromPush,
@@ -295,8 +294,8 @@ export default function MobileHomePage() {
                 disabled={pushLoading}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   pushSubscribed
-                    ? 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300'
-                    : 'bg-blue-600 text-white'
+                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
+                    : 'bg-blue-500/80 dark:bg-blue-500/70 text-white'
                 } disabled:opacity-50`}
               >
                 {pushLoading ? (
@@ -328,8 +327,8 @@ export default function MobileHomePage() {
                     disabled={settingsLoading}
                     className={`relative w-11 h-6 rounded-full transition-colors ${
                       notificationSettings[item.key]
-                        ? 'bg-blue-600'
-                        : 'bg-gray-300 dark:bg-gray-600'
+                        ? 'bg-blue-500/80 dark:bg-blue-500/70'
+                        : 'bg-gray-300 dark:bg-gray-700'
                     } disabled:opacity-50`}
                   >
                     <span
@@ -359,7 +358,7 @@ export default function MobileHomePage() {
 
       {/* 버전 정보 */}
       <div className="mt-4 text-center">
-        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v3.1.16</p>
+        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v3.3.1</p>
       </div>
 
       {/* PWA 설치 프롬프트 */}

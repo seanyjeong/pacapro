@@ -94,11 +94,11 @@ export default function MobileConsultationsPage() {
   // 상태별 색상
   const getStatusColor = (status: ConsultationStatus) => {
     const colors: Record<ConsultationStatus, string> = {
-      pending: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/50',
-      confirmed: 'text-blue-600 bg-blue-100 dark:bg-blue-900/50',
-      completed: 'text-gray-500 bg-gray-100 dark:bg-gray-800',
-      cancelled: 'text-gray-500 bg-gray-100 dark:bg-gray-800',
-      no_show: 'text-red-500 bg-red-100 dark:bg-red-900/50',
+      pending: 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30',
+      confirmed: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30',
+      completed: 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800',
+      cancelled: 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800',
+      no_show: 'text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-900/30',
     };
     return colors[status];
   };
@@ -153,7 +153,7 @@ export default function MobileConsultationsPage() {
                     )}
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
                   <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
@@ -170,8 +170,8 @@ export default function MobileConsultationsPage() {
                     className={`w-full bg-card rounded-xl p-4 shadow-sm text-left transition-all active:scale-[0.98] hover:bg-muted ${finished ? 'opacity-60' : ''}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${finished ? 'bg-gray-100 dark:bg-gray-800' : 'bg-green-50 dark:bg-green-950/50'}`}>
-                        <User className={`h-5 w-5 ${finished ? 'text-gray-400' : 'text-green-600 dark:text-green-400'}`} />
+                      <div className={`p-2 rounded-full ${finished ? 'bg-gray-100 dark:bg-gray-800' : 'bg-green-50 dark:bg-green-900/30'}`}>
+                        <User className={`h-5 w-5 ${finished ? 'text-gray-400 dark:text-gray-500' : 'text-green-600 dark:text-green-400'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
@@ -220,7 +220,7 @@ export default function MobileConsultationsPage() {
             <div className="space-y-4">
               {/* 이름 */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
                   <User className="h-5 w-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
@@ -231,7 +231,7 @@ export default function MobileConsultationsPage() {
 
               {/* 상담 시간 */}
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
                   <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
@@ -243,7 +243,7 @@ export default function MobileConsultationsPage() {
               {/* 학생 전화번호 */}
               {selectedConsultation.student_phone && (
                 <a href={`tel:${selectedConsultation.student_phone}`} className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-                  <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center">
                     <Phone className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                   </div>
                   <div>
@@ -256,7 +256,7 @@ export default function MobileConsultationsPage() {
               {/* 학교 */}
               {selectedConsultation.student_school && (
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center">
                     <School className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                   </div>
                   <div>
@@ -269,7 +269,7 @@ export default function MobileConsultationsPage() {
               {/* 학년 */}
               {selectedConsultation.student_grade && (
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/50 rounded-full flex items-center justify-center">
                     <GraduationCap className="h-5 w-5 text-pink-600 dark:text-pink-400" />
                   </div>
                   <div>

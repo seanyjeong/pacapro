@@ -44,10 +44,10 @@ const TIME_SLOTS: { key: TimeSlot; label: string }[] = [
 ];
 
 const STATUS_CONFIG = {
-  present: { label: '출석', color: 'bg-green-500', icon: CheckCircle2 },
-  absent: { label: '결석', color: 'bg-red-500', icon: XCircle },
-  late: { label: '지각', color: 'bg-yellow-500', icon: Clock },
-  excused: { label: '공결', color: 'bg-blue-500', icon: AlertCircle },
+  present: { label: '출석', color: 'bg-green-500/80 dark:bg-green-600', icon: CheckCircle2 },
+  absent: { label: '결석', color: 'bg-red-500/80 dark:bg-red-600', icon: XCircle },
+  late: { label: '지각', color: 'bg-yellow-500/80 dark:bg-yellow-600', icon: Clock },
+  excused: { label: '공결', color: 'bg-blue-500/80 dark:bg-blue-600', icon: AlertCircle },
 };
 
 // 공결 사유 옵션
@@ -219,33 +219,33 @@ export default function TabletAttendancePage() {
   return (
     <div className="space-y-4">
       {/* 날짜 선택 */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm">
         <div className="flex items-center justify-between">
           <button
             onClick={() => handleDateChange(-1)}
-            className="p-3 rounded-xl bg-slate-100 active:bg-slate-200 transition"
+            className="p-3 rounded-xl bg-slate-100 dark:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-600 transition"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={24} className="dark:text-slate-200" />
           </button>
 
           <div className="text-center">
-            <p className="text-xl font-bold text-slate-800">{formatDate(date)}</p>
+            <p className="text-xl font-bold text-slate-800 dark:text-slate-100">{formatDate(date)}</p>
             {isToday && (
-              <span className="text-sm text-blue-500 font-medium">오늘</span>
+              <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">오늘</span>
             )}
           </div>
 
           <button
             onClick={() => handleDateChange(1)}
-            className="p-3 rounded-xl bg-slate-100 active:bg-slate-200 transition"
+            className="p-3 rounded-xl bg-slate-100 dark:bg-slate-700 active:bg-slate-200 dark:active:bg-slate-600 transition"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={24} className="dark:text-slate-200" />
           </button>
         </div>
       </div>
 
       {/* 시간대 탭 */}
-      <div className="bg-white rounded-2xl p-2 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-2 shadow-sm">
         <div className="flex gap-2">
           {TIME_SLOTS.map(slot => (
             <button
@@ -253,8 +253,8 @@ export default function TabletAttendancePage() {
               onClick={() => setTimeSlot(slot.key)}
               className={`flex-1 py-3 rounded-xl font-medium transition ${
                 timeSlot === slot.key
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-slate-100 text-slate-600 active:bg-slate-200'
+                  ? 'bg-primary text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-600'
               }`}
             >
               {slot.label}
@@ -266,21 +266,21 @@ export default function TabletAttendancePage() {
       {/* 통계 */}
       {schedule && (
         <div className="grid grid-cols-4 gap-3">
-          <div className="bg-white rounded-xl p-3 shadow-sm text-center">
-            <p className="text-2xl font-bold text-slate-800">{schedule.students.length}</p>
-            <p className="text-xs text-slate-500">전체</p>
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm text-center">
+            <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{schedule.students.length}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">전체</p>
           </div>
-          <div className="bg-green-50 rounded-xl p-3 shadow-sm text-center">
-            <p className="text-2xl font-bold text-green-600">{stats.present}</p>
-            <p className="text-xs text-green-600">출석</p>
+          <div className="bg-green-50 dark:bg-green-950 rounded-xl p-3 shadow-sm text-center">
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.present}</p>
+            <p className="text-xs text-green-600 dark:text-green-400">출석</p>
           </div>
-          <div className="bg-red-50 rounded-xl p-3 shadow-sm text-center">
-            <p className="text-2xl font-bold text-red-600">{stats.absent}</p>
-            <p className="text-xs text-red-600">결석</p>
+          <div className="bg-red-50 dark:bg-red-950 rounded-xl p-3 shadow-sm text-center">
+            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.absent}</p>
+            <p className="text-xs text-red-600 dark:text-red-400">결석</p>
           </div>
-          <div className="bg-yellow-50 rounded-xl p-3 shadow-sm text-center">
-            <p className="text-2xl font-bold text-yellow-600">{stats.notMarked}</p>
-            <p className="text-xs text-yellow-600">미체크</p>
+          <div className="bg-yellow-50 dark:bg-yellow-950 rounded-xl p-3 shadow-sm text-center">
+            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.notMarked}</p>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400">미체크</p>
           </div>
         </div>
       )}
@@ -291,9 +291,9 @@ export default function TabletAttendancePage() {
           <RefreshCw className="animate-spin text-blue-500" size={32} />
         </div>
       ) : !schedule || schedule.students.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-          <Users size={48} className="mx-auto text-slate-300 mb-4" />
-          <p className="text-slate-500">배정된 학생이 없습니다</p>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm text-center">
+          <Users size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
+          <p className="text-slate-500 dark:text-slate-400">배정된 학생이 없습니다</p>
         </div>
       ) : (
         <div className={`grid gap-3 ${
@@ -302,27 +302,27 @@ export default function TabletAttendancePage() {
           {schedule.students.map(student => (
             <div
               key={student.student_id}
-              className={`bg-white rounded-2xl p-4 shadow-sm ${
+              className={`bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm ${
                 saving === student.student_id ? 'opacity-50' : ''
               }`}
             >
               {/* 학생 정보 */}
               <div className="mb-3">
                 <div className="flex items-center gap-2">
-                  <p className="font-bold text-slate-800 truncate">{student.student_name}</p>
+                  <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{student.student_name}</p>
                   {!!student.is_trial && (
-                    <span className="px-2 py-0.5 bg-purple-100 text-purple-600 text-xs rounded-full">
+                    <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 text-xs rounded-full">
                       체험
                     </span>
                   )}
                   {!!student.is_makeup && (
-                    <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs rounded-full">
+                    <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs rounded-full">
                       보충
                     </span>
                   )}
                 </div>
                 {student.grade && String(student.grade) !== '0' && String(student.grade) !== '00' && String(student.grade).trim() !== '' && (
-                  <p className="text-sm text-slate-500">{student.grade}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">{student.grade}</p>
                 )}
               </div>
 
@@ -356,8 +356,8 @@ export default function TabletAttendancePage() {
                   disabled={saving === student.student_id}
                   className={`py-3 rounded-xl font-medium transition active:scale-95 ${
                     student.attendance_status === 'present'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-green-100 text-green-700 active:bg-green-200'
+                      ? 'bg-green-500/80 dark:bg-green-600 text-white'
+                      : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 active:bg-green-200 dark:active:bg-green-800'
                   }`}
                 >
                   출석
@@ -367,8 +367,8 @@ export default function TabletAttendancePage() {
                   disabled={saving === student.student_id}
                   className={`py-3 rounded-xl font-medium transition active:scale-95 ${
                     student.attendance_status === 'absent'
-                      ? 'bg-red-500 text-white'
-                      : 'bg-red-100 text-red-700 active:bg-red-200'
+                      ? 'bg-red-500/80 dark:bg-red-600 text-white'
+                      : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 active:bg-red-200 dark:active:bg-red-800'
                   }`}
                 >
                   결석
@@ -378,8 +378,8 @@ export default function TabletAttendancePage() {
                   disabled={saving === student.student_id}
                   className={`py-3 rounded-xl font-medium transition active:scale-95 ${
                     student.attendance_status === 'late'
-                      ? 'bg-yellow-500 text-white'
-                      : 'bg-yellow-100 text-yellow-700 active:bg-yellow-200'
+                      ? 'bg-yellow-500/80 dark:bg-yellow-600 text-white'
+                      : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 active:bg-yellow-200 dark:active:bg-yellow-800'
                   }`}
                 >
                   지각
@@ -389,8 +389,8 @@ export default function TabletAttendancePage() {
                   disabled={saving === student.student_id}
                   className={`py-3 rounded-xl font-medium transition active:scale-95 ${
                     student.attendance_status === 'excused'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-blue-100 text-blue-700 active:bg-blue-200'
+                      ? 'bg-blue-500/80 dark:bg-blue-600 text-white'
+                      : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 active:bg-blue-200 dark:active:bg-blue-800'
                   }`}
                 >
                   공결
@@ -405,7 +405,7 @@ export default function TabletAttendancePage() {
       {showReasonModal && reasonModalData && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={handleReasonCancel}>
           <div
-            className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl"
+            className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 헤더 */}
@@ -525,7 +525,7 @@ export default function TabletAttendancePage() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleReasonCancel}
-                className="flex-1 py-4 rounded-xl font-medium bg-slate-100 text-slate-600 active:scale-95 transition-all"
+                className="flex-1 py-4 rounded-xl font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 active:scale-95 transition-all"
               >
                 취소
               </button>
@@ -534,8 +534,8 @@ export default function TabletAttendancePage() {
                 disabled={!reasonModalData.reason || (reasonModalData.reason === '기타' && !reasonModalData.customReason.trim())}
                 className={`flex-1 py-4 rounded-xl font-medium text-white active:scale-95 transition-all disabled:opacity-50 ${
                   reasonModalData.status === 'excused'
-                    ? 'bg-blue-500'
-                    : 'bg-red-500'
+                    ? 'bg-blue-500/80 dark:bg-blue-600'
+                    : 'bg-red-500/80 dark:bg-red-600'
                 }`}
               >
                 확인
