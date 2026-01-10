@@ -16,6 +16,7 @@ import {
 } from '@/lib/api/push';
 import { notificationSettingsAPI, NotificationSettings } from '@/lib/api/notificationSettings';
 import PWAInstallPrompt from '@/components/pwa-install-prompt';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function MobileHomePage() {
   const router = useRouter();
@@ -209,6 +210,11 @@ export default function MobileHomePage() {
 
   return (
     <div className="min-h-screen bg-background p-5 safe-area-inset">
+      {/* 테마 토글 (우측 상단) */}
+      <div className="flex justify-end mb-2">
+        <ThemeToggle />
+      </div>
+
       {/* 헤더 */}
       <header className="mb-8 text-center">
         <div className="flex justify-center mb-4">
