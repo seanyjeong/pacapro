@@ -243,7 +243,7 @@ export default function MobileHomePage() {
               key={item.href}
               onClick={() => router.push(item.href)}
               className="w-full bg-card border border-border/60 rounded-2xl p-5 flex items-center gap-4
-                         shadow-sm hover:shadow-md hover:border-border
+                         shadow-sm hover:shadow-md hover:border-border dark:hover:border-border/80
                          active:scale-[0.98] transition-all duration-200 group"
             >
               <div className={`p-3.5 rounded-xl ${item.iconBg}`}>
@@ -358,7 +358,7 @@ export default function MobileHomePage() {
 
       {/* 버전 정보 */}
       <div className="mt-4 text-center">
-        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v3.3.3</p>
+        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v3.3.4</p>
       </div>
 
       {/* PWA 설치 프롬프트 */}

@@ -172,7 +172,7 @@ export default function MobileUnpaidPage() {
                     key={payment.id}
                     onClick={() => canMarkPaid && setSelectedPayment(payment)}
                     className={`w-full bg-card rounded-xl p-4 shadow-sm text-left transition-all ${
-                      canMarkPaid ? 'active:scale-[0.98] hover:bg-muted' : ''
+                      canMarkPaid ? 'active:scale-[0.98] hover:bg-muted dark:hover:bg-secondary/50' : ''
                     }`}
                   >
                     {/* 학생 정보 */}
@@ -207,7 +207,7 @@ export default function MobileUnpaidPage() {
 
       {/* 완납 확인 모달 */}
       {selectedPayment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-card rounded-2xl w-full max-w-sm p-6 space-y-4">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center mx-auto mb-4">

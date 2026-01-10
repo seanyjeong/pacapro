@@ -45,36 +45,44 @@
     --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   }
 
-  /* 다크 테마 (Tech Innovation 스타일 - Deep & Rich) */
+  /* 다크 테마 (다크 디자이너 최적화 - 눈에 편한 진짜 다크모드) */
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
-    
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
-    
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 210 40% 98%;
-    
-    --muted: 217 32% 17%;
-    --muted-foreground: 215 20% 65%;
-    
-    --accent: 217 32% 17%;
-    --accent-foreground: 210 40% 98%;
-    
-    --destructive: 0 62% 30%;
-    --destructive-foreground: 210 40% 98%;
-    
-    --border: 217 32% 17%;
-    --input: 217 32% 17%;
-    --ring: 224 76% 48%;
+    /* 배경 - 순수 검정 아님, 미묘한 회색조 */
+    --background: 220 15% 6%;          /* #0d0e11 느낌 - Vercel/GitHub 스타일 */
+    --foreground: 210 20% 96%;         /* 너무 하얗지 않게 */
 
+    /* 카드 - 배경과 명확히 구분되는 레이어 */
+    --card: 220 15% 10%;               /* #16181c - 카드 배경 */
+    --card-foreground: 210 20% 96%;
+
+    /* 팝오버 - 카드보다 약간 밝게 (떠있는 느낌) */
+    --popover: 220 15% 12%;
+    --popover-foreground: 210 20% 96%;
+
+    /* Primary - 블루 계열 유지하되 채도 조정 */
+    --primary: 217 91% 60%;
+    --primary-foreground: 220 15% 10%;
+
+    /* Secondary - 배경과 카드 사이 (input 등에 사용) */
+    --secondary: 220 15% 14%;          /* #1e2126 */
+    --secondary-foreground: 210 20% 96%;
+
+    /* Muted - 배경과 비슷하지만 구분 */
+    --muted: 220 15% 8%;               /* #12141a */
+    --muted-foreground: 215 15% 60%;   /* 덜 밝은 회색 */
+
+    /* Accent - secondary와 동일 */
+    --accent: 220 15% 14%;
+    --accent-foreground: 210 20% 96%;
+
+    /* Destructive - 다크모드 친화적 빨강 */
+    --destructive: 0 72% 51%;          /* #dc2626 느낌 */
+    --destructive-foreground: 210 20% 96%;
+
+    /* Border - 미묘하게 보이되 존재감 있게 */
+    --border: 220 15% 18%;             /* #262a31 */
+    --input: 220 15% 14%;
+    --ring: 217 91% 60%;
   }
 }
 

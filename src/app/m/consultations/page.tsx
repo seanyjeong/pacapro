@@ -169,7 +169,9 @@ export default function MobileConsultationsPage() {
                   <button
                     key={consultation.id}
                     onClick={() => setSelectedConsultation(consultation)}
-                    className={`w-full bg-card rounded-xl p-4 shadow-sm text-left transition-all active:scale-[0.98] hover:bg-muted ${finished ? 'opacity-60' : ''}`}
+                    className={`w-full bg-card rounded-xl p-4 shadow-sm text-left transition-all
+                                active:scale-[0.98] hover:bg-muted dark:hover:bg-secondary/50
+                                ${finished ? 'opacity-60' : ''}`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-full ${finished ? 'bg-gray-100 dark:bg-gray-800' : 'bg-green-50 dark:bg-green-900/30'}`}>
@@ -210,7 +212,7 @@ export default function MobileConsultationsPage() {
 
       {/* 상담 상세 모달 */}
       {selectedConsultation && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedConsultation(null)}>
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setSelectedConsultation(null)}>
           <div className="bg-card rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-foreground">상담 정보</h3>

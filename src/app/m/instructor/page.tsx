@@ -18,10 +18,10 @@ const TIME_SLOTS: { value: TimeSlot; label: string }[] = [
 ];
 
 const STATUS_BUTTONS: { value: AttendanceStatus; label: string; color: string; activeColor: string }[] = [
-  { value: 'present', label: '출근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-500/80 dark:bg-emerald-500/70 text-white' },
-  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500/80 dark:bg-amber-500/70 text-white' },
-  { value: 'half_day', label: '반차', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-violet-500/80 dark:bg-violet-500/70 text-white' },
-  { value: 'absent', label: '결근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500/80 dark:bg-red-500/70 text-white' },
+  { value: 'present', label: '출근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-500/80 dark:bg-emerald-500/70 text-white dark:shadow-[0_0_15px_rgba(16,185,129,0.3)]' },
+  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500/80 dark:bg-amber-500/70 text-white dark:shadow-[0_0_15px_rgba(245,158,11,0.3)]' },
+  { value: 'half_day', label: '반차', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-violet-500/80 dark:bg-violet-500/70 text-white dark:shadow-[0_0_15px_rgba(139,92,246,0.3)]' },
+  { value: 'absent', label: '결근', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500/80 dark:bg-red-500/70 text-white dark:shadow-[0_0_15px_rgba(239,68,68,0.3)]' },
 ];
 
 interface InstructorSlotData {
@@ -216,7 +216,8 @@ export default function MobileInstructorPage() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="bg-secondary border border-border rounded-lg px-3 py-2 text-foreground flex-1"
+            className="bg-secondary border border-border rounded-lg px-3 py-2 text-foreground flex-1
+                       dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
       </header>

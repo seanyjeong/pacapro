@@ -35,10 +35,10 @@ const TIME_SLOTS: { value: TimeSlot; label: string }[] = [
 ];
 
 const STATUS_BUTTONS: { value: AttendanceStatus; label: string; color: string; activeColor: string }[] = [
-  { value: 'present', label: '출석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-500/80 dark:bg-emerald-500/70 text-white' },
-  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500/80 dark:bg-amber-500/70 text-white' },
-  { value: 'absent', label: '결석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500/80 dark:bg-red-500/70 text-white' },
-  { value: 'excused', label: '공결', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-blue-500/80 dark:bg-blue-500/70 text-white' },
+  { value: 'present', label: '출석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-emerald-500/80 dark:bg-emerald-500/70 text-white dark:shadow-[0_0_15px_rgba(16,185,129,0.3)]' },
+  { value: 'late', label: '지각', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-amber-500/80 dark:bg-amber-500/70 text-white dark:shadow-[0_0_15px_rgba(245,158,11,0.3)]' },
+  { value: 'absent', label: '결석', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-red-500/80 dark:bg-red-500/70 text-white dark:shadow-[0_0_15px_rgba(239,68,68,0.3)]' },
+  { value: 'excused', label: '공결', color: 'bg-secondary text-muted-foreground', activeColor: 'bg-blue-500/80 dark:bg-blue-500/70 text-white dark:shadow-[0_0_15px_rgba(59,130,246,0.3)]' },
 ];
 
 export default function MobileAttendancePage() {
@@ -341,7 +341,8 @@ export default function MobileAttendancePage() {
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="bg-secondary border border-border rounded-lg px-3 py-2 text-foreground flex-1"
+            className="bg-secondary border border-border rounded-lg px-3 py-2 text-foreground flex-1
+                       dark:[color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
 
@@ -501,7 +502,7 @@ export default function MobileAttendancePage() {
 
       {/* 결석/공결 사유 입력 모달 */}
       {showReasonModal && reasonModalData && (
-        <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50" onClick={handleReasonCancel}>
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-end justify-center z-50" onClick={handleReasonCancel}>
           <div
             className="bg-card w-full max-w-lg rounded-t-2xl p-5 pb-8 safe-area-pb animate-in slide-in-from-bottom duration-300"
             onClick={(e) => e.stopPropagation()}
