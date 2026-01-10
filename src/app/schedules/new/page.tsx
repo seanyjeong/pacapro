@@ -4,16 +4,25 @@
  * 수업 등록 페이지
  */
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { ScheduleForm } from '@/components/schedules/schedule-form';
 import { useCreateSchedule } from '@/hooks/use-schedules';
+import { instructorsAPI } from '@/lib/api/instructors';
 import type { ScheduleFormData } from '@/lib/types/schedule';
 
 export default function NewSchedulePage() {
   const router = useRouter();
   const createSchedule = useCreateSchedule();
+  const [instructors, setInstructors] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    instructorsAPI.getInstructors({ status: 'active' }).then((res) => {
+      setInstructors(res.instructors.map((i) => ({ id: i.id, name: i.name })));
+    });
+  }, []);
 
   const handleSubmit = async (data: ScheduleFormData) => {
     try {
@@ -49,12 +58,7 @@ export default function NewSchedulePage() {
 
       {/* 폼 */}
       <ScheduleForm
-        instructors={[
-          // TODO: 실제 강사 목록으로 대체
-          { id: 1, name: '김강사' },
-          { id: 2, name: '이강사' },
-          { id: 3, name: '박강사' },
-        ]}
+        instructors={instructors}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isSubmitting={createSchedule.isPending}

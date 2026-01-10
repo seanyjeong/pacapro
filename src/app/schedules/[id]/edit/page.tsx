@@ -4,11 +4,13 @@
  * 수업 수정 페이지
  */
 
+import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { ScheduleForm } from '@/components/schedules/schedule-form';
 import { useSchedule, useUpdateSchedule } from '@/hooks/use-schedules';
+import { instructorsAPI } from '@/lib/api/instructors';
 import type { ScheduleFormData } from '@/lib/types/schedule';
 
 export default function EditSchedulePage() {
@@ -18,6 +20,13 @@ export default function EditSchedulePage() {
 
   const { data: schedule, isLoading, error } = useSchedule(scheduleId);
   const updateSchedule = useUpdateSchedule();
+  const [instructors, setInstructors] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    instructorsAPI.getInstructors({ status: 'active' }).then((res) => {
+      setInstructors(res.instructors.map((i) => ({ id: i.id, name: i.name })));
+    });
+  }, []);
 
   const handleSubmit = async (data: ScheduleFormData) => {
     try {
@@ -77,12 +86,7 @@ export default function EditSchedulePage() {
       {/* 폼 */}
       <ScheduleForm
         schedule={schedule}
-        instructors={[
-          // TODO: 실제 강사 목록으로 대체
-          { id: 1, name: '김강사' },
-          { id: 2, name: '이강사' },
-          { id: 3, name: '박강사' },
-        ]}
+        instructors={instructors}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         isSubmitting={updateSchedule.isPending}
