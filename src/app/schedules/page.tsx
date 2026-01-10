@@ -66,8 +66,8 @@ export default function SchedulesPage() {
   const [canViewOvertimeApproval, setCanViewOvertimeApproval] = useState(false);
   const [canEditSchedules, setCanEditSchedules] = useState(false);
 
-  // 강사 근무 배정 패널 펼침 상태
-  const [isPanelExpanded, setIsPanelExpanded] = useState(true);
+  // 강사 근무 배정 패널 펼침 상태 (기본: 접힘)
+  const [isPanelExpanded, setIsPanelExpanded] = useState(false);
 
   useEffect(() => {
     setCanViewOvertimeApproval(canView('overtime_approval'));
