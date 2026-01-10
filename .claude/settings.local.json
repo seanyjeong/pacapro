@@ -168,7 +168,11 @@
       "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"SELECT id, student_id, paid_date, payment_method, paid_amount FROM student_payments WHERE paid_date LIKE ''2026-01-05%'';\")",
       "Bash(git restore:*)",
       "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"SELECT id, name, grade, status FROM students WHERE name LIKE ''%새봄%'' OR name LIKE ''%오새봄%'';\")",
-      "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"DESCRIBE consultations;\")"
+      "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"DESCRIBE consultations;\")",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git branch:*)"
     ],
     "deny": [],
     "ask": []

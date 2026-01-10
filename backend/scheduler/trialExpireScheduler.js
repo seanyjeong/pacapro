@@ -61,9 +61,9 @@ async function expireTrialStudents() {
                     continue;
                 }
 
-                // 마지막 체험일 + 2일 계산
+                // 마지막 체험일 + 1일 계산
                 const lastDate = new Date(lastTrialDate);
-                lastDate.setDate(lastDate.getDate() + 2);
+                lastDate.setDate(lastDate.getDate() + 1);
                 const expireDate = lastDate.toISOString().split('T')[0];
 
                 // 오늘이 만료일 이후인지 확인

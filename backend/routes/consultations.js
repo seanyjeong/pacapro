@@ -493,7 +493,9 @@ router.put('/:id', verifyToken, async (req, res) => {
 
     if (preferredTime) {
       updates.push('preferred_time = ?');
-      params.push(preferredTime + ':00');
+      // HH:MM 형식이면 :00 붙이고, 이미 HH:MM:SS면 그대로 사용
+      const timeValue = preferredTime.length === 5 ? preferredTime + ':00' : preferredTime;
+      params.push(timeValue);
     }
 
     // 체크리스트 업데이트
