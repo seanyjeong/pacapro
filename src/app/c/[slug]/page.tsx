@@ -35,6 +35,14 @@ const ADMISSION_TYPES = [
   { value: 'both', label: '수시+정시' }
 ];
 
+// 전화번호 자동 포맷팅 (000-0000-0000)
+const formatPhoneNumber = (value: string) => {
+  const numbers = value.replace(/\D/g, '').slice(0, 11);
+  if (numbers.length <= 3) return numbers;
+  if (numbers.length <= 7) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+  return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7)}`;
+};
+
 export default function ConsultationPage() {
   const params = useParams();
   const router = useRouter();
@@ -393,7 +401,7 @@ export default function ConsultationPage() {
                 <Label className="text-xs">연락처 <span className="text-red-500">*</span></Label>
                 <Input
                   value={formData.studentPhone || ''}
-                  onChange={(e) => setFormData({ ...formData, studentPhone: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, studentPhone: formatPhoneNumber(e.target.value) })}
                   placeholder="010-0000-0000"
                   className="mt-1"
                 />
