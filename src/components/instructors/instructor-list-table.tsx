@@ -31,7 +31,7 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">강사 목록을 불러오는 중...</p>
         </CardContent>
       </Card>
@@ -105,10 +105,10 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
                     <div className="flex items-center">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         instructor.gender === 'male'
-                          ? 'bg-gradient-to-br from-sky-400 to-sky-600'
+                          ? 'bg-sky-500'
                           : instructor.gender === 'female'
-                          ? 'bg-gradient-to-br from-pink-400 to-pink-600'
-                          : 'bg-gradient-to-br from-primary-500 to-primary-600'
+                          ? 'bg-pink-500'
+                          : 'bg-primary'
                       }`}>
                         <span className="text-white font-bold text-sm">
                           {instructor.name.charAt(0)}

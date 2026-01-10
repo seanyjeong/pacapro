@@ -17,36 +17,31 @@ interface StatsCardProps {
     iconColor?: string;
 }
 
-const accentStyles: Record<AccentColor, { bar: string; iconBg: string; iconColor: string; glow: string }> = {
+const accentStyles: Record<AccentColor, { bar: string; iconBg: string; iconColor: string }> = {
     blue: {
-        bar: 'bg-gradient-to-r from-blue-500 to-blue-400',
+        bar: 'bg-blue-500',
         iconBg: 'bg-blue-50 dark:bg-blue-950/50',
         iconColor: 'text-blue-600 dark:text-blue-400',
-        glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(59,130,246,0.4)]',
     },
     cyan: {
-        bar: 'bg-gradient-to-r from-cyan-500 to-teal-400',
+        bar: 'bg-cyan-500',
         iconBg: 'bg-cyan-50 dark:bg-cyan-950/50',
         iconColor: 'text-cyan-600 dark:text-cyan-400',
-        glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(6,182,212,0.4)]',
     },
     violet: {
-        bar: 'bg-gradient-to-r from-violet-500 to-purple-400',
+        bar: 'bg-violet-500',
         iconBg: 'bg-violet-50 dark:bg-violet-950/50',
         iconColor: 'text-violet-600 dark:text-violet-400',
-        glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(139,92,246,0.4)]',
     },
     emerald: {
-        bar: 'bg-gradient-to-r from-emerald-500 to-green-400',
+        bar: 'bg-emerald-500',
         iconBg: 'bg-emerald-50 dark:bg-emerald-950/50',
         iconColor: 'text-emerald-600 dark:text-emerald-400',
-        glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)]',
     },
     amber: {
-        bar: 'bg-gradient-to-r from-amber-500 to-orange-400',
+        bar: 'bg-amber-500',
         iconBg: 'bg-amber-50 dark:bg-amber-950/50',
         iconColor: 'text-amber-600 dark:text-amber-400',
-        glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(245,158,11,0.4)]',
     },
 };
 
@@ -64,8 +59,7 @@ export function StatsCard({
     return (
         <Card className={cn(
             'group relative overflow-hidden transition-all duration-300',
-            'hover:-translate-y-1',
-            accent.glow
+            'hover:-translate-y-1'
         )}>
             {/* 상단 컬러 바 - 호버시 표시 */}
             <div className={cn(
@@ -78,7 +72,7 @@ export function StatsCard({
                     {/* Icon with subtle glow */}
                     <div className={cn(
                         'p-3 rounded-xl transition-all duration-300',
-                        'group-hover:scale-110',
+                        'group-hover:scale-105',
                         iconBgColor || accent.iconBg
                     )}>
                         <Icon className={cn(

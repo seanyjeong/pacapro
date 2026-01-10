@@ -98,7 +98,7 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw,
         <div className="space-y-6">
           {/* 프로필 */}
           <div className="flex items-start space-x-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-3xl">{student.name.charAt(0)}</span>
             </div>
             <div className="flex-1">

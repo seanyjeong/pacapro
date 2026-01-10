@@ -36,15 +36,10 @@
     --accent-emerald: 160 84% 39%;
     --accent-amber: 38 92% 50%;
 
-    /* 그라데이션 - Flat 스타일로 변경 (미니멀리즘) */
-    --gradient-primary: linear-gradient(135deg, hsl(221.2, 83.2%, 53.3%) 0%, hsl(217, 91%, 60%) 100%);
-    --gradient-card: none; 
-
-    /* 정교한 그림자 */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
-    --shadow-glow: 0 0 40px -10px hsla(217, 91%, 60%, 0.4);
+    /* 그림자 - Minimal & Subtle */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 4px 8px 0 rgba(0, 0, 0, 0.06);
 
     /* 폰트 */
     --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -80,9 +75,6 @@
     --input: 217 32% 17%;
     --ring: 224 76% 48%;
 
-    /* 다크 그라데이션 - 은은한 깊이감 */
-    --gradient-card: linear-gradient(180deg, hsl(222, 47%, 12%) 0%, hsl(222, 47%, 10%) 100%);
-    --shadow-glow: 0 0 40px -10px hsla(217, 91%, 60%, 0.15);
   }
 }
 
@@ -100,8 +92,8 @@
 
 /* Modern Scrollbar - Minimal & Clean */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -162,26 +154,4 @@
     box-shadow: var(--shadow-lg);
   }
 
-  /* 글래스모피즘 */
-  .glass {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-  .dark .glass {
-    background: rgba(30, 30, 30, 0.8);
-  }
-
-  /* 그라데이션 텍스트 */
-  .text-gradient {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* 글로우 효과 */
-  .glow {
-    box-shadow: var(--shadow-glow);
-  }
 }

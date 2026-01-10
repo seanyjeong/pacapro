@@ -214,7 +214,7 @@ export default function AdminUsersPage() {
                                     {/* User Info */}
                                     <div className="flex-1">
                                         <div className="flex items-center space-x-3 mb-2">
-                                            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                                            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
                                                 <span className="text-white font-bold text-sm">
                                                     {user.name.charAt(0)}
                                                 </span>

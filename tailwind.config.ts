@@ -67,35 +67,19 @@ const config: Config = {
           '0%': { opacity: '0', transform: 'scale(0.95)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
-        'bounce-in': {
-          '0%': { opacity: '0', transform: 'scale(0)' },
-          '50%': { transform: 'scale(1.1)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
-        },
         'slide-up': {
           '0%': { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        'shimmer': {
-          '0%': { backgroundPosition: '-200% 0' },
-          '100%': { backgroundPosition: '200% 0' },
         },
         'pulse-soft': {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.6' },
         },
-        'glow': {
-          '0%, 100%': { boxShadow: '0 0 20px -5px hsla(217, 91%, 60%, 0.3)' },
-          '50%': { boxShadow: '0 0 30px -5px hsla(217, 91%, 60%, 0.5)' },
-        },
       },
       animation: {
         'fade-in': 'fade-in 0.3s ease-out',
-        'bounce-in': 'bounce-in 0.5s ease-out',
         'slide-up': 'slide-up 0.5s ease-out',
-        'shimmer': 'shimmer 2s infinite linear',
         'pulse-soft': 'pulse-soft 2s infinite ease-in-out',
-        'glow': 'glow 2s infinite ease-in-out',
       },
     },
   },

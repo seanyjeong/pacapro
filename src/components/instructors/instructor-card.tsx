@@ -33,7 +33,7 @@ export function InstructorCard({ instructor }: InstructorCardProps) {
         {/* 이름 & 상태 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-2xl">
                 {instructor.name.charAt(0)}
               </span>
