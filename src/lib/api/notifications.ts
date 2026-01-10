@@ -54,6 +54,14 @@ export interface NotificationSettings {
   sens_overdue_auto_enabled: boolean;
   sens_overdue_auto_hour: number;
 
+  // SENS 상담 리마인드
+  sens_reminder_template_code: string;
+  sens_reminder_template_content: string;
+  sens_reminder_buttons: ConsultationButton[];
+  sens_reminder_image_url: string;
+  sens_reminder_auto_enabled: boolean;
+  sens_reminder_hours: number;
+
   // ===== 솔라피 설정 =====
   solapi_api_key: string;
   solapi_api_secret: string;
@@ -90,6 +98,14 @@ export interface NotificationSettings {
   solapi_overdue_image_url: string;
   solapi_overdue_auto_enabled: boolean;
   solapi_overdue_auto_hour: number;
+
+  // 솔라피 상담 리마인드
+  solapi_reminder_template_id: string;
+  solapi_reminder_template_content: string;
+  solapi_reminder_buttons: ConsultationButton[];
+  solapi_reminder_image_url: string;
+  solapi_reminder_auto_enabled: boolean;
+  solapi_reminder_hours: number;
 
   // ===== 공통 설정 =====
   is_enabled: boolean;        // SENS 활성화
@@ -219,6 +235,22 @@ export const notificationsAPI = {
    */
   sendTestSensOverdue: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
     const response = await apiClient.post<SendResponse>('/notifications/test-sens-overdue', { phone });
+    return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
+   * 솔라피 상담 리마인드 알림톡 테스트 발송
+   */
+  sendTestReminder: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-reminder', { phone });
+    return { success: response.success || false, groupId: response.groupId };
+  },
+
+  /**
+   * SENS 상담 리마인드 알림톡 테스트 발송
+   */
+  sendTestSensReminder: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-reminder', { phone });
     return { success: response.success || false, requestId: response.requestId };
   },
 

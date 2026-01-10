@@ -169,7 +169,21 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), async 
                 sens_overdue_buttons: setting.sens_overdue_buttons ? JSON.parse(setting.sens_overdue_buttons) : [],
                 sens_overdue_image_url: setting.sens_overdue_image_url || '',
                 sens_overdue_auto_enabled: setting.sens_overdue_auto_enabled || false,
-                sens_overdue_auto_hour: setting.sens_overdue_auto_hour ?? 9
+                sens_overdue_auto_hour: setting.sens_overdue_auto_hour ?? 9,
+                // 솔라피 상담 리마인드 알림톡 설정
+                solapi_reminder_template_id: setting.solapi_reminder_template_id || '',
+                solapi_reminder_template_content: setting.solapi_reminder_template_content || '',
+                solapi_reminder_buttons: setting.solapi_reminder_buttons ? JSON.parse(setting.solapi_reminder_buttons) : [],
+                solapi_reminder_image_url: setting.solapi_reminder_image_url || '',
+                solapi_reminder_auto_enabled: setting.solapi_reminder_auto_enabled || false,
+                solapi_reminder_hours: setting.solapi_reminder_hours ?? 1,
+                // SENS 상담 리마인드 알림톡 설정
+                sens_reminder_template_code: setting.sens_reminder_template_code || '',
+                sens_reminder_template_content: setting.sens_reminder_template_content || '',
+                sens_reminder_buttons: setting.sens_reminder_buttons ? JSON.parse(setting.sens_reminder_buttons) : [],
+                sens_reminder_image_url: setting.sens_reminder_image_url || '',
+                sens_reminder_auto_enabled: setting.sens_reminder_auto_enabled || false,
+                sens_reminder_hours: setting.sens_reminder_hours ?? 1
             }
         });
     } catch (error) {
@@ -254,7 +268,21 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
             sens_overdue_buttons,
             sens_overdue_image_url,
             sens_overdue_auto_enabled,
-            sens_overdue_auto_hour
+            sens_overdue_auto_hour,
+            // 솔라피 상담 리마인드
+            solapi_reminder_template_id,
+            solapi_reminder_template_content,
+            solapi_reminder_buttons,
+            solapi_reminder_image_url,
+            solapi_reminder_auto_enabled,
+            solapi_reminder_hours,
+            // SENS 상담 리마인드
+            sens_reminder_template_code,
+            sens_reminder_template_content,
+            sens_reminder_buttons,
+            sens_reminder_image_url,
+            sens_reminder_auto_enabled,
+            sens_reminder_hours
         } = req.body;
 
         // 기존 설정 확인
@@ -298,8 +326,12 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                  sens_trial_template_code, sens_trial_template_content, sens_trial_buttons, sens_trial_image_url,
                  sens_trial_auto_enabled, sens_trial_auto_hour,
                  sens_overdue_template_code, sens_overdue_template_content, sens_overdue_buttons, sens_overdue_image_url,
-                 sens_overdue_auto_enabled, sens_overdue_auto_hour)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 sens_overdue_auto_enabled, sens_overdue_auto_hour,
+                 solapi_reminder_template_id, solapi_reminder_template_content, solapi_reminder_buttons, solapi_reminder_image_url,
+                 solapi_reminder_auto_enabled, solapi_reminder_hours,
+                 sens_reminder_template_code, sens_reminder_template_content, sens_reminder_buttons, sens_reminder_image_url,
+                 sens_reminder_auto_enabled, sens_reminder_hours)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     req.user.academyId,
                     service_type || 'sens',
@@ -358,7 +390,20 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     sens_overdue_buttons ? JSON.stringify(sens_overdue_buttons) : null,
                     sens_overdue_image_url || null,
                     sens_overdue_auto_enabled || false,
-                    sens_overdue_auto_hour ?? 9
+                    sens_overdue_auto_hour ?? 9,
+                    // Reminder 필드
+                    solapi_reminder_template_id || null,
+                    solapi_reminder_template_content || null,
+                    solapi_reminder_buttons ? JSON.stringify(solapi_reminder_buttons) : null,
+                    solapi_reminder_image_url || null,
+                    solapi_reminder_auto_enabled || false,
+                    solapi_reminder_hours ?? 1,
+                    sens_reminder_template_code || null,
+                    sens_reminder_template_content || null,
+                    sens_reminder_buttons ? JSON.stringify(sens_reminder_buttons) : null,
+                    sens_reminder_image_url || null,
+                    sens_reminder_auto_enabled || false,
+                    sens_reminder_hours ?? 1
                 ]
             );
         } else {
@@ -420,7 +465,19 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     sens_overdue_buttons = ?,
                     sens_overdue_image_url = ?,
                     sens_overdue_auto_enabled = ?,
-                    sens_overdue_auto_hour = ?
+                    sens_overdue_auto_hour = ?,
+                    solapi_reminder_template_id = ?,
+                    solapi_reminder_template_content = ?,
+                    solapi_reminder_buttons = ?,
+                    solapi_reminder_image_url = ?,
+                    solapi_reminder_auto_enabled = ?,
+                    solapi_reminder_hours = ?,
+                    sens_reminder_template_code = ?,
+                    sens_reminder_template_content = ?,
+                    sens_reminder_buttons = ?,
+                    sens_reminder_image_url = ?,
+                    sens_reminder_auto_enabled = ?,
+                    sens_reminder_hours = ?
                 WHERE academy_id = ?`,
                 [
                     service_type || 'sens',
@@ -480,6 +537,19 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
                     sens_overdue_image_url || null,
                     sens_overdue_auto_enabled || false,
                     sens_overdue_auto_hour ?? 9,
+                    // Reminder 필드
+                    solapi_reminder_template_id || null,
+                    solapi_reminder_template_content || null,
+                    solapi_reminder_buttons ? JSON.stringify(solapi_reminder_buttons) : null,
+                    solapi_reminder_image_url || null,
+                    solapi_reminder_auto_enabled || false,
+                    solapi_reminder_hours ?? 1,
+                    sens_reminder_template_code || null,
+                    sens_reminder_template_content || null,
+                    sens_reminder_buttons ? JSON.stringify(sens_reminder_buttons) : null,
+                    sens_reminder_image_url || null,
+                    sens_reminder_auto_enabled || false,
+                    sens_reminder_hours ?? 1,
                     req.user.academyId
                 ]
             );
@@ -2475,12 +2545,15 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
         }
 
         const now = new Date();
-        const currentHour = now.getHours();
-        const todayDay = now.getDay(); // 0=일, 1=월, ...
-        const dayMap = ['일', '월', '화', '수', '목', '금', '토'];
-        const todayDayStr = dayMap[todayDay];
+        const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+        const currentHour = koreaTime.getHours();
+        const dayOfWeek = koreaTime.getDay(); // 0=일, 1=월, ...
+        const year = koreaTime.getFullYear();
+        const month = koreaTime.getMonth() + 1;
+        const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
-        console.log(`[SENS 자동발송] 시작 - ${now.toISOString()}, 현재 시간: ${currentHour}시, 오늘: ${todayDayStr}요일`);
+        console.log(`[SENS 자동발송] 시작 - ${koreaTime.toISOString()}, 현재 시간: ${currentHour}시, 오늘: ${dayNames[dayOfWeek]}요일`);
 
         // 현재 시간에 발송 설정된 학원들 조회
         const [academySettings] = await db.query(
@@ -2513,20 +2586,26 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
                 }
 
                 // 오늘 수업이 있는 미납 학생 조회
-                const [unpaidStudents] = await db.query(
+                const [unpaidStudentsRaw] = await db.query(
                     `SELECT DISTINCT s.id, s.name, s.phone, s.parent_phone, s.class_days,
-                            p.id as payment_id, p.amount, p.year, p.month,
+                            p.id as payment_id, p.final_amount as amount, p.year_month,
                             (SELECT COUNT(*) FROM notification_logs nl
                              WHERE nl.payment_id = p.id AND nl.status = 'sent') as sent_count
                      FROM students s
-                     JOIN payments p ON s.id = p.student_id
+                     JOIN student_payments p ON s.id = p.student_id
                      WHERE s.academy_id = ?
                        AND s.status = 'active'
-                       AND p.status = 'unpaid'
+                       AND s.deleted_at IS NULL
+                       AND p.payment_status IN ('pending', 'partial')
+                       AND p.year_month = ?
                        AND JSON_CONTAINS(COALESCE(s.class_days, '[]'), ?)
+                       AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)
                      ORDER BY s.name`,
-                    [setting.academy_id, JSON.stringify(todayDayStr)]
+                    [setting.academy_id, yearMonth, JSON.stringify(dayOfWeek)]
                 );
+
+                // 복호화
+                const unpaidStudents = decryptStudentArray(unpaidStudentsRaw);
 
                 console.log(`[SENS 자동발송] ${setting.academy_name}: 오늘 수업 있는 미납자 ${unpaidStudents.length}명`);
 
@@ -2534,13 +2613,13 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
                 let failCount = 0;
 
                 for (const student of unpaidStudents) {
-                    // 복호화
-                    const studentName = student.name ? decryptField(student.name, ENCRYPTION_KEY) : '';
-                    const studentPhone = student.phone ? decryptField(student.phone, ENCRYPTION_KEY) : '';
-                    const parentPhone = student.parent_phone ? decryptField(student.parent_phone, ENCRYPTION_KEY) : '';
+                    // 이미 decryptStudentArray로 복호화됨
+                    const studentName = student.name || '';
+                    const studentPhone = student.phone || '';
+                    const parentPhone = student.parent_phone || '';
 
                     // 전화번호 우선순위: 학부모 > 학생
-                    const recipientPhone = parentPhone || studentPhone;
+                    const recipientPhone = isValidPhoneNumber(parentPhone) ? parentPhone : studentPhone;
                     if (!recipientPhone || !isValidPhoneNumber(recipientPhone)) {
                         console.log(`[SENS 자동발송] ${studentName}: 유효한 전화번호 없음`);
                         continue;
@@ -2571,11 +2650,12 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
                     }
 
                     // 변수 치환
-                    const dateStr = `${now.getMonth() + 1}월 ${now.getDate()}일`;
+                    const monthFromYearMonth = student.year_month ? student.year_month.split('-')[1].replace(/^0/, '') : String(month);
+                    const dateStr = `${koreaTime.getMonth() + 1}월 ${koreaTime.getDate()}일`;
                     let content = templateContent || '';
                     content = content
                         .replace(/#{이름}/g, studentName)
-                        .replace(/#{월}/g, String(student.month))
+                        .replace(/#{월}/g, monthFromYearMonth)
                         .replace(/#{교육비}/g, Math.floor(Number(student.amount)).toLocaleString())
                         .replace(/#{날짜}/g, dateStr)
                         .replace(/#{학원명}/g, setting.academy_name)
@@ -2798,6 +2878,627 @@ router.post('/send-trial-today-auto-sens', async (req, res) => {
         res.status(500).json({
             error: 'Server Error',
             message: 'SENS 체험수업 자동발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/notifications/test-reminder
+ * 솔라피 상담 리마인드 알림톡 테스트 발송
+ */
+router.post('/test-reminder', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { phone } = req.body;
+
+        if (!phone || !isValidPhoneNumber(phone)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '유효한 전화번호를 입력해주세요.'
+            });
+        }
+
+        // 설정 조회
+        const [settings] = await db.query(
+            'SELECT * FROM notification_settings WHERE academy_id = ?',
+            [req.user.academyId]
+        );
+
+        if (settings.length === 0) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '알림 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        const setting = settings[0];
+
+        // 솔라피 설정 확인
+        if (!setting.solapi_api_key || !setting.solapi_api_secret || !setting.solapi_pfid) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '솔라피 API 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        if (!setting.solapi_reminder_template_id) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '리마인드 템플릿 ID를 먼저 설정해주세요.'
+            });
+        }
+
+        // Secret 복호화
+        const decryptedSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
+        if (!decryptedSecret) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '솔라피 API Secret이 올바르지 않습니다.'
+            });
+        }
+
+        // 학원 정보 조회
+        const [academy] = await db.query(
+            'SELECT name, phone FROM academies WHERE id = ?',
+            [req.user.academyId]
+        );
+        const academyName = academy[0]?.name || '학원';
+        const academyPhone = academy[0]?.phone || '';
+
+        // 테스트 데이터
+        const now = new Date();
+        const testDate = `${now.getMonth() + 1}월 ${now.getDate()}일`;
+        const testTime = '14:00';
+        const reminderHours = setting.solapi_reminder_hours || 1;
+        const remainingTimeText = reminderHours >= 24
+            ? `${Math.floor(reminderHours / 24)}일`
+            : `${reminderHours}시간`;
+
+        // 템플릿 변수 치환
+        let content = setting.solapi_reminder_template_content || '';
+        content = content
+            .replace(/#{이름}/g, '테스트학생')
+            .replace(/#{날짜}/g, testDate)
+            .replace(/#{시간}/g, testTime)
+            .replace(/#{남은시간}/g, remainingTimeText)
+            .replace(/#{예약번호}/g, 'TEST-001')
+            .replace(/#{학원명}/g, academyName)
+            .replace(/#{학원전화}/g, academyPhone);
+
+        // 버튼 설정 파싱
+        let buttons = null;
+        if (setting.solapi_reminder_buttons) {
+            try {
+                buttons = JSON.parse(setting.solapi_reminder_buttons);
+            } catch (e) {
+                console.error('버튼 설정 파싱 오류:', e);
+            }
+        }
+
+        // 이미지 URL
+        const imageUrl = setting.solapi_reminder_image_url || null;
+
+        // 솔라피 알림톡 발송
+        const result = await sendAlimtalkSolapi(
+            {
+                solapi_api_key: setting.solapi_api_key,
+                solapi_api_secret: decryptedSecret,
+                solapi_pfid: setting.solapi_pfid,
+                solapi_sender_phone: setting.solapi_sender_phone
+            },
+            setting.solapi_reminder_template_id,
+            [{ phone, content, buttons, imageUrl }]
+        );
+
+        if (result.success) {
+            res.json({
+                success: true,
+                message: '리마인드 테스트 알림톡이 발송되었습니다.'
+            });
+        } else {
+            res.status(400).json({
+                error: 'Send Error',
+                message: result.message || '알림톡 발송에 실패했습니다.',
+                details: result.details
+            });
+        }
+
+    } catch (error) {
+        console.error('리마인드 테스트 발송 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '테스트 발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/notifications/test-sens-reminder
+ * SENS 상담 리마인드 알림톡 테스트 발송
+ */
+router.post('/test-sens-reminder', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+    try {
+        const { phone } = req.body;
+
+        if (!phone || !isValidPhoneNumber(phone)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '유효한 전화번호를 입력해주세요.'
+            });
+        }
+
+        // 설정 조회
+        const [settings] = await db.query(
+            'SELECT * FROM notification_settings WHERE academy_id = ?',
+            [req.user.academyId]
+        );
+
+        if (settings.length === 0) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '알림 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        const setting = settings[0];
+
+        // SENS 설정 확인
+        if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: 'SENS API 설정을 먼저 완료해주세요.'
+            });
+        }
+
+        if (!setting.sens_reminder_template_code) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: '리마인드 템플릿 코드를 먼저 설정해주세요.'
+            });
+        }
+
+        // Secret 복호화
+        const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
+        if (!decryptedSecret) {
+            return res.status(400).json({
+                error: 'Configuration Error',
+                message: 'SENS API Secret이 올바르지 않습니다.'
+            });
+        }
+
+        // 학원 정보 조회
+        const [academy] = await db.query(
+            'SELECT name, phone FROM academies WHERE id = ?',
+            [req.user.academyId]
+        );
+        const academyName = academy[0]?.name || '학원';
+        const academyPhone = academy[0]?.phone || '';
+
+        // 테스트 데이터
+        const now = new Date();
+        const testDate = `${now.getMonth() + 1}월 ${now.getDate()}일`;
+        const testTime = '14:00';
+        const reminderHours = setting.sens_reminder_hours || 1;
+        const remainingTimeText = reminderHours >= 24
+            ? `${Math.floor(reminderHours / 24)}일`
+            : `${reminderHours}시간`;
+
+        // 템플릿 변수 치환
+        let content = setting.sens_reminder_template_content || '';
+        content = content
+            .replace(/#{이름}/g, '테스트학생')
+            .replace(/#{날짜}/g, testDate)
+            .replace(/#{시간}/g, testTime)
+            .replace(/#{남은시간}/g, remainingTimeText)
+            .replace(/#{예약번호}/g, 'TEST-001')
+            .replace(/#{학원명}/g, academyName)
+            .replace(/#{학원전화}/g, academyPhone);
+
+        // 버튼 설정 파싱
+        let buttons = null;
+        if (setting.sens_reminder_buttons) {
+            try {
+                buttons = JSON.parse(setting.sens_reminder_buttons);
+            } catch (e) {
+                console.error('버튼 설정 파싱 오류:', e);
+            }
+        }
+
+        // 이미지 URL
+        const imageUrl = setting.sens_reminder_image_url || null;
+
+        // SENS 알림톡 발송
+        const result = await sendAlimtalk(
+            {
+                naver_access_key: setting.naver_access_key,
+                naver_secret_key: decryptedSecret,
+                naver_service_id: setting.naver_service_id,
+                kakao_channel_id: setting.kakao_channel_id
+            },
+            setting.sens_reminder_template_code,
+            [{
+                phone,
+                content,
+                buttons,
+                imageUrl
+            }]
+        );
+
+        if (result.success) {
+            res.json({
+                success: true,
+                message: 'SENS 리마인드 테스트 알림톡이 발송되었습니다.'
+            });
+        } else {
+            res.status(400).json({
+                error: 'Send Error',
+                message: result.message || '알림톡 발송에 실패했습니다.',
+                details: result.details
+            });
+        }
+
+    } catch (error) {
+        console.error('SENS 리마인드 테스트 발송 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '테스트 발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/notifications/send-reminder-auto
+ * 솔라피 상담 리마인드 자동발송 (n8n용)
+ */
+router.post('/send-reminder-auto', async (req, res) => {
+    try {
+        // API Key 검증
+        const apiKey = req.headers['x-api-key'];
+        if (apiKey !== 'paca-n8n-api-key-2024') {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const now = new Date();
+        const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+
+        console.log(`[Solapi 리마인드 자동발송] 시작 - ${koreaTime.toISOString()}`);
+
+        // 리마인드 자동발송이 활성화된 학원들 조회
+        const [academySettings] = await db.query(
+            `SELECT ns.*, a.name as academy_name, a.phone as academy_phone
+             FROM notification_settings ns
+             JOIN academies a ON ns.academy_id = a.id
+             WHERE ns.is_enabled = 1
+             AND ns.solapi_enabled = 1
+             AND ns.solapi_reminder_auto_enabled = 1`
+        );
+
+        console.log(`[Solapi 리마인드 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
+
+        const results = [];
+
+        for (const setting of academySettings) {
+            try {
+                // 솔라피 설정 확인
+                if (!setting.solapi_api_key || !setting.solapi_api_secret || !setting.solapi_pfid) {
+                    console.log(`[Solapi 리마인드 자동발송] ${setting.academy_name}: 솔라피 설정 미완료`);
+                    continue;
+                }
+
+                if (!setting.solapi_reminder_template_id) {
+                    console.log(`[Solapi 리마인드 자동발송] ${setting.academy_name}: 리마인드 템플릿 미설정`);
+                    continue;
+                }
+
+                // Secret 복호화
+                const decryptedSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
+                if (!decryptedSecret) {
+                    console.log(`[Solapi 리마인드 자동발송] ${setting.academy_name}: Secret 복호화 실패`);
+                    continue;
+                }
+
+                const reminderHours = setting.solapi_reminder_hours || 1;
+
+                // 현재 시간 + reminderHours 시간대의 상담 조회
+                // 예: 1시간 전 발송이면, 지금이 13시면 14시 상담 대상
+                const targetTime = new Date(koreaTime.getTime() + reminderHours * 60 * 60 * 1000);
+                const targetDateStr = targetTime.toISOString().split('T')[0]; // YYYY-MM-DD
+                const targetHour = targetTime.getHours();
+
+                // 해당 시간대 상담 조회 (confirmed 상태, 아직 리마인드 안 보낸 건)
+                const [consultationsRaw] = await db.query(
+                    `SELECT c.*, c.id as consultation_id
+                     FROM consultations c
+                     WHERE c.academy_id = ?
+                       AND c.status = 'confirmed'
+                       AND DATE(c.scheduled_date) = ?
+                       AND HOUR(c.scheduled_time) = ?
+                       AND c.reminder_alimtalk_sent_at IS NULL
+                       AND (c.parent_phone IS NOT NULL OR c.phone IS NOT NULL)`,
+                    [setting.academy_id, targetDateStr, targetHour]
+                );
+
+                // 복호화
+                const consultations = consultationsRaw.map(c => ({
+                    ...c,
+                    student_name: decryptData(c.student_name),
+                    parent_name: decryptData(c.parent_name),
+                    phone: decryptData(c.phone),
+                    parent_phone: decryptData(c.parent_phone)
+                }));
+
+                console.log(`[Solapi 리마인드 자동발송] ${setting.academy_name}: ${targetDateStr} ${targetHour}시 상담 ${consultations.length}건`);
+
+                let sentCount = 0;
+                let failCount = 0;
+
+                const remainingTimeText = reminderHours >= 24
+                    ? `${Math.floor(reminderHours / 24)}일`
+                    : `${reminderHours}시간`;
+
+                for (const consultation of consultations) {
+                    const recipientPhone = consultation.parent_phone || consultation.phone;
+                    const recipientName = consultation.parent_name || consultation.student_name || '고객';
+
+                    if (!recipientPhone) continue;
+
+                    // 날짜/시간 포맷
+                    const schedDate = new Date(consultation.scheduled_date);
+                    const dateStr = `${schedDate.getMonth() + 1}월 ${schedDate.getDate()}일`;
+                    const timeStr = consultation.scheduled_time ? consultation.scheduled_time.slice(0, 5) : '';
+
+                    // 템플릿 변수 치환
+                    let content = setting.solapi_reminder_template_content || '';
+                    content = content
+                        .replace(/#{이름}/g, recipientName)
+                        .replace(/#{날짜}/g, dateStr)
+                        .replace(/#{시간}/g, timeStr)
+                        .replace(/#{남은시간}/g, remainingTimeText)
+                        .replace(/#{예약번호}/g, consultation.reservation_number || '')
+                        .replace(/#{학원명}/g, setting.academy_name || '')
+                        .replace(/#{학원전화}/g, setting.academy_phone || '');
+
+                    // 버튼 파싱
+                    let buttons = null;
+                    if (setting.solapi_reminder_buttons) {
+                        try {
+                            buttons = JSON.parse(setting.solapi_reminder_buttons);
+                        } catch (e) {}
+                    }
+
+                    const imageUrl = setting.solapi_reminder_image_url || null;
+
+                    // 발송
+                    const result = await sendAlimtalkSolapi(
+                        {
+                            solapi_api_key: setting.solapi_api_key,
+                            solapi_api_secret: decryptedSecret,
+                            solapi_pfid: setting.solapi_pfid,
+                            solapi_sender_phone: setting.solapi_sender_phone
+                        },
+                        setting.solapi_reminder_template_id,
+                        [{ phone: recipientPhone, content, buttons, imageUrl }]
+                    );
+
+                    if (result.success) {
+                        sentCount++;
+                        // 발송 시간 기록
+                        await db.query(
+                            `UPDATE consultations SET reminder_alimtalk_sent_at = NOW() WHERE id = ?`,
+                            [consultation.consultation_id]
+                        );
+                    } else {
+                        failCount++;
+                        console.log(`[Solapi 리마인드 자동발송] 발송 실패: ${recipientPhone}`, result.message);
+                    }
+                }
+
+                results.push({
+                    academy: setting.academy_name,
+                    targetTime: `${targetDateStr} ${targetHour}:00`,
+                    total: consultations.length,
+                    sent: sentCount,
+                    failed: failCount
+                });
+
+            } catch (academyError) {
+                console.error(`[Solapi 리마인드 자동발송] ${setting.academy_name} 처리 오류:`, academyError);
+                results.push({
+                    academy: setting.academy_name,
+                    error: academyError.message
+                });
+            }
+        }
+
+        console.log(`[Solapi 리마인드 자동발송] 완료`, results);
+
+        res.json({
+            message: 'Solapi 상담 리마인드 자동발송 완료',
+            results
+        });
+
+    } catch (error) {
+        console.error('[Solapi 리마인드 자동발송] 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '리마인드 자동발송에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/notifications/send-reminder-auto-sens
+ * SENS 상담 리마인드 자동발송 (n8n용)
+ */
+router.post('/send-reminder-auto-sens', async (req, res) => {
+    try {
+        // API Key 검증
+        const apiKey = req.headers['x-api-key'];
+        if (apiKey !== 'paca-n8n-api-key-2024') {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const now = new Date();
+        const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+
+        console.log(`[SENS 리마인드 자동발송] 시작 - ${koreaTime.toISOString()}`);
+
+        // 리마인드 자동발송이 활성화된 학원들 조회
+        const [academySettings] = await db.query(
+            `SELECT ns.*, a.name as academy_name, a.phone as academy_phone
+             FROM notification_settings ns
+             JOIN academies a ON ns.academy_id = a.id
+             WHERE ns.is_enabled = 1
+             AND ns.sens_reminder_auto_enabled = 1`
+        );
+
+        console.log(`[SENS 리마인드 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
+
+        const results = [];
+
+        for (const setting of academySettings) {
+            try {
+                // SENS 설정 확인
+                if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
+                    console.log(`[SENS 리마인드 자동발송] ${setting.academy_name}: SENS 설정 미완료`);
+                    continue;
+                }
+
+                if (!setting.sens_reminder_template_code) {
+                    console.log(`[SENS 리마인드 자동발송] ${setting.academy_name}: 리마인드 템플릿 미설정`);
+                    continue;
+                }
+
+                // Secret 복호화
+                const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
+                if (!decryptedSecret) {
+                    console.log(`[SENS 리마인드 자동발송] ${setting.academy_name}: Secret 복호화 실패`);
+                    continue;
+                }
+
+                const reminderHours = setting.sens_reminder_hours || 1;
+
+                // 현재 시간 + reminderHours 시간대의 상담 조회
+                const targetTime = new Date(koreaTime.getTime() + reminderHours * 60 * 60 * 1000);
+                const targetDateStr = targetTime.toISOString().split('T')[0];
+                const targetHour = targetTime.getHours();
+
+                // 해당 시간대 상담 조회
+                const [consultationsRaw] = await db.query(
+                    `SELECT c.*, c.id as consultation_id
+                     FROM consultations c
+                     WHERE c.academy_id = ?
+                       AND c.status = 'confirmed'
+                       AND DATE(c.scheduled_date) = ?
+                       AND HOUR(c.scheduled_time) = ?
+                       AND c.reminder_alimtalk_sent_at IS NULL
+                       AND (c.parent_phone IS NOT NULL OR c.phone IS NOT NULL)`,
+                    [setting.academy_id, targetDateStr, targetHour]
+                );
+
+                // 복호화
+                const consultations = consultationsRaw.map(c => ({
+                    ...c,
+                    student_name: decryptData(c.student_name),
+                    parent_name: decryptData(c.parent_name),
+                    phone: decryptData(c.phone),
+                    parent_phone: decryptData(c.parent_phone)
+                }));
+
+                console.log(`[SENS 리마인드 자동발송] ${setting.academy_name}: ${targetDateStr} ${targetHour}시 상담 ${consultations.length}건`);
+
+                let sentCount = 0;
+                let failCount = 0;
+
+                const remainingTimeText = reminderHours >= 24
+                    ? `${Math.floor(reminderHours / 24)}일`
+                    : `${reminderHours}시간`;
+
+                for (const consultation of consultations) {
+                    const recipientPhone = consultation.parent_phone || consultation.phone;
+                    const recipientName = consultation.parent_name || consultation.student_name || '고객';
+
+                    if (!recipientPhone) continue;
+
+                    // 날짜/시간 포맷
+                    const schedDate = new Date(consultation.scheduled_date);
+                    const dateStr = `${schedDate.getMonth() + 1}월 ${schedDate.getDate()}일`;
+                    const timeStr = consultation.scheduled_time ? consultation.scheduled_time.slice(0, 5) : '';
+
+                    // 템플릿 변수 치환
+                    let content = setting.sens_reminder_template_content || '';
+                    content = content
+                        .replace(/#{이름}/g, recipientName)
+                        .replace(/#{날짜}/g, dateStr)
+                        .replace(/#{시간}/g, timeStr)
+                        .replace(/#{남은시간}/g, remainingTimeText)
+                        .replace(/#{예약번호}/g, consultation.reservation_number || '')
+                        .replace(/#{학원명}/g, setting.academy_name || '')
+                        .replace(/#{학원전화}/g, setting.academy_phone || '');
+
+                    // 버튼 파싱
+                    let buttons = null;
+                    if (setting.sens_reminder_buttons) {
+                        try {
+                            buttons = JSON.parse(setting.sens_reminder_buttons);
+                        } catch (e) {}
+                    }
+
+                    const imageUrl = setting.sens_reminder_image_url || null;
+
+                    // 발송
+                    const result = await sendAlimtalk(
+                        {
+                            naver_access_key: setting.naver_access_key,
+                            naver_secret_key: decryptedSecret,
+                            naver_service_id: setting.naver_service_id,
+                            kakao_channel_id: setting.kakao_channel_id
+                        },
+                        setting.sens_reminder_template_code,
+                        [{ phone: recipientPhone, content, buttons, imageUrl }]
+                    );
+
+                    if (result.success) {
+                        sentCount++;
+                        // 발송 시간 기록
+                        await db.query(
+                            `UPDATE consultations SET reminder_alimtalk_sent_at = NOW() WHERE id = ?`,
+                            [consultation.consultation_id]
+                        );
+                    } else {
+                        failCount++;
+                        console.log(`[SENS 리마인드 자동발송] 발송 실패: ${recipientPhone}`, result.message);
+                    }
+                }
+
+                results.push({
+                    academy: setting.academy_name,
+                    targetTime: `${targetDateStr} ${targetHour}:00`,
+                    total: consultations.length,
+                    sent: sentCount,
+                    failed: failCount
+                });
+
+            } catch (academyError) {
+                console.error(`[SENS 리마인드 자동발송] ${setting.academy_name} 처리 오류:`, academyError);
+                results.push({
+                    academy: setting.academy_name,
+                    error: academyError.message
+                });
+            }
+        }
+
+        console.log(`[SENS 리마인드 자동발송] 완료`, results);
+
+        res.json({
+            message: 'SENS 상담 리마인드 자동발송 완료',
+            results
+        });
+
+    } catch (error) {
+        console.error('[SENS 리마인드 자동발송] 오류:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'SENS 리마인드 자동발송에 실패했습니다.'
         });
     }
 });
