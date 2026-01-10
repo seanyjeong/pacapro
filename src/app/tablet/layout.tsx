@@ -19,7 +19,7 @@ import {
   Mountain
 } from 'lucide-react';
 
-const APP_VERSION = 'v3.3.2';
+const APP_VERSION = 'v3.3.3';
 
 // Navigation items (대시보드 제거)
 const navigation = [
