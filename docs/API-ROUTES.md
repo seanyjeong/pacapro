@@ -1,6 +1,6 @@
 # P-ACA API 명세서
 
-> **Last Updated**: 2026-01-02
+> **Last Updated**: 2026-01-10
 > **Base URL**: `https://chejump.com:8320/api`
 > **Authentication**: Bearer Token (JWT)
 
@@ -27,7 +27,8 @@
 17. [푸시 알림 (Push)](#푸시-알림-push)
 18. [토스 결제 (Toss)](#토스-결제-toss)
 19. [공개 API (Public)](#공개-api-public)
-20. [기타](#기타)
+20. [학원 일정 (Academy Events)](#학원-일정-academy-events)
+21. [기타](#기타)
 
 ---
 
@@ -483,6 +484,30 @@ Authorization: Bearer <JWT_TOKEN>
 | GET | `/reservation/:reservationNumber` | 예약 정보 조회 |
 | PUT | `/reservation/:reservationNumber` | 예약 수정 |
 | GET | `/check-slug/:slug` | 슬러그 사용 가능 확인 |
+
+---
+
+## 학원 일정 (Academy Events)
+
+**Base**: `/api/academy-events`
+
+| Method | Endpoint | 권한 | 설명 |
+|--------|----------|------|------|
+| GET | `/` | Token | 학원 일정 목록 |
+| GET | `/:id` | Token | 일정 상세 |
+| POST | `/` | schedules.edit | 일정 등록 |
+| PUT | `/:id` | schedules.edit | 일정 수정 |
+| DELETE | `/:id` | schedules.edit | 일정 삭제 |
+
+### 일정 타입 (event_type)
+- `work` - 업무
+- `academy` - 학원
+- `holiday` - 휴일 (자동 휴강 처리)
+- `etc` - 기타
+
+### 휴일 설정 시 자동 처리
+- `is_holiday: true` 설정 시 해당 날짜 수업 휴강 처리
+- 상담 슬롯 차단 (morning/afternoon/evening)
 
 ---
 

@@ -36,5 +36,5 @@ src/app/settings/page.tsx           → vX.X.X + 날짜
 ## 문서
 
 상세 스키마/API는 `docs/` 폴더 참조:
-- DATABASE-SCHEMA.md (46개 테이블)
+- DATABASE-SCHEMA.md (41개 테이블)
 - API-ROUTES.md (200+ 엔드포인트)
