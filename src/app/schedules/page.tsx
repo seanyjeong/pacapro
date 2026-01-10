@@ -290,32 +290,53 @@ export default function SchedulesPage() {
               </div>
 
               {/* 강사 근무 배정 패널 (접기/펼치기) */}
-              <div className={`hidden lg:flex flex-col transition-all duration-300 ${isPanelExpanded ? 'w-80' : 'w-10'}`}>
-                {/* 토글 버튼 */}
-                <button
-                  onClick={togglePanel}
-                  className="flex items-center justify-center h-10 mb-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                  title={isPanelExpanded ? '패널 접기' : '강사 근무 배정 펼치기'}
-                >
-                  {isPanelExpanded ? (
-                    <>
+              <div className={`hidden lg:flex flex-col transition-all duration-300 ${isPanelExpanded ? 'w-80' : 'w-12'}`}>
+                {isPanelExpanded ? (
+                  <>
+                    {/* 펼쳐진 상태: 토글 버튼 + 패널 */}
+                    <button
+                      onClick={togglePanel}
+                      className="flex items-center justify-center h-10 mb-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                      title="패널 접기"
+                    >
                       <PanelRightClose className="w-4 h-4 mr-2" />
                       <span className="text-sm">접기</span>
-                    </>
-                  ) : (
-                    <PanelRightOpen className="w-4 h-4" />
-                  )}
-                </button>
-
-                {/* 패널 내용 */}
-                {isPanelExpanded && (
-                  <InstructorSchedulePanel
-                    date={selectedDate}
-                    onRequestExtraDay={() => setExtraDayModalOpen(true)}
-                    onSave={() => {
-                      loadInstructorStats();
-                    }}
-                  />
+                    </button>
+                    <InstructorSchedulePanel
+                      date={selectedDate}
+                      onRequestExtraDay={() => setExtraDayModalOpen(true)}
+                      onSave={() => {
+                        loadInstructorStats();
+                      }}
+                    />
+                  </>
+                ) : (
+                  /* 접힌 상태: 미니 요약바 */
+                  <button
+                    onClick={togglePanel}
+                    className="flex flex-col items-center gap-3 py-4 px-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors h-full"
+                    title="강사 근무 배정 펼치기"
+                  >
+                    <PanelRightOpen className="w-4 h-4 text-muted-foreground" />
+                    {selectedDate && instructorStats[selectedDate] && (
+                      <>
+                        <div className="flex flex-col items-center gap-1">
+                          <UserCheck className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-xs font-medium">
+                            {(instructorStats[selectedDate]?.morning?.attended || 0) +
+                             (instructorStats[selectedDate]?.afternoon?.attended || 0) +
+                             (instructorStats[selectedDate]?.evening?.attended || 0)}
+                          </span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-xs font-medium">
+                            {schedules.filter(s => s.class_date === selectedDate).length}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </button>
                 )}
               </div>
             </div>
