@@ -16,7 +16,7 @@ interface SenderNumber {
 }
 
 type ServiceType = 'sens' | 'solapi';
-type TemplateType = 'unpaid' | 'consultation' | 'trial' | 'overdue';
+type TemplateType = 'unpaid' | 'consultation' | 'trial' | 'overdue' | 'reminder';
 
 export default function NotificationSettingsPage() {
   const [settings, setSettings] = useState<NotificationSettings>({
@@ -53,6 +53,13 @@ export default function NotificationSettingsPage() {
     sens_overdue_image_url: '',
     sens_overdue_auto_enabled: false,
     sens_overdue_auto_hour: 9,
+    // SENS 상담 리마인드
+    sens_reminder_template_code: '',
+    sens_reminder_template_content: '',
+    sens_reminder_buttons: [],
+    sens_reminder_image_url: '',
+    sens_reminder_auto_enabled: false,
+    sens_reminder_hours: 1,
     // ===== 솔라피 설정 =====
     solapi_api_key: '',
     solapi_api_secret: '',
@@ -84,6 +91,13 @@ export default function NotificationSettingsPage() {
     solapi_overdue_image_url: '',
     solapi_overdue_auto_enabled: false,
     solapi_overdue_auto_hour: 9,
+    // 솔라피 상담 리마인드
+    solapi_reminder_template_id: '',
+    solapi_reminder_template_content: '',
+    solapi_reminder_buttons: [],
+    solapi_reminder_image_url: '',
+    solapi_reminder_auto_enabled: false,
+    solapi_reminder_hours: 1,
     // ===== 공통 설정 =====
     is_enabled: false,        // SENS 활성화
     solapi_enabled: false,    // 솔라피 활성화
@@ -105,14 +119,19 @@ export default function NotificationSettingsPage() {
   const [testingSensConsultation, setTestingSensConsultation] = useState(false);
   const [testingSensTrial, setTestingSensTrial] = useState(false);
   const [testingSensOverdue, setTestingSensOverdue] = useState(false);
+  const [testingSensReminder, setTestingSensReminder] = useState(false);
+  // 솔라피 리마인드 테스트 상태
+  const [testingReminder, setTestingReminder] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [testPhoneConsultation, setTestPhoneConsultation] = useState('');
   const [testPhoneTrial, setTestPhoneTrial] = useState('');
   const [testPhoneOverdue, setTestPhoneOverdue] = useState('');
+  const [testPhoneReminder, setTestPhoneReminder] = useState('');
   // SENS 테스트 전화번호
   const [testPhoneSensConsultation, setTestPhoneSensConsultation] = useState('');
   const [testPhoneSensTrial, setTestPhoneSensTrial] = useState('');
   const [testPhoneSensOverdue, setTestPhoneSensOverdue] = useState('');
+  const [testPhoneSensReminder, setTestPhoneSensReminder] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [sendingUnpaid, setSendingUnpaid] = useState(false);
 
@@ -393,6 +412,25 @@ export default function NotificationSettingsPage() {
     }
   };
 
+  const handleTestReminder = async () => {
+    if (!testPhoneReminder) {
+      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
+      return;
+    }
+    setTestingReminder(true);
+    setMessage(null);
+    try {
+      await notificationsAPI.sendTestReminder(testPhoneReminder);
+      setMessage({ type: 'success', text: '상담 리마인드 테스트 메시지가 발송되었습니다.' });
+      loadLogs();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || '상담 리마인드 테스트 발송에 실패했습니다.' });
+    } finally {
+      setTestingReminder(false);
+    }
+  };
+
   // 체험수업 버튼 추가
   const addTrialButton = () => {
     const newButton: ConsultationButton = {
@@ -457,6 +495,20 @@ export default function NotificationSettingsPage() {
     }));
   };
 
+  // 솔라피 리마인드 버튼
+  const addReminderButton = () => {
+    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
+    setSettings(prev => ({ ...prev, solapi_reminder_buttons: [...(prev.solapi_reminder_buttons || []), newButton] }));
+  };
+  const removeReminderButton = (index: number) => {
+    setSettings(prev => ({ ...prev, solapi_reminder_buttons: prev.solapi_reminder_buttons.filter((_, i) => i !== index) }));
+  };
+  const updateReminderButton = (index: number, field: keyof ConsultationButton, value: string) => {
+    setSettings(prev => ({
+      ...prev, solapi_reminder_buttons: prev.solapi_reminder_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
+    }));
+  };
+
   // ===== SENS 버튼 관리 =====
   // SENS 납부안내 버튼
   const addSensUnpaidButton = () => {
@@ -511,6 +563,20 @@ export default function NotificationSettingsPage() {
   const updateSensOverdueButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
       ...prev, sens_overdue_buttons: prev.sens_overdue_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
+    }));
+  };
+
+  // SENS 리마인드 버튼
+  const addSensReminderButton = () => {
+    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
+    setSettings(prev => ({ ...prev, sens_reminder_buttons: [...(prev.sens_reminder_buttons || []), newButton] }));
+  };
+  const removeSensReminderButton = (index: number) => {
+    setSettings(prev => ({ ...prev, sens_reminder_buttons: prev.sens_reminder_buttons.filter((_, i) => i !== index) }));
+  };
+  const updateSensReminderButton = (index: number, field: keyof ConsultationButton, value: string) => {
+    setSettings(prev => ({
+      ...prev, sens_reminder_buttons: prev.sens_reminder_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
     }));
   };
 
@@ -569,6 +635,25 @@ export default function NotificationSettingsPage() {
       setMessage({ type: 'error', text: err.response?.data?.message || 'SENS 미납자 테스트 발송에 실패했습니다.' });
     } finally {
       setTestingSensOverdue(false);
+    }
+  };
+
+  const handleTestSensReminder = async () => {
+    if (!testPhoneSensReminder) {
+      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
+      return;
+    }
+    setTestingSensReminder(true);
+    setMessage(null);
+    try {
+      await notificationsAPI.sendTestSensReminder(testPhoneSensReminder);
+      setMessage({ type: 'success', text: 'SENS 상담 리마인드 테스트 메시지가 발송되었습니다.' });
+      loadLogs();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || 'SENS 상담 리마인드 테스트 발송에 실패했습니다.' });
+    } finally {
+      setTestingSensReminder(false);
     }
   };
 
@@ -1329,6 +1414,20 @@ export default function NotificationSettingsPage() {
               체험수업 알림톡
               {settings.solapi_trial_template_id && (
                 <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'trial' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTemplate('reminder')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                activeTemplate === 'reminder'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-muted text-foreground hover:bg-muted/80'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              상담 리마인드
+              {settings.solapi_reminder_template_id && (
+                <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'reminder' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
               )}
             </button>
           </div>
@@ -2534,6 +2633,338 @@ export default function NotificationSettingsPage() {
         </div>
       )}
 
+      {/* 솔라피 상담 리마인드 알림톡 템플릿 */}
+      {activeTab === 'solapi' && activeTemplate === 'reminder' && (
+        <div className="bg-card rounded-lg shadow-sm border border-purple-200 dark:border-purple-800 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 ID</label>
+              <input
+                type="text"
+                value={settings.solapi_reminder_template_id}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_reminder_template_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="KA01TP..."
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
+              <textarea
+                value={settings.solapi_reminder_template_content}
+                onChange={e => setSettings(prev => ({ ...prev, solapi_reminder_template_content: e.target.value }))}
+                rows={10}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"
+                placeholder={`안녕하세요, #{학원명}입니다.
+#{이름}님, 예약하신 상담이 #{남은시간} 후로 예정되어 있습니다.
+
+■ 상담 일정
+#{날짜} #{시간}
+
+문의사항은 카카오톡 채널로 연락주세요.`}
+              />
+            </div>
+
+            <div className="md:col-span-2 p-3 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+              <p className="text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">사용 가능한 변수</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-purple-700 dark:text-purple-300">{'#{이름}'}</code>
+                  <span className="text-muted-foreground">학생/학부모명</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-purple-700 dark:text-purple-300">{'#{날짜}'}</code>
+                  <span className="text-muted-foreground">상담 날짜</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-purple-700 dark:text-purple-300">{'#{시간}'}</code>
+                  <span className="text-muted-foreground">상담 시간</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-purple-700 dark:text-purple-300">{'#{남은시간}'}</code>
+                  <span className="text-muted-foreground">1시간, 2시간 등</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-purple-700 dark:text-purple-300">{'#{예약번호}'}</code>
+                  <span className="text-muted-foreground">상담 예약번호</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <code className="bg-card px-2 py-1 rounded border border-border text-purple-700 dark:text-purple-300">{'#{학원명}'}</code>
+                  <span className="text-muted-foreground">학원 이름</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 상담 리마인드 알림톡 미리보기 */}
+            {settings.solapi_reminder_template_content && (
+              <div className="md:col-span-2">
+                <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
+                <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
+                    <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
+                      <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
+                      </svg>
+                    </div>
+                    <span className="font-medium text-gray-800 text-sm">알림톡</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
+                        <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-600 mb-1">{academyName}</p>
+                      <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+                        {/* 이미지 미리보기 */}
+                        {settings.solapi_reminder_image_url && (
+                          <div className="mb-2 -mx-1 -mt-1">
+                            <img
+                              src={settings.solapi_reminder_image_url}
+                              alt="알림톡 이미지"
+                              className="w-full h-32 object-cover rounded-t-lg"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+                        <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">
+                          {settings.solapi_reminder_template_content
+                            .replace(/#{이름}/g, '홍길동')
+                            .replace(/#{학원명}/g, academyName)
+                            .replace(/#{날짜}/g, '1월 15일(수)')
+                            .replace(/#{시간}/g, '14:00')
+                            .replace(/#{남은시간}/g, '1시간')
+                            .replace(/#{예약번호}/g, 'C2025011501')
+                          }
+                        </p>
+                        {/* 버튼 미리보기 */}
+                        {settings.solapi_reminder_buttons && settings.solapi_reminder_buttons.length > 0 && (
+                          <div className="mt-3 pt-2 border-t border-gray-200 space-y-1.5">
+                            {settings.solapi_reminder_buttons.map((btn, idx) => (
+                              <div
+                                key={idx}
+                                className="text-center py-2 px-3 bg-gray-100 rounded-md text-sm text-purple-600 font-medium hover:bg-gray-200 cursor-pointer"
+                              >
+                                {btn.buttonName || '버튼'}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">오전 10:00</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 이미지 URL 설정 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <Image className="w-4 h-4 text-muted-foreground" />
+                <h4 className="font-medium text-foreground">이미지 설정 (선택)</h4>
+              </div>
+              <input
+                type="url"
+                value={settings.solapi_reminder_image_url || ''}
+                onChange={(e) => setSettings(prev => ({ ...prev, solapi_reminder_image_url: e.target.value }))}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                placeholder="https://example.com/image.jpg (이미지 알림톡인 경우)"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                솔라피 콘솔에서 이미지 업로드 후 URL을 입력하세요. 이미지 알림톡 템플릿인 경우에만 필요합니다.
+              </p>
+            </div>
+
+            {/* 버튼 설정 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-foreground">버튼 설정</h4>
+                <button
+                  type="button"
+                  onClick={addReminderButton}
+                  disabled={(settings.solapi_reminder_buttons?.length || 0) >= 5}
+                  className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-4 h-4" />
+                  버튼 추가
+                </button>
+              </div>
+
+              {(settings.solapi_reminder_buttons?.length || 0) === 0 ? (
+                <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  버튼이 없습니다. 템플릿에 버튼이 있다면 위의 &quot;버튼 추가&quot; 버튼을 클릭하세요.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {settings.solapi_reminder_buttons?.map((button, index) => (
+                    <div key={index} className="p-4 bg-muted/30 rounded-lg border border-border">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-foreground">버튼 {index + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeReminderButton(index)}
+                          className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">버튼 타입</label>
+                          <select
+                            value={button.buttonType}
+                            onChange={(e) => updateReminderButton(index, 'buttonType', e.target.value)}
+                            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                          >
+                            <option value="WL">웹링크 (WL)</option>
+                            <option value="AL">앱링크 (AL)</option>
+                            <option value="BK">봇키워드 (BK)</option>
+                            <option value="MD">메시지전달 (MD)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">버튼 이름</label>
+                          <input
+                            type="text"
+                            value={button.buttonName || ''}
+                            onChange={(e) => updateReminderButton(index, 'buttonName', e.target.value)}
+                            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                            placeholder="예: 상담 확인하기"
+                          />
+                        </div>
+                        {button.buttonType === 'WL' && (
+                          <>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">모바일 링크</label>
+                              <input
+                                type="url"
+                                value={button.linkMo || ''}
+                                onChange={(e) => updateReminderButton(index, 'linkMo', e.target.value)}
+                                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                                placeholder="https://..."
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-muted-foreground mb-1">PC 링크 (선택)</label>
+                              <input
+                                type="url"
+                                value={button.linkPc || ''}
+                                onChange={(e) => updateReminderButton(index, 'linkPc', e.target.value)}
+                                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
+                                placeholder="https://... (미입력시 모바일 링크 사용)"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                * 솔라피에서 등록한 템플릿의 버튼과 동일하게 설정해야 합니다
+              </p>
+            </div>
+
+            {/* 자동 발송 설정 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <h4 className="font-medium text-foreground mb-4">자동 발송 설정</h4>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">자동 발송</p>
+                    <p className="text-sm text-muted-foreground">상담 N시간 전에 자동으로 리마인드 알림톡 발송</p>
+                  </div>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, solapi_reminder_auto_enabled: !prev.solapi_reminder_auto_enabled }))}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_reminder_auto_enabled ? 'bg-purple-600' : 'bg-muted'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_reminder_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    발송 시점 (상담 몇 시간 전)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={settings.solapi_reminder_hours ?? 1}
+                      onChange={e => setSettings(prev => ({ ...prev, solapi_reminder_hours: parseInt(e.target.value) }))}
+                      className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    >
+                      <option value={1}>1시간 전</option>
+                      <option value={2}>2시간 전</option>
+                      <option value={3}>3시간 전</option>
+                      <option value={6}>6시간 전</option>
+                      <option value={12}>12시간 전</option>
+                      <option value={24}>24시간 전 (하루 전)</option>
+                    </select>
+                    <span className="text-sm text-muted-foreground">
+                      상담 {settings.solapi_reminder_hours ?? 1}시간 전에 발송
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-purple-50 dark:bg-purple-950 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <p className="text-sm text-purple-800 dark:text-purple-200">
+                    <strong>발송 대상:</strong> 확정(confirmed) 상태의 상담 예약
+                  </p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                    예: 상담이 14:00에 예정되어 있고 1시간 전으로 설정 시, 13:00에 알림톡 발송
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 테스트 발송 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <h4 className="font-medium text-foreground mb-4">테스트 발송</h4>
+              <div className="flex gap-3">
+                <input
+                  type="tel"
+                  value={testPhoneReminder}
+                  onChange={e => setTestPhoneReminder(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                  placeholder="010-1234-5678"
+                />
+                <button
+                  onClick={handleTestReminder}
+                  disabled={testingReminder || !settings.solapi_enabled || !settings.solapi_reminder_template_id}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testingReminder ? '발송 중...' : '테스트'}
+                </button>
+              </div>
+              {!settings.solapi_enabled && (
+                <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>
+              )}
+              {settings.solapi_enabled && !settings.solapi_reminder_template_id && (
+                <p className="text-sm text-amber-600 mt-1">템플릿 ID를 먼저 설정해야 테스트 발송이 가능합니다</p>
+              )}
+            </div>
+
+            {/* 저장 버튼 */}
+            <div className="md:col-span-2 pt-4 border-t border-border">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {saving ? '저장 중...' : '상담 리마인드 알림톡 설정 저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SENS 템플릿 선택 탭 */}
       {activeTab === 'sens' && (
         <div className="bg-card rounded-lg shadow-sm border border-border p-4">
@@ -2593,6 +3024,20 @@ export default function NotificationSettingsPage() {
               체험수업
               {settings.sens_trial_template_code && (
                 <span className={`text-xs px-1.5 py-0.5 rounded ${activeSensTemplate === 'trial' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveSensTemplate('reminder')}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${
+                activeSensTemplate === 'reminder'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-muted text-foreground hover:bg-muted/80'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              상담 리마인드
+              {settings.sens_reminder_template_code && (
+                <span className={`text-xs px-1.5 py-0.5 rounded ${activeSensTemplate === 'reminder' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
               )}
             </button>
           </div>
@@ -2973,6 +3418,85 @@ export default function NotificationSettingsPage() {
             </div>
             {/* 저장 */}
             <div className="md:col-span-2 pt-4 border-t border-border"><button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '체험수업 설정 저장'}</button></div>
+          </div>
+        </div>
+      )}
+
+      {/* SENS 상담 리마인드 템플릿 */}
+      {activeTab === 'sens' && activeSensTemplate === 'reminder' && (
+        <div className="bg-card rounded-lg shadow-sm border border-purple-200 dark:border-purple-800 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 코드</label>
+              <input type="text" value={settings.sens_reminder_template_code} onChange={e => setSettings(prev => ({ ...prev, sens_reminder_template_code: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="템플릿 코드 (SENS 콘솔에서 확인)" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
+              <textarea value={settings.sens_reminder_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_reminder_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm" placeholder={`[#{학원명}] 상담 리마인드\n\n#{이름}님, 상담 #{남은시간} 전입니다.\n\n일시: #{날짜} #{시간}\n\n문의: #{학원전화}`} />
+              <p className="text-xs text-muted-foreground mt-1">사용 가능 변수: #{`{이름}`}, #{`{날짜}`}, #{`{시간}`}, #{`{남은시간}`}, #{`{예약번호}`}, #{`{학원명}`}, #{`{학원전화}`}</p>
+            </div>
+            {/* 이미지 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
+              <input type="url" value={settings.sens_reminder_image_url || ''} onChange={(e) => setSettings(prev => ({ ...prev, sens_reminder_image_url: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="https://example.com/image.jpg" />
+            </div>
+            {/* 버튼 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-foreground">버튼 설정</h4>
+                <button type="button" onClick={addSensReminderButton} disabled={(settings.sens_reminder_buttons?.length || 0) >= 5} className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"><Plus className="w-4 h-4" />버튼 추가</button>
+              </div>
+              {(settings.sens_reminder_buttons?.length || 0) === 0 ? (
+                <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">버튼이 없습니다.</p>
+              ) : (
+                <div className="space-y-4">
+                  {settings.sens_reminder_buttons?.map((button, index) => (
+                    <div key={index} className="p-4 bg-muted/30 rounded-lg border border-border">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-medium text-foreground">버튼 {index + 1}</span>
+                        <button type="button" onClick={() => removeSensReminderButton(index)} className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"><Trash2 className="w-4 h-4" /></button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div><label className="block text-xs text-muted-foreground mb-1">버튼 타입</label><select value={button.buttonType} onChange={(e) => updateSensReminderButton(index, 'buttonType', e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"><option value="WL">웹링크 (WL)</option><option value="AL">앱링크 (AL)</option><option value="BK">봇키워드 (BK)</option><option value="MD">메시지전달 (MD)</option></select></div>
+                        <div><label className="block text-xs text-muted-foreground mb-1">버튼 이름</label><input type="text" value={button.buttonName || ''} onChange={(e) => updateSensReminderButton(index, 'buttonName', e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm" placeholder="버튼 텍스트" /></div>
+                        {button.buttonType === 'WL' && (<><div><label className="block text-xs text-muted-foreground mb-1">모바일 링크</label><input type="url" value={button.linkMo || ''} onChange={(e) => updateSensReminderButton(index, 'linkMo', e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm" placeholder="https://..." /></div><div><label className="block text-xs text-muted-foreground mb-1">PC 링크</label><input type="url" value={button.linkPc || ''} onChange={(e) => updateSensReminderButton(index, 'linkPc', e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm" placeholder="https://..." /></div></>)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* 자동 발송 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <div className="flex items-center justify-between mb-4">
+                <div><p className="font-medium text-foreground">상담 리마인드 자동 발송</p><p className="text-sm text-muted-foreground">상담 N시간 전에 자동 발송</p></div>
+                <button onClick={() => setSettings(prev => ({ ...prev, sens_reminder_auto_enabled: !prev.sens_reminder_auto_enabled }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_reminder_auto_enabled ? 'bg-purple-600' : 'bg-muted'}`}><span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.sens_reminder_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} /></button>
+              </div>
+              {settings.sens_reminder_auto_enabled && (
+                <div className="flex items-center gap-3">
+                  <label className="text-sm text-foreground">발송 시점:</label>
+                  <select value={settings.sens_reminder_hours} onChange={e => setSettings(prev => ({ ...prev, sens_reminder_hours: parseInt(e.target.value) }))} className="px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500">
+                    <option value={1}>1시간 전</option>
+                    <option value={2}>2시간 전</option>
+                    <option value={3}>3시간 전</option>
+                    <option value={6}>6시간 전</option>
+                    <option value={12}>12시간 전</option>
+                    <option value={24}>24시간 전 (하루 전)</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            {/* 테스트 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <label className="block text-sm font-medium text-foreground mb-2">리마인드 테스트 발송</label>
+              <div className="flex gap-3">
+                <input type="tel" value={testPhoneSensReminder} onChange={e => setTestPhoneSensReminder(e.target.value)} className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="테스트 전화번호 (예: 01012345678)" />
+                <button onClick={handleTestSensReminder} disabled={testingSensReminder || !settings.is_enabled || !settings.sens_reminder_template_code} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">{testingSensReminder ? '발송 중...' : '테스트'}</button>
+              </div>
+              {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
+            </div>
+            {/* 저장 */}
+            <div className="md:col-span-2 pt-4 border-t border-border"><button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '상담 리마인드 설정 저장'}</button></div>
           </div>
         </div>
       )}
