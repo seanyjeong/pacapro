@@ -37,7 +37,9 @@ export default function MobileConsultationsPage() {
   const loadTodayConsultations = async () => {
     setLoading(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
+      // 로컬 시간 기준으로 오늘 날짜 생성 (UTC 문제 방지)
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const response = await getConsultations({
         startDate: today,
         endDate: today,
