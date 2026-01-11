@@ -61,10 +61,6 @@ export default function ConductPage({ params }: PageProps) {
   const searchParams = useSearchParams();
   const fromPage = searchParams.get('from');
 
-  // 돌아갈 페이지 결정
-  const backUrl = fromPage === 'pending' ? '/students?tab=pending' : '/consultations';
-  const backLabel = fromPage === 'pending' ? '미등록관리로' : '목록으로';
-
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -155,6 +151,18 @@ export default function ConductPage({ params }: PageProps) {
     '목표': true,
     '기타': true
   });
+
+  // 돌아갈 페이지 결정 (상담 유형에 따라)
+  const getBackNavigation = () => {
+    if (fromPage === 'pending') {
+      return { url: '/students?tab=pending', label: '미등록관리로' };
+    }
+    if (consultation?.consultation_type === 'learning') {
+      return { url: '/consultations/enrolled', label: '재원생상담으로' };
+    }
+    return { url: '/consultations/new-inquiry', label: '신규상담으로' };
+  };
+  const { url: backUrl, label: backLabel } = getBackNavigation();
 
   // 상담 정보 로드
   useEffect(() => {
