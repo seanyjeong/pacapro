@@ -50,8 +50,12 @@ export default function NewInquiryConsultationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week'>('all');
 
-  // 완료 탭 필터 (전체/등록/체험중/미등록)
+  // 완료 탭 필터 (전체/등록/체험중/미등록) - 기존 유지
   const [completedTab, setCompletedTab] = useState<'all' | 'registered' | 'trial_ongoing' | 'unregistered'>('all');
+
+  // 태그 필터 (다중 선택 가능)
+  type TagFilter = 'registered' | 'trial_completed' | 'trial_ongoing' | 'unregistered' | 'no_trial';
+  const [selectedTags, setSelectedTags] = useState<TagFilter[]>([]);
 
   // 월별 접기/펼치기 (현재 달만 기본 펼침)
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
@@ -353,27 +357,59 @@ export default function NewInquiryConsultationsPage() {
     };
   }, [consultations]);
 
-  // 완료 탭에 따라 필터링된 상담 목록 (matched_student_status 사용)
+  // 태그 토글
+  const toggleTag = (tag: TagFilter) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  // 태그 필터에 맞는지 확인
+  const matchesTagFilter = (c: Consultation) => {
+    if (selectedTags.length === 0) return true;
+
+    return selectedTags.some(tag => {
+      switch (tag) {
+        case 'registered':
+          return c.matched_student_status === 'registered_with_trial' || c.matched_student_status === 'registered_direct';
+        case 'trial_completed':
+          return c.matched_student_status === 'registered_with_trial' || c.matched_student_status === 'trial_completed';
+        case 'trial_ongoing':
+          return c.matched_student_status === 'trial_ongoing';
+        case 'unregistered':
+          return c.matched_student_status === 'trial_completed' || c.matched_student_status === 'no_trial' || !c.matched_student_status;
+        case 'no_trial':
+          return c.matched_student_status === 'no_trial';
+        default:
+          return true;
+      }
+    });
+  };
+
+  // 필터링된 상담 목록 (상태 필터 + 태그 필터)
   const filteredConsultations = useMemo(() => {
-    if (statusFilter !== 'completed' || completedTab === 'all') {
-      return consultations;
+    let result = consultations;
+
+    // 완료 상태일 때 탭 필터 적용
+    if (statusFilter === 'completed' && completedTab !== 'all') {
+      if (completedTab === 'registered') {
+        result = result.filter(c => c.status === 'completed' &&
+          (c.matched_student_status === 'registered_with_trial' || c.matched_student_status === 'registered_direct'));
+      } else if (completedTab === 'trial_ongoing') {
+        result = result.filter(c => c.status === 'completed' && c.matched_student_status === 'trial_ongoing');
+      } else if (completedTab === 'unregistered') {
+        result = result.filter(c => c.status === 'completed' &&
+          (c.matched_student_status === 'trial_completed' || c.matched_student_status === 'no_trial' || !c.matched_student_status));
+      }
     }
-    if (completedTab === 'registered') {
-      // 등록 = 체험 후 등록 + 바로 등록
-      return consultations.filter(c => c.status === 'completed' &&
-        (c.matched_student_status === 'registered_with_trial' || c.matched_student_status === 'registered_direct'));
+
+    // 태그 필터 적용 (완료 상태에서만)
+    if (selectedTags.length > 0) {
+      result = result.filter(c => c.status === 'completed' && matchesTagFilter(c));
     }
-    if (completedTab === 'trial_ongoing') {
-      // 체험중
-      return consultations.filter(c => c.status === 'completed' && c.matched_student_status === 'trial_ongoing');
-    }
-    if (completedTab === 'unregistered') {
-      // 미등록 = 체험완료 미등록 + 미체험
-      return consultations.filter(c => c.status === 'completed' &&
-        (c.matched_student_status === 'trial_completed' || c.matched_student_status === 'no_trial' || !c.matched_student_status));
-    }
-    return consultations;
-  }, [consultations, statusFilter, completedTab]);
+
+    return result;
+  }, [consultations, statusFilter, completedTab, selectedTags]);
 
   // 월별로 그룹화된 상담 목록
   const groupedByMonth = useMemo(() => {
@@ -588,6 +624,86 @@ export default function NewInquiryConsultationsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* 태그 필터 (다중 선택) */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-muted-foreground mr-2">태그 필터:</span>
+            <div className="flex gap-1 flex-wrap">
+              <Button
+                variant={selectedTags.includes('registered') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleTag('registered')}
+                className={cn(
+                  "h-7 text-xs",
+                  !selectedTags.includes('registered') && "text-green-600 border-green-200 hover:bg-green-50 dark:border-green-800 dark:hover:bg-green-950"
+                )}
+              >
+                <UserCheck className="h-3 w-3 mr-1" />
+                등록
+              </Button>
+              <Button
+                variant={selectedTags.includes('trial_completed') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleTag('trial_completed')}
+                className={cn(
+                  "h-7 text-xs",
+                  !selectedTags.includes('trial_completed') && "text-purple-600 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950"
+                )}
+              >
+                <Dumbbell className="h-3 w-3 mr-1" />
+                체험완료
+              </Button>
+              <Button
+                variant={selectedTags.includes('trial_ongoing') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleTag('trial_ongoing')}
+                className={cn(
+                  "h-7 text-xs",
+                  !selectedTags.includes('trial_ongoing') && "text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-950"
+                )}
+              >
+                <Dumbbell className="h-3 w-3 mr-1" />
+                체험중
+              </Button>
+              <Button
+                variant={selectedTags.includes('unregistered') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleTag('unregistered')}
+                className={cn(
+                  "h-7 text-xs",
+                  !selectedTags.includes('unregistered') && "text-orange-600 border-orange-200 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-950"
+                )}
+              >
+                <UserX className="h-3 w-3 mr-1" />
+                미등록
+              </Button>
+              <Button
+                variant={selectedTags.includes('no_trial') ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleTag('no_trial')}
+                className={cn(
+                  "h-7 text-xs",
+                  !selectedTags.includes('no_trial') && "text-gray-600 border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900"
+                )}
+              >
+                미체험
+              </Button>
+              {selectedTags.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedTags([])}
+                  className="h-7 text-xs text-muted-foreground"
+                >
+                  초기화
+                </Button>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 목록 */}
       <Card>
@@ -900,6 +1016,12 @@ export default function NewInquiryConsultationsPage() {
                             <div>
                               <Label className="text-xs text-muted-foreground">영어(모의)</Label>
                               <p className="font-medium">{mockTest.english}등급</p>
+                            </div>
+                          )}
+                          {mockTest?.exploration && (
+                            <div>
+                              <Label className="text-xs text-muted-foreground">탐구(모의)</Label>
+                              <p className="font-medium">{mockTest.exploration}등급</p>
                             </div>
                           )}
                           {scores?.admissionType && (
