@@ -844,6 +844,12 @@ export default function NewInquiryConsultationsPage() {
                     <Label className="text-xs text-muted-foreground">학년</Label>
                     <p className="font-medium">{selectedConsultation.student_grade}</p>
                   </div>
+                  {(selectedConsultation.parent_phone || selectedConsultation.student_phone) && (
+                    <div>
+                      <Label className="text-xs text-muted-foreground">연락처</Label>
+                      <p className="font-medium">{selectedConsultation.parent_phone || selectedConsultation.student_phone}</p>
+                    </div>
+                  )}
                   {selectedConsultation.student_school && (
                     <div>
                       <Label className="text-xs text-muted-foreground">학교</Label>
@@ -854,34 +860,6 @@ export default function NewInquiryConsultationsPage() {
                     <div>
                       <Label className="text-xs text-muted-foreground">성별</Label>
                       <p className="font-medium">{selectedConsultation.gender === 'male' ? '남자' : '여자'}</p>
-                    </div>
-                  )}
-                  {selectedConsultation.student_phone && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground">학생 연락처</Label>
-                      <p className="font-medium">{selectedConsultation.student_phone}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 학부모 정보 */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  학부모 정보
-                </h4>
-                <div className="grid grid-cols-2 gap-4 p-3 border rounded-lg">
-                  {selectedConsultation.parent_name && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground">보호자명</Label>
-                      <p className="font-medium">{selectedConsultation.parent_name}</p>
-                    </div>
-                  )}
-                  {selectedConsultation.parent_phone && (
-                    <div>
-                      <Label className="text-xs text-muted-foreground">연락처</Label>
-                      <p className="font-medium">{selectedConsultation.parent_phone}</p>
                     </div>
                   )}
                 </div>
