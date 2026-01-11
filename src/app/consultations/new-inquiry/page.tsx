@@ -6,7 +6,7 @@ import { ko } from 'date-fns/locale';
 import {
   Calendar, Clock, Phone, Search, Plus, Eye, Edit, Trash2,
   MoreHorizontal, Loader2, RefreshCw, CheckSquare,
-  UserCheck, UserX
+  UserCheck, UserX, FlaskConical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,8 +50,8 @@ export default function NewInquiryConsultationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week'>('all');
 
-  // 완료 탭 필터 (전체/미등록/등록)
-  const [completedTab, setCompletedTab] = useState<'all' | 'unregistered' | 'registered'>('all');
+  // 완료 탭 필터 (전체/미등록/체험/등록)
+  const [completedTab, setCompletedTab] = useState<'all' | 'unregistered' | 'trial' | 'registered'>('all');
 
   // 상세 모달
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
@@ -329,14 +329,19 @@ export default function NewInquiryConsultationsPage() {
     return result;
   };
 
-  // 완료된 상담 중 등록/미등록 통계 계산
+  // 완료된 상담 중 등록/체험/미등록 통계 계산
   const completedStats = useMemo(() => {
     const completedList = consultations.filter(c => c.status === 'completed');
-    const registered = completedList.filter(c => c.linked_student_id);
+    // 등록 = linked_student_id 있고 is_trial이 false (재원생)
+    const registered = completedList.filter(c => c.linked_student_id && c.linked_student_is_trial === false);
+    // 체험 = linked_student_id 있고 is_trial이 true
+    const trial = completedList.filter(c => c.linked_student_id && c.linked_student_is_trial === true);
+    // 미등록 = linked_student_id 없음
     const unregistered = completedList.filter(c => !c.linked_student_id);
     return {
       total: completedList.length,
       registered: registered.length,
+      trial: trial.length,
       unregistered: unregistered.length
     };
   }, [consultations]);
@@ -347,9 +352,15 @@ export default function NewInquiryConsultationsPage() {
       return consultations;
     }
     if (completedTab === 'registered') {
-      return consultations.filter(c => c.status === 'completed' && c.linked_student_id);
+      // 등록 = 재원생 (is_trial === false)
+      return consultations.filter(c => c.status === 'completed' && c.linked_student_id && c.linked_student_is_trial === false);
+    }
+    if (completedTab === 'trial') {
+      // 체험 = is_trial === true
+      return consultations.filter(c => c.status === 'completed' && c.linked_student_id && c.linked_student_is_trial === true);
     }
     if (completedTab === 'unregistered') {
+      // 미등록 = linked_student_id 없음
       return consultations.filter(c => c.status === 'completed' && !c.linked_student_id);
     }
     return consultations;
@@ -460,13 +471,13 @@ export default function NewInquiryConsultationsPage() {
         </CardContent>
       </Card>
 
-      {/* 완료 상태일 때 등록/미등록 탭 */}
+      {/* 완료 상태일 때 미등록/체험/등록 탭 */}
       {statusFilter === 'completed' && (
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm text-muted-foreground mr-2">완료 상담 분류:</span>
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-wrap">
                 <Button
                   variant={completedTab === 'all' ? 'default' : 'outline'}
                   size="sm"
@@ -484,7 +495,7 @@ export default function NewInquiryConsultationsPage() {
                   onClick={() => setCompletedTab('unregistered')}
                   className={cn(
                     "h-8",
-                    completedTab !== 'unregistered' && "text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
+                    completedTab !== 'unregistered' && "text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700 dark:border-orange-800 dark:hover:bg-orange-950"
                   )}
                 >
                   <UserX className="h-3.5 w-3.5 mr-1" />
@@ -494,16 +505,31 @@ export default function NewInquiryConsultationsPage() {
                   </Badge>
                 </Button>
                 <Button
+                  variant={completedTab === 'trial' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCompletedTab('trial')}
+                  className={cn(
+                    "h-8",
+                    completedTab !== 'trial' && "text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-950"
+                  )}
+                >
+                  <FlaskConical className="h-3.5 w-3.5 mr-1" />
+                  체험
+                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-xs">
+                    {completedStats.trial}
+                  </Badge>
+                </Button>
+                <Button
                   variant={completedTab === 'registered' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setCompletedTab('registered')}
                   className={cn(
                     "h-8",
-                    completedTab !== 'registered' && "text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                    completedTab !== 'registered' && "text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700 dark:border-green-800 dark:hover:bg-green-950"
                   )}
                 >
                   <UserCheck className="h-3.5 w-3.5 mr-1" />
-                  등록완료
+                  등록
                   <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-xs">
                     {completedStats.registered}
                   </Badge>
@@ -524,7 +550,11 @@ export default function NewInquiryConsultationsPage() {
           ) : filteredConsultations.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               {statusFilter === 'completed' && completedTab !== 'all'
-                ? (completedTab === 'registered' ? '등록된 상담이 없습니다.' : '미등록 상담이 없습니다.')
+                ? (completedTab === 'registered'
+                    ? '등록된 상담이 없습니다.'
+                    : completedTab === 'trial'
+                      ? '체험 등록된 상담이 없습니다.'
+                      : '미등록 상담이 없습니다.')
                 : '상담 내역이 없습니다.'}
             </div>
           ) : (
@@ -548,12 +578,19 @@ export default function NewInquiryConsultationsPage() {
                         </Badge>
                         {c.status === 'completed' && (
                           c.linked_student_id ? (
-                            <Badge className="bg-green-100 text-green-700 border-green-200 flex items-center gap-1">
-                              <UserCheck className="h-3 w-3" />
-                              등록완료
-                            </Badge>
+                            c.linked_student_is_trial ? (
+                              <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 flex items-center gap-1">
+                                <FlaskConical className="h-3 w-3" />
+                                체험
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 flex items-center gap-1">
+                                <UserCheck className="h-3 w-3" />
+                                등록
+                              </Badge>
+                            )
                           ) : (
-                            <Badge className="bg-orange-100 text-orange-700 border-orange-200 flex items-center gap-1">
+                            <Badge className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800 flex items-center gap-1">
                               <UserX className="h-3 w-3" />
                               미등록
                             </Badge>
