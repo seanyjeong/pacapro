@@ -6,7 +6,7 @@ import { ko } from 'date-fns/locale';
 import {
   Calendar, Clock, Phone, Search, Plus, Eye, Edit, Trash2,
   MoreHorizontal, Loader2, RefreshCw, CheckSquare,
-  UserCheck, UserX, FlaskConical
+  UserCheck, UserX, Dumbbell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -329,15 +329,15 @@ export default function NewInquiryConsultationsPage() {
     return result;
   };
 
-  // 완료된 상담 중 등록/체험/미등록 통계 계산
+  // 완료된 상담 중 등록/체험/미등록 통계 계산 (matched_student_status 사용)
   const completedStats = useMemo(() => {
     const completedList = consultations.filter(c => c.status === 'completed');
-    // 등록 = linked_student_id 있고 is_trial이 false (재원생)
-    const registered = completedList.filter(c => c.linked_student_id && c.linked_student_is_trial === false);
-    // 체험 = linked_student_id 있고 is_trial이 true
-    const trial = completedList.filter(c => c.linked_student_id && c.linked_student_is_trial === true);
-    // 미등록 = linked_student_id 없음
-    const unregistered = completedList.filter(c => !c.linked_student_id);
+    // 등록 = 재원생 테이블에서 active로 매칭됨
+    const registered = completedList.filter(c => c.matched_student_status === 'registered');
+    // 체험 = 재원생 테이블에서 trial로 매칭됨
+    const trial = completedList.filter(c => c.matched_student_status === 'trial');
+    // 미등록 = 재원생 테이블에 없음
+    const unregistered = completedList.filter(c => c.matched_student_status === 'unregistered' || !c.matched_student_status);
     return {
       total: completedList.length,
       registered: registered.length,
@@ -346,22 +346,22 @@ export default function NewInquiryConsultationsPage() {
     };
   }, [consultations]);
 
-  // 완료 탭에 따라 필터링된 상담 목록
+  // 완료 탭에 따라 필터링된 상담 목록 (matched_student_status 사용)
   const filteredConsultations = useMemo(() => {
     if (statusFilter !== 'completed' || completedTab === 'all') {
       return consultations;
     }
     if (completedTab === 'registered') {
-      // 등록 = 재원생 (is_trial === false)
-      return consultations.filter(c => c.status === 'completed' && c.linked_student_id && c.linked_student_is_trial === false);
+      // 등록 = 재원생
+      return consultations.filter(c => c.status === 'completed' && c.matched_student_status === 'registered');
     }
     if (completedTab === 'trial') {
-      // 체험 = is_trial === true
-      return consultations.filter(c => c.status === 'completed' && c.linked_student_id && c.linked_student_is_trial === true);
+      // 체험
+      return consultations.filter(c => c.status === 'completed' && c.matched_student_status === 'trial');
     }
     if (completedTab === 'unregistered') {
-      // 미등록 = linked_student_id 없음
-      return consultations.filter(c => c.status === 'completed' && !c.linked_student_id);
+      // 미등록
+      return consultations.filter(c => c.status === 'completed' && (c.matched_student_status === 'unregistered' || !c.matched_student_status));
     }
     return consultations;
   }, [consultations, statusFilter, completedTab]);
@@ -513,7 +513,7 @@ export default function NewInquiryConsultationsPage() {
                     completedTab !== 'trial' && "text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-950"
                   )}
                 >
-                  <FlaskConical className="h-3.5 w-3.5 mr-1" />
+                  <Dumbbell className="h-3.5 w-3.5 mr-1" />
                   체험
                   <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-xs">
                     {completedStats.trial}
@@ -577,18 +577,16 @@ export default function NewInquiryConsultationsPage() {
                           {CONSULTATION_STATUS_LABELS[c.status]}
                         </Badge>
                         {c.status === 'completed' && (
-                          c.linked_student_id ? (
-                            c.linked_student_is_trial ? (
-                              <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 flex items-center gap-1">
-                                <FlaskConical className="h-3 w-3" />
-                                체험
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 flex items-center gap-1">
-                                <UserCheck className="h-3 w-3" />
-                                등록
-                              </Badge>
-                            )
+                          c.matched_student_status === 'registered' ? (
+                            <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 flex items-center gap-1">
+                              <UserCheck className="h-3 w-3" />
+                              등록
+                            </Badge>
+                          ) : c.matched_student_status === 'trial' ? (
+                            <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 flex items-center gap-1">
+                              <Dumbbell className="h-3 w-3" />
+                              체험
+                            </Badge>
                           ) : (
                             <Badge className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800 flex items-center gap-1">
                               <UserX className="h-3 w-3" />

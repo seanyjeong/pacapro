@@ -4,7 +4,8 @@ const db = require('../config/database');
 const { verifyToken, checkPermission } = require('../middleware/auth');
 const { decrypt, encrypt } = require('../utils/encryption');
 const { sendAlimtalkSolapi } = require('../utils/solapi');
-const { decryptApiKey } = require('../utils/naverSens');
+const { decryptApiKey, sendAlimtalk: sendAlimtalkSens } = require('../utils/naverSens');
+const logger = require('../utils/logger');
 
 // 암호화 키 (환경변수에서 가져옴)
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
@@ -22,6 +23,15 @@ function decryptConsultationNames(obj) {
 }
 function decryptConsultationArray(arr) {
     return arr.map(item => decryptConsultationNames({...item}));
+}
+
+// 학생 이름/전화번호 복호화 헬퍼
+function decryptStudentInfo(student) {
+    if (!student) return student;
+    if (student.name) student.name = decrypt(student.name);
+    if (student.phone) student.phone = decrypt(student.phone);
+    if (student.parent_phone) student.parent_phone = decrypt(student.parent_phone);
+    return student;
 }
 
 /**
@@ -51,45 +61,32 @@ async function generateReservationNumber() {
 }
 
 /**
- * 상담확정 알림톡 발송 (솔라피 직접 호출)
+ * 상담확정 알림톡 발송 (service_type에 따라 솔라피/SENS 선택)
  */
 async function sendConfirmationAlimtalk(consultation, academyId) {
     try {
         const { student_name, parent_phone, preferred_date, preferred_time, reservation_number } = consultation;
 
-        // 솔라피 설정 조회
+        // 알림 설정 조회 (service_type 포함)
         const [settings] = await db.query(
-            `SELECT solapi_api_key, solapi_api_secret, solapi_pfid, solapi_sender_phone,
+            `SELECT service_type,
+                    solapi_api_key, solapi_api_secret, solapi_pfid, solapi_sender_phone,
                     solapi_consultation_template_id, solapi_consultation_template_content,
-                    solapi_consultation_buttons, solapi_consultation_image_url
+                    solapi_consultation_buttons, solapi_consultation_image_url,
+                    naver_access_key, naver_secret_key, naver_service_id, kakao_channel_id,
+                    sens_consultation_template_code, sens_consultation_template_content,
+                    sens_consultation_buttons, sens_consultation_image_url
              FROM notification_settings WHERE academy_id = ?`,
             [academyId]
         );
 
         if (settings.length === 0) {
-            console.log('[ConsultationAlimtalk] 알림 설정 없음');
+            logger.info('[ConsultationAlimtalk] 알림 설정 없음');
             return false;
         }
 
         const setting = settings[0];
-
-        // 필수 설정 체크
-        if (!setting.solapi_api_key || !setting.solapi_api_secret || !setting.solapi_pfid) {
-            console.log('[ConsultationAlimtalk] 솔라피 설정 미완료');
-            return false;
-        }
-
-        if (!setting.solapi_consultation_template_id) {
-            console.log('[ConsultationAlimtalk] 상담확정 템플릿 ID 미설정');
-            return false;
-        }
-
-        // Secret 복호화
-        const decryptedSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
-        if (!decryptedSecret) {
-            console.log('[ConsultationAlimtalk] API Secret 복호화 실패');
-            return false;
-        }
+        const serviceType = setting.service_type || 'solapi';
 
         // 복호화
         const name = decrypt(student_name) || student_name;
@@ -102,72 +99,151 @@ async function sendConfirmationAlimtalk(consultation, academyId) {
         // 시간 포맷 (14:00)
         const timeStr = preferred_time.substring(0, 5);
 
-        // 템플릿 변수 치환
-        let content = setting.solapi_consultation_template_content || '';
-        content = content
-            .replace(/#{이름}/g, name)
-            .replace(/#{날짜}/g, dateStr)
-            .replace(/#{시간}/g, timeStr)
-            .replace(/#{예약번호}/g, reservation_number);
-
-        // 버튼 설정 파싱 및 변수 치환
-        let buttons = null;
-        if (setting.solapi_consultation_buttons) {
-            try {
-                buttons = JSON.parse(setting.solapi_consultation_buttons);
-                // 버튼 링크의 변수 치환
-                buttons = buttons.map(btn => ({
-                    ...btn,
-                    linkMo: btn.linkMo?.replace(/#{이름}/g, name)
-                        .replace(/#{날짜}/g, dateStr)
-                        .replace(/#{시간}/g, timeStr)
-                        .replace(/#{예약번호}/g, reservation_number),
-                    linkPc: btn.linkPc?.replace(/#{이름}/g, name)
-                        .replace(/#{날짜}/g, dateStr)
-                        .replace(/#{시간}/g, timeStr)
-                        .replace(/#{예약번호}/g, reservation_number),
-                }));
-            } catch (e) {
-                console.error('[ConsultationAlimtalk] 버튼 설정 파싱 오류:', e);
+        // service_type에 따라 분기
+        if (serviceType === 'sens') {
+            // === SENS 발송 ===
+            if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
+                logger.info('[ConsultationAlimtalk] SENS 설정 미완료');
+                return false;
             }
-        }
 
-        // 이미지 URL
-        const imageUrl = setting.solapi_consultation_image_url || null;
+            if (!setting.sens_consultation_template_code) {
+                logger.info('[ConsultationAlimtalk] SENS 상담확정 템플릿 코드 미설정');
+                return false;
+            }
 
-        console.log('[ConsultationAlimtalk] 발송:', { name, phone, dateStr, timeStr, reservation_number, hasButtons: !!buttons, hasImage: !!imageUrl });
+            const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
+            if (!decryptedSecret) {
+                logger.info('[ConsultationAlimtalk] SENS Secret 복호화 실패');
+                return false;
+            }
 
-        // 솔라피 알림톡 발송 (버튼/이미지 포함)
-        const result = await sendAlimtalkSolapi(
-            {
-                solapi_api_key: setting.solapi_api_key,
-                solapi_api_secret: decryptedSecret,
-                solapi_pfid: setting.solapi_pfid,
-                solapi_sender_phone: setting.solapi_sender_phone
-            },
-            setting.solapi_consultation_template_id,
-            [{ phone, content, buttons, imageUrl }]
-        );
+            // 템플릿 변수 치환
+            let content = setting.sens_consultation_template_content || '';
+            content = content
+                .replace(/#{이름}/g, name)
+                .replace(/#{날짜}/g, dateStr)
+                .replace(/#{시간}/g, timeStr)
+                .replace(/#{예약번호}/g, reservation_number);
 
-        if (result.success) {
-            console.log('[ConsultationAlimtalk] 발송 성공:', reservation_number);
+            // 버튼 파싱
+            let buttons = null;
+            if (setting.sens_consultation_buttons) {
+                try {
+                    buttons = typeof setting.sens_consultation_buttons === 'string'
+                        ? JSON.parse(setting.sens_consultation_buttons)
+                        : setting.sens_consultation_buttons;
+                } catch (e) {
+                    logger.error('[ConsultationAlimtalk] SENS 버튼 파싱 오류:', e);
+                }
+            }
 
-            // 발송 로그 기록
-            await db.query(
-                `INSERT INTO notification_logs
-                (academy_id, recipient_name, recipient_phone, message_type, template_code,
-                 message_content, status, request_id, sent_at)
-                VALUES (?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
-                [academyId, name, phone, setting.solapi_consultation_template_id, content, result.groupId || null]
+            logger.info('[ConsultationAlimtalk] SENS 발송:', { name, phone, dateStr, timeStr, reservation_number });
+
+            const result = await sendAlimtalkSens(
+                {
+                    naver_access_key: setting.naver_access_key,
+                    naver_secret_key: decryptedSecret,
+                    naver_service_id: setting.naver_service_id,
+                    kakao_channel_id: setting.kakao_channel_id
+                },
+                setting.sens_consultation_template_code,
+                [{ phone, content, buttons }]
             );
 
-            return true;
+            if (result.success) {
+                logger.info('[ConsultationAlimtalk] SENS 발송 성공:', reservation_number);
+                await db.query(
+                    `INSERT INTO notification_logs
+                    (academy_id, recipient_name, recipient_phone, message_type, template_code,
+                     message_content, status, request_id, sent_at)
+                    VALUES (?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
+                    [academyId, name, phone, setting.sens_consultation_template_code, content, result.requestId || null]
+                );
+                return true;
+            } else {
+                logger.error('[ConsultationAlimtalk] SENS 발송 실패:', result.error);
+                return false;
+            }
         } else {
-            console.error('[ConsultationAlimtalk] 발송 실패:', result.error);
-            return false;
+            // === 솔라피 발송 ===
+            if (!setting.solapi_api_key || !setting.solapi_api_secret || !setting.solapi_pfid) {
+                logger.info('[ConsultationAlimtalk] 솔라피 설정 미완료');
+                return false;
+            }
+
+            if (!setting.solapi_consultation_template_id) {
+                logger.info('[ConsultationAlimtalk] 상담확정 템플릿 ID 미설정');
+                return false;
+            }
+
+            const decryptedSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
+            if (!decryptedSecret) {
+                logger.info('[ConsultationAlimtalk] 솔라피 Secret 복호화 실패');
+                return false;
+            }
+
+            // 템플릿 변수 치환
+            let content = setting.solapi_consultation_template_content || '';
+            content = content
+                .replace(/#{이름}/g, name)
+                .replace(/#{날짜}/g, dateStr)
+                .replace(/#{시간}/g, timeStr)
+                .replace(/#{예약번호}/g, reservation_number);
+
+            // 버튼 설정 파싱 및 변수 치환
+            let buttons = null;
+            if (setting.solapi_consultation_buttons) {
+                try {
+                    buttons = JSON.parse(setting.solapi_consultation_buttons);
+                    buttons = buttons.map(btn => ({
+                        ...btn,
+                        linkMo: btn.linkMo?.replace(/#{이름}/g, name)
+                            .replace(/#{날짜}/g, dateStr)
+                            .replace(/#{시간}/g, timeStr)
+                            .replace(/#{예약번호}/g, reservation_number),
+                        linkPc: btn.linkPc?.replace(/#{이름}/g, name)
+                            .replace(/#{날짜}/g, dateStr)
+                            .replace(/#{시간}/g, timeStr)
+                            .replace(/#{예약번호}/g, reservation_number),
+                    }));
+                } catch (e) {
+                    logger.error('[ConsultationAlimtalk] 솔라피 버튼 파싱 오류:', e);
+                }
+            }
+
+            const imageUrl = setting.solapi_consultation_image_url || null;
+
+            logger.info('[ConsultationAlimtalk] 솔라피 발송:', { name, phone, dateStr, timeStr, reservation_number, hasButtons: !!buttons, hasImage: !!imageUrl });
+
+            const result = await sendAlimtalkSolapi(
+                {
+                    solapi_api_key: setting.solapi_api_key,
+                    solapi_api_secret: decryptedSecret,
+                    solapi_pfid: setting.solapi_pfid,
+                    solapi_sender_phone: setting.solapi_sender_phone
+                },
+                setting.solapi_consultation_template_id,
+                [{ phone, content, buttons, imageUrl }]
+            );
+
+            if (result.success) {
+                logger.info('[ConsultationAlimtalk] 솔라피 발송 성공:', reservation_number);
+                await db.query(
+                    `INSERT INTO notification_logs
+                    (academy_id, recipient_name, recipient_phone, message_type, template_code,
+                     message_content, status, request_id, sent_at)
+                    VALUES (?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
+                    [academyId, name, phone, setting.solapi_consultation_template_id, content, result.groupId || null]
+                );
+                return true;
+            } else {
+                logger.error('[ConsultationAlimtalk] 솔라피 발송 실패:', result.error);
+                return false;
+            }
         }
     } catch (error) {
-        console.error('[ConsultationAlimtalk] 오류:', error.message);
+        logger.error('[ConsultationAlimtalk] 오류:', error.message);
         return false;
     }
 }
@@ -253,6 +329,37 @@ router.get('/', verifyToken, async (req, res) => {
       [academyId]
     );
 
+    // 완료된 상담이 있으면 학생 매칭을 위해 학생 목록 조회
+    const hasCompletedConsultations = consultations.some(c => c.status === 'completed');
+    let studentsMap = new Map(); // 이름+전화번호 → 학생정보
+
+    if (hasCompletedConsultations) {
+      const [students] = await db.query(
+        `SELECT id, name, phone, parent_phone, status, is_trial FROM students WHERE academy_id = ?`,
+        [academyId]
+      );
+
+      // 복호화 후 Map 생성 (이름+학부모전화번호로 매칭)
+      students.forEach(s => {
+        const decryptedName = s.name ? decrypt(s.name) : '';
+        const decryptedParentPhone = s.parent_phone ? decrypt(s.parent_phone) : '';
+        const decryptedPhone = s.phone ? decrypt(s.phone) : '';
+
+        // 이름+학부모전화번호 키
+        if (decryptedName && decryptedParentPhone) {
+          const key = `${decryptedName.trim().toLowerCase()}_${decryptedParentPhone.replace(/[^0-9]/g, '')}`;
+          studentsMap.set(key, { id: s.id, status: s.status, is_trial: s.is_trial });
+        }
+        // 이름+학생전화번호 키도 추가
+        if (decryptedName && decryptedPhone) {
+          const key2 = `${decryptedName.trim().toLowerCase()}_${decryptedPhone.replace(/[^0-9]/g, '')}`;
+          if (!studentsMap.has(key2)) {
+            studentsMap.set(key2, { id: s.id, status: s.status, is_trial: s.is_trial });
+          }
+        }
+      });
+    }
+
     res.json({
       consultations: consultations.map(c => {
         // 복호화
@@ -267,7 +374,7 @@ router.get('/', verifyToken, async (req, res) => {
             ? (typeof decrypted.academic_scores === 'string' ? JSON.parse(decrypted.academic_scores) : decrypted.academic_scores)
             : null;
         } catch (e) {
-          console.error('academic_scores 파싱 오류:', e);
+          logger.error('academic_scores 파싱 오류:', e);
         }
 
         try {
@@ -275,13 +382,41 @@ router.get('/', verifyToken, async (req, res) => {
             ? (typeof decrypted.referral_sources === 'string' ? JSON.parse(decrypted.referral_sources) : decrypted.referral_sources)
             : null;
         } catch (e) {
-          console.error('referral_sources 파싱 오류:', e);
+          logger.error('referral_sources 파싱 오류:', e);
+        }
+
+        // 완료된 상담인 경우 학생 매칭 (이름+전화번호로)
+        let matched_student_status = null;
+        if (decrypted.status === 'completed') {
+          const consultName = (decrypted.student_name || '').trim().toLowerCase();
+          const consultParentPhone = (decrypted.parent_phone || '').replace(/[^0-9]/g, '');
+          const consultStudentPhone = (decrypted.student_phone || '').replace(/[^0-9]/g, '');
+
+          // 이름+학부모전화번호로 먼저 매칭
+          let matchKey = `${consultName}_${consultParentPhone}`;
+          let matched = studentsMap.get(matchKey);
+
+          // 없으면 이름+학생전화번호로 매칭
+          if (!matched && consultStudentPhone) {
+            matchKey = `${consultName}_${consultStudentPhone}`;
+            matched = studentsMap.get(matchKey);
+          }
+
+          if (matched) {
+            // active = 등록, trial = 체험
+            matched_student_status = matched.status === 'active' ? 'registered'
+                                    : matched.status === 'trial' ? 'trial'
+                                    : 'unregistered';
+          } else {
+            matched_student_status = 'unregistered';
+          }
         }
 
         return {
           ...decrypted,
           academicScores,
-          referralSources
+          referralSources,
+          matched_student_status
         };
       }),
       pagination: {
@@ -296,7 +431,7 @@ router.get('/', verifyToken, async (req, res) => {
       }, {})
     });
   } catch (error) {
-    console.error('상담 목록 조회 오류:', error);
+    logger.error('상담 목록 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -339,12 +474,12 @@ router.get('/by-student/:studentId', verifyToken, async (req, res) => {
         decrypted.referral_sources = JSON.parse(decrypted.referral_sources);
       }
     } catch (e) {
-      console.error('JSON 파싱 오류:', e);
+      logger.error('JSON 파싱 오류:', e);
     }
 
     res.json({ consultation: decrypted });
   } catch (error) {
-    console.error('학생 상담 조회 오류:', error);
+    logger.error('학생 상담 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -378,7 +513,7 @@ router.get('/booked-times', verifyToken, async (req, res) => {
 
     res.json({ date, bookedTimes });
   } catch (error) {
-    console.error('예약 시간 조회 오류:', error);
+    logger.error('예약 시간 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -413,7 +548,7 @@ router.get('/:id', verifyToken, async (req, res) => {
         ? (typeof consultation.academic_scores === 'string' ? JSON.parse(consultation.academic_scores) : consultation.academic_scores)
         : null;
     } catch (e) {
-      console.error('academic_scores 파싱 오류:', e);
+      logger.error('academic_scores 파싱 오류:', e);
     }
 
     try {
@@ -421,7 +556,7 @@ router.get('/:id', verifyToken, async (req, res) => {
         ? (typeof consultation.referral_sources === 'string' ? JSON.parse(consultation.referral_sources) : consultation.referral_sources)
         : null;
     } catch (e) {
-      console.error('referral_sources 파싱 오류:', e);
+      logger.error('referral_sources 파싱 오류:', e);
     }
 
     // checklist JSON 파싱
@@ -431,7 +566,7 @@ router.get('/:id', verifyToken, async (req, res) => {
         ? (typeof consultation.checklist === 'string' ? JSON.parse(consultation.checklist) : consultation.checklist)
         : null;
     } catch (e) {
-      console.error('checklist 파싱 오류:', e);
+      logger.error('checklist 파싱 오류:', e);
     }
 
     res.json({
@@ -441,7 +576,7 @@ router.get('/:id', verifyToken, async (req, res) => {
       checklist
     });
   } catch (error) {
-    console.error('상담 상세 조회 오류:', error);
+    logger.error('상담 상세 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -600,10 +735,10 @@ router.put('/:id', verifyToken, async (req, res) => {
 
       // 비동기로 알림톡 발송 (에러가 나도 응답은 성공)
       sendConfirmationAlimtalk(updatedConsultation, academyId).catch(err => {
-        console.error('[ConsultationAlimtalk] 비동기 발송 오류:', err);
+        logger.error('[ConsultationAlimtalk] 비동기 발송 오류:', err);
       });
     } else if (isLearningConsultation) {
-      console.log('[ConsultationAlimtalk] 재원생 상담은 알림톡 발송 제외:', currentConsultation.id);
+      logger.info('[ConsultationAlimtalk] 재원생 상담은 알림톡 발송 제외:', currentConsultation.id);
     }
 
     res.json({
@@ -612,7 +747,7 @@ router.put('/:id', verifyToken, async (req, res) => {
       alimtalkSent: wasNotConfirmed && willBeConfirmed
     });
   } catch (error) {
-    console.error('상담 수정 오류:', error);
+    logger.error('상담 수정 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -634,7 +769,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
 
     res.json({ message: '상담 신청이 삭제되었습니다.' });
   } catch (error) {
-    console.error('상담 삭제 오류:', error);
+    logger.error('상담 삭제 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -693,7 +828,7 @@ router.post('/direct', verifyToken, async (req, res) => {
       id: result.insertId
     });
   } catch (error) {
-    console.error('직접 상담 등록 오류:', error);
+    logger.error('직접 상담 등록 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -735,7 +870,7 @@ router.post('/:id/link-student', verifyToken, async (req, res) => {
       linkedStudent: decryptConsultationNames({...students[0]})
     });
   } catch (error) {
-    console.error('학생 연결 오류:', error);
+    logger.error('학생 연결 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -862,7 +997,7 @@ router.post('/:id/convert-to-trial', verifyToken, async (req, res) => {
       trialDates: trialDatesJson
     });
   } catch (error) {
-    console.error('체험 학생 등록 오류:', error);
+    logger.error('체험 학생 등록 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -934,7 +1069,7 @@ router.post('/:id/convert-to-pending', verifyToken, async (req, res) => {
       studentId
     });
   } catch (error) {
-    console.error('미등록관리 학생 등록 오류:', error);
+    logger.error('미등록관리 학생 등록 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -1005,7 +1140,7 @@ router.get('/settings/info', verifyToken, async (req, res) => {
       blockedSlots
     });
   } catch (error) {
-    console.error('상담 설정 조회 오류:', error);
+    logger.error('상담 설정 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -1084,7 +1219,7 @@ router.put('/settings/info', verifyToken, async (req, res) => {
 
     res.json({ message: '설정이 저장되었습니다.' });
   } catch (error) {
-    console.error('상담 설정 수정 오류:', error);
+    logger.error('상담 설정 수정 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -1119,7 +1254,7 @@ router.put('/settings/weekly-hours', verifyToken, async (req, res) => {
 
     res.json({ message: '운영 시간이 저장되었습니다.' });
   } catch (error) {
-    console.error('운영 시간 수정 오류:', error);
+    logger.error('운영 시간 수정 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -1155,7 +1290,7 @@ router.post('/settings/blocked-slots', verifyToken, async (req, res) => {
       id: result.insertId
     });
   } catch (error) {
-    console.error('시간대 차단 오류:', error);
+    logger.error('시간대 차단 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -1177,7 +1312,7 @@ router.delete('/settings/blocked-slots/:id', verifyToken, async (req, res) => {
 
     res.json({ message: '차단이 해제되었습니다.' });
   } catch (error) {
-    console.error('차단 해제 오류:', error);
+    logger.error('차단 해제 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -1215,7 +1350,7 @@ router.get('/calendar/events', verifyToken, async (req, res) => {
 
     res.json({ events: eventsByDate });
   } catch (error) {
-    console.error('캘린더 조회 오류:', error);
+    logger.error('캘린더 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -1275,7 +1410,7 @@ router.post('/learning', verifyToken, async (req, res) => {
       id: result.insertId
     });
   } catch (error) {
-    console.error('재원생 상담 등록 오류:', error);
+    logger.error('재원생 상담 등록 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });

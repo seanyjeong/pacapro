@@ -108,6 +108,9 @@ export interface Consultation {
   linked_student_grade?: string;
   linked_student_is_trial?: boolean;
 
+  // 학생 매칭 상태 (이름+전화번호로 재원생 테이블과 비교)
+  matched_student_status?: 'registered' | 'trial' | 'unregistered';
+
   // 상태
   status: ConsultationStatus;
   admin_notes?: string;
