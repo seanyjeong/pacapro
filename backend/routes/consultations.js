@@ -335,7 +335,7 @@ router.get('/', verifyToken, async (req, res) => {
 
     if (hasCompletedConsultations) {
       const [students] = await db.query(
-        `SELECT id, name, phone, parent_phone, status, is_trial FROM students WHERE academy_id = ?`,
+        `SELECT id, name, phone, parent_phone, status, is_trial, trial_dates FROM students WHERE academy_id = ?`,
         [academyId]
       );
 
@@ -345,16 +345,27 @@ router.get('/', verifyToken, async (req, res) => {
         const decryptedParentPhone = s.parent_phone ? decrypt(s.parent_phone) : '';
         const decryptedPhone = s.phone ? decrypt(s.phone) : '';
 
+        // trial_dates 파싱
+        let hasTrial = false;
+        try {
+          const trialDates = s.trial_dates ? (typeof s.trial_dates === 'string' ? JSON.parse(s.trial_dates) : s.trial_dates) : null;
+          hasTrial = trialDates && Array.isArray(trialDates) && trialDates.length > 0;
+        } catch (e) {
+          hasTrial = false;
+        }
+
+        const studentInfo = { id: s.id, status: s.status, is_trial: s.is_trial, hasTrial };
+
         // 이름+학부모전화번호 키
         if (decryptedName && decryptedParentPhone) {
           const key = `${decryptedName.trim().toLowerCase()}_${decryptedParentPhone.replace(/[^0-9]/g, '')}`;
-          studentsMap.set(key, { id: s.id, status: s.status, is_trial: s.is_trial });
+          studentsMap.set(key, studentInfo);
         }
         // 이름+학생전화번호 키도 추가
         if (decryptedName && decryptedPhone) {
           const key2 = `${decryptedName.trim().toLowerCase()}_${decryptedPhone.replace(/[^0-9]/g, '')}`;
           if (!studentsMap.has(key2)) {
-            studentsMap.set(key2, { id: s.id, status: s.status, is_trial: s.is_trial });
+            studentsMap.set(key2, studentInfo);
           }
         }
       });
@@ -386,6 +397,12 @@ router.get('/', verifyToken, async (req, res) => {
         }
 
         // 완료된 상담인 경우 학생 매칭 (이름+전화번호로)
+        // 상태 종류:
+        // - registered_with_trial: 체험 후 등록 (체험완료 + 등록)
+        // - registered_direct: 바로 등록 (등록만)
+        // - trial_ongoing: 체험 중 (체험중)
+        // - trial_completed: 체험 완료 미등록 (체험완료 + 미등록)
+        // - no_trial: 미체험 (미체험)
         let matched_student_status = null;
         if (decrypted.status === 'completed') {
           const consultName = (decrypted.student_name || '').trim().toLowerCase();
@@ -403,12 +420,19 @@ router.get('/', verifyToken, async (req, res) => {
           }
 
           if (matched) {
-            // active = 등록, trial = 체험
-            matched_student_status = matched.status === 'active' ? 'registered'
-                                    : matched.status === 'trial' ? 'trial'
-                                    : 'unregistered';
+            if (matched.status === 'active') {
+              // 재원생: 체험 이력 있으면 체험완료+등록, 없으면 바로등록
+              matched_student_status = matched.hasTrial ? 'registered_with_trial' : 'registered_direct';
+            } else if (matched.status === 'trial') {
+              // 체험생: 체험 진행 중
+              matched_student_status = 'trial_ongoing';
+            } else {
+              // 그 외 상태(withdrawn 등): 체험 이력 있으면 체험완료+미등록
+              matched_student_status = matched.hasTrial ? 'trial_completed' : 'no_trial';
+            }
           } else {
-            matched_student_status = 'unregistered';
+            // 매칭 안됨: 미체험
+            matched_student_status = 'no_trial';
           }
         }
 

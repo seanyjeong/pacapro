@@ -109,7 +109,12 @@ export interface Consultation {
   linked_student_is_trial?: boolean;
 
   // 학생 매칭 상태 (이름+전화번호로 재원생 테이블과 비교)
-  matched_student_status?: 'registered' | 'trial' | 'unregistered';
+  // - registered_with_trial: 체험 후 등록 (체험완료 + 등록)
+  // - registered_direct: 바로 등록 (등록만)
+  // - trial_ongoing: 체험 중 (체험중)
+  // - trial_completed: 체험 완료 미등록 (체험완료 + 미등록)
+  // - no_trial: 미체험
+  matched_student_status?: 'registered_with_trial' | 'registered_direct' | 'trial_ongoing' | 'trial_completed' | 'no_trial';
 
   // 상태
   status: ConsultationStatus;
