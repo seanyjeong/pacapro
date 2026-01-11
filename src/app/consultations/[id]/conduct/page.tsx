@@ -7,7 +7,7 @@ import { ko } from 'date-fns/locale';
 import {
   ArrowLeft, Save, User, Phone, School, Target, Calendar, Clock,
   CheckSquare, Square, ChevronDown, ChevronUp, Loader2, Sparkles, Plus, Trash2,
-  GraduationCap, UserPlus
+  GraduationCap, UserPlus, Edit
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -88,6 +88,18 @@ export default function ConductPage({ params }: PageProps) {
   const [pendingModalOpen, setPendingModalOpen] = useState(false);
   const [pendingMemo, setPendingMemo] = useState('');
   const [convertingToPending, setConvertingToPending] = useState(false);
+
+  // 학생 정보 수정 모달
+  const [studentEditModalOpen, setStudentEditModalOpen] = useState(false);
+  const [studentEditForm, setStudentEditForm] = useState({
+    student_name: '',
+    student_grade: '',
+    gender: '' as 'male' | 'female' | '',
+    student_school: '',
+    parent_phone: '',
+    target_school: ''
+  });
+  const [savingStudent, setSavingStudent] = useState(false);
 
   // 재원생 상담용 상태
   const [linkedStudent, setLinkedStudent] = useState<{
@@ -386,6 +398,56 @@ export default function ConductPage({ params }: PageProps) {
       toast.error(err.message || '체험 등록에 실패했습니다.');
     } finally {
       setConvertingToTrial(false);
+    }
+  };
+
+  // 학생 정보 수정 모달 열기
+  const openStudentEditModal = () => {
+    if (!consultation) return;
+    setStudentEditForm({
+      student_name: consultation.student_name || '',
+      student_grade: consultation.student_grade || '',
+      gender: consultation.gender || '',
+      student_school: consultation.student_school || '',
+      parent_phone: consultation.parent_phone || '',
+      target_school: consultation.target_school || ''
+    });
+    setStudentEditModalOpen(true);
+  };
+
+  // 학생 정보 저장
+  const handleSaveStudentInfo = async () => {
+    if (!consultation) return;
+
+    setSavingStudent(true);
+    try {
+      await apiClient.put(`/consultations/${consultation.id}`, {
+        student_name: studentEditForm.student_name,
+        student_grade: studentEditForm.student_grade,
+        gender: studentEditForm.gender || undefined,
+        student_school: studentEditForm.student_school,
+        parent_phone: studentEditForm.parent_phone,
+        target_school: studentEditForm.target_school
+      });
+
+      // 로컬 상태 업데이트
+      setConsultation({
+        ...consultation,
+        student_name: studentEditForm.student_name,
+        student_grade: studentEditForm.student_grade as typeof consultation.student_grade,
+        gender: studentEditForm.gender || undefined,
+        student_school: studentEditForm.student_school,
+        parent_phone: studentEditForm.parent_phone,
+        target_school: studentEditForm.target_school
+      });
+
+      toast.success('학생 정보가 수정되었습니다.');
+      setStudentEditModalOpen(false);
+    } catch (error) {
+      console.error('학생 정보 수정 오류:', error);
+      toast.error('학생 정보 수정에 실패했습니다.');
+    } finally {
+      setSavingStudent(false);
     }
   };
 
@@ -911,10 +973,21 @@ export default function ConductPage({ params }: PageProps) {
             {/* 기본 정보 */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center">
-                  <User className="h-5 w-5 mr-2 text-primary-600" />
-                  기본 정보
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center">
+                    <User className="h-5 w-5 mr-2 text-primary-600" />
+                    기본 정보
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={openStudentEditModal}
+                    className="h-8 px-2"
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    수정
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-3 text-sm">
@@ -927,6 +1000,13 @@ export default function ConductPage({ params }: PageProps) {
                     <p className="font-medium">{consultation.student_grade}</p>
                   </div>
                 </div>
+
+                {consultation.gender && (
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">성별</span>
+                    <p className="font-medium">{consultation.gender === 'male' ? '남' : '여'}</p>
+                  </div>
+                )}
 
                 <div className="flex items-center text-sm">
                   <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -1403,6 +1483,117 @@ export default function ConductPage({ params }: PageProps) {
                 <Clock className="h-4 w-4 mr-2" />
               )}
               미등록관리로 완료
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 학생 정보 수정 모달 */}
+      <Dialog open={studentEditModalOpen} onOpenChange={setStudentEditModalOpen}>
+        <DialogContent className="max-w-md py-6 px-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary-600" />
+              학생 정보 수정
+            </DialogTitle>
+            <DialogDescription>
+              상담 학생의 기본 정보를 수정합니다.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>학생명</Label>
+                <Input
+                  value={studentEditForm.student_name}
+                  onChange={(e) => setStudentEditForm({ ...studentEditForm, student_name: e.target.value })}
+                  placeholder="이름"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>학년</Label>
+                <Select
+                  value={studentEditForm.student_grade}
+                  onValueChange={(v) => setStudentEditForm({ ...studentEditForm, student_grade: v })}
+                >
+                  <SelectTrigger>
+                    <span>{studentEditForm.student_grade || '학년 선택'}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="중1">중1</SelectItem>
+                    <SelectItem value="중2">중2</SelectItem>
+                    <SelectItem value="중3">중3</SelectItem>
+                    <SelectItem value="고1">고1</SelectItem>
+                    <SelectItem value="고2">고2</SelectItem>
+                    <SelectItem value="고3">고3</SelectItem>
+                    <SelectItem value="N수생">N수생</SelectItem>
+                    <SelectItem value="대학생">대학생</SelectItem>
+                    <SelectItem value="기타">기타</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>성별</Label>
+                <Select
+                  value={studentEditForm.gender}
+                  onValueChange={(v) => setStudentEditForm({ ...studentEditForm, gender: v as 'male' | 'female' })}
+                >
+                  <SelectTrigger>
+                    <span>{studentEditForm.gender === 'male' ? '남' : studentEditForm.gender === 'female' ? '여' : '성별 선택'}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">남</SelectItem>
+                    <SelectItem value="female">여</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>학교</Label>
+                <Input
+                  value={studentEditForm.student_school}
+                  onChange={(e) => setStudentEditForm({ ...studentEditForm, student_school: e.target.value })}
+                  placeholder="학교명"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>학부모 연락처</Label>
+              <Input
+                value={studentEditForm.parent_phone}
+                onChange={(e) => setStudentEditForm({ ...studentEditForm, parent_phone: e.target.value })}
+                placeholder="010-0000-0000"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>목표 대학</Label>
+              <Input
+                value={studentEditForm.target_school}
+                onChange={(e) => setStudentEditForm({ ...studentEditForm, target_school: e.target.value })}
+                placeholder="목표 대학"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="mt-6">
+            <Button variant="outline" onClick={() => setStudentEditModalOpen(false)}>
+              취소
+            </Button>
+            <Button
+              onClick={handleSaveStudentInfo}
+              disabled={savingStudent}
+            >
+              {savingStudent ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              저장
             </Button>
           </DialogFooter>
         </DialogContent>

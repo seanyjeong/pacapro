@@ -11,7 +11,7 @@ import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
   Calendar, Clock, Phone, Search, Loader2, RefreshCw, ChevronLeft, ChevronRight,
-  MessageSquare, X, Play
+  MessageSquare, X, Play, Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -265,18 +265,29 @@ export default function TabletConsultationsPage() {
                   )}
                 </div>
 
-                {/* 상담 진행 버튼 */}
-                {(consultation.status === 'pending' || consultation.status === 'confirmed') && (
-                  <div className="mt-4 pt-3 border-t border-border">
-                    <Button
-                      onClick={() => router.push(`/tablet/consultations/${consultation.id}/conduct`)}
-                      className="w-full bg-primary hover:bg-primary/90 h-12 text-base"
-                    >
-                      <Play className="w-5 h-5 mr-2" />
-                      상담 진행
-                    </Button>
-                  </div>
-                )}
+                {/* 상담 진행/보기 버튼 - 모든 상태에서 표시 */}
+                <div className="mt-4 pt-3 border-t border-border">
+                  <Button
+                    onClick={() => router.push(`/tablet/consultations/${consultation.id}/conduct`)}
+                    className={`w-full h-12 text-base ${
+                      consultation.status === 'completed'
+                        ? 'bg-green-600 hover:bg-green-700'
+                        : 'bg-primary hover:bg-primary/90'
+                    }`}
+                  >
+                    {consultation.status === 'completed' ? (
+                      <>
+                        <Eye className="w-5 h-5 mr-2" />
+                        상담 내역 보기
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-5 h-5 mr-2" />
+                        상담 진행
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
