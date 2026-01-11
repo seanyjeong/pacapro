@@ -818,6 +818,11 @@ export default function NewInquiryConsultationsPage() {
                                 </span>
                               )}
                             </div>
+                            {c.admin_notes && (
+                              <div className="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 px-2 py-1 rounded mt-1">
+                                <span className="font-medium">메모:</span> {c.admin_notes}
+                              </div>
+                            )}
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
