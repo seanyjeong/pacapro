@@ -61,7 +61,7 @@ router.get('/consultation/:slug', async (req, res) => {
           ? JSON.parse(academy.referral_sources)
           : academy.referral_sources;
       } catch (e) {
-        console.error('referral_sources 파싱 오류:', e);
+        logger.error('referral_sources 파싱 오류:', e);
       }
     }
 
@@ -86,7 +86,7 @@ router.get('/consultation/:slug', async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('상담 페이지 정보 조회 오류:', error);
+    logger.error('상담 페이지 정보 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -217,7 +217,7 @@ router.get('/consultation/:slug/slots', async (req, res) => {
       slotDuration
     });
   } catch (error) {
-    console.error('슬롯 조회 오류:', error);
+    logger.error('슬롯 조회 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -367,7 +367,7 @@ router.post('/consultation/:slug/apply', async (req, res) => {
       preferredDate,
       preferredTime,
       consultationId
-    }).catch(err => console.error('[NewConsultationPush] 오류:', err));
+    }).catch(err => logger.error('[NewConsultationPush] 오류:', err));
 
     res.status(201).json({
       message: '상담 신청이 완료되었습니다.',
@@ -376,7 +376,7 @@ router.post('/consultation/:slug/apply', async (req, res) => {
       linkedStudent: linkedStudentId ? { id: linkedStudentId } : null
     });
   } catch (error) {
-    console.error('상담 신청 오류:', error);
+    logger.error('상담 신청 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });
@@ -440,9 +440,9 @@ async function sendNewConsultationPush(academyId, academyName, consultation) {
             }
         }
 
-        console.log(`[NewConsultationPush] 학원 ${academyId}: 새 상담 알림 발송 완료`);
+        logger.info(`[NewConsultationPush] 학원 ${academyId}: 새 상담 알림 발송 완료`);
     } catch (error) {
-        console.error('[NewConsultationPush] 오류:', error);
+        logger.error('[NewConsultationPush] 오류:', error);
     }
 }
 
@@ -499,7 +499,7 @@ router.get('/reservation/:reservationNumber', async (req, res) => {
             academySlug: consultation.slug
         });
     } catch (error) {
-        console.error('예약 조회 오류:', error);
+        logger.error('예약 조회 오류:', error);
         res.status(500).json({ error: '서버 오류가 발생했습니다.' });
     }
 });
@@ -575,14 +575,14 @@ router.put('/reservation/:reservationNumber', async (req, res) => {
             oldTime: consultation.preferred_time,
             newDate: preferredDate,
             newTime: preferredTime
-        }).catch(err => console.error('[ReservationChangePush] 오류:', err));
+        }).catch(err => logger.error('[ReservationChangePush] 오류:', err));
 
         res.json({
             message: '예약이 수정되었습니다. 관리자 확인 후 다시 확정됩니다.',
             newStatus: 'pending'
         });
     } catch (error) {
-        console.error('예약 수정 오류:', error);
+        logger.error('예약 수정 오류:', error);
         res.status(500).json({ error: '서버 오류가 발생했습니다.' });
     }
 });
@@ -593,6 +593,7 @@ router.put('/reservation/:reservationNumber', async (req, res) => {
 async function sendReservationChangePush(academyId, academyName, info) {
     try {
         const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
         // 관리자의 구독 조회
         const [subscriptions] = await db.query(
@@ -605,7 +606,7 @@ async function sendReservationChangePush(academyId, academyName, info) {
         );
 
         if (subscriptions.length === 0) {
-            console.log('[ReservationChangePush] 구독자 없음');
+            logger.info('[ReservationChangePush] 구독자 없음');
             return;
         }
 
@@ -646,9 +647,9 @@ async function sendReservationChangePush(academyId, academyName, info) {
             }
         }
 
-        console.log(`[ReservationChangePush] 학원 ${academyId}: 일정 변경 알림 발송 완료`);
+        logger.info(`[ReservationChangePush] 학원 ${academyId}: 일정 변경 알림 발송 완료`);
     } catch (error) {
-        console.error('[ReservationChangePush] 오류:', error);
+        logger.error('[ReservationChangePush] 오류:', error);
     }
 }
 
@@ -685,7 +686,7 @@ router.get('/check-slug/:slug', async (req, res) => {
       message: existing.length > 0 ? '이미 사용 중인 주소입니다.' : null
     });
   } catch (error) {
-    console.error('slug 확인 오류:', error);
+    logger.error('slug 확인 오류:', error);
     res.status(500).json({ error: '서버 오류가 발생했습니다.' });
   }
 });

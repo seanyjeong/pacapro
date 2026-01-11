@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 /**
  * GET /paca/settings
@@ -66,7 +67,7 @@ router.get('/', verifyToken, async (req, res) => {
             settings: settings[0]
         });
     } catch (error) {
-        console.error('Error fetching settings:', error);
+        logger.error('Error fetching settings:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch settings'
@@ -249,7 +250,7 @@ router.put('/', verifyToken, checkPermission('settings', 'edit'), async (req, re
             settings: updated[0]
         });
     } catch (error) {
-        console.error('Error updating settings:', error);
+        logger.error('Error updating settings:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update settings'
@@ -344,7 +345,7 @@ router.get('/academy', verifyToken, async (req, res) => {
                         ? JSON.parse(dbSettings.settings)
                         : dbSettings.settings;
                 } catch (e) {
-                    console.error('Failed to parse settings JSON:', e);
+                    logger.error('Failed to parse settings JSON:', e);
                 }
             }
 
@@ -363,7 +364,7 @@ router.get('/academy', verifyToken, async (req, res) => {
             settings
         });
     } catch (error) {
-        console.error('Error fetching academy settings:', error);
+        logger.error('Error fetching academy settings:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch academy settings'
@@ -508,7 +509,7 @@ router.put('/academy', verifyToken, checkPermission('settings', 'edit'), async (
                     season_fees: parsed.season_fees || finalSettings.season_fees,
                 };
             } catch (e) {
-                console.error('Failed to parse saved settings:', e);
+                logger.error('Failed to parse saved settings:', e);
             }
         }
 
@@ -517,7 +518,7 @@ router.put('/academy', verifyToken, checkPermission('settings', 'edit'), async (
             settings: finalSettings
         });
     } catch (error) {
-        console.error('Error updating academy settings:', error);
+        logger.error('Error updating academy settings:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update academy settings'
@@ -558,7 +559,7 @@ router.get('/tuition-rates', verifyToken, async (req, res) => {
             tuition_rates: settings[0].weekly_tuition_rates
         });
     } catch (error) {
-        console.error('Error fetching tuition rates:', error);
+        logger.error('Error fetching tuition rates:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch tuition rates'
@@ -608,7 +609,7 @@ router.put('/tuition-rates', verifyToken, checkPermission('settings', 'edit'), a
             tuition_rates
         });
     } catch (error) {
-        console.error('Error updating tuition rates:', error);
+        logger.error('Error updating tuition rates:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update tuition rates'
@@ -675,7 +676,7 @@ router.post('/reset-database', verifyToken, requireRole('owner'), async (req, re
 
         await connection.commit();
 
-        console.log(`[DB Reset] Academy ${req.user.academyId} by user ${req.user.id}`);
+        logger.info(`[DB Reset] Academy ${req.user.academyId} by user ${req.user.id}`);
 
         res.json({
             message: '데이터베이스가 초기화되었습니다.',
@@ -683,7 +684,7 @@ router.post('/reset-database', verifyToken, requireRole('owner'), async (req, re
         });
     } catch (error) {
         await connection.rollback();
-        console.error('Error resetting database:', error);
+        logger.error('Error resetting database:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '데이터베이스 초기화에 실패했습니다.'

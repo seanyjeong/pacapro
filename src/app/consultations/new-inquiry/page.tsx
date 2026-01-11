@@ -372,6 +372,27 @@ export default function NewInquiryConsultationsPage() {
     return consultations;
   }, [consultations, statusFilter, completedTab]);
 
+  // 월별로 그룹화된 상담 목록
+  const groupedByMonth = useMemo(() => {
+    const groups: { [key: string]: { label: string; consultations: typeof filteredConsultations } } = {};
+
+    filteredConsultations.forEach(c => {
+      const date = parseISO(c.preferred_date);
+      const key = format(date, 'yyyy-MM');
+      const label = format(date, 'yyyy년 M월', { locale: ko });
+
+      if (!groups[key]) {
+        groups[key] = { label, consultations: [] };
+      }
+      groups[key].consultations.push(c);
+    });
+
+    // 최신순 정렬
+    return Object.entries(groups)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([key, value]) => ({ key, ...value }));
+  }, [filteredConsultations]);
+
   return (
     <div className="p-6 space-y-6 pb-24">
       {/* 헤더 */}
@@ -564,132 +585,146 @@ export default function NewInquiryConsultationsPage() {
                 : '상담 내역이 없습니다.'}
             </div>
           ) : (
-            <div className="divide-y">
-              {filteredConsultations.map((c) => (
-                <div
-                  key={c.id}
-                  className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => {
-                    setSelectedConsultation(c);
-                    setDetailOpen(true);
-                  }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium">{c.student_name}</span>
-                        <Badge variant="outline">{c.student_grade}</Badge>
-                        <Badge className={CONSULTATION_STATUS_COLORS[c.status]}>
-                          {CONSULTATION_STATUS_LABELS[c.status]}
-                        </Badge>
-                        {c.status === 'completed' && (
-                          <>
-                            {/* 체험완료 태그 (체험 후 등록 또는 체험완료 미등록) */}
-                            {(c.matched_student_status === 'registered_with_trial' || c.matched_student_status === 'trial_completed') && (
-                              <Badge className="bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800 flex items-center gap-1">
-                                <Dumbbell className="h-3 w-3" />
-                                체험완료
-                              </Badge>
-                            )}
-                            {/* 등록 태그 (체험 후 등록 또는 바로 등록) */}
-                            {(c.matched_student_status === 'registered_with_trial' || c.matched_student_status === 'registered_direct') && (
-                              <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 flex items-center gap-1">
-                                <UserCheck className="h-3 w-3" />
-                                등록
-                              </Badge>
-                            )}
-                            {/* 체험중 태그 */}
-                            {c.matched_student_status === 'trial_ongoing' && (
-                              <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 flex items-center gap-1">
-                                <Dumbbell className="h-3 w-3" />
-                                체험중
-                              </Badge>
-                            )}
-                            {/* 미등록 태그 (체험완료 미등록 또는 미체험) */}
-                            {(c.matched_student_status === 'trial_completed' || c.matched_student_status === 'no_trial' || !c.matched_student_status) && (
-                              <Badge className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800 flex items-center gap-1">
-                                <UserX className="h-3 w-3" />
-                                미등록
-                              </Badge>
-                            )}
-                            {/* 미체험 태그 (체험 신청 안함) */}
-                            {c.matched_student_status === 'no_trial' && (
-                              <Badge className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 flex items-center gap-1">
-                                미체험
-                              </Badge>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {format(parseISO(c.preferred_date), 'M월 d일 (EEE)', { locale: ko })}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {c.preferred_time?.slice(0, 5)}
-                        </span>
-                        {c.parent_phone && (
-                          <span className="flex items-center gap-1">
-                            <Phone className="h-3.5 w-3.5" />
-                            {c.parent_phone}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
+            <div>
+              {groupedByMonth.map((group) => (
+                <div key={group.key}>
+                  {/* 월별 헤더 */}
+                  <div className="px-4 py-3 bg-muted/50 border-b flex items-center justify-between">
+                    <span className="font-medium text-sm">{group.label}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {group.consultations.length}명
+                    </Badge>
+                  </div>
+                  {/* 해당 월의 상담 목록 */}
+                  <div className="divide-y">
+                    {group.consultations.map((c) => (
+                      <div
+                        key={c.id}
+                        className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                        onClick={() => {
                           setSelectedConsultation(c);
                           setDetailOpen(true);
-                        }}>
-                          <Eye className="h-4 w-4 mr-2" />
-                          상세보기
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedConsultation(c);
-                          setNewStatus(c.status);
-                          setAdminNotes(c.admin_notes || '');
-                          setNewDate(c.preferred_date);
-                          setNewTime(c.preferred_time || '');
-                          setStatusModalOpen(true);
-                        }}>
-                          <Edit className="h-4 w-4 mr-2" />
-                          상태변경
-                        </DropdownMenuItem>
-                        {c.status === 'completed' && (
-                          <DropdownMenuItem onClick={(e) => {
-                            e.stopPropagation();
-                            setTrialConsultation(c);
-                            setTrialDates([{ date: '', timeSlot: '' }]);
-                            setTrialModalOpen(true);
-                          }}>
-                            <CheckSquare className="h-4 w-4 mr-2" />
-                            체험등록
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-red-600"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedConsultation(c);
-                            setDeleteModalOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          삭제
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        }}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium">{c.student_name}</span>
+                              <Badge variant="outline">{c.student_grade}</Badge>
+                              <Badge className={CONSULTATION_STATUS_COLORS[c.status]}>
+                                {CONSULTATION_STATUS_LABELS[c.status]}
+                              </Badge>
+                              {c.status === 'completed' && (
+                                <>
+                                  {/* 체험완료 태그 (체험 후 등록 또는 체험완료 미등록) */}
+                                  {(c.matched_student_status === 'registered_with_trial' || c.matched_student_status === 'trial_completed') && (
+                                    <Badge className="bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800 flex items-center gap-1">
+                                      <Dumbbell className="h-3 w-3" />
+                                      체험완료
+                                    </Badge>
+                                  )}
+                                  {/* 등록 태그 (체험 후 등록 또는 바로 등록) */}
+                                  {(c.matched_student_status === 'registered_with_trial' || c.matched_student_status === 'registered_direct') && (
+                                    <Badge className="bg-green-100 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-300 dark:border-green-800 flex items-center gap-1">
+                                      <UserCheck className="h-3 w-3" />
+                                      등록
+                                    </Badge>
+                                  )}
+                                  {/* 체험중 태그 */}
+                                  {c.matched_student_status === 'trial_ongoing' && (
+                                    <Badge className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 flex items-center gap-1">
+                                      <Dumbbell className="h-3 w-3" />
+                                      체험중
+                                    </Badge>
+                                  )}
+                                  {/* 미등록 태그 (체험완료 미등록 또는 미체험) */}
+                                  {(c.matched_student_status === 'trial_completed' || c.matched_student_status === 'no_trial' || !c.matched_student_status) && (
+                                    <Badge className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800 flex items-center gap-1">
+                                      <UserX className="h-3 w-3" />
+                                      미등록
+                                    </Badge>
+                                  )}
+                                  {/* 미체험 태그 (체험 신청 안함) */}
+                                  {c.matched_student_status === 'no_trial' && (
+                                    <Badge className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 flex items-center gap-1">
+                                      미체험
+                                    </Badge>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                {format(parseISO(c.preferred_date), 'M월 d일 (EEE)', { locale: ko })}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3.5 w-3.5" />
+                                {c.preferred_time?.slice(0, 5)}
+                              </span>
+                              {c.parent_phone && (
+                                <span className="flex items-center gap-1">
+                                  <Phone className="h-3.5 w-3.5" />
+                                  {c.parent_phone}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedConsultation(c);
+                                setDetailOpen(true);
+                              }}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                상세보기
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedConsultation(c);
+                                setNewStatus(c.status);
+                                setAdminNotes(c.admin_notes || '');
+                                setNewDate(c.preferred_date);
+                                setNewTime(c.preferred_time || '');
+                                setStatusModalOpen(true);
+                              }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                상태변경
+                              </DropdownMenuItem>
+                              {c.status === 'completed' && (
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTrialConsultation(c);
+                                  setTrialDates([{ date: '', timeSlot: '' }]);
+                                  setTrialModalOpen(true);
+                                }}>
+                                  <CheckSquare className="h-4 w-4 mr-2" />
+                                  체험등록
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedConsultation(c);
+                                  setDeleteModalOpen(true);
+                                }}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                삭제
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}

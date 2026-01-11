@@ -11,6 +11,7 @@ const db = require('../config/database');
 const { generateToken, verifyToken } = require('../middleware/auth');
 const { sendPasswordResetEmail } = require('../utils/emailSender');
 const { encrypt, decrypt, decryptFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 /**
  * POST /api/auth/register
@@ -124,7 +125,7 @@ router.post('/register', async (req, res) => {
 
     } catch (error) {
         await connection.rollback();
-        console.error('Registration error:', error);
+        logger.error('Registration error:', error);
         res.status(500).json({
             error: 'Internal Server Error',
             message: 'Registration failed',
@@ -223,7 +224,7 @@ router.post('/login', async (req, res) => {
                     ? JSON.parse(user.permissions)
                     : user.permissions;
             } catch (e) {
-                console.error('Failed to parse permissions:', e);
+                logger.error('Failed to parse permissions:', e);
             }
         }
 
@@ -243,7 +244,7 @@ router.post('/login', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Login error:', error);
+        logger.error('Login error:', error);
         res.status(500).json({
             error: 'Internal Server Error',
             message: 'Login failed',
@@ -282,7 +283,7 @@ router.get('/me', verifyToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Get user error:', error);
+        logger.error('Get user error:', error);
         res.status(500).json({
             error: 'Internal Server Error',
             message: 'Failed to get user info'
@@ -349,7 +350,7 @@ router.post('/change-password', verifyToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Change password error:', error);
+        logger.error('Change password error:', error);
         res.status(500).json({
             error: 'Internal Server Error',
             message: 'Failed to change password'
@@ -401,7 +402,7 @@ router.post('/verify-password', verifyToken, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Verify password error:', error);
+        logger.error('Verify password error:', error);
         res.status(500).json({
             error: 'Internal Server Error',
             message: '비밀번호 확인에 실패했습니다'
@@ -466,7 +467,7 @@ router.post('/forgot-password', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Forgot password error:', error);
+        logger.error('Forgot password error:', error);
         res.status(500).json({
             error: 'Internal Server Error',
             message: '비밀번호 재설정 이메일 발송에 실패했습니다'
@@ -533,7 +534,7 @@ router.post('/reset-password', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Reset password error:', error);
+        logger.error('Reset password error:', error);
         res.status(500).json({
             error: 'Internal Server Error',
             message: '비밀번호 재설정에 실패했습니다'
@@ -582,7 +583,7 @@ router.get('/verify-reset-token', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Verify reset token error:', error);
+        logger.error('Verify reset token error:', error);
         res.status(500).json({
             error: 'Internal Server Error',
             message: '토큰 확인에 실패했습니다',

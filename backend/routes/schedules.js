@@ -5,6 +5,7 @@ const { verifyToken, requireRole, checkPermission } = require('../middleware/aut
 const { updateSalaryFromAttendance } = require('../utils/salaryCalculator');
 const { decrypt } = require('../utils/encryption');
 const { validateAttendance } = require('../utils/attendanceValidator');
+const logger = require('../utils/logger');
 
 // 스케줄 결과에서 암호화된 이름 필드 복호화
 function decryptScheduleNames(schedules) {
@@ -104,7 +105,7 @@ router.get('/', verifyToken, async (req, res) => {
             schedules: decryptScheduleNames(schedules)
         });
     } catch (error) {
-        console.error('Error fetching schedules:', error);
+        logger.error('Error fetching schedules:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch schedules'
@@ -173,7 +174,7 @@ router.get('/instructor/:instructor_id', verifyToken, async (req, res) => {
             schedules: decryptScheduleNames(schedules)
         });
     } catch (error) {
-        console.error('Error fetching instructor schedules:', error);
+        logger.error('Error fetching instructor schedules:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch instructor schedules'
@@ -281,7 +282,7 @@ router.get('/slot', verifyToken, async (req, res) => {
             available_students: availableStudents
         });
     } catch (error) {
-        console.error('Error fetching slot data:', error);
+        logger.error('Error fetching slot data:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch slot data'
@@ -341,7 +342,7 @@ router.post('/slot/student', verifyToken, checkPermission('schedules', 'edit'), 
         // [보안] 학생이 현재 학원 소속인지 검증
         const validation = await validateAttendance(student_id, scheduleId);
         if (!validation.valid) {
-            console.error(`[SECURITY] Blocked: ${validation.error}`);
+            logger.error(`[SECURITY] Blocked: ${validation.error}`);
             return res.status(403).json({
                 error: 'Forbidden',
                 message: '해당 학생은 이 학원 소속이 아닙니다.'
@@ -358,7 +359,7 @@ router.post('/slot/student', verifyToken, checkPermission('schedules', 'edit'), 
 
         res.json({ message: is_makeup ? '보충 학생이 추가되었습니다.' : '학생이 배정되었습니다.' });
     } catch (error) {
-        console.error('Error adding student to slot:', error);
+        logger.error('Error adding student to slot:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to add student to slot'
@@ -404,7 +405,7 @@ router.delete('/slot/student', verifyToken, checkPermission('schedules', 'edit')
 
         res.json({ message: '학생이 제거되었습니다.' });
     } catch (error) {
-        console.error('Error removing student from slot:', error);
+        logger.error('Error removing student from slot:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to remove student from slot'
@@ -471,7 +472,7 @@ router.post('/slot/move', verifyToken, checkPermission('schedules', 'edit'), asy
 
         res.json({ message: '학생이 이동되었습니다.' });
     } catch (error) {
-        console.error('Error moving student:', error);
+        logger.error('Error moving student:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to move student'
@@ -517,7 +518,7 @@ router.get('/:id', verifyToken, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error fetching schedule:', error);
+        logger.error('Error fetching schedule:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch schedule'
@@ -815,7 +816,7 @@ router.post('/bulk', verifyToken, checkPermission('schedules', 'edit'), async (r
     } catch (error) {
         await connection.rollback();
         connection.release();
-        console.error('Error creating bulk schedules:', error);
+        logger.error('Error creating bulk schedules:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to create schedules'
@@ -911,7 +912,7 @@ router.post('/', verifyToken, checkPermission('schedules', 'edit'), async (req, 
             schedule: newSchedule[0]
         });
     } catch (error) {
-        console.error('Error creating schedule:', error);
+        logger.error('Error creating schedule:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to create schedule'
@@ -999,7 +1000,7 @@ router.put('/:id/assign-instructor', verifyToken, checkPermission('schedules', '
             schedule: updated[0]
         });
     } catch (error) {
-        console.error('Error assigning instructor:', error);
+        logger.error('Error assigning instructor:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to assign instructor'
@@ -1111,7 +1112,7 @@ router.put('/:id', verifyToken, checkPermission('schedules', 'edit'), async (req
             schedule: updated[0]
         });
     } catch (error) {
-        console.error('Error updating schedule:', error);
+        logger.error('Error updating schedule:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update schedule'
@@ -1148,7 +1149,7 @@ router.delete('/:id', verifyToken, checkPermission('schedules', 'edit'), async (
             message: 'Schedule deleted successfully'
         });
     } catch (error) {
-        console.error('Error deleting schedule:', error);
+        logger.error('Error deleting schedule:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to delete schedule'
@@ -1393,7 +1394,7 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
             students: studentsWithInfo
         });
     } catch (error) {
-        console.error('Error fetching attendance:', error);
+        logger.error('Error fetching attendance:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch attendance records'
@@ -1414,11 +1415,11 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
         const { attendance_records } = req.body;
 
         // 디버깅 로그
-        console.log(`[Attendance] Schedule ${scheduleId}, received:`, JSON.stringify(attendance_records));
+        logger.info(`[Attendance] Schedule ${scheduleId}, received:`, JSON.stringify(attendance_records));
 
         // Validation
         if (!Array.isArray(attendance_records) || attendance_records.length === 0) {
-            console.log(`[Attendance] Validation failed - empty or not array`);
+            logger.info(`[Attendance] Validation failed - empty or not array`);
             connection.release();
             return res.status(400).json({
                 error: 'Validation Error',
@@ -1453,7 +1454,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
 
             // attendance_status가 'none'이면 출석 상태만 NULL로 (학생은 목록에 유지)
             if (attendance_status === 'none') {
-                console.log(`[Attendance] Clearing attendance status for student ${student_id}`);
+                logger.info(`[Attendance] Clearing attendance status for student ${student_id}`);
 
                 // 체험생의 경우 기존 출석 상태 확인하여 trial_remaining 복구
                 const [existingAtt] = await connection.query(
@@ -1506,11 +1507,11 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                                     );
                                 }
                             } catch (e) {
-                                console.error('Failed to restore trial_dates attended status:', e);
+                                logger.error('Failed to restore trial_dates attended status:', e);
                             }
                         }
 
-                        console.log(`[Attendance] 체험생 ${student_id} 출석 취소 → trial_remaining +1, 상태 trial로 복구`);
+                        logger.info(`[Attendance] 체험생 ${student_id} 출석 취소 → trial_remaining +1, 상태 trial로 복구`);
                     }
                 }
 
@@ -1528,7 +1529,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
 
             // attendance_status가 null이거나 없으면 스킵 (중복 클릭 방지)
             if (!attendance_status) {
-                console.log(`[Attendance] Skipping student ${student_id} - no attendance_status`);
+                logger.info(`[Attendance] Skipping student ${student_id} - no attendance_status`);
                 continue;
             }
 
@@ -1638,7 +1639,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                             );
                         }
                     } catch (e) {
-                        console.error('Failed to update trial_dates:', e);
+                        logger.error('Failed to update trial_dates:', e);
                     }
                 }
 
@@ -1648,7 +1649,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                         'UPDATE students SET status = ?, is_trial = 0 WHERE id = ?',
                         ['pending', student_id]
                     );
-                    console.log(`체험생 ${student_id} 체험 완료 → 미등록관리로 자동 변경`);
+                    logger.info(`체험생 ${student_id} 체험 완료 → 미등록관리로 자동 변경`);
                 }
             }
 
@@ -1684,7 +1685,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
     } catch (error) {
         await connection.rollback();
         connection.release();
-        console.error('Error recording attendance:', error);
+        logger.error('Error recording attendance:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to record attendance'
@@ -1762,7 +1763,7 @@ router.get('/:id/instructor-attendance', verifyToken, async (req, res) => {
             attendances: decryptedAttendances
         });
     } catch (error) {
-        console.error('Error fetching instructor attendance:', error);
+        logger.error('Error fetching instructor attendance:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch instructor attendance'
@@ -1889,7 +1890,7 @@ router.post('/:id/instructor-attendance', verifyToken, checkPermission('schedule
     } catch (error) {
         await connection.rollback();
         connection.release();
-        console.error('Error recording instructor attendance:', error);
+        logger.error('Error recording instructor attendance:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to record instructor attendance'
@@ -2042,7 +2043,7 @@ router.get('/date/:date/instructor-attendance', verifyToken, async (req, res) =>
             instructors_by_slot: instructorsBySlot  // 배정된 강사만 (이미 복호화됨)
         });
     } catch (error) {
-        console.error('Error fetching instructor attendance by date:', error);
+        logger.error('Error fetching instructor attendance by date:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch instructor attendance'
@@ -2097,7 +2098,7 @@ router.post('/date/:date/instructor-attendance', verifyToken, checkPermission('s
 
             // attendance_status가 'none'이면 출근 상태만 NULL로 (강사는 목록에 유지)
             if (attendance_status === 'none') {
-                console.log(`[InstructorAttendance] Clearing attendance status for instructor ${instructor_id}`);
+                logger.info(`[InstructorAttendance] Clearing attendance status for instructor ${instructor_id}`);
                 await connection.query(
                     `UPDATE instructor_attendance SET attendance_status = NULL, check_in_time = NULL, check_out_time = NULL
                      WHERE instructor_id = ? AND work_date = ? AND time_slot = ?`,
@@ -2170,7 +2171,7 @@ router.post('/date/:date/instructor-attendance', verifyToken, checkPermission('s
     } catch (error) {
         await connection.rollback();
         connection.release();
-        console.error('Error recording instructor attendance:', error);
+        logger.error('Error recording instructor attendance:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to record instructor attendance'
@@ -2255,7 +2256,7 @@ router.get('/date/:date/instructor-schedules', verifyToken, checkPermission('sch
             schedules: schedulesBySlot
         });
     } catch (error) {
-        console.error('Error fetching instructor schedules:', error);
+        logger.error('Error fetching instructor schedules:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch instructor schedules'
@@ -2368,7 +2369,7 @@ router.post('/date/:date/instructor-schedules', verifyToken, checkPermission('sc
     } catch (error) {
         await connection.rollback();
         connection.release();
-        console.error('Error saving instructor schedules:', error);
+        logger.error('Error saving instructor schedules:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to save instructor schedules'
@@ -2466,7 +2467,7 @@ router.get('/instructor-schedules/month', verifyToken, checkPermission('schedule
             schedules: scheduleMap
         });
     } catch (error) {
-        console.error('Error fetching monthly instructor schedules:', error);
+        logger.error('Error fetching monthly instructor schedules:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch monthly instructor schedules'
@@ -2632,7 +2633,7 @@ router.post('/fix-all', verifyToken, requireRole('owner'), async (req, res) => {
 
     } catch (error) {
         connection.release();
-        console.error('Error fixing schedules:', error);
+        logger.error('Error fixing schedules:', error);
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'Failed to fix schedules'

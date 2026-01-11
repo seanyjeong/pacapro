@@ -174,7 +174,12 @@
       "Bash(git cherry-pick:*)",
       "Bash(git branch:*)",
       "Bash(npm run lint:*)",
-      "Bash(npx @next/codemod@canary next-lint-to-eslint-cli:*)"
+      "Bash(npx @next/codemod@canary next-lint-to-eslint-cli:*)",
+      "Bash(__NEW_LINE_61e43c8d8c0e3c73__ mysql -u paca -e \"\nSELECT\n  student_id,\n  COUNT\\(*\\) as total_count,\n  SUM\\(CASE WHEN template_code = ''KA01TP251218165834797kHf1oQCfIKI'' THEN 1 ELSE 0 END\\) as ''납부안내'',\n  SUM\\(CASE WHEN template_code = ''KA01TP251218170003235uD4ZwBIg8Pq'' THEN 1 ELSE 0 END\\) as ''미납자''\nFROM notification_logs\nWHERE academy_id = 2\n  AND YEAR\\(sent_at\\) = 2026\n  AND MONTH\\(sent_at\\) = 1\n  AND student_id IS NOT NULL\n  AND template_code IN \\(''KA01TP251218165834797kHf1oQCfIKI'', ''KA01TP251218170003235uD4ZwBIg8Pq''\\)\nGROUP BY student_id\nORDER BY total_count DESC;\n\" paca)",
+      "Bash(__NEW_LINE_6dd6bfdbac8b4eaa__ mysql -u paca -e \"\nSELECT\n  student_id,\n  template_code,\n  DATE\\(sent_at\\) as date\nFROM notification_logs\nWHERE academy_id = 2\n  AND template_code NOT LIKE ''KA01TP%''\n  AND sent_at >= DATE_SUB\\(NOW\\(\\), INTERVAL 30 DAY\\)\nLIMIT 20;\n\" paca)",
+      "Bash(systemctl status:*)",
+      "mcp__memory-keeper__context_save",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []

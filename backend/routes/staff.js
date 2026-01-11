@@ -11,6 +11,7 @@ const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 const { verifyToken, requireRole } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 // 복호화 헬퍼
 function decryptStaffFields(obj) {
@@ -66,7 +67,7 @@ router.get('/', verifyToken, requireRole('owner'), async (req, res) => {
             staff: staffWithParsedPermissions
         });
     } catch (error) {
-        console.error('Error fetching staff:', error);
+        logger.error('Error fetching staff:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch staff'
@@ -102,7 +103,7 @@ router.get('/available-instructors', verifyToken, requireRole('owner'), async (r
             instructors: decryptArray(instructors)
         });
     } catch (error) {
-        console.error('Error fetching available instructors:', error);
+        logger.error('Error fetching available instructors:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch available instructors'
@@ -232,7 +233,7 @@ router.post('/', verifyToken, requireRole('owner'), async (req, res) => {
 
     } catch (error) {
         await connection.rollback();
-        console.error('Error creating staff:', error);
+        logger.error('Error creating staff:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '직원 계정 생성에 실패했습니다.',
@@ -290,7 +291,7 @@ router.get('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             staff: staffMember
         });
     } catch (error) {
-        console.error('Error fetching staff:', error);
+        logger.error('Error fetching staff:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch staff'
@@ -371,7 +372,7 @@ router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             message: '직원 정보가 수정되었습니다.'
         });
     } catch (error) {
-        console.error('Error updating staff:', error);
+        logger.error('Error updating staff:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '직원 정보 수정에 실패했습니다.'
@@ -418,7 +419,7 @@ router.put('/:id/permissions', verifyToken, requireRole('owner'), async (req, re
             message: '권한이 수정되었습니다.'
         });
     } catch (error) {
-        console.error('Error updating permissions:', error);
+        logger.error('Error updating permissions:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '권한 수정에 실패했습니다.'
@@ -458,7 +459,7 @@ router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             message: '직원 계정이 삭제되었습니다.'
         });
     } catch (error) {
-        console.error('Error deleting staff:', error);
+        logger.error('Error deleting staff:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '직원 삭제에 실패했습니다.'

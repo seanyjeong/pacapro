@@ -4,6 +4,7 @@ const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { calculateInstructorSalary } = require('../utils/salaryCalculator');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 // 강사 이름 복호화 헬퍼
 function decryptInstructorName(obj) {
@@ -72,7 +73,7 @@ router.get('/', verifyToken, checkPermission('salaries', 'view'), async (req, re
             salaries: decryptSalaryArray(salaries)
         });
     } catch (error) {
-        console.error('Error fetching salaries:', error);
+        logger.error('Error fetching salaries:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch salary records'
@@ -198,7 +199,7 @@ router.get('/work-summary/:instructorId/:yearMonth', verifyToken, checkPermissio
             }
         });
     } catch (error) {
-        console.error('Error fetching work summary:', error);
+        logger.error('Error fetching work summary:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch work summary'
@@ -320,7 +321,7 @@ router.get('/:id', verifyToken, checkPermission('salaries', 'view'), async (req,
             }
         });
     } catch (error) {
-        console.error('Error fetching salary:', error);
+        logger.error('Error fetching salary:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch salary record'
@@ -377,7 +378,7 @@ router.post('/calculate', verifyToken, checkPermission('salaries', 'edit'), asyn
             salary: salaryData
         });
     } catch (error) {
-        console.error('Error calculating salary:', error);
+        logger.error('Error calculating salary:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to calculate salary'
@@ -480,7 +481,7 @@ router.post('/', verifyToken, checkPermission('salaries', 'edit'), async (req, r
             salary: decryptInstructorName(created[0])
         });
     } catch (error) {
-        console.error('Error creating salary:', error);
+        logger.error('Error creating salary:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to create salary record'
@@ -619,7 +620,7 @@ router.post('/:id/recalculate', verifyToken, checkPermission('salaries', 'edit')
         });
 
     } catch (error) {
-        console.error('Error recalculating salary:', error);
+        logger.error('Error recalculating salary:', error);
         res.status(500).json({ error: 'Server Error', message: '급여 재계산에 실패했습니다' });
     }
 });
@@ -707,7 +708,7 @@ router.post('/:id/pay', verifyToken, requireRole('owner'), async (req, res) => {
             salary: decryptInstructorName(updated[0])
         });
     } catch (error) {
-        console.error('Error recording salary payment:', error);
+        logger.error('Error recording salary payment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to record salary payment'
@@ -815,7 +816,7 @@ router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             salary: decryptInstructorName(updated[0])
         });
     } catch (error) {
-        console.error('Error updating salary:', error);
+        logger.error('Error updating salary:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update salary record'
@@ -913,7 +914,7 @@ router.post('/bulk-pay', verifyToken, requireRole('owner'), async (req, res) => 
             }))
         });
     } catch (error) {
-        console.error('Error bulk paying salaries:', error);
+        logger.error('Error bulk paying salaries:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to bulk pay salaries'
@@ -963,7 +964,7 @@ router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error deleting salary:', error);
+        logger.error('Error deleting salary:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to delete salary record'

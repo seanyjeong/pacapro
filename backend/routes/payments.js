@@ -5,6 +5,7 @@ const { verifyToken, requireRole, checkPermission } = require('../middleware/aut
 const { truncateToThousands, calculateProRatedFee, parseWeeklyDays } = require('../utils/seasonCalculator');
 const { decrypt } = require('../utils/encryption');
 const { calculateDueDate } = require('../utils/dueDateCalculator');
+const logger = require('../utils/logger');
 
 // 학생 이름 복호화 헬퍼
 function decryptStudentName(obj) {
@@ -190,7 +191,7 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
             payments: decryptPaymentArray(payments)
         });
     } catch (error) {
-        console.error('Error fetching payments:', error);
+        logger.error('Error fetching payments:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '납부 내역을 불러오는데 실패했습니다.'
@@ -235,7 +236,7 @@ router.get('/unpaid', verifyToken, checkPermission('payments', 'view'), async (r
             payments: decryptPaymentArray(payments)
         });
     } catch (error) {
-        console.error('Error fetching unpaid payments:', error);
+        logger.error('Error fetching unpaid payments:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '미납 내역을 불러오는데 실패했습니다.'
@@ -311,7 +312,7 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
             payments: decryptPaymentArray(payments)
         });
     } catch (error) {
-        console.error('Error fetching unpaid-today payments:', error);
+        logger.error('Error fetching unpaid-today payments:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '오늘 미납 내역을 불러오는데 실패했습니다.'
@@ -353,7 +354,7 @@ router.get('/:id', verifyToken, checkPermission('payments', 'view'), async (req,
             payment: decryptStudentName(payments[0])
         });
     } catch (error) {
-        console.error('Error fetching payment:', error);
+        logger.error('Error fetching payment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '납부 내역을 불러오는데 실패했습니다.'
@@ -456,7 +457,7 @@ router.post('/', verifyToken, checkPermission('payments', 'edit'), async (req, r
             payment: payments[0]
         });
     } catch (error) {
-        console.error('Error creating payment:', error);
+        logger.error('Error creating payment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '납부 내역 생성에 실패했습니다.'
@@ -555,7 +556,7 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
                     withNonSeasonProrated++;
                 }
             } catch (err) {
-                console.error(`Failed to calculate non-season prorated for student ${student.id}:`, err);
+                logger.error(`Failed to calculate non-season prorated for student ${student.id}:`, err);
             }
 
             // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 확인 및 적용
@@ -599,7 +600,7 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
                     withCarryover++;
                 }
             } catch (err) {
-                console.error(`Failed to apply carryover credit for student ${student.id}:`, err);
+                logger.error(`Failed to apply carryover credit for student ${student.id}:`, err);
             }
 
             const finalAmount = truncateToThousands(baseAmount - discount + additionalAmount - carryoverAmount);
@@ -713,7 +714,7 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
             due_date
         });
     } catch (error) {
-        console.error('Error creating bulk monthly charges:', error);
+        logger.error('Error creating bulk monthly charges:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '학원비 일괄 생성에 실패했습니다.'
@@ -863,7 +864,7 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
                 ]
             );
         } catch (revenueError) {
-            console.log('Revenue table insert skipped:', revenueError.message);
+            logger.info('Revenue table insert skipped:', revenueError.message);
         }
 
         // Fetch updated payment
@@ -883,13 +884,13 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
             payment: decryptStudentName(updated[0])
         });
     } catch (error) {
-        console.error('=== Error recording payment ===');
-        console.error('Error:', error);
-        console.error('Error message:', error.message);
-        console.error('SQL State:', error.sqlState);
-        console.error('SQL Message:', error.sqlMessage);
-        console.error('Payment ID:', paymentId);
-        console.error('Request body:', req.body);
+        logger.error('=== Error recording payment ===');
+        logger.error('Error:', error);
+        logger.error('Error message:', error.message);
+        logger.error('SQL State:', error.sqlState);
+        logger.error('SQL Message:', error.sqlMessage);
+        logger.error('Payment ID:', paymentId);
+        logger.error('Request body:', req.body);
         res.status(500).json({
             error: 'Server Error',
             message: '납부 기록에 실패했습니다.',
@@ -1042,7 +1043,7 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             payment: decryptStudentName(updated[0])
         });
     } catch (error) {
-        console.error('Error updating payment:', error);
+        logger.error('Error updating payment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '납부 내역 수정에 실패했습니다.'
@@ -1086,7 +1087,7 @@ router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error deleting payment:', error);
+        logger.error('Error deleting payment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '납부 내역 삭제에 실패했습니다.'
@@ -1131,7 +1132,7 @@ router.get('/stats/summary', verifyToken, checkPermission('payments', 'view'), a
             stats: stats[0]
         });
     } catch (error) {
-        console.error('Error fetching payment stats:', error);
+        logger.error('Error fetching payment stats:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '납부 통계를 불러오는데 실패했습니다.'
@@ -1312,7 +1313,7 @@ router.post('/generate-prorated', verifyToken, checkPermission('payments', 'edit
             proration: prorationDetails
         });
     } catch (error) {
-        console.error('Error generating prorated payment:', error);
+        logger.error('Error generating prorated payment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '일할계산 납부건 생성에 실패했습니다.'
@@ -1399,7 +1400,7 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
                 nonSeasonProratedInfo = nonSeasonProrated;
             }
         } catch (err) {
-            console.error(`Failed to calculate non-season prorated for student ${student_id}:`, err);
+            logger.error(`Failed to calculate non-season prorated for student ${student_id}:`, err);
         }
 
         const finalAmount = truncateToThousands(baseAmount - discountAmount + additionalAmount);
@@ -1444,7 +1445,7 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
             nonSeasonProrated: nonSeasonProratedInfo
         });
     } catch (error) {
-        console.error('Error generating monthly payment:', error);
+        logger.error('Error generating monthly payment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '월 납부건 생성에 실패했습니다.'

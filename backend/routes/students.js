@@ -4,6 +4,7 @@ const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { encrypt, decrypt, encryptFields, decryptFields, decryptArrayFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
 const { calculateDueDate } = require('../utils/dueDateCalculator');
+const logger = require('../utils/logger');
 
 /**
  * 학생을 해당 월의 스케줄에 자동 배정
@@ -17,7 +18,7 @@ const { calculateDueDate } = require('../utils/dueDateCalculator');
 async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classDays, enrollmentDate, defaultTimeSlot = 'evening') {
     try {
         if (!classDays || classDays.length === 0) {
-            console.log('No class days specified, skipping auto-assignment');
+            logger.info('No class days specified, skipping auto-assignment');
             return { assigned: 0, created: 0 };
         }
 
@@ -77,10 +78,10 @@ async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classD
             }
         }
 
-        console.log(`Auto-assigned student ${studentId}: ${assignedCount} schedules (${createdCount} new)`);
+        logger.info(`Auto-assigned student ${studentId}: ${assignedCount} schedules (${createdCount} new)`);
         return { assigned: assignedCount, created: createdCount };
     } catch (error) {
-        console.error('Error in autoAssignStudentToSchedules:', error);
+        logger.error('Error in autoAssignStudentToSchedules:', error);
         throw error;
     }
 }
@@ -111,7 +112,7 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
             [studentId, academyId, todayStr]
         );
 
-        console.log(`Removed ${deleteResult.affectedRows} future attendance records for student ${studentId}`);
+        logger.info(`Removed ${deleteResult.affectedRows} future attendance records for student ${studentId}`);
 
         // 2. 새 요일로 재배정 (오늘부터 월말까지)
         let assignedCount = 0;
@@ -161,10 +162,10 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
             }
         }
 
-        console.log(`Reassigned student ${studentId}: ${assignedCount} schedules (${createdCount} new)`);
+        logger.info(`Reassigned student ${studentId}: ${assignedCount} schedules (${createdCount} new)`);
         return { removed: deleteResult.affectedRows, assigned: assignedCount, created: createdCount };
     } catch (error) {
-        console.error('Error in reassignStudentSchedules:', error);
+        logger.error('Error in reassignStudentSchedules:', error);
         throw error;
     }
 }
@@ -213,7 +214,7 @@ router.get('/rest-ended', verifyToken, requireRole('owner', 'admin', 'staff'), a
             students: decryptedStudents
         });
     } catch (error) {
-        console.error('Error fetching rest-ended students:', error);
+        logger.error('Error fetching rest-ended students:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch rest-ended students'
@@ -330,7 +331,7 @@ router.get('/', verifyToken, async (req, res) => {
             students: decryptedStudents
         });
     } catch (error) {
-        console.error('Error fetching students:', error);
+        logger.error('Error fetching students:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch students'
@@ -413,7 +414,7 @@ router.get('/:id', verifyToken, async (req, res) => {
             payments
         });
     } catch (error) {
-        console.error('Error fetching student:', error);
+        logger.error('Error fetching student:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch student'
@@ -765,11 +766,11 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
         // 자동 스케줄 배정
         let autoAssignResult = null;
 
-        console.log('[Student Create] is_trial:', is_trial, 'trial_dates:', trial_dates);
+        logger.info('[Student Create] is_trial:', is_trial, 'trial_dates:', trial_dates);
 
         if (is_trial && trial_dates && trial_dates.length > 0) {
             // 체험생: trial_dates에 지정된 날짜들에 배정
-            console.log('[Trial] Starting schedule assignment for', trial_dates.length, 'dates');
+            logger.info('[Trial] Starting schedule assignment for', trial_dates.length, 'dates');
             try {
                 let trialAssigned = 0;
                 for (const trialDate of trial_dates) {
@@ -806,9 +807,9 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                     trialAssigned++;
                 }
                 autoAssignResult = { assigned: trialAssigned, created: 0 };
-                console.log('[Trial] Assigned', trialAssigned, 'schedules');
+                logger.info('[Trial] Assigned', trialAssigned, 'schedules');
             } catch (assignError) {
-                console.error('Trial schedule assign failed:', assignError);
+                logger.error('Trial schedule assign failed:', assignError);
             }
         } else if (!is_trial) {
             // 정식 학생: 기존 로직 (등록일 이후 해당 월의 수업에 배정)
@@ -824,7 +825,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                         time_slot || 'evening'  // 선택한 시간대 (기본: 저녁)
                     );
                 } catch (assignError) {
-                    console.error('Auto-assign failed:', assignError);
+                    logger.error('Auto-assign failed:', assignError);
                     // 배정 실패해도 학생 생성은 성공으로 처리
                 }
             }
@@ -840,7 +841,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             autoAssigned: autoAssignResult
         });
     } catch (error) {
-        console.error('Error creating student:', error);
+        logger.error('Error creating student:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to create student'
@@ -1135,7 +1136,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                         currentTimeSlot
                     );
                 } catch (reassignError) {
-                    console.error('Reassign failed:', reassignError);
+                    logger.error('Reassign failed:', reassignError);
                     // 재배정 실패해도 업데이트는 성공으로 처리
                 }
             }
@@ -1161,7 +1162,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                         time_slot
                     );
                 } catch (reassignError) {
-                    console.error('Time slot reassign failed:', reassignError);
+                    logger.error('Time slot reassign failed:', reassignError);
                     // 재배정 실패해도 업데이트는 성공으로 처리
                 }
             }
@@ -1188,9 +1189,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                        AND payment_type = 'monthly'`,
                     [newTuition, finalTuition, studentId, req.user.academyId, currentYearMonth]
                 );
-                console.log(`[Student ${studentId}] Pending payments updated: ${newTuition}원 (할인 후: ${finalTuition}원)`);
+                logger.info(`[Student ${studentId}] Pending payments updated: ${newTuition}원 (할인 후: ${finalTuition}원)`);
             } catch (paymentUpdateError) {
-                console.error('Payment update failed:', paymentUpdateError);
+                logger.error('Payment update failed:', paymentUpdateError);
                 // 결제 업데이트 실패해도 학생 정보 업데이트는 성공으로 처리
             }
         }
@@ -1243,7 +1244,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                 }
                 trialAssignResult = { assigned: trialAssigned };
             } catch (trialError) {
-                console.error('Trial schedule reassign failed:', trialError);
+                logger.error('Trial schedule reassign failed:', trialError);
             }
         }
 
@@ -1337,7 +1338,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                     }
                 }
             } catch (paymentError) {
-                console.error('Payment adjustment failed:', paymentError);
+                logger.error('Payment adjustment failed:', paymentError);
             }
         }
 
@@ -1417,7 +1418,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                     withdrawalInfo.scheduleMessage = `스케줄 ${scheduleDeleteResult.affectedRows}건 삭제됨`;
                 }
             } catch (withdrawError) {
-                console.error('Withdrawal payment cleanup failed:', withdrawError);
+                logger.error('Withdrawal payment cleanup failed:', withdrawError);
             }
         }
 
@@ -1443,7 +1444,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                     };
                 }
             } catch (pauseError) {
-                console.error('Pause schedule cleanup failed:', pauseError);
+                logger.error('Pause schedule cleanup failed:', pauseError);
             }
         }
 
@@ -1460,7 +1461,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             pauseInfo
         });
     } catch (error) {
-        console.error('Error updating student:', error);
+        logger.error('Error updating student:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update student'
@@ -1510,7 +1511,7 @@ router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
                     await connection.query(`DELETE FROM ${table} WHERE student_id = ?`, [studentId]);
                 } catch (tableErr) {
                     // 테이블이 없거나 컬럼이 없으면 무시
-                    console.log(`Skip delete from ${table}: ${tableErr.message}`);
+                    logger.info(`Skip delete from ${table}: ${tableErr.message}`);
                 }
             }
 
@@ -1533,7 +1534,7 @@ router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error deleting student:', error);
+        logger.error('Error deleting student:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to delete student: ' + (error.message || 'Unknown error'),
@@ -1603,7 +1604,7 @@ router.post('/:id/withdraw', verifyToken, checkPermission('students', 'edit'), a
             }
         });
     } catch (error) {
-        console.error('Error withdrawing student:', error);
+        logger.error('Error withdrawing student:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to withdraw student'
@@ -1719,7 +1720,7 @@ router.post('/grade-upgrade', verifyToken, checkPermission('students', 'edit'), 
             connection.release();
         }
     } catch (error) {
-        console.error('Error upgrading student grades:', error);
+        logger.error('Error upgrading student grades:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to upgrade student grades'
@@ -1871,7 +1872,7 @@ router.post('/auto-promote', verifyToken, requireRole('owner'), async (req, res)
         });
 
     } catch (error) {
-        console.error('Auto-promote error:', error);
+        logger.error('Auto-promote error:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to auto-promote students'
@@ -1946,7 +1947,7 @@ router.get('/:id/seasons', verifyToken, async (req, res) => {
             seasons
         });
     } catch (error) {
-        console.error('Error fetching student seasons:', error);
+        logger.error('Error fetching student seasons:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch student seasons'
@@ -2009,7 +2010,7 @@ router.get('/search', verifyToken, async (req, res) => {
             students
         });
     } catch (error) {
-        console.error('Error searching students:', error);
+        logger.error('Error searching students:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to search students'
@@ -2170,7 +2171,7 @@ router.post('/:id/rest', verifyToken, checkPermission('students', 'edit'), async
         });
     } catch (error) {
         await connection.rollback();
-        console.error('Error processing rest:', error);
+        logger.error('Error processing rest:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to process rest'
@@ -2253,7 +2254,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
                     'evening'
                 );
             } catch (assignError) {
-                console.error('Auto-assign failed:', assignError);
+                logger.error('Auto-assign failed:', assignError);
             }
         }
 
@@ -2356,7 +2357,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
                 };
             }
         } catch (paymentError) {
-            console.error('Auto payment creation failed:', paymentError);
+            logger.error('Auto payment creation failed:', paymentError);
         }
 
         // 업데이트된 학생 정보 조회
@@ -2375,7 +2376,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
             resumeDate: resumeDateStr
         });
     } catch (error) {
-        console.error('Error resuming student:', error);
+        logger.error('Error resuming student:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to resume student'
@@ -2425,7 +2426,7 @@ router.get('/:id/rest-credits', verifyToken, async (req, res) => {
             pendingTotal
         });
     } catch (error) {
-        console.error('Error fetching rest credits:', error);
+        logger.error('Error fetching rest credits:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch rest credits'
@@ -2631,7 +2632,7 @@ router.post('/:id/manual-credit', verifyToken, checkPermission('payments', 'edit
             }
         });
     } catch (error) {
-        console.error('Error creating manual credit:', error);
+        logger.error('Error creating manual credit:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '크레딧 생성에 실패했습니다.'
@@ -2658,7 +2659,7 @@ router.get('/:id/credits', verifyToken, async (req, res) => {
 
         res.json({ credits });
     } catch (error) {
-        console.error('Error fetching credits:', error);
+        logger.error('Error fetching credits:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '크레딧 조회에 실패했습니다.'
@@ -2739,7 +2740,7 @@ router.put('/:id/credits/:creditId', verifyToken, checkPermission('payments', 'e
 
         res.json({ message: '크레딧이 수정되었습니다.' });
     } catch (error) {
-        console.error('Error updating credit:', error);
+        logger.error('Error updating credit:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '크레딧 수정에 실패했습니다.'
@@ -2783,7 +2784,7 @@ router.delete('/:id/credits/:creditId', verifyToken, checkPermission('payments',
 
         res.json({ message: '크레딧이 삭제되었습니다.' });
     } catch (error) {
-        console.error('Error deleting credit:', error);
+        logger.error('Error deleting credit:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '크레딧 삭제에 실패했습니다.'
@@ -2910,7 +2911,7 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
         });
 
     } catch (error) {
-        console.error('Error applying credit:', error);
+        logger.error('Error applying credit:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '크레딧 적용에 실패했습니다.'

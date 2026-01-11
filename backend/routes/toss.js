@@ -16,6 +16,7 @@ const db = require('../config/database');
 const { decrypt, encrypt } = require('../utils/encryption');
 const crypto = require('crypto');
 const { verifyToken, checkPermission, checkAcademyAccess } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 // ============================================
 // 설정 상수
@@ -26,7 +27,7 @@ const CALLBACK_TIMESTAMP_TOLERANCE = 5 * 60 * 1000; // 5분
 
 // 토스 플러그인 API 키 미설정 경고
 if (!TOSS_PLUGIN_API_KEY) {
-    console.warn('[TOSS] ⚠️ TOSS_PLUGIN_API_KEY 미설정. 토스 연동이 작동하지 않습니다.');
+    logger.warn('[TOSS] ⚠️ TOSS_PLUGIN_API_KEY 미설정. 토스 연동이 작동하지 않습니다.');
 }
 
 // ============================================
@@ -76,7 +77,7 @@ const verifyTossPlugin = async (req, res, next) => {
                 return next();
             }
         } catch (error) {
-            console.error('[Toss] API Key verification error:', error);
+            logger.error('[Toss] API Key verification error:', error);
         }
     }
 
@@ -102,7 +103,7 @@ const verifyCallbackSignature = async (req, res, next) => {
         const requestTime = parseInt(timestamp);
         const now = Date.now();
         if (Math.abs(now - requestTime) > CALLBACK_TIMESTAMP_TOLERANCE) {
-            console.warn('[Toss] Callback timestamp expired:', {
+            logger.warn('[Toss] Callback timestamp expired:', {
                 requestTime,
                 now,
                 diff: now - requestTime
@@ -135,22 +136,22 @@ const verifyCallbackSignature = async (req, res, next) => {
                     .digest('hex');
 
                 if (signature !== expectedSignature) {
-                    console.error('[Toss] Invalid callback signature for academy:', academyId);
+                    logger.error('[Toss] Invalid callback signature for academy:', academyId);
                     return res.status(403).json({
                         success: false,
                         error: 'Forbidden',
                         message: '서명 검증 실패'
                     });
                 }
-                console.log('[Toss] Callback signature verified for academy:', academyId);
+                logger.info('[Toss] Callback signature verified for academy:', academyId);
             }
         } catch (error) {
-            console.error('[Toss] Signature verification error:', error);
+            logger.error('[Toss] Signature verification error:', error);
         }
     }
 
     // 3. 요청 로깅 (보안 감사용)
-    console.log('[Toss] Callback received:', {
+    logger.info('[Toss] Callback received:', {
         orderId: req.body.orderId,
         amount: req.body.amount,
         academyId: academyId,
@@ -247,7 +248,7 @@ router.get('/unpaid', verifyTossPlugin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[Toss] Error fetching unpaid:', error);
+        logger.error('[Toss] Error fetching unpaid:', error);
         res.status(500).json({
             success: false,
             error: 'Server Error',
@@ -289,7 +290,7 @@ router.get('/student/:id', verifyTossPlugin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[Toss] Error fetching student payments:', error);
+        logger.error('[Toss] Error fetching student payments:', error);
         res.status(500).json({
             success: false,
             error: 'Server Error',
@@ -326,7 +327,7 @@ router.post('/payment-callback', verifyCallbackSignature, async (req, res) => {
             metadata           // 커스텀 메타데이터
         } = req.body;
 
-        console.log('[Toss] Payment callback received:', {
+        logger.info('[Toss] Payment callback received:', {
             orderId,
             paymentKey,
             amount,
@@ -355,7 +356,7 @@ router.post('/payment-callback', verifyCallbackSignature, async (req, res) => {
 
         // 학원 ID 필수 검증 (기본값 1 제거!)
         if (!academyId) {
-            console.warn('[Toss] Academy ID missing in callback:', orderId);
+            logger.warn('[Toss] Academy ID missing in callback:', orderId);
             // 대기열에 추가 (수동 확인 필요)
             await connection.query(
                 `INSERT INTO toss_payment_queue (
@@ -410,7 +411,7 @@ router.post('/payment-callback', verifyCallbackSignature, async (req, res) => {
 
             await connection.commit();
 
-            console.log('[Toss] Payment added to queue (format mismatch):', orderId);
+            logger.info('[Toss] Payment added to queue (format mismatch):', orderId);
 
             return res.json({
                 success: true,
@@ -453,7 +454,7 @@ router.post('/payment-callback', verifyCallbackSignature, async (req, res) => {
 
             await connection.commit();
 
-            console.log('[Toss] Payment added to queue (ID not found):', paymentId);
+            logger.info('[Toss] Payment added to queue (ID not found):', paymentId);
 
             return res.json({
                 success: true,
@@ -524,7 +525,7 @@ router.post('/payment-callback', verifyCallbackSignature, async (req, res) => {
 
         await connection.commit();
 
-        console.log('[Toss] Payment matched successfully:', {
+        logger.info('[Toss] Payment matched successfully:', {
             paymentId,
             amount,
             newStatus,
@@ -542,7 +543,7 @@ router.post('/payment-callback', verifyCallbackSignature, async (req, res) => {
 
     } catch (error) {
         await connection.rollback();
-        console.error('[Toss] Error processing callback:', error);
+        logger.error('[Toss] Error processing callback:', error);
 
         res.status(500).json({
             success: false,
@@ -575,7 +576,7 @@ router.post('/cancel-callback', verifyCallbackSignature, async (req, res) => {
             metadata           // 커스텀 메타데이터
         } = req.body;
 
-        console.log('[Toss] Cancel callback received:', {
+        logger.info('[Toss] Cancel callback received:', {
             orderId,
             paymentKey,
             cancelAmount,
@@ -699,7 +700,7 @@ router.post('/cancel-callback', verifyCallbackSignature, async (req, res) => {
 
         await connection.commit();
 
-        console.log('[Toss] Cancel processed successfully:', {
+        logger.info('[Toss] Cancel processed successfully:', {
             paymentId,
             refundAmount,
             newStatus,
@@ -718,7 +719,7 @@ router.post('/cancel-callback', verifyCallbackSignature, async (req, res) => {
 
     } catch (error) {
         await connection.rollback();
-        console.error('[Toss] Error processing cancel callback:', error);
+        logger.error('[Toss] Error processing cancel callback:', error);
 
         res.status(500).json({
             success: false,
@@ -801,7 +802,7 @@ router.get('/history', verifyToken, checkPermission('payments', 'view'), checkAc
         });
 
     } catch (error) {
-        console.error('[Toss] Error fetching history:', error);
+        logger.error('[Toss] Error fetching history:', error);
         res.status(500).json({
             success: false,
             error: 'Server Error',
@@ -850,7 +851,7 @@ router.get('/queue', verifyToken, checkPermission('payments', 'view'), checkAcad
         });
 
     } catch (error) {
-        console.error('[Toss] Error fetching queue:', error);
+        logger.error('[Toss] Error fetching queue:', error);
         res.status(500).json({
             success: false,
             error: 'Server Error',
@@ -969,7 +970,7 @@ router.post('/queue/:id/match', verifyToken, checkPermission('payments', 'edit')
 
         await connection.commit();
 
-        console.log('[Toss] Manual match completed:', {
+        logger.info('[Toss] Manual match completed:', {
             queueId,
             paymentId: payment_id,
             amount: queueItem.amount,
@@ -986,7 +987,7 @@ router.post('/queue/:id/match', verifyToken, checkPermission('payments', 'edit')
 
     } catch (error) {
         await connection.rollback();
-        console.error('[Toss] Error manual matching:', error);
+        logger.error('[Toss] Error manual matching:', error);
         res.status(500).json({
             success: false,
             error: 'Server Error',
@@ -1038,7 +1039,7 @@ router.post('/queue/:id/ignore', verifyToken, checkPermission('payments', 'edit'
         });
 
     } catch (error) {
-        console.error('[Toss] Error ignoring queue item:', error);
+        logger.error('[Toss] Error ignoring queue item:', error);
         res.status(500).json({
             success: false,
             error: 'Server Error',
@@ -1094,7 +1095,7 @@ router.get('/stats', verifyToken, checkPermission('payments', 'view'), checkAcad
         });
 
     } catch (error) {
-        console.error('[Toss] Error fetching stats:', error);
+        logger.error('[Toss] Error fetching stats:', error);
         res.status(500).json({
             success: false,
             error: 'Server Error',
@@ -1135,7 +1136,7 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), checkA
         });
 
     } catch (error) {
-        console.error('[Toss] Error fetching settings:', error);
+        logger.error('[Toss] Error fetching settings:', error);
         res.status(500).json({
             success: false,
             error: 'Server Error',
@@ -1212,7 +1213,7 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), checkA
         });
 
     } catch (error) {
-        console.error('[Toss] Error saving settings:', error);
+        logger.error('[Toss] Error saving settings:', error);
         res.status(500).json({
             success: false,
             error: 'Server Error',

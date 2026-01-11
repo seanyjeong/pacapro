@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 const {
     calculateProRatedFee,
     calculateSeasonRefund,
@@ -63,7 +64,7 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
         const numericDays = operatingDays.map(d => typeof d === 'string' ? dayMap[d] : d).filter(d => d !== undefined);
 
         if (numericDays.length === 0) {
-            console.log('No operating days specified for season, skipping auto-assignment');
+            logger.info('No operating days specified for season, skipping auto-assignment');
             return { assigned: 0, created: 0, timeSlots: [] };
         }
 
@@ -77,7 +78,7 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
             const regDate = new Date(registrationDate + 'T00:00:00');
             if (regDate > seasonStartDate) {
                 startDate = regDate;
-                console.log(`Mid-season enrollment: starting from registration date ${registrationDate} instead of season start ${season.season_start_date}`);
+                logger.info(`Mid-season enrollment: starting from registration date ${registrationDate} instead of season start ${season.season_start_date}`);
             }
         }
 
@@ -137,10 +138,10 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
             currentDate.setDate(currentDate.getDate() + 1);
         }
 
-        console.log(`Season auto-assigned student ${studentId}: ${assignedCount} schedules (${createdCount} new), timeSlots: ${timeSlots.join(', ')}`);
+        logger.info(`Season auto-assigned student ${studentId}: ${assignedCount} schedules (${createdCount} new), timeSlots: ${timeSlots.join(', ')}`);
         return { assigned: assignedCount, created: createdCount, timeSlots };
     } catch (error) {
-        console.error('Error in autoAssignStudentToSeasonSchedules:', error);
+        logger.error('Error in autoAssignStudentToSeasonSchedules:', error);
         throw error;
     }
 }
@@ -166,10 +167,10 @@ async function removeStudentFromRegularSchedules(studentId, academyId, seasonSta
             [studentId, academyId, seasonStartDate, seasonEndDate]
         );
 
-        console.log(`Removed ${result.affectedRows} regular schedule assignments for student ${studentId} during season period`);
+        logger.info(`Removed ${result.affectedRows} regular schedule assignments for student ${studentId} during season period`);
         return { removed: result.affectedRows };
     } catch (error) {
-        console.error('Error in removeStudentFromRegularSchedules:', error);
+        logger.error('Error in removeStudentFromRegularSchedules:', error);
         throw error;
     }
 }
@@ -188,7 +189,7 @@ async function autoAssignAllSeasonStudentsToSchedules(seasonId, academyId) {
         );
 
         if (seasons.length === 0) {
-            console.log(`Season ${seasonId} not found`);
+            logger.info(`Season ${seasonId} not found`);
             return { totalAssigned: 0, totalCreated: 0, studentsProcessed: 0 };
         }
 
@@ -220,14 +221,14 @@ async function autoAssignAllSeasonStudentsToSchedules(seasonId, academyId) {
                 totalAssigned += result.assigned;
                 totalCreated += result.created;
             } catch (err) {
-                console.error(`Failed to assign student ${enrollment.student_id}:`, err);
+                logger.error(`Failed to assign student ${enrollment.student_id}:`, err);
             }
         }
 
-        console.log(`Season ${seasonId} auto-assigned: ${enrollments.length} students, ${totalAssigned} schedules (${totalCreated} new)`);
+        logger.info(`Season ${seasonId} auto-assigned: ${enrollments.length} students, ${totalAssigned} schedules (${totalCreated} new)`);
         return { totalAssigned, totalCreated, studentsProcessed: enrollments.length };
     } catch (error) {
-        console.error('Error in autoAssignAllSeasonStudentsToSchedules:', error);
+        logger.error('Error in autoAssignAllSeasonStudentsToSchedules:', error);
         throw error;
     }
 }
@@ -270,7 +271,7 @@ router.get('/', verifyToken, async (req, res) => {
             seasons
         });
     } catch (error) {
-        console.error('Error fetching seasons:', error);
+        logger.error('Error fetching seasons:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch seasons'
@@ -303,7 +304,7 @@ router.get('/active', verifyToken, async (req, res) => {
             seasons
         });
     } catch (error) {
-        console.error('Error fetching active seasons:', error);
+        logger.error('Error fetching active seasons:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch active seasons'
@@ -413,9 +414,9 @@ router.post('/enrollments/:enrollment_id/pay', verifyToken, checkPermission('sea
             enrollment: updated[0]
         });
     } catch (error) {
-        console.error('Error recording season payment:', error);
-        console.error('Enrollment ID:', enrollmentId);
-        console.error('Request body:', req.body);
+        logger.error('Error recording season payment:', error);
+        logger.error('Enrollment ID:', enrollmentId);
+        logger.error('Request body:', req.body);
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'Failed to record payment',
@@ -533,7 +534,7 @@ router.put('/enrollments/:enrollment_id', verifyToken, checkPermission('seasons'
             enrollment: updated[0]
         });
     } catch (error) {
-        console.error('Error updating enrollment:', error);
+        logger.error('Error updating enrollment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'Failed to update enrollment'
@@ -640,7 +641,7 @@ router.post('/enrollments/:enrollment_id/refund-preview', verifyToken, checkPerm
             academy: academySettings[0] || {}
         });
     } catch (error) {
-        console.error('Error calculating refund preview:', error);
+        logger.error('Error calculating refund preview:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to calculate refund'
@@ -781,7 +782,7 @@ router.post('/enrollments/:enrollment_id/cancel', verifyToken, checkPermission('
             refundCalculation: refundResult
         });
     } catch (error) {
-        console.error('Error cancelling enrollment:', error);
+        logger.error('Error cancelling enrollment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to cancel enrollment'
@@ -823,7 +824,7 @@ router.get('/:id', verifyToken, async (req, res) => {
 
         res.json({ season });
     } catch (error) {
-        console.error('Error fetching season:', error);
+        logger.error('Error fetching season:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch season'
@@ -931,7 +932,7 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
             season: created[0]
         });
     } catch (error) {
-        console.error('Error creating season:', error);
+        logger.error('Error creating season:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to create season'
@@ -1060,7 +1061,7 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
         // 시즌이 active로 변경되면 등록된 학생들을 스케줄에 자동 배정
         let scheduleResult = null;
         if (!wasActive && willBeActive) {
-            console.log(`Season ${seasonId} activated - auto-assigning students to schedules`);
+            logger.info(`Season ${seasonId} activated - auto-assigning students to schedules`);
             scheduleResult = await autoAssignAllSeasonStudentsToSchedules(seasonId, req.user.academyId);
         }
 
@@ -1070,7 +1071,7 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
             scheduleAssignment: scheduleResult
         });
     } catch (error) {
-        console.error('Error updating season:', error);
+        logger.error('Error updating season:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update season'
@@ -1127,7 +1128,7 @@ router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error deleting season:', error);
+        logger.error('Error deleting season:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to delete season'
@@ -1225,7 +1226,7 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
                     discountRate: parseFloat(student.discount_rate) || 0
                 });
             } catch (proRateError) {
-                console.log('ProRated calculation skipped:', proRateError.message);
+                logger.info('ProRated calculation skipped:', proRateError.message);
             }
         }
 
@@ -1261,7 +1262,7 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
                     baseSeasonFee = midSeasonProRated.proRatedFee;
                 }
             } catch (midSeasonError) {
-                console.log('Mid-season prorated calculation skipped:', midSeasonError.message);
+                logger.info('Mid-season prorated calculation skipped:', midSeasonError.message);
             }
         }
 
@@ -1420,7 +1421,7 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
                     season.season_end_date
                 );
             } catch (removeError) {
-                console.error('Remove from regular schedules failed:', removeError);
+                logger.error('Remove from regular schedules failed:', removeError);
             }
 
             // 2. 시즌 스케줄에 자동 배정
@@ -1442,10 +1443,10 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
                     regDateStr        // 등록일 (이 날짜 이후부터만 스케줄 배정)
                 );
             } catch (assignError) {
-                console.error('Season auto-assign failed:', assignError);
+                logger.error('Season auto-assign failed:', assignError);
             }
         } else {
-            console.log(`Season ${seasonId} is not active (status: ${season.status}), skipping auto-assignment`);
+            logger.info(`Season ${seasonId} is not active (status: ${season.status}), skipping auto-assignment`);
         }
 
         // Get enrollment details
@@ -1478,8 +1479,8 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
             }
         });
     } catch (error) {
-        console.error('Error enrolling student:', error);
-        console.error('Request body:', req.body);
+        logger.error('Error enrolling student:', error);
+        logger.error('Request body:', req.body);
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'Failed to enroll student',
@@ -1526,7 +1527,7 @@ router.get('/:id/students', verifyToken, async (req, res) => {
             enrolled_students: enrollments
         });
     } catch (error) {
-        console.error('Error fetching enrolled students:', error);
+        logger.error('Error fetching enrolled students:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch enrolled students'
@@ -1640,7 +1641,7 @@ router.delete('/:id/students/:student_id', verifyToken, checkPermission('seasons
             refundCalculation: refundResult
         });
     } catch (error) {
-        console.error('Error cancelling enrollment:', error);
+        logger.error('Error cancelling enrollment:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to cancel enrollment'
@@ -1835,7 +1836,7 @@ router.get('/:id/preview', verifyToken, checkPermission('seasons', 'edit'), asyn
             preview
         });
     } catch (error) {
-        console.error('Error calculating preview:', error);
+        logger.error('Error calculating preview:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to calculate preview'

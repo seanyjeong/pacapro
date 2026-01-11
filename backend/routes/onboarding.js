@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 /**
  * GET /paca/onboarding/status
@@ -35,7 +36,7 @@ router.get('/status', verifyToken, async (req, res) => {
             onboarding_completed_at: settings[0].onboarding_completed_at
         });
     } catch (error) {
-        console.error('Get onboarding status error:', error);
+        logger.error('Get onboarding status error:', error);
         res.status(500).json({ error: 'Server Error', message: '온보딩 상태 확인에 실패했습니다.' });
     }
 });
@@ -68,7 +69,7 @@ router.get('/data', verifyToken, async (req, res) => {
             settings: settings[0] || {}
         });
     } catch (error) {
-        console.error('Get onboarding data error:', error);
+        logger.error('Get onboarding data error:', error);
         res.status(500).json({ error: 'Server Error', message: '온보딩 데이터 조회에 실패했습니다.' });
     }
 });
@@ -142,7 +143,7 @@ router.post('/complete', verifyToken, requireRole('owner'), async (req, res) => 
         });
     } catch (error) {
         await connection.rollback();
-        console.error('Complete onboarding error:', error);
+        logger.error('Complete onboarding error:', error);
         res.status(500).json({ error: 'Server Error', message: '온보딩 완료 처리에 실패했습니다.' });
     } finally {
         connection.release();
@@ -220,7 +221,7 @@ router.post('/sample-data', verifyToken, requireRole('owner'), async (req, res) 
         });
     } catch (error) {
         await connection.rollback();
-        console.error('Create sample data error:', error);
+        logger.error('Create sample data error:', error);
         res.status(500).json({ error: 'Server Error', message: '샘플 데이터 생성에 실패했습니다.' });
     } finally {
         connection.release();
@@ -245,7 +246,7 @@ router.post('/skip', verifyToken, requireRole('owner'), async (req, res) => {
             message: '온보딩을 건너뛰었습니다.'
         });
     } catch (error) {
-        console.error('Skip onboarding error:', error);
+        logger.error('Skip onboarding error:', error);
         res.status(500).json({ error: 'Server Error', message: '온보딩 건너뛰기에 실패했습니다.' });
     }
 });

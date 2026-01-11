@@ -9,6 +9,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 /**
  * GET /paca/search
@@ -111,7 +112,7 @@ router.get('/', verifyToken, async (req, res) => {
             results
         });
     } catch (error) {
-        console.error('Search error:', error);
+        logger.error('Search error:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '검색에 실패했습니다.'

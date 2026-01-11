@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, checkPermission } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 /**
  * GET /paca/academy-events
@@ -41,7 +42,7 @@ router.get('/', verifyToken, async (req, res) => {
         const [events] = await db.query(query, params);
         res.json({ events });
     } catch (error) {
-        console.error('Error fetching academy events:', error);
+        logger.error('Error fetching academy events:', error);
         res.status(500).json({ message: '학원 일정 조회 실패', error: error.message });
     }
 });
@@ -63,7 +64,7 @@ router.get('/:id', verifyToken, async (req, res) => {
 
         res.json({ event: events[0] });
     } catch (error) {
-        console.error('Error fetching academy event:', error);
+        logger.error('Error fetching academy event:', error);
         res.status(500).json({ message: '학원 일정 조회 실패', error: error.message });
     }
 });
@@ -136,7 +137,7 @@ router.post('/', verifyToken, checkPermission('schedules', 'edit'), async (req, 
         res.status(201).json({ message: '학원 일정이 등록되었습니다.', event: newEvent[0] });
     } catch (error) {
         await connection.rollback();
-        console.error('Error creating academy event:', error);
+        logger.error('Error creating academy event:', error);
         res.status(500).json({ message: '학원 일정 등록 실패', error: error.message });
     } finally {
         connection.release();
@@ -229,7 +230,7 @@ router.put('/:id', verifyToken, checkPermission('schedules', 'edit'), async (req
         res.json({ message: '학원 일정이 수정되었습니다.', event: updatedEvent[0] });
     } catch (error) {
         await connection.rollback();
-        console.error('Error updating academy event:', error);
+        logger.error('Error updating academy event:', error);
         res.status(500).json({ message: '학원 일정 수정 실패', error: error.message });
     } finally {
         connection.release();
@@ -271,7 +272,7 @@ router.delete('/:id', verifyToken, checkPermission('schedules', 'edit'), async (
         res.json({ message: '학원 일정이 삭제되었습니다.' });
     } catch (error) {
         await connection.rollback();
-        console.error('Error deleting academy event:', error);
+        logger.error('Error deleting academy event:', error);
         res.status(500).json({ message: '학원 일정 삭제 실패', error: error.message });
     } finally {
         connection.release();

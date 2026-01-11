@@ -9,6 +9,7 @@ const pool = require('../config/database');
 const peakPool = require('../config/peak-database');
 const { decrypt } = require('../utils/encryption');
 const { verifyToken } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 // 암호화 필드 복호화 헬퍼
 const decryptStudentFields = (student) => {
@@ -55,7 +56,7 @@ router.get('/calendar', verifyToken, async (req, res) => {
 
     res.json({ consultations: decryptedConsultations });
   } catch (error) {
-    console.error('Failed to get calendar consultations:', error);
+    logger.error('Failed to get calendar consultations:', error);
     res.status(500).json({ error: '캘린더 상담 조회 실패' });
   }
 });
@@ -87,7 +88,7 @@ router.get('/:studentId', verifyToken, async (req, res) => {
 
     res.json({ consultations: decryptedConsultations });
   } catch (error) {
-    console.error('Failed to get student consultations:', error);
+    logger.error('Failed to get student consultations:', error);
     res.status(500).json({ error: '상담 목록 조회 실패' });
   }
 });
@@ -176,7 +177,7 @@ router.get('/:studentId/peak-records', verifyToken, async (req, res) => {
       records,
     });
   } catch (error) {
-    console.error('Failed to get P-EAK records:', error);
+    logger.error('Failed to get P-EAK records:', error);
     // P-EAK 연결 실패 시 빈 결과 반환 (폴백)
     res.json({
       found: false,
@@ -297,7 +298,7 @@ router.get('/:studentId/compare/:id', verifyToken, async (req, res) => {
 
     res.json(changes);
   } catch (error) {
-    console.error('Failed to compare consultations:', error);
+    logger.error('Failed to compare consultations:', error);
     res.status(500).json({ error: '상담 비교 실패' });
   }
 });
@@ -331,7 +332,7 @@ router.get('/:studentId/:id', verifyToken, async (req, res) => {
 
     res.json({ consultation });
   } catch (error) {
-    console.error('Failed to get consultation detail:', error);
+    logger.error('Failed to get consultation detail:', error);
     res.status(500).json({ error: '상담 상세 조회 실패' });
   }
 });
@@ -410,7 +411,7 @@ router.post('/', verifyToken, async (req, res) => {
       id: result.insertId,
     });
   } catch (error) {
-    console.error('Failed to create consultation:', error);
+    logger.error('Failed to create consultation:', error);
     res.status(500).json({ error: '상담 저장 실패' });
   }
 });
@@ -477,7 +478,7 @@ router.put('/:id', verifyToken, async (req, res) => {
 
     res.json({ message: '상담 기록이 수정되었습니다' });
   } catch (error) {
-    console.error('Failed to update consultation:', error);
+    logger.error('Failed to update consultation:', error);
     res.status(500).json({ error: '상담 수정 실패' });
   }
 });
@@ -498,7 +499,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
 
     res.json({ message: '상담 기록이 삭제되었습니다' });
   } catch (error) {
-    console.error('Failed to delete consultation:', error);
+    logger.error('Failed to delete consultation:', error);
     res.status(500).json({ error: '상담 삭제 실패' });
   }
 });

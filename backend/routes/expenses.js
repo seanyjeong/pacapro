@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 // 이름 필드 복호화 헬퍼
 function decryptNames(obj) {
@@ -85,7 +86,7 @@ router.get('/', verifyToken, checkPermission('expenses', 'view'), async (req, re
             expenses: decryptExpenseArray(expenses)
         });
     } catch (error) {
-        console.error('Error fetching expenses:', error);
+        logger.error('Error fetching expenses:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '지출 내역을 불러오는데 실패했습니다.'
@@ -125,7 +126,7 @@ router.get('/:id', verifyToken, checkPermission('expenses', 'view'), async (req,
 
         res.json({ expense: decryptNames({...expenses[0]}) });
     } catch (error) {
-        console.error('Error fetching expense:', error);
+        logger.error('Error fetching expense:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '지출 내역을 불러오는데 실패했습니다.'
@@ -180,7 +181,7 @@ router.get('/summary/monthly', verifyToken, checkPermission('expenses', 'view'),
             total: total[0]
         });
     } catch (error) {
-        console.error('Error fetching monthly expense summary:', error);
+        logger.error('Error fetching monthly expense summary:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '월별 지출 요약을 불러오는데 실패했습니다.'
@@ -208,7 +209,7 @@ router.get('/category/list', verifyToken, checkPermission('expenses', 'view'), a
             categories: categories.map(c => c.category)
         });
     } catch (error) {
-        console.error('Error fetching expense categories:', error);
+        logger.error('Error fetching expense categories:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '지출 카테고리를 불러오는데 실패했습니다.'
@@ -321,7 +322,7 @@ router.post('/', verifyToken, checkPermission('expenses', 'edit'), async (req, r
             expense: decryptNames({...expenses[0]})
         });
     } catch (error) {
-        console.error('Error creating expense:', error);
+        logger.error('Error creating expense:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '지출 등록에 실패했습니다.'
@@ -466,7 +467,7 @@ router.put('/:id', verifyToken, checkPermission('expenses', 'edit'), async (req,
             expense: decryptNames({...expenses[0]})
         });
     } catch (error) {
-        console.error('Error updating expense:', error);
+        logger.error('Error updating expense:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '지출 내역 수정에 실패했습니다.'
@@ -510,7 +511,7 @@ router.delete('/:id', verifyToken, checkPermission('expenses', 'edit'), async (r
             }
         });
     } catch (error) {
-        console.error('Error deleting expense:', error);
+        logger.error('Error deleting expense:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '지출 내역 삭제에 실패했습니다.'

@@ -6,10 +6,13 @@
 
 require('dotenv').config();
 
+// Logger 초기화
+const logger = require('./utils/logger');
+
 // 환경변수 검증 (서버 시작 전 필수!)
 const { validateEnv } = require('./utils/env-validator');
 if (!validateEnv()) {
-    console.error('[PACA] 환경변수 검증 실패. 서버를 시작할 수 없습니다.');
+    logger.error('[PACA] 환경변수 검증 실패. 서버를 시작할 수 없습니다.');
     process.exit(1);
 }
 
@@ -49,7 +52,7 @@ const corsOptions = {
         if (!origin || ALLOWED_ORIGINS.includes(origin)) {
             callback(null, true);
         } else {
-            console.warn(`[CORS] 차단된 origin: ${origin}`);
+            logger.warn(`[CORS] 차단된 origin: ${origin}`);
             callback(null, false); // 에러 대신 false 반환 (연결 거부)
         }
     },
@@ -121,11 +124,11 @@ const db = require('./config/database');
 // Test database connection
 db.getConnection()
     .then(connection => {
-        console.log('✅ MySQL Database Connected Successfully');
+        logger.info('✅ MySQL Database Connected Successfully');
         connection.release();
     })
     .catch(err => {
-        console.error('❌ MySQL Connection Error:', err.message);
+        logger.error('❌ MySQL Connection Error:', err.message);
         process.exit(1);
     });
 
@@ -239,7 +242,7 @@ app.use((req, res, next) => {
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-    console.error('Error:', err);
+    logger.error('Error:', err);
 
     // JWT Authentication Error
     if (err.name === 'UnauthorizedError') {
@@ -292,14 +295,14 @@ const { initMonthlyScheduleScheduler } = require('./scheduler/monthlyScheduleSch
 // Start Server
 // ==========================================
 const server = app.listen(PORT, () => {
-    console.log('==========================================');
-    console.log('🏋️  P-ACA Backend Server');
-    console.log('==========================================');
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🗄️  Database: ${process.env.DB_NAME}@${process.env.DB_HOST}`);
-    console.log(`🌐 API Base: http://localhost:${PORT}/paca`);
-    console.log('==========================================');
+    logger.info('==========================================');
+    logger.info('🏋️  P-ACA Backend Server');
+    logger.info('==========================================');
+    logger.info(`🚀 Server running on port ${PORT}`);
+    logger.info(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`🗄️  Database: ${process.env.DB_NAME}@${process.env.DB_HOST}`);
+    logger.info(`🌐 API Base: http://localhost:${PORT}/paca`);
+    logger.info('==========================================');
 
     // 스케줄러 초기화
     initScheduler();
@@ -320,29 +323,29 @@ async function gracefulShutdown(signal) {
     if (isShuttingDown) return;
     isShuttingDown = true;
 
-    console.log(`\n[${signal}] Graceful shutdown 시작...`);
+    logger.info(`\n[${signal}] Graceful shutdown 시작...`);
 
     // 새 요청 거부
     server.close(() => {
-        console.log('[SHUTDOWN] HTTP 서버 종료 완료');
+        logger.info('[SHUTDOWN] HTTP 서버 종료 완료');
     });
 
     // 진행 중인 요청 완료 대기 (최대 30초)
     const shutdownTimeout = setTimeout(() => {
-        console.error('[SHUTDOWN] 타임아웃 - 강제 종료');
+        logger.error('[SHUTDOWN] 타임아웃 - 강제 종료');
         process.exit(1);
     }, 30000);
 
     try {
         // DB 연결 풀 종료
         await db.end();
-        console.log('[SHUTDOWN] DB 연결 풀 종료 완료');
+        logger.info('[SHUTDOWN] DB 연결 풀 종료 완료');
 
         clearTimeout(shutdownTimeout);
-        console.log('[SHUTDOWN] 정상 종료');
+        logger.info('[SHUTDOWN] 정상 종료');
         process.exit(0);
     } catch (err) {
-        console.error('[SHUTDOWN] 종료 중 에러:', err.message);
+        logger.error('[SHUTDOWN] 종료 중 에러:', err.message);
         clearTimeout(shutdownTimeout);
         process.exit(1);
     }

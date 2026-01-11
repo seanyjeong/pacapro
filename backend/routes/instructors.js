@@ -76,7 +76,7 @@ router.get('/', verifyToken, checkPermission('instructors', 'view'), async (req,
             instructors: decryptedInstructors
         });
     } catch (error) {
-        console.error('Error fetching instructors:', error);
+        logger.error('Error fetching instructors:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch instructors'
@@ -119,7 +119,7 @@ router.get('/overtime/pending', verifyToken, checkPermission('overtime_approval'
             requests: decryptedRequests
         });
     } catch (error) {
-        console.error('Error fetching overtime requests:', error);
+        logger.error('Error fetching overtime requests:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch overtime requests'
@@ -176,7 +176,7 @@ router.get('/overtime/history', verifyToken, checkPermission('instructors', 'vie
             requests: decryptedRequests
         });
     } catch (error) {
-        console.error('Error fetching overtime history:', error);
+        logger.error('Error fetching overtime history:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch overtime history'
@@ -239,7 +239,7 @@ router.put('/overtime/:approvalId/approve', verifyToken, checkPermission('overti
             overtime: updated[0]
         });
     } catch (error) {
-        console.error('Error approving overtime:', error);
+        logger.error('Error approving overtime:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to process overtime request'
@@ -277,6 +277,7 @@ router.post('/verify-admin-password', verifyToken, checkPermission('instructors'
         }
 
         const bcrypt = require('bcryptjs');
+const logger = require('../utils/logger');
         const isMatch = await bcrypt.compare(password, users[0].password);
 
         if (!isMatch) {
@@ -292,7 +293,7 @@ router.post('/verify-admin-password', verifyToken, checkPermission('instructors'
             verified: true
         });
     } catch (error) {
-        console.error('Error verifying password:', error);
+        logger.error('Error verifying password:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to verify password'
@@ -379,7 +380,7 @@ router.get('/:id', verifyToken, checkPermission('instructors', 'view'), async (r
             salaries
         });
     } catch (error) {
-        console.error('Error fetching instructor:', error);
+        logger.error('Error fetching instructor:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch instructor'
@@ -548,7 +549,7 @@ router.post('/', verifyToken, checkPermission('instructors', 'edit'), async (req
             instructor: instructors[0]
         });
     } catch (error) {
-        console.error('Error creating instructor:', error);
+        logger.error('Error creating instructor:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to create instructor'
@@ -723,7 +724,7 @@ router.put('/:id', verifyToken, checkPermission('instructors', 'edit'), async (r
             instructor: updatedInstructors[0]
         });
     } catch (error) {
-        console.error('Error updating instructor:', error);
+        logger.error('Error updating instructor:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update instructor'
@@ -767,7 +768,7 @@ router.delete('/:id', verifyToken, checkPermission('instructors', 'edit'), async
             }
         });
     } catch (error) {
-        console.error('Error deleting instructor:', error);
+        logger.error('Error deleting instructor:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to delete instructor'
@@ -863,7 +864,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
             attendance: attendanceResult
         });
     } catch (error) {
-        console.error('Error recording attendance:', error);
+        logger.error('Error recording attendance:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to record attendance'
@@ -911,7 +912,7 @@ router.get('/:id/attendance', verifyToken, checkPermission('instructors', 'view'
             attendances
         });
     } catch (error) {
-        console.error('Error fetching attendance:', error);
+        logger.error('Error fetching attendance:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch attendance records'
@@ -1007,7 +1008,7 @@ router.post('/:id/overtime', verifyToken, checkPermission('overtime_approval', '
             overtime: created[0]
         });
     } catch (error) {
-        console.error('Error creating overtime request:', error);
+        logger.error('Error creating overtime request:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to create overtime request'

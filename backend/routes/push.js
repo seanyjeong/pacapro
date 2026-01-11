@@ -3,6 +3,7 @@ const router = express.Router();
 const webpush = require('web-push');
 const db = require('../config/database');
 const { verifyToken } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 // VAPID 설정
 webpush.setVapidDetails(
@@ -62,13 +63,13 @@ router.post('/subscribe', verifyToken, async (req, res) => {
             );
         }
 
-        console.log(`[Push] User ${req.user.id} subscribed (${deviceName || 'unknown device'})`);
+        logger.info(`[Push] User ${req.user.id} subscribed (${deviceName || 'unknown device'})`);
 
         res.json({
             message: 'Push subscription registered successfully'
         });
     } catch (error) {
-        console.error('Error subscribing to push:', error);
+        logger.error('Error subscribing to push:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to register push subscription'
@@ -96,13 +97,13 @@ router.delete('/subscribe', verifyToken, async (req, res) => {
             [req.user.id, endpoint]
         );
 
-        console.log(`[Push] User ${req.user.id} unsubscribed`);
+        logger.info(`[Push] User ${req.user.id} unsubscribed`);
 
         res.json({
             message: 'Push subscription removed successfully'
         });
     } catch (error) {
-        console.error('Error unsubscribing from push:', error);
+        logger.error('Error unsubscribing from push:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to remove push subscription'
@@ -129,7 +130,7 @@ router.get('/subscriptions', verifyToken, async (req, res) => {
             subscriptions
         });
     } catch (error) {
-        console.error('Error fetching subscriptions:', error);
+        logger.error('Error fetching subscriptions:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch subscriptions'
@@ -182,13 +183,13 @@ router.post('/test', verifyToken, async (req, res) => {
                 await webpush.sendNotification(pushSubscription, payload);
                 successCount++;
             } catch (error) {
-                console.error(`[Push] Failed to send to ${sub.device_name}:`, error.message);
+                logger.error(`[Push] Failed to send to ${sub.device_name}:`, error.message);
                 failCount++;
 
                 // 만료된 구독은 삭제
                 if (error.statusCode === 410 || error.statusCode === 404) {
                     await db.query('DELETE FROM push_subscriptions WHERE id = ?', [sub.id]);
-                    console.log(`[Push] Removed expired subscription ${sub.id}`);
+                    logger.info(`[Push] Removed expired subscription ${sub.id}`);
                 }
             }
         }
@@ -199,7 +200,7 @@ router.post('/test', verifyToken, async (req, res) => {
             failed: failCount
         });
     } catch (error) {
-        console.error('Error sending test push:', error);
+        logger.error('Error sending test push:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to send test push'

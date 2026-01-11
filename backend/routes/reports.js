@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 /**
  * GET /paca/reports/dashboard
@@ -130,7 +131,7 @@ router.get('/dashboard', verifyToken, requireRole('owner', 'admin', 'staff'), as
             }
         });
     } catch (error) {
-        console.error('Error fetching dashboard:', error);
+        logger.error('Error fetching dashboard:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch dashboard data'
@@ -228,7 +229,7 @@ router.get('/financial/monthly', verifyToken, checkPermission('reports', 'view')
             net_income: netIncome
         });
     } catch (error) {
-        console.error('Error fetching monthly financial report:', error);
+        logger.error('Error fetching monthly financial report:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch monthly financial report'
@@ -326,7 +327,7 @@ router.get('/financial/yearly', verifyToken, checkPermission('reports', 'view'),
             yearly_total: yearlyTotal
         });
     } catch (error) {
-        console.error('Error fetching yearly financial trend:', error);
+        logger.error('Error fetching yearly financial trend:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch yearly financial trend'
@@ -390,7 +391,7 @@ router.get('/students', verifyToken, checkPermission('reports', 'view'), async (
             by_admission_type: byAdmission
         });
     } catch (error) {
-        console.error('Error fetching student statistics:', error);
+        logger.error('Error fetching student statistics:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch student statistics'
@@ -449,7 +450,7 @@ router.get('/instructors', verifyToken, checkPermission('reports', 'view'), asyn
             by_tax_type: byTaxType
         });
     } catch (error) {
-        console.error('Error fetching instructor statistics:', error);
+        logger.error('Error fetching instructor statistics:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch instructor statistics'
@@ -547,7 +548,7 @@ router.get('/attendance', verifyToken, checkPermission('reports', 'view'), async
             by_student: studentStats
         });
     } catch (error) {
-        console.error('Error fetching attendance statistics:', error);
+        logger.error('Error fetching attendance statistics:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch attendance statistics'
@@ -618,7 +619,7 @@ router.get('/payments/unpaid', verifyToken, checkPermission('reports', 'view'), 
             }))
         });
     } catch (error) {
-        console.error('Error fetching unpaid payment report:', error);
+        logger.error('Error fetching unpaid payment report:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch unpaid payment report'

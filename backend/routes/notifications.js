@@ -15,6 +15,7 @@ const {
     isValidPhoneNumber
 } = require('../utils/naverSens');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 // 학생 정보 복호화 헬퍼
 function decryptStudentInfo(obj) {
@@ -37,7 +38,7 @@ const {
 // 암호화 키 (환경변수에서 가져옴)
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 if (!ENCRYPTION_KEY) {
-    console.warn('[notifications] ENCRYPTION_KEY 환경변수가 설정되지 않았습니다.');
+    logger.warn('[notifications] ENCRYPTION_KEY 환경변수가 설정되지 않았습니다.');
 }
 
 /**
@@ -187,7 +188,7 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), async 
             }
         });
     } catch (error) {
-        console.error('알림 설정 조회 오류:', error);
+        logger.error('알림 설정 조회 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '알림 설정 조회에 실패했습니다.'
@@ -560,7 +561,7 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
             success: true
         });
     } catch (error) {
-        console.error('알림 설정 저장 오류:', error);
+        logger.error('알림 설정 저장 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '알림 설정 저장에 실패했습니다.'
@@ -712,7 +713,7 @@ router.post('/test', verifyToken, checkPermission('settings', 'edit'), async (re
             });
         }
     } catch (error) {
-        console.error('테스트 발송 오류:', error);
+        logger.error('테스트 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '테스트 발송에 실패했습니다.'
@@ -939,7 +940,7 @@ router.post('/send-unpaid', verifyToken, checkPermission('settings', 'edit'), as
             failed: failedCount
         });
     } catch (error) {
-        console.error('일괄 발송 오류:', error);
+        logger.error('일괄 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '알림 발송에 실패했습니다.'
@@ -1120,7 +1121,7 @@ router.post('/send-individual', verifyToken, checkPermission('settings', 'edit')
             });
         }
     } catch (error) {
-        console.error('개별 발송 오류:', error);
+        logger.error('개별 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '알림 발송에 실패했습니다.'
@@ -1188,7 +1189,7 @@ router.get('/logs', verifyToken, checkPermission('settings', 'view'), async (req
             }
         });
     } catch (error) {
-        console.error('발송 내역 조회 오류:', error);
+        logger.error('발송 내역 조회 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '발송 내역 조회에 실패했습니다.'
@@ -1220,7 +1221,8 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
              FROM notification_settings ns
              JOIN academies a ON ns.academy_id = a.id
              LEFT JOIN academy_settings ast ON ns.academy_id = ast.academy_id
-             WHERE ns.solapi_enabled = 1
+             WHERE ns.service_type = 'solapi'
+             AND ns.solapi_enabled = 1
              AND ns.solapi_auto_enabled = 1
              AND ns.solapi_auto_hour = ?`,
             [currentHour]
@@ -1434,7 +1436,7 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
             results: results
         });
     } catch (error) {
-        console.error('솔라피 자동발송 오류:', error);
+        logger.error('솔라피 자동발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '자동발송 처리에 실패했습니다.',
@@ -1530,7 +1532,7 @@ router.post('/test-consultation', verifyToken, checkPermission('settings', 'edit
                         .replace(/#{예약번호}/g, testReservationNumber),
                 }));
             } catch (e) {
-                console.error('버튼 설정 파싱 오류:', e);
+                logger.error('버튼 설정 파싱 오류:', e);
             }
         }
 
@@ -1579,7 +1581,7 @@ router.post('/test-consultation', verifyToken, checkPermission('settings', 'edit
             });
         }
     } catch (error) {
-        console.error('상담확정 테스트 발송 오류:', error);
+        logger.error('상담확정 테스트 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '테스트 발송에 실패했습니다.'
@@ -1679,7 +1681,7 @@ router.post('/test-trial', verifyToken, checkPermission('settings', 'edit'), asy
             try {
                 buttons = JSON.parse(setting.solapi_trial_buttons);
             } catch (e) {
-                console.error('버튼 설정 파싱 오류:', e);
+                logger.error('버튼 설정 파싱 오류:', e);
             }
         }
 
@@ -1728,7 +1730,7 @@ router.post('/test-trial', verifyToken, checkPermission('settings', 'edit'), asy
             });
         }
     } catch (error) {
-        console.error('체험수업 테스트 발송 오류:', error);
+        logger.error('체험수업 테스트 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '테스트 발송에 실패했습니다.'
@@ -1818,7 +1820,7 @@ router.post('/test-overdue', verifyToken, checkPermission('settings', 'edit'), a
             try {
                 buttons = JSON.parse(setting.solapi_overdue_buttons);
             } catch (e) {
-                console.error('버튼 설정 파싱 오류:', e);
+                logger.error('버튼 설정 파싱 오류:', e);
             }
         }
 
@@ -1867,7 +1869,7 @@ router.post('/test-overdue', verifyToken, checkPermission('settings', 'edit'), a
             });
         }
     } catch (error) {
-        console.error('미납자 테스트 발송 오류:', error);
+        logger.error('미납자 테스트 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '테스트 발송에 실패했습니다.'
@@ -1889,14 +1891,15 @@ router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
         const todayStr = koreaTime.toISOString().split('T')[0]; // YYYY-MM-DD
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
-        console.log(`[체험수업 자동발송] ${todayStr} ${currentHour}시 시작`);
+        logger.info(`[체험수업 자동발송] ${todayStr} ${currentHour}시 시작`);
 
         // 현재 시간에 발송 설정된 학원들 조회
         const [academySettings] = await db.query(
             `SELECT ns.*, a.name as academy_name, a.phone as academy_phone
              FROM notification_settings ns
              JOIN academies a ON ns.academy_id = a.id
-             WHERE ns.solapi_enabled = 1
+             WHERE ns.service_type = 'solapi'
+             AND ns.solapi_enabled = 1
              AND ns.solapi_trial_auto_enabled = 1
              AND ns.solapi_trial_auto_hour = ?`,
             [currentHour]
@@ -1997,7 +2000,7 @@ router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
                     try {
                         buttons = JSON.parse(setting.solapi_trial_buttons);
                     } catch (e) {
-                        console.error('버튼 설정 파싱 오류:', e);
+                        logger.error('버튼 설정 파싱 오류:', e);
                     }
                 }
 
@@ -2029,7 +2032,7 @@ router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
                             return `${prefix}${idx + 1}회차: ${m}/${day}(${dayName})`;
                         }).join('\n');
                     } catch (e) {
-                        console.error('[체험수업 자동발송] trial_dates 파싱 오류:', e.message, s.trial_dates);
+                        logger.error('[체험수업 자동발송] trial_dates 파싱 오류:', e.message, s.trial_dates);
                         scheduleText = '체험일정 정보 없음';
                     }
 
@@ -2107,7 +2110,7 @@ router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
         const totalSent = results.reduce((sum, r) => sum + r.sent, 0);
         const totalFailed = results.reduce((sum, r) => sum + r.failed, 0);
 
-        console.log(`[체험수업 자동발송] 완료 - ${totalSent}명 성공, ${totalFailed}명 실패`);
+        logger.info(`[체험수업 자동발송] 완료 - ${totalSent}명 성공, ${totalFailed}명 실패`);
 
         res.json({
             message: `${currentHour}시 체험수업 자동발송 완료`,
@@ -2119,7 +2122,7 @@ router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
             results: results
         });
     } catch (error) {
-        console.error('체험수업 자동발송 오류:', error);
+        logger.error('체험수업 자동발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '자동발송 처리에 실패했습니다.',
@@ -2160,7 +2163,7 @@ router.get('/stats', verifyToken, checkPermission('settings', 'view'), async (re
             stats: stats[0]
         });
     } catch (error) {
-        console.error('발송 통계 조회 오류:', error);
+        logger.error('발송 통계 조회 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '발송 통계 조회에 실패했습니다.'
@@ -2257,7 +2260,7 @@ router.post('/test-sens-consultation', verifyToken, checkPermission('settings', 
                         .replace(/#{예약번호}/g, testReservationNumber)
                 }));
             } catch (e) {
-                console.error('버튼 파싱 오류:', e);
+                logger.error('버튼 파싱 오류:', e);
             }
         }
 
@@ -2286,7 +2289,7 @@ router.post('/test-sens-consultation', verifyToken, checkPermission('settings', 
             });
         }
     } catch (error) {
-        console.error('SENS 상담확정 테스트 발송 오류:', error);
+        logger.error('SENS 상담확정 테스트 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'SENS 상담확정 테스트 발송에 실패했습니다.'
@@ -2371,7 +2374,7 @@ router.post('/test-sens-trial', verifyToken, checkPermission('settings', 'edit')
             try {
                 buttons = JSON.parse(setting.sens_trial_buttons);
             } catch (e) {
-                console.error('버튼 파싱 오류:', e);
+                logger.error('버튼 파싱 오류:', e);
             }
         }
 
@@ -2400,7 +2403,7 @@ router.post('/test-sens-trial', verifyToken, checkPermission('settings', 'edit')
             });
         }
     } catch (error) {
-        console.error('SENS 체험수업 테스트 발송 오류:', error);
+        logger.error('SENS 체험수업 테스트 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'SENS 체험수업 테스트 발송에 실패했습니다.'
@@ -2490,7 +2493,7 @@ router.post('/test-sens-overdue', verifyToken, checkPermission('settings', 'edit
             try {
                 buttons = JSON.parse(setting.sens_overdue_buttons);
             } catch (e) {
-                console.error('버튼 파싱 오류:', e);
+                logger.error('버튼 파싱 오류:', e);
             }
         }
 
@@ -2519,7 +2522,7 @@ router.post('/test-sens-overdue', verifyToken, checkPermission('settings', 'edit
             });
         }
     } catch (error) {
-        console.error('SENS 미납자 테스트 발송 오류:', error);
+        logger.error('SENS 미납자 테스트 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'SENS 미납자 테스트 발송에 실패했습니다.'
@@ -2553,20 +2556,21 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
         const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
-        console.log(`[SENS 자동발송] 시작 - ${koreaTime.toISOString()}, 현재 시간: ${currentHour}시, 오늘: ${dayNames[dayOfWeek]}요일`);
+        logger.info(`[SENS 자동발송] 시작 - ${koreaTime.toISOString()}, 현재 시간: ${currentHour}시, 오늘: ${dayNames[dayOfWeek]}요일`);
 
         // 현재 시간에 발송 설정된 학원들 조회
         const [academySettings] = await db.query(
             `SELECT ns.*, a.name as academy_name, a.phone as academy_phone
              FROM notification_settings ns
              JOIN academies a ON ns.academy_id = a.id
-             WHERE ns.is_enabled = 1
+             WHERE ns.service_type = 'sens'
+             AND ns.is_enabled = 1
              AND ns.sens_auto_enabled = 1
              AND ns.sens_auto_hour = ?`,
             [currentHour]
         );
 
-        console.log(`[SENS 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
+        logger.info(`[SENS 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
 
         const results = [];
 
@@ -2574,14 +2578,14 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
             try {
                 // SENS 설정 확인
                 if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
-                    console.log(`[SENS 자동발송] ${setting.academy_name}: SENS 설정 미완료`);
+                    logger.info(`[SENS 자동발송] ${setting.academy_name}: SENS 설정 미완료`);
                     continue;
                 }
 
                 // Secret 복호화
                 const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
                 if (!decryptedSecret) {
-                    console.log(`[SENS 자동발송] ${setting.academy_name}: Secret 복호화 실패`);
+                    logger.info(`[SENS 자동발송] ${setting.academy_name}: Secret 복호화 실패`);
                     continue;
                 }
 
@@ -2607,7 +2611,7 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
                 // 복호화
                 const unpaidStudents = decryptStudentArray(unpaidStudentsRaw);
 
-                console.log(`[SENS 자동발송] ${setting.academy_name}: 오늘 수업 있는 미납자 ${unpaidStudents.length}명`);
+                logger.info(`[SENS 자동발송] ${setting.academy_name}: 오늘 수업 있는 미납자 ${unpaidStudents.length}명`);
 
                 let sentCount = 0;
                 let failCount = 0;
@@ -2621,7 +2625,7 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
                     // 전화번호 우선순위: 학부모 > 학생
                     const recipientPhone = isValidPhoneNumber(parentPhone) ? parentPhone : studentPhone;
                     if (!recipientPhone || !isValidPhoneNumber(recipientPhone)) {
-                        console.log(`[SENS 자동발송] ${studentName}: 유효한 전화번호 없음`);
+                        logger.info(`[SENS 자동발송] ${studentName}: 유효한 전화번호 없음`);
                         continue;
                     }
 
@@ -2706,7 +2710,7 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
                 });
 
             } catch (academyError) {
-                console.error(`[SENS 자동발송] ${setting.academy_name} 오류:`, academyError);
+                logger.error(`[SENS 자동발송] ${setting.academy_name} 오류:`, academyError);
             }
         }
 
@@ -2716,7 +2720,7 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[SENS 자동발송] 오류:', error);
+        logger.error('[SENS 자동발송] 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'SENS 자동발송에 실패했습니다.'
@@ -2741,20 +2745,21 @@ router.post('/send-trial-today-auto-sens', async (req, res) => {
         const currentHour = now.getHours();
         const todayStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
 
-        console.log(`[SENS 체험수업 자동발송] 시작 - ${now.toISOString()}, 현재 시간: ${currentHour}시`);
+        logger.info(`[SENS 체험수업 자동발송] 시작 - ${now.toISOString()}, 현재 시간: ${currentHour}시`);
 
         // 현재 시간에 발송 설정된 학원들 조회
         const [academySettings] = await db.query(
             `SELECT ns.*, a.name as academy_name
              FROM notification_settings ns
              JOIN academies a ON ns.academy_id = a.id
-             WHERE ns.is_enabled = 1
+             WHERE ns.service_type = 'sens'
+             AND ns.is_enabled = 1
              AND ns.sens_trial_auto_enabled = 1
              AND ns.sens_trial_auto_hour = ?`,
             [currentHour]
         );
 
-        console.log(`[SENS 체험수업 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
+        logger.info(`[SENS 체험수업 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
 
         const results = [];
 
@@ -2784,7 +2789,7 @@ router.post('/send-trial-today-auto-sens', async (req, res) => {
                     [setting.academy_id, todayStr]
                 );
 
-                console.log(`[SENS 체험수업 자동발송] ${setting.academy_name}: 오늘 체험 ${trialStudents.length}명`);
+                logger.info(`[SENS 체험수업 자동발송] ${setting.academy_name}: 오늘 체험 ${trialStudents.length}명`);
 
                 let sentCount = 0;
                 let failCount = 0;
@@ -2864,7 +2869,7 @@ router.post('/send-trial-today-auto-sens', async (req, res) => {
                 });
 
             } catch (academyError) {
-                console.error(`[SENS 체험수업 자동발송] ${setting.academy_name} 오류:`, academyError);
+                logger.error(`[SENS 체험수업 자동발송] ${setting.academy_name} 오류:`, academyError);
             }
         }
 
@@ -2874,7 +2879,7 @@ router.post('/send-trial-today-auto-sens', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[SENS 체험수업 자동발송] 오류:', error);
+        logger.error('[SENS 체험수업 자동발송] 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'SENS 체험수업 자동발송에 실패했습니다.'
@@ -2970,7 +2975,7 @@ router.post('/test-reminder', verifyToken, checkPermission('settings', 'edit'), 
             try {
                 buttons = JSON.parse(setting.solapi_reminder_buttons);
             } catch (e) {
-                console.error('버튼 설정 파싱 오류:', e);
+                logger.error('버튼 설정 파싱 오류:', e);
             }
         }
 
@@ -3003,7 +3008,7 @@ router.post('/test-reminder', verifyToken, checkPermission('settings', 'edit'), 
         }
 
     } catch (error) {
-        console.error('리마인드 테스트 발송 오류:', error);
+        logger.error('리마인드 테스트 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '테스트 발송에 실패했습니다.'
@@ -3099,7 +3104,7 @@ router.post('/test-sens-reminder', verifyToken, checkPermission('settings', 'edi
             try {
                 buttons = JSON.parse(setting.sens_reminder_buttons);
             } catch (e) {
-                console.error('버튼 설정 파싱 오류:', e);
+                logger.error('버튼 설정 파싱 오류:', e);
             }
         }
 
@@ -3137,7 +3142,7 @@ router.post('/test-sens-reminder', verifyToken, checkPermission('settings', 'edi
         }
 
     } catch (error) {
-        console.error('SENS 리마인드 테스트 발송 오류:', error);
+        logger.error('SENS 리마인드 테스트 발송 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '테스트 발송에 실패했습니다.'
@@ -3160,19 +3165,19 @@ router.post('/send-reminder-auto', async (req, res) => {
         const now = new Date();
         const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
 
-        console.log(`[Solapi 리마인드 자동발송] 시작 - ${koreaTime.toISOString()}`);
+        logger.info(`[Solapi 리마인드 자동발송] 시작 - ${koreaTime.toISOString()}`);
 
         // 리마인드 자동발송이 활성화된 학원들 조회
         const [academySettings] = await db.query(
             `SELECT ns.*, a.name as academy_name, a.phone as academy_phone
              FROM notification_settings ns
              JOIN academies a ON ns.academy_id = a.id
-             WHERE ns.is_enabled = 1
+             WHERE ns.service_type = 'solapi'
              AND ns.solapi_enabled = 1
              AND ns.solapi_reminder_auto_enabled = 1`
         );
 
-        console.log(`[Solapi 리마인드 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
+        logger.info(`[Solapi 리마인드 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
 
         const results = [];
 
@@ -3180,19 +3185,19 @@ router.post('/send-reminder-auto', async (req, res) => {
             try {
                 // 솔라피 설정 확인
                 if (!setting.solapi_api_key || !setting.solapi_api_secret || !setting.solapi_pfid) {
-                    console.log(`[Solapi 리마인드 자동발송] ${setting.academy_name}: 솔라피 설정 미완료`);
+                    logger.info(`[Solapi 리마인드 자동발송] ${setting.academy_name}: 솔라피 설정 미완료`);
                     continue;
                 }
 
                 if (!setting.solapi_reminder_template_id) {
-                    console.log(`[Solapi 리마인드 자동발송] ${setting.academy_name}: 리마인드 템플릿 미설정`);
+                    logger.info(`[Solapi 리마인드 자동발송] ${setting.academy_name}: 리마인드 템플릿 미설정`);
                     continue;
                 }
 
                 // Secret 복호화
                 const decryptedSecret = decryptApiKey(setting.solapi_api_secret, ENCRYPTION_KEY);
                 if (!decryptedSecret) {
-                    console.log(`[Solapi 리마인드 자동발송] ${setting.academy_name}: Secret 복호화 실패`);
+                    logger.info(`[Solapi 리마인드 자동발송] ${setting.academy_name}: Secret 복호화 실패`);
                     continue;
                 }
 
@@ -3226,7 +3231,7 @@ router.post('/send-reminder-auto', async (req, res) => {
                     parent_phone: decryptData(c.parent_phone)
                 }));
 
-                console.log(`[Solapi 리마인드 자동발송] ${setting.academy_name}: ${targetDateStr} ${targetHour}시 상담 ${consultations.length}건`);
+                logger.info(`[Solapi 리마인드 자동발송] ${setting.academy_name}: ${targetDateStr} ${targetHour}시 상담 ${consultations.length}건`);
 
                 let sentCount = 0;
                 let failCount = 0;
@@ -3288,7 +3293,7 @@ router.post('/send-reminder-auto', async (req, res) => {
                         );
                     } else {
                         failCount++;
-                        console.log(`[Solapi 리마인드 자동발송] 발송 실패: ${recipientPhone}`, result.message);
+                        logger.info(`[Solapi 리마인드 자동발송] 발송 실패: ${recipientPhone}`, result.message);
                     }
                 }
 
@@ -3301,7 +3306,7 @@ router.post('/send-reminder-auto', async (req, res) => {
                 });
 
             } catch (academyError) {
-                console.error(`[Solapi 리마인드 자동발송] ${setting.academy_name} 처리 오류:`, academyError);
+                logger.error(`[Solapi 리마인드 자동발송] ${setting.academy_name} 처리 오류:`, academyError);
                 results.push({
                     academy: setting.academy_name,
                     error: academyError.message
@@ -3309,7 +3314,7 @@ router.post('/send-reminder-auto', async (req, res) => {
             }
         }
 
-        console.log(`[Solapi 리마인드 자동발송] 완료`, results);
+        logger.info(`[Solapi 리마인드 자동발송] 완료`, results);
 
         res.json({
             message: 'Solapi 상담 리마인드 자동발송 완료',
@@ -3317,7 +3322,7 @@ router.post('/send-reminder-auto', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[Solapi 리마인드 자동발송] 오류:', error);
+        logger.error('[Solapi 리마인드 자동발송] 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '리마인드 자동발송에 실패했습니다.'
@@ -3340,18 +3345,19 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
         const now = new Date();
         const koreaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
 
-        console.log(`[SENS 리마인드 자동발송] 시작 - ${koreaTime.toISOString()}`);
+        logger.info(`[SENS 리마인드 자동발송] 시작 - ${koreaTime.toISOString()}`);
 
         // 리마인드 자동발송이 활성화된 학원들 조회
         const [academySettings] = await db.query(
             `SELECT ns.*, a.name as academy_name, a.phone as academy_phone
              FROM notification_settings ns
              JOIN academies a ON ns.academy_id = a.id
-             WHERE ns.is_enabled = 1
+             WHERE ns.service_type = 'sens'
+             AND ns.is_enabled = 1
              AND ns.sens_reminder_auto_enabled = 1`
         );
 
-        console.log(`[SENS 리마인드 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
+        logger.info(`[SENS 리마인드 자동발송] 발송 대상 학원 수: ${academySettings.length}`);
 
         const results = [];
 
@@ -3359,19 +3365,19 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
             try {
                 // SENS 설정 확인
                 if (!setting.naver_access_key || !setting.naver_secret_key || !setting.naver_service_id) {
-                    console.log(`[SENS 리마인드 자동발송] ${setting.academy_name}: SENS 설정 미완료`);
+                    logger.info(`[SENS 리마인드 자동발송] ${setting.academy_name}: SENS 설정 미완료`);
                     continue;
                 }
 
                 if (!setting.sens_reminder_template_code) {
-                    console.log(`[SENS 리마인드 자동발송] ${setting.academy_name}: 리마인드 템플릿 미설정`);
+                    logger.info(`[SENS 리마인드 자동발송] ${setting.academy_name}: 리마인드 템플릿 미설정`);
                     continue;
                 }
 
                 // Secret 복호화
                 const decryptedSecret = decryptApiKey(setting.naver_secret_key, ENCRYPTION_KEY);
                 if (!decryptedSecret) {
-                    console.log(`[SENS 리마인드 자동발송] ${setting.academy_name}: Secret 복호화 실패`);
+                    logger.info(`[SENS 리마인드 자동발송] ${setting.academy_name}: Secret 복호화 실패`);
                     continue;
                 }
 
@@ -3404,7 +3410,7 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
                     parent_phone: decryptData(c.parent_phone)
                 }));
 
-                console.log(`[SENS 리마인드 자동발송] ${setting.academy_name}: ${targetDateStr} ${targetHour}시 상담 ${consultations.length}건`);
+                logger.info(`[SENS 리마인드 자동발송] ${setting.academy_name}: ${targetDateStr} ${targetHour}시 상담 ${consultations.length}건`);
 
                 let sentCount = 0;
                 let failCount = 0;
@@ -3466,7 +3472,7 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
                         );
                     } else {
                         failCount++;
-                        console.log(`[SENS 리마인드 자동발송] 발송 실패: ${recipientPhone}`, result.message);
+                        logger.info(`[SENS 리마인드 자동발송] 발송 실패: ${recipientPhone}`, result.message);
                     }
                 }
 
@@ -3479,7 +3485,7 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
                 });
 
             } catch (academyError) {
-                console.error(`[SENS 리마인드 자동발송] ${setting.academy_name} 처리 오류:`, academyError);
+                logger.error(`[SENS 리마인드 자동발송] ${setting.academy_name} 처리 오류:`, academyError);
                 results.push({
                     academy: setting.academy_name,
                     error: academyError.message
@@ -3487,7 +3493,7 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
             }
         }
 
-        console.log(`[SENS 리마인드 자동발송] 완료`, results);
+        logger.info(`[SENS 리마인드 자동발송] 완료`, results);
 
         res.json({
             message: 'SENS 상담 리마인드 자동발송 완료',
@@ -3495,7 +3501,7 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('[SENS 리마인드 자동발송] 오류:', error);
+        logger.error('[SENS 리마인드 자동발송] 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'SENS 리마인드 자동발송에 실패했습니다.'

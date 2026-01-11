@@ -9,6 +9,7 @@ const ExcelJS = require('exceljs');
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 // 이름 필드 복호화 헬퍼
 function decryptNames(obj) {
@@ -323,7 +324,7 @@ router.get('/revenue', verifyToken, checkPermission('reports', 'view'), async (r
         res.end();
 
     } catch (error) {
-        console.error('Error exporting revenue:', error);
+        logger.error('Error exporting revenue:', error);
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'Failed to export revenue data'
@@ -473,7 +474,7 @@ router.get('/expenses', verifyToken, checkPermission('reports', 'view'), async (
         res.end();
 
     } catch (error) {
-        console.error('Error exporting expenses:', error);
+        logger.error('Error exporting expenses:', error);
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'Failed to export expense data'
@@ -691,7 +692,7 @@ router.get('/financial', verifyToken, checkPermission('reports', 'view'), async 
         res.end();
 
     } catch (error) {
-        console.error('Error exporting financial report:', error);
+        logger.error('Error exporting financial report:', error);
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'Failed to export financial report'
@@ -863,7 +864,7 @@ router.get('/payments', verifyToken, checkPermission('reports', 'view'), async (
         res.end();
 
     } catch (error) {
-        console.error('Error exporting payments:', error);
+        logger.error('Error exporting payments:', error);
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'Failed to export payment data'
@@ -1156,7 +1157,7 @@ router.get('/salaries', verifyToken, checkPermission('reports', 'view'), async (
         res.end();
 
     } catch (error) {
-        console.error('Error exporting salaries:', error);
+        logger.error('Error exporting salaries:', error);
         res.status(500).json({
             error: 'Server Error',
             message: error.message || 'Failed to export salary data'

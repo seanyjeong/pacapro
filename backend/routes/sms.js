@@ -18,10 +18,11 @@ const {
     sendMMSSolapi
 } = require('../utils/solapi');
 const { decryptArrayFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 if (!ENCRYPTION_KEY) {
-    console.warn('[sms] ENCRYPTION_KEY 환경변수가 설정되지 않았습니다.');
+    logger.warn('[sms] ENCRYPTION_KEY 환경변수가 설정되지 않았습니다.');
 }
 
 /**
@@ -392,7 +393,7 @@ router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (re
             total: recipients.length
         });
     } catch (error) {
-        console.error('SMS 발송 오류:', error);
+        logger.error('SMS 발송 오류:', error);
 
         // SENS 에러 메시지를 사용자 친화적으로 변환
         let userMessage = 'SMS 발송에 실패했습니다.';
@@ -474,7 +475,7 @@ router.get('/recipients-count', verifyToken, async (req, res) => {
             parents: parentPhones.size
         });
     } catch (error) {
-        console.error('수신자 수 조회 오류:', error);
+        logger.error('수신자 수 조회 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '수신자 수 조회에 실패했습니다.'
@@ -517,7 +518,7 @@ router.get('/logs', verifyToken, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('SMS 로그 조회 오류:', error);
+        logger.error('SMS 로그 조회 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'SMS 발송 내역 조회에 실패했습니다.'
@@ -551,7 +552,7 @@ router.get('/sender-numbers', verifyToken, async (req, res) => {
 
         res.json({ senderNumbers });
     } catch (error) {
-        console.error('발신번호 목록 조회 오류:', error);
+        logger.error('발신번호 목록 조회 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '발신번호 목록 조회에 실패했습니다.'
@@ -621,7 +622,7 @@ router.post('/sender-numbers', verifyToken, checkPermission('settings', 'edit'),
             }
         });
     } catch (error) {
-        console.error('발신번호 추가 오류:', error);
+        logger.error('발신번호 추가 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '발신번호 추가에 실패했습니다.'
@@ -679,7 +680,7 @@ router.put('/sender-numbers/:id', verifyToken, checkPermission('settings', 'edit
 
         res.json({ message: '발신번호가 수정되었습니다.' });
     } catch (error) {
-        console.error('발신번호 수정 오류:', error);
+        logger.error('발신번호 수정 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '발신번호 수정에 실패했습니다.'
@@ -722,7 +723,7 @@ router.delete('/sender-numbers/:id', verifyToken, checkPermission('settings', 'e
 
         res.json({ message: '발신번호가 삭제되었습니다.' });
     } catch (error) {
-        console.error('발신번호 삭제 오류:', error);
+        logger.error('발신번호 삭제 오류:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '발신번호 삭제에 실패했습니다.'

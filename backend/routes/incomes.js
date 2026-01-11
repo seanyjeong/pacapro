@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 // 이름 필드 복호화 헬퍼
 function decryptNames(obj) {
@@ -94,7 +95,7 @@ router.get('/', verifyToken, checkPermission('incomes', 'view'), async (req, res
             incomes: decryptIncomeArray(incomes)
         });
     } catch (error) {
-        console.error('Error fetching incomes:', error);
+        logger.error('Error fetching incomes:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '기타수입 내역을 불러오는데 실패했습니다.'
@@ -146,7 +147,7 @@ router.get('/:id', verifyToken, checkPermission('incomes', 'view'), async (req, 
             income: decryptNames({...incomes[0]})
         });
     } catch (error) {
-        console.error('Error fetching income:', error);
+        logger.error('Error fetching income:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '기타수입 내역을 불러오는데 실패했습니다.'
@@ -240,7 +241,7 @@ router.post('/', verifyToken, checkPermission('incomes', 'edit'), async (req, re
             income: decryptNames({...newIncome[0]})
         });
     } catch (error) {
-        console.error('Error creating income:', error);
+        logger.error('Error creating income:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '기타수입 등록에 실패했습니다.'
@@ -347,7 +348,7 @@ router.put('/:id', verifyToken, checkPermission('incomes', 'edit'), async (req, 
             income: decryptNames({...updated[0]})
         });
     } catch (error) {
-        console.error('Error updating income:', error);
+        logger.error('Error updating income:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '기타수입 수정에 실패했습니다.'
@@ -383,7 +384,7 @@ router.delete('/:id', verifyToken, checkPermission('incomes', 'edit'), async (re
             message: '기타수입 내역이 삭제되었습니다.'
         });
     } catch (error) {
-        console.error('Error deleting income:', error);
+        logger.error('Error deleting income:', error);
         res.status(500).json({
             error: 'Server Error',
             message: '기타수입 삭제에 실패했습니다.'

@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { verifyToken } = require('../middleware/auth');
+const logger = require('../utils/logger');
 
 // 모든 라우트에 인증 미들웨어 적용
 router.use(verifyToken);
@@ -45,7 +46,7 @@ router.get('/', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('알림 설정 조회 오류:', error);
+        logger.error('알림 설정 조회 오류:', error);
         res.status(500).json({ error: '알림 설정을 조회하는 중 오류가 발생했습니다.' });
     }
 });
@@ -81,7 +82,7 @@ router.put('/', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('알림 설정 저장 오류:', error);
+        logger.error('알림 설정 저장 오류:', error);
         res.status(500).json({ error: '알림 설정을 저장하는 중 오류가 발생했습니다.' });
     }
 });

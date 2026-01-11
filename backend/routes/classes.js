@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 // 이름 필드 복호화 헬퍼
 function decryptInstructorName(obj) {
@@ -71,7 +72,7 @@ router.get('/', verifyToken, async (req, res) => {
             classes
         });
     } catch (error) {
-        console.error('Error fetching classes:', error);
+        logger.error('Error fetching classes:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch classes'
@@ -151,7 +152,7 @@ router.get('/by-date/:date', verifyToken, async (req, res) => {
             classes
         });
     } catch (error) {
-        console.error('Error fetching classes by date:', error);
+        logger.error('Error fetching classes by date:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch classes by date'
@@ -253,7 +254,7 @@ router.put('/:classId/schedules/:date/assign-instructors', verifyToken, requireR
             schedules: decryptScheduleArray(schedules)
         });
     } catch (error) {
-        console.error('Error assigning instructors:', error);
+        logger.error('Error assigning instructors:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to assign instructors'
@@ -307,7 +308,7 @@ router.get('/:id', verifyToken, async (req, res) => {
             schedules: decryptScheduleArray(schedules)
         });
     } catch (error) {
-        console.error('Error fetching class:', error);
+        logger.error('Error fetching class:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch class'
@@ -406,7 +407,7 @@ router.post('/', verifyToken, requireRole('owner', 'admin'), async (req, res) =>
             class: newClass[0]
         });
     } catch (error) {
-        console.error('Error creating class:', error);
+        logger.error('Error creating class:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to create class'
@@ -528,7 +529,7 @@ router.put('/:id', verifyToken, requireRole('owner', 'admin'), async (req, res) 
             class: updated[0]
         });
     } catch (error) {
-        console.error('Error updating class:', error);
+        logger.error('Error updating class:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to update class'
@@ -577,7 +578,7 @@ router.delete('/:id', verifyToken, requireRole('owner', 'admin'), async (req, re
             deleted_schedules: deletedScheduleCount
         });
     } catch (error) {
-        console.error('Error deleting class:', error);
+        logger.error('Error deleting class:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to delete class'

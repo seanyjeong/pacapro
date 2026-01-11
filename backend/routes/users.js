@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, requireRole } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
+const logger = require('../utils/logger');
 
 // 복호화 헬퍼
 function decryptUserFields(obj) {
@@ -44,7 +45,7 @@ router.get('/pending', verifyToken, requireRole('owner', 'admin'), async (req, r
             users: decryptArray(users)
         });
     } catch (error) {
-        console.error('Error fetching pending users:', error);
+        logger.error('Error fetching pending users:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch pending users'
@@ -99,7 +100,7 @@ router.post('/approve/:id', verifyToken, requireRole('owner', 'admin'), async (r
             }
         });
     } catch (error) {
-        console.error('Error approving user:', error);
+        logger.error('Error approving user:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to approve user'
@@ -154,7 +155,7 @@ router.post('/reject/:id', verifyToken, requireRole('owner', 'admin'), async (re
             }
         });
     } catch (error) {
-        console.error('Error rejecting user:', error);
+        logger.error('Error rejecting user:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to reject user'
@@ -208,7 +209,7 @@ router.get('/', verifyToken, requireRole('owner', 'admin'), async (req, res) => 
             users: decryptArray(users)
         });
     } catch (error) {
-        console.error('Error fetching users:', error);
+        logger.error('Error fetching users:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch users'
@@ -254,7 +255,7 @@ router.get('/:id', verifyToken, requireRole('owner', 'admin'), async (req, res) 
 
         res.json({ user: decryptUserFields({...users[0]}) });
     } catch (error) {
-        console.error('Error fetching user:', error);
+        logger.error('Error fetching user:', error);
         res.status(500).json({
             error: 'Server Error',
             message: 'Failed to fetch user'
