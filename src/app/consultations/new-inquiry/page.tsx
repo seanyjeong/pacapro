@@ -1,17 +1,19 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
-  Calendar, Clock, User, Phone, Search, Plus, Eye, Edit, Trash2,
-  ChevronDown, MoreHorizontal, Loader2, RefreshCw, CheckSquare, Square
+  Calendar, Clock, Phone, Search, Plus, Eye, Edit, Trash2,
+  MoreHorizontal, Loader2, RefreshCw, CheckSquare,
+  UserCheck, UserX
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle
@@ -47,6 +49,9 @@ export default function NewInquiryConsultationsPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week'>('all');
+
+  // 완료 탭 필터 (전체/미등록/등록)
+  const [completedTab, setCompletedTab] = useState<'all' | 'unregistered' | 'registered'>('all');
 
   // 상세 모달
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
@@ -324,6 +329,32 @@ export default function NewInquiryConsultationsPage() {
     return result;
   };
 
+  // 완료된 상담 중 등록/미등록 통계 계산
+  const completedStats = useMemo(() => {
+    const completedList = consultations.filter(c => c.status === 'completed');
+    const registered = completedList.filter(c => c.linked_student_id);
+    const unregistered = completedList.filter(c => !c.linked_student_id);
+    return {
+      total: completedList.length,
+      registered: registered.length,
+      unregistered: unregistered.length
+    };
+  }, [consultations]);
+
+  // 완료 탭에 따라 필터링된 상담 목록
+  const filteredConsultations = useMemo(() => {
+    if (statusFilter !== 'completed' || completedTab === 'all') {
+      return consultations;
+    }
+    if (completedTab === 'registered') {
+      return consultations.filter(c => c.status === 'completed' && c.linked_student_id);
+    }
+    if (completedTab === 'unregistered') {
+      return consultations.filter(c => c.status === 'completed' && !c.linked_student_id);
+    }
+    return consultations;
+  }, [consultations, statusFilter, completedTab]);
+
   return (
     <div className="p-6 space-y-6 pb-24">
       {/* 헤더 */}
@@ -347,7 +378,7 @@ export default function NewInquiryConsultationsPage() {
       </div>
 
       {/* 통계 카드 */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="text-sm text-muted-foreground">전체</div>
@@ -372,6 +403,15 @@ export default function NewInquiryConsultationsPage() {
             <div className="text-2xl font-bold text-green-600">{stats.completed || 0}</div>
           </CardContent>
         </Card>
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground flex items-center gap-1">
+              <UserCheck className="h-3.5 w-3.5" />
+              등록완료
+            </div>
+            <div className="text-2xl font-bold text-primary">{completedStats.registered}</div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* 필터 */}
@@ -387,7 +427,10 @@ export default function NewInquiryConsultationsPage() {
                 className="pl-9"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(v) => {
+              setStatusFilter(v);
+              setCompletedTab('all'); // 상태 변경 시 탭 초기화
+            }}>
               <SelectTrigger className="w-full sm:w-40">
                 <SelectValue placeholder="상태" />
               </SelectTrigger>
@@ -417,6 +460,60 @@ export default function NewInquiryConsultationsPage() {
         </CardContent>
       </Card>
 
+      {/* 완료 상태일 때 등록/미등록 탭 */}
+      {statusFilter === 'completed' && (
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground mr-2">완료 상담 분류:</span>
+              <div className="flex gap-1">
+                <Button
+                  variant={completedTab === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCompletedTab('all')}
+                  className="h-8"
+                >
+                  전체
+                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-xs">
+                    {completedStats.total}
+                  </Badge>
+                </Button>
+                <Button
+                  variant={completedTab === 'unregistered' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCompletedTab('unregistered')}
+                  className={cn(
+                    "h-8",
+                    completedTab !== 'unregistered' && "text-orange-600 border-orange-200 hover:bg-orange-50 hover:text-orange-700"
+                  )}
+                >
+                  <UserX className="h-3.5 w-3.5 mr-1" />
+                  미등록
+                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-xs">
+                    {completedStats.unregistered}
+                  </Badge>
+                </Button>
+                <Button
+                  variant={completedTab === 'registered' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCompletedTab('registered')}
+                  className={cn(
+                    "h-8",
+                    completedTab !== 'registered' && "text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                  )}
+                >
+                  <UserCheck className="h-3.5 w-3.5 mr-1" />
+                  등록완료
+                  <Badge variant="secondary" className="ml-1.5 px-1.5 py-0 text-xs">
+                    {completedStats.registered}
+                  </Badge>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* 목록 */}
       <Card>
         <CardContent className="p-0">
@@ -424,13 +521,15 @@ export default function NewInquiryConsultationsPage() {
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
             </div>
-          ) : consultations.length === 0 ? (
+          ) : filteredConsultations.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
-              상담 내역이 없습니다.
+              {statusFilter === 'completed' && completedTab !== 'all'
+                ? (completedTab === 'registered' ? '등록된 상담이 없습니다.' : '미등록 상담이 없습니다.')
+                : '상담 내역이 없습니다.'}
             </div>
           ) : (
             <div className="divide-y">
-              {consultations.map((c) => (
+              {filteredConsultations.map((c) => (
                 <div
                   key={c.id}
                   className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
@@ -441,12 +540,25 @@ export default function NewInquiryConsultationsPage() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium">{c.student_name}</span>
                         <Badge variant="outline">{c.student_grade}</Badge>
                         <Badge className={CONSULTATION_STATUS_COLORS[c.status]}>
                           {CONSULTATION_STATUS_LABELS[c.status]}
                         </Badge>
+                        {c.status === 'completed' && (
+                          c.linked_student_id ? (
+                            <Badge className="bg-green-100 text-green-700 border-green-200 flex items-center gap-1">
+                              <UserCheck className="h-3 w-3" />
+                              등록완료
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-orange-100 text-orange-700 border-orange-200 flex items-center gap-1">
+                              <UserX className="h-3 w-3" />
+                              미등록
+                            </Badge>
+                          )
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
