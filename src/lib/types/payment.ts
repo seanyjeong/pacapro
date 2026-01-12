@@ -24,6 +24,7 @@ export interface Payment {
   notes?: string;
   created_at: string;
   updated_at?: string;
+  credit_balance?: number; // 학생의 남은 크레딧 잔액
 }
 
 // 미납 정보 (연체일수 포함)

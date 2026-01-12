@@ -257,18 +257,25 @@ export function PaymentList({
                     </td>
                     {showCreditButton && onCreditClick && (
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onCreditClick(payment);
-                          }}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950"
-                        >
-                          <Coins className="w-4 h-4 mr-1" />
-                          크레딧
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCreditClick(payment);
+                            }}
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950"
+                          >
+                            <Coins className="w-4 h-4 mr-1" />
+                            크레딧
+                          </Button>
+                          {payment.credit_balance && payment.credit_balance > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                              {Math.floor(payment.credit_balance).toLocaleString()}원
+                            </span>
+                          )}
+                        </div>
                       </td>
                     )}
                     {showPaymentMarkButton && onPaymentMark && (

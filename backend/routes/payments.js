@@ -140,7 +140,15 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
                 p.payment_method,
                 p.description,
                 p.notes,
-                p.created_at
+                p.created_at,
+                COALESCE((
+                    SELECT SUM(rc.remaining_amount)
+                    FROM rest_credits rc
+                    WHERE rc.student_id = p.student_id
+                    AND rc.academy_id = p.academy_id
+                    AND rc.status IN ('pending', 'partial')
+                    AND rc.remaining_amount > 0
+                ), 0) as credit_balance
             FROM student_payments p
             JOIN students s ON p.student_id = s.id
             WHERE p.academy_id = ?
