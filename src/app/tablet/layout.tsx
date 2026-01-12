@@ -17,7 +17,8 @@ import {
   Settings,
   MessageSquare,
   Mountain,
-  Send
+  Send,
+  Monitor
 } from 'lucide-react';
 
 const APP_VERSION = 'v3.3.5';
@@ -30,6 +31,7 @@ const navigation = [
   { name: '스케줄', href: '/tablet/schedule', icon: Calendar },
   { name: '상담예약', href: '/tablet/consultations', icon: MessageSquare },
   { name: '문자', href: '/tablet/sms', icon: Send },
+  { name: 'PC버전', href: '/', icon: Monitor, ownerOnly: true },
   { name: '설정', href: '/tablet/settings', icon: Settings, adminOnly: true },
 ];
 
@@ -129,6 +131,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   };
 
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
+  const isOwner = user?.role === 'owner';
   const currentPage = navigation.find(n =>
     pathname === n.href || (n.href !== '/tablet' && pathname.startsWith(n.href + '/'))
   );
@@ -155,7 +158,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
             <nav className="flex-1 py-2 overflow-y-auto min-h-0">
               <div className="space-y-0.5 px-1.5">
                 {navigation
-                  .filter(item => !item.adminOnly || isAdmin)
+                  .filter(item => (!item.adminOnly || isAdmin) && (!item.ownerOnly || isOwner))
                   .map((item) => {
                     const isActive = pathname === item.href ||
                       (item.href !== '/tablet' && pathname.startsWith(item.href + '/'));
@@ -320,7 +323,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
               </div>
               <div className="grid grid-cols-4 gap-4">
                 {navigation
-                  .filter(item => !item.adminOnly || isAdmin)
+                  .filter(item => (!item.adminOnly || isAdmin) && (!item.ownerOnly || isOwner))
                   .map((item) => {
                     const isActive = pathname === item.href ||
                       (item.href !== '/tablet' && pathname.startsWith(item.href + '/'));
