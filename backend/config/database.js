@@ -26,7 +26,10 @@ const pool = mysql.createPool({
     keepAliveInitialDelay: 0,
     connectTimeout: 10000, // 연결 타임아웃 10초
     timezone: '+09:00', // 한국 시간
-    dateStrings: true // DATE 타입을 문자열로 반환
+    dateStrings: true, // DATE 타입을 문자열로 반환
+    // 연결 끊김 방지 설정
+    idleTimeout: 60000, // 1분간 미사용 연결 제거 (죽은 연결 방지)
+    maxIdle: 10 // 유휴 연결 최대 10개 유지
 });
 
 /**

@@ -179,7 +179,12 @@
       "Bash(__NEW_LINE_6dd6bfdbac8b4eaa__ mysql -u paca -e \"\nSELECT\n  student_id,\n  template_code,\n  DATE\\(sent_at\\) as date\nFROM notification_logs\nWHERE academy_id = 2\n  AND template_code NOT LIKE ''KA01TP%''\n  AND sent_at >= DATE_SUB\\(NOW\\(\\), INTERVAL 30 DAY\\)\nLIMIT 20;\n\" paca)",
       "Bash(systemctl status:*)",
       "mcp__memory-keeper__context_save",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(tail:*)",
+      "Bash(sudo mysql:*)",
+      "Bash(MYSQL_PWD='q141171616!' mysql:*)",
+      "Bash(MYSQL_PWD='q141171616!' mysql -u paca -e \"SHOW VARIABLES LIKE ''''%timeout%''''\")",
+      "Bash(npm run type-check:*)"
     ],
     "deny": [],
     "ask": []

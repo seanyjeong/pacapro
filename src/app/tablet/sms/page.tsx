@@ -70,7 +70,7 @@ function TabletSMSPageContent() {
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
 
   const [content, setContent] = useState('');
-  const [customPhones, setCustomPhones] = useState('');
+  const [customPhones, setCustomPhones] = useState<string[]>(['']);
   const [sending, setSending] = useState(false);
   const [recipientsCount, setRecipientsCount] = useState({ all: 0, students: 0, parents: 0 });
   const [logs, setLogs] = useState<SMSLog[]>([]);
@@ -234,6 +234,34 @@ function TabletSMSPageContent() {
     });
   };
 
+  // 전화번호 자동 하이픈 포맷팅
+  const formatPhoneNumber = (value: string) => {
+    const numbers = value.replace(/[^0-9]/g, '');
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 7) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
+    return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
+  };
+
+  // 전화번호 변경 핸들러
+  const handlePhoneChange = (index: number, value: string) => {
+    const formatted = formatPhoneNumber(value);
+    const newPhones = [...customPhones];
+    newPhones[index] = formatted;
+    setCustomPhones(newPhones);
+  };
+
+  // 전화번호 추가
+  const addPhoneField = () => {
+    setCustomPhones([...customPhones, '']);
+  };
+
+  // 전화번호 삭제
+  const removePhoneField = (index: number) => {
+    if (customPhones.length > 1) {
+      setCustomPhones(customPhones.filter((_, i) => i !== index));
+    }
+  };
+
   const handleSend = async () => {
     if (!content.trim()) {
       toast.error('문자 내용을 입력해주세요.');
@@ -242,12 +270,12 @@ function TabletSMSPageContent() {
 
     // 직접입력 모드에서 전화번호 검증
     if (sendMode === 'custom') {
-      if (!customPhones.trim()) {
+      const validPhones = customPhones.filter(p => p.trim());
+      if (validPhones.length === 0) {
         toast.error('전화번호를 입력해주세요.');
         return;
       }
-      const phones = customPhones.split(/[\n,]/).filter(p => p.trim());
-      const invalidPhones = phones.filter(p => !/^\d{3}-\d{3,4}-\d{4}$/.test(p.trim()));
+      const invalidPhones = validPhones.filter(p => !/^\d{3}-\d{3,4}-\d{4}$/.test(p.trim()));
       if (invalidPhones.length > 0) {
         toast.error('전화번호는 하이픈(-)을 포함한 형식으로 입력해주세요.\n예: 010-1234-5678');
         return;
@@ -270,7 +298,7 @@ function TabletSMSPageContent() {
     // 수신자 수 계산
     let recipientCount = 0;
     if (sendMode === 'custom') {
-      recipientCount = customPhones.split(/[\n,]/).filter(p => p.trim()).length;
+      recipientCount = customPhones.filter(p => p.trim()).length;
     } else if (sendMode === 'individual') {
       recipientCount = 1;
     } else {
@@ -294,7 +322,7 @@ function TabletSMSPageContent() {
 
       if (sendMode === 'custom') {
         // 직접입력
-        const phones = customPhones.split(/[\n,]/).map(p => p.trim()).filter(Boolean);
+        const phones = customPhones.map(p => p.trim()).filter(Boolean);
         result = await smsAPI.send({
           target: 'custom',
           content,
@@ -659,18 +687,43 @@ function TabletSMSPageContent() {
           {/* 직접 입력 시 전화번호 입력 */}
           {sendMode === 'custom' && (
             <div className="mb-6">
-              <label className="block text-base font-medium text-foreground mb-2">
-                2. 전화번호 입력 (쉼표 또는 줄바꿈으로 구분)
+              <label className="block text-base font-medium text-foreground mb-3">
+                2. 전화번호 입력
               </label>
-              <textarea
-                value={customPhones}
-                onChange={(e) => setCustomPhones(e.target.value)}
-                rows={4}
-                className="w-full px-4 py-3 text-base border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="010-1234-5678, 010-9876-5432&#10;또는 줄바꿈으로 구분"
-              />
-              <p className="text-sm text-muted-foreground mt-2">
-                * 전화번호는 하이픈(-)을 포함하여 입력해주세요 (예: 010-1234-5678)
+              <div className="space-y-3">
+                {customPhones.map((phone, index) => (
+                  <div key={index} className="flex gap-3">
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => handlePhoneChange(index, e.target.value)}
+                      placeholder="010-1234-5678"
+                      className="flex-1 px-4 py-3 text-base border border-border rounded-lg bg-card text-foreground focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      maxLength={13}
+                    />
+                    {customPhones.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removePhoneField(index)}
+                        className="p-3 min-w-[48px] min-h-[48px] text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg transition-colors"
+                        title="삭제"
+                      >
+                        <X className="w-6 h-6" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addPhoneField}
+                  className="inline-flex items-center gap-2 px-5 py-3 text-base text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950 rounded-lg transition-colors min-h-[48px]"
+                >
+                  <Phone className="w-5 h-5" />
+                  번호 추가
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground mt-3">
+                * 입력 시 자동으로 하이픈(-)이 추가됩니다
               </p>
             </div>
           )}
