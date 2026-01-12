@@ -16,7 +16,8 @@ import {
   X,
   Settings,
   MessageSquare,
-  Mountain
+  Mountain,
+  Send
 } from 'lucide-react';
 
 const APP_VERSION = 'v3.3.5';
@@ -28,6 +29,7 @@ const navigation = [
   { name: '결제확인', href: '/tablet/payments', icon: CreditCard },
   { name: '스케줄', href: '/tablet/schedule', icon: Calendar },
   { name: '상담예약', href: '/tablet/consultations', icon: MessageSquare },
+  { name: '문자', href: '/tablet/sms', icon: Send },
   { name: '설정', href: '/tablet/settings', icon: Settings, adminOnly: true },
 ];
 
