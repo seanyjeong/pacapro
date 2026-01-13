@@ -162,6 +162,24 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                   .map((item) => {
                     const isActive = pathname === item.href ||
                       (item.href !== '/tablet' && pathname.startsWith(item.href + '/'));
+
+                    // PC버전은 완전히 새 페이지로 이동
+                    if (item.name === 'PC버전') {
+                      return (
+                        <button
+                          key={item.name}
+                          onClick={() => {
+                            window.location.href = '/';
+                          }}
+                          className="flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 text-slate-300 hover:bg-[#243a5e] hover:text-white"
+                          title={item.name}
+                        >
+                          <item.icon size={20} />
+                          <span className="text-[9px] mt-0.5 text-center leading-tight">{item.name}</span>
+                        </button>
+                      );
+                    }
+
                     return (
                       <Link
                         key={item.name}
@@ -327,6 +345,24 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                   .map((item) => {
                     const isActive = pathname === item.href ||
                       (item.href !== '/tablet' && pathname.startsWith(item.href + '/'));
+
+                    // PC버전은 완전히 새 페이지로 이동
+                    if (item.name === 'PC버전') {
+                      return (
+                        <button
+                          key={item.name}
+                          onClick={() => {
+                            setShowMoreMenu(false);
+                            window.location.href = '/';
+                          }}
+                          className="flex flex-col items-center p-4 rounded-xl transition bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                        >
+                          <item.icon size={28} />
+                          <span className="text-xs mt-2 text-center">{item.name}</span>
+                        </button>
+                      );
+                    }
+
                     return (
                       <Link
                         key={item.name}
