@@ -17,11 +17,10 @@ import {
   Settings,
   MessageSquare,
   Mountain,
-  Send,
-  Monitor
+  Send
 } from 'lucide-react';
 
-const APP_VERSION = 'v3.3.24';
+const APP_VERSION = 'v3.3.25';
 
 // Navigation items (대시보드 제거)
 const navigation = [
@@ -31,7 +30,6 @@ const navigation = [
   { name: '스케줄', href: '/tablet/schedule', icon: Calendar },
   { name: '상담예약', href: '/tablet/consultations', icon: MessageSquare },
   { name: '문자', href: '/tablet/sms', icon: Send },
-  { name: 'PC버전', href: '/', icon: Monitor, ownerOnly: true },
   { name: '설정', href: '/tablet/settings', icon: Settings, adminOnly: true },
 ];
 
@@ -162,26 +160,6 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                   .map((item) => {
                     const isActive = pathname === item.href ||
                       (item.href !== '/tablet' && pathname.startsWith(item.href + '/'));
-
-                    // PC버전은 외부 크롬 브라우저에서 열기
-                    if (item.name === 'PC버전') {
-                      return (
-                        <button
-                          key={item.name}
-                          onClick={() => {
-                            // 안드로이드 intent로 크롬에서 열기
-                            const url = 'https://paca.chejump.com/';
-                            const intentUrl = `intent://${url.replace('https://', '')}#Intent;scheme=https;package=com.android.chrome;end`;
-                            window.location.href = intentUrl;
-                          }}
-                          className="flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 text-slate-300 hover:bg-[#243a5e] hover:text-white"
-                          title={item.name}
-                        >
-                          <item.icon size={20} />
-                          <span className="text-[9px] mt-0.5 text-center leading-tight">{item.name}</span>
-                        </button>
-                      );
-                    }
 
                     return (
                       <Link
@@ -348,26 +326,6 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                   .map((item) => {
                     const isActive = pathname === item.href ||
                       (item.href !== '/tablet' && pathname.startsWith(item.href + '/'));
-
-                    // PC버전은 외부 크롬 브라우저에서 열기
-                    if (item.name === 'PC버전') {
-                      return (
-                        <button
-                          key={item.name}
-                          onClick={() => {
-                            setShowMoreMenu(false);
-                            // 안드로이드 intent로 크롬에서 열기
-                            const url = 'https://paca.chejump.com/';
-                            const intentUrl = `intent://${url.replace('https://', '')}#Intent;scheme=https;package=com.android.chrome;end`;
-                            window.location.href = intentUrl;
-                          }}
-                          className="flex flex-col items-center p-4 rounded-xl transition bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
-                        >
-                          <item.icon size={28} />
-                          <span className="text-xs mt-2 text-center">{item.name}</span>
-                        </button>
-                      );
-                    }
 
                     return (
                       <Link
