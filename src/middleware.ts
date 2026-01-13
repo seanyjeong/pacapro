@@ -20,10 +20,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // PC 모드 강제 쿠키 확인
+  const forcePC = request.cookies.get('force_pc_mode')?.value === 'true';
+
   // 태블릿 감지 (아이뮤즈 L11 포함)
   // iPad, 아이뮤즈(IMUZ, im-h091), 삼성 태블릿(SM-T), Android 태블릿
   const isTablet = /iPad|IMUZ|im-h\d|H091|SM-T\d|GT-P\d|Tab|tablet/i.test(ua) ||
     (/Android/i.test(ua) && !/Mobile/i.test(ua));
+
+  // PC 모드 강제 시 리다이렉트 안 함
+  if (forcePC) {
+    return NextResponse.next();
+  }
 
   // 태블릿 사용자가 PC 경로에 접근하면 태블릿 버전으로 리다이렉트
   if (isTablet) {
