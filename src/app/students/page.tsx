@@ -112,7 +112,7 @@ function StudentsPageContent() {
     setExcelDownloading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com:8320'}/paca/exports/students`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com:8320/paca'}/exports/students`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
