@@ -18,6 +18,7 @@ function decryptNames(obj) {
     if (obj.instructor_name) obj.instructor_name = decrypt(obj.instructor_name);
     if (obj.resident_number) obj.resident_number = decrypt(obj.resident_number);
     if (obj.name) obj.name = decrypt(obj.name);
+    if (obj.phone) obj.phone = decrypt(obj.phone);
     return obj;
 }
 function decryptArray(arr) {
@@ -1184,7 +1185,7 @@ router.get('/students', verifyToken, async (req, res) => {
         // 학생 목록 조회
         const [students] = await db.query(`
             SELECT
-                id, name, school, gender, grade, enrollment_date,
+                id, name, phone, school, gender, grade, enrollment_date,
                 admission_type, student_type, status, is_trial
             FROM students
             WHERE academy_id = ?
@@ -1242,14 +1243,14 @@ router.get('/students', verifyToken, async (req, res) => {
             const sheet = workbook.addWorksheet(group.name);
 
             // ===== 타이틀 헤더 =====
-            sheet.mergeCells('A1:G1');
+            sheet.mergeCells('A1:H1');
             const titleCell = sheet.getCell('A1');
             titleCell.value = `${academyName} - ${group.name} 명단`;
             titleCell.font = { bold: true, size: 18, color: { argb: group.color } };
             titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
             sheet.getRow(1).height = 35;
 
-            sheet.mergeCells('A2:G2');
+            sheet.mergeCells('A2:H2');
             const dateCell = sheet.getCell('A2');
             dateCell.value = `출력일: ${new Date().toLocaleDateString('ko-KR')} | 총 ${group.students.length}명`;
             dateCell.font = { size: 11, color: { argb: 'FF666666' } };
@@ -1261,7 +1262,7 @@ router.get('/students', verifyToken, async (req, res) => {
 
             // ===== 컬럼 헤더 =====
             const headerRow = sheet.getRow(4);
-            const headers = ['No.', '이름', '학교', '성별', '학년', '등록일', '입시유형'];
+            const headers = ['No.', '이름', '연락처', '학교', '성별', '학년', '등록일', '입시유형'];
             headers.forEach((header, index) => {
                 const cell = headerRow.getCell(index + 1);
                 cell.value = header;
@@ -1284,11 +1285,12 @@ router.get('/students', verifyToken, async (req, res) => {
             // 컬럼 너비 설정
             sheet.getColumn(1).width = 8;   // No.
             sheet.getColumn(2).width = 15;  // 이름
-            sheet.getColumn(3).width = 20;  // 학교
-            sheet.getColumn(4).width = 8;   // 성별
-            sheet.getColumn(5).width = 10;  // 학년
-            sheet.getColumn(6).width = 14;  // 등록일
-            sheet.getColumn(7).width = 12;  // 입시유형
+            sheet.getColumn(3).width = 15;  // 연락처
+            sheet.getColumn(4).width = 20;  // 학교
+            sheet.getColumn(5).width = 8;   // 성별
+            sheet.getColumn(6).width = 10;  // 학년
+            sheet.getColumn(7).width = 14;  // 등록일
+            sheet.getColumn(8).width = 12;  // 입시유형
 
             // ===== 데이터 행 =====
             let rowNum = 5;
@@ -1297,13 +1299,14 @@ router.get('/students', verifyToken, async (req, res) => {
 
                 row.getCell(1).value = index + 1;  // No.
                 row.getCell(2).value = student.name || '-';
-                row.getCell(3).value = student.school || '-';
-                row.getCell(4).value = genderLabels[student.gender] || '-';
-                row.getCell(5).value = student.grade || '-';
-                row.getCell(6).value = student.enrollment_date
+                row.getCell(3).value = student.phone || '-';
+                row.getCell(4).value = student.school || '-';
+                row.getCell(5).value = genderLabels[student.gender] || '-';
+                row.getCell(6).value = student.grade || '-';
+                row.getCell(7).value = student.enrollment_date
                     ? student.enrollment_date.split('T')[0]
                     : '-';
-                row.getCell(7).value = admissionLabels[student.admission_type] || student.admission_type || '-';
+                row.getCell(8).value = admissionLabels[student.admission_type] || student.admission_type || '-';
 
                 // 스타일 적용
                 row.eachCell((cell, colNumber) => {
@@ -1330,7 +1333,7 @@ router.get('/students', verifyToken, async (req, res) => {
 
             // 합계 행
             const totalRow = sheet.getRow(rowNum);
-            sheet.mergeCells(`A${rowNum}:G${rowNum}`);
+            sheet.mergeCells(`A${rowNum}:H${rowNum}`);
             totalRow.getCell(1).value = `총 ${group.students.length}명`;
             totalRow.getCell(1).font = { bold: true, size: 11, color: { argb: group.color } };
             totalRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
