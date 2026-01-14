@@ -589,7 +589,7 @@ export function TimeSlotDetailModal({
                               </div>
                             ) : (
                               /* 비시급 강사: 기존 출결 버튼들 */
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5">
                                 {INSTRUCTOR_ATTENDANCE_STATUS.map((status) => {
                                   const isSelected = attendance?.status === status.value;
                                   return (
@@ -598,10 +598,10 @@ export function TimeSlotDetailModal({
                                       onClick={() => handleInstructorAttendance(instructor.id, status.value)}
                                       disabled={savingInstructor}
                                       className={cn(
-                                        'px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                                        'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border-2 shadow-sm active:scale-95',
                                         isSelected
-                                          ? `${status.color} text-white`
-                                          : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                          ? `${status.color} text-white border-transparent shadow-md`
+                                          : 'bg-background text-foreground border-border hover:border-primary/50 hover:shadow'
                                       )}
                                     >
                                       {status.label}
@@ -614,27 +614,26 @@ export function TimeSlotDetailModal({
 
                           {/* 시급 강사: 시간 수정 (클릭하면 수정 가능) */}
                           {isHourly && (attendance?.checkIn || attendance?.checkOut) && (
-                            <div className="flex items-center gap-2 pl-11">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
+                            <div className="flex items-center gap-2 pl-11 flex-wrap">
                               <Input
                                 type="time"
                                 value={attendance?.checkIn || ''}
                                 onChange={(e) => handleTimeChange(instructor.id, 'checkIn', e.target.value)}
                                 onBlur={() => saveInstructorTime(instructor.id)}
                                 className="w-28 h-8 text-sm"
-                                placeholder="출근"
+                                placeholder="출근 시간"
                               />
-                              <span className="text-gray-400">~</span>
+                              <span className="text-muted-foreground shrink-0">~</span>
                               <Input
                                 type="time"
                                 value={attendance?.checkOut || ''}
                                 onChange={(e) => handleTimeChange(instructor.id, 'checkOut', e.target.value)}
                                 onBlur={() => saveInstructorTime(instructor.id)}
                                 className="w-28 h-8 text-sm"
-                                placeholder="퇴근"
+                                placeholder="퇴근 시간"
                               />
                               {attendance?.checkIn && attendance?.checkOut && (
-                                <span className="text-xs text-green-600 font-medium">
+                                <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 px-2 py-1 bg-emerald-50 dark:bg-emerald-950 rounded-full">
                                   {calculateHours(attendance.checkIn, attendance.checkOut)}
                                 </span>
                               )}
@@ -807,13 +806,14 @@ export function TimeSlotDetailModal({
                                     <Button
                                       key={otherSlot}
                                       size="sm"
-                                      variant="ghost"
-                                      className={cn('h-7 px-2', otherInfo.color)}
+                                      variant="outline"
+                                      className={cn('h-7 px-2 gap-1 text-xs font-medium', otherInfo.color, 'border-2 hover:shadow-sm')}
                                       disabled={movingStudent === student.student_id}
                                       onClick={() => handleMoveStudent(student.student_id, otherSlot)}
                                       title={`${otherInfo.label}으로 이동`}
                                     >
-                                      <OtherIcon className="h-3.5 w-3.5" />
+                                      <OtherIcon className="h-3.5 w-3.5 shrink-0" />
+                                      <span className="shrink-0">{otherInfo.label}</span>
                                     </Button>
                                   );
                                 })}
@@ -821,22 +821,31 @@ export function TimeSlotDetailModal({
                             </div>
 
                             {/* 출결 상태 버튼 */}
-                            <div className="flex items-center gap-1 pl-11 flex-wrap">
+                            <div className="flex items-center gap-1.5 pl-11 flex-wrap">
                               {STUDENT_ATTENDANCE_STATUS.map((status) => {
                                 const isSelected = currentStatus === status.value;
+                                const icons = {
+                                  present: Check,
+                                  absent: X,
+                                  late: Clock,
+                                  excused: AlertCircle
+                                };
+                                const Icon = icons[status.value as keyof typeof icons];
+                                
                                 return (
                                   <button
                                     key={status.value}
                                     onClick={() => handleStudentAttendance(student.student_id, status.value)}
                                     disabled={isSaving}
                                     className={cn(
-                                      'px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                                      'flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border-2 shadow-sm active:scale-95',
                                       isSelected
-                                        ? `${status.color} text-white`
-                                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                                        ? `${status.color} text-white border-transparent shadow-md`
+                                        : 'bg-background text-foreground border-border hover:border-primary/50 hover:shadow'
                                     )}
                                   >
-                                    {status.label}
+                                    <Icon className="h-3.5 w-3.5 shrink-0" />
+                                    <span className="shrink-0">{status.label}</span>
                                   </button>
                                 );
                               })}
