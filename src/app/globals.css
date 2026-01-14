@@ -128,6 +128,16 @@
   }
 }
 
+/* Input time 기본 아이콘 제거 */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
 /* 유틸리티 클래스 - Minimal */
 @layer utilities {
   /* 스태거 애니메이션 */
