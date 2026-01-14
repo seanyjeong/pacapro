@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 
 // package.json의 버전과 동일하게 유지
-const APP_VERSION = '3.4.2';
+const APP_VERSION = '3.4.3';
 
 export function VersionChecker() {
     useEffect(() => {

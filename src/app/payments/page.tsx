@@ -48,6 +48,7 @@ function PaymentsPageContent() {
   }, [searchParams, initialFiltersApplied, updateFilters]);
   const [bulkCharging, setBulkCharging] = useState(false);
   const [sendingNotification, setSendingNotification] = useState(false);
+  const [markingPaymentId, setMarkingPaymentId] = useState<number | null>(null);
 
   // 크레딧 모달 상태
   const [creditModalOpen, setCreditModalOpen] = useState(false);
@@ -157,6 +158,28 @@ function PaymentsPageContent() {
   // 크레딧 생성 성공 핸들러
   const handleCreditSuccess = () => {
     reload();
+  };
+
+  // 빠른 납부 처리 핸들러
+  const handleQuickPaymentMark = async (payment: Payment, method: 'account' | 'card' | 'cash' | 'other') => {
+    try {
+      setMarkingPaymentId(payment.id);
+      
+      await paymentsAPI.recordPayment(payment.id, {
+        paid_amount: parseFloat(String(payment.final_amount)) - parseFloat(String(payment.paid_amount || 0)),
+        payment_method: method,
+        payment_date: new Date().toISOString().split('T')[0],
+        notes: `빠른 납부 처리 (${method})`,
+      });
+
+      toast.success(`${payment.student_name}님의 학원비가 납부 처리되었습니다.`);
+      reload();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '납부 처리에 실패했습니다.');
+      console.error('Failed to mark payment:', err);
+    } finally {
+      setMarkingPaymentId(null);
+    }
   };
 
   if (error && !loading) {
@@ -406,6 +429,10 @@ function PaymentsPageContent() {
         onPaymentClick={handlePaymentClick}
         onCreditClick={canEditPayments ? handleCreditClick : undefined}
         showCreditButton={canEditPayments}
+        onPaymentMark={canEditPayments ? handleQuickPaymentMark : undefined}
+        showPaymentMarkButton={canEditPayments}
+        markingPaymentId={markingPaymentId}
+        confirmBeforePayment={true}
       />
 
       {/* 크레딧 모달 */}

@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Coins, Check, Loader2 } from 'lucide-react';
+import { Coins, Check, Loader2, CreditCard, Banknote, Wallet, DollarSign } from 'lucide-react';
 import type { Payment } from '@/lib/types/payment';
 import {
   formatPaymentAmount,
@@ -291,7 +291,7 @@ export function PaymentList({
                             처리중...
                           </span>
                         ) : (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <Button
                               variant="outline"
                               size="sm"
@@ -299,10 +299,11 @@ export function PaymentList({
                                 e.stopPropagation();
                                 handlePaymentMarkClick(payment, 'account');
                               }}
-                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950 px-2"
-                              title="계좌이체"
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border-2 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 dark:hover:bg-blue-900 shadow-sm hover:shadow transition-all active:scale-95"
+                              title="계좌이체로 납부 처리"
                             >
-                              계좌
+                              <Wallet className="h-3.5 w-3.5 shrink-0" />
+                              <span className="shrink-0">계좌</span>
                             </Button>
                             <Button
                               variant="outline"
@@ -311,10 +312,11 @@ export function PaymentList({
                                 e.stopPropagation();
                                 handlePaymentMarkClick(payment, 'card');
                               }}
-                              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-950 px-2"
-                              title="카드결제"
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border-2 bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:border-purple-300 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800 dark:hover:bg-purple-900 shadow-sm hover:shadow transition-all active:scale-95"
+                              title="카드결제로 납부 처리"
                             >
-                              카드
+                              <CreditCard className="h-3.5 w-3.5 shrink-0" />
+                              <span className="shrink-0">카드</span>
                             </Button>
                             <Button
                               variant="outline"
@@ -323,10 +325,11 @@ export function PaymentList({
                                 e.stopPropagation();
                                 handlePaymentMarkClick(payment, 'cash');
                               }}
-                              className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950 px-2"
-                              title="현금결제"
+                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border-2 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 dark:hover:bg-emerald-900 shadow-sm hover:shadow transition-all active:scale-95"
+                              title="현금결제로 납부 처리"
                             >
-                              현금
+                              <Banknote className="h-3.5 w-3.5 shrink-0" />
+                              <span className="shrink-0">현금</span>
                             </Button>
                           </div>
                         )}
