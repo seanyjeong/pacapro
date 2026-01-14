@@ -365,7 +365,7 @@ export function Sidebar() {
         );
     };
 
-    // 접힌 상태의 카테고리 메뉴 - fixed position 팝업
+    // 접힌 상태의 카테고리 메뉴 - fixed position 팝업 + 딜레이
     const CollapsedCategoryMenu = ({
         category,
         hasActiveChild,
@@ -382,10 +382,15 @@ export function Sidebar() {
         const [showMenu, setShowMenu] = useState(false);
         const [position, setPosition] = useState({ top: 0 });
         const buttonRef = useRef<HTMLButtonElement>(null);
-        const menuRef = useRef<HTMLDivElement>(null);
+        const timeoutRef = useRef<NodeJS.Timeout | null>(null);
         const CategoryIcon = category.icon;
 
         const handleMouseEnter = () => {
+            // 타이머 취소
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
             if (buttonRef.current) {
                 const rect = buttonRef.current.getBoundingClientRect();
                 setPosition({ top: rect.top });
@@ -393,12 +398,11 @@ export function Sidebar() {
             }
         };
 
-        const handleMouseLeave = (e: React.MouseEvent) => {
-            const relatedTarget = e.relatedTarget as HTMLElement;
-            if (menuRef.current?.contains(relatedTarget) || buttonRef.current?.contains(relatedTarget)) {
-                return;
-            }
-            setShowMenu(false);
+        const handleMouseLeave = () => {
+            // 150ms 딜레이 후 닫기
+            timeoutRef.current = setTimeout(() => {
+                setShowMenu(false);
+            }, 150);
         };
 
         return (
@@ -418,10 +422,9 @@ export function Sidebar() {
                 </button>
                 {showMenu && (
                     <div
-                        ref={menuRef}
-                        onMouseEnter={() => setShowMenu(true)}
-                        onMouseLeave={() => setShowMenu(false)}
-                        className="fixed left-[68px] pl-2 z-[100]"
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        className="fixed left-[52px] pl-5 z-[100]"
                         style={{ top: position.top }}
                     >
                         {/* 실제 메뉴 박스 */}
@@ -759,7 +762,7 @@ export function Sidebar() {
             {!collapsed && (
                 <div className="p-4 border-t border-border">
                     <div className="text-xs text-muted-foreground text-center space-y-1">
-                        <div>P-ACA v3.4.10</div>
+                        <div>P-ACA v3.4.11</div>
                         <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-15</div>
                         <div>문의: 010-2144-6755</div>
                     </div>
