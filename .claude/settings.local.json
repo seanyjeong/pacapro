@@ -189,7 +189,12 @@
       "Bash(head:*)",
       "Bash(pip show:*)",
       "Bash(pip install:*)",
-      "Bash(pdfinfo:*)"
+      "Bash(pdfinfo:*)",
+      "Skill(webapp-testing)",
+      "Bash(python check_consultation_button.py:*)",
+      "Bash(playwright install:*)",
+      "Bash(/tmp/playwright-venv/bin/pip install:*)",
+      "Bash(npm version:*)"
     ],
     "deny": [],
     "ask": []

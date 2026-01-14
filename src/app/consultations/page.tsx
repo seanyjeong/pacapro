@@ -8,7 +8,7 @@ import {
   Calendar, Clock, User, Phone, Search, Filter, Settings,
   ChevronDown, ChevronRight, Eye, Edit, Trash2, Link2,
   MessageSquare, MoreHorizontal, Loader2, RefreshCw, Plus,
-  CheckSquare, Square, Sparkles
+  CheckSquare, Square, Sparkles, UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -602,6 +602,12 @@ export default function ConsultationsPage() {
             <Plus className="h-4 w-4" />
             직접 등록
           </Button>
+          <Link href="/consultations/new-inquiry">
+            <Button variant="outline" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              신규상담
+            </Button>
+          </Link>
           <Link href="/consultations/calendar">
             <Button variant="outline" className="gap-2">
               <Calendar className="h-4 w-4" />

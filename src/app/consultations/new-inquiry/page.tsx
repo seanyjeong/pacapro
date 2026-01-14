@@ -6,7 +6,8 @@ import { ko } from 'date-fns/locale';
 import {
   Calendar, Clock, Phone, Search, Plus, Eye, Edit, Trash2,
   MoreHorizontal, Loader2, RefreshCw, CheckSquare,
-  UserCheck, UserX, Dumbbell, ChevronDown, ChevronRight, User, School
+  UserCheck, UserX, Dumbbell, ChevronDown, ChevronRight, User, School,
+  Settings, ClipboardList
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -460,6 +461,18 @@ export default function NewInquiryConsultationsPage() {
           <p className="text-muted-foreground">신규 학생 상담 관리</p>
         </div>
         <div className="flex items-center gap-2">
+          <Link href="/consultations">
+            <Button variant="outline">
+              <ClipboardList className="h-4 w-4 mr-2" />
+              상담 관리
+            </Button>
+          </Link>
+          <Link href="/consultations/settings">
+            <Button variant="outline">
+              <Settings className="h-4 w-4 mr-2" />
+              상담 설정
+            </Button>
+          </Link>
           <Link href="/consultations/calendar?type=new">
             <Button variant="outline">
               <Calendar className="h-4 w-4 mr-2" />
