@@ -32,7 +32,7 @@ import {
   checkSlugAvailability
 } from '@/lib/api/consultations';
 import type { WeeklyHour, BlockedSlot, ConsultationSettings, ChecklistTemplate } from '@/lib/types/consultation';
-import { DAY_LABELS } from '@/lib/types/consultation';
+import { DAY_LABELS, DAY_ORDER } from '@/lib/types/consultation';
 
 // 기본 체크리스트 템플릿 (체대입시 특화)
 const DEFAULT_CHECKLIST_TEMPLATE: ChecklistTemplate[] = [
@@ -111,6 +111,16 @@ export default function ConsultationSettingsPage() {
   const [defaultStartTime, setDefaultStartTime] = useState('09:00:00');
   const [defaultEndTime, setDefaultEndTime] = useState('18:00:00');
 
+  // 기본 운영 시간 생성 (7일)
+  const createDefaultWeeklyHours = (): WeeklyHour[] => {
+    return [0, 1, 2, 3, 4, 5, 6].map(dayOfWeek => ({
+      dayOfWeek,
+      isAvailable: dayOfWeek >= 1 && dayOfWeek <= 5, // 월~금만 기본 활성화
+      startTime: '09:00:00',
+      endTime: '18:00:00'
+    }));
+  };
+
   // 데이터 로드
   useEffect(() => {
     async function loadData() {
@@ -119,7 +129,15 @@ export default function ConsultationSettingsPage() {
         setAcademyName(response.academy?.name || '');
         setSlug(response.academy?.slug || '');
         setSettings(response.settings || {});
-        setWeeklyHours(response.weeklyHours || []);
+
+        // weeklyHours가 비어있으면 기본값 생성
+        const loadedHours = response.weeklyHours || [];
+        if (loadedHours.length === 0) {
+          setWeeklyHours(createDefaultWeeklyHours());
+        } else {
+          setWeeklyHours(loadedHours);
+        }
+
         setBlockedSlots(response.blockedSlots || []);
 
         // 체크리스트 템플릿 로드 (설정에 저장된 것이 있으면 사용)
@@ -752,10 +770,14 @@ export default function ConsultationSettingsPage() {
             </div>
           </div>
 
-          {/* 개별 요일 설정 */}
-          {weeklyHours.map((hour) => (
+          {/* 개별 요일 설정 (월~일 순서) */}
+          {DAY_ORDER.map((dayOfWeek) => {
+            const hour = weeklyHours.find(h => h.dayOfWeek === dayOfWeek);
+            if (!hour) return null;
+            const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // 일요일(0) 또는 토요일(6)
+            return (
             <div key={hour.dayOfWeek} className="flex items-center gap-4 p-3 bg-muted rounded-lg">
-              <div className="w-12 text-center font-medium">
+              <div className={`w-12 text-center font-medium ${isWeekend ? 'text-red-500' : ''}`}>
                 {DAY_LABELS[hour.dayOfWeek]}
               </div>
               <Switch
@@ -796,7 +818,8 @@ export default function ConsultationSettingsPage() {
                 <span className="text-muted-foreground">휴무</span>
               )}
             </div>
-          ))}
+            );
+          })}
 
           <Button onClick={handleSaveWeeklyHours} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}

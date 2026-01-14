@@ -297,3 +297,6 @@ export const GRADE_OPTIONS: StudentGrade[] = [
 
 // 요일 라벨
 export const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+
+// 월요일부터 시작하는 요일 순서 (월~일)
+export const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // 월, 화, 수, 목, 금, 토, 일
