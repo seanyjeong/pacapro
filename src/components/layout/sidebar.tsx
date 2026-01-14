@@ -345,7 +345,7 @@ export function Sidebar() {
         <aside
             className={cn(
                 "hidden md:flex md:flex-col fixed left-0 top-0 h-full bg-card border-r border-border no-print transition-all duration-300 ease-in-out z-40",
-                collapsed ? "w-[68px]" : "w-64"
+                collapsed ? "w-[68px] overflow-visible" : "w-64"
             )}
         >
             {/* Logo */}
@@ -408,7 +408,7 @@ export function Sidebar() {
             )}
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto py-4 px-2">
+            <nav className={cn("flex-1 py-4 px-2", collapsed ? "overflow-visible" : "overflow-y-auto")}>
                 {/* 대시보드 (항상 상단) */}
                 <ul className="space-y-1 mb-2">
                     <li>

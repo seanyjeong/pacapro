@@ -81,7 +81,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
     // 일반 페이지는 사이드바/TopNav 포함
     return (
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex h-screen overflow-hidden overflow-x-hidden">
             <Sidebar />
             <div className={cn(
                 "flex-1 flex flex-col transition-all duration-300 ease-in-out",

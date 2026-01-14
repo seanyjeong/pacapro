@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 가로 스크롤 방지 */
+html, body {
+  overflow-x: hidden;
+}
+
 /* Pretendard 폰트 - 모던 한글 최적화 */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
 
