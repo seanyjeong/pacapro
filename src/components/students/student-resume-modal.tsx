@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar, User, Clock, AlertTriangle, CheckCircle2, Banknote, CalendarDays } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
 import { toast } from 'sonner';
+import { truncateToThousands } from '@/lib/utils/payment-helpers';
 
 // 휴원 학생 타입 (무기한 휴원 지원)
 export interface RestEndedStudent {
@@ -125,9 +126,9 @@ export function StudentResumeModal({
     // 복귀일~월말 수업 횟수
     const remainingDays = countClassDaysUntilMonthEnd(resumeDate, classDaysArray);
 
-    // 일할계산 금액
+    // 일할계산 금액 (천원 단위 절삭)
     const proRatedAmount = monthlyTotal > 0
-      ? Math.round(discountedTuition * (remainingDays / monthlyTotal))
+      ? truncateToThousands(discountedTuition * (remainingDays / monthlyTotal))
       : 0;
 
     return {

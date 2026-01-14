@@ -332,9 +332,9 @@ export function Sidebar() {
                         <button
                             onClick={handlePushToggle}
                             disabled={pushLoading}
-                            className={`p-2 rounded-lg transition-colors ${
+                            className={`p-2 rounded-lg transition-colors duration-200 ${
                                 pushSubscribed
-                                    ? 'bg-green-500/10 dark:bg-green-500/20 text-green-600 dark:text-green-400'
+                                    ? 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
                                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                             } disabled:opacity-50`}
                         >
@@ -519,7 +519,7 @@ export function Sidebar() {
                           : 'https://peak-rose.vercel.app';
                         window.open(peakUrl, '_blank');
                     }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 transition-all group"
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 transition-all duration-200 group"
                 >
                     <div className="flex items-center space-x-3">
                         <Mountain className="w-5 h-5 text-orange-500" />
@@ -532,7 +532,7 @@ export function Sidebar() {
             {/* Footer */}
             <div className="p-4 border-t border-border">
                 <div className="text-xs text-muted-foreground text-center space-y-1">
-                    <div>P-ACA v3.3.28</div>
+                    <div>P-ACA v3.3.29</div>
                     <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-14</div>
                     <div>문의: 010-2144-6755</div>
                 </div>

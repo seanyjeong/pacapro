@@ -698,21 +698,21 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 }
             }
 
-            // 일할계산 금액
+            // 일할계산 금액 (천원 단위 절삭)
             const baseAmount = parseFloat(monthly_tuition);
             const discountRateNum = parseFloat(discount_rate) || 0;
             let proRatedAmount;
 
             if (totalClassDaysInMonth > 0 && classDaysCount > 0) {
                 const dailyRate = baseAmount / totalClassDaysInMonth;
-                proRatedAmount = Math.round(dailyRate * classDaysCount);
+                proRatedAmount = truncateToThousands(dailyRate * classDaysCount);
             } else {
                 // 수업요일 설정 없으면 일수 기준
-                proRatedAmount = Math.round(baseAmount * remainingDays / lastDayOfMonth);
+                proRatedAmount = truncateToThousands(baseAmount * remainingDays / lastDayOfMonth);
             }
 
-            // 할인 적용
-            const discountAmount = Math.round(proRatedAmount * discountRateNum / 100);
+            // 할인 적용 (천원 단위 절삭)
+            const discountAmount = truncateToThousands(proRatedAmount * discountRateNum / 100);
             const finalAmount = proRatedAmount - discountAmount;
 
             // 납부일 계산 (스케줄러와 동일한 로직 사용)
