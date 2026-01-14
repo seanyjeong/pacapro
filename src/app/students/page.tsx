@@ -34,6 +34,7 @@ function StudentsPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<StudentTab>(initialTab);
   const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
+  const [excelDownloading, setExcelDownloading] = useState(false);
 
   // URL 파라미터로 탭 변경 시 적용
   useEffect(() => {
@@ -106,6 +107,50 @@ function StudentsPageContent() {
     router.push('/students/new');
   };
 
+  // 엑셀 다운로드
+  const handleExcelDownload = async () => {
+    setExcelDownloading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com:8320'}/api/exports/students`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('다운로드 실패');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+
+      // 파일명 추출
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = '학생목록.xlsx';
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename\*=UTF-8''(.+)/);
+        if (match) {
+          filename = decodeURIComponent(match[1]);
+        }
+      }
+
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('엑셀 다운로드 오류:', error);
+      alert('엑셀 다운로드에 실패했습니다.');
+    } finally {
+      setExcelDownloading(false);
+    }
+  };
+
   // 에러 화면
   if (error && !loading) {
     return (
@@ -150,9 +195,13 @@ function StudentsPageContent() {
           <Button variant="outline" onClick={handleReload}>
             새로고침
           </Button>
-          <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
-            엑셀 다운로드
+          <Button variant="outline" onClick={handleExcelDownload} disabled={excelDownloading}>
+            {excelDownloading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            {excelDownloading ? '다운로드 중...' : '엑셀 다운로드'}
           </Button>
           <Button onClick={handleAddStudent}>
             <Plus className="w-4 h-4 mr-2" />
