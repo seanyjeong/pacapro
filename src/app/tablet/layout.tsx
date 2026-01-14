@@ -21,7 +21,7 @@ import {
   Monitor
 } from 'lucide-react';
 
-const APP_VERSION = 'v3.3.26';
+const APP_VERSION = 'v3.4.12';
 
 // Navigation items (대시보드 제거)
 const navigation = [
@@ -140,11 +140,11 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   if (orientation === 'landscape') {
     return (
       <OrientationContext.Provider value={orientation}>
-        <div className="min-h-screen flex bg-slate-100 dark:bg-slate-900">
-          {/* 축소형 사이드바 */}
-          <aside className="w-20 bg-[#1a2b4a] text-white flex flex-col fixed h-screen z-20">
+        <div className="min-h-screen flex bg-slate-50/50 dark:bg-background">
+          {/* 축소형 사이드바 - PC 스타일 */}
+          <aside className="w-20 bg-card border-r border-border flex flex-col fixed h-screen z-20">
             {/* 로고 */}
-            <div className="h-14 flex items-center justify-center border-b border-[#243a5e] shrink-0">
+            <div className="h-14 flex items-center justify-center border-b border-border shrink-0">
               <Image
                 src="/icons/icon-96x96.png"
                 alt="P-ACA"
@@ -172,7 +172,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                             document.cookie = 'force_pc_mode=true; path=/; max-age=86400';
                             window.location.href = '/';
                           }}
-                          className="flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 text-slate-300 hover:bg-[#243a5e] hover:text-white"
+                          className="w-full flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground"
                           title={item.name}
                         >
                           <item.icon size={20} />
@@ -187,8 +187,8 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                         href={item.href}
                         className={`flex flex-col items-center py-2 px-1 rounded-lg transition-all duration-200 ${
                           isActive
-                            ? 'bg-blue-500/15 text-orange-400'
-                            : 'text-slate-300 hover:bg-[#243a5e] hover:text-white'
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                         }`}
                         title={item.name}
                       >
@@ -201,7 +201,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
             </nav>
 
             {/* P-EAK & 로그아웃 */}
-            <div className="border-t border-[#243a5e] p-1.5 shrink-0 pb-4 space-y-1">
+            <div className="border-t border-border p-1.5 shrink-0 pb-4 space-y-1">
               <button
                 onClick={() => {
                   const token = localStorage.getItem('token');
@@ -210,7 +210,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                     : 'https://peak-rose.vercel.app';
                   window.open(peakUrl, '_blank');
                 }}
-                className="flex flex-col items-center py-1.5 px-1 rounded-lg text-orange-400 hover:text-orange-300 hover:bg-orange-500/10 transition w-full"
+                className="w-full flex flex-col items-center py-1.5 px-1 rounded-lg text-orange-500 hover:text-orange-400 hover:bg-orange-500/10 transition"
                 title="P-EAK 실기관리"
               >
                 <Mountain size={18} />
@@ -218,30 +218,30 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
               </button>
               <button
                 onClick={handleLogout}
-                className="flex flex-col items-center py-1.5 px-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#243a5e] transition w-full"
+                className="w-full flex flex-col items-center py-1.5 px-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition"
                 title="로그아웃"
               >
                 <LogOut size={18} />
                 <span className="text-[9px] mt-0.5">로그아웃</span>
               </button>
-              <p className="text-[8px] text-slate-500 text-center mt-1">{APP_VERSION}</p>
+              <p className="text-[8px] text-muted-foreground text-center mt-1">{APP_VERSION}</p>
             </div>
           </aside>
 
           {/* 메인 콘텐츠 */}
           <main className="flex-1 ml-20">
             {/* 헤더 */}
-            <header className="h-14 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between px-6 sticky top-0 z-10">
-              <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+            <header className="h-14 bg-card border-b border-border flex items-center justify-between px-6 sticky top-0 z-10">
+              <h1 className="text-lg font-bold text-foreground">
                 {currentPage?.name || 'P-ACA 태블릿'}
               </h1>
               {user && (
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{user.name}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{getRoleDisplayName(user.role, user.position)}</p>
+                    <p className="text-sm font-medium text-foreground">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{getRoleDisplayName(user.role, user.position)}</p>
                   </div>
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                  <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold">
                     {user.name.charAt(0)}
                   </div>
                 </div>
@@ -261,9 +261,9 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
   // 세로 모드 레이아웃
   return (
     <OrientationContext.Provider value={orientation}>
-      <div className="min-h-screen flex flex-col bg-slate-100 dark:bg-slate-900">
-        {/* 헤더 */}
-        <header className="h-16 bg-[#1a2b4a] flex items-center justify-between px-4 sticky top-0 z-20">
+      <div className="min-h-screen flex flex-col bg-slate-50/50 dark:bg-background">
+        {/* 헤더 - PC 스타일 */}
+        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sticky top-0 z-20">
           <div className="flex items-center gap-3">
             <Image
               src="/icons/icon-96x96.png"
@@ -273,17 +273,17 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
               className="rounded-xl"
             />
             <div>
-              <h1 className="text-white font-bold">P-ACA</h1>
-              <p className="text-[10px] text-slate-400">{APP_VERSION}</p>
+              <h1 className="text-foreground font-bold">P-ACA</h1>
+              <p className="text-[10px] text-muted-foreground">{APP_VERSION}</p>
             </div>
           </div>
           {user && (
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-sm font-medium text-white">{user.name}</p>
-                <p className="text-[10px] text-slate-400">{getRoleDisplayName(user.role, user.position)}</p>
+                <p className="text-sm font-medium text-foreground">{user.name}</p>
+                <p className="text-[10px] text-muted-foreground">{getRoleDisplayName(user.role, user.position)}</p>
               </div>
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+              <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold">
                 {user.name.charAt(0)}
               </div>
             </div>
@@ -295,15 +295,15 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
           {children}
         </main>
 
-        {/* 하단 탭 바 */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex items-center justify-around px-2 pt-2 pb-8 z-20" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
+        {/* 하단 탭 바 - PC 스타일 */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border flex items-center justify-around px-2 pt-2 pb-8 z-20" style={{ paddingBottom: 'max(2rem, env(safe-area-inset-bottom))' }}>
           {bottomTabs.map((tab) => {
             if (tab.href === '#more') {
               return (
                 <button
                   key={tab.name}
                   onClick={() => setShowMoreMenu(true)}
-                  className="flex flex-col items-center justify-center py-2 px-3 min-w-[64px] text-slate-400 dark:text-slate-500"
+                  className="flex flex-col items-center justify-center py-2 px-3 min-w-[64px] text-muted-foreground"
                 >
                   <tab.icon size={24} />
                   <span className="text-xs mt-1">{tab.name}</span>
@@ -317,7 +317,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                 key={tab.name}
                 href={tab.href}
                 className={`flex flex-col items-center justify-center py-2 px-3 min-w-[64px] ${
-                  isActive ? 'text-blue-500 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'
+                  isActive ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
                 <tab.icon size={24} />
@@ -327,16 +327,16 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
           })}
         </nav>
 
-        {/* 더보기 메뉴 모달 */}
+        {/* 더보기 메뉴 모달 - PC 스타일 */}
         {showMoreMenu && (
           <div className="fixed inset-0 bg-black/50 z-30 flex items-end" onClick={() => setShowMoreMenu(false)}>
             <div
-              className="bg-white dark:bg-slate-800 w-full rounded-t-2xl p-4 pb-8 safe-area-pb"
+              className="bg-card w-full rounded-t-2xl p-4 pb-8 safe-area-pb"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">메뉴</h2>
-                <button onClick={() => setShowMoreMenu(false)} className="p-2 text-slate-400 dark:text-slate-500">
+                <h2 className="text-lg font-bold text-foreground">메뉴</h2>
+                <button onClick={() => setShowMoreMenu(false)} className="p-2 text-muted-foreground">
                   <X size={24} />
                 </button>
               </div>
@@ -357,7 +357,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                             document.cookie = 'force_pc_mode=true; path=/; max-age=86400';
                             window.location.href = '/';
                           }}
-                          className="flex flex-col items-center p-4 rounded-xl transition bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                          className="flex flex-col items-center p-4 rounded-xl transition bg-muted text-foreground"
                         >
                           <item.icon size={28} />
                           <span className="text-xs mt-2 text-center">{item.name}</span>
@@ -371,7 +371,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                         href={item.href}
                         onClick={() => setShowMoreMenu(false)}
                         className={`flex flex-col items-center p-4 rounded-xl transition ${
-                          isActive ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                          isActive ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground'
                         }`}
                       >
                         <item.icon size={28} />
@@ -388,7 +388,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                     : 'https://peak-rose.vercel.app';
                     window.open(peakUrl, '_blank');
                   }}
-                  className="flex flex-col items-center p-4 rounded-xl bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                  className="flex flex-col items-center p-4 rounded-xl bg-orange-500/10 text-orange-500"
                 >
                   <Mountain size={28} />
                   <span className="text-xs mt-2">P-EAK</span>
@@ -398,7 +398,7 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                     setShowMoreMenu(false);
                     handleLogout();
                   }}
-                  className="flex flex-col items-center p-4 rounded-xl bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+                  className="flex flex-col items-center p-4 rounded-xl bg-destructive/10 text-destructive"
                 >
                   <LogOut size={28} />
                   <span className="text-xs mt-2">로그아웃</span>
