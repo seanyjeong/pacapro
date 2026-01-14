@@ -89,8 +89,8 @@ function calculate4Insurance(grossAmount) {
     // 총 공제액 (근로자 부담)
     const totalDeduction = nationalPension + healthInsurance + longTermCare + employmentInsurance;
 
-    // 실수령액
-    const netAmount = grossAmount - totalDeduction;
+    // 실수령액 (10원 단위 이하 버림)
+    const netAmount = Math.floor((grossAmount - totalDeduction) / 10) * 10;
 
     // 사업주 부담액 계산 (참고용)
     const employerBurden = {

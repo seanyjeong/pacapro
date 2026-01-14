@@ -587,10 +587,10 @@ router.post('/:id/recalculate', verifyToken, checkPermission('salaries', 'edit')
             taxAmount = Math.floor(baseAmount * 0.0972);
         }
 
-        // 7. 실수령액 계산 (인센티브/공제액은 기존 값 유지)
+        // 7. 실수령액 계산 (인센티브/공제액은 기존 값 유지, 10원 단위 이하 버림)
         const incentiveAmount = parseFloat(salary.incentive_amount) || 0;
         const totalDeduction = parseFloat(salary.total_deduction) || 0;
-        const netSalary = baseAmount + incentiveAmount - totalDeduction - taxAmount;
+        const netSalary = Math.floor((baseAmount + incentiveAmount - totalDeduction - taxAmount) / 10) * 10;
 
         // 8. 급여 업데이트
         await db.query(
@@ -786,8 +786,8 @@ router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             const baseAmount = parseFloat(currentSalary.base_amount) || 0;
             const taxAmount = parseFloat(currentSalary.tax_amount) || 0;
 
-            // 실수령액 = 기본급 + 인센티브 - 공제액 - 세금
-            const netSalary = baseAmount + newIncentive - newDeduction - taxAmount;
+            // 실수령액 = 기본급 + 인센티브 - 공제액 - 세금 (10원 단위 이하 버림)
+            const netSalary = Math.floor((baseAmount + newIncentive - newDeduction - taxAmount) / 10) * 10;
             updates.push('net_salary = ?');
             params.push(netSalary);
         }

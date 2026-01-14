@@ -33,13 +33,15 @@ export function formatDate(dateStr: string): string {
 }
 
 /**
- * 금액 포맷팅
+ * 금액 포맷팅 (10원 단위 이하 버림)
  */
 export function formatCurrency(amount: number | string | null | undefined): string {
   if (amount === null || amount === undefined) return '0원';
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(num)) return '0원';
-  return `${num.toLocaleString('ko-KR')}원`;
+  // 10원 단위 이하 버림
+  const rounded = Math.floor(num / 10) * 10;
+  return `${rounded.toLocaleString('ko-KR')}원`;
 }
 
 /**

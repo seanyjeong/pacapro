@@ -21,7 +21,9 @@ import { SALARY_TYPE_LABELS } from '@/lib/types/instructor';
 import { PasswordConfirmModal } from '@/components/modals/password-confirm-modal';
 
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('ko-KR').format(amount) + '원';
+  // 10원 단위 이하 버림 (100원 단위까지만 표시)
+  const rounded = Math.floor(amount / 10) * 10;
+  return new Intl.NumberFormat('ko-KR').format(rounded) + '원';
 }
 
 interface AttendanceDetail {
