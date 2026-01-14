@@ -583,8 +583,8 @@ router.post('/:id/recalculate', verifyToken, checkPermission('salaries', 'edit')
         if (taxType === '3.3%') {
             taxAmount = Math.floor(baseAmount * 0.033);
         } else if (taxType === 'insurance') {
-            // 4대보험: 국민연금 4.5% + 건강보험 3.545% + 고용보험 0.9% = 약 8.945%
-            taxAmount = Math.floor(baseAmount * 0.08945);
+            // 4대보험 (2026년): 국민연금 4.75% + 건강보험 3.595% + 장기요양 0.47% + 고용보험 0.9% = 약 9.72%
+            taxAmount = Math.floor(baseAmount * 0.0972);
         }
 
         // 7. 실수령액 계산 (인센티브/공제액은 기존 값 유지)

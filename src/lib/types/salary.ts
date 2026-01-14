@@ -159,12 +159,13 @@ export const PAYMENT_STATUS_OPTIONS = [
   { value: 'paid', label: '지급완료' },
 ];
 
-// 세율 상수
+// 세율 상수 (2026년 기준)
+// 4대보험 근로자 부담: 국민연금 4.75% + 건강보험 3.595% + 장기요양 0.47% + 고용보험 0.9% ≈ 9.72%
 export const TAX_RATES: Record<string, number> = {
   '3.3%': 0.033,
-  'insurance': 0.092,
+  'insurance': 0.0972, // 2026년 4대보험 근로자 부담 합계
   'none': 0,
   // 레거시 호환
   resident: 0.033,
-  freelancer: 0.092,
+  freelancer: 0.0972,
 };

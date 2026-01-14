@@ -202,7 +202,8 @@ export function calculateHourlySalary(hourlyRate: number, hoursWorked: number): 
 }
 
 /**
- * 공제액 계산 (4대보험 등)
+ * 공제액 계산 (4대보험 등) - 2026년 기준
+ * 근로자 부담분만 계산
  */
 export function calculateDeductions(
   grossSalary: number,
@@ -210,12 +211,13 @@ export function calculateDeductions(
 ): number {
   if (!includeInsurance) return 0;
 
-  // 간단한 4대보험 계산 (실제로는 더 복잡함)
-  const nationalPension = grossSalary * 0.045; // 국민연금 4.5%
-  const healthInsurance = grossSalary * 0.03545; // 건강보험 3.545%
+  // 2026년 4대보험 근로자 부담률
+  const nationalPension = grossSalary * 0.0475; // 국민연금 4.75% (2026년 인상)
+  const healthInsurance = grossSalary * 0.03595; // 건강보험 3.595%
+  const longTermCare = healthInsurance * 0.1314; // 장기요양보험 (건보료의 13.14%)
   const employmentInsurance = grossSalary * 0.009; // 고용보험 0.9%
 
-  return Math.floor(nationalPension + healthInsurance + employmentInsurance);
+  return Math.floor(nationalPension + healthInsurance + longTermCare + employmentInsurance);
 }
 
 /**

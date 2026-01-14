@@ -184,7 +184,12 @@
       "Bash(sudo mysql:*)",
       "Bash(MYSQL_PWD='q141171616!' mysql:*)",
       "Bash(MYSQL_PWD='q141171616!' mysql -u paca -e \"SHOW VARIABLES LIKE ''''%timeout%''''\")",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(tree:*)",
+      "Bash(head:*)",
+      "Bash(pip show:*)",
+      "Bash(pip install:*)",
+      "Bash(pdfinfo:*)"
     ],
     "deny": [],
     "ask": []
