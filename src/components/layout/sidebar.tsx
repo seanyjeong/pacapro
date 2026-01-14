@@ -353,10 +353,12 @@ export function Sidebar() {
                 {children}
                 {collapsed && showTooltip && (
                     <div
-                        className="fixed left-[76px] px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap z-[100] -translate-y-1/2"
+                        className="fixed left-[68px] pl-2 z-[100] -translate-y-1/2"
                         style={{ top: position.top }}
                     >
-                        <span className="text-sm font-medium text-foreground">{label}</span>
+                        <div className="px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap">
+                            <span className="text-sm font-medium text-foreground">{label}</span>
+                        </div>
                     </div>
                 )}
             </div>
@@ -419,46 +421,49 @@ export function Sidebar() {
                         ref={menuRef}
                         onMouseEnter={() => setShowMenu(true)}
                         onMouseLeave={() => setShowMenu(false)}
-                        className="fixed left-[76px] min-w-[180px] bg-popover border border-border rounded-lg shadow-xl z-[100]"
+                        className="fixed left-[68px] pl-2 z-[100]"
                         style={{ top: position.top }}
                     >
-                        <div className="px-3 py-2 border-b border-border">
-                            <span className="text-sm font-semibold text-foreground">{category.title}</span>
-                        </div>
-                        <ul className="py-1">
-                            {category.items.filter(canAccessMenu).map((item) => {
-                                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                                const Icon = item.icon;
+                        {/* 실제 메뉴 박스 */}
+                        <div className="min-w-[180px] bg-popover border border-border rounded-lg shadow-xl">
+                            <div className="px-3 py-2 border-b border-border">
+                                <span className="text-sm font-semibold text-foreground">{category.title}</span>
+                            </div>
+                            <ul className="py-1">
+                                {category.items.filter(canAccessMenu).map((item) => {
+                                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                                    const Icon = item.icon;
 
-                                return (
-                                    <li key={item.href}>
-                                        <Link
-                                            href={item.href}
-                                            onClick={() => setShowMenu(false)}
-                                            className={cn(
-                                                'flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
-                                                isActive
-                                                    ? 'bg-primary/10 text-primary font-medium'
-                                                    : 'text-foreground/80 hover:bg-muted'
-                                            )}
-                                        >
-                                            <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
-                                            <span>{item.title}</span>
-                                            {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
-                                                <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                                                    {consultationCounts.newInquiry}
-                                                </span>
-                                            )}
-                                            {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
-                                                <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                                                    {consultationCounts.enrolled}
-                                                </span>
-                                            )}
-                                        </Link>
-                                    </li>
-                                );
-                            })}
-                        </ul>
+                                    return (
+                                        <li key={item.href}>
+                                            <Link
+                                                href={item.href}
+                                                onClick={() => setShowMenu(false)}
+                                                className={cn(
+                                                    'flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
+                                                    isActive
+                                                        ? 'bg-primary/10 text-primary font-medium'
+                                                        : 'text-foreground/80 hover:bg-muted'
+                                                )}
+                                            >
+                                                <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                                                <span>{item.title}</span>
+                                                {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
+                                                    <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                                                        {consultationCounts.newInquiry}
+                                                    </span>
+                                                )}
+                                                {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
+                                                    <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                                                        {consultationCounts.enrolled}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
                     </div>
                 )}
             </div>
