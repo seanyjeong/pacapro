@@ -14,7 +14,10 @@ git push
 echo 'q141171616!' | sudo -S systemctl restart paca
 ```
 
-## 버전 업데이트 (4곳)
+## 버전 업데이트 (4곳) - PWA라서 필수!
+
+> **중요**: PWA 앱이라 코드 수정 후 배포할 때 반드시 버전 업데이트 필요!
+> 버전 안 올리면 사용자 기기에 캐시된 구버전이 계속 실행됨
 
 ```
 package.json                        → "version"
