@@ -308,7 +308,7 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
                     <div
                       key={instructor.id}
                       className={cn(
-                        'p-3 rounded-lg border transition-all',
+                        'p-3 rounded-lg border transition-all overflow-hidden',
                         isSelected
                           ? `${activeSlotInfo.bgColor} ${activeSlotInfo.darkBgColor} border-current`
                           : 'bg-card border-border hover:border-muted-foreground'
@@ -347,21 +347,25 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
 
                       {/* 시급제 강사 시간 입력 */}
                       {isSelected && isHourly && (
-                        <div className="mt-3 pl-11 flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <Input
-                            type="time"
-                            value={selection?.startTime || ''}
-                            onChange={(e) => updateTime(instructor.id, 'startTime', e.target.value)}
-                            className="w-28 h-8 text-sm"
-                          />
-                          <span className="text-muted-foreground">~</span>
-                          <Input
-                            type="time"
-                            value={selection?.endTime || ''}
-                            onChange={(e) => updateTime(instructor.id, 'endTime', e.target.value)}
-                            className="w-28 h-8 text-sm"
-                          />
+                        <div className="mt-3 pt-3 border-t border-border/50">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <Input
+                                type="time"
+                                value={selection?.startTime || ''}
+                                onChange={(e) => updateTime(instructor.id, 'startTime', e.target.value)}
+                                className="w-24 h-8 text-sm shrink-0"
+                              />
+                              <span className="text-muted-foreground shrink-0">~</span>
+                              <Input
+                                type="time"
+                                value={selection?.endTime || ''}
+                                onChange={(e) => updateTime(instructor.id, 'endTime', e.target.value)}
+                                className="w-24 h-8 text-sm shrink-0"
+                              />
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

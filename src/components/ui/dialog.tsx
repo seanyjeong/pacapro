@@ -35,7 +35,9 @@ export function DialogContent({ children, className }: DialogContentProps) {
   return (
     <div
       className={cn(
-        'relative bg-card rounded-lg shadow-xl w-full max-w-lg max-h-[85vh] overflow-y-auto',
+        'relative bg-card rounded-xl border border-border/50',
+        'shadow-[0_4px_8px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_8px_0_rgba(0,0,0,0.12)]',
+        'w-full max-w-lg max-h-[85vh] overflow-y-auto',
         className
       )}
       onClick={(e) => e.stopPropagation()}
@@ -52,7 +54,7 @@ interface DialogHeaderProps {
 
 export function DialogHeader({ children, className }: DialogHeaderProps) {
   return (
-    <div className={cn('px-6 py-4 border-b border-border', className)}>
+    <div className={cn('px-6 py-6 border-b border-border/50', className)}>
       {children}
     </div>
   );
@@ -91,7 +93,7 @@ interface DialogFooterProps {
 
 export function DialogFooter({ children, className }: DialogFooterProps) {
   return (
-    <div className={cn('px-6 py-4 border-t border-border flex justify-end space-x-3', className)}>
+    <div className={cn('px-6 py-6 border-t border-border/50 flex justify-end gap-3', className)}>
       {children}
     </div>
   );

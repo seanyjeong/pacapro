@@ -59,24 +59,25 @@ export function StatsCard({
     return (
         <Card className={cn(
             'group relative overflow-hidden transition-all duration-300',
-            'hover:-translate-y-1'
+            'hover:-translate-y-1 hover:shadow-[0_8px_24px_0_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_24px_0_rgba(0,0,0,0.16)]',
+            'cursor-pointer'
         )}>
-            {/* 상단 컬러 바 - 호버시 표시 */}
+            {/* 상단 컬러 바 - 항상 표시, 호버시 더 강조 */}
             <div className={cn(
-                'absolute top-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300',
+                'absolute top-0 left-0 right-0 h-1 opacity-60 group-hover:opacity-100 transition-all duration-300 group-hover:h-1.5',
                 accent.bar
             )} />
 
             <CardContent className="p-6">
                 <div className="flex items-start justify-between">
-                    {/* Icon with subtle glow */}
+                    {/* Icon */}
                     <div className={cn(
                         'p-3 rounded-xl transition-all duration-300',
-                        'group-hover:scale-105',
+                        'group-hover:scale-110 group-hover:rotate-3',
                         iconBgColor || accent.iconBg
                     )}>
                         <Icon className={cn(
-                            'w-6 h-6 transition-colors duration-300',
+                            'w-6 h-6 transition-transform duration-300',
                             iconColor || accent.iconColor
                         )} />
                     </div>
@@ -98,11 +99,11 @@ export function StatsCard({
                 </div>
 
                 {/* Content */}
-                <div className="mt-4 space-y-1">
-                    <div className="text-sm font-medium text-muted-foreground tracking-wide">
+                <div className="mt-4 space-y-1.5">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                         {title}
                     </div>
-                    <div className="text-3xl font-bold tracking-tight text-foreground">
+                    <div className="text-3xl font-bold tracking-tight text-foreground transition-transform duration-300 group-hover:scale-105">
                         {value}
                     </div>
                 </div>

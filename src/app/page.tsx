@@ -230,10 +230,10 @@ export default function DashboardPage() {
                         {canViewUnpaid && stats.unpaid_payments.count > 0 && (
                             <button
                                 onClick={() => router.push('/payments?status=unpaid')}
-                                className="w-full flex items-center justify-between p-4 bg-red-50/50 dark:bg-red-950/30 rounded-xl border border-red-200/60 dark:border-red-800/40 hover:border-red-300 dark:hover:border-red-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group"
+                                className="w-full flex items-center justify-between p-4 bg-red-50/50 dark:bg-red-950/30 rounded-xl border border-red-200/60 dark:border-red-800/40 hover:border-red-300 dark:hover:border-red-700 transition-all duration-300 hover:shadow-[0_8px_16px_0_rgba(239,68,68,0.15)] hover:-translate-y-1 group active:scale-[0.98]"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 bg-red-500 rounded-xl flex items-center justify-center">
+                                    <div className="w-11 h-11 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-500/30 group-hover:shadow-xl group-hover:shadow-red-500/40 transition-all duration-300">
                                         <AlertCircle className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="text-left">
@@ -251,10 +251,10 @@ export default function DashboardPage() {
                         {stats.rest_ended_students && stats.rest_ended_students.count > 0 && (
                             <button
                                 onClick={() => setShowRestEndedModal(true)}
-                                className="w-full flex items-center justify-between p-4 bg-amber-50/50 dark:bg-amber-950/30 rounded-xl border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group"
+                                className="w-full flex items-center justify-between p-4 bg-amber-50/50 dark:bg-amber-950/30 rounded-xl border border-amber-200/60 dark:border-amber-800/40 hover:border-amber-300 dark:hover:border-amber-700 transition-all duration-300 hover:shadow-[0_8px_16px_0_rgba(245,158,11,0.15)] hover:-translate-y-1 group active:scale-[0.98]"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 bg-amber-500 rounded-xl flex items-center justify-center">
+                                    <div className="w-11 h-11 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:shadow-xl group-hover:shadow-amber-500/40 transition-all duration-300">
                                         <PlayCircle className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="text-left">
@@ -272,10 +272,10 @@ export default function DashboardPage() {
                         {canViewSchedules && (instructorsBySlot.morning.length > 0 || instructorsBySlot.afternoon.length > 0 || instructorsBySlot.evening.length > 0) && (
                             <button
                                 onClick={() => router.push('/schedules')}
-                                className="w-full flex items-center justify-between p-4 bg-violet-50/50 dark:bg-violet-950/30 rounded-xl border border-violet-200/60 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group"
+                                className="w-full flex items-center justify-between p-4 bg-violet-50/50 dark:bg-violet-950/30 rounded-xl border border-violet-200/60 dark:border-violet-800/40 hover:border-violet-300 dark:hover:border-violet-700 transition-all duration-300 hover:shadow-[0_8px_16px_0_rgba(139,92,246,0.15)] hover:-translate-y-1 group active:scale-[0.98]"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 bg-violet-500 rounded-xl flex items-center justify-center">
+                                    <div className="w-11 h-11 bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/30 group-hover:shadow-xl group-hover:shadow-violet-500/40 transition-all duration-300">
                                         <Clock className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="text-left">
@@ -301,10 +301,10 @@ export default function DashboardPage() {
                         {canViewConsultations && todayConsultations.length > 0 && (
                             <button
                                 onClick={() => router.push('/consultations')}
-                                className="w-full flex items-center justify-between p-4 bg-cyan-50/50 dark:bg-cyan-950/30 rounded-xl border border-cyan-200/60 dark:border-cyan-800/40 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-300 hover:shadow-md hover:-translate-y-1 group"
+                                className="w-full flex items-center justify-between p-4 bg-cyan-50/50 dark:bg-cyan-950/30 rounded-xl border border-cyan-200/60 dark:border-cyan-800/40 hover:border-cyan-300 dark:hover:border-cyan-700 transition-all duration-300 hover:shadow-[0_8px_16px_0_rgba(6,182,212,0.15)] hover:-translate-y-1 group active:scale-[0.98]"
                             >
                                 <div className="flex items-center gap-4">
-                                    <div className="w-11 h-11 bg-cyan-500 rounded-xl flex items-center justify-center">
+                                    <div className="w-11 h-11 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/30 group-hover:shadow-xl group-hover:shadow-cyan-500/40 transition-all duration-300">
                                         <Calendar className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="text-left">

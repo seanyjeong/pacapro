@@ -164,7 +164,7 @@ export function TopNav() {
 
                         {/* 검색 결과 드롭다운 */}
                         {showResults && (
-                            <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-xl shadow-black/5 z-50 max-h-80 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border/50 rounded-lg shadow-[0_4px_8px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_8px_0_rgba(0,0,0,0.12)] z-50 max-h-80 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
                                 {searching ? (
                                     <div className="p-4 text-center text-muted-foreground text-sm">
                                         검색 중...
@@ -263,7 +263,7 @@ export function TopNav() {
 
                         {/* User Dropdown */}
                         {showUserMenu && (
-                            <div className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-xl border border-border py-1 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute right-0 mt-2 w-48 bg-card rounded-lg shadow-[0_4px_8px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_8px_0_rgba(0,0,0,0.12)] border border-border/50 py-1 animate-in fade-in zoom-in-95 duration-200">
                                 <button
                                     onClick={handleLogout}
                                     className="w-full flex items-center space-x-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"

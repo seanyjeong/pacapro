@@ -242,7 +242,7 @@ export default function SchedulesPage() {
             <CalendarPlus className="h-4 w-4 mr-2" />
             일괄 생성
           </Button>
-          <Button onClick={() => router.push('/schedules/new')}>
+          <Button variant="gradient" onClick={() => router.push('/schedules/new')}>
             <Plus className="h-4 w-4 mr-2" />
             개별수업등록
           </Button>

@@ -52,9 +52,9 @@ interface ScheduleCalendarV2Props {
 }
 
 const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; bgColor: string }[] = [
-  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-950 hover:bg-orange-100 dark:hover:bg-orange-900 border-orange-200 dark:border-orange-800' },
-  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 border-blue-200 dark:border-blue-800' },
-  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-950 hover:bg-purple-100 dark:hover:bg-purple-900 border-purple-200 dark:border-purple-800' },
+  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-50 dark:bg-orange-950 hover:bg-orange-100 dark:hover:bg-orange-900 border-orange-200 dark:border-orange-800 hover:shadow-sm' },
+  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 dark:hover:bg-blue-900 border-blue-200 dark:border-blue-800 hover:shadow-sm' },
+  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-950 hover:bg-purple-100 dark:hover:bg-purple-900 border-purple-200 dark:border-purple-800 hover:shadow-sm' },
 ];
 
 export function ScheduleCalendarV2({
@@ -192,20 +192,23 @@ export function ScheduleCalendarV2({
                 key={index}
                 onClick={() => onDateSelect(dateStr)}
                 className={cn(
-                  'min-h-[140px] p-1 rounded-lg border text-left transition-colors cursor-pointer',
+                  'min-h-[140px] p-1 rounded-lg border text-left transition-all duration-200 cursor-pointer overflow-hidden',
                   !inMonth && 'bg-muted/50 opacity-50',
-                  today && 'bg-primary/5 border-primary',
-                  selected && 'ring-2 ring-primary'
+                  today && 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary border-2 shadow-sm',
+                  selected && !today && 'bg-primary/5 ring-2 ring-primary shadow-md',
+                  selected && today && 'ring-2 ring-primary shadow-md',
+                  !selected && !today && 'hover:shadow-sm hover:border-primary/30'
                 )}
               >
                 <div className="flex flex-col h-full">
                   {/* 날짜 + 상담 */}
-                  <div className="flex items-center justify-between mb-1 px-1">
+                  <div className="flex items-center justify-between mb-1 px-1 shrink-0">
                     <span
                       className={cn(
-                        'text-sm font-medium',
-                        index % 7 === 0 && 'text-red-600',
-                        index % 7 === 6 && 'text-blue-600',
+                        'text-sm font-semibold shrink-0',
+                        today && 'text-primary',
+                        !today && index % 7 === 0 && 'text-red-600',
+                        !today && index % 7 === 6 && 'text-blue-600',
                         !inMonth && 'text-muted-foreground'
                       )}
                     >
@@ -214,22 +217,22 @@ export function ScheduleCalendarV2({
                     {/* 상담 예약 표시 */}
                     {inMonth && consultations?.[dateStr] && consultations[dateStr].length > 0 && (
                       <span
-                        className="flex items-center gap-0.5 text-xs text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950 px-1 rounded cursor-pointer hover:bg-pink-100 dark:hover:bg-pink-900 transition-colors"
+                        className="flex items-center gap-0.5 text-xs text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-pink-100 dark:hover:bg-pink-900 transition-all hover:shadow-sm shrink-0"
                         title={`상담 ${consultations[dateStr].length}건 - 클릭하여 상담 달력으로 이동`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onConsultationClick?.(dateStr);
                         }}
                       >
-                        <PhoneCall className="h-3 w-3" />
-                        {consultations[dateStr].length}
+                        <PhoneCall className="h-3 w-3 shrink-0" />
+                        <span className="shrink-0">{consultations[dateStr].length}</span>
                       </span>
                     )}
                   </div>
 
                   {/* 타임 슬롯들 */}
                   {inMonth && (
-                    <div className="flex-1 space-y-0.5">
+                    <div className="flex-1 space-y-0.5 overflow-hidden">
                       {TIME_SLOTS.map(({ slot, label, icon: Icon, color, bgColor }) => {
                         const key = `${dateStr}_${slot}`;
                         const schedule = scheduleMap.get(key);
@@ -252,43 +255,43 @@ export function ScheduleCalendarV2({
                             onDragOver={handleDragOver}
                             onDrop={(e) => handleDrop(e, dateStr, slot)}
                             className={cn(
-                              'flex items-center gap-1 px-1 py-0.5 rounded text-xs border transition-all cursor-pointer',
+                              'flex items-center gap-1 px-1 py-0.5 rounded text-xs border transition-all cursor-pointer overflow-hidden',
                               bgColor,
                               draggedStudent && 'ring-1 ring-dashed ring-muted-foreground'
                             )}
                           >
-                            <Icon className={cn('h-3 w-3', color)} />
-                            <span className={cn('font-medium', color)}>{label}</span>
-                            <div className="ml-auto flex items-center gap-1.5">
+                            <Icon className={cn('h-3 w-3 shrink-0', color)} />
+                            <span className={cn('font-medium shrink-0', color)}>{label}</span>
+                            <div className="ml-auto flex items-center gap-1 shrink-0 overflow-hidden">
                               {/* 강사 출근/배정 현황 */}
                               {scheduledInstructors > 0 && (
                                 <span
                                   className={cn(
-                                    'flex items-center gap-0.5',
+                                    'flex items-center gap-0.5 shrink-0 px-1 py-0.5 rounded-full text-[10px] font-semibold',
                                     attendedInstructors >= scheduledInstructors
-                                      ? 'text-green-600'
+                                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
                                       : attendedInstructors > 0
-                                      ? 'text-yellow-600'
-                                      : 'text-muted-foreground'
+                                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400'
+                                      : 'bg-muted text-muted-foreground'
                                   )}
                                   title={`출근 ${attendedInstructors}명 / 배정 ${scheduledInstructors}명`}
                                 >
-                                  <UserCheck className="h-3 w-3" />
-                                  {attendedInstructors}/{scheduledInstructors}
+                                  <UserCheck className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="shrink-0">{attendedInstructors}/{scheduledInstructors}</span>
                                 </span>
                               )}
                               {/* 체험생 태그 */}
                               {trialCount > 0 && (
-                                <span className="flex items-center gap-0.5 text-purple-600" title={`체험생 ${trialCount}명`}>
-                                  <Sparkles className="h-3 w-3" />
-                                  {trialCount}
+                                <span className="flex items-center gap-0.5 shrink-0 px-1 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400" title={`체험생 ${trialCount}명`}>
+                                  <Sparkles className="h-2.5 w-2.5 shrink-0" />
+                                  <span className="shrink-0">{trialCount}</span>
                                 </span>
                               )}
                               {/* 학생 수 */}
                               {studentCount > 0 && (
-                                <span className="flex items-center gap-0.5 text-muted-foreground">
-                                  <User className="h-3 w-3" />
-                                  {studentCount}
+                                <span className="flex items-center gap-0.5 shrink-0 text-muted-foreground">
+                                  <User className="h-3 w-3 shrink-0" />
+                                  <span className="shrink-0">{studentCount}</span>
                                 </span>
                               )}
                             </div>
