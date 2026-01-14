@@ -293,7 +293,7 @@ export default function EditSeasonPage() {
                 min="0"
                 step="10000"
               />
-              <p className="text-xs text-gray-500 mt-1">시즌 등록 시 학생이 납부해야 할 금액</p>
+              <p className="text-xs text-gray-500 mt-1">시즌 등록 시 학생이 납부해야 할 금액 (1만원 단위)</p>
             </div>
 
             {/* 상태 */}

@@ -1017,6 +1017,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   step="10000"
                   className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
+                <p className="text-xs text-muted-foreground mt-1">1만원 단위</p>
               </div>
 
               {/* 할인율 */}

@@ -130,6 +130,7 @@ export function PaymentForm({ initialData, students, onSubmit, onCancel, loading
                 min="0"
                 step="1000"
               />
+              <p className="text-xs text-gray-500 mt-1">1천원 단위</p>
             </div>
 
             <div>
@@ -142,6 +143,7 @@ export function PaymentForm({ initialData, students, onSubmit, onCancel, loading
                 min="0"
                 step="1000"
               />
+              <p className="text-xs text-gray-500 mt-1">1천원 단위</p>
             </div>
 
             <div>
@@ -154,6 +156,7 @@ export function PaymentForm({ initialData, students, onSubmit, onCancel, loading
                 min="0"
                 step="1000"
               />
+              <p className="text-xs text-gray-500 mt-1">1천원 단위</p>
             </div>
           </div>
 

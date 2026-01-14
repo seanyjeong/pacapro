@@ -373,6 +373,7 @@ export default function SeasonEnrollPage() {
                   />
                   <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">원</span>
                 </div>
+                <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
                 {discountAmount > 0 && season && (
                   <p className="mt-2 text-sm">
                     <span className="text-gray-500">시즌비: </span>

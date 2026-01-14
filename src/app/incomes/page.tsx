@@ -392,6 +392,7 @@ export default function IncomesPage() {
                   placeholder="0"
                   required
                 />
+                <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
               </div>
 
               <div>

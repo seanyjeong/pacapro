@@ -443,7 +443,7 @@ export default function SettingsPage() {
             <DollarSign className="w-5 h-5 text-blue-600" />
             <CardTitle>입시반 학원비 설정</CardTitle>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">주 수업 횟수별 월 학원비를 설정합니다.</p>
+          <p className="text-sm text-muted-foreground mt-1">주 수업 횟수별 월 학원비를 설정합니다. (1만원 단위)</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
@@ -474,7 +474,7 @@ export default function SettingsPage() {
             <DollarSign className="w-5 h-5 text-purple-600" />
             <CardTitle>공무원/성인반 학원비 설정</CardTitle>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">주 수업 횟수별 월 학원비를 설정합니다.</p>
+          <p className="text-sm text-muted-foreground mt-1">주 수업 횟수별 월 학원비를 설정합니다. (1만원 단위)</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
@@ -505,7 +505,7 @@ export default function SettingsPage() {
             <Calendar className="w-5 h-5 text-green-600" />
             <CardTitle>시즌비 설정</CardTitle>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">입시 유형별 시즌비를 설정합니다.</p>
+          <p className="text-sm text-muted-foreground mt-1">입시 유형별 시즌비를 설정합니다. (1만원 단위)</p>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -664,7 +664,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <div className="flex justify-between">
             <span>버전</span>
-            <span className="font-medium text-foreground">v3.3.31</span>
+            <span className="font-medium text-foreground">v3.3.32</span>
           </div>
           <div className="flex justify-between">
             <span>마지막 업데이트</span>

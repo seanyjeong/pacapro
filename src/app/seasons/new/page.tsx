@@ -282,6 +282,7 @@ export default function NewSeasonPage() {
                 min="0"
                 step="10000"
               />
+              <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
             </div>
 
             {/* 연속등록 할인 */}

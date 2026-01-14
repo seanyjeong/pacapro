@@ -194,7 +194,10 @@
       "Bash(python check_consultation_button.py:*)",
       "Bash(playwright install:*)",
       "Bash(/tmp/playwright-venv/bin/pip install:*)",
-      "Bash(npm version:*)"
+      "Bash(npm version:*)",
+      "Bash(source ~/.config/opencode/.env)",
+      "Bash(git tag:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

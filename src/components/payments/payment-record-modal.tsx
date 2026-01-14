@@ -151,10 +151,11 @@ export function PaymentRecordModal({
                   placeholder="0"
                   min="0"
                   max={remainingAmount}
-                  step="10000"
+                  step="1000"
                 />
                 <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">원</span>
               </div>
+              <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
               {formData.discount_amount > 0 && (
                 <p className="mt-2 text-sm">
                   <span className="text-muted-foreground">미납금: </span>
@@ -179,6 +180,7 @@ export function PaymentRecordModal({
                 min="0"
                 step="1000"
               />
+              <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
               <div className="flex gap-2 mt-2">
                 <button
                   type="button"

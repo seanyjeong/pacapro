@@ -500,6 +500,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                   min="0"
                   step="10000"
                 />
+                <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
               </div>
 
               {/* 할인 금액 */}
@@ -515,6 +516,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                   min="0"
                   step="10000"
                 />
+                <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
               </div>
 
               {/* 최종 시즌비 표시 */}
