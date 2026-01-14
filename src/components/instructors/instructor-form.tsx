@@ -340,11 +340,12 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                   onChange={(e) => handleChange('hourly_rate', parseFloat(e.target.value) || 0)}
                   placeholder="0"
                   min="0"
-                  step="1000"
+                  step="100"
                   className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
                     errors.hourly_rate ? 'border-red-500' : 'border-border'
                   }`}
                 />
+                <p className="text-xs text-muted-foreground mt-1">100원 단위로 입력</p>
                 {errors.hourly_rate && <p className="text-red-500 text-sm mt-1">{errors.hourly_rate}</p>}
               </div>
             )}
