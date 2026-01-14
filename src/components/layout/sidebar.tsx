@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -329,17 +329,141 @@ export function Sidebar() {
         return category.items.some(item => canAccessMenu(item));
     };
 
-    // 툴팁 컴포넌트 (접힌 상태에서 사용)
-    const Tooltip = ({ children, label }: { children: React.ReactNode; label: string }) => (
-        <div className="relative group">
-            {children}
-            {collapsed && (
-                <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-popover border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
-                    <span className="text-sm font-medium text-foreground">{label}</span>
-                </div>
-            )}
-        </div>
-    );
+    // 툴팁 컴포넌트 (접힌 상태에서 사용) - fixed position 사용
+    const Tooltip = ({ children, label }: { children: React.ReactNode; label: string }) => {
+        const [showTooltip, setShowTooltip] = useState(false);
+        const [position, setPosition] = useState({ top: 0 });
+        const buttonRef = useRef<HTMLDivElement>(null);
+
+        const handleMouseEnter = () => {
+            if (collapsed && buttonRef.current) {
+                const rect = buttonRef.current.getBoundingClientRect();
+                setPosition({ top: rect.top + rect.height / 2 });
+                setShowTooltip(true);
+            }
+        };
+
+        return (
+            <div
+                ref={buttonRef}
+                className="relative"
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={() => setShowTooltip(false)}
+            >
+                {children}
+                {collapsed && showTooltip && (
+                    <div
+                        className="fixed left-[76px] px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap z-[100] -translate-y-1/2"
+                        style={{ top: position.top }}
+                    >
+                        <span className="text-sm font-medium text-foreground">{label}</span>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // 접힌 상태의 카테고리 메뉴 - fixed position 팝업
+    const CollapsedCategoryMenu = ({
+        category,
+        hasActiveChild,
+        pathname,
+        canAccessMenu,
+        consultationCounts
+    }: {
+        category: NavCategory;
+        hasActiveChild: boolean;
+        pathname: string;
+        canAccessMenu: (item: NavItem) => boolean;
+        consultationCounts: { newInquiry: number; enrolled: number };
+    }) => {
+        const [showMenu, setShowMenu] = useState(false);
+        const [position, setPosition] = useState({ top: 0 });
+        const buttonRef = useRef<HTMLButtonElement>(null);
+        const menuRef = useRef<HTMLDivElement>(null);
+        const CategoryIcon = category.icon;
+
+        const handleMouseEnter = () => {
+            if (buttonRef.current) {
+                const rect = buttonRef.current.getBoundingClientRect();
+                setPosition({ top: rect.top });
+                setShowMenu(true);
+            }
+        };
+
+        const handleMouseLeave = (e: React.MouseEvent) => {
+            const relatedTarget = e.relatedTarget as HTMLElement;
+            if (menuRef.current?.contains(relatedTarget) || buttonRef.current?.contains(relatedTarget)) {
+                return;
+            }
+            setShowMenu(false);
+        };
+
+        return (
+            <div className="relative">
+                <button
+                    ref={buttonRef}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    className={cn(
+                        'w-full flex items-center justify-center p-2.5 rounded-lg text-sm font-medium transition-colors',
+                        hasActiveChild
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-foreground hover:bg-muted'
+                    )}
+                >
+                    <CategoryIcon className={cn('w-5 h-5', hasActiveChild ? 'text-primary' : 'text-muted-foreground')} />
+                </button>
+                {showMenu && (
+                    <div
+                        ref={menuRef}
+                        onMouseEnter={() => setShowMenu(true)}
+                        onMouseLeave={() => setShowMenu(false)}
+                        className="fixed left-[76px] min-w-[180px] bg-popover border border-border rounded-lg shadow-xl z-[100]"
+                        style={{ top: position.top }}
+                    >
+                        <div className="px-3 py-2 border-b border-border">
+                            <span className="text-sm font-semibold text-foreground">{category.title}</span>
+                        </div>
+                        <ul className="py-1">
+                            {category.items.filter(canAccessMenu).map((item) => {
+                                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                                const Icon = item.icon;
+
+                                return (
+                                    <li key={item.href}>
+                                        <Link
+                                            href={item.href}
+                                            onClick={() => setShowMenu(false)}
+                                            className={cn(
+                                                'flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
+                                                isActive
+                                                    ? 'bg-primary/10 text-primary font-medium'
+                                                    : 'text-foreground/80 hover:bg-muted'
+                                            )}
+                                        >
+                                            <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                                            <span>{item.title}</span>
+                                            {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
+                                                <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                                                    {consultationCounts.newInquiry}
+                                                </span>
+                                            )}
+                                            {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
+                                                <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                                                    {consultationCounts.enrolled}
+                                                </span>
+                                            )}
+                                        </Link>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <aside
@@ -443,58 +567,14 @@ export function Sidebar() {
                             <div key={category.title}>
                                 {/* 카테고리 헤더 */}
                                 {collapsed ? (
-                                    // 접힌 상태: 첫 번째 아이템으로 바로가기 또는 드롭다운
-                                    <div className="relative group">
-                                        <button
-                                            className={cn(
-                                                'w-full flex items-center justify-center p-2.5 rounded-lg text-sm font-medium transition-colors',
-                                                hasActiveChild
-                                                    ? 'bg-primary/10 text-primary'
-                                                    : 'text-foreground hover:bg-muted'
-                                            )}
-                                        >
-                                            <CategoryIcon className={cn('w-5 h-5', hasActiveChild ? 'text-primary' : 'text-muted-foreground')} />
-                                        </button>
-                                        {/* 호버 시 서브메뉴 팝업 */}
-                                        <div className="absolute left-full ml-2 top-0 min-w-[180px] bg-popover border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                                            <div className="px-3 py-2 border-b border-border">
-                                                <span className="text-sm font-semibold text-foreground">{category.title}</span>
-                                            </div>
-                                            <ul className="py-1">
-                                                {category.items.filter(canAccessMenu).map((item) => {
-                                                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                                                    const Icon = item.icon;
-
-                                                    return (
-                                                        <li key={item.href}>
-                                                            <Link
-                                                                href={item.href}
-                                                                className={cn(
-                                                                    'flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
-                                                                    isActive
-                                                                        ? 'bg-primary/10 text-primary font-medium'
-                                                                        : 'text-foreground/80 hover:bg-muted'
-                                                                )}
-                                                            >
-                                                                <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
-                                                                <span>{item.title}</span>
-                                                                {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
-                                                                    <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                                                                        {consultationCounts.newInquiry}
-                                                                    </span>
-                                                                )}
-                                                                {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
-                                                                    <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                                                                        {consultationCounts.enrolled}
-                                                                    </span>
-                                                                )}
-                                                            </Link>
-                                                        </li>
-                                                    );
-                                                })}
-                                            </ul>
-                                        </div>
-                                    </div>
+                                    // 접힌 상태: 호버 시 fixed 팝업
+                                    <CollapsedCategoryMenu
+                                        category={category}
+                                        hasActiveChild={hasActiveChild}
+                                        pathname={pathname}
+                                        canAccessMenu={canAccessMenu}
+                                        consultationCounts={consultationCounts}
+                                    />
                                 ) : (
                                     // 펼친 상태: 기존 아코디언
                                     <>
