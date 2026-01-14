@@ -36,6 +36,8 @@ import {
     ExternalLink,
     Mountain,
     CalendarDays,
+    PanelLeftClose,
+    PanelLeft,
 } from 'lucide-react';
 import type { Permissions } from '@/lib/types/staff';
 import apiClient from '@/lib/api/client';
@@ -131,6 +133,9 @@ export function Sidebar() {
     const [user, setUser] = useState<UserState | null>(null);
     const [academyName, setAcademyName] = useState<string>('');
 
+    // 사이드바 접힘 상태
+    const [collapsed, setCollapsed] = useState(true); // 기본값: 접힘
+
     // 푸시 알림 상태
     const [pushSupported, setPushSupported] = useState(false);
     const [pushSubscribed, setPushSubscribed] = useState(false);
@@ -160,6 +165,12 @@ export function Sidebar() {
             }
         }
         setMounted(true);
+
+        // 사이드바 접힘 상태 로드
+        const savedCollapsed = localStorage.getItem('sidebar_collapsed');
+        if (savedCollapsed !== null) {
+            setCollapsed(savedCollapsed === 'true');
+        }
 
         // 학원명 로드
         loadAcademyName();
@@ -208,6 +219,12 @@ export function Sidebar() {
             localStorage.setItem('sidebar_expanded', JSON.stringify(newState));
             return newState;
         });
+    };
+
+    const toggleCollapsed = () => {
+        const newValue = !collapsed;
+        setCollapsed(newValue);
+        localStorage.setItem('sidebar_collapsed', String(newValue));
     };
 
     const checkPushStatus = async () => {
@@ -312,22 +329,42 @@ export function Sidebar() {
         return category.items.some(item => canAccessMenu(item));
     };
 
+    // 툴팁 컴포넌트 (접힌 상태에서 사용)
+    const Tooltip = ({ children, label }: { children: React.ReactNode; label: string }) => (
+        <div className="relative group">
+            {children}
+            {collapsed && (
+                <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-popover border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
+                    <span className="text-sm font-medium text-foreground">{label}</span>
+                </div>
+            )}
+        </div>
+    );
+
     return (
-        <aside className="hidden md:flex md:w-64 md:flex-col fixed left-0 top-0 h-full bg-card border-r border-border no-print">
+        <aside
+            className={cn(
+                "hidden md:flex md:flex-col fixed left-0 top-0 h-full bg-card border-r border-border no-print transition-all duration-300 ease-in-out z-40",
+                collapsed ? "w-[68px]" : "w-64"
+            )}
+        >
             {/* Logo */}
-            <div className="h-16 flex items-center justify-between px-6 border-b border-border">
+            <div className={cn(
+                "h-16 flex items-center border-b border-border",
+                collapsed ? "justify-center px-2" : "justify-between px-4"
+            )}>
                 <Link href="/" className="flex items-center space-x-2">
                     <Image
                         src="/icons/icon-96x96.png"
                         alt="P-ACA"
                         width={32}
                         height={32}
-                        className="rounded-lg"
+                        className="rounded-lg flex-shrink-0"
                     />
-                    <span className="text-xl font-bold text-foreground">P-ACA</span>
+                    {!collapsed && <span className="text-xl font-bold text-foreground">P-ACA</span>}
                 </Link>
-                {/* 푸시 알림 토글 */}
-                {mounted && pushSupported && (
+                {/* 푸시 알림 토글 - 펼친 상태에서만 */}
+                {!collapsed && mounted && pushSupported && (
                     <div className="relative group">
                         <button
                             onClick={handlePushToggle}
@@ -360,8 +397,8 @@ export function Sidebar() {
                 )}
             </div>
 
-            {/* Academy Name */}
-            {academyName && (
+            {/* Academy Name - 펼친 상태에서만 */}
+            {!collapsed && academyName && (
                 <div className="px-4 py-3 border-b border-border bg-muted">
                     <div className="flex items-center space-x-2">
                         <Building2 className="w-5 h-5 text-primary flex-shrink-0" />
@@ -371,22 +408,25 @@ export function Sidebar() {
             )}
 
             {/* Navigation */}
-            <nav className="flex-1 overflow-y-auto py-4 px-3">
+            <nav className="flex-1 overflow-y-auto py-4 px-2">
                 {/* 대시보드 (항상 상단) */}
                 <ul className="space-y-1 mb-2">
                     <li>
-                        <Link
-                            href={dashboardItem.href}
-                            className={cn(
-                                'flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                                pathname === dashboardItem.href
-                                    ? 'bg-primary/10 text-primary font-semibold shadow-sm'
-                                    : 'text-foreground hover:bg-muted/80'
-                            )}
-                        >
-                            <LayoutDashboard className={cn('w-5 h-5', pathname === dashboardItem.href ? 'text-primary' : 'text-muted-foreground')} />
-                            <span>{dashboardItem.title}</span>
-                        </Link>
+                        <Tooltip label="대시보드">
+                            <Link
+                                href={dashboardItem.href}
+                                className={cn(
+                                    'flex items-center rounded-lg text-sm font-medium transition-colors',
+                                    collapsed ? 'justify-center p-2.5' : 'space-x-3 px-3 py-2.5',
+                                    pathname === dashboardItem.href
+                                        ? 'bg-primary/10 text-primary font-semibold shadow-sm'
+                                        : 'text-foreground hover:bg-muted/80'
+                                )}
+                            >
+                                <LayoutDashboard className={cn('w-5 h-5 flex-shrink-0', pathname === dashboardItem.href ? 'text-primary' : 'text-muted-foreground')} />
+                                {!collapsed && <span>{dashboardItem.title}</span>}
+                            </Link>
+                        </Tooltip>
                     </li>
                 </ul>
 
@@ -402,67 +442,125 @@ export function Sidebar() {
                         return (
                             <div key={category.title}>
                                 {/* 카테고리 헤더 */}
-                                <button
-                                    onClick={() => toggleCategory(category.title)}
-                                    className={cn(
-                                        'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                                        hasActiveChild
-                                            ? 'bg-primary/5 text-primary'
-                                            : 'text-foreground hover:bg-muted'
-                                    )}
-                                >
-                                    <div className="flex items-center space-x-3">
-                                        <CategoryIcon className={cn('w-5 h-5', hasActiveChild ? 'text-primary' : 'text-muted-foreground')} />
-                                        <span>{category.title}</span>
+                                {collapsed ? (
+                                    // 접힌 상태: 첫 번째 아이템으로 바로가기 또는 드롭다운
+                                    <div className="relative group">
+                                        <button
+                                            className={cn(
+                                                'w-full flex items-center justify-center p-2.5 rounded-lg text-sm font-medium transition-colors',
+                                                hasActiveChild
+                                                    ? 'bg-primary/10 text-primary'
+                                                    : 'text-foreground hover:bg-muted'
+                                            )}
+                                        >
+                                            <CategoryIcon className={cn('w-5 h-5', hasActiveChild ? 'text-primary' : 'text-muted-foreground')} />
+                                        </button>
+                                        {/* 호버 시 서브메뉴 팝업 */}
+                                        <div className="absolute left-full ml-2 top-0 min-w-[180px] bg-popover border border-border rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                            <div className="px-3 py-2 border-b border-border">
+                                                <span className="text-sm font-semibold text-foreground">{category.title}</span>
+                                            </div>
+                                            <ul className="py-1">
+                                                {category.items.filter(canAccessMenu).map((item) => {
+                                                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                                                    const Icon = item.icon;
+
+                                                    return (
+                                                        <li key={item.href}>
+                                                            <Link
+                                                                href={item.href}
+                                                                className={cn(
+                                                                    'flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
+                                                                    isActive
+                                                                        ? 'bg-primary/10 text-primary font-medium'
+                                                                        : 'text-foreground/80 hover:bg-muted'
+                                                                )}
+                                                            >
+                                                                <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                                                                <span>{item.title}</span>
+                                                                {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
+                                                                    <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                                                                        {consultationCounts.newInquiry}
+                                                                    </span>
+                                                                )}
+                                                                {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
+                                                                    <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                                                                        {consultationCounts.enrolled}
+                                                                    </span>
+                                                                )}
+                                                            </Link>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        </div>
                                     </div>
-                                    {isExpanded ? (
-                                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                    ) : (
-                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                    )}
-                                </button>
+                                ) : (
+                                    // 펼친 상태: 기존 아코디언
+                                    <>
+                                        <button
+                                            onClick={() => toggleCategory(category.title)}
+                                            className={cn(
+                                                'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                                                hasActiveChild
+                                                    ? 'bg-primary/5 text-primary'
+                                                    : 'text-foreground hover:bg-muted'
+                                            )}
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <CategoryIcon className={cn('w-5 h-5', hasActiveChild ? 'text-primary' : 'text-muted-foreground')} />
+                                                <span>{category.title}</span>
+                                            </div>
+                                            {isExpanded ? (
+                                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                            ) : (
+                                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                            )}
+                                        </button>
 
-                                {/* 서브메뉴 */}
-                                {isExpanded && (
-                                    <ul className="ml-4 mt-1 space-y-1 border-l border-border pl-3">
-                                        {category.items.filter(canAccessMenu).map((item) => {
-                                            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                                            const Icon = item.icon;
+                                        {/* 서브메뉴 */}
+                                        {isExpanded && (
+                                            <ul className="ml-4 mt-1 space-y-1 border-l border-border pl-3">
+                                                {category.items.filter(canAccessMenu).map((item) => {
+                                                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                                                    const Icon = item.icon;
 
-                                            return (
-                                                <li key={item.href}>
-                                                    <Link
-                                                        href={item.href}
-                                                        className={cn(
-                                                            'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                                                            isActive
-                                                                ? 'bg-primary/10 text-primary font-semibold shadow-sm'
-                                                                : 'text-foreground/70 hover:bg-muted hover:text-foreground'
-                                                        )}
-                                                    >
-                                                        <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
-                                                        <span>{item.title}</span>
-                                                        {/* 상담 카운트 배지 */}
-                                                        {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
-                                                            <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                                {consultationCounts.newInquiry}
-                                                            </span>
-                                                        )}
-                                                        {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
-                                                            <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                                {consultationCounts.enrolled}
-                                                            </span>
-                                                        )}
-                                                        {item.badge && (
-                                                            <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                                {item.badge}
-                                                            </span>
-                                                        )}
-                                                    </Link>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
+                                                    return (
+                                                        <li key={item.href}>
+                                                            <Link
+                                                                href={item.href}
+                                                                className={cn(
+                                                                    'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                                                                    isActive
+                                                                        ? 'bg-primary/10 text-primary font-semibold shadow-sm'
+                                                                        : 'text-foreground/70 hover:bg-muted hover:text-foreground'
+                                                                )}
+                                                            >
+                                                                <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
+                                                                <span>{item.title}</span>
+                                                                {/* 상담 카운트 배지 */}
+                                                                {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
+                                                                    <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                                        {consultationCounts.newInquiry}
+                                                                    </span>
+                                                                )}
+                                                                {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
+                                                                    <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                                        {consultationCounts.enrolled}
+                                                                    </span>
+                                                                )}
+                                                                {item.badge && (
+                                                                    <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                                        {item.badge}
+                                                                    </span>
+                                                                )}
+                                                            </Link>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         );
@@ -472,9 +570,11 @@ export function Sidebar() {
                 {/* Admin Menu (Admin only) */}
                 {mounted && isAdmin && (
                     <div className="mt-6">
-                        <div className="px-3 mb-2">
-                            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">개발자 전용</h3>
-                        </div>
+                        {!collapsed && (
+                            <div className="px-3 mb-2">
+                                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">개발자 전용</h3>
+                            </div>
+                        )}
                         <ul className="space-y-1">
                             {adminNavItems.map((item) => {
                                 const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
@@ -482,25 +582,28 @@ export function Sidebar() {
 
                                 return (
                                     <li key={item.href}>
-                                        <Link
-                                            href={item.href}
-                                            className={cn(
-                                                'flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                                                isActive
-                                                    ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                                                    : 'text-foreground hover:bg-muted'
-                                            )}
-                                        >
-                                            <Icon
-                                                className={cn('w-5 h-5', isActive ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}
-                                            />
-                                            <span>{item.title}</span>
-                                            {item.badge && (
-                                                <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                    {item.badge}
-                                                </span>
-                                            )}
-                                        </Link>
+                                        <Tooltip label={item.title}>
+                                            <Link
+                                                href={item.href}
+                                                className={cn(
+                                                    'flex items-center rounded-lg text-sm font-medium transition-colors',
+                                                    collapsed ? 'justify-center p-2.5' : 'space-x-3 px-3 py-2.5',
+                                                    isActive
+                                                        ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                                                        : 'text-foreground hover:bg-muted'
+                                                )}
+                                            >
+                                                <Icon
+                                                    className={cn('w-5 h-5', isActive ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}
+                                                />
+                                                {!collapsed && <span>{item.title}</span>}
+                                                {!collapsed && item.badge && (
+                                                    <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                        {item.badge}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                        </Tooltip>
                                     </li>
                                 );
                             })}
@@ -510,33 +613,73 @@ export function Sidebar() {
             </nav>
 
             {/* P-EAK 바로가기 */}
-            <div className="px-3 pb-2">
+            <div className="px-2 pb-2">
+                {collapsed ? (
+                    <Tooltip label="P-EAK 실기관리">
+                        <button
+                            onClick={() => {
+                                const token = localStorage.getItem('token');
+                                const peakUrl = token
+                                  ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
+                                  : 'https://peak-rose.vercel.app';
+                                window.open(peakUrl, '_blank');
+                            }}
+                            className="w-full flex items-center justify-center p-2.5 rounded-lg text-sm font-medium bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 transition-all duration-200"
+                        >
+                            <Mountain className="w-5 h-5 text-orange-500" />
+                        </button>
+                    </Tooltip>
+                ) : (
+                    <button
+                        onClick={() => {
+                            const token = localStorage.getItem('token');
+                            const peakUrl = token
+                              ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
+                              : 'https://peak-rose.vercel.app';
+                            window.open(peakUrl, '_blank');
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 transition-all duration-200 group"
+                    >
+                        <div className="flex items-center space-x-3">
+                            <Mountain className="w-5 h-5 text-orange-500" />
+                            <span className="text-orange-600 dark:text-orange-400">P-EAK 실기관리</span>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-orange-500/70 group-hover:text-orange-500" />
+                    </button>
+                )}
+            </div>
+
+            {/* 접기/펼치기 토글 버튼 */}
+            <div className="px-2 pb-2">
                 <button
-                    onClick={() => {
-                        const token = localStorage.getItem('token');
-                        const peakUrl = token
-                          ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
-                          : 'https://peak-rose.vercel.app';
-                        window.open(peakUrl, '_blank');
-                    }}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 transition-all duration-200 group"
+                    onClick={toggleCollapsed}
+                    className={cn(
+                        "w-full flex items-center rounded-lg text-sm font-medium transition-all duration-200",
+                        "bg-muted/50 hover:bg-muted border border-border/50 hover:border-border",
+                        collapsed ? "justify-center p-2.5" : "justify-between px-3 py-2.5"
+                    )}
                 >
-                    <div className="flex items-center space-x-3">
-                        <Mountain className="w-5 h-5 text-orange-500" />
-                        <span className="text-orange-600 dark:text-orange-400">P-EAK 실기관리</span>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-orange-500/70 group-hover:text-orange-500" />
+                    {collapsed ? (
+                        <PanelLeft className="w-5 h-5 text-muted-foreground" />
+                    ) : (
+                        <>
+                            <span className="text-muted-foreground">사이드바 접기</span>
+                            <PanelLeftClose className="w-5 h-5 text-muted-foreground" />
+                        </>
+                    )}
                 </button>
             </div>
 
-            {/* Footer */}
-            <div className="p-4 border-t border-border">
-                <div className="text-xs text-muted-foreground text-center space-y-1">
-                    <div>P-ACA v3.4.8</div>
-                    <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-15</div>
-                    <div>문의: 010-2144-6755</div>
+            {/* Footer - 펼친 상태에서만 */}
+            {!collapsed && (
+                <div className="p-4 border-t border-border">
+                    <div className="text-xs text-muted-foreground text-center space-y-1">
+                        <div>P-ACA v3.4.9</div>
+                        <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-15</div>
+                        <div>문의: 010-2144-6755</div>
+                    </div>
                 </div>
-            </div>
+            )}
         </aside>
     );
 }

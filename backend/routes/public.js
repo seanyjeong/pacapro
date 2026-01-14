@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const webpush = require('web-push');
+const logger = require('../utils/logger');
 
 // VAPID 설정
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
@@ -362,6 +363,7 @@ router.post('/consultation/:slug/apply', async (req, res) => {
     const consultationId = result.insertId;
 
     // 새 상담 예약 푸시 알림 발송 (비동기)
+    logger.info(`[상담신청] 푸시 알림 발송 시도 - academy ${academy.id}`);
     sendNewConsultationPush(academy.id, academy.name, {
       studentName,
       preferredDate,
@@ -386,6 +388,8 @@ router.post('/consultation/:slug/apply', async (req, res) => {
  */
 async function sendNewConsultationPush(academyId, academyName, consultation) {
     try {
+        logger.info(`[NewConsultationPush] 시작 - 학원 ${academyId}`);
+
         // new_consultation 알림을 활성화한 관리자의 구독만 조회
         const [subscriptions] = await db.query(
             `SELECT ps.*
@@ -398,7 +402,10 @@ async function sendNewConsultationPush(academyId, academyName, consultation) {
             [academyId]
         );
 
+        logger.info(`[NewConsultationPush] 구독 ${subscriptions.length}개 조회됨`);
+
         if (subscriptions.length === 0) {
+            logger.info(`[NewConsultationPush] 구독 없음 - 종료`);
             return;
         }
 
@@ -432,10 +439,13 @@ async function sendNewConsultationPush(academyId, academyName, consultation) {
 
             try {
                 await webpush.sendNotification(pushSubscription, payload);
+                logger.info(`[NewConsultationPush] 발송 성공 - user ${sub.user_id}`);
             } catch (error) {
+                logger.error(`[NewConsultationPush] 발송 실패 - user ${sub.user_id}:`, error.message);
                 // 만료된 구독 삭제
                 if (error.statusCode === 410 || error.statusCode === 404) {
                     await db.query('DELETE FROM push_subscriptions WHERE id = ?', [sub.id]);
+                    logger.info(`[NewConsultationPush] 만료된 구독 삭제 - id ${sub.id}`);
                 }
             }
         }

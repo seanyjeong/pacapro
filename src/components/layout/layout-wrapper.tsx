@@ -1,11 +1,51 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './sidebar';
 import { TopNav } from './topnav';
+import { cn } from '@/lib/utils/cn';
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+        const savedCollapsed = localStorage.getItem('sidebar_collapsed');
+        if (savedCollapsed !== null) {
+            setSidebarCollapsed(savedCollapsed === 'true');
+        }
+
+        // localStorage 변경 감지
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'sidebar_collapsed') {
+                setSidebarCollapsed(e.newValue === 'true');
+            }
+        };
+
+        // 커스텀 이벤트로 같은 탭에서의 변경도 감지
+        const handleSidebarToggle = () => {
+            const collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            setSidebarCollapsed(collapsed);
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('sidebar-toggle', handleSidebarToggle);
+
+        // 주기적으로 체크 (같은 탭 내 변경 감지용)
+        const interval = setInterval(() => {
+            const collapsed = localStorage.getItem('sidebar_collapsed') === 'true';
+            setSidebarCollapsed(collapsed);
+        }, 100);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('sidebar-toggle', handleSidebarToggle);
+            clearInterval(interval);
+        };
+    }, []);
 
     // 인증 페이지 (로그인, 회원가입, 비밀번호 찾기): 사이드바 없이 children만 반환
     const isAuthPage = pathname === '/login' ||
@@ -43,7 +83,10 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex h-screen overflow-hidden">
             <Sidebar />
-            <div className="flex-1 flex flex-col md:ml-64">
+            <div className={cn(
+                "flex-1 flex flex-col transition-all duration-300 ease-in-out",
+                mounted ? (sidebarCollapsed ? "md:ml-[68px]" : "md:ml-64") : "md:ml-[68px]"
+            )}>
                 <TopNav />
                 {/* 메인 콘텐츠 영역에 배경색 추가 (깊이감 부여) */}
                 <main className="flex-1 overflow-y-auto pt-16 bg-slate-50/50 dark:bg-background">
