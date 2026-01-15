@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -49,6 +49,8 @@ import {
     unsubscribeFromPush,
     getCurrentSubscription,
 } from '@/lib/api/push';
+import { SidebarTooltip } from './sidebar-tooltip';
+import { CollapsedCategoryMenu } from './collapsed-category-menu';
 
 interface NavItem {
     title: string;
@@ -329,150 +331,6 @@ export function Sidebar() {
         return category.items.some(item => canAccessMenu(item));
     };
 
-    // 툴팁 컴포넌트 (접힌 상태에서 사용) - fixed position 사용
-    const Tooltip = ({ children, label }: { children: React.ReactNode; label: string }) => {
-        const [showTooltip, setShowTooltip] = useState(false);
-        const [position, setPosition] = useState({ top: 0 });
-        const buttonRef = useRef<HTMLDivElement>(null);
-
-        const handleMouseEnter = () => {
-            if (collapsed && buttonRef.current) {
-                const rect = buttonRef.current.getBoundingClientRect();
-                setPosition({ top: rect.top + rect.height / 2 });
-                setShowTooltip(true);
-            }
-        };
-
-        return (
-            <div
-                ref={buttonRef}
-                className="relative"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={() => setShowTooltip(false)}
-            >
-                {children}
-                {collapsed && showTooltip && (
-                    <div
-                        className="fixed left-[68px] pl-2 z-[100] -translate-y-1/2"
-                        style={{ top: position.top }}
-                    >
-                        <div className="px-2 py-1 bg-popover border border-border rounded-md shadow-lg whitespace-nowrap">
-                            <span className="text-sm font-medium text-foreground">{label}</span>
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
-    };
-
-    // 접힌 상태의 카테고리 메뉴 - fixed position 팝업 + 딜레이
-    const CollapsedCategoryMenu = ({
-        category,
-        hasActiveChild,
-        pathname,
-        canAccessMenu,
-        consultationCounts
-    }: {
-        category: NavCategory;
-        hasActiveChild: boolean;
-        pathname: string;
-        canAccessMenu: (item: NavItem) => boolean;
-        consultationCounts: { newInquiry: number; enrolled: number };
-    }) => {
-        const [showMenu, setShowMenu] = useState(false);
-        const [position, setPosition] = useState({ top: 0 });
-        const buttonRef = useRef<HTMLButtonElement>(null);
-        const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-        const CategoryIcon = category.icon;
-
-        const handleMouseEnter = () => {
-            // 타이머 취소
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
-            }
-            if (buttonRef.current) {
-                const rect = buttonRef.current.getBoundingClientRect();
-                setPosition({ top: rect.top });
-                setShowMenu(true);
-            }
-        };
-
-        const handleMouseLeave = () => {
-            // 150ms 딜레이 후 닫기
-            timeoutRef.current = setTimeout(() => {
-                setShowMenu(false);
-            }, 150);
-        };
-
-        return (
-            <div className="relative">
-                <button
-                    ref={buttonRef}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                    className={cn(
-                        'w-full flex items-center justify-center p-2.5 rounded-lg text-sm font-medium transition-colors',
-                        hasActiveChild
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-foreground hover:bg-muted'
-                    )}
-                >
-                    <CategoryIcon className={cn('w-5 h-5', hasActiveChild ? 'text-primary' : 'text-muted-foreground')} />
-                </button>
-                {showMenu && (
-                    <div
-                        onMouseEnter={handleMouseEnter}
-                        onMouseLeave={handleMouseLeave}
-                        className="fixed left-[52px] pl-5 z-[100]"
-                        style={{ top: position.top }}
-                    >
-                        {/* 실제 메뉴 박스 */}
-                        <div className="min-w-[180px] bg-popover border border-border rounded-lg shadow-xl">
-                            <div className="px-3 py-2 border-b border-border">
-                                <span className="text-sm font-semibold text-foreground">{category.title}</span>
-                            </div>
-                            <ul className="py-1">
-                                {category.items.filter(canAccessMenu).map((item) => {
-                                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                                    const Icon = item.icon;
-
-                                    return (
-                                        <li key={item.href}>
-                                            <Link
-                                                href={item.href}
-                                                onClick={() => setShowMenu(false)}
-                                                className={cn(
-                                                    'flex items-center space-x-2 px-3 py-2 text-sm transition-colors',
-                                                    isActive
-                                                        ? 'bg-primary/10 text-primary font-medium'
-                                                        : 'text-foreground/80 hover:bg-muted'
-                                                )}
-                                            >
-                                                <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
-                                                <span>{item.title}</span>
-                                                {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
-                                                    <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                                                        {consultationCounts.newInquiry}
-                                                    </span>
-                                                )}
-                                                {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
-                                                    <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
-                                                        {consultationCounts.enrolled}
-                                                    </span>
-                                                )}
-                                            </Link>
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
-    };
-
     return (
         <aside
             className={cn(
@@ -544,7 +402,7 @@ export function Sidebar() {
                 {/* 대시보드 (항상 상단) */}
                 <ul className="space-y-1 mb-2">
                     <li>
-                        <Tooltip label="대시보드">
+                        <SidebarTooltip label="대시보드" collapsed={collapsed}>
                             <Link
                                 href={dashboardItem.href}
                                 className={cn(
@@ -558,7 +416,7 @@ export function Sidebar() {
                                 <LayoutDashboard className={cn('w-5 h-5 flex-shrink-0', pathname === dashboardItem.href ? 'text-primary' : 'text-muted-foreground')} />
                                 {!collapsed && <span>{dashboardItem.title}</span>}
                             </Link>
-                        </Tooltip>
+                        </SidebarTooltip>
                     </li>
                 </ul>
 
@@ -670,7 +528,7 @@ export function Sidebar() {
 
                                 return (
                                     <li key={item.href}>
-                                        <Tooltip label={item.title}>
+                                        <SidebarTooltip label={item.title} collapsed={collapsed}>
                                             <Link
                                                 href={item.href}
                                                 className={cn(
@@ -691,7 +549,7 @@ export function Sidebar() {
                                                     </span>
                                                 )}
                                             </Link>
-                                        </Tooltip>
+                                        </SidebarTooltip>
                                     </li>
                                 );
                             })}
@@ -703,7 +561,7 @@ export function Sidebar() {
             {/* P-EAK 바로가기 */}
             <div className="px-2 pb-2">
                 {collapsed ? (
-                    <Tooltip label="P-EAK 실기관리">
+                    <SidebarTooltip label="P-EAK 실기관리" collapsed={collapsed}>
                         <button
                             onClick={() => {
                                 const token = localStorage.getItem('token');
@@ -716,7 +574,7 @@ export function Sidebar() {
                         >
                             <Mountain className="w-5 h-5 text-orange-500" />
                         </button>
-                    </Tooltip>
+                    </SidebarTooltip>
                 ) : (
                     <button
                         onClick={() => {
@@ -762,7 +620,7 @@ export function Sidebar() {
             {!collapsed && (
                 <div className="p-4 border-t border-border">
                     <div className="text-xs text-muted-foreground text-center space-y-1">
-                        <div>P-ACA v3.5.4</div>
+                        <div>P-ACA v3.5.5</div>
                         <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-15</div>
                         <div>문의: 010-2144-6755</div>
                     </div>

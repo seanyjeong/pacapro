@@ -21,6 +21,15 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://supermax.kr/paca',
   },
+  // 성능 최적화: barrel imports 자동 변환
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'recharts',
+      'framer-motion',
+      'date-fns',
+    ],
+  },
 }
 
 module.exports = withPWA(nextConfig)

@@ -163,6 +163,36 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
   padding: 0;
 }
 
+/* Date Input 스타일 - 다크모드 대응 */
+input[type="date"] {
+  color-scheme: light;
+}
+
+.dark input[type="date"] {
+  color-scheme: dark;
+}
+
+/* Date picker 아이콘 색상 */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* Date input 선택 상태 - 더 명확한 색상 */
+input[type="date"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring));
+}
+
 /* 유틸리티 클래스 - Minimal */
 @layer utilities {
   /* 스태거 애니메이션 */
