@@ -163,13 +163,24 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
   padding: 0;
 }
 
-/* Date Input 스타일 - 다크모드 대응 */
+/* Date Input 스타일 - 라이트/다크 모드 대응 */
 input[type="date"] {
   color-scheme: light;
+  color: hsl(var(--foreground));
+}
+
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: hsl(var(--foreground));
 }
 
 .dark input[type="date"] {
   color-scheme: dark;
+  color: hsl(var(--foreground));
 }
 
 /* Date picker 아이콘 색상 */
