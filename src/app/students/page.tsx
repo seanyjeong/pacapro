@@ -15,10 +15,36 @@ import { PendingStudentList } from '@/components/students/pending-student-list';
 import { SchoolStudentList } from '@/components/students/school-student-list';
 import { useStudents } from '@/hooks/use-students';
 import { cn } from '@/lib/utils';
-import type { StudentStatus } from '@/lib/types/student';
+import type { StudentStatus, StudentFilters } from '@/lib/types/student';
+import {
+  STUDENT_TYPE_LABELS,
+  GRADE_LABELS,
+  ADMISSION_TYPE_LABELS,
+  GENDER_LABELS,
+} from '@/lib/types/student';
 
 // 탭 타입
 type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending' | 'graduated' | 'bySchool';
+
+// 활성 필터 라벨 생성 함수
+function getActiveFilterLabels(filters: StudentFilters): string[] {
+  const labels: string[] = [];
+
+  if (filters.grade) {
+    labels.push(GRADE_LABELS[filters.grade]);
+  }
+  if (filters.student_type) {
+    labels.push(STUDENT_TYPE_LABELS[filters.student_type]);
+  }
+  if (filters.admission_type) {
+    labels.push(ADMISSION_TYPE_LABELS[filters.admission_type]);
+  }
+  if (filters.gender) {
+    labels.push(GENDER_LABELS[filters.gender]);
+  }
+
+  return labels;
+}
 
 // 내부 컴포넌트 (useSearchParams 사용)
 function StudentsPageContent() {
@@ -264,7 +290,23 @@ function StudentsPageContent() {
           <StudentSearch value={searchQuery} onChange={handleSearch} />
         </div>
         <div className="text-sm text-muted-foreground">
-          총 <span className="font-semibold text-foreground">{students.length}</span>명
+          {(() => {
+            const filterLabels = getActiveFilterLabels(filters);
+            if (filterLabels.length > 0) {
+              return (
+                <>
+                  <span className="font-medium text-primary">{filterLabels.join(', ')}</span>
+                  {' '}
+                  <span className="font-semibold text-foreground">({students.length}명)</span>
+                </>
+              );
+            }
+            return (
+              <>
+                총 <span className="font-semibold text-foreground">{students.length}</span>명
+              </>
+            );
+          })()}
         </div>
       </div>
 
