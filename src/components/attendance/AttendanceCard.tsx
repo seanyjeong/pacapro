@@ -113,17 +113,17 @@ export function AttendanceCard({
             
             {/* Compact Badges */}
             <div className="flex items-center gap-1 shrink-0">
-              {student.is_season_student && (
+              {!!student.is_season_student && (
                 <span className={`px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full shrink-0 ${isTablet ? 'text-[10px]' : 'text-xs'}`}>
                   시즌
                 </span>
               )}
-              {student.is_makeup && (
+              {!!student.is_makeup && (
                 <span className={`px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full shrink-0 ${isTablet ? 'text-[10px]' : 'text-xs'}`}>
                   보충
                 </span>
               )}
-              {student.is_trial && (() => {
+              {!!student.is_trial && (() => {
                 const remaining = student.trial_remaining ?? 2;
                 const currentSession = Math.max(1, 2 - remaining + 1);
                 return (
