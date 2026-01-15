@@ -365,8 +365,7 @@ export default function TabletAttendancePage() {
           transition={{ delay: 0.2 }}
         >
           {orientation === 'landscape' && schedule.students.length > 8 ? (
-            <div className="grid grid-cols-[1fr_300px] gap-4">
-              <div />
+            <div className="grid grid-cols-[300px_1fr] gap-4">
               <StatsDashboard
                 stats={{
                   total: filteredStudents.length,
@@ -378,6 +377,7 @@ export default function TabletAttendancePage() {
                 }}
                 layout="vertical"
               />
+              <div /> {/* 오른쪽 빈 공간 */}
             </div>
           ) : (
             <StatsDashboard
@@ -416,12 +416,31 @@ export default function TabletAttendancePage() {
           animate="visible"
           className={`
             ${orientation === 'landscape' && schedule.students.length > 12
-              ? 'grid grid-cols-[1fr_320px] gap-4'
+              ? 'grid grid-cols-[320px_1fr] gap-4'
               : ''
             }
           `}
         >
-          {/* Student Grid */}
+          {/* Side Dashboard for landscape with many students - 왼쪽 */}
+          {orientation === 'landscape' && filteredStudents.length > 12 && (
+            <div className="row-start-1 col-start-1">
+              <div className="sticky top-4">
+                <StatsDashboard
+                  stats={{
+                    total: schedule.students.length,
+                    present: stats.present,
+                    absent: stats.absent,
+                    late: stats.late,
+                    excused: stats.excused,
+                    notMarked: stats.notMarked,
+                  }}
+                  layout="vertical"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Student Grid - 오른쪽 */}
           <div className={`grid gap-3 ${
             orientation === 'landscape' && filteredStudents.length > 12
               ? 'grid-cols-4'
@@ -457,25 +476,6 @@ export default function TabletAttendancePage() {
               ))}
             </AnimatePresence>
           </div>
-          
-          {/* Side Dashboard for landscape with many students */}
-          {orientation === 'landscape' && filteredStudents.length > 12 && (
-            <div className="row-start-1 col-start-2">
-              <div className="sticky top-4">
-                <StatsDashboard
-                  stats={{
-                    total: schedule.students.length,
-                    present: stats.present,
-                    absent: stats.absent,
-                    late: stats.late,
-                    excused: stats.excused,
-                    notMarked: stats.notMarked,
-                  }}
-                  layout="vertical"
-                />
-              </div>
-            </div>
-          )}
         </motion.div>
       )}
 
