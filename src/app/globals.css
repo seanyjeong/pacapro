@@ -36,6 +36,16 @@ html, body {
 
     /* 폰트 */
     --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+    /* 출석 상태 색상 - Gradient System */
+    --attendance-present-from: 160 84% 39%;     /* #10b981 emerald-500 */
+    --attendance-present-to: 160 84% 35%;       /* #059669 emerald-600 */
+    --attendance-late-from: 38 92% 50%;         /* #f59e0b amber-500 */
+    --attendance-late-to: 36 91% 44%;           /* #d97706 amber-600 */
+    --attendance-absent-from: 351 83% 57%;      /* #f43f5e rose-500 */
+    --attendance-absent-to: 350 89% 50%;        /* #e11d48 rose-600 */
+    --attendance-excused-from: 199 89% 48%;     /* #0ea5e9 sky-500 */
+    --attendance-excused-to: 201 96% 38%;       /* #0284c7 sky-600 */
   }
 
   /* 다크 테마 - 눈에 편한 다크모드 */
@@ -76,6 +86,16 @@ html, body {
     --border: 220 15% 18%;
     --input: 220 15% 14%;
     --ring: 217 91% 60%;
+
+    /* 출석 상태 색상 - Dark Mode Variants */
+    --attendance-present-from: 160 84% 35%;     /* #059669 darker emerald */
+    --attendance-present-to: 160 84% 30%;       /* #047857 emerald-700 */
+    --attendance-late-from: 36 91% 44%;         /* #d97706 darker amber */
+    --attendance-late-to: 35 91% 38%;           /* #b45309 amber-700 */
+    --attendance-absent-from: 350 89% 50%;      /* #e11d48 darker rose */
+    --attendance-absent-to: 347 87% 44%;        /* #be123c rose-700 */
+    --attendance-excused-from: 201 96% 38%;     /* #0284c7 darker sky */
+    --attendance-excused-to: 201 90% 32%;       /* #0369a1 sky-700 */
   }
 }
 
@@ -189,5 +209,109 @@ input[type="time"]::-webkit-datetime-edit-fields-wrapper {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* 출석 상태 그라데이션 배경 */
+  .bg-attendance-present {
+    background: linear-gradient(135deg, hsl(var(--attendance-present-from)) 0%, hsl(var(--attendance-present-to)) 100%);
+  }
+  
+  .bg-attendance-late {
+    background: linear-gradient(135deg, hsl(var(--attendance-late-from)) 0%, hsl(var(--attendance-late-to)) 100%);
+  }
+  
+  .bg-attendance-absent {
+    background: linear-gradient(135deg, hsl(var(--attendance-absent-from)) 0%, hsl(var(--attendance-absent-to)) 100%);
+  }
+  
+  .bg-attendance-excused {
+    background: linear-gradient(135deg, hsl(var(--attendance-excused-from)) 0%, hsl(var(--attendance-excused-to)) 100%);
+  }
+
+  /* 출석 상태 Glow 효과 (Dark Mode) */
+  .dark .glow-present {
+    box-shadow: 0 0 20px hsla(var(--attendance-present-from), 0.3),
+                0 4px 12px hsla(0, 0%, 0%, 0.5);
+  }
+  
+  .dark .glow-late {
+    box-shadow: 0 0 20px hsla(var(--attendance-late-from), 0.3),
+                0 4px 12px hsla(0, 0%, 0%, 0.5);
+  }
+  
+  .dark .glow-absent {
+    box-shadow: 0 0 20px hsla(var(--attendance-absent-from), 0.3),
+                0 4px 12px hsla(0, 0%, 0%, 0.5);
+  }
+  
+  .dark .glow-excused {
+    box-shadow: 0 0 20px hsla(var(--attendance-excused-from), 0.3),
+                0 4px 12px hsla(0, 0%, 0%, 0.5);
+  }
+
+  /* 향상된 글래스모피즘 */
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+
+  .dark .glass-strong {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* 마이크로 인터랙션 애니메이션 */
+  @keyframes check-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  @keyframes card-check {
+    0% { transform: scale(1); }
+    25% { transform: scale(0.95); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes count-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-check-bounce {
+    animation: check-bounce 0.4s ease-out;
+  }
+
+  .animate-card-check {
+    animation: card-check 0.3s ease-out;
+  }
+
+  .animate-count-up {
+    animation: count-up 0.3s ease-out;
+  }
+
+  /* Safe area padding for mobile */
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-pb {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  .mb-safe-area {
+    margin-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

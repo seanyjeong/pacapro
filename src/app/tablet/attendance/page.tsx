@@ -1,22 +1,29 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useOrientation } from '@/components/tablet/orientation-context';
 import apiClient from '@/lib/api/client';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  CheckCircle2,
-  XCircle,
-  Clock,
-  AlertCircle,
   ChevronLeft,
   ChevronRight,
   Users,
   RefreshCw,
   X,
+  AlertCircle,
   HelpCircle
 } from 'lucide-react';
+import { AttendanceCard, type Student, type AttendanceStatus } from '@/components/attendance/AttendanceCard';
+import { StatsDashboard } from '@/components/attendance/StatsDashboard';
+import { QuickActionsToolbar } from '@/components/attendance/QuickActionsToolbar';
+import { SearchFilter, type FilterOptions } from '@/components/attendance/SearchFilter';
+import { Confetti } from '@/components/attendance/Confetti';
+import { hapticForStatus } from '@/lib/attendance/haptics';
+import { debounce } from '@/lib/attendance/debounce';
+import { staggerContainer, cardVariants } from '@/lib/attendance/animations';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
-interface Student {
+interface TabletStudent {
   student_id: number;
   student_name: string;
   grade: string;
@@ -32,7 +39,7 @@ interface Schedule {
   id: number;
   class_date: string;
   time_slot: string;
-  students: Student[];
+  students: TabletStudent[];
 }
 
 type TimeSlot = 'morning' | 'afternoon' | 'evening';
@@ -43,12 +50,6 @@ const TIME_SLOTS: { key: TimeSlot; label: string }[] = [
   { key: 'evening', label: '저녁' }
 ];
 
-const STATUS_CONFIG = {
-  present: { label: '출석', color: 'bg-green-500/80 dark:bg-green-600', icon: CheckCircle2 },
-  absent: { label: '결석', color: 'bg-red-500/80 dark:bg-red-600', icon: XCircle },
-  late: { label: '지각', color: 'bg-yellow-500/80 dark:bg-yellow-600', icon: Clock },
-  excused: { label: '공결', color: 'bg-blue-500/80 dark:bg-blue-600', icon: AlertCircle },
-};
 
 // 공결 사유 옵션
 const EXCUSED_REASONS = [
@@ -70,6 +71,11 @@ export default function TabletAttendancePage() {
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<number | null>(null);
+  const [showToolbar, setShowToolbar] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<FilterOptions>({ status: 'all', studentType: 'all' });
+  const [showSearch, setShowSearch] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // 결석/공결 사유 모달 상태
   const [showReasonModal, setShowReasonModal] = useState(false);
@@ -106,7 +112,7 @@ export default function TabletAttendancePage() {
     setDate(newDate.toISOString().split('T')[0]);
   };
 
-  const handleAttendance = async (studentId: number, status: string, studentName?: string) => {
+  const handleAttendance = async (studentId: number, status: AttendanceStatus, studentName?: string) => {
     if (!schedule) return;
 
     // 현재 학생의 출석 상태 확인
@@ -118,6 +124,9 @@ export default function TabletAttendancePage() {
       await saveAttendance(studentId, 'none', undefined);
       return;
     }
+
+    // Haptic feedback
+    hapticForStatus(status);
 
     // 결석 또는 공결 선택 시 사유 모달 표시
     if ((status === 'absent' || status === 'excused') && studentName) {
@@ -136,12 +145,26 @@ export default function TabletAttendancePage() {
     await saveAttendance(studentId, status, undefined);
   };
 
-  // 실제 출석 저장 함수
-  const saveAttendance = async (studentId: number, status: string, notes?: string) => {
+  // 실제 출석 저장 함수 with optimistic updates
+  const saveAttendance = async (studentId: number, status: AttendanceStatus | 'none', notes?: string) => {
     if (!schedule) return;
 
     const isToggleOff = status === 'none';
     const uiStatus = isToggleOff ? null : status;
+
+    // Optimistic update
+    const previousSchedule = schedule;
+    setSchedule(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        students: prev.students.map(s =>
+          s.student_id === studentId
+            ? { ...s, attendance_status: uiStatus, notes: notes || null }
+            : s
+        )
+      };
+    });
 
     setSaving(studentId);
     try {
@@ -152,25 +175,22 @@ export default function TabletAttendancePage() {
           notes: notes
         }]
       });
-
-      // Update local state
-      setSchedule(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          students: prev.students.map(s =>
-            s.student_id === studentId
-              ? { ...s, attendance_status: uiStatus, notes: notes || null }
-              : s
-          )
-        };
-      });
     } catch (error) {
       console.error('Failed to update attendance:', error);
+      // Revert on error
+      setSchedule(previousSchedule);
     } finally {
       setSaving(null);
     }
   };
+
+  // Debounced save for better performance
+  const debouncedSave = useCallback(
+    debounce((studentId: number, status: AttendanceStatus | 'none', notes?: string) => {
+      saveAttendance(studentId, status, notes);
+    }, 300),
+    [schedule]
+  );
 
   // 사유 모달 확인 핸들러
   const handleReasonConfirm = async () => {
@@ -199,11 +219,61 @@ export default function TabletAttendancePage() {
 
   const isToday = date === new Date().toISOString().split('T')[0];
 
+  // Memoized filtered students for performance
+  const filteredStudents = useMemo(() => {
+    if (!schedule) return [];
+    
+    return schedule.students.filter((student) => {
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      if (!student.student_name.toLowerCase().includes(query)) {
+        return false;
+      }
+    }
+
+    // Status filter
+    if (filters.status && filters.status !== 'all') {
+      if (filters.status === 'not_marked') {
+        if (student.attendance_status !== null) return false;
+      } else {
+        if (student.attendance_status !== filters.status) return false;
+      }
+    }
+
+    // Student type filter
+    if (filters.studentType && filters.studentType !== 'all') {
+      if (filters.studentType === 'trial' && !student.is_trial) return false;
+      if (filters.studentType === 'makeup' && !student.is_makeup) return false;
+      if (filters.studentType === 'season' && !student.season_type) return false;
+      if (filters.studentType === 'regular' && (student.is_trial || student.is_makeup || student.season_type)) return false;
+    }
+
+      return true;
+    });
+  }, [schedule, searchQuery, filters]);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts([
+    {
+      key: '/',
+      callback: () => setShowSearch(true),
+      description: '검색 열기',
+    },
+    {
+      key: 'Escape',
+      callback: () => setShowSearch(false),
+      description: '검색 닫기',
+    },
+  ], !showReasonModal);
+
   // Stats
   const stats = schedule?.students.reduce(
     (acc, s) => {
-      if (s.attendance_status === 'present' || s.attendance_status === 'late') {
+      if (s.attendance_status === 'present') {
         acc.present++;
+      } else if (s.attendance_status === 'late') {
+        acc.late++;
       } else if (s.attendance_status === 'absent') {
         acc.absent++;
       } else if (s.attendance_status === 'excused') {
@@ -213,13 +283,17 @@ export default function TabletAttendancePage() {
       }
       return acc;
     },
-    { present: 0, absent: 0, excused: 0, notMarked: 0 }
-  ) || { present: 0, absent: 0, excused: 0, notMarked: 0 };
+    { present: 0, absent: 0, late: 0, excused: 0, notMarked: 0 }
+  ) || { present: 0, absent: 0, late: 0, excused: 0, notMarked: 0 };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-6">
       {/* 날짜 선택 */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-strong rounded-2xl p-4 shadow-md"
+      >
         <div className="flex items-center justify-between">
           <button
             onClick={() => handleDateChange(-1)}
@@ -242,47 +316,83 @@ export default function TabletAttendancePage() {
             <ChevronRight size={24} className="dark:text-slate-200" />
           </button>
         </div>
-      </div>
+      </motion.div>
 
       {/* 시간대 탭 */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-2 shadow-sm">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="glass-strong rounded-2xl p-2 shadow-md"
+      >
         <div className="flex gap-2">
           {TIME_SLOTS.map(slot => (
             <button
               key={slot.key}
               onClick={() => setTimeSlot(slot.key)}
-              className={`flex-1 py-3 rounded-xl font-medium transition ${
+              className={`flex-1 py-3 rounded-xl font-medium transition-all ${
                 timeSlot === slot.key
-                  ? 'bg-primary text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 active:bg-slate-200 dark:active:bg-slate-600'
+                  ? 'bg-attendance-present text-white shadow-lg'
+                  : 'bg-secondary text-muted-foreground hover:bg-secondary/80'
               }`}
             >
               {slot.label}
             </button>
           ))}
         </div>
-      </div>
+      </motion.div>
 
-      {/* 통계 */}
+      {/* Search & Filter */}
+      {schedule && showSearch && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
+          <SearchFilter
+            onSearch={setSearchQuery}
+            onFilter={setFilters}
+            showFilters={true}
+          />
+        </motion.div>
+      )}
+
+      {/* 통계 대시보드 */}
       {schedule && (
-        <div className="grid grid-cols-4 gap-3">
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm text-center">
-            <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">{schedule.students.length}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">전체</p>
-          </div>
-          <div className="bg-green-50 dark:bg-green-950 rounded-xl p-3 shadow-sm text-center">
-            <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.present}</p>
-            <p className="text-xs text-green-600 dark:text-green-400">출석</p>
-          </div>
-          <div className="bg-red-50 dark:bg-red-950 rounded-xl p-3 shadow-sm text-center">
-            <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.absent}</p>
-            <p className="text-xs text-red-600 dark:text-red-400">결석</p>
-          </div>
-          <div className="bg-yellow-50 dark:bg-yellow-950 rounded-xl p-3 shadow-sm text-center">
-            <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.notMarked}</p>
-            <p className="text-xs text-yellow-600 dark:text-yellow-400">미체크</p>
-          </div>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          {orientation === 'landscape' && schedule.students.length > 8 ? (
+            <div className="grid grid-cols-[1fr_300px] gap-4">
+              <div />
+              <StatsDashboard
+                stats={{
+                  total: filteredStudents.length,
+                  present: stats.present,
+                  absent: stats.absent,
+                  late: stats.late,
+                  excused: stats.excused,
+                  notMarked: stats.notMarked,
+                }}
+                layout="vertical"
+              />
+            </div>
+          ) : (
+            <StatsDashboard
+              stats={{
+                total: filteredStudents.length,
+                present: stats.present,
+                absent: stats.absent,
+                late: stats.late,
+                excused: stats.excused,
+                notMarked: stats.notMarked,
+              }}
+              layout="grid"
+            />
+          )}
+        </motion.div>
       )}
 
       {/* 학생 목록 */}
@@ -291,122 +401,148 @@ export default function TabletAttendancePage() {
           <RefreshCw className="animate-spin text-blue-500" size={32} />
         </div>
       ) : !schedule || schedule.students.length === 0 ? (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm text-center">
-          <Users size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4" />
-          <p className="text-slate-500 dark:text-slate-400">배정된 학생이 없습니다</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="glass-strong rounded-2xl p-8 shadow-md text-center"
+        >
+          <Users size={48} className="mx-auto text-muted-foreground/50 mb-4" />
+          <p className="text-muted-foreground">배정된 학생이 없습니다</p>
+        </motion.div>
       ) : (
-        <div className={`grid gap-3 ${
-          orientation === 'landscape' ? 'grid-cols-4' : 'grid-cols-2'
-        }`}>
-          {schedule.students.map(student => (
-            <div
-              key={student.student_id}
-              className={`bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm ${
-                saving === student.student_id ? 'opacity-50' : ''
-              }`}
-            >
-              {/* 학생 정보 */}
-              <div className="mb-3">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{student.student_name}</p>
-                  {!!student.is_trial && (
-                    <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 text-xs rounded-full">
-                      체험
-                    </span>
-                  )}
-                  {!!student.is_makeup && (
-                    <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 text-xs rounded-full">
-                      보충
-                    </span>
-                  )}
-                </div>
-                {student.grade && String(student.grade) !== '0' && String(student.grade) !== '00' && String(student.grade).trim() !== '' && (
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{student.grade}</p>
-                )}
-              </div>
-
-              {/* 현재 상태 표시 */}
-              {student.attendance_status && (
-                <div className="mb-3">
-                  <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-white text-sm ${
-                    STATUS_CONFIG[student.attendance_status as keyof typeof STATUS_CONFIG]?.color || 'bg-slate-400'
-                  }`}>
-                    {STATUS_CONFIG[student.attendance_status as keyof typeof STATUS_CONFIG]?.label || student.attendance_status}
-                  </span>
-                </div>
-              )}
-
-              {/* 결석/공결 사유 표시 */}
-              {(student.attendance_status === 'absent' || student.attendance_status === 'excused') && student.notes && (
-                <div className={`mb-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
-                  student.attendance_status === 'excused'
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'bg-red-50 text-red-700'
-                }`}>
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">사유: {student.notes}</span>
-                </div>
-              )}
-
-              {/* 출석 버튼 */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => handleAttendance(student.student_id, 'present', student.student_name)}
-                  disabled={saving === student.student_id}
-                  className={`py-3 rounded-xl font-medium transition active:scale-95 ${
-                    student.attendance_status === 'present'
-                      ? 'bg-green-500/80 dark:bg-green-600 text-white'
-                      : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 active:bg-green-200 dark:active:bg-green-800'
-                  }`}
+        <motion.div 
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          className={`
+            ${orientation === 'landscape' && schedule.students.length > 12
+              ? 'grid grid-cols-[1fr_320px] gap-4'
+              : ''
+            }
+          `}
+        >
+          {/* Student Grid */}
+          <div className={`grid gap-3 ${
+            orientation === 'landscape' && filteredStudents.length > 12
+              ? 'grid-cols-4'
+              : orientation === 'landscape'
+                ? 'grid-cols-5'
+                : 'grid-cols-3'
+          }`}>
+            <AnimatePresence mode="popLayout">
+              {filteredStudents.map((student, index) => (
+                <motion.div
+                  key={student.student_id}
+                  custom={index}
+                  variants={cardVariants}
+                  layout
                 >
-                  출석
-                </button>
-                <button
-                  onClick={() => handleAttendance(student.student_id, 'absent', student.student_name)}
-                  disabled={saving === student.student_id}
-                  className={`py-3 rounded-xl font-medium transition active:scale-95 ${
-                    student.attendance_status === 'absent'
-                      ? 'bg-red-500/80 dark:bg-red-600 text-white'
-                      : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 active:bg-red-200 dark:active:bg-red-800'
-                  }`}
-                >
-                  결석
-                </button>
-                <button
-                  onClick={() => handleAttendance(student.student_id, 'late', student.student_name)}
-                  disabled={saving === student.student_id}
-                  className={`py-3 rounded-xl font-medium transition active:scale-95 ${
-                    student.attendance_status === 'late'
-                      ? 'bg-yellow-500/80 dark:bg-yellow-600 text-white'
-                      : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 active:bg-yellow-200 dark:active:bg-yellow-800'
-                  }`}
-                >
-                  지각
-                </button>
-                <button
-                  onClick={() => handleAttendance(student.student_id, 'excused', student.student_name)}
-                  disabled={saving === student.student_id}
-                  className={`py-3 rounded-xl font-medium transition active:scale-95 ${
-                    student.attendance_status === 'excused'
-                      ? 'bg-blue-500/80 dark:bg-blue-600 text-white'
-                      : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 active:bg-blue-200 dark:active:bg-blue-800'
-                  }`}
-                >
-                  공결
-                </button>
+                  <AttendanceCard
+                    student={{
+                      student_id: student.student_id,
+                      student_name: student.student_name,
+                      grade: student.grade,
+                      attendance_status: student.attendance_status as AttendanceStatus | null,
+                      notes: student.notes,
+                      is_trial: student.is_trial,
+                      trial_remaining: student.trial_remaining,
+                      is_makeup: student.is_makeup,
+                      is_season_student: !!student.season_type,
+                    }}
+                    onStatusChange={(status) => handleAttendance(student.student_id, status, student.student_name)}
+                    layout="tablet"
+                    saving={saving === student.student_id}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+          
+          {/* Side Dashboard for landscape with many students */}
+          {orientation === 'landscape' && filteredStudents.length > 12 && (
+            <div className="row-start-1 col-start-2">
+              <div className="sticky top-4">
+                <StatsDashboard
+                  stats={{
+                    total: schedule.students.length,
+                    present: stats.present,
+                    absent: stats.absent,
+                    late: stats.late,
+                    excused: stats.excused,
+                    notMarked: stats.notMarked,
+                  }}
+                  layout="vertical"
+                />
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* Quick Actions Toolbar */}
+      {schedule && filteredStudents.length > 0 && showToolbar && (
+        <QuickActionsToolbar
+          onSearch={() => setShowSearch(!showSearch)}
+          onQuickAttendance={async () => {
+            if (!schedule || saving) return;
+            
+            const allPresent = schedule.students.every(s => s.attendance_status === 'present');
+            if (allPresent) {
+              // Already all present
+              return;
+            }
+
+            setSaving(-1);
+            try {
+              const records = schedule.students.map(s => ({
+                student_id: s.student_id,
+                attendance_status: 'present' as AttendanceStatus,
+              }));
+
+              await apiClient.post(`/schedules/${schedule.id}/attendance`, {
+                attendance_records: records,
+              });
+
+              // Update local state
+              setSchedule(prev => {
+                if (!prev) return null;
+                return {
+                  ...prev,
+                  students: prev.students.map(s => ({
+                    ...s,
+                    attendance_status: 'present',
+                  })),
+                };
+              });
+
+              // Show confetti celebration
+              setShowConfetti(true);
+            } catch (error) {
+              console.error('Failed to mark all present:', error);
+            } finally {
+              setSaving(null);
+            }
+          }}
+          position="bottom"
+        />
       )}
 
       {/* 결석/공결 사유 입력 모달 */}
-      {showReasonModal && reasonModalData && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={handleReasonCancel}>
-          <div
-            className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md p-6 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {showReasonModal && reasonModalData && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" 
+            onClick={handleReasonCancel}
+          >
+          <motion.div
+            initial={{ scale: 0.9, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            exit={{ scale: 0.9, y: 20 }}
+            className="glass-strong rounded-2xl w-full max-w-md p-6 shadow-2xl"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
           >
             {/* 헤더 */}
             <div className="flex items-center justify-between mb-4">
@@ -541,9 +677,13 @@ export default function TabletAttendancePage() {
                 확인
               </button>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confetti Animation */}
+      <Confetti trigger={showConfetti} />
     </div>
   );
 }
