@@ -331,8 +331,8 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
                         <div className={cn(
-                          'w-10 h-10 rounded-full flex items-center justify-center text-white font-medium',
-                          isChecked ? 'bg-primary-500' : 'bg-gray-400'
+                          'w-10 h-10 rounded-full flex items-center justify-center font-medium',
+                          isChecked ? 'bg-primary text-primary-foreground' : 'bg-gray-400 text-white'
                         )}>
                           {instructor.name.charAt(0)}
                         </div>

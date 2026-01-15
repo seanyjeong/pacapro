@@ -505,7 +505,7 @@ export default function SeasonDetailPage() {
                                     disabled={isUpdating}
                                     className={`px-2 py-1 text-xs rounded transition-colors ${
                                       isSelected
-                                        ? 'bg-primary-500 text-white'
+                                        ? 'bg-primary text-primary-foreground'
                                         : 'bg-muted text-muted-foreground hover:bg-muted/80'
                                     } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
                                   >

@@ -858,8 +858,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   onClick={() => handleClassDayToggle(option.value)}
                   className={`px-4 py-2 rounded-lg border transition-colors ${
                     formData.class_days.includes(option.value)
-                      ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-card text-foreground border-border hover:border-primary-500'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-card text-foreground border-border hover:border-primary'
                   }`}
                 >
                   {option.label}
@@ -885,8 +885,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   onClick={() => handleChange('time_slot', slot.value as 'morning' | 'afternoon' | 'evening')}
                   className={`px-4 py-2 rounded-lg border transition-colors ${
                     formData.time_slot === slot.value
-                      ? 'bg-primary-500 text-white border-primary-500'
-                      : 'bg-card text-foreground border-border hover:border-primary-500'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-card text-foreground border-border hover:border-primary'
                   }`}
                 >
                   {slot.label}

@@ -401,7 +401,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                     }}
                     className={`px-4 py-2 rounded-lg border transition-colors ${
                       (formData.work_days || []).includes(day.value)
-                        ? 'bg-primary-500 text-white border-primary-500'
+                        ? 'bg-primary text-primary-foreground border-primary'
                         : 'bg-card text-foreground border-border hover:bg-muted'
                     }`}
                   >
