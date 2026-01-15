@@ -357,41 +357,24 @@ export default function TabletAttendancePage() {
         </motion.div>
       )}
 
-      {/* 통계 대시보드 */}
-      {schedule && (
+      {/* 통계 대시보드 - 가로모드에서 학생 많으면 학생 목록 옆에 표시 */}
+      {schedule && !(orientation === 'landscape' && schedule.students.length > 8) && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2 }}
         >
-          {orientation === 'landscape' && schedule.students.length > 8 ? (
-            <div className="grid grid-cols-[300px_1fr] gap-4">
-              <StatsDashboard
-                stats={{
-                  total: filteredStudents.length,
-                  present: stats.present,
-                  absent: stats.absent,
-                  late: stats.late,
-                  excused: stats.excused,
-                  notMarked: stats.notMarked,
-                }}
-                layout="vertical"
-              />
-              <div /> {/* 오른쪽 빈 공간 */}
-            </div>
-          ) : (
-            <StatsDashboard
-              stats={{
-                total: filteredStudents.length,
-                present: stats.present,
-                absent: stats.absent,
-                late: stats.late,
-                excused: stats.excused,
-                notMarked: stats.notMarked,
-              }}
-              layout="grid"
-            />
-          )}
+          <StatsDashboard
+            stats={{
+              total: filteredStudents.length,
+              present: stats.present,
+              absent: stats.absent,
+              late: stats.late,
+              excused: stats.excused,
+              notMarked: stats.notMarked,
+            }}
+            layout="grid"
+          />
         </motion.div>
       )}
 
@@ -415,34 +398,15 @@ export default function TabletAttendancePage() {
           initial="hidden"
           animate="visible"
           className={`
-            ${orientation === 'landscape' && schedule.students.length > 12
-              ? 'grid grid-cols-[320px_1fr] gap-4'
+            ${orientation === 'landscape' && schedule.students.length > 8
+              ? 'grid grid-cols-[1fr_280px] gap-4'
               : ''
             }
           `}
         >
-          {/* Side Dashboard for landscape with many students - 왼쪽 */}
-          {orientation === 'landscape' && filteredStudents.length > 12 && (
-            <div className="row-start-1 col-start-1">
-              <div className="sticky top-4">
-                <StatsDashboard
-                  stats={{
-                    total: schedule.students.length,
-                    present: stats.present,
-                    absent: stats.absent,
-                    late: stats.late,
-                    excused: stats.excused,
-                    notMarked: stats.notMarked,
-                  }}
-                  layout="vertical"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Student Grid - 오른쪽 */}
+          {/* Student Grid - 왼쪽 */}
           <div className={`grid gap-3 ${
-            orientation === 'landscape' && filteredStudents.length > 12
+            orientation === 'landscape' && filteredStudents.length > 8
               ? 'grid-cols-4'
               : orientation === 'landscape'
                 ? 'grid-cols-5'
@@ -476,6 +440,23 @@ export default function TabletAttendancePage() {
               ))}
             </AnimatePresence>
           </div>
+
+          {/* Side Dashboard - 오른쪽 (가로모드 + 학생 많을 때) */}
+          {orientation === 'landscape' && filteredStudents.length > 8 && (
+            <div className="sticky top-4 self-start">
+              <StatsDashboard
+                stats={{
+                  total: schedule.students.length,
+                  present: stats.present,
+                  absent: stats.absent,
+                  late: stats.late,
+                  excused: stats.excused,
+                  notMarked: stats.notMarked,
+                }}
+                layout="vertical"
+              />
+            </div>
+          )}
         </motion.div>
       )}
 
