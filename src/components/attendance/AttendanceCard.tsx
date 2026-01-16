@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { CheckCircle2, XCircle, Clock, AlertCircle, Phone } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 
@@ -84,12 +83,7 @@ export function AttendanceCard({
   const isTablet = layout === 'tablet';
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      whileHover={{ scale: isTablet ? 1.02 : 1 }}
+    <div
       className={`
         bg-card rounded-2xl shadow-sm overflow-hidden transition-shadow
         ${saving ? 'opacity-50 pointer-events-none' : ''}
@@ -159,16 +153,12 @@ export function AttendanceCard({
 
       {/* Current Status Badge - Compact for tablet */}
       {currentStatus && config && !isTablet && (
-        <motion.div 
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className={`mb-2`}
-        >
+        <div className="mb-2">
           <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white font-medium ${config.gradient} ${isCompact ? 'text-xs' : 'text-sm'}`}>
             <config.icon className={`${isCompact ? 'h-3 w-3' : 'h-4 w-4'}`} />
             <span>{config.label}</span>
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Reason Note - More compact */}
@@ -184,18 +174,17 @@ export function AttendanceCard({
         {(Object.keys(STATUS_CONFIG) as AttendanceStatus[]).map((status) => {
           const statusConfig = STATUS_CONFIG[status];
           const isActive = currentStatus === status;
-          
+
           return (
-            <motion.button
+            <button
               key={status}
-              whileTap={{ scale: 0.95 }}
               onClick={() => handleStatusClick(status)}
               disabled={saving}
               className={`
                 rounded-xl font-medium transition-all flex items-center justify-center gap-1.5
                 ${isCompact ? 'py-2.5 text-sm' : isTablet ? 'py-2 text-xs' : 'py-3 text-sm'}
-                ${isActive 
-                  ? `${statusConfig.gradient} text-white shadow-md` 
+                ${isActive
+                  ? `${statusConfig.gradient} text-white shadow-md`
                   : `${statusConfig.lightBg} ${statusConfig.lightText}`
                 }
                 hover:shadow-lg active:scale-95
@@ -204,10 +193,10 @@ export function AttendanceCard({
             >
               {isTablet && <statusConfig.icon className="h-3 w-3" />}
               <span>{statusConfig.label}</span>
-            </motion.button>
+            </button>
           );
         })}
       </div>
-    </motion.div>
+    </div>
   );
 }
