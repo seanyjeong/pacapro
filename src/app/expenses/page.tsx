@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Banknote, TrendingDown, FileSpreadsheet, Calendar, List, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, Banknote, TrendingDown, FileSpreadsheet, Calendar, List, Pencil, Trash2, X, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 import { exportsApi } from '@/lib/api/exports';
@@ -142,7 +142,21 @@ export default function ExpensesPage() {
     supplies: '소모품',
     marketing: '홍보비',
     refund: '환불',
+    '환불': '환불',
+    '환불(대기)': '환불(대기)',
     other: '기타',
+  };
+
+  // 환불 완료 처리
+  const handleCompleteRefund = async (id: number, paymentMethod: string = 'cash') => {
+    if (!confirm('환불을 완료 처리하시겠습니까?')) return;
+    try {
+      await apiClient.post(`/expenses/${id}/complete-refund`, { payment_method: paymentMethod });
+      toast.success('환불이 완료 처리되었습니다.');
+      loadExpenses();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || '환불 완료 처리에 실패했습니다.');
+    }
   };
 
   if (loading) {
@@ -374,7 +388,11 @@ export default function ExpensesPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-muted-foreground">{expense.expense_date}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
-                            <span className="px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded">
+                            <span className={`px-2 py-1 text-xs font-medium rounded ${
+                              expense.category === '환불(대기)'
+                                ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 animate-pulse'
+                                : 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                            }`}>
                               {categoryMap[expense.category] || expense.category}
                             </span>
                             {expense.category === 'salary' && expense.instructor_name && (
@@ -396,7 +414,17 @@ export default function ExpensesPage() {
                         </td>
                         {canEditExpenses && (
                           <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                            {!expense.salary_id && (
+                            {expense.category === '환불(대기)' ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleCompleteRefund(expense.id)}
+                                className="text-green-600 border-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-1" />
+                                환불 완료
+                              </Button>
+                            ) : !expense.salary_id ? (
                               <div className="flex gap-2">
                                 <button
                                   onClick={() => handleEdit(expense)}
@@ -413,8 +441,7 @@ export default function ExpensesPage() {
                                   <Trash2 className="w-4 h-4" />
                                 </button>
                               </div>
-                            )}
-                            {expense.salary_id && (
+                            ) : (
                               <span className="text-xs text-muted-foreground">급여 연동</span>
                             )}
                           </td>
@@ -458,7 +485,11 @@ export default function ExpensesPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">카테고리</p>
                   <p className="font-medium text-foreground">
-                    <span className="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded">
+                    <span className={`px-2 py-1 text-xs rounded ${
+                      selectedExpense.category === '환불(대기)'
+                        ? 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
+                        : 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                    }`}>
                       {categoryMap[selectedExpense.category] || selectedExpense.category}
                     </span>
                     {selectedExpense.category === 'salary' && selectedExpense.instructor_name && (
@@ -492,7 +523,19 @@ export default function ExpensesPage() {
               )}
             </div>
             <div className="p-4 border-t border-border flex justify-end gap-2">
-              {canEditExpenses && !selectedExpense.salary_id && (
+              {canEditExpenses && selectedExpense.category === '환불(대기)' && (
+                <Button
+                  onClick={() => {
+                    handleCompleteRefund(selectedExpense.id);
+                    setSelectedExpense(null);
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  환불 완료
+                </Button>
+              )}
+              {canEditExpenses && !selectedExpense.salary_id && selectedExpense.category !== '환불(대기)' && (
                 <>
                   <Button
                     variant="outline"

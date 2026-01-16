@@ -247,7 +247,7 @@ export function StudentRestModal({
                 <Banknote className={`w-5 h-5 ${creditType === 'refund' ? 'text-primary' : 'text-muted-foreground'}`} />
                 <div className="flex-1">
                   <div className="font-medium">환불</div>
-                  <div className="text-sm text-muted-foreground">현금으로 환불 처리</div>
+                  <div className="text-sm text-muted-foreground">지출관리에 환불(대기)로 등록됨</div>
                 </div>
                 {creditType === 'refund' && (
                   <div className="text-primary font-medium">{creditAmount.toLocaleString()}원</div>
