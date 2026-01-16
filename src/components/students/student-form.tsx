@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Loader2, Sparkles, Plus, X, Calendar } from 'lucide-react';
 import apiClient from '@/lib/api/client';
 import { seasonsApi } from '@/lib/api/seasons';
+import { StudentRestModal } from './student-rest-modal';
 import type { Student, StudentFormData, StudentType, Grade, AdmissionType, StudentStatus, Gender, TrialDate } from '@/lib/types/student';
 import type { Season } from '@/lib/types/season';
 import { SEASON_TYPE_LABELS, formatSeasonFee } from '@/lib/types/season';
@@ -63,11 +64,15 @@ interface StudentFormProps {
   initialIsTrial?: boolean; // URL에서 is_trial=true로 전달된 경우
   onSubmit: (data: StudentFormData) => Promise<void>;
   onCancel: () => void;
+  onRestSuccess?: () => void; // 휴원 처리 성공 시 콜백 (페이지 새로고침 등)
 }
 
-export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmit, onCancel }: StudentFormProps) {
+export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmit, onCancel, onRestSuccess }: StudentFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // 휴원 처리 모달 상태
+  const [restModalOpen, setRestModalOpen] = useState(false);
 
   // 학원 설정 (학원비 기준표)
   const [academySettings, setAcademySettings] = useState<AcademySettings>({
@@ -1147,6 +1152,13 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 value={formData.status}
                 onChange={(e) => {
                   const newStatus = e.target.value as StudentStatus;
+
+                  // 휴원으로 변경 시 (현재 상태가 paused가 아닐 때) 모달 열기
+                  if (newStatus === 'paused' && formData.status !== 'paused' && initialData?.id) {
+                    setRestModalOpen(true);
+                    return; // select 값은 모달에서 처리 후 변경됨
+                  }
+
                   handleChange('status', newStatus);
                   // 휴원이 아닌 상태로 변경 시 휴식 정보 초기화
                   if (newStatus !== 'paused') {
@@ -1154,9 +1166,6 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                     handleChange('rest_end_date', '');
                     handleChange('rest_reason', '');
                     setIsIndefiniteRest(false);
-                  } else if (!formData.rest_start_date) {
-                    // 휴원으로 변경 시 기본값으로 오늘 날짜 설정
-                    handleChange('rest_start_date', new Date().toISOString().split('T')[0]);
                   }
                 }}
                 className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -1167,6 +1176,11 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                   </option>
                 ))}
               </select>
+              {formData.status !== 'paused' && initialData?.id && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  💡 휴원 선택 시 수업료 처리 옵션을 선택할 수 있습니다.
+                </p>
+              )}
             </div>
           )}
 
@@ -1261,6 +1275,30 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           {submitting ? '저장 중...' : mode === 'create' ? '등록' : '수정'}
         </Button>
       </div>
+
+      {/* 휴원 처리 모달 */}
+      {initialData && (
+        <StudentRestModal
+          open={restModalOpen}
+          onClose={() => setRestModalOpen(false)}
+          student={{
+            id: initialData.id,
+            name: initialData.name,
+            monthly_tuition: initialData.monthly_tuition,
+            weekly_count: initialData.weekly_count,
+          }}
+          onSuccess={() => {
+            setRestModalOpen(false);
+            // 부모 컴포넌트에 알림 (페이지 새로고침 등)
+            if (onRestSuccess) {
+              onRestSuccess();
+            } else {
+              // 기본 동작: 페이지 새로고침
+              window.location.reload();
+            }
+          }}
+        />
+      )}
     </form>
   );
 }

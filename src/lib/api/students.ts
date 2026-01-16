@@ -238,4 +238,27 @@ export const studentsAPI = {
   }> => {
     return await apiClient.post(`/students/${studentId}/credits/${creditId}/apply`, { year_month: yearMonth });
   },
+
+  /**
+   * 휴원 처리 (크레딧 옵션 포함)
+   * POST /paca/students/:id/process-rest
+   */
+  processRest: async (id: number, data: {
+    rest_start_date: string;
+    rest_end_date?: string | null;
+    rest_reason?: string;
+    credit_type: 'carryover' | 'refund' | 'none';
+    source_payment_id?: number;
+  }): Promise<{
+    message: string;
+    student: Student;
+    restCredit?: {
+      id: number;
+      credit_amount: number;
+      credit_type: string;
+      status: string;
+    };
+  }> => {
+    return await apiClient.post(`/students/${id}/process-rest`, data);
+  },
 };
