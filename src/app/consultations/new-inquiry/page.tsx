@@ -102,6 +102,15 @@ export default function NewInquiryConsultationsPage() {
   ]);
   const [convertingToTrial, setConvertingToTrial] = useState(false);
 
+  // 학생 정보 수정 모달
+  const [editStudentModalOpen, setEditStudentModalOpen] = useState(false);
+  const [editStudentForm, setEditStudentForm] = useState({
+    studentGrade: '',
+    parentPhone: '',
+    studentSchool: ''
+  });
+  const [updatingStudent, setUpdatingStudent] = useState(false);
+
   const getDateRange = useCallback(() => {
     const today = new Date();
     if (dateFilter === 'today') {
@@ -328,6 +337,40 @@ export default function NewInquiryConsultationsPage() {
       toast.error('체험 등록에 실패했습니다.');
     } finally {
       setConvertingToTrial(false);
+    }
+  };
+
+  // 학생 정보 수정 모달 열기
+  const openEditStudentModal = (c: Consultation) => {
+    setSelectedConsultation(c);
+    setEditStudentForm({
+      studentGrade: c.student_grade || '',
+      parentPhone: c.parent_phone || c.student_phone || '',
+      studentSchool: c.student_school || ''
+    });
+    setEditStudentModalOpen(true);
+  };
+
+  // 학생 정보 수정
+  const handleUpdateStudent = async () => {
+    if (!selectedConsultation) return;
+
+    setUpdatingStudent(true);
+    try {
+      await updateConsultation(selectedConsultation.id, {
+        studentGrade: editStudentForm.studentGrade || undefined,
+        parentPhone: editStudentForm.parentPhone || undefined,
+        studentSchool: editStudentForm.studentSchool || undefined
+      });
+
+      toast.success('학생 정보가 수정되었습니다.');
+      setEditStudentModalOpen(false);
+      loadData();
+    } catch (error) {
+      console.error('학생 정보 수정 오류:', error);
+      toast.error('학생 정보 수정에 실패했습니다.');
+    } finally {
+      setUpdatingStudent(false);
     }
   };
 
@@ -864,6 +907,13 @@ export default function NewInquiryConsultationsPage() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 상태변경
                               </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                openEditStudentModal(c);
+                              }}>
+                                <User className="h-4 w-4 mr-2" />
+                                학생정보 수정
+                              </DropdownMenuItem>
                               {c.status === 'completed' && (
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation();
@@ -965,10 +1015,20 @@ export default function NewInquiryConsultationsPage() {
 
               {/* 학생 정보 */}
               <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  학생 정보
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    학생 정보
+                  </h4>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEditStudentModal(selectedConsultation)}
+                  >
+                    <Edit className="h-3.5 w-3.5 mr-1" />
+                    수정
+                  </Button>
+                </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3 border rounded-lg">
                   <div>
                     <Label className="text-xs text-muted-foreground">이름</Label>
@@ -1404,6 +1464,65 @@ export default function NewInquiryConsultationsPage() {
             </Button>
             <Button onClick={handleConvertToTrial} disabled={convertingToTrial}>
               {convertingToTrial ? '등록 중...' : '체험 등록'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 학생 정보 수정 모달 */}
+      <Dialog open={editStudentModalOpen} onOpenChange={setEditStudentModalOpen}>
+        <DialogContent className="max-w-md py-6 px-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5" />
+              학생 정보 수정
+            </DialogTitle>
+            <DialogDescription>
+              {selectedConsultation?.student_name}님의 정보를 수정합니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>학년</Label>
+              <Select
+                value={editStudentForm.studentGrade}
+                onValueChange={(v) => setEditStudentForm({ ...editStudentForm, studentGrade: v })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="학년 선택" />
+                </SelectTrigger>
+                <SelectContent>
+                  {['중1', '중2', '중3', '고1', '고2', '고3', 'N수'].map((g) => (
+                    <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>연락처</Label>
+              <Input
+                value={editStudentForm.parentPhone}
+                onChange={(e) => setEditStudentForm({ ...editStudentForm, parentPhone: e.target.value })}
+                className="mt-1"
+                placeholder="010-0000-0000"
+              />
+            </div>
+            <div>
+              <Label>학교</Label>
+              <Input
+                value={editStudentForm.studentSchool}
+                onChange={(e) => setEditStudentForm({ ...editStudentForm, studentSchool: e.target.value })}
+                className="mt-1"
+                placeholder="OO고등학교"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditStudentModalOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handleUpdateStudent} disabled={updatingStudent}>
+              {updatingStudent ? '저장 중...' : '저장'}
             </Button>
           </DialogFooter>
         </DialogContent>
