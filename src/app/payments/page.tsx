@@ -60,7 +60,7 @@ function PaymentsPageContent() {
     classDays: number[];
   } | null>(null);
 
-  const { canEdit, canView } = usePermissions();
+  const { canEdit, canView, isOwner } = usePermissions();
   const canEditPayments = canEdit('payments');
   const canViewPayments = canView('payments');
   const viewOnly = canViewPayments && !canEditPayments; // view만 있고 edit 없는 경우
@@ -340,9 +340,11 @@ function PaymentsPageContent() {
                   <p className="text-2xl font-bold text-foreground">
                     {filteredPayments.length > 0 ? Math.round((paidCount / filteredPayments.length) * 100) : 0}%
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {paidAmount.toLocaleString()} / {totalAmount.toLocaleString()}원
-                  </p>
+                  {isOwner && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {paidAmount.toLocaleString()} / {totalAmount.toLocaleString()}원
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>

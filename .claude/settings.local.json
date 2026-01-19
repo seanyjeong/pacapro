@@ -203,7 +203,8 @@
       "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"SELECT id, name, role FROM users WHERE academy_id=1 AND role IN \\(''owner'', ''admin''\\);\")",
       "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"SELECT ps.id, ps.user_id, u.role, ps.created_at FROM push_subscriptions ps JOIN users u ON ps.user_id = u.id WHERE u.academy_id = 1;\")",
       "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"SELECT * FROM user_notification_settings WHERE user_id = 1;\")",
-      "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"SELECT ps.id, ps.user_id, u.role FROM push_subscriptions ps JOIN users u ON ps.user_id = u.id LEFT JOIN user_notification_settings ns ON u.id = ns.user_id WHERE u.academy_id = 1 AND u.role IN \\(''owner'', ''admin''\\) AND \\(ns.new_consultation IS NULL OR ns.new_consultation = TRUE\\);\")"
+      "Bash(MYSQL_PWD='q141171616!' mysql -u paca paca -e \"SELECT ps.id, ps.user_id, u.role FROM push_subscriptions ps JOIN users u ON ps.user_id = u.id LEFT JOIN user_notification_settings ns ON u.id = ns.user_id WHERE u.academy_id = 1 AND u.role IN \\(''owner'', ''admin''\\) AND \\(ns.new_consultation IS NULL OR ns.new_consultation = TRUE\\);\")",
+      "Bash(npx playwright install chromium)"
     ],
     "deny": [],
     "ask": []
