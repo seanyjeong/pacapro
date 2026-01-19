@@ -430,7 +430,6 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
   // 체험 일정 추가
   const addTrialDate = () => {
-    if (trialDates.length >= 2) return; // 최대 2회
     const today = new Date().toISOString().split('T')[0];
     setTrialDates([...trialDates, { date: today, time_slot: 'afternoon' }]);
   };
@@ -497,20 +496,18 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
               <div className="ml-6 space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="block text-sm font-medium text-foreground">
-                    체험 일정 <span className="text-muted-foreground text-xs">(최대 2회)</span>
+                    체험 일정
                   </label>
-                  {trialDates.length < 2 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addTrialDate}
-                      className="text-purple-600 border-purple-300 hover:bg-purple-50"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      일정 추가
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addTrialDate}
+                    className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    일정 추가
+                  </Button>
                 </div>
 
                 {trialDates.length === 0 ? (
@@ -576,20 +573,18 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="block text-sm font-medium text-foreground">
-                체험 일정 <span className="text-muted-foreground text-xs">(최대 2회)</span>
+                체험 일정
               </label>
-              {trialDates.length < 2 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addTrialDate}
-                  className="text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  일정 추가
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addTrialDate}
+                className="text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                일정 추가
+              </Button>
             </div>
 
             {trialDates.length === 0 ? (
