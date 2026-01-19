@@ -313,13 +313,14 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                   </button>
                 </td>
                 <td className="py-3 px-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center justify-end gap-3">
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => handleViewConsultation(student)}
                       title="상담 정보 보기"
                       disabled={loadingConsultationId === student.id}
+                      className="min-h-[40px] min-w-[40px]"
                     >
                       {loadingConsultationId === student.id ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -332,14 +333,16 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                       variant="outline"
                       onClick={() => handleTrialRegister(student)}
                       title="체험생으로 등록"
+                      className="min-h-[40px] px-3"
                     >
                       <Sparkles className="w-4 h-4 mr-1" />
                       체험 등록
                     </Button>
                     <Button
-                      size="sm"
+                      size="default"
                       variant="default"
                       onClick={() => handleRegister(student)}
+                      className="min-h-[40px] px-4"
                     >
                       <UserPlus className="w-4 h-4 mr-1" />
                       정식 등록
@@ -347,7 +350,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950 min-h-[40px] min-w-[40px]"
                       onClick={() => handleDelete(student)}
                       disabled={deletingId === student.id}
                     >
