@@ -2019,11 +2019,11 @@ router.get('/search', verifyToken, async (req, res) => {
 });
 
 /**
- * POST /paca/students/:id/rest
- * 학생 휴식 처리 (이월/환불 크레딧 생성)
+ * POST /paca/students/:id/process-rest
+ * 학생 휴식 처리 (이월/환불 크레딧 생성 + 미납금 조정)
  * Access: owner, admin
  */
-router.post('/:id/rest', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
+router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
     const studentId = parseInt(req.params.id);
     const connection = await db.getConnection();
 
@@ -2075,6 +2075,74 @@ router.post('/:id/rest', verifyToken, checkPermission('students', 'edit'), async
              WHERE id = ?`,
             [rest_start_date, rest_end_date || null, rest_reason || null, studentId]
         );
+
+        // 3-1. 휴원 시작월 미납금 조정
+        let unpaidAdjustment = null;
+        {
+            const restStartDate = new Date(rest_start_date);
+            const unpaidYear = restStartDate.getFullYear();
+            const unpaidMonth = restStartDate.getMonth() + 1;
+            const yearMonth = `${unpaidYear}-${String(unpaidMonth).padStart(2, '0')}`;
+            const dayOfMonth = restStartDate.getDate();
+
+            // 해당 월 미납 학원비 조회
+            const [unpaidPayments] = await connection.query(
+                `SELECT id, base_amount, discount_amount, final_amount, paid_amount, payment_status
+                 FROM student_payments
+                 WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ?
+                 AND payment_status IN ('pending', 'partial', 'overdue')`,
+                [studentId, req.user.academyId, yearMonth]
+            );
+
+            if (unpaidPayments.length > 0) {
+                const payment = unpaidPayments[0];
+                const originalAmount = parseFloat(payment.final_amount);
+                const paidAmount = parseFloat(payment.paid_amount) || 0;
+
+                if (dayOfMonth === 1) {
+                    // 1일자 휴원이면 해당 월 학원비 삭제
+                    await connection.query(
+                        'DELETE FROM student_payments WHERE id = ?',
+                        [payment.id]
+                    );
+                    unpaidAdjustment = {
+                        action: 'deleted',
+                        originalAmount,
+                        adjustedAmount: 0,
+                        message: `${yearMonth} 미납 학원비 삭제 (1일자 휴원)`
+                    };
+                } else {
+                    // 중간에 휴원이면 휴원 전날까지 일할계산
+                    const unpaidDaysInMonth = new Date(unpaidYear, unpaidMonth, 0).getDate();
+                    const attendedDays = dayOfMonth - 1;  // 휴원 시작일 전날까지
+
+                    // 일할계산 (천원 단위 절삭)
+                    const adjustedAmount = Math.floor((originalAmount * attendedDays / unpaidDaysInMonth) / 1000) * 1000;
+
+                    // 이미 납부한 금액보다 조정 금액이 적으면 조정 금액을 납부 금액으로
+                    const finalAdjustedAmount = Math.max(adjustedAmount, paidAmount);
+
+                    // 금액 조정
+                    await connection.query(
+                        `UPDATE student_payments SET
+                            final_amount = ?,
+                            payment_status = CASE WHEN ? <= ? THEN 'paid' ELSE payment_status END,
+                            updated_at = NOW()
+                         WHERE id = ?`,
+                        [finalAdjustedAmount, finalAdjustedAmount, paidAmount, payment.id]
+                    );
+
+                    unpaidAdjustment = {
+                        action: 'adjusted',
+                        originalAmount,
+                        adjustedAmount: finalAdjustedAmount,
+                        attendedDays,
+                        daysInMonth: unpaidDaysInMonth,
+                        message: `${yearMonth} 학원비 조정: ${originalAmount.toLocaleString()}원 → ${finalAdjustedAmount.toLocaleString()}원 (${attendedDays}일분)`
+                    };
+                }
+            }
+        }
 
         let restCredit = null;
 
@@ -2167,14 +2235,17 @@ router.post('/:id/rest', verifyToken, checkPermission('students', 'edit'), async
         res.json({
             message: '휴식 처리가 완료되었습니다.',
             student: updatedStudents[0],
-            restCredit
+            restCredit,
+            unpaidAdjustment
         });
     } catch (error) {
         await connection.rollback();
+        console.error('Error processing rest:', error);
         logger.error('Error processing rest:', error);
         res.status(500).json({
             error: 'Server Error',
-            message: 'Failed to process rest'
+            message: 'Failed to process rest',
+            detail: error.message
         });
     } finally {
         connection.release();

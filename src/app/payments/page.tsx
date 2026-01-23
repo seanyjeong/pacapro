@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Download, AlertCircle, Banknote, Bell, Search } from 'lucide-react';
+import { Plus, Download, AlertCircle, Bell, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentList } from '@/components/payments/payment-list';
 import { ManualCreditModal } from '@/components/students/manual-credit-modal';
@@ -46,7 +46,6 @@ function PaymentsPageContent() {
       setInitialFiltersApplied(true);
     }
   }, [searchParams, initialFiltersApplied, updateFilters]);
-  const [bulkCharging, setBulkCharging] = useState(false);
   const [sendingNotification, setSendingNotification] = useState(false);
   const [markingPaymentId, setMarkingPaymentId] = useState<number | null>(null);
 
@@ -80,35 +79,6 @@ function PaymentsPageContent() {
 
   const handleAddPayment = () => {
     router.push('/payments/new');
-  };
-
-  const handleBulkMonthlyCharge = async () => {
-    if (!confirm('모든 재원 학생에 대해 이번 달 수강료를 청구하시겠습니까?')) return;
-
-    try {
-      setBulkCharging(true);
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = today.getMonth() + 1;
-
-      // 납부기한은 백엔드에서 학생별로 계산 (학원 설정 + 출석일 기반)
-      const result = await paymentsAPI.bulkMonthlyCharge({
-        year,
-        month,
-      });
-
-      const messages = [];
-      if (result.created > 0) messages.push(`${result.created}명 생성`);
-      if (result.updated > 0) messages.push(`${result.updated}명 업데이트`);
-      if (result.skipped > 0) messages.push(`${result.skipped}명 건너뜀`);
-
-      toast.success(messages.length > 0 ? `학원비 처리 완료: ${messages.join(', ')}` : '처리할 학원비가 없습니다.');
-      reload();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || '일괄 청구에 실패했습니다.');
-    } finally {
-      setBulkCharging(false);
-    }
   };
 
   const handleSendUnpaidNotification = async () => {
@@ -238,10 +208,6 @@ function PaymentsPageContent() {
           </Button>
           {canEditPayments && (
             <>
-              <Button variant="outline" onClick={handleBulkMonthlyCharge} disabled={bulkCharging}>
-                <Banknote className="w-4 h-4 mr-2" />
-                {bulkCharging ? '청구 중...' : '월 수강료 일괄 청구'}
-              </Button>
               <Button variant="outline" onClick={handleSendUnpaidNotification} disabled={sendingNotification || unpaidCount === 0}>
                 <Bell className="w-4 h-4 mr-2" />
                 {sendingNotification ? '발송 중...' : `미납 알림 (${unpaidCount}명)`}
