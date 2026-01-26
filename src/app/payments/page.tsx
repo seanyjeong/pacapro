@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Download, AlertCircle, Bell, Search } from 'lucide-react';
+import { Plus, Download, AlertCircle, Bell, Search, Banknote } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentList } from '@/components/payments/payment-list';
 import { ManualCreditModal } from '@/components/students/manual-credit-modal';
