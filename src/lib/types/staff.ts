@@ -34,6 +34,7 @@ export interface Permissions {
   dashboard_unpaid?: PagePermission;   // 미수금 현황
   // 세부 기능 권한
   overtime_approval?: PagePermission;  // 초과근무 승인
+  class_days?: PagePermission;  // 수업일 관리
 }
 
 // 직원 정보
@@ -111,6 +112,7 @@ export const DEFAULT_PERMISSIONS: Permissions = {
   dashboard_unpaid: { view: false, edit: false },
   // 세부 기능 권한
   overtime_approval: { view: false, edit: false },
+  class_days: { view: false, edit: false },
 };
 
 // 페이지 권한 카테고리 구조 (사이드바와 동일)
@@ -136,6 +138,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
       { key: 'schedules', label: '수업스케줄', description: '시간표, 출결' },
       { key: 'academy_events', label: '학원일정', description: '학원 일정 관리' },
       { key: 'seasons', label: '시즌', description: '수시/정시 시즌' },
+      { key: 'class_days', label: '수업일관리', description: '수업 요일 일괄 변경' },
     ],
   },
   {

@@ -79,7 +79,7 @@ const navCategories: NavCategory[] = [
             { title: '학생', href: '/students', icon: Users, permissionKey: 'students' },
             { title: '강사', href: '/instructors', icon: UserCog, permissionKey: 'instructors' },
             { title: '수업스케줄', href: '/schedules', icon: Calendar, permissionKey: 'schedules' },
-            { title: '수업일관리', href: '/students/class-days', icon: CalendarCog, permissionKey: 'students' },
+            { title: '수업일관리', href: '/students/class-days', icon: CalendarCog, permissionKey: 'class_days' },
             { title: '학원일정', href: '/academy-events', icon: CalendarDays, permissionKey: 'academy_events' },
             { title: '시즌', href: '/seasons', icon: Trophy, permissionKey: 'seasons' },
         ],

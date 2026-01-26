@@ -348,7 +348,7 @@ router.get('/', verifyToken, async (req, res) => {
  * 재원(active) 학생 전체 수업일 목록 반환
  * Access: owner, admin, staff
  */
-router.get('/class-days', verifyToken, requireRole('owner', 'admin', 'staff'), async (req, res) => {
+router.get('/class-days', verifyToken, checkPermission('class_days', 'view'), async (req, res) => {
     try {
         const academyId = req.user.academyId;
 
@@ -391,7 +391,7 @@ router.get('/class-days', verifyToken, requireRole('owner', 'admin', 'staff'), a
  * 여러 학생 수업일 일괄 변경
  * Access: owner, admin
  */
-router.put('/class-days/bulk', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
+router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'), async (req, res) => {
     const { effective_from, students: studentUpdates } = req.body;
 
     if (!Array.isArray(studentUpdates) || studentUpdates.length === 0) {
@@ -482,7 +482,7 @@ router.put('/class-days/bulk', verifyToken, checkPermission('students', 'edit'),
  * 개별 학생 수업일 변경 (즉시 또는 예약)
  * Access: owner, admin
  */
-router.put('/:id/class-days', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
+router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit'), async (req, res) => {
     const studentId = parseInt(req.params.id);
     const { class_days, effective_from } = req.body;
 
@@ -575,7 +575,7 @@ router.put('/:id/class-days', verifyToken, checkPermission('students', 'edit'), 
  * 예약된 수업일 변경 취소
  * Access: owner, admin
  */
-router.delete('/:id/class-days-schedule', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
+router.delete('/:id/class-days-schedule', verifyToken, checkPermission('class_days', 'edit'), async (req, res) => {
     const studentId = parseInt(req.params.id);
 
     try {

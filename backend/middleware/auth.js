@@ -205,7 +205,8 @@ const PAGE_LABELS = {
     staff: '직원 관리',
     dashboard_finance: '대시보드 매출',
     dashboard_unpaid: '대시보드 미수금',
-    overtime_approval: '초과근무 승인'
+    overtime_approval: '초과근무 승인',
+    class_days: '수업일 관리'
 };
 
 /**
