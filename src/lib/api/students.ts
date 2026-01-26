@@ -16,6 +16,9 @@ import type {
   ManualCreditRequest,
   ManualCreditResponse,
   RestCreditsResponse,
+  ClassDaysResponse,
+  ClassDaysUpdateRequest,
+  ClassDaysBulkUpdateRequest,
 } from '@/lib/types/student';
 
 export const studentsAPI = {
@@ -260,5 +263,46 @@ export const studentsAPI = {
     };
   }> => {
     return await apiClient.post(`/students/${id}/process-rest`, data);
+  },
+
+  // ===== 수업일 관리 API =====
+
+  /**
+   * 수업일 관리 목록 조회
+   * GET /paca/students/class-days
+   */
+  getClassDays: async (): Promise<ClassDaysResponse> => {
+    return await apiClient.get('/students/class-days');
+  },
+
+  /**
+   * 개별 학생 수업일 변경
+   * PUT /paca/students/:id/class-days
+   */
+  updateClassDays: async (id: number, data: ClassDaysUpdateRequest): Promise<{
+    message: string;
+    mode: 'immediate' | 'scheduled';
+  }> => {
+    return await apiClient.put(`/students/${id}/class-days`, data);
+  },
+
+  /**
+   * 여러 학생 수업일 일괄 변경
+   * PUT /paca/students/class-days/bulk
+   */
+  bulkUpdateClassDays: async (data: ClassDaysBulkUpdateRequest): Promise<{
+    message: string;
+    mode: 'immediate' | 'scheduled';
+    results: Array<{ id: number; success: boolean; mode?: string }>;
+  }> => {
+    return await apiClient.put('/students/class-days/bulk', data);
+  },
+
+  /**
+   * 예약된 수업일 변경 취소
+   * DELETE /paca/students/:id/class-days-schedule
+   */
+  cancelClassDaysSchedule: async (id: number): Promise<{ message: string }> => {
+    return await apiClient.delete(`/students/${id}/class-days-schedule`);
   },
 };

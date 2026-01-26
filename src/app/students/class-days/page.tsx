@@ -1,0 +1,387 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Loader2, Save, Calendar, X, AlertCircle } from 'lucide-react';
+import { studentsAPI } from '@/lib/api/students';
+import { WEEKDAY_OPTIONS, WEEKDAY_MAP, formatClassDays } from '@/lib/types/student';
+import type { ClassDaysStudent } from '@/lib/types/student';
+import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+
+// 적용 시작월 옵션 생성
+function getEffectiveMonthOptions() {
+  const now = new Date();
+  const options: { value: string; label: string }[] = [
+    { value: 'immediate', label: '즉시 적용 (이번 달)' },
+  ];
+
+  // 다음 달부터 6개월 옵션
+  for (let i = 1; i <= 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const year = d.getFullYear();
+    const month = d.getMonth() + 1;
+    const value = `${year}-${String(month).padStart(2, '0')}-01`;
+    options.push({
+      value,
+      label: `${year}년 ${month}월부터`,
+    });
+  }
+
+  return options;
+}
+
+// 학생별 수정 상태
+interface StudentEdit {
+  class_days: number[];
+  changed: boolean;
+}
+
+export default function ClassDaysPage() {
+  const [students, setStudents] = useState<ClassDaysStudent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [effectiveFrom, setEffectiveFrom] = useState('immediate');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [edits, setEdits] = useState<Map<number, StudentEdit>>(new Map());
+
+  const monthOptions = getEffectiveMonthOptions();
+
+  const fetchStudents = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await studentsAPI.getClassDays();
+      setStudents(res.students);
+      setEdits(new Map());
+      setSelectedIds(new Set());
+    } catch (error) {
+      console.error('Failed to fetch class days:', error);
+      toast.error('수업일 목록을 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+
+  // 요일 토글
+  const toggleDay = (studentId: number, dayValue: number) => {
+    const student = students.find(s => s.id === studentId);
+    if (!student) return;
+
+    const currentEdit = edits.get(studentId);
+    const currentDays = currentEdit ? currentEdit.class_days : [...student.class_days];
+
+    const newDays = currentDays.includes(dayValue)
+      ? currentDays.filter(d => d !== dayValue)
+      : [...currentDays, dayValue].sort((a, b) => a - b);
+
+    // 원래 값과 비교하여 변경 여부 판단
+    const originalDays = new Set(student.class_days);
+    const newDaysSet = new Set(newDays);
+    const changed = originalDays.size !== newDaysSet.size ||
+      [...originalDays].some(d => !newDaysSet.has(d));
+
+    setEdits(prev => {
+      const next = new Map(prev);
+      if (changed) {
+        next.set(studentId, { class_days: newDays, changed: true });
+      } else {
+        next.delete(studentId);
+      }
+      return next;
+    });
+  };
+
+  // 전체 선택
+  const toggleSelectAll = () => {
+    if (selectedIds.size === students.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(students.map(s => s.id)));
+    }
+  };
+
+  // 개별 선택
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  // 저장 (변경된 항목만)
+  const handleSave = async () => {
+    const changedStudents = Array.from(edits.entries())
+      .filter(([, edit]) => edit.changed)
+      .map(([id, edit]) => ({
+        id,
+        class_days: edit.class_days,
+      }));
+
+    if (changedStudents.length === 0) {
+      toast.info('변경된 내용이 없습니다.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const effective = effectiveFrom === 'immediate' ? null : effectiveFrom;
+      const res = await studentsAPI.bulkUpdateClassDays({
+        effective_from: effective,
+        students: changedStudents,
+      });
+
+      toast.success(res.message);
+      await fetchStudents();
+    } catch (error) {
+      console.error('Save failed:', error);
+      toast.error('저장에 실패했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // 예약 취소
+  const handleCancelSchedule = async (studentId: number) => {
+    try {
+      await studentsAPI.cancelClassDaysSchedule(studentId);
+      toast.success('예약된 변경이 취소되었습니다.');
+      await fetchStudents();
+    } catch (error) {
+      console.error('Cancel failed:', error);
+      toast.error('예약 취소에 실패했습니다.');
+    }
+  };
+
+  // 변경된 학생 수
+  const changedCount = Array.from(edits.values()).filter(e => e.changed).length;
+
+  // 예약 변경 있는 학생 수
+  const scheduledCount = students.filter(s => s.class_days_next !== null).length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">수업일 관리</h1>
+          <p className="text-muted-foreground mt-1">
+            재원생 {students.length}명의 수업 요일을 관리합니다.
+          </p>
+        </div>
+      </div>
+
+      {/* 컨트롤 바 */}
+      <Card>
+        <CardContent className="py-4 px-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-muted-foreground" />
+              <span className="text-sm font-medium">적용 시작월:</span>
+              <Select value={effectiveFrom} onValueChange={setEffectiveFrom}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {monthOptions.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {changedCount > 0 && (
+                <Badge variant="secondary">
+                  {changedCount}명 변경됨
+                </Badge>
+              )}
+              {scheduledCount > 0 && (
+                <Badge variant="outline" className="text-orange-600 border-orange-300">
+                  {scheduledCount}명 변경 예정
+                </Badge>
+              )}
+              <Button
+                onClick={handleSave}
+                disabled={changedCount === 0 || saving}
+              >
+                {saving ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                저장 ({changedCount}명)
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 학생 목록 테이블 */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="p-3 text-left w-10">
+                    <Checkbox
+                      checked={selectedIds.size === students.length && students.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </th>
+                  <th className="p-3 text-left text-sm font-medium">이름</th>
+                  <th className="p-3 text-left text-sm font-medium">학년</th>
+                  <th className="p-3 text-left text-sm font-medium">현재 수업일</th>
+                  <th className="p-3 text-center text-sm font-medium">수업일 변경</th>
+                  <th className="p-3 text-left text-sm font-medium">변경 예정</th>
+                </tr>
+              </thead>
+              <tbody>
+                {students.map(student => {
+                  const edit = edits.get(student.id);
+                  const currentDays = edit ? edit.class_days : student.class_days;
+                  const hasChange = edit?.changed;
+                  const hasScheduled = student.class_days_next !== null;
+
+                  return (
+                    <tr
+                      key={student.id}
+                      className={cn(
+                        'border-b hover:bg-muted/30 transition-colors',
+                        hasChange && 'bg-blue-50/50 dark:bg-blue-950/20',
+                      )}
+                    >
+                      <td className="p-3">
+                        <Checkbox
+                          checked={selectedIds.has(student.id)}
+                          onCheckedChange={() => toggleSelect(student.id)}
+                        />
+                      </td>
+                      <td className="p-3">
+                        <span className="font-medium">{student.name}</span>
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="outline">{student.grade || '-'}</Badge>
+                      </td>
+                      <td className="p-3">
+                        <span className="text-sm">
+                          {formatClassDays(student.class_days)} (주{student.weekly_count}회)
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center justify-center gap-1">
+                          {WEEKDAY_OPTIONS.map(opt => {
+                            const isActive = currentDays.includes(opt.value);
+                            const wasOriginal = student.class_days.includes(opt.value);
+                            const isChanged = isActive !== wasOriginal;
+
+                            return (
+                              <button
+                                key={opt.value}
+                                onClick={() => toggleDay(student.id, opt.value)}
+                                className={cn(
+                                  'w-8 h-8 rounded-md text-xs font-medium transition-all',
+                                  'border',
+                                  isActive
+                                    ? 'bg-primary text-primary-foreground border-primary'
+                                    : 'bg-background text-muted-foreground border-input hover:border-primary/50',
+                                  isChanged && isActive && 'ring-2 ring-blue-400',
+                                  isChanged && !isActive && 'ring-2 ring-red-300 border-red-300',
+                                )}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
+                          {hasChange && (
+                            <button
+                              onClick={() => {
+                                setEdits(prev => {
+                                  const next = new Map(prev);
+                                  next.delete(student.id);
+                                  return next;
+                                });
+                              }}
+                              className="ml-1 text-muted-foreground hover:text-foreground"
+                              title="변경 취소"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        {hasScheduled ? (
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm">
+                              <Badge variant="outline" className="text-orange-600 border-orange-300">
+                                {formatClassDays(student.class_days_next!)}
+                              </Badge>
+                              <span className="ml-1 text-xs text-muted-foreground">
+                                ({student.class_days_effective_from?.slice(0, 7)}~)
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => handleCancelSchedule(student.id)}
+                              className="text-red-500 hover:text-red-700"
+                              title="예약 취소"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : hasChange ? (
+                          <Badge variant="secondary" className="text-blue-600">
+                            {formatClassDays(currentDays)} (주{currentDays.length}회)
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {students.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                      <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      재원 중인 학생이 없습니다.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

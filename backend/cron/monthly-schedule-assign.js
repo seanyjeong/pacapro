@@ -87,6 +87,23 @@ async function runMonthlyAssignment() {
     console.log(`========================================`);
 
     try {
+        // 예약된 class_days 변경 적용 (effective_from이 오늘 이하인 학생)
+        const todayStr = today.toISOString().split('T')[0];
+        const [scheduledUpdates] = await db.query(
+            `UPDATE students
+             SET class_days = class_days_next,
+                 weekly_count = JSON_LENGTH(class_days_next),
+                 class_days_next = NULL,
+                 class_days_effective_from = NULL
+             WHERE class_days_effective_from IS NOT NULL
+               AND class_days_effective_from <= ?
+               AND class_days_next IS NOT NULL`,
+            [todayStr]
+        );
+        if (scheduledUpdates.affectedRows > 0) {
+            console.log(`[예약 적용] ${scheduledUpdates.affectedRows}명의 수업일 변경이 적용되었습니다.`);
+        }
+
         // 모든 학원 조회
         const [academies] = await db.query(
             `SELECT DISTINCT academy_id FROM students WHERE status = 'active' AND deleted_at IS NULL`

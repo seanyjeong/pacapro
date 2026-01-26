@@ -38,6 +38,7 @@ import {
     CalendarDays,
     PanelLeftClose,
     PanelLeft,
+    CalendarCog,
 } from 'lucide-react';
 import type { Permissions } from '@/lib/types/staff';
 import apiClient from '@/lib/api/client';
@@ -78,6 +79,7 @@ const navCategories: NavCategory[] = [
             { title: '학생', href: '/students', icon: Users, permissionKey: 'students' },
             { title: '강사', href: '/instructors', icon: UserCog, permissionKey: 'instructors' },
             { title: '수업스케줄', href: '/schedules', icon: Calendar, permissionKey: 'schedules' },
+            { title: '수업일관리', href: '/students/class-days', icon: CalendarCog, permissionKey: 'students' },
             { title: '학원일정', href: '/academy-events', icon: CalendarDays, permissionKey: 'academy_events' },
             { title: '시즌', href: '/seasons', icon: Trophy, permissionKey: 'seasons' },
         ],
@@ -620,7 +622,7 @@ export function Sidebar() {
             {!collapsed && (
                 <div className="p-4 border-t border-border">
                     <div className="text-xs text-muted-foreground text-center space-y-1">
-                        <div>P-ACA v3.6.6</div>
+                        <div>P-ACA v3.7.0</div>
                         <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-01-23</div>
                         <div>문의: 010-2144-6755</div>
                     </div>

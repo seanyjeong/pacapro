@@ -866,6 +866,23 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 </button>
               ))}
             </div>
+            {/* 예약 변경 알림 (수정 모드에서만) */}
+            {mode === 'edit' && initialData?.class_days_next && initialData?.class_days_effective_from && (
+              <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
+                <p className="text-sm text-orange-700 dark:text-orange-400">
+                  변경 예정: {(() => {
+                    const days = typeof initialData.class_days_next === 'string'
+                      ? JSON.parse(initialData.class_days_next as string)
+                      : initialData.class_days_next;
+                    const dayMap: Record<number, string> = { 0: '일', 1: '월', 2: '화', 3: '수', 4: '목', 5: '금', 6: '토' };
+                    return Array.isArray(days) ? days.map((d: number) => dayMap[d] || '').join(', ') : '-';
+                  })()} ({initialData.class_days_effective_from?.slice(0, 7)}부터)
+                </p>
+                <p className="text-xs text-orange-600 dark:text-orange-500 mt-1">
+                  여기서 수업요일을 직접 수정하면 예약 변경은 취소됩니다.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* 수업 시간대 */}

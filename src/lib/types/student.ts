@@ -69,6 +69,9 @@ export interface Student {
   time_slot: 'morning' | 'afternoon' | 'evening' | null; // 수업 시간대
   // 메모
   memo: string | null; // 학생 메모
+  // 수업일 예약 변경
+  class_days_next: number[] | string | null; // 변경 예정 수업요일
+  class_days_effective_from: string | null; // 변경 적용 시작일 (YYYY-MM-DD)
   // 상담일
   consultation_date: string | null; // 상담 완료일
   created_at: string;
@@ -426,6 +429,41 @@ export interface ManualCreditRequest {
   // 공통
   reason: string;
   notes?: string;
+}
+
+// ===== 수업일 관리 관련 타입 =====
+
+// 수업일 관리 목록용 학생 인터페이스
+export interface ClassDaysStudent {
+  id: number;
+  name: string;
+  grade: Grade | null;
+  class_days: number[];
+  weekly_count: number;
+  time_slot: 'morning' | 'afternoon' | 'evening' | null;
+  class_days_next: number[] | null;
+  class_days_effective_from: string | null;
+}
+
+// 수업일 관리 목록 응답
+export interface ClassDaysResponse {
+  message: string;
+  students: ClassDaysStudent[];
+}
+
+// 수업일 변경 요청
+export interface ClassDaysUpdateRequest {
+  class_days: number[];
+  effective_from: string | null; // null이면 즉시 적용
+}
+
+// 수업일 일괄 변경 요청
+export interface ClassDaysBulkUpdateRequest {
+  effective_from: string | null;
+  students: Array<{
+    id: number;
+    class_days: number[];
+  }>;
 }
 
 // 수동 크레딧 생성 응답

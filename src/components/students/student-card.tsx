@@ -163,6 +163,11 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw,
                   <div className="text-foreground font-medium">
                     {formatClassDays(student.class_days)} (주 {student.weekly_count}회)
                   </div>
+                  {student.class_days_next && student.class_days_effective_from && (
+                    <div className="text-xs text-orange-600 mt-1">
+                      변경 예정: {formatClassDays(student.class_days_next)} ({student.class_days_effective_from.slice(0, 7)}~)
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-start">
