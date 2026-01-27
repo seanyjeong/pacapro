@@ -1512,10 +1512,8 @@ router.post('/prepaid-preview', verifyToken, async (req, res) => {
         for (const yearMonth of months) {
             // 기존 결제 레코드 확인
             const [existing] = await db.query(
-                `SELECT id, payment_status, paid_amount, final_amount
-                 FROM student_payments
-                 WHERE student_id = ? AND year_month = ? AND payment_type = 'monthly'`,
-                [student_id, yearMonth]
+                'SELECT id, payment_status, paid_amount, final_amount FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ?',
+                [student_id, yearMonth, 'monthly']
             );
 
             let status = 'new';
@@ -1643,11 +1641,8 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
         for (const yearMonth of months) {
             // 기존 레코드 SELECT FOR UPDATE
             const [existing] = await connection.query(
-                `SELECT id, payment_status, paid_amount, final_amount
-                 FROM student_payments
-                 WHERE student_id = ? AND year_month = ? AND payment_type = 'monthly'
-                 FOR UPDATE`,
-                [student_id, yearMonth]
+                'SELECT id, payment_status, paid_amount, final_amount FROM student_payments WHERE student_id = ? AND `year_month` = ? AND payment_type = ? FOR UPDATE',
+                [student_id, yearMonth, 'monthly']
             );
 
             // 이미 완납이면 skip
@@ -1671,7 +1666,7 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
                 // INSERT 새 레코드 (paid 상태로)
                 await connection.query(
                     `INSERT INTO student_payments (
-                        student_id, academy_id, year_month, payment_type,
+                        student_id, academy_id, \`year_month\`, payment_type,
                         base_amount, discount_amount, additional_amount, final_amount,
                         paid_amount, paid_date, due_date,
                         payment_status, payment_method, description, notes,
