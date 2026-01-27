@@ -19,6 +19,10 @@ import type {
   BulkChargeResponse,
   PaymentStatsResponse,
   PaymentFilters,
+  PrepaidPreviewRequest,
+  PrepaidPreviewResponse,
+  PrepaidPayRequest,
+  PrepaidPayResponse,
 } from '@/lib/types/payment';
 
 export const paymentsAPI = {
@@ -119,5 +123,13 @@ export const paymentsAPI = {
     const url = queryString ? `/payments/stats/summary?${queryString}` : '/payments/stats/summary';
 
     return await apiClient.get<PaymentStatsResponse>(url);
+  },
+
+  prepaidPreview: async (data: PrepaidPreviewRequest): Promise<PrepaidPreviewResponse> => {
+    return await apiClient.post<PrepaidPreviewResponse>('/payments/prepaid-preview', data);
+  },
+
+  prepaidPay: async (data: PrepaidPayRequest): Promise<PrepaidPayResponse> => {
+    return await apiClient.post<PrepaidPayResponse>('/payments/prepaid-pay', data);
   },
 };

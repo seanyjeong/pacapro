@@ -184,3 +184,48 @@ export const PAYMENT_METHOD_OPTIONS = [
   { value: 'cash', label: '현금' },
   { value: 'other', label: '기타' },
 ];
+
+// 선납 할인 결제 타입
+export interface PrepaidPreviewRequest {
+  student_id: number;
+  months: string[];
+  prepaid_discount_rate: number;
+}
+
+export interface PrepaidMonthDetail {
+  year_month: string;
+  base_amount: number;
+  student_discount: number;
+  prepaid_discount: number;
+  final_amount: number;
+  status: 'new' | 'existing_unpaid' | 'already_paid';
+}
+
+export interface PrepaidPreviewResponse {
+  student_name: string;
+  monthly_tuition: number;
+  student_discount_rate: number;
+  prepaid_discount_rate: number;
+  months: PrepaidMonthDetail[];
+  total_final: number;
+  total_prepaid_discount: number;
+  months_payable: number;
+  months_already_paid: number;
+}
+
+export interface PrepaidPayRequest {
+  student_id: number;
+  months: string[];
+  prepaid_discount_rate: number;
+  payment_method: 'account' | 'card' | 'cash' | 'other';
+  payment_date: string;
+}
+
+export interface PrepaidPayResponse {
+  message: string;
+  prepaid_group_id: string;
+  total_amount: number;
+  total_discount: number;
+  months_processed: string[];
+  months_skipped: string[];
+}

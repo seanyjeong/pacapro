@@ -190,6 +190,8 @@ Authorization: Bearer <JWT_TOKEN>
 | GET | `/stats/summary` | payments.view | 통계 요약 |
 | POST | `/generate-prorated` | payments.edit | 일할 학원비 생성 |
 | POST | `/generate-monthly-for-student` | payments.edit | 특정 학생 월 학원비 생성 |
+| POST | `/prepaid-preview` | 인증 | 선납 할인 미리보기 (금액 계산) |
+| POST | `/prepaid-pay` | 인증 | 선납 할인 결제 실행 (2~6개월) |
 
 ---
 

@@ -11,13 +11,14 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Plus, Coins } from 'lucide-react';
+import { CreditCard, Plus, Coins, Banknote } from 'lucide-react';
 import type { StudentPayment, RestCredit } from '@/lib/types/student';
 import { formatDate, formatCurrency, getPaymentStatusColor } from '@/lib/utils/student-helpers';
 import { PAYMENT_STATUS_LABELS, REST_CREDIT_TYPE_LABELS, REST_CREDIT_STATUS_LABELS, parseClassDays } from '@/lib/types/student';
 import { PAYMENT_METHOD_LABELS } from '@/lib/types/payment';
 import { studentsAPI } from '@/lib/api/students';
 import { ManualCreditModal } from './manual-credit-modal';
+import { PrepaidPaymentModal } from '@/components/payments/prepaid-payment-modal';
 
 interface StudentPaymentsProps {
   payments: StudentPayment[];
@@ -78,6 +79,7 @@ export function StudentPaymentsComponent({
   const [creditsLoading, setCreditsLoading] = useState(false);
   const [pendingTotal, setPendingTotal] = useState(0);
   const [creditModalOpen, setCreditModalOpen] = useState(false);
+  const [prepaidModalOpen, setPrepaidModalOpen] = useState(false);
 
   // 크레딧 적용 모달 상태
   const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -173,14 +175,25 @@ export function StudentPaymentsComponent({
                 미사용 크레딧은 다음 달 수강료 생성 시 자동 차감됩니다.
               </p>
             </div>
-            <Button
-              size="sm"
-              onClick={() => setCreditModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              크레딧 추가
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPrepaidModalOpen(true)}
+                className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950"
+              >
+                <Banknote className="w-4 h-4 mr-1" />
+                선납 결제
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setCreditModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                크레딧 추가
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {creditsLoading ? (
@@ -367,6 +380,21 @@ export function StudentPaymentsComponent({
           weeklyCount={weeklyCount}
           classDays={parseClassDays(classDays || [])}
           onSuccess={handleCreditSuccess}
+        />
+      )}
+
+      {/* 선납 결제 모달 */}
+      {canUseCredit && (
+        <PrepaidPaymentModal
+          open={prepaidModalOpen}
+          onClose={() => setPrepaidModalOpen(false)}
+          studentId={studentId}
+          studentName={studentName}
+          monthlyTuition={monthlyTuition}
+          onSuccess={() => {
+            loadCredits();
+            window.location.reload();
+          }}
         />
       )}
 
