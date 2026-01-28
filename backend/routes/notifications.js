@@ -45,7 +45,7 @@ if (!ENCRYPTION_KEY) {
  * GET /paca/notifications/settings
  * 알림 설정 조회
  */
-router.get('/settings', verifyToken, checkPermission('settings', 'view'), async (req, res) => {
+router.get('/settings', verifyToken, checkPermission('notifications', 'view'), async (req, res) => {
     try {
         const [settings] = await db.query(
             `SELECT * FROM notification_settings WHERE academy_id = ?`,
@@ -200,7 +200,7 @@ router.get('/settings', verifyToken, checkPermission('settings', 'view'), async 
  * PUT /paca/notifications/settings
  * 알림 설정 저장
  */
-router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const {
             service_type,
@@ -573,7 +573,7 @@ router.put('/settings', verifyToken, checkPermission('settings', 'edit'), async 
  * POST /paca/notifications/test
  * 테스트 메시지 발송
  */
-router.post('/test', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/test', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { phone } = req.body;
 
@@ -725,7 +725,7 @@ router.post('/test', verifyToken, checkPermission('settings', 'edit'), async (re
  * POST /paca/notifications/send-unpaid
  * 미납자 일괄 알림 발송
  */
-router.post('/send-unpaid', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/send-unpaid', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { year, month } = req.body;
 
@@ -803,6 +803,7 @@ router.post('/send-unpaid', verifyToken, checkPermission('settings', 'edit'), as
             WHERE p.academy_id = ?
                 AND p.year_month = ?
                 AND p.payment_status IN ('pending', 'partial')
+                AND p.final_amount > 0
                 AND s.status = 'active'
                 AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)
                 AND s.deleted_at IS NULL`,
@@ -952,7 +953,7 @@ router.post('/send-unpaid', verifyToken, checkPermission('settings', 'edit'), as
  * POST /paca/notifications/send-individual
  * 개별 학생 알림 발송
  */
-router.post('/send-individual', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/send-individual', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { payment_id } = req.body;
 
@@ -1133,7 +1134,7 @@ router.post('/send-individual', verifyToken, checkPermission('settings', 'edit')
  * GET /paca/notifications/logs
  * 발송 내역 조회
  */
-router.get('/logs', verifyToken, checkPermission('settings', 'view'), async (req, res) => {
+router.get('/logs', verifyToken, checkPermission('notifications', 'view'), async (req, res) => {
     try {
         const { page = 1, limit = 20, status, start_date, end_date } = req.query;
         const offset = (page - 1) * limit;
@@ -1276,6 +1277,7 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
                     JOIN students s ON p.student_id = s.id
                     WHERE p.academy_id = ?
                     AND p.payment_status IN ('pending', 'partial')
+                    AND p.final_amount > 0
                     AND p.year_month = ?
                     AND s.status = 'active'
                     AND s.deleted_at IS NULL
@@ -1298,8 +1300,16 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
                 const dueDay = setting.tuition_due_day || 1;
                 const dueDayText = `${dueDay}일`;
 
-                // 유효한 전화번호 필터링
+                // 유효한 전화번호 필터링 + 방어적 체크 (payment_id 필수)
                 const validRecipients = unpaidPayments
+                    .filter(p => {
+                        // 방어적 체크: payment_id가 없으면 제외
+                        if (!p.payment_id) {
+                            logger.warn(`[솔라피 자동발송] 학생 ${p.student_id} 제외: payment_id 없음`);
+                            return false;
+                        }
+                        return true;
+                    })
                     .map(p => {
                         const phone = isValidPhoneNumber(p.parent_phone) ? p.parent_phone : p.student_phone;
                         return { ...p, effectivePhone: phone };
@@ -1312,6 +1322,10 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
                     results.push(academyResult);
                     continue;
                 }
+
+                // 디버깅: 최종 발송 대상 로깅
+                logger.info(`[솔라피 자동발송] ${setting.academy_name}: 발송 대상 ${validRecipients.length}명 - ${validRecipients.map(p => `${p.student_id}(pid:${p.payment_id})`).join(', ')}`);
+
 
                 // 이번 달에 이미 알림을 받은 학생 조회 (첫 수업일 vs 두 번째 수업일 구분)
                 const studentIds = validRecipients.map(p => p.student_id);
@@ -1449,7 +1463,7 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
  * POST /paca/notifications/test-consultation
  * 상담확정 알림톡 테스트 발송
  */
-router.post('/test-consultation', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/test-consultation', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { phone } = req.body;
 
@@ -1593,7 +1607,7 @@ router.post('/test-consultation', verifyToken, checkPermission('settings', 'edit
  * POST /paca/notifications/test-trial
  * 체험수업 알림톡 테스트 발송
  */
-router.post('/test-trial', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/test-trial', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { phone } = req.body;
 
@@ -1742,7 +1756,7 @@ router.post('/test-trial', verifyToken, checkPermission('settings', 'edit'), asy
  * POST /paca/notifications/test-overdue
  * 미납자 알림톡 테스트 발송
  */
-router.post('/test-overdue', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/test-overdue', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { phone } = req.body;
 
@@ -2135,7 +2149,7 @@ router.post('/send-trial-today-auto', verifyToken, async (req, res) => {
  * GET /paca/notifications/stats
  * 발송 통계
  */
-router.get('/stats', verifyToken, checkPermission('settings', 'view'), async (req, res) => {
+router.get('/stats', verifyToken, checkPermission('notifications', 'view'), async (req, res) => {
     try {
         const { year, month } = req.query;
 
@@ -2179,7 +2193,7 @@ router.get('/stats', verifyToken, checkPermission('settings', 'view'), async (re
  * POST /paca/notifications/test-sens-consultation
  * SENS 상담확정 알림톡 테스트 발송
  */
-router.post('/test-sens-consultation', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/test-sens-consultation', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { phone } = req.body;
 
@@ -2301,7 +2315,7 @@ router.post('/test-sens-consultation', verifyToken, checkPermission('settings', 
  * POST /paca/notifications/test-sens-trial
  * SENS 체험수업 알림톡 테스트 발송
  */
-router.post('/test-sens-trial', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/test-sens-trial', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { phone } = req.body;
 
@@ -2415,7 +2429,7 @@ router.post('/test-sens-trial', verifyToken, checkPermission('settings', 'edit')
  * POST /paca/notifications/test-sens-overdue
  * SENS 미납자 알림톡 테스트 발송
  */
-router.post('/test-sens-overdue', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/test-sens-overdue', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { phone } = req.body;
 
@@ -2601,6 +2615,7 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
                        AND s.status = 'active'
                        AND s.deleted_at IS NULL
                        AND p.payment_status IN ('pending', 'partial')
+                       AND p.final_amount > 0
                        AND p.year_month = ?
                        AND JSON_CONTAINS(COALESCE(s.class_days, '[]'), ?)
                        AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)
@@ -2608,10 +2623,17 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
                     [setting.academy_id, yearMonth, JSON.stringify(dayOfWeek)]
                 );
 
-                // 복호화
-                const unpaidStudents = decryptStudentArray(unpaidStudentsRaw);
+                // 복호화 + 방어적 필터링 (payment_id 필수)
+                const unpaidStudents = decryptStudentArray(unpaidStudentsRaw)
+                    .filter(student => {
+                        if (!student.payment_id) {
+                            logger.warn(`[SENS 자동발송] 학생 ${student.id} 제외: payment_id 없음`);
+                            return false;
+                        }
+                        return true;
+                    });
 
-                logger.info(`[SENS 자동발송] ${setting.academy_name}: 오늘 수업 있는 미납자 ${unpaidStudents.length}명`);
+                logger.info(`[SENS 자동발송] ${setting.academy_name}: 오늘 수업 있는 미납자 ${unpaidStudents.length}명 - ${unpaidStudents.map(s => `${s.id}(pid:${s.payment_id})`).join(', ')}`);
 
                 let sentCount = 0;
                 let failCount = 0;
@@ -2891,7 +2913,7 @@ router.post('/send-trial-today-auto-sens', async (req, res) => {
  * POST /paca/notifications/test-reminder
  * 솔라피 상담 리마인드 알림톡 테스트 발송
  */
-router.post('/test-reminder', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/test-reminder', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { phone } = req.body;
 
@@ -3020,7 +3042,7 @@ router.post('/test-reminder', verifyToken, checkPermission('settings', 'edit'), 
  * POST /paca/notifications/test-sens-reminder
  * SENS 상담 리마인드 알림톡 테스트 발송
  */
-router.post('/test-sens-reminder', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/test-sens-reminder', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
         const { phone } = req.body;
 

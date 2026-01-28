@@ -37,7 +37,7 @@ if (!ENCRYPTION_KEY) {
  *   gradeFilter?: 'all' | 'junior' | 'senior'  // 학년 필터 (선행반/3학년)
  * }
  */
-router.post('/send', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/send', verifyToken, checkPermission('sms', 'edit'), async (req, res) => {
     try {
         const { target, content, customPhones, images, statusFilter = 'active', gradeFilter = 'all', senderNumberId } = req.body;
 
@@ -487,7 +487,7 @@ router.get('/recipients-count', verifyToken, async (req, res) => {
  * GET /paca/sms/logs
  * SMS/LMS/MMS 발송 내역 조회
  */
-router.get('/logs', verifyToken, async (req, res) => {
+router.get('/logs', verifyToken, checkPermission('sms', 'view'), async (req, res) => {
     try {
         const { page = 1, limit = 20 } = req.query;
         const offset = (page - 1) * limit;
@@ -564,7 +564,7 @@ router.get('/sender-numbers', verifyToken, async (req, res) => {
  * POST /paca/sms/sender-numbers
  * 발신번호 추가
  */
-router.post('/sender-numbers', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.post('/sender-numbers', verifyToken, checkPermission('sms', 'edit'), async (req, res) => {
     try {
         const { serviceType, phone, label } = req.body;
 
@@ -634,7 +634,7 @@ router.post('/sender-numbers', verifyToken, checkPermission('settings', 'edit'),
  * PUT /paca/sms/sender-numbers/:id
  * 발신번호 수정
  */
-router.put('/sender-numbers/:id', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.put('/sender-numbers/:id', verifyToken, checkPermission('sms', 'edit'), async (req, res) => {
     try {
         const { id } = req.params;
         const { label, isDefault } = req.body;
@@ -692,7 +692,7 @@ router.put('/sender-numbers/:id', verifyToken, checkPermission('settings', 'edit
  * DELETE /paca/sms/sender-numbers/:id
  * 발신번호 삭제
  */
-router.delete('/sender-numbers/:id', verifyToken, checkPermission('settings', 'edit'), async (req, res) => {
+router.delete('/sender-numbers/:id', verifyToken, checkPermission('sms', 'edit'), async (req, res) => {
     try {
         const { id } = req.params;
 
