@@ -11,10 +11,9 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Calendar, List, Loader2, CalendarPlus, UserCheck, UserCog, Bell, PhoneCall, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Plus, Calendar, List, Loader2, UserCheck, UserCog, Bell, PhoneCall, PanelRightOpen, PanelRightClose } from 'lucide-react';
 import { ScheduleCalendarV2 } from '@/components/schedules/schedule-calendar-v2';
 import { ScheduleList } from '@/components/schedules/schedule-list';
-import { BulkScheduleModal } from '@/components/schedules/bulk-schedule-modal';
 import { InstructorAttendanceModal } from '@/components/schedules/instructor-attendance-modal';
 import { TimeSlotDetailModal } from '@/components/schedules/time-slot-detail-modal';
 import { InstructorSchedulePanel } from '@/components/schedules/instructor-schedule-panel';
@@ -44,7 +43,6 @@ export default function SchedulesPage() {
   });
 
   // Modal states
-  const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const [instructorAttendanceModalOpen, setInstructorAttendanceModalOpen] = useState(false);
 
   // 타임슬롯 상세 모달
@@ -169,11 +167,6 @@ export default function SchedulesPage() {
     }
   };
 
-  // 일괄 생성 성공 핸들러
-  const handleBulkSuccess = useCallback(() => {
-    refetch();
-  }, [refetch]);
-
   // 출근 체크 성공 핸들러
   const handleAttendanceSuccess = useCallback(() => {
     refetch();
@@ -237,10 +230,6 @@ export default function SchedulesPage() {
           >
             <UserCheck className="h-4 w-4 mr-2" />
             강사 출근
-          </Button>
-          <Button variant="outline" onClick={() => setBulkModalOpen(true)}>
-            <CalendarPlus className="h-4 w-4 mr-2" />
-            일괄 생성
           </Button>
           <Button variant="gradient" onClick={() => router.push('/schedules/new')}>
             <Plus className="h-4 w-4 mr-2" />
@@ -361,12 +350,6 @@ export default function SchedulesPage() {
       )}
 
       {/* 모달들 */}
-      <BulkScheduleModal
-        open={bulkModalOpen}
-        onClose={() => setBulkModalOpen(false)}
-        onSuccess={handleBulkSuccess}
-      />
-
       <InstructorAttendanceModal
         open={instructorAttendanceModalOpen}
         date={selectedDate}
