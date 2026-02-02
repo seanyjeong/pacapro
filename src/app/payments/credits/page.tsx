@@ -11,14 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Loader2, CreditCard, Users, TrendingDown, RefreshCw } from 'lucide-react';
 import { paymentsAPI } from '@/lib/api/payments';
 import type { Credit, CreditStats, StudentWithCredit, CreditTypeStats } from '@/lib/types/payment';
@@ -228,7 +220,7 @@ export default function CreditsPage() {
         </Select>
       </div>
 
-      {/* 크레딧 목록 테이블 */}
+      {/* 크레딧 목록 */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">크레딧 내역</CardTitle>
@@ -239,36 +231,28 @@ export default function CreditsPage() {
               크레딧 내역이 없습니다
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>학생</TableHead>
-                  <TableHead>타입</TableHead>
-                  <TableHead>기간</TableHead>
-                  <TableHead className="text-right">발생금액</TableHead>
-                  <TableHead className="text-right">잔여금액</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>생성일</TableHead>
-                  <TableHead>비고</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {credits.map((credit) => (
-                  <TableRow key={credit.id}>
-                    <TableCell className="font-medium">
-                      {credit.student_name}
+            <div className="space-y-3">
+              {credits.map((credit) => (
+                <div
+                  key={credit.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors gap-3"
+                >
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium">{credit.student_name}</span>
                       {credit.student_status !== 'active' && (
-                        <Badge variant="outline" className="ml-2 text-xs">
+                        <Badge variant="outline" className="text-xs">
                           {credit.student_status === 'paused' ? '휴원' : credit.student_status}
                         </Badge>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="text-xs">
                         {CREDIT_TYPE_LABELS[credit.credit_type] || credit.credit_type}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                      <Badge className={`text-xs ${STATUS_COLORS[credit.status] || ''}`}>
+                        {STATUS_LABELS[credit.status] || credit.status}
+                      </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
                       {credit.rest_start_date && credit.rest_end_date ? (
                         <>
                           {format(new Date(credit.rest_start_date), 'M/d', { locale: ko })}
@@ -277,36 +261,28 @@ export default function CreditsPage() {
                           <span className="ml-1">({credit.rest_days}일)</span>
                         </>
                       ) : (
-                        '-'
+                        format(new Date(credit.created_at), 'yyyy-MM-dd', { locale: ko })
                       )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {credit.credit_amount.toLocaleString()}원
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {credit.remaining_amount > 0 ? (
-                        <span className="text-orange-600">
-                          {credit.remaining_amount.toLocaleString()}원
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">0원</span>
+                      {credit.notes && (
+                        <span className="ml-2 text-xs">| {credit.notes}</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={STATUS_COLORS[credit.status] || ''}>
-                        {STATUS_LABELS[credit.status] || credit.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(credit.created_at), 'yyyy-MM-dd', { locale: ko })}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                      {credit.notes || '-'}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-right">
+                    <div>
+                      <div className="text-sm text-muted-foreground">발생</div>
+                      <div className="font-medium">{credit.credit_amount.toLocaleString()}원</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-muted-foreground">잔여</div>
+                      <div className={`font-bold ${credit.remaining_amount > 0 ? 'text-orange-600' : 'text-muted-foreground'}`}>
+                        {credit.remaining_amount.toLocaleString()}원
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
