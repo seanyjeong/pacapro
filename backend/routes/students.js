@@ -495,7 +495,7 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
 
     try {
         const [students] = await db.query(
-            'SELECT id, class_days, time_slot FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            'SELECT id, class_days, time_slot, student_type FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
             [studentId, req.user.academyId]
         );
 
@@ -519,13 +519,35 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
                 : [];
             const timeSlot = students[0].time_slot || 'evening';
 
+            // 학원비 자동 계산
+            let newTuition = null;
+            const weeklyCount = class_days.length;
+            if (weeklyCount > 0) {
+                const [settings] = await db.query(
+                    'SELECT settings FROM academy_settings WHERE academy_id = ?',
+                    [req.user.academyId]
+                );
+                if (settings.length > 0 && settings[0].settings) {
+                    const parsed = typeof settings[0].settings === 'string'
+                        ? JSON.parse(settings[0].settings)
+                        : settings[0].settings;
+                    const studentType = students[0].student_type || 'exam';
+                    const tuitionTable = studentType === 'adult' ? parsed.adult_tuition : parsed.exam_tuition;
+                    if (tuitionTable) {
+                        newTuition = tuitionTable[`weekly_${weeklyCount}`] || null;
+                    }
+                }
+            }
+
             await db.query(
                 `UPDATE students
-                 SET class_days = ?, weekly_count = ?,
+                 SET class_days = ?, weekly_count = ?, ${newTuition !== null ? 'monthly_tuition = ?,' : ''}
                      class_days_next = NULL, class_days_effective_from = NULL,
                      updated_at = NOW()
                  WHERE id = ?`,
-                [JSON.stringify(class_days), class_days.length, studentId]
+                newTuition !== null
+                    ? [JSON.stringify(class_days), weeklyCount, newTuition, studentId]
+                    : [JSON.stringify(class_days), weeklyCount, studentId]
             );
 
             let reassignResult = null;
