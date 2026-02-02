@@ -3237,8 +3237,8 @@ router.post('/send-reminder-auto', async (req, res) => {
                      FROM consultations c
                      WHERE c.academy_id = ?
                        AND c.status = 'confirmed'
-                       AND DATE(c.scheduled_date) = ?
-                       AND HOUR(c.scheduled_time) = ?
+                       AND DATE(c.preferred_date) = ?
+                       AND HOUR(c.preferred_time) = ?
                        AND c.reminder_alimtalk_sent_at IS NULL
                        AND (c.parent_phone IS NOT NULL OR c.phone IS NOT NULL)`,
                     [setting.academy_id, targetDateStr, targetHour]
@@ -3269,9 +3269,9 @@ router.post('/send-reminder-auto', async (req, res) => {
                     if (!recipientPhone) continue;
 
                     // 날짜/시간 포맷
-                    const schedDate = new Date(consultation.scheduled_date);
+                    const schedDate = new Date(consultation.preferred_date);
                     const dateStr = `${schedDate.getMonth() + 1}월 ${schedDate.getDate()}일`;
-                    const timeStr = consultation.scheduled_time ? consultation.scheduled_time.slice(0, 5) : '';
+                    const timeStr = consultation.preferred_time ? consultation.preferred_time.slice(0, 5) : '';
 
                     // 템플릿 변수 치환
                     let content = setting.solapi_reminder_template_content || '';
@@ -3416,8 +3416,8 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
                      FROM consultations c
                      WHERE c.academy_id = ?
                        AND c.status = 'confirmed'
-                       AND DATE(c.scheduled_date) = ?
-                       AND HOUR(c.scheduled_time) = ?
+                       AND DATE(c.preferred_date) = ?
+                       AND HOUR(c.preferred_time) = ?
                        AND c.reminder_alimtalk_sent_at IS NULL
                        AND (c.parent_phone IS NOT NULL OR c.phone IS NOT NULL)`,
                     [setting.academy_id, targetDateStr, targetHour]
@@ -3448,9 +3448,9 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
                     if (!recipientPhone) continue;
 
                     // 날짜/시간 포맷
-                    const schedDate = new Date(consultation.scheduled_date);
+                    const schedDate = new Date(consultation.preferred_date);
                     const dateStr = `${schedDate.getMonth() + 1}월 ${schedDate.getDate()}일`;
-                    const timeStr = consultation.scheduled_time ? consultation.scheduled_time.slice(0, 5) : '';
+                    const timeStr = consultation.preferred_time ? consultation.preferred_time.slice(0, 5) : '';
 
                     // 템플릿 변수 치환
                     let content = setting.sens_reminder_template_content || '';
