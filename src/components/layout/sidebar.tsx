@@ -90,6 +90,7 @@ const navCategories: NavCategory[] = [
         defaultOpen: true,
         items: [
             { title: '학원비', href: '/payments', icon: CreditCard, permissionKey: 'payments' },
+            { title: '크레딧 관리', href: '/payments/credits', icon: Wallet, permissionKey: 'payments' },
             { title: '급여', href: '/salaries', icon: Wallet, permissionKey: 'salaries' },
             { title: '지출', href: '/expenses', icon: Receipt, permissionKey: 'expenses' },
             { title: '수입', href: '/incomes', icon: TrendingUp, permissionKey: 'incomes' },
