@@ -290,6 +290,7 @@ const { initConsultationReminderScheduler } = require('./scheduler/consultationR
 const { initPauseEndingScheduler } = require('./scheduler/pauseEndingScheduler');
 const { initTrialExpireScheduler } = require('./scheduler/trialExpireScheduler');
 const { initMonthlyScheduleScheduler } = require('./scheduler/monthlyScheduleScheduler');
+const { startClassDaysScheduler } = require('./scheduler/classDaysScheduler');
 
 // ==========================================
 // Start Server
@@ -314,6 +315,7 @@ const server = app.listen(PORT, () => {
     initPauseEndingScheduler();
     initTrialExpireScheduler();
     initMonthlyScheduleScheduler();
+    startClassDaysScheduler();
 });
 
 // Graceful Shutdown

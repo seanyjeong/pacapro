@@ -229,3 +229,60 @@ export interface PrepaidPayResponse {
   months_processed: string[];
   months_skipped: string[];
 }
+
+// ===== 크레딧 관련 타입 =====
+
+export interface Credit {
+  id: number;
+  student_id: number;
+  student_name: string;
+  student_status: string;
+  academy_id: number;
+  source_payment_id: number | null;
+  rest_start_date: string;
+  rest_end_date: string;
+  rest_days: number;
+  credit_amount: number;
+  remaining_amount: number;
+  credit_type: 'carryover' | 'refund' | 'manual';
+  status: 'pending' | 'partial' | 'applied' | 'refunded' | 'cancelled';
+  applied_to_payment_id: number | null;
+  created_at: string;
+  processed_at: string | null;
+  notes: string | null;
+}
+
+export interface CreditStats {
+  total_count: number;
+  total_credit: number;
+  total_remaining: number;
+  pending_count: number;
+  pending_amount: number;
+  partial_count: number;
+  applied_count: number;
+}
+
+export interface CreditsResponse {
+  credits: Credit[];
+  stats: CreditStats;
+}
+
+export interface StudentWithCredit {
+  id: number;
+  name: string;
+  student_status: string;
+  total_remaining: number;
+  credit_count: number;
+}
+
+export interface CreditTypeStats {
+  credit_type: string;
+  count: number;
+  total_amount: number;
+  remaining_amount: number;
+}
+
+export interface CreditsSummaryResponse {
+  students_with_credit: StudentWithCredit[];
+  type_stats: CreditTypeStats[];
+}

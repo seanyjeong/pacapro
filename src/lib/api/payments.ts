@@ -23,6 +23,8 @@ import type {
   PrepaidPreviewResponse,
   PrepaidPayRequest,
   PrepaidPayResponse,
+  CreditsResponse,
+  CreditsSummaryResponse,
 } from '@/lib/types/payment';
 
 export const paymentsAPI = {
@@ -131,5 +133,30 @@ export const paymentsAPI = {
 
   prepaidPay: async (data: PrepaidPayRequest): Promise<PrepaidPayResponse> => {
     return await apiClient.post<PrepaidPayResponse>('/payments/prepaid-pay', data);
+  },
+
+  // ===== 크레딧 관리 =====
+
+  /**
+   * 전체 크레딧 목록 조회
+   * GET /paca/payments/credits
+   */
+  getCredits: async (filters?: { status?: string; credit_type?: string }): Promise<CreditsResponse> => {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.credit_type) params.append('credit_type', filters.credit_type);
+
+    const queryString = params.toString();
+    const url = queryString ? `/payments/credits?${queryString}` : '/payments/credits';
+
+    return await apiClient.get<CreditsResponse>(url);
+  },
+
+  /**
+   * 크레딧 요약 통계
+   * GET /paca/payments/credits/summary
+   */
+  getCreditsSummary: async (): Promise<CreditsSummaryResponse> => {
+    return await apiClient.get<CreditsSummaryResponse>('/payments/credits/summary');
   },
 };
