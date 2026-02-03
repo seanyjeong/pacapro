@@ -152,24 +152,68 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
 
                     {/* 시간 (종일이 아닐 때만) */}
                     {!formData.is_all_day && (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                            {/* 빠른 시간 선택 버튼 */}
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-1">시작 시간</label>
-                                <input
-                                    type="time"
-                                    value={formData.start_time}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
-                                />
+                                <label className="block text-sm font-medium text-foreground mb-2">빠른 선택</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { label: '오전', start: '09:00', end: '12:00' },
+                                        { label: '오후', start: '13:00', end: '18:00' },
+                                        { label: '저녁', start: '18:00', end: '21:00' },
+                                    ].map((preset) => (
+                                        <button
+                                            key={preset.label}
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({
+                                                ...prev,
+                                                start_time: preset.start,
+                                                end_time: preset.end
+                                            }))}
+                                            className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors
+                                                ${formData.start_time === preset.start && formData.end_time === preset.end
+                                                    ? 'bg-primary text-primary-foreground border-primary'
+                                                    : 'bg-background text-foreground border-border hover:bg-muted'
+                                                }`}
+                                        >
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-foreground mb-1">종료 시간</label>
-                                <input
-                                    type="time"
-                                    value={formData.end_time}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
-                                />
+
+                            {/* 세부 시간 선택 */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1">시작 시간</label>
+                                    <select
+                                        value={formData.start_time}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                                        className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
+                                    >
+                                        <option value="">선택</option>
+                                        {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => (
+                                            <option key={hour} value={`${hour.toString().padStart(2, '0')}:00`}>
+                                                {hour < 12 ? `오전 ${hour}시` : hour === 12 ? '오후 12시' : `오후 ${hour - 12}시`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-foreground mb-1">종료 시간</label>
+                                    <select
+                                        value={formData.end_time}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                                        className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
+                                    >
+                                        <option value="">선택</option>
+                                        {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => (
+                                            <option key={hour} value={`${hour.toString().padStart(2, '0')}:00`}>
+                                                {hour < 12 ? `오전 ${hour}시` : hour === 12 ? '오후 12시' : `오후 ${hour - 12}시`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     )}
