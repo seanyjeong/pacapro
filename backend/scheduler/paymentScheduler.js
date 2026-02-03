@@ -30,12 +30,6 @@ async function generateMonthlyPayments() {
     const currentMonth = today.getMonth() + 1;
     const yearMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
 
-    // 매월 1일에만 실행 (수동 호출 시 무시)
-    // if (currentDay !== 1) {
-    //     console.log(`[PaymentScheduler] Skipping - today is not 1st of month (current: ${currentDay})`);
-    //     return 0;
-    // }
-
     try {
         // 모든 학원 설정 조회
         const [academies] = await db.query(`
@@ -48,6 +42,7 @@ async function generateMonthlyPayments() {
 
         let totalGenerated = 0;
         let totalWithCarryover = 0;
+        let totalErrors = 0;
 
         for (const academy of academies) {
             // 해당 학원의 모든 active 학생 조회
@@ -67,33 +62,40 @@ async function generateMonthlyPayments() {
             `, [academy.default_due_day, academy.academy_id]);
 
             for (const student of students) {
-                // 이미 해당 월 학원비가 있는지 확인
-                const [existing] = await db.query(`
-                    SELECT id, payment_status FROM student_payments
-                    WHERE student_id = ?
-                    AND \`year_month\` = ?
-                    AND payment_type = 'monthly'
-                `, [student.id, yearMonth]);
-
-                // 이미 납부 완료된 건은 건너뛰기
-                if (existing.length > 0 && existing[0].payment_status === 'paid') {
-                    console.log(`[PaymentScheduler] Payment already paid for student ${student.id} (${student.name}) - ${yearMonth}`);
-                    continue;
-                }
-
-                // 학원비 계산
-                const baseAmount = parseFloat(student.monthly_tuition);
-                const discountRate = parseFloat(student.discount_rate) || 0;
-                const discountAmount = truncateToThousands(baseAmount * discountRate / 100);
-
-                // 휴식 이월 크레딧 확인 및 적용
-                let carryoverAmount = 0;
-                let restCreditId = null;
-                let notes = null;
-
+                // 각 학생별로 트랜잭션 처리
+                const connection = await db.getConnection();
+                
                 try {
+                    await connection.beginTransaction();
+
+                    // 이미 해당 월 학원비가 있는지 확인
+                    const [existing] = await connection.query(`
+                        SELECT id, payment_status FROM student_payments
+                        WHERE student_id = ?
+                        AND \`year_month\` = ?
+                        AND payment_type = 'monthly'
+                    `, [student.id, yearMonth]);
+
+                    // 이미 납부 완료된 건은 건너뛰기
+                    if (existing.length > 0 && existing[0].payment_status === 'paid') {
+                        await connection.rollback();
+                        connection.release();
+                        console.log(`[PaymentScheduler] Payment already paid for student ${student.id} (${student.name}) - ${yearMonth}`);
+                        continue;
+                    }
+
+                    // 학원비 계산
+                    const baseAmount = parseFloat(student.monthly_tuition);
+                    const discountRate = parseFloat(student.discount_rate) || 0;
+                    const discountAmount = truncateToThousands(baseAmount * discountRate / 100);
+
+                    // 휴식 이월 크레딧 확인 및 적용
+                    let carryoverAmount = 0;
+                    let restCreditId = null;
+                    let notes = null;
+
                     // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 모두 조회
-                    const [pendingCredits] = await db.query(`
+                    const [pendingCredits] = await connection.query(`
                         SELECT id, remaining_amount, credit_type FROM rest_credits
                         WHERE student_id = ?
                         AND academy_id = ?
@@ -101,6 +103,7 @@ async function generateMonthlyPayments() {
                         AND status IN ('pending', 'partial')
                         AND remaining_amount > 0
                         ORDER BY created_at ASC
+                        FOR UPDATE
                     `, [student.id, academy.academy_id]);
 
                     if (pendingCredits.length > 0) {
@@ -113,7 +116,8 @@ async function generateMonthlyPayments() {
                         const newRemaining = credit.remaining_amount - carryoverAmount;
                         const newStatus = newRemaining <= 0 ? 'applied' : 'partial';
 
-                        await db.query(`
+                        // 크레딧 차감 (트랜잭션 내에서)
+                        await connection.query(`
                             UPDATE rest_credits SET
                                 remaining_amount = ?,
                                 status = ?,
@@ -126,97 +130,105 @@ async function generateMonthlyPayments() {
                         notes = `[크레딧 차감] ${creditTypeLabel} 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
                         totalWithCarryover++;
                     }
-                } catch (err) {
-                    console.error(`[PaymentScheduler] Failed to apply carryover for student ${student.id}:`, err);
-                }
 
-                const finalAmount = truncateToThousands(baseAmount - discountAmount - carryoverAmount);
+                    const finalAmount = truncateToThousands(baseAmount - discountAmount - carryoverAmount);
 
-                // 납부일 계산 (납부일 이후 첫 출석일)
-                let classDays = [];
-                if (student.class_days) {
-                    if (Array.isArray(student.class_days)) {
-                        classDays = student.class_days;
-                    } else if (typeof student.class_days === 'string') {
-                        try {
-                            classDays = JSON.parse(student.class_days);
-                        } catch (e) {
-                            // JSON 파싱 실패 시 쉼표 구분 문자열로 시도
-                            classDays = student.class_days.split(',').map(d => parseInt(d.trim(), 10)).filter(d => !isNaN(d));
+                    // 납부일 계산 (납부일 이후 첫 출석일)
+                    let classDays = [];
+                    if (student.class_days) {
+                        if (Array.isArray(student.class_days)) {
+                            classDays = student.class_days;
+                        } else if (typeof student.class_days === 'string') {
+                            try {
+                                classDays = JSON.parse(student.class_days);
+                            } catch (e) {
+                                classDays = student.class_days.split(',').map(d => parseInt(d.trim(), 10)).filter(d => !isNaN(d));
+                            }
                         }
                     }
-                }
-                const dueDateStr = calculateDueDate(currentYear, currentMonth, student.due_day, classDays);
+                    const dueDateStr = calculateDueDate(currentYear, currentMonth, student.due_day, classDays);
 
-                const description = carryoverAmount > 0
-                    ? `${currentMonth}월 학원비 (이월 차감 적용)`
-                    : `${currentMonth}월 학원비`;
+                    const description = carryoverAmount > 0
+                        ? `${currentMonth}월 학원비 (이월 차감 적용)`
+                        : `${currentMonth}월 학원비`;
 
-                // 기존 미납 학원비가 있으면 업데이트, 없으면 생성
-                if (existing.length > 0) {
-                    await db.query(`
-                        UPDATE student_payments SET
-                            base_amount = ?,
-                            discount_amount = ?,
-                            carryover_amount = ?,
-                            rest_credit_id = ?,
-                            final_amount = ?,
-                            due_date = ?,
-                            description = ?,
-                            notes = ?,
-                            updated_at = NOW()
-                        WHERE id = ?
-                    `, [
-                        baseAmount,
-                        discountAmount,
-                        carryoverAmount,
-                        restCreditId,
-                        finalAmount,
-                        dueDateStr,
-                        description,
-                        notes,
-                        existing[0].id
-                    ]);
-                    console.log(`[PaymentScheduler] Updated payment for student ${student.id} (${student.name}) - ${yearMonth}`);
-                } else {
-                    await db.query(`
-                        INSERT INTO student_payments (
-                            student_id,
-                            academy_id,
-                            \`year_month\`,
-                            payment_type,
-                            base_amount,
-                            discount_amount,
-                            additional_amount,
-                            carryover_amount,
-                            rest_credit_id,
-                            final_amount,
-                            due_date,
-                            payment_status,
+                    // 기존 미납 학원비가 있으면 업데이트, 없으면 생성 (트랜잭션 내에서)
+                    if (existing.length > 0) {
+                        await connection.query(`
+                            UPDATE student_payments SET
+                                base_amount = ?,
+                                discount_amount = ?,
+                                carryover_amount = ?,
+                                rest_credit_id = ?,
+                                final_amount = ?,
+                                due_date = ?,
+                                description = ?,
+                                notes = ?,
+                                updated_at = NOW()
+                            WHERE id = ?
+                        `, [
+                            baseAmount,
+                            discountAmount,
+                            carryoverAmount,
+                            restCreditId,
+                            finalAmount,
+                            dueDateStr,
+                            description,
+                            notes,
+                            existing[0].id
+                        ]);
+                        console.log(`[PaymentScheduler] Updated payment for student ${student.id} (${student.name}) - ${yearMonth}`);
+                    } else {
+                        await connection.query(`
+                            INSERT INTO student_payments (
+                                student_id,
+                                academy_id,
+                                \`year_month\`,
+                                payment_type,
+                                base_amount,
+                                discount_amount,
+                                additional_amount,
+                                carryover_amount,
+                                rest_credit_id,
+                                final_amount,
+                                due_date,
+                                payment_status,
+                                description,
+                                notes
+                            ) VALUES (?, ?, ?, 'monthly', ?, ?, 0, ?, ?, ?, ?, 'pending', ?, ?)
+                        `, [
+                            student.id,
+                            academy.academy_id,
+                            yearMonth,
+                            baseAmount,
+                            discountAmount,
+                            carryoverAmount,
+                            restCreditId,
+                            finalAmount,
+                            dueDateStr,
                             description,
                             notes
-                        ) VALUES (?, ?, ?, 'monthly', ?, ?, 0, ?, ?, ?, ?, 'pending', ?, ?)
-                    `, [
-                        student.id,
-                        academy.academy_id,
-                        yearMonth,
-                        baseAmount,
-                        discountAmount,
-                        carryoverAmount,
-                        restCreditId,
-                        finalAmount,
-                        dueDateStr,
-                        description,
-                        notes
-                    ]);
-                    console.log(`[PaymentScheduler] Generated payment for student ${student.id} (${student.name}) - ${yearMonth}`);
-                    totalGenerated++;
+                        ]);
+                        console.log(`[PaymentScheduler] Generated payment for student ${student.id} (${student.name}) - ${yearMonth}`);
+                        totalGenerated++;
+                    }
+
+                    // 트랜잭션 커밋
+                    await connection.commit();
+                    connection.release();
+
+                } catch (err) {
+                    // 트랜잭션 롤백
+                    await connection.rollback();
+                    connection.release();
+                    totalErrors++;
+                    console.error(`[PaymentScheduler] Transaction failed for student ${student.id} (${student.name}):`, err.message);
                 }
             }
         }
 
-        console.log(`[PaymentScheduler] Completed. Generated ${totalGenerated} payments (${totalWithCarryover} with carryover).`);
-        return { totalGenerated, totalWithCarryover };
+        console.log(`[PaymentScheduler] Completed. Generated ${totalGenerated} payments (${totalWithCarryover} with carryover). Errors: ${totalErrors}`);
+        return { totalGenerated, totalWithCarryover, totalErrors };
 
     } catch (error) {
         console.error('[PaymentScheduler] Error:', error);
