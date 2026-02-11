@@ -426,6 +426,8 @@ export interface ManualCreditRequest {
   end_date?: string;    // YYYY-MM-DD
   // 회차로 입력 시
   class_count?: number; // 1~12
+  // 금액 직접 입력 시
+  direct_amount?: number; // 1 ~ 10,000,000
   // 공통
   reason: string;
   notes?: string;

@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Calendar, Hash, AlertTriangle, Calculator, List, Trash2, Pencil, Loader2 } from 'lucide-react';
+import { CreditCard, Calendar, Hash, AlertTriangle, Calculator, List, Trash2, Pencil, Loader2, Banknote } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -111,8 +111,8 @@ export function ManualCreditModal({
   // 메인 탭: 'create' | 'manage'
   const [mainTab, setMainTab] = useState<'create' | 'manage'>('create');
 
-  // 입력 모드: 'date' | 'count'
-  const [inputMode, setInputMode] = useState<'date' | 'count'>('date');
+  // 입력 모드: 'date' | 'count' | 'amount'
+  const [inputMode, setInputMode] = useState<'date' | 'count' | 'amount'>('date');
 
   // 날짜 입력
   const [startDate, setStartDate] = useState<string>('');
@@ -120,6 +120,9 @@ export function ManualCreditModal({
 
   // 회차 입력
   const [classCount, setClassCount] = useState<number>(1);
+
+  // 금액 직접 입력
+  const [directAmount, setDirectAmount] = useState<number>(0);
 
   // 공통
   const [reason, setReason] = useState<string>('');
@@ -169,8 +172,16 @@ export function ManualCreditModal({
     };
   }, [classCount, perClassFee]);
 
+  // 금액 직접 입력 계산
+  const amountCalculation = useMemo(() => {
+    return {
+      count: directAmount > 0 ? 1 : 0,
+      totalCredit: directAmount > 0 ? directAmount : 0,
+    };
+  }, [directAmount]);
+
   // 현재 모드의 계산 결과
-  const currentCalculation = inputMode === 'date' ? dateCalculation : countCalculation;
+  const currentCalculation = inputMode === 'date' ? dateCalculation : inputMode === 'count' ? countCalculation : amountCalculation;
 
   // 최종 사유
   const finalReason = reason === '기타' ? customReason : reason;
@@ -212,9 +223,18 @@ export function ManualCreditModal({
         setError('해당 기간에 수업일이 없습니다.');
         return;
       }
-    } else {
+    } else if (inputMode === 'count') {
       if (classCount < 1 || classCount > 12) {
         setError('회차는 1~12 사이로 입력해주세요.');
+        return;
+      }
+    } else {
+      if (!directAmount || directAmount < 1000) {
+        setError('금액은 1,000원 이상 입력해주세요.');
+        return;
+      }
+      if (directAmount > 10000000) {
+        setError('금액은 10,000,000원 이하로 입력해주세요.');
         return;
       }
     }
@@ -225,7 +245,9 @@ export function ManualCreditModal({
 
       const data = inputMode === 'date'
         ? { start_date: startDate, end_date: endDate, reason: finalReason, notes: notes || undefined }
-        : { class_count: classCount, reason: finalReason, notes: notes || undefined };
+        : inputMode === 'count'
+        ? { class_count: classCount, reason: finalReason, notes: notes || undefined }
+        : { direct_amount: directAmount, reason: finalReason, notes: notes || undefined };
 
       const result = await studentsAPI.createManualCredit(studentId, data);
 
@@ -315,6 +337,7 @@ export function ManualCreditModal({
     setStartDate('');
     setEndDate('');
     setClassCount(1);
+    setDirectAmount(0);
     setReason('');
     setCustomReason('');
     setNotes('');
@@ -377,15 +400,19 @@ export function ManualCreditModal({
                 </div>
 
                 {/* 입력 모드 탭 */}
-                <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'date' | 'count')}>
-                  <TabsList className="grid w-full grid-cols-2">
+                <Tabs value={inputMode} onValueChange={(v) => setInputMode(v as 'date' | 'count' | 'amount')}>
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="date" className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      날짜로 입력
+                      날짜로
                     </TabsTrigger>
                     <TabsTrigger value="count" className="flex items-center gap-1">
                       <Hash className="w-4 h-4" />
-                      회차로 입력
+                      회차로
+                    </TabsTrigger>
+                    <TabsTrigger value="amount" className="flex items-center gap-1">
+                      <Banknote className="w-4 h-4" />
+                      금액 직접
                     </TabsTrigger>
                   </TabsList>
 
@@ -474,6 +501,37 @@ export function ManualCreditModal({
                       </div>
                     </div>
                   </TabsContent>
+
+                  {/* 금액 직접 입력 */}
+                  <TabsContent value="amount" className="space-y-3 mt-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="directAmount">크레딧 금액 (원)</Label>
+                      <Input
+                        id="directAmount"
+                        type="number"
+                        min={1000}
+                        max={10000000}
+                        step={1000}
+                        value={directAmount || ''}
+                        onChange={(e) => setDirectAmount(e.target.value === '' ? 0 : parseInt(e.target.value))}
+                        placeholder="예: 50000"
+                      />
+                      <p className="text-xs text-muted-foreground">1,000원 ~ 10,000,000원 (1,000원 단위 권장)</p>
+                    </div>
+
+                    {/* 금액 미리보기 */}
+                    {directAmount > 0 && (
+                      <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
+                        <div className="flex items-center gap-1 font-medium text-blue-700 dark:text-blue-400 mb-1">
+                          <Banknote className="w-4 h-4" />
+                          입력 금액
+                        </div>
+                        <div className="text-blue-700 dark:text-blue-400 font-medium">
+                          크레딧: {directAmount.toLocaleString()}원
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
                 </Tabs>
 
                 {/* 사유 선택 */}
@@ -529,7 +587,7 @@ export function ManualCreditModal({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={processing || currentCalculation.count === 0}
+                  disabled={processing || currentCalculation.totalCredit <= 0}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   {processing ? '생성 중...' : `${currentCalculation.totalCredit?.toLocaleString() || 0}원 크레딧 생성`}

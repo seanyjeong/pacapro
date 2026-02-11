@@ -104,7 +104,7 @@ Authorization: Bearer <JWT_TOKEN>
 | POST | `/:id/rest` | students.edit | 휴원 시작 |
 | POST | `/:id/resume` | students.edit | 휴원 복원 |
 | GET | `/:id/rest-credits` | Token | 휴원 크레딧 조회 |
-| POST | `/:id/manual-credit` | payments.edit | 수동 크레딧 추가 |
+| POST | `/:id/manual-credit` | payments.edit | 수동 크레딧 추가 (날짜/회차/금액직접입력) |
 | GET | `/:id/credits` | Token | 크레딧 목록 |
 | PUT | `/:id/credits/:creditId` | payments.edit | 크레딧 수정 |
 | DELETE | `/:id/credits/:creditId` | payments.edit | 크레딧 삭제 |
