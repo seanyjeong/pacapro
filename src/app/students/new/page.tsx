@@ -9,7 +9,7 @@ import { StudentForm } from '@/components/students/student-form';
 import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
 import apiClient from '@/lib/api/client';
-import type { StudentFormData, Student, Gender, StudentType, Grade } from '@/lib/types/student';
+import type { StudentFormData, Student, Gender, StudentType, Grade, StudentStatus } from '@/lib/types/student';
 
 function NewStudentContent() {
   const router = useRouter();
@@ -35,11 +35,24 @@ function NewStudentContent() {
 
   const handleSubmit = async (data: StudentFormData) => {
     try {
-      // 1. 학생 등록
-      const response = await studentsAPI.createStudent(data);
-      const newStudent = response.student;
+      let student: Student;
 
-      // 2. 시즌 등록이 선택된 경우
+      // 미등록관리에서 온 경우: 기존 학생 UPDATE (id 유지)
+      if (fromPendingId) {
+        const updateData = {
+          ...data,
+          status: 'active' as StudentStatus,  // pending → active 전환
+          is_trial: false,
+        };
+        const response = await studentsAPI.updateStudent(parseInt(fromPendingId), updateData);
+        student = response.student;
+      } else {
+        // 신규 등록: 새 학생 생성
+        const response = await studentsAPI.createStudent(data);
+        student = response.student;
+      }
+
+      // 시즌 등록이 선택된 경우
       if (data.enroll_in_season && data.selected_season_id) {
         try {
           // 시즌 정보 가져오기
@@ -47,32 +60,22 @@ function NewStudentContent() {
           const seasonFee = parseFloat(seasonDetail.season.default_season_fee) || 0;
 
           await seasonsApi.enrollStudent(data.selected_season_id, {
-            student_id: newStudent.id,
+            student_id: student.id,
             season_fee: seasonFee,
             registration_date: data.enrollment_date || new Date().toISOString().split('T')[0],
           });
 
-          toast.success(`${newStudent.name} 학생이 등록되었습니다!`, {
+          toast.success(`${student.name} 학생이 등록되었습니다!`, {
             description: '시즌 등록도 완료되었습니다.'
           });
         } catch (seasonError) {
           console.error('Season enrollment failed:', seasonError);
-          toast.warning(`${newStudent.name} 학생이 등록되었습니다.`, {
+          toast.warning(`${student.name} 학생이 등록되었습니다.`, {
             description: '시즌 등록에 실패했습니다. 학생 상세 페이지에서 다시 시도해주세요.'
           });
         }
       } else {
-        toast.success(`${newStudent.name} 학생이 등록되었습니다!`);
-      }
-
-      // 3. 미등록관리에서 온 경우, 기존 pending 학생 삭제
-      if (fromPendingId) {
-        try {
-          await apiClient.delete(`/students/${fromPendingId}`);
-        } catch (deleteError) {
-          console.error('Failed to delete pending student:', deleteError);
-          // 삭제 실패해도 등록은 성공했으므로 진행
-        }
+        toast.success(`${student.name} 학생이 등록되었습니다!`);
       }
 
       // 학생 목록으로 이동

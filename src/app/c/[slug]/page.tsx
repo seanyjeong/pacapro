@@ -181,6 +181,12 @@ export default function ConsultationPage() {
       toast.error('연락처를 입력해주세요.');
       return false;
     }
+    // 전화번호 11자리 검증 (하이픈 제외)
+    const phoneNumbers = formData.studentPhone.replace(/\D/g, '');
+    if (phoneNumbers.length !== 11) {
+      toast.error('전화번호 11자리를 정확히 입력해주세요.');
+      return false;
+    }
     if (!formData.studentGrade) {
       toast.error('학년을 선택해주세요.');
       return false;
@@ -400,6 +406,8 @@ export default function ConsultationPage() {
               <div>
                 <Label className="text-xs">연락처 <span className="text-red-500">*</span></Label>
                 <Input
+                  type="tel"
+                  inputMode="numeric"
                   value={formData.studentPhone || ''}
                   onChange={(e) => setFormData({ ...formData, studentPhone: formatPhoneNumber(e.target.value) })}
                   placeholder="010-0000-0000"

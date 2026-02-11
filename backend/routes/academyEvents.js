@@ -94,6 +94,18 @@ router.post('/', verifyToken, checkPermission('schedules', 'edit'), async (req, 
             return res.status(400).json({ message: '제목과 날짜는 필수입니다.' });
         }
 
+        // 디버깅 로그
+        console.log('=== ACADEMY EVENT DEBUG ===');
+        console.log('academyId:', req.user.academyId);
+        console.log('userId:', req.user.id);
+        console.log('title:', title);
+        console.log('event_date:', event_date);
+        console.log('event_type:', event_type);
+        console.log('is_all_day:', is_all_day);
+        console.log('is_holiday:', is_holiday);
+        console.log('color:', color);
+        console.log('===========================');
+
         // 일정 타입별 기본 색상
         const defaultColors = {
             work: '#f59e0b',
@@ -113,22 +125,25 @@ router.post('/', verifyToken, checkPermission('schedules', 'edit'), async (req, 
                 req.user.academyId,
                 title,
                 description || null,
-                event_type,
+                event_type || 'academy',
                 event_date,
                 start_time || null,
                 end_time || null,
-                is_all_day,
-                is_holiday,
+                is_all_day === undefined ? true : Boolean(is_all_day),
+                is_holiday === undefined ? false : Boolean(is_holiday),
                 finalColor,
-                req.user.userId
+                req.user.id
             ]
         );
 
         const eventId = result.insertId;
 
-        // 휴일인 경우 상담 차단 + 수업 휴강 처리
+        // 상담 차단 적용 (휴일이면 전체 + 수업 휴강, 일반 일정이면 해당 시간대만)
         if (is_holiday) {
             await applyHolidayBlocks(connection, req.user.academyId, event_date, eventId, title);
+        } else {
+            // 일반 일정도 해당 시간대 상담 차단
+            await applyEventBlocks(connection, req.user.academyId, event_date, eventId, title, is_all_day, start_time, end_time);
         }
 
         await connection.commit();
@@ -260,10 +275,8 @@ router.delete('/:id', verifyToken, checkPermission('schedules', 'edit'), async (
 
         const oldEvent = existing[0];
 
-        // 휴일이었으면 차단/휴강 복구
-        if (oldEvent.is_holiday) {
-            await removeHolidayBlocks(connection, eventId);
-        }
+        // 일정에 연결된 상담 차단 해제 (휴일/일반 일정 모두)
+        await removeEventBlocks(connection, eventId);
 
         // 일정 삭제
         await connection.execute('DELETE FROM academy_events WHERE id = ?', [eventId]);
@@ -314,6 +327,82 @@ async function removeHolidayBlocks(connection, eventId) {
     );
 
     // 2. 해당 이벤트로 휴강 처리된 수업 복구
+    await connection.execute(
+        `UPDATE class_schedules
+         SET is_closed = FALSE, close_reason = NULL, academy_event_id = NULL
+         WHERE academy_event_id = ?`,
+        [eventId]
+    );
+}
+
+/**
+ * 시간을 시간대(time_slot)로 변환
+ * isEndTime: true면 종료 시간으로 처리 (경계값은 이전 시간대로)
+ */
+function getTimeSlotFromTime(timeStr, isEndTime = false) {
+    if (!timeStr) return null;
+    const [hourStr, minStr] = timeStr.split(':');
+    const hour = parseInt(hourStr, 10);
+    const min = parseInt(minStr || '0', 10);
+
+    // 종료 시간이고 정각인 경우, 해당 시간대 시작 경계면 이전 시간대로
+    if (isEndTime && min === 0) {
+        if (hour === 12) return 'morning';   // 12:00까지 → 오전만
+        if (hour === 18) return 'afternoon'; // 18:00까지 → 오후까지
+    }
+
+    if (hour < 12) return 'morning';
+    if (hour < 18) return 'afternoon';
+    return 'evening';
+}
+
+/**
+ * 일반 일정 시 해당 시간대 상담 차단
+ */
+async function applyEventBlocks(connection, academyId, eventDate, eventId, title, isAllDay, startTime, endTime) {
+    let slotsToBlock = [];
+
+    if (isAllDay) {
+        // 종일 일정: 모든 시간대 차단
+        slotsToBlock = ['morning', 'afternoon', 'evening'];
+    } else if (startTime) {
+        // 시간 지정 일정: 해당 시간대만 차단
+        const startSlot = getTimeSlotFromTime(startTime, false);
+        const endSlot = getTimeSlotFromTime(endTime, true) || startSlot;
+
+        const allSlots = ['morning', 'afternoon', 'evening'];
+        const startIdx = allSlots.indexOf(startSlot);
+        const endIdx = allSlots.indexOf(endSlot);
+
+        if (startIdx !== -1 && endIdx !== -1) {
+            for (let i = startIdx; i <= endIdx; i++) {
+                slotsToBlock.push(allSlots[i]);
+            }
+        }
+    }
+
+    // 상담 차단 슬롯 추가
+    for (const slot of slotsToBlock) {
+        await connection.execute(
+            `INSERT INTO consultation_blocked_slots (academy_id, blocked_date, time_slot, is_all_day, reason, blocked_by, academy_event_id)
+             VALUES (?, ?, ?, 0, ?, 'system', ?)
+             ON DUPLICATE KEY UPDATE reason = VALUES(reason), academy_event_id = VALUES(academy_event_id), is_all_day = 0`,
+            [academyId, eventDate, slot, `일정: ${title}`, eventId]
+        );
+    }
+}
+
+/**
+ * 일정 삭제/수정 시 상담 차단 해제
+ */
+async function removeEventBlocks(connection, eventId) {
+    // 해당 이벤트로 추가된 상담 차단 슬롯 삭제
+    await connection.execute(
+        'DELETE FROM consultation_blocked_slots WHERE academy_event_id = ?',
+        [eventId]
+    );
+
+    // 휴일 관련 수업 휴강도 복구
     await connection.execute(
         `UPDATE class_schedules
          SET is_closed = FALSE, close_reason = NULL, academy_event_id = NULL

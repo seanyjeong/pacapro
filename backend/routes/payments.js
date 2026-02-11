@@ -328,6 +328,129 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
     }
 });
 
+// ===== 크레딧 관리 API =====
+
+/**
+ * GET /paca/payments/credits
+ * 전체 크레딧 목록 조회 (학원 전체)
+ */
+router.get('/credits', verifyToken, checkPermission('payments', 'view'), async (req, res) => {
+    try {
+        const { status, credit_type } = req.query;
+
+        let whereClause = 'rc.academy_id = ?';
+        const params = [req.user.academyId];
+
+        if (status && status !== 'all') {
+            whereClause += ' AND rc.status = ?';
+            params.push(status);
+        }
+
+        if (credit_type && credit_type !== 'all') {
+            whereClause += ' AND rc.credit_type = ?';
+            params.push(credit_type);
+        }
+
+        const [credits] = await db.query(
+            `SELECT rc.*, s.name as student_name, s.status as student_status
+             FROM rest_credits rc
+             JOIN students s ON rc.student_id = s.id
+             WHERE ${whereClause}
+             ORDER BY rc.created_at DESC`,
+            params
+        );
+
+        // 학생 이름 복호화
+        const decryptedCredits = credits.map(c => ({
+            ...c,
+            student_name: decrypt(c.student_name) || c.student_name
+        }));
+
+        // 통계
+        const [stats] = await db.query(
+            `SELECT
+                COUNT(*) as total_count,
+                SUM(credit_amount) as total_credit,
+                SUM(remaining_amount) as total_remaining,
+                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+                SUM(CASE WHEN status = 'pending' THEN remaining_amount ELSE 0 END) as pending_amount,
+                SUM(CASE WHEN status = 'partial' THEN 1 ELSE 0 END) as partial_count,
+                SUM(CASE WHEN status = 'applied' THEN 1 ELSE 0 END) as applied_count
+             FROM rest_credits
+             WHERE academy_id = ?`,
+            [req.user.academyId]
+        );
+
+        res.json({
+            credits: decryptedCredits,
+            stats: stats[0] || {
+                total_count: 0,
+                total_credit: 0,
+                total_remaining: 0,
+                pending_count: 0,
+                pending_amount: 0,
+                partial_count: 0,
+                applied_count: 0
+            }
+        });
+    } catch (error) {
+        logger.error('Error fetching all credits:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '크레딧 목록 조회에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * GET /paca/payments/credits/summary
+ * 크레딧 요약 통계
+ */
+router.get('/credits/summary', verifyToken, checkPermission('payments', 'view'), async (req, res) => {
+    try {
+        // 잔여 크레딧이 있는 학생 목록
+        const [studentsWithCredit] = await db.query(
+            `SELECT s.id, s.name, s.status as student_status,
+                    SUM(rc.remaining_amount) as total_remaining,
+                    COUNT(rc.id) as credit_count
+             FROM rest_credits rc
+             JOIN students s ON rc.student_id = s.id
+             WHERE rc.academy_id = ? AND rc.remaining_amount > 0
+             GROUP BY s.id, s.name, s.status
+             ORDER BY total_remaining DESC`,
+            [req.user.academyId]
+        );
+
+        const decryptedStudents = studentsWithCredit.map(s => ({
+            ...s,
+            name: decrypt(s.name) || s.name
+        }));
+
+        // 크레딧 타입별 통계
+        const [typeStats] = await db.query(
+            `SELECT credit_type,
+                    COUNT(*) as count,
+                    SUM(credit_amount) as total_amount,
+                    SUM(remaining_amount) as remaining_amount
+             FROM rest_credits
+             WHERE academy_id = ?
+             GROUP BY credit_type`,
+            [req.user.academyId]
+        );
+
+        res.json({
+            students_with_credit: decryptedStudents,
+            type_stats: typeStats
+        });
+    } catch (error) {
+        logger.error('Error fetching credit summary:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '크레딧 요약 조회에 실패했습니다.'
+        });
+    }
+});
+
 /**
  * GET /paca/payments/:id
  * Get payment by ID
@@ -1755,129 +1878,6 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
         connection.release();
         logger.error('Error in prepaid pay:', error);
         res.status(500).json({ error: 'Server Error', message: '선납 결제에 실패했습니다.' });
-    }
-});
-
-// ===== 크레딧 관리 API =====
-
-/**
- * GET /paca/payments/credits
- * 전체 크레딧 목록 조회 (학원 전체)
- */
-router.get('/credits', verifyToken, checkPermission('payments', 'view'), async (req, res) => {
-    try {
-        const { status, credit_type } = req.query;
-
-        let whereClause = 'rc.academy_id = ?';
-        const params = [req.user.academyId];
-
-        if (status && status !== 'all') {
-            whereClause += ' AND rc.status = ?';
-            params.push(status);
-        }
-
-        if (credit_type && credit_type !== 'all') {
-            whereClause += ' AND rc.credit_type = ?';
-            params.push(credit_type);
-        }
-
-        const [credits] = await db.query(
-            `SELECT rc.*, s.name as student_name, s.status as student_status
-             FROM rest_credits rc
-             JOIN students s ON rc.student_id = s.id
-             WHERE ${whereClause}
-             ORDER BY rc.created_at DESC`,
-            params
-        );
-
-        // 학생 이름 복호화
-        const decryptedCredits = credits.map(c => ({
-            ...c,
-            student_name: decrypt(c.student_name) || c.student_name
-        }));
-
-        // 통계
-        const [stats] = await db.query(
-            `SELECT
-                COUNT(*) as total_count,
-                SUM(credit_amount) as total_credit,
-                SUM(remaining_amount) as total_remaining,
-                SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
-                SUM(CASE WHEN status = 'pending' THEN remaining_amount ELSE 0 END) as pending_amount,
-                SUM(CASE WHEN status = 'partial' THEN 1 ELSE 0 END) as partial_count,
-                SUM(CASE WHEN status = 'applied' THEN 1 ELSE 0 END) as applied_count
-             FROM rest_credits
-             WHERE academy_id = ?`,
-            [req.user.academyId]
-        );
-
-        res.json({
-            credits: decryptedCredits,
-            stats: stats[0] || {
-                total_count: 0,
-                total_credit: 0,
-                total_remaining: 0,
-                pending_count: 0,
-                pending_amount: 0,
-                partial_count: 0,
-                applied_count: 0
-            }
-        });
-    } catch (error) {
-        logger.error('Error fetching all credits:', error);
-        res.status(500).json({
-            error: 'Server Error',
-            message: '크레딧 목록 조회에 실패했습니다.'
-        });
-    }
-});
-
-/**
- * GET /paca/payments/credits/summary
- * 크레딧 요약 통계
- */
-router.get('/credits/summary', verifyToken, checkPermission('payments', 'view'), async (req, res) => {
-    try {
-        // 잔여 크레딧이 있는 학생 목록
-        const [studentsWithCredit] = await db.query(
-            `SELECT s.id, s.name, s.status as student_status,
-                    SUM(rc.remaining_amount) as total_remaining,
-                    COUNT(rc.id) as credit_count
-             FROM rest_credits rc
-             JOIN students s ON rc.student_id = s.id
-             WHERE rc.academy_id = ? AND rc.remaining_amount > 0
-             GROUP BY s.id, s.name, s.status
-             ORDER BY total_remaining DESC`,
-            [req.user.academyId]
-        );
-
-        const decryptedStudents = studentsWithCredit.map(s => ({
-            ...s,
-            name: decrypt(s.name) || s.name
-        }));
-
-        // 크레딧 타입별 통계
-        const [typeStats] = await db.query(
-            `SELECT credit_type,
-                    COUNT(*) as count,
-                    SUM(credit_amount) as total_amount,
-                    SUM(remaining_amount) as remaining_amount
-             FROM rest_credits
-             WHERE academy_id = ?
-             GROUP BY credit_type`,
-            [req.user.academyId]
-        );
-
-        res.json({
-            students_with_credit: decryptedStudents,
-            type_stats: typeStats
-        });
-    } catch (error) {
-        logger.error('Error fetching credit summary:', error);
-        res.status(500).json({
-            error: 'Server Error',
-            message: '크레딧 요약 조회에 실패했습니다.'
-        });
     }
 });
 

@@ -3240,17 +3240,16 @@ router.post('/send-reminder-auto', async (req, res) => {
                        AND DATE(c.preferred_date) = ?
                        AND HOUR(c.preferred_time) = ?
                        AND c.reminder_alimtalk_sent_at IS NULL
-                       AND (c.parent_phone IS NOT NULL OR c.phone IS NOT NULL)`,
+                       AND c.parent_phone IS NOT NULL`,
                     [setting.academy_id, targetDateStr, targetHour]
                 );
 
                 // 복호화
                 const consultations = consultationsRaw.map(c => ({
                     ...c,
-                    student_name: decryptData(c.student_name),
-                    parent_name: decryptData(c.parent_name),
-                    phone: decryptData(c.phone),
-                    parent_phone: decryptData(c.parent_phone)
+                    student_name: decrypt(c.student_name),
+                    parent_name: decrypt(c.parent_name),
+                    parent_phone: decrypt(c.parent_phone)
                 }));
 
                 logger.info(`[Solapi 리마인드 자동발송] ${setting.academy_name}: ${targetDateStr} ${targetHour}시 상담 ${consultations.length}건`);
@@ -3263,7 +3262,7 @@ router.post('/send-reminder-auto', async (req, res) => {
                     : `${reminderHours}시간`;
 
                 for (const consultation of consultations) {
-                    const recipientPhone = consultation.parent_phone || consultation.phone;
+                    const recipientPhone = consultation.parent_phone;
                     const recipientName = consultation.parent_name || consultation.student_name || '고객';
 
                     if (!recipientPhone) continue;
@@ -3419,17 +3418,16 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
                        AND DATE(c.preferred_date) = ?
                        AND HOUR(c.preferred_time) = ?
                        AND c.reminder_alimtalk_sent_at IS NULL
-                       AND (c.parent_phone IS NOT NULL OR c.phone IS NOT NULL)`,
+                       AND c.parent_phone IS NOT NULL`,
                     [setting.academy_id, targetDateStr, targetHour]
                 );
 
                 // 복호화
                 const consultations = consultationsRaw.map(c => ({
                     ...c,
-                    student_name: decryptData(c.student_name),
-                    parent_name: decryptData(c.parent_name),
-                    phone: decryptData(c.phone),
-                    parent_phone: decryptData(c.parent_phone)
+                    student_name: decrypt(c.student_name),
+                    parent_name: decrypt(c.parent_name),
+                    parent_phone: decrypt(c.parent_phone)
                 }));
 
                 logger.info(`[SENS 리마인드 자동발송] ${setting.academy_name}: ${targetDateStr} ${targetHour}시 상담 ${consultations.length}건`);
@@ -3442,7 +3440,7 @@ router.post('/send-reminder-auto-sens', async (req, res) => {
                     : `${reminderHours}시간`;
 
                 for (const consultation of consultations) {
-                    const recipientPhone = consultation.parent_phone || consultation.phone;
+                    const recipientPhone = consultation.parent_phone;
                     const recipientName = consultation.parent_name || consultation.student_name || '고객';
 
                     if (!recipientPhone) continue;

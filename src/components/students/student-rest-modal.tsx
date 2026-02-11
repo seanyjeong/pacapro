@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, X, AlertCircle, Banknote, CreditCard, Ban } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
+import { paymentsAPI } from '@/lib/api/payments';
 
 interface StudentRestModalProps {
   open: boolean;
@@ -40,10 +41,11 @@ export function StudentRestModal({
   const [creditType, setCreditType] = useState<CreditType>('none');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [paidAmount, setPaidAmount] = useState<number | null>(null); // 해당 월 납부 금액
+  const [loadingPayment, setLoadingPayment] = useState(false);
 
   // 예상 크레딧 금액 계산
   const calculateCreditAmount = () => {
-    const monthlyTuition = parseFloat(student.monthly_tuition) || 0;
     const startDate = new Date(restStartDate);
     const year = startDate.getFullYear();
     const month = startDate.getMonth();
@@ -57,13 +59,19 @@ export function StudentRestModal({
     const effectiveEnd = endDate < new Date(year, month + 1, 0) ? endDate : new Date(year, month + 1, 0);
     const restDays = Math.ceil((effectiveEnd.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-    const dailyRate = monthlyTuition / daysInMonth;
+    // 납부한 금액이 없으면 환불금 0원
+    if (paidAmount === null || paidAmount <= 0) {
+      return { creditAmount: 0, restDays, daysInMonth, isPaid: false };
+    }
+
+    // 납부한 금액 기준으로 일할 계산
+    const dailyRate = paidAmount / daysInMonth;
     const creditAmount = Math.floor((dailyRate * restDays) / 1000) * 1000; // 천원 단위 절삭
 
-    return { creditAmount, restDays, daysInMonth };
+    return { creditAmount, restDays, daysInMonth, isPaid: true };
   };
 
-  const { creditAmount, restDays, daysInMonth } = calculateCreditAmount();
+  const { creditAmount, restDays, daysInMonth, isPaid } = calculateCreditAmount();
 
   // 모달 열릴 때 초기화
   useEffect(() => {
@@ -74,8 +82,48 @@ export function StudentRestModal({
       setRestReason('');
       setCreditType('none');
       setError('');
+      setPaidAmount(null);
     }
   }, [open, today]);
+
+  // 해당 월 결제 내역 조회
+  useEffect(() => {
+    if (!open || !restStartDate) return;
+
+    const fetchPayment = async () => {
+      setLoadingPayment(true);
+      try {
+        const startDate = new Date(restStartDate);
+        const year = startDate.getFullYear();
+        const month = startDate.getMonth() + 1; // 1-12
+
+        const response = await paymentsAPI.getPayments({
+          student_id: student.id,
+          year,
+          month,
+        });
+
+        // 해당 월의 paid 상태인 결제 금액 합산
+        const paidPayments = response.payments?.filter(
+          (p) => p.payment_status === 'paid'
+        ) || [];
+
+        const totalPaid = paidPayments.reduce(
+          (sum, p) => sum + (p.paid_amount || 0),
+          0
+        );
+
+        setPaidAmount(totalPaid);
+      } catch (err) {
+        console.error('결제 내역 조회 실패:', err);
+        setPaidAmount(0);
+      } finally {
+        setLoadingPayment(false);
+      }
+    };
+
+    fetchPayment();
+  }, [open, restStartDate, student.id]);
 
   const handleSubmit = async () => {
     if (!restStartDate) {
@@ -192,22 +240,42 @@ export function StudentRestModal({
           <div className="space-y-3">
             <h4 className="font-medium">수업료 처리</h4>
 
-            <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg text-sm">
-              <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-                <AlertCircle className="w-4 h-4" />
-                <span>
-                  {restDays}일 / {daysInMonth}일 = 예상 금액: <strong>{creditAmount.toLocaleString()}원</strong>
-                </span>
+            {loadingPayment ? (
+              <div className="p-3 bg-muted rounded-lg text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>결제 내역 확인 중...</span>
+                </div>
               </div>
-            </div>
+            ) : !isPaid ? (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg text-sm">
+                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>
+                    해당 월 납부 내역이 없습니다. 환불/이월 금액: <strong>0원</strong>
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg text-sm">
+                <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>
+                    납부액 {paidAmount?.toLocaleString()}원 기준, {restDays}일 / {daysInMonth}일 = 예상 금액: <strong>{creditAmount.toLocaleString()}원</strong>
+                  </span>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               {/* 이월 */}
               <label
-                className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                  creditType === 'carryover'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-muted-foreground'
+                className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
+                  !isPaid
+                    ? 'opacity-50 cursor-not-allowed'
+                    : creditType === 'carryover'
+                    ? 'border-primary bg-primary/5 cursor-pointer'
+                    : 'border-border hover:border-muted-foreground cursor-pointer'
                 }`}
               >
                 <input
@@ -215,7 +283,8 @@ export function StudentRestModal({
                   name="creditType"
                   value="carryover"
                   checked={creditType === 'carryover'}
-                  onChange={() => setCreditType('carryover')}
+                  onChange={() => isPaid && setCreditType('carryover')}
+                  disabled={!isPaid}
                   className="hidden"
                 />
                 <CreditCard className={`w-5 h-5 ${creditType === 'carryover' ? 'text-primary' : 'text-muted-foreground'}`} />
@@ -230,10 +299,12 @@ export function StudentRestModal({
 
               {/* 환불 */}
               <label
-                className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${
-                  creditType === 'refund'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-muted-foreground'
+                className={`flex items-center gap-3 p-3 border rounded-lg transition-colors ${
+                  !isPaid
+                    ? 'opacity-50 cursor-not-allowed'
+                    : creditType === 'refund'
+                    ? 'border-primary bg-primary/5 cursor-pointer'
+                    : 'border-border hover:border-muted-foreground cursor-pointer'
                 }`}
               >
                 <input
@@ -241,7 +312,8 @@ export function StudentRestModal({
                   name="creditType"
                   value="refund"
                   checked={creditType === 'refund'}
-                  onChange={() => setCreditType('refund')}
+                  onChange={() => isPaid && setCreditType('refund')}
+                  disabled={!isPaid}
                   className="hidden"
                 />
                 <Banknote className={`w-5 h-5 ${creditType === 'refund' ? 'text-primary' : 'text-muted-foreground'}`} />

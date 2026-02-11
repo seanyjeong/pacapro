@@ -518,9 +518,10 @@ Authorization: Bearer <JWT_TOKEN>
 - `holiday` - 휴일 (자동 휴강 처리)
 - `etc` - 기타
 
-### 휴일 설정 시 자동 처리
-- `is_holiday: true` 설정 시 해당 날짜 수업 휴강 처리
-- 상담 슬롯 차단 (morning/afternoon/evening)
+### 일정 등록 시 자동 처리
+- `is_holiday: true` 설정 시 해당 날짜 수업 휴강 처리 + 전체 시간대 상담 차단
+- 일반 일정도 해당 시간대 상담 차단 (종일 일정이면 전체, 시간 지정이면 해당 시간대만)
+- 삭제 시 연결된 상담 차단 자동 해제
 
 ---
 

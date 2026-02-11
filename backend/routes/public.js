@@ -146,7 +146,7 @@ router.get('/consultation/:slug/slots', async (req, res) => {
 
     // 해당 날짜의 차단된 시간대 조회
     const [blockedSlots] = await db.query(
-      `SELECT is_all_day, start_time, end_time
+      `SELECT is_all_day, start_time, end_time, time_slot
        FROM consultation_blocked_slots
        WHERE academy_id = ? AND blocked_date = ?`,
       [academy.id, date]
@@ -182,7 +182,16 @@ router.get('/consultation/:slug/slots', async (req, res) => {
 
       // 차단된 시간대 체크
       const isBlocked = blockedSlots.some(b => {
-        if (b.is_all_day) return true;
+        // time_slot 기반 차단 (morning/afternoon/evening)
+        if (b.time_slot) {
+          const slotHour = hours;
+          if (b.time_slot === 'morning' && slotHour < 12) return true;
+          if (b.time_slot === 'afternoon' && slotHour >= 12 && slotHour < 18) return true;
+          if (b.time_slot === 'evening' && slotHour >= 18) return true;
+          return false;
+        }
+        // 기존 is_all_day / start_time~end_time 기반 차단
+        if (b.is_all_day && !b.time_slot) return true;
         if (!b.start_time || !b.end_time) return false;
         return timeStr >= b.start_time && timeStr < b.end_time;
       });

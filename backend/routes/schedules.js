@@ -211,7 +211,43 @@ router.get('/slot', verifyToken, async (req, res) => {
             [req.user.academyId, date, time_slot]
         );
 
-        const schedule = schedules[0] || null;
+        let schedule = schedules[0] || null;
+
+        // 스케줄이 없으면 자동 생성
+        if (!schedule) {
+            const [result] = await db.query(
+                `INSERT INTO class_schedules (academy_id, class_date, time_slot, attendance_taken)
+                 VALUES (?, ?, ?, 0)`,
+                [req.user.academyId, date, time_slot]
+            );
+            schedule = { id: result.insertId, class_date: date, time_slot, attendance_taken: 0 };
+        }
+
+        // 해당 요일에 수업이 있는 학생 중 아직 출석 기록 없는 학생 자동 추가
+        const dayOfWeek = new Date(date + 'T00:00:00').getDay();
+        const [missingStudents] = await db.query(
+            `SELECT s.id
+             FROM students s
+             WHERE s.academy_id = ?
+             AND s.status = 'active'
+             AND s.deleted_at IS NULL
+             AND JSON_CONTAINS(s.class_days, ?)
+             AND s.id NOT IN (
+                SELECT a.student_id FROM attendance a
+                WHERE a.class_schedule_id = ?
+             )`,
+            [req.user.academyId, JSON.stringify(dayOfWeek), schedule.id]
+        );
+
+        // 누락된 학생들 자동 추가 (attendance_status = NULL로 추가)
+        if (missingStudents.length > 0) {
+            const values = missingStudents.map(s => [schedule.id, s.id, null, 0]);
+            await db.query(
+                `INSERT IGNORE INTO attendance (class_schedule_id, student_id, attendance_status, is_makeup)
+                 VALUES ?`,
+                [values]
+            );
+        }
 
         // 스케줄이 있으면 배정된 학생 조회 (시즌 정보, 체험생 정보, 전화번호, 보충 여부 포함)
         let students = [];
@@ -247,10 +283,7 @@ router.get('/slot', verifyToken, async (req, res) => {
             }));
         }
 
-        // 해당 요일에 수업이 있는 학생 중 아직 배정되지 않은 학생 조회
-        // class_days는 숫자 배열로 저장됨 (0=일, 1=월, 2=화, ...)
-        const dayOfWeek = new Date(date + 'T00:00:00').getDay();
-
+        // 해당 요일에 수업이 있는 학생 중 아직 배정되지 않은 학생 조회 (이미 자동 추가했으므로 비어있을 것)
         const [availableStudentsRaw] = await db.query(
             `SELECT s.id, s.name, s.grade, s.student_type, s.class_days
              FROM students s
