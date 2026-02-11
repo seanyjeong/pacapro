@@ -1493,11 +1493,12 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                     [studentId, req.user.academyId]
                 );
 
-                // 새 스케줄 배정
+                // 미출석 일정만 새로 배정 (출석 완료된 일정은 이미 attendance에 남아있음)
                 let trialAssigned = 0;
                 for (const trialDate of trial_dates) {
-                    const { date, time_slot } = trialDate;
+                    const { date, time_slot, attended } = trialDate;
                     if (!date || !time_slot) continue;
+                    if (attended) continue; // 출석 완료된 일정은 스킵
 
                     let [schedules] = await db.query(
                         `SELECT id FROM class_schedules
@@ -1526,6 +1527,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                     trialAssigned++;
                 }
                 trialAssignResult = { assigned: trialAssigned };
+                logger.info(`[Trial] Student ${studentId}: reassigned ${trialAssigned} unattended schedules`);
             } catch (trialError) {
                 logger.error('Trial schedule reassign failed:', trialError);
             }

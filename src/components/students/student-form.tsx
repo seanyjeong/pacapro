@@ -593,34 +593,51 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
               </p>
             ) : (
               <div className="space-y-2">
-                {trialDates.map((td, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-3 bg-card rounded-lg border border-purple-200 dark:border-purple-700">
-                    <Calendar className="w-4 h-4 text-purple-500" />
-                    <span className="text-sm font-medium text-purple-700 dark:text-purple-300">{idx + 1}회차</span>
-                    <input
-                      type="date"
-                      value={td.date}
-                      onChange={(e) => updateTrialDate(idx, 'date', e.target.value)}
-                      className="flex-1 px-3 py-1.5 border border-border bg-background text-foreground rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                    />
-                    <select
-                      value={td.time_slot}
-                      onChange={(e) => updateTrialDate(idx, 'time_slot', e.target.value as TrialDate['time_slot'])}
-                      className="px-3 py-1.5 border border-border bg-background text-foreground rounded-md text-sm focus:ring-purple-500 focus:border-purple-500"
-                    >
-                      {Object.entries(timeSlotLabels).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => removeTrialDate(idx)}
-                      className="p-1 text-muted-foreground hover:text-red-500"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                {trialDates.map((td, idx) => {
+                  const isAttended = td.attended === true;
+                  return (
+                    <div key={idx} className={`flex items-center gap-2 p-3 bg-card rounded-lg border ${
+                      isAttended
+                        ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950'
+                        : 'border-purple-200 dark:border-purple-700'
+                    }`}>
+                      <Calendar className={`w-4 h-4 ${isAttended ? 'text-green-500' : 'text-purple-500'}`} />
+                      <span className={`text-sm font-medium ${isAttended ? 'text-green-700 dark:text-green-300' : 'text-purple-700 dark:text-purple-300'}`}>
+                        {idx + 1}회차{isAttended && ' (출석완료)'}
+                      </span>
+                      <input
+                        type="date"
+                        value={td.date}
+                        onChange={(e) => updateTrialDate(idx, 'date', e.target.value)}
+                        disabled={isAttended}
+                        className={`flex-1 px-3 py-1.5 border border-border rounded-md text-sm focus:ring-purple-500 focus:border-purple-500 ${
+                          isAttended ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-background text-foreground'
+                        }`}
+                      />
+                      <select
+                        value={td.time_slot}
+                        onChange={(e) => updateTrialDate(idx, 'time_slot', e.target.value as TrialDate['time_slot'])}
+                        disabled={isAttended}
+                        className={`px-3 py-1.5 border border-border rounded-md text-sm focus:ring-purple-500 focus:border-purple-500 ${
+                          isAttended ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-background text-foreground'
+                        }`}
+                      >
+                        {Object.entries(timeSlotLabels).map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                      {!isAttended && (
+                        <button
+                          type="button"
+                          onClick={() => removeTrialDate(idx)}
+                          className="p-1 text-muted-foreground hover:text-red-500"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 

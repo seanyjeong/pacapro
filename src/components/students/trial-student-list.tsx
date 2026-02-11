@@ -62,19 +62,22 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
     router.push(`/students/new?${params.toString()}`);
   };
 
-  // 체험 종료 (삭제) 처리
+  // 체험 종료 처리 (미등록관리로 이동)
   const handleDelete = async (student: Student) => {
-    if (!confirm(`${student.name} 학생의 체험을 종료하시겠습니까?\n(체험 기록이 삭제됩니다)`)) {
+    if (!confirm(`${student.name} 학생의 체험을 종료하시겠습니까?\n(미등록관리로 이동됩니다)`)) {
       return;
     }
 
     try {
       setDeletingId(student.id);
-      await apiClient.delete(`/students/${student.id}`);
-      toast.success(`${student.name} 학생의 체험이 종료되었습니다.`);
+      await apiClient.put(`/students/${student.id}`, {
+        status: 'pending',
+        is_trial: false
+      });
+      toast.success(`${student.name} 학생의 체험이 종료되어 미등록관리로 이동했습니다.`);
       onReload();
     } catch (error) {
-      console.error('Failed to delete trial student:', error);
+      console.error('Failed to end trial:', error);
       toast.error('체험 종료에 실패했습니다.');
     } finally {
       setDeletingId(null);
