@@ -1,6 +1,6 @@
 # P-ACA API 명세서
 
-> **Last Updated**: 2026-01-10
+> **Last Updated**: 2026-02-11
 > **Base URL**: `https://chejump.com:8320/api`
 > **Authentication**: Bearer Token (JWT)
 
@@ -93,15 +93,19 @@ Authorization: Bearer <JWT_TOKEN>
 | GET | `/` | Token | 학생 목록 조회 |
 | GET | `/rest-ended` | owner, admin, staff | 휴원 종료 학생 목록 |
 | GET | `/search` | Token | 학생 검색 |
+| GET | `/class-days` | class_days.view | 요일반 목록 조회 |
+| PUT | `/class-days/bulk` | class_days.edit | 요일반 일괄 수정 |
 | GET | `/:id` | Token | 학생 상세 조회 |
 | POST | `/` | students.edit | 학생 등록 |
 | PUT | `/:id` | students.edit | 학생 수정 |
+| PUT | `/:id/class-days` | class_days.edit | 학생 요일반 수정 |
+| DELETE | `/:id/class-days-schedule` | class_days.edit | 학생 요일반 일정 삭제 |
 | DELETE | `/:id` | owner | 학생 삭제 |
 | POST | `/:id/withdraw` | students.edit | 퇴원 처리 |
 | POST | `/grade-upgrade` | students.edit | 학년 진급 |
 | POST | `/auto-promote` | owner | 자동 진급 |
 | GET | `/:id/seasons` | Token | 학생 시즌 이력 |
-| POST | `/:id/rest` | students.edit | 휴원 시작 |
+| POST | `/:id/process-rest` | students.edit | 휴원 처리 |
 | POST | `/:id/resume` | students.edit | 휴원 복원 |
 | GET | `/:id/rest-credits` | Token | 휴원 크레딧 조회 |
 | POST | `/:id/manual-credit` | payments.edit | 수동 크레딧 추가 (날짜/회차/금액직접입력) |
@@ -152,7 +156,6 @@ Authorization: Bearer <JWT_TOKEN>
 | POST | `/` | schedules.edit | 수업 등록 |
 | PUT | `/:id` | schedules.edit | 수업 수정 |
 | DELETE | `/:id` | schedules.edit | 수업 삭제 |
-| POST | `/bulk` | schedules.edit | 수업 일괄 생성 |
 | PUT | `/:id/assign-instructor` | schedules.edit | 강사 배정 |
 | GET | `/:id/attendance` | Token | 출석 목록 |
 | POST | `/:id/attendance` | Token | 출석 체크 |
@@ -181,6 +184,8 @@ Authorization: Bearer <JWT_TOKEN>
 | GET | `/` | payments.view | 학원비 목록 |
 | GET | `/unpaid` | payments.view | 미납 목록 |
 | GET | `/unpaid-today` | Token | 오늘 수업 미납자 |
+| GET | `/credits` | payments.view | 크레딧 목록 |
+| GET | `/credits/summary` | payments.view | 크레딧 요약 |
 | GET | `/:id` | payments.view | 학원비 상세 |
 | POST | `/` | payments.edit | 학원비 등록 |
 | PUT | `/:id` | payments.edit | 학원비 수정 |
@@ -190,8 +195,8 @@ Authorization: Bearer <JWT_TOKEN>
 | GET | `/stats/summary` | payments.view | 통계 요약 |
 | POST | `/generate-prorated` | payments.edit | 일할 학원비 생성 |
 | POST | `/generate-monthly-for-student` | payments.edit | 특정 학생 월 학원비 생성 |
-| POST | `/prepaid-preview` | 인증 | 선납 할인 미리보기 (금액 계산) |
-| POST | `/prepaid-pay` | 인증 | 선납 할인 결제 실행 (2~6개월) |
+| POST | `/prepaid-preview` | Token | 선납 할인 미리보기 (금액 계산) |
+| POST | `/prepaid-pay` | Token | 선납 할인 결제 실행 (2~6개월) |
 
 ---
 
@@ -246,6 +251,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 | Method | Endpoint | 권한 | 설명 |
 |--------|----------|------|------|
+| GET | `/calendar` | Token | 상담 캘린더 |
 | GET | `/:studentId` | Token | 학생 상담 이력 |
 | GET | `/:studentId/peak-records` | Token | P-EAK 실기 기록 |
 | GET | `/:studentId/compare/:id` | Token | 상담 비교 |
@@ -285,23 +291,27 @@ Authorization: Bearer <JWT_TOKEN>
 
 | Method | Endpoint | 권한 | 설명 |
 |--------|----------|------|------|
-| GET | `/settings` | settings.view | 알림 설정 조회 |
-| PUT | `/settings` | settings.edit | 알림 설정 수정 |
-| POST | `/test` | settings.edit | 테스트 발송 |
-| POST | `/send-unpaid` | settings.edit | 미납자 알림 수동 발송 |
-| POST | `/send-individual` | settings.edit | 개별 발송 |
-| GET | `/logs` | settings.view | 발송 로그 |
+| GET | `/settings` | notifications.view | 알림 설정 조회 |
+| PUT | `/settings` | notifications.edit | 알림 설정 수정 |
+| POST | `/test` | notifications.edit | 테스트 발송 |
+| POST | `/send-unpaid` | notifications.edit | 미납자 알림 수동 발송 |
+| POST | `/send-individual` | notifications.edit | 개별 발송 |
+| GET | `/logs` | notifications.view | 발송 로그 |
 | POST | `/send-unpaid-today-auto` | Token | 오늘 미납자 자동 발송 (솔라피) |
 | POST | `/send-trial-today-auto` | Token | 체험 알림 자동 발송 (솔라피) |
-| POST | `/test-consultation` | settings.edit | 상담 확정 테스트 (솔라피) |
-| POST | `/test-trial` | settings.edit | 체험 알림 테스트 (솔라피) |
-| POST | `/test-overdue` | settings.edit | 미납 알림 테스트 (솔라피) |
-| GET | `/stats` | settings.view | 발송 통계 |
+| POST | `/test-consultation` | notifications.edit | 상담 확정 테스트 (솔라피) |
+| POST | `/test-trial` | notifications.edit | 체험 알림 테스트 (솔라피) |
+| POST | `/test-overdue` | notifications.edit | 미납 알림 테스트 (솔라피) |
+| POST | `/test-reminder` | notifications.edit | 리마인더 테스트 (솔라피) |
+| GET | `/stats` | notifications.view | 발송 통계 |
 | POST | `/send-unpaid-today-auto-sens` | Public | 오늘 미납자 자동 발송 (SENS) |
 | POST | `/send-trial-today-auto-sens` | Public | 체험 알림 자동 발송 (SENS) |
-| POST | `/test-sens-consultation` | settings.edit | 상담 확정 테스트 (SENS) |
-| POST | `/test-sens-trial` | settings.edit | 체험 알림 테스트 (SENS) |
-| POST | `/test-sens-overdue` | settings.edit | 미납 알림 테스트 (SENS) |
+| POST | `/send-reminder-auto` | Public | 리마인더 자동 발송 (솔라피) |
+| POST | `/send-reminder-auto-sens` | Public | 리마인더 자동 발송 (SENS) |
+| POST | `/test-sens-consultation` | notifications.edit | 상담 확정 테스트 (SENS) |
+| POST | `/test-sens-trial` | notifications.edit | 체험 알림 테스트 (SENS) |
+| POST | `/test-sens-overdue` | notifications.edit | 미납 알림 테스트 (SENS) |
+| POST | `/test-sens-reminder` | notifications.edit | 리마인더 테스트 (SENS) |
 
 ---
 
@@ -311,13 +321,13 @@ Authorization: Bearer <JWT_TOKEN>
 
 | Method | Endpoint | 권한 | 설명 |
 |--------|----------|------|------|
-| POST | `/send` | settings.edit | SMS 발송 |
+| POST | `/send` | sms.edit | SMS 발송 |
 | GET | `/recipients-count` | Token | 수신자 수 조회 |
-| GET | `/logs` | Token | 발송 로그 |
+| GET | `/logs` | sms.view | 발송 로그 |
 | GET | `/sender-numbers` | Token | 발신번호 목록 |
-| POST | `/sender-numbers` | settings.edit | 발신번호 등록 |
-| PUT | `/sender-numbers/:id` | settings.edit | 발신번호 수정 |
-| DELETE | `/sender-numbers/:id` | settings.edit | 발신번호 삭제 |
+| POST | `/sender-numbers` | sms.edit | 발신번호 등록 |
+| PUT | `/sender-numbers/:id` | sms.edit | 발신번호 수정 |
+| DELETE | `/sender-numbers/:id` | sms.edit | 발신번호 삭제 |
 
 ---
 
@@ -364,6 +374,7 @@ Authorization: Bearer <JWT_TOKEN>
 | GET | `/financial` | reports.view | 재무 엑셀 |
 | GET | `/payments` | reports.view | 학원비 엑셀 |
 | GET | `/salaries` | reports.view | 급여 엑셀 |
+| GET | `/students` | Token | 학생 엑셀 |
 
 ---
 
@@ -591,6 +602,12 @@ Authorization: Bearer <JWT_TOKEN>
 | incomes.edit | 수입 등록/수정 |
 | overtime_approval.view | 초과근무 승인 조회 |
 | overtime_approval.edit | 초과근무 승인/거절 |
+| notifications.view | 알림톡 조회 |
+| notifications.edit | 알림톡 발송/수정 |
+| sms.view | SMS 로그 조회 |
+| sms.edit | SMS 발송/수정 |
+| class_days.view | 요일반 조회 |
+| class_days.edit | 요일반 등록/수정 |
 
 ---
 
@@ -603,6 +620,8 @@ Authorization: Bearer <JWT_TOKEN>
 | 체험수업 알림톡 (솔라피) | `POST /api/notifications/send-trial-today-auto` |
 | 납부안내 알림톡 (SENS) | `POST /api/notifications/send-unpaid-today-auto-sens` |
 | 체험수업 알림톡 (SENS) | `POST /api/notifications/send-trial-today-auto-sens` |
+| 리마인더 (솔라피) | `POST /api/notifications/send-reminder-auto` |
+| 리마인더 (SENS) | `POST /api/notifications/send-reminder-auto-sens` |
 
 ### 인증
 ```

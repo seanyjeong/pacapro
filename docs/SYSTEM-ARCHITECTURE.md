@@ -1,7 +1,7 @@
 # P-ACA 시스템 아키텍처 문서
 
-> **최종 업데이트**: 2026-01-13
-> **버전**: v3.3.26
+> **최종 업데이트**: 2026-02-11
+> **버전**: v3.8.8
 
 ---
 
@@ -70,14 +70,15 @@ src/
 │   │   └── reset-password/
 │   │
 │   ├── (메인 기능 - PC)
-│   │   ├── students/      # 학생 관리
+│   │   ├── students/      # 학생 관리 + class-days (요일반)
 │   │   ├── instructors/   # 강사 관리
 │   │   ├── schedules/     # 수업 스케줄
-│   │   ├── payments/      # 학원비
+│   │   ├── payments/      # 학원비 + credits, toss
 │   │   ├── salaries/      # 급여
-│   │   ├── consultations/ # 상담
+│   │   ├── consultations/ # 상담 + calendar, enrolled, settings, new-inquiry
 │   │   ├── seasons/       # 시즌
-│   │   ├── settings/      # 설정
+│   │   ├── academy-events/# 학원 일정
+│   │   ├── settings/      # 설정 + notifications
 │   │   └── ...
 │   │
 │   ├── tablet/            # 태블릿 전용
@@ -107,8 +108,8 @@ src/
 │   └── ...
 │
 ├── lib/
-│   ├── api/              # API 클라이언트 (20개 모듈)
-│   └── types/            # TypeScript 타입 정의
+│   ├── api/              # API 클라이언트 (19개 모듈 + client.ts)
+│   └── types/            # TypeScript 타입 정의 (10개)
 │
 └── middleware.ts         # 태블릿 자동 리다이렉트
 ```
@@ -122,6 +123,7 @@ src/
 ├── 학원 운영
 │   ├── /students (학생 목록)
 │   │   ├── /new (등록)
+│   │   ├── /class-days (요일반 관리)
 │   │   └── /[id] (상세) → /edit (수정)
 │   │
 │   ├── /instructors (강사)
@@ -132,37 +134,58 @@ src/
 │   │   ├── /new
 │   │   └── /[id] → /attendance, /edit
 │   │
-│   └── /seasons (시즌)
-│       ├── /new
-│       └── /[id] → /enroll, /edit
+│   ├── /seasons (시즌)
+│   │   ├── /new
+│   │   └── /[id] → /enroll, /edit
+│   │
+│   ├── /academy-events (학원 일정)
+│   └── /performance (성적)
 │
 ├── 재무 관리
 │   ├── /payments (학원비)
-│   ├── /salaries (급여)
+│   │   ├── /new (등록)
+│   │   ├── /credits (크레딧 관리)
+│   │   ├── /toss (토스 결제 관리)
+│   │   └── /[id] → /edit
+│   ├── /salaries (급여) → /[id] (상세)
 │   ├── /expenses (지출)
 │   └── /incomes (수입)
 │
 ├── 상담
 │   ├── /consultations (신규 상담)
-│   │   ├── /calendar
-│   │   ├── /enrolled
-│   │   └── /[id]/conduct
+│   │   ├── /calendar (캘린더)
+│   │   ├── /enrolled (재원생 상담)
+│   │   ├── /new-inquiry (직접 상담 등록)
+│   │   ├── /settings (상담 설정)
+│   │   └── /[id]/conduct (상담 진행)
 │   └── /sms (문자 발송)
 │
 ├── 설정
 │   ├── /settings
+│   │   └── /notifications (알림 설정)
 │   ├── /staff (직원 관리)
-│   └── /admin/users
+│   ├── /admin/users (사용자 관리)
+│   └── /reports (보고서)
 │
 ├── 태블릿 (/tablet/*)
-│   └── 출석체크, 학생, 결제, 상담, 문자, 설정
+│   ├── /attendance (출석 체크)
+│   ├── /students → /[id] (학생 조회/상세)
+│   ├── /payments (결제 확인)
+│   ├── /consultations → /[id]/conduct (상담)
+│   ├── /sms (문자)
+│   ├── /schedule (수업)
+│   └── /settings
 │
 ├── 모바일 (/m/*)
-│   └── 출석, 강사체크인, 미납자, 상담
+│   ├── / (메인)
+│   ├── /attendance (출석)
+│   ├── /instructor (강사 체크인)
+│   ├── /unpaid (미납자)
+│   └── /consultations (오늘 상담)
 │
 └── 공개 페이지
-    ├── /c/[slug] (상담 신청)
-    └── /consultation/[reservationNumber]
+    ├── /c/[slug] (상담 신청) → /success (완료)
+    └── /consultation/[reservationNumber] (예약 확인)
 ```
 
 ### 2.3 컴포넌트 구조
@@ -180,26 +203,43 @@ src/
 │       ├── 사용자 메뉴
 │       └── 테마 토글
 │
-├── 기능별 컴포넌트 (80개)
-│   ├── students/ (13개)
-│   │   ├── StudentForm
-│   │   ├── StudentListTable
-│   │   ├── StudentPayments
-│   │   └── ...
+├── 기능별 컴포넌트 (91개)
+│   ├── students/ (16개)
+│   │   ├── StudentForm, StudentListTable, StudentCard
+│   │   ├── StudentPayments, StudentSeasons, StudentPerformance
+│   │   ├── StudentConsultations, StudentSearch, StudentFilters
+│   │   ├── StudentRestModal, StudentResumeModal, ManualCreditModal
+│   │   ├── TrialStudentList, PendingStudentList
+│   │   └── SchoolStudentList, StudentStatsCards
 │   │
-│   ├── schedules/ (10개)
-│   │   ├── ScheduleForm
-│   │   ├── ScheduleCalendar
-│   │   └── ...
+│   ├── schedules/ (14개)
+│   │   ├── ScheduleForm, ScheduleCalendar, ScheduleCalendarV2
+│   │   ├── ScheduleCard, ScheduleList, ScheduleFilters
+│   │   ├── AttendanceChecker, InstructorAttendanceChecker
+│   │   ├── InstructorSchedulePanel, InstructorScheduleModal
+│   │   ├── InstructorAttendanceModal, TimeSlotDetailModal
+│   │   └── PendingApprovalsModal, ExtraDayRequestModal
 │   │
-│   ├── payments/ (4개)
-│   ├── instructors/ (6개)
-│   └── ...
+│   ├── payments/ (5개) - PaymentForm, PaymentList, PaymentCard, PaymentRecordModal, PrepaidPaymentModal
+│   ├── instructors/ (8개) - Form, List, Card, Search, Filters, StatsCards, Attendance, Salaries
+│   ├── attendance/ (8개) - StatsDashboard, SwipeableCard, RadialMenu, SearchFilter, ReasonBottomSheet, Confetti, QuickActionsToolbar, AttendanceCard
+│   ├── salaries/ (2개) - SalaryCalculator, SalaryList
+│   ├── staff/ (3개) - StaffList, PermissionModal, StaffFormModal
+│   ├── academy-events/ (2개) - EventCalendar, EventFormModal
+│   ├── dashboard/ (2개) - DashboardSkeleton, StatsCard
+│   ├── expenses/ (1개) - ExpenseCalendar
+│   ├── incomes/ (1개) - IncomeCalendar
+│   ├── refund/ (1개) - RefundModal
+│   └── 공통 (8개) - VersionChecker, Providers, ThemeToggle, PWAInstallPrompt, PushNotificationSettings, DynamicManifest, DynamicTitle, PasswordConfirmModal
+│
+├── 레이아웃 (5개)
+│   ├── LayoutWrapper, Sidebar, TopNav
+│   └── SidebarTooltip, CollapsedCategoryMenu
 │
 └── UI 컴포넌트 (shadcn/ui 14개)
-    ├── Button, Card, Input, Select
-    ├── Dialog, AlertDialog
-    ├── Badge, Tabs, Checkbox
+    ├── Button, Card, Input, Select, Textarea, Label
+    ├── Dialog, AlertDialog, DropdownMenu
+    ├── Badge, Tabs, Checkbox, Switch, Skeleton
     └── ...
 ```
 
@@ -207,7 +247,7 @@ src/
 
 ## 3. 백엔드 API 구조
 
-### 3.1 API 카테고리 (200+ 엔드포인트)
+### 3.1 API 카테고리 (250+ 엔드포인트)
 
 ```
 API 엔드포인트 구조
@@ -224,7 +264,9 @@ API 엔드포인트 구조
 │   ├── PUT /:id (수정)
 │   ├── DELETE /:id (삭제)
 │   ├── POST /:id/withdraw (퇴원)
-│   └── POST /:id/rest, /resume (휴원)
+│   ├── POST /:id/process-rest, /resume (휴원)
+│   ├── 요일반: GET /class-days, PUT /class-days/bulk
+│   └── 크레딧: GET /:id/credits, POST /:id/manual-credit
 │
 ├── /api/instructors (강사)
 │   ├── CRUD
@@ -240,7 +282,9 @@ API 엔드포인트 구조
 ├── /api/payments (학원비)
 │   ├── CRUD
 │   ├── POST /:id/pay (납부)
-│   └── GET /unpaid (미납)
+│   ├── GET /unpaid (미납)
+│   ├── GET /credits, /credits/summary (크레딧)
+│   └── POST /prepaid-preview, /prepaid-pay (선납 할인)
 │
 ├── /api/salaries (급여)
 │   ├── GET /work-summary
@@ -259,7 +303,8 @@ API 엔드포인트 구조
 │
 ├── /api/notifications (알림톡)
 │   ├── 솔라피/SENS 설정
-│   └── 테스트/발송
+│   ├── 테스트/발송
+│   └── 리마인더 자동 발송
 │
 ├── /api/sms (문자)
 │   ├── POST /send
@@ -274,10 +319,16 @@ API 엔드포인트 구조
 │   ├── GET /consultation/:slug/slots
 │   └── POST /consultation/:slug/apply
 │
+├── /api/academy-events (학원 일정)
+│   └── CRUD + 휴일 자동 휴강 처리
+│
+├── /api/student-consultations (재원생 상담)
+│   ├── GET /calendar
+│   └── 학생별 상담 CRUD
+│
 └── /api/exports (엑셀 다운로드)
-    ├── GET /payments
-    ├── GET /salaries
-    └── ...
+    ├── GET /payments, /salaries, /students
+    └── GET /revenue, /expenses, /financial
 ```
 
 ### 3.2 인증 & 권한
@@ -302,14 +353,17 @@ API 엔드포인트 구조
     ├── settings.view / settings.edit
     ├── expenses.view / expenses.edit
     ├── incomes.view / incomes.edit
-    └── overtime_approval.view / overtime_approval.edit
+    ├── overtime_approval.view / overtime_approval.edit
+    ├── notifications.view / notifications.edit
+    ├── sms.view / sms.edit
+    └── class_days.view / class_days.edit
 ```
 
 ---
 
 ## 4. 데이터베이스 스키마
 
-### 4.1 테이블 목록 (41개)
+### 4.1 테이블 목록 (43개, NocoDB 제외)
 
 ```
 DB 테이블 구조
@@ -362,7 +416,11 @@ DB 테이블 구조
     ├── student_performance (성적)
     ├── holidays (공휴일)
     ├── overtime_approvals (초과근무)
-    └── toss_settings (토스 설정)
+    ├── toss_settings (토스 설정)
+    ├── revenues (매출)
+    └── test_applicants (시험 응시자)
+
+※ paca DB에 NocoDB 테이블(nc_*, xc_*)이 ~67개 포함되어 있으나 앱과 무관
 ```
 
 ### 4.2 주요 테이블 관계도 (Mermaid)
@@ -619,21 +677,22 @@ flowchart TB
 ### 6.3 알림톡 (솔라피/SENS)
 
 ```
-알림톡 종류
+알림톡 종류 (솔라피 + SENS 이중 지원)
 ├── 상담 확정 알림
 ├── 체험 수업 안내
 ├── 미납 안내
-├── 상담 리마인드 (D-1)
-└── 휴원 종료 안내
+├── 상담 리마인더 (D-1)
+├── 휴원 종료 안내
+└── 리마인더 자동 발송
 ```
 
 ### 6.4 n8n 자동화
 
 ```
 n8n 워크플로우
-├── 매일 09:00 - 오늘 수업 미납자 알림톡
-├── 매일 09:00 - 오늘 체험 학생 알림톡
-├── 상담 D-1 리마인드
+├── 매일 09:00 - 오늘 수업 미납자 알림톡 (솔라피/SENS)
+├── 매일 09:00 - 오늘 체험 학생 알림톡 (솔라피/SENS)
+├── 상담 D-1 리마인더 (솔라피/SENS)
 └── 휴원 종료 예정 알림
 ```
 
@@ -711,11 +770,13 @@ n8n 워크플로우
 
 | 항목 | 수치 |
 |------|------|
-| 프론트엔드 페이지 | 66개 |
-| 컴포넌트 | 80개 |
-| API 엔드포인트 | 200+ |
-| DB 테이블 | 41개 |
-| API 모듈 | 20개 |
+| 프론트엔드 페이지 | 67개 |
+| 컴포넌트 | 91개 |
+| API 엔드포인트 | 250+ |
+| DB 테이블 | 43개 (NocoDB 제외) |
+| 백엔드 라우트 모듈 | 27개 |
+| 프론트 API 모듈 | 19개 |
+| TypeScript 타입 | 10개 |
 
 ---
 

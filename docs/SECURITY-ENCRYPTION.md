@@ -1,6 +1,7 @@
 # P-ACA 데이터 암호화
 
 > **상태**: Phase 1 완료 ✅ (2025-12-12)
+> **최종 업데이트**: 2026-02-11
 
 ---
 
@@ -17,6 +18,7 @@
 |--------|------|
 | students | name, phone, parent_phone, address |
 | instructors | name, phone, address, resident_number, account_number, account_holder |
+| consultations | student_name, student_phone, parent_name, parent_phone, notes |
 | users | name, phone |
 
 ### 주요 파일
