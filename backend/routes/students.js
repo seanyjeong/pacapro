@@ -1533,6 +1533,77 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
+
+        // pending → active 전환 시 첫 달 학원비 자동 생성
+        let firstPaymentFromPending = null;
+        if (status === 'active' && (oldStatus === 'pending' || oldStatus === 'trial') && monthly_tuition && monthly_tuition > 0) {
+            try {
+                const enrollDate = new Date(enrollment_date || new Date().toISOString().split('T')[0]);
+                const year = enrollDate.getFullYear();
+                const month = enrollDate.getMonth() + 1;
+
+                const [academySettings] = await db.query(
+                    'SELECT tuition_due_day FROM academy_settings WHERE academy_id = ?',
+                    [req.user.academyId]
+                );
+                const academyDueDay = academySettings.length > 0 ? academySettings[0].tuition_due_day : 5;
+                const studentDueDay = payment_due_day || academyDueDay;
+
+                // 이미 해당 월 학원비가 있는지 확인
+                const [existingPayment] = await db.query(
+                    'SELECT id FROM student_payments WHERE student_id = ? AND target_year = ? AND target_month = ?',
+                    [studentId, year, month]
+                );
+
+                if (existingPayment.length === 0) {
+                    const lastDayOfMonth = new Date(year, month, 0).getDate();
+                    const enrollDay = enrollDate.getDate();
+                    const remainingDays = lastDayOfMonth - enrollDay + 1;
+
+                    const newClassDays = class_days ? (typeof class_days === 'string' ? JSON.parse(class_days) : class_days) : [];
+                    let classCountInPeriod = 0;
+                    for (let d = enrollDay; d <= lastDayOfMonth; d++) {
+                        const date = new Date(year, month - 1, d);
+                        const dayOfWeek = date.getDay();
+                        if (newClassDays.includes(dayOfWeek)) classCountInPeriod++;
+                    }
+                    const totalClassDaysInMonth = (() => {
+                        let count = 0;
+                        for (let d = 1; d <= lastDayOfMonth; d++) {
+                            const date = new Date(year, month - 1, d);
+                            if (newClassDays.includes(date.getDay())) count++;
+                        }
+                        return count;
+                    })();
+
+                    const proratedAmount = totalClassDaysInMonth > 0
+                        ? Math.round(monthly_tuition * classCountInPeriod / totalClassDaysInMonth)
+                        : monthly_tuition;
+                    const discountAmt = discount_rate ? Math.round(proratedAmount * discount_rate / 100) : 0;
+                    const finalAmount = proratedAmount - discountAmt;
+                    const dueDate = new Date(year, month - 1, Math.min(studentDueDay, lastDayOfMonth));
+                    const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
+                    const description = `${month}월 학원비 (${enrollDay}일 등록, 일할계산)`;
+
+                    await db.query(
+                        `INSERT INTO student_payments (
+                            student_id, academy_id, year_month, payment_type, target_year, target_month,
+                            base_amount, discount_amount, additional_amount, final_amount,
+                            is_prorated, proration_details, due_date, payment_status, description
+                        ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, 0, ?, ?, ?, ?, 'pending', ?)`,
+                        [
+                            studentId, req.user.academyId, yearMonth, year, month,
+                            proratedAmount, discountAmt, finalAmount,
+                            1, JSON.stringify({ enrollDay, remainingDays, totalDays: lastDayOfMonth, classCountInPeriod, totalClassDaysInMonth }),
+                            dueDate, description
+                        ]
+                    );
+                    logger.info(`[Student ${studentId}] Payment created from pending: ${finalAmount}원 (${description})`);
+                }
+            } catch (paymentError) {
+                logger.error('Pending→Active payment creation failed:', paymentError);
+            }
+        }
         // 휴원 처리 (active → paused) 시 학원비 조정
         let paymentAdjustment = null;
         if (status === 'paused' && oldStatus === 'active') {
