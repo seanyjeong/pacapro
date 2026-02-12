@@ -30,6 +30,10 @@ function NewStudentContent() {
       grade: (searchParams.get('grade') || '') as Grade,
       school: searchParams.get('school') || '',
       gender: (searchParams.get('gender') || undefined) as Gender | undefined,
+      class_days: searchParams.get('class_days') || '[]',
+      weekly_count: parseInt(searchParams.get('weekly_count') || '0'),
+      monthly_tuition: searchParams.get('monthly_tuition') || '0',
+      time_slot: (searchParams.get('time_slot') || 'evening') as 'morning' | 'afternoon' | 'evening',
     } as Partial<Student>;
   }, [fromPendingId, searchParams]);
 

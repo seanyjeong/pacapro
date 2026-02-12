@@ -129,6 +129,10 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
       grade: student.grade || '',
       school: student.school || '',
       gender: student.gender || '',
+      class_days: JSON.stringify(typeof student.class_days === 'string' ? JSON.parse(student.class_days || '[]') : (student.class_days || [])),
+      weekly_count: String(student.weekly_count || 0),
+      monthly_tuition: String(student.monthly_tuition || 0),
+      time_slot: student.time_slot || 'evening',
     });
     router.push(`/students/new?${params.toString()}`);
   };

@@ -613,9 +613,9 @@ router.put('/:id', verifyToken, async (req, res) => {
     const {
       status, adminNotes, preferredDate, preferredTime, checklist, consultationMemo,
       // 학생 정보 수정 필드 추가
-      studentName, studentGrade, studentSchool, gender,
+      student_name, student_grade, student_school, gender,
       mockTestGrades, schoolGradeAvg, admissionType,
-      targetSchool, referrerStudent, parentPhone
+      target_school, referrerStudent, parent_phone
     } = req.body;
 
     // 기존 상담 확인 (현재 상태 포함)
@@ -670,27 +670,27 @@ router.put('/:id', verifyToken, async (req, res) => {
     }
 
     // 학생 정보 수정
-    if (studentName !== undefined) {
+    if (student_name !== undefined) {
       updates.push('student_name = ?');
-      params.push(studentName);
+      params.push(student_name);
       // parent_name도 같이 업데이트
       updates.push('parent_name = ?');
-      params.push(studentName);
+      params.push(student_name);
     }
 
-    if (studentGrade !== undefined) {
+    if (student_grade !== undefined) {
       updates.push('student_grade = ?');
-      params.push(studentGrade);
+      params.push(student_grade);
     }
 
-    if (studentSchool !== undefined) {
+    if (student_school !== undefined) {
       updates.push('student_school = ?');
-      params.push(studentSchool || null);
+      params.push(student_school || null);
     }
 
-    if (parentPhone !== undefined) {
+    if (parent_phone !== undefined) {
       updates.push('parent_phone = ?');
-      params.push(parentPhone ? encrypt(parentPhone) : null);
+      params.push(parent_phone ? encrypt(parent_phone) : null);
     }
 
     if (gender !== undefined) {
@@ -698,9 +698,9 @@ router.put('/:id', verifyToken, async (req, res) => {
       params.push(gender || null);
     }
 
-    if (targetSchool !== undefined) {
+    if (target_school !== undefined) {
       updates.push('target_school = ?');
-      params.push(targetSchool || null);
+      params.push(target_school || null);
     }
 
     if (referrerStudent !== undefined) {
@@ -744,6 +744,21 @@ router.put('/:id', verifyToken, async (req, res) => {
       `UPDATE consultations SET ${updates.join(', ')} WHERE id = ?`,
       params
     );
+
+    // 연결된 학생이 있으면 students 테이블도 동기화
+    if (currentConsultation.linked_student_id) {
+      const studentUpdates = [];
+      const studentParams = [];
+      if (student_name !== undefined) { studentUpdates.push('name = ?'); studentParams.push(student_name); }
+      if (student_grade !== undefined) { studentUpdates.push('grade = ?'); studentParams.push(student_grade); }
+      if (student_school !== undefined) { studentUpdates.push('school = ?'); studentParams.push(student_school || null); }
+      if (gender !== undefined) { studentUpdates.push('gender = ?'); studentParams.push(gender || null); }
+      if (parent_phone !== undefined) { studentUpdates.push('parent_phone = ?'); studentParams.push(parent_phone ? encrypt(parent_phone) : null); }
+      if (studentUpdates.length > 0) {
+        studentParams.push(currentConsultation.linked_student_id);
+        await db.query(`UPDATE students SET ${studentUpdates.join(', ')} WHERE id = ?`, studentParams);
+      }
+    }
 
     // 상태가 confirmed로 변경되면 알림톡 발송
     // 단, 재원생 상담(learning)은 알림톡 발송 제외
