@@ -157,6 +157,9 @@ export default function ConductPage({ params }: PageProps) {
     if (fromPage === 'pending') {
       return { url: '/students?tab=pending', label: '미등록관리로' };
     }
+    if (fromPage === 'trial') {
+      return { url: '/students?tab=trial', label: '체험생관리로' };
+    }
     if (consultation?.consultation_type === 'learning') {
       return { url: '/consultations/enrolled', label: '재원생상담으로' };
     }
