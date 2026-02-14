@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles, Pencil, Clock, Check } from 'lucide-react';
+import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles, Pencil, Clock, Check, FileText } from 'lucide-react';
 import type { Student, TrialDate } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 
@@ -25,6 +25,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
   const router = useRouter();
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [movingToPendingId, setMovingToPendingId] = useState<number | null>(null);
+  const [loadingConsultationId, setLoadingConsultationId] = useState<number | null>(null);
 
   // 체험 일정 파싱
   const parseTrialDates = (trialDates: TrialDate[] | string | null): TrialDate[] => {
@@ -47,6 +48,23 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
       evening: '저녁',
     };
     return labels[slot] || slot;
+  };
+
+  // 상담 정보 조회 - 상담 진행 페이지로 이동
+  const handleViewConsultation = async (student: Student) => {
+    setLoadingConsultationId(student.id);
+    try {
+      const res = await apiClient.get<{ consultation: { id: number } }>(`/consultations/by-student/${student.id}`);
+      if (res.consultation?.id) {
+        router.push(`/consultations/${res.consultation.id}/conduct?from=trial`);
+      } else {
+        toast.error('상담 정보를 찾을 수 없습니다.');
+      }
+    } catch {
+      toast.error('상담 정보를 찾을 수 없습니다.');
+    } finally {
+      setLoadingConsultationId(null);
+    }
   };
 
   // 정식 등록 처리
@@ -211,6 +229,19 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleViewConsultation(student)}
+                        title="상담 정보 보기"
+                        disabled={loadingConsultationId === student.id}
+                      >
+                        {loadingConsultationId === student.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <FileText className="w-4 h-4" />
+                        )}
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"

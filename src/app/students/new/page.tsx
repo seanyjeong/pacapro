@@ -16,13 +16,15 @@ function NewStudentContent() {
   const searchParams = useSearchParams();
   const isTrial = searchParams.get('is_trial') === 'true';
 
-  // 미등록관리에서 넘어온 경우 학생 정보 초기값 설정
+  // 미등록관리 또는 체험생에서 넘어온 경우 학생 정보 초기값 설정
   const fromPendingId = searchParams.get('from_pending');
+  const fromTrialId = searchParams.get('from_trial');
+  const existingStudentId = fromPendingId || fromTrialId;
   const initialData = useMemo(() => {
-    if (!fromPendingId) return undefined;
+    if (!existingStudentId) return undefined;
 
     return {
-      id: parseInt(fromPendingId),
+      id: parseInt(existingStudentId),
       name: searchParams.get('name') || '',
       phone: searchParams.get('phone') || '',
       parent_phone: searchParams.get('parent_phone') || '',
@@ -35,20 +37,20 @@ function NewStudentContent() {
       monthly_tuition: searchParams.get('monthly_tuition') || '0',
       time_slot: (searchParams.get('time_slot') || 'evening') as 'morning' | 'afternoon' | 'evening',
     } as Partial<Student>;
-  }, [fromPendingId, searchParams]);
+  }, [existingStudentId, searchParams]);
 
   const handleSubmit = async (data: StudentFormData) => {
     try {
       let student: Student;
 
-      // 미등록관리에서 온 경우: 기존 학생 UPDATE (id 유지)
-      if (fromPendingId) {
+      // 미등록관리 또는 체험생에서 온 경우: 기존 학생 UPDATE (id 유지, 상담 기록 보존)
+      if (existingStudentId) {
         const updateData = {
           ...data,
-          status: 'active' as StudentStatus,  // pending → active 전환
+          status: 'active' as StudentStatus,
           is_trial: false,
         };
-        const response = await studentsAPI.updateStudent(parseInt(fromPendingId), updateData);
+        const response = await studentsAPI.updateStudent(parseInt(existingStudentId), updateData);
         student = response.student;
       } else {
         // 신규 등록: 새 학생 생성
