@@ -133,6 +133,9 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                         <div className="ml-4">
                           <div className="text-sm font-medium text-foreground flex items-center gap-2">
                             {student.name}
+                            {student.school && (
+                              <span className="text-xs text-muted-foreground">{student.school}</span>
+                            )}
                             {!!student.is_trial && (
                               <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs flex items-center gap-1 px-1.5 py-0">
                                 <Sparkles className="h-3 w-3" />
