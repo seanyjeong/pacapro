@@ -257,7 +257,12 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                     <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
                       <User className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                     </div>
-                    <span className="font-medium text-foreground">{student.name}</span>
+<div>
+                      <span className="font-medium text-foreground">{student.name}</span>
+                      {student.school && (
+                        <div className="text-xs text-muted-foreground">{student.school}</div>
+                      )}
+                    </div>
                   </div>
                 </td>
                 <td className="py-3 px-4 text-sm text-muted-foreground">
