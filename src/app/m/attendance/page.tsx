@@ -429,13 +429,11 @@ export default function MobileAttendancePage() {
               animate="visible"
               className="space-y-3"
             >
-              <AnimatePresence mode="popLayout">
-                {students.map((student, index) => (
+              {students.map((student, index) => (
                   <motion.div
                     key={student.student_id}
                     custom={index}
                     variants={cardVariants}
-                    layout
                   >
                     <SwipeableCard
                       onSwipeRight={() => {
@@ -477,7 +475,6 @@ export default function MobileAttendancePage() {
                     </SwipeableCard>
                   </motion.div>
                 ))}
-              </AnimatePresence>
             </motion.div>
 
             {/* Quick Actions Toolbar - Mobile */}
