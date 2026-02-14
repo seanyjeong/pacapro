@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Save, Calendar, X, AlertCircle } from 'lucide-react';
+import { Loader2, Save, Calendar, X, AlertCircle, Filter } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
 import { WEEKDAY_OPTIONS, WEEKDAY_MAP, formatClassDays } from '@/lib/types/student';
 import type { ClassDaysStudent } from '@/lib/types/student';
@@ -54,8 +54,26 @@ export default function ClassDaysPage() {
   const [effectiveFrom, setEffectiveFrom] = useState('immediate');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [edits, setEdits] = useState<Map<number, StudentEdit>>(new Map());
+  const [filterGrade, setFilterGrade] = useState<string>('all');
+  const [filterWeekly, setFilterWeekly] = useState<string>('all');
 
   const monthOptions = getEffectiveMonthOptions();
+
+  // Grade sort order
+  const GRADE_ORDER_MAP: Record<string, number> = { "고1": 1, "고2": 2, "고3": 3, "N수": 4 };
+
+  const filteredStudents = useMemo(() => students
+    .filter(s => {
+      if (filterGrade !== "all" && s.grade !== filterGrade) return false;
+      if (filterWeekly !== "all" && s.weekly_count !== Number(filterWeekly)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const ga = GRADE_ORDER_MAP[a.grade || ""] ?? 99;
+      const gb = GRADE_ORDER_MAP[b.grade || ""] ?? 99;
+      if (ga !== gb) return ga - gb;
+      return a.name.localeCompare(b.name, "ko");
+    }), [students, filterGrade, filterWeekly]);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -107,10 +125,10 @@ export default function ClassDaysPage() {
 
   // 전체 선택
   const toggleSelectAll = () => {
-    if (selectedIds.size === students.length) {
+    if (selectedIds.size === filteredStudents.length) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(students.map(s => s.id)));
+      setSelectedIds(new Set(filteredStudents.map(s => s.id)));
     }
   };
 
@@ -245,6 +263,45 @@ export default function ClassDaysPage() {
         </CardContent>
       </Card>
 
+      {/* 필터 */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          <Select value={filterGrade} onValueChange={setFilterGrade}>
+            <SelectTrigger className="w-[120px] h-8 text-sm">
+              <SelectValue placeholder="학년" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 학년</SelectItem>
+              <SelectItem value="고1">고1</SelectItem>
+              <SelectItem value="고2">고2</SelectItem>
+              <SelectItem value="고3">고3</SelectItem>
+              <SelectItem value="N수">N수</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={filterWeekly} onValueChange={setFilterWeekly}>
+            <SelectTrigger className="w-[130px] h-8 text-sm">
+              <SelectValue placeholder="수업 횟수" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 횟수</SelectItem>
+              <SelectItem value="1">주1회</SelectItem>
+              <SelectItem value="2">주2회</SelectItem>
+              <SelectItem value="3">주3회</SelectItem>
+              <SelectItem value="4">주4회</SelectItem>
+              <SelectItem value="5">주5회</SelectItem>
+              <SelectItem value="6">주6회</SelectItem>
+            </SelectContent>
+          </Select>
+          {(filterGrade !== 'all' || filterWeekly !== 'all') && (
+            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => { setFilterGrade('all'); setFilterWeekly('all'); }}>
+              초기화
+            </Button>
+          )}
+        </div>
+        <span className="text-sm text-muted-foreground">{filteredStudents.length}명</span>
+      </div>
+
       {/* 학생 목록 테이블 */}
       <Card>
         <CardContent className="p-0">
@@ -254,7 +311,7 @@ export default function ClassDaysPage() {
                 <tr className="border-b bg-muted/50">
                   <th className="p-3 text-left w-10">
                     <Checkbox
-                      checked={selectedIds.size === students.length && students.length > 0}
+                      checked={selectedIds.size === filteredStudents.length && filteredStudents.length > 0}
                       onCheckedChange={toggleSelectAll}
                     />
                   </th>
@@ -266,7 +323,7 @@ export default function ClassDaysPage() {
                 </tr>
               </thead>
               <tbody>
-                {students.map(student => {
+                {filteredStudents.map(student => {
                   const edit = edits.get(student.id);
                   const currentDays = edit ? edit.class_days : student.class_days;
                   const hasChange = edit?.changed;
