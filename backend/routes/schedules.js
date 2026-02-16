@@ -213,8 +213,25 @@ router.get('/slot', verifyToken, async (req, res) => {
 
         let schedule = schedules[0] || null;
 
-        // 스케줄이 없으면 자동 생성
+        // 해당 요일 + 시간대에 수업이 있는 학생 조회
+        const dayOfWeek = new Date(date + 'T00:00:00').getDay();
+        const [eligibleStudents] = await db.query(
+            `SELECT s.id
+             FROM students s
+             WHERE s.academy_id = ?
+             AND s.status = 'active'
+             AND s.deleted_at IS NULL
+             AND JSON_CONTAINS(s.class_days, ?)
+             AND s.time_slot = ?`,
+            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot]
+        );
+
+        // 스케줄이 없으면: 해당 시간대에 학생이 있을 때만 자동 생성
         if (!schedule) {
+            if (eligibleStudents.length === 0) {
+                // 해당 시간대에 학생이 없으면 빈 응답 반환 (스케줄 생성하지 않음)
+                return res.json({ schedule: null, students: [] });
+            }
             const [result] = await db.query(
                 `INSERT INTO class_schedules (academy_id, class_date, time_slot, attendance_taken)
                  VALUES (?, ?, ?, 0)`,
@@ -223,8 +240,7 @@ router.get('/slot', verifyToken, async (req, res) => {
             schedule = { id: result.insertId, class_date: date, time_slot, attendance_taken: 0 };
         }
 
-        // 해당 요일에 수업이 있는 학생 중 아직 출석 기록 없는 학생 자동 추가
-        const dayOfWeek = new Date(date + 'T00:00:00').getDay();
+        // 아직 출석 기록 없는 학생 자동 추가
         const [missingStudents] = await db.query(
             `SELECT s.id
              FROM students s
@@ -232,11 +248,12 @@ router.get('/slot', verifyToken, async (req, res) => {
              AND s.status = 'active'
              AND s.deleted_at IS NULL
              AND JSON_CONTAINS(s.class_days, ?)
+             AND s.time_slot = ?
              AND s.id NOT IN (
                 SELECT a.student_id FROM attendance a
                 WHERE a.class_schedule_id = ?
              )`,
-            [req.user.academyId, JSON.stringify(dayOfWeek), schedule.id]
+            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, schedule.id]
         );
 
         // 누락된 학생들 자동 추가 (attendance_status = NULL로 추가)

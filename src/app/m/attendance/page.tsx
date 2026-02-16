@@ -46,14 +46,8 @@ export default function MobileAttendancePage() {
   const router = useRouter();
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // 현재 시간에 따라 시간대 자동 선택
-  const getInitialTimeSlot = (): TimeSlot => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'morning';      // 오전 6시~12시
-    if (hour < 17) return 'afternoon';    // 12시~17시
-    return 'evening';                      // 17시 이후
-  };
-  const [timeSlot, setTimeSlot] = useState<TimeSlot>(getInitialTimeSlot());
+  // 기본 시간대: evening (대부분의 학원이 저녁 수업)
+  const [timeSlot, setTimeSlot] = useState<TimeSlot>('evening');
   const [schedule, setSchedule] = useState<ClassSchedule | null>(null);
   const [students, setStudents] = useState<(Attendance & { phone?: string; parent_phone?: string; grade?: string })[]>([]);
   const [loading, setLoading] = useState(true);
