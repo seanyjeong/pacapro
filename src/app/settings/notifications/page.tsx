@@ -8,11 +8,12 @@ import apiClient from '@/lib/api/client';
 import { smsAPI } from '@/lib/api/sms';
 
 interface SenderNumber {
-  id: number;
-  service_type: 'solapi' | 'sens';
-  phone: string;
-  label: string | null;
-  is_default: number;
+  id?: number;
+  number: string;
+  phone?: string;
+  label?: string | null;
+  is_default: boolean | number;
+  service_type?: 'solapi' | 'sens';
 }
 
 type ServiceType = 'sens' | 'solapi';
@@ -20,11 +21,13 @@ type TemplateType = 'unpaid' | 'consultation' | 'trial' | 'overdue' | 'reminder'
 
 export default function NotificationSettingsPage() {
   const [settings, setSettings] = useState<NotificationSettings>({
-    service_type: 'sens',
+    provider: 'sens',
     // ===== SENS 설정 =====
-    naver_access_key: '',
-    naver_secret_key: '',
-    naver_service_id: '',
+    sens_access_key: '',
+    sens_secret_key: '',
+    sens_service_id: '',
+    sens_sender: '',
+    sens_templates: null,
     sms_service_id: '',
     kakao_channel_id: '',
     // SENS 납부안내
@@ -64,7 +67,8 @@ export default function NotificationSettingsPage() {
     solapi_api_key: '',
     solapi_api_secret: '',
     solapi_pfid: '',
-    solapi_sender_phone: '',
+    solapi_sender: '',
+    solapi_templates: null,
     // 솔라피 납부안내
     solapi_template_id: '',
     solapi_template_content: '',
@@ -103,7 +107,7 @@ export default function NotificationSettingsPage() {
     solapi_enabled: false,    // 솔라피 활성화
   });
 
-  // 현재 선택된 서비스 탭 (보기용, 실제 저장은 service_type)
+  // 현재 선택된 서비스 탭 (보기용, 실제 저장은 provider)
   const [activeTab, setActiveTab] = useState<ServiceType>('sens');
 
   // SENS 템플릿 탭 상태
@@ -181,8 +185,8 @@ export default function NotificationSettingsPage() {
 
   const loadSenderNumbers = async () => {
     try {
-      const { senderNumbers: numbers } = await smsAPI.getSenderNumbers(activeTab);
-      setSenderNumbers(numbers);
+      const numbers = await smsAPI.getSenderNumbers();
+      setSenderNumbers(numbers as unknown as SenderNumber[]);
     } catch {
       setSenderNumbers([]);
     }
@@ -236,9 +240,11 @@ export default function NotificationSettingsPage() {
   const loadSettings = async () => {
     try {
       const data = await notificationsAPI.getSettings();
-      setSettings(data);
-      // 현재 선택된 서비스 타입으로 탭 설정
-      setActiveTab(data.service_type || 'sens');
+      if (data) {
+        setSettings(data);
+        // 현재 선택된 서비스 타입으로 탭 설정
+        setActiveTab(data.provider || 'sens');
+      }
     } catch {
       // 설정 로드 실패 시 기본값 유지
     } finally {
@@ -249,7 +255,7 @@ export default function NotificationSettingsPage() {
   const loadLogs = async () => {
     try {
       const data = await notificationsAPI.getLogs({ limit: 10 });
-      setLogs(data.logs);
+      setLogs(data);
     } catch {
       // 로그 로드 실패 시 빈 배열 유지
     }
@@ -306,7 +312,7 @@ export default function NotificationSettingsPage() {
   const removeUnpaidButton = (index: number) => {
     setSettings(prev => ({
       ...prev,
-      solapi_buttons: prev.solapi_buttons.filter((_, i) => i !== index),
+      solapi_buttons: (prev.solapi_buttons || []).filter((_, i) => i !== index),
     }));
   };
 
@@ -314,7 +320,7 @@ export default function NotificationSettingsPage() {
   const updateUnpaidButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
       ...prev,
-      solapi_buttons: prev.solapi_buttons.map((btn, i) =>
+      solapi_buttons: (prev.solapi_buttons || []).map((btn, i) =>
         i === index ? { ...btn, [field]: value } : btn
       ),
     }));
@@ -338,7 +344,7 @@ export default function NotificationSettingsPage() {
   const removeConsultationButton = (index: number) => {
     setSettings(prev => ({
       ...prev,
-      solapi_consultation_buttons: prev.solapi_consultation_buttons.filter((_, i) => i !== index),
+      solapi_consultation_buttons: (prev.solapi_consultation_buttons || []).filter((_, i) => i !== index),
     }));
   };
 
@@ -346,7 +352,7 @@ export default function NotificationSettingsPage() {
   const updateConsultationButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
       ...prev,
-      solapi_consultation_buttons: prev.solapi_consultation_buttons.map((btn, i) =>
+      solapi_consultation_buttons: (prev.solapi_consultation_buttons || []).map((btn, i) =>
         i === index ? { ...btn, [field]: value } : btn
       ),
     }));
@@ -449,7 +455,7 @@ export default function NotificationSettingsPage() {
   const removeTrialButton = (index: number) => {
     setSettings(prev => ({
       ...prev,
-      solapi_trial_buttons: prev.solapi_trial_buttons.filter((_, i) => i !== index),
+      solapi_trial_buttons: (prev.solapi_trial_buttons || []).filter((_, i) => i !== index),
     }));
   };
 
@@ -457,7 +463,7 @@ export default function NotificationSettingsPage() {
   const updateTrialButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
       ...prev,
-      solapi_trial_buttons: prev.solapi_trial_buttons.map((btn, i) =>
+      solapi_trial_buttons: (prev.solapi_trial_buttons || []).map((btn, i) =>
         i === index ? { ...btn, [field]: value } : btn
       ),
     }));
@@ -481,7 +487,7 @@ export default function NotificationSettingsPage() {
   const removeOverdueButton = (index: number) => {
     setSettings(prev => ({
       ...prev,
-      solapi_overdue_buttons: prev.solapi_overdue_buttons.filter((_, i) => i !== index),
+      solapi_overdue_buttons: (prev.solapi_overdue_buttons || []).filter((_, i) => i !== index),
     }));
   };
 
@@ -489,7 +495,7 @@ export default function NotificationSettingsPage() {
   const updateOverdueButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
       ...prev,
-      solapi_overdue_buttons: prev.solapi_overdue_buttons.map((btn, i) =>
+      solapi_overdue_buttons: (prev.solapi_overdue_buttons || []).map((btn, i) =>
         i === index ? { ...btn, [field]: value } : btn
       ),
     }));
@@ -501,11 +507,11 @@ export default function NotificationSettingsPage() {
     setSettings(prev => ({ ...prev, solapi_reminder_buttons: [...(prev.solapi_reminder_buttons || []), newButton] }));
   };
   const removeReminderButton = (index: number) => {
-    setSettings(prev => ({ ...prev, solapi_reminder_buttons: prev.solapi_reminder_buttons.filter((_, i) => i !== index) }));
+    setSettings(prev => ({ ...prev, solapi_reminder_buttons: (prev.solapi_reminder_buttons || []).filter((_, i) => i !== index) }));
   };
   const updateReminderButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
-      ...prev, solapi_reminder_buttons: prev.solapi_reminder_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
+      ...prev, solapi_reminder_buttons: (prev.solapi_reminder_buttons || []).map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
     }));
   };
 
@@ -516,11 +522,11 @@ export default function NotificationSettingsPage() {
     setSettings(prev => ({ ...prev, sens_buttons: [...(prev.sens_buttons || []), newButton] }));
   };
   const removeSensUnpaidButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_buttons: prev.sens_buttons.filter((_, i) => i !== index) }));
+    setSettings(prev => ({ ...prev, sens_buttons: (prev.sens_buttons || []).filter((_, i) => i !== index) }));
   };
   const updateSensUnpaidButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
-      ...prev, sens_buttons: prev.sens_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
+      ...prev, sens_buttons: (prev.sens_buttons || []).map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
     }));
   };
 
@@ -530,11 +536,11 @@ export default function NotificationSettingsPage() {
     setSettings(prev => ({ ...prev, sens_consultation_buttons: [...(prev.sens_consultation_buttons || []), newButton] }));
   };
   const removeSensConsultationButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_consultation_buttons: prev.sens_consultation_buttons.filter((_, i) => i !== index) }));
+    setSettings(prev => ({ ...prev, sens_consultation_buttons: (prev.sens_consultation_buttons || []).filter((_, i) => i !== index) }));
   };
   const updateSensConsultationButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
-      ...prev, sens_consultation_buttons: prev.sens_consultation_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
+      ...prev, sens_consultation_buttons: (prev.sens_consultation_buttons || []).map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
     }));
   };
 
@@ -544,11 +550,11 @@ export default function NotificationSettingsPage() {
     setSettings(prev => ({ ...prev, sens_trial_buttons: [...(prev.sens_trial_buttons || []), newButton] }));
   };
   const removeSensTrialButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_trial_buttons: prev.sens_trial_buttons.filter((_, i) => i !== index) }));
+    setSettings(prev => ({ ...prev, sens_trial_buttons: (prev.sens_trial_buttons || []).filter((_, i) => i !== index) }));
   };
   const updateSensTrialButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
-      ...prev, sens_trial_buttons: prev.sens_trial_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
+      ...prev, sens_trial_buttons: (prev.sens_trial_buttons || []).map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
     }));
   };
 
@@ -558,11 +564,11 @@ export default function NotificationSettingsPage() {
     setSettings(prev => ({ ...prev, sens_overdue_buttons: [...(prev.sens_overdue_buttons || []), newButton] }));
   };
   const removeSensOverdueButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_overdue_buttons: prev.sens_overdue_buttons.filter((_, i) => i !== index) }));
+    setSettings(prev => ({ ...prev, sens_overdue_buttons: (prev.sens_overdue_buttons || []).filter((_, i) => i !== index) }));
   };
   const updateSensOverdueButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
-      ...prev, sens_overdue_buttons: prev.sens_overdue_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
+      ...prev, sens_overdue_buttons: (prev.sens_overdue_buttons || []).map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
     }));
   };
 
@@ -572,11 +578,11 @@ export default function NotificationSettingsPage() {
     setSettings(prev => ({ ...prev, sens_reminder_buttons: [...(prev.sens_reminder_buttons || []), newButton] }));
   };
   const removeSensReminderButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_reminder_buttons: prev.sens_reminder_buttons.filter((_, i) => i !== index) }));
+    setSettings(prev => ({ ...prev, sens_reminder_buttons: (prev.sens_reminder_buttons || []).filter((_, i) => i !== index) }));
   };
   const updateSensReminderButton = (index: number, field: keyof ConsultationButton, value: string) => {
     setSettings(prev => ({
-      ...prev, sens_reminder_buttons: prev.sens_reminder_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
+      ...prev, sens_reminder_buttons: (prev.sens_reminder_buttons || []).map((btn, i) => i === index ? { ...btn, [field]: value } : btn)
     }));
   };
 
@@ -703,7 +709,7 @@ export default function NotificationSettingsPage() {
   // 서비스 타입 변경 시 settings도 업데이트
   const handleServiceTypeChange = (type: ServiceType) => {
     setActiveTab(type);
-    setSettings(prev => ({ ...prev, service_type: type }));
+    setSettings(prev => ({ ...prev, provider: type }));
   };
 
   // 현재 선택된 서비스의 템플릿 내용
@@ -767,11 +773,11 @@ export default function NotificationSettingsPage() {
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-purple-600" />
             <span className="font-semibold text-foreground">알림톡 발송 설정</span>
-            {(settings.service_type === 'solapi' ? settings.solapi_enabled : settings.is_enabled) && (
+            {(settings.provider === 'solapi' ? settings.solapi_enabled : settings.is_enabled) && (
               <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">활성화됨</span>
             )}
             <span className="text-xs px-2 py-0.5 rounded bg-muted text-muted-foreground">
-              {settings.service_type === 'solapi' ? '솔라피' : 'SENS'}
+              {settings.provider === 'solapi' ? '솔라피' : 'SENS'}
             </span>
           </div>
           {showSolapiSettingsSection ? (
@@ -791,20 +797,20 @@ export default function NotificationSettingsPage() {
                 </div>
                 <button
                   onClick={() => {
-                    if (settings.service_type === 'solapi') {
+                    if (settings.provider === 'solapi') {
                       setSettings(prev => ({ ...prev, solapi_enabled: !prev.solapi_enabled }));
                     } else {
                       setSettings(prev => ({ ...prev, is_enabled: !prev.is_enabled }));
                     }
                   }}
                   className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                    (settings.service_type === 'solapi' ? settings.solapi_enabled : settings.is_enabled)
+                    (settings.provider === 'solapi' ? settings.solapi_enabled : settings.is_enabled)
                       ? 'bg-purple-600'
                       : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 >
                   <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                    (settings.service_type === 'solapi' ? settings.solapi_enabled : settings.is_enabled)
+                    (settings.provider === 'solapi' ? settings.solapi_enabled : settings.is_enabled)
                       ? 'translate-x-6'
                       : 'translate-x-1'
                   }`} />
@@ -812,7 +818,7 @@ export default function NotificationSettingsPage() {
               </div>
 
               {/* 개별 알림톡 토글들 */}
-              {(settings.service_type === 'solapi' ? settings.solapi_enabled : settings.is_enabled) && (
+              {(settings.provider === 'solapi' ? settings.solapi_enabled : settings.is_enabled) && (
                 <div className="space-y-3">
                   {/* 납부 안내 + 미납자 알림톡 (같은 시간 사용) */}
                   <div className="p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
@@ -823,16 +829,16 @@ export default function NotificationSettingsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <select
-                          value={settings.service_type === 'solapi' ? (settings.solapi_auto_hour ?? 10) : (settings.sens_auto_hour ?? 10)}
+                          value={settings.provider === 'solapi' ? (settings.solapi_auto_hour ?? 10) : (settings.sens_auto_hour ?? 10)}
                           onChange={e => {
                             const hour = parseInt(e.target.value);
-                            if (settings.service_type === 'solapi') {
+                            if (settings.provider === 'solapi') {
                               setSettings(prev => ({ ...prev, solapi_auto_hour: hour }));
                             } else {
                               setSettings(prev => ({ ...prev, sens_auto_hour: hour }));
                             }
                           }}
-                          disabled={settings.service_type === 'solapi' ? !settings.solapi_auto_enabled : !settings.sens_auto_enabled}
+                          disabled={settings.provider === 'solapi' ? !settings.solapi_auto_enabled : !settings.sens_auto_enabled}
                           className="px-2 py-1 text-sm border border-orange-300 dark:border-orange-700 bg-white dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-orange-500 disabled:opacity-50"
                         >
                           {[...Array(24)].map((_, hour) => (
@@ -841,20 +847,20 @@ export default function NotificationSettingsPage() {
                         </select>
                         <button
                           onClick={() => {
-                            if (settings.service_type === 'solapi') {
+                            if (settings.provider === 'solapi') {
                               setSettings(prev => ({ ...prev, solapi_auto_enabled: !prev.solapi_auto_enabled }));
                             } else {
                               setSettings(prev => ({ ...prev, sens_auto_enabled: !prev.sens_auto_enabled }));
                             }
                           }}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            (settings.service_type === 'solapi' ? settings.solapi_auto_enabled : settings.sens_auto_enabled)
+                            (settings.provider === 'solapi' ? settings.solapi_auto_enabled : settings.sens_auto_enabled)
                               ? 'bg-orange-600'
                               : 'bg-gray-300 dark:bg-gray-600'
                           }`}
                         >
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                            (settings.service_type === 'solapi' ? settings.solapi_auto_enabled : settings.sens_auto_enabled)
+                            (settings.provider === 'solapi' ? settings.solapi_auto_enabled : settings.sens_auto_enabled)
                               ? 'translate-x-6'
                               : 'translate-x-1'
                           }`} />
@@ -869,20 +875,20 @@ export default function NotificationSettingsPage() {
                       </div>
                       <button
                         onClick={() => {
-                          if (settings.service_type === 'solapi') {
+                          if (settings.provider === 'solapi') {
                             setSettings(prev => ({ ...prev, solapi_overdue_auto_enabled: !prev.solapi_overdue_auto_enabled }));
                           } else {
                             setSettings(prev => ({ ...prev, sens_overdue_auto_enabled: !prev.sens_overdue_auto_enabled }));
                           }
                         }}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          (settings.service_type === 'solapi' ? settings.solapi_overdue_auto_enabled : settings.sens_overdue_auto_enabled)
+                          (settings.provider === 'solapi' ? settings.solapi_overdue_auto_enabled : settings.sens_overdue_auto_enabled)
                             ? 'bg-red-600'
                             : 'bg-gray-300 dark:bg-gray-600'
                         }`}
                       >
                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                          (settings.service_type === 'solapi' ? settings.solapi_overdue_auto_enabled : settings.sens_overdue_auto_enabled)
+                          (settings.provider === 'solapi' ? settings.solapi_overdue_auto_enabled : settings.sens_overdue_auto_enabled)
                             ? 'translate-x-6'
                             : 'translate-x-1'
                         }`} />
@@ -908,16 +914,16 @@ export default function NotificationSettingsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <select
-                          value={settings.service_type === 'solapi' ? (settings.solapi_trial_auto_hour ?? 9) : (settings.sens_trial_auto_hour ?? 9)}
+                          value={settings.provider === 'solapi' ? (settings.solapi_trial_auto_hour ?? 9) : (settings.sens_trial_auto_hour ?? 9)}
                           onChange={e => {
                             const hour = parseInt(e.target.value);
-                            if (settings.service_type === 'solapi') {
+                            if (settings.provider === 'solapi') {
                               setSettings(prev => ({ ...prev, solapi_trial_auto_hour: hour }));
                             } else {
                               setSettings(prev => ({ ...prev, sens_trial_auto_hour: hour }));
                             }
                           }}
-                          disabled={settings.service_type === 'solapi' ? !settings.solapi_trial_auto_enabled : !settings.sens_trial_auto_enabled}
+                          disabled={settings.provider === 'solapi' ? !settings.solapi_trial_auto_enabled : !settings.sens_trial_auto_enabled}
                           className="px-2 py-1 text-sm border border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                         >
                           {[...Array(24)].map((_, hour) => (
@@ -926,20 +932,20 @@ export default function NotificationSettingsPage() {
                         </select>
                         <button
                           onClick={() => {
-                            if (settings.service_type === 'solapi') {
+                            if (settings.provider === 'solapi') {
                               setSettings(prev => ({ ...prev, solapi_trial_auto_enabled: !prev.solapi_trial_auto_enabled }));
                             } else {
                               setSettings(prev => ({ ...prev, sens_trial_auto_enabled: !prev.sens_trial_auto_enabled }));
                             }
                           }}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            (settings.service_type === 'solapi' ? settings.solapi_trial_auto_enabled : settings.sens_trial_auto_enabled)
+                            (settings.provider === 'solapi' ? settings.solapi_trial_auto_enabled : settings.sens_trial_auto_enabled)
                               ? 'bg-blue-600'
                               : 'bg-gray-300 dark:bg-gray-600'
                           }`}
                         >
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                            (settings.service_type === 'solapi' ? settings.solapi_trial_auto_enabled : settings.sens_trial_auto_enabled)
+                            (settings.provider === 'solapi' ? settings.solapi_trial_auto_enabled : settings.sens_trial_auto_enabled)
                               ? 'translate-x-6'
                               : 'translate-x-1'
                           }`} />
@@ -955,16 +961,16 @@ export default function NotificationSettingsPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <select
-                          value={settings.service_type === 'solapi' ? (settings.solapi_reminder_hours ?? 1) : (settings.sens_reminder_hours ?? 1)}
+                          value={settings.provider === 'solapi' ? (settings.solapi_reminder_hours ?? 1) : (settings.sens_reminder_hours ?? 1)}
                           onChange={e => {
                             const hours = parseInt(e.target.value);
-                            if (settings.service_type === 'solapi') {
+                            if (settings.provider === 'solapi') {
                               setSettings(prev => ({ ...prev, solapi_reminder_hours: hours }));
                             } else {
                               setSettings(prev => ({ ...prev, sens_reminder_hours: hours }));
                             }
                           }}
-                          disabled={settings.service_type === 'solapi' ? !settings.solapi_reminder_auto_enabled : !settings.sens_reminder_auto_enabled}
+                          disabled={settings.provider === 'solapi' ? !settings.solapi_reminder_auto_enabled : !settings.sens_reminder_auto_enabled}
                           className="px-2 py-1 text-sm border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
                         >
                           <option value={1}>1시간 전</option>
@@ -976,20 +982,20 @@ export default function NotificationSettingsPage() {
                         </select>
                         <button
                           onClick={() => {
-                            if (settings.service_type === 'solapi') {
+                            if (settings.provider === 'solapi') {
                               setSettings(prev => ({ ...prev, solapi_reminder_auto_enabled: !prev.solapi_reminder_auto_enabled }));
                             } else {
                               setSettings(prev => ({ ...prev, sens_reminder_auto_enabled: !prev.sens_reminder_auto_enabled }));
                             }
                           }}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            (settings.service_type === 'solapi' ? settings.solapi_reminder_auto_enabled : settings.sens_reminder_auto_enabled)
+                            (settings.provider === 'solapi' ? settings.solapi_reminder_auto_enabled : settings.sens_reminder_auto_enabled)
                               ? 'bg-purple-600'
                               : 'bg-gray-300 dark:bg-gray-600'
                           }`}
                         >
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                            (settings.service_type === 'solapi' ? settings.solapi_reminder_auto_enabled : settings.sens_reminder_auto_enabled)
+                            (settings.provider === 'solapi' ? settings.solapi_reminder_auto_enabled : settings.sens_reminder_auto_enabled)
                               ? 'translate-x-6'
                               : 'translate-x-1'
                           }`} />
@@ -1000,7 +1006,7 @@ export default function NotificationSettingsPage() {
                 </div>
               )}
 
-              {!(settings.service_type === 'solapi' ? settings.solapi_enabled : settings.is_enabled) && (
+              {!(settings.provider === 'solapi' ? settings.solapi_enabled : settings.is_enabled) && (
                 <div className="p-3 bg-amber-50 dark:bg-amber-950 rounded-lg border border-amber-200 dark:border-amber-800">
                   <p className="text-sm text-amber-800 dark:text-amber-200">
                     알림톡이 비활성화되어 있습니다. 활성화해야 모든 알림톡을 발송할 수 있습니다.
@@ -1057,8 +1063,8 @@ export default function NotificationSettingsPage() {
           </button>
         </div>
         <p className="text-sm text-muted-foreground">
-          현재 사용 중: <strong className="text-foreground">{settings.service_type === 'solapi' ? '솔라피' : '네이버 SENS'}</strong>
-          {settings.service_type !== activeTab && (
+          현재 사용 중: <strong className="text-foreground">{settings.provider === 'solapi' ? '솔라피' : '네이버 SENS'}</strong>
+          {settings.provider !== activeTab && (
             <span className="text-amber-600 ml-2">(변경 후 저장 필요)</span>
           )}
         </p>
@@ -1192,8 +1198,8 @@ export default function NotificationSettingsPage() {
               </label>
               <input
                 type="text"
-                value={settings.naver_access_key}
-                onChange={e => setSettings(prev => ({ ...prev, naver_access_key: e.target.value }))}
+                value={settings.sens_access_key}
+                onChange={e => setSettings(prev => ({ ...prev, sens_access_key: e.target.value }))}
                 className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="Access Key ID"
               />
@@ -1205,8 +1211,8 @@ export default function NotificationSettingsPage() {
               </label>
               <input
                 type="password"
-                value={settings.naver_secret_key}
-                onChange={e => setSettings(prev => ({ ...prev, naver_secret_key: e.target.value }))}
+                value={settings.sens_secret_key}
+                onChange={e => setSettings(prev => ({ ...prev, sens_secret_key: e.target.value }))}
                 className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder={settings.has_secret_key ? '저장됨 (변경하려면 새로 입력)' : 'Secret Key'}
               />
@@ -1218,8 +1224,8 @@ export default function NotificationSettingsPage() {
               </label>
               <input
                 type="text"
-                value={settings.naver_service_id}
-                onChange={e => setSettings(prev => ({ ...prev, naver_service_id: e.target.value }))}
+                value={settings.sens_service_id}
+                onChange={e => setSettings(prev => ({ ...prev, sens_service_id: e.target.value }))}
                 className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 placeholder="ncp:kkobizmsg:kr:..."
               />
@@ -1287,14 +1293,14 @@ export default function NotificationSettingsPage() {
                       <div className="flex items-center gap-2">
                         {sender.is_default !== 1 && (
                           <button
-                            onClick={() => handleSetDefaultSender(sender.id)}
+                            onClick={() => handleSetDefaultSender(sender.id!)}
                             className="text-xs px-2 py-1 rounded border border-green-300 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950"
                           >
                             기본으로 설정
                           </button>
                         )}
                         <button
-                          onClick={() => handleDeleteSenderNumber(sender.id)}
+                          onClick={() => handleDeleteSenderNumber(sender.id!)}
                           className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -1425,14 +1431,14 @@ export default function NotificationSettingsPage() {
                       <div className="flex items-center gap-2">
                         {sender.is_default !== 1 && (
                           <button
-                            onClick={() => handleSetDefaultSender(sender.id)}
+                            onClick={() => handleSetDefaultSender(sender.id!)}
                             className="text-xs px-2 py-1 rounded border border-purple-300 dark:border-purple-700 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950"
                           >
                             기본으로 설정
                           </button>
                         )}
                         <button
-                          onClick={() => handleDeleteSenderNumber(sender.id)}
+                          onClick={() => handleDeleteSenderNumber(sender.id!)}
                           className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -3769,7 +3775,7 @@ export default function NotificationSettingsPage() {
                       {log.sent_at ? new Date(log.sent_at).toLocaleString('ko-KR') : '-'}
                     </td>
                     <td className="py-2 px-2 text-foreground">{log.recipient_name || log.student_name || '-'}</td>
-                    <td className="py-2 px-2 text-foreground">{log.recipient_phone}</td>
+                    <td className="py-2 px-2 text-foreground">{log.recipient}</td>
                     <td className="py-2 px-2">{getStatusBadge(log.status)}</td>
                   </tr>
                 ))}

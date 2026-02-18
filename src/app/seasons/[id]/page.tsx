@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { seasonsApi } from '@/lib/api/seasons';
-import type { Season, StudentSeason, RefundData, RefundPreviewResponse } from '@/lib/types/season';
+import type { Season, StudentSeason, RefundPreviewResponse } from '@/lib/types/season';
 import {
   SEASON_TYPE_LABELS,
   SEASON_STATUS_LABELS,
@@ -55,8 +55,8 @@ export default function SeasonDetailPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await seasonsApi.getSeason(seasonId);
-      setSeason(response.season);
+      const seasonData = await seasonsApi.getSeason(seasonId);
+      setSeason(seasonData);
 
       // 등록 학생 목록 조회
       try {
@@ -80,7 +80,7 @@ export default function SeasonDetailPage() {
 
   const handleDelete = async () => {
     if (!season) return;
-    if (!confirm(`"${season.season_name}" 시즌을 삭제하시겠습니까?\n등록된 학생이 있으면 삭제할 수 없습니다.`)) return;
+    if (!confirm(`"${season.name}" 시즌을 삭제하시겠습니까?\n등록된 학생이 있으면 삭제할 수 없습니다.`)) return;
 
     try {
       await seasonsApi.deleteSeason(seasonId);
@@ -97,11 +97,7 @@ export default function SeasonDetailPage() {
     setRefundModalOpen(true);
 
     try {
-      const preview = await seasonsApi.getRefundPreview(
-        enrollment.id,
-        cancellationDate,
-        false
-      );
+      const preview = await seasonsApi.getRefundPreview(enrollment.id);
       setRefundPreview(preview);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '환불 정보 조회에 실패했습니다.');
@@ -116,12 +112,7 @@ export default function SeasonDetailPage() {
     if (!selectedEnrollment) return;
 
     try {
-      await seasonsApi.cancelEnrollmentWithRefund(
-        selectedEnrollment.id,
-        cancellationDate,
-        includeVat,
-        finalAmount
-      );
+      await seasonsApi.cancelEnrollmentById(selectedEnrollment.id);
       toast.success(`${selectedEnrollment.student_name} 학생의 시즌 등록이 취소되었습니다.`);
       setRefundModalOpen(false);
       setSelectedEnrollment(null);
@@ -188,11 +179,11 @@ export default function SeasonDetailPage() {
     const currentSlots = getEnrollmentTimeSlots(enrollment);
 
     // 토글 (이미 있으면 제거, 없으면 추가)
-    let newSlots: string[];
+    let newSlots: ('morning' | 'afternoon' | 'evening')[];
     if (currentSlots.includes(slot)) {
-      newSlots = currentSlots.filter((s: string) => s !== slot);
+      newSlots = currentSlots.filter((s: string) => s !== slot) as typeof newSlots;
     } else {
-      newSlots = [...currentSlots, slot];
+      newSlots = [...currentSlots, slot] as typeof newSlots;
     }
 
     // 최소 1개는 선택되어야 함
@@ -203,7 +194,7 @@ export default function SeasonDetailPage() {
 
     try {
       setUpdatingTimeSlotId(enrollment.id);
-      await seasonsApi.updateEnrollment(enrollment.id, { time_slots: newSlots });
+      await seasonsApi.updateEnrollmentById(enrollment.id, { time_slots: newSlots });
 
       // 로컬 상태 즉시 업데이트
       setEnrolledStudents(prev => prev.map(e =>
@@ -245,7 +236,7 @@ export default function SeasonDetailPage() {
     );
   }
 
-  const operatingDays = parseOperatingDays(season.operating_days);
+  const operatingDays = parseOperatingDays(season.operating_days || []);
   const gradeTimeSlots = typeof season.grade_time_slots === 'string'
     ? JSON.parse(season.grade_time_slots) as GradeTimeSlots
     : season.grade_time_slots;
@@ -261,23 +252,25 @@ export default function SeasonDetailPage() {
           </Button>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-2xl font-bold text-foreground">{season.season_name}</h1>
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                season.season_type === 'early' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
-              }`}>
-                {SEASON_TYPE_LABELS[season.season_type]}
-              </span>
+              <h1 className="text-2xl font-bold text-foreground">{season.name}</h1>
+              {season.season_type && (
+                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                  season.season_type === 'early' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
+                }`}>
+                  {SEASON_TYPE_LABELS[season.season_type]}
+                </span>
+              )}
               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                 season.status === 'active'
                   ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
-                  : season.status === 'draft'
-                  ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                  : 'bg-muted text-muted-foreground'
+                  : season.status === 'completed'
+                  ? 'bg-muted text-muted-foreground'
+                  : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
               }`}>
                 {SEASON_STATUS_LABELS[season.status] || season.status}
               </span>
             </div>
-            <p className="text-muted-foreground">{new Date(season.season_start_date).getFullYear()}년</p>
+            <p className="text-muted-foreground">{new Date(season.start_date).getFullYear()}년</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -300,8 +293,8 @@ export default function SeasonDetailPage() {
               <Calendar className="w-8 h-8 text-blue-500" />
               <div>
                 <p className="text-sm text-muted-foreground">시즌 기간</p>
-                <p className="font-medium">{season.season_start_date}</p>
-                <p className="font-medium">~ {season.season_end_date}</p>
+                <p className="font-medium">{season.start_date}</p>
+                <p className="font-medium">~ {season.end_date}</p>
               </div>
             </div>
           </CardContent>
@@ -312,7 +305,7 @@ export default function SeasonDetailPage() {
               <DollarSign className="w-8 h-8 text-green-500" />
               <div>
                 <p className="text-sm text-muted-foreground">시즌비</p>
-                <p className="text-xl font-bold">{formatSeasonFee(season.default_season_fee)}</p>
+                <p className="text-xl font-bold">{formatSeasonFee(season.fee)}</p>
               </div>
             </div>
           </CardContent>
@@ -449,8 +442,8 @@ export default function SeasonDetailPage() {
                 </thead>
                 <tbody>
                   {enrolledStudents.map(enrollment => {
-                    const seasonFee = parseFloat(enrollment.season_fee) || 0; // 실제 납부할 금액
-                    const discountAmount = parseFloat(enrollment.discount_amount || '0') || 0;
+                    const seasonFee = enrollment.fee; // 실제 납부할 금액
+                    const discountAmount = parseFloat(String(enrollment.discount_amount || '0')) || 0;
                     const originalFee = seasonFee + discountAmount; // 원래 금액 = 납부금액 + 할인금액
                     const hasDiscount = discountAmount > 0;
 
@@ -461,15 +454,15 @@ export default function SeasonDetailPage() {
                           {hasDiscount ? (
                             <div className="flex flex-col">
                               <span className="line-through text-gray-400 text-sm">
-                                {formatSeasonFee(originalFee.toString())}
+                                {formatSeasonFee(originalFee)}
                               </span>
                               <div className="flex items-center gap-1">
-                                <span className="text-red-500 text-sm">-{formatSeasonFee(discountAmount.toString())}</span>
-                                <span className="font-bold text-primary-600">{formatSeasonFee(seasonFee.toString())}</span>
+                                <span className="text-red-500 text-sm">-{formatSeasonFee(discountAmount)}</span>
+                                <span className="font-bold text-primary-600">{formatSeasonFee(seasonFee)}</span>
                               </div>
                             </div>
                           ) : (
-                            <span>{formatSeasonFee(enrollment.season_fee)}</span>
+                            <span>{formatSeasonFee(enrollment.fee)}</span>
                           )}
                         </td>
                         <td className="py-2 px-3 text-sm text-muted-foreground">
@@ -479,15 +472,15 @@ export default function SeasonDetailPage() {
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             enrollment.payment_status === 'paid' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
                             enrollment.payment_status === 'partial' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' :
-                            enrollment.payment_status === 'pending' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' :
+                            enrollment.payment_status === 'unpaid' ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' :
                             enrollment.payment_status === 'cancelled' ? 'bg-muted text-muted-foreground' :
                             'bg-muted text-muted-foreground'
                           }`}>
                             {enrollment.payment_status === 'paid' && '완납'}
                             {enrollment.payment_status === 'partial' && '일부납부'}
-                            {enrollment.payment_status === 'pending' && '미납'}
+                            {enrollment.payment_status === 'unpaid' && '미납'}
                             {enrollment.payment_status === 'cancelled' && '취소됨'}
-                            {!['paid', 'partial', 'pending', 'cancelled'].includes(enrollment.payment_status) && enrollment.payment_status}
+                            {!['paid', 'partial', 'unpaid', 'cancelled'].includes(enrollment.payment_status) && enrollment.payment_status}
                           </span>
                         </td>
                         <td className="py-2 px-3">
@@ -571,10 +564,46 @@ export default function SeasonDetailPage() {
           setSelectedEnrollment(null);
           setRefundPreview(null);
         }}
-        enrollment={refundPreview?.enrollment || null}
-        cancellationDate={refundPreview?.cancellation_date || cancellationDate}
-        refund={refundPreview?.refund || null}
-        academy={refundPreview?.academy || {}}
+        enrollment={selectedEnrollment ? {
+          id: selectedEnrollment.id,
+          student_name: selectedEnrollment.student_name || '',
+          season_name: season?.name || '',
+          season_start_date: season?.start_date || '',
+          season_end_date: season?.end_date || '',
+          original_fee: selectedEnrollment.fee,
+          discount_amount: parseFloat(String(selectedEnrollment.discount_amount || '0')) || 0,
+          paid_amount: selectedEnrollment.paid_amount,
+          payment_status: selectedEnrollment.payment_status,
+        } : null}
+        cancellationDate={cancellationDate}
+        refund={refundPreview ? {
+          paidAmount: refundPreview.paid_amount,
+          originalFee: refundPreview.fee,
+          discountAmount: 0,
+          totalClassDays: refundPreview.total_days,
+          attendedDays: refundPreview.used_days,
+          remainingDays: refundPreview.remaining_days,
+          progressRate: refundPreview.total_days > 0 ? `${Math.round(refundPreview.used_days / refundPreview.total_days * 100)}%` : '0%',
+          usedAmount: refundPreview.paid_amount - refundPreview.refund_amount,
+          usedRate: `${Math.round((1 - refundPreview.refund_ratio) * 100)}%`,
+          refundAmount: refundPreview.refund_amount,
+          refundRate: `${Math.round(refundPreview.refund_ratio * 100)}%`,
+          includeVat: false,
+          vatAmount: 0,
+          refundAfterVat: refundPreview.refund_amount,
+          legalRefundRate: `${Math.round(refundPreview.refund_ratio * 100)}%`,
+          legalRefundReason: '일할계산',
+          legalRefundAmount: refundPreview.refund_amount,
+          finalRefundAmount: refundPreview.refund_amount,
+          calculationDetails: {
+            paidAmount: `${refundPreview.paid_amount.toLocaleString()}원`,
+            perClassFee: refundPreview.total_days > 0 ? `${Math.round(refundPreview.fee / refundPreview.total_days).toLocaleString()}원` : '0원',
+            usedFormula: `${refundPreview.used_days}일 × 일당금액`,
+            refundFormula: '납부액 - 사용액',
+            vatFormula: null,
+          },
+        } : null}
+        academy={{}}
         onConfirm={handleConfirmRefund}
         loading={refundLoading}
       />

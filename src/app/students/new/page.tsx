@@ -63,12 +63,12 @@ function NewStudentContent() {
         try {
           // 시즌 정보 가져오기
           const seasonDetail = await seasonsApi.getSeason(data.selected_season_id);
-          const seasonFee = parseFloat(seasonDetail.season.default_season_fee) || 0;
+          const seasonFee = seasonDetail.fee || 0;
 
           await seasonsApi.enrollStudent(data.selected_season_id, {
             student_id: student.id,
-            season_fee: seasonFee,
-            registration_date: data.enrollment_date || new Date().toISOString().split('T')[0],
+            fee: seasonFee,
+            enrollment_date: data.enrollment_date || new Date().toISOString().split('T')[0],
           });
 
           toast.success(`${student.name} 학생이 등록되었습니다!`, {

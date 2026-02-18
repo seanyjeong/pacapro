@@ -1,6 +1,6 @@
 /**
  * Custom Hooks for Payment Management
- * 학원비 관리 커스텀 훅 - React Query 기반 (backward-compatible interface)
+ * Aligned with FastAPI backend
  */
 
 import { useState, useCallback } from 'react';
@@ -8,9 +8,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paymentsAPI } from '@/lib/api/payments';
 import type {
   Payment,
-  UnpaidPayment,
   PaymentFilters,
-  PaymentStats,
+  PaymentStatsResponse,
   PaymentFormData,
 } from '@/lib/types/payment';
 import { toast } from 'sonner';
@@ -18,27 +17,48 @@ import { toast } from 'sonner';
 const QUERY_KEYS = {
   payments: (filters?: PaymentFilters) => ['payments', filters] as const,
   payment: (id: number) => ['payments', id] as const,
-  unpaid: () => ['payments', 'unpaid'] as const,
-  stats: (year?: number, month?: number) => ['payments', 'stats', year, month] as const,
+  unpaid: (yearMonth: string) => ['payments', 'unpaid', yearMonth] as const,
+  stats: (yearMonth?: string) => ['payments', 'stats', yearMonth] as const,
 };
 
+// Helper: convert year+month to year_month string
+function toYearMonth(year?: number, month?: number): string | undefined {
+  if (!year || !month) return undefined;
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
+
 /**
- * 학원비 목록 조회 훅
+ * Payment list hook
+ * Accepts legacy { year, month } or new { year_month } filters
  */
-export function usePayments(initialFilters?: PaymentFilters) {
-  const [filters, setFilters] = useState<PaymentFilters>(initialFilters || {});
+export function usePayments(initialFilters?: PaymentFilters & { year?: number; month?: number; include_previous_unpaid?: boolean }) {
+  // Convert legacy year+month to year_month
+  const normalizeFilters = useCallback((f: typeof initialFilters): PaymentFilters => {
+    if (!f) return {};
+    const { year, month, include_previous_unpaid, ...rest } = f as PaymentFilters & { year?: number; month?: number; include_previous_unpaid?: boolean };
+    const yearMonth = rest.year_month ?? toYearMonth(year, month);
+    return {
+      ...rest,
+      ...(yearMonth ? { year_month: yearMonth } : {}),
+    };
+  }, []);
+
+  const [filters, setFilters] = useState<PaymentFilters>(normalizeFilters(initialFilters));
 
   const query = useQuery({
     queryKey: QUERY_KEYS.payments(filters),
     queryFn: async () => {
+      // Backend returns Payment[] directly
       const data = await paymentsAPI.getPayments(filters);
-      return data.payments as Payment[];
+      return Array.isArray(data) ? data : (data as unknown as { payments?: Payment[] }).payments ?? [];
     },
   });
 
-  const updateFilters = useCallback((newFilters: Partial<PaymentFilters>) => {
+  const updateFilters = useCallback((newFilters: Partial<PaymentFilters & { year?: number; month?: number }>) => {
     setFilters((prev) => {
-      const merged = { ...prev, ...newFilters };
+      const { year, month, ...rest } = newFilters as Partial<PaymentFilters> & { year?: number; month?: number };
+      const yearMonth = rest.year_month ?? toYearMonth(year, month);
+      const merged = { ...prev, ...rest, ...(yearMonth ? { year_month: yearMonth } : {}) };
       Object.keys(merged).forEach(key => {
         if (merged[key as keyof PaymentFilters] === undefined) {
           delete merged[key as keyof PaymentFilters];
@@ -69,14 +89,14 @@ export function usePayments(initialFilters?: PaymentFilters) {
 }
 
 /**
- * 학원비 상세 정보 조회 훅
+ * Single payment detail hook
  */
 export function usePayment(id: number) {
   const query = useQuery({
     queryKey: QUERY_KEYS.payment(id),
     queryFn: async () => {
-      const data = await paymentsAPI.getPayment(id);
-      return data.payment as Payment;
+      // Backend returns Payment directly
+      return await paymentsAPI.getPayment(id);
     },
     enabled: !!id,
   });
@@ -94,15 +114,18 @@ export function usePayment(id: number) {
 }
 
 /**
- * 미납 학원비 조회 훅
+ * Unpaid payments hook
  */
-export function useUnpaidPayments() {
+export function useUnpaidPayments(yearMonth?: string) {
+  const ym = yearMonth ?? toYearMonth(new Date().getFullYear(), new Date().getMonth() + 1) ?? '';
+
   const query = useQuery({
-    queryKey: QUERY_KEYS.unpaid(),
+    queryKey: QUERY_KEYS.unpaid(ym),
     queryFn: async () => {
-      const data = await paymentsAPI.getUnpaidPayments();
-      return data.payments as UnpaidPayment[];
+      // Backend returns Payment[] directly
+      return await paymentsAPI.getUnpaidPayments(ym);
     },
+    enabled: !!ym,
   });
 
   const reload = useCallback(() => {
@@ -118,14 +141,16 @@ export function useUnpaidPayments() {
 }
 
 /**
- * 학원비 통계 조회 훅
+ * Payment stats hook
  */
 export function usePaymentStats(year?: number, month?: number) {
+  const yearMonth = toYearMonth(year, month);
+
   const query = useQuery({
-    queryKey: QUERY_KEYS.stats(year, month),
+    queryKey: QUERY_KEYS.stats(yearMonth),
     queryFn: async () => {
-      const data = await paymentsAPI.getPaymentStats(year, month);
-      return data.stats as PaymentStats;
+      // Backend returns stats directly
+      return await paymentsAPI.getPaymentStats(yearMonth);
     },
   });
 
@@ -142,7 +167,7 @@ export function usePaymentStats(year?: number, month?: number) {
 }
 
 /**
- * 학원비 등록 뮤테이션 훅
+ * Create payment mutation
  */
 export function useCreatePayment() {
   const queryClient = useQueryClient();
@@ -160,7 +185,7 @@ export function useCreatePayment() {
 }
 
 /**
- * 학원비 수정 뮤테이션 훅
+ * Update payment mutation
  */
 export function useUpdatePayment() {
   const queryClient = useQueryClient();
@@ -180,7 +205,7 @@ export function useUpdatePayment() {
 }
 
 /**
- * 학원비 삭제 뮤테이션 훅
+ * Delete payment mutation
  */
 export function useDeletePayment() {
   const queryClient = useQueryClient();

@@ -1,160 +1,153 @@
 /**
  * Payment Type Definitions
- * 학원비 관련 타입 정의
+ * Aligned with FastAPI backend (api/app/routers/academy/payments)
  */
 
-// 기본 학원비 납부 인터페이스
+// ===== Base Payment =====
+
 export interface Payment {
   id: number;
+  academy_id: number;
   student_id: number;
-  student_name: string;
-  student_number: string;
-  year_month: string; // YYYY-MM
-  payment_type: 'monthly' | 'season' | 'material' | 'other';
-  base_amount: number; // 기본 금액
-  discount_amount: number; // 할인 금액
-  additional_amount: number; // 추가 금액
-  final_amount: number; // 최종 청구 금액
-  paid_amount: number; // 납부 금액
-  paid_date?: string; // 납부일 (YYYY-MM-DD)
-  due_date: string; // 납부 기한 (YYYY-MM-DD)
-  payment_status: 'pending' | 'partial' | 'paid';
-  payment_method?: 'account' | 'card' | 'cash' | 'other';
-  description?: string;
-  notes?: string;
+  student_name?: string; // attached via backend JOIN
+  year_month: string; // "YYYY-MM"
+  base_amount: number;
+  discount_amount: number;
+  final_amount: number;
+  paid_amount: number;
+  payment_status: PaymentStatus;
+  payment_method: PaymentMethod | null;
+  paid_date: string | null;
+  due_date: string | null;
+  notes: string | null;
   created_at: string;
-  updated_at?: string;
-  credit_balance?: number; // 학생의 남은 크레딧 잔액
+  updated_at: string | null;
 }
 
-// 미납 정보 (연체일수 포함)
-export interface UnpaidPayment extends Payment {
-  phone?: string;
-  parent_phone?: string;
-  days_overdue: number;
-}
+export type PaymentStatus = 'unpaid' | 'partial' | 'paid' | 'overdue';
+export type PaymentMethod = 'account' | 'card' | 'cash' | 'other';
 
-// 학원비 등록/수정용 DTO
+// ===== Request DTOs =====
+
 export interface PaymentFormData {
   student_id: number;
-  payment_type: 'monthly' | 'season' | 'material' | 'other';
+  year_month: string;
   base_amount: number;
   discount_amount?: number;
-  additional_amount?: number;
-  due_date: string;
-  year_month: string; // YYYY-MM
-  description?: string;
+  final_amount?: number;
+  due_date?: string;
   notes?: string;
 }
 
-// 납부 기록 DTO
 export interface PaymentRecordData {
   paid_amount: number;
-  payment_method: 'account' | 'card' | 'cash' | 'other';
-  payment_date?: string; // 기본값은 오늘
+  payment_method: PaymentMethod;
+  paid_date?: string;
   notes?: string;
-  discount_amount?: number; // 추가 할인 금액
 }
 
-// 일괄 청구 DTO
 export interface BulkMonthlyChargeData {
-  year: number;
-  month: number;
+  year_month: string; // "YYYY-MM"
+  overwrite?: boolean;
 }
 
-// 학원비 필터 인터페이스
 export interface PaymentFilters {
   student_id?: number;
-  payment_status?: 'pending' | 'partial' | 'paid';
-  payment_type?: 'monthly' | 'season' | 'material' | 'other';
-  year?: number;
-  month?: number;
-  search?: string;
-  include_previous_unpaid?: boolean; // 이전 달 미납자 포함
+  payment_status?: PaymentStatus;
+  year_month?: string;
+  search?: string; // client-side filter only
 }
 
-// 학원비 통계
-export interface PaymentStats {
-  total_count: number;
-  paid_count: number;
-  partial_count: number;
-  unpaid_count: number;
-  total_expected: number;
-  total_collected: number;
-  total_outstanding: number;
-}
+// ===== Response Types (backend returns flat, no wrapper) =====
 
-// API 응답 타입
-export interface PaymentsResponse {
-  message: string;
-  payments: Payment[];
-}
-
-export interface PaymentDetailResponse {
-  payment: Payment;
-}
-
-export interface PaymentCreateResponse {
-  message: string;
-  payment: Payment;
-}
-
-export interface PaymentUpdateResponse {
-  message: string;
-  payment: Payment;
-}
-
-export interface PaymentDeleteResponse {
-  message: string;
-  payment: {
-    id: number;
-    student_name: string;
-  };
-}
-
-export interface UnpaidPaymentsResponse {
-  message: string;
-  payments: UnpaidPayment[];
-}
-
-export interface UnpaidTodayResponse {
-  message: string;
-  date: string;
-  day_of_week: number;
-  day_name: string;
-  count: number;
-  payments: UnpaidPayment[];
-}
+// GET /payments → Payment[] directly
+// GET /payments/unpaid → Payment[] directly (with student_name)
+// GET /payments/unpaid-today → Payment[] directly
+// GET /payments/{id} → Payment directly
+// POST /payments → Payment directly
+// PUT /payments/{id} → Payment directly
+// DELETE /payments/{id} → { message: string }
+// POST /payments/{id}/pay → Payment directly
 
 export interface BulkChargeResponse {
-  message: string;
-  created: number;
-  updated: number;
-  skipped: number;
-  withNonSeasonProrated: number;
-  withCarryover: number;
-  year: number;
-  month: number;
-  due_date: string;
+  year_month: string;
+  created_count: number;
+  student_ids: number[];
 }
 
 export interface PaymentStatsResponse {
-  message: string;
-  stats: PaymentStats;
+  total_billed: number;
+  total_paid: number;
+  total_unpaid: number;
+  paid_count: number;
+  unpaid_count: number;
+  partial_count: number;
+  collection_rate: number;
 }
 
-// 한글 매핑
-export const PAYMENT_TYPE_LABELS: Record<string, string> = {
-  monthly: '월 수강료',
-  season: '시즌비',
-  material: '교재비',
-  other: '기타',
-};
+export interface PaymentHistoryResponse {
+  student_id: number;
+  payments: Payment[];
+  summary: {
+    total_billed: number;
+    total_paid: number;
+    balance: number;
+  };
+}
+
+// ===== Prepaid =====
+
+export interface PrepaidPreviewRequest {
+  student_id: number;
+  months: number; // int, not string[]
+}
+
+export interface PrepaidPreviewResponse {
+  student_id: number;
+  months: number;
+  monthly_tuition: number;
+  total_without_discount: number;
+  discount_rate: number;
+  discount_amount: number;
+  final_amount: number;
+}
+
+export interface PrepaidPayRequest {
+  student_id: number;
+  months: number; // int, not string[]
+  amount: number;
+}
+
+export interface PrepaidPayResponse {
+  student_id: number;
+  months: number;
+  total_amount: number;
+  payment_ids: number[];
+}
+
+export interface PrepaidBalanceResponse {
+  student_id: number;
+  total_billed: number;
+  total_paid: number;
+  prepaid_balance: number;
+  outstanding: number;
+}
+
+// ===== Credits =====
+
+// GET /payments/credits → Payment[] directly (discount_amount > 0)
+export interface CreditsSummaryResponse {
+  total_credits: number;
+  total_saved: number;
+}
+
+// ===== Labels & Options =====
 
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
-  pending: '미납',
+  unpaid: '미납',
   partial: '부분납부',
   paid: '완납',
+  overdue: '연체',
 };
 
 export const PAYMENT_METHOD_LABELS: Record<string, string> = {
@@ -164,18 +157,11 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
   other: '기타',
 };
 
-// 옵션 리스트
-export const PAYMENT_TYPE_OPTIONS = [
-  { value: 'monthly', label: '월 수강료' },
-  { value: 'season', label: '시즌비' },
-  { value: 'material', label: '교재비' },
-  { value: 'other', label: '기타' },
-];
-
 export const PAYMENT_STATUS_OPTIONS = [
-  { value: 'pending', label: '미납' },
+  { value: 'unpaid', label: '미납' },
   { value: 'partial', label: '부분납부' },
   { value: 'paid', label: '완납' },
+  { value: 'overdue', label: '연체' },
 ];
 
 export const PAYMENT_METHOD_OPTIONS = [
@@ -184,105 +170,3 @@ export const PAYMENT_METHOD_OPTIONS = [
   { value: 'cash', label: '현금' },
   { value: 'other', label: '기타' },
 ];
-
-// 선납 할인 결제 타입
-export interface PrepaidPreviewRequest {
-  student_id: number;
-  months: string[];
-  prepaid_discount_rate: number;
-}
-
-export interface PrepaidMonthDetail {
-  year_month: string;
-  base_amount: number;
-  student_discount: number;
-  prepaid_discount: number;
-  final_amount: number;
-  status: 'new' | 'existing_unpaid' | 'already_paid';
-}
-
-export interface PrepaidPreviewResponse {
-  student_name: string;
-  monthly_tuition: number;
-  student_discount_rate: number;
-  prepaid_discount_rate: number;
-  months: PrepaidMonthDetail[];
-  total_final: number;
-  total_prepaid_discount: number;
-  months_payable: number;
-  months_already_paid: number;
-}
-
-export interface PrepaidPayRequest {
-  student_id: number;
-  months: string[];
-  prepaid_discount_rate: number;
-  payment_method: 'account' | 'card' | 'cash' | 'other';
-  payment_date: string;
-}
-
-export interface PrepaidPayResponse {
-  message: string;
-  prepaid_group_id: string;
-  total_amount: number;
-  total_discount: number;
-  months_processed: string[];
-  months_skipped: string[];
-}
-
-// ===== 크레딧 관련 타입 =====
-
-export interface Credit {
-  id: number;
-  student_id: number;
-  student_name: string;
-  student_status: string;
-  academy_id: number;
-  source_payment_id: number | null;
-  rest_start_date: string;
-  rest_end_date: string;
-  rest_days: number;
-  credit_amount: number;
-  remaining_amount: number;
-  credit_type: 'carryover' | 'refund' | 'manual';
-  status: 'pending' | 'partial' | 'applied' | 'refunded' | 'cancelled';
-  applied_to_payment_id: number | null;
-  created_at: string;
-  processed_at: string | null;
-  notes: string | null;
-}
-
-export interface CreditStats {
-  total_count: number;
-  total_credit: number;
-  total_remaining: number;
-  pending_count: number;
-  pending_amount: number;
-  partial_count: number;
-  applied_count: number;
-}
-
-export interface CreditsResponse {
-  credits: Credit[];
-  stats: CreditStats;
-}
-
-export interface StudentWithCredit {
-  id: number;
-  name: string;
-  student_status: string;
-  total_remaining: number;
-  credit_count: number;
-}
-
-export interface CreditTypeStats {
-  credit_type: string;
-  count: number;
-  total_amount: number;
-  remaining_amount: number;
-}
-
-export interface CreditsSummaryResponse {
-  students_with_credit: StudentWithCredit[];
-  type_stats: CreditTypeStats[];
-}

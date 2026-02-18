@@ -157,8 +157,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
   const loadAvailableSeasons = async () => {
     try {
       setSeasonsLoading(true);
-      const seasons = await seasonsApi.getActiveSeasons();
-      setAvailableSeasons(seasons);
+      const season = await seasonsApi.getActiveSeason();
+      setAvailableSeasons(season ? [season] : []);
     } catch (err) {
       console.error('Failed to load seasons:', err);
     } finally {
@@ -1007,7 +1007,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                         <option value="">시즌을 선택하세요</option>
                         {availableSeasons.map((season) => (
                           <option key={season.id} value={season.id}>
-                            {season.season_name} ({SEASON_TYPE_LABELS[season.season_type]}) - {formatSeasonFee(season.default_season_fee)}
+                            {season.name} {season.season_type ? `(${SEASON_TYPE_LABELS[season.season_type]})` : ''} - {formatSeasonFee(season.fee)}
                           </option>
                         ))}
                       </select>

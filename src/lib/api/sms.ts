@@ -1,130 +1,123 @@
 /**
- * SMS API 클라이언트
+ * SMS API client
+ * Backend: /sms/* endpoints
  */
 
 import apiClient from './client';
 
-interface SendSMSResponse {
-  message: string;
-  sent: number;
-  failed: number;
-  total: number;
-}
-
-interface RecipientsCountResponse {
-  all: number;
-  students: number;
-  parents: number;
-}
-
-interface SMSLog {
+// Backend NotificationLog fields (SMS logs use the same table)
+export interface SMSLog {
   id: number;
-  academy_id: number;
-  student_id: number | null;
-  recipient_name: string;
-  recipient_phone: string;
-  message_type: string;
-  message_content: string;
-  status: 'pending' | 'sent' | 'delivered' | 'failed';
+  academy_id?: number;
+  type: string; // 'sms'
+  recipient: string | null;
+  content: string | null;
+  status: 'sent' | 'failed';
   error_message: string | null;
-  request_id: string | null;
-  sent_at: string | null;
+  is_read?: boolean;
   created_at: string;
+  // Frontend aliases (optional)
+  recipient_name?: string;
+  student_name?: string;
 }
 
-interface LogsResponse {
-  logs: SMSLog[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-interface SenderNumber {
-  id: number;
-  service_type: 'solapi' | 'sens';
-  phone: string;
-  label: string | null;
-  is_default: number;
-  created_at: string;
-}
-
-interface SenderNumbersResponse {
-  senderNumbers: SenderNumber[];
+export interface SenderNumber {
+  id?: number;
+  number: string;
+  phone?: string; // Frontend alias for number
+  is_default: boolean;
+  service_type?: 'solapi' | 'sens';
+  label?: string | null;
+  created_at?: string;
 }
 
 export const smsAPI = {
-  /**
-   * SMS/MMS 발송
-   */
+  // POST /sms/send → flat log dict
+  // Backend body: {to, content, type="sms"}
   send: async (params: {
-    target: 'all' | 'students' | 'parents' | 'custom';
+    to: string;
     content: string;
-    customPhones?: string[];
-    images?: { name: string; data: string }[];  // MMS 이미지 (base64)
-    statusFilter?: 'active' | 'pending';  // 상태 필터
-    gradeFilter?: 'all' | 'junior' | 'senior';  // 학년 필터
-    senderNumberId?: number;  // 선택한 발신번호 ID
-  }): Promise<SendSMSResponse> => {
-    return apiClient.post<SendSMSResponse>('/sms/send', params);
+    type?: string;
+  }): Promise<SMSLog> => {
+    return apiClient.post<SMSLog>('/sms/send', {
+      to: params.to,
+      content: params.content,
+      type: params.type || 'sms',
+    });
   },
 
-  /**
-   * 수신자 수 조회
-   */
-  getRecipientsCount: async (statusFilter?: string, gradeFilter?: string): Promise<RecipientsCountResponse> => {
+  // POST /sms/send-bulk → {sent, recipients}
+  // Backend body: {recipients[], content, type="sms"}
+  sendBulk: async (params: {
+    recipients: string[];
+    content: string;
+    type?: string;
+  }): Promise<{ sent: number; recipients: string[] }> => {
+    return apiClient.post('/sms/send-bulk', {
+      recipients: params.recipients,
+      content: params.content,
+      type: params.type || 'sms',
+    });
+  },
+
+  // GET /sms/recipients-count → {count}
+  // Backend params: status?, time_slot?
+  getRecipientsCount: async (status?: string, timeSlot?: string): Promise<{ count: number }> => {
     const params: Record<string, string> = {};
-    if (statusFilter) params.statusFilter = statusFilter;
-    if (gradeFilter) params.gradeFilter = gradeFilter;
-    return apiClient.get<RecipientsCountResponse>('/sms/recipients-count', { params });
+    if (status) params.status = status;
+    if (timeSlot) params.time_slot = timeSlot;
+    return apiClient.get<{ count: number }>('/sms/recipients-count', { params });
   },
 
-  /**
-   * 발송 내역 조회
-   */
+  // GET /sms/logs → flat array
+  // Backend params: limit?, status?
   getLogs: async (params?: {
-    page?: number;
     limit?: number;
-  }): Promise<LogsResponse> => {
-    return apiClient.get<LogsResponse>('/sms/logs', { params });
+    status?: string;
+  }): Promise<SMSLog[]> => {
+    return apiClient.get<SMSLog[]>('/sms/logs', { params });
   },
 
-  /**
-   * 발신번호 목록 조회
-   */
-  getSenderNumbers: async (serviceType?: 'solapi' | 'sens'): Promise<SenderNumbersResponse> => {
-    const params: Record<string, string> = {};
-    if (serviceType) params.serviceType = serviceType;
-    return apiClient.get<SenderNumbersResponse>('/sms/sender-numbers', { params });
+  // GET /sms/history → flat array (alias for logs)
+  getHistory: async (params?: {
+    limit?: number;
+    status?: string;
+  }): Promise<SMSLog[]> => {
+    return apiClient.get<SMSLog[]>('/sms/history', { params });
   },
 
-  /**
-   * 발신번호 추가
-   */
+  // GET /sms/balance → {provider, balance, message}
+  getBalance: async (): Promise<{ provider: string; balance: number | null; message: string }> => {
+    return apiClient.get('/sms/balance');
+  },
+
+  // GET /sms/sender-numbers → flat array of {number, is_default}
+  getSenderNumbers: async (): Promise<SenderNumber[]> => {
+    return apiClient.get<SenderNumber[]>('/sms/sender-numbers');
+  },
+
+  // GET /sms/templates → flat array
+  getTemplates: async (): Promise<{ id: number; name: string; content: string; type: string }[]> => {
+    return apiClient.get('/sms/templates');
+  },
+
+  // --- Sender number CRUD (not yet in backend, stubs for frontend UI) ---
   addSenderNumber: async (params: {
     serviceType: 'solapi' | 'sens';
     phone: string;
     label?: string;
-  }): Promise<{ message: string; senderNumber: SenderNumber }> => {
-    return apiClient.post('/sms/sender-numbers', params);
+  }): Promise<SenderNumber> => {
+    return apiClient.post<SenderNumber>('/sms/sender-numbers', params);
   },
 
-  /**
-   * 발신번호 수정
-   */
   updateSenderNumber: async (id: number, params: {
     label?: string;
     isDefault?: boolean;
-  }): Promise<{ message: string }> => {
-    return apiClient.put(`/sms/sender-numbers/${id}`, params);
+  }): Promise<void> => {
+    await apiClient.put(`/sms/sender-numbers/${id}`, params);
   },
 
-  /**
-   * 발신번호 삭제
-   */
-  deleteSenderNumber: async (id: number): Promise<{ message: string }> => {
-    return apiClient.delete(`/sms/sender-numbers/${id}`);
+  deleteSenderNumber: async (id: number): Promise<void> => {
+    await apiClient.delete(`/sms/sender-numbers/${id}`);
   },
 };

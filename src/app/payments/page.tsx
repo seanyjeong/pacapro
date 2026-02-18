@@ -15,7 +15,6 @@ import { notificationsAPI } from '@/lib/api/notifications';
 import { usePermissions } from '@/lib/utils/permissions';
 import {
   PAYMENT_STATUS_OPTIONS,
-  PAYMENT_TYPE_OPTIONS,
 } from '@/lib/types/payment';
 import type { Payment } from '@/lib/types/payment';
 import { parseClassDays } from '@/lib/types/student';
@@ -41,7 +40,7 @@ function PaymentsPageContent() {
     if (!initialFiltersApplied) {
       const statusFromUrl = searchParams.get('status');
       if (statusFromUrl === 'unpaid') {
-        updateFilters({ payment_status: 'pending' as const });
+        updateFilters({ payment_status: 'unpaid' });
       }
       setInitialFiltersApplied(true);
     }
@@ -93,8 +92,9 @@ function PaymentsPageContent() {
     try {
       setSendingNotification(true);
       const today = new Date();
-      const year = filters.year || today.getFullYear();
-      const month = filters.month || (today.getMonth() + 1);
+      const [yearStr, monthStr] = (filters.year_month || `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`).split('-');
+      const year = parseInt(yearStr);
+      const month = parseInt(monthStr);
 
       const result = await notificationsAPI.sendUnpaid(year, month);
       toast.success(`알림 발송 완료: ${result.sent}명 성공, ${result.failed}명 실패`);
@@ -138,7 +138,7 @@ function PaymentsPageContent() {
       await paymentsAPI.recordPayment(payment.id, {
         paid_amount: parseFloat(String(payment.final_amount)) - parseFloat(String(payment.paid_amount || 0)),
         payment_method: method,
-        payment_date: new Date().toISOString().split('T')[0],
+        paid_date: new Date().toISOString().split('T')[0],
         notes: `빠른 납부 처리 (${method})`,
       });
 
@@ -173,15 +173,13 @@ function PaymentsPageContent() {
   }
 
   // 통계는 선택된 월 기준 (이전 달 미납자는 제외)
-  const selectedYearMonth = filters.year && filters.month
-    ? `${filters.year}-${String(filters.month).padStart(2, '0')}`
-    : `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+  const selectedYearMonth = filters.year_month || `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
 
   const currentMonthPayments = filteredPayments.filter((p) => p.year_month === selectedYearMonth);
   const previousUnpaidPayments = filteredPayments.filter((p) => p.year_month !== selectedYearMonth);
 
   const paidCount = currentMonthPayments.filter((p) => p.payment_status === 'paid').length;
-  const unpaidCount = currentMonthPayments.filter((p) => p.payment_status === 'pending').length;
+  const unpaidCount = currentMonthPayments.filter((p) => p.payment_status === 'unpaid' || p.payment_status === 'overdue').length;
   const partialCount = currentMonthPayments.filter((p) => p.payment_status === 'partial').length;
   const totalAmount = Math.floor(currentMonthPayments.reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
   const paidAmount = Math.floor(currentMonthPayments
@@ -348,41 +346,21 @@ function PaymentsPageContent() {
               </select>
             </div>
 
-            <div>
-              <label className="text-sm text-muted-foreground">청구 유형</label>
-              <select
-                value={filters.payment_type || ''}
-                onChange={(e) => updateFilters({ payment_type: e.target.value as any })}
-                className="ml-2 px-3 py-1 border border-border rounded-md text-sm bg-card text-foreground"
-              >
-                <option value="">전체</option>
-                {PAYMENT_TYPE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             <div className="flex items-center gap-2">
               <label className="text-sm text-muted-foreground">청구 월</label>
               <input
                 type="month"
-                value={filters.year && filters.month ? `${filters.year}-${String(filters.month).padStart(2, '0')}` : ''}
+                value={filters.year_month || ''}
                 onChange={(e) => {
-                  const [year, month] = e.target.value.split('-');
-                  updateFilters({ year: parseInt(year), month: parseInt(month) });
+                  updateFilters({ year_month: e.target.value });
                 }}
                 className="px-3 py-1 border border-border rounded-md text-sm bg-card text-foreground"
               />
             </div>
 
             <Button variant="outline" onClick={() => updateFilters({
-              year: currentYear,
-              month: currentMonth,
-              include_previous_unpaid: true,
+              year_month: `${currentYear}-${String(currentMonth).padStart(2, '0')}`,
               payment_status: undefined,
-              payment_type: undefined,
               search: undefined,
             })} className="ml-auto">
               필터 초기화

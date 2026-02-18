@@ -1,6 +1,6 @@
 /**
  * Payments API Client
- * 학원비 관련 API 호출 함수
+ * Aligned with FastAPI backend (api/app/routers/academy/payments)
  */
 
 import apiClient from './client';
@@ -9,152 +9,159 @@ import type {
   PaymentFormData,
   PaymentRecordData,
   BulkMonthlyChargeData,
-  PaymentsResponse,
-  PaymentDetailResponse,
-  PaymentCreateResponse,
-  PaymentUpdateResponse,
-  PaymentDeleteResponse,
-  UnpaidPaymentsResponse,
-  UnpaidTodayResponse,
+  PaymentFilters,
   BulkChargeResponse,
   PaymentStatsResponse,
-  PaymentFilters,
+  PaymentHistoryResponse,
   PrepaidPreviewRequest,
   PrepaidPreviewResponse,
   PrepaidPayRequest,
   PrepaidPayResponse,
-  CreditsResponse,
+  PrepaidBalanceResponse,
   CreditsSummaryResponse,
 } from '@/lib/types/payment';
 
 export const paymentsAPI = {
   /**
-   * 학원비 목록 조회 (필터링)
-   * GET /paca/payments
+   * GET /payments
+   * Backend returns Payment[] directly (no wrapper)
    */
-  getPayments: async (filters?: PaymentFilters): Promise<PaymentsResponse> => {
+  getPayments: async (filters?: PaymentFilters): Promise<Payment[]> => {
     const params = new URLSearchParams();
-
     if (filters?.student_id) params.append('student_id', filters.student_id.toString());
     if (filters?.payment_status) params.append('payment_status', filters.payment_status);
-    if (filters?.payment_type) params.append('payment_type', filters.payment_type);
-    if (filters?.year) params.append('year', filters.year.toString());
-    if (filters?.month) params.append('month', filters.month.toString());
-    if (filters?.include_previous_unpaid) params.append('include_previous_unpaid', 'true');
+    if (filters?.year_month) params.append('year_month', filters.year_month);
 
     const queryString = params.toString();
     const url = queryString ? `/payments?${queryString}` : '/payments';
-
-    return await apiClient.get<PaymentsResponse>(url);
+    return await apiClient.get<Payment[]>(url);
   },
 
   /**
-   * 미납/연체 학원비 조회
-   * GET /paca/payments/unpaid
+   * GET /payments/unpaid?year_month=YYYY-MM
+   * Backend returns Payment[] directly
    */
-  getUnpaidPayments: async (): Promise<UnpaidPaymentsResponse> => {
-    return await apiClient.get<UnpaidPaymentsResponse>('/payments/unpaid');
+  getUnpaidPayments: async (yearMonth: string): Promise<Payment[]> => {
+    return await apiClient.get<Payment[]>(`/payments/unpaid?year_month=${yearMonth}`);
   },
 
   /**
-   * 오늘 출석 예정인 학생 중 미납자 조회
-   * GET /paca/payments/unpaid-today
+   * GET /payments/unpaid-today
+   * Backend returns Payment[] directly
    */
-  getUnpaidTodayPayments: async (): Promise<UnpaidTodayResponse> => {
-    return await apiClient.get<UnpaidTodayResponse>('/payments/unpaid-today');
+  getUnpaidTodayPayments: async (): Promise<Payment[]> => {
+    return await apiClient.get<Payment[]>('/payments/unpaid-today');
   },
 
   /**
-   * 학원비 상세 조회
-   * GET /paca/payments/:id
+   * GET /payments/{id}
+   * Backend returns Payment directly
    */
-  getPayment: async (id: number): Promise<PaymentDetailResponse> => {
-    return await apiClient.get<PaymentDetailResponse>(`/payments/${id}`);
+  getPayment: async (id: number): Promise<Payment> => {
+    return await apiClient.get<Payment>(`/payments/${id}`);
   },
 
   /**
-   * 학원비 청구 등록
-   * POST /paca/payments
+   * POST /payments
+   * Backend returns Payment directly
    */
-  createPayment: async (data: PaymentFormData): Promise<PaymentCreateResponse> => {
-    return await apiClient.post<PaymentCreateResponse>('/payments', data);
+  createPayment: async (data: PaymentFormData): Promise<Payment> => {
+    return await apiClient.post<Payment>('/payments', data);
   },
 
   /**
-   * 일괄 월 수강료 청구
-   * POST /paca/payments/bulk-monthly
+   * POST /payments/bulk-monthly
+   * Backend expects { year_month, overwrite }
    */
   bulkMonthlyCharge: async (data: BulkMonthlyChargeData): Promise<BulkChargeResponse> => {
     return await apiClient.post<BulkChargeResponse>('/payments/bulk-monthly', data);
   },
 
   /**
-   * 납부 기록
-   * POST /paca/payments/:id/pay
+   * POST /payments/{id}/pay
+   * Backend expects { paid_amount, payment_method, paid_date?, notes? }
    */
-  recordPayment: async (id: number, data: PaymentRecordData): Promise<PaymentUpdateResponse> => {
-    return await apiClient.post<PaymentUpdateResponse>(`/payments/${id}/pay`, data);
+  recordPayment: async (id: number, data: PaymentRecordData): Promise<Payment> => {
+    return await apiClient.post<Payment>(`/payments/${id}/pay`, data);
   },
 
   /**
-   * 학원비 수정
-   * PUT /paca/payments/:id
+   * PUT /payments/{id}
+   * Backend returns Payment directly
    */
-  updatePayment: async (id: number, data: Partial<PaymentFormData>): Promise<PaymentUpdateResponse> => {
-    return await apiClient.put<PaymentUpdateResponse>(`/payments/${id}`, data);
+  updatePayment: async (id: number, data: Partial<PaymentFormData>): Promise<Payment> => {
+    return await apiClient.put<Payment>(`/payments/${id}`, data);
   },
 
   /**
-   * 학원비 삭제
-   * DELETE /paca/payments/:id
+   * DELETE /payments/{id}
+   * Backend returns { message: string }
    */
-  deletePayment: async (id: number): Promise<PaymentDeleteResponse> => {
-    return await apiClient.delete<PaymentDeleteResponse>(`/payments/${id}`);
+  deletePayment: async (id: number): Promise<{ message: string }> => {
+    return await apiClient.delete<{ message: string }>(`/payments/${id}`);
   },
 
   /**
-   * 학원비 통계 조회
-   * GET /paca/payments/stats/summary
+   * GET /payments/stats/summary?year_month=YYYY-MM
+   * Backend returns stats directly
    */
-  getPaymentStats: async (year?: number, month?: number): Promise<PaymentStatsResponse> => {
-    const params = new URLSearchParams();
-    if (year) params.append('year', year.toString());
-    if (month) params.append('month', month.toString());
-
-    const queryString = params.toString();
-    const url = queryString ? `/payments/stats/summary?${queryString}` : '/payments/stats/summary';
-
+  getPaymentStats: async (yearMonth?: string): Promise<PaymentStatsResponse> => {
+    const url = yearMonth
+      ? `/payments/stats/summary?year_month=${yearMonth}`
+      : '/payments/stats/summary';
     return await apiClient.get<PaymentStatsResponse>(url);
   },
 
+  /**
+   * GET /payments/student/{studentId}/history
+   */
+  getPaymentHistory: async (studentId: number): Promise<PaymentHistoryResponse> => {
+    return await apiClient.get<PaymentHistoryResponse>(`/payments/student/${studentId}/history`);
+  },
+
+  /**
+   * POST /payments/prepaid-preview
+   * Backend expects { student_id, months: int }
+   */
   prepaidPreview: async (data: PrepaidPreviewRequest): Promise<PrepaidPreviewResponse> => {
     return await apiClient.post<PrepaidPreviewResponse>('/payments/prepaid-preview', data);
   },
 
+  /**
+   * POST /payments/prepaid-pay
+   * Backend expects { student_id, months: int, amount: int }
+   */
   prepaidPay: async (data: PrepaidPayRequest): Promise<PrepaidPayResponse> => {
     return await apiClient.post<PrepaidPayResponse>('/payments/prepaid-pay', data);
   },
 
-  // ===== 크레딧 관리 =====
-
   /**
-   * 전체 크레딧 목록 조회
-   * GET /paca/payments/credits
+   * GET /payments/prepaid/{studentId}
    */
-  getCredits: async (filters?: { status?: string; credit_type?: string }): Promise<CreditsResponse> => {
-    const params = new URLSearchParams();
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.credit_type) params.append('credit_type', filters.credit_type);
-
-    const queryString = params.toString();
-    const url = queryString ? `/payments/credits?${queryString}` : '/payments/credits';
-
-    return await apiClient.get<CreditsResponse>(url);
+  getPrepaidBalance: async (studentId: number): Promise<PrepaidBalanceResponse> => {
+    return await apiClient.get<PrepaidBalanceResponse>(`/payments/prepaid/${studentId}`);
   },
 
   /**
-   * 크레딧 요약 통계
-   * GET /paca/payments/credits/summary
+   * POST /payments/prepaid/{studentId}
+   * Add prepaid credit
+   */
+  addPrepaidCredit: async (studentId: number, data: { amount: number; payment_method?: string; notes?: string }): Promise<Payment> => {
+    return await apiClient.post<Payment>(`/payments/prepaid/${studentId}`, data);
+  },
+
+  // ===== Credits =====
+
+  /**
+   * GET /payments/credits
+   * Backend returns Payment[] directly (discount_amount > 0)
+   */
+  getCredits: async (): Promise<Payment[]> => {
+    return await apiClient.get<Payment[]>('/payments/credits');
+  },
+
+  /**
+   * GET /payments/credits/summary
    */
   getCreditsSummary: async (): Promise<CreditsSummaryResponse> => {
     return await apiClient.get<CreditsSummaryResponse>('/payments/credits/summary');

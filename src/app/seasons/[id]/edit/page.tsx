@@ -31,22 +31,21 @@ export default function EditSeasonPage() {
     season_fee: 0,
     continuous_discount_type: 'none',
     continuous_discount_rate: 0,
-    status: 'draft',
+    status: 'active',
   });
 
   useEffect(() => {
     const fetchSeason = async () => {
       try {
         setLoading(true);
-        const response = await seasonsApi.getSeason(seasonId);
-        const season = response.season;
+        const season = await seasonsApi.getSeason(seasonId);
 
-        // 백엔드 필드를 폼 필드로 변환
+        // Parse grade_time_slots if stored as JSON string
         let gradeTimeSlots = typeof season.grade_time_slots === 'string'
           ? JSON.parse(season.grade_time_slots)
           : season.grade_time_slots;
 
-        // 기존 단일값 형식을 배열 형식으로 변환 (하위 호환성)
+        // Convert legacy single-value format to array format
         if (gradeTimeSlots) {
           Object.keys(gradeTimeSlots).forEach(grade => {
             if (!Array.isArray(gradeTimeSlots[grade])) {
@@ -56,15 +55,15 @@ export default function EditSeasonPage() {
         }
 
         setFormData({
-          season_name: season.season_name,
-          season_type: season.season_type,
-          year: new Date(season.season_start_date).getFullYear(),
-          start_date: season.season_start_date,
-          end_date: season.season_end_date,
+          season_name: season.name,
+          season_type: season.season_type || 'early',
+          year: new Date(season.start_date).getFullYear(),
+          start_date: season.start_date,
+          end_date: season.end_date,
           non_season_end_date: season.non_season_end_date || '',
-          operating_days: parseOperatingDays(season.operating_days),
+          operating_days: parseOperatingDays(season.operating_days || []),
           grade_time_slots: gradeTimeSlots || { '고3': ['evening'], 'N수': ['morning'] },
-          season_fee: parseFloat(season.default_season_fee) || 0,
+          season_fee: season.fee || 0,
           continuous_discount_type: season.continuous_discount_type || 'none',
           continuous_discount_rate: season.continuous_discount_rate || 0,
           status: season.status,
@@ -304,10 +303,9 @@ export default function EditSeasonPage() {
                 value={formData.status}
                 onChange={e => handleChange('status', e.target.value as SeasonStatus)}
               >
-                <option value="draft">준비중</option>
-                <option value="upcoming">예정</option>
                 <option value="active">진행중</option>
-                <option value="ended">종료</option>
+                <option value="completed">종료</option>
+                <option value="cancelled">취소</option>
               </select>
             </div>
 

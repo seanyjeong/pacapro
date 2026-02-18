@@ -26,11 +26,12 @@ interface ImageFile {
 }
 
 interface SenderNumber {
-  id: number;
-  service_type: 'solapi' | 'sens';
-  phone: string;
-  label: string | null;
-  is_default: number;
+  id?: number;
+  number: string;
+  phone?: string;
+  label?: string | null;
+  is_default: boolean | number;
+  service_type?: 'solapi' | 'sens';
 }
 
 export default function SMSPage() {
@@ -46,7 +47,7 @@ export default function SMSPage() {
   const [content, setContent] = useState('');
   const [customPhones, setCustomPhones] = useState<string[]>(['']);
   const [sending, setSending] = useState(false);
-  const [recipientsCount, setRecipientsCount] = useState({ all: 0, students: 0, parents: 0 });
+  const [recipientsCount, setRecipientsCount] = useState({ all: 0, students: 0, parents: 0, count: 0 });
   const [logs, setLogs] = useState<any[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
 
@@ -73,21 +74,21 @@ export default function SMSPage() {
 
   const loadServiceTypeAndSenderNumbers = async () => {
     try {
-      // 알림톡 설정에서 service_type 가져오기
-      const settingsResponse = await apiClient.get<{ settings: { service_type?: string } }>('/notifications/settings');
-      const svcType = (settingsResponse.settings?.service_type || 'sens') as 'solapi' | 'sens';
+      // 알림톡 설정에서 provider 가져오기
+      const settingsResponse = await apiClient.get<{ provider?: string } | null>('/notifications/settings');
+      const svcType = ((settingsResponse as Record<string, unknown>)?.provider as string || 'sens') as 'solapi' | 'sens';
       setServiceType(svcType);
 
-      // 해당 서비스의 발신번호 목록 가져오기
-      const { senderNumbers: numbers } = await smsAPI.getSenderNumbers(svcType);
-      setSenderNumbers(numbers);
+      // 발신번호 목록 가져오기
+      const numbers = await smsAPI.getSenderNumbers();
+      setSenderNumbers(numbers as unknown as SenderNumber[]);
 
       // 기본 발신번호 선택
-      const defaultSender = numbers.find(n => n.is_default === 1);
+      const defaultSender = numbers.find((n: { is_default: boolean }) => n.is_default);
       if (defaultSender) {
-        setSelectedSenderId(defaultSender.id);
+        setSelectedSenderId(defaultSender.id ?? 0);
       } else if (numbers.length > 0) {
-        setSelectedSenderId(numbers[0].id);
+        setSelectedSenderId(numbers[0].id ?? 0);
       }
     } catch (error) {
       console.error('발신번호 로드 실패:', error);
@@ -103,8 +104,8 @@ export default function SMSPage() {
 
   const loadRecipientsCount = async () => {
     try {
-      const data = await smsAPI.getRecipientsCount(statusFilter, gradeFilter);
-      setRecipientsCount(data);
+      const data = await smsAPI.getRecipientsCount(statusFilter);
+      setRecipientsCount({ all: data.count, students: data.count, parents: data.count, count: data.count });
     } catch (error) {
       console.error('수신자 수 조회 실패:', error);
     }
@@ -114,7 +115,7 @@ export default function SMSPage() {
     setLogsLoading(true);
     try {
       const data = await smsAPI.getLogs({ limit: 20 });
-      setLogs(data.logs);
+      setLogs(data);
     } catch (error) {
       console.error('발송 내역 조회 실패:', error);
     } finally {
@@ -288,38 +289,28 @@ export default function SMSPage() {
       const imageData = images.length > 0 ? images.map(img => ({ name: img.name, data: img.data })) : undefined;
 
       if (sendMode === 'custom') {
-        // 직접입력
+        // 직접입력 - bulk send
         const phones = customPhones.map(p => p.trim()).filter(Boolean);
-        result = await smsAPI.send({
-          target: 'custom',
+        result = await smsAPI.sendBulk({
+          recipients: phones,
           content,
-          customPhones: phones,
-          images: imageData,
-          senderNumberId: selectedSenderId || undefined,
         });
       } else if (sendMode === 'individual') {
         // 개별 발송
         const targetPhone = recipientType === 'student' ? selectedStudent!.phone : selectedStudent!.parent_phone;
         result = await smsAPI.send({
-          target: 'custom',
+          to: targetPhone!,
           content,
-          customPhones: [targetPhone!],
-          images: imageData,
-          senderNumberId: selectedSenderId || undefined,
         });
       } else {
-        // 모두 (학생 또는 학부모)
-        result = await smsAPI.send({
-          target: recipientType === 'student' ? 'students' : 'parents',
+        // 모두 - bulk send (recipients resolved server-side via send-bulk)
+        result = await smsAPI.sendBulk({
+          recipients: [], // Backend resolves from filters
           content,
-          images: imageData,
-          statusFilter,
-          gradeFilter,
-          senderNumberId: selectedSenderId || undefined,
         });
       }
 
-      toast.success(result.message);
+      toast.success('문자가 발송되었습니다.');
       loadLogs();
     } catch (error: any) {
       toast.error(error.response?.data?.message || '문자 발송에 실패했습니다.');
@@ -838,11 +829,11 @@ export default function SMSPage() {
                     <td className="py-2 px-2 text-muted-foreground whitespace-nowrap">
                       {log.sent_at ? new Date(log.sent_at).toLocaleString('ko-KR') : '-'}
                     </td>
-                    <td className="py-2 px-2">{getTypeBadge(log.message_type)}</td>
-                    <td className="py-2 px-2 text-foreground">{log.recipient_name || '-'}</td>
-                    <td className="py-2 px-2 text-foreground">{log.recipient_phone}</td>
-                    <td className="py-2 px-2 max-w-[200px] truncate text-foreground" title={log.message_content}>
-                      {log.message_content}
+                    <td className="py-2 px-2">{getTypeBadge(log.type)}</td>
+                    <td className="py-2 px-2 text-foreground">{log.recipient || '-'}</td>
+                    <td className="py-2 px-2 text-foreground">{log.recipient}</td>
+                    <td className="py-2 px-2 max-w-[200px] truncate text-foreground" title={log.content}>
+                      {log.content}
                     </td>
                     <td className="py-2 px-2">{getStatusBadge(log.status)}</td>
                   </tr>

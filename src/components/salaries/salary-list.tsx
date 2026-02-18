@@ -1,6 +1,6 @@
 /**
  * Salary List Component
- * 급여 목록 컴포넌트
+ * Aligned with backend field names
  */
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,12 +10,8 @@ import {
   formatYearMonth,
   formatDate,
   getPaymentStatusColor,
-  getTaxTypeColor,
 } from '@/lib/utils/salary-helpers';
-import {
-  TAX_TYPE_LABELS,
-  PAYMENT_STATUS_LABELS,
-} from '@/lib/types/salary';
+import { PAYMENT_STATUS_LABELS, TAX_TYPE_LABELS } from '@/lib/types/salary';
 
 interface SalaryListProps {
   salaries: Salary[];
@@ -60,9 +56,9 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">강사</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">급여월</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">금액</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">공제</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">실수령액</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">기본급</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">세금/공제</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">총 급여</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">상태</th>
               </tr>
             </thead>
@@ -70,31 +66,43 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
               {salaries.map((salary) => (
                 <tr key={salary.id} onClick={() => onSalaryClick(salary.id)} className="hover:bg-muted cursor-pointer transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-medium text-foreground">{salary.instructor_name}</div>
+                    <div className="font-medium text-foreground">{salary.instructor_name ?? `강사 #${salary.instructor_id}`}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-foreground">{formatYearMonth(salary.year_month)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="font-semibold text-foreground">{formatSalaryAmount(salary.base_amount + salary.incentive_amount)}</div>
-                      {salary.incentive_amount > 0 && (
-                        <div className="text-xs text-blue-600 dark:text-blue-400">인센티브: +{formatSalaryAmount(salary.incentive_amount)}</div>
+                      <div className="font-semibold text-foreground">{formatSalaryAmount(salary.base_salary)}</div>
+                      {salary.overtime_pay > 0 && (
+                        <div className="text-xs text-orange-600 dark:text-orange-400">초과: +{formatSalaryAmount(salary.overtime_pay)}</div>
+                      )}
+                      {salary.incentive > 0 && (
+                        <div className="text-xs text-blue-600 dark:text-blue-400">인센티브: +{formatSalaryAmount(salary.incentive)}</div>
                       )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-red-600 dark:text-red-400">-{formatSalaryAmount(salary.tax_amount + salary.total_deduction)}</div>
-                      <span className={`text-xs px-2 py-0.5 rounded ${getTaxTypeColor(salary.tax_type)}`}>
-                        {TAX_TYPE_LABELS[salary.tax_type]}
-                      </span>
+                      {salary.tax_amount > 0 && (
+                        <div className="text-red-600 dark:text-red-400 text-xs">
+                          {TAX_TYPE_LABELS[salary.tax_type] ?? salary.tax_type}: -{formatSalaryAmount(salary.tax_amount)}
+                        </div>
+                      )}
+                      {salary.deductions > 0 && (
+                        <div className="text-red-600 dark:text-red-400 text-xs">
+                          공제: -{formatSalaryAmount(salary.deductions)}
+                        </div>
+                      )}
+                      {salary.tax_amount === 0 && salary.deductions === 0 && (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="font-bold text-lg text-foreground">{formatSalaryAmount(salary.net_salary)}</div>
-                    {salary.payment_date && (
-                      <div className="text-xs text-green-600 dark:text-green-400">지급: {formatDate(salary.payment_date)}</div>
+                    <div className="font-bold text-lg text-foreground">{formatSalaryAmount(salary.total_salary)}</div>
+                    {salary.paid_date && (
+                      <div className="text-xs text-green-600 dark:text-green-400">지급: {formatDate(salary.paid_date)}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

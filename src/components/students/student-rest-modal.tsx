@@ -97,19 +97,19 @@ export function StudentRestModal({
         const year = startDate.getFullYear();
         const month = startDate.getMonth() + 1; // 1-12
 
-        const response = await paymentsAPI.getPayments({
+        const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
+        const payments = await paymentsAPI.getPayments({
           student_id: student.id,
-          year,
-          month,
+          year_month: yearMonth,
         });
 
         // 해당 월의 paid 상태인 결제 금액 합산
-        const paidPayments = response.payments?.filter(
-          (p) => p.payment_status === 'paid'
-        ) || [];
+        const paidPayments = payments.filter(
+          (p: any) => p.payment_status === 'paid'
+        );
 
         const totalPaid = paidPayments.reduce(
-          (sum, p) => sum + (p.paid_amount || 0),
+          (sum: number, p: any) => sum + (p.paid_amount || 0),
           0
         );
 

@@ -326,7 +326,7 @@ export default function PushNotificationSettings() {
                     <Smartphone className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-foreground">{sub.device_name || '알 수 없는 기기'}</span>
                     <span className="text-xs text-muted-foreground">
-                      ({new Date(sub.updated_at).toLocaleDateString('ko-KR')})
+                      ({sub.updated_at ? new Date(sub.updated_at).toLocaleDateString('ko-KR') : '-'})
                     </span>
                   </div>
                 </div>

@@ -112,10 +112,10 @@ export default function TossPaymentsPage() {
     setSelectedPaymentId('');
 
     try {
-      const res = await paymentsAPI.getUnpaidPayments();
-      if (res.payments) {
-        setUnpaidPayments(res.payments as Payment[]);
-      }
+      const now = new Date();
+      const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const data = await paymentsAPI.getUnpaidPayments(yearMonth);
+      setUnpaidPayments(data);
     } catch (error) {
       console.error('Error loading unpaid payments:', error);
       toast.error('미납 목록 로드 실패');

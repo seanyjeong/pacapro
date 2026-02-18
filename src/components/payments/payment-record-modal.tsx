@@ -13,7 +13,7 @@ import { PAYMENT_METHOD_OPTIONS } from '@/lib/types/payment';
 interface PaymentRecordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { paid_amount: number; payment_method: string; payment_date: string; discount_amount?: number }) => Promise<void>;
+  onSubmit: (data: { paid_amount: number; payment_method: string; paid_date: string; discount_amount?: number }) => Promise<void>;
   studentName: string;
   finalAmount: number;
   paidAmount?: number;
@@ -48,7 +48,7 @@ export function PaymentRecordModal({
   const [formData, setFormData] = useState({
     paid_amount: remainingAmount,
     payment_method: 'account',
-    payment_date: new Date().toISOString().split('T')[0],
+    paid_date: new Date().toISOString().split('T')[0],
     discount_amount: 0, // 추가 할인
   });
   const [submitting, setSubmitting] = useState(false);
@@ -75,7 +75,7 @@ export function PaymentRecordModal({
       await onSubmit({
         paid_amount: formData.paid_amount,
         payment_method: formData.payment_method,
-        payment_date: formData.payment_date,
+        paid_date: formData.paid_date,
         discount_amount: formData.discount_amount > 0 ? formData.discount_amount : undefined,
       });
       onClose();
@@ -243,8 +243,8 @@ export function PaymentRecordModal({
                 <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                 <input
                   type="date"
-                  value={formData.payment_date}
-                  onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
+                  value={formData.paid_date}
+                  onChange={(e) => setFormData({ ...formData, paid_date: e.target.value })}
                   className="w-full pl-10 pr-4 py-3 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   required
                 />

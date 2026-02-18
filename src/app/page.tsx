@@ -85,11 +85,10 @@ export default function DashboardPage() {
         // 오늘 상담 일정 로드
         try {
             const consultationData = await getConsultations({
-                startDate: today,
-                endDate: today,
+                date: today,
                 status: 'confirmed',
             });
-            setTodayConsultations(consultationData.consultations || []);
+            setTodayConsultations(consultationData);
         } catch (err) {
             console.error('Failed to load consultations:', err);
         }

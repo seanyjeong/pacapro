@@ -1,35 +1,33 @@
 /**
- * 알림 설정 API
+ * Push notification preference settings API
+ * Backend: /notification-settings (not yet implemented - placeholder)
+ * These are boolean toggle preferences for push notification types,
+ * separate from the provider settings in /notifications/settings.
  */
 
 import apiClient from './client';
 
 export interface NotificationSettings {
-  unpaid_attendance: boolean;    // 미납자 출석 알림
-  consultation_reminder: boolean; // 상담 30분 전 알림
-  new_consultation: boolean;      // 새 상담 예약 알림
-  pause_ending: boolean;          // 휴원 종료 알림
-}
-
-interface NotificationSettingsResponse {
-  settings: NotificationSettings;
-}
-
-interface UpdateResponse {
-  message: string;
-  settings: NotificationSettings;
+  unpaid_attendance: boolean;    // Unpaid student attendance alert
+  consultation_reminder: boolean; // Consultation 30min reminder
+  new_consultation: boolean;      // New consultation booking alert
+  pause_ending: boolean;          // Pause ending alert
 }
 
 export const notificationSettingsAPI = {
-  // 알림 설정 조회
+  // GET /notification-settings → flat dict (or null)
   get: async (): Promise<NotificationSettings> => {
-    const response = await apiClient.get<NotificationSettingsResponse>('/notification-settings');
-    return response.settings;
+    const response = await apiClient.get<NotificationSettings | null>('/notification-settings');
+    return response || {
+      unpaid_attendance: true,
+      consultation_reminder: true,
+      new_consultation: true,
+      pause_ending: true,
+    };
   },
 
-  // 알림 설정 업데이트
-  update: async (settings: Partial<NotificationSettings>): Promise<NotificationSettings> => {
-    const response = await apiClient.put<UpdateResponse>('/notification-settings', settings);
-    return response.settings;
+  // PUT /notification-settings → flat dict
+  update: async (settings: Partial<NotificationSettings>): Promise<void> => {
+    await apiClient.put('/notification-settings', settings);
   },
 };

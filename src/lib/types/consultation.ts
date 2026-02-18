@@ -69,67 +69,52 @@ export interface AcademicScores {
   };
 }
 
-// 상담 신청
+// 상담 — backend fields from consultations table
 export interface Consultation {
   id: number;
   academy_id: number;
-  consultation_type: ConsultationType;
-  learning_type?: LearningType; // 재원생 상담 유형
 
-  // 학부모 정보
-  parent_name: string;
-  parent_phone: string;
+  // Backend core fields (from _decrypt_consultation)
+  student_name: string | null;
+  student_phone: string | null;
+  parent_name: string | null;
+  parent_phone: string | null;
+  date: string; // YYYY-MM-DD (backend field)
+  time: string; // HH:MM (backend field)
+  status: ConsultationStatus;
+  notes: string | null; // backend field (admin memo)
+  source: string | null; // online|phone|walk_in
+  linked_student_id: number | null;
+  created_at: string;
+  updated_at: string | null;
+  deleted_at: string | null;
 
-  // 학생 정보
-  student_name: string;
-  student_phone?: string;
-  student_grade: StudentGrade;
+  // Aliases — populated by API mapper for backward compatibility with components
+  preferred_date: string; // = date
+  preferred_time: string; // = time
+  admin_notes?: string; // = notes
+
+  // Frontend-extended fields (not in backend yet — used by components)
+  consultation_type?: ConsultationType;
+  learning_type?: LearningType;
+  student_grade?: StudentGrade;
   student_school?: string;
   gender?: 'male' | 'female';
-
-  // 성적 정보
   academic_scores?: AcademicScores;
-  academicScores?: AcademicScores; // API 응답용
-
-  // 기타 정보
+  academicScores?: AcademicScores;
   target_school?: string;
   referrer_student?: string;
   referral_sources?: string[];
-  referralSources?: string[]; // API 응답용
+  referralSources?: string[];
   inquiry_content?: string;
-
-  // 일정
-  preferred_date: string;
-  preferred_time: string;
-
-  // 연결된 학생
-  linked_student_id?: number;
   linked_student_name?: string;
   linked_student_grade?: string;
   linked_student_is_trial?: boolean;
-
-  // 학생 매칭 상태 (이름+전화번호로 재원생 테이블과 비교)
-  // - registered_with_trial: 체험 후 등록 (체험완료 + 등록)
-  // - registered_direct: 바로 등록 (등록만)
-  // - trial_ongoing: 체험 중 (체험중)
-  // - trial_completed: 체험 완료 미등록 (체험완료 + 미등록)
-  // - no_trial: 미체험
   matched_student_status?: 'registered_with_trial' | 'registered_direct' | 'trial_ongoing' | 'trial_completed' | 'no_trial';
-
-  // 상태
-  status: ConsultationStatus;
-  admin_notes?: string;
-
-  // 상담 진행
   checklist?: ChecklistItem[];
   consultation_memo?: string;
-
-  // 알림톡
   alimtalk_sent_at?: string;
   alimtalk_status?: string;
-
-  created_at: string;
-  updated_at: string;
 }
 
 // 모의고사 등급 (과목별)
@@ -172,29 +157,28 @@ export interface WeeklyHour {
   endTime: string | null;
 }
 
-// 차단된 시간대
+// Blocked slot (stored as JSON in consultation_settings.blocked_slots)
 export interface BlockedSlot {
   id: number;
-  blocked_date: string;
-  is_all_day: boolean;
-  start_time?: string;
-  end_time?: string;
+  date: string; // backend field name
+  start_time: string;
+  end_time: string;
   reason?: string;
-  created_at: string;
+  // Aliases for backward compat
+  blocked_date?: string; // = date
 }
 
-// 상담 설정
-export interface ConsultationSettings {
-  isEnabled: boolean;
-  pageTitle: string;
-  pageDescription: string;
-  slotDuration: number;
-  maxReservationsPerSlot: number;
-  advanceDays: number;
-  minAdvanceHours: number;
-  referralSources: string[];
-  sendConfirmationAlimtalk: boolean;
-  confirmationTemplateCode: string;
+// Settings update request — maps to ConsultationSettingsUpdate on backend
+export interface ConsultationSettingsUpdate {
+  slug?: string;
+  is_active?: boolean;
+  academy_name_display?: string;
+  description?: string;
+  duration_minutes?: number;
+  max_per_slot?: number;
+  fields?: Record<string, boolean>;
+  notify_on_new?: boolean;
+  notify_email?: string;
 }
 
 // 공개 페이지 정보 (API 응답 구조)
@@ -221,23 +205,10 @@ export interface TimeSlot {
   reason?: 'blocked' | 'fully_booked' | 'past' | null;
 }
 
-// API 응답들
-export interface ConsultationListResponse {
-  consultations: Consultation[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-  stats: {
-    pending?: number;
-    confirmed?: number;
-    completed?: number;
-    cancelled?: number;
-    no_show?: number;
-  };
-}
+// API responses — backend returns flat data
+// GET /consultations → Consultation[] directly
+// GET /consultations/{id} → Consultation directly
+// GET /consultations/settings → flat settings object with parsed JSON fields
 
 export interface SlotsResponse {
   date: string;
@@ -245,15 +216,21 @@ export interface SlotsResponse {
   slotDuration: number;
 }
 
-export interface SettingsResponse {
-  academy?: {
-    id: number;
-    name: string;
-    slug?: string;
-  };
-  settings?: Partial<ConsultationSettings>;
-  weeklyHours?: WeeklyHour[];
-  blockedSlots?: BlockedSlot[];
+// GET /consultations/settings returns flat ConsultationSettings columns with parsed JSON
+export interface ConsultationSettingsResponse {
+  id: number;
+  academy_id: number;
+  slug: string | null;
+  is_active: boolean;
+  academy_name_display: string | null;
+  description: string | null;
+  duration_minutes: number;
+  max_per_slot: number;
+  weekly_hours: Record<string, string[]> | null; // parsed JSON
+  blocked_slots: Array<{ id: number; date: string; start_time: string; end_time: string; reason?: string }> | null;
+  fields: Record<string, boolean> | null; // parsed JSON
+  notify_on_new: boolean;
+  notify_email: string | null;
 }
 
 // 상담 유형 라벨

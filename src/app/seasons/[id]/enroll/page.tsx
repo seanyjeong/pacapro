@@ -66,8 +66,8 @@ export default function SeasonEnrollPage() {
       try {
         setLoading(true);
         // 시즌 정보 조회
-        const seasonResponse = await seasonsApi.getSeason(seasonId);
-        setSeason(seasonResponse.season);
+        const seasonData = await seasonsApi.getSeason(seasonId);
+        setSeason(seasonData);
 
         // 학생 목록 조회 (고3, N수만 - 시즌 대상)
         const studentsResponse = await apiClient.get<{ students: Student[] }>('/students?grade_type=high');
@@ -124,13 +124,13 @@ export default function SeasonEnrollPage() {
 
     try {
       setEnrolling(studentId);
-      const baseFee = parseFloat(season.default_season_fee) || 0;
+      const baseFee = season.fee || 0;
       const finalFee = Math.max(0, baseFee - discount);
 
       await seasonsApi.enrollStudent(seasonId, {
         student_id: studentId,
-        season_fee: baseFee,  // 원래 시즌비 (백엔드에서 할인 적용)
-        discount_amount: discount,  // 할인 금액
+        fee: baseFee,
+        discount_amount: discount,
         time_slots: timeSlots,
       });
 
@@ -198,8 +198,8 @@ export default function SeasonEnrollPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">학생 등록</h1>
           <p className="text-gray-600">
-            {season.season_name} ({SEASON_TYPE_LABELS[season.season_type]}) -
-            시즌비: {formatSeasonFee(season.default_season_fee)}
+            {season.name} {season.season_type ? `(${SEASON_TYPE_LABELS[season.season_type]})` : ''} -
+            시즌비: {formatSeasonFee(season.fee)}
           </p>
         </div>
       </div>
@@ -378,11 +378,11 @@ export default function SeasonEnrollPage() {
                   <p className="mt-2 text-sm">
                     <span className="text-gray-500">시즌비: </span>
                     <span className="line-through text-gray-400 mr-1">
-                      {parseInt(season.default_season_fee).toLocaleString()}원
+                      {(season.fee || 0).toLocaleString()}원
                     </span>
                     <span className="text-red-500 mr-1">-{discountAmount.toLocaleString()}원</span>
                     <span className="font-bold text-blue-600">
-                      → {Math.max(0, parseInt(season.default_season_fee) - discountAmount).toLocaleString()}원
+                      → {Math.max(0, (season.fee || 0) - discountAmount).toLocaleString()}원
                     </span>
                   </p>
                 )}
