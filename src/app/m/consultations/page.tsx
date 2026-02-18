@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { canView } from '@/lib/utils/permissions';
-import { getConsultations, getCalendarGrouped } from '@/lib/api/consultations';
+import { getConsultations } from '@/lib/api/consultations';
 import { ArrowLeft, MessageSquare, Clock, User, Phone, School, GraduationCap, X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 
@@ -77,11 +77,13 @@ export default function MobileConsultationsPage() {
     setLoading(true);
     try {
       const dateStr = toLocalDateStr(date);
-      // Backend supports single date filter
-      const list = await getConsultations({ date: dateStr });
-      const sorted = list.sort((a, b) => {
-        const timeA = a.preferred_time || a.time || '00:00';
-        const timeB = b.preferred_time || b.time || '00:00';
+      const response = await getConsultations({
+        startDate: dateStr,
+        endDate: dateStr,
+      });
+      const sorted = (response.consultations || []).sort((a, b) => {
+        const timeA = a.preferred_time || '00:00';
+        const timeB = b.preferred_time || '00:00';
         return timeA.localeCompare(timeB);
       });
       setConsultations(sorted);
@@ -94,12 +96,18 @@ export default function MobileConsultationsPage() {
 
   const loadMonthCounts = async (year: number, month: number) => {
     try {
-      const yearMonth = `${year}-${String(month + 1).padStart(2, '0')}`;
-      const grouped = await getCalendarGrouped(yearMonth);
+      const startDate = toLocalDateStr(new Date(year, month, 1));
+      const endDate = toLocalDateStr(new Date(year, month + 1, 0));
+      const response = await getConsultations({
+        startDate,
+        endDate,
+        limit: 500,
+      });
       const counts: Record<string, number> = {};
-      for (const [date, list] of Object.entries(grouped)) {
-        counts[date] = list.length;
-      }
+      (response.consultations || []).forEach((c) => {
+        const d = c.preferred_date?.slice(0, 10);
+        if (d) counts[d] = (counts[d] || 0) + 1;
+      });
       setMonthCounts(counts);
     } catch (err) {
       console.error('Failed to load month counts:', err);

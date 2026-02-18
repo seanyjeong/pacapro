@@ -28,7 +28,7 @@ export default function NewSeasonPage() {
     season_fee: 0,
     continuous_discount_type: 'none',
     continuous_discount_rate: 0,
-    status: 'active',
+    status: 'draft',
     notes: '',
   });
 
@@ -168,9 +168,9 @@ export default function NewSeasonPage() {
                   value={formData.status}
                   onChange={e => handleChange('status', e.target.value as SeasonStatus)}
                 >
+                  <option value="draft">준비중</option>
                   <option value="active">진행중</option>
                   <option value="completed">종료</option>
-                  <option value="cancelled">취소</option>
                 </select>
               </div>
             </div>

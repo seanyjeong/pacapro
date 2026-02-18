@@ -7,16 +7,16 @@ import { paymentsAPI } from '@/lib/api/payments';
 import { ArrowLeft, CreditCard, Calendar, User, Check, X, Loader2, Banknote, Building2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import type { Payment } from '@/lib/types/payment';
+import type { UnpaidPayment } from '@/lib/types/payment';
 
 export default function MobileUnpaidPage() {
   const router = useRouter();
-  const [payments, setPayments] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<UnpaidPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [canViewAmount, setCanViewAmount] = useState(false);
   const [canMarkPaid, setCanMarkPaid] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedPayment, setSelectedPayment] = useState<UnpaidPayment | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'cash' | 'account'>('card');
   const [processing, setProcessing] = useState(false);
   const [dayName, setDayName] = useState<string>('');
@@ -48,11 +48,9 @@ export default function MobileUnpaidPage() {
   const loadUnpaidPayments = async () => {
     setLoading(true);
     try {
-      const data = await paymentsAPI.getUnpaidTodayPayments();
-      setPayments(data);
-      // day_name is computed locally
-      const days = ['일', '월', '화', '수', '목', '금', '토'];
-      setDayName(days[new Date().getDay()]);
+      const response = await paymentsAPI.getUnpaidTodayPayments();
+      setPayments(response.payments || []);
+      setDayName(response.day_name || '');
     } catch (err) {
       console.error('Failed to load unpaid payments:', err);
       toast.error('미납 목록을 불러오는데 실패했습니다.');
@@ -87,7 +85,7 @@ export default function MobileUnpaidPage() {
       await paymentsAPI.recordPayment(selectedPayment.id, {
         paid_amount: unpaidAmount,
         payment_method: selectedPaymentMethod,
-        paid_date: new Date().toISOString().split('T')[0],
+        payment_date: new Date().toISOString().split('T')[0],
       });
       toast.success(`${selectedPayment.student_name} 완납 처리되었습니다.`);
       setSelectedPayment(null);
@@ -187,8 +185,8 @@ export default function MobileUnpaidPage() {
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-3.5 w-3.5" />
                           <span>{payment.year_month}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getOverdueColor(payment.payment_status === 'overdue' ? 30 : 0)}`}>
-                            {payment.payment_status === 'overdue' ? '연체' : '미납'}
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getOverdueColor(payment.days_overdue || 0)}`}>
+                            {(payment.days_overdue || 0) > 0 ? `${payment.days_overdue}일 연체` : '미납'}
                           </span>
                         </div>
                       </div>

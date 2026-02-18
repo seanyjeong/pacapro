@@ -13,10 +13,12 @@ import {
   formatYearMonth,
   formatDate,
   getPaymentStatusColor,
+  getPaymentTypeColor,
   isOverdue,
   calculateOverdueDays,
 } from '@/lib/utils/payment-helpers';
 import {
+  PAYMENT_TYPE_LABELS,
   PAYMENT_STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
 } from '@/lib/types/payment';
@@ -31,7 +33,7 @@ interface PaymentCardProps {
 
 export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpdatePaidDate }: PaymentCardProps) {
   const overdue = isOverdue(payment);
-  const daysOverdue = overdue && payment.due_date ? calculateOverdueDays(payment.due_date) : 0;
+  const daysOverdue = overdue ? calculateOverdueDays(payment.due_date) : 0;
 
   // 납부일 수정 상태
   const [isEditingPaidDate, setIsEditingPaidDate] = useState(false);
@@ -62,6 +64,7 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpda
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-2xl">{payment.student_name}</CardTitle>
+            <p className="text-sm text-gray-500 mt-1">{payment.student_number}</p>
           </div>
           <span
             className={`px-3 py-1 text-sm font-medium rounded ${getPaymentStatusColor(
@@ -81,9 +84,21 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpda
           </div>
         )}
 
-        <div>
-          <p className="text-sm text-gray-500 mb-1">청구 월</p>
-          <p className="font-medium">{formatYearMonth(payment.year_month)}</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-500 mb-1">청구 유형</p>
+            <span
+              className={`px-2 py-1 text-sm font-medium rounded ${getPaymentTypeColor(
+                payment.payment_type
+              )}`}
+            >
+              {PAYMENT_TYPE_LABELS[payment.payment_type]}
+            </span>
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-1">청구 월</p>
+            <p className="font-medium">{formatYearMonth(payment.year_month)}</p>
+          </div>
         </div>
 
         <div className="border-t pt-4">
@@ -99,6 +114,12 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpda
                 <span className="font-medium">-{formatPaymentAmount(payment.discount_amount)}</span>
               </div>
             )}
+            {payment.additional_amount > 0 && (
+              <div className="flex justify-between text-blue-600">
+                <span>{payment.notes?.includes('비시즌 종강 일할') ? '비시즌 종강 일할' : '추가 금액'}</span>
+                <span className="font-medium">+{formatPaymentAmount(payment.additional_amount)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-lg font-bold border-t pt-2">
               <span>최종 청구 금액</span>
               <span>{formatPaymentAmount(payment.final_amount)}</span>
@@ -110,7 +131,7 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpda
           <div>
             <p className="text-sm text-gray-500 mb-1">납부 기한</p>
             <p className={`font-medium ${overdue ? 'text-red-600' : ''}`}>
-              {payment.due_date ? formatDate(payment.due_date) : '-'}
+              {formatDate(payment.due_date)}
             </p>
           </div>
           {payment.paid_date && (
@@ -164,6 +185,13 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpda
           <div>
             <p className="text-sm text-gray-500 mb-1">납부 방법</p>
             <p className="font-medium">{PAYMENT_METHOD_LABELS[payment.payment_method]}</p>
+          </div>
+        )}
+
+        {payment.description && (
+          <div>
+            <p className="text-sm text-gray-500 mb-1">설명</p>
+            <p>{payment.description}</p>
           </div>
         )}
 

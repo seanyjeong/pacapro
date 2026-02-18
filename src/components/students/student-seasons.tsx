@@ -17,7 +17,8 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { seasonsApi } from '@/lib/api/seasons';
-import type { Season, StudentSeason, RefundPreviewResponse } from '@/lib/types/season';
+import axios from 'axios';
+import type { Season, StudentSeason, ProRatedPreview, RefundPreviewResponse } from '@/lib/types/season';
 import { RefundModal } from '@/components/refund/refund-modal';
 import {
   SEASON_TYPE_LABELS,
@@ -42,7 +43,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [isContinuous, setIsContinuous] = useState(false);
   const [registrationDate, setRegistrationDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [preview, setPreview] = useState<Record<string, unknown> | null>(null);
+  const [preview, setPreview] = useState<ProRatedPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
@@ -94,13 +95,13 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
       setError(null);
 
       // 병렬로 데이터 로드
-      const [enrollmentsData, activeSeason] = await Promise.all([
+      const [enrollmentsData, seasonsData] = await Promise.all([
         seasonsApi.getStudentSeasonHistory(studentId),
-        seasonsApi.getActiveSeason(),
+        seasonsApi.getActiveSeasons(),
       ]);
 
       setEnrollments(enrollmentsData);
-      setActiveSeasons(activeSeason ? [activeSeason] : []);
+      setActiveSeasons(seasonsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : '데이터 로드 실패');
     } finally {
@@ -114,23 +115,32 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     try {
       setPreviewLoading(true);
       setPreviewError(null);
-      // Simple client-side preview based on selected season
-      const selectedSeason = activeSeasons.find(s => s.id === selectedSeasonId);
-      if (selectedSeason) {
-        const seasonFee = selectedSeason.fee || 0;
-        setPreview({
-          final_calculation: {
-            season_fee: seasonFee,
-            original_season_fee: seasonFee,
-            discount_amount: 0,
-            total_due: seasonFee,
-          },
-        });
-      }
+      const previousEnrollment = enrollments.find(e =>
+        e.status === 'completed' || e.status === 'active'
+      );
+      const previewData = await seasonsApi.getProRatedPreview(
+        selectedSeasonId,
+        studentId,
+        isContinuous,
+        isContinuous ? previousEnrollment?.season_id : undefined,
+        registrationDate  // 시즌 중간 합류 일할계산을 위한 등록일
+      );
+      setPreview(previewData);
     } catch (err: unknown) {
       console.error('Preview load failed:', err);
       setPreview(null);
-      setPreviewError('프리뷰를 불러오는데 실패했습니다.');
+      // 이미 등록된 경우 에러 메시지 표시
+      if (axios.isAxiosError(err)) {
+        console.log('Axios error response:', err.response?.status, err.response?.data);
+        const message = err.response?.data?.message;
+        if (err.response?.status === 409) {
+          setPreviewError(message || '이미 이 시즌에 등록되어 있습니다.');
+        } else {
+          setPreviewError(message || '프리뷰를 불러오는데 실패했습니다.');
+        }
+      } else {
+        setPreviewError('프리뷰를 불러오는데 실패했습니다.');
+      }
     } finally {
       setPreviewLoading(false);
     }
@@ -142,18 +152,18 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     try {
       setEnrolling(true);
       const previousEnrollment = enrollments.find(e =>
-        e.status === 'completed' || e.status === 'enrolled'
+        e.status === 'completed' || e.status === 'active'
       );
 
       // 선택된 시즌 정보에서 기본 시즌비 가져오기
       const selectedSeason = activeSeasons.find(s => s.id === selectedSeasonId);
-      const finalCalc = preview?.final_calculation as { season_fee?: number } | undefined;
-      const seasonFee = finalCalc?.season_fee ?? (selectedSeason?.fee || 0);
+      const seasonFee = preview?.final_calculation?.season_fee ||
+        (selectedSeason ? parseFloat(selectedSeason.default_season_fee) : 0);
 
       await seasonsApi.enrollStudent(selectedSeasonId, {
         student_id: studentId,
-        fee: seasonFee,
-        enrollment_date: registrationDate,
+        season_fee: seasonFee,
+        registration_date: registrationDate,  // 시즌 중간 합류를 위한 등록일
         is_continuous: isContinuous,
         previous_season_id: isContinuous ? previousEnrollment?.season_id : undefined,
       });
@@ -176,8 +186,8 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
   const handleEditClick = (enrollment: StudentSeason) => {
     setEditingEnrollment(enrollment);
     setEditData({
-      registration_date: enrollment.enrollment_date || '',
-      season_fee: enrollment.fee || 0,
+      registration_date: enrollment.registration_date || '',
+      season_fee: parseFloat(String(enrollment.season_fee)) || 0,
       discount_amount: parseFloat(String(enrollment.discount_amount)) || 0,
       discount_reason: enrollment.discount_type === 'custom' ? '할인 적용' : '',
     });
@@ -190,7 +200,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
 
     try {
       setSaving(true);
-      await seasonsApi.updateEnrollmentById(editingEnrollment.id, {
+      await seasonsApi.updateEnrollment(editingEnrollment.id, {
         registration_date: editData.registration_date || undefined,
         season_fee: editData.season_fee,
         discount_amount: editData.discount_amount,
@@ -218,8 +228,9 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     try {
       setRefundLoading(true);
       setSelectedEnrollmentForRefund(enrollment);
-      const refundData = await seasonsApi.getRefundPreview(enrollment.id);
-      setRefundPreview(refundData);
+      const today = new Date().toISOString().split('T')[0];
+      const preview = await seasonsApi.getRefundPreview(enrollment.id, today, false);
+      setRefundPreview(preview);
       setRefundModalOpen(true);
     } catch (err) {
       console.error('Failed to load refund preview:', err);
@@ -234,7 +245,13 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     if (!selectedEnrollmentForRefund) return;
 
     try {
-      await seasonsApi.cancelEnrollmentById(selectedEnrollmentForRefund.id);
+      const today = new Date().toISOString().split('T')[0];
+      await seasonsApi.cancelEnrollmentWithRefund(
+        selectedEnrollmentForRefund.id,
+        today,
+        includeVat,
+        finalAmount
+      );
       toast.success('환불 처리가 완료되었습니다.');
       setRefundModalOpen(false);
       setRefundPreview(null);
@@ -248,7 +265,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
 
   // 미납 시즌 취소
   const handleCancelEnrollment = async (enrollment: StudentSeason) => {
-    if (!confirm(`${enrollment.season?.name || enrollment.season_name || '시즌'} 등록을 취소하시겠습니까?`)) return;
+    if (!confirm(`${enrollment.season_name} 등록을 취소하시겠습니까?`)) return;
 
     try {
       await seasonsApi.cancelEnrollment(enrollment.season_id, studentId);
@@ -330,16 +347,20 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900">
-                        {enrollment.season?.name || enrollment.season_name || '시즌'}
+                        {enrollment.season_name}
                       </h4>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
                         <span className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
-                          등록일: {enrollment.enrollment_date || '미지정'}
+                          등록일: {enrollment.registration_date || '미지정'}
                         </span>
                         <span className="flex items-center">
                           <Banknote className="w-4 h-4 mr-1" />
-                          시즌비: {formatSeasonFee(enrollment.fee)}
+                          시즌비: {formatSeasonFee(
+                            (parseFloat(enrollment.season_fee) > 0 ? enrollment.season_fee : null) ||
+                            (parseFloat(enrollment.final_fee) > 0 ? enrollment.final_fee : null) ||
+                            '0'
+                          )}
                         </span>
                         {parseFloat(String(enrollment.discount_amount)) > 0 && (
                           <span className="text-red-600">
@@ -356,7 +377,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                       {/* 진행 중인 시즌만 수정/환불/취소 가능 */}
-                      {(enrollment.status === 'enrolled') && (
+                      {(enrollment.status === 'active' || enrollment.status === 'registered') && (
                         <>
                           <button
                             onClick={() => handleEditClick(enrollment)}
@@ -394,17 +415,19 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                       )}
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          enrollment.status === 'enrolled'
+                          enrollment.status === 'active'
                             ? 'bg-green-100 text-green-800'
+                            : enrollment.status === 'registered'
+                            ? 'bg-blue-100 text-blue-800'
                             : enrollment.status === 'completed'
                             ? 'bg-gray-100 text-gray-800'
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {STUDENT_SEASON_STATUS_LABELS[enrollment.status] || enrollment.status}
+                        {STUDENT_SEASON_STATUS_LABELS[enrollment.status]}
                       </span>
                       {/* 납부 상태 표시 */}
-                      {(enrollment.status === 'enrolled') && (
+                      {(enrollment.status === 'active' || enrollment.status === 'registered') && (
                         <span
                           className={`px-2 py-1 text-xs font-medium rounded-full ${
                             enrollment.payment_status === 'paid'
@@ -445,7 +468,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
 
             <div className="space-y-4">
               <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="font-medium text-blue-900">{editingEnrollment.season?.name || editingEnrollment.season_name || '시즌'}</p>
+                <p className="font-medium text-blue-900">{editingEnrollment.season_name}</p>
               </div>
 
               {/* 등록일 */}
@@ -561,7 +584,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                   <option value="">시즌을 선택하세요</option>
                   {availableSeasons.map(season => (
                     <option key={season.id} value={season.id}>
-                      {season.name} {season.season_type ? `(${SEASON_TYPE_LABELS[season.season_type]})` : ''}
+                      {season.season_name} ({SEASON_TYPE_LABELS[season.season_type]})
                     </option>
                   ))}
                 </select>
@@ -611,31 +634,54 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                       <span className="text-sm">{previewError}</span>
                     </div>
                   ) : preview?.final_calculation ? (
-                    (() => {
-                      const calc = preview.final_calculation as { season_fee?: number; discount_amount?: number; total_due?: number };
-                      return (
-                        <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">시즌비</span>
-                            <span>{formatSeasonFee(calc.season_fee || 0)}</span>
-                          </div>
+                    <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                      {/* 시즌비 (일할 전 원래 금액 표시) */}
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">시즌비</span>
+                        <span>
+                          {formatSeasonFee(preview.final_calculation.original_season_fee || preview.final_calculation.season_fee)}
+                        </span>
+                      </div>
 
-                          {(calc.discount_amount || 0) > 0 && (
-                            <div className="flex justify-between text-green-600">
-                              <span>할인</span>
-                              <span>-{formatSeasonFee(calc.discount_amount || 0)}</span>
-                            </div>
-                          )}
-
-                          <div className="flex justify-between font-semibold border-t pt-2">
-                            <span>총 납부액</span>
-                            <span className="text-primary-600">
-                              {formatSeasonFee(calc.total_due || 0)}
-                            </span>
-                          </div>
+                      {/* 시즌 중간 합류 일할계산 */}
+                      {preview.mid_season_prorated && (
+                        <div className="flex justify-between text-orange-600">
+                          <span>
+                            중간합류 할인 ({preview.mid_season_prorated.remaining_days}/{preview.mid_season_prorated.total_days}일)
+                          </span>
+                          <span>-{formatSeasonFee(preview.mid_season_prorated.discount)}</span>
                         </div>
-                      );
-                    })()
+                      )}
+
+                      {/* 비시즌 일할 안내 (시즌 전달 학원비에서 별도 청구) */}
+                      {preview.non_season_prorated_info && (
+                        <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mt-1">
+                          💡 비시즌 일할 {formatSeasonFee(preview.non_season_prorated_info.amount)}은(는) 시즌 전달 학원비에서 별도 청구됩니다.
+                        </div>
+                      )}
+
+                      {/* 연속등록 할인 */}
+                      {preview.final_calculation.discount_amount > 0 && (
+                        <div className="flex justify-between text-green-600">
+                          <span>연속등록 할인</span>
+                          <span>-{formatSeasonFee(preview.final_calculation.discount_amount)}</span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between font-semibold border-t pt-2">
+                        <span>총 납부액</span>
+                        <span className="text-primary-600">
+                          {formatSeasonFee(preview.final_calculation.total_due)}
+                        </span>
+                      </div>
+
+                      {/* 시즌 중간 합류 안내 */}
+                      {preview.mid_season_prorated && (
+                        <div className="text-xs text-orange-600 mt-2 bg-orange-50 p-2 rounded">
+                          {preview.mid_season_prorated.details}
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-gray-500 text-sm">시즌을 선택해주세요.</p>
                   )}
@@ -671,7 +717,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
       )}
 
       {/* 환불 모달 */}
-      {refundPreview && selectedEnrollmentForRefund && (
+      {refundPreview && (
         <RefundModal
           isOpen={refundModalOpen}
           onClose={() => {
@@ -679,46 +725,10 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
             setRefundPreview(null);
             setSelectedEnrollmentForRefund(null);
           }}
-          enrollment={{
-            id: selectedEnrollmentForRefund.id,
-            student_name: selectedEnrollmentForRefund.student_name || '',
-            season_name: selectedEnrollmentForRefund.season?.name || selectedEnrollmentForRefund.season_name || '',
-            season_start_date: selectedEnrollmentForRefund.season?.start_date || '',
-            season_end_date: selectedEnrollmentForRefund.season?.end_date || '',
-            original_fee: selectedEnrollmentForRefund.fee,
-            discount_amount: parseFloat(String(selectedEnrollmentForRefund.discount_amount || '0')) || 0,
-            paid_amount: selectedEnrollmentForRefund.paid_amount,
-            payment_status: selectedEnrollmentForRefund.payment_status,
-          }}
-          cancellationDate={new Date().toISOString().split('T')[0]}
-          refund={{
-            paidAmount: refundPreview.paid_amount,
-            originalFee: refundPreview.fee,
-            discountAmount: 0,
-            totalClassDays: refundPreview.total_days,
-            attendedDays: refundPreview.used_days,
-            remainingDays: refundPreview.remaining_days,
-            progressRate: refundPreview.total_days > 0 ? `${Math.round(refundPreview.used_days / refundPreview.total_days * 100)}%` : '0%',
-            usedAmount: refundPreview.paid_amount - refundPreview.refund_amount,
-            usedRate: `${Math.round((1 - refundPreview.refund_ratio) * 100)}%`,
-            refundAmount: refundPreview.refund_amount,
-            refundRate: `${Math.round(refundPreview.refund_ratio * 100)}%`,
-            includeVat: false,
-            vatAmount: 0,
-            refundAfterVat: refundPreview.refund_amount,
-            legalRefundRate: `${Math.round(refundPreview.refund_ratio * 100)}%`,
-            legalRefundReason: '일할계산',
-            legalRefundAmount: refundPreview.refund_amount,
-            finalRefundAmount: refundPreview.refund_amount,
-            calculationDetails: {
-              paidAmount: `${refundPreview.paid_amount.toLocaleString()}원`,
-              perClassFee: refundPreview.total_days > 0 ? `${Math.round(refundPreview.fee / refundPreview.total_days).toLocaleString()}원` : '0원',
-              usedFormula: `${refundPreview.used_days}일 × 일당금액`,
-              refundFormula: '납부액 - 사용액',
-              vatFormula: null,
-            },
-          }}
-          academy={{}}
+          enrollment={refundPreview.enrollment}
+          cancellationDate={refundPreview.cancellation_date}
+          refund={refundPreview.refund}
+          academy={refundPreview.academy}
           onConfirm={handleConfirmRefund}
         />
       )}

@@ -48,7 +48,7 @@ function TabletPaymentsPageContent() {
       await paymentsAPI.recordPayment(payment.id, {
         paid_amount: payment.final_amount,
         payment_method: method,
-        paid_date: new Date().toISOString().split('T')[0],
+        payment_date: new Date().toISOString().split('T')[0],
       });
       toast.success(`${payment.student_name}님 학원비 납부 완료`);
       reload();
@@ -65,7 +65,7 @@ function TabletPaymentsPageContent() {
     if (!initialFiltersApplied) {
       const statusFromUrl = searchParams.get('status');
       if (statusFromUrl === 'unpaid') {
-        updateFilters({ payment_status: 'unpaid' });
+        updateFilters({ payment_status: 'pending' as const });
       }
       setInitialFiltersApplied(true);
     }
@@ -129,7 +129,7 @@ function TabletPaymentsPageContent() {
 
   // 통계 계산 (현재 월 기준)
   const paidCount = currentMonthPayments.filter((p) => p.payment_status === 'paid').length;
-  const unpaidCount = currentMonthPayments.filter((p) => p.payment_status === 'unpaid' || p.payment_status === 'overdue').length;
+  const unpaidCount = currentMonthPayments.filter((p) => p.payment_status === 'pending').length;
   const partialCount = currentMonthPayments.filter((p) => p.payment_status === 'partial').length;
 
   return (

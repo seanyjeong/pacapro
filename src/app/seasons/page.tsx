@@ -76,8 +76,8 @@ export default function SeasonsPage() {
     regular: seasons.filter(s => s.season_type === 'regular').length,
   };
 
-  // 연도 목록 (필터용) - start_date에서 연도 추출
-  const years = Array.from(new Set(seasons.map(s => new Date(s.start_date).getFullYear()))).sort((a, b) => b - a);
+  // 연도 목록 (필터용) - season_start_date에서 연도 추출
+  const years = Array.from(new Set(seasons.map(s => new Date(s.season_start_date).getFullYear()))).sort((a, b) => b - a);
   const currentYear = new Date().getFullYear();
   if (!years.includes(currentYear)) years.unshift(currentYear);
   if (!years.includes(currentYear + 1)) years.unshift(currentYear + 1);
@@ -202,6 +202,7 @@ export default function SeasonsPage() {
               onChange={e => setFilters(prev => ({ ...prev, status: (e.target.value as SeasonStatus) || undefined }))}
             >
               <option value="">모든 상태</option>
+              <option value="draft">준비중</option>
               <option value="active">진행중</option>
               <option value="completed">종료</option>
               <option value="cancelled">취소</option>
@@ -252,7 +253,7 @@ export default function SeasonsPage() {
                 </thead>
                 <tbody>
                   {seasons.map(season => {
-                    const operatingDays = parseOperatingDays(season.operating_days || []);
+                    const operatingDays = parseOperatingDays(season.operating_days);
                     return (
                       <tr
                         key={season.id}
@@ -260,18 +261,18 @@ export default function SeasonsPage() {
                         onClick={() => handleSeasonClick(season.id)}
                       >
                         <td className="py-3 px-4">
-                          <div className="font-medium text-foreground">{season.name}</div>
-                          <div className="text-sm text-muted-foreground">{new Date(season.start_date).getFullYear()}년</div>
+                          <div className="font-medium text-foreground">{season.season_name}</div>
+                          <div className="text-sm text-muted-foreground">{new Date(season.season_start_date).getFullYear()}년</div>
                         </td>
                         <td className="py-3 px-4">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             season.season_type === 'early' ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200' : 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
                           }`}>
-                            {season.season_type ? SEASON_TYPE_LABELS[season.season_type] : '-'}
+                            {SEASON_TYPE_LABELS[season.season_type]}
                           </span>
                         </td>
                         <td className="py-3 px-4 text-sm text-muted-foreground">
-                          <div>{season.start_date} ~ {season.end_date}</div>
+                          <div>{season.season_start_date} ~ {season.season_end_date}</div>
                           {season.non_season_end_date && (
                             <div className="text-xs text-muted-foreground/70">비시즌 종강: {season.non_season_end_date}</div>
                           )}
@@ -280,13 +281,15 @@ export default function SeasonsPage() {
                           {formatOperatingDays(operatingDays)}
                         </td>
                         <td className="py-3 px-4 text-sm font-medium text-foreground">
-                          {formatSeasonFee(season.fee)}
+                          {formatSeasonFee(season.default_season_fee)}
                         </td>
                         <td className="py-3 px-4">
                           <span
                             className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                               season.status === 'active'
                                 ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                                : season.status === 'draft'
+                                ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
                                 : season.status === 'completed'
                                 ? 'bg-muted text-muted-foreground'
                                 : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
@@ -307,7 +310,7 @@ export default function SeasonsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteSeason(season.id, season.name)}
+                              onClick={() => handleDeleteSeason(season.id, season.season_name)}
                               className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
                               <Trash2 className="w-4 h-4" />

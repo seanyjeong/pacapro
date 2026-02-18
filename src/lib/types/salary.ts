@@ -1,119 +1,171 @@
 /**
  * Salary Type Definitions
- * Aligned with FastAPI backend (api/app/routers/academy/salaries)
+ * 급여 관련 타입 정의
  */
 
-// ===== Base Salary =====
+// 세금 타입 (DB: '3.3%', 'insurance', 'none' / 레거시: 'resident', 'freelancer')
+export type TaxType = '3.3%' | 'insurance' | 'none' | 'resident' | 'freelancer';
 
-export type TaxType = '3.3%' | 'insurance' | 'none';
-
+// 기본 급여 기록 인터페이스
 export interface Salary {
   id: number;
-  academy_id: number;
-  instructor_id: number;
-  instructor_name?: string; // attached via backend JOIN when available
-  year_month: string; // "YYYY-MM"
-  base_salary: number;
-  overtime_pay: number;
-  incentive: number;
-  tax_type: TaxType; // snapshot from instructor at calculation time
-  tax_amount: number; // auto-calculated; editable for insurance type
-  deductions: number;
-  total_salary: number; // gross - tax_amount - deductions
-  paid_amount: number;
-  payment_status: SalaryPaymentStatus;
-  paid_date: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string | null;
-}
-
-export type SalaryPaymentStatus = 'unpaid' | 'partial' | 'paid';
-
-// ===== Request DTOs =====
-
-export interface SalaryFormData {
-  instructor_id: number;
-  year_month: string;
-  base_salary?: number;
-  overtime_pay?: number;
-  incentive?: number;
-  tax_type?: TaxType;
-  tax_amount?: number;
-  deductions?: number;
-  total_salary?: number;
-  notes?: string;
-}
-
-export interface SalaryCalculateRequest {
-  instructor_id: number;
-  year_month: string;
-}
-
-export interface BulkPayRequest {
-  salary_ids: number[];
-  paid_date: string;
-  payment_method?: string;
-}
-
-export interface SalaryFilters {
-  instructor_id?: number;
-  year_month?: string;
-  payment_status?: SalaryPaymentStatus;
-}
-
-// ===== Response Types (backend returns flat, no wrapper) =====
-
-// GET /salaries → Salary[] directly
-// GET /salaries/{id} → Salary directly
-// POST /salaries → Salary directly
-// POST /salaries/calculate → Salary directly (creates record)
-// POST /salaries/recalculate/{id} → Salary directly
-// PUT /salaries/{id} → Salary directly
-// DELETE /salaries/{id} → { message: string }
-// POST /salaries/{id}/pay → Salary directly
-// POST /salaries/bulk-pay → { message: string, updated_ids: number[] }
-
-export interface SalarySummaryResponse {
-  year_month: string;
-  total_records: number;
-  total_salary: number;
-  total_paid: number;
-  total_unpaid: number;
-  unpaid_count: number;
-  partial_count: number;
-  paid_count: number;
-}
-
-export interface WorkSummaryResponse {
   instructor_id: number;
   instructor_name: string;
-  year_month: string;
-  total_classes: number;
-  morning_classes: number;
-  afternoon_classes: number;
-  evening_classes: number;
-  overtime_count: number;
-  overtime_hours: number;
-  work_days: number;
+  year_month: string; // YYYY-MM
+  base_amount: number; // 기본 급여
+  incentive_amount: number; // 인센티브
+  total_deduction: number; // 공제액
+  tax_type: TaxType;
+  tax_amount: number; // 세금
+  insurance_details?: string | object; // 보험료 상세 (JSON)
+  net_salary: number; // 실수령액
+  payment_date?: string; // 지급일
+  payment_status: 'pending' | 'paid';
+  created_at: string;
+  updated_at?: string;
 }
 
-// ===== Labels & Options =====
+// 급여 상세 정보 (강사 정보 포함)
+export interface SalaryDetail extends Salary {
+  salary_type?: 'hourly' | 'monthly';
+  hourly_rate?: number;
+  monthly_salary?: number;
+}
 
-export const TAX_TYPE_LABELS: Record<TaxType, string> = {
-  '3.3%': '3.3%',
-  insurance: '4대보험',
-  none: '없음',
+// 급여 등록/수정용 DTO
+export interface SalaryFormData {
+  instructor_id: number;
+  year_month: string; // YYYY-MM
+  base_amount: number;
+  incentive_amount?: number;
+  total_deduction?: number;
+  tax_type: TaxType;
+  tax_amount?: number;
+  insurance_details?: object;
+  net_salary: number;
+}
+
+// 급여 계산 요청 DTO
+export interface SalaryCalculationRequest {
+  instructor_id: number;
+  year: number;
+  month: number;
+  incentive_amount?: number;
+  total_deduction?: number;
+  work_data?: {
+    hours_worked?: number;
+    days_worked?: number;
+    classes_taught?: number;
+  };
+}
+
+// 급여 계산 결과
+export interface SalaryCalculationResult {
+  base_amount: number;
+  incentive_amount: number;
+  gross_salary: number; // 총 급여
+  tax_type: TaxType;
+  tax_amount: number;
+  insurance_amount: number;
+  total_deduction: number;
+  net_salary: number; // 실수령액
+  breakdown: {
+    salary_type?: string;
+    total_hours?: number;
+    total_classes?: number;
+    morning_classes?: number;
+    afternoon_classes?: number;
+    evening_classes?: number;
+    income_tax?: number;
+    resident_tax?: number;
+    national_pension?: number;
+    health_insurance?: number;
+    employment_insurance?: number;
+    other_deductions?: number;
+  };
+}
+
+// 급여 필터 인터페이스
+export interface SalaryFilters {
+  instructor_id?: number;
+  year?: number;
+  month?: number;
+  payment_status?: 'pending' | 'paid';
+}
+
+// API 응답 타입
+export interface SalariesResponse {
+  message: string;
+  salaries: Salary[];
+}
+
+export interface SalaryDetailResponse {
+  salary: SalaryDetail;
+}
+
+export interface SalaryCreateResponse {
+  message: string;
+  salary: Salary;
+}
+
+export interface SalaryUpdateResponse {
+  message: string;
+  salary: Salary;
+}
+
+export interface SalaryDeleteResponse {
+  message: string;
+  salary: {
+    id: number;
+    instructor_name: string;
+    year_month: string;
+  };
+}
+
+export interface SalaryCalculationResponse {
+  message: string;
+  instructor: {
+    id: number;
+    name: string;
+    salary_type: string;
+  };
+  salary: SalaryCalculationResult;
+}
+
+// 한글 매핑 (DB 값과 일치하도록)
+export const TAX_TYPE_LABELS: Record<string, string> = {
+  '3.3%': '3.3% 과세',
+  'insurance': '4대보험',
+  'none': '비과세',
+  // 레거시 호환
+  resident: '3.3% 과세',
+  freelancer: '4대보험',
 };
 
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
-  unpaid: '미지급',
-  partial: '부분지급',
+  pending: '미지급',
   paid: '지급완료',
 };
 
+// 옵션 리스트
+export const TAX_TYPE_OPTIONS = [
+  { value: '3.3%', label: '3.3% 과세' },
+  { value: 'insurance', label: '4대보험' },
+  { value: 'none', label: '비과세' },
+];
+
 export const PAYMENT_STATUS_OPTIONS = [
-  { value: 'unpaid', label: '미지급' },
-  { value: 'partial', label: '부분지급' },
+  { value: 'pending', label: '미지급' },
   { value: 'paid', label: '지급완료' },
 ];
+
+// 세율 상수 (2026년 기준)
+// 4대보험 근로자 부담: 국민연금 4.75% + 건강보험 3.595% + 장기요양 0.47% + 고용보험 0.9% ≈ 9.72%
+export const TAX_RATES: Record<string, number> = {
+  '3.3%': 0.033,
+  'insurance': 0.0972, // 2026년 4대보험 근로자 부담 합계
+  'none': 0,
+  // 레거시 호환
+  resident: 0.033,
+  freelancer: 0.0972,
+};

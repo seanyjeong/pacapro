@@ -66,17 +66,9 @@ export default function TabletSchedulePage() {
   // 월별 상담 일정 조회
   const loadConsultations = useCallback(async () => {
     try {
-      const yearMonth = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-      const events = await getCalendarEvents(yearMonth);
-      const grouped: Record<string, Consultation[]> = {};
-      events.forEach(evt => {
-        const date = (evt as { date?: string }).date || '';
-        if (date) {
-          if (!grouped[date]) grouped[date] = [];
-          grouped[date].push(evt as unknown as Consultation);
-        }
-      });
-      setConsultations(grouped);
+      const { start, end } = getMonthRange(currentYear, currentMonth);
+      const response = await getCalendarEvents(start, end);
+      setConsultations(response.events || {});
     } catch (err) {
       console.error('Failed to load consultations:', err);
     }

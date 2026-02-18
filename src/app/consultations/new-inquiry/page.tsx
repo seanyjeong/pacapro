@@ -127,43 +127,20 @@ export default function NewInquiryConsultationsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Backend only supports { status?, date? } — filter rest client-side
-      const allConsultations = await getConsultations({
+      const { startDate, endDate } = getDateRange();
+      const response = await getConsultations({
+        search: search || undefined,
         status: statusFilter || undefined,
+        consultationType: 'new_registration', // 신규상담만
+        startDate,
+        endDate,
+        page: pagination.page,
+        limit: pagination.limit
       });
 
-      // Client-side filtering: new_registration type, search, date range
-      let filtered = allConsultations.filter(c =>
-        !c.consultation_type || c.consultation_type === 'new_registration'
-      );
-      if (search) {
-        const q = search.toLowerCase();
-        filtered = filtered.filter(c =>
-          c.student_name?.toLowerCase().includes(q) ||
-          c.student_phone?.includes(q) ||
-          c.parent_phone?.includes(q)
-        );
-      }
-      const { startDate, endDate } = getDateRange();
-      if (startDate) {
-        filtered = filtered.filter(c => c.date >= startDate);
-      }
-      if (endDate) {
-        filtered = filtered.filter(c => c.date <= endDate);
-      }
-
-      // Client-side stats
-      const byStatus: Record<string, number> = { total: filtered.length };
-      filtered.forEach(c => { byStatus[c.status] = (byStatus[c.status] || 0) + 1; });
-      setStats(byStatus);
-
-      // Client-side pagination
-      const total = filtered.length;
-      const totalPages = Math.max(1, Math.ceil(total / pagination.limit));
-      const page = Math.min(pagination.page, totalPages);
-      const start = (page - 1) * pagination.limit;
-      setConsultations(filtered.slice(start, start + pagination.limit));
-      setPagination({ total, page, limit: pagination.limit, totalPages });
+      setConsultations(response.consultations);
+      setStats(response.stats);
+      setPagination(response.pagination);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
       toast.error('데이터를 불러오는데 실패했습니다.');
@@ -180,8 +157,8 @@ export default function NewInquiryConsultationsPage() {
     const loadSettings = async () => {
       try {
         const response = await getConsultationSettings();
-        if (response?.weekly_hours && Array.isArray(response.weekly_hours)) {
-          setWeeklyHours(response.weekly_hours as unknown as WeeklyHour[]);
+        if (response.weeklyHours) {
+          setWeeklyHours(response.weeklyHours);
         }
       } catch (error) {
         console.error('운영시간 설정 로드 오류:', error);
@@ -195,8 +172,8 @@ export default function NewInquiryConsultationsPage() {
     if (!date) return;
     setLoadingBookedTimes(true);
     try {
-      const times = await getBookedTimes(date);
-      setBookedTimes(times);
+      const response = await getBookedTimes(date);
+      setBookedTimes(response.bookedTimes || []);
     } catch (error) {
       console.error('예약 시간 로드 오류:', error);
     } finally {
@@ -209,8 +186,8 @@ export default function NewInquiryConsultationsPage() {
     if (!date) return;
     setLoadingEditBookedTimes(true);
     try {
-      const times = await getBookedTimes(date);
-      setEditBookedTimes(times);
+      const response = await getBookedTimes(date);
+      setEditBookedTimes(response.bookedTimes || []);
     } catch (error) {
       console.error('예약 시간 로드 오류:', error);
     } finally {

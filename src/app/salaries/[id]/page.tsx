@@ -15,12 +15,13 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { salariesAPI } from '@/lib/api/salaries';
-import type { Salary } from '@/lib/types/salary';
+import type { SalaryDetail } from '@/lib/types/salary';
 import { PAYMENT_STATUS_LABELS, TAX_TYPE_LABELS } from '@/lib/types/salary';
 import { SALARY_TYPE_LABELS } from '@/lib/types/instructor';
 import { PasswordConfirmModal } from '@/components/modals/password-confirm-modal';
 
 function formatCurrency(amount: number): string {
+  // 10원 단위 이하 버림 (100원 단위까지만 표시)
   const rounded = Math.floor(amount / 10) * 10;
   return new Intl.NumberFormat('ko-KR').format(rounded) + '원';
 }
@@ -54,7 +55,7 @@ export default function SalaryDetailPage() {
   const router = useRouter();
   const salaryId = Number(params.id);
 
-  const [salary, setSalary] = useState<Salary | null>(null);
+  const [salary, setSalary] = useState<SalaryDetail | null>(null);
   const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,15 +63,10 @@ export default function SalaryDetailPage() {
   const [recalculating, setRecalculating] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-  // Incentive edit state
+  // 인센티브 수정 상태
   const [editingIncentive, setEditingIncentive] = useState(false);
   const [incentiveInput, setIncentiveInput] = useState('');
   const [savingIncentive, setSavingIncentive] = useState(false);
-
-  // Tax amount edit state (for insurance type only)
-  const [editingTax, setEditingTax] = useState(false);
-  const [taxInput, setTaxInput] = useState('');
-  const [savingTax, setSavingTax] = useState(false);
 
   useEffect(() => {
     if (salaryId) {
@@ -83,7 +79,7 @@ export default function SalaryDetailPage() {
       setLoading(true);
       setError(null);
       const response = await salariesAPI.getSalary(salaryId);
-      setSalary(response);
+      setSalary(response.salary);
       setAttendanceSummary((response as any).attendance_summary || null);
     } catch (err: any) {
       console.error('Failed to load salary:', err);
@@ -93,11 +89,13 @@ export default function SalaryDetailPage() {
     }
   };
 
+  // 지급 처리 버튼 클릭 시 비밀번호 모달 열기
   const handlePayment = () => {
     if (!salary || salary.payment_status === 'paid') return;
     setShowPasswordModal(true);
   };
 
+  // 비밀번호 확인 후 실제 지급 처리
   const executePayment = async () => {
     setShowPasswordModal(false);
 
@@ -119,7 +117,7 @@ export default function SalaryDetailPage() {
   };
 
   const handleRecalculate = async () => {
-    if (!salary || salary.payment_status === 'paid') return;
+    if (!salary || salary.payment_status !== 'pending') return;
 
     const confirmed = window.confirm(
       '현재 강사 단가와 출근 기록을 기반으로 급여를 재계산합니다.\n\n' +
@@ -132,8 +130,8 @@ export default function SalaryDetailPage() {
       const result = await salariesAPI.recalculateSalary(salaryId);
       alert(
         `급여가 재계산되었습니다.\n\n` +
-        `기본급: ${new Intl.NumberFormat('ko-KR').format(result.base_salary)}원\n` +
-        `총 급여: ${new Intl.NumberFormat('ko-KR').format(result.total_salary)}원`
+        `기본급: ${new Intl.NumberFormat('ko-KR').format(result.salary.base_amount)}원\n` +
+        `실수령액: ${new Intl.NumberFormat('ko-KR').format(result.salary.net_salary)}원`
       );
       loadSalary();
     } catch (err: any) {
@@ -144,16 +142,19 @@ export default function SalaryDetailPage() {
     }
   };
 
+  // 인센티브 수정 시작
   const startEditIncentive = () => {
-    setIncentiveInput(salary?.incentive?.toString() || '0');
+    setIncentiveInput(salary?.incentive_amount?.toString() || '0');
     setEditingIncentive(true);
   };
 
+  // 인센티브 수정 취소
   const cancelEditIncentive = () => {
     setEditingIncentive(false);
     setIncentiveInput('');
   };
 
+  // 인센티브 저장
   const saveIncentive = async () => {
     if (!salary) return;
 
@@ -165,9 +166,9 @@ export default function SalaryDetailPage() {
 
     try {
       setSavingIncentive(true);
-      await salariesAPI.updateSalary(salaryId, { incentive: newIncentive });
+      await salariesAPI.updateSalary(salaryId, { incentive_amount: newIncentive });
       setEditingIncentive(false);
-      loadSalary();
+      loadSalary(); // 새로고침
     } catch (err: any) {
       console.error('Failed to update incentive:', err);
       alert(err.response?.data?.message || '인센티브 수정에 실패했습니다.');
@@ -176,38 +177,7 @@ export default function SalaryDetailPage() {
     }
   };
 
-  const startEditTax = () => {
-    setTaxInput(salary?.tax_amount?.toString() || '0');
-    setEditingTax(true);
-  };
-
-  const cancelEditTax = () => {
-    setEditingTax(false);
-    setTaxInput('');
-  };
-
-  const saveTax = async () => {
-    if (!salary) return;
-
-    const newTaxAmount = parseInt(taxInput) || 0;
-    if (newTaxAmount < 0) {
-      alert('세금액은 0 이상이어야 합니다.');
-      return;
-    }
-
-    try {
-      setSavingTax(true);
-      await salariesAPI.updateSalary(salaryId, { tax_amount: newTaxAmount });
-      setEditingTax(false);
-      loadSalary();
-    } catch (err: any) {
-      console.error('Failed to update tax amount:', err);
-      alert(err.response?.data?.message || '세금액 수정에 실패했습니다.');
-    } finally {
-      setSavingTax(false);
-    }
-  };
-
+  // 로딩 화면
   if (loading) {
     return (
       <div className="space-y-6">
@@ -227,6 +197,7 @@ export default function SalaryDetailPage() {
     );
   }
 
+  // 에러 화면
   if (error || !salary) {
     return (
       <div className="space-y-6">
@@ -253,26 +224,50 @@ export default function SalaryDetailPage() {
   const afternoonRate = parseFloat((salary as any).afternoon_class_rate) || 0;
   const eveningRate = parseFloat((salary as any).evening_class_rate) || 0;
 
-  const isUnpaid = salary.payment_status !== 'paid';
-
   return (
     <>
+      {/* 인쇄용 스타일 */}
       <style jsx global>{`
         @media print {
-          @page { size: A4; margin: 10mm; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .print-container { max-width: 100% !important; padding: 0 !important; }
-          .print-section { break-inside: avoid; page-break-inside: avoid; }
-          .print-compact { padding: 4px 8px !important; font-size: 11px !important; }
-          .print-table td, .print-table th { padding: 2px 6px !important; font-size: 10px !important; }
-          .print-title { font-size: 18px !important; margin-bottom: 8px !important; }
-          .print-gap { gap: 8px !important; }
-          .no-print { display: none !important; }
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .print-container {
+            max-width: 100% !important;
+            padding: 0 !important;
+          }
+          .print-section {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          .print-compact {
+            padding: 4px 8px !important;
+            font-size: 11px !important;
+          }
+          .print-table td, .print-table th {
+            padding: 2px 6px !important;
+            font-size: 10px !important;
+          }
+          .print-title {
+            font-size: 18px !important;
+            margin-bottom: 8px !important;
+          }
+          .print-gap {
+            gap: 8px !important;
+          }
+          .no-print {
+            display: none !important;
+          }
         }
       `}</style>
 
       <div className="space-y-4 max-w-4xl mx-auto print-container">
-        {/* Header */}
+        {/* 헤더 (화면용) */}
         <div className="flex items-center justify-between no-print">
           <div className="flex items-center space-x-4">
             <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg">
@@ -288,7 +283,7 @@ export default function SalaryDetailPage() {
               <Printer className="w-4 h-4 mr-1" />
               인쇄
             </Button>
-            {isUnpaid && (
+            {salary.payment_status === 'pending' && (
               <>
                 <Button variant="outline" size="sm" onClick={handleRecalculate} disabled={recalculating}>
                   <RefreshCw className={`w-4 h-4 mr-1 ${recalculating ? 'animate-spin' : ''}`} />
@@ -303,18 +298,18 @@ export default function SalaryDetailPage() {
           </div>
         </div>
 
-        {/* Print header */}
+        {/* 인쇄용 헤더 */}
         <div className="hidden print:block text-center border-b-2 border-gray-800 pb-3 mb-4">
           <h1 className="text-xl font-bold print-title">급 여 명 세 서</h1>
           <p className="text-sm text-gray-600">{salary.year_month} ({attendanceSummary?.work_year_month} 근무분)</p>
         </div>
 
-        {/* Basic info */}
+        {/* 기본 정보 */}
         <div className="print-section border rounded-lg p-3 print-compact">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 print-gap text-sm">
             <div>
               <span className="text-gray-500">강사명:</span>
-              <span className="ml-2 font-semibold">{salary.instructor_name ?? `강사 #${salary.instructor_id}`}</span>
+              <span className="ml-2 font-semibold">{salary.instructor_name}</span>
             </div>
             <div>
               <span className="text-gray-500">급여유형:</span>
@@ -333,7 +328,7 @@ export default function SalaryDetailPage() {
           </div>
         </div>
 
-        {/* Rate info (for per_class/hourly) */}
+        {/* 단가 정보 */}
         {((salary as any).salary_type === 'per_class' || (salary as any).salary_type === 'hourly') && (
           <div className="print-section border rounded-lg p-3 print-compact bg-gray-50">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">단가 정보</h3>
@@ -376,7 +371,7 @@ export default function SalaryDetailPage() {
           </div>
         )}
 
-        {/* Attendance details */}
+        {/* 출근 내역 */}
         {attendanceSummary && Object.keys(attendanceSummary.daily_breakdown).length > 0 && (
           <div className="print-section border rounded-lg overflow-hidden">
             <div className="bg-blue-50 p-2 print-compact border-b">
@@ -443,43 +438,37 @@ export default function SalaryDetailPage() {
           </div>
         )}
 
-        {/* Salary calculation */}
+        {/* 급여 계산 내역 */}
         <div className="print-section border rounded-lg overflow-hidden">
           <div className="bg-emerald-50 p-2 print-compact border-b">
             <h3 className="text-sm font-semibold text-emerald-800">급여 계산</h3>
           </div>
           <div className="p-3 print-compact space-y-2 text-sm">
-            {/* Per-class calculation formula */}
+            {/* 계산식 */}
             {attendanceSummary && (salary as any).salary_type === 'per_class' && (
               <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-2">
                 {morningRate > 0 && attendanceSummary.morning_classes > 0 && (
-                  <div>오전: {formatCurrency(morningRate)} x {attendanceSummary.morning_classes}회 = {formatCurrency(morningRate * attendanceSummary.morning_classes)}</div>
+                  <div>오전: {formatCurrency(morningRate)} × {attendanceSummary.morning_classes}회 = {formatCurrency(morningRate * attendanceSummary.morning_classes)}</div>
                 )}
                 {afternoonRate > 0 && attendanceSummary.afternoon_classes > 0 && (
-                  <div>오후: {formatCurrency(afternoonRate)} x {attendanceSummary.afternoon_classes}회 = {formatCurrency(afternoonRate * attendanceSummary.afternoon_classes)}</div>
+                  <div>오후: {formatCurrency(afternoonRate)} × {attendanceSummary.afternoon_classes}회 = {formatCurrency(afternoonRate * attendanceSummary.afternoon_classes)}</div>
                 )}
                 {eveningRate > 0 && attendanceSummary.evening_classes > 0 && (
-                  <div>저녁: {formatCurrency(eveningRate)} x {attendanceSummary.evening_classes}회 = {formatCurrency(eveningRate * attendanceSummary.evening_classes)}</div>
+                  <div>저녁: {formatCurrency(eveningRate)} × {attendanceSummary.evening_classes}회 = {formatCurrency(eveningRate * attendanceSummary.evening_classes)}</div>
                 )}
               </div>
             )}
             {attendanceSummary && (salary as any).salary_type === 'hourly' && hourlyRate > 0 && (
               <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-2">
-                시급 {formatCurrency(hourlyRate)} x {attendanceSummary.total_hours}시간 = {formatCurrency(hourlyRate * attendanceSummary.total_hours)}
+                시급 {formatCurrency(hourlyRate)} × {attendanceSummary.total_hours}시간 = {formatCurrency(hourlyRate * attendanceSummary.total_hours)}
               </div>
             )}
 
             <div className="flex justify-between py-1 border-b">
               <span className="text-gray-600">기본급</span>
-              <span className="font-medium">{formatCurrency(salary.base_salary)}</span>
+              <span className="font-medium">{formatCurrency(salary.base_amount)}</span>
             </div>
-            {salary.overtime_pay > 0 && (
-              <div className="flex justify-between py-1 border-b">
-                <span className="text-gray-600">초과근무수당</span>
-                <span className="font-medium text-orange-600">+{formatCurrency(salary.overtime_pay)}</span>
-              </div>
-            )}
-            {/* Incentive — always shown, editable */}
+            {/* 인센티브 - 항상 표시 (수정 가능) */}
             <div className="flex justify-between py-1 border-b items-center">
               <span className="text-gray-600">인센티브</span>
               {editingIncentive ? (
@@ -510,10 +499,10 @@ export default function SalaryDetailPage() {
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <span className={`font-medium ${salary.incentive > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                    {salary.incentive > 0 ? `+${formatCurrency(salary.incentive)}` : '0원'}
+                  <span className={`font-medium ${salary.incentive_amount > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                    {salary.incentive_amount > 0 ? `+${formatCurrency(salary.incentive_amount)}` : '0원'}
                   </span>
-                  {isUnpaid && (
+                  {salary.payment_status === 'pending' && (
                     <button
                       onClick={startEditIncentive}
                       className="p-1 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded no-print"
@@ -524,88 +513,75 @@ export default function SalaryDetailPage() {
                 </div>
               )}
             </div>
-            {/* Tax — shown when tax_type is not 'none' */}
-            {salary.tax_type && salary.tax_type !== 'none' && (
-              <div className="flex justify-between py-1 border-b items-center">
-                <span className="text-gray-600">
-                  세금 ({TAX_TYPE_LABELS[salary.tax_type] ?? salary.tax_type})
-                </span>
-                {editingTax ? (
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="number"
-                      value={taxInput}
-                      onChange={(e) => setTaxInput(e.target.value)}
-                      className="w-32 px-2 py-1 border border-gray-300 rounded text-right text-sm"
-                      min="0"
-                      step="1000"
-                      autoFocus
-                    />
-                    <span className="text-sm text-gray-500">원</span>
-                    <button
-                      onClick={saveTax}
-                      disabled={savingTax}
-                      className="p-1 text-green-600 hover:bg-green-50 rounded"
-                    >
-                      <Save className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={cancelEditTax}
-                      className="p-1 text-gray-500 hover:bg-gray-100 rounded"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-red-600">
-                      -{formatCurrency(salary.tax_amount)}
-                    </span>
-                    {/* Only insurance type is editable (4대보험 may differ from actual) */}
-                    {isUnpaid && salary.tax_type === 'insurance' && (
-                      <button
-                        onClick={startEditTax}
-                        className="p-1 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded no-print"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            {salary.deductions > 0 && (
+            {salary.total_deduction > 0 && (
               <div className="flex justify-between py-1 border-b">
                 <span className="text-gray-600">공제액</span>
-                <span className="font-medium text-red-600">-{formatCurrency(salary.deductions)}</span>
+                <span className="font-medium text-red-600">-{formatCurrency(salary.total_deduction)}</span>
+              </div>
+            )}
+            {/* 4대보험 상세 내역 */}
+            {(salary.tax_type === 'insurance' || salary.tax_type === 'freelancer') && salary.insurance_details ? (() => {
+              const details = typeof salary.insurance_details === 'string'
+                ? JSON.parse(salary.insurance_details)
+                : salary.insurance_details;
+              return (
+                <div className="py-1 border-b">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-gray-600 font-medium">4대보험 공제 내역</span>
+                    <span className="font-medium text-red-600">-{formatCurrency(salary.tax_amount)}</span>
+                  </div>
+                  <div className="pl-4 space-y-1 text-sm bg-red-50 rounded p-2 -mx-1">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">국민연금 (4.5%)</span>
+                      <span className="text-red-600">{formatCurrency(details.nationalPension || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">건강보험 (3.545%)</span>
+                      <span className="text-red-600">{formatCurrency(details.healthInsurance || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">장기요양보험</span>
+                      <span className="text-red-600">{formatCurrency(details.longTermCare || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">고용보험 (0.9%)</span>
+                      <span className="text-red-600">{formatCurrency(details.employmentInsurance || 0)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })() : (
+              <div className="flex justify-between py-1 border-b">
+                <span className="text-gray-600">세금 ({TAX_TYPE_LABELS[salary.tax_type] || salary.tax_type})</span>
+                <span className="font-medium text-red-600">-{formatCurrency(salary.tax_amount)}</span>
               </div>
             )}
             <div className="flex justify-between py-2 bg-blue-50 -mx-3 px-3 rounded mt-2">
-              <span className="font-bold text-gray-900">총 급여</span>
-              <span className="text-xl font-bold text-blue-600">{formatCurrency(salary.total_salary)}</span>
+              <span className="font-bold text-gray-900">실수령액</span>
+              <span className="text-xl font-bold text-blue-600">{formatCurrency(salary.net_salary)}</span>
             </div>
           </div>
         </div>
 
-        {/* Payment info */}
-        {salary.payment_status === 'paid' && salary.paid_date && (
+        {/* 지급 정보 */}
+        {salary.payment_status === 'paid' && salary.payment_date && (
           <div className="print-section border rounded-lg p-3 print-compact bg-green-50">
             <div className="flex justify-between items-center text-sm">
               <span className="text-green-700 font-medium">지급 완료</span>
               <span className="text-green-800 font-semibold">
-                {new Date(salary.paid_date).toLocaleDateString('ko-KR')}
+                {new Date(salary.payment_date).toLocaleDateString('ko-KR')}
               </span>
             </div>
           </div>
         )}
 
-        {/* Bottom buttons */}
+        {/* 하단 버튼 (화면용) */}
         <div className="flex justify-between no-print pt-2">
           <Button variant="outline" size="sm" onClick={() => router.back()}>
             <ArrowLeft className="w-4 h-4 mr-1" />
             목록
           </Button>
-          {isUnpaid && (
+          {salary.payment_status === 'pending' && (
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={handleRecalculate} disabled={recalculating}>
                 <RefreshCw className={`w-4 h-4 mr-1 ${recalculating ? 'animate-spin' : ''}`} />
@@ -620,12 +596,13 @@ export default function SalaryDetailPage() {
         </div>
       </div>
 
+      {/* 비밀번호 확인 모달 */}
       <PasswordConfirmModal
         open={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
         onConfirm={executePayment}
         title="급여 지급 확인"
-        description={`${salary?.instructor_name ?? '강사'}님의 급여를 지급 처리합니다. (${formatCurrency(salary?.total_salary || 0)})\n비밀번호를 입력해주세요.`}
+        description={`${salary?.instructor_name}님의 급여를 지급 처리합니다. (${formatCurrency(salary?.net_salary || 0)})\n비밀번호를 입력해주세요.`}
       />
     </>
   );

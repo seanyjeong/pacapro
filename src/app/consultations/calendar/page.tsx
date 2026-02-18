@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { getCalendarGrouped } from '@/lib/api/consultations';
+import { getConsultations } from '@/lib/api/consultations';
 import type { Consultation, ConsultationStatus, LearningType } from '@/lib/types/consultation';
 
 // 재원생 상담 메모 타입
@@ -111,17 +111,19 @@ function ConsultationCalendarContent() {
       const endStr = format(end, 'yyyy-MM-dd');
 
       // 상담 예약 + 재원생 상담 메모 동시 로드
-      const yearMonth = format(currentMonth, 'yyyy-MM');
-      const [grouped, memosRes] = await Promise.all([
-        getCalendarGrouped(yearMonth),
+      const [consultationsRes, memosRes] = await Promise.all([
+        getConsultations({
+          startDate: startStr,
+          endDate: endStr,
+          limit: 100
+        }),
         apiClient.get<{ consultations: StudentConsultationMemo[] }>(
           '/student-consultations/calendar',
           { params: { startDate: startStr, endDate: endStr } }
         )
       ]);
 
-      // Flatten grouped consultations into flat array
-      setConsultations(Object.values(grouped).flat());
+      setConsultations(consultationsRes.consultations);
       setStudentMemos(memosRes.consultations || []);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
@@ -623,7 +625,7 @@ function ConsultationCalendarContent() {
               <div className="flex items-center gap-2 flex-wrap">
                 <StatusBadge status={selectedConsultation.status} />
                 <Badge variant="outline" className={selectedConsultation.consultation_type === 'learning' ? 'text-emerald-700 border-emerald-300' : ''}>
-                  {selectedConsultation.consultation_type ? CONSULTATION_TYPE_LABELS[selectedConsultation.consultation_type] : '신규 상담'}
+                  {CONSULTATION_TYPE_LABELS[selectedConsultation.consultation_type]}
                 </Badge>
                 {selectedConsultation.consultation_type === 'learning' && selectedConsultation.learning_type && (
                   <Badge className="bg-emerald-100 text-emerald-800">

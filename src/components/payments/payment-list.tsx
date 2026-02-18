@@ -25,9 +25,11 @@ import {
   formatYearMonth,
   formatDate,
   getPaymentStatusColor,
+  getPaymentTypeColor,
   isOverdue,
 } from '@/lib/utils/payment-helpers';
 import {
+  PAYMENT_TYPE_LABELS,
   PAYMENT_STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
 } from '@/lib/types/payment';
@@ -174,22 +176,50 @@ export function PaymentList({
                     }`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-medium text-foreground">{payment.student_name}</div>
+                      <div>
+                        <div className="font-medium text-foreground">{payment.student_name}</div>
+                        <div className="text-sm text-muted-foreground">{payment.student_number}</div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-foreground">
-                        {formatYearMonth(payment.year_month)}
-                      </span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2 py-1 text-xs font-medium rounded ${getPaymentTypeColor(
+                              payment.payment_type
+                            )}`}
+                          >
+                            {PAYMENT_TYPE_LABELS[payment.payment_type]}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {formatYearMonth(payment.year_month)}
+                          </span>
+                        </div>
+                        {payment.description && (
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {payment.description}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="font-semibold text-foreground">
                           {formatPaymentAmount(payment.final_amount)}
                         </div>
-                        {payment.discount_amount > 0 && payment.base_amount !== payment.final_amount && (
+                        {(payment.discount_amount > 0 || payment.additional_amount > 0) && (
                           <div className="text-xs text-muted-foreground">
-                            기본: {formatPaymentAmount(payment.base_amount)}
-                            {' | '}할인: -{formatPaymentAmount(payment.discount_amount)}
+                            {payment.base_amount !== payment.final_amount && (
+                              <>
+                                기본: {formatPaymentAmount(payment.base_amount)}
+                                {payment.discount_amount > 0 && (
+                                  <> | 할인: -{formatPaymentAmount(payment.discount_amount)}</>
+                                )}
+                                {payment.additional_amount > 0 && (
+                                  <> | {payment.notes?.includes('비시즌 종강 일할') ? '비시즌 일할' : '추가'}: +{formatPaymentAmount(payment.additional_amount)}</>
+                                )}
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
@@ -197,7 +227,7 @@ export function PaymentList({
                     {!hideDueDate && (
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className={overdue ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-foreground'}>
-                          {payment.due_date ? formatDate(payment.due_date) : '-'}
+                          {formatDate(payment.due_date)}
                         </div>
                         {payment.paid_date && (
                           <div className="text-sm text-green-600 dark:text-green-400">
@@ -240,6 +270,11 @@ export function PaymentList({
                             <Coins className="w-4 h-4 mr-1" />
                             크레딧
                           </Button>
+                          {payment.credit_balance && payment.credit_balance > 0 && (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
+                              {Math.floor(payment.credit_balance).toLocaleString()}원
+                            </span>
+                          )}
                         </div>
                       </td>
                     )}

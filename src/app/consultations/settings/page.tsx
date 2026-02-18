@@ -31,7 +31,7 @@ import {
   removeBlockedSlot,
   checkSlugAvailability
 } from '@/lib/api/consultations';
-import type { WeeklyHour, BlockedSlot, ConsultationSettingsUpdate, ChecklistTemplate } from '@/lib/types/consultation';
+import type { WeeklyHour, BlockedSlot, ConsultationSettings, ChecklistTemplate } from '@/lib/types/consultation';
 import { DAY_LABELS, DAY_ORDER } from '@/lib/types/consultation';
 
 // 기본 체크리스트 템플릿 (체대입시 특화)
@@ -64,19 +64,8 @@ export default function ConsultationSettingsPage() {
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
 
-  // Local settings state (frontend field names — mapped to/from backend on load/save)
-  interface LocalSettings {
-    isEnabled?: boolean;
-    pageTitle?: string;
-    pageDescription?: string;
-    slotDuration?: number;
-    maxReservationsPerSlot?: number;
-    advanceDays?: number;
-    minAdvanceHours?: number;
-    referralSources?: string[];
-    sendConfirmationAlimtalk?: boolean;
-  }
-  const [settings, setSettings] = useState<LocalSettings>({
+  // 설정
+  const [settings, setSettings] = useState<Partial<ConsultationSettings>>({
     isEnabled: true,
     pageTitle: '상담 예약',
     pageDescription: '',
@@ -137,34 +126,22 @@ export default function ConsultationSettingsPage() {
     async function loadData() {
       try {
         const response = await getConsultationSettings();
-        if (!response) {
+        setAcademyName(response.academy?.name || '');
+        setSlug(response.academy?.slug || '');
+        setSettings(response.settings || {});
+
+        // weeklyHours가 비어있으면 기본값 생성
+        const loadedHours = response.weeklyHours || [];
+        if (loadedHours.length === 0) {
           setWeeklyHours(createDefaultWeeklyHours());
-          return;
-        }
-
-        // Flat ConsultationSettingsResponse → local state mapping
-        setAcademyName(response.academy_name_display || '');
-        setSlug(response.slug || '');
-        setSettings({
-          isEnabled: response.is_active,
-          pageDescription: response.description || '',
-          slotDuration: response.duration_minutes,
-          maxReservationsPerSlot: response.max_per_slot,
-        });
-
-        // weekly_hours: backend stores as JSON (may be WeeklyHour[] or Record)
-        const rawHours = response.weekly_hours;
-        if (rawHours && Array.isArray(rawHours) && rawHours.length > 0) {
-          setWeeklyHours(rawHours as unknown as WeeklyHour[]);
         } else {
-          setWeeklyHours(createDefaultWeeklyHours());
+          setWeeklyHours(loadedHours);
         }
 
-        setBlockedSlots(response.blocked_slots || []);
+        setBlockedSlots(response.blockedSlots || []);
 
-        // Checklist template from fields JSON
-        const fields = response.fields as Record<string, unknown> | null;
-        const savedTemplate = (fields as { checklist_template?: ChecklistTemplate[] })?.checklist_template;
+        // 체크리스트 템플릿 로드 (설정에 저장된 것이 있으면 사용)
+        const savedTemplate = (response.settings as { checklist_template?: ChecklistTemplate[] })?.checklist_template;
         if (savedTemplate && savedTemplate.length > 0) {
           setChecklistTemplate(savedTemplate);
         }
@@ -201,20 +178,14 @@ export default function ConsultationSettingsPage() {
     }
   };
 
-  // Map local settings to backend ConsultationSettingsUpdate format
-  const mapSettingsToBackend = (): ConsultationSettingsUpdate => ({
-    slug,
-    is_active: settings.isEnabled,
-    description: settings.pageDescription,
-    duration_minutes: settings.slotDuration,
-    max_per_slot: settings.maxReservationsPerSlot,
-  });
-
   // 설정 저장
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
-      await updateConsultationSettings(mapSettingsToBackend());
+      await updateConsultationSettings({
+        slug,
+        ...settings
+      });
       toast.success('설정이 저장되었습니다.');
     } catch (error) {
       toast.error('저장에 실패했습니다.');
@@ -246,9 +217,8 @@ export default function ConsultationSettingsPage() {
     setAddingBlock(true);
     try {
       const result = await addBlockedSlot({
-        date: newBlockedDate,
-        start_time: '00:00',
-        end_time: '23:59',
+        blockedDate: newBlockedDate,
+        isAllDay: true,
         reason: newBlockReason
       });
 
@@ -256,10 +226,10 @@ export default function ConsultationSettingsPage() {
         ...blockedSlots,
         {
           id: result.id,
-          date: newBlockedDate,
-          start_time: result.start_time || '00:00',
-          end_time: result.end_time || '23:59',
+          blocked_date: newBlockedDate,
+          is_all_day: true,
           reason: newBlockReason,
+          created_at: new Date().toISOString()
         }
       ]);
 
@@ -385,7 +355,7 @@ export default function ConsultationSettingsPage() {
     }
 
     // 이미 차단된 날짜 제외
-    const existingDates = blockedSlots.map(s => s.date.substring(0, 10));
+    const existingDates = blockedSlots.map(s => s.blocked_date.substring(0, 10));
     const newHolidays = futureHolidays.filter(h => !existingDates.includes(h.date));
 
     if (newHolidays.length === 0) {
@@ -403,10 +373,10 @@ export default function ConsultationSettingsPage() {
         // API는 id만 반환하므로 BlockedSlot 객체를 직접 구성
         const newSlot: BlockedSlot = {
           id: result.id,
-          date: holiday.date,
-          start_time: result.start_time || '00:00',
-          end_time: result.end_time || '23:59',
+          blocked_date: holiday.date,
+          is_all_day: true,
           reason: holiday.name,
+          created_at: new Date().toISOString()
         };
         setBlockedSlots(prev => [...prev, newSlot]);
       }
@@ -509,8 +479,9 @@ export default function ConsultationSettingsPage() {
     setSavingChecklist(true);
     try {
       await updateConsultationSettings({
-        ...mapSettingsToBackend(),
-      } as ConsultationSettingsUpdate & { checklist_template: ChecklistTemplate[] });
+        ...settings,
+        checklist_template: checklistTemplate
+      } as Partial<ConsultationSettings> & { checklist_template: ChecklistTemplate[] });
       toast.success('체크리스트가 저장되었습니다.');
     } catch (error) {
       toast.error('저장에 실패했습니다.');
@@ -894,7 +865,7 @@ export default function ConsultationSettingsPage() {
                 <div key={slot.id} className="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950 rounded-lg">
                   <div>
                     <span className="font-medium text-foreground">
-                      {format(parseISO(slot.date), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
+                      {format(parseISO(slot.blocked_date), 'yyyy년 M월 d일 (EEE)', { locale: ko })}
                     </span>
                     {slot.reason && (
                       <span className="text-sm text-muted-foreground ml-2">- {slot.reason}</span>

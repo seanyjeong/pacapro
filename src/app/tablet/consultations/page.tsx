@@ -38,27 +38,22 @@ export default function TabletConsultationsPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Backend only supports { status?, date? } — filter rest client-side
-      const dateParam = dateFilter === 'today' ? selectedDate : undefined;
-      const allConsultations = await getConsultations({ date: dateParam });
+      const params: {
+        search?: string;
+        startDate?: string;
+        endDate?: string;
+      } = {};
 
-      // Client-side search filter
-      let filtered = allConsultations;
-      if (search) {
-        const q = search.toLowerCase();
-        filtered = filtered.filter(c =>
-          c.student_name?.toLowerCase().includes(q) ||
-          c.student_phone?.includes(q) ||
-          c.parent_phone?.includes(q)
-        );
+      if (search) params.search = search;
+
+      if (dateFilter === 'today') {
+        params.startDate = selectedDate;
+        params.endDate = selectedDate;
       }
 
-      // Client-side stats
-      const byStatus: Record<string, number> = { total: filtered.length };
-      filtered.forEach(c => { byStatus[c.status] = (byStatus[c.status] || 0) + 1; });
-
-      setConsultations(filtered);
-      setStats(byStatus);
+      const response = await getConsultations(params);
+      setConsultations(response.consultations || []);
+      setStats(response.stats || {});
     } catch (error) {
       console.error('데이터 로드 오류:', error);
     } finally {
@@ -235,7 +230,7 @@ export default function TabletConsultationsPage() {
                   <div className="flex items-center gap-2">
                     <StatusBadge status={consultation.status} />
                     <Badge variant="outline">
-                      {consultation.consultation_type ? CONSULTATION_TYPE_LABELS[consultation.consultation_type] : '신규 상담'}
+                      {CONSULTATION_TYPE_LABELS[consultation.consultation_type]}
                     </Badge>
                   </div>
                 </div>

@@ -3,7 +3,7 @@
  * 학원비 관련 유틸리티 함수
  */
 
-import type { Payment } from '@/lib/types/payment';
+import type { Payment, UnpaidPayment } from '@/lib/types/payment';
 
 /**
  * 금액을 천원 단위로 절삭 (백원 단위 버림)
@@ -66,8 +66,7 @@ export function getPaymentStatusColor(status: string): string {
       return 'text-green-700 dark:text-green-200 bg-green-100 dark:bg-green-900 border-green-200 dark:border-green-700';
     case 'partial':
       return 'text-yellow-700 dark:text-yellow-200 bg-yellow-100 dark:bg-yellow-900 border-yellow-200 dark:border-yellow-700';
-    case 'unpaid':
-    case 'overdue':
+    case 'pending':
       return 'text-red-700 dark:text-red-200 bg-red-100 dark:bg-red-900 border-red-200 dark:border-red-700';
     default:
       return 'text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700';
@@ -111,11 +110,8 @@ export function formatDate(dateString: string): string {
 /**
  * 미납 학원비 정렬 (연체일수 많은 순)
  */
-export function sortUnpaidPayments(payments: Payment[]): Payment[] {
-  return [...payments].sort((a, b) => {
-    // Sort by year_month ascending (older = more overdue first)
-    return a.year_month.localeCompare(b.year_month);
-  });
+export function sortUnpaidPayments(payments: UnpaidPayment[]): UnpaidPayment[] {
+  return [...payments].sort((a, b) => b.days_overdue - a.days_overdue);
 }
 
 /**

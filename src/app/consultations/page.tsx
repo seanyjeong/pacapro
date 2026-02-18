@@ -219,34 +219,19 @@ export default function ConsultationsPage() {
     setLoading(true);
     try {
       const { startDate, endDate } = getDateRange();
-      const data = await getConsultations({
+      const response = await getConsultations({
+        search: search || undefined,
         status: statusFilter || undefined,
+        consultationType: typeFilter || undefined,
+        startDate,
+        endDate,
+        page: pagination.page,
+        limit: pagination.limit
       });
 
-      // Client-side filtering (backend only supports status + date)
-      let filtered = data;
-      if (search) {
-        const q = search.toLowerCase();
-        filtered = filtered.filter(c =>
-          c.student_name?.toLowerCase().includes(q) ||
-          c.parent_name?.toLowerCase().includes(q) ||
-          c.student_phone?.includes(q) ||
-          c.parent_phone?.includes(q)
-        );
-      }
-      if (typeFilter) {
-        filtered = filtered.filter(c => c.consultation_type === typeFilter);
-      }
-      if (startDate && endDate) {
-        filtered = filtered.filter(c => c.date >= startDate && c.date <= endDate);
-      }
-      setConsultations(filtered);
-      // Calculate stats from data
-      const calcStats: Record<string, number> = {};
-      for (const c of data) {
-        calcStats[c.status] = (calcStats[c.status] || 0) + 1;
-      }
-      setStats(calcStats);
+      setConsultations(response.consultations);
+      setStats(response.stats);
+      setPagination(response.pagination);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
       toast.error('데이터를 불러오는데 실패했습니다.');
@@ -264,8 +249,8 @@ export default function ConsultationsPage() {
     const loadSettings = async () => {
       try {
         const response = await getConsultationSettings();
-        if (response?.weekly_hours) {
-          setWeeklyHours(response.weekly_hours as any);
+        if (response.weeklyHours) {
+          setWeeklyHours(response.weeklyHours);
         }
       } catch (error) {
         console.error('운영시간 설정 로드 오류:', error);
@@ -288,10 +273,11 @@ export default function ConsultationsPage() {
 
     setLoadingEditBookedTimes(true);
     try {
-      const booked = await getBookedTimes(date);
+      const response = await getBookedTimes(date);
       // 현재 상담의 시간은 제외 (자기 자신은 선택 가능)
       const currentTime = selectedConsultation?.preferred_time?.substring(0, 5);
       const currentDate = selectedConsultation?.preferred_date;
+      const booked = response.bookedTimes || [];
       // 같은 날짜의 같은 시간이면 제외
       if (date === currentDate && currentTime) {
         setEditBookedTimes(booked.filter((t: string) => t !== currentTime));
@@ -412,9 +398,7 @@ export default function ConsultationsPage() {
         gender: editForm.gender || undefined,
         schoolGradeAvg: editForm.schoolGradeAvg,
         admissionType: editForm.admissionType || undefined,
-        mockTestGrades: editForm.mockTestGrades
-          ? Object.fromEntries(Object.entries(editForm.mockTestGrades).filter(([, v]) => v !== undefined)) as Record<string, number>
-          : undefined,
+        mockTestGrades: editForm.mockTestGrades,
         targetSchool: editForm.targetSchool,
         referrerStudent: editForm.referrerStudent
       });
@@ -440,8 +424,8 @@ export default function ConsultationsPage() {
 
     setLoadingBookedTimes(true);
     try {
-      const booked = await getBookedTimes(date);
-      setBookedTimes(booked);
+      const response = await getBookedTimes(date);
+      setBookedTimes(response.bookedTimes || []);
     } catch (error) {
       console.error('예약 시간 조회 오류:', error);
       setBookedTimes([]);
@@ -462,12 +446,7 @@ export default function ConsultationsPage() {
 
     setRegistering(true);
     try {
-      await createDirectConsultation({
-        ...directForm,
-        mockTestGrades: directForm.mockTestGrades
-          ? Object.fromEntries(Object.entries(directForm.mockTestGrades).filter(([, v]) => v !== undefined)) as Record<string, number>
-          : undefined,
-      });
+      await createDirectConsultation(directForm);
       toast.success('상담이 등록되었습니다.');
       setDirectRegisterOpen(false);
       setDirectForm({
@@ -734,7 +713,7 @@ export default function ConsultationsPage() {
                         <span className="text-sm text-muted-foreground">{c.student_grade}</span>
                         <StatusBadge status={c.status} />
                         <Badge variant="outline">
-                          {c.consultation_type ? CONSULTATION_TYPE_LABELS[c.consultation_type] : '신규 상담'}
+                          {CONSULTATION_TYPE_LABELS[c.consultation_type]}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -835,7 +814,7 @@ export default function ConsultationsPage() {
               <div className="flex items-center gap-2">
                 <StatusBadge status={selectedConsultation.status} />
                 <Badge variant="outline">
-                  {selectedConsultation.consultation_type ? CONSULTATION_TYPE_LABELS[selectedConsultation.consultation_type] : '신규 상담'}
+                  {CONSULTATION_TYPE_LABELS[selectedConsultation.consultation_type]}
                 </Badge>
                 {selectedConsultation.linked_student_name && !selectedConsultation.linked_student_is_trial && (
                   <Badge variant="secondary" className="gap-1">

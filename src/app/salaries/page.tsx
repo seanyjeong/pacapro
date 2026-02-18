@@ -12,26 +12,39 @@ import { exportsApi } from '@/lib/api/exports';
 import { salariesAPI } from '@/lib/api/salaries';
 import apiClient from '@/lib/api/client';
 import { PAYMENT_STATUS_OPTIONS } from '@/lib/types/salary';
-import { calculateTotalPaid, calculateTotalUnpaid, getPrevYearMonth, getNextYearMonth } from '@/lib/utils/salary-helpers';
+import { calculateTotalPaid, calculateTotalUnpaid } from '@/lib/utils/salary-helpers';
 import { PasswordConfirmModal } from '@/components/modals/password-confirm-modal';
+// PDF 유틸리티는 동적 import로 필요할 때만 로드
 import { toast } from 'sonner';
 
 /**
- * 급여일 기준으로 보여줄 급여 월을 계산 (YYYY-MM 반환)
+ * 급여일 기준으로 보여줄 급여 월을 계산
+ *
+ * 익월 정산(next): 이번 달 급여일에 전달 근무분을 지급
+ * - 12월 2일 (급여일 10일 전): 이번 달에 지급할 11월분 표시
+ * - 12월 15일 (급여일 10일 후): 이번 달에 지급한 11월분 표시
+ *
+ * 당월 정산(current): 이번 달 급여일에 당월 근무분을 지급
+ * - 12월 2일 (급여일 10일 전): 이번 달에 지급할 12월분 표시
+ * - 12월 15일 (급여일 10일 후): 이번 달에 지급한 12월분 표시
  */
-function calculateDefaultYearMonth(salaryPayDay: number, salaryMonthType: 'next' | 'current'): string {
+function calculateDefaultYearMonth(salaryPayDay: number, salaryMonthType: 'next' | 'current'): { year: number; month: number } {
   const today = new Date();
   const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth() + 1;
+  const currentMonth = today.getMonth() + 1; // 1-12
 
   if (salaryMonthType === 'next') {
+    // 익월 정산: 이번 달 급여일에 전달 근무분 지급
+    // 12월 → 11월분 표시
     const targetMonth = currentMonth - 1;
     if (targetMonth <= 0) {
-      return `${currentYear - 1}-12`;
+      return { year: currentYear - 1, month: 12 };
     }
-    return `${currentYear}-${String(targetMonth).padStart(2, '0')}`;
+    return { year: currentYear, month: targetMonth };
   } else {
-    return `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+    // 당월 정산: 이번 달 급여일에 당월 근무분 지급
+    // 12월 → 12월분 표시
+    return { year: currentYear, month: currentMonth };
   }
 }
 
@@ -41,7 +54,14 @@ export default function SalariesPage() {
   const [salaryPayDay, setSalaryPayDay] = useState(10);
   const [salaryMonthType, setSalaryMonthType] = useState<'next' | 'current'>('next');
 
-  const { salaries, loading, error, filters, updateFilters, reload, setFilters } = useSalaries();
+  // 초기 필터는 설정 로드 후 계산
+  const initialFilters = useMemo(() => {
+    if (!settingsLoaded) return {};
+    const { year, month } = calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
+    return { year, month };
+  }, [settingsLoaded, salaryPayDay, salaryMonthType]);
+
+  const { salaries, loading, error, filters, updateFilters, resetFilters, reload, setFilters } = useSalaries();
   const [instructors, setInstructors] = useState<any[]>([]);
   const [exporting, setExporting] = useState(false);
   const [pdfExporting, setPdfExporting] = useState(false);
@@ -49,16 +69,17 @@ export default function SalariesPage() {
   const [bulkPaying, setBulkPaying] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
+  // 설정 로드 및 초기 필터 설정
   useEffect(() => {
     loadSettings();
     loadInstructors();
   }, []);
 
-  // Apply default year_month filter after settings load
+  // 설정 로드 후 초기 필터 적용
   useEffect(() => {
-    if (settingsLoaded && !filters.year_month) {
-      const defaultYm = calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
-      setFilters({ ...filters, year_month: defaultYm });
+    if (settingsLoaded && !filters.year && !filters.month) {
+      const { year, month } = calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
+      setFilters({ ...filters, year, month });
     }
   }, [settingsLoaded, salaryPayDay, salaryMonthType]);
 
@@ -85,19 +106,32 @@ export default function SalariesPage() {
     }
   };
 
+  // 이전 월로 이동
   const goToPrevMonth = () => {
-    const ym = filters.year_month || calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
-    updateFilters({ year_month: getPrevYearMonth(ym) });
+    const year = filters.year || new Date().getFullYear();
+    const month = filters.month || new Date().getMonth() + 1;
+    if (month === 1) {
+      updateFilters({ year: year - 1, month: 12 });
+    } else {
+      updateFilters({ month: month - 1 });
+    }
   };
 
+  // 다음 월로 이동
   const goToNextMonth = () => {
-    const ym = filters.year_month || calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
-    updateFilters({ year_month: getNextYearMonth(ym) });
+    const year = filters.year || new Date().getFullYear();
+    const month = filters.month || new Date().getMonth() + 1;
+    if (month === 12) {
+      updateFilters({ year: year + 1, month: 1 });
+    } else {
+      updateFilters({ month: month + 1 });
+    }
   };
 
+  // 현재(기본) 월로 이동
   const goToDefaultMonth = () => {
-    const defaultYm = calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
-    setFilters({ year_month: defaultYm });
+    const { year, month } = calculateDefaultYearMonth(salaryPayDay, salaryMonthType);
+    setFilters({ ...filters, year, month, instructor_id: undefined, payment_status: undefined });
   };
 
   const handleSalaryClick = (id: number) => {
@@ -107,12 +141,10 @@ export default function SalariesPage() {
   const handleExportSalaries = async () => {
     try {
       setExporting(true);
-      const ym = filters.year_month;
-      const [year, month] = ym ? ym.split('-').map(Number) : [undefined, undefined];
       await exportsApi.downloadSalaries({
-        year,
-        month,
-        payment_status: 'paid',
+        year: filters.year,
+        month: filters.month,
+        payment_status: 'paid', // 지급완료된 것만
       });
       toast.success('급여 명세서 다운로드 완료');
     } catch (error) {
@@ -133,6 +165,7 @@ export default function SalariesPage() {
       setPdfExporting(true);
       setPdfProgress({ current: 0, total: salaries.length });
 
+      // 학원명 가져오기
       let academyName = 'P-ACA';
       try {
         const settingsResponse = await apiClient.get<{ settings: { academy_name: string } }>('/settings/academy');
@@ -141,13 +174,14 @@ export default function SalariesPage() {
         console.error('Failed to load academy name:', err);
       }
 
+      // 각 급여의 상세 정보(출근 기록 포함) 가져오기
       const salaryDataList = await Promise.all(
         salaries.map(async (salary) => {
           try {
-            const salaryDetail = await salariesAPI.getSalary(salary.id);
+            const response = await salariesAPI.getSalary(salary.id);
             return {
-              salary: salaryDetail,
-              attendance_summary: (salaryDetail as any).attendance_summary || null,
+              salary: response.salary,
+              attendance_summary: (response as any).attendance_summary || null,
             };
           } catch (err) {
             console.error(`Failed to load salary ${salary.id}:`, err);
@@ -159,8 +193,11 @@ export default function SalariesPage() {
         })
       );
 
-      const yearMonth = filters.year_month || new Date().toISOString().slice(0, 7);
+      const yearMonth = filters.year && filters.month
+        ? `${filters.year}-${String(filters.month).padStart(2, '0')}`
+        : new Date().toISOString().slice(0, 7);
 
+      // 동적 import로 PDF 유틸리티 로드 (번들 크기 최적화)
       const { downloadSalariesAsZip } = await import('@/lib/utils/pdf-generator');
       await downloadSalariesAsZip(
         salaryDataList,
@@ -179,27 +216,28 @@ export default function SalariesPage() {
     }
   };
 
+  // 비밀번호 확인 후 일괄 지급 처리 실행
   const handleBulkPay = () => {
-    if (unpaidCount === 0) {
+    if (pendingCount === 0) {
       toast.error('지급 대기 중인 급여가 없습니다');
       return;
     }
+    // 비밀번호 확인 모달 열기
     setShowPasswordModal(true);
   };
 
+  // 비밀번호 확인 후 실제 일괄 지급 처리
   const executeBulkPay = async () => {
     setShowPasswordModal(false);
 
     try {
       setBulkPaying(true);
-      const unpaidIds = salaries
-        .filter((s) => s.payment_status !== 'paid')
-        .map((s) => s.id);
+      const yearMonth = filters.year && filters.month
+        ? `${filters.year}-${String(filters.month).padStart(2, '0')}`
+        : undefined;
 
-      const today = new Date().toISOString().split('T')[0];
       const result = await salariesAPI.bulkRecordPayment({
-        salary_ids: unpaidIds,
-        paid_date: today,
+        year_month: yearMonth,
       });
 
       toast.success(result.message);
@@ -232,17 +270,9 @@ export default function SalariesPage() {
   }
 
   const paidCount = salaries.filter((s) => s.payment_status === 'paid').length;
-  const unpaidCount = salaries.filter((s) => s.payment_status !== 'paid').length;
+  const pendingCount = salaries.filter((s) => s.payment_status === 'pending').length;
   const totalPaid = calculateTotalPaid(salaries);
   const totalUnpaid = calculateTotalUnpaid(salaries);
-
-  // Display year_month as readable text
-  const displayYearMonth = (() => {
-    const ym = filters.year_month;
-    if (!ym) return '전체';
-    const [y, m] = ym.split('-');
-    return `${y}년 ${parseInt(m)}월`;
-  })();
 
   return (
     <div className="space-y-6">
@@ -317,7 +347,7 @@ export default function SalariesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">미지급</p>
-                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{unpaidCount}건</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{pendingCount}건</p>
                 <p className="text-xs text-muted-foreground mt-1">{totalUnpaid.toLocaleString()}원</p>
               </div>
               <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
@@ -338,7 +368,7 @@ export default function SalariesPage() {
         </Card>
       </div>
 
-      {/* Guide */}
+      {/* 안내 메시지 */}
       <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
         <CardContent className="p-4">
           <div className="flex items-start gap-3">
@@ -356,7 +386,7 @@ export default function SalariesPage() {
         </CardContent>
       </Card>
 
-      {/* Filters */}
+      {/* 필터 */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-4 flex-wrap">
@@ -392,13 +422,13 @@ export default function SalariesPage() {
               </select>
             </div>
 
-            {/* Month navigation */}
+            {/* 월 네비게이션 */}
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={goToPrevMonth}>
                 <ChevronLeft className="w-4 h-4" />
               </Button>
               <Button variant="outline" size="sm" onClick={goToDefaultMonth} className="min-w-[120px]">
-                {displayYearMonth}
+                {filters.year && filters.month ? `${filters.year}년 ${filters.month}월` : '전체'}
               </Button>
               <Button variant="outline" size="sm" onClick={goToNextMonth}>
                 <ChevronRight className="w-4 h-4" />
@@ -412,7 +442,7 @@ export default function SalariesPage() {
               <Button
                 variant="default"
                 onClick={handleBulkPay}
-                disabled={bulkPaying || unpaidCount === 0}
+                disabled={bulkPaying || pendingCount === 0}
                 className="bg-green-600 hover:bg-green-700"
               >
                 {bulkPaying ? (
@@ -420,7 +450,7 @@ export default function SalariesPage() {
                 ) : (
                   <CheckCircle className="w-4 h-4 mr-2" />
                 )}
-                모두 지급처리 ({unpaidCount}건)
+                모두 지급처리 ({pendingCount}건)
               </Button>
             </div>
           </div>
@@ -429,12 +459,13 @@ export default function SalariesPage() {
 
       <SalaryList salaries={salaries} loading={loading} onSalaryClick={handleSalaryClick} />
 
+      {/* 비밀번호 확인 모달 */}
       <PasswordConfirmModal
         open={showPasswordModal}
         onClose={() => setShowPasswordModal(false)}
         onConfirm={executeBulkPay}
         title="급여 지급 확인"
-        description={`${unpaidCount}건의 급여를 모두 지급 처리합니다. (총 ${totalUnpaid.toLocaleString()}원)\n비밀번호를 입력해주세요.`}
+        description={`${pendingCount}건의 급여를 모두 지급 처리합니다. (총 ${totalUnpaid.toLocaleString()}원)\n비밀번호를 입력해주세요.`}
       />
     </div>
   );

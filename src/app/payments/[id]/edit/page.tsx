@@ -105,10 +105,13 @@ export default function EditPaymentPage({ params }: { params: Promise<{ id: stri
 
   const initialData: Partial<PaymentFormData> = {
     student_id: payment.student_id,
+    payment_type: payment.payment_type,
     base_amount: Math.floor(Number(payment.base_amount) || 0),
     discount_amount: Math.floor(Number(payment.discount_amount) || 0),
-    due_date: payment.due_date?.split('T')[0] || payment.due_date || undefined,
+    additional_amount: Math.floor(Number(payment.additional_amount) || 0),
+    due_date: payment.due_date?.split('T')[0] || payment.due_date,
     year_month: payment.year_month,
+    description: payment.description || '',
     notes: payment.notes || '',
   };
 

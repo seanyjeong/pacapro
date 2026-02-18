@@ -1,12 +1,12 @@
 /**
  * Custom Hooks for Salary Management
- * Aligned with FastAPI backend — React Query based
+ * 급여 관리 커스텀 훅 - React Query 기반 (backward-compatible interface)
  */
 
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { salariesAPI } from '@/lib/api/salaries';
-import type { Salary, SalaryFilters, SalaryFormData } from '@/lib/types/salary';
+import type { Salary, SalaryDetail, SalaryFilters, SalaryFormData } from '@/lib/types/salary';
 import { toast } from 'sonner';
 
 const QUERY_KEYS = {
@@ -22,7 +22,10 @@ export function useSalaries(initialFilters?: SalaryFilters) {
 
   const query = useQuery({
     queryKey: QUERY_KEYS.salaries(filters),
-    queryFn: () => salariesAPI.getSalaries(filters),
+    queryFn: async () => {
+      const data = await salariesAPI.getSalaries(filters);
+      return data.salaries as Salary[];
+    },
   });
 
   const updateFilters = useCallback((newFilters: Partial<SalaryFilters>) => {
@@ -55,7 +58,10 @@ export function useSalaries(initialFilters?: SalaryFilters) {
 export function useSalary(id: number) {
   const query = useQuery({
     queryKey: QUERY_KEYS.salary(id),
-    queryFn: () => salariesAPI.getSalary(id),
+    queryFn: async () => {
+      const data = await salariesAPI.getSalary(id);
+      return data.salary as SalaryDetail;
+    },
     enabled: !!id,
   });
 
