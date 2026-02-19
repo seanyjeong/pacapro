@@ -113,7 +113,6 @@ Authorization: Bearer <JWT_TOKEN>
 | PUT | `/:id/credits/:creditId` | payments.edit | 크레딧 수정 |
 | DELETE | `/:id/credits/:creditId` | payments.edit | 크레딧 삭제 |
 | POST | `/:id/credits/:creditId/apply` | payments.edit | 크레딧 적용 |
-| GET | `/:id/attendance` | Token | 학생 월별 출결 현황 (`?year_month=YYYY-MM`) |
 
 ### 학생 상태 (status)
 - `active`: 재원생 (스케줄O, 학원비O)

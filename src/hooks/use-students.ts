@@ -18,7 +18,6 @@ const QUERY_KEYS = {
   students: (filters?: StudentFilters) => ['students', filters] as const,
   student: (id: number) => ['students', id] as const,
   search: (query: string) => ['students', 'search', query] as const,
-  attendance: (id: number, yearMonth: string) => ['students', id, 'attendance', yearMonth] as const,
 };
 
 /**
@@ -114,24 +113,6 @@ export function useStudentSearch(searchQuery: string) {
 
   return {
     students: query.data || [],
-    loading: query.isLoading,
-    error: query.error?.message || null,
-  };
-}
-
-/**
- * 학생 월별 출결 현황 조회 훅
- */
-export function useStudentAttendance(studentId: number, yearMonth: string) {
-  const query = useQuery({
-    queryKey: QUERY_KEYS.attendance(studentId, yearMonth),
-    queryFn: () => studentsAPI.getStudentAttendance(studentId, yearMonth),
-    enabled: !!studentId && !!yearMonth,
-    staleTime: 60 * 1000,
-  });
-
-  return {
-    data: query.data || null,
     loading: query.isLoading,
     error: query.error?.message || null,
   };
