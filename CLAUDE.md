@@ -36,8 +36,25 @@ src/app/settings/page.tsx           → vX.X.X + 날짜
 
 **모달 패딩**: `py-6 px-6` 필수
 
-## 문서
+## 📄 문서 동기화 (필수!)
+
+> **기능 추가/수정/삭제 시 아래 문서를 반드시 함께 업데이트할 것.**
+> 코드만 배포하고 문서를 안 고치면 다음 세션에서 틀린 정보로 작업하게 됨.
+
+| 변경 유형 | 업데이트 대상 문서 |
+|-----------|-------------------|
+| API 엔드포인트 추가/수정/삭제 | `docs/API-ROUTES.md` |
+| DB 테이블/컬럼 변경 | `docs/DATABASE-SCHEMA.md` |
+| 새 페이지/라우트 추가 | 이 파일 (`CLAUDE.md`) + 상위 `academy/CLAUDE.md` |
+| 프론트 주요 컴포넌트 추가 | 이 파일 (`CLAUDE.md`) 관련 섹션 |
+| 배포 구조 변경 | 이 파일 (`CLAUDE.md`) 배포 섹션 |
+| 버전 업데이트 | 4곳 (위 "버전 업데이트" 섹션 참조) |
+
+**체크리스트 (커밋 전 확인):**
+- [ ] API 변경 → `docs/API-ROUTES.md` 반영했는가?
+- [ ] DB 변경 → `docs/DATABASE-SCHEMA.md` 반영했는가?
+- [ ] 기능 배포 → 버전 4곳 올렸는가?
 
 상세 스키마/API는 `docs/` 폴더 참조:
-- DATABASE-SCHEMA.md (41개 테이블)
+- DATABASE-SCHEMA.md (43개 테이블)
 - API-ROUTES.md (200+ 엔드포인트)
