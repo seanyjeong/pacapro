@@ -19,6 +19,7 @@ import type {
   ClassDaysResponse,
   ClassDaysUpdateRequest,
   ClassDaysBulkUpdateRequest,
+  StudentAttendanceResponse,
 } from '@/lib/types/student';
 
 export const studentsAPI = {
@@ -304,5 +305,13 @@ export const studentsAPI = {
    */
   cancelClassDaysSchedule: async (id: number): Promise<{ message: string }> => {
     return await apiClient.delete(`/students/${id}/class-days-schedule`);
+  },
+
+  /**
+   * 학생 월별 출결 현황 조회
+   * GET /paca/students/:id/attendance?year_month=YYYY-MM
+   */
+  getStudentAttendance: async (id: number, yearMonth: string): Promise<StudentAttendanceResponse> => {
+    return await apiClient.get(`/students/${id}/attendance?year_month=${yearMonth}`);
   },
 };

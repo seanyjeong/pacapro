@@ -10,6 +10,7 @@ import { StudentCard } from '@/components/students/student-card';
 import { StudentPerformanceComponent } from '@/components/students/student-performance';
 import { StudentPaymentsComponent } from '@/components/students/student-payments';
 import { StudentSeasonsComponent } from '@/components/students/student-seasons';
+import { StudentAttendanceComponent } from '@/components/students/student-attendance';
 import { StudentConsultationsComponent } from '@/components/students/student-consultations';
 import { StudentResumeModal, RestEndedStudent } from '@/components/students/student-resume-modal';
 import { useStudent } from '@/hooks/use-students';
@@ -20,7 +21,7 @@ export default function StudentDetailPage() {
   const params = useParams();
   const studentId = parseInt(params.id as string);
 
-  const [activeTab, setActiveTab] = useState<'performance' | 'payments' | 'seasons' | 'consultations'>('performance');
+  const [activeTab, setActiveTab] = useState<'performance' | 'attendance' | 'payments' | 'seasons' | 'consultations'>('performance');
   const [resumeModalOpen, setResumeModalOpen] = useState(false);
 
   // useStudent 훅 사용
@@ -227,6 +228,16 @@ export default function StudentDetailPage() {
             성적 기록 (추후)
           </button>
           <button
+            onClick={() => setActiveTab('attendance')}
+            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+              activeTab === 'attendance'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+            }`}
+          >
+            출결 현황
+          </button>
+          <button
             onClick={() => setActiveTab('payments')}
             className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
               activeTab === 'payments'
@@ -272,6 +283,9 @@ export default function StudentDetailPage() {
       <div>
         {activeTab === 'performance' && (
           <StudentPerformanceComponent performances={performances} loading={false} />
+        )}
+        {activeTab === 'attendance' && (
+          <StudentAttendanceComponent studentId={studentId} />
         )}
         {activeTab === 'payments' && (
           <StudentPaymentsComponent
