@@ -226,8 +226,17 @@ router.get('/slot', verifyToken, async (req, res) => {
             [req.user.academyId, JSON.stringify(dayOfWeek), time_slot]
         );
 
-        // 스케줄이 없으면: 해당 시간대에 학생이 있을 때만 자동 생성
+        // 스케줄이 없으면: 현재 월까지만 + 해당 시간대에 학생이 있을 때만 자동 생성
         if (!schedule) {
+            const now = new Date();
+            const currentYearMonth = now.getFullYear() * 100 + (now.getMonth() + 1);
+            const requestDate = new Date(date + 'T00:00:00');
+            const requestYearMonth = requestDate.getFullYear() * 100 + (requestDate.getMonth() + 1);
+
+            if (requestYearMonth > currentYearMonth) {
+                // 다음 달 이후는 자동 생성하지 않음 (cron이 월말에 배정)
+                return res.json({ schedule: null, students: [] });
+            }
             if (eligibleStudents.length === 0) {
                 // 해당 시간대에 학생이 없으면 빈 응답 반환 (스케줄 생성하지 않음)
                 return res.json({ schedule: null, students: [] });

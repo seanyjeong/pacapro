@@ -246,6 +246,12 @@ router.get('/', verifyToken, async (req, res) => {
     try {
         const { status, season_type } = req.query;
 
+        // 종료일 지난 active 시즌 자동 ended 처리
+        await db.query(
+            `UPDATE seasons SET status = 'ended' WHERE academy_id = ? AND status = 'active' AND season_end_date < CURDATE()`,
+            [req.user.academyId]
+        );
+
         let query = `
             SELECT * FROM seasons
             WHERE academy_id = ?

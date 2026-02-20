@@ -19,9 +19,9 @@ function decryptArray(arr) {
 /**
  * GET /paca/users/pending
  * Get all pending users waiting for approval
- * Access: owner, admin
+ * Access: admin only
  */
-router.get('/pending', verifyToken, requireRole('owner', 'admin'), async (req, res) => {
+router.get('/pending', verifyToken, requireRole('admin'), async (req, res) => {
     try {
         const [users] = await db.query(
             `SELECT
@@ -56,9 +56,9 @@ router.get('/pending', verifyToken, requireRole('owner', 'admin'), async (req, r
 /**
  * POST /paca/users/approve/:id
  * Approve a pending user
- * Access: owner, admin
+ * Access: admin only
  */
-router.post('/approve/:id', verifyToken, requireRole('owner', 'admin'), async (req, res) => {
+router.post('/approve/:id', verifyToken, requireRole('admin'), async (req, res) => {
     const userId = parseInt(req.params.id);
 
     try {
@@ -111,9 +111,9 @@ router.post('/approve/:id', verifyToken, requireRole('owner', 'admin'), async (r
 /**
  * POST /paca/users/reject/:id
  * Reject a pending user
- * Access: owner, admin
+ * Access: admin only
  */
-router.post('/reject/:id', verifyToken, requireRole('owner', 'admin'), async (req, res) => {
+router.post('/reject/:id', verifyToken, requireRole('admin'), async (req, res) => {
     const userId = parseInt(req.params.id);
 
     try {

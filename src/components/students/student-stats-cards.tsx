@@ -58,8 +58,8 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
       const pending = students.filter((s) => s.status === 'pending').length;
 
       const newStats = {
-        // 전체 = 재원 + 휴원 + 졸업 (퇴원생, 체험생, 미등록 제외)
-        total: active + paused + graduated,
+        // 전체 = 재원 + 휴원 (졸업생, 퇴원생, 체험생, 미등록 제외)
+        total: active + paused,
         active,
         paused,
         graduated,

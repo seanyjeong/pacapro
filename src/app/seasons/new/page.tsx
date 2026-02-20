@@ -225,7 +225,7 @@ export default function NewSeasonPage() {
                     type="button"
                     className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                       formData.operating_days.includes(day.value)
-                        ? 'bg-primary-600 text-white border-primary-600'
+                        ? 'bg-primary text-primary-foreground border-primary'
                         : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                     }`}
                     onClick={() => toggleOperatingDay(day.value)}

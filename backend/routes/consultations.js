@@ -612,11 +612,20 @@ router.put('/:id', verifyToken, async (req, res) => {
     const academyId = req.user.academy_id;
     const {
       status, adminNotes, preferredDate, preferredTime, checklist, consultationMemo,
-      // 학생 정보 수정 필드 추가
+      // 학생 정보 수정 필드 (snake_case + camelCase 둘 다 지원)
       student_name, student_grade, student_school, gender,
+      studentName, studentGrade, studentSchool,
       mockTestGrades, schoolGradeAvg, admissionType,
-      target_school, referrerStudent, parent_phone
+      target_school, targetSchool, referrerStudent,
+      parent_phone, parentPhone
     } = req.body;
+
+    // camelCase → snake_case 호환
+    const _student_name = student_name || studentName;
+    const _student_grade = student_grade || studentGrade;
+    const _student_school = student_school !== undefined ? student_school : studentSchool;
+    const _parent_phone = parent_phone !== undefined ? parent_phone : parentPhone;
+    const _target_school = target_school !== undefined ? target_school : targetSchool;
 
     // 기존 상담 확인 (현재 상태 포함)
     const [existing] = await db.query(
@@ -670,27 +679,27 @@ router.put('/:id', verifyToken, async (req, res) => {
     }
 
     // 학생 정보 수정
-    if (student_name !== undefined) {
+    if (_student_name !== undefined) {
       updates.push('student_name = ?');
-      params.push(student_name);
+      params.push(_student_name);
       // parent_name도 같이 업데이트
       updates.push('parent_name = ?');
-      params.push(student_name);
+      params.push(_student_name);
     }
 
-    if (student_grade !== undefined) {
+    if (_student_grade !== undefined) {
       updates.push('student_grade = ?');
-      params.push(student_grade);
+      params.push(_student_grade);
     }
 
-    if (student_school !== undefined) {
+    if (_student_school !== undefined) {
       updates.push('student_school = ?');
-      params.push(student_school || null);
+      params.push(_student_school || null);
     }
 
-    if (parent_phone !== undefined) {
+    if (_parent_phone !== undefined) {
       updates.push('parent_phone = ?');
-      params.push(parent_phone ? encrypt(parent_phone) : null);
+      params.push(_parent_phone ? encrypt(_parent_phone) : null);
     }
 
     if (gender !== undefined) {
@@ -698,9 +707,9 @@ router.put('/:id', verifyToken, async (req, res) => {
       params.push(gender || null);
     }
 
-    if (target_school !== undefined) {
+    if (_target_school !== undefined) {
       updates.push('target_school = ?');
-      params.push(target_school || null);
+      params.push(_target_school || null);
     }
 
     if (referrerStudent !== undefined) {
@@ -749,11 +758,11 @@ router.put('/:id', verifyToken, async (req, res) => {
     if (currentConsultation.linked_student_id) {
       const studentUpdates = [];
       const studentParams = [];
-      if (student_name !== undefined) { studentUpdates.push('name = ?'); studentParams.push(student_name); }
-      if (student_grade !== undefined) { studentUpdates.push('grade = ?'); studentParams.push(student_grade); }
-      if (student_school !== undefined) { studentUpdates.push('school = ?'); studentParams.push(student_school || null); }
+      if (_student_name !== undefined) { studentUpdates.push('name = ?'); studentParams.push(_student_name); }
+      if (_student_grade !== undefined) { studentUpdates.push('grade = ?'); studentParams.push(_student_grade); }
+      if (_student_school !== undefined) { studentUpdates.push('school = ?'); studentParams.push(_student_school || null); }
       if (gender !== undefined) { studentUpdates.push('gender = ?'); studentParams.push(gender || null); }
-      if (parent_phone !== undefined) { studentUpdates.push('parent_phone = ?'); studentParams.push(parent_phone ? encrypt(parent_phone) : null); }
+      if (_parent_phone !== undefined) { studentUpdates.push('parent_phone = ?'); studentParams.push(_parent_phone ? encrypt(_parent_phone) : null); }
       if (studentUpdates.length > 0) {
         studentParams.push(currentConsultation.linked_student_id);
         await db.query(`UPDATE students SET ${studentUpdates.join(', ')} WHERE id = ?`, studentParams);
