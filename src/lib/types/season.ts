@@ -7,7 +7,7 @@
 export type SeasonType = 'early' | 'regular';
 
 // 시즌 상태
-export type SeasonStatus = 'draft' | 'active' | 'completed' | 'cancelled';
+export type SeasonStatus = 'draft' | 'active' | 'completed' | 'ended' | 'cancelled';
 
 // 연속등록 할인 타입
 export type ContinuousDiscountType = 'none' | 'free' | 'rate';
@@ -287,6 +287,7 @@ export const SEASON_STATUS_LABELS: Record<SeasonStatus, string> = {
   draft: '준비중',
   active: '진행중',
   completed: '종료',
+  ended: '종료',
   cancelled: '취소',
 };
 

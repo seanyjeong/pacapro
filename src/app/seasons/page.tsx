@@ -204,7 +204,7 @@ export default function SeasonsPage() {
               <option value="">모든 상태</option>
               <option value="draft">준비중</option>
               <option value="active">진행중</option>
-              <option value="completed">종료</option>
+              <option value="ended">종료</option>
               <option value="cancelled">취소</option>
             </select>
             {(filters.year || filters.season_type || filters.status) && (
@@ -290,7 +290,7 @@ export default function SeasonsPage() {
                                 ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
                                 : season.status === 'draft'
                                 ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
-                                : season.status === 'completed'
+                                : season.status === 'completed' || season.status === 'ended'
                                 ? 'bg-muted text-muted-foreground'
                                 : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
                             }`}
