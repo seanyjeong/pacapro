@@ -139,7 +139,7 @@ export function Sidebar() {
     const [academyName, setAcademyName] = useState<string>('');
 
     // 사이드바 접힘 상태
-    const [collapsed, setCollapsed] = useState(true); // 기본값: 접힘
+    const [collapsed, setCollapsed] = useState(false); // 기본값: 펼침
 
     // 푸시 알림 상태
     const [pushSupported, setPushSupported] = useState(false);
