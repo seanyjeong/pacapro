@@ -1212,7 +1212,7 @@ router.put('/settings/info', verifyToken, async (req, res) => {
     } = req.body;
 
     // slug 업데이트 (학원 테이블)
-    if (slug !== undefined) {
+    if (slug !== undefined && slug !== '') {
       // slug 유효성 검사
       if (!/^[a-z0-9-]+$/.test(slug)) {
         return res.status(400).json({ error: 'slug는 영문 소문자, 숫자, 하이픈만 사용 가능합니다.' });

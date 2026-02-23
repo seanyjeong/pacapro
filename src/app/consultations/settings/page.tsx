@@ -61,8 +61,10 @@ export default function ConsultationSettingsPage() {
   // 학원 정보
   const [academyName, setAcademyName] = useState('');
   const [slug, setSlug] = useState('');
+  const [originalSlug, setOriginalSlug] = useState('');
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
+  const [savingSlug, setSavingSlug] = useState(false);
 
   // 설정
   const [settings, setSettings] = useState<Partial<ConsultationSettings>>({
@@ -127,7 +129,9 @@ export default function ConsultationSettingsPage() {
       try {
         const response = await getConsultationSettings();
         setAcademyName(response.academy?.name || '');
-        setSlug(response.academy?.slug || '');
+        const loadedSlug = response.academy?.slug || '';
+        setSlug(loadedSlug);
+        setOriginalSlug(loadedSlug);
         setSettings(response.settings || {});
 
         // weeklyHours가 비어있으면 기본값 생성
@@ -178,12 +182,34 @@ export default function ConsultationSettingsPage() {
     }
   };
 
+  // slug 저장
+  const handleSaveSlug = async () => {
+    if (!slug || slug.length < 3) {
+      toast.error('페이지 주소를 3자 이상 입력해주세요.');
+      return;
+    }
+    if (slugAvailable !== true) {
+      toast.error('먼저 중복 확인을 해주세요.');
+      return;
+    }
+    setSavingSlug(true);
+    try {
+      await updateConsultationSettings({ slug });
+      setOriginalSlug(slug);
+      setSlugAvailable(null);
+      toast.success('페이지 주소가 저장되었습니다.');
+    } catch (error) {
+      toast.error('주소 저장에 실패했습니다.');
+    } finally {
+      setSavingSlug(false);
+    }
+  };
+
   // 설정 저장
   const handleSaveSettings = async () => {
     setSaving(true);
     try {
       await updateConsultationSettings({
-        slug,
         ...settings
       });
       toast.success('설정이 저장되었습니다.');
@@ -578,25 +604,38 @@ export default function ConsultationSettingsPage() {
                   placeholder="my-academy"
                   className="rounded-l-none flex-1"
                 />
-                <Button variant="outline" onClick={checkSlug} disabled={checkingSlug}>
+                <Button variant="outline" onClick={checkSlug} disabled={checkingSlug || !slug || slug.length < 3}>
                   {checkingSlug ? <Loader2 className="h-4 w-4 animate-spin" /> : '중복 확인'}
+                </Button>
+                <Button
+                  onClick={handleSaveSlug}
+                  disabled={savingSlug || slugAvailable !== true || slug === originalSlug}
+                >
+                  {savingSlug ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  주소 저장
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                영문 소문자, 숫자, 하이픈(-)만 사용 가능
+                영문 소문자, 숫자, 하이픈(-)만 사용 가능 (3자 이상)
               </p>
+              {slugAvailable === true && slug !== originalSlug && (
+                <p className="text-xs text-green-600 mt-1">사용 가능한 주소입니다. &quot;주소 저장&quot;을 눌러주세요.</p>
+              )}
+              {!slug && !originalSlug && (
+                <p className="text-xs text-orange-600 mt-1">페이지 주소를 설정해야 상담 예약 링크를 사용할 수 있습니다.</p>
+              )}
             </div>
           </div>
 
-          {slug && (
+          {(slug && originalSlug) && (
             <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
               <span className="text-sm text-blue-800 dark:text-blue-200 flex-1">
-                {typeof window !== 'undefined' ? `${window.location.origin}/c/${slug}` : ''}
+                {typeof window !== 'undefined' ? `${window.location.origin}/c/${originalSlug}` : ''}
               </span>
               <Button variant="outline" size="sm" onClick={copyLink}>
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
-              <Link href={`/c/${slug}`} target="_blank">
+              <Link href={`/c/${originalSlug}`} target="_blank">
                 <Button variant="outline" size="sm">
                   <ExternalLink className="h-4 w-4" />
                 </Button>
