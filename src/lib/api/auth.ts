@@ -65,6 +65,7 @@ export const authAPI = {
         if (typeof window !== 'undefined') {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            document.cookie = 'paca_auth=; path=/; max-age=0';
             window.location.href = '/login';
         }
     },

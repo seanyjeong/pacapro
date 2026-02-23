@@ -25,6 +25,9 @@ export default function LoginPage() {
             localStorage.setItem('token', response.token);
             localStorage.setItem('user', JSON.stringify(response.user));
 
+            // Set auth cookie for middleware access control
+            document.cookie = `paca_auth=1; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+
             // 원장(owner)인 경우 온보딩 상태 확인
             if (response.user.role === 'owner') {
                 try {

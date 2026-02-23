@@ -20,6 +20,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Authentication check - redirect to login if no auth cookie
+  const hasAuth = request.cookies.has('paca_auth');
+  if (!hasAuth) {
+    const loginUrl = new URL('/login', request.url);
+    return NextResponse.redirect(loginUrl);
+  }
+
   // PC 모드 강제 쿠키 확인
   const forcePC = request.cookies.get('force_pc_mode')?.value === 'true';
 

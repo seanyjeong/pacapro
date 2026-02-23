@@ -3,7 +3,9 @@ import { NextResponse } from 'next/server';
 export async function GET(request: Request) {
   // URL에서 파라미터 가져오기
   const { searchParams } = new URL(request.url);
-  const academyName = searchParams.get('name') || 'P-ACA';
+  const rawName = searchParams.get('name') || 'P-ACA';
+  // Sanitize input to prevent XSS
+  const academyName = rawName.replace(/[<>"'`&]/g, "")
   const isTablet = searchParams.get('tablet') === 'true';
 
   const manifest = {
