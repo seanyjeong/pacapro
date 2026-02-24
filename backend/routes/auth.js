@@ -26,9 +26,12 @@ router.post('/register', async (req, res) => {
             password,
             name,
             phone,
-            role = 'owner', // 첫 가입자는 원장으로 등록
+            role: _requestedRole, // ignored - always forced to 'owner'
             academyName // 원장이 가입할 때 학원명
         } = req.body;
+
+        // Security: Force role to 'owner' regardless of request body (prevent mass assignment)
+        const role = 'owner';
 
         // Validation
         if (!email || !password || !name) {

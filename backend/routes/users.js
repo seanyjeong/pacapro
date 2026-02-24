@@ -37,7 +37,9 @@ router.get('/pending', verifyToken, requireRole('admin'), async (req, res) => {
             LEFT JOIN academies a ON u.academy_id = a.id
             WHERE u.approval_status = 'pending'
             AND u.is_active = true
-            ORDER BY u.created_at DESC`
+            AND u.academy_id = ?
+            ORDER BY u.created_at DESC`,
+            [req.user.academyId]
         );
 
         res.json({
@@ -64,8 +66,8 @@ router.post('/approve/:id', verifyToken, requireRole('admin'), async (req, res) 
     try {
         // Check if user exists and is pending
         const [users] = await db.query(
-            'SELECT id, email, name, approval_status FROM users WHERE id = ?',
-            [userId]
+            'SELECT id, email, name, approval_status, academy_id FROM users WHERE id = ? AND academy_id = ?',
+            [userId, req.user.academyId]
         );
 
         if (users.length === 0) {
@@ -119,8 +121,8 @@ router.post('/reject/:id', verifyToken, requireRole('admin'), async (req, res) =
     try {
         // Check if user exists and is pending
         const [users] = await db.query(
-            'SELECT id, email, name, approval_status FROM users WHERE id = ?',
-            [userId]
+            'SELECT id, email, name, approval_status, academy_id FROM users WHERE id = ? AND academy_id = ?',
+            [userId, req.user.academyId]
         );
 
         if (users.length === 0) {
@@ -172,6 +174,8 @@ router.get('/', verifyToken, requireRole('owner', 'admin'), async (req, res) => 
     try {
         const { role, approval_status } = req.query;
 
+        const academyId = req.user.academyId;
+
         let query = `
             SELECT
                 u.id,
@@ -185,10 +189,10 @@ router.get('/', verifyToken, requireRole('owner', 'admin'), async (req, res) => 
                 a.name as academy_name
             FROM users u
             LEFT JOIN academies a ON u.academy_id = a.id
-            WHERE 1=1
+            WHERE u.academy_id = ?
         `;
 
-        const params = [];
+        const params = [academyId];
 
         if (role) {
             query += ' AND u.role = ?';
@@ -242,8 +246,8 @@ router.get('/:id', verifyToken, requireRole('owner', 'admin'), async (req, res) 
                 a.name as academy_name
             FROM users u
             LEFT JOIN academies a ON u.academy_id = a.id
-            WHERE u.id = ?`,
-            [userId]
+            WHERE u.id = ? AND u.academy_id = ?`,
+            [userId, req.user.academyId]
         );
 
         if (users.length === 0) {
