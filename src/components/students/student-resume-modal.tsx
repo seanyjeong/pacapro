@@ -26,7 +26,7 @@ export interface RestEndedStudent {
   rest_start_date: string;
   rest_end_date: string | null;  // null이면 무기한 휴원
   rest_reason: string | null;
-  class_days: number[] | string;
+  class_days: number[] | string | Array<{day: number; timeSlot: string}>;
   time_slot: string | null;
   monthly_tuition: string;
   discount_rate: string;
@@ -41,8 +41,8 @@ interface StudentResumeModalProps {
   onSuccess: () => void;
 }
 
-// 수업 요일 포맷
-function formatClassDays(classDays: number[] | string | null): string {
+// 수업 요일 포맷 (숫자 배열, 객체 배열, 문자열 모두 처리)
+function formatClassDays(classDays: number[] | string | Array<{day: number; timeSlot: string}> | null): string {
   if (!classDays) return '미정';
 
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
@@ -52,22 +52,40 @@ function formatClassDays(classDays: number[] | string | null): string {
     return classDays || '미정';
   }
 
-  // 배열인 경우 (숫자: [1, 3, 5])
+  // 배열인 경우
   if (Array.isArray(classDays) && classDays.length > 0) {
-    return classDays.map(d => dayNames[d] || d).join(', ');
+    if (typeof classDays[0] === 'number') {
+      return (classDays as number[]).map(d => dayNames[d] || d).join(', ');
+    }
+    // 객체 배열
+    return (classDays as Array<{day: number; timeSlot: string}>).map(d => dayNames[d.day] || d.day).join(', ');
   }
 
   return '미정';
 }
 
-// class_days를 숫자 배열로 변환
-function parseClassDays(classDays: number[] | string | null): number[] {
+// class_days를 숫자 배열로 변환 (하위호환)
+function parseClassDays(classDays: number[] | string | Array<{day: number; timeSlot: string}> | null): number[] {
   if (!classDays) return [];
 
-  if (Array.isArray(classDays)) return classDays;
+  if (Array.isArray(classDays)) {
+    if (classDays.length === 0) return [];
+    if (typeof classDays[0] === 'number') return classDays as number[];
+    return (classDays as Array<{day: number}>).map(d => d.day);
+  }
 
   // 문자열인 경우 파싱 시도
   if (typeof classDays === 'string') {
+    try {
+      const parsed = JSON.parse(classDays);
+      if (Array.isArray(parsed)) {
+        if (parsed.length === 0) return [];
+        if (typeof parsed[0] === 'number') return parsed;
+        return parsed.map((d: {day: number}) => d.day);
+      }
+    } catch {
+      // JSON 파싱 실패시 한글 요일 시도
+    }
     const dayMap: Record<string, number> = {
       '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6
     };

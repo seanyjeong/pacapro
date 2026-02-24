@@ -3,7 +3,7 @@
  * 학생 관련 유틸리티 함수 - 입시생/성인 구분 지원
  */
 
-import type { Student, StudentType, Grade, StudentStatus } from '@/lib/types/student';
+import type { Student, StudentType, Grade, StudentStatus, ClassDaySlot, ClassDaysValue } from '@/lib/types/student';
 import { WEEKDAY_MAP, STUDENT_TYPE_LABELS, GRADE_LABELS } from '@/lib/types/student';
 
 /**
@@ -69,30 +69,135 @@ export function getStudentDisplayInfo(student: Student): string {
 }
 
 /**
- * 수업요일 파싱 (JSON string/number[] → number[])
+ * 수업요일 파싱 (JSON string/number[]/ClassDaySlot[] → number[])
+ * 하위호환: 객체 배열이면 day 값만 추출
  * @example parseClassDays('[1,3,5]') => [1, 3, 5]
- * @example parseClassDays([1, 3, 5]) => [1, 3, 5]
+ * @example parseClassDays([{day:1,timeSlot:"morning"}]) => [1]
  */
-export function parseClassDays(classDays: string | number[]): number[] {
-  if (Array.isArray(classDays)) return classDays;
-
+export function parseClassDays(classDays: ClassDaysValue | null | undefined): number[] {
   if (!classDays) return [];
+
+  if (Array.isArray(classDays)) {
+    return classDays.map(item =>
+      typeof item === 'number' ? item : item.day
+    );
+  }
 
   try {
     const parsed = JSON.parse(classDays);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((item: number | ClassDaySlot) =>
+      typeof item === 'number' ? item : item.day
+    );
   } catch {
     return [];
   }
 }
 
 /**
- * 수업요일 문자열로 변환 (숫자 배열 → 한글 요일)
- * @example formatClassDays([1, 3, 5]) => '월, 수, 금'
+ * 수업요일 + 시간대 파싱 (모든 포맷 → ClassDaySlot[])
+ * 하위호환: 숫자 배열이면 defaultTimeSlot 적용
+ * @example parseClassDaysWithSlots([1,3,6], 'morning') => [{day:1,timeSlot:"morning"}, ...]
+ * @example parseClassDaysWithSlots([{day:1,timeSlot:"morning"}]) => [{day:1,timeSlot:"morning"}]
  */
-export function formatClassDays(classDays: string | number[]): string {
+export function parseClassDaysWithSlots(
+  classDays: ClassDaysValue | null | undefined,
+  defaultTimeSlot: 'morning' | 'afternoon' | 'evening' = 'evening'
+): ClassDaySlot[] {
+  if (!classDays) return [];
+
+  let arr: (number | ClassDaySlot)[];
+
+  if (Array.isArray(classDays)) {
+    arr = classDays;
+  } else {
+    try {
+      const parsed = JSON.parse(classDays);
+      if (!Array.isArray(parsed)) return [];
+      arr = parsed;
+    } catch {
+      return [];
+    }
+  }
+
+  return arr.map(item => {
+    if (typeof item === 'number') {
+      return { day: item, timeSlot: defaultTimeSlot };
+    }
+    return { day: item.day, timeSlot: item.timeSlot || defaultTimeSlot };
+  });
+}
+
+/**
+ * ClassDaySlot 배열에서 day 숫자만 추출
+ * @example extractDayNumbers([{day:1,timeSlot:"morning"},{day:6,timeSlot:"afternoon"}]) => [1, 6]
+ */
+export function extractDayNumbers(slots: ClassDaySlot[]): number[] {
+  return slots.map(s => s.day);
+}
+
+/**
+ * 특정 요일의 시간대 조회
+ * @example getTimeSlotForDay([{day:1,timeSlot:"morning"},{day:6,timeSlot:"afternoon"}], 6) => "afternoon"
+ */
+export function getTimeSlotForDay(
+  slots: ClassDaySlot[],
+  day: number,
+  defaultTimeSlot: 'morning' | 'afternoon' | 'evening' = 'evening'
+): 'morning' | 'afternoon' | 'evening' {
+  const found = slots.find(s => s.day === day);
+  return found?.timeSlot || defaultTimeSlot;
+}
+
+/**
+ * 수업요일 문자열로 변환 (모든 포맷 → 한글 요일)
+ * @example formatClassDays([1, 3, 5]) => '월, 수, 금'
+ * @example formatClassDays([{day:1,timeSlot:"morning"}]) => '월'
+ */
+export function formatClassDays(classDays: ClassDaysValue | null | undefined): string {
   const days = parseClassDays(classDays);
   return days.map(d => WEEKDAY_MAP[d] || '').filter(Boolean).join(', ') || '-';
+}
+
+const TIME_SLOT_LABELS: Record<string, string> = {
+  morning: '오전',
+  afternoon: '오후',
+  evening: '저녁',
+};
+
+/**
+ * 수업요일 + 시간대 문자열로 변환
+ * 같은 시간대끼리 그룹핑해서 표시
+ * @example formatClassDaysWithSlots([{day:1,timeSlot:"morning"},{day:3,timeSlot:"morning"},{day:6,timeSlot:"afternoon"}])
+ *   => '월,수 오전 / 토 오후'
+ */
+export function formatClassDaysWithSlots(
+  classDays: ClassDaysValue | null | undefined,
+  defaultTimeSlot: 'morning' | 'afternoon' | 'evening' = 'evening'
+): string {
+  const slots = parseClassDaysWithSlots(classDays, defaultTimeSlot);
+  if (slots.length === 0) return '-';
+
+  // 모든 시간대가 같으면 간단 표시
+  const allSameSlot = slots.every(s => s.timeSlot === slots[0].timeSlot);
+  if (allSameSlot) {
+    const dayStr = slots.map(s => WEEKDAY_MAP[s.day] || '').filter(Boolean).join(',');
+    return `${dayStr} ${TIME_SLOT_LABELS[slots[0].timeSlot] || slots[0].timeSlot}`;
+  }
+
+  // 시간대별 그룹핑
+  const groups: Record<string, number[]> = {};
+  for (const s of slots) {
+    if (!groups[s.timeSlot]) groups[s.timeSlot] = [];
+    groups[s.timeSlot].push(s.day);
+  }
+
+  return Object.entries(groups)
+    .map(([timeSlot, days]) => {
+      const dayStr = days.map(d => WEEKDAY_MAP[d] || '').filter(Boolean).join(',');
+      return `${dayStr} ${TIME_SLOT_LABELS[timeSlot] || timeSlot}`;
+    })
+    .join(' / ');
 }
 
 /**

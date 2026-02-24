@@ -221,9 +221,11 @@ router.get('/slot', verifyToken, async (req, res) => {
              WHERE s.academy_id = ?
              AND s.status = 'active'
              AND s.deleted_at IS NULL
-             AND JSON_CONTAINS(s.class_days, ?)
-             AND s.time_slot = ?`,
-            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot]
+             AND (
+                (JSON_CONTAINS(s.class_days, CAST(? AS JSON)) AND s.time_slot = ?)
+                OR JSON_CONTAINS(s.class_days, CAST(? AS JSON))
+             )`,
+            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot})]
         );
 
         // 스케줄이 없으면: 현재 월까지만 + 해당 시간대에 학생이 있을 때만 자동 생성
@@ -256,13 +258,15 @@ router.get('/slot', verifyToken, async (req, res) => {
              WHERE s.academy_id = ?
              AND s.status = 'active'
              AND s.deleted_at IS NULL
-             AND JSON_CONTAINS(s.class_days, ?)
-             AND s.time_slot = ?
+             AND (
+                (JSON_CONTAINS(s.class_days, CAST(? AS JSON)) AND s.time_slot = ?)
+                OR JSON_CONTAINS(s.class_days, CAST(? AS JSON))
+             )
              AND s.id NOT IN (
                 SELECT a.student_id FROM attendance a
                 WHERE a.class_schedule_id = ?
              )`,
-            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, schedule.id]
+            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), schedule.id]
         );
 
         // 누락된 학생들 자동 추가 (attendance_status = NULL로 추가)
@@ -316,14 +320,17 @@ router.get('/slot', verifyToken, async (req, res) => {
              WHERE s.academy_id = ?
              AND s.status = 'active'
              AND s.deleted_at IS NULL
-             AND JSON_CONTAINS(s.class_days, ?)
+             AND (
+                JSON_CONTAINS(s.class_days, CAST(? AS JSON))
+                OR JSON_CONTAINS(s.class_days, CAST(? AS JSON))
+             )
              AND s.id NOT IN (
                 SELECT a.student_id FROM attendance a
                 JOIN class_schedules cs ON a.class_schedule_id = cs.id
                 WHERE cs.class_date = ? AND cs.academy_id = ?
              )
              ORDER BY s.name`,
-            [req.user.academyId, JSON.stringify(dayOfWeek), date, req.user.academyId]
+            [req.user.academyId, JSON.stringify(dayOfWeek), JSON.stringify({day: dayOfWeek}), date, req.user.academyId]
         );
 
         // 복호화
@@ -1063,9 +1070,12 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
             AND s.status = 'active'
             AND s.deleted_at IS NULL
             AND ss.id IS NULL
-            AND JSON_CONTAINS(s.class_days, ?)
+            AND (
+                JSON_CONTAINS(s.class_days, CAST(? AS JSON))
+                OR JSON_CONTAINS(s.class_days, CAST(? AS JSON))
+            )
             ORDER BY s.name ASC`,
-            [req.user.academyId, classDateStr, classDateStr, scheduleId, req.user.academyId, JSON.stringify(dayOfWeek)]
+            [req.user.academyId, classDateStr, classDateStr, scheduleId, req.user.academyId, JSON.stringify(dayOfWeek), JSON.stringify({day: dayOfWeek})]
         );
 
         // 기존 학생 ID Set 생성
@@ -2280,7 +2290,10 @@ router.post('/fix-all', verifyToken, requireRole('owner'), async (req, res) => {
             AND a.attendance_status IS NULL
             AND (
                 cs.time_slot IN ('morning', 'afternoon')
-                OR NOT JSON_CONTAINS(COALESCE(s.class_days, '[]'), CAST(DAYOFWEEK(cs.class_date) - 1 AS CHAR))
+                OR (
+                    NOT JSON_CONTAINS(COALESCE(s.class_days, '[]'), CAST(DAYOFWEEK(cs.class_date) - 1 AS JSON))
+                    AND NOT JSON_CONTAINS(COALESCE(s.class_days, '[]'), JSON_OBJECT('day', DAYOFWEEK(cs.class_date) - 1))
+                )
             )
             ORDER BY s.name, cs.class_date
         `, [req.user.academyId]);

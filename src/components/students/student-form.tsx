@@ -25,7 +25,8 @@ import {
   STATUS_OPTIONS,
   WEEKDAY_OPTIONS,
 } from '@/lib/types/student';
-import { parseClassDays } from '@/lib/utils/student-helpers';
+import type { ClassDaySlot } from '@/lib/types/student';
+import { parseClassDaysWithSlots, extractDayNumbers, getTimeSlotForDay } from '@/lib/utils/student-helpers';
 
 // 학원비 설정 타입 (설정 페이지와 동일)
 interface TuitionByWeeklyCount {
@@ -112,7 +113,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
     grade: initialData?.grade as Grade | undefined,
     age: initialData?.age || undefined,
     admission_type: (initialData?.admission_type || 'regular') as AdmissionType,
-    class_days: initialData ? parseClassDays(initialData.class_days) : [],
+    class_days: initialData ? parseClassDaysWithSlots(initialData.class_days, initialData.time_slot || 'evening') : [],
     weekly_count: initialData?.weekly_count || 0,
     monthly_tuition: initialData ? parseFloat(initialData.monthly_tuition) : 0,
     discount_rate: initialData ? parseFloat(initialData.discount_rate) : 0,
@@ -243,9 +244,17 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
   // 수업요일 체크박스 핸들러 - 주 수업횟수 자동 계산 및 학원비 설정
   const handleClassDayToggle = (day: number) => {
     const current = formData.class_days;
-    const newDays = current.includes(day)
-      ? current.filter((d) => d !== day)
-      : [...current, day].sort((a, b) => a - b);
+    const currentDayNums = extractDayNumbers(current);
+    const defaultTimeSlot = formData.time_slot || 'evening';
+
+    let newDays: ClassDaySlot[];
+    if (currentDayNums.includes(day)) {
+      // 요일 제거
+      newDays = current.filter((d) => d.day !== day);
+    } else {
+      // 요일 추가 (기본 시간대 적용)
+      newDays = [...current, { day, timeSlot: defaultTimeSlot }].sort((a, b) => a.day - b.day);
+    }
 
     const newWeeklyCount = newDays.length;
 
@@ -259,6 +268,16 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
       class_days: newDays,
       weekly_count: newWeeklyCount,
       monthly_tuition: newTuition,
+    }));
+  };
+
+  // 특정 요일의 시간대 변경 핸들러
+  const handleDayTimeSlotChange = (day: number, timeSlot: 'morning' | 'afternoon' | 'evening') => {
+    setFormData((prev) => ({
+      ...prev,
+      class_days: prev.class_days.map((d) =>
+        d.day === day ? { ...d, timeSlot } : d
+      ),
     }));
   };
 
@@ -862,37 +881,68 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           <CardTitle>수업 정보</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* 수업요일 */}
+          {/* 수업요일 + 시간대 */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
               수업요일 <span className="text-muted-foreground text-xs">(선택하면 주 수업횟수가 자동 계산됩니다)</span>
             </label>
             <div className="flex flex-wrap gap-2">
-              {WEEKDAY_OPTIONS.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => handleClassDayToggle(option.value)}
-                  className={`px-4 py-2 rounded-lg border transition-colors ${
-                    formData.class_days.includes(option.value)
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-card text-foreground border-border hover:border-primary'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
+              {WEEKDAY_OPTIONS.map((option) => {
+                const isSelected = extractDayNumbers(formData.class_days).includes(option.value);
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleClassDayToggle(option.value)}
+                    className={`px-4 py-2 rounded-lg border transition-colors ${
+                      isSelected
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-card text-foreground border-border hover:border-primary'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
             </div>
+
+            {/* 선택된 요일별 시간대 설정 */}
+            {formData.class_days.length > 0 && (
+              <div className="mt-3 space-y-2">
+                <label className="block text-xs font-medium text-muted-foreground">
+                  요일별 시간대 설정
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {formData.class_days.map((slot) => {
+                    const dayLabel = WEEKDAY_OPTIONS.find(o => o.value === slot.day)?.label || '';
+                    return (
+                      <div key={slot.day} className="flex items-center gap-1 bg-muted rounded-lg px-3 py-1.5">
+                        <span className="text-sm font-medium min-w-[1.5rem]">{dayLabel}</span>
+                        <select
+                          value={slot.timeSlot}
+                          onChange={(e) => handleDayTimeSlotChange(slot.day, e.target.value as 'morning' | 'afternoon' | 'evening')}
+                          className="text-xs bg-background border border-border rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          <option value="morning">오전</option>
+                          <option value="afternoon">오후</option>
+                          <option value="evening">저녁</option>
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* 예약 변경 알림 (수정 모드에서만) */}
             {mode === 'edit' && initialData?.class_days_next && initialData?.class_days_effective_from && (
               <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
                 <p className="text-sm text-orange-700 dark:text-orange-400">
                   변경 예정: {(() => {
-                    const days = typeof initialData.class_days_next === 'string'
-                      ? JSON.parse(initialData.class_days_next as string)
-                      : initialData.class_days_next;
+                    const nextSlots = parseClassDaysWithSlots(initialData.class_days_next, initialData.time_slot || 'evening');
                     const dayMap: Record<number, string> = { 0: '일', 1: '월', 2: '화', 3: '수', 4: '목', 5: '금', 6: '토' };
-                    return Array.isArray(days) ? days.map((d: number) => dayMap[d] || '').join(', ') : '-';
+                    const timeMap: Record<string, string> = { morning: '오전', afternoon: '오후', evening: '저녁' };
+                    return nextSlots.map(s => `${dayMap[s.day] || ''}(${timeMap[s.timeSlot] || s.timeSlot})`).join(', ') || '-';
                   })()} ({initialData.class_days_effective_from?.slice(0, 7)}부터)
                 </p>
                 <p className="text-xs text-orange-600 dark:text-orange-500 mt-1">
@@ -902,10 +952,10 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
             )}
           </div>
 
-          {/* 수업 시간대 */}
+          {/* 기본 시간대 (새 요일 추가 시 기본값) */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              수업 시간대 <span className="text-muted-foreground text-xs">(스케줄 배정 시간대)</span>
+              기본 시간대 <span className="text-muted-foreground text-xs">(새 요일 추가 시 기본값)</span>
             </label>
             <div className="flex flex-wrap gap-2">
               {[

@@ -59,7 +59,10 @@ async function fixSchedules() {
             AND ss.id IS NULL
             AND (
                 cs.time_slot IN ('morning', 'afternoon')
-                OR NOT JSON_CONTAINS(s.class_days, CAST(DAYOFWEEK(cs.class_date) - 1 AS CHAR))
+                OR (
+                    NOT JSON_CONTAINS(COALESCE(s.class_days, '[]'), CAST(DAYOFWEEK(cs.class_date) - 1 AS JSON))
+                    AND NOT JSON_CONTAINS(COALESCE(s.class_days, '[]'), JSON_OBJECT('day', DAYOFWEEK(cs.class_date) - 1))
+                )
             )
             ORDER BY s.name, cs.class_date
         `);

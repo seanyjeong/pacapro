@@ -7,6 +7,22 @@ const cron = require('node-cron');
 const db = require('../config/database');
 const logger = require('../utils/logger');
 
+// ===== 요일별 시간대 유틸리티 (하위호환) =====
+function parseClassDaysWithSlots(classDays, defaultTimeSlot = 'evening') {
+    if (!classDays) return [];
+    let arr;
+    if (typeof classDays === 'string') {
+        try { arr = JSON.parse(classDays); } catch { return []; }
+    } else {
+        arr = classDays;
+    }
+    if (!Array.isArray(arr)) return [];
+    return arr.map(item => {
+        if (typeof item === 'number') return { day: item, timeSlot: defaultTimeSlot };
+        return { day: item.day, timeSlot: item.timeSlot || defaultTimeSlot };
+    });
+}
+
 /**
  * 수업일 변경 예정 반영
  */
@@ -17,7 +33,7 @@ async function applyScheduledClassDaysChanges() {
     try {
         // 변경 예정일이 오늘 이전인 학생들 조회
         const [studentsToUpdate] = await db.query(
-            `SELECT id, name, class_days, class_days_next, class_days_effective_from, student_type
+            `SELECT id, name, class_days, class_days_next, class_days_effective_from, student_type, time_slot
              FROM students
              WHERE class_days_next IS NOT NULL
                AND class_days_effective_from IS NOT NULL
@@ -36,9 +52,10 @@ async function applyScheduledClassDaysChanges() {
 
         for (const student of studentsToUpdate) {
             try {
-                const newClassDays = typeof student.class_days_next === 'string'
-                    ? JSON.parse(student.class_days_next)
-                    : student.class_days_next;
+                const newClassDays = parseClassDaysWithSlots(
+                    student.class_days_next,
+                    student.time_slot || 'evening'
+                );
                 const newWeeklyCount = newClassDays.length;
 
                 // 학원비 자동 계산

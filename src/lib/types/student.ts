@@ -20,6 +20,17 @@ export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn' | 't
 // 성별 (gender)
 export type Gender = 'male' | 'female';
 
+// ===== 요일별 시간대 타입 =====
+
+// 요일별 시간대 객체
+export interface ClassDaySlot {
+  day: number;  // 0-6 (일-토)
+  timeSlot: 'morning' | 'afternoon' | 'evening';
+}
+
+// class_days 가능한 타입 (하위호환: 숫자 배열 or 객체 배열 or JSON 문자열)
+export type ClassDaysValue = number[] | ClassDaySlot[] | string;
+
 // ===== 학생 인터페이스 =====
 
 // 체험 일정 타입
@@ -45,7 +56,7 @@ export interface Student {
   address: string | null;
   admission_type: AdmissionType; // regular, early, civil_service
   profile_image_url: string | null;
-  class_days: number[] | string; // JSON array 또는 string
+  class_days: ClassDaysValue; // 숫자 배열 or ClassDaySlot 배열 or JSON string
   weekly_count: number;
   monthly_tuition: string; // decimal -> string
   discount_rate: string; // decimal -> string
@@ -70,7 +81,7 @@ export interface Student {
   // 메모
   memo: string | null; // 학생 메모
   // 수업일 예약 변경
-  class_days_next: number[] | string | null; // 변경 예정 수업요일
+  class_days_next: ClassDaySlot[] | number[] | string | null; // 변경 예정 수업요일
   class_days_effective_from: string | null; // 변경 적용 시작일 (YYYY-MM-DD)
   // 상담일
   consultation_date: string | null; // 상담 완료일
@@ -92,7 +103,7 @@ export interface StudentFormData {
   age?: number; // 성인용
   address?: string;
   admission_type: AdmissionType;
-  class_days: number[]; // [1, 3, 5] = 월, 수, 금
+  class_days: ClassDaySlot[]; // [{day:1,timeSlot:"morning"}, ...]
   weekly_count: number;
   monthly_tuition: number;
   discount_rate?: number;
@@ -348,21 +359,28 @@ export const WEEKDAY_OPTIONS = [
 
 // ===== 유틸리티 함수 =====
 
-// class_days 파싱 (JSON string -> array)
-export function parseClassDays(classDays: number[] | string): number[] {
+// class_days 파싱 (JSON string/number[]/ClassDaySlot[] → number[])
+// 하위호환: 객체 배열이면 day 값만 추출
+export function parseClassDays(classDays: ClassDaysValue | null | undefined): number[] {
+  if (!classDays) return [];
   if (Array.isArray(classDays)) {
-    return classDays;
+    return classDays.map(item =>
+      typeof item === 'number' ? item : item.day
+    );
   }
   try {
     const parsed = JSON.parse(classDays);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((item: number | ClassDaySlot) =>
+      typeof item === 'number' ? item : item.day
+    );
   } catch {
     return [];
   }
 }
 
 // class_days를 한글로 변환
-export function formatClassDays(classDays: number[] | string): string {
+export function formatClassDays(classDays: ClassDaysValue | null | undefined): string {
   const days = parseClassDays(classDays);
   return days.map(d => WEEKDAY_MAP[d] || '').filter(Boolean).join(', ');
 }
@@ -467,10 +485,10 @@ export interface ClassDaysStudent {
   id: number;
   name: string;
   grade: Grade | null;
-  class_days: number[];
+  class_days: ClassDaysValue; // 숫자 배열 or ClassDaySlot 배열 or JSON string
   weekly_count: number;
   time_slot: 'morning' | 'afternoon' | 'evening' | null;
-  class_days_next: number[] | null;
+  class_days_next: ClassDaySlot[] | number[] | string | null;
   class_days_effective_from: string | null;
 }
 
@@ -482,7 +500,7 @@ export interface ClassDaysResponse {
 
 // 수업일 변경 요청
 export interface ClassDaysUpdateRequest {
-  class_days: number[];
+  class_days: ClassDaySlot[]; // [{day:1,timeSlot:"morning"}, ...]
   effective_from: string | null; // null이면 즉시 적용
 }
 
@@ -491,7 +509,7 @@ export interface ClassDaysBulkUpdateRequest {
   effective_from: string | null;
   students: Array<{
     id: number;
-    class_days: number[];
+    class_days: ClassDaySlot[];
   }>;
 }
 

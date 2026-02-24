@@ -6,22 +6,74 @@ const { encrypt, decrypt, encryptFields, decryptFields, decryptArrayFields, ENCR
 const { calculateDueDate } = require('../utils/dueDateCalculator');
 const logger = require('../utils/logger');
 
+// ===== 요일별 시간대 유틸리티 (하위호환) =====
+
+/**
+ * class_days를 ClassDaySlot 배열로 파싱 (하위호환)
+ * - 숫자 배열 [1,3,6] → [{day:1,timeSlot:default}, ...]
+ * - 객체 배열 [{day:1,timeSlot:"morning"}] → 그대로
+ * - JSON 문자열 → 파싱 후 처리
+ */
+function parseClassDaysWithSlots(classDays, defaultTimeSlot = 'evening') {
+    if (!classDays) return [];
+
+    let arr;
+    if (typeof classDays === 'string') {
+        try {
+            arr = JSON.parse(classDays);
+        } catch {
+            return [];
+        }
+    } else {
+        arr = classDays;
+    }
+
+    if (!Array.isArray(arr)) return [];
+
+    return arr.map(item => {
+        if (typeof item === 'number') {
+            return { day: item, timeSlot: defaultTimeSlot };
+        }
+        return { day: item.day, timeSlot: item.timeSlot || defaultTimeSlot };
+    });
+}
+
+/**
+ * ClassDaySlot 배열에서 day 숫자만 추출
+ * @example extractDayNumbers([{day:1,timeSlot:"morning"}]) => [1]
+ */
+function extractDayNumbers(slots) {
+    return slots.map(s => s.day);
+}
+
+/**
+ * 특정 요일의 시간대 조회
+ * @example getTimeSlotForDay(slots, 6, 'evening') => 'afternoon'
+ */
+function getTimeSlotForDay(slots, day, defaultTimeSlot = 'evening') {
+    const found = slots.find(s => s.day === day);
+    return found ? found.timeSlot : defaultTimeSlot;
+}
+
 /**
  * 학생을 해당 월의 스케줄에 자동 배정
  * @param {object} dbConn - 데이터베이스 연결
  * @param {number} studentId - 학생 ID
  * @param {number} academyId - 학원 ID
- * @param {array} classDays - 수업 요일 (예: [1, 3, 5] - 숫자 배열)
+ * @param {array} classDays - 수업 요일 (숫자 배열 [1,3,6] 또는 객체 배열 [{day:1,timeSlot:"morning"}])
  * @param {string} enrollmentDate - 등록일 (YYYY-MM-DD)
- * @param {string} defaultTimeSlot - 기본 시간대 ('morning' | 'afternoon' | 'evening')
+ * @param {string} defaultTimeSlot - 기본 시간대 (숫자 배열일 때 사용)
  */
 async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classDays, enrollmentDate, defaultTimeSlot = 'evening') {
     try {
-        if (!classDays || classDays.length === 0) {
+        // 하위호환: 어떤 포맷이든 ClassDaySlot 배열로 변환
+        const slots = parseClassDaysWithSlots(classDays, defaultTimeSlot);
+        if (slots.length === 0) {
             logger.info('No class days specified, skipping auto-assignment');
             return { assigned: 0, created: 0 };
         }
 
+        const dayNumbers = extractDayNumbers(slots);
         const enrollDate = new Date(enrollmentDate + 'T00:00:00');
         const year = enrollDate.getFullYear();
         const month = enrollDate.getMonth();
@@ -36,14 +88,16 @@ async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classD
             const currentDate = new Date(year, month, day);
             const dayOfWeek = currentDate.getDay();
 
-            if (classDays.includes(dayOfWeek)) {
+            if (dayNumbers.includes(dayOfWeek)) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                // 해당 요일의 시간대 조회
+                const timeSlot = getTimeSlotForDay(slots, dayOfWeek, defaultTimeSlot);
 
                 // 해당 날짜+시간대의 스케줄 조회 또는 생성
                 let [schedules] = await dbConn.query(
                     `SELECT id FROM class_schedules
                      WHERE academy_id = ? AND class_date = ? AND time_slot = ?`,
-                    [academyId, dateStr, defaultTimeSlot]
+                    [academyId, dateStr, timeSlot]
                 );
 
                 let scheduleId;
@@ -52,7 +106,7 @@ async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classD
                     const [result] = await dbConn.query(
                         `INSERT INTO class_schedules (academy_id, class_date, time_slot, attendance_taken)
                          VALUES (?, ?, ?, false)`,
-                        [academyId, dateStr, defaultTimeSlot]
+                        [academyId, dateStr, timeSlot]
                     );
                     scheduleId = result.insertId;
                     createdCount++;
@@ -93,6 +147,10 @@ async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classD
  */
 async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDays, newClassDays, defaultTimeSlot = 'evening') {
     try {
+        // 하위호환: 어떤 포맷이든 ClassDaySlot 배열로 변환
+        const newSlots = parseClassDaysWithSlots(newClassDays, defaultTimeSlot);
+        const newDayNumbers = extractDayNumbers(newSlots);
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayStr = today.toISOString().split('T')[0];
@@ -114,7 +172,7 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
 
         logger.info(`Removed ${deleteResult.affectedRows} future attendance records for student ${studentId}`);
 
-        // 2. 새 요일로 재배정 (오늘부터 월말까지)
+        // 2. 새 요일로 재배정 (오늘부터 월말까지) - 요일별 시간대 사용
         let assignedCount = 0;
         let createdCount = 0;
 
@@ -122,14 +180,16 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
             const currentDate = new Date(year, month, day);
             const dayOfWeek = currentDate.getDay();
 
-            if (newClassDays.includes(dayOfWeek)) {
+            if (newDayNumbers.includes(dayOfWeek)) {
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                // 해당 요일의 시간대 조회
+                const timeSlot = getTimeSlotForDay(newSlots, dayOfWeek, defaultTimeSlot);
 
                 // 해당 날짜+시간대의 스케줄 조회 또는 생성
                 let [schedules] = await dbConn.query(
                     `SELECT id FROM class_schedules
                      WHERE academy_id = ? AND class_date = ? AND time_slot = ?`,
-                    [academyId, dateStr, defaultTimeSlot]
+                    [academyId, dateStr, timeSlot]
                 );
 
                 let scheduleId;
@@ -137,7 +197,7 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
                     const [result] = await dbConn.query(
                         `INSERT INTO class_schedules (academy_id, class_date, time_slot, attendance_taken)
                          VALUES (?, ?, ?, false)`,
-                        [academyId, dateStr, defaultTimeSlot]
+                        [academyId, dateStr, timeSlot]
                     );
                     scheduleId = result.insertId;
                     createdCount++;
@@ -367,9 +427,9 @@ router.get('/class-days', verifyToken, checkPermission('class_days', 'view'), as
         const decryptedStudents = students.map(s => ({
             ...s,
             name: decrypt(s.name),
-            class_days: typeof s.class_days === 'string' ? JSON.parse(s.class_days) : (s.class_days || []),
+            class_days: parseClassDaysWithSlots(s.class_days, s.time_slot || 'evening'),
             class_days_next: s.class_days_next
-                ? (typeof s.class_days_next === 'string' ? JSON.parse(s.class_days_next) : s.class_days_next)
+                ? parseClassDaysWithSlots(s.class_days_next, s.time_slot || 'evening')
                 : null,
         }));
 
@@ -427,13 +487,14 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
                         : [];
                     const timeSlot = rows[0].time_slot || 'evening';
 
+                    const normalizedDays = parseClassDaysWithSlots(class_days, timeSlot);
                     await db.query(
                         `UPDATE students
                          SET class_days = ?, weekly_count = ?,
                              class_days_next = NULL, class_days_effective_from = NULL,
                              updated_at = NOW()
                          WHERE id = ? AND academy_id = ?`,
-                        [JSON.stringify(class_days), class_days.length, id, academyId]
+                        [JSON.stringify(normalizedDays), normalizedDays.length, id, academyId]
                     );
 
                     if (class_days.length > 0) {
@@ -446,12 +507,13 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
 
                     results.push({ id, mode: 'immediate', success: true });
                 } else {
+                    const normalizedNext = parseClassDaysWithSlots(class_days, timeSlot);
                     await db.query(
                         `UPDATE students
                          SET class_days_next = ?, class_days_effective_from = ?,
                              updated_at = NOW()
                          WHERE id = ? AND academy_id = ?`,
-                        [JSON.stringify(class_days), effective_from, id, academyId]
+                        [JSON.stringify(normalizedNext), effective_from, id, academyId]
                     );
 
                     results.push({ id, mode: 'scheduled', success: true });
@@ -539,6 +601,7 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
                 }
             }
 
+            const normalizedClassDays = parseClassDaysWithSlots(class_days, timeSlot);
             await db.query(
                 `UPDATE students
                  SET class_days = ?, weekly_count = ?, ${newTuition !== null ? 'monthly_tuition = ?,' : ''}
@@ -546,15 +609,15 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
                      updated_at = NOW()
                  WHERE id = ?`,
                 newTuition !== null
-                    ? [JSON.stringify(class_days), weeklyCount, newTuition, studentId]
-                    : [JSON.stringify(class_days), weeklyCount, studentId]
+                    ? [JSON.stringify(normalizedClassDays), weeklyCount, newTuition, studentId]
+                    : [JSON.stringify(normalizedClassDays), weeklyCount, studentId]
             );
 
             let reassignResult = null;
-            if (class_days.length > 0) {
+            if (normalizedClassDays.length > 0) {
                 try {
                     reassignResult = await reassignStudentSchedules(
-                        db, studentId, req.user.academyId, oldClassDays, class_days, timeSlot
+                        db, studentId, req.user.academyId, oldClassDays, normalizedClassDays, timeSlot
                     );
                 } catch (reassignError) {
                     logger.error('Reassign failed:', reassignError);
@@ -568,12 +631,13 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
                 reassignResult
             });
         } else {
+            const normalizedNext = parseClassDaysWithSlots(class_days, timeSlot);
             await db.query(
                 `UPDATE students
                  SET class_days_next = ?, class_days_effective_from = ?,
                      updated_at = NOW()
                  WHERE id = ?`,
-                [JSON.stringify(class_days), effective_from, studentId]
+                [JSON.stringify(normalizedNext), effective_from, studentId]
             );
 
             res.json({
@@ -911,7 +975,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 grade || null,
                 age || null,
                 admission_type || 'regular',
-                JSON.stringify(class_days || []),
+                JSON.stringify(parseClassDaysWithSlots(class_days || [], time_slot || 'evening')),
                 weekly_count || 0,
                 is_trial ? 0 : (monthly_tuition || 0),  // 체험생은 학원비 0
                 discount_rate || 0,
@@ -959,7 +1023,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
 
             // 수업 요일 계산 (등록일부터 말일까지 수업일수)
             let classDaysCount = 0;
-            const parsedClassDays = class_days || [];
+            const parsedClassDays = extractDayNumbers(parseClassDaysWithSlots(class_days || [], time_slot || 'evening'));
             for (let d = enrollDay; d <= lastDayOfMonth; d++) {
                 const checkDate = new Date(year, month - 1, d);
                 const dayOfWeek = checkDate.getDay();
@@ -1093,6 +1157,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             }
         } else if (!is_trial) {
             // 정식 학생: 기존 로직 (등록일 이후 해당 월의 수업에 배정)
+            // class_days가 숫자 배열이든 객체 배열이든 autoAssign이 내부에서 처리
             const parsedClassDays = class_days || [];
             if (parsedClassDays.length > 0) {
                 try {
@@ -1102,7 +1167,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                         req.user.academyId,
                         parsedClassDays,
                         enrollment_date || new Date().toISOString().split('T')[0],
-                        time_slot || 'evening'  // 선택한 시간대 (기본: 저녁)
+                        time_slot || 'evening'
                     );
                 } catch (assignError) {
                     logger.error('Auto-assign failed:', assignError);
@@ -1154,11 +1219,13 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         // 기존 class_days, status, time_slot 파싱
         const oldStatus = students[0].status;
         const oldTimeSlot = students[0].time_slot || 'evening';
-        const oldClassDays = students[0].class_days
+        const oldClassDaysRaw = students[0].class_days
             ? (typeof students[0].class_days === 'string'
                 ? JSON.parse(students[0].class_days)
                 : students[0].class_days)
             : [];
+        // 하위호환: 비교용 day 숫자 배열 추출
+        const oldDayNumbers = extractDayNumbers(parseClassDaysWithSlots(oldClassDaysRaw, oldTimeSlot));
 
         const {
             student_number,
@@ -1290,7 +1357,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         }
         if (class_days !== undefined) {
             updates.push('class_days = ?');
-            params.push(JSON.stringify(class_days));
+            params.push(JSON.stringify(parseClassDaysWithSlots(class_days, time_slot || oldTimeSlot || 'evening')));
             // 직접 수정 시 예약 변경 초기화
             updates.push('class_days_next = NULL');
             updates.push('class_days_effective_from = NULL');
@@ -1401,20 +1468,31 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         let reassignResult = null;
         if (class_days !== undefined) {
             const newClassDays = class_days || [];
-            // 요일이 실제로 변경되었는지 확인
-            const oldSet = new Set(oldClassDays);
-            const newSet = new Set(newClassDays);
-            const isChanged = oldClassDays.length !== newClassDays.length ||
-                              oldClassDays.some(d => !newSet.has(d)) ||
-                              newClassDays.some(d => !oldSet.has(d));
+            // 하위호환: 객체/숫자 배열 모두 day 숫자로 비교
+            const newSlots = parseClassDaysWithSlots(newClassDays, currentTimeSlot);
+            const newDayNumbers = extractDayNumbers(newSlots);
 
-            if (isChanged && newClassDays.length > 0) {
+            // 요일 또는 시간대가 변경되었는지 확인
+            const oldSlots = parseClassDaysWithSlots(oldClassDaysRaw, oldTimeSlot);
+            const oldSet = new Set(oldDayNumbers);
+            const newSet = new Set(newDayNumbers);
+            const daysChanged = oldDayNumbers.length !== newDayNumbers.length ||
+                              oldDayNumbers.some(d => !newSet.has(d)) ||
+                              newDayNumbers.some(d => !oldSet.has(d));
+
+            // 시간대 변경도 감지 (같은 요일이라도 시간대가 다르면 재배정)
+            const timeSlotsChanged = !daysChanged && newSlots.some(ns => {
+                const os = oldSlots.find(o => o.day === ns.day);
+                return os && os.timeSlot !== ns.timeSlot;
+            });
+
+            if ((daysChanged || timeSlotsChanged) && newSlots.length > 0) {
                 try {
                     reassignResult = await reassignStudentSchedules(
                         db,
                         studentId,
                         req.user.academyId,
-                        oldClassDays,
+                        oldClassDaysRaw,
                         newClassDays,
                         currentTimeSlot
                     );
@@ -1425,23 +1503,32 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
-        // time_slot만 변경되었으면 스케줄 재배정 (class_days 변경 없이)
+        // time_slot(기본 시간대)만 변경되었으면 스케줄 재배정 판단
+        // - class_days가 이미 객체 배열(per-day timeslot)이면 재배정 불필요 (각 요일에 이미 timeSlot 지정됨)
+        // - class_days가 숫자 배열(레거시)이면 기본 시간대 변경 시 재배정 필요
         let timeSlotReassignResult = null;
         if (time_slot !== undefined && time_slot !== oldTimeSlot && class_days === undefined) {
-            const currentClassDays = updatedStudents[0].class_days
+            const currentClassDaysRaw = updatedStudents[0].class_days
                 ? (typeof updatedStudents[0].class_days === 'string'
                     ? JSON.parse(updatedStudents[0].class_days)
                     : updatedStudents[0].class_days)
                 : [];
 
-            if (currentClassDays.length > 0) {
+            // 이미 객체 배열이면 각 요일에 timeSlot이 지정되어 있으므로 재배정 생략
+            const isAlreadyObjectArray = Array.isArray(currentClassDaysRaw)
+                && currentClassDaysRaw.length > 0
+                && typeof currentClassDaysRaw[0] === 'object'
+                && currentClassDaysRaw[0].day !== undefined;
+
+            if (currentClassDaysRaw.length > 0 && !isAlreadyObjectArray) {
                 try {
+                    // 레거시 숫자 배열: 새 기본 시간대로 재배정
                     timeSlotReassignResult = await reassignStudentSchedules(
                         db,
                         studentId,
                         req.user.academyId,
-                        currentClassDays,
-                        currentClassDays,
+                        currentClassDaysRaw,
+                        currentClassDaysRaw,
                         time_slot
                     );
                 } catch (reassignError) {
@@ -1536,6 +1623,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
 
         // pending → active 전환 시 첫 달 학원비 자동 생성
         let firstPaymentFromPending = null;
+            logger.info(`[Debug] pending->active check: status=${status}, oldStatus=${oldStatus}, monthly_tuition=${monthly_tuition} (type: ${typeof monthly_tuition})`);
         if (status === 'active' && (oldStatus === 'pending' || oldStatus === 'trial') && monthly_tuition && monthly_tuition > 0) {
             try {
                 const enrollDate = new Date(enrollment_date || new Date().toISOString().split('T')[0]);
@@ -1560,26 +1648,26 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                     const enrollDay = enrollDate.getDate();
                     const remainingDays = lastDayOfMonth - enrollDay + 1;
 
-                    const newClassDays = class_days ? (typeof class_days === 'string' ? JSON.parse(class_days) : class_days) : [];
+                    const newDayNums = extractDayNumbers(parseClassDaysWithSlots(class_days || [], currentTimeSlot));
                     let classCountInPeriod = 0;
                     for (let d = enrollDay; d <= lastDayOfMonth; d++) {
                         const date = new Date(year, month - 1, d);
                         const dayOfWeek = date.getDay();
-                        if (newClassDays.includes(dayOfWeek)) classCountInPeriod++;
+                        if (newDayNums.includes(dayOfWeek)) classCountInPeriod++;
                     }
                     const totalClassDaysInMonth = (() => {
                         let count = 0;
                         for (let d = 1; d <= lastDayOfMonth; d++) {
                             const date = new Date(year, month - 1, d);
-                            if (newClassDays.includes(date.getDay())) count++;
+                            if (newDayNums.includes(date.getDay())) count++;
                         }
                         return count;
                     })();
 
                     const proratedAmount = totalClassDaysInMonth > 0
-                        ? Math.round(monthly_tuition * classCountInPeriod / totalClassDaysInMonth)
+                        ? Math.floor(monthly_tuition * classCountInPeriod / totalClassDaysInMonth / 100) * 100
                         : monthly_tuition;
-                    const discountAmt = discount_rate ? Math.round(proratedAmount * discount_rate / 100) : 0;
+                    const discountAmt = discount_rate ? Math.floor(proratedAmount * discount_rate / 100 / 100) * 100 : 0;
                     const finalAmount = proratedAmount - discountAmt;
                     const dueDate = new Date(year, month - 1, Math.min(studentDueDay, lastDayOfMonth));
                     const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
@@ -1587,7 +1675,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
 
                     await db.query(
                         `INSERT INTO student_payments (
-                            student_id, academy_id, year_month, payment_type, target_year, target_month,
+                            student_id, academy_id, \`year_month\`, payment_type, target_year, target_month,
                             base_amount, discount_amount, additional_amount, final_amount,
                             is_prorated, proration_details, due_date, payment_status, description
                         ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, 0, ?, ?, ?, ?, 'pending', ?)`,
@@ -2705,12 +2793,15 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
                 const lastDayOfMonth = new Date(year, month, 0).getDate();
                 const remainingDays = lastDayOfMonth - currentDay + 1;
 
-                // 수업 요일 기준 일할 계산 (숫자 배열 또는 한글 배열 처리)
+                // 수업 요일 기준 일할 계산 (숫자/객체/한글 배열 처리)
                 let classDayNums = [];
                 if (Array.isArray(classDays) && classDays.length > 0) {
                     if (typeof classDays[0] === 'number') {
-                        // 이미 숫자 배열 [1, 5] (월=1, 금=5)
+                        // 숫자 배열 [1, 5] (월=1, 금=5)
                         classDayNums = classDays;
+                    } else if (typeof classDays[0] === 'object' && classDays[0].day !== undefined) {
+                        // 객체 배열 [{day:1,timeSlot:"morning"}]
+                        classDayNums = classDays.map(d => d.day);
                     } else {
                         // 한글 요일 배열 ['월', '금']
                         const dayNameToNum = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 0 };
@@ -2865,25 +2956,27 @@ router.get('/:id/rest-credits', verifyToken, async (req, res) => {
  * 천원 단위 절삭
  */
 function truncateToThousands(amount) {
-    return Math.floor(amount / 1000) * 1000;
+    return Math.floor(amount / 100) * 100;
 }
 
 /**
  * 기간 내 수업 횟수 계산
  * @param {string} startDate - 시작일 (YYYY-MM-DD)
  * @param {string} endDate - 종료일 (YYYY-MM-DD)
- * @param {array} classDays - 수업 요일 배열 (0=일, 1=월, ..., 6=토)
+ * @param {array} classDays - 수업 요일 배열 (숫자 배열 or 객체 배열)
  * @returns {object} { count: 수업횟수, dates: 수업일 배열 }
  */
 function countClassDaysInPeriod(startDate, endDate, classDays) {
     const start = new Date(startDate + 'T00:00:00');
     const end = new Date(endDate + 'T00:00:00');
     const classDates = [];
+    // 하위호환: 객체 배열이면 day 숫자만 추출
+    const dayNumbers = extractDayNumbers(parseClassDaysWithSlots(classDays));
 
     const current = new Date(start);
     while (current <= end) {
         const dayOfWeek = current.getDay();
-        if (classDays.includes(dayOfWeek)) {
+        if (dayNumbers.includes(dayOfWeek)) {
             classDates.push(new Date(current));
         }
         current.setDate(current.getDate() + 1);
@@ -3370,4 +3463,115 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
     }
 });
 
+
+
+/**
+ * GET /paca/students/:id/attendance
+ * Get student monthly attendance records
+ * Query: year_month (YYYY-MM)
+ */
+router.get('/:id/attendance', verifyToken, async (req, res) => {
+    try {
+        const studentId = parseInt(req.params.id);
+        const { year_month } = req.query;
+        const academyId = req.user.academyId;
+
+        if (!year_month || !/^\d{4}-\d{2}$/.test(year_month)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: 'year_month is required (YYYY-MM format)'
+            });
+        }
+
+        const [year, month] = year_month.split('-');
+        const startDate = `${year}-${month}-01`;
+        const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+        const endDate = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+
+        // Verify student belongs to this academy + get enrollment_date
+        const [studentCheck] = await db.query(
+            'SELECT id, enrollment_date FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            [studentId, academyId]
+        );
+        if (studentCheck.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: 'Student not found'
+            });
+        }
+
+        // Filter out pre-enrollment records
+        const enrollmentDate = studentCheck[0].enrollment_date;
+        const enrollDateStr = enrollmentDate ? new Date(enrollmentDate).toISOString().split('T')[0] : null;
+        const effectiveStartDate = enrollDateStr && enrollDateStr > startDate ? enrollDateStr : startDate;
+
+        // Get daily attendance records
+        const [records] = await db.query(
+            `SELECT
+                cs.class_date as date,
+                cs.time_slot,
+                a.attendance_status,
+                a.is_makeup,
+                a.notes
+            FROM attendance a
+            JOIN class_schedules cs ON a.class_schedule_id = cs.id
+            WHERE a.student_id = ?
+              AND cs.class_date >= ?
+              AND cs.class_date <= ?
+              AND cs.academy_id = ?
+            ORDER BY cs.class_date, FIELD(cs.time_slot, 'morning', 'afternoon', 'evening')`,
+            [studentId, effectiveStartDate, endDate, academyId]
+        );
+
+        // Calculate summary
+        const summary = {
+            total: records.length,
+            present: 0,
+            absent: 0,
+            late: 0,
+            excused: 0,
+            makeup: 0
+        };
+
+        records.forEach(r => {
+            if (r.attendance_status === 'present') summary.present++;
+            else if (r.attendance_status === 'absent') summary.absent++;
+            else if (r.attendance_status === 'late') summary.late++;
+            else if (r.attendance_status === 'excused') summary.excused++;
+            if (r.is_makeup) summary.makeup++;
+        });
+
+        summary.attendance_rate = summary.total > 0
+            ? parseFloat(((summary.present / summary.total) * 100).toFixed(1))
+            : 0;
+
+        // Format dates
+        const formattedRecords = records.map(r => ({
+            date: r.date instanceof Date
+                ? r.date.toISOString().split('T')[0]
+                : String(r.date).split('T')[0],
+            time_slot: r.time_slot,
+            attendance_status: r.attendance_status,
+            is_makeup: r.is_makeup ? true : false,
+            notes: r.notes || null
+        }));
+
+        res.json({
+            student_id: studentId,
+            year_month,
+            summary,
+            records: formattedRecords
+        });
+
+    } catch (error) {
+        logger.error('Error fetching student attendance:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: 'Failed to fetch student attendance'
+        });
+    }
+});
+
 module.exports = router;
+
+

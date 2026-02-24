@@ -28,7 +28,7 @@ interface StudentPaymentsProps {
   studentName?: string;
   monthlyTuition?: number;
   weeklyCount?: number;
-  classDays?: number[] | string;
+  classDays?: number[] | string | import('@/lib/types/student').ClassDaySlot[];
 }
 
 // 크레딧 타입별 배지 색상

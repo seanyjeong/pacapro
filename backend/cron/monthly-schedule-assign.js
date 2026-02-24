@@ -16,10 +16,42 @@ const db = require('../config/database');
 
 const DEFAULT_TIME_SLOT = 'evening';
 
+// ===== 요일별 시간대 유틸리티 (하위호환) =====
+
+function parseClassDaysWithSlots(classDays, defaultTimeSlot = DEFAULT_TIME_SLOT) {
+    if (!classDays) return [];
+    let arr;
+    if (typeof classDays === 'string') {
+        try { arr = JSON.parse(classDays); } catch { return []; }
+    } else {
+        arr = classDays;
+    }
+    if (!Array.isArray(arr)) return [];
+    return arr.map(item => {
+        if (typeof item === 'number') return { day: item, timeSlot: defaultTimeSlot };
+        return { day: item.day, timeSlot: item.timeSlot || defaultTimeSlot };
+    });
+}
+
+function extractDayNumbers(slots) {
+    return slots.map(s => s.day);
+}
+
+function getTimeSlotForDay(slots, day, defaultTimeSlot = DEFAULT_TIME_SLOT) {
+    const found = slots.find(s => s.day === day);
+    return found ? found.timeSlot : defaultTimeSlot;
+}
+
 /**
  * 특정 학생을 해당 월에 배정
+ * classDays: 숫자 배열 [1,3,6] 또는 객체 배열 [{day:1,timeSlot:"morning"}]
+ * defaultTimeSlot: 숫자 배열일 때 사용할 기본 시간대
  */
-async function assignStudentToMonth(dbConn, studentId, academyId, classDays, year, month, timeSlot = DEFAULT_TIME_SLOT) {
+async function assignStudentToMonth(dbConn, studentId, academyId, classDays, year, month, defaultTimeSlot = DEFAULT_TIME_SLOT) {
+    const slots = parseClassDaysWithSlots(classDays, defaultTimeSlot);
+    if (slots.length === 0) return { assigned: 0, created: 0 };
+
+    const dayNumbers = extractDayNumbers(slots);
     const lastDay = new Date(year, month, 0).getDate(); // month는 1-12
 
     let assignedCount = 0;
@@ -29,8 +61,10 @@ async function assignStudentToMonth(dbConn, studentId, academyId, classDays, yea
         const currentDate = new Date(year, month - 1, day);
         const dayOfWeek = currentDate.getDay();
 
-        if (classDays.includes(dayOfWeek)) {
+        if (dayNumbers.includes(dayOfWeek)) {
             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            // 해당 요일의 시간대 조회
+            const timeSlot = getTimeSlotForDay(slots, dayOfWeek, defaultTimeSlot);
 
             // 해당 날짜+시간대의 스케줄 조회 또는 생성
             let [schedules] = await dbConn.query(
@@ -118,9 +152,9 @@ async function runMonthlyAssignment() {
         for (const academy of academies) {
             const academyId = academy.academy_id;
 
-            // 해당 학원의 활성 학생 조회 (class_days가 있는 학생만)
+            // 해당 학원의 활성 학생 조회 (class_days가 있는 학생만, time_slot 포함)
             const [students] = await db.query(
-                `SELECT id, name, class_days
+                `SELECT id, name, class_days, time_slot
                  FROM students
                  WHERE academy_id = ?
                  AND status = 'active'
@@ -147,7 +181,7 @@ async function runMonthlyAssignment() {
                         classDays,
                         year,
                         month,
-                        DEFAULT_TIME_SLOT
+                        student.time_slot || DEFAULT_TIME_SLOT
                     );
 
                     totalStudents++;

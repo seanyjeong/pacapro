@@ -1281,10 +1281,13 @@ router.post('/send-unpaid-today-auto', verifyToken, async (req, res) => {
                     AND p.year_month = ?
                     AND s.status = 'active'
                     AND s.deleted_at IS NULL
-                    AND JSON_CONTAINS(COALESCE(s.class_days, '[]'), ?)
+                    AND (
+                        JSON_CONTAINS(COALESCE(s.class_days, '[]'), CAST(? AS JSON))
+                        OR JSON_CONTAINS(COALESCE(s.class_days, '[]'), CAST(? AS JSON))
+                    )
                     AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)
                     ORDER BY s.name ASC`,
-                    [academyId, yearMonth, JSON.stringify(dayOfWeek)]
+                    [academyId, yearMonth, JSON.stringify(dayOfWeek), JSON.stringify({day: dayOfWeek})]
                 );
 
                 // 복호화
@@ -2617,10 +2620,13 @@ router.post('/send-unpaid-today-auto-sens', async (req, res) => {
                        AND p.payment_status IN ('pending', 'partial')
                        AND p.final_amount > 0
                        AND p.year_month = ?
-                       AND JSON_CONTAINS(COALESCE(s.class_days, '[]'), ?)
+                       AND (
+                           JSON_CONTAINS(COALESCE(s.class_days, '[]'), CAST(? AS JSON))
+                           OR JSON_CONTAINS(COALESCE(s.class_days, '[]'), CAST(? AS JSON))
+                       )
                        AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)
                      ORDER BY s.name`,
-                    [setting.academy_id, yearMonth, JSON.stringify(dayOfWeek)]
+                    [setting.academy_id, yearMonth, JSON.stringify(dayOfWeek), JSON.stringify({day: dayOfWeek})]
                 );
 
                 // 복호화 + 방어적 필터링 (payment_id 필수)

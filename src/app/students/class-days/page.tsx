@@ -15,7 +15,8 @@ import {
 import { Loader2, Save, Calendar, X, AlertCircle, Filter } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
 import { WEEKDAY_OPTIONS, WEEKDAY_MAP, formatClassDays } from '@/lib/types/student';
-import type { ClassDaysStudent } from '@/lib/types/student';
+import type { ClassDaysStudent, ClassDaySlot } from '@/lib/types/student';
+import { parseClassDaysWithSlots, extractDayNumbers, formatClassDaysWithSlots } from '@/lib/utils/student-helpers';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -43,7 +44,7 @@ function getEffectiveMonthOptions() {
 
 // 학생별 수정 상태
 interface StudentEdit {
-  class_days: number[];
+  class_days: ClassDaySlot[];
   changed: boolean;
 }
 
@@ -100,22 +101,65 @@ export default function ClassDaysPage() {
     if (!student) return;
 
     const currentEdit = edits.get(studentId);
-    const currentDays = currentEdit ? currentEdit.class_days : [...student.class_days];
+    const defaultTimeSlot = student.time_slot || 'evening';
+    const currentSlots = currentEdit
+      ? currentEdit.class_days
+      : parseClassDaysWithSlots(student.class_days, defaultTimeSlot);
+    const currentDayNums = extractDayNumbers(currentSlots);
 
-    const newDays = currentDays.includes(dayValue)
-      ? currentDays.filter(d => d !== dayValue)
-      : [...currentDays, dayValue].sort((a, b) => a - b);
+    let newSlots: ClassDaySlot[];
+    if (currentDayNums.includes(dayValue)) {
+      newSlots = currentSlots.filter(s => s.day !== dayValue);
+    } else {
+      newSlots = [...currentSlots, { day: dayValue, timeSlot: defaultTimeSlot }].sort((a, b) => a.day - b.day);
+    }
 
     // 원래 값과 비교하여 변경 여부 판단
-    const originalDays = new Set(student.class_days);
-    const newDaysSet = new Set(newDays);
-    const changed = originalDays.size !== newDaysSet.size ||
-      [...originalDays].some(d => !newDaysSet.has(d));
+    const originalSlots = parseClassDaysWithSlots(student.class_days, defaultTimeSlot);
+    const originalDayNums = new Set(extractDayNumbers(originalSlots));
+    const newDayNums = new Set(extractDayNumbers(newSlots));
+    const daysChanged = originalDayNums.size !== newDayNums.size ||
+      [...originalDayNums].some(d => !newDayNums.has(d));
+    const timeSlotsChanged = !daysChanged && newSlots.some(ns => {
+      const os = originalSlots.find(o => o.day === ns.day);
+      return os && os.timeSlot !== ns.timeSlot;
+    });
+
+    setEdits(prev => {
+      const next = new Map(prev);
+      if (daysChanged || timeSlotsChanged) {
+        next.set(studentId, { class_days: newSlots, changed: true });
+      } else {
+        next.delete(studentId);
+      }
+      return next;
+    });
+  };
+
+  // 요일별 시간대 변경
+  const changeDayTimeSlot = (studentId: number, dayValue: number, timeSlot: 'morning' | 'afternoon' | 'evening') => {
+    const student = students.find(s => s.id === studentId);
+    if (!student) return;
+
+    const currentEdit = edits.get(studentId);
+    const defaultTimeSlot = student.time_slot || 'evening';
+    const currentSlots = currentEdit
+      ? currentEdit.class_days
+      : parseClassDaysWithSlots(student.class_days, defaultTimeSlot);
+
+    const newSlots = currentSlots.map(s => s.day === dayValue ? { ...s, timeSlot } : s);
+
+    // 원래 값과 비교
+    const originalSlots = parseClassDaysWithSlots(student.class_days, defaultTimeSlot);
+    const changed = newSlots.some(ns => {
+      const os = originalSlots.find(o => o.day === ns.day);
+      return !os || os.timeSlot !== ns.timeSlot;
+    }) || newSlots.length !== originalSlots.length;
 
     setEdits(prev => {
       const next = new Map(prev);
       if (changed) {
-        next.set(studentId, { class_days: newDays, changed: true });
+        next.set(studentId, { class_days: newSlots, changed: true });
       } else {
         next.delete(studentId);
       }
@@ -325,7 +369,12 @@ export default function ClassDaysPage() {
               <tbody>
                 {filteredStudents.map(student => {
                   const edit = edits.get(student.id);
-                  const currentDays = edit ? edit.class_days : student.class_days;
+                  const defaultTS = student.time_slot || 'evening';
+                  const currentSlots = edit
+                    ? edit.class_days
+                    : parseClassDaysWithSlots(student.class_days, defaultTS);
+                  const currentDayNums = extractDayNumbers(currentSlots);
+                  const originalDayNums = extractDayNumbers(parseClassDaysWithSlots(student.class_days, defaultTS));
                   const hasChange = edit?.changed;
                   const hasScheduled = student.class_days_next !== null;
 
@@ -351,48 +400,68 @@ export default function ClassDaysPage() {
                       </td>
                       <td className="p-3">
                         <span className="text-sm">
-                          {formatClassDays(student.class_days)} (주{student.weekly_count}회)
+                          {formatClassDaysWithSlots(student.class_days, defaultTS)} (주{student.weekly_count}회)
                         </span>
                       </td>
                       <td className="p-3">
-                        <div className="flex items-center justify-center gap-1">
-                          {WEEKDAY_OPTIONS.map(opt => {
-                            const isActive = currentDays.includes(opt.value);
-                            const wasOriginal = student.class_days.includes(opt.value);
-                            const isChanged = isActive !== wasOriginal;
+                        <div className="flex flex-col gap-1">
+                          <div className="flex items-center justify-center gap-1">
+                            {WEEKDAY_OPTIONS.map(opt => {
+                              const isActive = currentDayNums.includes(opt.value);
+                              const wasOriginal = originalDayNums.includes(opt.value);
+                              const isChanged = isActive !== wasOriginal;
 
-                            return (
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={() => toggleDay(student.id, opt.value)}
+                                  className={cn(
+                                    'w-8 h-8 rounded-md text-xs font-medium transition-all',
+                                    'border',
+                                    isActive
+                                      ? 'bg-primary text-primary-foreground border-primary'
+                                      : 'bg-background text-muted-foreground border-input hover:border-primary/50',
+                                    isChanged && isActive && 'ring-2 ring-blue-400',
+                                    isChanged && !isActive && 'ring-2 ring-red-300 border-red-300',
+                                  )}
+                                >
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                            {hasChange && (
                               <button
-                                key={opt.value}
-                                onClick={() => toggleDay(student.id, opt.value)}
-                                className={cn(
-                                  'w-8 h-8 rounded-md text-xs font-medium transition-all',
-                                  'border',
-                                  isActive
-                                    ? 'bg-primary text-primary-foreground border-primary'
-                                    : 'bg-background text-muted-foreground border-input hover:border-primary/50',
-                                  isChanged && isActive && 'ring-2 ring-blue-400',
-                                  isChanged && !isActive && 'ring-2 ring-red-300 border-red-300',
-                                )}
+                                onClick={() => {
+                                  setEdits(prev => {
+                                    const next = new Map(prev);
+                                    next.delete(student.id);
+                                    return next;
+                                  });
+                                }}
+                                className="ml-1 text-muted-foreground hover:text-foreground"
+                                title="변경 취소"
                               >
-                                {opt.label}
+                                <X className="w-4 h-4" />
                               </button>
-                            );
-                          })}
-                          {hasChange && (
-                            <button
-                              onClick={() => {
-                                setEdits(prev => {
-                                  const next = new Map(prev);
-                                  next.delete(student.id);
-                                  return next;
-                                });
-                              }}
-                              className="ml-1 text-muted-foreground hover:text-foreground"
-                              title="변경 취소"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
+                            )}
+                          </div>
+                          {/* 선택된 요일별 시간대 선택 */}
+                          {currentSlots.length > 0 && (
+                            <div className="flex flex-wrap justify-center gap-1 mt-1">
+                              {currentSlots.map(slot => (
+                                <select
+                                  key={slot.day}
+                                  value={slot.timeSlot}
+                                  onChange={(e) => changeDayTimeSlot(student.id, slot.day, e.target.value as 'morning' | 'afternoon' | 'evening')}
+                                  className="text-[10px] bg-background border border-input rounded px-1 py-0.5"
+                                  title={`${WEEKDAY_MAP[slot.day]} 시간대`}
+                                >
+                                  <option value="morning">{WEEKDAY_MAP[slot.day]}오전</option>
+                                  <option value="afternoon">{WEEKDAY_MAP[slot.day]}오후</option>
+                                  <option value="evening">{WEEKDAY_MAP[slot.day]}저녁</option>
+                                </select>
+                              ))}
+                            </div>
                           )}
                         </div>
                       </td>
@@ -401,7 +470,7 @@ export default function ClassDaysPage() {
                           <div className="flex items-center gap-2">
                             <div className="text-sm">
                               <Badge variant="outline" className="text-orange-600 border-orange-300">
-                                {formatClassDays(student.class_days_next!)}
+                                {formatClassDaysWithSlots(student.class_days_next!, defaultTS)}
                               </Badge>
                               <span className="ml-1 text-xs text-muted-foreground">
                                 ({student.class_days_effective_from?.slice(0, 7)}~)
@@ -417,7 +486,7 @@ export default function ClassDaysPage() {
                           </div>
                         ) : hasChange ? (
                           <Badge variant="secondary" className="text-blue-600">
-                            {formatClassDays(currentDays)} (주{currentDays.length}회)
+                            {formatClassDaysWithSlots(currentSlots)} (주{currentSlots.length}회)
                           </Badge>
                         ) : (
                           <span className="text-sm text-muted-foreground">-</span>
