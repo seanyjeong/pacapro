@@ -75,6 +75,17 @@ async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classD
 
         const dayNumbers = extractDayNumbers(slots);
         const enrollDate = new Date(enrollmentDate + 'T00:00:00');
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+
+        // 등록일이 미래 월이면 스케줄 생성 생략 (해당 월에 크론이 자동 생성)
+        if (enrollDate.getFullYear() > currentYear ||
+            (enrollDate.getFullYear() === currentYear && enrollDate.getMonth() > currentMonth)) {
+            logger.info(`Student ${studentId}: enrollment_date ${enrollmentDate} is future month, skipping auto-assign (cron will handle)`);
+            return { assigned: 0, created: 0 };
+        }
+
         const year = enrollDate.getFullYear();
         const month = enrollDate.getMonth();
         const enrollDay = enrollDate.getDate();
