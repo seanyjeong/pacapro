@@ -5,6 +5,7 @@
  */
 
 require('dotenv').config();
+const path = require('path');
 
 // Logger 초기화
 const logger = require('./utils/logger');
@@ -196,61 +197,42 @@ app.get('/paca', (req, res) => {
     });
 });
 
-// Import Routes
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const studentRoutes = require('./routes/students');
-const instructorRoutes = require('./routes/instructors');
-const paymentRoutes = require('./routes/payments');
-const salaryRoutes = require('./routes/salaries');
-const seasonRoutes = require('./routes/seasons');
-const scheduleRoutes = require('./routes/schedules');
-const settingRoutes = require('./routes/settings');
-const performanceRoutes = require('./routes/performance');
-const expenseRoutes = require('./routes/expenses');
-const incomeRoutes = require('./routes/incomes');
-const reportRoutes = require('./routes/reports');
-const exportRoutes = require('./routes/exports');
-const staffRoutes = require('./routes/staff');
-const onboardingRoutes = require('./routes/onboarding');
-const searchRoutes = require('./routes/search');
-const notificationRoutes = require('./routes/notifications');
-const smsRoutes = require('./routes/sms');
-const publicRoutes = require('./routes/public');
-const consultationRoutes = require('./routes/consultations');
-const pushRoutes = require('./routes/push');
-const notificationSettingsRoutes = require('./routes/notificationSettings');
-const tossRoutes = require('./routes/toss');
-const studentConsultationRoutes = require('./routes/student-consultations');
-const academyEventRoutes = require('./routes/academyEvents');
+// Auto-register Routes (W-6)
+// Scans routes/ directory and registers each file/directory as /paca/{kebab-name}
+// Convention: camelCase filename → kebab-case URL prefix
+const fs = require('fs');
+const routesDir = path.join(__dirname, 'routes');
+const ROUTE_EXCLUDE = ['classes.js']; // unused route files
 
-// Register Routes
-app.use('/paca/auth', authRoutes);
-app.use('/paca/users', userRoutes);
-app.use('/paca/students', studentRoutes);
-app.use('/paca/instructors', instructorRoutes);
-app.use('/paca/payments', paymentRoutes);
-app.use('/paca/salaries', salaryRoutes);
-app.use('/paca/seasons', seasonRoutes);
-app.use('/paca/schedules', scheduleRoutes);
-app.use('/paca/settings', settingRoutes);
-app.use('/paca/performance', performanceRoutes);
-app.use('/paca/expenses', expenseRoutes);
-app.use('/paca/incomes', incomeRoutes);
-app.use('/paca/reports', reportRoutes);
-app.use('/paca/exports', exportRoutes);
-app.use('/paca/staff', staffRoutes);
-app.use('/paca/onboarding', onboardingRoutes);
-app.use('/paca/search', searchRoutes);
-app.use('/paca/notifications', notificationRoutes);
-app.use('/paca/sms', smsRoutes);
-app.use('/paca/public', publicRoutes);
-app.use('/paca/consultations', consultationRoutes);
-app.use('/paca/push', pushRoutes);
-app.use('/paca/notification-settings', notificationSettingsRoutes);
-app.use('/paca/toss', tossRoutes);
-app.use('/paca/student-consultations', studentConsultationRoutes);
-app.use('/paca/academy-events', academyEventRoutes);
+function toKebabCase(str) {
+    return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+}
+
+fs.readdirSync(routesDir).forEach(entry => {
+    if (ROUTE_EXCLUDE.includes(entry)) return;
+    if (entry.endsWith('.bak') || entry.endsWith('.split-backup')) return;
+
+    const fullPath = path.join(routesDir, entry);
+    const stat = fs.statSync(fullPath);
+
+    // .js files or directories with index.js
+    let routeModule;
+    if (stat.isFile() && entry.endsWith('.js')) {
+        routeModule = require(fullPath);
+        const name = entry.replace('.js', '');
+        const prefix = `/paca/${toKebabCase(name)}`;
+        app.use(prefix, routeModule);
+        logger.info(`[Route] ${prefix}`);
+    } else if (stat.isDirectory()) {
+        const indexPath = path.join(fullPath, 'index.js');
+        if (fs.existsSync(indexPath)) {
+            routeModule = require(fullPath);
+            const prefix = `/paca/${toKebabCase(entry)}`;
+            app.use(prefix, routeModule);
+            logger.info(`[Route] ${prefix} (dir)`);
+        }
+    }
+});
 
 // ==========================================
 // Error Handling
@@ -299,18 +281,23 @@ app.use((err, req, res, next) => {
 });
 
 // ==========================================
-// Scheduler
+// Scheduler Registry (W-3)
 // ==========================================
-const { initScheduler } = require('./scheduler/paymentScheduler');
-const { initNotificationScheduler } = require('./scheduler/notificationScheduler');
-const { initGradePromotionScheduler } = require('./scheduler/gradePromotionScheduler');
-const { initScheduler: initExcusedCreditScheduler } = require('./scheduler/excusedCreditScheduler');
-const { initPushScheduler } = require('./scheduler/pushScheduler');
-const { initConsultationReminderScheduler } = require('./scheduler/consultationReminderScheduler');
-const { initPauseEndingScheduler } = require('./scheduler/pauseEndingScheduler');
-const { initTrialExpireScheduler } = require('./scheduler/trialExpireScheduler');
-const { initMonthlyScheduleScheduler } = require('./scheduler/monthlyScheduleScheduler');
-const { startClassDaysScheduler } = require('./scheduler/classDaysScheduler');
+// Auto-scans scheduler/ directory and collects init functions (init* or start*)
+const schedulerDir = path.join(__dirname, 'scheduler');
+const schedulerInits = [];
+
+fs.readdirSync(schedulerDir).forEach(entry => {
+    if (!entry.endsWith('.js')) return;
+    const mod = require(path.join(schedulerDir, entry));
+    // Find the first exported function that starts with 'init' or 'start'
+    const initFn = Object.values(mod).find(
+        v => typeof v === 'function' && /^(init|start)/.test(v.name)
+    );
+    if (initFn) {
+        schedulerInits.push({ name: entry, fn: initFn });
+    }
+});
 
 // ==========================================
 // Start Server
@@ -325,17 +312,11 @@ const server = app.listen(PORT, () => {
     logger.info(`🌐 API Base: http://localhost:${PORT}/paca`);
     logger.info('==========================================');
 
-    // 스케줄러 초기화
-    initScheduler();
-    initNotificationScheduler();
-    initGradePromotionScheduler();
-    initExcusedCreditScheduler();
-    initPushScheduler();
-    initConsultationReminderScheduler();
-    initPauseEndingScheduler();
-    initTrialExpireScheduler();
-    initMonthlyScheduleScheduler();
-    startClassDaysScheduler();
+    // 스케줄러 초기화 (auto-registry)
+    schedulerInits.forEach(({ name, fn }) => {
+        fn();
+        logger.info(`[Scheduler] ${name} → ${fn.name}()`);
+    });
 });
 
 // Graceful Shutdown
