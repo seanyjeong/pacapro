@@ -1,269 +1,75 @@
+/**
+ * User Routes
+ * 사용자 관리 API
+ */
+
 const express = require('express');
 const router = express.Router();
-const db = require('../config/database');
 const { verifyToken, requireRole } = require('../middleware/auth');
-const { decrypt } = require('../utils/encryption');
+const userService = require('../services/userService');
 const logger = require('../utils/logger');
 
-// 복호화 헬퍼
-function decryptUserFields(obj) {
-    if (!obj) return obj;
-    if (obj.name) obj.name = decrypt(obj.name);
-    if (obj.phone) obj.phone = decrypt(obj.phone);
-    return obj;
-}
-function decryptArray(arr) {
-    return arr.map(item => decryptUserFields({...item}));
-}
-
-/**
- * GET /paca/users/pending
- * Get all pending users waiting for approval
- * Access: admin only
- */
+/** GET /paca/users/pending */
 router.get('/pending', verifyToken, requireRole('admin'), async (req, res) => {
     try {
-        const [users] = await db.query(
-            `SELECT
-                u.id,
-                u.email,
-                u.name,
-                u.phone,
-                u.role,
-                u.approval_status,
-                u.created_at,
-                a.name as academy_name
-            FROM users u
-            LEFT JOIN academies a ON u.academy_id = a.id
-            WHERE u.approval_status = 'pending'
-            AND u.is_active = true
-            AND u.academy_id = ?
-            ORDER BY u.created_at DESC`,
-            [req.user.academyId]
-        );
-
-        res.json({
-            message: `Found ${users.length} pending users`,
-            users: decryptArray(users)
-        });
+        const result = await userService.getPendingUsers(req.user.academyId);
+        res.json(result);
     } catch (error) {
         logger.error('Error fetching pending users:', error);
-        res.status(500).json({
-            error: 'Server Error',
-            message: 'Failed to fetch pending users'
-        });
+        res.status(500).json({ error: 'Server Error', message: 'Failed to fetch pending users' });
     }
 });
 
-/**
- * POST /paca/users/approve/:id
- * Approve a pending user
- * Access: admin only
- */
+/** POST /paca/users/approve/:id */
 router.post('/approve/:id', verifyToken, requireRole('admin'), async (req, res) => {
-    const userId = parseInt(req.params.id);
-
     try {
-        // Check if user exists and is pending
-        const [users] = await db.query(
-            'SELECT id, email, name, approval_status, academy_id FROM users WHERE id = ? AND academy_id = ?',
-            [userId, req.user.academyId]
-        );
-
-        if (users.length === 0) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'User not found'
-            });
+        const result = await userService.changeApprovalStatus(parseInt(req.params.id), req.user.academyId, 'approved');
+        if (result.status !== 200) {
+            return res.status(result.status).json({ error: result.error, message: result.message });
         }
-
-        const user = users[0];
-
-        if (user.approval_status !== 'pending') {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: `User is already ${user.approval_status}`
-            });
-        }
-
-        // Approve user
-        await db.query(
-            'UPDATE users SET approval_status = ?, updated_at = NOW() WHERE id = ?',
-            ['approved', userId]
-        );
-
-        res.json({
-            message: 'User approved successfully',
-            user: {
-                id: user.id,
-                email: user.email,
-                name: decrypt(user.name),
-                approval_status: 'approved'
-            }
-        });
+        res.json({ message: result.message, user: result.user });
     } catch (error) {
         logger.error('Error approving user:', error);
-        res.status(500).json({
-            error: 'Server Error',
-            message: 'Failed to approve user'
-        });
+        res.status(500).json({ error: 'Server Error', message: 'Failed to approve user' });
     }
 });
 
-/**
- * POST /paca/users/reject/:id
- * Reject a pending user
- * Access: admin only
- */
+/** POST /paca/users/reject/:id */
 router.post('/reject/:id', verifyToken, requireRole('admin'), async (req, res) => {
-    const userId = parseInt(req.params.id);
-
     try {
-        // Check if user exists and is pending
-        const [users] = await db.query(
-            'SELECT id, email, name, approval_status, academy_id FROM users WHERE id = ? AND academy_id = ?',
-            [userId, req.user.academyId]
-        );
-
-        if (users.length === 0) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'User not found'
-            });
+        const result = await userService.changeApprovalStatus(parseInt(req.params.id), req.user.academyId, 'rejected');
+        if (result.status !== 200) {
+            return res.status(result.status).json({ error: result.error, message: result.message });
         }
-
-        const user = users[0];
-
-        if (user.approval_status !== 'pending') {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: `User is already ${user.approval_status}`
-            });
-        }
-
-        // Reject user
-        await db.query(
-            'UPDATE users SET approval_status = ?, updated_at = NOW() WHERE id = ?',
-            ['rejected', userId]
-        );
-
-        res.json({
-            message: 'User rejected successfully',
-            user: {
-                id: user.id,
-                email: user.email,
-                name: decrypt(user.name),
-                approval_status: 'rejected'
-            }
-        });
+        res.json({ message: result.message, user: result.user });
     } catch (error) {
         logger.error('Error rejecting user:', error);
-        res.status(500).json({
-            error: 'Server Error',
-            message: 'Failed to reject user'
-        });
+        res.status(500).json({ error: 'Server Error', message: 'Failed to reject user' });
     }
 });
 
-/**
- * GET /paca/users
- * Get all users (with optional filters)
- * Access: owner, admin
- */
+/** GET /paca/users */
 router.get('/', verifyToken, requireRole('owner', 'admin'), async (req, res) => {
     try {
-        const { role, approval_status } = req.query;
-
-        const academyId = req.user.academyId;
-
-        let query = `
-            SELECT
-                u.id,
-                u.email,
-                u.name,
-                u.phone,
-                u.role,
-                u.approval_status,
-                u.is_active,
-                u.created_at,
-                a.name as academy_name
-            FROM users u
-            LEFT JOIN academies a ON u.academy_id = a.id
-            WHERE u.academy_id = ?
-        `;
-
-        const params = [academyId];
-
-        if (role) {
-            query += ' AND u.role = ?';
-            params.push(role);
-        }
-
-        if (approval_status) {
-            query += ' AND u.approval_status = ?';
-            params.push(approval_status);
-        }
-
-        query += ' ORDER BY u.created_at DESC';
-
-        const [users] = await db.query(query, params);
-
-        res.json({
-            message: `Found ${users.length} users`,
-            users: decryptArray(users)
-        });
+        const result = await userService.getUsers(req.user.academyId, req.query);
+        res.json(result);
     } catch (error) {
         logger.error('Error fetching users:', error);
-        res.status(500).json({
-            error: 'Server Error',
-            message: 'Failed to fetch users'
-        });
+        res.status(500).json({ error: 'Server Error', message: 'Failed to fetch users' });
     }
 });
 
-/**
- * GET /paca/users/:id
- * Get user by ID
- * Access: owner, admin
- */
+/** GET /paca/users/:id */
 router.get('/:id', verifyToken, requireRole('owner', 'admin'), async (req, res) => {
-    const userId = parseInt(req.params.id);
-
     try {
-        const [users] = await db.query(
-            `SELECT
-                u.id,
-                u.email,
-                u.name,
-                u.phone,
-                u.role,
-                u.approval_status,
-                u.is_active,
-                u.created_at,
-                u.updated_at,
-                u.last_login,
-                a.id as academy_id,
-                a.name as academy_name
-            FROM users u
-            LEFT JOIN academies a ON u.academy_id = a.id
-            WHERE u.id = ? AND u.academy_id = ?`,
-            [userId, req.user.academyId]
-        );
-
-        if (users.length === 0) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: 'User not found'
-            });
+        const user = await userService.getUserById(parseInt(req.params.id), req.user.academyId);
+        if (!user) {
+            return res.status(404).json({ error: 'Not Found', message: 'User not found' });
         }
-
-        res.json({ user: decryptUserFields({...users[0]}) });
+        res.json({ user });
     } catch (error) {
         logger.error('Error fetching user:', error);
-        res.status(500).json({
-            error: 'Server Error',
-            message: 'Failed to fetch user'
-        });
+        res.status(500).json({ error: 'Server Error', message: 'Failed to fetch user' });
     }
 });
 

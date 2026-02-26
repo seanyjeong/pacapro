@@ -36,6 +36,8 @@ src/app/settings/page.tsx           → vX.X.X + 날짜
 
 **모달 패딩**: `py-6 px-6` 필수
 
+**API 테스트**: 항상 아카데미 1번 (academy_id=1) 계정으로 테스트. 로컬 CLI에서 `.env` 안 읽히므로 curl 토큰 테스트 대신 `journalctl -u paca`로 실제 트래픽 로그 확인.
+
 ## 📄 문서 동기화 (필수!)
 
 > **기능 추가/수정/삭제 시 아래 문서를 반드시 함께 업데이트할 것.**
