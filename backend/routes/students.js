@@ -1214,9 +1214,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
     const studentId = parseInt(req.params.id);
 
     try {
-        // Check if student exists and get current class_days, status, time_slot
+        // Check if student exists and get current class_days, status, time_slot, student_number
         const [students] = await db.query(
-            'SELECT id, class_days, status, time_slot FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            'SELECT id, class_days, status, time_slot, student_number FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
             [studentId, req.user.academyId]
         );
 
@@ -1322,13 +1322,34 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
+        // pending/trial → active 전환 시 학번 자동 생성
+        let autoStudentNumber = student_number;
+        if (status === 'active' && (oldStatus === 'pending' || oldStatus === 'trial') && !student_number && !students[0].student_number) {
+            const year = new Date().getFullYear();
+            const [lastStudent] = await db.query(
+                `SELECT student_number FROM students
+                WHERE academy_id = ?
+                AND student_number LIKE '${year}%'
+                ORDER BY student_number DESC LIMIT 1`,
+                [req.user.academyId]
+            );
+
+            if (lastStudent.length > 0 && lastStudent[0].student_number) {
+                const lastNum = parseInt(lastStudent[0].student_number.slice(-3));
+                autoStudentNumber = `${year}${String(lastNum + 1).padStart(3, '0')}`;
+            } else {
+                autoStudentNumber = `${year}001`;
+            }
+            logger.info(`[PUT /:id] Auto-generated student_number: ${autoStudentNumber} for student ${studentId}`);
+        }
+
         // Build update query dynamically
         const updates = [];
         const params = [];
 
-        if (student_number !== undefined) {
+        if (autoStudentNumber !== undefined) {
             updates.push('student_number = ?');
-            params.push(student_number);
+            params.push(autoStudentNumber);
         }
         if (name !== undefined) {
             updates.push('name = ?');
