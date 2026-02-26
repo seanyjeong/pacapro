@@ -399,14 +399,14 @@ async function sendNewConsultationPush(academyId, academyName, consultation) {
     try {
         logger.info(`[NewConsultationPush] 시작 - 학원 ${academyId}`);
 
-        // new_consultation 알림을 활성화한 관리자의 구독만 조회
+        // new_consultation 알림을 활성화한 학원장의 구독만 조회
         const [subscriptions] = await db.query(
             `SELECT ps.*
              FROM push_subscriptions ps
              JOIN users u ON ps.user_id = u.id
              LEFT JOIN user_notification_settings ns ON u.id = ns.user_id
              WHERE u.academy_id = ?
-               AND u.role IN ('owner', 'admin')
+               AND u.role = 'owner'
                AND (ns.new_consultation IS NULL OR ns.new_consultation = TRUE)`,
             [academyId]
         );
@@ -614,13 +614,15 @@ async function sendReservationChangePush(academyId, academyName, info) {
         const { decrypt } = require('../utils/encryption');
 const logger = require('../utils/logger');
 
-        // 관리자의 구독 조회
+        // 학원장의 구독 조회 (new_consultation 설정 체크)
         const [subscriptions] = await db.query(
             `SELECT ps.*
              FROM push_subscriptions ps
              JOIN users u ON ps.user_id = u.id
+             LEFT JOIN user_notification_settings ns ON u.id = ns.user_id
              WHERE u.academy_id = ?
-               AND u.role IN ('owner', 'admin')`,
+               AND u.role = 'owner'
+               AND (ns.new_consultation IS NULL OR ns.new_consultation = TRUE)`,
             [academyId]
         );
 

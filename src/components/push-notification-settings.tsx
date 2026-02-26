@@ -10,6 +10,7 @@ import {
   subscribeToPush,
   unsubscribeFromPush,
   getCurrentSubscription,
+  sendLocalTestNotification,
   PushSubscription,
 } from '@/lib/api/push';
 import { notificationSettingsAPI, NotificationSettings } from '@/lib/api/notificationSettings';
@@ -31,6 +32,8 @@ export default function PushNotificationSettings() {
     pause_ending: true,
   });
   const [settingsLoading, setSettingsLoading] = useState(false);
+  const [testingLocal, setTestingLocal] = useState(false);
+  const [testingServer, setTestingServer] = useState(false);
 
   useEffect(() => {
     checkStatus();
@@ -332,6 +335,60 @@ export default function PushNotificationSettings() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* 알림 진단 */}
+        {subscribed && (
+          <div className="space-y-2">
+            <p className="font-medium text-foreground">알림 진단</p>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  setTestingLocal(true);
+                  setMessage(null);
+                  try {
+                    const ok = await sendLocalTestNotification();
+                    setMessage(ok
+                      ? { type: 'success', text: '로컬 테스트 알림을 보냈습니다. 알림이 표시되는지 확인하세요.' }
+                      : { type: 'error', text: '로컬 테스트 알림 실패. 브라우저/시스템 알림 설정을 확인하세요.' }
+                    );
+                  } catch {
+                    setMessage({ type: 'error', text: '로컬 테스트 알림 실패' });
+                  } finally {
+                    setTestingLocal(false);
+                  }
+                }}
+                disabled={testingLocal || testingServer}
+                className="px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                {testingLocal ? '발송 중...' : '로컬 테스트'}
+              </button>
+              <button
+                onClick={async () => {
+                  setTestingServer(true);
+                  setMessage(null);
+                  try {
+                    const result = await pushAPI.sendTest();
+                    setMessage({
+                      type: result.success > 0 ? 'success' : 'error',
+                      text: `서버 테스트: 성공 ${result.success}건, 실패 ${result.failed}건`
+                    });
+                  } catch {
+                    setMessage({ type: 'error', text: '서버 테스트 알림 실패' });
+                  } finally {
+                    setTestingServer(false);
+                  }
+                }}
+                disabled={testingLocal || testingServer}
+                className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {testingServer ? '발송 중...' : '서버 테스트'}
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              로컬 테스트: 서버 없이 직접 알림 표시 | 서버 테스트: 서버→푸시서비스→기기 경로
+            </p>
           </div>
         )}
 

@@ -125,6 +125,23 @@ export async function getCurrentSubscription(): Promise<PushSubscriptionJSON | n
   }
 }
 
+// 로컬 테스트 알림 (서버/WNS 거치지 않고 직접 표시)
+export async function sendLocalTestNotification(): Promise<boolean> {
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    await registration.showNotification('P-ACA 로컬 테스트', {
+      body: '이 알림이 보이면 알림 시스템이 정상입니다!',
+      icon: '/icons/icon-192x192.png',
+      badge: '/icons/icon-72x72.png',
+      tag: 'paca-local-test',
+    } as NotificationOptions);
+    return true;
+  } catch (error) {
+    console.error('로컬 테스트 알림 실패:', error);
+    return false;
+  }
+}
+
 // VAPID 공개키 변환 유틸리티
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);

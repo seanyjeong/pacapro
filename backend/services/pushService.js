@@ -156,7 +156,7 @@ async function sendPushToAcademyAdmins(academyId, payload) {
         `SELECT DISTINCT ps.*
          FROM push_subscriptions ps
          JOIN users u ON ps.user_id = u.id
-         WHERE u.academy_id = ? AND u.role IN ('owner', 'admin')`,
+         WHERE u.academy_id = ? AND u.role = 'owner'`,
         [academyId]
     );
 

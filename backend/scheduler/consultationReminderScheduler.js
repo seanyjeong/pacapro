@@ -111,7 +111,7 @@ async function sendPushToAcademyAdmins(academyId, academyName, consultation) {
              JOIN users u ON ps.user_id = u.id
              LEFT JOIN user_notification_settings ns ON u.id = ns.user_id
              WHERE u.academy_id = ?
-               AND u.role IN ('owner', 'admin')
+               AND u.role = 'owner'
                AND (ns.consultation_reminder IS NULL OR ns.consultation_reminder = TRUE)`,
             [academyId]
         );
