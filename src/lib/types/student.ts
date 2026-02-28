@@ -126,6 +126,8 @@ export interface StudentFormData {
   time_slot?: 'morning' | 'afternoon' | 'evening'; // 수업 시간대 (기본: evening)
   // 메모
   memo?: string; // 학생 메모
+  // 예약 적용 (YYYY-MM-DD)
+  effective_from?: string;
 }
 
 // 학생 필터 인터페이스

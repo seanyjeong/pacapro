@@ -133,6 +133,36 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
   // 휴식 설정 관련 상태
   const [isIndefiniteRest, setIsIndefiniteRest] = useState(!initialData?.rest_end_date && initialData?.status === 'paused');
 
+  // 적용 시작월 (수업요일 예약 변경)
+  const [effectiveFrom, setEffectiveFrom] = useState('immediate');
+  const effectiveMonthOptions = useMemo(() => {
+    const now = new Date();
+    const options: { value: string; label: string }[] = [
+      { value: 'immediate', label: '즉시 적용 (이번 달)' },
+    ];
+    for (let i = 1; i <= 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const year = d.getFullYear();
+      const month = d.getMonth() + 1;
+      options.push({
+        value: `${year}-${String(month).padStart(2, '0')}-01`,
+        label: `${year}년 ${month}월부터`,
+      });
+    }
+    return options;
+  }, []);
+  // 수업요일 변경 감지
+  const classDaysChanged = useMemo(() => {
+    if (mode !== 'edit' || !initialData) return false;
+    const oldDays = parseClassDaysWithSlots(initialData.class_days, initialData.time_slot || 'evening');
+    const newDays = formData.class_days;
+    if (oldDays.length !== newDays.length) return true;
+    return newDays.some(nd => {
+      const od = oldDays.find(o => o.day === nd.day);
+      return !od || od.timeSlot !== nd.timeSlot;
+    });
+  }, [mode, initialData, formData.class_days]);
+
   // 학원 설정 로드
   useEffect(() => {
     loadAcademySettings();
@@ -385,6 +415,13 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
     if (!validate()) return;
 
+    // 수업요일 즉시 적용 경고 (수정 모드에서 수업요일 변경 + 즉시 적용 선택 시)
+    if (mode === 'edit' && classDaysChanged && effectiveFrom === 'immediate') {
+      if (!confirm('수업요일을 즉시 변경하시겠습니까?\n\n변경 즉시 출석부에 반영됩니다.\n예약 적용을 원하시면 적용 시작월을 변경해주세요.')) {
+        return;
+      }
+    }
+
     // 시즌 등록 정보 및 체험생 정보 포함
     // 체험 남은 횟수 계산: attended가 false인 것의 개수 (새 날짜는 attended 없음 = false 취급)
     const trialRemaining = trialDates.filter(td => !td.attended).length || trialDates.length || 2;
@@ -400,6 +437,8 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
       trial_dates: isTrial ? trialDates : undefined,
       // 시간대
       time_slot: formData.time_slot,
+      // 예약 적용
+      effective_from: classDaysChanged && effectiveFrom !== 'immediate' ? effectiveFrom : undefined,
     };
 
     try {
@@ -935,7 +974,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
             )}
 
             {/* 예약 변경 알림 (수정 모드에서만) */}
-            {mode === 'edit' && initialData?.class_days_next && initialData?.class_days_effective_from && (
+            {mode === 'edit' && initialData?.class_days_next && initialData?.class_days_effective_from && !classDaysChanged && (
               <div className="mt-2 p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
                 <p className="text-sm text-orange-700 dark:text-orange-400">
                   변경 예정: {(() => {
@@ -948,6 +987,34 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
                 <p className="text-xs text-orange-600 dark:text-orange-500 mt-1">
                   여기서 수업요일을 직접 수정하면 예약 변경은 취소됩니다.
                 </p>
+              </div>
+            )}
+
+            {/* 적용 시작월 선택 (수정 모드에서 수업요일 변경 시) */}
+            {mode === 'edit' && classDaysChanged && (
+              <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <label className="block text-sm font-medium text-blue-700 dark:text-blue-400 mb-2">
+                  적용 시작월
+                </label>
+                <select
+                  value={effectiveFrom}
+                  onChange={(e) => setEffectiveFrom(e.target.value)}
+                  className="w-full sm:w-[220px] bg-background border border-border rounded-lg px-3 py-2 text-sm"
+                >
+                  {effectiveMonthOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                {effectiveFrom === 'immediate' && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                    즉시 적용하면 출석부에 바로 반영됩니다.
+                  </p>
+                )}
+                {effectiveFrom !== 'immediate' && (
+                  <p className="text-xs text-blue-600 dark:text-blue-500 mt-2">
+                    선택한 달부터 수업요일이 변경됩니다. 현재 수업요일은 유지됩니다.
+                  </p>
+                )}
               </div>
             )}
           </div>

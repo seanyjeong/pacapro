@@ -97,7 +97,7 @@ Authorization: Bearer <JWT_TOKEN>
 | PUT | `/class-days/bulk` | class_days.edit | 요일반 일괄 수정 |
 | GET | `/:id` | Token | 학생 상세 조회 |
 | POST | `/` | students.edit | 학생 등록 |
-| PUT | `/:id` | students.edit | 학생 수정 |
+| PUT | `/:id` | students.edit | 학생 수정 (`effective_from` 파라미터로 수업요일 예약 적용 가능, 변경 이력 audit_logs 기록) |
 | PUT | `/:id/class-days` | class_days.edit | 학생 요일반 수정 |
 | DELETE | `/:id/class-days-schedule` | class_days.edit | 학생 요일반 일정 삭제 |
 | DELETE | `/:id` | owner | 학생 삭제 |

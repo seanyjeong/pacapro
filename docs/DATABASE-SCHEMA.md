@@ -623,16 +623,21 @@
 | onboarding_completed | tinyint(1) | 온보딩 완료 여부 |
 | onboarding_completed_at | timestamp | 온보딩 완료 시각 |
 
-### `audit_logs` - 감사 로그
+### `audit_logs` - 감사 로그 (활성: 학생 수정 시 자동 기록)
 | 컬럼 | 타입 | 설명 |
 |------|------|------|
 | id | int | PK |
-| academy_id | int | 학원 ID |
-| user_id | int | 사용자 ID |
-| action | varchar(50) | 수행 동작 |
-| target_type | varchar(50) | 대상 유형 |
-| target_id | int | 대상 ID |
-| details | json | 상세 내용 |
+| user_id | int | 수정한 사용자 ID |
+| user_email | varchar(255) | 사용자 이메일 |
+| user_role | varchar(50) | 사용자 역할 |
+| action | varchar(100) | update / schedule / create / delete |
+| table_name | varchar(100) | 대상 테이블 (students 등) |
+| record_id | int | 대상 레코드 ID |
+| old_values | json | 변경 전 값 |
+| new_values | json | 변경 후 값 |
+| ip_address | varchar(45) | 클라이언트 IP |
+| user_agent | text | 브라우저 정보 |
+| created_at | timestamp | 기록 시간 |
 
 ### `holidays` - 공휴일
 | 컬럼 | 타입 | 설명 |

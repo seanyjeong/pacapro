@@ -4,6 +4,7 @@ const { encrypt, decrypt, decryptFields, decryptArrayFields, ENCRYPTED_FIELDS } 
 const { calculateDueDate } = require('../../utils/dueDateCalculator');
 const logger = require('../../utils/logger');
 const { parseClassDaysWithSlots, extractDayNumbers, autoAssignStudentToSchedules, reassignStudentSchedules, truncateToThousands } = require('./_utils');
+const { logAudit, getAuditInfoFromReq } = require('../../utils/auditLogger');
 
 module.exports = function(router) {
 
@@ -646,9 +647,15 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
     const studentId = parseInt(req.params.id);
 
     try {
-        // Check if student exists and get current class_days, status, time_slot, student_number
+        // Check if student exists and get current values for audit logging
         const [students] = await db.query(
-            'SELECT id, class_days, status, time_slot, student_number FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            `SELECT id, student_number, name, gender, student_type, phone, parent_phone,
+                    school, grade, age, admission_type, class_days, weekly_count,
+                    monthly_tuition, discount_rate, discount_reason, payment_due_day,
+                    enrollment_date, address, notes, memo, status, time_slot,
+                    rest_start_date, rest_end_date, rest_reason,
+                    is_trial, trial_remaining, trial_dates
+             FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
             [studentId, req.user.academyId]
         );
 
@@ -701,7 +708,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             // 시간대
             time_slot,
             // 메모
-            memo
+            memo,
+            // 예약 적용 (YYYY-MM-DD)
+            effective_from
         } = req.body;
 
         // Validate student_type
@@ -819,14 +828,36 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             updates.push('admission_type = ?');
             params.push(admission_type);
         }
+        // effective_from이 미래 달이면 예약 모드, 아니면 즉시 적용
+        let isScheduledClassDays = false;
         if (class_days !== undefined) {
-            updates.push('class_days = ?');
-            params.push(JSON.stringify(parseClassDaysWithSlots(class_days, time_slot || oldTimeSlot || 'evening')));
-            // 직접 수정 시 예약 변경 초기화
-            updates.push('class_days_next = NULL');
-            updates.push('class_days_effective_from = NULL');
+            const normalizedClassDays = parseClassDaysWithSlots(class_days, time_slot || oldTimeSlot || 'evening');
+
+            if (effective_from) {
+                const now = new Date();
+                const currentMonthFirst = new Date(now.getFullYear(), now.getMonth(), 1);
+                const effectiveDate = new Date(effective_from + 'T00:00:00');
+
+                if (effectiveDate > currentMonthFirst) {
+                    // 예약 모드: class_days_next에 저장, 현재 class_days 유지
+                    isScheduledClassDays = true;
+                    updates.push('class_days_next = ?');
+                    params.push(JSON.stringify(normalizedClassDays));
+                    updates.push('class_days_effective_from = ?');
+                    params.push(effective_from);
+                    logger.info(`[Student ${studentId}] Scheduled class_days change for ${effective_from}`);
+                }
+            }
+
+            if (!isScheduledClassDays) {
+                // 즉시 적용 모드
+                updates.push('class_days = ?');
+                params.push(JSON.stringify(normalizedClassDays));
+                updates.push('class_days_next = NULL');
+                updates.push('class_days_effective_from = NULL');
+            }
         }
-        if (weekly_count !== undefined) {
+        if (weekly_count !== undefined && !isScheduledClassDays) {
             updates.push('weekly_count = ?');
             params.push(weekly_count);
         }
@@ -919,6 +950,57 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             params
         );
 
+        // Audit logging: 변경 전/후 값 기록
+        const oldStudent = students[0];
+        const oldValues = {};
+        const newValues = {};
+        const auditFields = {
+            student_number: autoStudentNumber, name, gender, student_type, phone, parent_phone,
+            school, grade, age, admission_type, weekly_count, monthly_tuition,
+            discount_rate, discount_reason, payment_due_day, enrollment_date,
+            address, notes, memo, status, time_slot,
+            rest_start_date, rest_end_date, rest_reason,
+            is_trial, trial_remaining
+        };
+        // 암호화 필드 복호화 비교
+        const encryptedKeys = ['name', 'phone', 'parent_phone', 'address'];
+        for (const [field, newVal] of Object.entries(auditFields)) {
+            if (newVal === undefined) continue;
+            let oldVal = oldStudent[field];
+            if (encryptedKeys.includes(field) && oldVal) {
+                try { oldVal = decrypt(oldVal); } catch { /* keep raw */ }
+            }
+            // 타입 맞춰서 비교
+            if (String(oldVal ?? '') !== String(newVal ?? '')) {
+                oldValues[field] = oldVal;
+                newValues[field] = newVal;
+            }
+        }
+        // class_days 별도 비교 (JSON)
+        if (class_days !== undefined) {
+            oldValues.class_days = oldClassDaysRaw;
+            newValues.class_days = class_days;
+        }
+        // trial_dates 별도 비교 (JSON)
+        if (trial_dates !== undefined) {
+            const oldTrialDates = oldStudent.trial_dates
+                ? (typeof oldStudent.trial_dates === 'string' ? JSON.parse(oldStudent.trial_dates) : oldStudent.trial_dates)
+                : null;
+            oldValues.trial_dates = oldTrialDates;
+            newValues.trial_dates = trial_dates;
+        }
+        if (Object.keys(newValues).length > 0) {
+            const auditInfo = getAuditInfoFromReq(req);
+            logAudit({
+                ...auditInfo,
+                action: isScheduledClassDays ? 'schedule' : 'update',
+                tableName: 'students',
+                recordId: studentId,
+                oldValues,
+                newValues
+            });
+        }
+
         // Fetch updated student
         const [updatedStudents] = await db.query(
             'SELECT * FROM students WHERE id = ?',
@@ -928,9 +1010,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         // 현재 시간대 결정 (새 값 또는 기존 값)
         const currentTimeSlot = time_slot || oldTimeSlot;
 
-        // class_days가 변경되었으면 스케줄 재배정
+        // class_days가 즉시 적용 모드로 변경되었으면 스케줄 재배정 (예약 모드면 스킵)
         let reassignResult = null;
-        if (class_days !== undefined) {
+        if (class_days !== undefined && !isScheduledClassDays) {
             const newClassDays = class_days || [];
             // 하위호환: 객체/숫자 배열 모두 day 숫자로 비교
             const newSlots = parseClassDaysWithSlots(newClassDays, currentTimeSlot);

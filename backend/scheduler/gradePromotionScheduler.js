@@ -1,34 +1,29 @@
 /**
  * 학년 자동 진급 스케줄러
- * 매년 3월 1일에 실행되어 학생 학년을 자동으로 진급 처리
+ * 매년 1월 1일에 실행되어 학생 학년을 자동으로 진급 처리
  *
- * 진급 규칙:
- * - 중1 → 중2
- * - 중2 → 중3
- * - 중3 → 고1
- * - 고1 → 고2
+ * 진급 규칙 (높은 학년부터 일괄 처리):
+ * - 고3 → N수
  * - 고2 → 고3
- * - 고3 → N수 (status가 active인 경우만)
+ * - 고1 → 고2
+ * - 중3 → 고1
+ * - 중2 → 중3
+ * - 중1 → 중2
  * - N수 → N수 (유지)
- *
- * 졸업 처리:
- * - 고3 학생 중 졸업 처리할 학생은 status를 'graduated'로 변경
- * - graduated 상태 학생은 스케줄에 포함되지 않음
  */
 
 const cron = require('node-cron');
 const db = require('../config/database');
 
-// 학년 진급 매핑
-const GRADE_PROMOTION_MAP = {
-    '중1': '중2',
-    '중2': '중3',
-    '중3': '고1',
-    '고1': '고2',
-    '고2': '고3',
-    '고3': 'N수',  // 고3은 기본적으로 N수로 진급
-    'N수': 'N수'   // N수는 유지
-};
+// 높은 학년부터 처리 (순서 중요! 낮은 학년부터 하면 중복 진급됨)
+const GRADE_PROMOTION_ORDER = [
+    { from: '고3', to: 'N수' },
+    { from: '고2', to: '고3' },
+    { from: '고1', to: '고2' },
+    { from: '중3', to: '고1' },
+    { from: '중2', to: '중3' },
+    { from: '중1', to: '중2' },
+];
 
 /**
  * 학년 진급 처리 로직
@@ -36,99 +31,48 @@ const GRADE_PROMOTION_MAP = {
  */
 async function promoteStudentGrades(isDryRun = false) {
     const today = new Date();
-    const currentMonth = today.getMonth() + 1;
-    const currentDay = today.getDate();
-
-    console.log(`[GradePromotionScheduler] Starting grade promotion check... (${today.toISOString()})`);
-
-    // 3월 1일이 아니면 스킵 (수동 실행 시에는 무시 가능하도록 인자 추가 가능)
-    // if (currentMonth !== 3 || currentDay !== 1) {
-    //     console.log(`[GradePromotionScheduler] Skipping - today is not March 1st`);
-    //     return { promoted: 0, graduated: 0, skipped: 0 };
-    // }
+    console.log(`[GradePromotionScheduler] Starting grade promotion... (${today.toISOString()})`);
 
     try {
-        // 모든 학원의 active/paused 학생 조회 (graduated 제외)
-        const [students] = await db.query(`
-            SELECT
-                s.id,
-                s.academy_id,
-                s.name,
-                s.grade,
-                s.status
-            FROM students s
-            WHERE s.deleted_at IS NULL
-              AND s.status IN ('active', 'paused')
-              AND s.grade IS NOT NULL
-            ORDER BY s.academy_id, s.grade
-        `);
-
-        if (students.length === 0) {
-            console.log('[GradePromotionScheduler] No active students found');
-            return { promoted: 0, graduated: 0, skipped: 0 };
-        }
-
-        console.log(`[GradePromotionScheduler] Found ${students.length} active students to process`);
-
-        let promotedCount = 0;
-        let graduatedCount = 0;
-        let skippedCount = 0;
+        let totalPromoted = 0;
         const promotionLog = [];
 
-        for (const student of students) {
-            const currentGrade = student.grade;
-            const newGrade = GRADE_PROMOTION_MAP[currentGrade];
+        // 높은 학년부터 일괄 UPDATE (중복 진급 방지)
+        for (const { from, to } of GRADE_PROMOTION_ORDER) {
+            // 먼저 대상 인원 조회
+            const [targets] = await db.query(
+                `SELECT COUNT(*) as cnt FROM students WHERE deleted_at IS NULL AND grade = ?`,
+                [from]
+            );
+            const count = targets[0].cnt;
 
-            if (!newGrade) {
-                // 매핑에 없는 학년은 스킵 (예: null, 빈값 등)
-                skippedCount++;
-                continue;
-            }
-
-            if (currentGrade === newGrade) {
-                // N수 → N수처럼 변화 없으면 스킵
-                skippedCount++;
-                continue;
-            }
-
-            promotionLog.push({
-                studentId: student.id,
-                name: student.name,
-                academyId: student.academy_id,
-                from: currentGrade,
-                to: newGrade
-            });
+            if (count === 0) continue;
 
             if (!isDryRun) {
-                // 실제 학년 업데이트
                 await db.query(
-                    `UPDATE students SET grade = ?, updated_at = NOW() WHERE id = ?`,
-                    [newGrade, student.id]
+                    `UPDATE students SET grade = ?, updated_at = NOW() WHERE deleted_at IS NULL AND grade = ?`,
+                    [to, from]
+                );
+
+                // 연결된 상담의 student_grade도 동기화
+                await db.query(
+                    `UPDATE consultations c
+                     INNER JOIN students s ON c.linked_student_id = s.id
+                     SET c.student_grade = ?
+                     WHERE s.deleted_at IS NULL AND c.student_grade = ? AND c.linked_student_id IS NOT NULL`,
+                    [to, from]
                 );
             }
 
-            promotedCount++;
+            promotionLog.push({ from, to, count });
+            totalPromoted += count;
+            console.log(`  ${from} → ${to}: ${count}명`);
         }
 
-        // 로그 출력
-        if (promotionLog.length > 0) {
-            console.log('[GradePromotionScheduler] Promotion summary:');
-            const byGrade = {};
-            promotionLog.forEach(log => {
-                const key = `${log.from} → ${log.to}`;
-                byGrade[key] = (byGrade[key] || 0) + 1;
-            });
-            Object.entries(byGrade).forEach(([transition, count]) => {
-                console.log(`  ${transition}: ${count}명`);
-            });
-        }
-
-        console.log(`[GradePromotionScheduler] Completed - Promoted: ${promotedCount}, Skipped: ${skippedCount}`);
+        console.log(`[GradePromotionScheduler] Completed - Total promoted: ${totalPromoted}명`);
 
         return {
-            promoted: promotedCount,
-            graduated: graduatedCount,
-            skipped: skippedCount,
+            promoted: totalPromoted,
             details: promotionLog
         };
 
@@ -167,11 +111,11 @@ async function graduateStudents(studentIds) {
 
 /**
  * 스케줄러 초기화
- * 매년 3월 1일 오전 1시에 실행 (한국 시간)
+ * 매년 1월 1일 오전 1시에 실행 (한국 시간)
  */
 function initGradePromotionScheduler() {
-    // 매년 3월 1일 01:00에 실행 (0 1 1 3 *)
-    cron.schedule('0 1 1 3 *', async () => {
+    // 매년 1월 1일 01:00에 실행 (0 1 1 1 *)
+    cron.schedule('0 1 1 1 *', async () => {
         console.log('[GradePromotionScheduler] Annual grade promotion starting...');
         await promoteStudentGrades(false);
     }, {
@@ -179,7 +123,7 @@ function initGradePromotionScheduler() {
         timezone: 'Asia/Seoul'
     });
 
-    console.log('🎓 학년 자동 진급 스케줄러 초기화 완료 (매년 3월 1일 01:00 실행)');
+    console.log('🎓 학년 자동 진급 스케줄러 초기화 완료 (매년 1월 1일 01:00 실행)');
 }
 
 module.exports = {
