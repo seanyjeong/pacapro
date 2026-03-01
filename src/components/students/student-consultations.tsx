@@ -475,15 +475,37 @@ function renderInitialConsultation(
                 <BookOpen className="h-4 w-4 text-indigo-600" />
                 학업 성적
               </div>
-              <div className="pl-6">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {Object.entries(academicScores).map(([subject, score]: [string, any]) => (
-                    <div key={subject} className="bg-muted rounded p-2 text-center text-sm">
-                      <div className="text-xs text-muted-foreground">{subject}</div>
-                      <div className="font-medium">{typeof score === 'object' ? JSON.stringify(score) : score}</div>
-                    </div>
-                  ))}
+              <div className="pl-6 space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {academicScores.admissionType && (
+                    <Badge variant="outline">
+                      {academicScores.admissionType === 'early' ? '수시' : academicScores.admissionType === 'regular' ? '정시' : academicScores.admissionType}
+                    </Badge>
+                  )}
+                  {academicScores.schoolGradeAvg && (
+                    <p className="text-sm">
+                      <span className="text-muted-foreground">내신 평균:</span>{' '}
+                      <span className="font-medium">{academicScores.schoolGradeAvg}등급</span>
+                    </p>
+                  )}
                 </div>
+                {academicScores.mockTestGrades && (
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { key: 'korean', label: '국어' },
+                      { key: 'math', label: '수학' },
+                      { key: 'english', label: '영어' },
+                      { key: 'exploration', label: '탐구' },
+                    ].map(({ key, label }) => (
+                      academicScores.mockTestGrades[key] != null && (
+                        <div key={key} className="bg-muted rounded p-2 text-center text-sm">
+                          <div className="text-xs text-muted-foreground">{label}</div>
+                          <div className="font-medium">{academicScores.mockTestGrades[key]}등급</div>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
