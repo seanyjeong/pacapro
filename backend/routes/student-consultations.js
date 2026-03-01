@@ -11,8 +11,14 @@ const { decrypt } = require('../utils/encryption');
 const { verifyToken } = require('../middleware/auth');
 const logger = require('../utils/logger');
 
-// 암호화 필드 복호화 헬퍼
-const decryptStudentFields = (student) => {
+const safeJsonParse = (val) => {
+  if (!val) return null;
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val); } catch { return null; }
+};
+
+// 암호화 필드 복호화 헬퍼 (calendar, detail 등에서 사용)
+const decryptStudentFields = (student) => {  // eslint-disable-line no-unused-vars
   if (!student) return student;
   return {
     ...student,
@@ -86,7 +92,34 @@ router.get('/:studentId', verifyToken, async (req, res) => {
       student_name: c.student_name ? decrypt(c.student_name) : c.student_name,
     }));
 
-    res.json({ consultations: decryptedConsultations });
+    // 신규상담 기록 조회 (consultations 테이블에서 linked_student_id로 연결된 건)
+    const [initialConsultations] = await pool.execute(
+      `SELECT id, consultation_type, learning_type, preferred_date, preferred_time,
+              status, student_name, parent_name, parent_phone, student_grade,
+              inquiry_content, consultation_memo, admin_notes,
+              academic_scores, target_school, checklist, referral_sources,
+              created_at
+       FROM consultations
+       WHERE linked_student_id = ? AND academy_id = ?
+       ORDER BY preferred_date DESC`,
+      [studentId, academyId]
+    );
+
+    // 신규상담 암호화 필드 복호화 + JSON 파싱
+    const decryptedInitialConsultations = initialConsultations.map(c => ({
+      ...c,
+      student_name: c.student_name ? decrypt(c.student_name) : c.student_name,
+      parent_name: c.parent_name ? decrypt(c.parent_name) : c.parent_name,
+      parent_phone: c.parent_phone ? decrypt(c.parent_phone) : c.parent_phone,
+      academic_scores: safeJsonParse(c.academic_scores),
+      checklist: safeJsonParse(c.checklist),
+      referral_sources: safeJsonParse(c.referral_sources),
+    }));
+
+    res.json({
+      consultations: decryptedConsultations,
+      initialConsultations: decryptedInitialConsultations,
+    });
   } catch (error) {
     logger.error('Failed to get student consultations:', error);
     res.status(500).json({ error: '상담 목록 조회 실패' });

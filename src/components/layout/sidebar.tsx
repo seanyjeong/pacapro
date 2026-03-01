@@ -623,7 +623,7 @@ export function Sidebar() {
             {!collapsed && (
                 <div className="p-4 border-t border-border">
                     <div className="text-xs text-muted-foreground text-center space-y-1">
-                        <div>P-ACA v3.12.1</div>
+                        <div>P-ACA v3.13.0</div>
                         <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-02-28</div>
                         <div>문의: 010-2144-6755</div>
                     </div>

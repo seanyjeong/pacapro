@@ -253,7 +253,7 @@ Authorization: Bearer <JWT_TOKEN>
 | Method | Endpoint | 권한 | 설명 |
 |--------|----------|------|------|
 | GET | `/calendar` | Token | 상담 캘린더 |
-| GET | `/:studentId` | Token | 학생 상담 이력 |
+| GET | `/:studentId` | Token | 학생 상담 이력 (응답: consultations + initialConsultations) |
 | GET | `/:studentId/peak-records` | Token | P-EAK 실기 기록 |
 | GET | `/:studentId/compare/:id` | Token | 상담 비교 |
 | GET | `/:studentId/:id` | Token | 상담 상세 |

@@ -1,7 +1,8 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-26T14:29:47.022Z",
+  "lastUpdated": "2026-03-01T09:52:35.432Z",
   "activeFeatures": [
+    "student-initial-consultation",
     "per-day-timeslot",
     "pacapro",
     "routes",
@@ -17,10 +18,28 @@
     "__tests__",
     "split-students-route",
     "notifications",
-    "tmp"
+    "tmp",
+    "searchService.js",
+    "onboardingService.js",
+    "notificationSettingsService.js",
+    "userService.js",
+    "pushService.js",
+    "incomeService.js",
+    "academyEventService.js",
+    "api",
+    "student-initial-consultation 검증"
   ],
-  "primaryFeature": "per-day-timeslot",
+  "primaryFeature": "student-initial-consultation",
   "features": {
+    "student-initial-consultation": {
+      "phase": "completed",
+      "startedAt": "2026-03-01T10:00:00.000Z",
+      "planDoc": "docs/01-plan/features/student-initial-consultation.plan.md",
+      "designDoc": "docs/02-design/features/student-initial-consultation.design.md",
+      "analysisDoc": "docs/03-analysis/student-initial-consultation.analysis.md",
+      "matchRate": 100,
+      "iterationCount": 0
+    },
     "per-day-timeslot": {
       "phase": "design",
       "startedAt": "2026-02-24T15:00:00.000Z",
@@ -38,7 +57,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T11:03:02.044Z",
-        "lastUpdated": "2026-02-24T12:31:12.137Z"
+        "lastUpdated": "2026-03-01T09:52:33.467Z"
       },
       "lastFile": "/home/sean/pacapro/src/components/version-checker.tsx"
     },
@@ -51,9 +70,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T11:06:25.122Z",
-        "lastUpdated": "2026-02-26T04:02:21.323Z"
+        "lastUpdated": "2026-03-01T09:47:22.304Z"
       },
-      "lastFile": "/home/sean/pacapro/backend/routes/students.js"
+      "lastFile": "/home/sean/pacapro/backend/routes/student-consultations.js"
     },
     "cron": {
       "phase": "do",
@@ -90,9 +109,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T11:13:51.843Z",
-        "lastUpdated": "2026-02-26T11:18:21.168Z"
+        "lastUpdated": "2026-03-01T09:44:37.039Z"
       },
-      "lastFile": "/home/sean/pacapro/backend/routes/students/crud.js"
+      "lastFile": "/home/sean/pacapro/src/components/students/student-consultations.tsx"
     },
     "class-days": {
       "phase": "do",
@@ -130,9 +149,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T12:00:41.174Z",
-        "lastUpdated": "2026-02-24T12:00:41.174Z"
+        "lastUpdated": "2026-02-26T17:05:33.831Z"
       },
-      "lastFile": "/home/sean/pacapro/backend/scheduler/classDaysScheduler.js"
+      "lastFile": "/home/sean/pacapro/backend/scheduler/pauseEndingScheduler.js"
     },
     "layout": {
       "phase": "do",
@@ -143,7 +162,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T12:31:13.779Z",
-        "lastUpdated": "2026-02-26T14:14:22.050Z"
+        "lastUpdated": "2026-03-01T09:52:34.440Z"
       },
       "lastFile": "/home/sean/pacapro/src/components/layout/sidebar.tsx"
     },
@@ -156,7 +175,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T12:31:14.957Z",
-        "lastUpdated": "2026-02-26T14:14:23.226Z"
+        "lastUpdated": "2026-03-01T09:52:35.432Z"
       },
       "lastFile": "/home/sean/pacapro/src/app/settings/page.tsx"
     },
@@ -227,6 +246,124 @@
         "lastUpdated": "2026-02-26T14:29:47.022Z"
       },
       "lastFile": "/tmp/test-scheduler.js"
+    },
+    "searchService.js": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-26T15:43:02.042Z",
+        "lastUpdated": "2026-02-26T15:43:02.042Z"
+      },
+      "lastFile": "/home/sean/pacapro/backend/services/searchService.js"
+    },
+    "onboardingService.js": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-26T15:47:30.539Z",
+        "lastUpdated": "2026-02-26T15:47:30.539Z"
+      },
+      "lastFile": "/home/sean/pacapro/backend/services/onboardingService.js"
+    },
+    "notificationSettingsService.js": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-26T15:48:55.564Z",
+        "lastUpdated": "2026-02-26T15:48:55.564Z"
+      },
+      "lastFile": "/home/sean/pacapro/backend/services/notificationSettingsService.js"
+    },
+    "userService.js": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-26T15:50:01.527Z",
+        "lastUpdated": "2026-02-26T15:50:01.527Z"
+      },
+      "lastFile": "/home/sean/pacapro/backend/services/userService.js"
+    },
+    "pushService.js": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-26T15:52:57.944Z",
+        "lastUpdated": "2026-02-26T17:05:59.241Z"
+      },
+      "lastFile": "/home/sean/pacapro/backend/services/pushService.js"
+    },
+    "incomeService.js": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-26T15:57:16.427Z",
+        "lastUpdated": "2026-02-26T15:57:16.427Z"
+      },
+      "lastFile": "/home/sean/pacapro/backend/services/incomeService.js"
+    },
+    "academyEventService.js": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-26T15:59:54.571Z",
+        "lastUpdated": "2026-02-26T15:59:54.571Z"
+      },
+      "lastFile": "/home/sean/pacapro/backend/services/academyEventService.js"
+    },
+    "api": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-26T16:38:43.393Z",
+        "lastUpdated": "2026-02-26T16:40:18.209Z"
+      },
+      "lastFile": "/home/sean/pacapro/src/lib/api/push.ts"
+    },
+    "student-initial-consultation 검증": {
+      "phase": "act",
+      "phaseNumber": 5,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-01T09:46:38.919Z",
+        "lastUpdated": "2026-03-01T09:46:38.920Z"
+      },
+      "previousPhase": "check",
+      "autoAdvanced": true
     }
   },
   "pipeline": {
@@ -237,7 +374,7 @@
   "session": {
     "startedAt": "2026-02-24T10:20:40.806Z",
     "onboardingCompleted": true,
-    "lastActivity": "2026-02-26T14:29:47.022Z"
+    "lastActivity": "2026-03-01T09:52:35.432Z"
   },
   "history": [
     {
@@ -778,6 +915,234 @@
     {
       "timestamp": "2026-02-26T14:29:47.022Z",
       "feature": "tmp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:43:02.043Z",
+      "feature": "searchService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:43:07.390Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:47:30.539Z",
+      "feature": "onboardingService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:47:40.001Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:48:55.564Z",
+      "feature": "notificationSettingsService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:49:01.683Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:50:01.527Z",
+      "feature": "userService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:50:11.858Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:52:57.944Z",
+      "feature": "pushService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:53:09.598Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:57:16.427Z",
+      "feature": "incomeService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:57:28.815Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T15:59:54.571Z",
+      "feature": "academyEventService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T16:00:06.539Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T16:38:43.393Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T16:38:48.584Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T16:38:54.973Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T16:39:12.350Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T16:40:18.209Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T17:05:24.173Z",
+      "feature": "scheduler",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T17:05:25.668Z",
+      "feature": "scheduler",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T17:05:33.831Z",
+      "feature": "scheduler",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T17:05:48.423Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T17:05:54.962Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T17:05:59.241Z",
+      "feature": "pushService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T17:08:30.334Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T17:08:40.924Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T17:08:41.798Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:43:07.113Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:44:15.284Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:44:37.039Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:44:44.579Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:46:38.920Z",
+      "feature": "student-initial-consultation 검증",
+      "phase": "act",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:47:15.050Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:47:22.304Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:52:33.467Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:52:34.440Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T09:52:35.432Z",
+      "feature": "settings",
       "phase": "do",
       "action": "updated"
     }
