@@ -161,6 +161,18 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
         today.setHours(0, 0, 0, 0);
         const todayStr = today.toISOString().split('T')[0];
 
+        // 등록일 조회: 등록일 이전에는 스케줄 배정하지 않음
+        const [studentRows] = await dbConn.query(
+            'SELECT enrollment_date FROM students WHERE id = ?',
+            [studentId]
+        );
+        const enrollmentDate = studentRows[0]?.enrollment_date
+            ? new Date(studentRows[0].enrollment_date + 'T00:00:00')
+            : null;
+
+        // 시작일: 오늘과 등록일 중 더 늦은 날짜
+        const startDate = enrollmentDate && enrollmentDate > today ? enrollmentDate : today;
+
         const year = today.getFullYear();
         const month = today.getMonth();
         const lastDay = new Date(year, month + 1, 0).getDate();
@@ -178,11 +190,11 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
 
         logger.info(`Removed ${deleteResult.affectedRows} future attendance records for student ${studentId}`);
 
-        // 2. 새 요일로 재배정 (오늘부터 월말까지) - 요일별 시간대 사용
+        // 2. 새 요일로 재배정 (시작일부터 월말까지) - 등록일 이전 배정 방지
         let assignedCount = 0;
         let createdCount = 0;
 
-        for (let day = today.getDate(); day <= lastDay; day++) {
+        for (let day = startDate.getDate(); day <= lastDay; day++) {
             const currentDate = new Date(year, month, day);
             const dayOfWeek = currentDate.getDay();
 
