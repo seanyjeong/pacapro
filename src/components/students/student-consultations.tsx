@@ -499,12 +499,19 @@ function renderInitialConsultation(
               </div>
               <div className="pl-6">
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  {checklist.map((item: any, idx: number) => (
-                    <li key={idx} className="flex items-center gap-2">
-                      <span>{item.checked ? '✅' : '⬜'}</span>
-                      <span>{item.label || item}</span>
-                    </li>
-                  ))}
+                  {checklist.map((item: any, idx: number) => {
+                    const label = item.text || item.label || (typeof item === 'string' ? item : '');
+                    const inputVal = item.input?.value || '';
+                    return (
+                      <li key={idx} className="flex items-center gap-2">
+                        <span>{item.checked ? '✅' : '⬜'}</span>
+                        <span>
+                          {label}
+                          {inputVal && <span className="ml-1 text-foreground font-medium">({inputVal})</span>}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             </div>
