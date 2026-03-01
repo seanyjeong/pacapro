@@ -41,8 +41,6 @@ interface InitialConsultation {
   preferred_time: string;
   status: string;
   student_name: string | null;
-  parent_name: string | null;
-  parent_phone: string | null;
   student_grade: string | null;
   inquiry_content: string | null;
   consultation_memo: string | null;
@@ -517,24 +515,24 @@ function renderInitialConsultation(
             </div>
           )}
 
-          {/* 학부모 정보 */}
-          {(consultation.parent_name || consultation.parent_phone) && (
+          {/* 신청자 정보 */}
+          {(consultation.student_name || consultation.student_grade) && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <PhoneCall className="h-4 w-4 text-gray-600" />
-                학부모 정보
+                신청자 정보
               </div>
               <div className="pl-6 space-y-1">
-                {consultation.parent_name && (
+                {consultation.student_name && (
                   <p className="text-sm">
-                    <span className="text-muted-foreground">학부모:</span>{' '}
-                    <span className="font-medium">{consultation.parent_name}</span>
+                    <span className="text-muted-foreground">이름:</span>{' '}
+                    <span className="font-medium">{consultation.student_name}</span>
                   </p>
                 )}
-                {consultation.parent_phone && (
+                {consultation.student_grade && (
                   <p className="text-sm">
-                    <span className="text-muted-foreground">연락처:</span>{' '}
-                    <span className="font-medium">{consultation.parent_phone}</span>
+                    <span className="text-muted-foreground">학년:</span>{' '}
+                    <span className="font-medium">{consultation.student_grade}</span>
                   </p>
                 )}
               </div>

@@ -109,8 +109,8 @@ router.get('/:studentId', verifyToken, async (req, res) => {
     const decryptedInitialConsultations = initialConsultations.map(c => ({
       ...c,
       student_name: c.student_name ? decrypt(c.student_name) : c.student_name,
-      parent_name: c.parent_name ? decrypt(c.parent_name) : c.parent_name,
-      parent_phone: c.parent_phone ? decrypt(c.parent_phone) : c.parent_phone,
+      parent_name: undefined,
+      parent_phone: undefined,
       academic_scores: safeJsonParse(c.academic_scores),
       checklist: safeJsonParse(c.checklist),
       referral_sources: safeJsonParse(c.referral_sources),
