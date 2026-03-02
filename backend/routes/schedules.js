@@ -1022,6 +1022,7 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
                     s.name AS student_name,
                     s.student_number,
                     s.student_type,
+                    s.is_trial,
                     s.grade,
                     s.class_days,
                     ss.id AS season_registration_id,
@@ -1051,6 +1052,7 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
                 s.name AS student_name,
                 s.student_number,
                 s.student_type,
+                s.is_trial,
                 s.grade,
                 s.class_days,
                 NULL AS season_registration_id,
@@ -1115,6 +1117,7 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
             student_name: decrypt(student.student_name),
             student_number: student.student_number,
             student_type: student.student_type,
+            is_trial: !!student.is_trial,
             attendance_status: student.attendance_status || null,
             makeup_date: student.makeup_date || null,
             notes: student.attendance_notes || '',
@@ -1145,6 +1148,18 @@ router.get('/:id/attendance', verifyToken, async (req, res) => {
                 });
             }
         }
+
+        // 정렬: 체험생 먼저, 그 다음 가나다순
+        studentsWithInfo.sort((a, b) => {
+            // 1. 체험생 우선
+            if (a.is_trial && !b.is_trial) return -1;
+            if (!a.is_trial && b.is_trial) return 1;
+            // 2. 보충 학생은 뒤로
+            if (a.is_makeup && !b.is_makeup) return 1;
+            if (!a.is_makeup && b.is_makeup) return -1;
+            // 3. 가나다순
+            return (a.student_name || '').localeCompare(b.student_name || '', 'ko');
+        });
 
         res.json({
             message: 'Attendance records retrieved',
