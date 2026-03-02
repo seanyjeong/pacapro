@@ -143,7 +143,7 @@ export function AttendanceCard({
         {/* Phone Button */}
         {onPhoneCall && (student.phone || student.parent_phone) && !isTablet && (
           <button
-            onClick={() => onPhoneCall(student.parent_phone, student.phone)}
+            onClick={() => onPhoneCall(student.phone, student.parent_phone)}
             className="p-2 text-muted-foreground hover:text-emerald-500 dark:hover:text-emerald-400 transition shrink-0"
           >
             <Phone className="h-5 w-5" />
