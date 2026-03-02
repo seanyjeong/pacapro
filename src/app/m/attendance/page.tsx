@@ -298,14 +298,13 @@ export default function MobileAttendancePage() {
     }
   };
 
-  // 전화걸기
-  const handleCall = (phone?: string, parentPhone?: string) => {
-    const numberToCall = phone || parentPhone;
-    if (!numberToCall) {
+  // 전화걸기 (학생 번호로만)
+  const handleCall = (phone?: string) => {
+    if (!phone) {
       toast.error('등록된 전화번호가 없습니다.');
       return;
     }
-    window.location.href = `tel:${numberToCall}`;
+    window.location.href = `tel:${phone}`;
   };
 
   if (hasPermission === null || loading) {

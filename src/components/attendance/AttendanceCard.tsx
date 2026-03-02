@@ -22,7 +22,7 @@ export interface Student {
 interface AttendanceCardProps {
   student: Student;
   onStatusChange: (status: AttendanceStatus) => void;
-  onPhoneCall?: (phone?: string, parentPhone?: string) => void;
+  onPhoneCall?: (phone?: string) => void;
   layout?: 'compact' | 'standard' | 'tablet';
   saving?: boolean;
 }
@@ -143,7 +143,7 @@ export function AttendanceCard({
         {/* Phone Button */}
         {onPhoneCall && (student.phone || student.parent_phone) && !isTablet && (
           <button
-            onClick={() => onPhoneCall(student.phone, student.parent_phone)}
+            onClick={() => onPhoneCall(student.phone)}
             className="p-2 text-muted-foreground hover:text-emerald-500 dark:hover:text-emerald-400 transition shrink-0"
           >
             <Phone className="h-5 w-5" />
