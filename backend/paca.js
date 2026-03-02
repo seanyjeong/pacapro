@@ -111,10 +111,10 @@ const publicLimiter = rateLimit({
     skip: (req) => isDev // 개발 환경에서는 스킵
 });
 
-// 로그인 API: 15분에 10회 (브루트포스 방지)
+// 로그인 API: 15분에 100회 (넉넉하게 설정)
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     message: {
@@ -124,10 +124,10 @@ const loginLimiter = rateLimit({
     skip: (req) => isDev
 });
 
-// 일반 API: 1분에 100회
+// 일반 API: 1분에 300회
 const generalLimiter = rateLimit({
     windowMs: 60 * 1000,
-    max: 100,
+    max: 300,
     standardHeaders: true,
     legacyHeaders: false,
     message: {

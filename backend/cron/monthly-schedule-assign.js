@@ -47,7 +47,7 @@ function getTimeSlotForDay(slots, day, defaultTimeSlot = DEFAULT_TIME_SLOT) {
  * classDays: 숫자 배열 [1,3,6] 또는 객체 배열 [{day:1,timeSlot:"morning"}]
  * defaultTimeSlot: 숫자 배열일 때 사용할 기본 시간대
  */
-async function assignStudentToMonth(dbConn, studentId, academyId, classDays, year, month, defaultTimeSlot = DEFAULT_TIME_SLOT) {
+async function assignStudentToMonth(dbConn, studentId, academyId, classDays, year, month, defaultTimeSlot = DEFAULT_TIME_SLOT, enrollmentDate = null) {
     const slots = parseClassDaysWithSlots(classDays, defaultTimeSlot);
     if (slots.length === 0) return { assigned: 0, created: 0 };
 
@@ -57,9 +57,15 @@ async function assignStudentToMonth(dbConn, studentId, academyId, classDays, yea
     let assignedCount = 0;
     let createdCount = 0;
 
+    // enrollment_date 이전 날짜는 스킵
+    const enrollDate = enrollmentDate ? new Date(enrollmentDate) : null;
+
     for (let day = 1; day <= lastDay; day++) {
         const currentDate = new Date(year, month - 1, day);
         const dayOfWeek = currentDate.getDay();
+
+        // enrollment_date 이전이면 스킵
+        if (enrollDate && currentDate < enrollDate) continue;
 
         if (dayNumbers.includes(dayOfWeek)) {
             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -154,7 +160,7 @@ async function runMonthlyAssignment() {
 
             // 해당 학원의 활성 학생 조회 (class_days가 있는 학생만, time_slot 포함)
             const [students] = await db.query(
-                `SELECT id, name, class_days, time_slot
+                `SELECT id, name, class_days, time_slot, enrollment_date
                  FROM students
                  WHERE academy_id = ?
                  AND status = 'active'
@@ -181,7 +187,8 @@ async function runMonthlyAssignment() {
                         classDays,
                         year,
                         month,
-                        student.time_slot || DEFAULT_TIME_SLOT
+                        student.time_slot || DEFAULT_TIME_SLOT,
+                        student.enrollment_date
                     );
 
                     totalStudents++;

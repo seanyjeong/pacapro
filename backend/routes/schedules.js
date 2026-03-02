@@ -213,7 +213,7 @@ router.get('/slot', verifyToken, async (req, res) => {
 
         let schedule = schedules[0] || null;
 
-        // 해당 요일 + 시간대에 수업이 있는 학생 조회
+        // 해당 요일 + 시간대에 수업이 있는 학생 조회 (enrollment_date 이전 제외)
         const dayOfWeek = new Date(date + 'T00:00:00').getDay();
         const [eligibleStudents] = await db.query(
             `SELECT s.id
@@ -224,8 +224,9 @@ router.get('/slot', verifyToken, async (req, res) => {
              AND (
                 (JSON_CONTAINS(s.class_days, CAST(? AS JSON)) AND s.time_slot = ?)
                 OR JSON_CONTAINS(s.class_days, CAST(? AS JSON))
-             )`,
-            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot})]
+             )
+             AND (s.enrollment_date IS NULL OR s.enrollment_date <= ?)`,
+            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), date]
         );
 
         // 스케줄이 없으면: 현재 월까지만 + 해당 시간대에 학생이 있을 때만 자동 생성
@@ -251,7 +252,7 @@ router.get('/slot', verifyToken, async (req, res) => {
             schedule = { id: result.insertId, class_date: date, time_slot, attendance_taken: 0 };
         }
 
-        // 아직 출석 기록 없는 학생 자동 추가
+        // 아직 출석 기록 없는 학생 자동 추가 (enrollment_date 이전은 제외)
         const [missingStudents] = await db.query(
             `SELECT s.id
              FROM students s
@@ -265,8 +266,9 @@ router.get('/slot', verifyToken, async (req, res) => {
              AND s.id NOT IN (
                 SELECT a.student_id FROM attendance a
                 WHERE a.class_schedule_id = ?
-             )`,
-            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), schedule.id]
+             )
+             AND (s.enrollment_date IS NULL OR s.enrollment_date <= ?)`,
+            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), schedule.id, date]
         );
 
         // 누락된 학생들 자동 추가 (attendance_status = NULL로 추가)
@@ -311,6 +313,15 @@ router.get('/slot', verifyToken, async (req, res) => {
                 phone: s.phone ? decrypt(s.phone) : s.phone,
                 parent_phone: s.parent_phone ? decrypt(s.parent_phone) : s.parent_phone
             }));
+
+            // 정렬: 체험 먼저 → 일반 → 보충, 같은 그룹 내 가나다순
+            students.sort((a, b) => {
+                if (a.is_trial && !b.is_trial) return -1;
+                if (!a.is_trial && b.is_trial) return 1;
+                if (a.is_makeup && !b.is_makeup) return 1;
+                if (!a.is_makeup && b.is_makeup) return -1;
+                return (a.student_name || '').localeCompare(b.student_name || '', 'ko');
+            });
         }
 
         // 해당 요일에 수업이 있는 학생 중 아직 배정되지 않은 학생 조회 (이미 자동 추가했으므로 비어있을 것)
