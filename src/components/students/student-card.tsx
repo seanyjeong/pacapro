@@ -138,10 +138,10 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw,
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
             <div>
               <div className="text-sm text-muted-foreground mb-1">학생 연락처</div>
-              <div className="flex items-center text-foreground">
+              <a href={student.phone ? `tel:${student.phone}` : undefined} className="flex items-center text-foreground">
                 <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
                 {formatPhoneNumber(student.phone)}
-              </div>
+              </a>
             </div>
             <div>
               <div className="text-sm text-muted-foreground mb-1">학부모 연락처</div>
