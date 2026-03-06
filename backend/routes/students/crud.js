@@ -1211,9 +1211,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                     })();
 
                     const proratedAmount = totalClassDaysInMonth > 0
-                        ? Math.floor(monthly_tuition * classCountInPeriod / totalClassDaysInMonth / 100) * 100
+                        ? Math.floor(monthly_tuition * classCountInPeriod / totalClassDaysInMonth / 1000) * 1000
                         : monthly_tuition;
-                    const discountAmt = discount_rate ? Math.floor(proratedAmount * discount_rate / 100 / 100) * 100 : 0;
+                    const discountAmt = discount_rate ? Math.floor(proratedAmount * discount_rate / 100 / 1000) * 1000 : 0;
                     const finalAmount = proratedAmount - discountAmt;
                     const dueDate = new Date(year, month - 1, Math.min(studentDueDay, lastDayOfMonth));
                     const yearMonth = `${year}-${String(month).padStart(2, '0')}`;

@@ -252,7 +252,7 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
  * 천원 단위 절삭
  */
 function truncateToThousands(amount) {
-    return Math.floor(amount / 100) * 100;
+    return Math.floor(amount / 1000) * 1000;
 }
 
 /**
