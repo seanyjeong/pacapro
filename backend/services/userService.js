@@ -21,6 +21,8 @@ function decryptArray(arr) {
  * 승인 대기 사용자 목록 조회
  */
 async function getPendingUsers(academyId) {
+    // academy 1(admin)은 전체 pending 유저 조회, 그 외는 같은 academy만
+    const isAdmin = academyId === 1;
     const [users] = await db.query(
         `SELECT
             u.id, u.email, u.name, u.phone, u.role,
@@ -30,9 +32,9 @@ async function getPendingUsers(academyId) {
         LEFT JOIN academies a ON u.academy_id = a.id
         WHERE u.approval_status = 'pending'
         AND u.is_active = true
-        AND u.academy_id = ?
+        ${isAdmin ? '' : 'AND u.academy_id = ?'}
         ORDER BY u.created_at DESC`,
-        [academyId]
+        isAdmin ? [] : [academyId]
     );
 
     return { message: `Found ${users.length} pending users`, users: decryptArray(users) };
@@ -42,9 +44,11 @@ async function getPendingUsers(academyId) {
  * 사용자 승인/거절 공통 로직
  */
 async function changeApprovalStatus(userId, academyId, newStatus) {
+    // academy 1(admin)은 전체 유저 승인/거절 가능
+    const isAdmin = academyId === 1;
     const [users] = await db.query(
-        'SELECT id, email, name, approval_status, academy_id FROM users WHERE id = ? AND academy_id = ?',
-        [userId, academyId]
+        `SELECT id, email, name, approval_status, academy_id FROM users WHERE id = ? ${isAdmin ? '' : 'AND academy_id = ?'}`,
+        isAdmin ? [userId] : [userId, academyId]
     );
 
     if (users.length === 0) {

@@ -503,15 +503,14 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             const discountAmount = truncateToThousands(proRatedAmount * discountRateNum / 100);
             const finalAmount = proRatedAmount - discountAmount;
 
-            // 납부일 계산 (스케줄러와 동일한 로직 사용)
+            // 납부일 계산: 등록일이 학원 납부일 이후면 등록일+7일
             let dueDateStr = calculateDueDate(year, month, studentDueDay, parsedClassDays);
             let dueDateObj = new Date(dueDateStr);
 
-            // 납부일이 등록일보다 이전이면 다음 달 납부일로
             if (dueDateObj < enrollDate) {
-                const nextMonth = month === 12 ? 1 : month + 1;
-                const nextYear = month === 12 ? year + 1 : year;
-                dueDateStr = calculateDueDate(nextYear, nextMonth, studentDueDay, parsedClassDays);
+                const grace = new Date(enrollDate);
+                grace.setDate(grace.getDate() + 7);
+                dueDateStr = grace.toISOString().split('T')[0];
             }
 
             // 학원비 레코드 생성
@@ -1215,7 +1214,12 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                         : monthly_tuition;
                     const discountAmt = discount_rate ? Math.floor(proratedAmount * discount_rate / 100 / 1000) * 1000 : 0;
                     const finalAmount = proratedAmount - discountAmt;
-                    const dueDate = new Date(year, month - 1, Math.min(studentDueDay, lastDayOfMonth));
+                    let dueDate = new Date(year, month - 1, Math.min(studentDueDay, lastDayOfMonth));
+                    // 납부일이 등록일보다 이전이면 등록일+7일
+                    if (dueDate < enrollDate) {
+                        dueDate = new Date(enrollDate);
+                        dueDate.setDate(dueDate.getDate() + 7);
+                    }
                     const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
                     const description = `${month}월 학원비 (${enrollDay}일 등록, 일할계산)`;
 
