@@ -436,9 +436,14 @@ export default function ConsultationsPage() {
 
   // 직접 등록
   const handleDirectRegister = async () => {
-    if (!directForm.studentName || !directForm.phone || !directForm.grade ||
-        !directForm.preferredDate || !directForm.preferredTime) {
-      toast.error('필수 항목을 모두 입력해주세요.');
+    const missing: string[] = [];
+    if (!directForm.studentName) missing.push('학생명');
+    if (!directForm.phone) missing.push('전화번호');
+    if (!directForm.grade) missing.push('학년');
+    if (!directForm.preferredDate) missing.push('상담일');
+    if (!directForm.preferredTime) missing.push('시간');
+    if (missing.length > 0) {
+      toast.error(`${missing.join(', ')}을(를) 입력해주세요.`);
       return;
     }
 
