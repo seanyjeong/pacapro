@@ -238,6 +238,7 @@ export default function NewInquiryConsultationsPage() {
   const handleCreateConsultation = async () => {
     const missing: string[] = [];
     if (!createForm.studentName) missing.push('학생명');
+    if (!createForm.phone) missing.push('연락처');
     if (!createForm.preferredDate) missing.push('상담일');
     if (!createForm.preferredTime) missing.push('시간');
     if (missing.length > 0) {

@@ -3,9 +3,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { canView } from '@/lib/utils/permissions';
-import { getConsultations } from '@/lib/api/consultations';
-import { ArrowLeft, MessageSquare, Clock, User, Phone, School, GraduationCap, X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { getConsultations, updateConsultation } from '@/lib/api/consultations';
+import { ArrowLeft, MessageSquare, Clock, User, Phone, School, GraduationCap, X, ChevronLeft, ChevronRight, Calendar, Check, Loader2 } from 'lucide-react';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
+import { toast } from 'sonner';
 
 // Helper: format YYYY-MM-DD from Date (local timezone)
 function toLocalDateStr(d: Date) {
@@ -35,6 +36,8 @@ export default function MobileConsultationsPage() {
   const [loading, setLoading] = useState(true);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+  const [showStatusChange, setShowStatusChange] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   // Calendar state
   const today = useMemo(() => new Date(), []);
@@ -72,6 +75,23 @@ export default function MobileConsultationsPage() {
       loadMonthCounts(calendarMonth.year, calendarMonth.month);
     }
   }, [hasPermission, showCalendar, calendarMonth.year, calendarMonth.month]);
+
+  const handleStatusChange = async (consultation: Consultation, newStatus: ConsultationStatus) => {
+    if (consultation.status === newStatus) return;
+    setUpdatingStatus(true);
+    try {
+      await updateConsultation(consultation.id, { status: newStatus });
+      toast.success('상태가 변경되었습니다.');
+      setSelectedConsultation({ ...consultation, status: newStatus });
+      setShowStatusChange(false);
+      loadConsultations(selectedDate);
+    } catch (error) {
+      console.error('상태 변경 오류:', error);
+      toast.error('상태 변경에 실패했습니다.');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   const loadConsultations = async (date: Date) => {
     setLoading(true);
@@ -388,90 +408,137 @@ export default function MobileConsultationsPage() {
 
       {/* Detail modal */}
       {selectedConsultation && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setSelectedConsultation(null)}>
-          <div className="bg-card rounded-2xl w-full max-w-sm p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="text-xl font-bold text-foreground">상담 정보</h3>
-              <button onClick={() => setSelectedConsultation(null)} className="p-2 text-muted-foreground hover:text-foreground">
-                <X className="h-5 w-5" />
-              </button>
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-end justify-center z-50" onClick={() => { setSelectedConsultation(null); setShowStatusChange(false); }}>
+          <div className="bg-card rounded-t-2xl w-full max-w-md max-h-[85vh] overflow-y-auto pb-8" onClick={(e) => e.stopPropagation()}>
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
             </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">이름</p>
-                  <p className="font-semibold text-lg text-foreground">{selectedConsultation.student_name}</p>
-                </div>
+            <div className="px-6 pb-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-foreground">상담 정보</h3>
+                <button onClick={() => { setSelectedConsultation(null); setShowStatusChange(false); }} className="p-2 text-muted-foreground hover:text-foreground">
+                  <X className="h-5 w-5" />
+                </button>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              {/* Status change section */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className={`text-sm px-3 py-1 rounded-full font-medium ${getStatusColor(selectedConsultation.status)}`}>
+                    {getStatusLabel(selectedConsultation.status)}
+                  </span>
+                  <button
+                    onClick={() => setShowStatusChange(!showStatusChange)}
+                    className="text-sm text-primary font-medium px-3 py-1.5 rounded-lg hover:bg-primary/10 transition"
+                  >
+                    {showStatusChange ? '닫기' : '상태변경'}
+                  </button>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">상담 시간</p>
-                  <p className="font-semibold text-foreground">{formatTime(selectedConsultation.preferred_time)}</p>
-                </div>
+
+                {showStatusChange && (
+                  <div className="grid grid-cols-5 gap-1.5 p-3 bg-muted rounded-xl">
+                    {(['pending', 'confirmed', 'completed', 'cancelled', 'no_show'] as ConsultationStatus[]).map((s) => (
+                      <button
+                        key={s}
+                        disabled={updatingStatus || selectedConsultation.status === s}
+                        onClick={() => handleStatusChange(selectedConsultation, s)}
+                        className={`relative flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-xs font-medium transition-all
+                          ${selectedConsultation.status === s
+                            ? 'bg-primary text-primary-foreground ring-2 ring-primary'
+                            : 'hover:bg-background text-muted-foreground hover:text-foreground'}
+                          ${updatingStatus ? 'opacity-50' : ''}`}
+                      >
+                        {updatingStatus && selectedConsultation.status !== s ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : selectedConsultation.status === s ? (
+                          <Check className="h-3 w-3" />
+                        ) : null}
+                        <span>{getStatusLabel(s)}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {selectedConsultation.student_phone && (
-                <a href={`tel:${selectedConsultation.student_phone}`} className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-                  <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center">
-                    <Phone className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">학생 전화번호</p>
-                    <p className="font-semibold text-foreground">{selectedConsultation.student_phone}</p>
-                  </div>
-                </a>
-              )}
-
-              {selectedConsultation.parent_phone && (
-                <a href={`tel:${selectedConsultation.parent_phone}`} className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-                  <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
-                    <Phone className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">학부모 전화번호</p>
-                    <p className="font-semibold text-foreground">{selectedConsultation.parent_phone}</p>
-                  </div>
-                </a>
-              )}
-
-              {selectedConsultation.student_school && (
+              {/* Student info */}
+              <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center">
-                    <School className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                  <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                    <User className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">학교</p>
-                    <p className="font-semibold text-foreground">{selectedConsultation.student_school}</p>
+                    <p className="text-sm text-muted-foreground">이름</p>
+                    <p className="font-semibold text-lg text-foreground">{selectedConsultation.student_name}</p>
                   </div>
                 </div>
-              )}
 
-              {selectedConsultation.student_grade && (
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/50 rounded-full flex items-center justify-center">
-                    <GraduationCap className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">학년</p>
-                    <p className="font-semibold text-foreground">{formatGrade(selectedConsultation.student_grade)}</p>
+                    <p className="text-sm text-muted-foreground">상담 시간</p>
+                    <p className="font-semibold text-foreground">{formatTime(selectedConsultation.preferred_time)}</p>
                   </div>
                 </div>
-              )}
 
-              {selectedConsultation.inquiry_content && (
-                <div className="p-3 bg-muted rounded-xl">
-                  <p className="text-sm text-muted-foreground mb-1">문의 내용</p>
-                  <p className="text-sm text-foreground whitespace-pre-wrap">{selectedConsultation.inquiry_content}</p>
-                </div>
-              )}
+                {selectedConsultation.student_phone && (
+                  <a href={`tel:${selectedConsultation.student_phone}`} className="flex items-center gap-3 p-3 bg-muted rounded-xl">
+                    <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/50 rounded-full flex items-center justify-center">
+                      <Phone className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">학생 전화번호</p>
+                      <p className="font-semibold text-foreground">{selectedConsultation.student_phone}</p>
+                    </div>
+                  </a>
+                )}
+
+                {selectedConsultation.parent_phone && (
+                  <a href={`tel:${selectedConsultation.parent_phone}`} className="flex items-center gap-3 p-3 bg-muted rounded-xl">
+                    <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
+                      <Phone className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">학부모 전화번호</p>
+                      <p className="font-semibold text-foreground">{selectedConsultation.parent_phone}</p>
+                    </div>
+                  </a>
+                )}
+
+                {selectedConsultation.student_school && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-violet-100 dark:bg-violet-900/50 rounded-full flex items-center justify-center">
+                      <School className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">학교</p>
+                      <p className="font-semibold text-foreground">{selectedConsultation.student_school}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedConsultation.student_grade && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/50 rounded-full flex items-center justify-center">
+                      <GraduationCap className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">학년</p>
+                      <p className="font-semibold text-foreground">{formatGrade(selectedConsultation.student_grade)}</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedConsultation.inquiry_content && (
+                  <div className="p-3 bg-muted rounded-xl">
+                    <p className="text-sm text-muted-foreground mb-1">문의 내용</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{selectedConsultation.inquiry_content}</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
