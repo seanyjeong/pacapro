@@ -155,7 +155,7 @@ export default function NewInquiryConsultationsPage() {
       setPagination(response.pagination);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
-      toast.error('데이터를 불러오는데 실패했습니다.');
+
     } finally {
       setLoading(false);
     }
@@ -239,6 +239,7 @@ export default function NewInquiryConsultationsPage() {
     const missing: string[] = [];
     if (!createForm.studentName) missing.push('학생명');
     if (!createForm.phone) missing.push('연락처');
+    if (!createForm.grade) missing.push('학년');
     if (!createForm.preferredDate) missing.push('상담일');
     if (!createForm.preferredTime) missing.push('시간');
     if (missing.length > 0) {
@@ -270,7 +271,7 @@ export default function NewInquiryConsultationsPage() {
       loadData();
     } catch (error) {
       console.error('상담 등록 오류:', error);
-      toast.error('상담 등록에 실패했습니다.');
+
     } finally {
       setCreating(false);
     }
@@ -295,7 +296,7 @@ export default function NewInquiryConsultationsPage() {
       loadData();
     } catch (error) {
       console.error('상태 변경 오류:', error);
-      toast.error('상태 변경에 실패했습니다.');
+
     } finally {
       setUpdating(false);
     }
@@ -314,7 +315,7 @@ export default function NewInquiryConsultationsPage() {
       loadData();
     } catch (error) {
       console.error('삭제 오류:', error);
-      toast.error('삭제에 실패했습니다.');
+
     } finally {
       setDeleting(false);
     }
@@ -351,7 +352,7 @@ export default function NewInquiryConsultationsPage() {
       loadData();
     } catch (error) {
       console.error('체험 등록 오류:', error);
-      toast.error('체험 등록에 실패했습니다.');
+
     } finally {
       setConvertingToTrial(false);
     }
@@ -385,7 +386,7 @@ export default function NewInquiryConsultationsPage() {
       loadData();
     } catch (error) {
       console.error('학생 정보 수정 오류:', error);
-      toast.error('학생 정보 수정에 실패했습니다.');
+
     } finally {
       setUpdatingStudent(false);
     }

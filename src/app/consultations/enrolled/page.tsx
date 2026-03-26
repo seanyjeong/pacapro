@@ -121,7 +121,7 @@ export default function EnrolledConsultationsPage() {
       setPagination(response.pagination);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
-      toast.error('데이터를 불러오는데 실패했습니다.');
+
     } finally {
       setLoading(false);
     }
@@ -242,7 +242,7 @@ export default function EnrolledConsultationsPage() {
       loadData();
     } catch (error) {
       console.error('상담 등록 오류:', error);
-      toast.error('상담 등록에 실패했습니다.');
+
     } finally {
       setCreating(false);
     }
@@ -267,7 +267,7 @@ export default function EnrolledConsultationsPage() {
       loadData();
     } catch (error) {
       console.error('상태 변경 오류:', error);
-      toast.error('상태 변경에 실패했습니다.');
+
     } finally {
       setUpdating(false);
     }
@@ -286,7 +286,7 @@ export default function EnrolledConsultationsPage() {
       loadData();
     } catch (error) {
       console.error('삭제 오류:', error);
-      toast.error('삭제에 실패했습니다.');
+
     } finally {
       setDeleting(false);
     }

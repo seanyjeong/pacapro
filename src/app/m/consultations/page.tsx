@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { canView } from '@/lib/utils/permissions';
-import { getConsultations, updateConsultation } from '@/lib/api/consultations';
-import { ArrowLeft, MessageSquare, Clock, User, Phone, School, GraduationCap, X, ChevronLeft, ChevronRight, Calendar, Check, Loader2 } from 'lucide-react';
+import { canView, isOwner } from '@/lib/utils/permissions';
+import { getConsultations, updateConsultation, createDirectConsultation, getBookedTimes } from '@/lib/api/consultations';
+import { ArrowLeft, MessageSquare, Clock, User, Phone, School, GraduationCap, X, ChevronLeft, ChevronRight, Calendar, Check, Loader2, Plus } from 'lucide-react';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 import { toast } from 'sonner';
 
@@ -38,6 +38,19 @@ export default function MobileConsultationsPage() {
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [showStatusChange, setShowStatusChange] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // 신규 상담 등록 (원장 전용)
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    studentName: '',
+    phone: '',
+    grade: '',
+    preferredDate: '',
+    preferredTime: '',
+    notes: '',
+  });
+  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
 
   // Calendar state
   const today = useMemo(() => new Date(), []);
@@ -75,6 +88,50 @@ export default function MobileConsultationsPage() {
       loadMonthCounts(calendarMonth.year, calendarMonth.month);
     }
   }, [hasPermission, showCalendar, calendarMonth.year, calendarMonth.month]);
+
+  // 시간 슬롯 생성 (30분 간격, 9시~18시)
+  const generateTimeSlots = () => {
+    const slots: string[] = [];
+    for (let h = 9; h < 18; h++) {
+      slots.push(`${h.toString().padStart(2, '0')}:00`);
+      slots.push(`${h.toString().padStart(2, '0')}:30`);
+    }
+    return slots;
+  };
+
+  const loadBookedTimes = async (date: string) => {
+    try {
+      const res = await getBookedTimes(date);
+      setBookedTimes(res.bookedTimes || []);
+    } catch {
+      setBookedTimes([]);
+    }
+  };
+
+  const handleCreateConsultation = async () => {
+    const missing: string[] = [];
+    if (!createForm.studentName) missing.push('학생명');
+    if (!createForm.phone) missing.push('연락처');
+    if (!createForm.grade) missing.push('학년');
+    if (!createForm.preferredDate) missing.push('상담일');
+    if (!createForm.preferredTime) missing.push('시간');
+    if (missing.length > 0) {
+      toast.error(`${missing.join(', ')}을(를) 입력해주세요.`);
+      return;
+    }
+    setCreating(true);
+    try {
+      await createDirectConsultation(createForm);
+      toast.success('상담이 등록되었습니다.');
+      setShowCreateForm(false);
+      setCreateForm({ studentName: '', phone: '', grade: '', preferredDate: '', preferredTime: '', notes: '' });
+      loadConsultations(selectedDate);
+    } catch (error) {
+      console.error('상담 등록 오류:', error);
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const handleStatusChange = async (consultation: Consultation, newStatus: ConsultationStatus) => {
     if (consultation.status === newStatus) return;
@@ -405,6 +462,151 @@ export default function MobileConsultationsPage() {
           </>
         )}
       </main>
+
+
+      {/* 신규 상담 등록 FAB (원장 전용) */}
+      {isOwner() && (
+        <button
+          onClick={() => {
+            setShowCreateForm(true);
+            // 오늘 날짜로 기본 설정
+            setCreateForm(prev => ({ ...prev, preferredDate: toLocalDateStr(selectedDate) }));
+            loadBookedTimes(toLocalDateStr(selectedDate));
+          }}
+          className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-primary text-primary-foreground rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <Plus className="h-7 w-7" />
+        </button>
+      )}
+
+      {/* 신규 상담 등록 폼 (원장 전용) */}
+      {showCreateForm && (
+        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-end justify-center z-50" onClick={() => setShowCreateForm(false)}>
+          <div className="bg-card rounded-t-2xl w-full max-w-md max-h-[90vh] overflow-y-auto pb-8" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
+            </div>
+
+            <div className="px-6 pb-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-foreground">신규 상담 등록</h3>
+                <button onClick={() => setShowCreateForm(false)} className="p-2 text-muted-foreground hover:text-foreground">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* 학생명 */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">학생명 *</label>
+                <input
+                  type="text"
+                  value={createForm.studentName}
+                  onChange={(e) => setCreateForm({ ...createForm, studentName: e.target.value })}
+                  placeholder="학생 이름"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* 연락처 */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">연락처 *</label>
+                <input
+                  type="tel"
+                  value={createForm.phone}
+                  onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                  placeholder="010-0000-0000"
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* 학년 */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">학년 *</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {['중3', '고1', '고2', '고3', 'N수', '성인'].map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => setCreateForm({ ...createForm, grade: g === createForm.grade ? '' : g })}
+                      className={`py-2.5 rounded-xl text-sm font-medium transition-all
+                        ${createForm.grade === g
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 상담일 */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">상담일 *</label>
+                <input
+                  type="date"
+                  value={createForm.preferredDate}
+                  onChange={(e) => {
+                    setCreateForm({ ...createForm, preferredDate: e.target.value, preferredTime: '' });
+                    if (e.target.value) loadBookedTimes(e.target.value);
+                  }}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* 시간 */}
+              {createForm.preferredDate && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground mb-1 block">시간 *</label>
+                  <div className="grid grid-cols-4 gap-1.5 max-h-48 overflow-y-auto">
+                    {generateTimeSlots().map((slot) => {
+                      const isBooked = bookedTimes.includes(slot);
+                      const isSelected = createForm.preferredTime === slot;
+                      return (
+                        <button
+                          key={slot}
+                          disabled={isBooked}
+                          onClick={() => setCreateForm({ ...createForm, preferredTime: slot })}
+                          className={`py-2 rounded-lg text-sm font-medium transition-all
+                            ${isSelected ? 'bg-primary text-primary-foreground' : ''}
+                            ${isBooked ? 'bg-muted/50 text-muted-foreground/40 line-through cursor-not-allowed' : ''}
+                            ${!isSelected && !isBooked ? 'bg-muted text-foreground hover:bg-muted/80' : ''}`}
+                        >
+                          {slot}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 메모 */}
+              <div>
+                <label className="text-sm font-medium text-muted-foreground mb-1 block">메모</label>
+                <textarea
+                  value={createForm.notes}
+                  onChange={(e) => setCreateForm({ ...createForm, notes: e.target.value })}
+                  placeholder="상담 관련 메모"
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                />
+              </div>
+
+              {/* 등록 버튼 */}
+              <button
+                onClick={handleCreateConsultation}
+                disabled={creating}
+                className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-semibold text-base disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              >
+                {creating ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    등록 중...
+                  </>
+                ) : '상담 등록'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Detail modal */}
       {selectedConsultation && (

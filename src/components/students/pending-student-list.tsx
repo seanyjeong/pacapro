@@ -93,7 +93,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
       onReload();
     } catch (error) {
       console.error('Failed to save memo:', error);
-      toast.error('메모 저장에 실패했습니다.');
+
     } finally {
       setSavingMemo(false);
     }
@@ -155,7 +155,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
       onReload();
     } catch (error) {
       console.error('Failed to register as trial:', error);
-      toast.error('체험생 등록에 실패했습니다.');
+
     }
   };
 
@@ -172,7 +172,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
       onReload();
     } catch (error) {
       console.error('Failed to delete student:', error);
-      toast.error('삭제에 실패했습니다.');
+
     } finally {
       setDeletingId(null);
     }

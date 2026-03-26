@@ -152,7 +152,7 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
       setResult(calculationResult);
     } catch (err) {
       console.error('Failed to calculate salary:', err);
-      toast.error('급여 계산에 실패했습니다.');
+
     } finally {
       setCalculating(false);
     }

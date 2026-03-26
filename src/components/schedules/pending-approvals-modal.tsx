@@ -70,7 +70,7 @@ export function PendingApprovalsModal({
       setRequests(response.requests || []);
     } catch (err) {
       console.error('Failed to load pending requests:', err);
-      toast.error('요청 목록을 불러오는데 실패했습니다.');
+
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export function PendingApprovalsModal({
       onApproved?.();
     } catch (err) {
       console.error('Failed to approve:', err);
-      toast.error('승인 처리에 실패했습니다.');
+
     } finally {
       setProcessingId(null);
     }
@@ -99,7 +99,7 @@ export function PendingApprovalsModal({
       setRequests(prev => prev.filter(r => r.id !== request.id));
     } catch (err) {
       console.error('Failed to reject:', err);
-      toast.error('거부 처리에 실패했습니다.');
+
     } finally {
       setProcessingId(null);
     }

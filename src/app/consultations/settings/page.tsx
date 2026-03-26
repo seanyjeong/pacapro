@@ -151,7 +151,7 @@ export default function ConsultationSettingsPage() {
         }
       } catch (error) {
         console.error('설정 로드 오류:', error);
-        toast.error('설정을 불러오는데 실패했습니다.');
+
       } finally {
         setLoading(false);
       }
@@ -176,7 +176,7 @@ export default function ConsultationSettingsPage() {
         toast.success('사용 가능한 주소입니다.');
       }
     } catch (error) {
-      toast.error('확인에 실패했습니다.');
+
     } finally {
       setCheckingSlug(false);
     }
@@ -199,7 +199,7 @@ export default function ConsultationSettingsPage() {
       setSlugAvailable(null);
       toast.success('페이지 주소가 저장되었습니다.');
     } catch (error) {
-      toast.error('주소 저장에 실패했습니다.');
+
     } finally {
       setSavingSlug(false);
     }
@@ -214,7 +214,7 @@ export default function ConsultationSettingsPage() {
       });
       toast.success('설정이 저장되었습니다.');
     } catch (error) {
-      toast.error('저장에 실패했습니다.');
+
     } finally {
       setSaving(false);
     }
@@ -227,7 +227,7 @@ export default function ConsultationSettingsPage() {
       await updateWeeklyHours(weeklyHours);
       toast.success('운영 시간이 저장되었습니다.');
     } catch (error) {
-      toast.error('저장에 실패했습니다.');
+
     } finally {
       setSaving(false);
     }
@@ -264,7 +264,7 @@ export default function ConsultationSettingsPage() {
       setNewBlockReason('');
       toast.success('날짜가 차단되었습니다.');
     } catch (error) {
-      toast.error('차단에 실패했습니다.');
+
     } finally {
       setAddingBlock(false);
     }
@@ -277,7 +277,7 @@ export default function ConsultationSettingsPage() {
       setBlockedSlots(blockedSlots.filter(b => b.id !== id));
       toast.success('차단이 해제되었습니다.');
     } catch (error) {
-      toast.error('해제에 실패했습니다.');
+
     }
   };
 
@@ -510,7 +510,7 @@ export default function ConsultationSettingsPage() {
       } as Partial<ConsultationSettings> & { checklist_template: ChecklistTemplate[] });
       toast.success('체크리스트가 저장되었습니다.');
     } catch (error) {
-      toast.error('저장에 실패했습니다.');
+
     } finally {
       setSavingChecklist(false);
     }

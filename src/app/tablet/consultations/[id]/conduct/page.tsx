@@ -189,7 +189,7 @@ export default function TabletConductPage({ params }: PageProps) {
         }
       } catch (error) {
         console.error('상담 정보 로드 오류:', error);
-        toast.error('상담 정보를 불러오는데 실패했습니다.');
+
         router.push(backUrl);
       } finally {
         setLoading(false);
@@ -298,7 +298,7 @@ export default function TabletConductPage({ params }: PageProps) {
       }
     } catch (error) {
       console.error('저장 오류:', error);
-      toast.error('저장에 실패했습니다.');
+
     } finally {
       setSaving(false);
     }
@@ -410,7 +410,7 @@ export default function TabletConductPage({ params }: PageProps) {
       setStudentEditModalOpen(false);
     } catch (error) {
       console.error('학생 정보 수정 오류:', error);
-      toast.error('학생 정보 수정에 실패했습니다.');
+
     } finally {
       setSavingStudent(false);
     }

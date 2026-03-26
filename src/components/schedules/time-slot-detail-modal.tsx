@@ -299,7 +299,7 @@ export function TimeSlotDetailModal({
       onStudentMoved?.();
     } catch (err) {
       console.error('Failed to move student:', err);
-      toast.error('학생 이동에 실패했습니다.');
+
     } finally {
       setMovingStudent(null);
     }

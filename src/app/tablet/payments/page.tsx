@@ -54,7 +54,7 @@ function TabletPaymentsPageContent() {
       reload();
     } catch (err) {
       console.error('Payment mark error:', err);
-      toast.error('납부 처리 실패');
+
     } finally {
       setMarkingPaymentId(null);
     }

@@ -234,7 +234,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
       setRefundModalOpen(true);
     } catch (err) {
       console.error('Failed to load refund preview:', err);
-      toast.error('환불 정보를 불러오는데 실패했습니다.');
+
     } finally {
       setRefundLoading(false);
     }
@@ -259,7 +259,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
       loadData();
     } catch (err) {
       console.error('Failed to process refund:', err);
-      toast.error('환불 처리에 실패했습니다.');
+
     }
   };
 
@@ -273,7 +273,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
       loadData();
     } catch (err) {
       console.error('Failed to cancel enrollment:', err);
-      toast.error('취소 처리에 실패했습니다.');
+
     }
   };
 

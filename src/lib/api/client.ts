@@ -46,25 +46,25 @@ class APIClient {
                 } else if (error.response?.status === 403) {
                     // 권한 없음 - 사용자 친화적 메시지 표시
                     if (typeof window !== 'undefined') {
-                        const message = error.response?.data?.message || '접근 권한이 없습니다.';
+                        const message = error.response?.data?.error || error.response?.data?.message || '접근 권한이 없습니다.';
                         toast.error(message);
                     }
                 } else if (error.response?.status === 500) {
                     // 서버 에러
                     if (typeof window !== 'undefined') {
-                        const message = error.response?.data?.message || '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+                        const message = error.response?.data?.error || error.response?.data?.message || '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
                         toast.error(message);
                     }
                 } else if (error.response?.status === 404) {
                     // Not Found
                     if (typeof window !== 'undefined') {
-                        const message = error.response?.data?.message || '요청한 데이터를 찾을 수 없습니다.';
+                        const message = error.response?.data?.error || error.response?.data?.message || '요청한 데이터를 찾을 수 없습니다.';
                         toast.error(message);
                     }
                 } else if (error.response?.status === 400) {
                     // Bad Request
                     if (typeof window !== 'undefined') {
-                        const message = error.response?.data?.message || '잘못된 요청입니다.';
+                        const message = error.response?.data?.error || error.response?.data?.message || '잘못된 요청입니다.';
                         toast.error(message);
                     }
                 }
