@@ -6,7 +6,7 @@ class APIClient {
     private baseURL: string;
 
     constructor() {
-        this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://supermax.kr/paca';
+        this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
 
         this.client = axios.create({
             baseURL: this.baseURL,

@@ -241,7 +241,7 @@ export function AttendanceChecker({
 
     setIsSearching(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://supermax.kr/paca'}/students?search=${encodeURIComponent(searchQuery)}&status=active&limit=20`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca'}/students?search=${encodeURIComponent(searchQuery)}&status=active&limit=20`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -269,7 +269,7 @@ export function AttendanceChecker({
 
     setIsAddingStudent(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://supermax.kr/paca'}/schedules/slot/student`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca'}/schedules/slot/student`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

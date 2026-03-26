@@ -4,7 +4,7 @@
 
 import axios from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://supermax.kr/paca';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
 const BASE_PATH = '/exports';
 
 export interface ExportFilters {
