@@ -576,8 +576,8 @@ router.post('/:id/recalculate', verifyToken, checkPermission('salaries', 'edit')
             baseAmount = hourlyRate * totalHours;
         }
 
-        // 6. 세금 계산
-        const taxType = salary.tax_type || salary.instructor_tax_type || 'none';
+        // 6. 세금 계산 (강사의 현재 세금 타입 사용)
+        const taxType = salary.instructor_tax_type || 'none';
         let taxAmount = 0;
 
         if (taxType === '3.3%') {
@@ -592,12 +592,12 @@ router.post('/:id/recalculate', verifyToken, checkPermission('salaries', 'edit')
         const totalDeduction = parseFloat(salary.total_deduction) || 0;
         const netSalary = Math.floor((baseAmount + incentiveAmount - totalDeduction - taxAmount) / 10) * 10;
 
-        // 8. 급여 업데이트
+        // 8. 급여 업데이트 (tax_type도 현재 강사 설정으로 갱신)
         await db.query(
             `UPDATE salary_records
-             SET base_amount = ?, tax_amount = ?, net_salary = ?, updated_at = NOW()
+             SET base_amount = ?, tax_type = ?, tax_amount = ?, net_salary = ?, updated_at = NOW()
              WHERE id = ?`,
-            [baseAmount, taxAmount, netSalary, salaryId]
+            [baseAmount, taxType, taxAmount, netSalary, salaryId]
         );
 
         const totalClasses = morningClasses + afternoonClasses + eveningClasses;

@@ -129,6 +129,8 @@ export default function ConductPage({ params }: PageProps) {
     measured_at: string;
   }>>({});
   const [peakLoading, setPeakLoading] = useState(false);
+  // 기존 student_consultation ID (있으면 수정, 없으면 생성)
+  const [existingStudentConsultationId, setExistingStudentConsultationId] = useState<number | null>(null);
   const [learningForm, setLearningForm] = useState({
     admissionType: 'early' as 'early' | 'regular',
     schoolGradeAvg: '' as string,
@@ -185,10 +187,35 @@ export default function ConductPage({ params }: PageProps) {
             console.error('학생 정보 로드 오류:', err);
           }
 
-          // 이전 상담 기록 로드
+          // 이전 상담 기록 로드 + 이 consultation_id로 생성된 기존 기록 확인
           try {
             const prevData = await apiClient.get<{ consultations: typeof previousConsultations }>(`/student-consultations/${data.linked_student_id}`);
-            setPreviousConsultations(prevData.consultations || []);
+            const allConsultations = prevData.consultations || [];
+            setPreviousConsultations(allConsultations);
+
+            // 이 consultation_id로 이미 생성된 student_consultation이 있으면 폼에 로드
+            const existing = (allConsultations as any[]).find(
+              (c: any) => c.consultation_id === data.id
+            );
+            if (existing) {
+              setExistingStudentConsultationId(existing.id);
+              const mockScores = existing.mock_test_scores
+                ? (typeof existing.mock_test_scores === 'string' ? JSON.parse(existing.mock_test_scores) : existing.mock_test_scores)
+                : null;
+              setLearningForm(prev => ({
+                ...prev,
+                admissionType: existing.admission_type || 'early',
+                schoolGradeAvg: existing.school_grade_avg ? String(existing.school_grade_avg) : '',
+                mockTestScores: mockScores || prev.mockTestScores,
+                academicMemo: existing.academic_memo || '',
+                physicalRecordType: existing.physical_record_type || 'latest',
+                physicalMemo: existing.physical_memo || '',
+                targetUniversity1: existing.target_university_1 || '',
+                targetUniversity2: existing.target_university_2 || '',
+                targetMemo: existing.target_memo || '',
+                generalMemo: existing.general_memo || '',
+              }));
+            }
           } catch (err) {
             console.error('이전 상담 기록 로드 오류:', err);
           }
@@ -304,8 +331,8 @@ export default function ConductPage({ params }: PageProps) {
     setSaving(true);
     try {
       if (consultation.consultation_type === 'learning' && consultation.linked_student_id) {
-        // 재원생 상담 저장 - student_consultations 테이블에 저장
-        await apiClient.post('/student-consultations', {
+        // 재원생 상담 저장 - student_consultations 테이블
+        const payload = {
           student_id: consultation.linked_student_id,
           consultation_id: consultation.id,
           consultation_date: consultation.preferred_date,
@@ -321,8 +348,18 @@ export default function ConductPage({ params }: PageProps) {
           target_university_2: learningForm.targetUniversity2,
           target_memo: learningForm.targetMemo,
           general_memo: learningForm.generalMemo
-        });
-        toast.success('상담 기록이 저장되었습니다.');
+        };
+
+        if (existingStudentConsultationId) {
+          // 기존 기록 수정
+          await apiClient.put(`/student-consultations/${existingStudentConsultationId}`, payload);
+          toast.success('상담 기록이 수정되었습니다.');
+        } else {
+          // 새 기록 생성
+          const result = await apiClient.post<{ id: number }>('/student-consultations', payload);
+          setExistingStudentConsultationId(result.id);
+          toast.success('상담 기록이 저장되었습니다.');
+        }
         // 상담 상태도 업데이트
         setConsultation({ ...consultation, status: 'completed' });
       } else {

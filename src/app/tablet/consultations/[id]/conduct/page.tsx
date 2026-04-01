@@ -121,6 +121,7 @@ export default function TabletConductPage({ params }: PageProps) {
     measured_at: string;
   }>>({});
   const [peakLoading, setPeakLoading] = useState(false);
+  const [existingStudentConsultationId, setExistingStudentConsultationId] = useState<number | null>(null);
   const [learningForm, setLearningForm] = useState({
     admissionType: 'early' as 'early' | 'regular',
     schoolGradeAvg: '' as string,
@@ -160,6 +161,36 @@ export default function TabletConductPage({ params }: PageProps) {
           } catch (err) {
             console.error('학생 정보 로드 오류:', err);
           }
+
+          // 이 consultation_id로 이미 생성된 student_consultation이 있으면 폼에 로드
+          try {
+            const prevData = await apiClient.get<{ consultations: any[] }>(`/student-consultations/${data.linked_student_id}`);
+            const existing = (prevData.consultations || []).find(
+              (c: any) => c.consultation_id === data.id
+            );
+            if (existing) {
+              setExistingStudentConsultationId(existing.id);
+              const mockScores = existing.mock_test_scores
+                ? (typeof existing.mock_test_scores === 'string' ? JSON.parse(existing.mock_test_scores) : existing.mock_test_scores)
+                : null;
+              setLearningForm(prev => ({
+                ...prev,
+                admissionType: existing.admission_type || 'early',
+                schoolGradeAvg: existing.school_grade_avg ? String(existing.school_grade_avg) : '',
+                mockTestScores: mockScores || prev.mockTestScores,
+                academicMemo: existing.academic_memo || '',
+                physicalRecordType: existing.physical_record_type || 'latest',
+                physicalMemo: existing.physical_memo || '',
+                targetUniversity1: existing.target_university_1 || '',
+                targetUniversity2: existing.target_university_2 || '',
+                targetMemo: existing.target_memo || '',
+                generalMemo: existing.general_memo || '',
+              }));
+            }
+          } catch (err) {
+            console.error('기존 상담 기록 로드 오류:', err);
+          }
+
           loadPeakRecords(data.linked_student_id);
         }
 
@@ -268,7 +299,7 @@ export default function TabletConductPage({ params }: PageProps) {
     setSaving(true);
     try {
       if (consultation.consultation_type === 'learning' && consultation.linked_student_id) {
-        await apiClient.post('/student-consultations', {
+        const payload = {
           student_id: consultation.linked_student_id,
           consultation_id: consultation.id,
           consultation_date: consultation.preferred_date,
@@ -284,8 +315,16 @@ export default function TabletConductPage({ params }: PageProps) {
           target_university_2: learningForm.targetUniversity2,
           target_memo: learningForm.targetMemo,
           general_memo: learningForm.generalMemo
-        });
-        toast.success('상담 기록이 저장되었습니다.');
+        };
+
+        if (existingStudentConsultationId) {
+          await apiClient.put(`/student-consultations/${existingStudentConsultationId}`, payload);
+          toast.success('상담 기록이 수정되었습니다.');
+        } else {
+          const result = await apiClient.post<{ id: number }>('/student-consultations', payload);
+          setExistingStudentConsultationId(result.id);
+          toast.success('상담 기록이 저장되었습니다.');
+        }
         setConsultation({ ...consultation, status: 'completed' });
       } else {
         await apiClient.put(`/consultations/${consultation.id}`, {
