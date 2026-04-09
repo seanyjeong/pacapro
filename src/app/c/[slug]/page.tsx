@@ -750,10 +750,12 @@ export default function ConsultationPage() {
                 <div className="text-xs text-gray-400">학교</div>
                 <div className="font-medium text-gray-900">{formData.studentSchool}</div>
               </div>
-              {formData.schoolGradeAvg && (
+              {formData.schoolGradeAvg != null && (
                 <div>
                   <div className="text-xs text-gray-400">내신 평균</div>
-                  <div className="font-medium text-gray-900">{formData.schoolGradeAvg}등급</div>
+                  <div className="font-medium text-gray-900">
+                    {formData.schoolGradeAvg === -1 ? '미응시' : `${formData.schoolGradeAvg}등급`}
+                  </div>
                 </div>
               )}
               {formData.admissionType && (
@@ -766,14 +768,14 @@ export default function ConsultationPage() {
               )}
             </div>
 
-            {(formData.mockTestGrades?.korean || formData.mockTestGrades?.math || formData.mockTestGrades?.english || formData.mockTestGrades?.exploration) && (
+            {(formData.mockTestGrades?.korean != null || formData.mockTestGrades?.math != null || formData.mockTestGrades?.english != null || formData.mockTestGrades?.exploration != null) && (
               <div>
                 <div className="text-xs text-gray-400 mb-1">모의고사 등급</div>
                 <div className="flex flex-wrap gap-3 text-gray-700">
-                  {formData.mockTestGrades?.korean && <span>국어 {formData.mockTestGrades.korean}등급</span>}
-                  {formData.mockTestGrades?.math && <span>수학 {formData.mockTestGrades.math}등급</span>}
-                  {formData.mockTestGrades?.english && <span>영어 {formData.mockTestGrades.english}등급</span>}
-                  {formData.mockTestGrades?.exploration && <span>탐구 {formData.mockTestGrades.exploration}등급</span>}
+                  {formData.mockTestGrades?.korean != null && <span>국어 {formData.mockTestGrades.korean === -1 ? '미응시' : `${formData.mockTestGrades.korean}등급`}</span>}
+                  {formData.mockTestGrades?.math != null && <span>수학 {formData.mockTestGrades.math === -1 ? '미응시' : `${formData.mockTestGrades.math}등급`}</span>}
+                  {formData.mockTestGrades?.english != null && <span>영어 {formData.mockTestGrades.english === -1 ? '미응시' : `${formData.mockTestGrades.english}등급`}</span>}
+                  {formData.mockTestGrades?.exploration != null && <span>탐구 {formData.mockTestGrades.exploration === -1 ? '미응시' : `${formData.mockTestGrades.exploration}등급`}</span>}
                 </div>
               </div>
             )}

@@ -482,10 +482,12 @@ function renderInitialConsultation(
                       {academicScores.admissionType === 'early' ? '수시' : academicScores.admissionType === 'regular' ? '정시' : academicScores.admissionType}
                     </Badge>
                   )}
-                  {academicScores.schoolGradeAvg && (
+                  {academicScores.schoolGradeAvg != null && (
                     <p className="text-sm">
                       <span className="text-muted-foreground">내신 평균:</span>{' '}
-                      <span className="font-medium">{academicScores.schoolGradeAvg}등급</span>
+                      <span className="font-medium">
+                        {academicScores.schoolGradeAvg === -1 ? '미응시' : `${academicScores.schoolGradeAvg}등급`}
+                      </span>
                     </p>
                   )}
                 </div>
@@ -500,7 +502,9 @@ function renderInitialConsultation(
                       academicScores.mockTestGrades[key] != null && (
                         <div key={key} className="bg-muted rounded p-2 text-center text-sm">
                           <div className="text-xs text-muted-foreground">{label}</div>
-                          <div className="font-medium">{academicScores.mockTestGrades[key]}등급</div>
+                          <div className="font-medium">
+                            {academicScores.mockTestGrades[key] === -1 ? '미응시' : `${academicScores.mockTestGrades[key]}등급`}
+                          </div>
                         </div>
                       )
                     ))}

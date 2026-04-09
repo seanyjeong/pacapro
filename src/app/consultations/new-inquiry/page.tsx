@@ -1090,34 +1090,34 @@ export default function NewInquiryConsultationsPage() {
                       const mockTest = scores?.mockTestGrades || scores?.mock_exam_grades;
                       return (
                         <>
-                          {scores?.schoolGradeAvg !== undefined && scores.schoolGradeAvg > 0 && (
+                          {scores?.schoolGradeAvg !== undefined && scores.schoolGradeAvg !== null && (
                             <div>
                               <Label className="text-xs text-muted-foreground">내신평균</Label>
-                              <p className="font-medium">{scores.schoolGradeAvg}등급</p>
+                              <p className="font-medium">{scores.schoolGradeAvg === -1 ? '미응시' : `${scores.schoolGradeAvg}등급`}</p>
                             </div>
                           )}
-                          {mockTest?.korean && (
+                          {mockTest?.korean != null && (
                             <div>
                               <Label className="text-xs text-muted-foreground">국어(모의)</Label>
-                              <p className="font-medium">{mockTest.korean}등급</p>
+                              <p className="font-medium">{mockTest.korean === -1 ? '미응시' : `${mockTest.korean}등급`}</p>
                             </div>
                           )}
-                          {mockTest?.math && (
+                          {mockTest?.math != null && (
                             <div>
                               <Label className="text-xs text-muted-foreground">수학(모의)</Label>
-                              <p className="font-medium">{mockTest.math}등급</p>
+                              <p className="font-medium">{mockTest.math === -1 ? '미응시' : `${mockTest.math}등급`}</p>
                             </div>
                           )}
-                          {mockTest?.english && (
+                          {mockTest?.english != null && (
                             <div>
                               <Label className="text-xs text-muted-foreground">영어(모의)</Label>
-                              <p className="font-medium">{mockTest.english}등급</p>
+                              <p className="font-medium">{mockTest.english === -1 ? '미응시' : `${mockTest.english}등급`}</p>
                             </div>
                           )}
-                          {mockTest?.exploration && (
+                          {mockTest?.exploration != null && (
                             <div>
                               <Label className="text-xs text-muted-foreground">탐구(모의)</Label>
-                              <p className="font-medium">{mockTest.exploration}등급</p>
+                              <p className="font-medium">{mockTest.exploration === -1 ? '미응시' : `${mockTest.exploration}등급`}</p>
                             </div>
                           )}
                           {scores?.admissionType && (
