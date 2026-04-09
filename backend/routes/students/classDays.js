@@ -75,32 +75,90 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
 
         const results = [];
 
+        // 학원비 자동 계산용 academy_settings 1회 조회
+        let exam_tuition = null;
+        let adult_tuition = null;
+        try {
+            const [settings] = await db.query(
+                'SELECT settings FROM academy_settings WHERE academy_id = ?',
+                [academyId]
+            );
+            if (settings.length > 0 && settings[0].settings) {
+                const parsed = typeof settings[0].settings === 'string'
+                    ? JSON.parse(settings[0].settings)
+                    : settings[0].settings;
+                exam_tuition = parsed.exam_tuition || null;
+                adult_tuition = parsed.adult_tuition || null;
+            }
+        } catch (e) {
+            logger.error('Failed to load academy_settings for tuition calculation:', e);
+        }
+
         for (const update of studentUpdates) {
             const { id, class_days } = update;
             if (!id || !Array.isArray(class_days)) continue;
 
             try {
+                const [rows] = await db.query(
+                    'SELECT class_days, time_slot, student_type FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+                    [id, academyId]
+                );
+                if (rows.length === 0) continue;
+
+                const oldClassDays = rows[0].class_days
+                    ? (typeof rows[0].class_days === 'string' ? JSON.parse(rows[0].class_days) : rows[0].class_days)
+                    : [];
+                const timeSlot = rows[0].time_slot || 'evening';
+                const studentType = rows[0].student_type || 'exam';
+
                 if (isImmediate) {
-                    const [rows] = await db.query(
-                        'SELECT class_days, time_slot FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
-                        [id, academyId]
-                    );
-                    if (rows.length === 0) continue;
-
-                    const oldClassDays = rows[0].class_days
-                        ? (typeof rows[0].class_days === 'string' ? JSON.parse(rows[0].class_days) : rows[0].class_days)
-                        : [];
-                    const timeSlot = rows[0].time_slot || 'evening';
-
                     const normalizedDays = parseClassDaysWithSlots(class_days, timeSlot);
+                    const weeklyCount = normalizedDays.length;
+
+                    // 학원비 자동 계산
+                    let newTuition = null;
+                    if (weeklyCount > 0) {
+                        const tuitionTable = studentType === 'adult' ? adult_tuition : exam_tuition;
+                        if (tuitionTable) {
+                            newTuition = tuitionTable[`weekly_${weeklyCount}`] || null;
+                        }
+                    }
+
                     await db.query(
                         `UPDATE students
-                         SET class_days = ?, weekly_count = ?,
+                         SET class_days = ?, weekly_count = ?, ${newTuition !== null ? 'monthly_tuition = ?,' : ''}
                              class_days_next = NULL, class_days_effective_from = NULL,
                              updated_at = NOW()
                          WHERE id = ? AND academy_id = ?`,
-                        [JSON.stringify(normalizedDays), normalizedDays.length, id, academyId]
+                        newTuition !== null
+                            ? [JSON.stringify(normalizedDays), weeklyCount, newTuition, id, academyId]
+                            : [JSON.stringify(normalizedDays), weeklyCount, id, academyId]
                     );
+
+                    // 학원비 변경 시 현재 월 이후 pending 결제 내역 자동 업데이트
+                    if (newTuition !== null) {
+                        try {
+                            const [stRows] = await db.query(
+                                'SELECT discount_rate FROM students WHERE id = ?',
+                                [id]
+                            );
+                            const discountRate = stRows.length > 0 ? (stRows[0].discount_rate || 0) : 0;
+                            const finalTuition = newTuition * (1 - discountRate / 100);
+                            const currentYearMonth = new Date().toISOString().slice(0, 7);
+                            await db.query(
+                                `UPDATE student_payments
+                                 SET base_amount = ?, final_amount = ?, updated_at = NOW()
+                                 WHERE student_id = ?
+                                   AND academy_id = ?
+                                   AND \`year_month\` >= ?
+                                   AND payment_status = 'pending'
+                                   AND payment_type = 'monthly'`,
+                                [newTuition, finalTuition, id, academyId, currentYearMonth]
+                            );
+                        } catch (payErr) {
+                            logger.error(`Pending payments update failed for student ${id}:`, payErr);
+                        }
+                    }
 
                     if (class_days.length > 0) {
                         try {
@@ -110,7 +168,7 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
                         }
                     }
 
-                    results.push({ id, mode: 'immediate', success: true });
+                    results.push({ id, mode: 'immediate', success: true, newTuition });
                 } else {
                     const normalizedNext = parseClassDaysWithSlots(class_days, timeSlot);
                     await db.query(
@@ -217,6 +275,31 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
                     ? [JSON.stringify(normalizedClassDays), weeklyCount, newTuition, studentId]
                     : [JSON.stringify(normalizedClassDays), weeklyCount, studentId]
             );
+
+            // 학원비 변경 시 현재 월 이후 pending 결제 내역 자동 업데이트
+            if (newTuition !== null) {
+                try {
+                    const [stRows] = await db.query(
+                        'SELECT discount_rate FROM students WHERE id = ?',
+                        [studentId]
+                    );
+                    const discountRate = stRows.length > 0 ? (stRows[0].discount_rate || 0) : 0;
+                    const finalTuition = newTuition * (1 - discountRate / 100);
+                    const currentYearMonth = new Date().toISOString().slice(0, 7);
+                    await db.query(
+                        `UPDATE student_payments
+                         SET base_amount = ?, final_amount = ?, updated_at = NOW()
+                         WHERE student_id = ?
+                           AND academy_id = ?
+                           AND \`year_month\` >= ?
+                           AND payment_status = 'pending'
+                           AND payment_type = 'monthly'`,
+                        [newTuition, finalTuition, studentId, req.user.academyId, currentYearMonth]
+                    );
+                } catch (payErr) {
+                    logger.error(`Pending payments update failed for student ${studentId}:`, payErr);
+                }
+            }
 
             let reassignResult = null;
             if (normalizedClassDays.length > 0) {

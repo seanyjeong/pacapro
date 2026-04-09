@@ -151,9 +151,9 @@ export function StudentConsultationsComponent({ studentId, studentName }: Props)
           <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-foreground mb-2">상담 기록이 없습니다</h3>
           <p className="text-muted-foreground mb-4">
-            {studentName} 학생의 상담 기록을 캘린더에서 등록할 수 있습니다.
+            {studentName} 학생의 상담 기록을 재원생상담에서 등록할 수 있습니다.
           </p>
-          <Link href="/consultations/calendar">
+          <Link href="/consultations/enrolled">
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               상담 등록하기
@@ -175,7 +175,7 @@ export function StudentConsultationsComponent({ studentId, studentName }: Props)
         <h3 className="text-lg font-semibold text-foreground">
           상담 기록 ({countLabel})
         </h3>
-        <Link href="/consultations/calendar">
+        <Link href="/consultations/enrolled">
           <Button variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
             새 상담 등록
