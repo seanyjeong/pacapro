@@ -2,6 +2,7 @@
 
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,6 +15,7 @@ export default function EditStudentPage() {
   const router = useRouter();
   const params = useParams();
   const studentId = parseInt(params.id as string);
+  const queryClient = useQueryClient();
 
   // useStudent 훅 사용
   const { student, loading, error, reload } = useStudent(studentId);
@@ -21,6 +23,10 @@ export default function EditStudentPage() {
   const handleSubmit = async (data: StudentFormData) => {
     try {
       const response = await studentsAPI.updateStudent(studentId, data);
+
+      // React Query 캐시 무효화 (상세 페이지 + 학생 목록 최신화)
+      await queryClient.invalidateQueries({ queryKey: ['students', studentId] });
+      await queryClient.invalidateQueries({ queryKey: ['students'] });
 
       // 성공 알림
       toast.success(`${response.student.name} 학생 정보가 수정되었습니다!`);
