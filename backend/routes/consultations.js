@@ -1404,20 +1404,22 @@ router.get('/calendar/events', verifyToken, async (req, res) => {
 });
 
 // POST /paca/consultations/learning - 재원생 상담 일정 등록
+// ⚠️ 이제 student_consultations 테이블에 직접 저장 (consultations 테이블 X)
 router.post('/learning', verifyToken, async (req, res) => {
   try {
     const academyId = req.user.academy_id;
+    const userId = req.user.id;
     const {
       studentId,
       preferredDate,
-      preferredTime,
+      preferredTime,  // 시간은 UI 표시용으로만 사용 (student_consultations에는 날짜만)
       learningType, // regular, admission, parent, counseling
       adminNotes
     } = req.body;
 
     // 필수 필드 검증
-    if (!studentId || !preferredDate || !preferredTime || !learningType) {
-      return res.status(400).json({ error: '학생, 날짜, 시간, 상담유형은 필수입니다.' });
+    if (!studentId || !preferredDate || !learningType) {
+      return res.status(400).json({ error: '학생, 날짜, 상담유형은 필수입니다.' });
     }
 
     // 학생 정보 조회
@@ -1430,26 +1432,19 @@ router.post('/learning', verifyToken, async (req, res) => {
       return res.status(404).json({ error: '학생을 찾을 수 없습니다.' });
     }
 
-    const student = students[0];
-
-    // 상담 일정 등록 (consultation_type = 'learning')
+    // student_consultations 테이블에 직접 저장
     const [result] = await db.query(
-      `INSERT INTO consultations (
-        academy_id, consultation_type, learning_type, linked_student_id,
-        parent_name, parent_phone, student_name, student_grade,
-        preferred_date, preferred_time, status, admin_notes, created_at
-      ) VALUES (?, 'learning', ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, NOW())`,
+      `INSERT INTO student_consultations (
+        academy_id, student_id, consultation_date, consultation_type,
+        general_memo, created_by, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, NOW())`,
       [
         academyId,
-        learningType,
         studentId,
-        student.name,  // 이미 암호화된 값
-        student.phone || '',  // 이미 암호화된 값
-        student.name,  // 이미 암호화된 값
-        student.grade,
         preferredDate,
-        preferredTime + ':00',
-        adminNotes || null
+        learningType,  // regular, admission, parent, counseling
+        adminNotes || null,
+        userId
       ]
     );
 

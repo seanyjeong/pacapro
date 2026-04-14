@@ -93,6 +93,7 @@ router.get('/:studentId', verifyToken, async (req, res) => {
     }));
 
     // 신규상담 기록 조회 (consultations 테이블에서 linked_student_id로 연결된 건)
+    // ⚠️ learning 타입은 제외 (재원생 상담은 student_consultations에 저장됨)
     const [initialConsultations] = await pool.execute(
       `SELECT id, consultation_type, learning_type, preferred_date, preferred_time,
               status, student_name, parent_name, parent_phone, student_grade,
@@ -100,7 +101,7 @@ router.get('/:studentId', verifyToken, async (req, res) => {
               academic_scores, target_school, checklist, referral_sources,
               created_at
        FROM consultations
-       WHERE linked_student_id = ? AND academy_id = ?
+       WHERE linked_student_id = ? AND academy_id = ? AND consultation_type != 'learning'
        ORDER BY preferred_date DESC`,
       [studentId, academyId]
     );
