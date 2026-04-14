@@ -107,12 +107,13 @@ v X . Y . Z
 
 ### 버전 업데이트 위치 (푸시 전 필수!)
 
-**수동 수정 필요 (6곳)**:
+**수동 수정 필요 (7곳)**:
 | 파일 | 필드/위치 |
 |------|----------|
 | `package.json` | `"version": "3.15.1"` |
 | `src/components/version-checker.tsx` | `APP_VERSION = '3.15.1'` |
 | `src/components/layout/sidebar.tsx` | `P-ACA v3.15.1` |
+| `src/components/layout/sidebar.tsx` | `Last updated: YYYY-MM-DD` ← **배포 날짜** |
 | `src/app/m/page.tsx` | `P-ACA Mobile v3.15.1` |
 | `src/app/settings/page.tsx` | `v3.15.1` |
 | `src/app/tablet/layout.tsx` | `APP_VERSION = 'v3.15.1'` |
