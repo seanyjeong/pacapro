@@ -9,10 +9,11 @@ import { Button } from '@/components/ui/button';
 import {
   Calendar, ChevronDown, ChevronUp, Loader2, MessageSquare,
   GraduationCap, Target, Sparkles, FileText, Plus, PhoneCall,
-  ClipboardList, BookOpen
+  ClipboardList, BookOpen, Eye
 } from 'lucide-react';
 import apiClient from '@/lib/api/client';
 import Link from 'next/link';
+import { ConsultationDetailModal } from './consultation-detail-modal';
 
 interface StudentConsultation {
   id: number;
@@ -81,6 +82,8 @@ export function StudentConsultationsComponent({ studentId, studentName }: Props)
   const [initialConsultations, setInitialConsultations] = useState<InitialConsultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedConsultation, setSelectedConsultation] = useState<StudentConsultation | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     loadConsultations();
@@ -187,12 +190,26 @@ export function StudentConsultationsComponent({ studentId, studentName }: Props)
       <div className="space-y-3">
         {timeline.map((item) => {
           if (item.type === 'student') {
-            return renderStudentConsultation(item.data, expandedId, toggleExpand, parseJSON);
+            return renderStudentConsultation(
+              item.data,
+              expandedId,
+              toggleExpand,
+              parseJSON,
+              (c) => { setSelectedConsultation(c); setModalOpen(true); }
+            );
           } else {
             return renderInitialConsultation(item.data, expandedId, toggleExpand, parseJSON);
           }
         })}
       </div>
+
+      {/* 상담 상세 모달 */}
+      <ConsultationDetailModal
+        open={modalOpen}
+        onClose={() => { setModalOpen(false); setSelectedConsultation(null); }}
+        consultation={selectedConsultation}
+        studentName={studentName}
+      />
     </div>
   );
 }
@@ -202,7 +219,8 @@ function renderStudentConsultation(
   consultation: StudentConsultation,
   expandedId: string | null,
   toggleExpand: (key: string) => void,
-  parseJSON: (v: string | null | object) => any
+  parseJSON: (v: string | null | object) => any,
+  onViewDetail: (c: StudentConsultation) => void
 ) {
   const key = `student-${consultation.id}`;
   const mockTestScores = parseJSON(consultation.mock_test_scores);
@@ -231,11 +249,20 @@ function renderStudentConsultation(
             </Badge>
           )}
         </div>
-        {isExpanded ? (
-          <ChevronUp className="h-5 w-5 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="h-5 w-5 text-muted-foreground" />
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); onViewDetail(consultation); }}
+            className="p-1.5 rounded-md hover:bg-primary/10 text-primary transition-colors"
+            title="상세보기 / PDF 저장"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          {isExpanded ? (
+            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+          )}
+        </div>
       </button>
 
       {isExpanded && (
