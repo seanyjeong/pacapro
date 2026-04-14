@@ -92,12 +92,22 @@ app.use('/paca', generalLimiter);
 ## 📦 버전업 & 배포 절차 (PWA)
 
 ### 버전 업데이트 위치 (푸시 전 필수!)
-| 파일 | 필드 | 설명 |
-|------|------|------|
-| `package.json` | `"version"` | **유일한 수동 수정 필요** (예: `3.14.4` → `3.15.0`) |
-| `package-lock.json` | - | `npm install` 시 자동 갱신 |
-| `public/sw.js` | - | `next build` 시 자동 재생성 (next-pwa) |
-| `public/manifest.json` | - | 버전 필드 없음 (앱 메타만 관리) |
+
+**수동 수정 필요 (6곳)**:
+| 파일 | 필드/위치 |
+|------|----------|
+| `package.json` | `"version": "3.15.0"` |
+| `src/components/version-checker.tsx` | `APP_VERSION = '3.15.0'` |
+| `src/components/layout/sidebar.tsx` | `P-ACA v3.15.0` |
+| `src/app/m/page.tsx` | `P-ACA Mobile v3.15.0` |
+| `src/app/settings/page.tsx` | `v3.15.0` |
+| `src/app/tablet/layout.tsx` | `APP_VERSION = 'v3.15.0'` |
+
+**자동 갱신**:
+| 파일 | 설명 |
+|------|------|
+| `package-lock.json` | `npm install` 시 자동 |
+| `public/sw.js` | `next build` 시 자동 (next-pwa) |
 
 ### 배포 체크리스트
 ```bash
