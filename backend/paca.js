@@ -192,7 +192,18 @@ app.get('/paca', (req, res) => {
             incomes: '/paca/incomes',
             reports: '/paca/reports',
             staff: '/paca/staff',
-            notifications: '/paca/notifications'
+            notifications: '/paca/notifications',
+            consultations: '/paca/consultations',
+            studentConsultations: '/paca/student-consultations',
+            academyEvents: '/paca/academy-events',
+            public: '/paca/public',
+            push: '/paca/push',
+            search: '/paca/search',
+            sms: '/paca/sms',
+            toss: '/paca/toss',
+            exports: '/paca/exports',
+            onboarding: '/paca/onboarding',
+            notificationSettings: '/paca/notification-settings'
         }
     });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
@@ -77,6 +77,9 @@ export default function EnrolledConsultationsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [students, setStudents] = useState<Student[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
+  const studentDropdownRef = useRef<HTMLDivElement>(null);
   const [createForm, setCreateForm] = useState({
     studentId: '',
     preferredDate: '',
@@ -143,6 +146,17 @@ export default function EnrolledConsultationsPage() {
       }
     };
     loadSettings();
+  }, []);
+
+  // 학생 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (studentDropdownRef.current && !studentDropdownRef.current.contains(e.target as Node)) {
+        setStudentDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // 재원생 목록 로드
@@ -239,6 +253,8 @@ export default function EnrolledConsultationsPage() {
         learningType: 'regular',
         adminNotes: ''
       });
+      setStudentSearch('');
+      setStudentDropdownOpen(false);
       loadData();
     } catch (error) {
       console.error('상담 등록 오류:', error);
@@ -672,21 +688,65 @@ export default function EnrolledConsultationsPage() {
               {loadingStudents ? (
                 <div className="mt-1 p-2 text-sm text-muted-foreground">학생 목록 로딩 중...</div>
               ) : (
-                <Select
-                  value={createForm.studentId}
-                  onValueChange={(v) => setCreateForm({ ...createForm, studentId: v })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="학생 선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {students.map((s) => (
-                      <SelectItem key={s.id} value={s.id.toString()}>
-                        {s.name} ({s.grade})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="relative mt-1" ref={studentDropdownRef}>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="학생 이름 검색..."
+                      value={studentSearch}
+                      onChange={(e) => {
+                        setStudentSearch(e.target.value);
+                        setStudentDropdownOpen(true);
+                      }}
+                      onFocus={() => setStudentDropdownOpen(true)}
+                      className="pl-9"
+                    />
+                    {createForm.studentId && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                        ✓ {students.find(s => s.id.toString() === createForm.studentId)?.name}
+                      </span>
+                    )}
+                  </div>
+                  {studentDropdownOpen && (
+                    <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+                      {students
+                        .filter(s =>
+                          !studentSearch ||
+                          s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                          s.grade.toLowerCase().includes(studentSearch.toLowerCase())
+                        )
+                        .slice(0, 50)
+                        .map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center justify-between ${
+                              createForm.studentId === s.id.toString() ? 'bg-muted' : ''
+                            }`}
+                            onClick={() => {
+                              setCreateForm({ ...createForm, studentId: s.id.toString() });
+                              setStudentSearch('');
+                              setStudentDropdownOpen(false);
+                            }}
+                          >
+                            <span>{s.name} <span className="text-muted-foreground">({s.grade})</span></span>
+                            {createForm.studentId === s.id.toString() && (
+                              <span className="text-primary">✓</span>
+                            )}
+                          </button>
+                        ))}
+                      {students.filter(s =>
+                        !studentSearch ||
+                        s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                        s.grade.toLowerCase().includes(studentSearch.toLowerCase())
+                      ).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          검색 결과가 없습니다
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -758,7 +818,11 @@ export default function EnrolledConsultationsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setCreateModalOpen(false);
+              setStudentSearch('');
+              setStudentDropdownOpen(false);
+            }}>
               취소
             </Button>
             <Button onClick={handleCreateConsultation} disabled={creating}>
