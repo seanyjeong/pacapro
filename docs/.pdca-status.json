@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-01T09:52:35.432Z",
+  "lastUpdated": "2026-04-11T11:23:48.867Z",
   "activeFeatures": [
     "student-initial-consultation",
     "per-day-timeslot",
@@ -27,7 +27,14 @@
     "incomeService.js",
     "academyEventService.js",
     "api",
-    "student-initial-consultation 검증"
+    "student-initial-consultation 검증",
+    "attendance",
+    "m",
+    "new-inquiry",
+    "consultations",
+    "conduct",
+    "[slug]",
+    "edit"
   ],
   "primaryFeature": "student-initial-consultation",
   "features": {
@@ -57,7 +64,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T11:03:02.044Z",
-        "lastUpdated": "2026-03-01T09:52:33.467Z"
+        "lastUpdated": "2026-04-11T11:23:45.816Z"
       },
       "lastFile": "/home/sean/pacapro/src/components/version-checker.tsx"
     },
@@ -70,9 +77,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T11:06:25.122Z",
-        "lastUpdated": "2026-03-01T09:47:22.304Z"
+        "lastUpdated": "2026-03-31T07:38:33.717Z"
       },
-      "lastFile": "/home/sean/pacapro/backend/routes/student-consultations.js"
+      "lastFile": "/home/sean/pacapro/backend/routes/salaries.js"
     },
     "cron": {
       "phase": "do",
@@ -83,7 +90,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T11:10:35.962Z",
-        "lastUpdated": "2026-02-24T11:10:47.692Z"
+        "lastUpdated": "2026-03-02T08:16:06.856Z"
       },
       "lastFile": "/home/sean/pacapro/backend/cron/monthly-schedule-assign.js"
     },
@@ -109,7 +116,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T11:13:51.843Z",
-        "lastUpdated": "2026-03-01T09:44:37.039Z"
+        "lastUpdated": "2026-04-09T12:30:48.529Z"
       },
       "lastFile": "/home/sean/pacapro/src/components/students/student-consultations.tsx"
     },
@@ -162,7 +169,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T12:31:13.779Z",
-        "lastUpdated": "2026-03-01T09:52:34.440Z"
+        "lastUpdated": "2026-04-11T11:23:47.018Z"
       },
       "lastFile": "/home/sean/pacapro/src/components/layout/sidebar.tsx"
     },
@@ -175,7 +182,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T12:31:14.957Z",
-        "lastUpdated": "2026-03-01T09:52:35.432Z"
+        "lastUpdated": "2026-04-11T11:23:47.742Z"
       },
       "lastFile": "/home/sean/pacapro/src/app/settings/page.tsx"
     },
@@ -188,9 +195,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-26T10:52:12.866Z",
-        "lastUpdated": "2026-02-26T14:21:27.269Z"
+        "lastUpdated": "2026-03-02T08:16:33.880Z"
       },
-      "lastFile": "/home/sean/pacapro/backend/paca.js"
+      "lastFile": "/home/sean/ilsanmaxtraining/backend/peak.js"
     },
     "__tests__": {
       "phase": "do",
@@ -295,7 +302,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-26T15:50:01.527Z",
-        "lastUpdated": "2026-02-26T15:50:01.527Z"
+        "lastUpdated": "2026-03-11T10:39:28.227Z"
       },
       "lastFile": "/home/sean/pacapro/backend/services/userService.js"
     },
@@ -364,6 +371,97 @@
       },
       "previousPhase": "check",
       "autoAdvanced": true
+    },
+    "attendance": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-02T09:30:54.243Z",
+        "lastUpdated": "2026-03-02T09:32:17.155Z"
+      },
+      "lastFile": "/home/sean/pacapro/src/components/attendance/AttendanceCard.tsx"
+    },
+    "m": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-06T09:35:13.862Z",
+        "lastUpdated": "2026-04-11T11:23:48.867Z"
+      },
+      "lastFile": "/home/sean/pacapro/src/app/m/page.tsx"
+    },
+    "new-inquiry": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-12T09:52:19.083Z",
+        "lastUpdated": "2026-04-09T12:07:09.111Z"
+      },
+      "lastFile": "/home/sean/pacapro/src/app/consultations/new-inquiry/page.tsx"
+    },
+    "consultations": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-12T09:53:12.598Z",
+        "lastUpdated": "2026-03-12T09:53:12.598Z"
+      },
+      "lastFile": "/home/sean/pacapro/src/app/consultations/page.tsx"
+    },
+    "conduct": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-01T05:50:47.866Z",
+        "lastUpdated": "2026-04-01T05:51:58.007Z"
+      },
+      "lastFile": "/home/sean/pacapro/src/app/tablet/consultations/[id]/conduct/page.tsx"
+    },
+    "[slug]": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-09T12:07:21.882Z",
+        "lastUpdated": "2026-04-09T12:07:30.525Z"
+      },
+      "lastFile": "/home/sean/pacapro/src/app/c/[slug]/page.tsx"
+    },
+    "edit": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-11T11:23:28.321Z",
+        "lastUpdated": "2026-04-11T11:23:28.321Z"
+      },
+      "lastFile": "/home/sean/pacapro/src/app/students/[id]/edit/page.tsx"
     }
   },
   "pipeline": {
@@ -374,7 +472,7 @@
   "session": {
     "startedAt": "2026-02-24T10:20:40.806Z",
     "onboardingCompleted": true,
-    "lastActivity": "2026-03-01T09:52:35.432Z"
+    "lastActivity": "2026-04-11T11:23:48.867Z"
   },
   "history": [
     {
@@ -1143,6 +1241,552 @@
     {
       "timestamp": "2026-03-01T09:52:35.432Z",
       "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T10:02:15.594Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T10:02:48.007Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T10:37:47.223Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T10:37:56.131Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T10:38:02.042Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T10:57:36.275Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T10:57:36.982Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T10:57:38.110Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T10:58:17.137Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:08:50.488Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:08:56.367Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:09:09.170Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:09:21.048Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:09:56.191Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:09:57.030Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:09:57.799Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:15:56.053Z",
+      "feature": "cron",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:16:02.179Z",
+      "feature": "cron",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:16:06.856Z",
+      "feature": "cron",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:16:14.507Z",
+      "feature": "backend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:16:18.717Z",
+      "feature": "backend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:16:29.013Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:16:33.880Z",
+      "feature": "backend",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:18:18.591Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:18:28.676Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:18:46.251Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:20:02.587Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:20:12.119Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T08:20:13.323Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T09:30:54.244Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T09:32:03.417Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T09:32:08.442Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T09:32:17.155Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T09:32:59.136Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T09:33:00.426Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T09:33:01.408Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-06T09:31:26.028Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-06T09:35:13.862Z",
+      "feature": "m",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-06T09:40:54.787Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-06T09:41:09.217Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T10:37:14.581Z",
+      "feature": "userService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-11T10:39:28.227Z",
+      "feature": "userService.js",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T05:49:46.877Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T05:53:15.069Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T05:53:27.018Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T09:52:19.083Z",
+      "feature": "new-inquiry",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T09:52:28.769Z",
+      "feature": "new-inquiry",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T09:53:05.072Z",
+      "feature": "new-inquiry",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T09:53:12.598Z",
+      "feature": "consultations",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T09:54:24.810Z",
+      "feature": "new-inquiry",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T09:54:31.873Z",
+      "feature": "new-inquiry",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T09:55:16.488Z",
+      "feature": "new-inquiry",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:16:44.036Z",
+      "feature": "m",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:16:55.558Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:16:57.381Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-12T10:16:58.345Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-31T07:38:28.928Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-31T07:38:33.717Z",
+      "feature": "routes",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:50:47.866Z",
+      "feature": "conduct",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:50:59.093Z",
+      "feature": "conduct",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:51:15.741Z",
+      "feature": "conduct",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:51:33.207Z",
+      "feature": "conduct",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:51:45.221Z",
+      "feature": "conduct",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:51:58.007Z",
+      "feature": "conduct",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:53:04.572Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:53:05.456Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:53:15.887Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T05:53:16.463Z",
+      "feature": "m",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T08:33:41.521Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:06:24.558Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:07:09.111Z",
+      "feature": "new-inquiry",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:07:21.882Z",
+      "feature": "[slug]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:07:30.525Z",
+      "feature": "[slug]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:08:00.156Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:08:00.439Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:08:01.210Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:08:01.712Z",
+      "feature": "m",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:14:58.702Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:17:03.459Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:17:20.788Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:30:44.055Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:30:48.529Z",
+      "feature": "students",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:30:55.032Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:30:55.623Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:30:56.860Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T12:30:57.757Z",
+      "feature": "m",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-11T11:23:28.321Z",
+      "feature": "edit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-11T11:23:45.816Z",
+      "feature": "pacapro",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-11T11:23:47.018Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-11T11:23:47.742Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-11T11:23:48.867Z",
+      "feature": "m",
       "phase": "do",
       "action": "updated"
     }

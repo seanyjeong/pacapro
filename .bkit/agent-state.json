@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "enabled": false,
+  "teamName": "",
+  "feature": "student-initial-consultation",
+  "pdcaPhase": "completed",
+  "orchestrationPattern": "leader",
+  "ctoAgent": "opus",
+  "startedAt": "2026-03-12T09:45:50.422Z",
+  "lastUpdated": "2026-03-12T10:17:29.784Z",
+  "teammates": [],
+  "progress": {
+    "totalTasks": 0,
+    "completedTasks": 0,
+    "inProgressTasks": 0,
+    "failedTasks": 0,
+    "pendingTasks": 0
+  },
+  "recentMessages": [],
+  "sessionId": "82b3ab1f-0c05-4448-bdd5-c9af2d9538fa"
+}

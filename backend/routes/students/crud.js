@@ -1442,6 +1442,33 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
+        // 체험 해제 (trial → pending 또는 is_trial false) 시 미래 스케줄에서 제거
+        let trialCancelInfo = null;
+        if (oldStatus === 'trial' && status === 'pending') {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const [deleteResult] = await db.query(
+                    `DELETE a FROM attendance a
+                     JOIN class_schedules cs ON a.class_schedule_id = cs.id
+                     WHERE a.student_id = ?
+                     AND cs.academy_id = ?
+                     AND cs.class_date >= ?
+                     AND a.attendance_status IS NULL`,
+                    [studentId, req.user.academyId, today]
+                );
+
+                if (deleteResult.affectedRows > 0) {
+                    trialCancelInfo = {
+                        deletedSchedules: deleteResult.affectedRows,
+                        message: `체험 스케줄 ${deleteResult.affectedRows}건 삭제됨`
+                    };
+                    logger.info(`[Trial Cancel] Student ${studentId}: deleted ${deleteResult.affectedRows} future schedules`);
+                }
+            } catch (trialCancelError) {
+                logger.error('Trial cancel schedule cleanup failed:', trialCancelError);
+            }
+        }
+
         // 민감 필드 복호화 후 응답
         const decryptedStudent = decryptFields(updatedStudents[0], ENCRYPTED_FIELDS.students);
 
@@ -1452,7 +1479,8 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             trialScheduleAssigned: trialAssignResult,
             paymentAdjustment,
             withdrawalInfo,
-            pauseInfo
+            pauseInfo,
+            trialCancelInfo
         });
     } catch (error) {
         logger.error('Error updating student:', error);

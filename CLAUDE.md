@@ -91,17 +91,31 @@ app.use('/paca', generalLimiter);
 
 ## 📦 버전업 & 배포 절차 (PWA)
 
+### 버전 규칙 (Semantic Versioning)
+```
+v X . Y . Z
+  │   │   └── Patch: 버그 수정, 작은 UI 수정
+  │   └────── Minor: 새 기능 추가, 중간 규모 변경
+  └────────── Major: 대규모 변경, 호환성 깨지는 변경
+```
+
+| 변경 규모 | 예시 | 버전 변경 |
+|----------|------|----------|
+| **Patch** (작은 수정) | 버그 픽스, 오타 수정, 스타일 미세 조정 | `3.15.0` → `3.15.1` |
+| **Minor** (중간 기능) | 새 기능 추가, UI 개선, API 추가 | `3.15.1` → `3.16.0` |
+| **Major** (대규모) | 아키텍처 변경, DB 스키마 대폭 변경 | `3.16.0` → `4.0.0` |
+
 ### 버전 업데이트 위치 (푸시 전 필수!)
 
 **수동 수정 필요 (6곳)**:
 | 파일 | 필드/위치 |
 |------|----------|
-| `package.json` | `"version": "3.15.0"` |
-| `src/components/version-checker.tsx` | `APP_VERSION = '3.15.0'` |
-| `src/components/layout/sidebar.tsx` | `P-ACA v3.15.0` |
-| `src/app/m/page.tsx` | `P-ACA Mobile v3.15.0` |
-| `src/app/settings/page.tsx` | `v3.15.0` |
-| `src/app/tablet/layout.tsx` | `APP_VERSION = 'v3.15.0'` |
+| `package.json` | `"version": "3.15.1"` |
+| `src/components/version-checker.tsx` | `APP_VERSION = '3.15.1'` |
+| `src/components/layout/sidebar.tsx` | `P-ACA v3.15.1` |
+| `src/app/m/page.tsx` | `P-ACA Mobile v3.15.1` |
+| `src/app/settings/page.tsx` | `v3.15.1` |
+| `src/app/tablet/layout.tsx` | `APP_VERSION = 'v3.15.1'` |
 
 **자동 갱신**:
 | 파일 | 설명 |
@@ -111,12 +125,11 @@ app.use('/paca', generalLimiter);
 
 ### 배포 체크리스트
 ```bash
-# 1. 버전업 (package.json 수정)
-# version: "3.14.4" → "3.15.0" (기능 추가 시 minor, 버그픽스 시 patch)
+# 1. 버전업 (6곳 수동 수정)
 
 # 2. 커밋 & 푸시
 git add -A
-git commit -m "feat: 기능 설명 + 버전 3.15.0"
+git commit -m "feat: 기능 설명 (v3.15.1)"
 git push origin main
 
 # 3. Vercel 자동 배포 확인 (프론트)
