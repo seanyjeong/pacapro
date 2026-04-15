@@ -204,19 +204,6 @@ export default function PerformancePage() {
     s.grade?.includes(searchQuery)
   );
 
-  const getConfidenceBadge = (confidence: string) => {
-    switch (confidence) {
-      case 'high':
-        return <Badge className="bg-green-100 text-green-800">높음</Badge>;
-      case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-800">보통</Badge>;
-      case 'low':
-        return <Badge className="bg-orange-100 text-orange-800">낮음</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800">미매칭</Badge>;
-    }
-  };
-
   const renderNaesinTab = () => (
     <div className="space-y-6">
       {/* 학생 선택 */}
@@ -460,7 +447,9 @@ export default function PerformancePage() {
                             {result.paca.grade} / {result.paca.school || '학교 미등록'}
                           </p>
                         </div>
-                        {getConfidenceBadge(result.confidence)}
+                        {!result.matched && (
+                          <Badge className="bg-gray-100 text-gray-800">미매칭</Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-4">
                         {result.jungsi?.hasScores && (
