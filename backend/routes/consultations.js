@@ -1434,19 +1434,21 @@ router.post('/learning', verifyToken, async (req, res) => {
 
     const student = students[0];
     const studentName = decrypt(student.name) || student.name;
+    const studentGrade = student.grade;  // 학생의 실제 학년 정보
 
     // 1. consultations 테이블에 저장 (스케줄 달력 표시용)
     const [consultationResult] = await db.query(
       `INSERT INTO consultations (
         academy_id, consultation_type, learning_type, linked_student_id,
-        student_name, preferred_date, preferred_time, status, admin_notes,
+        student_name, student_grade, preferred_date, preferred_time, status, admin_notes,
         created_at
-      ) VALUES (?, 'learning', ?, ?, ?, ?, ?, 'confirmed', ?, NOW())`,
+      ) VALUES (?, 'learning', ?, ?, ?, ?, ?, ?, 'confirmed', ?, NOW())`,
       [
         academyId,
         learningType,
         studentId,
         encrypt(studentName),
+        studentGrade,  // 학생의 실제 학년 저장
         preferredDate,
         preferredTime + ':00',  // HH:MM -> HH:MM:00
         adminNotes || null
