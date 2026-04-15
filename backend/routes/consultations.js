@@ -1404,7 +1404,7 @@ router.get('/calendar/events', verifyToken, async (req, res) => {
 });
 
 // POST /paca/consultations/learning - 재원생 상담 일정 등록
-// ⚠️ 이제 student_consultations 테이블에 직접 저장 (consultations 테이블 X)
+// consultations 테이블 + student_consultations 테이블 둘 다 저장 (스케줄 달력 표시 + 상담 기록)
 router.post('/learning', verifyToken, async (req, res) => {
   try {
     const academyId = req.user.academy_id;
@@ -1412,14 +1412,14 @@ router.post('/learning', verifyToken, async (req, res) => {
     const {
       studentId,
       preferredDate,
-      preferredTime,  // 시간은 UI 표시용으로만 사용 (student_consultations에는 날짜만)
+      preferredTime,  // 시간 (스케줄 달력 표시용)
       learningType, // regular, admission, parent, counseling
       adminNotes
     } = req.body;
 
     // 필수 필드 검증
-    if (!studentId || !preferredDate || !learningType) {
-      return res.status(400).json({ error: '학생, 날짜, 상담유형은 필수입니다.' });
+    if (!studentId || !preferredDate || !preferredTime || !learningType) {
+      return res.status(400).json({ error: '학생, 날짜, 시간, 상담유형은 필수입니다.' });
     }
 
     // 학생 정보 조회
@@ -1432,25 +1432,74 @@ router.post('/learning', verifyToken, async (req, res) => {
       return res.status(404).json({ error: '학생을 찾을 수 없습니다.' });
     }
 
-    // student_consultations 테이블에 직접 저장
-    const [result] = await db.query(
+    const student = students[0];
+    const studentName = decrypt(student.name) || student.name;
+
+    // 1. consultations 테이블에 저장 (스케줄 달력 표시용)
+    const [consultationResult] = await db.query(
+      `INSERT INTO consultations (
+        academy_id, consultation_type, learning_type, linked_student_id,
+        student_name, preferred_date, preferred_time, status, admin_notes,
+        created_at
+      ) VALUES (?, 'learning', ?, ?, ?, ?, ?, 'confirmed', ?, NOW())`,
+      [
+        academyId,
+        learningType,
+        studentId,
+        encrypt(studentName),
+        preferredDate,
+        preferredTime + ':00',  // HH:MM -> HH:MM:00
+        adminNotes || null
+      ]
+    );
+
+    // 2. student_consultations 테이블에 저장 (상담 기록용)
+    const [studentConsultationResult] = await db.query(
       `INSERT INTO student_consultations (
-        academy_id, student_id, consultation_date, consultation_type,
+        academy_id, student_id, consultation_id, consultation_date, consultation_type,
         general_memo, created_by, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?, NOW())`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
         academyId,
         studentId,
+        consultationResult.insertId,  // consultations 테이블과 연결
         preferredDate,
-        learningType,  // regular, admission, parent, counseling
+        learningType,
         adminNotes || null,
         userId
       ]
     );
 
+    // 3. PWA 푸시 알림 발송 (학원 관리자들에게)
+    try {
+      const pushService = require('../services/pushService');
+      const formattedDate = new Date(preferredDate).toLocaleDateString('ko-KR', {
+        month: 'long', day: 'numeric', weekday: 'short'
+      });
+      const learningTypeLabels = {
+        regular: '정기상담',
+        admission: '진학상담',
+        parent: '학부모상담',
+        counseling: '고민상담'
+      };
+      await pushService.sendPushToAcademyAdmins(academyId, {
+        title: '재원생 상담 등록',
+        body: `${studentName} 학생 ${learningTypeLabels[learningType] || learningType} - ${formattedDate} ${preferredTime}`,
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-72x72.png',
+        data: {
+          type: 'consultation',
+          url: `/consultations/calendar?date=${preferredDate}`
+        }
+      });
+    } catch (pushError) {
+      logger.error('푸시 알림 발송 실패 (무시):', pushError);
+    }
+
     res.status(201).json({
       message: '재원생 상담 일정이 등록되었습니다.',
-      id: result.insertId
+      consultationId: consultationResult.insertId,
+      studentConsultationId: studentConsultationResult.insertId
     });
   } catch (error) {
     logger.error('재원생 상담 등록 오류:', error);
