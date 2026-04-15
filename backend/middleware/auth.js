@@ -149,9 +149,17 @@ const requireRole = (...roles) => {
         }
 
         if (!roles.includes(req.user.role)) {
+            // 역할명 한글화
+            const roleNames = {
+                owner: '원장',
+                admin: '관리자',
+                staff: '직원',
+                instructor: '강사'
+            };
+            const requiredRoleNames = roles.map(r => roleNames[r] || r).join(' 또는 ');
             return res.status(403).json({
                 error: 'Forbidden',
-                message: `Required role: ${roles.join(' or ')}`
+                message: `이 기능은 ${requiredRoleNames} 권한이 필요합니다.`
             });
         }
 
