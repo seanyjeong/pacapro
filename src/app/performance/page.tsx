@@ -99,6 +99,7 @@ export default function PerformancePage() {
   const [matchResults, setMatchResults] = useState<JungsiMatchResult[]>([]);
   const [selectedStudentScores, setSelectedStudentScores] = useState<ScoreData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [scoresLoading, setScoresLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedStudent, setExpandedStudent] = useState<number | null>(null);
@@ -165,6 +166,8 @@ export default function PerformancePage() {
 
   const fetchStudentScores = async (studentId: number, exam: string) => {
     try {
+      setScoresLoading(true);
+      setSelectedStudentScores(null);
       const data = await apiClient.get<{ success: boolean; matched: boolean; scores: ScoreData }>(
         `/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`
       );
@@ -176,6 +179,8 @@ export default function PerformancePage() {
     } catch (error) {
       console.error('성적 조회 실패:', error);
       setSelectedStudentScores(null);
+    } finally {
+      setScoresLoading(false);
     }
   };
 
@@ -553,10 +558,15 @@ export default function PerformancePage() {
                               </p>
                             </div>
                           </div>
-                        ) : result.matched ? (
+                        ) : scoresLoading ? (
                           <div className="text-center py-4 text-gray-500">
                             <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                             <p>성적 조회 중...</p>
+                          </div>
+                        ) : result.matched ? (
+                          <div className="text-center py-4 text-gray-500">
+                            <AlertCircle className="w-6 h-6 mx-auto mb-2 text-yellow-500" />
+                            <p>성적 데이터가 없습니다.</p>
                           </div>
                         ) : (
                           <div className="text-center py-4 text-gray-500">
