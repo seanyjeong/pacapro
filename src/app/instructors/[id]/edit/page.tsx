@@ -4,8 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import { InstructorForm } from '@/components/instructors/instructor-form';
-import { useInstructor } from '@/hooks/use-instructors';
-import { instructorsAPI } from '@/lib/api/instructors';
+import { useInstructor, useUpdateInstructor } from '@/hooks/use-instructors';
 import type { InstructorFormData } from '@/lib/types/instructor';
 import { Button } from '@/components/ui/button';
 
@@ -15,12 +14,13 @@ export default function EditInstructorPage() {
   const instructorId = Number(params.id);
 
   const { instructor, loading, error, reload } = useInstructor(instructorId);
+  const updateMutation = useUpdateInstructor();
 
   const handleSubmit = async (data: InstructorFormData) => {
     try {
-      await instructorsAPI.updateInstructor(instructorId, data);
+      await updateMutation.mutateAsync({ id: instructorId, data });
 
-      // 성공 시 상세 페이지로 이동
+      // 성공 시 상세 페이지로 이동 (toast는 훅 내부에서 표시됨)
       router.push(`/instructors/${instructorId}`);
     } catch (error) {
       console.error('Failed to update instructor:', error);
