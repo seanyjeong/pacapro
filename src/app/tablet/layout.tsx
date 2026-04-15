@@ -21,7 +21,7 @@ import {
   Monitor
 } from 'lucide-react';
 
-const APP_VERSION = 'v3.17.2';
+const APP_VERSION = 'v3.17.3';
 
 // Navigation items (대시보드 제거)
 const navigation = [

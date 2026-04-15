@@ -4,8 +4,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -71,16 +69,10 @@ interface StudentAllScores {
   '수능': ScoreData | null;
 }
 
-// 내신 과목 목록
-const NAESIN_SUBJECTS = [
-  '국어', '영어', '수학', '물리학', '화학', '생명과학', '지구과학',
-  '한국사', '사회', '윤리', '경제', '정치', '음악', '미술', '체육'
-];
-
 const EXAM_TYPES = ['3월', '6월', '9월', '수능'] as const;
 
 export default function PerformancePage() {
-  const [activeTab, setActiveTab] = useState('모의고사');
+  const [activeTab, setActiveTab] = useState('내신');
   const [students, setStudents] = useState<Student[]>([]);
   const [jungsiStatus, setJungsiStatus] = useState<JungsiStatus | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
@@ -89,15 +81,6 @@ export default function PerformancePage() {
   const [studentScores, setStudentScores] = useState<StudentAllScores | null>(null);
   const [scoresLoading, setScoresLoading] = useState(false);
 
-  // 내신 관련 상태
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [naesinForm, setNaesinForm] = useState<{
-    semester: string;
-    grades: { [subject: string]: string };
-  }>({
-    semester: '1학기',
-    grades: {}
-  });
 
   // 정시엔진 상태 확인
   useEffect(() => {
@@ -229,130 +212,16 @@ export default function PerformancePage() {
   };
 
   const renderNaesinTab = () => (
-    <div className="space-y-6">
-      {/* 학생 선택 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <User className="w-5 h-5" />
-            학생 선택
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4 items-end">
-            <div className="flex-1">
-              <Label>학생 검색</Label>
-              <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="이름, 학교, 학년으로 검색..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <Select
-              value={selectedStudent?.id?.toString() || ''}
-              onValueChange={(value) => {
-                const student = students.find(s => s.id === parseInt(value));
-                setSelectedStudent(student || null);
-              }}
-            >
-              <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="학생을 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredStudents.slice(0, 50).map((student) => (
-                  <SelectItem key={student.id} value={student.id.toString()}>
-                    {student.name} ({student.grade} / {student.school || '미등록'})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {selectedStudent && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <BookOpen className="w-5 h-5" />
-              {selectedStudent.name} - 내신 성적 입력
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* 학기 선택 */}
-              <div className="flex gap-4 items-center">
-                <Label>학기</Label>
-                <Select
-                  value={naesinForm.semester}
-                  onValueChange={(value) => setNaesinForm(prev => ({ ...prev, semester: value }))}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1학기">1학기</SelectItem>
-                    <SelectItem value="2학기">2학기</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* 과목별 등급 입력 */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {NAESIN_SUBJECTS.map((subject) => (
-                  <div key={subject}>
-                    <Label className="text-sm">{subject}</Label>
-                    <Select
-                      value={naesinForm.grades[subject] || ''}
-                      onValueChange={(value) => setNaesinForm(prev => ({
-                        ...prev,
-                        grades: { ...prev.grades, [subject]: value }
-                      }))}
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="-" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">-</SelectItem>
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((grade) => (
-                          <SelectItem key={grade} value={grade.toString()}>
-                            {grade}등급
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setNaesinForm({ semester: '1학기', grades: {} })}>
-                  초기화
-                </Button>
-                <Button onClick={() => {
-                  alert('내신 저장 기능은 추후 구현 예정입니다.');
-                }}>
-                  저장
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {!selectedStudent && (
-        <Card>
-          <CardContent className="p-12 text-center text-gray-500">
-            <BookOpen className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>학생을 선택하면 내신 성적을 입력할 수 있습니다.</p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <Card>
+      <CardContent className="p-12 text-center">
+        <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+        <h3 className="text-xl font-semibold text-gray-700 mb-2">내신 성적 관리</h3>
+        <p className="text-gray-500 mb-4">
+          내신 성적 입력 및 관리 기능은 추후 업데이트 예정입니다.
+        </p>
+        <Badge variant="outline" className="text-sm">Coming Soon</Badge>
+      </CardContent>
+    </Card>
   );
 
   const renderMopyeongTab = () => {
@@ -542,25 +411,25 @@ export default function PerformancePage() {
         )}
       </div>
 
-      {/* 탭 - 내신 / 모의고사 */}
+      {/* 탭 - 내신 / 모의고사·수능 */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="모의고사" className="flex items-center gap-2">
-            <Award className="w-4 h-4" />
-            모의고사
-          </TabsTrigger>
           <TabsTrigger value="내신" className="flex items-center gap-2">
             <BookOpen className="w-4 h-4" />
             내신
           </TabsTrigger>
+          <TabsTrigger value="모의고사" className="flex items-center gap-2">
+            <Award className="w-4 h-4" />
+            모의고사·수능
+          </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="모의고사" className="mt-6">
-          {renderMopyeongTab()}
-        </TabsContent>
 
         <TabsContent value="내신" className="mt-6">
           {renderNaesinTab()}
+        </TabsContent>
+
+        <TabsContent value="모의고사" className="mt-6">
+          {renderMopyeongTab()}
         </TabsContent>
       </Tabs>
     </div>

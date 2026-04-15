@@ -87,8 +87,15 @@ router.get('/', verifyToken, async (req, res) => {
         }
 
         if (status) {
-            query += ' AND s.status = ?';
-            params.push(status);
+            // 쉼표로 분리된 다중 상태 지원 (예: status=active,paused)
+            const statuses = status.split(',').map(s => s.trim()).filter(Boolean);
+            if (statuses.length === 1) {
+                query += ' AND s.status = ?';
+                params.push(statuses[0]);
+            } else if (statuses.length > 1) {
+                query += ` AND s.status IN (${statuses.map(() => '?').join(',')})`;
+                params.push(...statuses);
+            }
         }
 
         // search는 복호화 후 메모리에서 필터링 (암호화된 데이터 검색 불가)

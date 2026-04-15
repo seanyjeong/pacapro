@@ -364,7 +364,7 @@ export default function MobileHomePage() {
 
       {/* 버전 정보 */}
       <div className="mt-4 text-center">
-        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v3.17.2</p>
+        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v3.17.3</p>
       </div>
 
       {/* PWA 설치 프롬프트 */}
