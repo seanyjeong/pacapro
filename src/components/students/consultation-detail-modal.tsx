@@ -64,13 +64,15 @@ const MONTH_LABELS: Record<string, string> = {
 };
 
 // PDF용 인라인 스타일 (html2canvas 호환)
+// 핵심: lineHeight를 픽셀 단위로 명시, 폰트 크기의 약 1.6~1.8배
 const pdfStyles = {
   container: {
     width: '595px',
     padding: '28px',
     margin: '0 auto',
     backgroundColor: '#ffffff',
-    fontFamily: 'system-ui, -apple-system, sans-serif',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    boxSizing: 'border-box' as const,
   },
   header: {
     textAlign: 'center' as const,
@@ -83,13 +85,15 @@ const pdfStyles = {
     fontWeight: 'bold',
     color: '#111827',
     margin: '0 0 4px 0',
-    lineHeight: '1.3',
+    lineHeight: '32px',  // 22px * 1.45
+    display: 'block',
   },
   subtitle: {
     fontSize: '12px',
     color: '#9ca3af',
     margin: 0,
-    lineHeight: '1.3',
+    lineHeight: '18px',  // 12px * 1.5
+    display: 'block',
   },
   infoBox: {
     display: 'grid',
@@ -109,19 +113,25 @@ const pdfStyles = {
     width: '60px',
     fontSize: '11px',
     color: '#6b7280',
-    lineHeight: '1.5',
+    lineHeight: '18px',  // 11px * 1.6
+    display: 'inline-block',
+    verticalAlign: 'top',
   },
   infoValue: {
     fontSize: '13px',
     fontWeight: '600',
     color: '#111827',
-    lineHeight: '1.5',
+    lineHeight: '20px',  // 13px * 1.5
+    display: 'inline-block',
+    verticalAlign: 'top',
   },
   infoValueSmall: {
     fontSize: '12px',
     fontWeight: '500',
     color: '#111827',
-    lineHeight: '1.5',
+    lineHeight: '18px',  // 12px * 1.5
+    display: 'inline-block',
+    verticalAlign: 'top',
   },
   section: {
     marginBottom: '18px',
@@ -136,7 +146,7 @@ const pdfStyles = {
     marginBottom: '10px',
     paddingBottom: '6px',
     borderBottom: '1px solid #e5e7eb',
-    lineHeight: '1.5',
+    lineHeight: '22px',  // 14px * 1.57
   },
   colorBar: (color: string) => ({
     width: '4px',
@@ -151,23 +161,25 @@ const pdfStyles = {
     fontSize: '12px',
   },
   th: {
-    padding: '10px 8px',
+    padding: '8px 6px',
     textAlign: 'center' as const,
     verticalAlign: 'middle' as const,
     fontWeight: '600',
     color: '#374151',
     backgroundColor: '#f3f4f6',
     border: '1px solid #e5e7eb',
-    lineHeight: '1.5',
+    lineHeight: '20px',  // 12px * 1.67
     fontSize: '12px',
+    boxSizing: 'border-box' as const,
   },
   td: {
-    padding: '10px 8px',
+    padding: '8px 6px',
     textAlign: 'center' as const,
     verticalAlign: 'middle' as const,
     border: '1px solid #e5e7eb',
-    lineHeight: '1.5',
+    lineHeight: '20px',  // 12px * 1.67
     fontSize: '12px',
+    boxSizing: 'border-box' as const,
   },
   cardGrid: {
     display: 'grid',
@@ -184,13 +196,15 @@ const pdfStyles = {
     fontSize: '11px',
     color: '#6b7280',
     marginBottom: '4px',
-    lineHeight: '1.5',
+    lineHeight: '16px',  // 11px * 1.45
+    display: 'block',
   },
   cardValue: {
     fontSize: '14px',
     fontWeight: 'bold',
     color: '#111827',
-    lineHeight: '1.5',
+    lineHeight: '22px',  // 14px * 1.57
+    display: 'block',
   },
   cardUnit: {
     fontSize: '11px',
@@ -214,13 +228,15 @@ const pdfStyles = {
     fontWeight: '500',
     color: isPrimary ? '#9333ea' : '#6b7280',
     marginBottom: '4px',
-    lineHeight: '1.5',
+    lineHeight: '16px',  // 11px * 1.45
+    display: 'block',
   }),
   universityName: {
     fontSize: '14px',
     fontWeight: '600',
     color: '#111827',
-    lineHeight: '1.5',
+    lineHeight: '22px',  // 14px * 1.57
+    display: 'block',
   },
   memoBox: (color: string) => ({
     marginTop: '10px',
@@ -229,7 +245,7 @@ const pdfStyles = {
     borderRadius: '6px',
     fontSize: '12px',
     color: '#374151',
-    lineHeight: '1.6',
+    lineHeight: '20px',  // 12px * 1.67
   }),
   contentBox: {
     padding: '14px',
@@ -241,7 +257,7 @@ const pdfStyles = {
     fontSize: '12px',
     color: '#374151',
     whiteSpace: 'pre-wrap' as const,
-    lineHeight: '1.6',
+    lineHeight: '20px',  // 12px * 1.67
     margin: 0,
   },
   footer: {
@@ -254,7 +270,8 @@ const pdfStyles = {
     fontSize: '11px',
     color: '#9ca3af',
     margin: 0,
-    lineHeight: '1.5',
+    lineHeight: '16px',  // 11px * 1.45
+    display: 'block',
   },
 };
 
