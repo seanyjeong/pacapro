@@ -2,7 +2,7 @@
 
 Express 4 기반. prefix `/paca/*`. JWT (authMiddleware) + rate limiter.
 
-> **Last Updated**: 2026-04-14
+> **Last Updated**: 2026-04-15
 
 ## 미들웨어 스택 (`paca.js`)
 ```js
@@ -33,9 +33,9 @@ app.use('/paca', generalLimiter);               // 전체 제한
 
 ---
 
-## 전체 라우트 모듈 목록 (27개)
+## 전체 라우트 모듈 목록 (28개)
 
-### 단일 파일 모듈 (24개)
+### 단일 파일 모듈 (25개)
 | 파일 | URL Prefix | 설명 |
 |------|------------|------|
 | `academyEvents.js` | `/paca/academy-events` | 학원 일정/이벤트 |
@@ -45,6 +45,7 @@ app.use('/paca', generalLimiter);               // 전체 제한
 | `exports.js` | `/paca/exports` | 엑셀 내보내기 |
 | `incomes.js` | `/paca/incomes` | 기타수입 관리 |
 | `instructors.js` | `/paca/instructors` | 강사 관리 |
+| `jungsi.js` | `/paca/jungsi` | 정시엔진 연동 (성적 조회) |
 | `notificationSettings.js` | `/paca/notification-settings` | 알림 설정 (글로벌) |
 | `onboarding.js` | `/paca/onboarding` | 온보딩 |
 | `payments.js` | `/paca/payments` | 결제/학원비 |
@@ -459,6 +460,54 @@ app.use('/paca', generalLimiter);               // 전체 제한
 |--------|------|------|------|
 | GET | `/` | 글로벌 설정 조회 | Public |
 | PUT | `/` | 글로벌 설정 수정 | Public |
+
+### Jungsi (`/paca/jungsi`)
+**정시엔진 연동 — 수능 성적 조회 및 학생 매칭**
+
+| Method | Path | 설명 | 권한 |
+|--------|------|------|------|
+| GET | `/status` | 연동 상태 확인 | JWT |
+| GET | `/scores/:studentId` | 학생 수능 성적 조회 | JWT |
+| GET | `/match-preview` | 전체 학생 매칭 미리보기 | JWT |
+| POST | `/link` | 학생 수동 연결 | JWT |
+
+**쿼리 파라미터**
+- `year`: 학년도 (기본값: '2026')
+- `exam`: 시험 유형 (기본값: '수능')
+
+**GET `/scores/:studentId` 응답**
+```json
+{
+  "success": true,
+  "matched": true,
+  "confidence": "high",
+  "matchMethod": "name+school+grade",
+  "student": {
+    "paca": { "id": 1, "name": "김철준", "school": "행신고", "grade": "고3" },
+    "jungsi": { "student_id": 123, "student_name": "김철준", "school_name": "행신고등학교", "grade": "고3" }
+  },
+  "scores": {
+    "year": "2026",
+    "exam": "수능",
+    "국어": { "선택과목": "화법과 작문", "원점수": 85, "표준점수": 135, "백분위": 92, "등급": "2" },
+    "수학": { "선택과목": "미적분", "원점수": 88, "표준점수": 140, "백분위": 95, "등급": "1" },
+    "영어": { "원점수": 95, "등급": "1" },
+    "한국사": { "원점수": 48, "등급": "2" },
+    "탐구1": { "선택과목": "생명과학I", "원점수": 45, "표준점수": 68, "백분위": 90, "등급": "2" },
+    "탐구2": { "선택과목": "지구과학I", "원점수": 42, "표준점수": 65, "백분위": 85, "등급": "2" }
+  }
+}
+```
+
+**학생 매칭 로직**
+1. 이름 + 학교 + 학년 완전 일치 (confidence: high)
+2. 이름 + 학교 일치 (confidence: medium)
+3. 이름만 일치 + 동명이인 없음 (confidence: low)
+
+**학교명 정규화**: "행신고등학교" → "행신고"로 변환하여 매칭
+
+**academy_id → branch_name 매핑**
+- academy_id=2 → '일산'
 
 ---
 

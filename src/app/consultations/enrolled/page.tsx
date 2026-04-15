@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
   Calendar, Clock, User, Search, Plus, Eye, Edit, Trash2,
-  MoreHorizontal, Loader2, RefreshCw, GraduationCap
+  MoreHorizontal, Loader2, RefreshCw, GraduationCap, Award, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +42,25 @@ interface Student {
   id: number;
   name: string;
   grade: string;
+}
+
+interface SubjectScore {
+  선택과목?: string;
+  원점수?: number;
+  표준점수?: number;
+  백분위?: number;
+  등급?: string;
+}
+
+interface ScoreData {
+  year: string;
+  exam: string;
+  국어?: SubjectScore;
+  수학?: SubjectScore;
+  영어?: { 원점수?: number; 등급?: string };
+  한국사?: { 원점수?: number; 등급?: string };
+  탐구1?: SubjectScore;
+  탐구2?: SubjectScore;
 }
 
 export default function EnrolledConsultationsPage() {
@@ -91,6 +110,13 @@ export default function EnrolledConsultationsPage() {
   const [bookedTimes, setBookedTimes] = useState<string[]>([]);
   const [loadingBookedTimes, setLoadingBookedTimes] = useState(false);
   const [weeklyHours, setWeeklyHours] = useState<WeeklyHour[]>([]);
+
+  // 성적 관련 상태
+  const [showScores, setShowScores] = useState(false);
+  const [loadingScores, setLoadingScores] = useState(false);
+  const [selectedExam, setSelectedExam] = useState('수능');
+  const [studentScores, setStudentScores] = useState<ScoreData | null>(null);
+  const EXAM_TYPES = ['3월', '6월', '9월', '수능'];
 
   const getDateRange = useCallback(() => {
     const today = new Date();
@@ -158,6 +184,26 @@ export default function EnrolledConsultationsPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // 학생 성적 조회
+  const loadStudentScores = async (studentId: number, exam: string) => {
+    setLoadingScores(true);
+    try {
+      const response = await apiClient.get<{ success: boolean; matched: boolean; scores: ScoreData }>(
+        `/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`
+      );
+      if (response.success && response.matched) {
+        setStudentScores(response.scores);
+      } else {
+        setStudentScores(null);
+      }
+    } catch (error) {
+      console.error('성적 조회 오류:', error);
+      setStudentScores(null);
+    } finally {
+      setLoadingScores(false);
+    }
+  };
 
   // 재원생 목록 로드
   const loadStudents = async () => {
@@ -429,6 +475,8 @@ export default function EnrolledConsultationsPage() {
                   className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
                   onClick={() => {
                     setSelectedConsultation(c);
+                    setShowScores(false);
+                    setStudentScores(null);
                     setDetailOpen(true);
                   }}
                 >
@@ -466,6 +514,8 @@ export default function EnrolledConsultationsPage() {
                         <DropdownMenuItem onClick={(e) => {
                           e.stopPropagation();
                           setSelectedConsultation(c);
+                          setShowScores(false);
+                          setStudentScores(null);
                           setDetailOpen(true);
                         }}>
                           <Eye className="h-4 w-4 mr-2" />
@@ -570,6 +620,108 @@ export default function EnrolledConsultationsPage() {
                   </div>
                 )}
               </div>
+
+              {/* 성적 조회 섹션 */}
+              {selectedConsultation.linked_student_id && (
+                <div className="border-t pt-4">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between p-2 hover:bg-muted rounded-md transition-colors"
+                    onClick={() => {
+                      if (!showScores) {
+                        setShowScores(true);
+                        loadStudentScores(selectedConsultation.linked_student_id!, selectedExam);
+                      } else {
+                        setShowScores(false);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Award className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">모의고사 성적 조회</span>
+                    </div>
+                    {showScores ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </button>
+
+                  {showScores && (
+                    <div className="mt-3 space-y-3">
+                      {/* 시험 유형 선택 */}
+                      <div className="flex gap-2">
+                        {EXAM_TYPES.map((exam) => (
+                          <Button
+                            key={exam}
+                            variant={selectedExam === exam ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                              setSelectedExam(exam);
+                              loadStudentScores(selectedConsultation.linked_student_id!, exam);
+                            }}
+                          >
+                            {exam}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* 성적 표시 */}
+                      {loadingScores ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : studentScores ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {/* 국어 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">국어</p>
+                            <p className="text-lg font-bold">{studentScores.국어?.등급 || '-'}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {studentScores.국어?.표준점수 && `${studentScores.국어.표준점수}점`}
+                            </p>
+                          </div>
+                          {/* 수학 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">수학</p>
+                            <p className="text-lg font-bold">{studentScores.수학?.등급 || '-'}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {studentScores.수학?.표준점수 && `${studentScores.수학.표준점수}점`}
+                            </p>
+                          </div>
+                          {/* 영어 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">영어</p>
+                            <p className="text-lg font-bold">{studentScores.영어?.등급 || '-'}</p>
+                          </div>
+                          {/* 탐구1 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">탐구1</p>
+                            <p className="text-lg font-bold">{studentScores.탐구1?.등급 || '-'}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {studentScores.탐구1?.선택과목}
+                            </p>
+                          </div>
+                          {/* 탐구2 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">탐구2</p>
+                            <p className="text-lg font-bold">{studentScores.탐구2?.등급 || '-'}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {studentScores.탐구2?.선택과목}
+                            </p>
+                          </div>
+                          {/* 한국사 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">한국사</p>
+                            <p className="text-lg font-bold">{studentScores.한국사?.등급 || '-'}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-sm text-muted-foreground">
+                          정시엔진에서 매칭된 성적이 없습니다.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <DialogFooter>
                 <Button variant="outline" onClick={() => setDetailOpen(false)}>
                   닫기

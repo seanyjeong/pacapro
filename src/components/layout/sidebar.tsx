@@ -82,6 +82,7 @@ const navCategories: NavCategory[] = [
             { title: '수업일관리', href: '/students/class-days', icon: CalendarCog, permissionKey: 'class_days' },
             { title: '학원일정', href: '/academy-events', icon: CalendarDays, permissionKey: 'academy_events' },
             { title: '시즌', href: '/seasons', icon: Trophy, permissionKey: 'seasons' },
+            { title: '성적관리', href: '/performance', icon: Award, permissionKey: 'students' },
         ],
     },
     {
@@ -113,7 +114,6 @@ const navCategories: NavCategory[] = [
         icon: Cog,
         defaultOpen: false,
         items: [
-            { title: '성적기록 (추후)', href: '/performance', icon: Award },
             { title: '직원관리', href: '/staff', icon: UserCheck, ownerOnly: true },
             { title: '설정', href: '/settings', icon: Settings, permissionKey: 'settings' },
         ],
@@ -623,7 +623,7 @@ export function Sidebar() {
             {!collapsed && (
                 <div className="p-4 border-t border-border">
                     <div className="text-xs text-muted-foreground text-center space-y-1">
-                        <div>P-ACA v3.15.2</div>
+                        <div>P-ACA v3.16.0</div>
                         <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-04-15</div>
                         <div>문의: 010-2144-6755</div>
                     </div>
