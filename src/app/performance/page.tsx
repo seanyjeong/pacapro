@@ -448,10 +448,8 @@ export default function PerformancePage() {
                           setExpandedStudent(null);
                         } else {
                           setExpandedStudent(result.paca.id);
-                          const student = students.find(s => s.id === result.paca.id);
-                          if (student) {
-                            setSelectedStudent(student);
-                          }
+                          // 직접 성적 조회 (students 배열 의존성 제거)
+                          fetchStudentScores(result.paca.id, activeTab);
                         }
                       }}
                     >
