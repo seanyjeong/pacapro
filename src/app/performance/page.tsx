@@ -32,25 +32,6 @@ interface Student {
   status: string;
 }
 
-interface JungsiMatchResult {
-  paca: {
-    id: number;
-    name: string;
-    school: string;
-    grade: string;
-  };
-  jungsi: {
-    student_id: number;
-    student_name: string;
-    school_name: string;
-    grade: string;
-    hasScores: boolean;
-  } | null;
-  matched: boolean;
-  confidence: 'high' | 'medium' | 'low' | 'none';
-  matchMethod: string | null;
-}
-
 interface JungsiStatus {
   success: boolean;
   academyId: number;
@@ -83,7 +64,12 @@ interface SubjectScore {
   등급?: string;
 }
 
-const EXAM_TABS = ['내신', '3월', '6월', '9월', '수능'];
+interface StudentAllScores {
+  '3월': ScoreData | null;
+  '6월': ScoreData | null;
+  '9월': ScoreData | null;
+  '수능': ScoreData | null;
+}
 
 // 내신 과목 목록
 const NAESIN_SUBJECTS = [
@@ -91,20 +77,20 @@ const NAESIN_SUBJECTS = [
   '한국사', '사회', '윤리', '경제', '정치', '음악', '미술', '체육'
 ];
 
+const EXAM_TYPES = ['3월', '6월', '9월', '수능'] as const;
+
 export default function PerformancePage() {
-  const [activeTab, setActiveTab] = useState('내신');
+  const [activeTab, setActiveTab] = useState('모의고사');
   const [students, setStudents] = useState<Student[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [jungsiStatus, setJungsiStatus] = useState<JungsiStatus | null>(null);
-  const [matchResults, setMatchResults] = useState<JungsiMatchResult[]>([]);
-  const [selectedStudentScores, setSelectedStudentScores] = useState<ScoreData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [scoresLoading, setScoresLoading] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedStudent, setExpandedStudent] = useState<number | null>(null);
+  const [studentScores, setStudentScores] = useState<StudentAllScores | null>(null);
+  const [scoresLoading, setScoresLoading] = useState(false);
 
-  // 내신 입력 상태
+  // 내신 관련 상태
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [naesinForm, setNaesinForm] = useState<{
     semester: string;
     grades: { [subject: string]: string };
@@ -148,61 +134,99 @@ export default function PerformancePage() {
     }
   };
 
-  const fetchMatchPreview = async (exam: string) => {
-    try {
-      setLoading(true);
-      const data = await apiClient.get<{ success: boolean; results: JungsiMatchResult[] }>(
-        `/jungsi/match-preview?exam=${encodeURIComponent(exam)}`
-      );
-      if (data.success) {
-        setMatchResults(data.results);
-      }
-    } catch (error) {
-      console.error('매칭 미리보기 실패:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 학생의 모든 시험 성적 조회 (3월, 6월, 9월, 수능)
+  const fetchAllScores = async (studentId: number) => {
+    setScoresLoading(true);
+    const results: StudentAllScores = { '3월': null, '6월': null, '9월': null, '수능': null };
 
-  const fetchStudentScores = async (studentId: number, exam: string) => {
     try {
-      setScoresLoading(true);
-      setSelectedStudentScores(null);
-      const data = await apiClient.get<{ success: boolean; matched: boolean; scores: ScoreData }>(
-        `/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`
-      );
-      if (data.success && data.matched) {
-        setSelectedStudentScores(data.scores);
-      } else {
-        setSelectedStudentScores(null);
-      }
+      const promises = EXAM_TYPES.map(async (exam) => {
+        try {
+          const data = await apiClient.get<{ success: boolean; matched: boolean; scores: ScoreData }>(
+            `/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`
+          );
+          if (data.success && data.matched && data.scores) {
+            results[exam] = data.scores;
+          }
+        } catch {
+          // 개별 실패 무시
+        }
+      });
+
+      await Promise.all(promises);
+      setStudentScores(results);
     } catch (error) {
       console.error('성적 조회 실패:', error);
-      setSelectedStudentScores(null);
     } finally {
       setScoresLoading(false);
     }
   };
-
-  // 탭 변경 시 데이터 로드
-  useEffect(() => {
-    if (activeTab !== '내신' && jungsiStatus?.isConfigured) {
-      fetchMatchPreview(activeTab);
-    }
-  }, [activeTab, jungsiStatus]);
-
-  // 학생 선택 시 성적 조회
-  useEffect(() => {
-    if (selectedStudent && activeTab !== '내신') {
-      fetchStudentScores(selectedStudent.id, activeTab);
-    }
-  }, [selectedStudent, activeTab]);
 
   const filteredStudents = students.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.school?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.grade?.includes(searchQuery)
   );
+
+  // 성적 카드 렌더링
+  const renderScoreCard = (scores: ScoreData | null, examName: string) => {
+    if (!scores) {
+      return (
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-medium text-gray-700">{examName}</h4>
+            <Badge variant="outline" className="text-gray-400">데이터 없음</Badge>
+          </div>
+          <p className="text-sm text-gray-400 text-center py-2">성적 정보가 없습니다</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-white rounded-lg border p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="font-medium text-gray-900">{examName}</h4>
+          <Badge className="bg-green-100 text-green-800">조회됨</Badge>
+        </div>
+        <div className="grid grid-cols-6 gap-2 text-center">
+          {/* 국어 */}
+          <div>
+            <p className="text-xs text-gray-500">국어</p>
+            <p className="text-xl font-bold">{scores.국어?.등급 || '-'}</p>
+            <p className="text-[10px] text-gray-400 truncate">{scores.국어?.선택과목 || ''}</p>
+          </div>
+          {/* 수학 */}
+          <div>
+            <p className="text-xs text-gray-500">수학</p>
+            <p className="text-xl font-bold">{scores.수학?.등급 || '-'}</p>
+            <p className="text-[10px] text-gray-400 truncate">{scores.수학?.선택과목 || ''}</p>
+          </div>
+          {/* 영어 */}
+          <div>
+            <p className="text-xs text-gray-500">영어</p>
+            <p className="text-xl font-bold">{scores.영어?.등급 || '-'}</p>
+          </div>
+          {/* 탐구1 */}
+          <div>
+            <p className="text-xs text-gray-500">탐구1</p>
+            <p className="text-xl font-bold">{scores.탐구1?.등급 || '-'}</p>
+            <p className="text-[10px] text-gray-400 truncate">{scores.탐구1?.선택과목 || ''}</p>
+          </div>
+          {/* 탐구2 */}
+          <div>
+            <p className="text-xs text-gray-500">탐구2</p>
+            <p className="text-xl font-bold">{scores.탐구2?.등급 || '-'}</p>
+            <p className="text-[10px] text-gray-400 truncate">{scores.탐구2?.선택과목 || ''}</p>
+          </div>
+          {/* 한국사 */}
+          <div>
+            <p className="text-xs text-gray-500">한국사</p>
+            <p className="text-xl font-bold">{scores.한국사?.등급 || '-'}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderNaesinTab = () => (
     <div className="space-y-6">
@@ -310,7 +334,6 @@ export default function PerformancePage() {
                   초기화
                 </Button>
                 <Button onClick={() => {
-                  // TODO: 내신 저장 API 호출
                   alert('내신 저장 기능은 추후 구현 예정입니다.');
                 }}>
                   저장
@@ -332,7 +355,7 @@ export default function PerformancePage() {
     </div>
   );
 
-  const renderMopyeongTab = (exam: string) => {
+  const renderMopyeongTab = () => {
     if (!jungsiStatus?.isConfigured) {
       return (
         <Card>
@@ -369,10 +392,10 @@ export default function PerformancePage() {
 
     return (
       <div className="space-y-6">
-        {/* 연동 상태 */}
+        {/* 연동 상태 + 검색 */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
@@ -380,82 +403,79 @@ export default function PerformancePage() {
                 </div>
                 <Badge variant="outline">{jungsiStatus.branchName} 지점</Badge>
               </div>
+              <div className="flex-1 max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="학생 이름, 학교, 학년으로 검색..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => fetchMatchPreview(exam)}
-                disabled={loading}
+                onClick={fetchStudents}
               >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                )}
+                <RefreshCw className="w-4 h-4 mr-2" />
                 새로고침
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* 학생 목록 & 성적 */}
+        {/* 학생 목록 */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <GraduationCap className="w-5 h-5" />
-              {exam} 모의고사 성적
+              학생별 모의고사 성적
+              <Badge variant="secondary" className="ml-2">{filteredStudents.length}명</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-              </div>
-            ) : matchResults.length === 0 ? (
+            {filteredStudents.length === 0 ? (
               <div className="text-center py-12 text-gray-500">
-                <p>매칭된 학생이 없습니다.</p>
+                <p>검색 결과가 없습니다.</p>
               </div>
             ) : (
               <div className="space-y-2">
-                {matchResults.map((result) => (
+                {filteredStudents.map((student) => (
                   <div
-                    key={result.paca.id}
+                    key={student.id}
                     className={cn(
                       "border rounded-lg overflow-hidden",
-                      expandedStudent === result.paca.id && "ring-2 ring-primary"
+                      expandedStudent === student.id && "ring-2 ring-primary"
                     )}
                   >
                     {/* 학생 행 */}
                     <div
-                      className={cn(
-                        "flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50",
-                        result.matched && "bg-green-50/50"
-                      )}
+                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
                       onClick={() => {
-                        if (expandedStudent === result.paca.id) {
+                        if (expandedStudent === student.id) {
                           setExpandedStudent(null);
+                          setStudentScores(null);
                         } else {
-                          setExpandedStudent(result.paca.id);
-                          // 직접 성적 조회 (students 배열 의존성 제거)
-                          fetchStudentScores(result.paca.id, activeTab);
+                          setExpandedStudent(student.id);
+                          fetchAllScores(student.id);
                         }
                       }}
                     >
                       <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="w-5 h-5 text-primary" />
+                        </div>
                         <div>
-                          <p className="font-medium">{result.paca.name}</p>
+                          <p className="font-medium">{student.name}</p>
                           <p className="text-sm text-gray-500">
-                            {result.paca.grade} / {result.paca.school || '학교 미등록'}
+                            {student.grade} / {student.school || '학교 미등록'}
                           </p>
                         </div>
-                        {!result.matched && (
-                          <Badge className="bg-gray-100 text-gray-800">미매칭</Badge>
-                        )}
                       </div>
-                      <div className="flex items-center gap-4">
-                        {result.jungsi?.hasScores && (
-                          <Badge className="bg-blue-100 text-blue-800">성적 있음</Badge>
-                        )}
-                        {expandedStudent === result.paca.id ? (
+                      <div className="flex items-center gap-2">
+                        {expandedStudent === student.id ? (
                           <ChevronUp className="w-5 h-5 text-gray-400" />
                         ) : (
                           <ChevronDown className="w-5 h-5 text-gray-400" />
@@ -463,103 +483,25 @@ export default function PerformancePage() {
                       </div>
                     </div>
 
-                    {/* 성적 상세 (확장) */}
-                    {expandedStudent === result.paca.id && (
+                    {/* 성적 상세 (확장) - 3월/6월/9월/수능 한번에 */}
+                    {expandedStudent === student.id && (
                       <div className="border-t bg-gray-50 p-4">
-                        {selectedStudentScores ? (
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                            {/* 국어 */}
-                            <div className="bg-white p-3 rounded-lg border">
-                              <p className="text-sm text-gray-500 mb-1">국어</p>
-                              <p className="text-2xl font-bold">
-                                {selectedStudentScores.국어?.등급 || '-'}
-                                <span className="text-sm font-normal text-gray-500">등급</span>
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {selectedStudentScores.국어?.선택과목}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                표준: {selectedStudentScores.국어?.표준점수 || '-'} /
-                                백분위: {selectedStudentScores.국어?.백분위 || '-'}
-                              </p>
-                            </div>
-                            {/* 수학 */}
-                            <div className="bg-white p-3 rounded-lg border">
-                              <p className="text-sm text-gray-500 mb-1">수학</p>
-                              <p className="text-2xl font-bold">
-                                {selectedStudentScores.수학?.등급 || '-'}
-                                <span className="text-sm font-normal text-gray-500">등급</span>
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {selectedStudentScores.수학?.선택과목}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                표준: {selectedStudentScores.수학?.표준점수 || '-'} /
-                                백분위: {selectedStudentScores.수학?.백분위 || '-'}
-                              </p>
-                            </div>
-                            {/* 영어 */}
-                            <div className="bg-white p-3 rounded-lg border">
-                              <p className="text-sm text-gray-500 mb-1">영어</p>
-                              <p className="text-2xl font-bold">
-                                {selectedStudentScores.영어?.등급 || '-'}
-                                <span className="text-sm font-normal text-gray-500">등급</span>
-                              </p>
-                            </div>
-                            {/* 탐구1 */}
-                            <div className="bg-white p-3 rounded-lg border">
-                              <p className="text-sm text-gray-500 mb-1">탐구1</p>
-                              <p className="text-2xl font-bold">
-                                {selectedStudentScores.탐구1?.등급 || '-'}
-                                <span className="text-sm font-normal text-gray-500">등급</span>
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {selectedStudentScores.탐구1?.선택과목}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                표준: {selectedStudentScores.탐구1?.표준점수 || '-'} /
-                                백분위: {selectedStudentScores.탐구1?.백분위 || '-'}
-                              </p>
-                            </div>
-                            {/* 탐구2 */}
-                            <div className="bg-white p-3 rounded-lg border">
-                              <p className="text-sm text-gray-500 mb-1">탐구2</p>
-                              <p className="text-2xl font-bold">
-                                {selectedStudentScores.탐구2?.등급 || '-'}
-                                <span className="text-sm font-normal text-gray-500">등급</span>
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {selectedStudentScores.탐구2?.선택과목}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                표준: {selectedStudentScores.탐구2?.표준점수 || '-'} /
-                                백분위: {selectedStudentScores.탐구2?.백분위 || '-'}
-                              </p>
-                            </div>
-                            {/* 한국사 */}
-                            <div className="bg-white p-3 rounded-lg border">
-                              <p className="text-sm text-gray-500 mb-1">한국사</p>
-                              <p className="text-2xl font-bold">
-                                {selectedStudentScores.한국사?.등급 || '-'}
-                                <span className="text-sm font-normal text-gray-500">등급</span>
-                              </p>
-                            </div>
-                          </div>
-                        ) : scoresLoading ? (
-                          <div className="text-center py-4 text-gray-500">
-                            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
+                        {scoresLoading ? (
+                          <div className="text-center py-8 text-gray-500">
+                            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
                             <p>성적 조회 중...</p>
                           </div>
-                        ) : result.matched ? (
-                          <div className="text-center py-4 text-gray-500">
-                            <AlertCircle className="w-6 h-6 mx-auto mb-2 text-yellow-500" />
-                            <p>성적 데이터가 없습니다.</p>
+                        ) : studentScores ? (
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {renderScoreCard(studentScores['3월'], '3월 모평')}
+                            {renderScoreCard(studentScores['6월'], '6월 모평')}
+                            {renderScoreCard(studentScores['9월'], '9월 모평')}
+                            {renderScoreCard(studentScores['수능'], '수능')}
                           </div>
                         ) : (
-                          <div className="text-center py-4 text-gray-500">
-                            <AlertCircle className="w-6 h-6 mx-auto mb-2 text-yellow-500" />
-                            <p>정시엔진에서 매칭된 학생이 없습니다.</p>
-                            <p className="text-sm">이름, 학교, 학년 정보를 확인해주세요.</p>
+                          <div className="text-center py-8 text-gray-500">
+                            <AlertCircle className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
+                            <p>성적을 조회할 수 없습니다.</p>
                           </div>
                         )}
                       </div>
@@ -600,30 +542,26 @@ export default function PerformancePage() {
         )}
       </div>
 
-      {/* 탭 */}
+      {/* 탭 - 내신 / 모의고사 */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          {EXAM_TABS.map((tab) => (
-            <TabsTrigger key={tab} value={tab} className="flex items-center gap-2">
-              {tab === '내신' ? (
-                <BookOpen className="w-4 h-4" />
-              ) : (
-                <Award className="w-4 h-4" />
-              )}
-              {tab}
-            </TabsTrigger>
-          ))}
+        <TabsList className="grid w-full grid-cols-2 max-w-md">
+          <TabsTrigger value="모의고사" className="flex items-center gap-2">
+            <Award className="w-4 h-4" />
+            모의고사
+          </TabsTrigger>
+          <TabsTrigger value="내신" className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4" />
+            내신
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="모의고사" className="mt-6">
+          {renderMopyeongTab()}
+        </TabsContent>
 
         <TabsContent value="내신" className="mt-6">
           {renderNaesinTab()}
         </TabsContent>
-
-        {['3월', '6월', '9월', '수능'].map((exam) => (
-          <TabsContent key={exam} value={exam} className="mt-6">
-            {renderMopyeongTab(exam)}
-          </TabsContent>
-        ))}
       </Tabs>
     </div>
   );
