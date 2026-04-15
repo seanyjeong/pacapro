@@ -193,30 +193,30 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
           </div>
 
           {/* 기본 정보 - 컴팩트 */}
-          <div className="grid grid-cols-2 gap-2 mb-4 p-3 bg-gray-50 rounded text-sm">
-            <div className="space-y-1">
-              <div className="flex">
-                <span className="w-16 text-gray-500 text-xs">학생명</span>
-                <span className="font-semibold text-gray-900">{studentName}</span>
-                {studentGrade && <span className="ml-1 text-gray-500 text-xs">({studentGrade})</span>}
+          <div className="grid grid-cols-2 gap-2 mb-4 p-3 bg-gray-50 rounded">
+            <div className="space-y-1.5">
+              <div className="flex items-baseline">
+                <span className="w-16 text-gray-500 text-xs leading-none">학생명</span>
+                <span className="font-semibold text-gray-900 text-sm leading-none">{studentName}</span>
+                {studentGrade && <span className="ml-1 text-gray-500 text-xs leading-none">({studentGrade})</span>}
               </div>
-              <div className="flex">
-                <span className="w-16 text-gray-500 text-xs">상담유형</span>
-                <span className="font-medium text-gray-900 text-xs">
+              <div className="flex items-baseline">
+                <span className="w-16 text-gray-500 text-xs leading-none">상담유형</span>
+                <span className="font-medium text-gray-900 text-xs leading-none">
                   {CONSULTATION_TYPE_LABELS[consultation.consultation_type] || consultation.consultation_type}
                 </span>
               </div>
             </div>
-            <div className="space-y-1">
-              <div className="flex">
-                <span className="w-16 text-gray-500 text-xs">상담일</span>
-                <span className="font-semibold text-gray-900 text-xs">
+            <div className="space-y-1.5">
+              <div className="flex items-baseline">
+                <span className="w-16 text-gray-500 text-xs leading-none">상담일</span>
+                <span className="font-semibold text-gray-900 text-xs leading-none">
                   {format(parseISO(consultation.consultation_date), 'yyyy.M.d (EEE)', { locale: ko })}
                 </span>
               </div>
-              <div className="flex">
-                <span className="w-16 text-gray-500 text-xs">입시전형</span>
-                <span className="font-medium text-gray-900 text-xs">
+              <div className="flex items-baseline">
+                <span className="w-16 text-gray-500 text-xs leading-none">입시전형</span>
+                <span className="font-medium text-gray-900 text-xs leading-none">
                   {consultation.admission_type === 'early' ? '수시' :
                    consultation.admission_type === 'regular' ? '정시' :
                    consultation.admission_type === 'both' ? '수시/정시' : '-'}
@@ -227,11 +227,11 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
 
           {/* 학업 성적 섹션 */}
           <div className="mb-4">
-            <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b flex items-center gap-1">
-              <span className="w-0.5 h-3 bg-blue-500 rounded"></span>
-              학업 성적
+            <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b flex items-center gap-2 leading-tight">
+              <span className="w-1 h-4 bg-blue-500 rounded flex-shrink-0"></span>
+              <span>학업 성적</span>
               {consultation.school_grade_avg && (
-                <span className="ml-auto text-xs font-normal text-gray-500">
+                <span className="ml-auto text-xs font-normal text-gray-500 leading-tight">
                   내신 평균: <span className="text-blue-600 font-semibold">{consultation.school_grade_avg}등급</span>
                 </span>
               )}
@@ -301,10 +301,10 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
           {/* 실기 기록 섹션 */}
           {hasPhysicalRecords && (
             <div className="mb-4">
-              <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b flex items-center gap-1">
-                <span className="w-0.5 h-3 bg-orange-500 rounded"></span>
-                실기 기록
-                <span className="text-xs font-normal text-gray-500 ml-1">
+              <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b flex items-center gap-2 leading-tight">
+                <span className="w-1 h-4 bg-orange-500 rounded flex-shrink-0"></span>
+                <span>실기 기록</span>
+                <span className="text-xs font-normal text-gray-500 leading-tight">
                   ({consultation.physical_record_type === 'latest' ? '최근' : '평균'})
                 </span>
               </h2>
@@ -312,8 +312,8 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
               <div className="grid grid-cols-4 gap-2">
                 {Object.entries(physicalRecords).slice(0, 8).map(([name, record]: [string, any]) => (
                   <div key={name} className="bg-orange-50 rounded p-2 border border-orange-100">
-                    <div className="text-xs text-gray-500 truncate">{name}</div>
-                    <div className="text-sm font-bold text-gray-900">
+                    <div className="text-xs text-gray-500 truncate leading-tight">{name}</div>
+                    <div className="text-sm font-bold text-gray-900 leading-tight">
                       {record.value}<span className="text-xs font-normal text-gray-500 ml-0.5">{record.unit}</span>
                     </div>
                   </div>
@@ -321,7 +321,7 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
               </div>
 
               {consultation.physical_memo && (
-                <div className="mt-2 p-2 bg-orange-50 rounded text-xs text-gray-700">
+                <div className="mt-2 p-2 bg-orange-50 rounded text-xs text-gray-700 leading-relaxed">
                   {consultation.physical_memo}
                 </div>
               )}
@@ -331,28 +331,28 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
           {/* 목표 대학 섹션 */}
           {(consultation.target_university_1 || consultation.target_university_2) && (
             <div className="mb-4">
-              <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b flex items-center gap-1">
-                <span className="w-0.5 h-3 bg-purple-500 rounded"></span>
-                목표 대학
+              <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b flex items-center gap-2 leading-tight">
+                <span className="w-1 h-4 bg-purple-500 rounded flex-shrink-0"></span>
+                <span>목표 대학</span>
               </h2>
 
               <div className="flex gap-3">
                 {consultation.target_university_1 && (
                   <div className="flex-1 p-2 bg-purple-50 rounded border border-purple-100">
-                    <div className="text-xs text-purple-600 font-medium">1지망</div>
-                    <div className="text-sm font-semibold text-gray-900">{consultation.target_university_1}</div>
+                    <div className="text-xs text-purple-600 font-medium leading-tight">1지망</div>
+                    <div className="text-sm font-semibold text-gray-900 leading-tight">{consultation.target_university_1}</div>
                   </div>
                 )}
                 {consultation.target_university_2 && (
                   <div className="flex-1 p-2 bg-gray-50 rounded border border-gray-200">
-                    <div className="text-xs text-gray-500 font-medium">2지망</div>
-                    <div className="text-sm font-semibold text-gray-900">{consultation.target_university_2}</div>
+                    <div className="text-xs text-gray-500 font-medium leading-tight">2지망</div>
+                    <div className="text-sm font-semibold text-gray-900 leading-tight">{consultation.target_university_2}</div>
                   </div>
                 )}
               </div>
 
               {consultation.target_memo && (
-                <div className="mt-2 p-2 bg-purple-50 rounded text-xs text-gray-700">
+                <div className="mt-2 p-2 bg-purple-50 rounded text-xs text-gray-700 leading-relaxed">
                   {consultation.target_memo}
                 </div>
               )}
@@ -362,9 +362,9 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
           {/* 상담 내용 섹션 */}
           {consultation.general_memo && (
             <div className="mb-4">
-              <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b flex items-center gap-1">
-                <span className="w-0.5 h-3 bg-green-500 rounded"></span>
-                상담 내용
+              <h2 className="text-sm font-bold text-gray-900 mb-2 pb-1 border-b flex items-center gap-2 leading-tight">
+                <span className="w-1 h-4 bg-green-500 rounded flex-shrink-0"></span>
+                <span>상담 내용</span>
               </h2>
 
               <div className="p-3 bg-green-50 rounded border border-green-100">
