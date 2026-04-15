@@ -105,7 +105,7 @@ function matchStudents(pacaStudent, jungsiStudents) {
 /**
  * 정시엔진 API 호출 (내부용)
  */
-async function fetchJungsiStudents(branchName, year = '2026', exam = null) {
+async function fetchJungsiStudents(branchName, year = '2027', exam = null) {
     // exam이 없으면 현재 시점 기준 기본값 사용
     const examType = exam || getDefaultExam();
     try {
@@ -138,7 +138,7 @@ async function fetchJungsiStudents(branchName, year = '2026', exam = null) {
 router.get('/scores/:studentId', verifyToken, async (req, res) => {
     try {
         const studentId = parseInt(req.params.studentId);
-        const { year = '2026' } = req.query;
+        const { year = '2027' } = req.query;
         const exam = req.query.exam || getDefaultExam(); // 3월/6월/9월/수능
 
         // 1. P-ACA 학생 정보 조회
@@ -290,7 +290,7 @@ router.get('/scores/:studentId', verifyToken, async (req, res) => {
  */
 router.get('/match-preview', verifyToken, async (req, res) => {
     try {
-        const { year = '2026' } = req.query;
+        const { year = '2027' } = req.query;
         const exam = req.query.exam || getDefaultExam(); // 3월/6월/9월/수능
         const academyId = req.user.academyId;
 
