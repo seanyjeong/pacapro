@@ -117,12 +117,18 @@ export default function EnrolledConsultationsPage() {
   const [loadingBookedTimes, setLoadingBookedTimes] = useState(false);
   const [weeklyHours, setWeeklyHours] = useState<WeeklyHour[]>([]);
 
-  // 성적 관련 상태
+  // 성적 관련 상태 (상세 모달용)
   const [showScores, setShowScores] = useState(false);
   const [loadingScores, setLoadingScores] = useState(false);
   const [selectedExam, setSelectedExam] = useState('수능');
   const [studentScores, setStudentScores] = useState<ScoreData | null>(null);
   const EXAM_TYPES = ['3월', '6월', '9월', '수능'];
+
+  // 등록 모달용 성적 상태
+  const [createScoresLoading, setCreateScoresLoading] = useState(false);
+  const [createScores, setCreateScores] = useState<Record<string, ScoreData | null>>({
+    '3월': null, '6월': null, '9월': null
+  });
 
   const getDateRange = useCallback(() => {
     const today = new Date();
@@ -191,7 +197,7 @@ export default function EnrolledConsultationsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 학생 성적 조회
+  // 학생 성적 조회 (상세 모달용)
   const loadStudentScores = async (studentId: number, exam: string) => {
     setLoadingScores(true);
     try {
@@ -208,6 +214,35 @@ export default function EnrolledConsultationsPage() {
       setStudentScores(null);
     } finally {
       setLoadingScores(false);
+    }
+  };
+
+  // 등록 모달용 - 학생 선택 시 3월/6월/9월 성적 전체 조회
+  const loadCreateStudentScores = async (studentId: number) => {
+    setCreateScoresLoading(true);
+    const results: Record<string, ScoreData | null> = { '3월': null, '6월': null, '9월': null };
+
+    try {
+      // 3개 시험 동시 조회
+      const promises = ['3월', '6월', '9월'].map(async (exam) => {
+        try {
+          const response = await apiClient.get<{ success: boolean; matched: boolean; scores: ScoreData }>(
+            `/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`
+          );
+          if (response.success && response.matched && response.scores) {
+            results[exam] = response.scores;
+          }
+        } catch {
+          // 개별 실패 무시
+        }
+      });
+
+      await Promise.all(promises);
+      setCreateScores(results);
+    } catch (error) {
+      console.error('성적 조회 오류:', error);
+    } finally {
+      setCreateScoresLoading(false);
     }
   };
 
@@ -322,6 +357,7 @@ export default function EnrolledConsultationsPage() {
       });
       setStudentSearch('');
       setStudentDropdownOpen(false);
+      setCreateScores({ '3월': null, '6월': null, '9월': null });
       loadData();
     } catch (error) {
       console.error('상담 등록 오류:', error);
@@ -900,6 +936,8 @@ export default function EnrolledConsultationsPage() {
                               setCreateForm({ ...createForm, studentId: s.id.toString() });
                               setStudentSearch('');
                               setStudentDropdownOpen(false);
+                              // 학생 선택 시 성적 자동 조회
+                              loadCreateStudentScores(s.id);
                             }}
                           >
                             <span>{s.name} <span className="text-muted-foreground">({s.grade || '-'})</span></span>
@@ -990,53 +1028,92 @@ export default function EnrolledConsultationsPage() {
               />
             </div>
 
-            {/* 모의고사 성적 입력 */}
-            <div className="border-t pt-4">
-              <Label className="flex items-center gap-2 mb-3">
-                <Award className="h-4 w-4 text-blue-600" />
-                모의고사 등급 (선택)
-              </Label>
-              <div className="space-y-3">
-                {['3월', '6월', '9월'].map((exam) => (
-                  <div key={exam} className="bg-muted/30 p-3 rounded-md">
-                    <p className="text-sm font-medium mb-2">{exam} 모평</p>
-                    <div className="grid grid-cols-5 gap-2">
-                      {['국어', '수학', '영어', '탐구1', '탐구2'].map((subject) => (
-                        <div key={subject}>
-                          <Label className="text-xs text-muted-foreground">{subject}</Label>
-                          <Select
-                            value={createForm.scores[exam][subject]}
-                            onValueChange={(v) => setCreateForm({
-                              ...createForm,
-                              scores: {
-                                ...createForm.scores,
-                                [exam]: { ...createForm.scores[exam], [subject]: v }
-                              }
-                            })}
-                          >
-                            <SelectTrigger className="h-8 text-sm">
-                              <SelectValue placeholder="-" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="">-</SelectItem>
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => (
-                                <SelectItem key={g} value={g.toString()}>{g}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      ))}
-                    </div>
+            {/* 모의고사 성적 - 학생 선택 시만 표시 */}
+            {createForm.studentId && (
+              <div className="border-t pt-4">
+                <Label className="flex items-center gap-2 mb-3">
+                  <Award className="h-4 w-4 text-blue-600" />
+                  모의고사 등급
+                </Label>
+                {createScoresLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">성적 조회 중...</span>
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-3">
+                    {['3월', '6월', '9월'].map((exam) => {
+                      const scoreData = createScores[exam];
+                      const hasScore = scoreData !== null;
+
+                      return (
+                        <div key={exam} className="bg-muted/30 p-3 rounded-md">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-medium">{exam} 모평</p>
+                            {hasScore && (
+                              <Badge className="bg-green-100 text-green-800 text-xs">정시엔진 연동</Badge>
+                            )}
+                          </div>
+                          {hasScore ? (
+                            // 조회된 성적 표시 (읽기 전용)
+                            <div className="grid grid-cols-5 gap-2">
+                              {[
+                                { key: '국어', data: scoreData.국어 },
+                                { key: '수학', data: scoreData.수학 },
+                                { key: '영어', data: scoreData.영어 },
+                                { key: '탐구1', data: scoreData.탐구1 },
+                                { key: '탐구2', data: scoreData.탐구2 }
+                              ].map(({ key, data }) => (
+                                <div key={key} className="text-center">
+                                  <p className="text-xs text-muted-foreground">{key}</p>
+                                  <p className="text-lg font-bold">{data?.등급 || '-'}</p>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            // 성적 없음 - 입력칸 표시
+                            <div className="grid grid-cols-5 gap-2">
+                              {['국어', '수학', '영어', '탐구1', '탐구2'].map((subject) => (
+                                <div key={subject}>
+                                  <Label className="text-xs text-muted-foreground">{subject}</Label>
+                                  <Select
+                                    value={createForm.scores[exam][subject]}
+                                    onValueChange={(v) => setCreateForm({
+                                      ...createForm,
+                                      scores: {
+                                        ...createForm.scores,
+                                        [exam]: { ...createForm.scores[exam], [subject]: v }
+                                      }
+                                    })}
+                                  >
+                                    <SelectTrigger className="h-8 text-sm">
+                                      <SelectValue placeholder="-" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="">-</SelectItem>
+                                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => (
+                                        <SelectItem key={g} value={g.toString()}>{g}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
               setCreateModalOpen(false);
               setStudentSearch('');
               setStudentDropdownOpen(false);
+              setCreateScores({ '3월': null, '6월': null, '9월': null });
             }}>
               취소
             </Button>
