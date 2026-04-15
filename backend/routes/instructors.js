@@ -612,7 +612,7 @@ router.put('/:id', verifyToken, checkPermission('instructors', 'edit'), async (r
             if (existing.length > 0) {
                 return res.status(400).json({
                     error: 'Validation Error',
-                    message: 'Email already exists'
+                    message: '이미 사용 중인 이메일입니다.'
                 });
             }
         }

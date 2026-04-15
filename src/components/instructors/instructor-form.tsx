@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 import type { Instructor, InstructorFormData, InstructorType, Gender } from '@/lib/types/instructor';
 import {
   SALARY_TYPE_OPTIONS,
@@ -135,7 +136,9 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
       await onSubmit(formData);
     } catch (err: any) {
       console.error('Form submit error:', err);
-      setErrors({ submit: err.response?.data?.message || '저장에 실패했습니다.' });
+      const errorMessage = err.response?.data?.message || '저장에 실패했습니다.';
+      setErrors({ submit: errorMessage });
+      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
