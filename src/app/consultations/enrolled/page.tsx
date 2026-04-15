@@ -860,12 +860,12 @@ export default function EnrolledConsultationsPage() {
                     )}
                   </div>
                   {studentDropdownOpen && (
-                    <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-[100] w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
                       {students
                         .filter(s =>
                           !studentSearch ||
-                          s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
-                          s.grade.toLowerCase().includes(studentSearch.toLowerCase())
+                          s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                          (s.grade && s.grade.toLowerCase().includes(studentSearch.toLowerCase()))
                         )
                         .slice(0, 50)
                         .map((s) => (
@@ -881,7 +881,7 @@ export default function EnrolledConsultationsPage() {
                               setStudentDropdownOpen(false);
                             }}
                           >
-                            <span>{s.name} <span className="text-muted-foreground">({s.grade})</span></span>
+                            <span>{s.name} <span className="text-muted-foreground">({s.grade || '-'})</span></span>
                             {createForm.studentId === s.id.toString() && (
                               <span className="text-primary">✓</span>
                             )}
@@ -889,8 +889,8 @@ export default function EnrolledConsultationsPage() {
                         ))}
                       {students.filter(s =>
                         !studentSearch ||
-                        s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
-                        s.grade.toLowerCase().includes(studentSearch.toLowerCase())
+                        s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                        (s.grade && s.grade.toLowerCase().includes(studentSearch.toLowerCase()))
                       ).length === 0 && (
                         <div className="px-3 py-2 text-sm text-muted-foreground">
                           검색 결과가 없습니다
