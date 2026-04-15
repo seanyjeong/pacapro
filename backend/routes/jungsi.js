@@ -68,37 +68,37 @@ function normalizeSchoolName(name) {
 
 /**
  * 학생 매칭 함수
- * P-ACA 학생과 정시엔진 학생을 이름+학교+학년으로 매칭
+ * 1차: 이름으로 매칭 (동명이인 없으면 바로 확정)
+ * 2차: 동명이인 있으면 학교명으로 구분
  */
 function matchStudents(pacaStudent, jungsiStudents) {
     const pacaName = pacaStudent.name;
     const pacaSchool = normalizeSchoolName(pacaStudent.school);
-    const pacaGrade = pacaStudent.grade;
 
-    // 1차: 이름 + 정규화된 학교명 + 학년 완전 일치
-    let match = jungsiStudents.find(j => {
-        const jungsiSchool = normalizeSchoolName(j.school_name);
-        return j.student_name === pacaName &&
-               jungsiSchool === pacaSchool &&
-               j.grade === pacaGrade;
-    });
-
-    if (match) return { match, confidence: 'high', method: 'name+school+grade' };
-
-    // 2차: 이름 + 정규화된 학교명 (학년 무시)
-    match = jungsiStudents.find(j => {
-        const jungsiSchool = normalizeSchoolName(j.school_name);
-        return j.student_name === pacaName && jungsiSchool === pacaSchool;
-    });
-
-    if (match) return { match, confidence: 'medium', method: 'name+school' };
-
-    // 3차: 이름만 (동명이인 주의)
+    // 1차: 이름으로 필터
     const nameMatches = jungsiStudents.filter(j => j.student_name === pacaName);
+
+    // 동명이인 없으면 바로 매칭
     if (nameMatches.length === 1) {
-        return { match: nameMatches[0], confidence: 'low', method: 'name_only' };
+        return { match: nameMatches[0], confidence: 'high', method: 'name' };
     }
 
+    // 동명이인 있으면 학교명으로 구분
+    if (nameMatches.length > 1) {
+        const schoolMatch = nameMatches.find(j => {
+            const jungsiSchool = normalizeSchoolName(j.school_name);
+            return jungsiSchool === pacaSchool;
+        });
+
+        if (schoolMatch) {
+            return { match: schoolMatch, confidence: 'high', method: 'name+school' };
+        }
+
+        // 학교도 안 맞으면 매칭 실패 (동명이인 구분 불가)
+        return { match: null, confidence: 'none', method: null };
+    }
+
+    // 이름 매칭 없음
     return { match: null, confidence: 'none', method: null };
 }
 
