@@ -22,6 +22,7 @@ import {
   User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import apiClient from '@/lib/api/client';
 
 interface Student {
   id: number;
@@ -124,11 +125,7 @@ export default function PerformancePage() {
   const fetchJungsiStatus = async () => {
     try {
       setStatusLoading(true);
-      const token = localStorage.getItem('token');
-      const res = await fetch('/paca/jungsi/status', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await apiClient.get<JungsiStatus>('/jungsi/status');
       if (data.success) {
         setJungsiStatus(data);
       }
@@ -141,11 +138,7 @@ export default function PerformancePage() {
 
   const fetchStudents = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/paca/students?status=active,paused', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await apiClient.get<{ students: Student[] }>('/students?status=active,paused');
       if (data.students) {
         setStudents(data.students);
       }
@@ -157,11 +150,9 @@ export default function PerformancePage() {
   const fetchMatchPreview = async (exam: string) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/paca/jungsi/match-preview?exam=${encodeURIComponent(exam)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await apiClient.get<{ success: boolean; results: JungsiMatchResult[] }>(
+        `/jungsi/match-preview?exam=${encodeURIComponent(exam)}`
+      );
       if (data.success) {
         setMatchResults(data.results);
       }
@@ -174,11 +165,9 @@ export default function PerformancePage() {
 
   const fetchStudentScores = async (studentId: number, exam: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/paca/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
+      const data = await apiClient.get<{ success: boolean; matched: boolean; scores: ScoreData }>(
+        `/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`
+      );
       if (data.success && data.matched) {
         setSelectedStudentScores(data.scores);
       } else {
