@@ -104,7 +104,13 @@ export default function EnrolledConsultationsPage() {
     preferredDate: '',
     preferredTime: '',
     learningType: 'regular' as LearningType,
-    adminNotes: ''
+    adminNotes: '',
+    // 모의고사 성적 (3월/6월/9월)
+    scores: {
+      '3월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' },
+      '6월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' },
+      '9월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' }
+    } as Record<string, Record<string, string>>
   });
   const [creating, setCreating] = useState(false);
   const [bookedTimes, setBookedTimes] = useState<string[]>([]);
@@ -282,12 +288,22 @@ export default function EnrolledConsultationsPage() {
 
     setCreating(true);
     try {
+      // 입력된 성적만 필터링
+      const filteredScores: Record<string, Record<string, string>> = {};
+      for (const [exam, subjects] of Object.entries(createForm.scores)) {
+        const hasData = Object.values(subjects).some(v => v !== '');
+        if (hasData) {
+          filteredScores[exam] = subjects;
+        }
+      }
+
       await apiClient.post('/consultations/learning', {
         studentId: parseInt(createForm.studentId),
         preferredDate: createForm.preferredDate,
         preferredTime: createForm.preferredTime,
         learningType: createForm.learningType,
-        adminNotes: createForm.adminNotes || undefined
+        adminNotes: createForm.adminNotes || undefined,
+        mockExamScores: Object.keys(filteredScores).length > 0 ? filteredScores : undefined
       });
 
       toast.success('재원생 상담이 등록되었습니다.');
@@ -297,7 +313,12 @@ export default function EnrolledConsultationsPage() {
         preferredDate: '',
         preferredTime: '',
         learningType: 'regular',
-        adminNotes: ''
+        adminNotes: '',
+        scores: {
+          '3월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' },
+          '6월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' },
+          '9월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' }
+        }
       });
       setStudentSearch('');
       setStudentDropdownOpen(false);
@@ -967,6 +988,48 @@ export default function EnrolledConsultationsPage() {
                 className="mt-1"
                 rows={2}
               />
+            </div>
+
+            {/* 모의고사 성적 입력 */}
+            <div className="border-t pt-4">
+              <Label className="flex items-center gap-2 mb-3">
+                <Award className="h-4 w-4 text-blue-600" />
+                모의고사 등급 (선택)
+              </Label>
+              <div className="space-y-3">
+                {['3월', '6월', '9월'].map((exam) => (
+                  <div key={exam} className="bg-muted/30 p-3 rounded-md">
+                    <p className="text-sm font-medium mb-2">{exam} 모평</p>
+                    <div className="grid grid-cols-5 gap-2">
+                      {['국어', '수학', '영어', '탐구1', '탐구2'].map((subject) => (
+                        <div key={subject}>
+                          <Label className="text-xs text-muted-foreground">{subject}</Label>
+                          <Select
+                            value={createForm.scores[exam][subject]}
+                            onValueChange={(v) => setCreateForm({
+                              ...createForm,
+                              scores: {
+                                ...createForm.scores,
+                                [exam]: { ...createForm.scores[exam], [subject]: v }
+                              }
+                            })}
+                          >
+                            <SelectTrigger className="h-8 text-sm">
+                              <SelectValue placeholder="-" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">-</SelectItem>
+                              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => (
+                                <SelectItem key={g} value={g.toString()}>{g}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <DialogFooter>

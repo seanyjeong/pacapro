@@ -1414,7 +1414,8 @@ router.post('/learning', verifyToken, async (req, res) => {
       preferredDate,
       preferredTime,  // 시간 (스케줄 달력 표시용)
       learningType, // regular, admission, parent, counseling
-      adminNotes
+      adminNotes,
+      mockExamScores  // 모의고사 성적 { '3월': { 국어: '2', 수학: '1', ... }, ... }
     } = req.body;
 
     // 필수 필드 검증
@@ -1472,7 +1473,49 @@ router.post('/learning', verifyToken, async (req, res) => {
       ]
     );
 
-    // 3. PWA 푸시 알림 발송 (학원 관리자들에게)
+    // 3. 모의고사 성적 저장 (입력된 경우)
+    if (mockExamScores && typeof mockExamScores === 'object') {
+      const examMonthMap = { '3월': '03', '6월': '06', '9월': '09' };
+      const currentYear = new Date().getFullYear();
+
+      for (const [examName, subjects] of Object.entries(mockExamScores)) {
+        // 최소 1개 이상의 과목 성적이 있는 경우만 저장
+        const hasData = Object.values(subjects).some(v => v !== '' && v !== null);
+        if (!hasData) continue;
+
+        const month = examMonthMap[examName];
+        if (!month) continue;
+
+        // record_date는 해당 월의 첫날로 설정 (예: 2026-03-01)
+        const recordDate = `${currentYear}-${month}-01`;
+
+        // subjects 객체를 배열 형태로 변환
+        const subjectsArray = Object.entries(subjects)
+          .filter(([, grade]) => grade !== '' && grade !== null)
+          .map(([name, grade]) => ({
+            name,
+            grade: parseInt(grade),
+            score: null  // 등급만 입력받음
+          }));
+
+        if (subjectsArray.length === 0) continue;
+
+        await db.query(
+          `INSERT INTO student_performance (
+            student_id, record_date, record_type, performance_data, notes, recorded_by
+          ) VALUES (?, ?, 'mock_exam', ?, ?, ?)`,
+          [
+            studentId,
+            recordDate,
+            JSON.stringify({ exam: examName, subjects: subjectsArray }),
+            `${examName} 모의고사 (재원생상담 등록 시 입력)`,
+            userId
+          ]
+        );
+      }
+    }
+
+    // 4. PWA 푸시 알림 발송 (학원 관리자들에게)
     try {
       const pushService = require('../services/pushService');
       const formattedDate = new Date(preferredDate).toLocaleDateString('ko-KR', {
