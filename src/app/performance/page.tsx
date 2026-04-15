@@ -506,14 +506,6 @@ export default function PerformancePage() {
                                 <span className="text-sm font-normal text-gray-500">등급</span>
                               </p>
                             </div>
-                            {/* 한국사 */}
-                            <div className="bg-white p-3 rounded-lg border">
-                              <p className="text-sm text-gray-500 mb-1">한국사</p>
-                              <p className="text-2xl font-bold">
-                                {selectedStudentScores.한국사?.등급 || '-'}
-                                <span className="text-sm font-normal text-gray-500">등급</span>
-                              </p>
-                            </div>
                             {/* 탐구1 */}
                             <div className="bg-white p-3 rounded-lg border">
                               <p className="text-sm text-gray-500 mb-1">탐구1</p>
@@ -542,6 +534,14 @@ export default function PerformancePage() {
                               <p className="text-xs text-gray-500">
                                 표준: {selectedStudentScores.탐구2?.표준점수 || '-'} /
                                 백분위: {selectedStudentScores.탐구2?.백분위 || '-'}
+                              </p>
+                            </div>
+                            {/* 한국사 */}
+                            <div className="bg-white p-3 rounded-lg border">
+                              <p className="text-sm text-gray-500 mb-1">한국사</p>
+                              <p className="text-2xl font-bold">
+                                {selectedStudentScores.한국사?.등급 || '-'}
+                                <span className="text-sm font-normal text-gray-500">등급</span>
                               </p>
                             </div>
                           </div>
