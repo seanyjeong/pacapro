@@ -39,6 +39,7 @@ interface Props {
   consultation: StudentConsultation | null;
   studentName: string;
   studentGrade?: string;
+  academyName?: string;
 }
 
 const CONSULTATION_TYPE_LABELS: Record<string, string> = {
@@ -62,7 +63,7 @@ const MONTH_LABELS: Record<string, string> = {
   september: '9월'
 };
 
-export function ConsultationDetailModal({ open, onClose, consultation, studentName, studentGrade }: Props) {
+export function ConsultationDetailModal({ open, onClose, consultation, studentName, studentGrade, academyName }: Props) {
   const printRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
 
@@ -188,8 +189,8 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
         >
           {/* 문서 헤더 */}
           <div className="text-center mb-4 pb-3 border-b-2 border-gray-800">
-            <h1 className="text-xl font-bold text-gray-900 mb-0.5">상담 기록서</h1>
-            <p className="text-xs text-gray-400">P-ACA 학원관리시스템</p>
+            <h1 className="text-xl font-bold text-gray-900 mb-0.5">상담 기록</h1>
+            <p className="text-xs text-gray-400">{academyName || '학원'}</p>
           </div>
 
           {/* 기본 정보 - 컴팩트 */}
@@ -378,7 +379,7 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
           {/* 푸터 */}
           <div className="mt-4 pt-2 border-t border-gray-200 text-center">
             <p className="text-xs text-gray-400">
-              작성: {format(parseISO(consultation.created_at), 'yyyy.M.d HH:mm', { locale: ko })} | P-ACA
+              작성: {format(parseISO(consultation.created_at), 'yyyy.M.d HH:mm', { locale: ko })} | {academyName || '학원'}
             </p>
           </div>
         </div>

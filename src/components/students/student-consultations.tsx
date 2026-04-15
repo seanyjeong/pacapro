@@ -84,10 +84,23 @@ export function StudentConsultationsComponent({ studentId, studentName }: Props)
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [selectedConsultation, setSelectedConsultation] = useState<StudentConsultation | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [academyName, setAcademyName] = useState<string>('');
 
   useEffect(() => {
     loadConsultations();
+    loadAcademyName();
   }, [studentId]);
+
+  const loadAcademyName = async () => {
+    try {
+      const response = await apiClient.get<{ settings: { academy_name?: string } }>('/settings/academy');
+      if (response.settings?.academy_name) {
+        setAcademyName(response.settings.academy_name);
+      }
+    } catch (err) {
+      // 에러 무시
+    }
+  };
 
   const loadConsultations = async () => {
     setLoading(true);
@@ -209,6 +222,7 @@ export function StudentConsultationsComponent({ studentId, studentName }: Props)
         onClose={() => { setModalOpen(false); setSelectedConsultation(null); }}
         consultation={selectedConsultation}
         studentName={studentName}
+        academyName={academyName}
       />
     </div>
   );
