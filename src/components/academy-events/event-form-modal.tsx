@@ -37,8 +37,8 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                 event_date: event.event_date,
                 start_time: event.start_time || '',
                 end_time: event.end_time || '',
-                is_all_day: event.is_all_day,
-                is_holiday: event.is_holiday,
+                is_all_day: Boolean(event.is_all_day),
+                is_holiday: Boolean(event.is_holiday),
                 color: event.color,
             });
         } else {
@@ -151,7 +151,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                     </div>
 
                     {/* 시간 (종일이 아닐 때만) */}
-                    {!formData.is_all_day && (
+                    {!Boolean(formData.is_all_day) && (
                         <div className="space-y-3">
                             {/* 빠른 시간 선택 버튼 */}
                             <div>
@@ -244,7 +244,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                                 휴일 지정
                             </label>
                         </div>
-                        {formData.is_holiday && (
+                        {Boolean(formData.is_holiday) && (
                             <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400">
                                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                                 <span>휴일로 지정하면 해당 날짜의 상담 예약이 차단되고, 수업이 휴강 처리됩니다.</span>

@@ -20,7 +20,9 @@ const JUNGSI_JWT_SECRET = process.env.JUNGSI_JWT_SECRET || 'super-secret-key!!';
 
 // P-ACA academy_id → 정시엔진 branch_name 매핑
 const ACADEMY_BRANCH_MAP = {
-    2: '일산'  // academy_id=2 → 일산지점
+    2: '일산',   // academy_id=2 → 일산지점
+    5: '강남',   // academy_id=5 → 강남지점
+    17: '은평'   // academy_id=17 → 은평지점
     // 추가 지점 매핑 시 여기에 추가
 };
 
