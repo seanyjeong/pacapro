@@ -166,6 +166,8 @@ export function Sidebar() {
                 setUser({
                     role: userData.role || '',
                     permissions: userData.permissions || {},
+                    academyId: userData.academyId,
+                    academy_id: userData.academy_id,
                 });
             } catch {
                 setUser(null);
@@ -625,7 +627,7 @@ export function Sidebar() {
             {!collapsed && (
                 <div className="p-4 border-t border-border">
                     <div className="text-xs text-muted-foreground text-center space-y-1">
-                        <div>P-ACA v3.17.5</div>
+                        <div>P-ACA v3.17.6</div>
                         <div className="text-[10px] text-muted-foreground/70">Last updated: 2026-05-01</div>
                         <div>문의: 010-2144-6755</div>
                     </div>
