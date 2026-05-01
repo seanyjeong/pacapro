@@ -30,8 +30,9 @@ export default function AdminUsersPage() {
 
         const user = JSON.parse(userStr);
 
-        // admin이 아니면 접근 거부
-        if (user.role !== 'admin') {
+        // 시스템 관리자 (admin role 또는 academy=1 owner) 만 접근 가능
+        const isSystemAdmin = user.role === 'admin' || (user.role === 'owner' && Number(user.academyId ?? user.academy_id) === 1);
+        if (!isSystemAdmin) {
             setAccessDenied(true);
             setLoading(false);
             return;

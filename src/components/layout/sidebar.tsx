@@ -130,6 +130,8 @@ const adminNavItems: NavItem[] = [
 interface UserState {
     role: string;
     permissions: Permissions;
+    academyId?: number;
+    academy_id?: number;
 }
 
 export function Sidebar() {
@@ -298,7 +300,7 @@ export function Sidebar() {
         }
     };
 
-    const isAdmin = user?.role === 'admin';
+    const isAdmin = user?.role === 'admin' || (user?.role === 'owner' && Number(user?.academyId ?? user?.academy_id) === 1);
     const isOwner = user?.role === 'owner';
     const isStaff = user?.role === 'staff';
     const permissions: Permissions = user?.permissions || {};

@@ -277,9 +277,26 @@ const generateToken = (userId, expiresIn = '24h') => {
     );
 };
 
+
+/**
+ * 시스템 관리자 체크 — admin role 또는 academy_id=1 owner
+ */
+const requireSystemAdmin = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
+    }
+    const isAdmin = req.user.role === 'admin';
+    const isSystemOwner = req.user.role === 'owner' && Number(req.user.academyId) === 1;
+    if (!isAdmin && !isSystemOwner) {
+        return res.status(403).json({ error: 'Forbidden', message: '시스템 관리자 권한이 필요합니다.' });
+    }
+    next();
+};
+
 module.exports = {
     verifyToken,
     requireRole,
+    requireSystemAdmin,
     checkAcademyAccess,
     checkPermission,
     generateToken

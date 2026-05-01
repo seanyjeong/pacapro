@@ -5,12 +5,12 @@
 
 const express = require('express');
 const router = express.Router();
-const { verifyToken, requireRole } = require('../middleware/auth');
+const { verifyToken, requireRole, requireSystemAdmin } = require('../middleware/auth');
 const userService = require('../services/userService');
 const logger = require('../utils/logger');
 
 /** GET /paca/users/pending */
-router.get('/pending', verifyToken, requireRole('admin'), async (req, res) => {
+router.get('/pending', verifyToken, requireSystemAdmin, async (req, res) => {
     try {
         const result = await userService.getPendingUsers(req.user.academyId);
         res.json(result);
@@ -21,7 +21,7 @@ router.get('/pending', verifyToken, requireRole('admin'), async (req, res) => {
 });
 
 /** POST /paca/users/approve/:id */
-router.post('/approve/:id', verifyToken, requireRole('admin'), async (req, res) => {
+router.post('/approve/:id', verifyToken, requireSystemAdmin, async (req, res) => {
     try {
         const result = await userService.changeApprovalStatus(parseInt(req.params.id), req.user.academyId, 'approved');
         if (result.status !== 200) {
@@ -35,7 +35,7 @@ router.post('/approve/:id', verifyToken, requireRole('admin'), async (req, res) 
 });
 
 /** POST /paca/users/reject/:id */
-router.post('/reject/:id', verifyToken, requireRole('admin'), async (req, res) => {
+router.post('/reject/:id', verifyToken, requireSystemAdmin, async (req, res) => {
     try {
         const result = await userService.changeApprovalStatus(parseInt(req.params.id), req.user.academyId, 'rejected');
         if (result.status !== 200) {
