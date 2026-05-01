@@ -4,6 +4,7 @@ const db = require('../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../middleware/auth');
 const { updateSalaryFromAttendance } = require('../utils/salaryCalculator');
 const { encrypt, decrypt, encryptFields, decryptFields, decryptArrayFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
+const { syncPeakTrainerAsync } = require('../utils/peak-trainer-sync');
 
 /**
  * GET /paca/instructors
@@ -544,6 +545,8 @@ router.post('/', verifyToken, checkPermission('instructors', 'edit'), async (req
             [result.insertId]
         );
 
+        syncPeakTrainerAsync(result.insertId);
+
         res.status(201).json({
             message: 'Instructor created successfully',
             instructor: instructors[0]
@@ -719,6 +722,8 @@ router.put('/:id', verifyToken, checkPermission('instructors', 'edit'), async (r
             [instructorId]
         );
 
+        syncPeakTrainerAsync(instructorId);
+
         res.json({
             message: 'Instructor updated successfully',
             instructor: updatedInstructors[0]
@@ -759,6 +764,8 @@ router.delete('/:id', verifyToken, checkPermission('instructors', 'edit'), async
             'UPDATE instructors SET deleted_at = NOW(), updated_at = NOW() WHERE id = ?',
             [instructorId]
         );
+
+        syncPeakTrainerAsync(instructorId);
 
         res.json({
             message: 'Instructor deleted successfully',

@@ -1,3 +1,31 @@
+---
+product: pacapro
+display_name: PacaPro (P-ACA)
+server: n100
+base_url: https://chejump.com
+tags:
+  - domain:학원관리
+  - domain:체대입시
+  - domain:SaaS
+  - stack:node
+  - stack:express
+  - stack:nextjs
+  - db:mysql
+  - deploy:n100-systemd
+  - deploy:vultr-failover
+  - payment:toss
+  - auth:jwt
+  - push:vapid
+provides:
+  - sso
+  - paca-db-users
+  - student-mgmt-api
+shares_with:
+  - peak:jwt-secret
+  - peak:data-encryption-key
+depends_on: []
+---
+
 # pacapro (P-ACA)
 
 @ARCHITECTURE.md

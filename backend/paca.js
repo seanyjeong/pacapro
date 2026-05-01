@@ -203,7 +203,8 @@ app.get('/paca', (req, res) => {
             toss: '/paca/toss',
             exports: '/paca/exports',
             onboarding: '/paca/onboarding',
-            notificationSettings: '/paca/notification-settings'
+            notificationSettings: '/paca/notification-settings',
+            jungsi: '/paca/jungsi'
         }
     });
 });
