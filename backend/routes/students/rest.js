@@ -1,4 +1,38 @@
-const db = require('../../config/database');
+/**
+ * routes/students/rest.js (Phase 2 #2, Tier 2 휴원 처리)
+ *
+ * 마운트: routes/students/index.js → require('./rest')(router) → /paca/students/...
+ * 인증: verifyToken + checkPermission('students', 'edit') (각 endpoint 내부 적용)
+ *
+ * 응답 표면 (ADR-013 보존):
+ *   POST /paca/students/:id/process-rest
+ *     → 200: { message, student, restCredit, unpaidAdjustment }
+ *     → 4xx/5xx: { error: '<영문코드>', message: '<한국어 친화 메시지>' [, detail?] }
+ *   POST /paca/students/:id/resume
+ *     → 200: { message, student, scheduleAssigned, paymentCreated, resumeDate }
+ *     → 4xx/5xx: { error: '<영문코드>', message: '<한국어 친화 메시지>' }
+ *
+ *   프론트 직접 소비 (src/lib/api/students.ts):
+ *     - processRest: { message, student, restCredit? } 직접 소비 (unpaidAdjustment는 화면 표시 안 함, 보존)
+ *     - resumeStudent: { message, student, scheduleAssigned, paymentCreated, resumeDate } 직접 소비
+ *   axios 인터셉터: error.response.data.error || data.message → toast.
+ *
+ * DB 패턴 (ADR-005):
+ *   - 단일 쿼리: pool.execute(sql, params)
+ *   - 트랜잭션: conn.execute(sql, params) (process-rest 의 경우)
+ *   - IN 절 없음 (ADR-016 해당 X)
+ *
+ * 보안 (ADR-007):
+ *   - 학생 PII 직접 복호화 없음 (이름/연락처 노출 X — 응답에 monthly_tuition/status 등만)
+ *   - 결제 (toss/payments 흐름) 미접촉 — student_payments 자체 INSERT/UPDATE 만 (학사 데이터)
+ *
+ * 분리 결정:
+ *   - 448 줄 (500줄 임계 미만) → ADR-006 분리 X. 자매 모듈 enrollment.js (494줄) 와 동일 정책.
+ *   - 향후 students 도메인 전체가 ADR-005 통일 + JSDoc 정리되면 students/_helpers.js 같은 공통 헬퍼
+ *     추출 검토 가능 (현재 phase 범위 외).
+ */
+
+const pool = require('../../config/database');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const logger = require('../../utils/logger');
 const { autoAssignStudentToSchedules } = require('./_utils');
@@ -7,28 +41,37 @@ module.exports = function(router) {
 
 /**
  * POST /paca/students/:id/process-rest
- * 학생 휴식 처리 (이월/환불 크레딧 생성 + 미납금 조정)
+ * 학생 휴원 처리 (이월/환불 크레딧 생성 + 미납금 일할 조정 + 미래 스케줄 정리)
+ *
+ * Body:
+ *   - rest_start_date (필수, YYYY-MM-DD)
+ *   - rest_end_date (옵션, YYYY-MM-DD — 없으면 무기한)
+ *   - rest_reason (옵션)
+ *   - credit_type ('carryover' | 'refund' | 'none')
+ *   - source_payment_id (옵션 — 이미 납부한 학원비 ID)
+ *
+ * 트랜잭션: conn.beginTransaction → conn.execute × N → conn.commit (실패 시 rollback + release).
  * Access: owner, admin
  */
 router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
     const studentId = parseInt(req.params.id);
-    const connection = await db.getConnection();
+    const conn = await pool.getConnection();
 
     try {
-        await connection.beginTransaction();
+        await conn.beginTransaction();
 
         // 1. 학생 존재 확인 및 현재 정보 조회
-        const [students] = await connection.query(
+        const [students] = await conn.execute(
             `SELECT id, name, monthly_tuition, discount_rate, status, academy_id
              FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
             [studentId, req.user.academyId]
         );
 
         if (students.length === 0) {
-            await connection.rollback();
+            await conn.rollback();
             return res.status(404).json({
-                error: 'Not Found',
-                message: 'Student not found'
+                error: 'NOT_FOUND',
+                message: '학생 정보를 찾을 수 없습니다.'
             });
         }
 
@@ -44,15 +87,15 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
 
         // 2. 필수 필드 검증
         if (!rest_start_date) {
-            await connection.rollback();
+            await conn.rollback();
             return res.status(400).json({
-                error: 'Validation Error',
+                error: 'VALIDATION_ERROR',
                 message: '휴식 시작일은 필수입니다.'
             });
         }
 
         // 3. 학생 상태를 paused로 변경하고 휴식 정보 저장
-        await connection.query(
+        await conn.execute(
             `UPDATE students SET
                 status = 'paused',
                 rest_start_date = ?,
@@ -73,7 +116,7 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
             const dayOfMonth = restStartDate.getDate();
 
             // 해당 월 미납 학원비 조회
-            const [unpaidPayments] = await connection.query(
+            const [unpaidPayments] = await conn.execute(
                 `SELECT id, base_amount, discount_amount, final_amount, paid_amount, payment_status
                  FROM student_payments
                  WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ?
@@ -88,7 +131,7 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
 
                 if (dayOfMonth === 1) {
                     // 1일자 휴원이면 해당 월 학원비 삭제
-                    await connection.query(
+                    await conn.execute(
                         'DELETE FROM student_payments WHERE id = ?',
                         [payment.id]
                     );
@@ -110,7 +153,7 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
                     const finalAdjustedAmount = Math.max(adjustedAmount, paidAmount);
 
                     // 금액 조정
-                    await connection.query(
+                    await conn.execute(
                         `UPDATE student_payments SET
                             final_amount = ?,
                             payment_status = CASE WHEN ? <= ? THEN 'paid' ELSE payment_status END,
@@ -164,7 +207,7 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
 
             if (creditAmount > 0) {
                 // 휴식 크레딧 생성
-                const [creditResult] = await connection.query(
+                const [creditResult] = await conn.execute(
                     `INSERT INTO rest_credits (
                         student_id,
                         academy_id,
@@ -192,7 +235,7 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
                     ]
                 );
 
-                const [credits] = await connection.query(
+                const [credits] = await conn.execute(
                     'SELECT * FROM rest_credits WHERE id = ?',
                     [creditResult.insertId]
                 );
@@ -201,7 +244,7 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
         }
 
         // 5. 오늘 이후 미출석 스케줄 삭제 (휴식 시작일 기준)
-        await connection.query(
+        await conn.execute(
             `DELETE a FROM attendance a
              JOIN class_schedules cs ON a.class_schedule_id = cs.id
              WHERE a.student_id = ?
@@ -211,10 +254,10 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
             [studentId, req.user.academyId, rest_start_date]
         );
 
-        await connection.commit();
+        await conn.commit();
 
-        // 업데이트된 학생 정보 조회
-        const [updatedStudents] = await db.query(
+        // 업데이트된 학생 정보 조회 (트랜잭션 외부 — 응답용 read)
+        const [updatedStudents] = await pool.execute(
             'SELECT * FROM students WHERE id = ?',
             [studentId]
         );
@@ -226,24 +269,30 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
             unpaidAdjustment
         });
     } catch (error) {
-        await connection.rollback();
-        console.error('Error processing rest:', error);
+        await conn.rollback();
         logger.error('Error processing rest:', error);
         res.status(500).json({
-            error: 'Server Error',
-            message: 'Failed to process rest',
-            detail: error.message
+            error: 'PROCESS_REST_FAILED',
+            message: '휴원 처리에 실패했습니다. 잠시 후 다시 시도해주세요.'
         });
     } finally {
-        connection.release();
+        conn.release();
     }
 });
 
 /**
  * POST /paca/students/:id/resume
  * 학생 휴식 복귀 처리
- * - 복귀 시 해당 월 학원비가 없으면 일할계산하여 자동 생성
- * - resume_date: 복귀 날짜 (YYYY-MM-DD) - 없으면 오늘 날짜 사용
+ *
+ * 동작:
+ *   - 학생 status = 'active' 로 변경하고 휴식 정보 (rest_start/end/reason) 초기화
+ *   - class_days 가 있으면 복귀일 기준 미래 스케줄 자동 재배정 (autoAssignStudentToSchedules)
+ *   - 해당 월 학원비가 없으면 일할계산하여 자동 생성 (수업 요일 기준)
+ *
+ * Body:
+ *   - resume_date (옵션, YYYY-MM-DD — 없으면 오늘)
+ *
+ * 단일 쿼리 모음 — 트랜잭션 미사용 (각 단계 실패 시 부분 진행 허용 — 기존 동작 유지).
  * Access: owner, admin
  */
 router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
@@ -256,7 +305,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
 
     try {
         // 학생 존재 확인 (수강료 정보 포함)
-        const [students] = await db.query(
+        const [students] = await pool.execute(
             `SELECT s.id, s.name, s.status, s.class_days, s.monthly_tuition, s.discount_rate,
                     COALESCE(s.payment_due_day, ast.tuition_due_day, 5) as due_day
              FROM students s
@@ -267,8 +316,8 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
 
         if (students.length === 0) {
             return res.status(404).json({
-                error: 'Not Found',
-                message: 'Student not found'
+                error: 'NOT_FOUND',
+                message: '학생 정보를 찾을 수 없습니다.'
             });
         }
 
@@ -276,13 +325,13 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
 
         if (student.status !== 'paused') {
             return res.status(400).json({
-                error: 'Validation Error',
+                error: 'VALIDATION_ERROR',
                 message: '휴식 상태인 학생만 복귀할 수 있습니다.'
             });
         }
 
         // 상태를 active로 변경하고 휴식 정보 초기화
-        await db.query(
+        await pool.execute(
             `UPDATE students SET
                 status = 'active',
                 rest_start_date = NULL,
@@ -304,7 +353,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
         if (classDays.length > 0) {
             try {
                 reassignResult = await autoAssignStudentToSchedules(
-                    db,
+                    pool,
                     studentId,
                     req.user.academyId,
                     classDays,
@@ -325,7 +374,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
             const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
 
             // 이미 해당 월 학원비가 있는지 확인
-            const [existingPayment] = await db.query(
+            const [existingPayment] = await pool.execute(
                 `SELECT id FROM student_payments
                  WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
                 [studentId, req.user.academyId, yearMonth]
@@ -388,7 +437,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
                 const notes = `복귀일: ${currentDay}일, 남은 수업일: ${remainingClassDays}/${totalClassDays}일\n` +
                               `계산: ${baseAmount.toLocaleString()}원 × (${remainingClassDays}/${totalClassDays}) = ${proRatedAmount.toLocaleString()}원`;
 
-                const [result] = await db.query(
+                const [result] = await pool.execute(
                     `INSERT INTO student_payments (
                         student_id, academy_id, \`year_month\`, payment_type,
                         base_amount, discount_amount, additional_amount, final_amount,
@@ -422,7 +471,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
         }
 
         // 업데이트된 학생 정보 조회
-        const [updatedStudents] = await db.query(
+        const [updatedStudents] = await pool.execute(
             'SELECT * FROM students WHERE id = ?',
             [studentId]
         );
@@ -439,8 +488,8 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
     } catch (error) {
         logger.error('Error resuming student:', error);
         res.status(500).json({
-            error: 'Server Error',
-            message: 'Failed to resume student'
+            error: 'RESUME_FAILED',
+            message: '복귀 처리에 실패했습니다. 잠시 후 다시 시도해주세요.'
         });
     }
 });
