@@ -1,17 +1,62 @@
+/**
+ * paca/notifications/settings.js
+ *
+ * 알림 설정 CRUD (조회 / 저장).
+ *
+ * @module routes/notifications/settings
+ *
+ * 마운트 경로 (paca.js → routes/notifications/index.js → settings.js):
+ *   - GET  /paca/notifications/settings — 알림 설정 조회 (Secret Key 마스킹)
+ *   - PUT  /paca/notifications/settings — 알림 설정 저장 (신규/업데이트 자동 분기)
+ *
+ * 인증/권한:
+ *   - 모든 endpoint: verifyToken + checkPermission('notifications', 'view'|'edit')
+ *   - 광역 router 미들웨어 추가 금지 (ADR-014, notifications/index.js JSDoc 참조).
+ *
+ * 응답 표면 (ADR-013 보존):
+ *   - GET 200: { message, settings: {...} } — 프론트 src/lib/api/notifications.ts(getSettings) 가
+ *     `response.settings` 직접 소비 + sms/page.tsx, tablet/sms/page.tsx 도 동일 키 사용. 단독 변경 시 break.
+ *   - PUT 200: { message, success: true } — 프론트는 `{message}` 만 소비 (saveSettings) 하지만
+ *     혹시 모를 의존을 위해 success 필드도 보존.
+ *   - 5xx: { error, message } — axios 인터셉터 (`src/lib/api/client.ts` handleError) 가
+ *     `error.response?.data?.error || data.message` 순서로 toast → `error` 키 변경 시 다른 메시지 노출.
+ *   응답/에러 표면 통일 (RULES.md 1번) 은 ADR-013 에 따라 프론트 동시 변경 트랙으로 분리.
+ *
+ * DB 호출 패턴 (ADR-005):
+ *   - 모든 DB 호출은 `pool.execute(sql, params)` 사용 (notifications/_utils.js 의 신규 alias, ADR-011).
+ *   - 기존 `db.query(...)` 4건 (GET 조회 1 / PUT 기존 확인 1 / INSERT 1 / UPDATE 1) → 전부 `pool.execute` 로 통일.
+ *
+ * 보안 영역 (ADR-007):
+ *   - Secret Key 처리는 `_utils` 의 `encryptApiKey` / `decryptApiKey` 헬퍼만 호출. 시그니처 무변경.
+ *   - 마스킹 규칙 (앞 4자리 + `****`) 변경 금지 — 프론트 `has_secret_key` / `has_solapi_secret` 플래그와 짝.
+ *
+ * 분리 (ADR-006) 미루기 결정:
+ *   - 파일 536줄 = 500줄 임계 살짝 초과. GET (~196줄) + PUT (~340줄) 로 자연 분리 가능.
+ *   - 단, PUT endpoint 의 거대한 INSERT/UPDATE 컬럼 목록 (70여 개) + 응답 객체 직렬화 (수십 개 키)
+ *     은 분리 시 누락 위험 매우 큼 → 회귀 테스트 표면도 같이 폭발.
+ *   - Phase 1 정책 (안전한 작은 모듈 + 패턴 검증) 에 비추어 분리는 Phase 2 시작 시 진행하는 것이
+ *     더 안전. 본 commit 은 ADR-005 통일 + JSDoc + 응답 표면 보존 명시까지만 수행.
+ */
+
 const {
-    db, verifyToken, checkPermission, encryptApiKey, decryptApiKey,
-    logger, ENCRYPTION_KEY, getBalanceSolapi
+    pool, verifyToken, checkPermission, encryptApiKey, decryptApiKey,
+    logger, ENCRYPTION_KEY
 } = require('./_utils');
 
 module.exports = function(router) {
 
 /**
  * GET /paca/notifications/settings
- * 알림 설정 조회
+ *
+ * 알림 설정 조회. Secret Key 는 앞 4자리 + `****` 로 마스킹.
+ *
+ * 응답 (ADR-013 보존):
+ *   - 200 { message, settings: {...} } (없으면 기본값 객체)
+ *   - 5xx { error: 'Server Error', message: '알림 설정 조회에 실패했습니다.' }
  */
 router.get('/settings', verifyToken, checkPermission('notifications', 'view'), async (req, res) => {
     try {
-        const [settings] = await db.query(
+        const [settings] = await pool.execute(
             `SELECT * FROM notification_settings WHERE academy_id = ?`,
             [req.user.academyId]
         );
@@ -162,7 +207,16 @@ router.get('/settings', verifyToken, checkPermission('notifications', 'view'), a
 
 /**
  * PUT /paca/notifications/settings
- * 알림 설정 저장
+ *
+ * 알림 설정 저장. 기존 row 존재 여부에 따라 INSERT / UPDATE 자동 분기.
+ *
+ * Secret Key 처리 (ADR-007):
+ *   - 신규 입력 (`****` 미포함) → encryptApiKey 로 암호화 후 저장.
+ *   - 마스킹된 값 (`****` 포함) → 기존 암호화된 값 그대로 유지 (재암호화 X).
+ *
+ * 응답 (ADR-013 보존):
+ *   - 200 { message, success: true }
+ *   - 5xx { error: 'Server Error', message: '알림 설정 저장에 실패했습니다.' }
  */
 router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
     try {
@@ -251,7 +305,7 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
         } = req.body;
 
         // 기존 설정 확인
-        const [existing] = await db.query(
+        const [existing] = await pool.execute(
             'SELECT id, naver_secret_key, solapi_api_secret FROM notification_settings WHERE academy_id = ?',
             [req.user.academyId]
         );
@@ -274,7 +328,7 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
 
         if (existing.length === 0) {
             // 신규 생성
-            await db.query(
+            await pool.execute(
                 `INSERT INTO notification_settings
                 (academy_id, service_type,
                  naver_access_key, naver_secret_key, naver_service_id, sms_service_id, kakao_channel_id,
@@ -373,7 +427,7 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
             );
         } else {
             // 업데이트
-            await db.query(
+            await pool.execute(
                 `UPDATE notification_settings SET
                     service_type = ?,
                     naver_access_key = ?,

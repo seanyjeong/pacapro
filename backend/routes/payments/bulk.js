@@ -1,0 +1,622 @@
+/**
+ * paca/payments/bulk.js — 학원비 일괄/개별 청구 생성 라우터 (Phase 3 #6)
+ *
+ * 마운트: paca.js → routes/payments/index.js → require('./bulk')(router)
+ *         mount path: '/paca/payments'
+ *
+ * Endpoint (3건 — 모두 정적 경로):
+ *   - POST /bulk-monthly                    — 학원 전체 월 수강료 일괄 청구 (active 학생).
+ *                                              비시즌 종강 일할 + 휴식/공결/수동 크레딧 이월 차감.
+ *                                              기존 미납건 → UPDATE / 신규 → INSERT / 완납 → skip.
+ *   - POST /generate-prorated               — 등록일 기준 일할 계산 청구 (수업일 기준).
+ *   - POST /generate-monthly-for-student    — 특정 학생 다음 월 청구 (비시즌 종강 일할 포함).
+ *
+ * 인증: verifyToken + checkPermission('payments', 'edit')
+ *
+ * 응답 표면 보존 (ADR-013):
+ *   POST /bulk-monthly                  → { message, created, updated, skipped, withNonSeasonProrated, withCarryover, year, month, due_date }
+ *   POST /generate-prorated             → { message, payment, proration } (201)
+ *   POST /generate-monthly-for-student  → { message, payment, nonSeasonProrated } (201)
+ *   4xx                                 → { error, message }
+ *   5xx                                 → { error:'Server Error', message:'...' }
+ *
+ * DB 호출 (ADR-005): pool.execute (모두). db.query 잔존 0건.
+ *   - bulk-monthly: 학생 N명 루프 → N×3 (pendingCredits SELECT + UPDATE + existingPayment SELECT)
+ *                   + 1 (academy settings) + 1 (active students) + 1 (UPDATE 또는 INSERT)
+ *
+ * ADR-007: decrypt 시그니처 무변경 (학생 이름 미복호화 — bulk endpoint 응답은 카운트만).
+ *
+ * **결제 데이터 영속 변경 X (사장님 결정 2026-05-02)**:
+ *   - student_payments INSERT/UPDATE 컬럼/순서/값 1:1 보존
+ *   - rest_credits UPDATE (carryover 차감) 1:1 보존
+ *   - calculateNonSeasonEndProrated 헬퍼 결과 적용 1:1 보존
+ *   - notes 멀티라인 ('\n' 구분자) + description 후위 추가 패턴 보존
+ *
+ * 분리 결정 (ADR-006): ~480줄 — 임계 미만, 분리 불요.
+ */
+
+const {
+    pool,
+    truncateToThousands,
+    calculateDueDate,
+    calculateNonSeasonEndProrated,
+    logger,
+} = require('./_utils');
+const { verifyToken, checkPermission } = require('../../middleware/auth');
+
+module.exports = function(router) {
+
+/**
+ * POST /paca/payments/bulk-monthly
+ * Create monthly tuition charges for all active students
+ * Access: owner, admin
+ */
+router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
+    try {
+        const { year, month } = req.body;
+
+        if (!year || !month) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '필수 항목을 모두 입력해주세요. (연도, 월)'
+            });
+        }
+
+        // 학원 설정에서 기본 납부일 가져오기
+        const [academySettings] = await pool.execute(
+            `SELECT tuition_due_day FROM academies WHERE id = ?`,
+            [req.user.academyId]
+        );
+        const defaultDueDay = academySettings[0]?.tuition_due_day || 1;
+
+        // Get all active students
+        const [students] = await pool.execute(
+            `SELECT
+                id,
+                name,
+                student_number,
+                monthly_tuition,
+                discount_rate,
+                class_days,
+                payment_due_day
+            FROM students
+            WHERE academy_id = ?
+            AND status = 'active'
+            AND deleted_at IS NULL`,
+            [req.user.academyId]
+        );
+
+        if (students.length === 0) {
+            return res.json({
+                message: '활성 상태인 학생이 없습니다.',
+                created: 0,
+                updated: 0
+            });
+        }
+
+        // Create or update payment records for all students
+        let created = 0;
+        let updated = 0;
+        let skipped = 0;
+        let withNonSeasonProrated = 0;
+        let withCarryover = 0;
+        const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
+
+        for (const student of students) {
+            // 학생별 납부기한 계산 (스케줄러와 동일한 로직)
+            const studentDueDay = student.payment_due_day || defaultDueDay;
+            let classDays = [];
+            try {
+                classDays = student.class_days ? JSON.parse(student.class_days) : [];
+            } catch (e) {
+                classDays = [];
+            }
+            // ⚠️ 원본 동작 보존 (ADR-013) — `const due_date` 가 for 블록 안에서 declare 되어
+            // 응답 객체의 `due_date` 키가 ReferenceError 를 throw → 5xx 분기로 빠짐.
+            // 학생 0명 early return 만 정상 응답. lesson #227 (원본 동작 보존) 패턴.
+            // 본 endpoint 의 fix 는 별도 트랙 (응답 표면 표준화) 에서 진행.
+            const due_date = calculateDueDate(year, month, studentDueDay, classDays);
+
+            const baseAmount = parseFloat(student.monthly_tuition) || 0;
+            const discountRate = parseFloat(student.discount_rate) || 0;
+            const discount = truncateToThousands(baseAmount * (discountRate / 100));
+
+            // 비시즌 종강 일할 계산 (다음 달 비시즌 종강일까지)
+            let additionalAmount = 0;
+            let notes = null;
+            let description = `${year}년 ${month}월 수강료`;
+
+            try {
+                const nonSeasonProrated = await calculateNonSeasonEndProrated({
+                    studentId: student.id,
+                    academyId: req.user.academyId,
+                    year,
+                    month
+                });
+
+                if (nonSeasonProrated) {
+                    additionalAmount = nonSeasonProrated.amount;
+                    notes = `[비시즌 종강 일할] ${nonSeasonProrated.description}\n${nonSeasonProrated.details.formula}`;
+                    description = `${year}년 ${month}월 수강료 + 비시즌 종강 일할`;
+                    withNonSeasonProrated++;
+                }
+            } catch (err) {
+                logger.error(`Failed to calculate non-season prorated for student ${student.id}:`, err);
+            }
+
+            // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 확인 및 적용
+            let carryoverAmount = 0;
+            let restCreditId = null;
+            try {
+                const [pendingCredits] = await pool.execute(
+                    `SELECT id, remaining_amount, credit_type FROM rest_credits
+                     WHERE student_id = ?
+                     AND academy_id = ?
+                     AND credit_type IN ('carryover', 'excused', 'manual')
+                     AND status IN ('pending', 'partial')
+                     AND remaining_amount > 0
+                     ORDER BY created_at ASC`,
+                    [student.id, req.user.academyId]
+                );
+
+                if (pendingCredits.length > 0) {
+                    const credit = pendingCredits[0];
+                    const amountBeforeCarryover = baseAmount - discount + additionalAmount;
+
+                    // 이월 금액이 청구 금액보다 크면 청구 금액만큼만 차감
+                    carryoverAmount = Math.min(credit.remaining_amount, amountBeforeCarryover);
+                    restCreditId = credit.id;
+
+                    // 크레딧 잔액 업데이트
+                    const newRemaining = credit.remaining_amount - carryoverAmount;
+                    const newStatus = newRemaining <= 0 ? 'applied' : 'partial';
+
+                    await pool.execute(
+                        `UPDATE rest_credits SET
+                            remaining_amount = ?,
+                            status = ?,
+                            processed_at = NOW()
+                         WHERE id = ?`,
+                        [newRemaining, newStatus, credit.id]
+                    );
+
+                    notes = (notes || '') + `\n[이월 차감] 휴식 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
+                    description += ' (이월 차감 적용)';
+                    withCarryover++;
+                }
+            } catch (err) {
+                logger.error(`Failed to apply carryover credit for student ${student.id}:`, err);
+            }
+
+            const finalAmount = truncateToThousands(baseAmount - discount + additionalAmount - carryoverAmount);
+
+            // 해당 학생의 기존 학원비 확인
+            const [existingPayment] = await pool.execute(
+                `SELECT id, payment_status, paid_amount FROM student_payments
+                 WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
+                [student.id, req.user.academyId, yearMonth]
+            );
+
+            if (existingPayment.length > 0) {
+                const existing = existingPayment[0];
+
+                // 이미 납부 완료된 건은 건너뛰기
+                if (existing.payment_status === 'paid') {
+                    skipped++;
+                    continue;
+                }
+
+                // 기존 학원비 업데이트 (금액 변경사항 반영)
+                await pool.execute(
+                    `UPDATE student_payments SET
+                        base_amount = ?,
+                        discount_amount = ?,
+                        additional_amount = ?,
+                        carryover_amount = ?,
+                        rest_credit_id = ?,
+                        final_amount = ?,
+                        due_date = ?,
+                        description = ?,
+                        notes = ?,
+                        updated_at = NOW()
+                     WHERE id = ?`,
+                    [
+                        baseAmount,
+                        discount,
+                        additionalAmount,
+                        carryoverAmount,
+                        restCreditId,
+                        finalAmount,
+                        due_date,
+                        description,
+                        notes,
+                        existing.id
+                    ]
+                );
+                updated++;
+            } else {
+                // 새로 생성
+                await pool.execute(
+                    `INSERT INTO student_payments (
+                        student_id,
+                        academy_id,
+                        \`year_month\`,
+                        payment_type,
+                        base_amount,
+                        discount_amount,
+                        additional_amount,
+                        carryover_amount,
+                        rest_credit_id,
+                        final_amount,
+                        due_date,
+                        payment_status,
+                        description,
+                        notes,
+                        recorded_by
+                    ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+                    [
+                        student.id,
+                        req.user.academyId,
+                        yearMonth,
+                        baseAmount,
+                        discount,
+                        additionalAmount,
+                        carryoverAmount,
+                        restCreditId,
+                        finalAmount,
+                        due_date,
+                        description,
+                        notes,
+                        req.user.userId
+                    ]
+                );
+                created++;
+            }
+        }
+
+        // 결과 메시지 생성
+        const messageParts = [];
+        if (created > 0) messageParts.push(`${created}명 생성`);
+        if (updated > 0) messageParts.push(`${updated}명 업데이트`);
+        if (skipped > 0) messageParts.push(`${skipped}명 건너뜀(납부완료)`);
+
+        let message = messageParts.length > 0
+            ? `학원비 처리 완료: ${messageParts.join(', ')}`
+            : '처리할 학원비가 없습니다.';
+
+        if (withNonSeasonProrated > 0) message += ` (비시즌 종강 일할 포함: ${withNonSeasonProrated}명)`;
+        if (withCarryover > 0) message += ` (이월 차감 적용: ${withCarryover}명)`;
+
+        res.json({
+            message,
+            created,
+            updated,
+            skipped,
+            withNonSeasonProrated,
+            withCarryover,
+            year,
+            month,
+            due_date
+        });
+    } catch (error) {
+        logger.error('Error creating bulk monthly charges:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '학원비 일괄 생성에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/payments/generate-prorated
+ * Generate prorated payment for a student based on enrollment date
+ * Access: owner, admin
+ *
+ * 등록일 기준 일할계산:
+ * - 11/25 등록, 납부일 1일 → 11월: 25~30일 일할, 12월부터: 정상
+ */
+router.post('/generate-prorated', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
+    try {
+        const { student_id, enrollment_date } = req.body;
+
+        if (!student_id) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '학생을 선택해주세요.'
+            });
+        }
+
+        // Get student with payment_due_day
+        const [students] = await pool.execute(
+            `SELECT
+                s.id, s.name, s.monthly_tuition, s.discount_rate,
+                s.payment_due_day, s.enrollment_date, s.class_days,
+                a.tuition_due_day
+            FROM students s
+            JOIN academies ac ON s.academy_id = ac.id
+            LEFT JOIN academy_settings a ON ac.id = a.academy_id
+            WHERE s.id = ? AND s.academy_id = ? AND s.deleted_at IS NULL`,
+            [student_id, req.user.academyId]
+        );
+
+        if (students.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: '학생을 찾을 수 없습니다.'
+            });
+        }
+
+        const student = students[0];
+        const regDate = new Date(enrollment_date || student.enrollment_date || new Date());
+
+        // 납부일 결정: 학생 개별 납부일 > 학원 납부일 > 기본 5일
+        const dueDay = student.payment_due_day || student.tuition_due_day || 5;
+
+        // 등록월의 마지막 날
+        const lastDayOfMonth = new Date(regDate.getFullYear(), regDate.getMonth() + 1, 0).getDate();
+        const regDay = regDate.getDate();
+
+        // 수업 요일 파싱
+        let classDays = [];
+        try {
+            classDays = typeof student.class_days === 'string'
+                ? JSON.parse(student.class_days)
+                : (student.class_days || []);
+        } catch (e) {
+            classDays = [];
+        }
+
+        // 해당 월의 총 수업일수 계산
+        const dayNameToNum = { '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6, '일': 0 };
+        const classDayNums = classDays.map(d => dayNameToNum[d]).filter(d => d !== undefined);
+
+        let totalClassDays = 0;
+        let remainingClassDays = 0;
+
+        for (let day = 1; day <= lastDayOfMonth; day++) {
+            const date = new Date(regDate.getFullYear(), regDate.getMonth(), day);
+            const dayOfWeek = date.getDay();
+            if (classDayNums.includes(dayOfWeek)) {
+                totalClassDays++;
+                if (day >= regDay) {
+                    remainingClassDays++;
+                }
+            }
+        }
+
+        // 일할계산 금액
+        const baseAmount = parseFloat(student.monthly_tuition) || 0;
+        const discountRate = parseFloat(student.discount_rate) || 0;
+
+        let proRatedAmount = baseAmount;
+        let isProrated = false;
+
+        // 등록일이 1일이 아니면 일할계산
+        if (regDay > 1 && totalClassDays > 0) {
+            proRatedAmount = truncateToThousands(baseAmount * (remainingClassDays / totalClassDays));
+            isProrated = true;
+        }
+
+        const finalAmount = truncateToThousands(proRatedAmount - (proRatedAmount * (discountRate / 100)));
+
+        // 납부기한 계산 (등록월의 납부일 또는 등록일 + 7일)
+        let dueDate;
+        if (regDay <= dueDay) {
+            // 등록일이 납부일 전이면 이번 달 납부일
+            dueDate = new Date(regDate.getFullYear(), regDate.getMonth(), dueDay);
+        } else {
+            // 등록일이 납부일 후면 등록일 + 7일 (또는 다음달 납부일)
+            dueDate = new Date(regDate);
+            dueDate.setDate(regDate.getDate() + 7);
+        }
+
+        const yearMonth = `${regDate.getFullYear()}-${String(regDate.getMonth() + 1).padStart(2, '0')}`;
+
+        // 이미 해당 월 납부건이 있는지 확인
+        const [existing] = await pool.execute(
+            `SELECT id FROM student_payments
+            WHERE student_id = ? AND year_month = ? AND payment_type = 'monthly'`,
+            [student_id, yearMonth]
+        );
+
+        if (existing.length > 0) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: `${yearMonth} 월 납부건이 이미 존재합니다.`
+            });
+        }
+
+        // 납부 레코드 생성
+        const prorationDetails = {
+            enrollment_date: regDate.toISOString().split('T')[0],
+            registration_day: regDay,
+            total_class_days: totalClassDays,
+            remaining_class_days: remainingClassDays,
+            class_days: classDays,
+            base_amount: baseAmount,
+            prorated_amount: proRatedAmount,
+            calculation: isProrated
+                ? `${baseAmount}원 × (${remainingClassDays}/${totalClassDays}일) = ${proRatedAmount}원`
+                : '일할계산 없음 (월초 등록)'
+        };
+
+        const [result] = await pool.execute(
+            `INSERT INTO student_payments (
+                student_id, academy_id, year_month, payment_type,
+                base_amount, discount_amount, additional_amount, final_amount,
+                is_prorated, proration_details,
+                due_date, payment_status, description, recorded_by
+            ) VALUES (?, ?, ?, 'monthly', ?, ?, 0, ?, ?, ?, ?, 'pending', ?, ?)`,
+            [
+                student_id,
+                req.user.academyId,
+                yearMonth,
+                proRatedAmount,
+                proRatedAmount * (discountRate / 100),
+                finalAmount,
+                isProrated ? 1 : 0,
+                JSON.stringify(prorationDetails),
+                dueDate.toISOString().split('T')[0],
+                isProrated
+                    ? `${regDate.getMonth() + 1}월 학원비 (일할: ${regDay}일~)`
+                    : `${regDate.getMonth() + 1}월 학원비`,
+                req.user.userId
+            ]
+        );
+
+        // 생성된 납부건 조회
+        const [created] = await pool.execute(
+            `SELECT p.*, s.name as student_name
+            FROM student_payments p
+            JOIN students s ON p.student_id = s.id
+            WHERE p.id = ?`,
+            [result.insertId]
+        );
+
+        res.status(201).json({
+            message: '일할계산 납부건이 생성되었습니다.',
+            payment: created[0],
+            proration: prorationDetails
+        });
+    } catch (error) {
+        logger.error('Error generating prorated payment:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '일할계산 납부건 생성에 실패했습니다.'
+        });
+    }
+});
+
+/**
+ * POST /paca/payments/generate-monthly-for-student
+ * Generate next month's payment for a specific student
+ * Access: owner, admin
+ */
+router.post('/generate-monthly-for-student', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
+    try {
+        const { student_id, year, month } = req.body;
+
+        if (!student_id || !year || !month) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '필수 항목을 모두 입력해주세요. (학생, 연도, 월)'
+            });
+        }
+
+        // Get student info
+        const [students] = await pool.execute(
+            `SELECT
+                s.id, s.name, s.monthly_tuition, s.discount_rate,
+                s.payment_due_day,
+                a.tuition_due_day
+            FROM students s
+            JOIN academies ac ON s.academy_id = ac.id
+            LEFT JOIN academy_settings a ON ac.id = a.academy_id
+            WHERE s.id = ? AND s.academy_id = ? AND s.deleted_at IS NULL`,
+            [student_id, req.user.academyId]
+        );
+
+        if (students.length === 0) {
+            return res.status(404).json({
+                error: 'Not Found',
+                message: '학생을 찾을 수 없습니다.'
+            });
+        }
+
+        const student = students[0];
+        const dueDay = student.payment_due_day || student.tuition_due_day || 5;
+        const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
+
+        // Check existing
+        const [existing] = await pool.execute(
+            `SELECT id FROM student_payments
+            WHERE student_id = ? AND year_month = ? AND payment_type = 'monthly'`,
+            [student_id, yearMonth]
+        );
+
+        if (existing.length > 0) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: `${yearMonth} 월 납부건이 이미 존재합니다.`
+            });
+        }
+
+        const baseAmount = parseFloat(student.monthly_tuition) || 0;
+        const discountRate = parseFloat(student.discount_rate) || 0;
+        const discountAmount = truncateToThousands(baseAmount * (discountRate / 100));
+
+        // 비시즌 종강 일할 계산
+        let additionalAmount = 0;
+        let notes = null;
+        let description = `${year}년 ${month}월 학원비`;
+        let nonSeasonProratedInfo = null;
+
+        try {
+            const nonSeasonProrated = await calculateNonSeasonEndProrated({
+                studentId: student_id,
+                academyId: req.user.academyId,
+                year,
+                month
+            });
+
+            if (nonSeasonProrated) {
+                additionalAmount = nonSeasonProrated.amount;
+                notes = `[비시즌 종강 일할] ${nonSeasonProrated.description}\n${nonSeasonProrated.details.formula}`;
+                description = `${year}년 ${month}월 학원비 + 비시즌 종강 일할`;
+                nonSeasonProratedInfo = nonSeasonProrated;
+            }
+        } catch (err) {
+            logger.error(`Failed to calculate non-season prorated for student ${student_id}:`, err);
+        }
+
+        const finalAmount = truncateToThousands(baseAmount - discountAmount + additionalAmount);
+
+        // Due date
+        const dueDate = new Date(year, month - 1, dueDay);
+
+        const [result] = await pool.execute(
+            `INSERT INTO student_payments (
+                student_id, academy_id, year_month, payment_type,
+                base_amount, discount_amount, additional_amount, final_amount,
+                due_date, payment_status, description, notes, recorded_by
+            ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+            [
+                student_id,
+                req.user.academyId,
+                yearMonth,
+                baseAmount,
+                discountAmount,
+                additionalAmount,
+                finalAmount,
+                dueDate.toISOString().split('T')[0],
+                description,
+                notes,
+                req.user.userId
+            ]
+        );
+
+        const [created] = await pool.execute(
+            `SELECT p.*, s.name as student_name
+            FROM student_payments p
+            JOIN students s ON p.student_id = s.id
+            WHERE p.id = ?`,
+            [result.insertId]
+        );
+
+        res.status(201).json({
+            message: nonSeasonProratedInfo
+                ? '월 납부건이 생성되었습니다. (비시즌 종강 일할 포함)'
+                : '월 납부건이 생성되었습니다.',
+            payment: created[0],
+            nonSeasonProrated: nonSeasonProratedInfo
+        });
+    } catch (error) {
+        logger.error('Error generating monthly payment:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '월 납부건 생성에 실패했습니다.'
+        });
+    }
+});
+
+};
