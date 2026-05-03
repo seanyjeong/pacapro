@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { canEdit, canView } from '@/lib/utils/permissions';
+import packageJson from '../../../package.json';
 import { UserCheck, Users, CreditCard, LogOut, ChevronRight, ChevronDown, Bell, BellOff, Loader2, CalendarClock, MessageSquarePlus, UserPlus, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -364,7 +365,7 @@ export default function MobileHomePage() {
 
       {/* 버전 정보 */}
       <div className="mt-4 text-center">
-        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v3.17.6</p>
+        <p className="text-xs text-muted-foreground/60">P-ACA Mobile v{packageJson.version}</p>
       </div>
 
       {/* PWA 설치 프롬프트 */}

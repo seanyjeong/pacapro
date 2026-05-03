@@ -20,8 +20,9 @@ import {
   Send,
   Monitor
 } from 'lucide-react';
+import packageJson from '../../../package.json';
 
-const APP_VERSION = 'v3.17.4';
+const APP_VERSION = `v${packageJson.version}`;
 
 // Navigation items (대시보드 제거)
 const navigation = [

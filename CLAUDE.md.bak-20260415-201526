@@ -1,31 +1,3 @@
----
-product: pacapro
-display_name: PacaPro (P-ACA)
-server: n100
-base_url: https://chejump.com
-tags:
-  - domain:학원관리
-  - domain:체대입시
-  - domain:SaaS
-  - stack:node
-  - stack:express
-  - stack:nextjs
-  - db:mysql
-  - deploy:n100-systemd
-  - deploy:vultr-failover
-  - payment:toss
-  - auth:jwt
-  - push:vapid
-provides:
-  - sso
-  - paca-db-users
-  - student-mgmt-api
-shares_with:
-  - peak:jwt-secret
-  - peak:data-encryption-key
-depends_on: []
----
-
 # pacapro (P-ACA)
 
 @ARCHITECTURE.md
@@ -135,37 +107,30 @@ v X . Y . Z
 
 ### 버전 업데이트 위치 (푸시 전 필수!)
 
-> 🚨 **캡틴 (Claude) 에게 — paca 작업 시 이 파일 무조건 먼저 읽어라**
-> 사장님이 100번+ 강조한 룰. memory 박아도 잊으면 CLAUDE.md 가 강제 게이트.
+**수동 수정 필요 (7곳)**:
+| 파일 | 필드/위치 |
+|------|----------|
+| `package.json` | `"version": "3.15.1"` |
+| `src/components/version-checker.tsx` | `APP_VERSION = '3.15.1'` |
+| `src/components/layout/sidebar.tsx` | `P-ACA v3.15.1` |
+| `src/components/layout/sidebar.tsx` | `Last updated: YYYY-MM-DD` ← **배포 날짜** |
+| `src/app/m/page.tsx` | `P-ACA Mobile v3.15.1` |
+| `src/app/settings/page.tsx` | `v3.15.1` |
+| `src/app/tablet/layout.tsx` | `APP_VERSION = 'v3.15.1'` |
 
-**v3.18.2 부터 자동화 (2026-05-03 759e5fc / d3b8f32 / 76ebefd)**:
-이제 **`package.json` 1곳만 수정** 하면 모든 표시 위치가 `import packageJson` 으로 자동 갱신.
-
-| 파일 | 처리 |
-|------|------|
-| `package.json` | `"version"` + `"lastUpdate": "YYYY-MM-DD"` ← **수동 수정 (1곳)** |
-| `src/components/version-checker.tsx` | `import packageJson` → `APP_VERSION = packageJson.version` ✅ 자동 |
-| `src/components/layout/sidebar.tsx` | `P-ACA v{packageJson.version}` + `Last updated: {packageJson.lastUpdate}` ✅ 자동 |
-| `src/app/m/page.tsx` | `P-ACA Mobile v{packageJson.version}` ✅ 자동 |
-| `src/app/settings/page.tsx` | `v{packageJson.version}` ✅ 자동 |
-| `src/app/tablet/layout.tsx` | `APP_VERSION = \`v${packageJson.version}\`` ✅ 자동 |
-| `backend/package.json` | `"version"` ← **별도 bump 필수** (frontend 와 분리) |
-
-**자동 갱신 (코드 수정 0)**:
+**자동 갱신**:
 | 파일 | 설명 |
 |------|------|
 | `package-lock.json` | `npm install` 시 자동 |
 | `public/sw.js` | `next build` 시 자동 (next-pwa) |
 
-### 배포 체크리스트 (v3.18.2 이후)
+### 배포 체크리스트
 ```bash
-# 1. 버전업 (2곳만 수동 수정)
-#    - package.json: version + lastUpdate
-#    - backend/package.json: version
+# 1. 버전업 (6곳 수동 수정)
 
 # 2. 커밋 & 푸시
 git add -A
-git commit -m "feat: 기능 설명 (vX.Y.Z)"
+git commit -m "feat: 기능 설명 (v3.15.1)"
 git push origin main
 
 # 3. Vercel 자동 배포 확인 (프론트)
@@ -174,10 +139,6 @@ git push origin main
 # 4. 백엔드 변경 시 재시작
 sudo systemctl restart paca
 ```
-
-### 새 hardcoded version 추가 금지
-새 파일에 version 표시 추가 시 무조건 `import packageJson from '경로/package.json'` 사용.
-hardcoded version (예: `v3.18.2`) 작성 시 사장님이 다음 배포에서 짜증.
 
 ### PWA 캐시 갱신
 - `sw.js` 빌드 시 chunk 해시가 바뀌어 자동 갱신

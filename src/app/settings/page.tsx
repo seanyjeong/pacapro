@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Save, User, Building, Shield, DollarSign, Calendar, Clock, Banknote, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
+import packageJson from '../../../package.json';
 
 // 학원비 설정 타입
 interface TuitionByWeeklyCount {
@@ -664,7 +665,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-3 text-sm text-muted-foreground">
           <div className="flex justify-between">
             <span>버전</span>
-            <span className="font-medium text-foreground">v3.17.6</span>
+            <span className="font-medium text-foreground">v{packageJson.version}</span>
           </div>
           <div className="flex justify-between">
             <span>마지막 업데이트</span>
