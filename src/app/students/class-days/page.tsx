@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Save, Calendar, X, AlertCircle, Filter } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Loader2, Save, Calendar, X, AlertCircle, Filter, Search } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
 import { WEEKDAY_OPTIONS, WEEKDAY_MAP, formatClassDays } from '@/lib/types/student';
 import type { ClassDaysStudent, ClassDaySlot } from '@/lib/types/student';
@@ -57,6 +58,7 @@ export default function ClassDaysPage() {
   const [edits, setEdits] = useState<Map<number, StudentEdit>>(new Map());
   const [filterGrade, setFilterGrade] = useState<string>('all');
   const [filterWeekly, setFilterWeekly] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const monthOptions = getEffectiveMonthOptions();
 
@@ -67,6 +69,8 @@ export default function ClassDaysPage() {
     .filter(s => {
       if (filterGrade !== "all" && s.grade !== filterGrade) return false;
       if (filterWeekly !== "all" && s.weekly_count !== Number(filterWeekly)) return false;
+      const q = searchQuery.trim().toLowerCase();
+      if (q && !s.name.toLowerCase().includes(q)) return false;
       return true;
     })
     .sort((a, b) => {
@@ -74,7 +78,7 @@ export default function ClassDaysPage() {
       const gb = GRADE_ORDER_MAP[b.grade || ""] ?? 99;
       if (ga !== gb) return ga - gb;
       return a.name.localeCompare(b.name, "ko");
-    }), [students, filterGrade, filterWeekly]);
+    }), [students, filterGrade, filterWeekly, searchQuery]);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -337,11 +341,21 @@ export default function ClassDaysPage() {
               <SelectItem value="6">주6회</SelectItem>
             </SelectContent>
           </Select>
-          {(filterGrade !== 'all' || filterWeekly !== 'all') && (
-            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => { setFilterGrade('all'); setFilterWeekly('all'); }}>
+          {(filterGrade !== 'all' || filterWeekly !== 'all' || searchQuery) && (
+            <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => { setFilterGrade('all'); setFilterWeekly('all'); setSearchQuery(''); }}>
               초기화
             </Button>
           )}
+        </div>
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="학생 이름 검색"
+            className="h-8 w-[200px] pl-8 text-sm"
+          />
         </div>
         <span className="text-sm text-muted-foreground">{filteredStudents.length}명</span>
       </div>
@@ -445,10 +459,10 @@ export default function ClassDaysPage() {
                               </button>
                             )}
                           </div>
-                          {/* 선택된 요일별 시간대 선택 */}
+                          {/* 선택된 요일별 시간대 선택 — 일요일(0)을 맨 뒤로 (월~토→일) */}
                           {currentSlots.length > 0 && (
                             <div className="flex flex-wrap justify-center gap-1 mt-1">
-                              {currentSlots.map(slot => (
+                              {[...currentSlots].sort((a, b) => (a.day === 0 ? 7 : a.day) - (b.day === 0 ? 7 : b.day)).map(slot => (
                                 <select
                                   key={slot.day}
                                   value={slot.timeSlot}
