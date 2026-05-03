@@ -49,6 +49,23 @@ function PaymentsPageContent() {
   const [sendingNotification, setSendingNotification] = useState(false);
   const [markingPaymentId, setMarkingPaymentId] = useState<number | null>(null);
 
+  // 오늘 수업 미납자 필터 (학생별 class_days 매칭)
+  const [todayUnpaidOnly, setTodayUnpaidOnly] = useState(false);
+  const [studentClassDaysMap, setStudentClassDaysMap] = useState<Map<number, number[]>>(new Map());
+
+  useEffect(() => {
+    let cancelled = false;
+    studentsAPI.getClassDays().then(res => {
+      if (cancelled) return;
+      const m = new Map<number, number[]>();
+      for (const s of res.students || []) {
+        m.set(s.id, parseClassDays(s.class_days || []));
+      }
+      setStudentClassDaysMap(m);
+    }).catch(() => { /* 학생 데이터 로드 실패해도 페이지 자체는 동작 */ });
+    return () => { cancelled = true; };
+  }, []);
+
   // 크레딧 모달 상태
   const [creditModalOpen, setCreditModalOpen] = useState(false);
   const [creditStudentInfo, setCreditStudentInfo] = useState<{
@@ -65,11 +82,18 @@ function PaymentsPageContent() {
   const viewOnly = canViewPayments && !canEditPayments; // view만 있고 edit 없는 경우
 
   // view 권한만 있으면 미납 내역만 표시 + 검색어 필터링
+  const todayDayOfWeek = new Date().getDay(); // 0=일 ~ 6=토
   const filteredPayments = payments.filter(p => {
     // view 권한만 있으면 미납만
     if (viewOnly && p.payment_status === 'paid') return false;
     // 검색어 필터
     if (filters.search && !p.student_name?.toLowerCase().includes(filters.search.toLowerCase())) return false;
+    // 오늘 수업 미납자 토글
+    if (todayUnpaidOnly) {
+      if (p.payment_status === 'paid') return false;
+      const days = studentClassDaysMap.get(p.student_id);
+      if (!days || !days.includes(todayDayOfWeek)) return false;
+    }
     return true;
   });
 
@@ -377,14 +401,27 @@ function PaymentsPageContent() {
               />
             </div>
 
-            <Button variant="outline" onClick={() => updateFilters({
-              year: currentYear,
-              month: currentMonth,
-              include_previous_unpaid: true,
-              payment_status: undefined,
-              payment_type: undefined,
-              search: undefined,
-            })} className="ml-auto">
+            <Button
+              variant={todayUnpaidOnly ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setTodayUnpaidOnly(v => !v)}
+              title="오늘 요일에 수업이 있는 미납자만 필터링"
+            >
+              <Banknote className="w-4 h-4 mr-1" />
+              오늘 수업 미납자
+            </Button>
+
+            <Button variant="outline" onClick={() => {
+              setTodayUnpaidOnly(false);
+              updateFilters({
+                year: currentYear,
+                month: currentMonth,
+                include_previous_unpaid: true,
+                payment_status: undefined,
+                payment_type: undefined,
+                search: undefined,
+              });
+            }} className="ml-auto">
               필터 초기화
             </Button>
           </div>
