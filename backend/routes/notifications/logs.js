@@ -53,9 +53,13 @@ router.get('/logs', verifyToken, checkPermission('notifications', 'view'), async
             params
         );
 
+        // mysql2 prepared statement (pool.execute) LIMIT/OFFSET 자리표시자 비호환 (lesson #235).
+        // 정수 검증 후 직접 인터폴레이트 (SQL injection 안전).
+        const safeLimit = Math.max(1, Math.min(1000, parseInt(limit) || 50));
+        const safeOffset = Math.max(0, parseInt(offset) || 0);
         const [logs] = await pool.execute(
-            `SELECT * FROM notification_logs ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-            [...params, parseInt(limit), parseInt(offset)]
+            `SELECT * FROM notification_logs ${whereClause} ORDER BY created_at DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`,
+            params
         );
 
         res.json({

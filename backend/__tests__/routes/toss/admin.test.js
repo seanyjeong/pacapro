@@ -99,7 +99,9 @@ describe('GET /paca/toss/history', () => {
         expect(sql).toMatch(/AND h\.payment_id = \?/);
         expect(sql).toMatch(/AND h\.approved_at >= \?/);
         expect(sql).toMatch(/AND h\.approved_at <= \?/);
-        expect(pool.execute.mock.calls[0][1]).toEqual([5, '7', '2024-12-01', '2024-12-31 23:59:59', 10, 20]);
+        // LIMIT/OFFSET 은 SQL 인터폴레이트 (lesson #235 — mysql2 prepared statement 호환)
+        expect(sql).toMatch(/LIMIT 10 OFFSET 20/);
+        expect(pool.execute.mock.calls[0][1]).toEqual([5, '7', '2024-12-01', '2024-12-31 23:59:59']);
     });
 
     test('5xx: 한국어 메시지 + e.message 누출 0건', async () => {

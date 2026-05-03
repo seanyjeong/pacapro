@@ -90,9 +90,11 @@ module.exports = function (router) {
             );
             const total = countResult[0].total;
 
-            // 페이징
-            const offset = (parseInt(page) - 1) * parseInt(limit);
-            params.push(parseInt(limit), offset);
+            // 페이징 — mysql2 prepared statement (pool.execute) 는 LIMIT/OFFSET 자리표시자
+            // 바인딩에 정수 인자를 받지 못하는 mysql 5.x 호환 이슈가 있음 (lesson #235).
+            // SQL injection 안전을 위해 정수 검증 후 직접 인터폴레이트.
+            const safeLimit = Math.max(1, Math.min(1000, parseInt(limit) || 20));
+            const safeOffset = Math.max(0, (parseInt(page) - 1) * safeLimit);
 
             // 목록 조회
             const [consultations] = await pool.execute(
@@ -101,7 +103,7 @@ module.exports = function (router) {
                  LEFT JOIN students s ON c.linked_student_id = s.id
                  ${whereClause}
                  ORDER BY c.preferred_date DESC, c.preferred_time DESC
-                 LIMIT ? OFFSET ?`,
+                 LIMIT ${safeLimit} OFFSET ${safeOffset}`,
                 params
             );
 

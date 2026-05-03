@@ -71,8 +71,11 @@ router.get('/history', verifyToken, checkPermission('payments', 'view'), checkAc
             params.push(end_date + ' 23:59:59');
         }
 
-        query += ' ORDER BY h.created_at DESC LIMIT ? OFFSET ?';
-        params.push(parseInt(limit), parseInt(offset));
+        // mysql2 prepared statement (pool.execute) LIMIT/OFFSET 자리표시자 비호환 (lesson #235).
+        // 정수 검증 후 직접 인터폴레이트 (SQL injection 안전).
+        const safeLimit = Math.max(1, Math.min(1000, parseInt(limit) || 50));
+        const safeOffset = Math.max(0, parseInt(offset) || 0);
+        query += ` ORDER BY h.created_at DESC LIMIT ${safeLimit} OFFSET ${safeOffset}`;
 
         const [history] = await pool.execute(query, params);
 

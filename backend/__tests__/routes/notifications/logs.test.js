@@ -143,12 +143,12 @@ describe('GET /paca/notifications/logs', () => {
     // 순서: academyId, status, message_type, start_date, end_date(+23:59:59)
     expect(countParams).toEqual([1, 'sent', 'alimtalk', '2026-04-01', '2026-04-30 23:59:59']);
 
-    // logs 쿼리: count params + [limit, offset] 가 추가
+    // logs 쿼리: count params 와 동일 (LIMIT/OFFSET 은 인터폴레이트 — lesson #235)
     const [logsSql, logsParams] = pool.execute.mock.calls[1];
     expect(logsSql).toMatch(/SELECT \* FROM notification_logs/);
     expect(logsSql).toMatch(/ORDER BY created_at DESC/);
-    expect(logsSql).toMatch(/LIMIT \? OFFSET \?/);
-    expect(logsParams).toEqual([1, 'sent', 'alimtalk', '2026-04-01', '2026-04-30 23:59:59', 20, 0]);
+    expect(logsSql).toMatch(/LIMIT \d+ OFFSET \d+/);
+    expect(logsParams).toEqual([1, 'sent', 'alimtalk', '2026-04-01', '2026-04-30 23:59:59']);
   });
 
   test('기본값 page=1 limit=20 일 때 offset=0', async () => {
@@ -159,10 +159,9 @@ describe('GET /paca/notifications/logs', () => {
     const app = buildApp();
     await request(app).get('/paca/notifications/logs');
 
-    const [, logsParams] = pool.execute.mock.calls[1];
-    // params: [academyId, limit=20, offset=0]
-    expect(logsParams[logsParams.length - 2]).toBe(20);
-    expect(logsParams[logsParams.length - 1]).toBe(0);
+    // LIMIT/OFFSET 은 SQL 인터폴레이트 (lesson #235)
+    const [logsSql] = pool.execute.mock.calls[1];
+    expect(logsSql).toMatch(/LIMIT 20 OFFSET 0/);
   });
 
   test('실패: DB 오류 시 500 + 한국어 친화 메시지 (코드 언어 노출 X)', async () => {
