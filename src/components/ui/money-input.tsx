@@ -51,7 +51,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
           id={id}
           name={name}
           className={cn(
-            "w-full px-3 py-2 pr-10 border border-border bg-background text-foreground rounded-md",
+            "w-full px-3 py-2 pr-10 border border-border bg-background text-foreground rounded-md text-right",
             className
           )}
         />
