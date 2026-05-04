@@ -835,7 +835,10 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
-        // 휴원 처리 (→ paused) 시 미래 스케줄에서 제거
+        // 휴원 처리 (→ paused) 시 출결 정리 (사장님 확정 2026-05-04, 퇴원과 동일):
+        //  - 과거 (< today): 보존 (이력)
+        //  - 당일 (= today): 무조건 삭제 (체크된 것도)
+        //  - 미래 (> today): 미체크 (NULL) 만 삭제
         let pauseInfo = null;
         if (status === 'paused' && oldStatus !== 'paused') {
             try {
@@ -844,10 +847,12 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                     `DELETE a FROM attendance a
                      JOIN class_schedules cs ON a.class_schedule_id = cs.id
                      WHERE a.student_id = ?
-                     AND cs.academy_id = ?
-                     AND cs.class_date > ?
-                     AND a.attendance_status IS NULL`,
-                    [studentId, req.user.academyId, today]
+                       AND cs.academy_id = ?
+                       AND (
+                         cs.class_date = ?
+                         OR (cs.class_date > ? AND a.attendance_status IS NULL)
+                       )`,
+                    [studentId, req.user.academyId, today, today]
                 );
 
                 if (deleteResult.affectedRows > 0) {

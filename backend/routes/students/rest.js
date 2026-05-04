@@ -243,15 +243,20 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
             }
         }
 
-        // 5. 오늘 이후 미출석 스케줄 삭제 (휴식 시작일 기준)
+        // 5. 출결 정리 정책 (사장님 확정 2026-05-04, 퇴원과 동일):
+        //  - 휴원 시작일 이전: 보존 (이력)
+        //  - 휴원 시작일 당일 (= rest_start_date): 무조건 삭제 (체크된 것도)
+        //  - 휴원 시작일 이후: 미체크 (NULL) 만 삭제
         await conn.execute(
             `DELETE a FROM attendance a
              JOIN class_schedules cs ON a.class_schedule_id = cs.id
              WHERE a.student_id = ?
-             AND cs.academy_id = ?
-             AND cs.class_date >= ?
-             AND a.attendance_status IS NULL`,
-            [studentId, req.user.academyId, rest_start_date]
+               AND cs.academy_id = ?
+               AND (
+                 cs.class_date = ?
+                 OR (cs.class_date > ? AND a.attendance_status IS NULL)
+               )`,
+            [studentId, req.user.academyId, rest_start_date, rest_start_date]
         );
 
         await conn.commit();
