@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MoneyInput } from '@/components/ui/money-input';
 import {
   ArrowLeft,
   CheckCircle,
@@ -65,7 +66,7 @@ export default function SalaryDetailPage() {
 
   // 인센티브 수정 상태
   const [editingIncentive, setEditingIncentive] = useState(false);
-  const [incentiveInput, setIncentiveInput] = useState('');
+  const [incentiveInput, setIncentiveInput] = useState<number>(0);
   const [savingIncentive, setSavingIncentive] = useState(false);
 
   useEffect(() => {
@@ -144,21 +145,21 @@ export default function SalaryDetailPage() {
 
   // 인센티브 수정 시작
   const startEditIncentive = () => {
-    setIncentiveInput(salary?.incentive_amount?.toString() || '0');
+    setIncentiveInput(salary?.incentive_amount || 0);
     setEditingIncentive(true);
   };
 
   // 인센티브 수정 취소
   const cancelEditIncentive = () => {
     setEditingIncentive(false);
-    setIncentiveInput('');
+    setIncentiveInput(0);
   };
 
   // 인센티브 저장
   const saveIncentive = async () => {
     if (!salary) return;
 
-    const newIncentive = parseFloat(incentiveInput) || 0;
+    const newIncentive = incentiveInput || 0;
     if (newIncentive < 0) {
       alert('인센티브는 0 이상이어야 합니다.');
       return;
@@ -473,16 +474,11 @@ export default function SalaryDetailPage() {
               <span className="text-gray-600">인센티브</span>
               {editingIncentive ? (
                 <div className="flex items-center space-x-2">
-                  <input
-                    type="number"
+                  <MoneyInput
                     value={incentiveInput}
-                    onChange={(e) => setIncentiveInput(e.target.value)}
-                    className="w-32 px-2 py-1 border border-gray-300 rounded text-right text-sm"
-                    min="0"
-                    step="10000"
-                    autoFocus
+                    onChange={(v) => setIncentiveInput(v)}
+                    className="w-32 py-1 text-sm"
                   />
-                  <span className="text-sm text-gray-500">원</span>
                   <button
                     onClick={saveIncentive}
                     disabled={savingIncentive}
