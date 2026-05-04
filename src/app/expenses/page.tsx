@@ -9,6 +9,7 @@ import apiClient from '@/lib/api/client';
 import { exportsApi } from '@/lib/api/exports';
 import { usePermissions } from '@/lib/utils/permissions';
 import { ExpenseCalendar } from '@/components/expenses/expense-calendar';
+import { MoneyInput } from '@/components/ui/money-input';
 
 // 금액 포맷 함수 (소수점 제거 + 천단위 쉼표)
 const formatAmount = (amount: number) => Math.floor(amount).toLocaleString();
@@ -302,16 +303,9 @@ export default function ExpensesPage() {
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">금액 *</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={formData.amount === 0 ? '' : formData.amount.toLocaleString()}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/[^0-9]/g, '');
-                    setFormData({ ...formData, amount: raw === '' ? 0 : Number(raw) });
-                  }}
-                  placeholder="0"
-                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
+                <MoneyInput
+                  value={formData.amount}
+                  onChange={(amount) => setFormData({ ...formData, amount })}
                   required
                 />
               </div>
