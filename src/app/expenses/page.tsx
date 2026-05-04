@@ -303,11 +303,15 @@ export default function ExpensesPage() {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">금액 *</label>
                 <input
-                  type="number"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+                  type="text"
+                  inputMode="numeric"
+                  value={formData.amount === 0 ? '' : formData.amount.toLocaleString()}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/[^0-9]/g, '');
+                    setFormData({ ...formData, amount: raw === '' ? 0 : Number(raw) });
+                  }}
+                  placeholder="0"
                   className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
-                  min="0"
                   required
                 />
               </div>
