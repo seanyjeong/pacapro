@@ -7,6 +7,7 @@ import { Save, User, Building, Shield, DollarSign, Calendar, Clock, Banknote, Al
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 import packageJson from '../../../package.json';
+import { MoneyInput } from '@/components/ui/money-input';
 
 // 학원비 설정 타입
 interface TuitionByWeeklyCount {
@@ -453,14 +454,10 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-foreground mb-1 text-center">
                   {weeklyLabels[index]}
                 </label>
-                <input
-                  type="number"
-                  value={academySettings.exam_tuition[key] || ''}
-                  onChange={(e) => handleTuitionChange('exam_tuition', key, Number(e.target.value))}
-                  className="w-full px-2 py-2 border border-border bg-background text-foreground rounded-md text-center text-sm"
-                  min="0"
-                  step="10000"
-                  placeholder="0"
+                <MoneyInput
+                  value={academySettings.exam_tuition[key]}
+                  onChange={(v) => handleTuitionChange('exam_tuition', key, v)}
+                  className="text-sm"
                 />
               </div>
             ))}
@@ -484,14 +481,10 @@ export default function SettingsPage() {
                 <label className="block text-sm font-medium text-foreground mb-1 text-center">
                   {weeklyLabels[index]}
                 </label>
-                <input
-                  type="number"
-                  value={academySettings.adult_tuition[key] || ''}
-                  onChange={(e) => handleTuitionChange('adult_tuition', key, Number(e.target.value))}
-                  className="w-full px-2 py-2 border border-border bg-background text-foreground rounded-md text-center text-sm"
-                  min="0"
-                  step="10000"
-                  placeholder="0"
+                <MoneyInput
+                  value={academySettings.adult_tuition[key]}
+                  onChange={(v) => handleTuitionChange('adult_tuition', key, v)}
+                  className="text-sm"
                 />
               </div>
             ))}
@@ -514,42 +507,27 @@ export default function SettingsPage() {
               <label className="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
                 입시 - 수시
               </label>
-              <input
-                type="number"
-                value={academySettings.season_fees.exam_early || ''}
-                onChange={(e) => handleSeasonFeeChange('exam_early', Number(e.target.value))}
-                className="w-full px-3 py-2 border border-blue-200 dark:border-blue-800 rounded-md text-center bg-background text-foreground"
-                min="0"
-                step="10000"
-                placeholder="0"
+              <MoneyInput
+                value={academySettings.season_fees.exam_early}
+                onChange={(v) => handleSeasonFeeChange('exam_early', v)}
               />
             </div>
             <div className="p-4 bg-indigo-50 dark:bg-indigo-950 rounded-lg">
               <label className="block text-sm font-medium text-indigo-800 dark:text-indigo-200 mb-2">
                 입시 - 정시
               </label>
-              <input
-                type="number"
-                value={academySettings.season_fees.exam_regular || ''}
-                onChange={(e) => handleSeasonFeeChange('exam_regular', Number(e.target.value))}
-                className="w-full px-3 py-2 border border-indigo-200 dark:border-indigo-800 rounded-md text-center bg-background text-foreground"
-                min="0"
-                step="10000"
-                placeholder="0"
+              <MoneyInput
+                value={academySettings.season_fees.exam_regular}
+                onChange={(v) => handleSeasonFeeChange('exam_regular', v)}
               />
             </div>
             <div className="p-4 bg-purple-50 dark:bg-purple-950 rounded-lg">
               <label className="block text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">
                 공무원
               </label>
-              <input
-                type="number"
-                value={academySettings.season_fees.civil_service || ''}
-                onChange={(e) => handleSeasonFeeChange('civil_service', Number(e.target.value))}
-                className="w-full px-3 py-2 border border-purple-200 dark:border-purple-800 rounded-md text-center bg-background text-foreground"
-                min="0"
-                step="10000"
-                placeholder="0"
+              <MoneyInput
+                value={academySettings.season_fees.civil_service}
+                onChange={(v) => handleSeasonFeeChange('civil_service', v)}
               />
             </div>
           </div>

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, CreditCard, Banknote, Building2, HelpCircle, Calendar } from 'lucide-react';
 import { PAYMENT_METHOD_OPTIONS } from '@/lib/types/payment';
+import { MoneyInput } from '@/components/ui/money-input';
 
 interface PaymentRecordModalProps {
   isOpen: boolean;
@@ -134,27 +135,18 @@ export function PaymentRecordModal({
               <label className="block text-sm font-medium text-foreground mb-2">
                 할인 금액 <span className="text-muted-foreground text-xs font-normal">(선택사항)</span>
               </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  value={formData.discount_amount || ''}
-                  onChange={(e) => {
-                    const discount = Math.floor(Number(e.target.value)) || 0;
-                    const newRemaining = Math.max(0, remainingAmount - discount);
-                    setFormData({
-                      ...formData,
-                      discount_amount: discount,
-                      paid_amount: newRemaining // 할인 적용 시 납부 금액 자동 조정
-                    });
-                  }}
-                  className="w-full px-4 py-2 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 pr-10"
-                  placeholder="0"
-                  min="0"
-                  max={remainingAmount}
-                  step="1000"
-                />
-                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm">원</span>
-              </div>
+              <MoneyInput
+                value={formData.discount_amount}
+                onChange={(discount) => {
+                  const newRemaining = Math.max(0, remainingAmount - discount);
+                  setFormData({
+                    ...formData,
+                    discount_amount: discount,
+                    paid_amount: newRemaining
+                  });
+                }}
+                className="py-2 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
               <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
               {formData.discount_amount > 0 && (
                 <p className="mt-2 text-sm">
@@ -171,14 +163,10 @@ export function PaymentRecordModal({
               <label className="block text-sm font-medium text-foreground mb-2">
                 납부 금액 <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
+              <MoneyInput
                 value={formData.paid_amount}
-                onChange={(e) => setFormData({ ...formData, paid_amount: Math.floor(Number(e.target.value)) })}
-                className="w-full px-4 py-3 border border-border bg-background rounded-lg text-lg font-semibold focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                placeholder="0"
-                min="0"
-                step="1000"
+                onChange={(paid_amount) => setFormData({ ...formData, paid_amount })}
+                className="py-3 rounded-lg text-lg font-semibold focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
               <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
               <div className="flex gap-2 mt-2">

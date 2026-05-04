@@ -232,7 +232,7 @@ export function PrepaidPaymentModal({
               step={1}
               value={prepaidRate}
               onChange={(e) => setPrepaidRate(e.target.value)}
-              className="w-32"
+              className="w-32 text-right"
             />
           </div>
 

@@ -9,6 +9,7 @@ import apiClient from '@/lib/api/client';
 import { exportsApi } from '@/lib/api/exports';
 import { usePermissions } from '@/lib/utils/permissions';
 import { IncomeCalendar } from '@/components/incomes/income-calendar';
+import { MoneyInput } from '@/components/ui/money-input';
 
 interface OtherIncome {
   id: number;
@@ -382,14 +383,9 @@ export default function IncomesPage() {
 
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1">금액 *</label>
-                <input
-                  type="number"
-                  value={formData.amount || ''}
-                  onChange={(e) => setFormData({ ...formData, amount: Math.floor(Number(e.target.value)) })}
-                  className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
-                  min="0"
-                  step="1000"
-                  placeholder="0"
+                <MoneyInput
+                  value={formData.amount}
+                  onChange={(amount) => setFormData({ ...formData, amount })}
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { PaymentFormData } from '@/lib/types/payment';
 import { PAYMENT_TYPE_OPTIONS } from '@/lib/types/payment';
 import { calculateFinalAmount, getCurrentYearMonth, getNextDueDate } from '@/lib/utils/payment-helpers';
+import { MoneyInput } from '@/components/ui/money-input';
 
 interface PaymentFormProps {
   initialData?: Partial<PaymentFormData>;
@@ -121,40 +122,30 @@ export function PaymentForm({ initialData, students, onSubmit, onCancel, loading
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">기본 금액 *</label>
-              <input
-                type="number"
+              <MoneyInput
                 value={formData.base_amount}
-                onChange={(e) => setFormData({ ...formData, base_amount: Math.floor(Number(e.target.value)) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                required
-                min="0"
-                step="1000"
+                onChange={(base_amount) => setFormData({ ...formData, base_amount })}
+                className="focus:ring-primary-500 focus:border-primary-500" required
               />
               <p className="text-xs text-gray-500 mt-1">1천원 단위</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">할인 금액</label>
-              <input
-                type="number"
+              <MoneyInput
                 value={formData.discount_amount}
-                onChange={(e) => setFormData({ ...formData, discount_amount: Math.floor(Number(e.target.value)) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                min="0"
-                step="1000"
+                onChange={(discount_amount) => setFormData({ ...formData, discount_amount })}
+                className="focus:ring-primary-500 focus:border-primary-500"
               />
               <p className="text-xs text-gray-500 mt-1">1천원 단위</p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">추가 금액</label>
-              <input
-                type="number"
+              <MoneyInput
                 value={formData.additional_amount}
-                onChange={(e) => setFormData({ ...formData, additional_amount: Math.floor(Number(e.target.value)) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                min="0"
-                step="1000"
+                onChange={(additional_amount) => setFormData({ ...formData, additional_amount })}
+                className="focus:ring-primary-500 focus:border-primary-500"
               />
               <p className="text-xs text-gray-500 mt-1">1천원 단위</p>
             </div>

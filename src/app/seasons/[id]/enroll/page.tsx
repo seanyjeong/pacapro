@@ -10,6 +10,7 @@ import { seasonsApi } from '@/lib/api/seasons';
 import apiClient from '@/lib/api/client';
 import type { Season } from '@/lib/types/season';
 import { SEASON_TYPE_LABELS, formatSeasonFee } from '@/lib/types/season';
+import { MoneyInput } from '@/components/ui/money-input';
 
 interface Student {
   id: number;
@@ -361,18 +362,11 @@ export default function SeasonEnrollPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   할인 금액 (선택사항)
                 </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    min="0"
-                    step="10000"
-                    value={discountAmount || ''}
-                    onChange={(e) => setDiscountAmount(e.target.value === '' ? 0 : parseInt(e.target.value))}
-                    placeholder="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-12"
-                  />
-                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">원</span>
-                </div>
+                <MoneyInput
+                  value={discountAmount}
+                  onChange={(v) => setDiscountAmount(v)}
+                  className="rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
                 <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
                 {discountAmount > 0 && season && (
                   <p className="mt-2 text-sm">

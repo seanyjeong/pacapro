@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { StudentFormData } from '@/lib/types/student';
 import type { AcademySettings } from '../_types';
+import { MoneyInput } from '@/components/ui/money-input';
 
 interface TuitionSectionProps {
   isTrial: boolean;
@@ -29,10 +30,11 @@ export function TuitionSection({
             <label className="block text-sm font-medium text-foreground mb-2">
               월 학원비 <span className="text-muted-foreground text-xs">(수업횟수에 따라 자동 설정)</span>
             </label>
-            <input type="number" value={formData.monthly_tuition || ''}
-              onChange={(e) => handleChange('monthly_tuition', e.target.value === '' ? 0 : parseInt(e.target.value))}
-              placeholder="0" min="0" step="10000"
-              className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+            <MoneyInput
+              value={formData.monthly_tuition}
+              onChange={(monthly_tuition) => handleChange('monthly_tuition', monthly_tuition)}
+              className="focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
             <p className="text-xs text-muted-foreground mt-1">1만원 단위</p>
           </div>
 
@@ -42,7 +44,7 @@ export function TuitionSection({
             <input type="number" value={formData.discount_rate || ''}
               onChange={(e) => handleChange('discount_rate', e.target.value === '' ? 0 : parseFloat(e.target.value))}
               placeholder="0" min="0" max="100" step="1"
-              className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+              className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-right" />
           </div>
 
           {/* 납부일 */}

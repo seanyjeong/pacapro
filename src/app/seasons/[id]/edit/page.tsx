@@ -9,6 +9,7 @@ import { seasonsApi } from '@/lib/api/seasons';
 import type { SeasonFormData, SeasonType, SeasonStatus, TimeSlot } from '@/lib/types/season';
 import { OPERATING_DAY_OPTIONS, SEASON_TARGET_GRADES, TIME_SLOT_OPTIONS, parseOperatingDays } from '@/lib/types/season';
 import type { GradeTimeSlots } from '@/lib/types/season';
+import { MoneyInput } from '@/components/ui/money-input';
 
 export default function EditSeasonPage() {
   const router = useRouter();
@@ -284,14 +285,9 @@ export default function EditSeasonPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 시즌비 (원) <span className="text-red-500">*</span>
               </label>
-              <input
-                type="number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                placeholder="예: 500000"
-                value={formData.season_fee || ''}
-                onChange={e => handleChange('season_fee', e.target.value === '' ? 0 : parseInt(e.target.value))}
-                min="0"
-                step="10000"
+              <MoneyInput
+                value={formData.season_fee}
+                onChange={(season_fee) => handleChange('season_fee', season_fee)}
               />
               <p className="text-xs text-gray-500 mt-1">시즌 등록 시 학생이 납부해야 할 금액 (1만원 단위)</p>
             </div>

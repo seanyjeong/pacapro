@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 interface MoneyInputProps {
-  value: number;
+  value: number | undefined;
   onChange: (n: number) => void;
   placeholder?: string;
   suffix?: string;
@@ -30,7 +30,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
     },
     ref
   ) => {
-    const display = value === 0 ? "" : value.toLocaleString();
+    const display = !value ? "" : value.toLocaleString();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const raw = e.target.value.replace(/[^0-9]/g, "");

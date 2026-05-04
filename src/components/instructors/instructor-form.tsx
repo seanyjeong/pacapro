@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import type { Instructor, InstructorFormData, InstructorType, Gender } from '@/lib/types/instructor';
+import { MoneyInput } from '@/components/ui/money-input';
 import {
   SALARY_TYPE_OPTIONS,
   TAX_TYPE_OPTIONS,
@@ -337,16 +338,10 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                 <label className="block text-sm font-medium text-foreground mb-2">
                   {formData.salary_type === 'per_class' ? '수업료' : '시급'} <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="number"
+                <MoneyInput
                   value={formData.hourly_rate}
-                  onChange={(e) => handleChange('hourly_rate', parseFloat(e.target.value) || 0)}
-                  placeholder="0"
-                  min="0"
-                  step="100"
-                  className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                    errors.hourly_rate ? 'border-red-500' : 'border-border'
-                  }`}
+                  onChange={(v) => handleChange('hourly_rate', v)}
+                  className={errors.hourly_rate ? 'border-red-500' : ''}
                 />
                 <p className="text-xs text-muted-foreground mt-1">100원 단위로 입력</p>
                 {errors.hourly_rate && <p className="text-red-500 text-sm mt-1">{errors.hourly_rate}</p>}
@@ -359,16 +354,10 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
                 <label className="block text-sm font-medium text-foreground mb-2">
                   월급 <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="number"
+                <MoneyInput
                   value={formData.base_salary}
-                  onChange={(e) => handleChange('base_salary', parseFloat(e.target.value) || 0)}
-                  placeholder="0"
-                  min="0"
-                  step="10000"
-                  className={`w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                    errors.base_salary ? 'border-red-500' : 'border-border'
-                  }`}
+                  onChange={(v) => handleChange('base_salary', v)}
+                  className={errors.base_salary ? 'border-red-500' : ''}
                 />
                 <p className="text-xs text-muted-foreground mt-1">1만원 단위</p>
                 {errors.base_salary && <p className="text-red-500 text-sm mt-1">{errors.base_salary}</p>}

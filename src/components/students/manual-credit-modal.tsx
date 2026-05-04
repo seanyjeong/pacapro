@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { MoneyInput } from '@/components/ui/money-input';
 import {
   Dialog,
   DialogContent,
@@ -483,7 +484,7 @@ export function ManualCreditModal({
                           if (!classCount || classCount < 1) setClassCount(1);
                           if (classCount > 12) setClassCount(12);
                         }}
-                      />
+                       className="text-right"/>
                       <p className="text-xs text-muted-foreground">1~12 사이의 값을 입력하세요.</p>
                     </div>
 
@@ -506,15 +507,11 @@ export function ManualCreditModal({
                   <TabsContent value="amount" className="space-y-3 mt-3">
                     <div className="space-y-1">
                       <Label htmlFor="directAmount">크레딧 금액 (원)</Label>
-                      <Input
+                      <MoneyInput
                         id="directAmount"
-                        type="number"
-                        min={1000}
-                        max={10000000}
-                        step={1000}
-                        value={directAmount || ''}
-                        onChange={(e) => setDirectAmount(e.target.value === '' ? 0 : parseInt(e.target.value))}
-                        placeholder="예: 50000"
+                        value={directAmount}
+                        onChange={(v) => setDirectAmount(Math.min(10000000, v))}
+                        placeholder="50000"
                       />
                       <p className="text-xs text-muted-foreground">1,000원 ~ 10,000,000원 (1,000원 단위 권장)</p>
                     </div>
@@ -619,10 +616,9 @@ export function ManualCreditModal({
                         <div className="space-y-3">
                           <div className="space-y-1">
                             <Label>금액</Label>
-                            <Input
-                              type="number"
-                              value={editAmount || ''}
-                              onChange={(e) => setEditAmount(e.target.value === '' ? 0 : parseInt(e.target.value))}
+                            <MoneyInput
+                              value={editAmount}
+                              onChange={(v) => setEditAmount(v)}
                             />
                           </div>
                           <div className="space-y-1">

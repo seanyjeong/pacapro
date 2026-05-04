@@ -76,7 +76,7 @@ export function TabletLearningView({
                   placeholder="예: 3.5"
                   value={learningForm.schoolGradeAvg}
                   onChange={(e) => setLearningForm({ ...learningForm, schoolGradeAvg: e.target.value })}
-                  className="mt-1"
+                  className="mt-1 text-right"
                 />
               </div>
             </div>

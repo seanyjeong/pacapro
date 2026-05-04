@@ -12,6 +12,7 @@ import type { SalaryCalculationResult, TaxType } from '@/lib/types/salary';
 import { TAX_TYPE_LABELS, SALARY_TYPE_LABELS } from '@/lib/types/instructor';
 import { formatSalaryAmount, calculateTax } from '@/lib/utils/salary-helpers';
 import { Loader2, RefreshCw } from 'lucide-react';
+import { MoneyInput } from '@/components/ui/money-input';
 
 interface SalaryCalculatorProps {
   instructors: Array<{ id: number; name: string; salary_type: string; hourly_rate?: string | number; base_salary?: string | number; tax_type?: string }>;
@@ -304,23 +305,19 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">인센티브</label>
-            <input
-              type="number"
+            <MoneyInput
               value={incentive}
-              onChange={(e) => setIncentive(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-              min="0"
+              onChange={(v) => setIncentive(v)}
+              className="focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">공제액</label>
-            <input
-              type="number"
+            <MoneyInput
               value={deduction}
-              onChange={(e) => setDeduction(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-              min="0"
+              onChange={(v) => setDeduction(v)}
+              className="focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
         </div>

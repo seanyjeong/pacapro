@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MoneyInput } from '@/components/ui/money-input';
 import {
   Trophy,
   Plus,
@@ -492,13 +493,10 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   시즌비
                 </label>
-                <input
-                  type="number"
-                  value={editData.season_fee || ''}
-                  onChange={(e) => setEditData({ ...editData, season_fee: e.target.value === '' ? 0 : parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                  min="0"
-                  step="10000"
+                <MoneyInput
+                  value={editData.season_fee}
+                  onChange={(season_fee) => setEditData({ ...editData, season_fee })}
+                  className="focus:ring-primary-500 focus:border-primary-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
               </div>
@@ -508,13 +506,10 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   할인 금액
                 </label>
-                <input
-                  type="number"
-                  value={editData.discount_amount || ''}
-                  onChange={(e) => setEditData({ ...editData, discount_amount: e.target.value === '' ? 0 : parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                  min="0"
-                  step="10000"
+                <MoneyInput
+                  value={editData.discount_amount}
+                  onChange={(discount_amount) => setEditData({ ...editData, discount_amount })}
+                  className="focus:ring-primary-500 focus:border-primary-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
               </div>
