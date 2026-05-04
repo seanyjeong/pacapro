@@ -49,7 +49,9 @@ const {
     extractDayNumbers,
     reassignStudentSchedules,
     truncateToThousands,
-    logger
+    logger,
+    logAudit,
+    getAuditInfoFromReq
 } = require('./_utils');
 
 module.exports = function(router) {
