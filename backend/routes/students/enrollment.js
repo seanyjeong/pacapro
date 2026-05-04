@@ -136,13 +136,20 @@ router.post('/:id/withdraw', verifyToken, checkPermission('students', 'edit'), a
             [finalWithdrawalDate, reason || null, studentId]
         );
 
-        // 미래 미체크 출결 예약 정리
+        // 출결 정리 정책 (사장님 확정 2026-05-04):
+        //  - 과거 (< today): 출석 이력 보존 (삭제 X)
+        //  - 당일 (= today): 무조건 삭제 (체크된 것도 — 퇴원했으니 그날 깨끗하게)
+        //  - 미래 (> today): 미체크 (NULL) 만 삭제 (이미 출석 처리된 것은 보존)
         const today = new Date().toISOString().split('T')[0];
         await pool.execute(
             `DELETE a FROM attendance a
              JOIN class_schedules cs ON a.class_schedule_id = cs.id
-             WHERE a.student_id = ? AND cs.class_date >= ? AND a.attendance_status IS NULL`,
-            [studentId, today]
+             WHERE a.student_id = ?
+               AND (
+                 cs.class_date = ?
+                 OR (cs.class_date > ? AND a.attendance_status IS NULL)
+               )`,
+            [studentId, today, today]
         );
 
         res.json({
