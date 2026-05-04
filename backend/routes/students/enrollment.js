@@ -141,7 +141,7 @@ router.post('/:id/withdraw', verifyToken, checkPermission('students', 'edit'), a
         await pool.execute(
             `DELETE a FROM attendance a
              JOIN class_schedules cs ON a.class_schedule_id = cs.id
-             WHERE a.student_id = ? AND cs.class_date > ? AND a.attendance_status IS NULL`,
+             WHERE a.student_id = ? AND cs.class_date >= ? AND a.attendance_status IS NULL`,
             [studentId, today]
         );
 
