@@ -30,6 +30,7 @@ const verifyToken = async (req, res, next) => {
             const academyId = req.query.academy_id || req.body.academy_id || null;
             req.user = {
                 id: 0,
+                userId: 0, // 호환성 위해 둘 다 설정
                 email: 'n8n@system',
                 name: 'N8N Service',
                 role: 'admin',
@@ -103,6 +104,7 @@ const verifyToken = async (req, res, next) => {
         // Attach user to request
         req.user = {
             id: user.id,
+            userId: user.id, // 호환성 위해 둘 다 설정 (12개 라우트가 req.user.userId 사용)
             email: user.email,
             name: user.name,
             role: user.role,
