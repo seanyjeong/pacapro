@@ -10,9 +10,12 @@
  *   - verifyToken + requireRole('owner') — 지급 처리는 owner 만.
  *
  * DB 패턴 (ADR-005):
- *   - pool.execute(sql, params) 통일.
+ *   - pool.getConnection() + beginTransaction/commit/rollback 패턴 적용.
+ *     (salary_records UPDATE 와 expenses INSERT 가 한 트랜잭션 — 부분 성공 차단.)
+ *   - connection.execute(sql, params) 통일.
  *   - bulk-pay 의 IN 절 2건 (조회 + UPDATE) 은 ADR-016 표준 (자리표시자 N개 명시 전개 + spread params) 적용.
  *   - bulk INSERT (expenses) 는 자리표시자 N×8 펼침으로 ADR-005 prepared statement 호환.
+ *   - finally 에서 connection.release() 필수 (커넥션 누수 차단).
  *
  * 한국어 메시지 (ADR-003):
  *   - 사용자 노출 message 한국어 친화. error code 영문 표준화.
@@ -40,15 +43,18 @@ module.exports = function(router) {
      * - ADR-016: IN 절 자리표시자 N개 명시 전개.
      */
     router.post('/bulk-pay', verifyToken, requireRole('owner'), async (req, res) => {
+        const connection = await pool.getConnection();
         try {
             const { year_month, salary_ids, payment_date } = req.body;
+
+            await connection.beginTransaction();
 
             let salariesToPay = [];
 
             if (salary_ids && salary_ids.length > 0) {
                 // ADR-016: IN 절 자리표시자 명시 전개
                 const placeholders = salary_ids.map(() => '?').join(',');
-                const [rows] = await pool.execute(
+                const [rows] = await connection.execute(
                     `SELECT s.id, s.instructor_id, s.net_salary, s.\`year_month\`,
                             i.academy_id, i.name as instructor_name
                      FROM salary_records s
@@ -60,7 +66,7 @@ module.exports = function(router) {
                 );
                 salariesToPay = rows;
             } else if (year_month) {
-                const [rows] = await pool.execute(
+                const [rows] = await connection.execute(
                     `SELECT s.id, s.instructor_id, s.net_salary, s.\`year_month\`,
                             i.academy_id, i.name as instructor_name
                      FROM salary_records s
@@ -72,6 +78,7 @@ module.exports = function(router) {
                 );
                 salariesToPay = rows;
             } else {
+                await connection.rollback();
                 return res.status(400).json({
                     error: 'VALIDATION_ERROR',
                     message: 'year_month 또는 salary_ids 중 하나는 반드시 지정해야 합니다.'
@@ -79,6 +86,7 @@ module.exports = function(router) {
             }
 
             if (salariesToPay.length === 0) {
+                await connection.commit();
                 return res.status(200).json({
                     message: '지급 처리할 미지급 급여가 없습니다.',
                     paid_count: 0,
@@ -91,7 +99,7 @@ module.exports = function(router) {
 
             // ADR-016: UPDATE IN 절 자리표시자 명시 전개
             const updatePlaceholders = paidIds.map(() => '?').join(',');
-            await pool.execute(
+            await connection.execute(
                 `UPDATE salary_records
                  SET payment_status = 'paid', payment_date = ?, updated_at = NOW()
                  WHERE id IN (${updatePlaceholders})`,
@@ -114,13 +122,15 @@ module.exports = function(router) {
                         req.user.userId
                     );
                 }
-                await pool.execute(
+                await connection.execute(
                     `INSERT INTO expenses (
                         academy_id, expense_date, category, amount, salary_id, instructor_id, description, recorded_by
                     ) VALUES ${valuesPart}`,
                     insertParams
                 );
             }
+
+            await connection.commit();
 
             res.json({
                 message: `${salariesToPay.length}건의 급여가 지급 처리되었습니다.`,
@@ -133,11 +143,14 @@ module.exports = function(router) {
                 }))
             });
         } catch (error) {
+            await connection.rollback();
             logger.error('Error bulk paying salaries:', error);
             res.status(500).json({
                 error: 'BULK_PAY_FAILED',
                 message: '급여 일괄 지급에 실패했습니다.'
             });
+        } finally {
+            connection.release();
         }
     });
 
@@ -148,11 +161,14 @@ module.exports = function(router) {
      */
     router.post('/:id/pay', verifyToken, requireRole('owner'), async (req, res) => {
         const salaryId = parseInt(req.params.id);
+        const connection = await pool.getConnection();
 
         try {
             const { payment_date } = req.body;
 
-            const [salaries] = await pool.execute(
+            await connection.beginTransaction();
+
+            const [salaries] = await connection.execute(
                 `SELECT s.*, i.academy_id, i.name as instructor_name
                  FROM salary_records s
                  JOIN instructors i ON s.instructor_id = i.id
@@ -161,6 +177,7 @@ module.exports = function(router) {
             );
 
             if (salaries.length === 0) {
+                await connection.rollback();
                 return res.status(404).json({
                     error: 'NOT_FOUND',
                     message: '급여 기록을 찾을 수 없습니다.'
@@ -170,6 +187,7 @@ module.exports = function(router) {
             const salary = salaries[0];
 
             if (salary.academy_id !== req.user.academyId) {
+                await connection.rollback();
                 return res.status(403).json({
                     error: 'FORBIDDEN',
                     message: '접근 권한이 없습니다.'
@@ -179,7 +197,7 @@ module.exports = function(router) {
             const actualPaymentDate = payment_date || new Date().toISOString().split('T')[0];
 
             // 지급 상태 업데이트
-            await pool.execute(
+            await connection.execute(
                 `UPDATE salary_records
                  SET payment_status = 'paid', payment_date = ?, updated_at = NOW()
                  WHERE id = ?`,
@@ -187,7 +205,7 @@ module.exports = function(router) {
             );
 
             // 지출 기록
-            await pool.execute(
+            await connection.execute(
                 `INSERT INTO expenses (
                     academy_id,
                     expense_date,
@@ -210,7 +228,7 @@ module.exports = function(router) {
             );
 
             // 업데이트된 레코드 조회
-            const [updated] = await pool.execute(
+            const [updated] = await connection.execute(
                 `SELECT s.*, i.name as instructor_name
                  FROM salary_records s
                  JOIN instructors i ON s.instructor_id = i.id
@@ -218,16 +236,21 @@ module.exports = function(router) {
                 [salaryId]
             );
 
+            await connection.commit();
+
             res.json({
                 message: '급여 지급이 등록되었습니다.',
                 salary: decryptInstructorName(updated[0])
             });
         } catch (error) {
+            await connection.rollback();
             logger.error('Error recording salary payment:', error);
             res.status(500).json({
                 error: 'PAY_FAILED',
                 message: '급여 지급 등록에 실패했습니다.'
             });
+        } finally {
+            connection.release();
         }
     });
 };
