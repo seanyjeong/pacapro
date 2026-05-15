@@ -40,13 +40,20 @@ class APIClient {
         // 에러 처리 (primary + fallback 공통)
         const handleError = (error: any) => {
             if (error.response?.status === 401) {
-                this.clearAuth();
-                if (typeof window !== 'undefined' &&
-                    !window.location.pathname.startsWith('/login') &&
-                    !window.location.pathname.startsWith('/register') &&
-                    !window.location.pathname.startsWith('/forgot-password') &&
-                    !window.location.pathname.startsWith('/reset-password')) {
-                    window.location.href = '/login';
+                // /auth/verify-password 는 중요 작업 전 비밀번호 재확인용 —
+                // 401이어도 토큰 만료가 아니라 비번 틀림이므로 모달이 메시지 처리하게 둠
+                const url = error.config?.url || '';
+                const isVerifyPassword = url.includes('/auth/verify-password');
+
+                if (!isVerifyPassword) {
+                    this.clearAuth();
+                    if (typeof window !== 'undefined' &&
+                        !window.location.pathname.startsWith('/login') &&
+                        !window.location.pathname.startsWith('/register') &&
+                        !window.location.pathname.startsWith('/forgot-password') &&
+                        !window.location.pathname.startsWith('/reset-password')) {
+                        window.location.href = '/login';
+                    }
                 }
             } else if (error.response?.status && typeof window !== 'undefined') {
                 const msg = error.response?.data?.error || error.response?.data?.message;
