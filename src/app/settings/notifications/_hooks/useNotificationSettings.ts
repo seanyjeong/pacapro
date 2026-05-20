@@ -90,9 +90,20 @@ export function useNotificationSettings() {
     solapi_reminder_image_url: '',
     solapi_reminder_auto_enabled: false,
     solapi_reminder_hours: 1,
+    // 솔라피 출결관리
+    solapi_attendance_template_id: '',
+    solapi_attendance_template_content: '',
+    solapi_attendance_buttons: [],
+    solapi_attendance_image_url: '',
+    // SENS 출결관리
+    sens_attendance_template_code: '',
+    sens_attendance_template_content: '',
+    sens_attendance_buttons: [],
+    sens_attendance_image_url: '',
     // ===== 공통 설정 =====
     is_enabled: false,
     solapi_enabled: false,
+    attendance_alimtalk_enabled: false,
   });
 
   const [activeTab, setActiveTab] = useState<ServiceType>('sens');

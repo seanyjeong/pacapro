@@ -363,6 +363,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
 
         const validStatuses = ['present', 'absent', 'late', 'excused', 'makeup'];
         const processedRecords = [];
+        const notifyTargets = [];
 
         for (const record of attendance_records) {
             const { student_id, attendance_status, makeup_date, notes } = record;
@@ -503,6 +504,9 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                 `SELECT attendance_status FROM attendance WHERE class_schedule_id = ? AND student_id = ?`,
                 [scheduleId, student_id]
             );
+            const prevStatus = existingAttendance.length > 0
+                ? existingAttendance[0].attendance_status
+                : null;
             const wasAlreadyPresent = existingAttendance.length > 0 &&
                 ['present', 'late'].includes(existingAttendance[0].attendance_status);
 
@@ -519,6 +523,9 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                 updated_at = CURRENT_TIMESTAMP`,
                 [scheduleId, student_id, attendance_status, attendance_status === 'makeup' ? makeup_date : null, notes || null, req.user.id]
             );
+
+            // 알림톡 발송 대상 수집 (트랜잭션 커밋 후 비동기 발송용)
+            notifyTargets.push({ student_id, attendance_status, notes: notes || null, prevStatus });
 
             // 체험생이고 출석(present) 또는 지각(late)인 경우 trial_remaining 차감
             const isAttended = ['present', 'late'].includes(attendance_status);
@@ -597,6 +604,20 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
             class_date: schedule.class_date,
             attendance_records: processedRecords
         });
+
+        // 출결 알림톡 비동기 발송 (fire-and-forget — 발송 실패가 출결 응답을 깨지 않음)
+        if (notifyTargets.length > 0) {
+            setImmediate(() =>
+                require('../../utils/attendanceNotify').notifyAttendance({
+                    pool: db,
+                    decrypt,
+                    academyId: req.user.academyId,
+                    scheduleId,
+                    classDate: schedule.class_date,
+                    targets: notifyTargets
+                }).catch(e => logger.error('[AttendanceNotify]', e))
+            );
+        }
     } catch (error) {
         await connection.rollback();
         connection.release();

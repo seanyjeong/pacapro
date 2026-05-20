@@ -1,7 +1,7 @@
 'use client';
 
 // Phase 4 #1 — 솔라피 템플릿 탭 + 5개 템플릿 폼 sub-component
-import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, Image } from 'lucide-react';
+import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, Image, ClipboardCheck } from 'lucide-react';
 import { NotificationSettings, ConsultationButton } from '@/lib/api/notifications';
 import { TemplateType } from '../_types';
 import AlimtalkPreview from './AlimtalkPreview';
@@ -95,6 +95,10 @@ export default function SolapiTemplates({
           <button onClick={() => setActiveTemplate('reminder')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTemplate === 'reminder' ? 'bg-purple-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}>
             <Clock className="w-4 h-4" />상담 리마인드
             {settings.solapi_reminder_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'reminder' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
+          </button>
+          <button onClick={() => setActiveTemplate('attendance')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTemplate === 'attendance' ? 'bg-teal-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}>
+            <ClipboardCheck className="w-4 h-4" />출결관리 알림톡
+            {settings.solapi_attendance_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'attendance' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
           </button>
         </div>
       </div>
@@ -439,6 +443,49 @@ export default function SolapiTemplates({
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={onSave} disabled={saving} className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
                 {saving ? '저장 중...' : '상담 리마인드 알림톡 설정 저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 출결관리 */}
+      {activeTemplate === 'attendance' && (
+        <div className="bg-card rounded-lg shadow-sm border border-teal-200 dark:border-teal-800 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2 flex items-center justify-between">
+              <div>
+                <p className="font-medium text-foreground">출결 알림톡 발송</p>
+                <p className="text-sm text-muted-foreground">출결 기록 시 보호자에게 자동으로 알림톡 발송</p>
+              </div>
+              <button onClick={() => setSettings(prev => ({ ...prev, attendance_alimtalk_enabled: !prev.attendance_alimtalk_enabled }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.attendance_alimtalk_enabled ? 'bg-teal-600' : 'bg-muted'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.attendance_alimtalk_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 ID</label>
+              <input type="text" value={settings.solapi_attendance_template_id} onChange={e => setSettings(prev => ({ ...prev, solapi_attendance_template_id: e.target.value }))}
+                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="KA01TP..." />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용 · 솔라피 승인본과 동일하게)</label>
+              <textarea value={settings.solapi_attendance_template_content} onChange={e => setSettings(prev => ({ ...prev, solapi_attendance_template_content: e.target.value }))}
+                rows={6} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-mono text-sm"
+                placeholder={`안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월}월 #{일}일 #{요일}요일 수업 #{출결상태}하였습니다.`} />
+            </div>
+            <div className="md:col-span-2 p-3 bg-teal-50 dark:bg-teal-950 rounded-lg border border-teal-200 dark:border-teal-800">
+              <p className="text-sm font-medium text-teal-800 dark:text-teal-200 mb-2">사용 가능한 변수</p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                {[['#{학원명}','학원 이름'],['#{이름}','학생명'],['#{월}','월'],['#{일}','일'],['#{요일}','요일'],['#{출결상태}','출석/지각/결석']].map(([code, label]) => (
+                  <div key={code} className="flex items-center gap-2"><code className="bg-card px-2 py-1 rounded border border-border text-teal-700 dark:text-teal-300">{code}</code><span className="text-muted-foreground">{label}</span></div>
+                ))}
+              </div>
+            </div>
+            <AlimtalkPreview academyName={academyName} templateContent={settings.solapi_attendance_template_content} imageUrl="" buttons={[]}
+              replacements={{'#{학원명}':academyName,'#{이름}':'홍길동','#{월}':'5','#{일}':'18','#{요일}':'월','#{출결상태}':'출석'}} />
+            <div className="md:col-span-2 pt-4 border-t border-border">
+              <button onClick={onSave} disabled={saving} className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
+                {saving ? '저장 중...' : '출결관리 알림톡 설정 저장'}
               </button>
             </div>
           </div>

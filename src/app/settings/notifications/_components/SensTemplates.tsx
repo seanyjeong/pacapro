@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, Image, Plus, Trash2 } from 'lucide-react';
+import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, Image, Plus, Trash2, ClipboardCheck } from 'lucide-react';
 import { NotificationSettings, ConsultationButton } from '@/lib/api/notifications';
 import type { TemplateType } from '../_types';
 
@@ -195,6 +195,7 @@ export default function SensTemplates({
             { key: 'consultation' as TemplateType, label: '상담확정', icon: <Bell className="w-4 h-4" />, activeColor: 'bg-green-600', setCode: settings.sens_consultation_template_code },
             { key: 'trial' as TemplateType, label: '체험수업', icon: <GraduationCap className="w-4 h-4" />, activeColor: 'bg-blue-600', setCode: settings.sens_trial_template_code },
             { key: 'reminder' as TemplateType, label: '상담 리마인드', icon: <Clock className="w-4 h-4" />, activeColor: 'bg-purple-600', setCode: settings.sens_reminder_template_code },
+            { key: 'attendance' as TemplateType, label: '출결관리', icon: <ClipboardCheck className="w-4 h-4" />, activeColor: 'bg-teal-600', setCode: settings.sens_attendance_template_code },
           ].map(({ key, label, icon, activeColor, setCode }) => (
             <button
               key={key}
@@ -553,6 +554,36 @@ export default function SensTemplates({
             {/* 저장 */}
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '상담 리마인드 설정 저장'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* SENS 출결관리 템플릿 */}
+      {activeSensTemplate === 'attendance' && (
+        <div className="bg-card rounded-lg shadow-sm border border-teal-200 dark:border-teal-800 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2 flex items-center justify-between">
+              <div>
+                <p className="font-medium text-foreground">출결 알림톡 발송</p>
+                <p className="text-sm text-muted-foreground">출결 기록 시 보호자에게 자동으로 알림톡 발송</p>
+              </div>
+              <button onClick={() => setSettings(prev => ({ ...prev, attendance_alimtalk_enabled: !prev.attendance_alimtalk_enabled }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.attendance_alimtalk_enabled ? 'bg-teal-600' : 'bg-muted'}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.attendance_alimtalk_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 코드</label>
+              <input type="text" value={settings.sens_attendance_template_code} onChange={e => setSettings(prev => ({ ...prev, sens_attendance_template_code: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="템플릿 코드 (SENS 콘솔에서 확인)" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용 · SENS 승인본과 동일하게)</label>
+              <textarea value={settings.sens_attendance_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_attendance_template_content: e.target.value }))} rows={6} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-mono text-sm" placeholder={`안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월}월 #{일}일 #{요일}요일 수업 #{출결상태}하였습니다.`} />
+              <p className="text-xs text-muted-foreground mt-1">사용 가능 변수: #{`{학원명}`}, #{`{이름}`}, #{`{월}`}, #{`{일}`}, #{`{요일}`}, #{`{출결상태}`}(출석/지각/결석)</p>
+            </div>
+            {/* 저장 */}
+            <div className="md:col-span-2 pt-4 border-t border-border">
+              <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '출결관리 설정 저장'}</button>
             </div>
           </div>
         </div>

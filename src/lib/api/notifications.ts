@@ -107,6 +107,17 @@ export interface NotificationSettings {
   solapi_reminder_auto_enabled: boolean;
   solapi_reminder_hours: number;
 
+  // 출결관리 (출결 기록 시 보호자 알림톡)
+  solapi_attendance_template_id: string;
+  solapi_attendance_template_content: string;
+  solapi_attendance_buttons: ConsultationButton[];
+  solapi_attendance_image_url: string;
+  sens_attendance_template_code: string;
+  sens_attendance_template_content: string;
+  sens_attendance_buttons: ConsultationButton[];
+  sens_attendance_image_url: string;
+  attendance_alimtalk_enabled: boolean;
+
   // ===== 공통 설정 =====
   is_enabled: boolean;        // SENS 활성화
   solapi_enabled: boolean;    // 솔라피 활성화
