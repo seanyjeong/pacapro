@@ -105,7 +105,18 @@ router.get('/settings', verifyToken, checkPermission('notifications', 'view'), a
                     sens_overdue_buttons: [],
                     sens_overdue_image_url: '',
                     sens_overdue_auto_enabled: false,
-                    sens_overdue_auto_hour: 9
+                    sens_overdue_auto_hour: 9,
+                    // 솔라피 출결관리
+                    solapi_attendance_template_id: '',
+                    solapi_attendance_template_content: '',
+                    solapi_attendance_buttons: [],
+                    solapi_attendance_image_url: '',
+                    // SENS 출결관리
+                    sens_attendance_template_code: '',
+                    sens_attendance_template_content: '',
+                    sens_attendance_buttons: [],
+                    sens_attendance_image_url: '',
+                    attendance_alimtalk_enabled: false
                 }
             });
         }
@@ -193,7 +204,18 @@ router.get('/settings', verifyToken, checkPermission('notifications', 'view'), a
                 sens_reminder_buttons: setting.sens_reminder_buttons ? JSON.parse(setting.sens_reminder_buttons) : [],
                 sens_reminder_image_url: setting.sens_reminder_image_url || '',
                 sens_reminder_auto_enabled: setting.sens_reminder_auto_enabled || false,
-                sens_reminder_hours: setting.sens_reminder_hours ?? 1
+                sens_reminder_hours: setting.sens_reminder_hours ?? 1,
+                // 솔라피 출결관리 알림톡 설정
+                solapi_attendance_template_id: setting.solapi_attendance_template_id || '',
+                solapi_attendance_template_content: setting.solapi_attendance_template_content || '',
+                solapi_attendance_buttons: setting.solapi_attendance_buttons ? JSON.parse(setting.solapi_attendance_buttons) : [],
+                solapi_attendance_image_url: setting.solapi_attendance_image_url || '',
+                // SENS 출결관리 알림톡 설정
+                sens_attendance_template_code: setting.sens_attendance_template_code || '',
+                sens_attendance_template_content: setting.sens_attendance_template_content || '',
+                sens_attendance_buttons: setting.sens_attendance_buttons ? JSON.parse(setting.sens_attendance_buttons) : [],
+                sens_attendance_image_url: setting.sens_attendance_image_url || '',
+                attendance_alimtalk_enabled: setting.attendance_alimtalk_enabled || false
             }
         });
     } catch (error) {
@@ -301,7 +323,18 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
             sens_reminder_buttons,
             sens_reminder_image_url,
             sens_reminder_auto_enabled,
-            sens_reminder_hours
+            sens_reminder_hours,
+            // 솔라피 출결관리
+            solapi_attendance_template_id,
+            solapi_attendance_template_content,
+            solapi_attendance_buttons,
+            solapi_attendance_image_url,
+            // SENS 출결관리
+            sens_attendance_template_code,
+            sens_attendance_template_content,
+            sens_attendance_buttons,
+            sens_attendance_image_url,
+            attendance_alimtalk_enabled
         } = req.body;
 
         // 기존 설정 확인
@@ -349,8 +382,11 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
                  solapi_reminder_template_id, solapi_reminder_template_content, solapi_reminder_buttons, solapi_reminder_image_url,
                  solapi_reminder_auto_enabled, solapi_reminder_hours,
                  sens_reminder_template_code, sens_reminder_template_content, sens_reminder_buttons, sens_reminder_image_url,
-                 sens_reminder_auto_enabled, sens_reminder_hours)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 sens_reminder_auto_enabled, sens_reminder_hours,
+                 solapi_attendance_template_id, solapi_attendance_template_content, solapi_attendance_buttons, solapi_attendance_image_url,
+                 sens_attendance_template_code, sens_attendance_template_content, sens_attendance_buttons, sens_attendance_image_url,
+                 attendance_alimtalk_enabled)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     req.user.academyId,
                     service_type || 'sens',
@@ -422,7 +458,17 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
                     sens_reminder_buttons ? JSON.stringify(sens_reminder_buttons) : null,
                     sens_reminder_image_url || null,
                     sens_reminder_auto_enabled || false,
-                    sens_reminder_hours ?? 1
+                    sens_reminder_hours ?? 1,
+                    // 출결관리 필드
+                    solapi_attendance_template_id || null,
+                    solapi_attendance_template_content || null,
+                    solapi_attendance_buttons ? JSON.stringify(solapi_attendance_buttons) : null,
+                    solapi_attendance_image_url || null,
+                    sens_attendance_template_code || null,
+                    sens_attendance_template_content || null,
+                    sens_attendance_buttons ? JSON.stringify(sens_attendance_buttons) : null,
+                    sens_attendance_image_url || null,
+                    attendance_alimtalk_enabled || false
                 ]
             );
         } else {
@@ -496,7 +542,16 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
                     sens_reminder_buttons = ?,
                     sens_reminder_image_url = ?,
                     sens_reminder_auto_enabled = ?,
-                    sens_reminder_hours = ?
+                    sens_reminder_hours = ?,
+                    solapi_attendance_template_id = ?,
+                    solapi_attendance_template_content = ?,
+                    solapi_attendance_buttons = ?,
+                    solapi_attendance_image_url = ?,
+                    sens_attendance_template_code = ?,
+                    sens_attendance_template_content = ?,
+                    sens_attendance_buttons = ?,
+                    sens_attendance_image_url = ?,
+                    attendance_alimtalk_enabled = ?
                 WHERE academy_id = ?`,
                 [
                     service_type || 'sens',
@@ -569,6 +624,16 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
                     sens_reminder_image_url || null,
                     sens_reminder_auto_enabled || false,
                     sens_reminder_hours ?? 1,
+                    // 출결관리 필드
+                    solapi_attendance_template_id || null,
+                    solapi_attendance_template_content || null,
+                    solapi_attendance_buttons ? JSON.stringify(solapi_attendance_buttons) : null,
+                    solapi_attendance_image_url || null,
+                    sens_attendance_template_code || null,
+                    sens_attendance_template_content || null,
+                    sens_attendance_buttons ? JSON.stringify(sens_attendance_buttons) : null,
+                    sens_attendance_image_url || null,
+                    attendance_alimtalk_enabled || false,
                     req.user.academyId
                 ]
             );

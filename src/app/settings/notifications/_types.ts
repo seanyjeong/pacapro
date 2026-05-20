@@ -10,4 +10,4 @@ export interface SenderNumber {
 }
 
 export type ServiceType = 'sens' | 'solapi';
-export type TemplateType = 'unpaid' | 'consultation' | 'trial' | 'overdue' | 'reminder';
+export type TemplateType = 'unpaid' | 'consultation' | 'trial' | 'overdue' | 'reminder' | 'attendance';
