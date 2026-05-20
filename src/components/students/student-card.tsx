@@ -144,7 +144,7 @@ export function StudentCard({ student, onEdit, onDelete, onGraduate, onWithdraw,
               </a>
             </div>
             <div>
-              <div className="text-sm text-muted-foreground mb-1">학부모 연락처</div>
+              <div className="text-sm text-muted-foreground mb-1">연락처</div>
               <div className="flex items-center text-foreground">
                 <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
                 {formatPhoneNumber(student.parent_phone)}
