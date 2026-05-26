@@ -5,6 +5,7 @@ const DEFAULT_POLICY = {
   consecutiveAbsenceThreshold: 2,
   plateauRatio: 0.02,
   plateauAbsolute: 0.5,
+  standingLongJumpAvgThresholds: { male: 250, female: 200 },
   excusedKeywords: ['병원', '부상', '대회', '학교', '시험', '공결', '사전', '가족'],
 };
 
@@ -31,7 +32,7 @@ function buildConsultationCandidates(input) {
     if (candidate) candidates.push(candidate);
   }
 
-  candidates.sort((a, b) => b.score - a.score || a.student.name.localeCompare(b.student.name, 'ko'));
+  candidates.sort(compareCandidates);
   return {
     period: {
       end_date: formatDate(today),
@@ -45,6 +46,15 @@ function buildConsultationCandidates(input) {
     },
     candidates: candidates.slice(0, limit),
   };
+}
+
+function compareCandidates(a, b) {
+  return b.score - a.score
+    || b.signals.attendance.max_consecutive_absences - a.signals.attendance.max_consecutive_absences
+    || b.signals.attendance.unexcused_absences - a.signals.attendance.unexcused_absences
+    || b.signals.records.problem_count - a.signals.records.problem_count
+    || b.signals.records.declining_count - a.signals.records.declining_count
+    || a.student.name.localeCompare(b.student.name, 'ko');
 }
 
 function analyzeAttendance(rows, policy = DEFAULT_POLICY) {
@@ -85,9 +95,11 @@ function analyzeAttendance(rows, policy = DEFAULT_POLICY) {
 function analyzeRecords(rows, policy = DEFAULT_POLICY) {
   const grouped = groupBy(rows || [], recordGroupKey);
   const problemRecords = [];
+  const recentRecords = [];
 
   for (const records of grouped.values()) {
     const trend = analyzeRecordTrend(records, policy);
+    if (trend) recentRecords.push(trend);
     if (trend && ['declining', 'plateau'].includes(trend.trend)) {
       problemRecords.push(trend);
     }
@@ -95,6 +107,7 @@ function analyzeRecords(rows, policy = DEFAULT_POLICY) {
 
   problemRecords.sort((a, b) => trendPriority(b.trend) - trendPriority(a.trend));
   return {
+    recent_records: recentRecords,
     problem_count: problemRecords.length,
     declining_count: problemRecords.filter((item) => item.trend === 'declining').length,
     plateau_count: problemRecords.filter((item) => item.trend === 'plateau').length,
@@ -138,6 +151,7 @@ function analyzeRecordTrend(records, policy = DEFAULT_POLICY) {
     trend,
     latest,
     oldest,
+    average: roundMetric(samples.reduce((sum, sample) => sum + sample.value, 0) / samples.length),
     unit: samples[0].unit || '',
     samples: chronological.map((sample) => ({
       measured_at: sample.measured_at,
@@ -149,6 +163,7 @@ function analyzeRecordTrend(records, policy = DEFAULT_POLICY) {
 function buildCandidate(student, peakStudent, attendanceSignals, recordSignals, today, attendanceDays, policy) {
   const reasons = [];
   let score = 0;
+  const lowStandingLongJump = standingLongJumpSignal(student, recordSignals, policy);
 
   if (attendanceSignals.max_consecutive_absences >= policy.consecutiveAbsenceThreshold) {
     score += 45;
@@ -162,6 +177,10 @@ function buildCandidate(student, peakStudent, attendanceSignals, recordSignals, 
     score += 35 + (recordSignals.declining_count * 8);
     reasons.push(`최근 5개 기록 기준 하락/정체 종목 ${recordSignals.problem_count}개`);
   }
+  if (lowStandingLongJump) {
+    score += 40;
+    reasons.push(lowStandingLongJump.reason);
+  }
 
   if (score <= 0) return null;
   return {
@@ -171,6 +190,7 @@ function buildCandidate(student, peakStudent, attendanceSignals, recordSignals, 
       name: student.name || '',
       school: student.school || '',
       grade: student.grade || '',
+      gender: student.gender || null,
     },
     priority: score >= 80 ? 'high' : score >= 45 ? 'medium' : 'low',
     score,
@@ -178,9 +198,29 @@ function buildCandidate(student, peakStudent, attendanceSignals, recordSignals, 
     signals: {
       attendance: attendanceSignals,
       records: recordSignals,
+      absolute_performance: {
+        low_standing_long_jump: lowStandingLongJump,
+      },
     },
     suggested_action: suggestedAction(attendanceSignals, recordSignals, policy),
     generated_at: formatDate(today),
+  };
+}
+
+function standingLongJumpSignal(student, recordSignals, policy) {
+  const gender = String(student.gender || '').trim().toLowerCase();
+  const threshold = policy.standingLongJumpAvgThresholds[gender];
+  if (!threshold) return null;
+  const record = (recordSignals.recent_records || []).find((item) => item.event_name === '제자리멀리뛰기');
+  if (!record || !Number.isFinite(record.average) || record.average > threshold) return null;
+  const genderLabel = gender === 'female' ? '여자' : '남자';
+  return {
+    event_name: record.event_name,
+    average: record.average,
+    threshold,
+    unit: record.unit || 'cm',
+    sample_count: record.samples.length,
+    reason: `제자리멀리뛰기 최근 ${record.samples.length}개 평균 ${formatMetric(record.average)}${record.unit || 'cm'} (${genderLabel} 기준 ${threshold}cm 이하)`,
   };
 }
 
@@ -250,6 +290,14 @@ function improvementAmount(latest, oldest, direction) {
 
 function trendPriority(trend) {
   return trend === 'declining' ? 2 : trend === 'plateau' ? 1 : 0;
+}
+
+function roundMetric(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function formatMetric(value) {
+  return Number.isInteger(value) ? String(value) : String(roundMetric(value));
 }
 
 function parseIsoDate(value) {

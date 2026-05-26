@@ -88,6 +88,63 @@ describe('consultationCandidateService', () => {
       ]),
     );
   });
+
+  test('제자리멀리뛰기 최근 5개 평균이 성별 기준 이하이면 상담 신호로 잡는다', () => {
+    const result = buildConsultationCandidates({
+      today: '2026-05-27',
+      attendanceDays: 14,
+      students: [
+        { id: 1, name: '남학생', gender: 'male', status: 'active' },
+        { id: 2, name: '여학생', gender: 'female', status: 'active' },
+      ],
+      peakStudents: [
+        { id: 101, paca_student_id: 1, status: 'active' },
+        { id: 102, paca_student_id: 2, status: 'active' },
+      ],
+      attendanceRows: [],
+      recordRows: [
+        ...recordSet(101, 11, '제자리멀리뛰기', [245, 246, 247, 248, 249]),
+        ...recordSet(102, 11, '제자리멀리뛰기', [198, 199, 200, 199, 198]),
+      ],
+      limit: 10,
+    });
+
+    expect(result.candidates).toHaveLength(2);
+    expect(result.candidates[0].reasons.join(' ')).toContain('남자 기준 250cm 이하');
+    expect(result.candidates[1].signals.absolute_performance.low_standing_long_jump).toMatchObject({
+      average: 198.8,
+      threshold: 200,
+    });
+  });
+
+  test('점수가 같으면 문제 기록 개수로 상담 후보 순서를 정한다', () => {
+    const result = buildConsultationCandidates({
+      today: '2026-05-27',
+      attendanceDays: 7,
+      students: [
+        { id: 1, name: '가학생', status: 'active' },
+        { id: 2, name: '하학생', status: 'active' },
+      ],
+      peakStudents: [
+        { id: 101, paca_student_id: 1, status: 'active' },
+        { id: 102, paca_student_id: 2, status: 'active' },
+      ],
+      attendanceRows: [],
+      recordRows: [
+        ...recordSet(101, 11, '제자리멀리뛰기', [250, 246, 242, 239, 235]),
+        ...recordSet(101, 12, '메디신볼', [8.0, 7.8, 7.6, 7.4, 7.2]),
+        ...recordSet(102, 21, '제자리멀리뛰기', [250, 246, 242, 239, 235]),
+        ...recordSet(102, 22, '메디신볼', [8.0, 7.8, 7.6, 7.4, 7.2]),
+        ...recordSet(102, 23, '좌전굴', [20, 20, 20, 20, 20]),
+      ],
+      limit: 2,
+    });
+
+    expect(result.candidates.map((candidate) => candidate.student.name)).toEqual([
+      '하학생',
+      '가학생',
+    ]);
+  });
 });
 
 function sample(measuredAt, value, overrides = {}) {

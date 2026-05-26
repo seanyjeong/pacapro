@@ -56,7 +56,7 @@ router.get('/', verifyToken, async (req, res) => {
 
 async function loadActiveStudents(academyId) {
   const [rows] = await pool.execute(
-    `SELECT id, name, school, grade, status
+    `SELECT id, name, school, grade, gender, status
      FROM students
      WHERE academy_id = ?
        AND deleted_at IS NULL
