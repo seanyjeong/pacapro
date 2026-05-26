@@ -5,7 +5,7 @@
  *   - 2 endpoint × 응답 표면 (ADR-013):
  *     POST /bulk-pay        → { message, paid_count, salaries:[{id, instructor_name, net_salary, year_month}] }
  *     POST /:id/pay         → { message, salary: <decryptedRow> }
- *   - DB 호출 패턴 (ADR-005): pool.execute 만
+ *   - DB 호출 패턴 (ADR-005): connection.execute 트랜잭션
  *   - IN 절 자리표시자 명시 전개 (ADR-016): bulk-pay SELECT + UPDATE 두 군데
  *   - bulk INSERT (expenses) 자리표시자 N×8 명시 전개 (ADR-005 prepared statement 호환)
  *   - 한국어 친화 메시지 (ADR-003) + e.message 누출 0건
@@ -15,6 +15,7 @@
 jest.mock('../../../config/database', () => ({
   query: jest.fn(),
   execute: jest.fn(),
+  getConnection: jest.fn(),
 }));
 
 jest.mock('../../../middleware/auth', () => ({
@@ -41,6 +42,13 @@ jest.mock('../../../utils/logger', () => ({
 const express = require('express');
 const request = require('supertest');
 const pool = require('../../../config/database');
+const fakeConn = {
+  execute: jest.fn(),
+  beginTransaction: jest.fn(),
+  commit: jest.fn(),
+  rollback: jest.fn(),
+  release: jest.fn(),
+};
 
 function makeApp() {
   const app = express();
@@ -54,6 +62,12 @@ function makeApp() {
 function resetMocks() {
   pool.execute.mockReset();
   pool.query.mockReset();
+  pool.getConnection.mockReset().mockResolvedValue(fakeConn);
+  fakeConn.execute.mockReset();
+  fakeConn.beginTransaction.mockReset().mockResolvedValue();
+  fakeConn.commit.mockReset().mockResolvedValue();
+  fakeConn.rollback.mockReset().mockResolvedValue();
+  fakeConn.release.mockReset();
 }
 
 describe('POST /paca/salaries/bulk-pay', () => {
@@ -68,7 +82,7 @@ describe('POST /paca/salaries/bulk-pay', () => {
   });
 
   test('year_month 매칭 0건 → 200 + paid_count 0', async () => {
-    pool.execute.mockResolvedValueOnce([[]]); // SELECT empty
+    fakeConn.execute.mockResolvedValueOnce([[]]); // SELECT empty
 
     const res = await request(makeApp())
       .post('/paca/salaries/bulk-pay')
@@ -86,7 +100,7 @@ describe('POST /paca/salaries/bulk-pay', () => {
       { id: 12, instructor_id: 6, net_salary: 1500000, year_month: '2026-04', academy_id: 1, instructor_name: 'enc:김' },
       { id: 13, instructor_id: 7, net_salary: 2000000, year_month: '2026-04', academy_id: 1, instructor_name: 'enc:이' },
     ];
-    pool.execute
+    fakeConn.execute
       .mockResolvedValueOnce([rows]) // SELECT IN
       .mockResolvedValueOnce([{ affectedRows: 3 }]) // UPDATE IN
       .mockResolvedValueOnce([{ insertId: 50 }]); // INSERT expenses
@@ -101,17 +115,17 @@ describe('POST /paca/salaries/bulk-pay', () => {
     expect(res.body.message).toMatch(/3건의 급여가 지급/);
 
     // ADR-016: SELECT IN 자리표시자 3개 명시 전개
-    const selectCall = pool.execute.mock.calls[0];
+    const selectCall = fakeConn.execute.mock.calls[0];
     expect(selectCall[0]).toMatch(/IN \(\?,\?,\?\)/);
     expect(selectCall[1]).toEqual([11, 12, 13, 1]); // ...salary_ids, academyId
 
     // ADR-016: UPDATE IN 자리표시자 3개 명시 전개
-    const updateCall = pool.execute.mock.calls[1];
+    const updateCall = fakeConn.execute.mock.calls[1];
     expect(updateCall[0]).toMatch(/IN \(\?,\?,\?\)/);
     expect(updateCall[1]).toEqual(['2026-04-30', 11, 12, 13]);
 
     // expenses bulk INSERT: VALUES (?,?,?,?,?,?,?,?), (?,...) × 3
-    const insertCall = pool.execute.mock.calls[2];
+    const insertCall = fakeConn.execute.mock.calls[2];
     expect(insertCall[0]).toMatch(/INSERT INTO expenses/);
     // 자리표시자 명시 전개 (3 × 8 = 24개)
     expect(insertCall[1]).toHaveLength(24);
@@ -121,7 +135,7 @@ describe('POST /paca/salaries/bulk-pay', () => {
     const rows = [
       { id: 21, instructor_id: 8, net_salary: 800000, year_month: '2026-04', academy_id: 1, instructor_name: 'enc:박' },
     ];
-    pool.execute
+    fakeConn.execute
       .mockResolvedValueOnce([rows])
       .mockResolvedValueOnce([{ affectedRows: 1 }])
       .mockResolvedValueOnce([{ insertId: 51 }]);
@@ -138,7 +152,7 @@ describe('POST /paca/salaries/bulk-pay', () => {
   });
 
   test('5xx 에러 → 한국어 + e.message 누출 0건', async () => {
-    pool.execute.mockRejectedValueOnce(new Error('SQL syntax error'));
+    fakeConn.execute.mockRejectedValueOnce(new Error('SQL syntax error'));
 
     const res = await request(makeApp())
       .post('/paca/salaries/bulk-pay')
@@ -155,7 +169,7 @@ describe('POST /paca/salaries/:id/pay', () => {
   beforeEach(() => resetMocks());
 
   test('급여 미존재 → 404 한국어', async () => {
-    pool.execute.mockResolvedValueOnce([[]]);
+    fakeConn.execute.mockResolvedValueOnce([[]]);
 
     const res = await request(makeApp()).post('/paca/salaries/999/pay').send({});
 
@@ -165,7 +179,7 @@ describe('POST /paca/salaries/:id/pay', () => {
   });
 
   test('다른 학원 → 403 한국어', async () => {
-    pool.execute.mockResolvedValueOnce([[
+    fakeConn.execute.mockResolvedValueOnce([[
       { id: 10, instructor_id: 5, net_salary: 1000000, year_month: '2026-04', academy_id: 999, instructor_name: 'enc:홍' }
     ]]);
 
@@ -184,7 +198,7 @@ describe('POST /paca/salaries/:id/pay', () => {
     const updatedRow = {
       ...salaryRow, payment_status: 'paid', payment_date: '2026-04-30'
     };
-    pool.execute
+    fakeConn.execute
       .mockResolvedValueOnce([[salaryRow]]) // SELECT
       .mockResolvedValueOnce([{ affectedRows: 1 }]) // UPDATE salary_records
       .mockResolvedValueOnce([{ insertId: 60 }]) // INSERT expenses
@@ -199,13 +213,13 @@ describe('POST /paca/salaries/:id/pay', () => {
     expect(res.body.salary.id).toBe(10);
     expect(res.body.salary.instructor_name).toBe('홍'); // decrypted
 
-    // ADR-005 검증: 모든 호출이 pool.execute (pool.query 0건)
+    // ADR-005 검증: 모든 호출이 connection.execute (pool.query 0건)
     expect(pool.query).not.toHaveBeenCalled();
-    expect(pool.execute).toHaveBeenCalledTimes(4);
+    expect(fakeConn.execute).toHaveBeenCalledTimes(4);
   });
 
   test('5xx 에러 → 한국어 + e.message 누출 0건', async () => {
-    pool.execute.mockRejectedValueOnce(new Error('Connection lost'));
+    fakeConn.execute.mockRejectedValueOnce(new Error('Connection lost'));
 
     const res = await request(makeApp()).post('/paca/salaries/10/pay').send({});
 
