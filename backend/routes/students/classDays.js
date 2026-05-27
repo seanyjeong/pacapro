@@ -236,13 +236,14 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
         const effectiveDate = effective_from ? new Date(effective_from + 'T00:00:00') : null;
         const isImmediate = !effectiveDate || effectiveDate <= currentMonthFirst;
 
+        const timeSlot = students[0].time_slot || 'evening';
+
         if (isImmediate) {
             const oldClassDays = students[0].class_days
                 ? (typeof students[0].class_days === 'string'
                     ? JSON.parse(students[0].class_days)
                     : students[0].class_days)
                 : [];
-            const timeSlot = students[0].time_slot || 'evening';
 
             // 학원비 자동 계산
             let newTuition = null;
