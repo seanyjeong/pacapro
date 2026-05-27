@@ -50,8 +50,20 @@ jest.mock('../../../../utils/logger', () => ({
 }));
 
 jest.mock('../../../../routes/students/_utils', () => ({
-    parseClassDaysWithSlots: jest.fn(),
+    parseClassDaysWithSlots: jest.fn((classDays, defaultTimeSlot = 'evening') => {
+        const arr = typeof classDays === 'string' ? JSON.parse(classDays) : (classDays || []);
+        return arr.map(item => typeof item === 'number' ? { day: item, timeSlot: defaultTimeSlot } : item);
+    }),
     extractDayNumbers: jest.fn(),
+    normalizeStudentClassDays: jest.fn((student) => ({
+        ...student,
+        class_days: (typeof student.class_days === 'string' ? JSON.parse(student.class_days) : (student.class_days || []))
+            .map(item => typeof item === 'number' ? { day: item, timeSlot: student.time_slot || 'evening' } : item),
+        class_days_next: student.class_days_next
+            ? (typeof student.class_days_next === 'string' ? JSON.parse(student.class_days_next) : student.class_days_next)
+                .map(item => typeof item === 'number' ? { day: item, timeSlot: student.time_slot || 'evening' } : item)
+            : student.class_days_next,
+    })),
     autoAssignStudentToSchedules: jest.fn(),
     reassignStudentSchedules: jest.fn(),
     truncateToThousands: jest.fn((v) => Math.floor(v / 1000) * 1000),
@@ -85,6 +97,21 @@ describe('GET /paca/students (list)', () => {
         expect(Array.isArray(res.body.students)).toBe(true);
         expect(res.body.students[0].name).toBe('홍길동');
         expect(pool.execute).toHaveBeenCalledTimes(1);
+    });
+
+    test('레거시 숫자 class_days를 요일별 시간대 객체로 정규화한다', async () => {
+        pool.execute.mockResolvedValueOnce([[
+            { id: 9143, name: 'enc_백종환', class_days: '[1,4,6]', time_slot: 'evening' },
+        ]]);
+
+        const res = await request(makeApp()).get('/paca/students?search=' + encodeURIComponent('백종환'));
+
+        expect(res.status).toBe(200);
+        expect(res.body.students[0].class_days).toEqual([
+            { day: 1, timeSlot: 'evening' },
+            { day: 4, timeSlot: 'evening' },
+            { day: 6, timeSlot: 'evening' },
+        ]);
     });
 
     test('학원 격리: WHERE academy_id = ? 필수 + params[0] = academyId', async () => {

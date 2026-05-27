@@ -62,6 +62,7 @@ const logger = require('../../../utils/logger');
 const {
     parseClassDaysWithSlots,
     extractDayNumbers,
+    normalizeStudentClassDays,
     autoAssignStudentToSchedules,
     reassignStudentSchedules,
     truncateToThousands
@@ -84,6 +85,7 @@ module.exports = {
     logger,
     parseClassDaysWithSlots,
     extractDayNumbers,
+    normalizeStudentClassDays,
     autoAssignStudentToSchedules,
     reassignStudentSchedules,
     truncateToThousands

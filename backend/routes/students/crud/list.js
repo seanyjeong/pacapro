@@ -27,6 +27,7 @@ const {
     verifyToken,
     decryptArrayFields,
     ENCRYPTED_FIELDS,
+    normalizeStudentClassDays,
     logger
 } = require('./_utils');
 
@@ -126,7 +127,8 @@ router.get('/', verifyToken, async (req, res) => {
         const [students] = await pool.execute(query, params);
 
         // 민감 필드 복호화
-        let decryptedStudents = decryptArrayFields(students, ENCRYPTED_FIELDS.students);
+        let decryptedStudents = decryptArrayFields(students, ENCRYPTED_FIELDS.students)
+            .map(normalizeStudentClassDays);
 
         // search 파라미터가 있으면 복호화된 데이터에서 필터링
         if (search) {

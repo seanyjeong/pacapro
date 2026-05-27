@@ -36,8 +36,20 @@ jest.mock('../../../../utils/dueDateCalculator', () => ({ calculateDueDate: jest
 jest.mock('../../../../utils/auditLogger', () => ({ logAudit: jest.fn(), getAuditInfoFromReq: jest.fn() }));
 jest.mock('../../../../utils/logger', () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }));
 jest.mock('../../../../routes/students/_utils', () => ({
-    parseClassDaysWithSlots: jest.fn(),
+    parseClassDaysWithSlots: jest.fn((classDays, defaultTimeSlot = 'evening') => {
+        const arr = typeof classDays === 'string' ? JSON.parse(classDays) : (classDays || []);
+        return arr.map(item => typeof item === 'number' ? { day: item, timeSlot: defaultTimeSlot } : item);
+    }),
     extractDayNumbers: jest.fn(),
+    normalizeStudentClassDays: jest.fn((student) => ({
+        ...student,
+        class_days: (typeof student.class_days === 'string' ? JSON.parse(student.class_days) : (student.class_days || []))
+            .map(item => typeof item === 'number' ? { day: item, timeSlot: student.time_slot || 'evening' } : item),
+        class_days_next: student.class_days_next
+            ? (typeof student.class_days_next === 'string' ? JSON.parse(student.class_days_next) : student.class_days_next)
+                .map(item => typeof item === 'number' ? { day: item, timeSlot: student.time_slot || 'evening' } : item)
+            : student.class_days_next,
+    })),
     autoAssignStudentToSchedules: jest.fn(),
     reassignStudentSchedules: jest.fn(),
     truncateToThousands: jest.fn(),
@@ -84,6 +96,22 @@ describe('GET /paca/students/:id (detail)', () => {
         expect(res.body.student.name).toBe('복호화_홍길동');
         expect(res.body.performances).toHaveLength(1);
         expect(res.body.payments).toHaveLength(1);
+    });
+
+    test('레거시 숫자 class_days를 상세 응답에서 정규화한다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 9143, name: 'enc_백종환', class_days: '[1,4,6]', time_slot: 'evening' }]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]]);
+
+        const res = await request(makeApp()).get('/paca/students/9143');
+
+        expect(res.status).toBe(200);
+        expect(res.body.student.class_days).toEqual([
+            { day: 1, timeSlot: 'evening' },
+            { day: 4, timeSlot: 'evening' },
+            { day: 6, timeSlot: 'evening' },
+        ]);
     });
 
     test('DB 호출 3건 (ADR-005 pool.execute) — students JOIN academies / student_performance / student_payments', async () => {

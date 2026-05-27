@@ -50,6 +50,18 @@ function getTimeSlotForDay(slots, day, defaultTimeSlot = 'evening') {
     return found ? found.timeSlot : defaultTimeSlot;
 }
 
+function normalizeStudentClassDays(student) {
+    if (!student || typeof student !== 'object') return student;
+    const defaultTimeSlot = student.time_slot || 'evening';
+    return {
+        ...student,
+        class_days: parseClassDaysWithSlots(student.class_days, defaultTimeSlot),
+        class_days_next: student.class_days_next
+            ? parseClassDaysWithSlots(student.class_days_next, defaultTimeSlot)
+            : student.class_days_next,
+    };
+}
+
 /**
  * 학생을 해당 월의 스케줄에 자동 배정
  * @param {object} dbConn - 데이터베이스 연결
@@ -294,6 +306,7 @@ module.exports = {
     parseClassDaysWithSlots,
     extractDayNumbers,
     getTimeSlotForDay,
+    normalizeStudentClassDays,
     autoAssignStudentToSchedules,
     reassignStudentSchedules,
     truncateToThousands,

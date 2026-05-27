@@ -47,6 +47,7 @@ const {
     calculateDueDate,
     parseClassDaysWithSlots,
     extractDayNumbers,
+    normalizeStudentClassDays,
     reassignStudentSchedules,
     truncateToThousands,
     logger,
@@ -894,7 +895,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         }
 
         // 민감 필드 복호화 후 응답
-        const decryptedStudent = decryptFields(updatedStudents[0], ENCRYPTED_FIELDS.students);
+        const decryptedStudent = normalizeStudentClassDays(decryptFields(updatedStudents[0], ENCRYPTED_FIELDS.students));
 
         res.json({
             message: 'Student updated successfully',
