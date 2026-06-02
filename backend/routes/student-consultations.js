@@ -34,7 +34,7 @@ const decryptStudentFields = (student) => {  // eslint-disable-line no-unused-va
  */
 router.get('/calendar', verifyToken, async (req, res) => {
   try {
-    const academyId = req.user?.academy_id || 2;
+    const academyId = req.user.academyId;
     const { startDate, endDate } = req.query;
 
     if (!startDate || !endDate) {
@@ -74,7 +74,7 @@ router.get('/calendar', verifyToken, async (req, res) => {
 router.get('/:studentId', verifyToken, async (req, res) => {
   try {
     const { studentId } = req.params;
-    const academyId = req.user?.academy_id || 2;
+    const academyId = req.user.academyId;
 
     const [consultations] = await pool.execute(
       `SELECT sc.*,
@@ -136,7 +136,7 @@ router.get('/:studentId/peak-records', verifyToken, async (req, res) => {
   try {
     const { studentId } = req.params;
     const { type = 'latest', date } = req.query; // type: 'latest' or 'average'
-    const academyId = req.user?.academy_id || 2;
+    const academyId = req.user.academyId;
 
     // P-EAK DB에서 학생 찾기 (paca_student_id로 매칭)
     const [peakStudents] = await peakPool.execute(
@@ -229,7 +229,7 @@ router.get('/:studentId/peak-records', verifyToken, async (req, res) => {
 router.get('/:studentId/compare/:id', verifyToken, async (req, res) => {
   try {
     const { studentId, id } = req.params;
-    const academyId = req.user?.academy_id || 2;
+    const academyId = req.user.academyId;
 
     // 현재 상담 조회
     const [current] = await pool.execute(
@@ -344,7 +344,7 @@ router.get('/:studentId/compare/:id', verifyToken, async (req, res) => {
 router.get('/:studentId/:id', verifyToken, async (req, res) => {
   try {
     const { studentId, id } = req.params;
-    const academyId = req.user?.academy_id || 2;
+    const academyId = req.user.academyId;
 
     const [rows] = await pool.execute(
       `SELECT sc.*,
@@ -377,7 +377,7 @@ router.get('/:studentId/:id', verifyToken, async (req, res) => {
  */
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const academyId = req.user?.academy_id || 2;
+    const academyId = req.user.academyId;
     const createdBy = req.user?.id;
 
     const {
@@ -457,7 +457,7 @@ router.post('/', verifyToken, async (req, res) => {
 router.put('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const academyId = req.user?.academy_id || 2;
+    const academyId = req.user.academyId;
 
     const {
       consultation_date,
@@ -524,7 +524,7 @@ router.put('/:id', verifyToken, async (req, res) => {
 router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const academyId = req.user?.academy_id || 2;
+    const academyId = req.user.academyId;
 
     await pool.execute(
       `DELETE FROM student_consultations WHERE id = ? AND academy_id = ?`,
