@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MoneyInput } from '@/components/ui/money-input';
 import {
   Trophy,
   Plus,
@@ -14,7 +13,6 @@ import {
   Banknote,
   Edit2,
   Calendar,
-  X,
   RotateCcw,
 } from 'lucide-react';
 import { seasonsApi } from '@/lib/api/seasons';
@@ -22,10 +20,10 @@ import axios from 'axios';
 import type { Season, StudentSeason, ProRatedPreview, RefundPreviewResponse } from '@/lib/types/season';
 import { RefundModal } from '@/components/refund/refund-modal';
 import {
-  SEASON_TYPE_LABELS,
   STUDENT_SEASON_STATUS_LABELS,
   formatSeasonFee,
 } from '@/lib/types/season';
+import { StudentSeasonEditModal, StudentSeasonEnrollModal } from './student-season-modals';
 
 interface StudentSeasonsProps {
   studentId: number;
@@ -39,7 +37,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
   const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 시즌 등록 모달 상태
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [isContinuous, setIsContinuous] = useState(false);
@@ -48,7 +45,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
-  // 시즌 수정 모달 상태
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEnrollment, setEditingEnrollment] = useState<StudentSeason | null>(null);
   const [editData, setEditData] = useState({
@@ -59,43 +55,16 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
   });
   const [saving, setSaving] = useState(false);
 
-  // 환불 모달 상태
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [refundPreview, setRefundPreview] = useState<RefundPreviewResponse | null>(null);
   const [selectedEnrollmentForRefund, setSelectedEnrollmentForRefund] = useState<StudentSeason | null>(null);
   const [refundLoading, setRefundLoading] = useState(false);
 
-  // 공무원/성인은 시즌 시스템 미사용
-  if (studentType === 'adult') {
-    return (
-      <Card>
-        <CardContent className="p-8 text-center">
-          <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">시즌 등록 대상이 아닙니다</h3>
-          <p className="text-gray-500">
-            성인/공무원 학생은 시즌 시스템 대신 연중 월회비로 관리됩니다.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  useEffect(() => {
-    loadData();
-  }, [studentId]);
-
-  useEffect(() => {
-    if (selectedSeasonId && showEnrollModal) {
-      loadPreview();
-    }
-  }, [selectedSeasonId, isContinuous, registrationDate]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // 병렬로 데이터 로드
       const [enrollmentsData, seasonsData] = await Promise.all([
         seasonsApi.getStudentSeasonHistory(studentId),
         seasonsApi.getActiveSeasons(),
@@ -108,9 +77,9 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     } finally {
       setLoading(false);
     }
-  };
+  }, [studentId]);
 
-  const loadPreview = async () => {
+  const loadPreview = useCallback(async () => {
     if (!selectedSeasonId) return;
 
     try {
@@ -130,7 +99,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     } catch (err: unknown) {
       console.error('Preview load failed:', err);
       setPreview(null);
-      // 이미 등록된 경우 에러 메시지 표시
       if (axios.isAxiosError(err)) {
         console.log('Axios error response:', err.response?.status, err.response?.data);
         const message = err.response?.data?.message;
@@ -145,7 +113,33 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     } finally {
       setPreviewLoading(false);
     }
-  };
+  }, [selectedSeasonId, enrollments, studentId, isContinuous, registrationDate]);
+
+  useEffect(() => {
+    if (studentType === 'adult') return;
+    loadData();
+  }, [loadData, studentType]);
+
+  useEffect(() => {
+    if (studentType === 'adult') return;
+    if (selectedSeasonId && showEnrollModal) {
+      loadPreview();
+    }
+  }, [loadPreview, selectedSeasonId, showEnrollModal, studentType]);
+
+  if (studentType === 'adult') {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">시즌 등록 대상이 아닙니다</h3>
+          <p className="text-gray-500">
+            성인/공무원 학생은 시즌 시스템 대신 연중 월회비로 관리됩니다.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleEnroll = async () => {
     if (!selectedSeasonId) return;
@@ -156,7 +150,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
         e.status === 'completed' || e.status === 'active'
       );
 
-      // 선택된 시즌 정보에서 기본 시즌비 가져오기
       const selectedSeason = activeSeasons.find(s => s.id === selectedSeasonId);
       const seasonFee = preview?.final_calculation?.season_fee ||
         (selectedSeason ? parseFloat(selectedSeason.default_season_fee) : 0);
@@ -183,7 +176,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     }
   };
 
-  // 수정 모달 열기
   const handleEditClick = (enrollment: StudentSeason) => {
     setEditingEnrollment(enrollment);
     setEditData({
@@ -195,7 +187,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     setShowEditModal(true);
   };
 
-  // 수정 저장
   const handleSaveEdit = async () => {
     if (!editingEnrollment) return;
 
@@ -219,7 +210,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     }
   };
 
-  // 환불 모달 열기
   const handleOpenRefundModal = async (enrollment: StudentSeason) => {
     if (enrollment.payment_status !== 'paid') {
       toast.error('완납된 시즌만 환불 처리할 수 있습니다.');
@@ -241,7 +231,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     }
   };
 
-  // 환불 처리 확정
   const handleConfirmRefund = async (includeVat: boolean, finalAmount: number) => {
     if (!selectedEnrollmentForRefund) return;
 
@@ -264,7 +253,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     }
   };
 
-  // 미납 시즌 취소
   const handleCancelEnrollment = async (enrollment: StudentSeason) => {
     if (!confirm(`${enrollment.season_name} 등록을 취소하시겠습니까?`)) return;
 
@@ -278,7 +266,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     }
   };
 
-  // 미등록 시즌 필터링
   const enrolledSeasonIds = new Set(enrollments.map(e => e.season_id));
   const availableSeasons = activeSeasons.filter(s => !enrolledSeasonIds.has(s.id));
 
@@ -308,7 +295,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
 
   return (
     <div className="space-y-6">
-      {/* 시즌 등록 버튼 */}
       {availableSeasons.length > 0 && (
         <div className="flex justify-end">
           <Button onClick={() => setShowEnrollModal(true)}>
@@ -318,7 +304,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
         </div>
       )}
 
-      {/* 등록된 시즌 목록 */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
@@ -377,7 +362,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
-                      {/* 진행 중인 시즌만 수정/환불/취소 가능 */}
                       {(enrollment.status === 'active' || enrollment.status === 'registered') && (
                         <>
                           <button
@@ -427,7 +411,6 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                       >
                         {STUDENT_SEASON_STATUS_LABELS[enrollment.status]}
                       </span>
-                      {/* 납부 상태 표시 */}
                       {(enrollment.status === 'active' || enrollment.status === 'registered') && (
                         <span
                           className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -450,268 +433,46 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
         </CardContent>
       </Card>
 
-      {/* 시즌 수정 모달 */}
       {showEditModal && editingEnrollment && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">시즌 등록 정보 수정</h3>
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingEnrollment(null);
-                }}
-                className="p-1 hover:bg-gray-100 rounded"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <p className="font-medium text-blue-900">{editingEnrollment.season_name}</p>
-              </div>
-
-              {/* 등록일 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  등록일
-                </label>
-                <input
-                  type="date"
-                  value={editData.registration_date}
-                  onChange={(e) => setEditData({ ...editData, registration_date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  시즌 시작일 이후로 설정하면 일할계산이 적용됩니다.
-                </p>
-              </div>
-
-              {/* 시즌비 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  시즌비
-                </label>
-                <MoneyInput
-                  value={editData.season_fee}
-                  onChange={(season_fee) => setEditData({ ...editData, season_fee })}
-                  className="focus:ring-primary-500 focus:border-primary-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
-              </div>
-
-              {/* 할인 금액 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  할인 금액
-                </label>
-                <MoneyInput
-                  value={editData.discount_amount}
-                  onChange={(discount_amount) => setEditData({ ...editData, discount_amount })}
-                  className="focus:ring-primary-500 focus:border-primary-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
-              </div>
-
-              {/* 최종 시즌비 표시 */}
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">시즌비</span>
-                  <span>{editData.season_fee.toLocaleString()}원</span>
-                </div>
-                {editData.discount_amount > 0 && (
-                  <div className="flex justify-between text-sm text-red-600 mt-1">
-                    <span>할인</span>
-                    <span>-{editData.discount_amount.toLocaleString()}원</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-semibold mt-2 pt-2 border-t">
-                  <span>최종 금액</span>
-                  <span className="text-primary-600">
-                    {Math.max(0, editData.season_fee - editData.discount_amount).toLocaleString()}원
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingEnrollment(null);
-                }}
-                disabled={saving}
-              >
-                취소
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={handleSaveEdit}
-                disabled={saving}
-              >
-                {saving ? '저장 중...' : '저장'}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <StudentSeasonEditModal
+          editingEnrollment={editingEnrollment}
+          editData={editData}
+          saving={saving}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingEnrollment(null);
+          }}
+          onSave={handleSaveEdit}
+          onEditDataChange={setEditData}
+        />
       )}
 
-      {/* 시즌 등록 모달 */}
       {showEnrollModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">시즌 등록</h3>
-
-            <div className="space-y-4">
-              {/* 시즌 선택 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  등록할 시즌 선택
-                </label>
-                <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  value={selectedSeasonId || ''}
-                  onChange={e => setSelectedSeasonId(e.target.value ? parseInt(e.target.value) : null)}
-                >
-                  <option value="">시즌을 선택하세요</option>
-                  {availableSeasons.map(season => (
-                    <option key={season.id} value={season.id}>
-                      {season.season_name} ({SEASON_TYPE_LABELS[season.season_type]})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* 등록일 선택 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  등록일 (시즌 시작 후 합류 시 일할계산)
-                </label>
-                <input
-                  type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  value={registrationDate}
-                  onChange={e => setRegistrationDate(e.target.value)}
-                />
-              </div>
-
-              {/* 연속등록 여부 */}
-              {enrollments.length > 0 && (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="continuous"
-                    checked={isContinuous}
-                    onChange={e => setIsContinuous(e.target.checked)}
-                    className="w-4 h-4"
-                  />
-                  <label htmlFor="continuous" className="text-sm text-gray-700">
-                    연속등록 (이전 시즌에서 이어서 등록)
-                  </label>
-                </div>
-              )}
-
-              {/* 미리보기 */}
-              {selectedSeasonId && (
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">납부 예상 금액</h4>
-                  {previewLoading ? (
-                    <div className="flex items-center text-gray-500">
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      계산 중...
-                    </div>
-                  ) : previewError ? (
-                    <div className="bg-red-50 p-4 rounded-lg flex items-center gap-2 text-red-600">
-                      <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                      <span className="text-sm">{previewError}</span>
-                    </div>
-                  ) : preview?.final_calculation ? (
-                    <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
-                      {/* 시즌비 (일할 전 원래 금액 표시) */}
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">시즌비</span>
-                        <span>
-                          {formatSeasonFee(preview.final_calculation.original_season_fee || preview.final_calculation.season_fee)}
-                        </span>
-                      </div>
-
-                      {/* 시즌 중간 합류 일할계산 */}
-                      {preview.mid_season_prorated && (
-                        <div className="flex justify-between text-orange-600">
-                          <span>
-                            중간합류 할인 ({preview.mid_season_prorated.remaining_days}/{preview.mid_season_prorated.total_days}일)
-                          </span>
-                          <span>-{formatSeasonFee(preview.mid_season_prorated.discount)}</span>
-                        </div>
-                      )}
-
-                      {/* 비시즌 일할 안내 (시즌 전달 학원비에서 별도 청구) */}
-                      {preview.non_season_prorated_info && (
-                        <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded mt-1">
-                          💡 비시즌 일할 {formatSeasonFee(preview.non_season_prorated_info.amount)}은(는) 시즌 전달 학원비에서 별도 청구됩니다.
-                        </div>
-                      )}
-
-                      {/* 연속등록 할인 */}
-                      {preview.final_calculation.discount_amount > 0 && (
-                        <div className="flex justify-between text-green-600">
-                          <span>연속등록 할인</span>
-                          <span>-{formatSeasonFee(preview.final_calculation.discount_amount)}</span>
-                        </div>
-                      )}
-
-                      <div className="flex justify-between font-semibold border-t pt-2">
-                        <span>총 납부액</span>
-                        <span className="text-primary-600">
-                          {formatSeasonFee(preview.final_calculation.total_due)}
-                        </span>
-                      </div>
-
-                      {/* 시즌 중간 합류 안내 */}
-                      {preview.mid_season_prorated && (
-                        <div className="text-xs text-orange-600 mt-2 bg-orange-50 p-2 rounded">
-                          {preview.mid_season_prorated.details}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-sm">시즌을 선택해주세요.</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* 버튼 */}
-            <div className="flex justify-end gap-2 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowEnrollModal(false);
-                  setSelectedSeasonId(null);
-                  setIsContinuous(false);
-                  setRegistrationDate(new Date().toISOString().split('T')[0]);
-                  setPreview(null);
-                  setPreviewError(null);
-                }}
-              >
-                취소
-              </Button>
-              <Button
-                onClick={handleEnroll}
-                disabled={!selectedSeasonId || enrolling || !!previewError}
-              >
-                {enrolling && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                등록
-              </Button>
-            </div>
-          </div>
-        </div>
+        <StudentSeasonEnrollModal
+          availableSeasons={availableSeasons}
+          enrollments={enrollments}
+          selectedSeasonId={selectedSeasonId}
+          registrationDate={registrationDate}
+          isContinuous={isContinuous}
+          preview={preview}
+          previewLoading={previewLoading}
+          previewError={previewError}
+          enrolling={enrolling}
+          onSeasonChange={setSelectedSeasonId}
+          onRegistrationDateChange={setRegistrationDate}
+          onContinuousChange={setIsContinuous}
+          onClose={() => {
+            setShowEnrollModal(false);
+            setSelectedSeasonId(null);
+            setIsContinuous(false);
+            setRegistrationDate(new Date().toISOString().split('T')[0]);
+            setPreview(null);
+            setPreviewError(null);
+          }}
+          onEnroll={handleEnroll}
+        />
       )}
 
-      {/* 환불 모달 */}
       {refundPreview && (
         <RefundModal
           isOpen={refundModalOpen}

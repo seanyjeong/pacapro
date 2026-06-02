@@ -21,6 +21,7 @@ import {
   Monitor
 } from 'lucide-react';
 import packageJson from '../../../package.json';
+import { openPeakSso } from '@/lib/peak-sso';
 
 const APP_VERSION = `v${packageJson.version}`;
 
@@ -203,14 +204,8 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
 
             {/* P-EAK & 로그아웃 */}
             <div className="border-t border-border p-1.5 shrink-0 pb-4 space-y-1">
-              <button
-                onClick={() => {
-                  const token = localStorage.getItem('token');
-                  const peakUrl = token
-                    ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
-                    : 'https://peak-rose.vercel.app';
-                  window.open(peakUrl, '_blank');
-                }}
+	              <button
+	                onClick={() => { void openPeakSso(); }}
                 className="w-full flex flex-col items-center py-1.5 px-1 rounded-lg text-orange-500 hover:text-orange-400 hover:bg-orange-500/10 transition"
                 title="P-EAK 실기관리"
               >
@@ -380,15 +375,11 @@ export default function TabletLayout({ children }: { children: React.ReactNode }
                       </Link>
                     );
                   })}
-                <button
-                  onClick={() => {
-                    setShowMoreMenu(false);
-                    const token = localStorage.getItem('token');
-                    const peakUrl = token
-                    ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
-                    : 'https://peak-rose.vercel.app';
-                    window.open(peakUrl, '_blank');
-                  }}
+	                <button
+	                  onClick={() => {
+	                    setShowMoreMenu(false);
+	                    void openPeakSso();
+	                  }}
                   className="flex flex-col items-center p-4 rounded-xl bg-orange-500/10 text-orange-500"
                 >
                   <Mountain size={28} />

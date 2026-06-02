@@ -27,15 +27,11 @@ import {
     Bell,
     BellOff,
     Loader2,
-    ChevronDown,
-    ChevronRight,
     GraduationCap,
     CircleDollarSign,
     MessageCircle,
     Cog,
     BellRing,
-    ExternalLink,
-    Mountain,
     CalendarDays,
     PanelLeftClose,
     PanelLeft,
@@ -51,8 +47,8 @@ import {
     unsubscribeFromPush,
     getCurrentSubscription,
 } from '@/lib/api/push';
-import { SidebarTooltip } from './sidebar-tooltip';
-import { CollapsedCategoryMenu } from './collapsed-category-menu';
+import { SidebarNavigation } from './sidebar-navigation';
+import { PeakShortcutButton } from './peak-shortcut-button';
 
 interface NavItem {
     title: string;
@@ -405,203 +401,22 @@ export function Sidebar() {
                 </div>
             )}
 
-            {/* Navigation */}
-            <nav className={cn("flex-1 py-4 px-2", collapsed ? "overflow-visible" : "overflow-y-auto")}>
-                {/* 대시보드 (항상 상단) */}
-                <ul className="space-y-1 mb-2">
-                    <li>
-                        <SidebarTooltip label="대시보드" collapsed={collapsed}>
-                            <Link
-                                href={dashboardItem.href}
-                                className={cn(
-                                    'flex items-center rounded-lg text-sm font-medium transition-colors',
-                                    collapsed ? 'justify-center p-2.5' : 'space-x-3 px-3 py-2.5',
-                                    pathname === dashboardItem.href
-                                        ? 'bg-primary/10 text-primary font-semibold shadow-sm'
-                                        : 'text-foreground hover:bg-muted/80'
-                                )}
-                            >
-                                <LayoutDashboard className={cn('w-5 h-5 flex-shrink-0', pathname === dashboardItem.href ? 'text-primary' : 'text-muted-foreground')} />
-                                {!collapsed && <span>{dashboardItem.title}</span>}
-                            </Link>
-                        </SidebarTooltip>
-                    </li>
-                </ul>
+            <SidebarNavigation
+                collapsed={collapsed}
+                pathname={pathname}
+                mounted={mounted}
+                isAdmin={isAdmin}
+                expandedCategories={expandedCategories}
+                navCategories={navCategories}
+                dashboardItem={dashboardItem}
+                adminNavItems={adminNavItems}
+                consultationCounts={consultationCounts}
+                canAccessMenu={canAccessMenu}
+                hasAccessibleItems={hasAccessibleItems}
+                toggleCategory={toggleCategory}
+            />
 
-                {/* 카테고리별 메뉴 */}
-                <div className="space-y-1">
-                    {navCategories.filter(hasAccessibleItems).map((category) => {
-                        const CategoryIcon = category.icon;
-                        const isExpanded = expandedCategories[category.title];
-                        const hasActiveChild = category.items.some(
-                            item => pathname === item.href || pathname.startsWith(item.href + '/')
-                        );
-
-                        return (
-                            <div key={category.title}>
-                                {/* 카테고리 헤더 */}
-                                {collapsed ? (
-                                    // 접힌 상태: 호버 시 fixed 팝업
-                                    <CollapsedCategoryMenu
-                                        category={category}
-                                        hasActiveChild={hasActiveChild}
-                                        pathname={pathname}
-                                        canAccessMenu={canAccessMenu}
-                                        consultationCounts={consultationCounts}
-                                    />
-                                ) : (
-                                    // 펼친 상태: 기존 아코디언
-                                    <>
-                                        <button
-                                            onClick={() => toggleCategory(category.title)}
-                                            className={cn(
-                                                'w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                                                hasActiveChild
-                                                    ? 'bg-primary/5 text-primary'
-                                                    : 'text-foreground hover:bg-muted'
-                                            )}
-                                        >
-                                            <div className="flex items-center space-x-3">
-                                                <CategoryIcon className={cn('w-5 h-5', hasActiveChild ? 'text-primary' : 'text-muted-foreground')} />
-                                                <span>{category.title}</span>
-                                            </div>
-                                            {isExpanded ? (
-                                                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                            ) : (
-                                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                            )}
-                                        </button>
-
-                                        {/* 서브메뉴 */}
-                                        {isExpanded && (
-                                            <ul className="ml-4 mt-1 space-y-1 border-l border-border pl-3">
-                                                {category.items.filter(canAccessMenu).map((item) => {
-                                                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                                                    const Icon = item.icon;
-
-                                                    return (
-                                                        <li key={item.href}>
-                                                            <Link
-                                                                href={item.href}
-                                                                className={cn(
-                                                                    'flex items-center space-x-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                                                                    isActive
-                                                                        ? 'bg-primary/10 text-primary font-semibold shadow-sm'
-                                                                        : 'text-foreground/70 hover:bg-muted hover:text-foreground'
-                                                                )}
-                                                            >
-                                                                <Icon className={cn('w-4 h-4', isActive ? 'text-primary' : 'text-muted-foreground')} />
-                                                                <span>{item.title}</span>
-                                                                {/* 상담 카운트 배지 */}
-                                                                {item.href === '/consultations/new-inquiry' && consultationCounts.newInquiry > 0 && (
-                                                                    <span className="ml-auto bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                                        {consultationCounts.newInquiry}
-                                                                    </span>
-                                                                )}
-                                                                {item.href === '/consultations/enrolled' && consultationCounts.enrolled > 0 && (
-                                                                    <span className="ml-auto bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                                        {consultationCounts.enrolled}
-                                                                    </span>
-                                                                )}
-                                                                {item.badge && (
-                                                                    <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                                        {item.badge}
-                                                                    </span>
-                                                                )}
-                                                            </Link>
-                                                        </li>
-                                                    );
-                                                })}
-                                            </ul>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Admin Menu (Admin only) */}
-                {mounted && isAdmin && (
-                    <div className="mt-6">
-                        {!collapsed && (
-                            <div className="px-3 mb-2">
-                                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">개발자 전용</h3>
-                            </div>
-                        )}
-                        <ul className="space-y-1">
-                            {adminNavItems.map((item) => {
-                                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
-                                const Icon = item.icon;
-
-                                return (
-                                    <li key={item.href}>
-                                        <SidebarTooltip label={item.title} collapsed={collapsed}>
-                                            <Link
-                                                href={item.href}
-                                                className={cn(
-                                                    'flex items-center rounded-lg text-sm font-medium transition-colors',
-                                                    collapsed ? 'justify-center p-2.5' : 'space-x-3 px-3 py-2.5',
-                                                    isActive
-                                                        ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                                                        : 'text-foreground hover:bg-muted'
-                                                )}
-                                            >
-                                                <Icon
-                                                    className={cn('w-5 h-5', isActive ? 'text-purple-600 dark:text-purple-400' : 'text-muted-foreground')}
-                                                />
-                                                {!collapsed && <span>{item.title}</span>}
-                                                {!collapsed && item.badge && (
-                                                    <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                                        {item.badge}
-                                                    </span>
-                                                )}
-                                            </Link>
-                                        </SidebarTooltip>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </div>
-                )}
-            </nav>
-
-            {/* P-EAK 바로가기 */}
-            <div className="px-2 pb-2">
-                {collapsed ? (
-                    <SidebarTooltip label="P-EAK 실기관리" collapsed={collapsed}>
-                        <button
-                            onClick={() => {
-                                const token = localStorage.getItem('token');
-                                const peakUrl = token
-                                  ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
-                                  : 'https://peak-rose.vercel.app';
-                                window.open(peakUrl, '_blank');
-                            }}
-                            className="w-full flex items-center justify-center p-2.5 rounded-lg text-sm font-medium bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 transition-all duration-200"
-                        >
-                            <Mountain className="w-5 h-5 text-orange-500" />
-                        </button>
-                    </SidebarTooltip>
-                ) : (
-                    <button
-                        onClick={() => {
-                            const token = localStorage.getItem('token');
-                            const peakUrl = token
-                              ? `https://peak-rose.vercel.app/login?token=${encodeURIComponent(token)}`
-                              : 'https://peak-rose.vercel.app';
-                            window.open(peakUrl, '_blank');
-                        }}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 transition-all duration-200 group"
-                    >
-                        <div className="flex items-center space-x-3">
-                            <Mountain className="w-5 h-5 text-orange-500" />
-                            <span className="text-orange-600 dark:text-orange-400">P-EAK 실기관리</span>
-                        </div>
-                        <ExternalLink className="w-4 h-4 text-orange-500/70 group-hover:text-orange-500" />
-                    </button>
-                )}
-            </div>
+            <PeakShortcutButton collapsed={collapsed} />
 
             {/* 접기/펼치기 토글 버튼 */}
             <div className="px-2 pb-2">

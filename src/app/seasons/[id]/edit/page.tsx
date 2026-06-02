@@ -43,7 +43,7 @@ export default function EditSeasonPage() {
         const season = response.season;
 
         // 백엔드 필드를 폼 필드로 변환
-        let gradeTimeSlots = typeof season.grade_time_slots === 'string'
+        const gradeTimeSlots = typeof season.grade_time_slots === 'string'
           ? JSON.parse(season.grade_time_slots)
           : season.grade_time_slots;
 
