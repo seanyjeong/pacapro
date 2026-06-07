@@ -11,9 +11,8 @@ interface TabletBottomActionBarProps {
   checklist: { checked: boolean }[];
   linkedStudent: { name: string } | null;
   saving: boolean;
-  backUrl: string;
-  onBack: () => void;
-  onSave: () => void;
+  onBack: () => void | Promise<void>;
+  onSave: () => void | Promise<void>;
   onOpenTrial: () => void;
   onOpenPending: () => void;
 }
@@ -23,7 +22,6 @@ export function TabletBottomActionBar({
   checklist,
   linkedStudent,
   saving,
-  backUrl,
   onBack,
   onSave,
   onOpenTrial,

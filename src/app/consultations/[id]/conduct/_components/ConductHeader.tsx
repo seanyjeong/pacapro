@@ -1,7 +1,6 @@
 'use client';
 
 import { Loader2, ArrowLeft, Save } from 'lucide-react';
-import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
@@ -11,27 +10,25 @@ import { CONSULTATION_STATUS_LABELS, CONSULTATION_STATUS_COLORS, LEARNING_TYPE_L
 
 interface ConductHeaderProps {
   consultation: Consultation;
-  backUrl: string;
   backLabel: string;
   progressPercent: number;
   saving: boolean;
-  onSave: () => void;
+  onBack: () => void | Promise<void>;
+  onSave: () => void | Promise<void>;
 }
 
 export function ConductHeader({
-  consultation, backUrl, backLabel, progressPercent, saving, onSave
+  consultation, backLabel, progressPercent, saving, onBack, onSave
 }: ConductHeaderProps) {
   return (
     <div className="sticky top-0 z-10 bg-card border-b border-border shadow-sm">
       <div className="max-w-7xl mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href={backUrl}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                {backLabel}
-              </Button>
-            </Link>
+            <Button variant="ghost" size="sm" onClick={onBack}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {backLabel}
+            </Button>
             <div>
               <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                 {consultation.consultation_type === 'learning' ? '재원생 상담' : '상담 진행'}: {consultation.student_name} ({consultation.student_grade})

@@ -15,7 +15,7 @@ interface TabletConductHeaderProps {
   consultation: Consultation;
   progressPercent: number;
   backLabel: string;
-  onBack: () => void;
+  onBack: () => void | Promise<void>;
 }
 
 export function TabletConductHeader({

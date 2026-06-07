@@ -10,6 +10,7 @@
 import { use } from 'react';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useConsultationDraftAutosave } from '@/hooks/useConsultationDraftAutosave';
 import { useTabletConduct } from './_hooks/useTabletConduct';
 import { TabletConductHeader } from './_components/TabletConductHeader';
 import { TabletLearningView } from './_components/TabletLearningView';
@@ -74,6 +75,26 @@ export default function TabletConductPage({ params }: PageProps) {
     handleSaveStudentInfo,
     handleConvertToPending,
   } = conduct;
+  const draftAutosave = useConsultationDraftAutosave({
+    consultationId: consultation?.id,
+    enabled: !loading && !!consultation && consultation.consultation_type !== 'learning',
+    checklist,
+    consultationMemo,
+  });
+
+  const handleBack = async () => {
+    const saved = await draftAutosave.saveDraftNow();
+    if (saved) {
+      router.push(backUrl);
+    }
+  };
+
+  const handleSaveWithDraft = async () => {
+    const saved = await draftAutosave.saveDraftNow();
+    if (saved) {
+      await handleSave();
+    }
+  };
 
   if (loading) {
     return (
@@ -101,7 +122,7 @@ export default function TabletConductPage({ params }: PageProps) {
         consultation={consultation}
         progressPercent={progressPercent}
         backLabel={backLabel}
-        onBack={() => router.push(backUrl)}
+        onBack={handleBack}
       />
 
       {consultation.consultation_type === 'learning' ? (
@@ -135,9 +156,8 @@ export default function TabletConductPage({ params }: PageProps) {
         checklist={checklist}
         linkedStudent={linkedStudent}
         saving={saving}
-        backUrl={backUrl}
-        onBack={() => router.push(backUrl)}
-        onSave={handleSave}
+        onBack={handleBack}
+        onSave={handleSaveWithDraft}
         onOpenTrial={() => setTrialModalOpen(true)}
         onOpenPending={() => setPendingModalOpen(true)}
       />

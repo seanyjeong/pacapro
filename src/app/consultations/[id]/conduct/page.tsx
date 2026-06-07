@@ -6,8 +6,10 @@
 import { use } from 'react';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import { useConsultationDraftAutosave } from '@/hooks/useConsultationDraftAutosave';
 
 import { useConduct } from './_hooks/useConduct';
 import { ConductHeader } from './_components/ConductHeader';
@@ -25,7 +27,28 @@ interface PageProps {
 
 export default function ConductPage({ params }: PageProps) {
   const resolvedParams = use(params);
+  const router = useRouter();
   const c = useConduct(resolvedParams.id);
+  const draftAutosave = useConsultationDraftAutosave({
+    consultationId: c.consultation?.id,
+    enabled: !c.loading && !!c.consultation && c.consultation.consultation_type !== 'learning',
+    checklist: c.checklist,
+    consultationMemo: c.consultationMemo,
+  });
+
+  const handleBack = async () => {
+    const saved = await draftAutosave.saveDraftNow();
+    if (saved) {
+      router.push(c.backUrl);
+    }
+  };
+
+  const handleSave = async () => {
+    const saved = await draftAutosave.saveDraftNow();
+    if (saved) {
+      await c.handleSave();
+    }
+  };
 
   if (c.loading) {
     return (
@@ -53,11 +76,11 @@ export default function ConductPage({ params }: PageProps) {
     <div className="min-h-screen bg-background pb-20">
       <ConductHeader
         consultation={c.consultation}
-        backUrl={c.backUrl}
         backLabel={c.backLabel}
         progressPercent={c.progressPercent}
         saving={c.saving}
-        onSave={c.handleSave}
+        onBack={handleBack}
+        onSave={handleSave}
       />
 
       <div className="max-w-7xl mx-auto px-4 py-6">
@@ -100,8 +123,8 @@ export default function ConductPage({ params }: PageProps) {
         linkedStudent={c.linkedStudent}
         checklist={c.checklist}
         saving={c.saving}
-        backUrl={c.backUrl}
-        onSave={c.handleSave}
+        onBack={handleBack}
+        onSave={handleSave}
         onOpenPending={() => c.setPendingModalOpen(true)}
         onOpenTrial={() => c.setTrialModalOpen(true)}
       />

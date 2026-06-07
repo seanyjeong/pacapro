@@ -1,7 +1,6 @@
 'use client';
 
 import { Loader2, Save, ArrowLeft, Clock, Sparkles } from 'lucide-react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import type { Consultation } from '@/lib/types/consultation';
 import type { LinkedStudent } from '../_types';
@@ -11,15 +10,15 @@ interface BottomActionBarProps {
   linkedStudent: LinkedStudent | null;
   checklist: { checked: boolean }[];
   saving: boolean;
-  backUrl: string;
-  onSave: () => void;
+  onBack: () => void | Promise<void>;
+  onSave: () => void | Promise<void>;
   onOpenPending: () => void;
   onOpenTrial: () => void;
 }
 
 export function BottomActionBar({
-  consultation, linkedStudent, checklist, saving, backUrl,
-  onSave, onOpenPending, onOpenTrial
+  consultation, linkedStudent, checklist, saving,
+  onBack, onSave, onOpenPending, onOpenTrial
 }: BottomActionBarProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
@@ -30,12 +29,10 @@ export function BottomActionBar({
               {linkedStudent?.name || consultation.student_name} ({consultation.student_grade}) 재원생 상담
             </div>
             <div className="flex items-center space-x-3">
-              <Link href={backUrl}>
-                <Button variant="outline">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  돌아가기
-                </Button>
-              </Link>
+              <Button variant="outline" onClick={onBack}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                돌아가기
+              </Button>
               <Button onClick={onSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
                 {saving ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
