@@ -13,6 +13,8 @@
  *   node scripts/backfill-pending-from-consultations.js --execute  # 실제 반영
  */
 
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
 const db = require('../config/database');
 const { decrypt } = require('../utils/encryption');
 const { createPendingStudentFromConsultation } = require('../routes/consultations/_utils');
