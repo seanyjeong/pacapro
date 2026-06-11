@@ -229,6 +229,11 @@ export interface StudentCreateResponse {
 export interface StudentUpdateResponse {
   message: string;
   student: Student;
+  enrollmentDateRecalc?: {
+    type: 'recalculated' | 'skipped';
+    message: string;
+    finalAmount?: number;
+  };
 }
 
 export interface StudentDeleteResponse {

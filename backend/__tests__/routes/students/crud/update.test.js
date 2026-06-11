@@ -39,6 +39,7 @@ jest.mock('../../../../utils/logger', () => ({ info: jest.fn(), warn: jest.fn(),
 jest.mock('../../../../routes/students/_utils', () => ({
     parseClassDaysWithSlots: jest.fn(() => []),
     extractDayNumbers: jest.fn(() => []),
+    normalizeStudentClassDays: jest.fn((s) => s),
     autoAssignStudentToSchedules: jest.fn(),
     reassignStudentSchedules: jest.fn().mockResolvedValue({ removed: 0, assigned: 0, created: 0 }),
     truncateToThousands: jest.fn((v) => Math.floor(v / 1000) * 1000),
@@ -187,5 +188,77 @@ describe('PUT /paca/students/:id (update)', () => {
         await request(makeApp()).put('/paca/students/5').send({ name: '변경' });
         expect(pool.execute.mock.calls.length).toBeGreaterThan(0);
         expect(pool.query).not.toHaveBeenCalled();
+    });
+});
+
+describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 학원비 재계산', () => {
+    test('등록일 변경 + 미납 일할계산 학원비 존재 → 재계산 UPDATE + enrollmentDateRecalc recalculated', async () => {
+        pool.execute.mockResolvedValue([[]]);
+        pool.execute
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000 })]])   // 학생 SELECT
+            .mockResolvedValueOnce([{ affectedRows: 1 }])                               // UPDATE students
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000, enrollment_date: '2026-01-15' })]]) // 갱신 SELECT
+            .mockResolvedValueOnce([[{ id: 77, payment_status: 'pending' }]])           // 일할계산 학원비 SELECT
+            .mockResolvedValueOnce([[{ tuition_due_day: 5 }]])                          // academy_settings SELECT
+            .mockResolvedValueOnce([{ affectedRows: 1 }]);                              // UPDATE student_payments
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ enrollment_date: '2026-01-15' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.enrollmentDateRecalc.type).toBe('recalculated');
+        // 수업요일 미설정(mock []) → 일수 기준: floor(300000 * 17/31 / 1000) * 1000 = 164000
+        expect(res.body.enrollmentDateRecalc.finalAmount).toBe(164000);
+
+        const paymentUpdateCall = pool.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]));
+        expect(paymentUpdateCall).toBeDefined();
+        expect(paymentUpdateCall[1]).toContain('2026-01');      // year_month
+        expect(paymentUpdateCall[1]).toContain(164000);          // proRatedAmount
+        expect(paymentUpdateCall[1]).toContain(77);              // 대상 payment id
+    });
+
+    test('첫 달 학원비가 이미 paid → 재계산 스킵 + enrollmentDateRecalc skipped', async () => {
+        pool.execute.mockResolvedValue([[]]);
+        pool.execute
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000 })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000, enrollment_date: '2026-01-15' })]])
+            .mockResolvedValueOnce([[{ id: 77, payment_status: 'paid' }]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ enrollment_date: '2026-01-15' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.enrollmentDateRecalc.type).toBe('skipped');
+        expect(pool.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]))).toBeUndefined();
+    });
+
+    test('등록월 변경인데 새 달에 월 학원비 이미 존재 → 중복 방지 스킵', async () => {
+        pool.execute.mockResolvedValue([[]]);
+        pool.execute
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000 })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000, enrollment_date: '2026-02-10' })]])
+            .mockResolvedValueOnce([[{ id: 77, payment_status: 'pending' }]])           // 일할계산 학원비 SELECT
+            .mockResolvedValueOnce([[{ id: 88 }]]);                                     // 새 달 중복 SELECT
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ enrollment_date: '2026-02-10' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.enrollmentDateRecalc.type).toBe('skipped');
+        expect(res.body.enrollmentDateRecalc.message).toContain('2월');
+        expect(pool.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]))).toBeUndefined();
+    });
+
+    test('등록일 동일하면 재계산 블록 미진입 (enrollmentDateRecalc null)', async () => {
+        pool.execute.mockResolvedValue([[]]);
+        pool.execute
+            .mockResolvedValueOnce([[existingStudent()]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent()]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ enrollment_date: '2026-01-01' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.enrollmentDateRecalc).toBeNull();
+        expect(pool.execute.mock.calls.find(c => /student_payments/.test(c[0]))).toBeUndefined();
     });
 });

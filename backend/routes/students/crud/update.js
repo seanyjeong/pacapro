@@ -531,6 +531,130 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
         }
 
+        // 등록일 변경 시 첫 달 일할계산 학원비 재계산 (미납 건만, create.js 일할계산과 동일 로직)
+        let enrollmentDateRecalc = null;
+        const oldEnrollmentDate = oldStudent.enrollment_date; // dateStrings: 'YYYY-MM-DD'
+        if (enrollment_date !== undefined && enrollment_date && oldEnrollmentDate
+            && String(enrollment_date) !== String(oldEnrollmentDate)) {
+            try {
+                const oldYearMonth = String(oldEnrollmentDate).slice(0, 7);
+
+                // 기존 등록월의 일할계산 학원비 조회
+                const [proratedRows] = await pool.execute(
+                    `SELECT id, payment_status FROM student_payments
+                     WHERE student_id = ? AND academy_id = ?
+                       AND \`year_month\` = ? AND payment_type = 'monthly'
+                       AND (is_prorated = 1 OR description LIKE '%일할계산%')`,
+                    [studentId, req.user.academyId, oldYearMonth]
+                );
+
+                if (proratedRows.length > 0) {
+                    const proratedPayment = proratedRows[0];
+                    const enrollDate = new Date(enrollment_date);
+                    const year = enrollDate.getFullYear();
+                    const month = enrollDate.getMonth() + 1;
+                    const newYearMonth = `${year}-${String(month).padStart(2, '0')}`;
+
+                    // 새 등록월에 다른 월 학원비가 이미 있으면 중복 방지를 위해 스킵
+                    let duplicateRows = [];
+                    if (newYearMonth !== oldYearMonth) {
+                        const [dup] = await pool.execute(
+                            `SELECT id FROM student_payments
+                             WHERE student_id = ? AND academy_id = ?
+                               AND \`year_month\` = ? AND payment_type = 'monthly' AND id != ?`,
+                            [studentId, req.user.academyId, newYearMonth, proratedPayment.id]
+                        );
+                        duplicateRows = dup;
+                    }
+
+                    if (proratedPayment.payment_status !== 'pending') {
+                        enrollmentDateRecalc = {
+                            type: 'skipped',
+                            message: '첫 달 학원비가 이미 납부되어 재계산하지 않았습니다. 결제 내역에서 직접 수정해주세요.'
+                        };
+                    } else if (duplicateRows.length > 0) {
+                        enrollmentDateRecalc = {
+                            type: 'skipped',
+                            message: `${month}월 학원비가 이미 있어 재계산하지 않았습니다. 결제 내역에서 직접 정리해주세요.`
+                        };
+                    } else {
+                        const studentData = updatedStudents[0];
+                        const baseAmount = parseFloat(studentData.monthly_tuition) || 0;
+                        const discountRateNum = parseFloat(studentData.discount_rate) || 0;
+                        const lastDayOfMonth = new Date(year, month, 0).getDate();
+                        const enrollDay = enrollDate.getDate();
+                        const remainingDays = lastDayOfMonth - enrollDay + 1;
+
+                        const currentClassDaysRaw = studentData.class_days
+                            ? (typeof studentData.class_days === 'string'
+                                ? JSON.parse(studentData.class_days)
+                                : studentData.class_days)
+                            : [];
+                        const parsedClassDays = extractDayNumbers(parseClassDaysWithSlots(currentClassDaysRaw, currentTimeSlot));
+
+                        // 등록일부터 말일까지 수업일수 / 전체 월 수업일수
+                        let classDaysCount = 0;
+                        for (let d = enrollDay; d <= lastDayOfMonth; d++) {
+                            if (parsedClassDays.includes(new Date(year, month - 1, d).getDay())) classDaysCount++;
+                        }
+                        let totalClassDaysInMonth = 0;
+                        for (let d = 1; d <= lastDayOfMonth; d++) {
+                            if (parsedClassDays.includes(new Date(year, month - 1, d).getDay())) totalClassDaysInMonth++;
+                        }
+
+                        let proRatedAmount;
+                        if (totalClassDaysInMonth > 0 && classDaysCount > 0) {
+                            proRatedAmount = truncateToThousands(baseAmount / totalClassDaysInMonth * classDaysCount);
+                        } else {
+                            // 수업요일 설정 없으면 일수 기준
+                            proRatedAmount = truncateToThousands(baseAmount * remainingDays / lastDayOfMonth);
+                        }
+                        const discountAmount = truncateToThousands(proRatedAmount * discountRateNum / 100);
+                        const finalAmount = proRatedAmount - discountAmount;
+
+                        const [academySettings] = await pool.execute(
+                            'SELECT tuition_due_day FROM academy_settings WHERE academy_id = ?',
+                            [req.user.academyId]
+                        );
+                        const academyDueDay = academySettings.length > 0 ? academySettings[0].tuition_due_day : 5;
+                        const studentDueDay = studentData.payment_due_day || academyDueDay;
+
+                        let dueDateStr = calculateDueDate(year, month, studentDueDay, parsedClassDays);
+                        if (new Date(dueDateStr) < enrollDate) {
+                            const grace = new Date(enrollDate);
+                            grace.setDate(grace.getDate() + 7);
+                            dueDateStr = grace.toISOString().split('T')[0];
+                        }
+
+                        await pool.execute(
+                            `UPDATE student_payments
+                             SET \`year_month\` = ?, target_year = ?, target_month = ?,
+                                 base_amount = ?, discount_amount = ?, final_amount = ?,
+                                 is_prorated = 1, proration_details = ?,
+                                 due_date = ?, description = ?, updated_at = NOW()
+                             WHERE id = ?`,
+                            [
+                                newYearMonth, year, month,
+                                proRatedAmount, discountAmount, finalAmount,
+                                JSON.stringify({ enrollDay, remainingDays, totalDays: lastDayOfMonth, classCountInPeriod: classDaysCount, totalClassDaysInMonth }),
+                                dueDateStr, `${month}월 학원비 (${enrollDay}일 등록, 일할계산)`,
+                                proratedPayment.id
+                            ]
+                        );
+                        enrollmentDateRecalc = {
+                            type: 'recalculated',
+                            message: `등록일 변경으로 첫 달 학원비 재계산: ${finalAmount.toLocaleString()}원 (${enrollDay}일 등록)`,
+                            finalAmount
+                        };
+                        logger.info(`[Student ${studentId}] Prorated payment recalculated for enrollment_date change ${oldEnrollmentDate} → ${enrollment_date}: ${finalAmount}원`);
+                    }
+                }
+            } catch (recalcError) {
+                logger.error('Enrollment date payment recalc failed:', recalcError);
+                // 재계산 실패해도 학생 정보 업데이트는 성공으로 처리
+            }
+        }
+
         // 체험생 trial_dates가 변경되었으면 스케줄 재배정
         let trialAssignResult = null;
         if (is_trial && trial_dates !== undefined && trial_dates.length > 0) {
@@ -903,6 +1027,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             scheduleReassigned: reassignResult,
             trialScheduleAssigned: trialAssignResult,
             paymentAdjustment,
+            enrollmentDateRecalc,
             withdrawalInfo,
             pauseInfo,
             trialCancelInfo

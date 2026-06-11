@@ -31,6 +31,15 @@ export default function EditStudentPage() {
       // 성공 알림
       toast.success(`${response.student.name} 학생 정보가 수정되었습니다!`);
 
+      // 등록일 변경에 따른 첫 달 학원비 재계산 결과 알림
+      if (response.enrollmentDateRecalc) {
+        if (response.enrollmentDateRecalc.type === 'recalculated') {
+          toast.info(response.enrollmentDateRecalc.message);
+        } else {
+          toast.warning(response.enrollmentDateRecalc.message);
+        }
+      }
+
       // 상세 페이지로 이동
       router.push(`/students/${studentId}`);
     } catch (error: any) {
