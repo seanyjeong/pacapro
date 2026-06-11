@@ -94,6 +94,61 @@ async function generateReservationNumber() {
 }
 
 /**
+ * 상담 → 미등록관리(pending) 학생 생성 + 상담 연결 공용 헬퍼.
+ *
+ *  - conversion.js (수동 convert-to-pending) 와 write.js (상담완료 시 자동 전환),
+ *    scripts/backfill-pending-from-consultations.js (소급 스크립트) 가 공유한다.
+ *  - INSERT 컬럼/값 셰이프는 기존 convert-to-pending 원본 보존.
+ *  - 호출 측이 linked_student_id 부재를 먼저 확인해야 한다 (중복 생성 가드는 호출자 책임).
+ *
+ * @param {Object} consultation - consultations row (id, academy_id, student_name, ... 포함)
+ * @param {Object} [opts]
+ * @param {string} [opts.studentPhone] - 학생 본인 전화번호 (없으면 parent_phone 사용)
+ * @param {string} [opts.memo] - 미등록관리 메모 (없으면 inquiry_content)
+ * @returns {Promise<number>} 생성된 studentId
+ */
+async function createPendingStudentFromConsultation(consultation, { studentPhone, memo } = {}) {
+    // 학부모 연락처는 정식 등록 시 입력
+    const phone = studentPhone || consultation.parent_phone;
+
+    // 민감 정보 암호화 (이미 암호화된 값이면 그대로 사용)
+    const isAlreadyEncrypted = (val) => val && typeof val === 'string' && val.startsWith('ENC:');
+    const encryptedName = isAlreadyEncrypted(consultation.student_name)
+        ? consultation.student_name
+        : encrypt(consultation.student_name);
+    const encryptedPhone = phone
+        ? (isAlreadyEncrypted(phone) ? phone : encrypt(phone))
+        : null;
+
+    const [studentResult] = await pool.execute(
+        `INSERT INTO students (
+            academy_id, name, grade, school, gender, phone, parent_phone, status,
+            is_trial, memo, class_days, monthly_tuition, consultation_date, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, NULL, 'pending', 0, ?, '[]', 0, ?, NOW())`,
+        [
+            consultation.academy_id,
+            encryptedName,
+            consultation.student_grade,
+            consultation.student_school,
+            consultation.gender || null,
+            encryptedPhone,
+            memo || consultation.inquiry_content || null,
+            consultation.preferred_date
+        ]
+    );
+
+    const studentId = studentResult.insertId;
+
+    // 상담 상태 업데이트 (completed + 학생 연결)
+    await pool.execute(
+        `UPDATE consultations SET status = 'completed', linked_student_id = ? WHERE id = ?`,
+        [studentId, consultation.id]
+    );
+
+    return studentId;
+}
+
+/**
  * 상담확정 알림톡 발송 (service_type 에 따라 솔라피/SENS 채널 분기).
  *
  *  - notification_settings 의 service_type 컬럼으로 채널 결정 (기본 'solapi').
@@ -308,5 +363,6 @@ module.exports = {
     decryptConsultationArray,
     decryptStudentInfo,
     generateReservationNumber,
+    createPendingStudentFromConsultation,
     sendConfirmationAlimtalk,
 };

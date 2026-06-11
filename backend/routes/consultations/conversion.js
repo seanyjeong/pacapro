@@ -28,7 +28,7 @@
  * 의 `/:id` 와 segment 수가 달라 충돌 X. write 의 `/:id/link-student` 와 같은 형태.
  */
 
-const { pool, verifyToken, encrypt, logger } = require('./_utils');
+const { pool, verifyToken, encrypt, logger, createPendingStudentFromConsultation } = require('./_utils');
 
 module.exports = function (router) {
     // ============================================
@@ -186,43 +186,8 @@ module.exports = function (router) {
                 return res.status(400).json({ error: '이미 학생으로 등록되어 있습니다.' });
             }
 
-            // 미등록관리 학생 등록 (pending 상태)
-            // 학부모 연락처는 정식 등록 시 입력
-            const phone = studentPhone || consultation.parent_phone;
-
-            // 민감 정보 암호화 (이미 암호화된 값이면 그대로 사용)
-            const isAlreadyEncrypted = (val) => val && typeof val === 'string' && val.startsWith('ENC:');
-            const encryptedName = isAlreadyEncrypted(consultation.student_name)
-                ? consultation.student_name
-                : encrypt(consultation.student_name);
-            const encryptedPhone = phone
-                ? (isAlreadyEncrypted(phone) ? phone : encrypt(phone))
-                : null;
-
-            const [studentResult] = await pool.execute(
-                `INSERT INTO students (
-                    academy_id, name, grade, school, gender, phone, parent_phone, status,
-                    is_trial, memo, class_days, monthly_tuition, consultation_date, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, NULL, 'pending', 0, ?, '[]', 0, ?, NOW())`,
-                [
-                    academyId,
-                    encryptedName,
-                    consultation.student_grade,
-                    consultation.student_school,
-                    consultation.gender || null,
-                    encryptedPhone,
-                    memo || consultation.inquiry_content || null,
-                    consultation.preferred_date
-                ]
-            );
-
-            const studentId = studentResult.insertId;
-
-            // 상담 상태 업데이트 (completed + 학생 연결)
-            await pool.execute(
-                `UPDATE consultations SET status = 'completed', linked_student_id = ? WHERE id = ?`,
-                [studentId, id]
-            );
+            // 미등록관리 학생 등록 (pending 상태) — 공용 헬퍼 (_utils.js)
+            const studentId = await createPendingStudentFromConsultation(consultation, { studentPhone, memo });
 
             res.json({
                 message: '미등록관리 학생으로 등록되었습니다.',

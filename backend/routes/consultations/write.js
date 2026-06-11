@@ -6,6 +6,8 @@
  *                            상태 confirmed 전환 시 예약번호 자동 발급 + 알림톡 비동기 발송
  *                            (단, learning 타입 상담은 알림톡 발송 제외)
  *                            연결된 학생이 있으면 students 테이블도 동기화
+ *                            상태 completed 전환 시 학생 미연결 신규상담이면
+ *                            미등록관리(pending) 학생 자동 생성 + 연결 (learning 제외)
  *   POST /direct           — 관리자가 직접 상담 등록 (201, consultation_type='new_registration', status='confirmed')
  *   POST /:id/link-student — 상담을 기존 학생과 연결 (linked_student_id UPDATE)
  *
@@ -37,6 +39,7 @@ const {
     encrypt,
     decryptConsultationNames,
     generateReservationNumber,
+    createPendingStudentFromConsultation,
     sendConfirmationAlimtalk,
     logger,
 } = require('./_utils');
@@ -207,6 +210,34 @@ module.exports = function (router) {
                 if (studentUpdates.length > 0) {
                     studentParams.push(currentConsultation.linked_student_id);
                     await pool.execute(`UPDATE students SET ${studentUpdates.join(', ')} WHERE id = ?`, studentParams);
+                }
+            }
+
+            // 상태가 completed 로 변경되는데 학생 미연결 신규상담이면 미등록관리(pending) 학생 자동 생성
+            // (체험등록/미등록관리 버튼을 안 누르고 상담만 완료한 학생도 미등록관리 탭에 잡히도록)
+            const wasNotCompleted = currentConsultation.status !== 'completed';
+            const willBeCompleted = status === 'completed';
+            if (wasNotCompleted && willBeCompleted
+                && !currentConsultation.linked_student_id
+                && currentConsultation.consultation_type !== 'learning') {
+                try {
+                    // 같은 요청에서 수정된 학생 정보가 있으면 반영한 값으로 생성
+                    const consultationForPending = {
+                        ...currentConsultation,
+                        student_name: _student_name !== undefined ? _student_name : currentConsultation.student_name,
+                        student_grade: _student_grade !== undefined ? _student_grade : currentConsultation.student_grade,
+                        student_school: _student_school !== undefined ? (_student_school || null) : currentConsultation.student_school,
+                        gender: gender !== undefined ? (gender || null) : currentConsultation.gender,
+                        parent_phone: _parent_phone !== undefined ? _parent_phone : currentConsultation.parent_phone,
+                        preferred_date: preferredDate || currentConsultation.preferred_date,
+                    };
+                    const pendingStudentId = await createPendingStudentFromConsultation(consultationForPending, {
+                        memo: consultationMemo !== undefined ? consultationMemo : currentConsultation.consultation_memo,
+                    });
+                    logger.info(`[ConsultationAutoPending] 상담 ${id} 완료 → 미등록관리 학생 ${pendingStudentId} 자동 생성`);
+                } catch (err) {
+                    // 자동 전환 실패해도 상담 수정 자체는 성공 처리
+                    logger.error('[ConsultationAutoPending] 자동 전환 오류:', err);
                 }
             }
 
