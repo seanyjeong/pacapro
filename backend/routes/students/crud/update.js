@@ -521,7 +521,8 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                        AND academy_id = ?
                        AND \`year_month\` >= ?
                        AND payment_status = 'pending'
-                       AND payment_type = 'monthly'`,
+                       AND payment_type = 'monthly'
+                       AND NOT (is_prorated = 1 OR description LIKE '%일할계산%')`,
                     [newTuition, finalTuition, studentId, req.user.academyId, currentYearMonth]
                 );
                 logger.info(`[Student ${studentId}] Pending payments updated: ${newTuition}원 (할인 후: ${finalTuition}원)`);
