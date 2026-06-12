@@ -139,7 +139,7 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="py-6 px-6 space-y-4">
           {/* 구분 */}
           <div className="space-y-2">
             <Label>구분</Label>
