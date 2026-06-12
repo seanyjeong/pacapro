@@ -4,10 +4,11 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Download, AlertCircle, Bell, Search, Banknote } from 'lucide-react';
+import { Plus, Download, AlertCircle, Bell, Search, Banknote, Calculator } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaymentList } from '@/components/payments/payment-list';
 import { ManualCreditModal } from '@/components/students/manual-credit-modal';
+import { ProrationCalculatorModal } from '@/components/payments/proration-calculator-modal';
 import { usePayments } from '@/hooks/use-payments';
 import { paymentsAPI } from '@/lib/api/payments';
 import { studentsAPI } from '@/lib/api/students';
@@ -65,6 +66,9 @@ function PaymentsPageContent() {
     }).catch(() => { /* 학생 데이터 로드 실패해도 페이지 자체는 동작 */ });
     return () => { cancelled = true; };
   }, []);
+
+  // 일할계산기 모달 상태
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
 
   // 크레딧 모달 상태
   const [creditModalOpen, setCreditModalOpen] = useState(false);
@@ -227,6 +231,10 @@ function PaymentsPageContent() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
+          <Button variant="outline" onClick={() => setCalculatorOpen(true)}>
+            <Calculator className="w-4 h-4 mr-2" />
+            일할계산기
+          </Button>
           <Button variant="outline" onClick={reload}>
             새로고침
           </Button>
@@ -438,6 +446,12 @@ function PaymentsPageContent() {
         showPaymentMarkButton={canEditPayments}
         markingPaymentId={markingPaymentId}
         confirmBeforePayment={true}
+      />
+
+      {/* 일할계산기 모달 */}
+      <ProrationCalculatorModal
+        open={calculatorOpen}
+        onClose={() => setCalculatorOpen(false)}
       />
 
       {/* 크레딧 모달 */}

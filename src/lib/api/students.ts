@@ -191,6 +191,24 @@ export const studentsAPI = {
   },
 
   /**
+   * 첫 달 일할계산 학원비 재계산
+   * POST /paca/students/:id/recalculate-first-payment
+   */
+  recalculateFirstPayment: async (id: number): Promise<{
+    message: string;
+    payment: {
+      id: number;
+      year_month: string;
+      base_amount: number;
+      discount_amount: number;
+      final_amount: number;
+      due_date: string;
+    };
+  }> => {
+    return await apiClient.post(`/students/${id}/recalculate-first-payment`);
+  },
+
+  /**
    * 학생 크레딧 목록 조회
    * GET /paca/students/:id/rest-credits
    */

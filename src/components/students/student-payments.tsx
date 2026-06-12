@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Plus, Coins, Banknote } from 'lucide-react';
+import { CreditCard, Plus, Coins, Banknote, Calculator } from 'lucide-react';
 import type { StudentPayment, RestCredit } from '@/lib/types/student';
 import { formatDate, formatCurrency, getPaymentStatusColor } from '@/lib/utils/student-helpers';
 import { PAYMENT_STATUS_LABELS, REST_CREDIT_TYPE_LABELS, REST_CREDIT_STATUS_LABELS, parseClassDays } from '@/lib/types/student';
@@ -141,6 +141,27 @@ export function StudentPaymentsComponent({
     }
   };
 
+  // 첫 달 일할 재계산 상태
+  const [recalculating, setRecalculating] = useState(false);
+
+  // 첫 달 일할계산 학원비 재계산 (현재 등록일 기준, 미납 건만)
+  const handleRecalculateFirstPayment = async () => {
+    if (!studentId) return;
+    if (!confirm('현재 등록일 기준으로 첫 달 학원비를 다시 일할계산합니다. 진행할까요?')) return;
+
+    try {
+      setRecalculating(true);
+      const result = await studentsAPI.recalculateFirstPayment(studentId);
+      alert(result.message);
+      window.location.reload(); // 페이지 새로고침으로 학원비 갱신
+    } catch (err: any) {
+      console.error('Failed to recalculate first payment:', err);
+      alert(err.response?.data?.message || '첫 달 학원비 재계산에 실패했습니다.');
+    } finally {
+      setRecalculating(false);
+    }
+  };
+
   // 크레딧 기능 사용 가능 여부
   const canUseCredit = studentId && studentName && monthlyTuition && weeklyCount;
 
@@ -262,7 +283,7 @@ export function StudentPaymentsComponent({
 
       {/* 납부 내역 섹션 */}
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <CreditCard className="w-5 h-5" />
             납부 내역
@@ -272,6 +293,17 @@ export function StudentPaymentsComponent({
               </span>
             )}
           </CardTitle>
+          {studentId && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleRecalculateFirstPayment}
+              disabled={recalculating}
+            >
+              <Calculator className="w-4 h-4 mr-1" />
+              {recalculating ? '재계산 중...' : '첫 달 일할 재계산'}
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="p-0">
           {payments.length === 0 ? (

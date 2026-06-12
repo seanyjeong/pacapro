@@ -10,5 +10,6 @@ require('./crud')(router);         // GET /, GET /:id, POST /, PUT /:id, DELETE 
 require('./rest')(router);         // POST /:id/process-rest, POST /:id/resume
 require('./credits')(router);      // GET /:id/rest-credits, POST /:id/manual-credit, GET /:id/credits, ...
 require('./attendance')(router);   // GET /:id/attendance
+require('./firstPayment')(router); // POST /:id/recalculate-first-payment
 
 module.exports = router;
