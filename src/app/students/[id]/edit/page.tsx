@@ -40,6 +40,10 @@ export default function EditStudentPage() {
         }
       }
 
+      if (response.pendingInfo) {
+        toast.info(response.pendingInfo.message);
+      }
+
       // 상세 페이지로 이동
       router.push(`/students/${studentId}`);
     } catch (error: any) {

@@ -189,6 +189,31 @@ describe('PUT /paca/students/:id (update)', () => {
         expect(pool.execute.mock.calls.length).toBeGreaterThan(0);
         expect(pool.query).not.toHaveBeenCalled();
     });
+
+    test('active → pending 전환 시 오늘 이후 미체크 스케줄 삭제', async () => {
+        pool.execute.mockResolvedValue([[]]);
+        pool.execute
+            .mockResolvedValueOnce([[existingStudent({ status: 'active' })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ status: 'pending' })]])
+            .mockResolvedValueOnce([{ affectedRows: 3 }]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ status: 'pending' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.pendingInfo).toEqual({
+            deletedSchedules: 3,
+            message: '미등록 전환으로 미래 스케줄 3건 삭제됨',
+        });
+
+        const pendingDeleteCall = pool.execute.mock.calls.find(c =>
+            /DELETE a FROM attendance a/.test(c[0])
+            && /cs\.class_date >= \?/.test(c[0])
+            && /a\.attendance_status IS NULL/.test(c[0])
+        );
+        expect(pendingDeleteCall).toBeDefined();
+        expect(pendingDeleteCall[1]).toEqual([5, 1, expect.any(String)]);
+    });
 });
 
 describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 학원비 재계산', () => {
