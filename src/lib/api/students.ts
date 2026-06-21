@@ -15,6 +15,7 @@ import type {
   StudentFilters,
   ManualCreditRequest,
   ManualCreditResponse,
+  RestCredit,
   RestCreditsResponse,
   ClassDaysResponse,
   ClassDaysUpdateRequest,
@@ -228,7 +229,7 @@ export const studentsAPI = {
    * 학생 크레딧 목록 조회 (새 API)
    * GET /paca/students/:id/credits
    */
-  getCredits: async (id: number): Promise<{ credits: any[] }> => {
+  getCredits: async (id: number): Promise<{ credits: RestCredit[] }> => {
     return await apiClient.get(`/students/${id}/credits`);
   },
 

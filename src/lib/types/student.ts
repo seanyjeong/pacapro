@@ -355,7 +355,7 @@ export function formatDiscountRate(rate: string | number): string {
 // ===== 휴식 크레딧 관련 타입 =====
 
 export type RestCreditType = 'carryover' | 'refund' | 'excused' | 'manual';
-export type RestCreditStatus = 'pending' | 'partial' | 'applied' | 'refunded' | 'cancelled';
+export type RestCreditStatus = 'pending' | 'partial' | 'applied' | 'used' | 'refunded' | 'cancelled' | 'expired';
 
 // 휴식 크레딧 인터페이스
 export interface RestCredit {
@@ -413,8 +413,10 @@ export const REST_CREDIT_STATUS_LABELS: Record<RestCreditStatus, string> = {
   pending: '미사용',
   partial: '부분사용',
   applied: '크레딧사용',
+  used: '사용됨',
   refunded: '환불완료',
   cancelled: '취소',
+  expired: '만료',
 };
 
 // ===== 수동 크레딧 관련 타입 =====
