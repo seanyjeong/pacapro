@@ -5,11 +5,10 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Users, UserCheck, UserX, GraduationCap, Sparkles, Clock } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
-import type { Student } from '@/lib/types/student';
 
 interface StudentStatsCardsProps {
   onStatsLoaded?: (stats: StudentStats) => void;
@@ -36,11 +35,7 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadAllStudentsStats();
-  }, [refreshTrigger]);
-
-  const loadAllStudentsStats = async () => {
+  const loadAllStudentsStats = useCallback(async () => {
     try {
       setLoading(true);
       // 모든 학생 가져오기 (필터 없이)
@@ -74,7 +69,11 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
     } finally {
       setLoading(false);
     }
-  };
+  }, [onStatsLoaded]);
+
+  useEffect(() => {
+    loadAllStudentsStats();
+  }, [loadAllStudentsStats, refreshTrigger]);
 
   const cards = [
     {
@@ -122,18 +121,19 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+    <div className="overflow-x-auto pb-1 md:overflow-visible md:pb-0">
+      <div className="flex w-max gap-3 md:grid md:w-full md:grid-cols-3 lg:grid-cols-6 lg:gap-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <Card key={card.title}>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className={`p-2 ${card.bgColor} rounded-lg`}>
+          <Card key={card.title} className="w-36 shrink-0 md:w-auto md:min-w-0 md:shrink">
+            <CardContent className="p-3 lg:p-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`shrink-0 p-2 ${card.bgColor} rounded-lg`}>
                   <Icon className={`w-5 h-5 ${card.iconColor}`} />
                 </div>
-                <div>
-                  <div className="text-xs text-muted-foreground">{card.title}</div>
+                <div className="min-w-0">
+                  <div className="truncate text-xs text-muted-foreground">{card.title}</div>
                   <div className="text-xl font-bold text-foreground">
                     {loading ? '-' : card.value}명
                   </div>
@@ -143,6 +143,7 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
           </Card>
         );
       })}
+      </div>
     </div>
   );
 }

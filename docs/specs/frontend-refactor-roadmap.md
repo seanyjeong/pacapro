@@ -22,7 +22,8 @@ Work page by page in production menu order. For every page:
 1. Students
    - First risk: several student components exceed 500 lines.
    - First API fix: route student Excel download through `exportsApi.downloadStudents()`.
-   - Next slice: split oversized list/detail modal components before visual redesign.
+   - Shell refactor: root route split into `src/features/students`, with Korean error UX and Operations Desk header/tabs/search structure.
+   - Next slice: split oversized detail/modal components before changing student detail workflows.
 2. Instructors
 3. Schedules
 4. Student Class Days
