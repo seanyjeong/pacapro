@@ -1,0 +1,314 @@
+/**
+ * 알림톡 API 클라이언트
+ */
+
+import apiClient from './client';
+
+// 알림톡 버튼 타입
+export interface ConsultationButton {
+  buttonType: 'WL' | 'AL' | 'BK' | 'MD';  // WL: 웹링크, AL: 앱링크, BK: 봇키워드, MD: 메시지전달
+  buttonName: string;
+  linkMo?: string;  // 모바일 링크
+  linkPc?: string;  // PC 링크
+}
+
+export interface NotificationSettings {
+  // 서비스 타입 선택
+  service_type: 'sens' | 'solapi';
+
+  // ===== SENS 설정 =====
+  naver_access_key: string;
+  naver_secret_key: string;
+  naver_service_id: string;  // 알림톡용 Service ID
+  sms_service_id: string;    // SMS용 Service ID
+  kakao_channel_id: string;
+  has_secret_key?: boolean;
+
+  // SENS 납부안내 (기존 template_code, template_content 재사용)
+  template_code: string;
+  template_content: string;
+  sens_buttons: ConsultationButton[];
+  sens_image_url: string;
+  sens_auto_enabled: boolean;  // 수업일 기반 자동발송 활성화
+  sens_auto_hour: number;      // 자동발송 시간 (0-23)
+
+  // SENS 상담확정
+  sens_consultation_template_code: string;
+  sens_consultation_template_content: string;
+  sens_consultation_buttons: ConsultationButton[];
+  sens_consultation_image_url: string;
+
+  // SENS 체험수업
+  sens_trial_template_code: string;
+  sens_trial_template_content: string;
+  sens_trial_buttons: ConsultationButton[];
+  sens_trial_image_url: string;
+  sens_trial_auto_enabled: boolean;
+  sens_trial_auto_hour: number;
+
+  // SENS 미납자
+  sens_overdue_template_code: string;
+  sens_overdue_template_content: string;
+  sens_overdue_buttons: ConsultationButton[];
+  sens_overdue_image_url: string;
+  sens_overdue_auto_enabled: boolean;
+  sens_overdue_auto_hour: number;
+
+  // SENS 상담 리마인드
+  sens_reminder_template_code: string;
+  sens_reminder_template_content: string;
+  sens_reminder_buttons: ConsultationButton[];
+  sens_reminder_image_url: string;
+  sens_reminder_auto_enabled: boolean;
+  sens_reminder_hours: number;
+
+  // ===== 솔라피 설정 =====
+  solapi_api_key: string;
+  solapi_api_secret: string;
+  solapi_pfid: string;  // 카카오 채널 ID
+  solapi_sender_phone: string;  // 발신번호
+  has_solapi_secret?: boolean;
+
+  // 솔라피 납부안내
+  solapi_template_id: string;
+  solapi_template_content: string;
+  solapi_buttons: ConsultationButton[];
+  solapi_image_url: string;
+  solapi_auto_enabled: boolean;  // 수업일 기반 자동발송 활성화
+  solapi_auto_hour: number;      // 자동발송 시간 (0-23)
+
+  // 솔라피 상담확정
+  solapi_consultation_template_id: string;
+  solapi_consultation_template_content: string;
+  solapi_consultation_buttons: ConsultationButton[];
+  solapi_consultation_image_url: string;
+
+  // 솔라피 체험수업
+  solapi_trial_template_id: string;
+  solapi_trial_template_content: string;
+  solapi_trial_buttons: ConsultationButton[];
+  solapi_trial_image_url: string;
+  solapi_trial_auto_enabled: boolean;
+  solapi_trial_auto_hour: number;
+
+  // 솔라피 미납자
+  solapi_overdue_template_id: string;
+  solapi_overdue_template_content: string;
+  solapi_overdue_buttons: ConsultationButton[];
+  solapi_overdue_image_url: string;
+  solapi_overdue_auto_enabled: boolean;
+  solapi_overdue_auto_hour: number;
+
+  // 솔라피 상담 리마인드
+  solapi_reminder_template_id: string;
+  solapi_reminder_template_content: string;
+  solapi_reminder_buttons: ConsultationButton[];
+  solapi_reminder_image_url: string;
+  solapi_reminder_auto_enabled: boolean;
+  solapi_reminder_hours: number;
+
+  // 출결관리 (출결 기록 시 보호자 알림톡)
+  solapi_attendance_template_id: string;
+  solapi_attendance_template_content: string;
+  solapi_attendance_buttons: ConsultationButton[];
+  solapi_attendance_image_url: string;
+  sens_attendance_template_code: string;
+  sens_attendance_template_content: string;
+  sens_attendance_buttons: ConsultationButton[];
+  sens_attendance_image_url: string;
+  attendance_alimtalk_enabled: boolean;
+
+  // ===== 공통 설정 =====
+  is_enabled: boolean;        // SENS 활성화
+  solapi_enabled: boolean;    // 솔라피 활성화
+}
+
+export interface NotificationLog {
+  id: number;
+  academy_id: number;
+  student_id: number | null;
+  payment_id: number | null;
+  recipient_name: string;
+  recipient_phone: string;
+  message_type: 'alimtalk' | 'sms';
+  template_code: string;
+  message_content: string;
+  status: 'pending' | 'sent' | 'delivered' | 'failed';
+  error_message: string | null;
+  request_id: string | null;
+  sent_at: string | null;
+  created_at: string;
+  student_name?: string;
+}
+
+export interface NotificationStats {
+  total: number;
+  sent: number;
+  delivered: number;
+  failed: number;
+}
+
+interface SettingsResponse {
+  message: string;
+  settings: NotificationSettings;
+}
+
+interface LogsResponse {
+  message: string;
+  logs: NotificationLog[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+interface StatsResponse {
+  message: string;
+  stats: NotificationStats;
+}
+
+interface SendResponse {
+  message: string;
+  success?: boolean;
+  sent?: number;
+  failed?: number;
+  requestId?: string;
+}
+
+export const notificationsAPI = {
+  /**
+   * 알림 설정 조회
+   */
+  getSettings: async (): Promise<NotificationSettings> => {
+    const response = await apiClient.get<SettingsResponse>('/notifications/settings');
+    return response.settings;
+  },
+
+  /**
+   * 알림 설정 저장
+   */
+  saveSettings: async (settings: Partial<NotificationSettings>): Promise<void> => {
+    await apiClient.put<{ message: string }>('/notifications/settings', settings);
+  },
+
+  /**
+   * 테스트 메시지 발송 (미납자 알림톡)
+   */
+  sendTest: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test', { phone });
+    return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
+   * 상담확정 알림톡 테스트 발송
+   */
+  sendTestConsultation: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-consultation', { phone });
+    return { success: response.success || false, groupId: response.groupId };
+  },
+
+  /**
+   * 체험수업 알림톡 테스트 발송
+   */
+  sendTestTrial: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-trial', { phone });
+    return { success: response.success || false, groupId: response.groupId };
+  },
+
+  /**
+   * 미납자 알림톡 테스트 발송 (솔라피)
+   */
+  sendTestOverdue: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-overdue', { phone });
+    return { success: response.success || false, groupId: response.groupId };
+  },
+
+  /**
+   * SENS 상담확정 알림톡 테스트 발송
+   */
+  sendTestSensConsultation: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-consultation', { phone });
+    return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
+   * SENS 체험수업 알림톡 테스트 발송
+   */
+  sendTestSensTrial: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-trial', { phone });
+    return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
+   * SENS 미납자 알림톡 테스트 발송
+   */
+  sendTestSensOverdue: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-overdue', { phone });
+    return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
+   * 솔라피 상담 리마인드 알림톡 테스트 발송
+   */
+  sendTestReminder: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-reminder', { phone });
+    return { success: response.success || false, groupId: response.groupId };
+  },
+
+  /**
+   * SENS 상담 리마인드 알림톡 테스트 발송
+   */
+  sendTestSensReminder: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-reminder', { phone });
+    return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
+   * 미납자 일괄 알림 발송
+   */
+  sendUnpaid: async (year: number, month: number): Promise<{ sent: number; failed: number }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/send-unpaid', { year, month });
+    return { sent: response.sent || 0, failed: response.failed || 0 };
+  },
+
+  /**
+   * 개별 학생 알림 발송
+   */
+  sendIndividual: async (paymentId: number): Promise<{ success: boolean }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/send-individual', { payment_id: paymentId });
+    return { success: response.success || false };
+  },
+
+  /**
+   * 발송 내역 조회
+   */
+  getLogs: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<{
+    logs: NotificationLog[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }> => {
+    const response = await apiClient.get<LogsResponse>('/notifications/logs', { params });
+    return { logs: response.logs, pagination: response.pagination };
+  },
+
+  /**
+   * 발송 통계 조회
+   */
+  getStats: async (year?: number, month?: number): Promise<NotificationStats> => {
+    const params = year && month ? { year, month } : {};
+    const response = await apiClient.get<StatsResponse>('/notifications/stats', { params });
+    return response.stats;
+  },
+};

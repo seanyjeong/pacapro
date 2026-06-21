@@ -1,0 +1,358 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 가로 스크롤 방지 */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Pretendard 폰트 - 모던 한글 최적화 */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
+@layer base {
+  :root {
+    /* 기본 색상 */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+
+    /* 폰트 */
+    --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+    /* 출석 상태 색상 - Gradient System */
+    --attendance-present-from: 160 84% 39%;     /* #10b981 emerald-500 */
+    --attendance-present-to: 160 84% 35%;       /* #059669 emerald-600 */
+    --attendance-late-from: 38 92% 50%;         /* #f59e0b amber-500 */
+    --attendance-late-to: 36 91% 44%;           /* #d97706 amber-600 */
+    --attendance-absent-from: 351 83% 57%;      /* #f43f5e rose-500 */
+    --attendance-absent-to: 350 89% 50%;        /* #e11d48 rose-600 */
+    --attendance-excused-from: 199 89% 48%;     /* #0ea5e9 sky-500 */
+    --attendance-excused-to: 201 96% 38%;       /* #0284c7 sky-600 */
+  }
+
+  /* 다크 테마 - 눈에 편한 다크모드 */
+  .dark {
+    /* 배경 - 순수 검정 아님, 미묘한 회색조 */
+    --background: 220 15% 6%;
+    --foreground: 210 20% 96%;
+
+    /* 카드 - 배경과 명확히 구분 */
+    --card: 220 15% 10%;
+    --card-foreground: 210 20% 96%;
+
+    /* 팝오버 */
+    --popover: 220 15% 12%;
+    --popover-foreground: 210 20% 96%;
+
+    /* Primary */
+    --primary: 217 91% 60%;
+    --primary-foreground: 220 15% 10%;
+
+    /* Secondary */
+    --secondary: 220 15% 14%;
+    --secondary-foreground: 210 20% 96%;
+
+    /* Muted */
+    --muted: 220 15% 8%;
+    --muted-foreground: 215 15% 60%;
+
+    /* Accent */
+    --accent: 220 15% 14%;
+    --accent-foreground: 210 20% 96%;
+
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 20% 96%;
+
+    /* Border */
+    --border: 220 15% 18%;
+    --input: 220 15% 14%;
+    --ring: 217 91% 60%;
+
+    /* 출석 상태 색상 - Dark Mode Variants */
+    --attendance-present-from: 160 84% 35%;     /* #059669 darker emerald */
+    --attendance-present-to: 160 84% 30%;       /* #047857 emerald-700 */
+    --attendance-late-from: 36 91% 44%;         /* #d97706 darker amber */
+    --attendance-late-to: 35 91% 38%;           /* #b45309 amber-700 */
+    --attendance-absent-from: 350 89% 50%;      /* #e11d48 darker rose */
+    --attendance-absent-to: 347 87% 44%;        /* #be123c rose-700 */
+    --attendance-excused-from: 201 96% 38%;     /* #0284c7 darker sky */
+    --attendance-excused-to: 201 90% 32%;       /* #0369a1 sky-700 */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Modern Scrollbar - Ultra Minimal */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 99px;
+  transition: background 0.2s;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* 다크 모드 스크롤바 */
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+
+/* 모바일 터치 스크롤 개선 */
+@media (max-width: 768px) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* 모바일에서는 스크롤바 숨기기 (깔끔함 유지) */
+  ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+}
+
+/* Input time 기본 아이콘 제거 */
+input[type="time"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+/* Date Input 스타일 - 라이트/다크 모드 대응 */
+input[type="date"] {
+  color-scheme: light;
+  color: hsl(var(--foreground));
+}
+
+input[type="date"]::-webkit-datetime-edit,
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+input[type="date"]::-webkit-datetime-edit-text,
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: hsl(var(--foreground));
+}
+
+.dark input[type="date"] {
+  color-scheme: dark;
+  color: hsl(var(--foreground));
+}
+
+/* Date picker 아이콘 색상 */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* Date input 선택 상태 - 더 명확한 색상 */
+input[type="date"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px hsl(var(--ring));
+}
+
+/* 유틸리티 클래스 - Minimal */
+@layer utilities {
+  /* 스태거 애니메이션 */
+  .stagger-children > * {
+    animation: slide-up 0.5s ease-out backwards;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 80ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 160ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 240ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 320ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 400ms; }
+  
+  /* 부드러운 펄스 애니메이션 */
+  .animate-pulse-soft {
+    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse-soft {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  /* 글래스모피즘 효과 */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .dark .glass {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* 그라데이션 텍스트 */
+  .gradient-text {
+    background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary)) 50%, hsl(var(--accent)) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* 출석 상태 그라데이션 배경 */
+  .bg-attendance-present {
+    background: linear-gradient(135deg, hsl(var(--attendance-present-from)) 0%, hsl(var(--attendance-present-to)) 100%);
+  }
+  
+  .bg-attendance-late {
+    background: linear-gradient(135deg, hsl(var(--attendance-late-from)) 0%, hsl(var(--attendance-late-to)) 100%);
+  }
+  
+  .bg-attendance-absent {
+    background: linear-gradient(135deg, hsl(var(--attendance-absent-from)) 0%, hsl(var(--attendance-absent-to)) 100%);
+  }
+  
+  .bg-attendance-excused {
+    background: linear-gradient(135deg, hsl(var(--attendance-excused-from)) 0%, hsl(var(--attendance-excused-to)) 100%);
+  }
+
+  /* 출석 상태 Glow 효과 (Dark Mode) */
+  .dark .glow-present {
+    box-shadow: 0 0 20px hsla(var(--attendance-present-from), 0.3),
+                0 4px 12px hsla(0, 0%, 0%, 0.5);
+  }
+  
+  .dark .glow-late {
+    box-shadow: 0 0 20px hsla(var(--attendance-late-from), 0.3),
+                0 4px 12px hsla(0, 0%, 0%, 0.5);
+  }
+  
+  .dark .glow-absent {
+    box-shadow: 0 0 20px hsla(var(--attendance-absent-from), 0.3),
+                0 4px 12px hsla(0, 0%, 0%, 0.5);
+  }
+  
+  .dark .glow-excused {
+    box-shadow: 0 0 20px hsla(var(--attendance-excused-from), 0.3),
+                0 4px 12px hsla(0, 0%, 0%, 0.5);
+  }
+
+  /* 향상된 글래스모피즘 */
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+
+  .dark .glass-strong {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* 마이크로 인터랙션 애니메이션 */
+  @keyframes check-bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  @keyframes card-check {
+    0% { transform: scale(1); }
+    25% { transform: scale(0.95); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes count-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-check-bounce {
+    animation: check-bounce 0.4s ease-out;
+  }
+
+  .animate-card-check {
+    animation: card-check 0.3s ease-out;
+  }
+
+  .animate-count-up {
+    animation: count-up 0.3s ease-out;
+  }
+
+  /* Safe area padding for mobile */
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-pb {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  .mb-safe-area {
+    margin-bottom: max(env(safe-area-inset-bottom), 1rem);
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

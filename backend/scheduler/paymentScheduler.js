@@ -1,0 +1,262 @@
+/**
+ * Payment Scheduler
+ * 학원비 자동 청구 스케줄러
+ *
+ * 매월 1일에 해당 월 학원비 자동 생성
+ * (휴식 크레딧 이월 차감 포함)
+ */
+
+const cron = require('node-cron');
+const db = require('../config/database');
+const { calculateDueDate } = require('../utils/dueDateCalculator');
+
+/**
+ * 천원 단위 절삭
+ */
+function truncateToThousands(amount) {
+    return Math.floor(amount / 1000) * 1000;
+}
+
+/**
+ * 학원비 자동 생성 로직
+ * 매월 1일에 실행되어 모든 active 학생의 학원비를 생성
+ */
+async function generateMonthlyPayments() {
+    console.log('[PaymentScheduler] Starting automatic payment generation...');
+
+    const today = new Date();
+    const currentDay = today.getDate();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    const yearMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+
+    try {
+        // 모든 학원 설정 조회
+        const [academies] = await db.query(`
+            SELECT
+                a.id as academy_id,
+                COALESCE(ast.tuition_due_day, 5) as default_due_day
+            FROM academies a
+            LEFT JOIN academy_settings ast ON a.id = ast.academy_id
+        `);
+
+        let totalGenerated = 0;
+        let totalWithCarryover = 0;
+        let totalErrors = 0;
+
+        for (const academy of academies) {
+            // 해당 학원의 모든 active 학생 조회
+            const [students] = await db.query(`
+                SELECT
+                    s.id,
+                    s.name,
+                    s.monthly_tuition,
+                    s.discount_rate,
+                    s.class_days,
+                    COALESCE(s.payment_due_day, ?) as due_day
+                FROM students s
+                WHERE s.academy_id = ?
+                AND s.status = 'active'
+                AND s.deleted_at IS NULL
+                AND s.monthly_tuition > 0
+            `, [academy.default_due_day, academy.academy_id]);
+
+            for (const student of students) {
+                // 각 학생별로 트랜잭션 처리
+                const connection = await db.getConnection();
+                
+                try {
+                    await connection.beginTransaction();
+
+                    // 이미 해당 월 학원비가 있는지 확인
+                    const [existing] = await connection.query(`
+                        SELECT id, payment_status FROM student_payments
+                        WHERE student_id = ?
+                        AND \`year_month\` = ?
+                        AND payment_type = 'monthly'
+                    `, [student.id, yearMonth]);
+
+                    // 이미 납부 완료된 건은 건너뛰기
+                    if (existing.length > 0 && existing[0].payment_status === 'paid') {
+                        await connection.rollback();
+                        connection.release();
+                        console.log(`[PaymentScheduler] Payment already paid for student ${student.id} (${student.name}) - ${yearMonth}`);
+                        continue;
+                    }
+
+                    // 학원비 계산
+                    const baseAmount = parseFloat(student.monthly_tuition);
+                    const discountRate = parseFloat(student.discount_rate) || 0;
+                    const discountAmount = truncateToThousands(baseAmount * discountRate / 100);
+
+                    // 휴식 이월 크레딧 확인 및 적용
+                    let carryoverAmount = 0;
+                    let restCreditId = null;
+                    let notes = null;
+
+                    // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 모두 조회
+                    const [pendingCredits] = await connection.query(`
+                        SELECT id, remaining_amount, credit_type FROM rest_credits
+                        WHERE student_id = ?
+                        AND academy_id = ?
+                        AND credit_type IN ('carryover', 'excused', 'manual')
+                        AND status IN ('pending', 'partial')
+                        AND remaining_amount > 0
+                        ORDER BY created_at ASC
+                        FOR UPDATE
+                    `, [student.id, academy.academy_id]);
+
+                    if (pendingCredits.length > 0) {
+                        const credit = pendingCredits[0];
+                        const amountBeforeCarryover = baseAmount - discountAmount;
+
+                        carryoverAmount = Math.min(credit.remaining_amount, amountBeforeCarryover);
+                        restCreditId = credit.id;
+
+                        const newRemaining = credit.remaining_amount - carryoverAmount;
+                        const newStatus = newRemaining <= 0 ? 'applied' : 'partial';
+
+                        // 크레딧 차감 (트랜잭션 내에서)
+                        await connection.query(`
+                            UPDATE rest_credits SET
+                                remaining_amount = ?,
+                                status = ?,
+                                applied_to_payment_id = NULL,
+                                processed_at = NOW()
+                            WHERE id = ?
+                        `, [newRemaining, newStatus, credit.id]);
+
+                        const creditTypeLabel = credit.credit_type === 'excused' ? '공결' : '휴식';
+                        notes = `[크레딧 차감] ${creditTypeLabel} 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
+                        totalWithCarryover++;
+                    }
+
+                    const finalAmount = truncateToThousands(baseAmount - discountAmount - carryoverAmount);
+
+                    // 납부일 계산 (납부일 이후 첫 출석일)
+                    let classDays = [];
+                    if (student.class_days) {
+                        if (Array.isArray(student.class_days)) {
+                            classDays = student.class_days;
+                        } else if (typeof student.class_days === 'string') {
+                            try {
+                                classDays = JSON.parse(student.class_days);
+                            } catch (e) {
+                                classDays = student.class_days.split(',').map(d => parseInt(d.trim(), 10)).filter(d => !isNaN(d));
+                            }
+                        }
+                    }
+                    const dueDateStr = calculateDueDate(currentYear, currentMonth, student.due_day, classDays);
+
+                    const description = carryoverAmount > 0
+                        ? `${currentMonth}월 학원비 (이월 차감 적용)`
+                        : `${currentMonth}월 학원비`;
+
+                    // 기존 미납 학원비가 있으면 업데이트, 없으면 생성 (트랜잭션 내에서)
+                    if (existing.length > 0) {
+                        await connection.query(`
+                            UPDATE student_payments SET
+                                base_amount = ?,
+                                discount_amount = ?,
+                                carryover_amount = ?,
+                                rest_credit_id = ?,
+                                final_amount = ?,
+                                due_date = ?,
+                                description = ?,
+                                notes = ?,
+                                updated_at = NOW()
+                            WHERE id = ?
+                        `, [
+                            baseAmount,
+                            discountAmount,
+                            carryoverAmount,
+                            restCreditId,
+                            finalAmount,
+                            dueDateStr,
+                            description,
+                            notes,
+                            existing[0].id
+                        ]);
+                        console.log(`[PaymentScheduler] Updated payment for student ${student.id} (${student.name}) - ${yearMonth}`);
+                    } else {
+                        await connection.query(`
+                            INSERT INTO student_payments (
+                                student_id,
+                                academy_id,
+                                \`year_month\`,
+                                payment_type,
+                                base_amount,
+                                discount_amount,
+                                additional_amount,
+                                carryover_amount,
+                                rest_credit_id,
+                                final_amount,
+                                due_date,
+                                payment_status,
+                                description,
+                                notes
+                            ) VALUES (?, ?, ?, 'monthly', ?, ?, 0, ?, ?, ?, ?, 'pending', ?, ?)
+                        `, [
+                            student.id,
+                            academy.academy_id,
+                            yearMonth,
+                            baseAmount,
+                            discountAmount,
+                            carryoverAmount,
+                            restCreditId,
+                            finalAmount,
+                            dueDateStr,
+                            description,
+                            notes
+                        ]);
+                        console.log(`[PaymentScheduler] Generated payment for student ${student.id} (${student.name}) - ${yearMonth}`);
+                        totalGenerated++;
+                    }
+
+                    // 트랜잭션 커밋
+                    await connection.commit();
+                    connection.release();
+
+                } catch (err) {
+                    // 트랜잭션 롤백
+                    await connection.rollback();
+                    connection.release();
+                    totalErrors++;
+                    console.error(`[PaymentScheduler] Transaction failed for student ${student.id} (${student.name}):`, err.message);
+                }
+            }
+        }
+
+        console.log(`[PaymentScheduler] Completed. Generated ${totalGenerated} payments (${totalWithCarryover} with carryover). Errors: ${totalErrors}`);
+        return { totalGenerated, totalWithCarryover, totalErrors };
+
+    } catch (error) {
+        console.error('[PaymentScheduler] Error:', error);
+        throw error;
+    }
+}
+
+/**
+ * 스케줄러 초기화
+ * 매월 1일 00:01에 실행
+ */
+function initScheduler() {
+    // 매월 1일 00:01에 실행 (1 0 1 * *)
+    cron.schedule('1 0 1 * *', async () => {
+        console.log('[PaymentScheduler] Running scheduled task at', new Date().toISOString());
+        try {
+            await generateMonthlyPayments();
+        } catch (error) {
+            console.error('[PaymentScheduler] Scheduled task failed:', error);
+        }
+    }, {
+        timezone: 'Asia/Seoul'
+    });
+
+    console.log('[PaymentScheduler] Scheduler initialized - runs monthly at 00:01 KST on the 1st');
+}
+
+module.exports = {
+    initScheduler,
+    generateMonthlyPayments
+};

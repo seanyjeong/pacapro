@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Backend (Express.js)
+backend/node_modules/
+backend/.env
+
+# Next.js
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Misc
+*.log
+*.tsbuildinfo
+nul
+
+# PWA (Service Worker)
+**/public/workbox-*.js
+**/public/sw.js
+**/public/sw.js.map
+
+# Playwright screenshots
+.playwright-mcp/
+
+# Backup folders
+backend_old_backup/
+
+# Redesign lab safety
+.env*
+*.sql
+*.dump
+*.db
+*.sqlite
+*.sqlite3
+*.xlsx
+*.xls
+*.pem
+*.key
+*.crt
+database/
+docs/private/
+screenshots/
+test-results/
+.vercel/

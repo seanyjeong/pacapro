@@ -1,0 +1,1128 @@
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { format, parseISO } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import {
+  Calendar, Clock, User, Search, Plus, Eye, Edit, Trash2,
+  MoreHorizontal, Loader2, RefreshCw, GraduationCap, Award, ChevronDown, ChevronUp
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import Link from 'next/link';
+
+import {
+  getConsultations, updateConsultation, deleteConsultation,
+  getBookedTimes, getConsultationSettings
+} from '@/lib/api/consultations';
+import type { WeeklyHour, LearningType } from '@/lib/types/consultation';
+import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
+import {
+  CONSULTATION_STATUS_LABELS,
+  CONSULTATION_STATUS_COLORS,
+  LEARNING_TYPE_LABELS
+} from '@/lib/types/consultation';
+import apiClient from '@/lib/api/client';
+
+interface Student {
+  id: number;
+  name: string;
+  grade: string;
+}
+
+interface SubjectScore {
+  선택과목?: string;
+  원점수?: number;
+  표준점수?: number;
+  백분위?: number;
+  등급?: string;
+}
+
+interface ScoreData {
+  year: string;
+  exam: string;
+  국어?: SubjectScore;
+  수학?: SubjectScore;
+  영어?: { 원점수?: number; 등급?: string };
+  한국사?: { 원점수?: number; 등급?: string };
+  탐구1?: SubjectScore;
+  탐구2?: SubjectScore;
+}
+
+export default function EnrolledConsultationsPage() {
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<Record<string, number>>({});
+  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
+
+  // 필터
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week'>('all');
+
+  // 상세 모달
+  const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  // 상태 변경 모달
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState<ConsultationStatus>('pending');
+  const [adminNotes, setAdminNotes] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const [newDate, setNewDate] = useState('');
+  const [newTime, setNewTime] = useState('');
+  const [editBookedTimes, setEditBookedTimes] = useState<string[]>([]);
+  const [loadingEditBookedTimes, setLoadingEditBookedTimes] = useState(false);
+
+  // 삭제 확인 모달
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // 재원생상담 등록 모달
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [studentDropdownOpen, setStudentDropdownOpen] = useState(false);
+  const studentDropdownRef = useRef<HTMLDivElement>(null);
+  const [createForm, setCreateForm] = useState({
+    studentId: '',
+    preferredDate: '',
+    preferredTime: '',
+    learningType: 'regular' as LearningType,
+    adminNotes: '',
+    // 모의고사 성적 (3월/6월/9월)
+    scores: {
+      '3월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' },
+      '6월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' },
+      '9월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' }
+    } as Record<string, Record<string, string>>
+  });
+  const [creating, setCreating] = useState(false);
+  const [bookedTimes, setBookedTimes] = useState<string[]>([]);
+  const [loadingBookedTimes, setLoadingBookedTimes] = useState(false);
+  const [weeklyHours, setWeeklyHours] = useState<WeeklyHour[]>([]);
+
+  // 성적 관련 상태 (상세 모달용)
+  const [showScores, setShowScores] = useState(false);
+  const [loadingScores, setLoadingScores] = useState(false);
+  const [selectedExam, setSelectedExam] = useState('수능');
+  const [studentScores, setStudentScores] = useState<ScoreData | null>(null);
+  const EXAM_TYPES = ['3월', '6월', '9월', '수능'];
+
+  // 등록 모달용 성적 상태
+  const [createScoresLoading, setCreateScoresLoading] = useState(false);
+  const [createScores, setCreateScores] = useState<Record<string, ScoreData | null>>({
+    '3월': null, '6월': null, '9월': null
+  });
+
+  const getDateRange = useCallback(() => {
+    const today = new Date();
+    if (dateFilter === 'today') {
+      const dateStr = format(today, 'yyyy-MM-dd');
+      return { startDate: dateStr, endDate: dateStr };
+    } else if (dateFilter === 'week') {
+      const start = format(today, 'yyyy-MM-dd');
+      const end = format(addDays(today, 7), 'yyyy-MM-dd');
+      return { startDate: start, endDate: end };
+    }
+    return { startDate: undefined, endDate: undefined };
+  }, [dateFilter]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const { startDate, endDate } = getDateRange();
+      const response = await getConsultations({
+        search: search || undefined,
+        status: statusFilter || undefined,
+        consultationType: 'learning', // 재원생상담만
+        startDate,
+        endDate,
+        page: pagination.page,
+        limit: pagination.limit
+      });
+
+      setConsultations(response.consultations);
+      setStats(response.stats);
+      setPagination(response.pagination);
+    } catch (error) {
+      console.error('데이터 로드 오류:', error);
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [search, statusFilter, dateFilter, pagination.page]);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const response = await getConsultationSettings();
+        if (response.weeklyHours) {
+          setWeeklyHours(response.weeklyHours);
+        }
+      } catch (error) {
+        console.error('운영시간 설정 로드 오류:', error);
+      }
+    };
+    loadSettings();
+  }, []);
+
+  // 학생 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (studentDropdownRef.current && !studentDropdownRef.current.contains(e.target as Node)) {
+        setStudentDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // 학생 성적 조회 (상세 모달용)
+  const loadStudentScores = async (studentId: number, exam: string) => {
+    setLoadingScores(true);
+    try {
+      const response = await apiClient.get<{ success: boolean; matched: boolean; scores: ScoreData }>(
+        `/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`
+      );
+      if (response.success && response.matched) {
+        setStudentScores(response.scores);
+      } else {
+        setStudentScores(null);
+      }
+    } catch (error) {
+      console.error('성적 조회 오류:', error);
+      setStudentScores(null);
+    } finally {
+      setLoadingScores(false);
+    }
+  };
+
+  // 등록 모달용 - 학생 선택 시 3월/6월/9월 성적 전체 조회
+  const loadCreateStudentScores = async (studentId: number) => {
+    setCreateScoresLoading(true);
+    const results: Record<string, ScoreData | null> = { '3월': null, '6월': null, '9월': null };
+
+    try {
+      // 3개 시험 동시 조회
+      const promises = ['3월', '6월', '9월'].map(async (exam) => {
+        try {
+          const response = await apiClient.get<{ success: boolean; matched: boolean; scores: ScoreData }>(
+            `/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`
+          );
+          if (response.success && response.matched && response.scores) {
+            results[exam] = response.scores;
+          }
+        } catch {
+          // 개별 실패 무시
+        }
+      });
+
+      await Promise.all(promises);
+      setCreateScores(results);
+    } catch (error) {
+      console.error('성적 조회 오류:', error);
+    } finally {
+      setCreateScoresLoading(false);
+    }
+  };
+
+  // 재원생 목록 로드
+  const loadStudents = async () => {
+    setLoadingStudents(true);
+    try {
+      const response = await apiClient.get<{ students: Student[] }>('/students?status=active&limit=500');
+      setStudents(response.students || []);
+    } catch (error) {
+      console.error('학생 목록 로드 오류:', error);
+    } finally {
+      setLoadingStudents(false);
+    }
+  };
+
+  // 예약된 시간 로드
+  const loadBookedTimes = async (date: string) => {
+    if (!date) return;
+    setLoadingBookedTimes(true);
+    try {
+      const response = await getBookedTimes(date);
+      setBookedTimes(response.bookedTimes || []);
+    } catch (error) {
+      console.error('예약 시간 로드 오류:', error);
+    } finally {
+      setLoadingBookedTimes(false);
+    }
+  };
+
+  // 수정용 예약된 시간 로드
+  const loadEditBookedTimes = async (date: string) => {
+    if (!date) return;
+    setLoadingEditBookedTimes(true);
+    try {
+      const response = await getBookedTimes(date);
+      setEditBookedTimes(response.bookedTimes || []);
+    } catch (error) {
+      console.error('예약 시간 로드 오류:', error);
+    } finally {
+      setLoadingEditBookedTimes(false);
+    }
+  };
+
+  // 시간 슬롯 생성
+  const generateTimeSlots = (date: string) => {
+    if (!date || weeklyHours.length === 0) return [];
+    const dayOfWeek = new Date(date).getDay();
+
+    const hourConfig = weeklyHours.find(h => h.dayOfWeek === dayOfWeek);
+    if (!hourConfig || !hourConfig.isAvailable) return [];
+
+    const startHour = parseInt(hourConfig.startTime?.substring(0, 2) || '09');
+    const startMin = parseInt(hourConfig.startTime?.substring(3, 5) || '00');
+    const endHour = parseInt(hourConfig.endTime?.substring(0, 2) || '18');
+    const endMin = parseInt(hourConfig.endTime?.substring(3, 5) || '00');
+
+    const slots: string[] = [];
+    let current = startHour * 60 + startMin;
+    const end = endHour * 60 + endMin;
+
+    while (current < end) {
+      const h = Math.floor(current / 60);
+      const m = current % 60;
+      slots.push(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+      current += 30;
+    }
+
+    return slots;
+  };
+
+  // 재원생상담 등록
+  const handleCreateConsultation = async () => {
+    if (!createForm.studentId || !createForm.preferredDate || !createForm.preferredTime) {
+      toast.error('필수 항목을 입력해주세요.');
+      return;
+    }
+
+    setCreating(true);
+    try {
+      // 입력된 성적만 필터링
+      const filteredScores: Record<string, Record<string, string>> = {};
+      for (const [exam, subjects] of Object.entries(createForm.scores)) {
+        const hasData = Object.values(subjects).some(v => v !== '');
+        if (hasData) {
+          filteredScores[exam] = subjects;
+        }
+      }
+
+      await apiClient.post('/consultations/learning', {
+        studentId: parseInt(createForm.studentId),
+        preferredDate: createForm.preferredDate,
+        preferredTime: createForm.preferredTime,
+        learningType: createForm.learningType,
+        adminNotes: createForm.adminNotes || undefined,
+        mockExamScores: Object.keys(filteredScores).length > 0 ? filteredScores : undefined
+      });
+
+      toast.success('재원생 상담이 등록되었습니다.');
+      setCreateModalOpen(false);
+      setCreateForm({
+        studentId: '',
+        preferredDate: '',
+        preferredTime: '',
+        learningType: 'regular',
+        adminNotes: '',
+        scores: {
+          '3월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' },
+          '6월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' },
+          '9월': { 국어: '', 수학: '', 영어: '', 탐구1: '', 탐구2: '' }
+        }
+      });
+      setStudentSearch('');
+      setStudentDropdownOpen(false);
+      setCreateScores({ '3월': null, '6월': null, '9월': null });
+      loadData();
+    } catch (error) {
+      console.error('상담 등록 오류:', error);
+
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // 상태 변경
+  const handleStatusChange = async () => {
+    if (!selectedConsultation) return;
+
+    setUpdating(true);
+    try {
+      await updateConsultation(selectedConsultation.id, {
+        status: newStatus,
+        adminNotes: adminNotes || undefined,
+        preferredDate: newDate || undefined,
+        preferredTime: newTime || undefined
+      });
+
+      toast.success('상담 상태가 변경되었습니다.');
+      setStatusModalOpen(false);
+      setDetailOpen(false);
+      loadData();
+    } catch (error) {
+      console.error('상태 변경 오류:', error);
+
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // 삭제
+  const handleDelete = async () => {
+    if (!selectedConsultation) return;
+
+    setDeleting(true);
+    try {
+      await deleteConsultation(selectedConsultation.id);
+      toast.success('상담이 삭제되었습니다.');
+      setDeleteModalOpen(false);
+      setDetailOpen(false);
+      loadData();
+    } catch (error) {
+      console.error('삭제 오류:', error);
+
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const addDays = (date: Date, days: number) => {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+  };
+
+  return (
+    <div className="p-6 space-y-6 pb-24">
+      {/* 헤더 */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">재원생상담</h1>
+          <p className="text-muted-foreground">재원생 학습/진학 상담 관리</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href="/consultations/calendar?type=learning">
+            <Button variant="outline">
+              <Calendar className="h-4 w-4 mr-2" />
+              캘린더
+            </Button>
+          </Link>
+          <Button onClick={() => {
+            loadStudents();
+            setCreateModalOpen(true);
+          }}>
+            <Plus className="h-4 w-4 mr-2" />
+            재원생상담 등록
+          </Button>
+        </div>
+      </div>
+
+      {/* 통계 카드 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">전체</div>
+            <div className="text-2xl font-bold">{stats.total || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">대기중</div>
+            <div className="text-2xl font-bold text-yellow-600">{stats.pending || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">확정</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.confirmed || 0}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">완료</div>
+            <div className="text-2xl font-bold text-green-600">{stats.completed || 0}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 필터 */}
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="학생명 검색..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="상태" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">전체</SelectItem>
+                <SelectItem value="pending">대기중</SelectItem>
+                <SelectItem value="confirmed">확정</SelectItem>
+                <SelectItem value="completed">완료</SelectItem>
+                <SelectItem value="cancelled">취소</SelectItem>
+                <SelectItem value="no_show">노쇼</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as any)}>
+              <SelectTrigger className="w-full sm:w-40">
+                <SelectValue placeholder="기간" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">전체 기간</SelectItem>
+                <SelectItem value="today">오늘</SelectItem>
+                <SelectItem value="week">이번 주</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button variant="outline" onClick={loadData}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 목록 */}
+      <Card>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+            </div>
+          ) : consultations.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              상담 내역이 없습니다.
+            </div>
+          ) : (
+            <div className="divide-y">
+              {consultations.map((c) => (
+                <div
+                  key={c.id}
+                  className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    setSelectedConsultation(c);
+                    setShowScores(false);
+                    setStudentScores(null);
+                    setDetailOpen(true);
+                  }}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-4 w-4 text-blue-600" />
+                        <span className="font-medium">{c.student_name}</span>
+                        <Badge variant="outline">{c.student_grade}</Badge>
+                        {c.learning_type && (
+                          <Badge variant="secondary">{LEARNING_TYPE_LABELS[c.learning_type]}</Badge>
+                        )}
+                        <Badge className={CONSULTATION_STATUS_COLORS[c.status]}>
+                          {CONSULTATION_STATUS_LABELS[c.status]}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {format(parseISO(c.preferred_date), 'M월 d일 (EEE)', { locale: ko })}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {c.preferred_time?.slice(0, 5)}
+                        </span>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedConsultation(c);
+                          setShowScores(false);
+                          setStudentScores(null);
+                          setDetailOpen(true);
+                        }}>
+                          <Eye className="h-4 w-4 mr-2" />
+                          상세보기
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedConsultation(c);
+                          setNewStatus(c.status);
+                          setAdminNotes(c.admin_notes || '');
+                          setNewDate(c.preferred_date);
+                          setNewTime(c.preferred_time || '');
+                          setStatusModalOpen(true);
+                        }}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          상태변경
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedConsultation(c);
+                            setDeleteModalOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          삭제
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 페이지네이션 */}
+      {pagination.totalPages > 1 && (
+        <div className="flex justify-center gap-2">
+          <Button
+            variant="outline"
+            disabled={pagination.page === 1}
+            onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
+          >
+            이전
+          </Button>
+          <span className="flex items-center px-4">
+            {pagination.page} / {pagination.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            disabled={pagination.page === pagination.totalPages}
+            onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
+          >
+            다음
+          </Button>
+        </div>
+      )}
+
+      {/* 상세 모달 */}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-lg py-6 px-6">
+          <DialogHeader>
+            <DialogTitle>재원생 상담 상세</DialogTitle>
+          </DialogHeader>
+          {selectedConsultation && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">학생명</Label>
+                  <p className="font-medium">{selectedConsultation.student_name}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">학년</Label>
+                  <p className="font-medium">{selectedConsultation.student_grade}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">상담일시</Label>
+                  <p className="font-medium">
+                    {format(parseISO(selectedConsultation.preferred_date), 'yyyy년 M월 d일', { locale: ko })} {selectedConsultation.preferred_time?.slice(0, 5)}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">상태</Label>
+                  <Badge className={CONSULTATION_STATUS_COLORS[selectedConsultation.status]}>
+                    {CONSULTATION_STATUS_LABELS[selectedConsultation.status]}
+                  </Badge>
+                </div>
+                {selectedConsultation.learning_type && (
+                  <div>
+                    <Label className="text-muted-foreground">상담유형</Label>
+                    <Badge variant="secondary">{LEARNING_TYPE_LABELS[selectedConsultation.learning_type]}</Badge>
+                  </div>
+                )}
+                {selectedConsultation.admin_notes && (
+                  <div className="col-span-2">
+                    <Label className="text-muted-foreground">메모</Label>
+                    <p className="text-sm whitespace-pre-wrap">{selectedConsultation.admin_notes}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* 성적 조회 섹션 */}
+              {selectedConsultation.linked_student_id && (
+                <div className="border-t pt-4">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between p-2 hover:bg-muted rounded-md transition-colors"
+                    onClick={() => {
+                      if (!showScores) {
+                        setShowScores(true);
+                        loadStudentScores(selectedConsultation.linked_student_id!, selectedExam);
+                      } else {
+                        setShowScores(false);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Award className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">모의고사 성적 조회</span>
+                    </div>
+                    {showScores ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </button>
+
+                  {showScores && (
+                    <div className="mt-3 space-y-3">
+                      {/* 시험 유형 선택 */}
+                      <div className="flex gap-2">
+                        {EXAM_TYPES.map((exam) => (
+                          <Button
+                            key={exam}
+                            variant={selectedExam === exam ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => {
+                              setSelectedExam(exam);
+                              loadStudentScores(selectedConsultation.linked_student_id!, exam);
+                            }}
+                          >
+                            {exam}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* 성적 표시 */}
+                      {loadingScores ? (
+                        <div className="flex items-center justify-center py-4">
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : studentScores ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {/* 국어 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">국어</p>
+                            <p className="text-lg font-bold">{studentScores.국어?.등급 || '-'}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {studentScores.국어?.표준점수 && `${studentScores.국어.표준점수}점`}
+                            </p>
+                          </div>
+                          {/* 수학 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">수학</p>
+                            <p className="text-lg font-bold">{studentScores.수학?.등급 || '-'}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {studentScores.수학?.표준점수 && `${studentScores.수학.표준점수}점`}
+                            </p>
+                          </div>
+                          {/* 영어 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">영어</p>
+                            <p className="text-lg font-bold">{studentScores.영어?.등급 || '-'}</p>
+                          </div>
+                          {/* 탐구1 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">탐구1</p>
+                            <p className="text-lg font-bold">{studentScores.탐구1?.등급 || '-'}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {studentScores.탐구1?.선택과목}
+                            </p>
+                          </div>
+                          {/* 탐구2 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">탐구2</p>
+                            <p className="text-lg font-bold">{studentScores.탐구2?.등급 || '-'}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {studentScores.탐구2?.선택과목}
+                            </p>
+                          </div>
+                          {/* 한국사 */}
+                          <div className="bg-muted/50 p-2 rounded text-center">
+                            <p className="text-xs text-muted-foreground">한국사</p>
+                            <p className="text-lg font-bold">{studentScores.한국사?.등급 || '-'}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-sm text-muted-foreground">
+                          정시엔진에서 매칭된 성적이 없습니다.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDetailOpen(false)}>
+                  닫기
+                </Button>
+                <Link href={`/consultations/${selectedConsultation.id}/conduct`}>
+                  <Button>상담 진행</Button>
+                </Link>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* 상태 변경 모달 */}
+      <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
+        <DialogContent className="max-w-md py-6 px-6">
+          <DialogHeader>
+            <DialogTitle>상태 변경</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>상태</Label>
+              <Select value={newStatus} onValueChange={(v) => setNewStatus(v as ConsultationStatus)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">대기중</SelectItem>
+                  <SelectItem value="confirmed">확정</SelectItem>
+                  <SelectItem value="completed">완료</SelectItem>
+                  <SelectItem value="cancelled">취소</SelectItem>
+                  <SelectItem value="no_show">노쇼</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>일정 변경 (선택)</Label>
+              <div className="grid grid-cols-2 gap-2 mt-1">
+                <Input
+                  type="date"
+                  value={newDate}
+                  onChange={(e) => {
+                    setNewDate(e.target.value);
+                    if (e.target.value) {
+                      loadEditBookedTimes(e.target.value);
+                    }
+                  }}
+                />
+                <Select value={newTime} onValueChange={setNewTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="시간" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {generateTimeSlots(newDate).map((time) => {
+                      const isBooked = editBookedTimes.includes(time);
+                      return (
+                        <SelectItem key={time} value={time}>
+                          {time} {isBooked && '(예약있음)'}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>메모</Label>
+              <Textarea
+                value={adminNotes}
+                onChange={(e) => setAdminNotes(e.target.value)}
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusModalOpen(false)}>
+              취소
+            </Button>
+            <Button onClick={handleStatusChange} disabled={updating}>
+              {updating ? '저장 중...' : '저장'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 삭제 확인 모달 */}
+      <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="max-w-sm py-6 px-6">
+          <DialogHeader>
+            <DialogTitle>상담 삭제</DialogTitle>
+            <DialogDescription>
+              정말 이 상담을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteModalOpen(false)}>
+              취소
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? '삭제 중...' : '삭제'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 재원생상담 등록 모달 */}
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent className="max-w-md py-6 px-6">
+          <DialogHeader>
+            <DialogTitle>재원생상담 등록</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>학생 선택 *</Label>
+              {loadingStudents ? (
+                <div className="mt-1 p-2 text-sm text-muted-foreground">학생 목록 로딩 중...</div>
+              ) : (
+                <div className="relative mt-1" ref={studentDropdownRef}>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="학생 이름 검색..."
+                      value={studentSearch}
+                      onChange={(e) => {
+                        setStudentSearch(e.target.value);
+                        setStudentDropdownOpen(true);
+                      }}
+                      onFocus={() => setStudentDropdownOpen(true)}
+                      className="pl-9"
+                    />
+                    {createForm.studentId && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                        ✓ {students.find(s => s.id.toString() === createForm.studentId)?.name}
+                      </span>
+                    )}
+                  </div>
+                  {studentDropdownOpen && (
+                    <div className="absolute z-[100] w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-auto">
+                      {students
+                        .filter(s =>
+                          !studentSearch ||
+                          s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                          (s.grade && s.grade.toLowerCase().includes(studentSearch.toLowerCase()))
+                        )
+                        .slice(0, 50)
+                        .map((s) => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            className={`w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors flex items-center justify-between ${
+                              createForm.studentId === s.id.toString() ? 'bg-muted' : ''
+                            }`}
+                            onClick={() => {
+                              setCreateForm({ ...createForm, studentId: s.id.toString() });
+                              setStudentSearch('');
+                              setStudentDropdownOpen(false);
+                              // 학생 선택 시 성적 자동 조회
+                              loadCreateStudentScores(s.id);
+                            }}
+                          >
+                            <span>{s.name} <span className="text-muted-foreground">({s.grade || '-'})</span></span>
+                            {createForm.studentId === s.id.toString() && (
+                              <span className="text-primary">✓</span>
+                            )}
+                          </button>
+                        ))}
+                      {students.filter(s =>
+                        !studentSearch ||
+                        s.name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+                        (s.grade && s.grade.toLowerCase().includes(studentSearch.toLowerCase()))
+                      ).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          검색 결과가 없습니다
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>상담일 *</Label>
+                <Input
+                  type="date"
+                  value={createForm.preferredDate}
+                  onChange={(e) => {
+                    setCreateForm({ ...createForm, preferredDate: e.target.value, preferredTime: '' });
+                    if (e.target.value) {
+                      loadBookedTimes(e.target.value);
+                    }
+                  }}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>시간 *</Label>
+                <Select
+                  value={createForm.preferredTime}
+                  onValueChange={(v) => setCreateForm({ ...createForm, preferredTime: v })}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="시간" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingBookedTimes ? (
+                      <div className="p-2 text-center text-sm text-muted-foreground">로딩 중...</div>
+                    ) : (
+                      generateTimeSlots(createForm.preferredDate).map((time) => {
+                        const isBooked = bookedTimes.includes(time);
+                        return (
+                          <SelectItem key={time} value={time}>
+                            {time} {isBooked && '(예약있음)'}
+                          </SelectItem>
+                        );
+                      })
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label>상담 유형</Label>
+              <Select
+                value={createForm.learningType}
+                onValueChange={(v) => setCreateForm({ ...createForm, learningType: v as LearningType })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="regular">정기 상담</SelectItem>
+                  <SelectItem value="admission">진학 상담</SelectItem>
+                  <SelectItem value="parent">학부모 상담</SelectItem>
+                  <SelectItem value="concern">고민 상담</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>메모</Label>
+              <Textarea
+                value={createForm.adminNotes}
+                onChange={(e) => setCreateForm({ ...createForm, adminNotes: e.target.value })}
+                className="mt-1"
+                rows={2}
+              />
+            </div>
+
+            {/* 모의고사 성적 - 학생 선택 시만 표시 */}
+            {createForm.studentId && (
+              <div className="border-t pt-4">
+                <Label className="flex items-center gap-2 mb-3">
+                  <Award className="h-4 w-4 text-blue-600" />
+                  모의고사 등급
+                </Label>
+                {createScoresLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">성적 조회 중...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {['3월', '6월', '9월'].map((exam) => {
+                      const scoreData = createScores[exam];
+                      const hasScore = scoreData !== null;
+
+                      return (
+                        <div key={exam} className="bg-muted/30 p-3 rounded-md">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-sm font-medium">{exam} 모평</p>
+                            {hasScore && (
+                              <Badge className="bg-green-100 text-green-800 text-xs">정시엔진 연동</Badge>
+                            )}
+                          </div>
+                          {hasScore ? (
+                            // 조회된 성적 표시 (읽기 전용)
+                            <div className="grid grid-cols-5 gap-2">
+                              {[
+                                { key: '국어', data: scoreData.국어 },
+                                { key: '수학', data: scoreData.수학 },
+                                { key: '영어', data: scoreData.영어 },
+                                { key: '탐구1', data: scoreData.탐구1 },
+                                { key: '탐구2', data: scoreData.탐구2 }
+                              ].map(({ key, data }) => (
+                                <div key={key} className="text-center">
+                                  <p className="text-xs text-muted-foreground">{key}</p>
+                                  <p className="text-lg font-bold">{data?.등급 || '-'}</p>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            // 성적 없음 - 입력칸 표시
+                            <div className="grid grid-cols-5 gap-2">
+                              {['국어', '수학', '영어', '탐구1', '탐구2'].map((subject) => (
+                                <div key={subject}>
+                                  <Label className="text-xs text-muted-foreground">{subject}</Label>
+                                  <Select
+                                    value={createForm.scores[exam][subject]}
+                                    onValueChange={(v) => setCreateForm({
+                                      ...createForm,
+                                      scores: {
+                                        ...createForm.scores,
+                                        [exam]: { ...createForm.scores[exam], [subject]: v }
+                                      }
+                                    })}
+                                  >
+                                    <SelectTrigger className="h-8 text-sm">
+                                      <SelectValue placeholder="-" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="">-</SelectItem>
+                                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((g) => (
+                                        <SelectItem key={g} value={g.toString()}>{g}</SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setCreateModalOpen(false);
+              setStudentSearch('');
+              setStudentDropdownOpen(false);
+              setCreateScores({ '3월': null, '6월': null, '9월': null });
+            }}>
+              취소
+            </Button>
+            <Button onClick={handleCreateConsultation} disabled={creating}>
+              {creating ? '등록 중...' : '등록'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
