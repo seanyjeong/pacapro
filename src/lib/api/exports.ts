@@ -13,6 +13,7 @@ export interface ExportFilters {
   year?: number;
   month?: number;
   status?: string;
+  payment_status?: string;
 }
 
 /**
@@ -34,6 +35,7 @@ async function downloadExcel(endpoint: string, filters?: ExportFilters, defaultF
   if (filters?.year) params.append('year', filters.year.toString());
   if (filters?.month) params.append('month', filters.month.toString());
   if (filters?.status) params.append('status', filters.status);
+  if (filters?.payment_status) params.append('payment_status', filters.payment_status);
 
   const queryString = params.toString();
   const url = queryString
@@ -83,6 +85,13 @@ async function downloadExcel(endpoint: string, filters?: ExportFilters, defaultF
 }
 
 export const exportsApi = {
+  /**
+   * 학생 명단 엑셀 다운로드
+   */
+  downloadStudents: async () => {
+    await downloadExcel('/students', undefined, '학생명단.xlsx');
+  },
+
   /**
    * 수입 내역 엑셀 다운로드
    */

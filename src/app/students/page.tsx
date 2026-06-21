@@ -2,9 +2,9 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Plus, Download, AlertCircle, Users, UserCheck, UserX, Sparkles, Clock, Loader2, School, GraduationCap } from 'lucide-react';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
 import { StudentFiltersComponent } from '@/components/students/student-filters';
@@ -14,6 +14,7 @@ import { TrialStudentList } from '@/components/students/trial-student-list';
 import { PendingStudentList } from '@/components/students/pending-student-list';
 import { SchoolStudentList } from '@/components/students/school-student-list';
 import { useStudents } from '@/hooks/use-students';
+import { exportsApi } from '@/lib/api/exports';
 import { cn } from '@/lib/utils';
 import type { StudentStatus, StudentFilters } from '@/lib/types/student';
 import {
@@ -105,17 +106,7 @@ function StudentsPageContent() {
       // 학교별 탭: 모든 학생 (재원+체험+미등록) 가져오기
       updateFilters({ status: undefined, is_trial: undefined });
     }
-  }, [activeTab]);
-
-  // 탭별 학생 수 계산
-  const tabCounts = {
-    active: students.filter(s => s.status === 'active').length,
-    paused: students.filter(s => s.status === 'paused').length,
-    withdrawn: students.filter(s => s.status === 'withdrawn').length,
-    trial: students.filter(s => s.status === 'trial').length,
-    pending: students.filter(s => s.status === 'pending').length,
-    graduated: students.filter(s => s.status === 'graduated').length,
-  };
+  }, [activeTab, updateFilters]);
 
   // 검색어 필터링 적용
   const handleSearch = (query: string) => {
@@ -137,41 +128,10 @@ function StudentsPageContent() {
   const handleExcelDownload = async () => {
     setExcelDownloading(true);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com:8320/paca'}/exports/students`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('다운로드 실패');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-
-      // 파일명 추출
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = '학생목록.xlsx';
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename\*=UTF-8''(.+)/);
-        if (match) {
-          filename = decodeURIComponent(match[1]);
-        }
-      }
-
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('엑셀 다운로드 오류:', error);
-      alert('엑셀 다운로드에 실패했습니다.');
+      await exportsApi.downloadStudents();
+      toast.success('학생 명단 엑셀을 다운로드했습니다.');
+    } catch {
+      toast.error('학생 명단 엑셀을 다운로드하지 못했습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
       setExcelDownloading(false);
     }
@@ -348,7 +308,7 @@ function StudentsPageContent() {
                 <p className="text-sm text-blue-800 dark:text-blue-200">
                   학생을 등록하시면 학원비, 성적, 출석 등을 관리할 수 있습니다.
                   <br />
-                  우측 상단의 "학생 등록" 버튼을 클릭하여 첫 학생을 등록해보세요.
+                  우측 상단의 &quot;학생 등록&quot; 버튼을 클릭하여 첫 학생을 등록해보세요.
                 </p>
               </div>
             </div>
