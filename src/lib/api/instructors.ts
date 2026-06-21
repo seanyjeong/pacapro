@@ -5,7 +5,6 @@
 
 import apiClient from './client';
 import type {
-  Instructor,
   InstructorFormData,
   InstructorsResponse,
   InstructorDetailResponse,

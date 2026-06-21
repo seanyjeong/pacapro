@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { InstructorForm } from '@/components/instructors/instructor-form';
 import { instructorsAPI } from '@/lib/api/instructors';
