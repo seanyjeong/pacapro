@@ -4,6 +4,10 @@
 
 P-ACA should move from a generic card-based admin UI to a premium operating console. The first redesign pass explores three viable shell directions before choosing one system.
 
+## Selected System
+
+The selected base is **Other A / Operations Desk**. Keep the compact rail, command topbar, left work queue, KPI strip, and table-first hierarchy as the master shell. Page work should change details only after checking the API contract and the real operator task flow.
+
 ## Design Tokens
 
 - Font: Pretendard Variable, system-ui fallback.
@@ -32,3 +36,4 @@ Sharper, higher-contrast shell with large touch-safe controls, action rail, and 
 - Tables get sticky headers, clear row actions, and compact status badges.
 - Empty states explain the next action in Korean.
 - Cards are used only for repeated records or real panels, not nested decoration.
+- Error states use plain Korean and never expose server codes, network policy names, call traces, or storage terms.

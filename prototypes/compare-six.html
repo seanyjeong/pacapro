@@ -52,6 +52,7 @@
     .score { border: 1px solid var(--line); border-radius: 7px; padding: 9px; background: var(--soft); }
     .score strong { display: block; font-size: 12px; }
     .score span { color: var(--muted); font-size: 12px; }
+    .selected-link { display: inline-flex; align-items: center; min-height: 32px; margin-top: 12px; padding: 0 11px; border: 1px solid var(--other); border-radius: 7px; background: oklch(96% 0.035 155); color: var(--ink); font-size: 12px; font-weight: 760; text-decoration: none; }
     .matrix { width: 100%; border-collapse: collapse; font-size: 12px; }
     .matrix th, .matrix td { border-bottom: 1px solid var(--line); padding: 9px; text-align: left; vertical-align: top; }
     .matrix th { color: var(--muted); font-weight: 760; background: var(--soft); }
@@ -124,8 +125,9 @@
 
     <section class="recommendation">
       <article class="panel">
-        <h2>1차 추천: Codex A 또는 Other A를 베이스로 통합</h2>
-        <p>운영자 PC 메인은 테이블과 큐가 강한 A 계열이 가장 안전합니다. Codex A는 방향성이 간결하고 빠르게 이식하기 좋고, Other A는 디테일이 풍부합니다. 최종안은 A를 기본 셸로 두고, B의 지점/요일 스캔과 C의 태블릿 액션을 부분 차용하는 방식이 좋습니다.</p>
+        <h2>선택: Other A를 PACA 기본 셸로 개발</h2>
+        <p>운영자 PC 메인은 테이블과 큐가 강한 A 계열이 가장 안전합니다. 그중 Other A는 디테일이 풍부하므로 기본 형식을 유지하고, 색상 토큰과 오류/빈 상태, 행 액션 규칙만 개발 기준으로 정리해 갑니다.</p>
+        <a class="selected-link" href="selected-operations-desk-v1.html" target="_blank">선택안 v1 열기</a>
         <div class="score-grid">
           <div class="score"><strong>운영 안정성</strong><span>A 계열 우세</span></div>
           <div class="score"><strong>지점 관리감</strong><span>B 계열 우세</span></div>

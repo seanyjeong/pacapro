@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PACA Selected Operations Desk v1</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <style>
+    :root {
+      --bg: oklch(98.2% 0.006 78);
+      --surface: oklch(99.2% 0.004 78);
+      --surface-2: oklch(96.2% 0.009 78);
+      --line: oklch(88.4% 0.013 78);
+      --line-strong: oklch(80.4% 0.016 78);
+      --ink: oklch(22% 0.018 76);
+      --ink-2: oklch(42% 0.018 76);
+      --ink-3: oklch(55% 0.018 76);
+      --accent: oklch(45% 0.085 185);
+      --accent-soft: oklch(94.5% 0.045 185);
+      --ok: oklch(48% 0.13 146);
+      --ok-soft: oklch(95.4% 0.052 146);
+      --warn: oklch(57% 0.13 72);
+      --warn-soft: oklch(95.8% 0.052 72);
+      --bad: oklch(50% 0.16 29);
+      --bad-soft: oklch(95.5% 0.045 29);
+      --rail: 56px;
+      --topbar: 56px;
+      --queue: 360px;
+      --radius: 6px;
+      --radius-lg: 8px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-size: 14px; line-height: 1.45; letter-spacing: 0; }
+    button, input, select { font: inherit; color: inherit; }
+    button { border: 0; }
+    table { width: 100%; border-collapse: collapse; }
+    .mono { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+    .demo-frame { min-height: 100vh; padding: 14px; }
+    .labbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; padding: 0 12px; border: 1px solid var(--line); border-bottom: 0; border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: var(--surface); color: var(--ink-2); font-size: 12px; }
+    .labbar strong { color: var(--ink); font-size: 13px; }
+    .app { display: grid; grid-template-columns: var(--rail) minmax(0, 1fr); min-height: calc(100vh - 66px); overflow: hidden; border: 1px solid var(--line); border-radius: 0 0 var(--radius-lg) var(--radius-lg); background: var(--bg); }
+
+    .rail { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 0; border-right: 1px solid var(--line); background: var(--surface); }
+    .logo { width: 32px; height: 32px; display: grid; place-items: center; margin-bottom: 8px; border-radius: var(--radius); background: var(--ink); color: var(--surface); font-size: 13px; font-weight: 780; }
+    .nav { width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--radius); background: transparent; color: var(--ink-3); cursor: pointer; }
+    .nav:hover { background: var(--surface-2); color: var(--ink-2); }
+    .nav.active { background: var(--accent-soft); color: var(--accent); }
+    .nav svg, .iconbtn svg { width: 18px; height: 18px; }
+    .spacer { flex: 1; }
+    .user { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--surface-2); color: var(--ink-2); font-size: 12px; }
+
+    .workspace { min-width: 0; }
+    .topbar { height: var(--topbar); display: flex; align-items: center; gap: 12px; padding: 0 20px; border-bottom: 1px solid var(--line); background: var(--surface); }
+    .crumbs { min-width: 132px; color: var(--ink-3); font-size: 13px; white-space: nowrap; }
+    .crumbs b { color: var(--ink); font-weight: 720; }
+    .search { display: flex; align-items: center; gap: 8px; min-width: 220px; max-width: 520px; height: 34px; flex: 1; padding: 0 11px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface-2); color: var(--ink-3); }
+    .search svg { width: 14px; height: 14px; flex: none; }
+    .search:focus-within { border-color: var(--accent); background: var(--surface); color: var(--accent); }
+    .search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 13px; }
+    .top-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .branch { height: 32px; padding: 0 28px 0 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); font-size: 12px; }
+    .date { color: var(--ink-3); font-size: 12px; white-space: nowrap; }
+    .iconbtn { width: 32px; height: 32px; display: grid; place-items: center; border-radius: var(--radius); background: transparent; color: var(--ink-2); cursor: pointer; }
+    .iconbtn:hover { background: var(--surface-2); }
+    .btn { min-height: 32px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font-size: 12px; font-weight: 680; cursor: pointer; white-space: nowrap; }
+    .btn:hover { background: var(--surface-2); }
+    .btn.primary { border-color: var(--ink); background: var(--ink); color: var(--surface); }
+    .btn.primary:hover { background: oklch(27% 0.018 76); }
+
+    .main { display: grid; grid-template-columns: var(--queue) minmax(0, 1fr); min-height: calc(100vh - 122px); }
+    .queue { overflow: auto; padding: 16px; border-right: 1px solid var(--line); background: var(--surface); }
+    .section-label { margin: 0 0 10px; color: var(--ink-3); font-size: 11px; font-weight: 760; text-transform: uppercase; letter-spacing: .06em; }
+    .q-item { padding: 10px 12px; margin-bottom: 6px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); cursor: pointer; }
+    .q-item:hover { background: var(--surface-2); }
+    .q-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+    .q-who { min-width: 0; font-size: 13px; font-weight: 720; }
+    .q-time { color: var(--ink-3); font-size: 11px; white-space: nowrap; }
+    .q-text { margin-top: 3px; color: var(--ink-2); font-size: 12px; }
+    .q-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+    .content { min-width: 0; overflow: auto; padding: 20px 24px 28px; }
+    .title-row { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 14px; }
+    h1 { margin: 0; font-size: 19px; line-height: 1.3; font-weight: 760; letter-spacing: 0; }
+    .subtitle { margin-top: 4px; color: var(--ink-3); font-size: 13px; }
+    .sync { display: flex; align-items: center; gap: 8px; min-height: 28px; padding: 0 9px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink-2); font-size: 12px; white-space: nowrap; }
+    .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+
+    .kpi-strip { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; margin-bottom: 16px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: var(--line); }
+    .kpi { min-width: 0; padding: 12px 14px; background: var(--surface); }
+    .kpi-label { color: var(--ink-3); font-size: 11px; font-weight: 720; text-transform: uppercase; letter-spacing: .05em; }
+    .kpi-value { margin-top: 4px; font-size: 21px; font-weight: 760; letter-spacing: 0; }
+    .kpi-note { margin-top: 2px; color: var(--ok); font-size: 11px; }
+    .kpi-note.bad { color: var(--bad); }
+
+    .panel { margin-bottom: 14px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--surface); }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+    .panel-title { font-size: 13px; font-weight: 760; }
+    .actions { display: flex; align-items: center; gap: 6px; }
+    .mini-search { width: 238px; height: 28px; flex: none; font-size: 12px; }
+    .tabs { display: flex; gap: 0; padding: 0 16px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+    .tab { min-height: 40px; display: inline-flex; align-items: center; padding: 0 12px; border-bottom: 2px solid transparent; color: var(--ink-3); font-size: 13px; white-space: nowrap; }
+    .tab.active { border-bottom-color: var(--accent); color: var(--ink); font-weight: 760; }
+    .table-scroll { overflow: auto; }
+    .students { min-width: 860px; font-size: 13px; }
+    .students th { position: sticky; top: 0; z-index: 1; padding: 10px 12px; border-bottom: 1px solid var(--line); background: var(--surface-2); color: var(--ink-3); font-size: 11px; font-weight: 760; text-align: left; text-transform: uppercase; letter-spacing: .05em; }
+    .students td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    .students tr:hover td { background: var(--surface-2); }
+    .students tr:last-child td { border-bottom: 0; }
+    .person { display: flex; align-items: center; gap: 8px; }
+    .avatar { width: 28px; height: 28px; display: grid; place-items: center; flex: none; border: 1px solid var(--line); border-radius: 50%; background: var(--surface-2); color: var(--ink-2); font-size: 11px; font-weight: 760; }
+    .name { font-weight: 760; }
+    .meta { color: var(--ink-3); font-size: 11px; }
+    .badge { display: inline-flex; align-items: center; gap: 5px; min-height: 22px; padding: 0 8px; border: 1px solid; border-radius: 4px; font-size: 11px; font-weight: 680; white-space: nowrap; }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .ok { color: var(--ok); border-color: oklch(82% 0.09 146); background: var(--ok-soft); }
+    .warn { color: var(--warn); border-color: oklch(82% 0.09 72); background: var(--warn-soft); }
+    .bad { color: var(--bad); border-color: oklch(82% 0.075 29); background: var(--bad-soft); }
+    .active { color: var(--accent); border-color: oklch(78% 0.08 185); background: var(--accent-soft); }
+    .quiet { color: var(--ink-2); border-color: var(--line); background: var(--surface-2); }
+    .row-actions { display: flex; justify-content: flex-end; gap: 4px; }
+    .row-actions .iconbtn { width: 26px; height: 26px; }
+
+    .state-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; border-top: 1px solid var(--line); background: var(--line); }
+    .state { padding: 14px 16px; background: var(--surface); }
+    .state strong { display: block; margin-bottom: 4px; font-size: 13px; }
+    .state p { margin: 0; color: var(--ink-2); font-size: 12px; }
+    .state.error { border-left: 3px solid var(--bad); }
+    .state.empty { border-left: 3px solid var(--accent); }
+    @media (max-width: 1180px) {
+      .main { grid-template-columns: 1fr; }
+      .queue { display: none; }
+      .kpi-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .demo-frame { padding: 0; }
+      .labbar { border-radius: 0; }
+      .app { grid-template-columns: 1fr; border-left: 0; border-right: 0; border-radius: 0; }
+      .rail { flex-direction: row; height: 56px; padding: 0 10px; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+      .logo { margin: 0 6px 0 0; }
+      .spacer, .user { display: none; }
+      .topbar { height: auto; flex-wrap: wrap; padding: 10px 12px; }
+      .crumbs { width: 100%; }
+      .search { order: 3; min-width: 100%; }
+      .date { display: none; }
+      .content { padding: 16px 12px 24px; }
+      .title-row, .panel-head { flex-direction: column; align-items: stretch; }
+      .top-right, .actions { width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+      .mini-search { width: 100%; }
+      .kpi-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .state-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-frame">
+    <div class="labbar">
+      <strong>PACA Operations Desk v1</strong>
+      <span>선택 방향: Other A 구조 유지 · 페이지별 화면 이식 기준</span>
+    </div>
+    <div class="app">
+      <aside class="rail" aria-label="주 메뉴">
+        <div class="logo">P</div>
+        <button class="nav active" title="대시보드"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="8" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="15" width="7" height="6" rx="1"/></svg></button>
+        <button class="nav" title="학생"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg></button>
+        <button class="nav" title="상담"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12Z"/></svg></button>
+        <button class="nav" title="일정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></button>
+        <button class="nav" title="결제"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg></button>
+        <button class="nav" title="리포트"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></button>
+        <div class="spacer"></div>
+        <button class="nav" title="설정"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 15.5a1.8 1.8 0 0 0 .2 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.8 1.8 0 0 0-1.9-.2 1.8 1.8 0 0 0-1 1.6V22h-3v-.4a1.8 1.8 0 0 0-1-1.6 1.8 1.8 0 0 0-1.9.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.8 1.8 0 0 0 .2-1.9 1.8 1.8 0 0 0-1.6-1H2v-3h.4a1.8 1.8 0 0 0 1.6-1 1.8 1.8 0 0 0-.2-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.8 1.8 0 0 0 1.9.2 1.8 1.8 0 0 0 1-1.6V2h3v.4a1.8 1.8 0 0 0 1 1.6 1.8 1.8 0 0 0 1.9-.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.8 1.8 0 0 0-.2 1.9 1.8 1.8 0 0 0 1.6 1h.4v3h-.4a1.8 1.8 0 0 0-1.6 1Z"/></svg></button>
+        <div class="user">김</div>
+      </aside>
+
+      <div class="workspace">
+        <header class="topbar">
+          <div class="crumbs">학원 운영 <span aria-hidden="true">›</span> <b>대시보드</b></div>
+          <label class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input aria-label="통합 검색" placeholder="학생·학부모·상담 메모 검색">
+          </label>
+          <div class="top-right">
+            <select class="branch" aria-label="지점 선택"><option>일산교육원</option><option>강남교육원</option></select>
+            <span class="date">2026년 6월 21일 일요일</span>
+            <button class="iconbtn" title="알림"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/></svg></button>
+            <button class="btn primary">신규 상담 등록</button>
+          </div>
+        </header>
+
+        <div class="main">
+          <aside class="queue">
+            <h2 class="section-label">오늘의 업무 · 14건</h2>
+            <div class="q-item"><div class="q-top"><span class="q-who">이서윤 학부모 상담</span><span class="q-time mono">10:30</span></div><div class="q-text">정시 지원 전략, 희망 대학 5개 검토</div><div class="q-meta"><span class="badge active">예약</span></div></div>
+            <div class="q-item"><div class="q-top"><span class="q-who">김민재 출결 확인</span><span class="q-time mono">11:00</span></div><div class="q-text">3회 연속 지각, 담당 강사 메모 필요</div><div class="q-meta"><span class="badge bad">지각 3회</span></div></div>
+            <div class="q-item"><div class="q-top"><span class="q-who">강남 신규상담 시간 확인</span><span class="q-time mono">12:20</span></div><div class="q-text">선택 가능한 상담 시간이 보이지 않음</div><div class="q-meta"><span class="badge warn">설정 확인</span></div></div>
+            <div class="q-item"><div class="q-top"><span class="q-who">6월 분납 알림</span><span class="q-time mono">13:00</span></div><div class="q-text">미납 4건, 안내 전송 전 최종 확인</div><div class="q-meta"><span class="badge warn">미납 4</span></div></div>
+            <div class="q-item"><div class="q-top"><span class="q-who">미등록 학생 일정 정리</span><span class="q-time mono">15:10</span></div><div class="q-text">스케줄에 남은 학생 1명 확인</div><div class="q-meta"><span class="badge quiet">확인 중</span></div></div>
+            <div class="q-item"><div class="q-top"><span class="q-who">박지훈 상담 후속</span><span class="q-time mono">16:30</span></div><div class="q-text">합격 가능성 진단표 작성</div><div class="q-meta"><span class="badge active">예약</span></div></div>
+          </aside>
+
+          <main class="content">
+            <div class="title-row">
+              <div>
+                <h1>오늘의 운영 현황</h1>
+                <div class="subtitle">일산교육원 기준 · 상담, 출결, 결제, 후속 업무를 한 화면에서 확인</div>
+              </div>
+              <div class="sync"><span class="pulse"></span><span>최근 저장 완료 · 1분 전</span></div>
+            </div>
+
+            <section class="kpi-strip" aria-label="핵심 지표">
+              <div class="kpi"><div class="kpi-label">등록 학생</div><div class="kpi-value mono">142</div><div class="kpi-note">+3 이번 주</div></div>
+              <div class="kpi"><div class="kpi-label">오늘 출석</div><div class="kpi-value mono">96 / 108</div><div class="kpi-note">88.9%</div></div>
+              <div class="kpi"><div class="kpi-label">예정 상담</div><div class="kpi-value mono">14</div><div class="kpi-note">완료 6 · 대기 8</div></div>
+              <div class="kpi"><div class="kpi-label">신규 문의</div><div class="kpi-value mono">7</div><div class="kpi-note">오늘 접수</div></div>
+              <div class="kpi"><div class="kpi-label">미납</div><div class="kpi-value mono">₩4.2M</div><div class="kpi-note bad">4명 확인 필요</div></div>
+              <div class="kpi"><div class="kpi-label">후속관리</div><div class="kpi-value mono">9</div><div class="kpi-note">오늘 마감 3</div></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <div class="panel-title">학생 운영 목록</div>
+                <div class="actions">
+                  <label class="search mini-search"><input aria-label="학생 목록 검색" placeholder="이름·학년·종목 검색"></label>
+                  <button class="btn">필터</button>
+                  <button class="btn">내보내기</button>
+                </div>
+              </div>
+              <nav class="tabs" aria-label="학생 상태">
+                <span class="tab active">전체 · 142</span>
+                <span class="tab">정시 준비 · 38</span>
+                <span class="tab">수시 준비 · 51</span>
+                <span class="tab">신규 · 9</span>
+                <span class="tab">미등록 · 4</span>
+              </nav>
+              <div class="table-scroll">
+                <table class="students">
+                  <thead><tr><th>학생</th><th>학년</th><th>종목</th><th>출석</th><th>다음 상담</th><th>결제</th><th>다음 행동</th><th style="text-align:right;">액션</th></tr></thead>
+                  <tbody>
+                    <tr><td><div class="person"><div class="avatar">이</div><div><div class="name">이서윤</div><div class="meta">고3 · 일산</div></div></div></td><td>고3</td><td>체조</td><td><span class="badge ok">출석</span></td><td class="mono">오늘 10:30</td><td><span class="badge ok">완납</span></td><td>상담 자료 확인</td><td><div class="row-actions"><button class="iconbtn" title="메모"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12Z"/></svg></button><button class="iconbtn" title="상세"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18l6-6-6-6"/></svg></button></div></td></tr>
+                    <tr><td><div class="person"><div class="avatar">김</div><div><div class="name">김민재</div><div class="meta">고2 · 일산</div></div></div></td><td>고2</td><td>육상 단거리</td><td><span class="badge bad">지각</span></td><td class="mono">내일 14:00</td><td><span class="badge warn">분납 중</span></td><td>보호자 연락</td><td><div class="row-actions"><button class="iconbtn" title="메모"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12Z"/></svg></button><button class="iconbtn" title="상세"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18l6-6-6-6"/></svg></button></div></td></tr>
+                    <tr><td><div class="person"><div class="avatar">박</div><div><div class="name">박지훈</div><div class="meta">고3 · 일산</div></div></div></td><td>고3</td><td>수영</td><td><span class="badge ok">출석</span></td><td class="mono">오늘 16:30</td><td><span class="badge ok">완납</span></td><td>진단표 작성</td><td><div class="row-actions"><button class="iconbtn" title="메모"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12Z"/></svg></button><button class="iconbtn" title="상세"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18l6-6-6-6"/></svg></button></div></td></tr>
+                    <tr><td><div class="person"><div class="avatar">정</div><div><div class="name">정수아</div><div class="meta">고2 · 일산</div></div></div></td><td>고2</td><td>레슬링</td><td><span class="badge bad">결석</span></td><td class="mono">6/24 11:00</td><td><span class="badge bad">미납</span></td><td>결석 사유 확인</td><td><div class="row-actions"><button class="iconbtn" title="메모"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12Z"/></svg></button><button class="iconbtn" title="상세"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18l6-6-6-6"/></svg></button></div></td></tr>
+                    <tr><td><div class="person"><div class="avatar">최</div><div><div class="name">최현우</div><div class="meta">고3 · 일산</div></div></div></td><td>고3</td><td>축구</td><td><span class="badge ok">출석</span></td><td class="mono">6/22 09:30</td><td><span class="badge ok">완납</span></td><td>훈련 기록 입력</td><td><div class="row-actions"><button class="iconbtn" title="메모"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12Z"/></svg></button><button class="iconbtn" title="상세"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 18l6-6-6-6"/></svg></button></div></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="state-row">
+                <div class="state empty"><strong>선택된 학생이 없습니다</strong><p>학생을 선택하면 상담 메모, 출결 이력, 결제 내역이 여기에 이어서 표시됩니다.</p></div>
+                <div class="state error" role="alert"><strong>저장하지 못했습니다</strong><p>입력한 내용은 화면에 남겨두었습니다. 잠시 후 다시 저장해 주세요.</p></div>
+              </div>
+            </section>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
