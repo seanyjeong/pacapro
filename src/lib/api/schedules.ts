@@ -2,7 +2,7 @@
  * 수업 관리 API 클라이언트
  */
 
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 import type {
   ClassSchedule,
   Attendance,
@@ -126,7 +126,7 @@ export const schedulesApi = {
   /**
    * 강사 출근 현황 조회 (날짜 기준)
    */
-  getInstructorAttendanceByDate: async (date: string): Promise<{
+  getInstructorAttendanceByDate: async (date: string, config?: APIRequestConfig): Promise<{
     date: string;
     attendances: InstructorAttendanceRecord[];
     instructors: { id: number; name: string }[];
@@ -136,7 +136,7 @@ export const schedulesApi = {
       evening: { id: number; name: string }[];
     };
   }> => {
-    return apiClient.get(`${BASE_PATH}/date/${date}/instructor-attendance`);
+    return apiClient.get(`${BASE_PATH}/date/${date}/instructor-attendance`, config);
   },
 
   /**

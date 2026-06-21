@@ -3,7 +3,7 @@
  * 학생 관련 API 호출 함수
  */
 
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 import type {
   Student,
   StudentFormData,
@@ -141,7 +141,7 @@ export const studentsAPI = {
    * 휴원 종료 대기 학생 목록 조회
    * GET /paca/students/rest-ended
    */
-  getRestEndedStudents: async (): Promise<{
+  getRestEndedStudents: async (config?: APIRequestConfig): Promise<{
     message: string;
     students: Array<{
       id: number;
@@ -159,7 +159,7 @@ export const studentsAPI = {
       days_overdue: number;
     }>;
   }> => {
-    return await apiClient.get('/students/rest-ended');
+    return await apiClient.get('/students/rest-ended', config);
   },
 
   /**

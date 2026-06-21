@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 import type {
   Consultation,
   ConsultationFormData,
@@ -79,7 +79,7 @@ export async function getConsultations(params?: {
   consultationType?: string;
   page?: number;
   limit?: number;
-}): Promise<ConsultationListResponse> {
+}, config?: APIRequestConfig): Promise<ConsultationListResponse> {
   const searchParams = new URLSearchParams();
   if (params?.status) searchParams.append('status', params.status);
   if (params?.startDate) searchParams.append('startDate', params.startDate);
@@ -89,7 +89,7 @@ export async function getConsultations(params?: {
   if (params?.page) searchParams.append('page', params.page.toString());
   if (params?.limit) searchParams.append('limit', params.limit.toString());
 
-  return apiClient.get<ConsultationListResponse>(`/consultations?${searchParams.toString()}`);
+  return apiClient.get<ConsultationListResponse>(`/consultations?${searchParams.toString()}`, config);
 }
 
 // 상담 상세 조회

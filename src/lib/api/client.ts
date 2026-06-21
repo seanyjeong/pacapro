@@ -4,6 +4,10 @@ import { toast } from 'sonner';
 const PRIMARY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
 const FALLBACK_URL = process.env.NEXT_PUBLIC_FALLBACK_API_URL || 'https://supermax.kr/paca';
 
+export interface APIRequestConfig extends AxiosRequestConfig {
+    suppressErrorToast?: boolean;
+}
+
 function createClient(baseURL: string) {
     return axios.create({
         baseURL,
@@ -55,7 +59,7 @@ class APIClient {
                         window.location.href = '/login';
                     }
                 }
-            } else if (error.response?.status && typeof window !== 'undefined') {
+            } else if (error.response?.status && typeof window !== 'undefined' && !error.config?.suppressErrorToast) {
                 const msg = error.response?.data?.error || error.response?.data?.message;
                 if (msg && error.response.status >= 400) {
                     toast.error(msg);
@@ -92,7 +96,7 @@ class APIClient {
         console.warn('[APIClient] Primary down, switching to fallback:', FALLBACK_URL);
     }
 
-    async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    async get<T>(url: string, config?: APIRequestConfig): Promise<T> {
         try {
             const res: AxiosResponse<T> = await this.getClient().get(url, config);
             return res.data;
@@ -106,7 +110,7 @@ class APIClient {
         }
     }
 
-    async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    async post<T>(url: string, data?: any, config?: APIRequestConfig): Promise<T> {
         try {
             const res: AxiosResponse<T> = await this.getClient().post(url, data, config);
             return res.data;
@@ -120,7 +124,7 @@ class APIClient {
         }
     }
 
-    async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    async put<T>(url: string, data?: any, config?: APIRequestConfig): Promise<T> {
         try {
             const res: AxiosResponse<T> = await this.getClient().put(url, data, config);
             return res.data;
@@ -134,7 +138,7 @@ class APIClient {
         }
     }
 
-    async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    async delete<T>(url: string, config?: APIRequestConfig): Promise<T> {
         try {
             const res: AxiosResponse<T> = await this.getClient().delete(url, config);
             return res.data;
@@ -148,7 +152,7 @@ class APIClient {
         }
     }
 
-    async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    async patch<T>(url: string, data?: any, config?: APIRequestConfig): Promise<T> {
         try {
             const res: AxiosResponse<T> = await this.getClient().patch(url, data, config);
             return res.data;
