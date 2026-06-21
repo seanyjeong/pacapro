@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P-ACA Main UI Directions</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --ink: oklch(22% 0.025 250);
+      --muted: oklch(48% 0.025 250);
+      --line: oklch(88% 0.015 250);
+      --soft: oklch(96% 0.012 250);
+      --paper: oklch(99% 0.006 250);
+      --blue: oklch(52% 0.14 252);
+      --green: oklch(55% 0.12 165);
+      --amber: oklch(64% 0.13 78);
+      --red: oklch(56% 0.16 25);
+      --violet: oklch(50% 0.12 292);
+      --radius: 8px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); letter-spacing: 0; }
+    button, input { font: inherit; }
+    .demo-header {
+      position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; padding: 14px 18px; border-bottom: 1px solid var(--line); background: var(--paper);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 760; }
+    .mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 7px; color: white; background: var(--blue); }
+    .switcher { display: flex; flex-wrap: wrap; gap: 6px; }
+    .switcher button { border: 1px solid var(--line); background: var(--paper); color: var(--muted); padding: 8px 11px; border-radius: 7px; cursor: pointer; }
+    .switcher button.active { color: var(--ink); border-color: color-mix(in oklch, var(--blue), var(--line) 30%); background: oklch(96% 0.035 252); }
+    .direction { display: none; min-height: calc(100vh - 61px); }
+    .direction.active { display: block; }
+    .shell { display: grid; grid-template-columns: 248px 1fr; min-height: calc(100vh - 61px); }
+    .sidebar { border-right: 1px solid var(--line); padding: 16px; background: oklch(97% 0.012 250); }
+    .side-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .academy { font-weight: 760; }
+    .role { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .nav-group { margin-top: 18px; }
+    .nav-label { color: var(--muted); font-size: 11px; font-weight: 760; margin: 0 0 8px; }
+    .nav-item { display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 0 10px; border-radius: 7px; color: var(--muted); font-size: 14px; }
+    .nav-item strong { color: var(--ink); }
+    .nav-item.active { background: var(--ink); color: white; }
+    .nav-item.active strong { color: white; }
+    .content { padding: 22px; min-width: 0; }
+    .topbar { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; margin-bottom: 18px; }
+    .search { min-height: 42px; border: 1px solid var(--line); border-radius: 7px; padding: 0 13px; background: white; color: var(--muted); display: flex; align-items: center; }
+    .actions { display: flex; gap: 8px; }
+    .btn { min-height: 38px; border: 1px solid var(--line); background: white; padding: 0 12px; border-radius: 7px; color: var(--ink); }
+    .btn.primary { border-color: var(--blue); background: var(--blue); color: white; }
+    h1 { font-size: 24px; line-height: 1.2; margin: 0; letter-spacing: 0; }
+    .subtitle { color: var(--muted); margin-top: 6px; font-size: 14px; }
+    .hero-line { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .status-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .stat, .panel { border: 1px solid var(--line); background: white; border-radius: var(--radius); }
+    .stat { padding: 13px; }
+    .stat span { display: block; color: var(--muted); font-size: 12px; }
+    .stat b { display: block; font-size: 21px; margin-top: 5px; }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(310px, 0.75fr); gap: 14px; align-items: start; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 14px; border-bottom: 1px solid var(--line); }
+    .panel-title { font-weight: 760; }
+    .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th { color: var(--muted); font-size: 12px; font-weight: 680; background: var(--soft); }
+    .badge { display: inline-flex; align-items: center; min-height: 22px; border-radius: 6px; padding: 0 7px; font-size: 12px; font-weight: 680; }
+    .badge.green { color: oklch(35% 0.1 165); background: oklch(93% 0.05 165); }
+    .badge.amber { color: oklch(42% 0.11 78); background: oklch(94% 0.055 78); }
+    .badge.red { color: oklch(42% 0.13 25); background: oklch(94% 0.045 25); }
+    .queue { padding: 8px; display: grid; gap: 8px; }
+    .task { border: 1px solid var(--line); border-radius: 7px; padding: 11px; display: grid; gap: 4px; }
+    .task strong { font-size: 14px; }
+    .task span { color: var(--muted); font-size: 12px; }
+    .mini-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; padding: 12px; }
+    .day { min-height: 54px; border: 1px solid var(--line); border-radius: 6px; padding: 6px; font-size: 12px; background: white; }
+    .day.today { border-color: var(--blue); background: oklch(97% 0.03 252); }
+    .day small { display: block; color: var(--muted); margin-top: 4px; }
+
+    .branch { --blue: oklch(48% 0.11 205); --ink: oklch(23% 0.018 210); --soft: oklch(96% 0.013 105); --paper: oklch(98.5% 0.01 105); }
+    .branch .shell { grid-template-columns: 72px 1fr; }
+    .branch .sidebar { padding: 12px; background: oklch(25% 0.02 210); color: white; }
+    .branch .nav-item { justify-content: center; color: oklch(82% 0.025 210); padding: 0; }
+    .branch .nav-item.active { background: oklch(92% 0.06 105); color: oklch(25% 0.02 210); }
+    .branch .nav-label, .branch .side-title { display: none; }
+    .branch .hero-line { padding: 18px; border: 1px solid var(--line); border-radius: var(--radius); background: white; }
+    .branch .grid { grid-template-columns: minmax(360px, 0.85fr) minmax(0, 1.15fr); }
+
+    .field { --blue: oklch(53% 0.15 18); --ink: oklch(20% 0.018 35); --soft: oklch(96% 0.012 35); --paper: oklch(98% 0.006 35); }
+    .field .shell { grid-template-columns: 208px 1fr; }
+    .field .sidebar { background: white; }
+    .field .content { background: oklch(97% 0.012 35); }
+    .field .status-strip { grid-template-columns: 1.1fr 1fr 1fr; }
+    .field .grid { grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr); }
+    .field .btn.primary { background: var(--ink); border-color: var(--ink); }
+    .touch-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; }
+    .touch-actions .btn { min-height: 54px; }
+
+    @media (max-width: 860px) {
+      .demo-header { align-items: flex-start; flex-direction: column; }
+      .shell, .branch .shell, .field .shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .content { padding: 14px; }
+      .topbar, .grid, .branch .grid, .field .grid { grid-template-columns: 1fr; }
+      .hero-line { align-items: flex-start; flex-direction: column; }
+      .status-strip, .field .status-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .table-wrap { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="demo-header">
+    <div class="brand"><span class="mark">P</span><span>P-ACA 메인 UI 방향 데모</span></div>
+    <div class="switcher" aria-label="디자인 방향 선택">
+      <button class="active" data-target="ops">A. Operations Desk</button>
+      <button data-target="branch">B. Branch Control</button>
+      <button data-target="field">C. Field Console</button>
+    </div>
+  </header>
+
+  <section id="ops" class="direction active">
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="side-title"><div><div class="academy">테스트체대학원</div><div class="role">원장 · 오늘 6월 21일</div></div></div>
+        <div class="nav-group"><p class="nav-label">운영</p><div class="nav-item active"><strong>대시보드</strong><span>12</span></div><div class="nav-item">학생</div><div class="nav-item">상담</div><div class="nav-item">수업스케줄</div></div>
+        <div class="nav-group"><p class="nav-label">재무</p><div class="nav-item">학원비</div><div class="nav-item">급여</div><div class="nav-item">리포트</div></div>
+      </aside>
+      <main class="content">
+        <div class="topbar"><div class="search">학생, 상담, 전화번호 검색</div><div class="actions"><button class="btn">새로고침</button><button class="btn primary">상담 등록</button></div></div>
+        <div class="hero-line"><div><h1>오늘의 운영 데스크</h1><div class="subtitle">미납, 상담, 수업 배정을 한 화면에서 우선순위로 정리합니다.</div></div><button class="btn">P-EAK 이동</button></div>
+        <div class="status-strip"><div class="stat"><span>수강 학생</span><b>16명</b></div><div class="stat"><span>오늘 상담</span><b>4건</b></div><div class="stat"><span>미납 알림</span><b>16명</b></div><div class="stat"><span>오늘 수업</span><b>오후 16명</b></div></div>
+        <div class="grid">
+          <section class="panel"><div class="panel-header"><div class="panel-title">우선 처리 학생</div><button class="btn">전체 보기</button></div><div class="table-wrap"><table class="table"><thead><tr><th>학생</th><th>상태</th><th>다음 행동</th><th>담당</th></tr></thead><tbody><tr><td>아이유</td><td><span class="badge amber">상담 예정</span></td><td>10:00 재원 상담</td><td>김코치</td></tr><tr><td>홍길동</td><td><span class="badge red">미납</span></td><td>6월 학원비 알림</td><td>데스크</td></tr><tr><td>김태리</td><td><span class="badge green">수업 배정</span></td><td>오후 출석 확인</td><td>정멘토</td></tr></tbody></table></div></section>
+          <section class="panel"><div class="panel-header"><div class="panel-title">오늘의 할 일</div><span class="badge red">긴급 3</span></div><div class="queue"><div class="task"><strong>미납 학원비 16명</strong><span>결제수단별 빠른 처리 버튼 노출</span></div><div class="task"><strong>상담 대기 2건</strong><span>예약 확정 또는 시간 변경 필요</span></div><div class="task"><strong>수업 배정 확인</strong><span>오후반 학생 16명 출석 준비</span></div></div></section>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <section id="branch" class="direction branch">
+    <div class="shell">
+      <aside class="sidebar"><div class="nav-group"><div class="nav-item active">홈</div><div class="nav-item">학생</div><div class="nav-item">상담</div><div class="nav-item">결제</div><div class="nav-item">설정</div></div></aside>
+      <main class="content">
+        <div class="topbar"><div class="search">통합 검색: 학생명, 학교, 보호자 번호</div><div class="actions"><button class="btn">월간 보기</button><button class="btn primary">빠른 등록</button></div></div>
+        <div class="hero-line"><div><h1>일산 지점 운영판</h1><div class="subtitle">지점장이 아침에 보는 하루 흐름: 상담, 수업, 결제, 직원 상태.</div></div><div class="actions"><button class="btn">상담 설정</button><button class="btn">출석 태블릿</button></div></div>
+        <div class="grid">
+          <section class="panel"><div class="panel-header"><div class="panel-title">6월 달력 요약</div><span class="badge green">정상 운영</span></div><div class="mini-calendar"><div class="day">21<small>오늘</small></div><div class="day today">22<small>상담 3</small></div><div class="day">23<small>수업 16</small></div><div class="day">24<small>급여</small></div><div class="day">25<small>미납</small></div><div class="day">26<small>테스트</small></div><div class="day">27<small>휴무</small></div></div></section>
+          <section class="panel"><div class="panel-header"><div class="panel-title">지점 업무 흐름</div><button class="btn">담당자 배정</button></div><div class="table-wrap"><table class="table"><thead><tr><th>시간</th><th>업무</th><th>상태</th><th>메모</th></tr></thead><tbody><tr><td>10:00</td><td>아이유 재원상담</td><td><span class="badge amber">준비</span></td><td>성적표 확인</td></tr><tr><td>14:30</td><td>홍서범 신규상담</td><td><span class="badge green">확정</span></td><td>강남 지점 문의</td></tr><tr><td>18:00</td><td>오후반 출석</td><td><span class="badge amber">대기</span></td><td>태블릿 사용</td></tr></tbody></table></div></section>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <section id="field" class="direction field">
+    <div class="shell">
+      <aside class="sidebar"><div class="side-title"><div><div class="academy">P-ACA Field</div><div class="role">데스크 + 태블릿 겸용</div></div></div><div class="nav-group"><p class="nav-label">실행</p><div class="nav-item active"><strong>오늘</strong></div><div class="nav-item">출석</div><div class="nav-item">상담</div><div class="nav-item">결제</div></div></aside>
+      <main class="content">
+        <div class="topbar"><div class="search">바로 실행 검색</div><div class="actions"><button class="btn primary">출석 체크</button><button class="btn">문자 발송</button></div></div>
+        <div class="hero-line"><div><h1>현장 실행 콘솔</h1><div class="subtitle">큰 터치 타깃과 작업별 액션으로 수업 중에도 빠르게 처리합니다.</div></div></div>
+        <div class="status-strip"><div class="stat"><span>지금 시간대</span><b>오후반</b></div><div class="stat"><span>미처리</span><b>5건</b></div><div class="stat"><span>오늘 결제</span><b>0원</b></div></div>
+        <div class="grid">
+          <section class="panel"><div class="panel-header"><div class="panel-title">빠른 실행</div><span class="badge amber">현장 모드</span></div><div class="touch-actions"><button class="btn primary">출석</button><button class="btn">상담 확정</button><button class="btn">미납 알림</button><button class="btn">학생 검색</button><button class="btn">수업 변경</button><button class="btn">P-EAK</button></div></section>
+          <section class="panel"><div class="panel-header"><div class="panel-title">오늘 처리 큐</div><button class="btn">정렬</button></div><div class="table-wrap"><table class="table"><thead><tr><th>우선</th><th>학생/업무</th><th>상태</th><th>액션</th></tr></thead><tbody><tr><td>1</td><td>홍길동 미납</td><td><span class="badge red">연체</span></td><td>알림</td></tr><tr><td>2</td><td>아이유 상담</td><td><span class="badge amber">10:00</span></td><td>진행</td></tr><tr><td>3</td><td>오후반 출석</td><td><span class="badge green">준비</span></td><td>열기</td></tr></tbody></table></div></section>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <script>
+    const buttons = document.querySelectorAll("[data-target]");
+    const sections = document.querySelectorAll(".direction");
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => {
+        buttons.forEach((item) => item.classList.remove("active"));
+        sections.forEach((section) => section.classList.remove("active"));
+        button.classList.add("active");
+        document.getElementById(button.dataset.target).classList.add("active");
+      });
+    });
+  </script>
+</body>
+</html>
