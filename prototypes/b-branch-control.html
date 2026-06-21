@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>Direction B — Branch Control</title>
+<link rel="stylesheet" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --bg: #F8F4ED;
+    --surface: #FFFDF7;
+    --surface-2: #F1ECDF;
+    --border: #E6DDC9;
+    --border-strong: #D2C7AC;
+    --text: #2C2620;
+    --text-2: #524A3E;
+    --text-3: #786E5C;
+    --accent: #4A6741;        /* deep olive/sage */
+    --accent-2: #DDE5D5;
+    --accent-3: #B89643;       /* brass — gold, not orange-brown */
+    --ok: #2D5F2D;
+    --warn: #C2862A;
+    --bad: #B84A3C;
+    --radius: 6px;
+    --radius-lg: 8px;
+    --sidebar: 240px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
+  button, input, select { font: inherit; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+  table { border-collapse: collapse; width: 100%; }
+  .mono { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+  .app { display: grid; grid-template-columns: var(--sidebar) 1fr; min-height: 100vh; }
+
+  /* Sidebar — wider, label + icon */
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 20px 16px; display: flex; flex-direction: column; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .brand .mark { width: 32px; height: 32px; border-radius: var(--radius); background: var(--accent); color: var(--surface); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+  .brand .name { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+  .branch-tag { font-size: 11px; color: var(--text-3); padding: 4px 8px; background: var(--surface-2); border-radius: 4px; display: inline-block; margin: 4px 0 24px 42px; }
+  .nav-section { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); font-weight: 600; padding: 14px 10px 6px; }
+  .nav-section:first-of-type { padding-top: 0; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius); cursor: pointer; color: var(--text-2); font-weight: 500; }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--accent); color: var(--surface); }
+  .nav-item .icon { width: 16px; height: 16px; flex-shrink: 0; }
+  .nav-item.active .icon { color: var(--surface); }
+  .spacer { flex: 1; }
+  .branch-selector { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); cursor: pointer; }
+  .branch-selector .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .branch-selector .label { flex: 1; }
+  .branch-selector .label .n { font-weight: 600; font-size: 13px; }
+  .branch-selector .label .s { font-size: 11px; color: var(--text-3); }
+  .branch-selector .caret { font-size: 10px; color: var(--text-3); }
+
+  /* Top header — stronger branch/day header */
+  header.day-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 20px 28px 18px; display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 24px; }
+  .day-meta .eyebrow { font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .day-meta h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-top: 4px; }
+  .day-meta h1 .d { color: var(--accent); }
+  .day-meta .sub { color: var(--text-2); font-size: 13px; margin-top: 4px; }
+  .day-actions { display: flex; gap: 8px; align-items: center; }
+  .btn { height: 32px; padding: 0 12px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 500; }
+  .btn:hover { background: var(--surface-2); }
+  .btn-primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+  .btn-primary:hover { background: #3D5836; }
+  .btn-ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+  .btn-ghost:hover { background: var(--surface-2); }
+
+  /* Quick scan KPIs */
+  .scan-kpis { background: var(--surface); border-bottom: 1px solid var(--border); display: grid; grid-template-columns: repeat(5, 1fr); }
+  .scan-kpis > div { padding: 14px 24px; border-right: 1px solid var(--border); }
+  .scan-kpis > div:last-child { border-right: 0; }
+  .scan-kpis .label { font-size: 12px; color: var(--text-3); }
+  .scan-kpis .value { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-top: 2px; }
+  .scan-kpis .value .unit { font-size: 12px; color: var(--text-3); font-weight: 500; margin-left: 2px; }
+  .scan-kpis .trend { font-size: 11px; margin-top: 2px; }
+  .trend.up { color: var(--ok); }
+  .trend.down { color: var(--bad); }
+  .trend.flat { color: var(--text-3); }
+
+  /* Main split — 3 panels */
+  main { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 1px; background: var(--border); padding: 1px; }
+  .panel { background: var(--surface); display: flex; flex-direction: column; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px 10px; }
+  .panel-head .title { font-size: 14px; font-weight: 700; letter-spacing: -0.005em; }
+  .panel-head .count { font-size: 11px; color: var(--text-3); padding: 2px 8px; background: var(--surface-2); border-radius: 10px; margin-left: 6px; }
+  .panel-head .link { font-size: 12px; color: var(--accent); font-weight: 600; cursor: pointer; }
+  .panel-body { padding: 0 18px 18px; flex: 1; overflow-y: auto; }
+
+  /* Schedule timeline */
+  .timeline { position: relative; padding-left: 16px; }
+  .timeline::before { content: ""; position: absolute; left: 5px; top: 4px; bottom: 4px; width: 1px; background: var(--border); }
+  .tl-item { position: relative; padding: 0 0 14px 16px; }
+  .tl-item::before { content: ""; position: absolute; left: -16px; top: 6px; width: 11px; height: 11px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+  .tl-item.now::before { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-2); }
+  .tl-item .time { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+  .tl-item .title { font-size: 13px; font-weight: 600; margin-top: 1px; }
+  .tl-item .what { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .tl-item .tag { display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px; margin-top: 4px; background: var(--surface-2); color: var(--text-2); }
+
+  /* Consult list */
+  .consult { padding: 12px 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; }
+  .consult:last-child { border-bottom: 0; }
+  .consult .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent-2); color: var(--accent); display: grid; place-items: center; font-weight: 700; font-size: 13px; }
+  .consult .who { font-size: 13px; font-weight: 600; }
+  .consult .topic { font-size: 12px; color: var(--text-2); margin-top: 1px; }
+  .consult .when { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; text-align: right; }
+  .consult .badge { margin-top: 4px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: 3px; font-size: 11px; font-weight: 500; }
+  .b-up    { background: #E8F1E5; color: var(--ok); }
+  .b-soon  { background: #FAEFD7; color: var(--warn); }
+  .b-late  { background: #F7E4DE; color: var(--bad); }
+
+  /* Money table */
+  .money-row { padding: 10px 0; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto; gap: 4px; align-items: baseline; }
+  .money-row:last-child { border-bottom: 0; }
+  .money-row .name { font-size: 13px; font-weight: 600; }
+  .money-row .sub { font-size: 11px; color: var(--text-3); }
+  .money-row .amt { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .money-row .amt.bad { color: var(--bad); }
+  .money-row .amt.ok { color: var(--ok); }
+
+  /* Footer note */
+  .branch-note { background: var(--accent-2); color: var(--accent); padding: 10px 18px; font-size: 12px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; }
+
+  /* Tablet */
+  @media (max-width: 1180px) {
+    .app { grid-template-columns: 64px 1fr; }
+    .sidebar .nav-item span:not(.icon) { display: none; }
+    .sidebar .brand .name, .sidebar .branch-tag, .sidebar .nav-section, .sidebar .branch-selector .label { display: none; }
+    main { grid-template-columns: 1fr; }
+    .scan-kpis { grid-template-columns: repeat(3, 1fr); }
+    .scan-kpis > div:nth-child(3) { border-right: 0; }
+    .scan-kpis > div:nth-child(n+4) { display: none; }
+  }
+
+  .demo-frame { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); background: var(--bg); }
+  .demo-label { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-2); }
+  .demo-label .swatch { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="demo-frame">
+  <div class="demo-label"><span class="swatch"></span> Direction B — Branch Control · 1280px · warm-neutral, branch header, 3-panel split</div>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="mark">P</div>
+        <div class="name">P-ACA</div>
+      </div>
+      <div class="branch-tag">Branch · 일산교육원</div>
+
+      <div class="nav-section">운영</div>
+      <div class="nav-item active"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>오늘</span></div>
+      <div class="nav-item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>일정</span></div>
+      <div class="nav-item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12Z"/></svg><span>상담</span></div>
+
+      <div class="nav-section">학생 · 강사</div>
+      <div class="nav-item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span>학생</span></div>
+      <div class="nav-item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.4"/></svg><span>강사</span></div>
+      <div class="nav-item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l3 3 7-7"/><path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"/></svg><span>출결</span></div>
+
+      <div class="nav-section">재무 · 리포트</div>
+      <div class="nav-item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg><span>결제</span></div>
+      <div class="nav-item"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>리포트</span></div>
+
+      <div class="spacer"></div>
+      <div class="branch-selector">
+        <span class="dot"></span>
+        <div class="label"><div class="n">일산교육원</div><div class="s">142명 · 11명 강사</div></div>
+        <span class="caret">▾</span>
+      </div>
+    </aside>
+
+    <!-- Main column -->
+    <div>
+      <header class="day-header">
+        <div class="day-meta">
+          <div class="eyebrow">SUNDAY · 2026년 6월 21일</div>
+          <h1>오늘 <span class="d">·</span> 일산교육원</h1>
+          <div class="sub">점장 김은수 · 주말 특별 훈련일 · 전체 18건 일정</div>
+        </div>
+        <div class="day-actions">
+          <button class="btn btn-ghost">어제 보기</button>
+          <button class="btn">내보내기</button>
+          <button class="btn btn-primary">+ 새 상담 등록</button>
+        </div>
+      </header>
+
+      <!-- Scan KPIs -->
+      <div class="scan-kpis">
+        <div>
+          <div class="label">오늘 출석률</div>
+          <div class="value mono">88.9<span class="unit">%</span></div>
+          <div class="trend up">+2.1 어제比</div>
+        </div>
+        <div>
+          <div class="label">신규 등록</div>
+          <div class="value mono">3<span class="unit">명</span></div>
+          <div class="trend up">+1 어제比</div>
+        </div>
+        <div>
+          <div class="label">예정 상담</div>
+          <div class="value mono">14<span class="unit">건</span></div>
+          <div class="trend flat">완료 6 · 대기 8</div>
+        </div>
+        <div>
+          <div class="label">금일 입금</div>
+          <div class="value mono">₩2.8M</div>
+          <div class="trend up">+0.4M 어제比</div>
+        </div>
+        <div>
+          <div class="label">미납 합계</div>
+          <div class="value mono">₩4.2M</div>
+          <div class="trend down">+0.6M 어제比</div>
+        </div>
+      </div>
+
+      <!-- Main split -->
+      <main>
+        <!-- Schedule -->
+        <section class="panel">
+          <div class="panel-head">
+            <div class="title">오늘의 일정 <span class="count">18</span></div>
+            <span class="link">전체 일정 →</span>
+          </div>
+          <div class="panel-body">
+            <div class="timeline">
+              <div class="tl-item"><div class="time mono">08:00 — 09:00</div><div class="title">조기 체력반 · 12명</div><div class="what">트랙 · 조장 이현호</div><div class="tag">전체</div></div>
+              <div class="tl-item"><div class="time mono">09:30 — 10:30</div><div class="title">고3 정시 전략 회의</div><div class="what">강사 4명 · 교무실</div><div class="tag">회의</div></div>
+              <div class="tl-item now"><div class="time mono">10:30 — 11:30</div><div class="title">이서윤 · 학부모 상담</div><div class="what">정시 지원 전략 — 학과 5개 슬라이드 검토</div><div class="tag">상담실 A</div></div>
+              <div class="tl-item"><div class="time mono">11:00 — 12:00</div><div class="title">김민재 출결 후속</div><div class="what">3일 지각 — 강사 메모</div><div class="tag">데스크</div></div>
+              <div class="tl-item"><div class="time mono">13:00 — 13:30</div><div class="title">6월 분납 알림 발송</div><div class="what">자동 · 미납 4건</div><div class="tag">시스템</div></div>
+              <div class="tl-item"><div class="time mono">15:00 — 17:00</div><div class="title">주간 실기 테스트</div><div class="what">참여 28명 · 슈퍼맥스 100m</div><div class="tag">운동장</div></div>
+              <div class="tl-item"><div class="time mono">16:30 — 17:30</div><div class="title">박지훈 · 상담 후속</div><div class="what">합격 가능성 진단표</div><div class="tag">상담실 B</div></div>
+              <div class="tl-item"><div class="time mono">17:00 — 18:00</div><div class="title">신규 입학 등록 3건</div><div class="what">서류 검토 · 첫 일정 조율</div><div class="tag">데스크</div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Consult -->
+        <section class="panel">
+          <div class="panel-head">
+            <div class="title">상담 큐 <span class="count">8 대기</span></div>
+            <span class="link">예약 보기 →</span>
+          </div>
+          <div class="panel-body">
+            <div class="consult">
+              <div class="avatar">이</div>
+              <div><div class="who">이서윤 · 학부모</div><div class="topic">정시 학과 5개 슬라이드</div></div>
+              <div><div class="when mono">10:30</div><div class="badge b-soon">곧 시작</div></div>
+            </div>
+            <div class="consult">
+              <div class="avatar" style="background:#FAEFD7;color:var(--warn);">박</div>
+              <div><div class="who">박지훈 · 본인</div><div class="topic">합격 가능성 진단표</div></div>
+              <div><div class="when mono">16:30</div><div class="badge b-up">예약</div></div>
+            </div>
+            <div class="consult">
+              <div class="avatar">정</div>
+              <div><div class="who">정수아 · 학부모</div><div class="topic">3일 결석 후속 · 학습 계획</div></div>
+              <div><div class="when mono">6/24 11:00</div><div class="badge b-up">예약</div></div>
+            </div>
+            <div class="consult">
+              <div class="avatar">최</div>
+              <div><div class="who">최현우 · 학부모</div><div class="topic">수시 원서 점검</div></div>
+              <div><div class="when mono">6/22 09:30</div><div class="badge b-up">예약</div></div>
+            </div>
+            <div class="consult">
+              <div class="avatar" style="background:#F7E4DE;color:var(--bad);">한</div>
+              <div><div class="who">한지민 · 본인</div><div class="topic">6월 진도 점검</div></div>
+              <div><div class="when mono">6/27 15:00</div><div class="badge b-up">예약</div></div>
+            </div>
+            <div class="consult">
+              <div class="avatar">신</div>
+              <div><div class="who">신입 3명 · 학부모</div><div class="topic">첫 상담 일정 조율</div></div>
+              <div><div class="when mono">오늘 17:00</div><div class="badge b-soon">미확정</div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Money -->
+        <section class="panel">
+          <div class="panel-head">
+            <div class="title">금일 결제 <span class="count">₩2.8M / ₩4.2M</span></div>
+            <span class="link">결제 대장 →</span>
+          </div>
+          <div class="panel-body">
+            <div class="money-row">
+              <div><div class="name">이서윤</div><div class="sub">6월 분납 · 2/4회차</div></div>
+              <div class="amt ok mono">+₩450,000</div>
+            </div>
+            <div class="money-row">
+              <div><div class="name">최현우</div><div class="sub">6월 분납 · 1/4회차</div></div>
+              <div class="amt ok mono">+₩450,000</div>
+            </div>
+            <div class="money-row">
+              <div><div class="name">한지민</div><div class="sub">신규 등록 · 첫 달</div></div>
+              <div class="amt ok mono">+₩380,000</div>
+            </div>
+            <div class="money-row">
+              <div><div class="name">신입 3명</div><div class="sub">등록금 · 합계</div></div>
+              <div class="amt ok mono">+₩1,140,000</div>
+            </div>
+            <div class="money-row">
+              <div><div class="name">박지훈</div><div class="sub">6월 분납 · 미입금</div></div>
+              <div class="amt bad mono">-₩450,000</div>
+            </div>
+            <div class="money-row">
+              <div><div class="name">정수아</div><div class="sub">5월 미납 잔여</div></div>
+              <div class="amt bad mono">-₩220,000</div>
+            </div>
+            <div class="money-row">
+              <div><div class="name">김민재</div><div class="sub">6월 분납 · 미입금</div></div>
+              <div class="amt bad mono">-₩380,000</div>
+            </div>
+          </div>
+          <div class="branch-note">
+            <span>오늘의 입금 ₩2.42M · 미납 ₩1.05M</span>
+            <span style="text-decoration:underline;cursor:pointer;">미납자 알림 보내기</span>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+</div>
+</body>
+</html>

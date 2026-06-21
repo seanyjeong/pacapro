@@ -170,14 +170,22 @@
   <script>
     const buttons = document.querySelectorAll("[data-target]");
     const sections = document.querySelectorAll(".direction");
+    const allowedTargets = new Set(["ops", "branch", "field"]);
+
+    function activateDirection(target) {
+      const selected = allowedTargets.has(target) ? target : "ops";
+      buttons.forEach((item) => item.classList.toggle("active", item.dataset.target === selected));
+      sections.forEach((section) => section.classList.toggle("active", section.id === selected));
+    }
+
     buttons.forEach((button) => {
       button.addEventListener("click", () => {
-        buttons.forEach((item) => item.classList.remove("active"));
-        sections.forEach((section) => section.classList.remove("active"));
-        button.classList.add("active");
-        document.getElementById(button.dataset.target).classList.add("active");
+        activateDirection(button.dataset.target);
+        history.replaceState(null, "", `#${button.dataset.target}`);
       });
     });
+
+    activateDirection(window.location.hash.replace("#", ""));
   </script>
 </body>
 </html>

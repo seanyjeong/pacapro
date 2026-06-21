@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>Direction C — Field Console</title>
+<link rel="stylesheet" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root {
+    --bg: #F4F2EC;
+    --surface: #FFFFFF;
+    --surface-2: #EDEAE0;
+    --ink: #0A0A0A;
+    --ink-2: #2A2A28;
+    --muted: #6B6B68;
+    --line: #0A0A0A;
+    --line-soft: #C7C4BA;
+    --accent: #F5B800;          /* golden yellow — sharp accent, not orange-brown */
+    --accent-ink: #0A0A0A;
+    --ok: #00863A;
+    --warn: #E89B0E;
+    --bad: #D62828;
+    --radius: 4px;
+    --radius-lg: 6px;
+    --action-rail: 96px;
+    --topbar: 72px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--ink); font-family: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif; font-size: 15px; line-height: 1.4; font-weight: 500; }
+  button, input, select { font: inherit; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+  table { border-collapse: collapse; width: 100%; }
+  .mono { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+  strong { font-weight: 700; }
+
+  .app { display: grid; grid-template-columns: var(--action-rail) 1fr; min-height: 100vh; }
+
+  /* Action rail — touch-safe, large */
+  .action-rail { background: var(--ink); color: var(--surface); display: flex; flex-direction: column; }
+  .ar-brand { height: var(--topbar); display: grid; place-items: center; border-bottom: 2px solid var(--surface); }
+  .ar-brand .mark { width: 44px; height: 44px; border-radius: var(--radius); background: var(--accent); color: var(--ink); display: grid; place-items: center; font-weight: 800; font-size: 20px; letter-spacing: -0.04em; }
+  .ar-section { padding: 12px 0; border-bottom: 2px solid var(--surface); }
+  .ar-section .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .ar-btn { width: 100%; height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: var(--surface); border: 0; background: transparent; padding: 0; }
+  .ar-btn:hover { background: var(--ink-2); }
+  .ar-btn.active { background: var(--accent); color: var(--ink); }
+  .ar-btn .icon { width: 22px; height: 22px; }
+  .ar-btn .txt { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; }
+  .ar-spacer { flex: 1; }
+  .ar-clock { padding: 12px 8px; text-align: center; border-top: 2px solid var(--surface); }
+  .ar-clock .t { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .ar-clock .d { font-size: 11px; color: #B8B5AA; margin-top: 2px; }
+
+  /* Top header — schedule-first, big */
+  header.topbar { background: var(--surface); border-bottom: 3px solid var(--ink); height: var(--topbar); display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px; padding: 0 24px; }
+  .topbar .when { display: flex; align-items: baseline; gap: 12px; }
+  .topbar .when .day { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; }
+  .topbar .when .day .label { font-size: 14px; font-weight: 700; color: var(--muted); margin-right: 6px; }
+  .topbar .when .sub { font-size: 14px; color: var(--muted); }
+  .topbar .search { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 14px; border: 2px solid var(--ink); border-radius: var(--radius); background: var(--surface); min-width: 280px; }
+  .topbar .search input { flex: 1; background: transparent; border: 0; outline: 0; font-size: 15px; font-weight: 500; }
+  .topbar .search svg { flex-shrink: 0; }
+  .big-btn { height: 44px; padding: 0 18px; border-radius: var(--radius); border: 2px solid var(--ink); background: var(--surface); color: var(--ink); display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; font-size: 14px; }
+  .big-btn:hover { background: var(--bg); }
+  .big-btn-primary { background: var(--ink); color: var(--surface); }
+  .big-btn-primary:hover { background: #000; }
+  .big-btn-accent { background: var(--accent); color: var(--ink); }
+  .big-btn-accent:hover { background: #E0A800; }
+
+  /* Main: 2-col — schedule (large) + right side strip */
+  main { display: grid; grid-template-columns: 1fr 320px; }
+  .schedule { background: var(--surface); padding: 20px 24px 28px; border-right: 3px solid var(--ink); }
+  .schedule h2 { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+  .schedule h2 .count { font-size: 12px; font-weight: 700; color: var(--muted); padding: 2px 8px; border: 2px solid var(--ink); border-radius: 10px; }
+  .schedule .lead { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+
+  .slot { display: grid; grid-template-columns: 92px 1fr auto; gap: 14px; padding: 14px 14px; border: 2px solid var(--ink); border-radius: var(--radius-lg); margin-bottom: 10px; background: var(--surface); align-items: center; }
+  .slot.now { background: var(--accent); box-shadow: 6px 6px 0 var(--ink); transform: translate(-2px, -2px); }
+  .slot.past { opacity: 0.55; background: var(--surface-2); }
+  .slot .time { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .slot .time .dur { font-size: 11px; font-weight: 600; color: var(--muted); display: block; margin-top: 2px; }
+  .slot .what .title { font-size: 16px; font-weight: 800; letter-spacing: -0.005em; }
+  .slot .what .sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .slot .what .tags { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 8px; border: 2px solid var(--ink); border-radius: 3px; background: var(--surface); }
+  .tag.dark { background: var(--ink); color: var(--surface); }
+  .tag.ok { background: #D6F2DF; }
+  .tag.warn { background: #FBE2B6; }
+  .tag.bad { background: #F7CDCD; }
+  .slot .act { display: flex; gap: 6px; }
+  .slot .act .sq { width: 44px; height: 44px; border: 2px solid var(--ink); border-radius: var(--radius); display: grid; place-items: center; background: var(--surface); cursor: pointer; }
+  .slot .act .sq:hover { background: var(--bg); }
+  .slot .act .sq.primary { background: var(--ink); color: var(--surface); }
+  .slot .act .sq.primary:hover { background: #000; }
+
+  /* Right strip — now + quick stats */
+  aside.right { background: var(--surface-2); padding: 18px 18px; display: flex; flex-direction: column; gap: 14px; }
+  .card { background: var(--surface); border: 2px solid var(--ink); border-radius: var(--radius-lg); padding: 14px; }
+  .card.dark { background: var(--ink); color: var(--surface); }
+  .card.accent { background: var(--accent); color: var(--ink); }
+  .card .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .card.dark .label, .card.accent .label { color: var(--ink); }
+  .card .v { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .card .v .u { font-size: 13px; font-weight: 600; margin-left: 3px; opacity: 0.8; }
+  .card .sub { font-size: 12px; margin-top: 4px; opacity: 0.85; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-grid .card { padding: 10px 12px; }
+  .stat-grid .card .v { font-size: 18px; }
+
+  /* Empty / error / loading examples */
+  .state-card { padding: 18px; text-align: left; border: 2px dashed var(--ink); background: var(--surface); border-radius: var(--radius-lg); }
+  .state-card .h { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .state-card .b { font-size: 13px; color: var(--muted); }
+  .state-card.err { background: #F7E4DE; border-style: solid; border-color: var(--bad); }
+  .state-card.err .h { color: var(--bad); }
+
+  /* Tablet (1024–1180) */
+  @media (max-width: 1180px) {
+    .app { grid-template-columns: var(--action-rail) 1fr; }
+    main { grid-template-columns: 1fr; }
+    aside.right { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; }
+    .topbar { grid-template-columns: 1fr auto; }
+    .topbar .when .day { font-size: 24px; }
+    .topbar .search { min-width: 0; }
+    .slot { grid-template-columns: 72px 1fr auto; }
+  }
+
+  .demo-frame { border: 2px solid var(--ink); border-radius: 12px; overflow: hidden; box-shadow: 4px 4px 0 var(--ink); background: var(--bg); }
+  .demo-label { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--ink); color: var(--surface); border-bottom: 2px solid var(--ink); font-size: 12px; }
+  .demo-label .swatch { width: 10px; height: 10px; background: var(--accent); border-radius: 50%; }
+</style>
+</head>
+<body>
+<div class="demo-frame">
+  <div class="demo-label"><span class="swatch"></span> Direction C — Field Console · 1280px · 고대비, 두꺼운 2px 보더, 큰 터치 타깃, 액션 레일</div>
+  <div class="app">
+    <!-- Action rail -->
+    <aside class="action-rail" aria-label="빠른 액션">
+      <div class="ar-brand"><div class="mark">P</div></div>
+
+      <div class="ar-section">
+        <div class="label">메인</div>
+        <button class="ar-btn active"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span class="txt">일정</span></button>
+        <button class="ar-btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg><span class="txt">학생</span></button>
+        <button class="ar-btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 21l1.8-5.5A8 8 0 1 1 21 12Z"/></svg><span class="txt">상담</span></button>
+      </div>
+
+      <div class="ar-section">
+        <div class="label">빠른 액션</div>
+        <button class="ar-btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 7-7"/><path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"/></svg><span class="txt">출석</span></button>
+        <button class="ar-btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg><span class="txt">결제</span></button>
+        <button class="ar-btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg><span class="txt">알림</span></button>
+      </div>
+
+      <div class="ar-spacer"></div>
+      <div class="ar-clock">
+        <div class="t mono">10:42</div>
+        <div class="d">일요일 6/21</div>
+      </div>
+    </aside>
+
+    <!-- Main column -->
+    <div>
+      <header class="topbar">
+        <div class="when">
+          <div class="day"><span class="label">오늘</span>6.21</div>
+          <div class="sub">일산교육원 · 점장 김은수 · 일요일 훈련일</div>
+        </div>
+        <div class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input placeholder="학생·강사·메모 검색">
+        </div>
+        <button class="big-btn big-btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+          새 학생 등록
+        </button>
+      </header>
+
+      <main>
+        <!-- Schedule -->
+        <section class="schedule">
+          <h2>오늘의 일정 <span class="count">총 18</span></h2>
+          <div class="lead">현재 10:42 · 다음 일정 11:00 김민재 출결 후속</div>
+
+          <div class="slot past">
+            <div class="time mono">08:00<span class="dur">60분</span></div>
+            <div class="what">
+              <div class="title">조기 체력반 · 12명</div>
+              <div class="sub">트랙 · 조장 이현호 · 출석 12/12</div>
+              <div class="tags"><span class="tag dark">완료</span></div>
+            </div>
+            <div class="act">
+              <button class="sq" title="상세"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+            </div>
+          </div>
+
+          <div class="slot past">
+            <div class="time mono">09:30<span class="dur">60분</span></div>
+            <div class="what">
+              <div class="title">고3 정시 전략 회의</div>
+              <div class="sub">강사 4명 · 교무실 · 메모 2건 작성됨</div>
+              <div class="tags"><span class="tag dark">완료</span><span class="tag">메모 2</span></div>
+            </div>
+            <div class="act">
+              <button class="sq" title="메모"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg></button>
+              <button class="sq" title="상세"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+            </div>
+          </div>
+
+          <div class="slot now">
+            <div class="time mono">10:30<span class="dur">60분</span></div>
+            <div class="what">
+              <div class="title">이서윤 · 학부모 상담</div>
+              <div class="sub">정시 학과 5개 슬라이드 · 상담실 A</div>
+              <div class="tags"><span class="tag">진행 중</span><span class="tag dark">상담</span></div>
+            </div>
+            <div class="act">
+              <button class="sq primary" title="체크인"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3 7-7"/></svg></button>
+              <button class="sq" title="메모"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="slot">
+            <div class="time mono">11:00<span class="dur">30분</span></div>
+            <div class="what">
+              <div class="title">김민재 · 출결 후속</div>
+              <div class="sub">3일 지각 · 강사 메모 발송 필요</div>
+              <div class="tags"><span class="tag warn">지각 3회</span></div>
+            </div>
+            <div class="act">
+              <button class="sq primary" title="출석 체크"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 11l3 3 7-7"/></svg></button>
+              <button class="sq" title="연락"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg></button>
+            </div>
+          </div>
+
+          <div class="slot">
+            <div class="time mono">13:00<span class="dur">30분</span></div>
+            <div class="what">
+              <div class="title">6월 분납 알림 발송</div>
+              <div class="sub">자동 · 미납 4건 · 알림장 미리보기 권장</div>
+              <div class="tags"><span class="tag bad">미납 4</span><span class="tag">시스템</span></div>
+            </div>
+            <div class="act">
+              <button class="sq primary" title="지금 발송"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg></button>
+              <button class="sq" title="미리보기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            </div>
+          </div>
+
+          <div class="slot">
+            <div class="time mono">15:00<span class="dur">120분</span></div>
+            <div class="what">
+              <div class="title">주간 실기 테스트</div>
+              <div class="sub">슈퍼맥스 100m · 참여 28명 · 운동장</div>
+              <div class="tags"><span class="tag ok">준비 완료</span></div>
+            </div>
+            <div class="act">
+              <button class="sq" title="상세"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+            </div>
+          </div>
+
+          <div class="slot">
+            <div class="time mono">16:30<span class="dur">60분</span></div>
+            <div class="what">
+              <div class="title">박지훈 · 상담 후속</div>
+              <div class="sub">합격 가능성 진단표 작성</div>
+              <div class="tags"><span class="tag">상담실 B</span></div>
+            </div>
+            <div class="act">
+              <button class="sq" title="메모"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Empty / error states -->
+          <div class="state-card" style="margin-top:18px;">
+            <div class="h">선택된 학생이 없습니다</div>
+            <div class="b">왼쪽 일정에서 학생을 선택하면 출결 이력, 메모, 결제 정보가 여기에 표시됩니다.</div>
+          </div>
+        </section>
+
+        <!-- Right strip -->
+        <aside class="right">
+          <div class="card accent">
+            <div class="label">현재 진행 중</div>
+            <div class="v mono">10:30<span class="u">시작</span></div>
+            <div class="sub"><strong>이서윤 · 학부모 상담</strong><br>정시 학과 5개 슬라이드 · 상담실 A</div>
+          </div>
+
+          <div class="stat-grid">
+            <div class="card"><div class="label">오늘 출석</div><div class="v mono">96<span class="u">/108</span></div><div class="sub" style="color:var(--muted);">88.9%</div></div>
+            <div class="card"><div class="label">대기 상담</div><div class="v mono">8<span class="u">건</span></div><div class="sub" style="color:var(--muted);">곧 시작 1</div></div>
+            <div class="card dark"><div class="label" style="color:var(--accent);">금일 입금</div><div class="v mono">₩2.8M</div><div class="sub" style="color:#B8B5AA;">+0.4M 어제比</div></div>
+            <div class="card"><div class="label">미납 합계</div><div class="v mono" style="color:var(--bad);">₩4.2M</div><div class="sub" style="color:var(--muted);">+0.6M 어제比</div></div>
+          </div>
+
+          <div class="card">
+            <div class="label">다가오는 알림</div>
+            <div class="v mono">3<span class="u">건</span></div>
+            <div class="sub" style="color:var(--muted);">
+              11:00 김민재 출결 후속<br>
+              13:00 6월 분납 알림<br>
+              15:00 실기 테스트 준비
+            </div>
+          </div>
+
+          <div class="state-card err">
+            <div class="h">결제 동기화 실패</div>
+            <div class="b">3건의 카드 결제가 PG사에서 보류되었습니다. 데스크에서 확인이 필요합니다.</div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+</div>
+</body>
+</html>

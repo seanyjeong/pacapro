@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>P-ACA UI Direction 6-Way Comparison</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --paper: oklch(98% 0.007 245);
+      --surface: oklch(99.2% 0.004 245);
+      --soft: oklch(95.5% 0.012 245);
+      --line: oklch(87.5% 0.015 245);
+      --ink: oklch(22% 0.025 245);
+      --muted: oklch(48% 0.025 245);
+      --codex: oklch(52% 0.13 252);
+      --other: oklch(52% 0.11 155);
+      --warn: oklch(62% 0.13 78);
+      --radius: 8px;
+      font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); letter-spacing: 0; }
+    a { color: inherit; }
+    .page { max-width: 1600px; margin: 0 auto; padding: 24px; }
+    .top {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+    .eyebrow { color: var(--muted); font-size: 12px; font-weight: 760; text-transform: uppercase; }
+    h1 { margin: 6px 0 0; font-size: 28px; line-height: 1.2; letter-spacing: 0; }
+    .sub { color: var(--muted); margin-top: 8px; max-width: 840px; font-size: 14px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+    .pill { display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); font-size: 12px; color: var(--muted); }
+    .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--codex); }
+    .dot.other { background: var(--other); }
+    .recommendation {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+    .recommendation .panel { padding: 16px; }
+    .panel h2 { margin: 0; font-size: 16px; letter-spacing: 0; }
+    .panel p { color: var(--muted); margin: 8px 0 0; font-size: 13px; line-height: 1.55; }
+    .score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+    .score { border: 1px solid var(--line); border-radius: 7px; padding: 9px; background: var(--soft); }
+    .score strong { display: block; font-size: 12px; }
+    .score span { color: var(--muted); font-size: 12px; }
+    .matrix { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .matrix th, .matrix td { border-bottom: 1px solid var(--line); padding: 9px; text-align: left; vertical-align: top; }
+    .matrix th { color: var(--muted); font-weight: 760; background: var(--soft); }
+    .matrix tr:last-child td { border-bottom: 0; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card { overflow: hidden; }
+    .card-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .label { display: flex; gap: 8px; align-items: center; font-weight: 780; font-size: 13px; }
+    .desc { color: var(--muted); margin-top: 4px; font-size: 12px; line-height: 1.35; }
+    .open { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .frame {
+      position: relative;
+      width: 100%;
+      background: oklch(96% 0.01 245);
+      overflow: hidden;
+    }
+    .frame iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1280px;
+      height: 860px;
+      border: 0;
+      transform-origin: 0 0;
+      background: var(--surface);
+    }
+    .notes { display: grid; grid-template-columns: 92px 1fr; gap: 8px; padding: 10px 12px 12px; border-top: 1px solid var(--line); font-size: 12px; }
+    .notes b { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+    .notes span { color: var(--ink); }
+    .codex-card { border-top: 3px solid var(--codex); }
+    .other-card { border-top: 3px solid var(--other); }
+
+    @media (max-width: 1180px) {
+      .top, .recommendation { grid-template-columns: 1fr; }
+      .legend { justify-content: flex-start; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .page { padding: 14px; }
+      .cards { grid-template-columns: 1fr; }
+      .score-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="top">
+      <div>
+        <div class="eyebrow">P-ACA redesign lab</div>
+        <h1>6개 UI 방향 비교 캔버스</h1>
+        <div class="sub">Codex 초안 3개와 다른 LLM 초안 3개를 같은 크기의 미리보기로 비교합니다. 운영 메인 셸, 정보 밀도, 지점 운영성, 현장 터치성 기준으로 선택하면 됩니다.</div>
+      </div>
+      <div class="legend">
+        <span class="pill"><span class="dot"></span>Codex 3안</span>
+        <span class="pill"><span class="dot other"></span>Other LLM 3안</span>
+      </div>
+    </section>
+
+    <section class="recommendation">
+      <article class="panel">
+        <h2>1차 추천: Codex A 또는 Other A를 베이스로 통합</h2>
+        <p>운영자 PC 메인은 테이블과 큐가 강한 A 계열이 가장 안전합니다. Codex A는 방향성이 간결하고 빠르게 이식하기 좋고, Other A는 디테일이 풍부합니다. 최종안은 A를 기본 셸로 두고, B의 지점/요일 스캔과 C의 태블릿 액션을 부분 차용하는 방식이 좋습니다.</p>
+        <div class="score-grid">
+          <div class="score"><strong>운영 안정성</strong><span>A 계열 우세</span></div>
+          <div class="score"><strong>지점 관리감</strong><span>B 계열 우세</span></div>
+          <div class="score"><strong>태블릿 현장성</strong><span>C 계열 우세</span></div>
+          <div class="score"><strong>개발 리스크</strong><span>Codex A 낮음</span></div>
+        </div>
+      </article>
+      <article class="panel">
+        <table class="matrix">
+          <thead><tr><th>방향</th><th>강점</th><th>주의점</th></tr></thead>
+          <tbody>
+            <tr><td>A</td><td>데스크 업무, 검색, 테이블</td><td>차별감은 약할 수 있음</td></tr>
+            <tr><td>B</td><td>지점장 스캔, 하루 흐름</td><td>실무 테이블 밀도 보강 필요</td></tr>
+            <tr><td>C</td><td>태블릿, 현장 액션</td><td>PC 메인 단독으로는 정보량 부족</td></tr>
+          </tbody>
+        </table>
+      </article>
+    </section>
+
+    <section class="cards">
+      <article class="panel card codex-card">
+        <div class="card-head">
+          <div><div class="label"><span class="dot"></span>Codex A · Operations Desk</div><div class="desc">가장 간결한 운영 데스크. 검색, 큐, 테이블 중심.</div></div>
+          <a class="open" href="../design-demos/paca-main-frame-directions.html#ops" target="_blank">열기</a>
+        </div>
+        <div class="frame"><iframe src="../design-demos/paca-main-frame-directions.html#ops" title="Codex A"></iframe></div>
+        <div class="notes"><b>선택 이유</b><span>개발 리스크가 낮고 PACA 기존 구조에 빨리 이식 가능.</span></div>
+      </article>
+
+      <article class="panel card codex-card">
+        <div class="card-head">
+          <div><div class="label"><span class="dot"></span>Codex B · Branch Control</div><div class="desc">지점 운영판. 날짜와 지점 흐름을 가볍게 강조.</div></div>
+          <a class="open" href="../design-demos/paca-main-frame-directions.html#branch" target="_blank">열기</a>
+        </div>
+        <div class="frame"><iframe src="../design-demos/paca-main-frame-directions.html#branch" title="Codex B"></iframe></div>
+        <div class="notes"><b>선택 이유</b><span>지점장 관점이 좋지만 메인 실무 테이블은 더 필요.</span></div>
+      </article>
+
+      <article class="panel card codex-card">
+        <div class="card-head">
+          <div><div class="label"><span class="dot"></span>Codex C · Field Console</div><div class="desc">태블릿과 현장 액션 중심. 큰 버튼과 실행 큐.</div></div>
+          <a class="open" href="../design-demos/paca-main-frame-directions.html#field" target="_blank">열기</a>
+        </div>
+        <div class="frame"><iframe src="../design-demos/paca-main-frame-directions.html#field" title="Codex C"></iframe></div>
+        <div class="notes"><b>선택 이유</b><span>PC 메인보다는 태블릿/출석/현장 모드에 적합.</span></div>
+      </article>
+
+      <article class="panel card other-card">
+        <div class="card-head">
+          <div><div class="label"><span class="dot other"></span>Other A · Operations Desk</div><div class="desc">디테일이 많은 풀 1280px 운영 콘솔.</div></div>
+          <a class="open" href="a-operations-desk.html" target="_blank">열기</a>
+        </div>
+        <div class="frame"><iframe src="a-operations-desk.html" title="Other A"></iframe></div>
+        <div class="notes"><b>선택 이유</b><span>시각 완성도는 높지만 일부 규칙과 색상 토큰 정리가 필요.</span></div>
+      </article>
+
+      <article class="panel card other-card">
+        <div class="card-head">
+          <div><div class="label"><span class="dot other"></span>Other B · Branch Control</div><div class="desc">웜 톤 지점 운영판, 매니저 스캔에 강함.</div></div>
+          <a class="open" href="b-branch-control.html" target="_blank">열기</a>
+        </div>
+        <div class="frame"><iframe src="b-branch-control.html" title="Other B"></iframe></div>
+        <div class="notes"><b>선택 이유</b><span>하루 흐름 표현이 좋지만 운영 테이블 밀도는 보강 필요.</span></div>
+      </article>
+
+      <article class="panel card other-card">
+        <div class="card-head">
+          <div><div class="label"><span class="dot other"></span>Other C · Field Console</div><div class="desc">고대비 현장형 콘솔, 태블릿 시인성이 강함.</div></div>
+          <a class="open" href="c-field-console.html" target="_blank">열기</a>
+        </div>
+        <div class="frame"><iframe src="c-field-console.html" title="Other C"></iframe></div>
+        <div class="notes"><b>선택 이유</b><span>현장 모드는 좋지만 PC 메인으로 쓰면 정보가 거칠 수 있음.</span></div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    function resizeFrames() {
+      document.querySelectorAll(".frame").forEach((frame) => {
+        const iframe = frame.querySelector("iframe");
+        const scale = frame.clientWidth / 1280;
+        iframe.style.transform = `scale(${scale})`;
+        frame.style.height = `${860 * scale}px`;
+      });
+    }
+
+    addEventListener("resize", resizeFrames);
+    addEventListener("load", resizeFrames);
+    resizeFrames();
+  </script>
+</body>
+</html>

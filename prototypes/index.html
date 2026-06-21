@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>P-ACA Redesign — 3 Directions Comparison</title>
+<link rel="stylesheet" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #EDEAE2; color: #1C1917; font-family: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif; font-size: 14px; line-height: 1.5; }
+  .page { max-width: 1440px; margin: 0 auto; padding: 40px 32px 80px; }
+
+  header.intro { margin-bottom: 36px; }
+  header.intro .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: #78716C; font-weight: 600; }
+  header.intro h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; margin-top: 6px; }
+  header.intro .sub { color: #57534E; font-size: 15px; margin-top: 8px; max-width: 780px; }
+  header.intro .meta { display: flex; gap: 14px; margin-top: 16px; font-size: 12px; color: #78716C; }
+  header.intro .meta a { color: #0F766E; text-decoration: underline; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+  .col { background: #FAFAF9; border: 1px solid #D6D3D1; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+  .col-head { padding: 16px 18px; border-bottom: 1px solid #E7E5E4; background: #FFFFFF; }
+  .col-head .name { font-size: 13px; font-weight: 700; letter-spacing: -0.005em; display: flex; align-items: center; gap: 8px; }
+  .col-head .name .swatch { width: 10px; height: 10px; border-radius: 50%; }
+  .col-head .name.a .swatch { background: #0F766E; }
+  .col-head .name.b .swatch { background: #4A6741; }
+  .col-head .name.c .swatch { background: #F5B800; border: 1px solid #0A0A0A; }
+  .col-head .tagline { font-size: 12px; color: #57534E; margin-top: 4px; }
+  .col-head .for { font-size: 11px; color: #78716C; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .frame-wrap { width: 100%; height: 600px; overflow: hidden; background: #FFFFFF; position: relative; }
+  .frame-wrap iframe { width: 1280px; height: 800px; border: 0; transform-origin: 0 0; position: absolute; top: 0; left: 0; }
+  .frame-wrap.a iframe { transform: scale(calc((100% - 0px) / 1280)); /* fallback set inline */ }
+  /* JS will compute correct scale */
+
+  .col-foot { padding: 14px 18px; border-top: 1px solid #E7E5E4; background: #FFFFFF; }
+  .col-foot .row { display: grid; grid-template-columns: 84px 1fr; gap: 8px; padding: 4px 0; font-size: 12px; }
+  .col-foot .row .k { color: #78716C; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; font-size: 10px; padding-top: 1px; }
+  .col-foot .row .v { color: #1C1917; }
+
+  .open-link { display: inline-block; font-size: 12px; color: #0F766E; text-decoration: underline; margin-top: 10px; font-weight: 600; }
+
+  /* Comparison matrix */
+  .matrix { margin-top: 48px; background: #FFFFFF; border: 1px solid #D6D3D1; border-radius: 12px; overflow: hidden; }
+  .matrix h2 { padding: 18px 22px; border-bottom: 1px solid #E7E5E4; font-size: 15px; font-weight: 700; letter-spacing: -0.005em; }
+  table.matrix-t { width: 100%; font-size: 13px; }
+  table.matrix-t th, table.matrix-t td { padding: 12px 16px; border-bottom: 1px solid #F0EEED; text-align: left; vertical-align: top; }
+  table.matrix-t thead th { background: #FAFAF9; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: #57534E; font-weight: 700; }
+  table.matrix-t thead th:first-child { width: 140px; }
+  table.matrix-t tbody th { font-weight: 600; color: #1C1917; font-size: 12px; }
+  table.matrix-t tbody td { color: #44403C; }
+  table.matrix-t tbody tr:last-child td, table.matrix-t tbody tr:last-child th { border-bottom: 0; }
+
+  .reco { margin-top: 48px; background: #FFFFFF; border: 2px solid #0F766E; border-radius: 12px; padding: 24px 28px; }
+  .reco .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #0F766E; font-weight: 700; }
+  .reco h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin-top: 6px; }
+  .reco p { color: #44403C; font-size: 14px; margin-top: 8px; max-width: 920px; }
+  .reco .tradeoffs { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .reco .tradeoffs > div { background: #FAFAF9; border: 1px solid #E7E5E4; border-radius: 8px; padding: 12px 14px; font-size: 12px; }
+  .reco .tradeoffs .h { font-weight: 700; margin-bottom: 4px; }
+  .reco .tradeoffs .h.up { color: #15803D; }
+  .reco .tradeoffs .h.down { color: #B91C1C; }
+  .reco .tradeoffs ul { padding-left: 16px; color: #57534E; }
+  .reco .tradeoffs li { margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="intro">
+    <div class="eyebrow">P-ACA Redesign · Candidate Directions</div>
+    <h1>학원 운영 콘솔 · 3개 방향 비교</h1>
+    <div class="sub">2026-06-21 · 일산교육원 운영 콘솔 개선안. 같은 데이터셋(142명 학생, 11명 강사, 14건 상담, 18건 일정)으로 셋이 어떻게 다른 우선순위를 보여주는지 한 화면에서 비교.</div>
+    <div class="meta">
+      <a href="a-operations-desk.html" target="_blank">Direction A 전체 보기 →</a>
+      <a href="b-branch-control.html" target="_blank">Direction B 전체 보기 →</a>
+      <a href="c-field-console.html" target="_blank">Direction C 전체 보기 →</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <article class="col">
+      <div class="col-head">
+        <div class="name a"><span class="swatch"></span>Direction A · Operations Desk</div>
+        <div class="tagline">조용한 라이트 콘솔 · 좁은 레일 · 커맨드바 · 테이블 우선</div>
+        <div class="for">PC-heavy 데스크 워크 · 상담·결제 집중 운영자</div>
+      </div>
+      <div class="frame-wrap a"><iframe src="a-operations-desk.html" scrolling="no"></iframe></div>
+      <div class="col-foot">
+        <div class="row"><div class="k">레이아웃</div><div class="v">56px 아이콘 레일 + 56px 커맨드바 + 좌측 360px 오늘의 큐 + 메인</div></div>
+        <div class="row"><div class="k">컬러</div><div class="v">cool gray + deep teal (#0F766E)</div></div>
+        <div class="row"><div class="k">타이포</div><div class="v">Pretendard Variable · 14px 본문 · 11px 라벨 uppercase</div></div>
+        <div class="row"><div class="k">테이블</div><div class="v">sticky 헤더 · 학생 행 + 출석/결제 배지 · row action</div></div>
+        <div class="row"><div class="k">배지</div><div class="v">paid / due / late / att / abs · dot + 색상 + 라벨</div></div>
+        <div class="row"><div class="k">태블릿</div><div class="v">큐 숨김, KPI 3열로 압축, 검색바 유지</div></div>
+        <a class="open-link" href="a-operations-desk.html" target="_blank">A 전체 페이지 열기 →</a>
+      </div>
+    </article>
+
+    <article class="col">
+      <div class="col-head">
+        <div class="name b"><span class="swatch"></span>Direction B · Branch Control</div>
+        <div class="tagline">웜 뉴트럴 · 지점·요일 헤더 강조 · 일정·상담·금일 결제 3분할</div>
+        <div class="for">지점 관리자 · 하루를 훑어보는 운영자</div>
+      </div>
+      <div class="frame-wrap b"><iframe src="b-branch-control.html" scrolling="no"></iframe></div>
+      <div class="col-foot">
+        <div class="row"><div class="k">레이아웃</div><div class="v">240px 라벨 레일 + 강한 day header + 5-스캔 KPI + 3-panel split</div></div>
+        <div class="row"><div class="k">컬러</div><div class="v">warm ivory + olive/sage (#4A6741) + brass accent</div></div>
+        <div class="row"><div class="k">타이포</div><div class="v">Pretendard · 26px day 헤더 · 본문 13–14px</div></div>
+        <div class="row"><div class="k">테이블</div><div class="v">타임라인 도트 + 카드 행 · 시간·제목·태그</div></div>
+        <div class="row"><div class="k">배지</div><div class="v">upcoming / soon / late · 패널 단위 색상</div></div>
+        <div class="row"><div class="k">태블릿</div><div class="v">사이드바 64px 라벨 숨김, 메인 1열로 스택</div></div>
+        <a class="open-link" href="b-branch-control.html" target="_blank">B 전체 페이지 열기 →</a>
+      </div>
+    </article>
+
+    <article class="col">
+      <div class="col-head">
+        <div class="name c"><span class="swatch"></span>Direction C · Field Console</div>
+        <div class="tagline">고대비 · 두꺼운 2px 보더 · 큰 터치 타깃 · 액션 레일 · 일정 우선</div>
+        <div class="for">태블릿/데스크 하이브리드 · 현장 동선</div>
+      </div>
+      <div class="frame-wrap c"><iframe src="c-field-console.html" scrolling="no"></iframe></div>
+      <div class="col-foot">
+        <div class="row"><div class="k">레이아웃</div><div class="v">96px 검정 액션 레일 + 72px 큰 헤더 + 일정(좌) + 현황 카드(우)</div></div>
+        <div class="row"><div class="k">컬러</div><div class="v">ink(#0A0A0A) + 흰색 + golden yellow(#F5B800) 액션</div></div>
+        <div class="row"><div class="k">타이포</div><div class="v">Pretendard 800 weight · 22px 시간 · 16–18px 카드</div></div>
+        <div class="row"><div class="k">테이블</div><div class="v">슬롯 카드(시간+제목+태그+44px 사각 액션) — 노-테이블</div></div>
+        <div class="row"><div class="k">배지</div><div class="v">두꺼운 2px 보더 배지 · 진행 중 노란 강조</div></div>
+        <div class="row"><div class="k">태블릿</div><div class="v">우측 strip이 2열 grid로 압축 · 레일/헤더 유지</div></div>
+        <a class="open-link" href="c-field-console.html" target="_blank">C 전체 페이지 열기 →</a>
+      </div>
+    </article>
+  </div>
+
+  <!-- Comparison matrix -->
+  <section class="matrix">
+    <h2>속성별 비교</h2>
+    <table class="matrix-t">
+      <thead>
+        <tr><th>속성</th><th>A · Operations Desk</th><th>B · Branch Control</th><th>C · Field Console</th></tr>
+      </thead>
+      <tbody>
+        <tr><th>주안</th><td>테이블 밀도, 빠른 검색/필터</td><td>하루 단위 스캔, 3개 동시 흐름</td><td>터치로 즉각 처리, 큰 액션</td></tr>
+        <tr><th>정보 위계</th><td>큐(오늘) → 테이블 → KPI</td><td>헤더(날짜) → KPI → 3-panel</td><td>현재 진행(노란 강조) → 다음 일정</td></tr>
+        <tr><th>네비게이션</th><td>아이콘 8개 레일 + 커맨드 ⌘K</td><td>라벨 9개 사이드바 + 지점 선택</td><td>큰 아이콘 6개 액션 레일 + 시계</td></tr>
+        <tr><th>컬러 톤</th><td>cool · 깔끔 · 사무실</td><td>warm · 매니저룸 · 종이 노트</td><td>graphic · 산업용 · 시인성</td></tr>
+        <tr><th>테이블</th><td>학생 명단 (행+배지+액션)</td><td>일정 타임라인 (도트+카드)</td><td>슬롯 카드 (시간+큰 액션)</td></tr>
+        <tr><th>상태 배지</th><td>5종 · pastel 배경 + dot</td><td>3종 · 패널 단위 색상</td><td>두꺼운 보더 + 의미 색</td></tr>
+        <tr><th>태블릿</th><td>큐 숨김 + KPI 3열</td><td>사이드바 라벨 숨김 + 1열</td><td>이미 태블릿 우선, 우측 strip 2열</td></tr>
+        <tr><th>러닝커브</th><td>낮음 · 익숙한 어드민 패턴</td><td>중간 · 패널 의미 학습</td><td>중간 · 큰 버튼 의미 학습</td></tr>
+        <tr><th>접근성</th><td>높음 · 일반 텍스트 크기</td><td>중간 · 본문 작아짐</td><td>높음 · 큰 터치 타깃 + 고대비</td></tr>
+        <tr><th>맞지 않는 케이스</th><td>데스크가 아닌 환경, 매니저 스캔</td><td>학생 명단을 빨리 훑고 싶을 때</td><td>밀도 우선 작업 (예: 142명 비교)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Recommendation -->
+  <section class="reco">
+    <div class="label">Recommendation</div>
+    <h2>1차 추천: Direction A (Operations Desk) — 운영자 기본값</h2>
+    <p>P-ACA는 PC 기반 운영 도구이고, 가장 자주 보는 화면이 '학생 명단 + 출결/결제/상담 빠른 조회'다. A는 그 작업에 가장 직접적인 밀도와 위계를 제공하면서, 기존 사용자의 어드민 근육을 굳히지 않는다. 한국 운영자에게 익숙한 '왼쪽 명단 + 오른쪽 상세' 패턴의 현대판이라고 보면 된다.</p>
+    <div class="tradeoffs">
+      <div>
+        <div class="h up">A를 추천하는 이유</div>
+        <ul>
+          <li>운영 시간의 대부분이 테이블 + 검색 위주 — A가 가장 빨리 도달</li>
+          <li>142명 학생의 출석/결제 상태를 한눈에 — KPI 6개가 압축 요약</li>
+          <li>⌘K 커맨드바는 강사/상담 전환의 마찰을 0으로 만듦</li>
+          <li>한국 데스크 운영자에게 가장 낮은 학습비용</li>
+          <li>백엔드 라우팅/테이블 컴포넌트 변경 최소 — 출결·결제 빈 데이터 그대로 활용</li>
+        </ul>
+      </div>
+      <div>
+        <div class="h down">A의 약점과 보완</div>
+        <ul>
+          <li>'오늘을 훑는' 매니저 뷰는 약함 → B의 3-panel 스캔 KPI를 A 헤더 아래 보조 row로 차용</li>
+          <li>태블릿에서 큐 사라짐 → A 큐를 하단 sheet로 살리는 v2 작업</li>
+          <li>현장 동선(체육관/운동장)은 약함 → 운동장 진입 시에만 C의 큰 액션 모드 토글 (별도 라우트)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <p style="margin-top:32px;font-size:12px;color:#78716C;">각 방향은 <code>prototypes/</code> 아래 단일 HTML 파일로 분리되어 있어, 브라우저에서 직접 열거나 <code>design-demos/</code>와 결합해 비교 가능합니다.</p>
+</div>
+
+<script>
+  // Compute correct iframe scale based on container width
+  function scaleIframes() {
+    document.querySelectorAll('.frame-wrap').forEach(wrap => {
+      const iframe = wrap.querySelector('iframe');
+      if (!iframe) return;
+      const w = wrap.clientWidth;
+      const h = wrap.clientHeight;
+      const scale = Math.min(w / 1280, h / 800);
+      iframe.style.transform = `scale(${scale})`;
+    });
+  }
+  scaleIframes();
+  window.addEventListener('resize', scaleIframes);
+</script>
+</body>
+</html>
