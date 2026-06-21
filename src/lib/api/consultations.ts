@@ -123,14 +123,15 @@ export async function updateConsultation(
     admissionType?: 'early' | 'regular' | 'both' | '';
     targetSchool?: string;
     referrerStudent?: string;
-  }
+  },
+  config?: APIRequestConfig
 ): Promise<{ message: string }> {
-  return apiClient.put<{ message: string }>(`/consultations/${id}`, data);
+  return apiClient.put<{ message: string }>(`/consultations/${id}`, data, config);
 }
 
 // 상담 삭제
-export async function deleteConsultation(id: number): Promise<{ message: string }> {
-  return apiClient.delete<{ message: string }>(`/consultations/${id}`);
+export async function deleteConsultation(id: number, config?: APIRequestConfig): Promise<{ message: string }> {
+  return apiClient.delete<{ message: string }>(`/consultations/${id}`, config);
 }
 
 // 기존 학생과 연결
@@ -148,8 +149,8 @@ export async function linkStudent(
 // ============================================
 
 // 상담 설정 조회
-export async function getConsultationSettings(): Promise<SettingsResponse> {
-  return apiClient.get<SettingsResponse>('/consultations/settings/info');
+export async function getConsultationSettings(config?: APIRequestConfig): Promise<SettingsResponse> {
+  return apiClient.get<SettingsResponse>('/consultations/settings/info', config);
 }
 
 // 상담 설정 수정
@@ -205,8 +206,8 @@ export async function getCalendarEvents(
 }
 
 // 특정 날짜의 예약된 시간 조회
-export async function getBookedTimes(date: string): Promise<{ date: string; bookedTimes: string[] }> {
-  return apiClient.get<{ date: string; bookedTimes: string[] }>(`/consultations/booked-times?date=${date}`);
+export async function getBookedTimes(date: string, config?: APIRequestConfig): Promise<{ date: string; bookedTimes: string[] }> {
+  return apiClient.get<{ date: string; bookedTimes: string[] }>(`/consultations/booked-times?date=${date}`, config);
 }
 
 // 관리자 직접 상담 등록
