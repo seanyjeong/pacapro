@@ -41,8 +41,8 @@ export default function AttendancePage() {
         data: { attendance_records: submissions },
       });
       router.push(`/schedules/${scheduleId}`);
-    } catch (error) {
-      console.error('Failed to submit attendance:', error);
+    } catch {
+      console.error('Failed to submit attendance');
     }
   };
 

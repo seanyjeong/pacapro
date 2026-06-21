@@ -5,12 +5,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { schedulesApi } from '@/lib/api/schedules';
 import type {
-  ClassSchedule,
-  Attendance,
   ScheduleFormData,
   ScheduleFilters,
   AttendanceBatchSubmission,
-  ScheduleStats,
 } from '@/lib/types/schedule';
 import { toast } from 'sonner';
 
@@ -74,13 +71,14 @@ export function useCreateSchedule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: ScheduleFormData) => schedulesApi.createSchedule(data),
+    mutationFn: (data: ScheduleFormData) =>
+      schedulesApi.createSchedule(data, { suppressErrorToast: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
       toast.success('수업이 등록되었습니다.');
     },
-    onError: (error: Error) => {
-      toast.error(`수업 등록 실패: ${error.message}`);
+    onError: () => {
+      toast.error('수업을 등록하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해주세요.');
     },
   });
 }
@@ -93,14 +91,14 @@ export function useUpdateSchedule() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<ScheduleFormData> }) =>
-      schedulesApi.updateSchedule(id, data),
+      schedulesApi.updateSchedule(id, data, { suppressErrorToast: true }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.schedule(variables.id) });
       toast.success('수업이 수정되었습니다.');
     },
-    onError: (error: Error) => {
-      toast.error(`수업 수정 실패: ${error.message}`);
+    onError: () => {
+      toast.error('수업 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.');
     },
   });
 }
@@ -112,13 +110,13 @@ export function useDeleteSchedule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => schedulesApi.deleteSchedule(id),
+    mutationFn: (id: number) => schedulesApi.deleteSchedule(id, { suppressErrorToast: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
       toast.success('수업이 삭제되었습니다.');
     },
-    onError: (error: Error) => {
-      toast.error(`수업 삭제 실패: ${error.message}`);
+    onError: () => {
+      toast.error('수업을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.');
     },
   });
 }
@@ -131,15 +129,15 @@ export function useSubmitAttendance() {
 
   return useMutation({
     mutationFn: ({ scheduleId, data }: { scheduleId: number; data: AttendanceBatchSubmission }) =>
-      schedulesApi.submitAttendance(scheduleId, data),
+      schedulesApi.submitAttendance(scheduleId, data, { suppressErrorToast: true }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.attendance(variables.scheduleId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.schedule(variables.scheduleId) });
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
       toast.success('출석이 체크되었습니다.');
     },
-    onError: (error: Error) => {
-      toast.error(`출석 체크 실패: ${error.message}`);
+    onError: () => {
+      toast.error('출석 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     },
   });
 }

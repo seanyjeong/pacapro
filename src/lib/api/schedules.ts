@@ -47,22 +47,26 @@ export const schedulesApi = {
   /**
    * 수업 등록
    */
-  createSchedule: async (data: ScheduleFormData): Promise<ClassSchedule> => {
-    return apiClient.post<ClassSchedule>(BASE_PATH, data);
+  createSchedule: async (data: ScheduleFormData, config?: APIRequestConfig): Promise<ClassSchedule> => {
+    return apiClient.post<ClassSchedule>(BASE_PATH, data, config);
   },
 
   /**
    * 수업 수정
    */
-  updateSchedule: async (id: number, data: Partial<ScheduleFormData>): Promise<ClassSchedule> => {
-    return apiClient.put<ClassSchedule>(`${BASE_PATH}/${id}`, data);
+  updateSchedule: async (
+    id: number,
+    data: Partial<ScheduleFormData>,
+    config?: APIRequestConfig
+  ): Promise<ClassSchedule> => {
+    return apiClient.put<ClassSchedule>(`${BASE_PATH}/${id}`, data, config);
   },
 
   /**
    * 수업 삭제
    */
-  deleteSchedule: async (id: number): Promise<void> => {
-    return apiClient.delete<void>(`${BASE_PATH}/${id}`);
+  deleteSchedule: async (id: number, config?: APIRequestConfig): Promise<void> => {
+    return apiClient.delete<void>(`${BASE_PATH}/${id}`, config);
   },
 
   /**
@@ -77,9 +81,10 @@ export const schedulesApi = {
    */
   submitAttendance: async (
     scheduleId: number,
-    data: AttendanceBatchSubmission
+    data: AttendanceBatchSubmission,
+    config?: APIRequestConfig
   ): Promise<void> => {
-    return apiClient.post<void>(`${BASE_PATH}/${scheduleId}/attendance`, data);
+    return apiClient.post<void>(`${BASE_PATH}/${scheduleId}/attendance`, data, config);
   },
 
   /**
