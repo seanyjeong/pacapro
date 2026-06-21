@@ -164,17 +164,18 @@ export async function updateConsultationSettings(data: {
   referralSources?: string[];
   sendConfirmationAlimtalk?: boolean;
   confirmationTemplateCode?: string;
-}): Promise<{ message: string }> {
-  return apiClient.put<{ message: string }>('/consultations/settings/info', data);
+}, config?: APIRequestConfig): Promise<{ message: string }> {
+  return apiClient.put<{ message: string }>('/consultations/settings/info', data, config);
 }
 
 // 요일별 운영 시간 수정
 export async function updateWeeklyHours(
-  weeklyHours: WeeklyHour[]
+  weeklyHours: WeeklyHour[],
+  config?: APIRequestConfig
 ): Promise<{ message: string }> {
   return apiClient.put<{ message: string }>('/consultations/settings/weekly-hours', {
     weeklyHours
-  });
+  }, config);
 }
 
 // 시간대 차단 추가
@@ -184,13 +185,13 @@ export async function addBlockedSlot(data: {
   startTime?: string;
   endTime?: string;
   reason?: string;
-}): Promise<{ message: string; id: number }> {
-  return apiClient.post<{ message: string; id: number }>('/consultations/settings/blocked-slots', data);
+}, config?: APIRequestConfig): Promise<{ message: string; id: number }> {
+  return apiClient.post<{ message: string; id: number }>('/consultations/settings/blocked-slots', data, config);
 }
 
 // 시간대 차단 해제
-export async function removeBlockedSlot(id: number): Promise<{ message: string }> {
-  return apiClient.delete<{ message: string }>(`/consultations/settings/blocked-slots/${id}`);
+export async function removeBlockedSlot(id: number, config?: APIRequestConfig): Promise<{ message: string }> {
+  return apiClient.delete<{ message: string }>(`/consultations/settings/blocked-slots/${id}`, config);
 }
 
 // 캘린더용 상담 일정 조회
