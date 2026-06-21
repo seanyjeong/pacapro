@@ -23,6 +23,14 @@ interface PasswordConfirmModalProps {
   description?: string;
 }
 
+function getConfirmErrorMessage(error: unknown): string {
+  const response = (error as { response?: { status?: number } }).response;
+  if (response?.status === 401 || response?.status === 403) {
+    return '비밀번호가 일치하지 않습니다.';
+  }
+  return '비밀번호를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+}
+
 export function PasswordConfirmModal({
   open,
   onClose,
@@ -48,8 +56,8 @@ export function PasswordConfirmModal({
       await authAPI.verifyPassword(password);
       setPassword('');
       onConfirm();
-    } catch (err: any) {
-      setError(err.response?.data?.message || '비밀번호가 일치하지 않습니다');
+    } catch (err: unknown) {
+      setError(getConfirmErrorMessage(err));
     } finally {
       setVerifying(false);
     }

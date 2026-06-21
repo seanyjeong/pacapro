@@ -7,6 +7,7 @@ import { formatCompactCurrency, toSafeNumber } from './dashboard-utils';
 interface DashboardKpiStripProps {
     stats: DashboardStats;
     permissions: DashboardPermissions;
+    amountsVisible: boolean;
 }
 
 interface KpiItem {
@@ -24,7 +25,18 @@ const toneClass = {
     bad: 'text-red-700 dark:text-red-300',
 };
 
-export function DashboardKpiStrip({ stats, permissions }: DashboardKpiStripProps) {
+function getProtectedAmount(amountsVisible: boolean, value: string): string {
+    return amountsVisible ? value : '••••';
+}
+
+function getNetIncomeNote(amountsVisible: boolean, netIncome: number): string {
+    if (!amountsVisible) return '비밀번호 확인 필요';
+    return netIncome >= 0
+        ? `흑자 ${formatCompactCurrency(netIncome)}`
+        : `적자 ${formatCompactCurrency(Math.abs(netIncome))}`;
+}
+
+export function DashboardKpiStrip({ stats, permissions, amountsVisible }: DashboardKpiStripProps) {
     const netIncome = toSafeNumber(stats.current_month.net_income);
     const items: KpiItem[] = [
         {
@@ -45,15 +57,15 @@ export function DashboardKpiStrip({ stats, permissions }: DashboardKpiStripProps
         items.push(
             {
                 label: '이번 달 수입',
-                value: formatCompactCurrency(stats.current_month.revenue.amount),
+                value: getProtectedAmount(amountsVisible, formatCompactCurrency(stats.current_month.revenue.amount)),
                 note: `${stats.current_month.revenue.count}건 납부`,
                 tone: 'good',
                 icon: TrendingUp,
             },
             {
                 label: '순수익',
-                value: formatCompactCurrency(netIncome),
-                note: netIncome >= 0 ? `흑자 ${formatCompactCurrency(netIncome)}` : `적자 ${formatCompactCurrency(Math.abs(netIncome))}`,
+                value: getProtectedAmount(amountsVisible, formatCompactCurrency(netIncome)),
+                note: getNetIncomeNote(amountsVisible, netIncome),
                 tone: netIncome >= 0 ? 'good' : 'warn',
                 icon: Banknote,
             }
@@ -63,7 +75,7 @@ export function DashboardKpiStrip({ stats, permissions }: DashboardKpiStripProps
     if (permissions.unpaid) {
         items.push({
             label: '미납',
-            value: formatCompactCurrency(stats.unpaid_payments.amount),
+            value: getProtectedAmount(amountsVisible, formatCompactCurrency(stats.unpaid_payments.amount)),
             note: `${stats.unpaid_payments.count}건 확인 필요`,
             tone: stats.unpaid_payments.count > 0 ? 'bad' : 'good',
             icon: WalletCards,

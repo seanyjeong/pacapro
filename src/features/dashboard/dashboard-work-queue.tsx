@@ -17,6 +17,7 @@ interface DashboardWorkQueueProps {
     instructorsBySlot: InstructorSlotMap;
     todayConsultations: Consultation[];
     todayDataError: string | null;
+    amountsVisible: boolean;
     onNavigate: (href: string) => void;
     onOpenRestEnded: () => void;
     onRefresh: () => void;
@@ -35,15 +36,18 @@ function buildQueueItems({
     permissions,
     instructorsBySlot,
     todayConsultations,
+    amountsVisible,
     onOpenRestEnded,
-}: Pick<DashboardWorkQueueProps, 'stats' | 'permissions' | 'instructorsBySlot' | 'todayConsultations' | 'onOpenRestEnded'>): WorkQueueItem[] {
+}: Pick<DashboardWorkQueueProps, 'stats' | 'permissions' | 'instructorsBySlot' | 'todayConsultations' | 'amountsVisible' | 'onOpenRestEnded'>): WorkQueueItem[] {
     const items: WorkQueueItem[] = [];
 
     if (permissions.unpaid && stats.unpaid_payments.count > 0) {
         items.push({
             id: 'unpaid',
             title: '미납 학원비',
-            detail: `${stats.unpaid_payments.count}건 · ${formatCurrency(stats.unpaid_payments.amount)}`,
+            detail: amountsVisible
+                ? `${stats.unpaid_payments.count}건 · ${formatCurrency(stats.unpaid_payments.amount)}`
+                : `${stats.unpaid_payments.count}건 · 금액 숨김`,
             badge: '확인 필요',
             tone: 'danger',
             icon: Banknote,

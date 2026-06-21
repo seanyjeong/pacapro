@@ -7,9 +7,19 @@ import { getNetIncomeLabel, toSafeNumber } from './dashboard-utils';
 interface DashboardMonthSummaryProps {
     stats: DashboardStats;
     permissions: DashboardPermissions;
+    amountsVisible: boolean;
 }
 
-export function DashboardMonthSummary({ stats, permissions }: DashboardMonthSummaryProps) {
+function getProtectedAmount(amountsVisible: boolean, value: string): string {
+    return amountsVisible ? value : '금액 숨김';
+}
+
+function getSummaryBadge(amountsVisible: boolean, isProfit: boolean): string {
+    if (!amountsVisible) return '금액 가림';
+    return isProfit ? '수익 유지' : '지출 확인';
+}
+
+export function DashboardMonthSummary({ stats, permissions, amountsVisible }: DashboardMonthSummaryProps) {
     const netIncome = toSafeNumber(stats.current_month.net_income);
     const isProfit = netIncome >= 0;
 
@@ -37,7 +47,7 @@ export function DashboardMonthSummary({ stats, permissions }: DashboardMonthSumm
                     <p className="mt-0.5 text-xs text-muted-foreground">{stats.current_month.month}</p>
                 </div>
                 <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
-                    {isProfit ? '수익 유지' : '지출 확인'}
+                    {getSummaryBadge(amountsVisible, isProfit)}
                 </span>
             </div>
             <div className="divide-y divide-border">
@@ -45,21 +55,21 @@ export function DashboardMonthSummary({ stats, permissions }: DashboardMonthSumm
                     icon={ArrowUpRight}
                     label="수입"
                     detail={`${stats.current_month.revenue.count}건 납부`}
-                    amount={formatCurrency(stats.current_month.revenue.amount)}
+                    amount={getProtectedAmount(amountsVisible, formatCurrency(stats.current_month.revenue.amount))}
                     tone="good"
                 />
                 <MoneyRow
                     icon={ArrowDownRight}
                     label="지출"
                     detail={`${stats.current_month.expenses.count}건 지출`}
-                    amount={formatCurrency(stats.current_month.expenses.amount)}
+                    amount={getProtectedAmount(amountsVisible, formatCurrency(stats.current_month.expenses.amount))}
                     tone="bad"
                 />
                 <MoneyRow
                     icon={Banknote}
                     label="순수익"
-                    detail={getNetIncomeLabel(stats)}
-                    amount={formatCurrency(netIncome)}
+                    detail={amountsVisible ? getNetIncomeLabel(stats) : '비밀번호 확인 후 표시됩니다'}
+                    amount={getProtectedAmount(amountsVisible, formatCurrency(netIncome))}
                     tone={isProfit ? 'good' : 'warn'}
                 />
             </div>
