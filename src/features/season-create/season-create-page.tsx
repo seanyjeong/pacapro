@@ -10,7 +10,7 @@ export function SeasonCreatePage() {
   const state = useSeasonCreateState(() => router.push('/seasons'));
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-5xl" data-testid="season-create-workspace">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-6xl" data-testid="season-create-workspace">
       <SeasonCreateHeader onBack={() => router.back()} />
       <SeasonCreateForm
         currentYear={state.currentYear}

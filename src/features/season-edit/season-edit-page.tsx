@@ -17,7 +17,7 @@ export function SeasonEditPage() {
 
   if (state.loadError) {
     return (
-      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-5xl" data-testid="season-edit-workspace">
+      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-6xl" data-testid="season-edit-workspace">
         <SeasonEditHeader onBack={() => router.back()} />
         <SeasonEditError message={state.loadError} onBack={() => router.push('/seasons')} onRetry={state.reload} />
       </div>
@@ -25,7 +25,7 @@ export function SeasonEditPage() {
   }
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-5xl" data-testid="season-edit-workspace">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-6xl" data-testid="season-edit-workspace">
       <SeasonEditHeader onBack={() => router.back()} />
       <SeasonEditForm
         error={state.saveError}

@@ -20,6 +20,7 @@ export function SeasonDetailHeader({ season, onBack, onEdit, onDelete }: SeasonD
           목록
         </Button>
         <div className="min-w-0">
+          <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Season Detail</div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="truncate text-2xl font-semibold tracking-normal text-foreground">{season.season_name}</h1>
             <SeasonStatusBadge label={SEASON_TYPE_LABELS[season.season_type]} tone="info" />

@@ -17,7 +17,7 @@ interface SeasonCreateFormProps {
   submitting: boolean;
 }
 
-const inputClass = 'h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100';
+const inputClass = 'h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15';
 
 export function SeasonCreateForm({
   currentYear,
@@ -40,17 +40,17 @@ export function SeasonCreateForm({
   }, [error]);
 
   return (
-    <form className="space-y-5" onSubmit={onSubmit}>
+    <form className="space-y-4" onSubmit={onSubmit}>
       {error && (
         <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" data-testid="season-create-error">
           {error}
         </div>
       )}
 
-      <section className="rounded-md border border-slate-200 bg-white">
+      <section className="rounded-md border border-border bg-card">
         <SectionHeader title="기본 정보" />
-        <div className="grid gap-4 p-4 md:grid-cols-4">
-          <label className="grid gap-1 text-sm font-medium text-slate-700 md:col-span-2">
+        <div className="grid gap-3 p-4 md:grid-cols-4">
+          <label className="grid gap-1 text-sm font-medium text-foreground md:col-span-2">
             시즌명 <span className="text-rose-500">*</span>
             <input
               className={inputClass}
@@ -59,7 +59,7 @@ export function SeasonCreateForm({
               onChange={(event) => onChange('season_name', event.target.value)}
             />
           </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
+          <label className="grid gap-1 text-sm font-medium text-foreground">
             연도
             <select className={inputClass} value={formData.year} onChange={(event) => onChange('year', Number(event.target.value))}>
               {yearOptions.map((year) => (
@@ -67,7 +67,7 @@ export function SeasonCreateForm({
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
+          <label className="grid gap-1 text-sm font-medium text-foreground">
             시즌 타입
             <select className={inputClass} value={formData.season_type} onChange={(event) => onChange('season_type', event.target.value as SeasonType)}>
               <option value="early">수시</option>
@@ -77,10 +77,10 @@ export function SeasonCreateForm({
         </div>
       </section>
 
-      <section className="rounded-md border border-slate-200 bg-white">
+      <section className="rounded-md border border-border bg-card">
         <SectionHeader title="기간" />
-        <div className="grid gap-4 p-4 md:grid-cols-3">
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
+        <div className="grid gap-3 p-4 md:grid-cols-3">
+          <label className="grid gap-1 text-sm font-medium text-foreground">
             비시즌 종강일
             <input
               className={inputClass}
@@ -89,22 +89,22 @@ export function SeasonCreateForm({
               onChange={(event) => onChange('non_season_end_date', event.target.value)}
             />
           </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
+          <label className="grid gap-1 text-sm font-medium text-foreground">
             시즌 시작일 <span className="text-rose-500">*</span>
             <input className={inputClass} type="date" value={formData.start_date} onChange={(event) => onChange('start_date', event.target.value)} />
           </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
+          <label className="grid gap-1 text-sm font-medium text-foreground">
             시즌 종료일 <span className="text-rose-500">*</span>
             <input className={inputClass} type="date" value={formData.end_date} onChange={(event) => onChange('end_date', event.target.value)} />
           </label>
         </div>
       </section>
 
-      <section className="rounded-md border border-slate-200 bg-white">
+      <section className="rounded-md border border-border bg-card">
         <SectionHeader title="운영 설정" />
-        <div className="space-y-5 p-4">
+        <div className="space-y-4 p-4">
           <div>
-            <p className="text-sm font-medium text-slate-700">운영 요일 <span className="text-rose-500">*</span></p>
+            <p className="text-sm font-medium text-foreground">운영 요일 <span className="text-rose-500">*</span></p>
             <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
               {OPERATING_DAY_OPTIONS.map((day) => {
                 const selected = formData.operating_days.includes(day.value);
@@ -112,7 +112,7 @@ export function SeasonCreateForm({
                   <button
                     key={day.value}
                     type="button"
-                    className={`h-10 rounded-md border text-sm font-semibold transition-colors ${selected ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}
+                    className={`h-10 rounded-md border text-sm font-semibold transition-colors ${selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-foreground hover:bg-muted'}`}
                     onClick={() => onToggleOperatingDay(day.value)}
                   >
                     {day.label}
@@ -122,12 +122,12 @@ export function SeasonCreateForm({
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-4">
-            <p className="text-sm font-medium text-slate-700">학년별 수업 시간대</p>
+          <div className="border-t border-border/70 pt-4">
+            <p className="text-sm font-medium text-foreground">학년별 수업 시간대</p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {SEASON_TARGET_GRADES.map((grade) => (
-                <div key={grade} className="grid gap-2 rounded-md border border-slate-200 p-3 sm:grid-cols-[52px_1fr] sm:items-center">
-                  <span className="text-sm font-semibold text-slate-800">{grade}</span>
+                <div key={grade} className="grid gap-2 rounded-md border border-border bg-background p-3 sm:grid-cols-[52px_1fr] sm:items-center">
+                  <span className="text-sm font-semibold text-foreground">{grade}</span>
                   <div className="grid grid-cols-3 gap-2">
                     {TIME_SLOT_OPTIONS.map((slot) => {
                       const selected = formData.grade_time_slots?.[grade]?.includes(slot.value);
@@ -135,7 +135,7 @@ export function SeasonCreateForm({
                         <button
                           key={slot.value}
                           type="button"
-                          className={`h-9 rounded-md border text-sm font-semibold transition-colors ${selected ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'}`}
+                          className={`h-9 rounded-md border text-sm font-semibold transition-colors ${selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-foreground hover:bg-muted'}`}
                           onClick={() => onToggleTimeSlot(grade, slot.value)}
                         >
                           {slot.label}
@@ -150,18 +150,18 @@ export function SeasonCreateForm({
         </div>
       </section>
 
-      <section className="rounded-md border border-slate-200 bg-white">
+      <section className="rounded-md border border-border bg-card">
         <SectionHeader title="금액과 연속등록" />
-        <div className="grid gap-4 p-4 md:grid-cols-3">
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
+        <div className="grid gap-3 p-4 md:grid-cols-3">
+          <label className="grid gap-1 text-sm font-medium text-foreground">
             기본 시즌비 (원)
             <MoneyInput
               value={formData.season_fee}
               onChange={(seasonFee) => onChange('season_fee', seasonFee)}
-              className="h-10 border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              className="h-10 border-border focus:border-primary focus:ring-2 focus:ring-primary/15"
             />
           </label>
-          <label className="grid gap-1 text-sm font-medium text-slate-700">
+          <label className="grid gap-1 text-sm font-medium text-foreground">
             할인 타입
             <select
               className={inputClass}
@@ -174,7 +174,7 @@ export function SeasonCreateForm({
             </select>
           </label>
           {formData.continuous_discount_type === 'rate' && (
-            <label className="grid gap-1 text-sm font-medium text-slate-700">
+            <label className="grid gap-1 text-sm font-medium text-foreground">
               할인율 (%)
               <input
                 className={`${inputClass} text-right`}
@@ -189,7 +189,7 @@ export function SeasonCreateForm({
         </div>
       </section>
 
-      <div className="flex flex-col-reverse gap-2 border-t border-slate-200 pt-4 sm:flex-row sm:justify-end">
+      <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
         <Button type="button" variant="outline" onClick={onCancel}>
           취소
         </Button>
@@ -204,8 +204,8 @@ export function SeasonCreateForm({
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="border-b border-slate-200 px-4 py-3">
-      <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
+    <div className="border-b border-border bg-muted/20 px-4 py-3">
+      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
     </div>
   );
 }

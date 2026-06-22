@@ -8,10 +8,11 @@ interface SeasonListHeaderProps {
 
 export function SeasonListHeader({ onAddSeason, onRefresh }: SeasonListHeaderProps) {
   return (
-    <header className="flex flex-col gap-4 border-b border-slate-200 pb-4 md:flex-row md:items-end md:justify-between">
+    <header className="flex flex-col gap-4 border-b border-border/70 pb-4 md:flex-row md:items-end md:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-normal text-slate-950">시즌 관리</h1>
-        <p className="mt-1 text-sm text-slate-600">수시/정시 시즌 등록 및 관리</p>
+        <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Season Desk</div>
+        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">시즌 관리</h1>
+        <p className="mt-1 text-sm text-muted-foreground">수시/정시 시즌 등록 및 관리</p>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:flex">
         <Button variant="outline" onClick={onRefresh}>
