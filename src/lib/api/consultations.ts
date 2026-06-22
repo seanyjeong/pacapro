@@ -230,8 +230,8 @@ export async function createDirectConsultation(data: {
   preferredDate: string;
   preferredTime: string;
   notes?: string;
-}): Promise<{ message: string; id: number }> {
-  return apiClient.post<{ message: string; id: number }>('/consultations/direct', data);
+}, config?: APIRequestConfig): Promise<{ message: string; id: number }> {
+  return apiClient.post<{ message: string; id: number }>('/consultations/direct', data, config);
 }
 
 // 상담 완료 → 체험 학생 등록
