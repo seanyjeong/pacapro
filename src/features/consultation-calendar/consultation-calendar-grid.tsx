@@ -36,7 +36,7 @@ export function ConsultationCalendarGrid({
       </div>
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: startPadding }).map((_, index) => (
-          <div key={`pad-${index}`} className="min-h-[100px]" />
+          <div key={`pad-${index}`} className="min-h-[74px] sm:min-h-[96px]" />
         ))}
         {calendarDays.map((date) => (
           <ConsultationCalendarDayCell

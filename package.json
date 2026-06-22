@@ -20,6 +20,7 @@
     "smoke:reports": "node scripts/smoke/reports-smoke.mjs",
     "smoke:schedules": "node scripts/smoke/schedules-smoke.mjs",
     "smoke:consultations": "node scripts/smoke/consultations-smoke.mjs",
+    "smoke:consultation-calendar": "node scripts/smoke/consultation-calendar-smoke.mjs",
     "smoke:consultation-booking": "node scripts/smoke/consultation-booking-smoke.mjs",
     "smoke:mobile-consultations": "node scripts/smoke/mobile-consultations-smoke.mjs",
     "smoke:mobile-attendance": "node scripts/smoke/mobile-attendance-smoke.mjs",

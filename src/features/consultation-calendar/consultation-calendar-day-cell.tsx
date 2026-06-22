@@ -25,16 +25,16 @@ export function ConsultationCalendarDayCell({
 
   return (
     <div
-      className={`group relative min-h-[100px] rounded-lg border p-1 transition-colors ${
-        hasEntries ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
-      } ${isToday ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}
+      className={`group relative min-h-[74px] rounded-md border p-1.5 transition-colors sm:min-h-[96px] ${
+        hasEntries ? 'hover:bg-blue-50/70 dark:hover:bg-blue-950/30' : 'hover:bg-muted/40'
+      } ${isToday ? 'border-blue-300 bg-blue-50/80 dark:border-blue-800 dark:bg-blue-950/35' : 'border-border bg-card'}`}
     >
       <div className="mb-1 flex items-center justify-between">
         <div className="flex items-center gap-1">
           <button
             type="button"
-            className={`text-sm font-medium ${
-              dayOfWeek === 0 ? 'text-red-500' : dayOfWeek === 6 ? 'text-blue-500' : 'text-gray-700'
+            className={`text-sm font-semibold ${
+              dayOfWeek === 0 ? 'text-red-500' : dayOfWeek === 6 ? 'text-blue-600' : 'text-foreground'
             }`}
             onClick={() => onDateClick(date)}
           >
@@ -53,7 +53,7 @@ export function ConsultationCalendarDayCell({
             event.stopPropagation();
             onCreateLearning(date);
           }}
-          className="rounded p-0.5 opacity-0 transition-opacity hover:bg-emerald-100 group-hover:opacity-100"
+          className="rounded-md p-0.5 opacity-0 transition-opacity hover:bg-emerald-100 group-hover:opacity-100 focus:opacity-100"
           title="재원생 상담 등록"
         >
           <Plus className="h-3.5 w-3.5 text-emerald-600" />
@@ -71,19 +71,19 @@ export function ConsultationCalendarDayCell({
             >
               <i className={`h-2 w-2 flex-shrink-0 rounded-full ${getStatusDot(consultation.status, isLearning)}`} />
               {isLearning && <UserCheck className="h-2.5 w-2.5 flex-shrink-0 text-emerald-600" />}
-              <span className={`truncate ${isDone ? 'text-gray-400 line-through' : ''}`}>
+              <span className={`truncate ${isDone ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                 {consultation.student_name}
               </span>
             </span>
           );
         })}
         {consultations.length > 3 && (
-          <span className="block pl-3 text-xs text-gray-500">+{consultations.length - 3}건 더</span>
+          <span className="block pl-3 text-xs text-muted-foreground">+{consultations.length - 3}건 더</span>
         )}
         {memos.slice(0, 2).map((memo) => (
           <span
             key={`memo-${memo.id}`}
-            className="flex items-center gap-1 truncate rounded bg-amber-50 px-1 text-xs text-amber-700"
+            className="flex items-center gap-1 truncate rounded-md bg-amber-50 px-1 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
           >
             <FileText className="h-2.5 w-2.5 flex-shrink-0" />
             <span className="truncate">{memo.student_name}</span>

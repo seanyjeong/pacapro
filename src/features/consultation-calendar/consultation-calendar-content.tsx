@@ -1,5 +1,6 @@
 'use client';
 
+import { AlertCircle } from 'lucide-react';
 import { ConsultationCalendarDayListDialog } from './consultation-calendar-day-list-dialog';
 import { ConsultationCalendarDetailDialog } from './consultation-calendar-detail-dialog';
 import { ConsultationCalendarHeader } from './consultation-calendar-header';
@@ -11,23 +12,38 @@ export function ConsultationCalendarContent() {
   const state = useConsultationCalendarState();
 
   return (
-    <div className="space-y-6">
-      <ConsultationCalendarHeader
-        fromSchedule={state.fromSchedule}
-        onBack={state.handleBack}
-      />
-      <ConsultationCalendarMonthCard
-        currentMonth={state.currentMonth}
-        loading={state.loading}
-        calendarDays={state.calendarDays}
-        startPadding={state.startPadding}
-        onPreviousMonth={state.previousMonth}
-        onNextMonth={state.nextMonth}
-        getConsultationsForDate={state.getConsultationsForDate}
-        getMemosForDate={state.getMemosForDate}
-        onDateClick={state.handleDateClick}
-        onCreateLearning={state.openLearningModal}
-      />
+    <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
+        <ConsultationCalendarHeader
+          fromSchedule={state.fromSchedule}
+          memoCount={state.studentMemos.length}
+          onBack={state.handleBack}
+          totalCount={state.consultations.length}
+        />
+        {state.loadError ? (
+          <section className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div>
+                <h2 className="text-sm font-semibold">상담 달력 정보를 불러오지 못했습니다</h2>
+                <p className="mt-1 text-sm">{state.loadError}</p>
+              </div>
+            </div>
+          </section>
+        ) : null}
+        <ConsultationCalendarMonthCard
+          currentMonth={state.currentMonth}
+          loading={state.loading}
+          calendarDays={state.calendarDays}
+          startPadding={state.startPadding}
+          onPreviousMonth={state.previousMonth}
+          onNextMonth={state.nextMonth}
+          getConsultationsForDate={state.getConsultationsForDate}
+          getMemosForDate={state.getMemosForDate}
+          onDateClick={state.handleDateClick}
+          onCreateLearning={state.openLearningModal}
+        />
+      </div>
       <ConsultationCalendarDayListDialog
         open={state.dayListModalOpen}
         selectedDate={state.selectedDate}
@@ -53,6 +69,6 @@ export function ConsultationCalendarContent() {
         onLearningTypeChange={state.setLearningType}
         onSubmit={state.handleLearningSubmit}
       />
-    </div>
+    </main>
   );
 }

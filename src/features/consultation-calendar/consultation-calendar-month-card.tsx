@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Consultation } from '@/lib/types/consultation';
@@ -34,7 +34,7 @@ export function ConsultationCalendarMonthCard({
   onCreateLearning,
 }: ConsultationCalendarMonthCardProps) {
   return (
-    <Card>
+    <Card className="rounded-md shadow-none">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={onPreviousMonth}>
@@ -50,8 +50,12 @@ export function ConsultationCalendarMonthCard({
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: 35 }).map((_, index) => (
+                <div key={index} className="h-24 animate-pulse rounded-md bg-muted" />
+              ))}
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
