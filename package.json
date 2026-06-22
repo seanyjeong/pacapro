@@ -17,6 +17,7 @@
     "smoke:consultation-booking": "node scripts/smoke/consultation-booking-smoke.mjs",
     "smoke:mobile-consultations": "node scripts/smoke/mobile-consultations-smoke.mjs",
     "smoke:mobile-attendance": "node scripts/smoke/mobile-attendance-smoke.mjs",
+    "smoke:tablet-attendance": "node scripts/smoke/tablet-attendance-smoke.mjs",
     "smoke:season-list": "node scripts/smoke/season-list-smoke.mjs",
     "smoke:season-create": "node scripts/smoke/season-create-smoke.mjs",
     "smoke:season-edit": "node scripts/smoke/season-edit-smoke.mjs",
