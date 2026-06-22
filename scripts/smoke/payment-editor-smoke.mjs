@@ -103,7 +103,13 @@ async function runCreate(browser) {
   await page.getByLabel('청구 월').fill('2026-07');
   await page.getByLabel('납부 기한').fill('2026-07-10');
   await page.getByLabel('설명').fill('7월 수강료');
-  await page.getByText('504,000원').waitFor();
+  const createSummary = page.getByTestId('payment-form-summary');
+  await createSummary.getByText('청구 요약').waitFor();
+  await createSummary.getByText('박민수').waitFor();
+  await createSummary.getByText('2026-07', { exact: true }).waitFor();
+  await createSummary.getByText('2026-07-10').waitFor();
+  await createSummary.getByText('504,000원').waitFor();
+  await page.getByText('504,000원').first().waitFor();
   await assertNoRawVisibleText(page, 'payment create');
   await assertNoHorizontalOverflow(page, 'payment create');
   await page.screenshot({ path: '/Users/etlab/paca-payment-create-desktop.png', fullPage: true });
@@ -129,6 +135,12 @@ async function runEdit(browser) {
   if (!(await page.getByLabel('학생').isDisabled())) throw new Error('student selector should be locked in edit mode');
   await page.getByLabel('기본 금액').fill('580000');
   await page.getByLabel('내부 메모').fill('수정 후 메모');
+  const editSummary = page.getByTestId('payment-form-summary');
+  await editSummary.getByText('청구 요약').waitFor();
+  await editSummary.getByText('박민수').waitFor();
+  await editSummary.getByText('2026-05', { exact: true }).waitFor();
+  await editSummary.getByText('2026-05-10').waitFor();
+  await editSummary.getByText('540,000원').waitFor();
   await assertNoRawVisibleText(page, 'payment edit');
   await assertNoHorizontalOverflow(page, 'payment edit');
   await page.getByRole('heading', { name: '학원비 수정' }).scrollIntoViewIfNeeded();

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { MoneyInput } from '@/components/ui/money-input';
 import type { PaymentFormData } from '@/lib/types/payment';
 import { PAYMENT_TYPE_OPTIONS } from '@/lib/types/payment';
+import { PaymentFormSummary } from './payment-form-summary';
 import type { PaymentFormMode, PaymentFormStudent, PaymentFormSubmit } from './payment-editor-types';
 import { buildDefaultPaymentFormData, getFinalPaymentAmount, getStudentTuitionValues } from './payment-editor-utils';
 
@@ -49,6 +50,8 @@ export function PaymentForm({ mode, initialData, students, onSubmit, onCancel, l
 
   return (
     <form onSubmit={submit} className="space-y-4">
+      <PaymentFormSummary finalAmount={finalAmount} formData={formData} students={students} />
+
       <section className="rounded-lg border border-border/70 bg-card">
         <SectionHeader title="청구 대상" />
         <div className="grid gap-4 p-4 sm:grid-cols-2">
