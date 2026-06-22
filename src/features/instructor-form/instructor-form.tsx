@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react';
 import { useState } from 'react';
-import { toast } from 'sonner';
+import { AlertCircle } from 'lucide-react';
 import type { InstructorFormData } from '@/lib/types/instructor';
 import { AccountInfoSection } from './account-info-section';
 import { AdditionalInfoSection } from './additional-info-section';
@@ -64,12 +64,15 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
 
     try {
       setSubmitting(true);
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.submit;
+        return next;
+      });
       await onSubmit(formData);
     } catch (error) {
-      console.error('Form submit error:', error);
       const errorMessage = getApiErrorMessage(error, SUBMIT_ERROR_MESSAGE);
       setErrors({ submit: errorMessage });
-      toast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -98,8 +101,17 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
       </FormSection>
 
       {errors.submit && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-900/70 dark:bg-red-950/30">
-          <p className="text-red-600 dark:text-red-400 text-sm">{errors.submit}</p>
+        <div
+          className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+          role="alert"
+        >
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold">저장 실패</h2>
+              <p className="text-sm">{errors.submit}</p>
+            </div>
+          </div>
         </div>
       )}
 

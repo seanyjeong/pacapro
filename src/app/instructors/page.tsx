@@ -8,6 +8,8 @@ import { InstructorStatsCards } from '@/components/instructors/instructor-stats-
 import { InstructorFiltersComponent } from '@/components/instructors/instructor-filters';
 import { InstructorSearch } from '@/components/instructors/instructor-search';
 import { InstructorListTable } from '@/components/instructors/instructor-list-table';
+import { InstructorPageHeader } from '@/features/instructors/instructor-page-header';
+import { InstructorErrorPanel } from '@/features/instructors/instructor-page-states';
 import { useInstructors } from '@/hooks/use-instructors';
 
 export default function InstructorsPage() {
@@ -41,35 +43,21 @@ export default function InstructorsPage() {
   if (error && !loading) {
     return (
       <div className="mx-auto w-full max-w-7xl space-y-5">
-        <header>
-          <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">PACA Instructor Desk</div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">강사 운영</h1>
-        </header>
-
-        <section className="flex min-h-[320px] items-center justify-center rounded-md border border-red-200 bg-red-50 p-6 text-center text-red-950 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-100">
-          <div>
-            <AlertCircle className="mx-auto h-9 w-9" />
-            <h2 className="mt-4 text-base font-semibold">강사 정보를 불러오지 못했습니다</h2>
-            <p className="mt-2 text-sm text-red-800 dark:text-red-200">잠시 후 다시 시도해 주세요.</p>
-            <Button variant="outline" className="mt-5 gap-2" onClick={reload}>
-              <RefreshCw className="h-4 w-4" />
-              다시 불러오기
-            </Button>
-          </div>
-        </section>
+        <InstructorPageHeader
+          description="강사 목록을 다시 불러올 수 있습니다."
+          eyebrow="PACA Instructor Desk"
+          title="강사 운영"
+        />
+        <InstructorErrorPanel message={error} onRetry={reload} title="강사 정보를 불러오지 못했습니다" />
       </div>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
-      <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">PACA Instructor Desk</div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">강사 운영</h1>
-          <p className="mt-1 text-sm text-muted-foreground">급여 방식, 재직 상태, 출퇴근 기록을 한 화면에서 확인합니다.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <InstructorPageHeader
+        actions={
+          <>
           <Button variant="outline" className="gap-2" onClick={reload}>
             <RefreshCw className="h-4 w-4" />
             새로고침
@@ -78,8 +66,13 @@ export default function InstructorsPage() {
             <Plus className="h-4 w-4" />
             강사 등록
           </Button>
-        </div>
-      </header>
+          </>
+        }
+        className="border-b-0 pb-0"
+        description="급여 방식, 재직 상태, 출퇴근 기록을 한 화면에서 확인합니다."
+        eyebrow="PACA Instructor Desk"
+        title="강사 운영"
+      />
 
       <InstructorStatsCards instructors={instructors} />
 

@@ -134,9 +134,6 @@ export function useUpdateInstructor() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.instructor(variables.id) });
       toast.success('강사 정보가 수정되었습니다.');
     },
-    onError: () => {
-      toast.error(INSTRUCTOR_SAVE_ERROR_MESSAGE);
-    },
   });
 }
 

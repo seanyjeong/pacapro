@@ -185,7 +185,7 @@ async function runListError(browser) {
   const { context, page } = result;
 
   await page.goto('/instructors', { waitUntil: 'domcontentloaded' });
-  await page.getByText('강사 정보를 불러오지 못했습니다').waitFor();
+  await page.getByRole('heading', { name: '강사 정보를 불러오지 못했습니다' }).waitFor();
   await assertNoRawVisibleText(page, 'instructors list error');
   await assertNoHorizontalOverflow(page, 'instructors list error');
   await page.screenshot({ path: '/Users/etlab/paca-instructors-error-mobile.png', fullPage: true });
@@ -216,7 +216,7 @@ async function runDetailError(browser) {
   const { context, page } = result;
 
   await page.goto('/instructors/31', { waitUntil: 'domcontentloaded' });
-  await page.getByText('강사 정보를 불러오지 못했습니다').waitFor();
+  await page.getByRole('heading', { name: '강사 정보를 불러오지 못했습니다' }).waitFor();
   await assertNoRawVisibleText(page, 'instructors detail error');
   await assertNoHorizontalOverflow(page, 'instructors detail error');
   await page.screenshot({ path: '/Users/etlab/paca-instructor-detail-error-mobile.png', fullPage: true });
@@ -233,10 +233,26 @@ async function runCreateError(browser) {
   await page.getByRole('heading', { name: '강사 등록' }).waitFor();
   await fillInstructorFields(page);
   await page.locator('form button[type="submit"]').click();
+  await page.locator('form').getByText('저장 실패').waitFor();
   await page.locator('form').getByText('강사 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'instructors create error');
   await assertNoHorizontalOverflow(page, 'instructors create error');
   await page.screenshot({ path: '/Users/etlab/paca-instructor-create-error-mobile.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
+async function runEditLoadError(browser) {
+  const result = await createInstructorPage(browser, 'edit-load-error', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/instructors/31/edit', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '강사 수정' }).waitFor();
+  await page.getByRole('heading', { name: '강사 정보를 불러오지 못했습니다' }).waitFor();
+  await assertNoRawVisibleText(page, 'instructors edit load error');
+  await assertNoHorizontalOverflow(page, 'instructors edit load error');
+  await page.screenshot({ path: '/Users/etlab/paca-instructor-edit-load-error-mobile.png', fullPage: true });
 
   await context.close();
   return result;
@@ -251,6 +267,7 @@ async function runEditError(browser) {
   await page.locator('#instructor-name').fill('최강사수정');
   await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   await page.locator('form button[type="submit"]').click();
+  await page.locator('form').getByText('저장 실패').waitFor();
   await page.locator('form').getByText('강사 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'instructors edit error');
   await assertNoHorizontalOverflow(page, 'instructors edit error');
@@ -273,12 +290,14 @@ async function main() {
     const detailDesktop = await runDetailDesktop(browser);
     const detailError = await runDetailError(browser);
     const createError = await runCreateError(browser);
+    const editLoadError = await runEditLoadError(browser);
     const editError = await runEditError(browser);
-    [listDesktop, listError, detailDesktop, detailError, createError, editError].forEach(assertDiagnostics);
+    [listDesktop, listError, detailDesktop, detailError, createError, editLoadError, editError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       createPayload: createError.state.createPayload,
       detailHits: detailDesktop.state.hits,
       editPayload: editError.state.editPayload,
+      editLoadErrorHits: editLoadError.state.hits,
       listHits: listDesktop.state.hits,
       listErrorHits: listError.state.hits,
       normalConsoleErrors: listDesktop.diagnostics.consoleErrors,
