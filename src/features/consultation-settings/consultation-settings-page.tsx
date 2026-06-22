@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { BlockedSlotDialog } from './blocked-slot-dialog';
 import { BlockedSlotsSection } from './blocked-slots-section';
 import { ChecklistItemDialog } from './checklist-item-dialog';
@@ -17,79 +17,119 @@ export function ConsultationSettingsPage() {
 
   if (state.loading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
+      <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
+          <div className="h-32 rounded-md border border-border bg-card" />
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+            <div className="space-y-5">
+              <div className="h-64 rounded-md border border-border bg-card" />
+              <div className="h-80 rounded-md border border-border bg-card" />
+            </div>
+            <div className="space-y-5">
+              <div className="h-52 rounded-md border border-border bg-card" />
+              <div className="h-72 rounded-md border border-border bg-card" />
+            </div>
+          </div>
+        </div>
+      </main>
     );
   }
 
+  const weeklyAvailableCount = state.weeklyHours.filter((hour) => hour.isAvailable).length;
+
   return (
-    <div className="space-y-6">
-      <SettingsHeader academyName={state.academyName} />
+    <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
+        <SettingsHeader
+          academyName={state.academyName}
+          blockedCount={state.blockedSlots.length}
+          isEnabled={state.settings.isEnabled}
+          originalSlug={state.originalSlug}
+          weeklyAvailableCount={weeklyAvailableCount}
+        />
 
-      <ReservationLinkSection
-        isEnabled={state.settings.isEnabled}
-        slug={state.slug}
-        originalSlug={state.originalSlug}
-        slugAvailable={state.slugAvailable}
-        checkingSlug={state.checkingSlug}
-        savingSlug={state.savingSlug}
-        copied={state.copied}
-        onEnabledChange={(checked) => state.updateSetting('isEnabled', checked)}
-        onSlugChange={state.setSlugValue}
-        onCheckSlug={state.checkSlug}
-        onSaveSlug={state.handleSaveSlug}
-        onCopyLink={state.copyLink}
-      />
+        {state.loadError ? (
+          <section className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div>
+                <h2 className="text-sm font-semibold">상담 예약 설정을 불러오지 못했습니다</h2>
+                <p className="mt-1 text-sm">{state.loadError}</p>
+              </div>
+            </div>
+          </section>
+        ) : (
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+            <div className="min-w-0 space-y-5">
+              <ReservationLinkSection
+                isEnabled={state.settings.isEnabled}
+                slug={state.slug}
+                originalSlug={state.originalSlug}
+                slugAvailable={state.slugAvailable}
+                checkingSlug={state.checkingSlug}
+                savingSlug={state.savingSlug}
+                copied={state.copied}
+                onEnabledChange={(checked) => state.updateSetting('isEnabled', checked)}
+                onSlugChange={state.setSlugValue}
+                onCheckSlug={state.checkSlug}
+                onSaveSlug={state.handleSaveSlug}
+                onCopyLink={state.copyLink}
+              />
 
-      <PageSettingsSection
-        settings={state.settings}
-        saving={state.saving}
-        onSettingChange={state.updateSetting}
-        onSave={state.handleSaveSettings}
-      />
+              <PageSettingsSection
+                settings={state.settings}
+                saving={state.saving}
+                onSettingChange={state.updateSetting}
+                onSave={state.handleSaveSettings}
+              />
 
-      <WeeklyHoursSection
-        weeklyHours={state.weeklyHours}
-        defaultStartTime={state.defaultStartTime}
-        defaultEndTime={state.defaultEndTime}
-        timeOptions={state.timeOptions}
-        saving={state.saving}
-        onDefaultStartTimeChange={state.setDefaultStartTime}
-        onDefaultEndTimeChange={state.setDefaultEndTime}
-        onApplyAll={state.applyDefaultTimeToAll}
-        onApplyWeekdays={state.applyDefaultTimeToWeekdays}
-        onUpdateHour={state.updateHour}
-        onSave={state.handleSaveWeeklyHours}
-      />
+              <WeeklyHoursSection
+                weeklyHours={state.weeklyHours}
+                defaultStartTime={state.defaultStartTime}
+                defaultEndTime={state.defaultEndTime}
+                timeOptions={state.timeOptions}
+                saving={state.saving}
+                onDefaultStartTimeChange={state.setDefaultStartTime}
+                onDefaultEndTimeChange={state.setDefaultEndTime}
+                onApplyAll={state.applyDefaultTimeToAll}
+                onApplyWeekdays={state.applyDefaultTimeToWeekdays}
+                onUpdateHour={state.updateHour}
+                onSave={state.handleSaveWeeklyHours}
+              />
+            </div>
 
-      <BlockedSlotsSection
-        blockedSlots={state.blockedSlots}
-        addingHolidays={state.addingHolidays}
-        onOpenBlockModal={() => state.setBlockModalOpen(true)}
-        onAddAllHolidays={state.handleAddAllHolidays}
-        onRemoveBlockedSlot={state.handleRemoveBlockedSlot}
-      />
+            <aside className="min-w-0 space-y-5">
+              <BlockedSlotsSection
+                blockedSlots={state.blockedSlots}
+                addingHolidays={state.addingHolidays}
+                onOpenBlockModal={() => state.setBlockModalOpen(true)}
+                onAddAllHolidays={state.handleAddAllHolidays}
+                onRemoveBlockedSlot={state.handleRemoveBlockedSlot}
+              />
 
-      <ReferralSourcesSection
-        settings={state.settings}
-        newReferralSource={state.newReferralSource}
-        saving={state.saving}
-        onNewReferralSourceChange={state.setNewReferralSource}
-        onAddReferralSource={state.addReferralSource}
-        onRemoveReferralSource={state.removeReferralSource}
-        onSave={state.handleSaveSettings}
-      />
+              <ReferralSourcesSection
+                settings={state.settings}
+                newReferralSource={state.newReferralSource}
+                saving={state.saving}
+                onNewReferralSourceChange={state.setNewReferralSource}
+                onAddReferralSource={state.addReferralSource}
+                onRemoveReferralSource={state.removeReferralSource}
+                onSave={state.handleSaveSettings}
+              />
 
-      <ChecklistTemplateSection
-        checklistTemplate={state.checklistTemplate}
-        checklistCategories={state.checklistCategories}
-        savingChecklist={state.savingChecklist}
-        onOpenAddDialog={() => state.setAddChecklistModalOpen(true)}
-        onResetDefault={state.resetToDefaultChecklist}
-        onSave={state.saveChecklist}
-        onRemoveItem={state.removeChecklistItem}
-      />
+              <ChecklistTemplateSection
+                checklistTemplate={state.checklistTemplate}
+                checklistCategories={state.checklistCategories}
+                savingChecklist={state.savingChecklist}
+                onOpenAddDialog={() => state.setAddChecklistModalOpen(true)}
+                onResetDefault={state.resetToDefaultChecklist}
+                onSave={state.saveChecklist}
+                onRemoveItem={state.removeChecklistItem}
+              />
+            </aside>
+          </div>
+        )}
+      </div>
 
       <ChecklistItemDialog
         open={state.addChecklistModalOpen}
@@ -110,6 +150,6 @@ export function ConsultationSettingsPage() {
         onReasonChange={state.setNewBlockReason}
         onAdd={state.handleAddBlockedSlot}
       />
-    </div>
+    </main>
   );
 }

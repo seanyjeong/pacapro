@@ -51,6 +51,7 @@ export function ChecklistItemDialog({
               </SelectContent>
             </Select>
             <Input
+              aria-label="새 카테고리 입력"
               value={newChecklistItem.category}
               onChange={(event) => onItemChange('category', event.target.value)}
               placeholder="새 카테고리 입력"
@@ -58,8 +59,9 @@ export function ChecklistItemDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>항목명</Label>
+            <Label htmlFor="checklist-item-text">항목명</Label>
             <Input
+              id="checklist-item-text"
               value={newChecklistItem.text}
               onChange={(event) => onItemChange('text', event.target.value)}
               placeholder="예: 타학원 경험 확인"
@@ -85,8 +87,9 @@ export function ChecklistItemDialog({
 
           {newChecklistItem.inputType !== 'none' && (
             <div className="space-y-2">
-              <Label>입력 필드 라벨</Label>
+              <Label htmlFor="checklist-input-label">입력 필드 라벨</Label>
               <Input
+                id="checklist-input-label"
                 value={newChecklistItem.inputLabel}
                 onChange={(event) => onItemChange('inputLabel', event.target.value)}
                 placeholder="예: 학원명, 체력"
@@ -96,8 +99,9 @@ export function ChecklistItemDialog({
 
           {newChecklistItem.inputType === 'radio' && (
             <div className="space-y-2">
-              <Label>선택 옵션 (쉼표로 구분)</Label>
+              <Label htmlFor="checklist-radio-options">선택 옵션</Label>
               <Input
+                id="checklist-radio-options"
                 value={newChecklistItem.radioOptions}
                 onChange={(event) => onItemChange('radioOptions', event.target.value)}
                 placeholder="예: 상, 중, 하"

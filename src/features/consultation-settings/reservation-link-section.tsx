@@ -38,28 +38,32 @@ export function ReservationLinkSection({
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="rounded-md shadow-none">
+      <CardHeader className="space-y-1">
         <CardTitle className="flex items-center gap-2">
           <Link2 className="h-5 w-5" />
-          상담 예약 링크
+          예약 링크
         </CardTitle>
-        <CardDescription>학부모에게 공유할 상담 예약 페이지 링크입니다.</CardDescription>
+        <CardDescription>학부모에게 공유할 공개 상담 신청 페이지입니다.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Switch checked={isEnabled} onCheckedChange={onEnabledChange} />
-          <Label>상담 예약 활성화</Label>
+        <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-3">
+          <div>
+            <Label htmlFor="consultation-enabled" className="font-medium">상담 예약 활성화</Label>
+            <p className="mt-1 text-xs text-muted-foreground">비활성화하면 외부 예약 페이지에서 신규 신청을 받지 않습니다.</p>
+          </div>
+          <Switch id="consultation-enabled" checked={!!isEnabled} onCheckedChange={onEnabledChange} />
         </div>
 
         <div className="space-y-1">
-          <Label>페이지 주소 (slug)</Label>
+          <Label htmlFor="consultation-slug">페이지 주소</Label>
           <div className="flex flex-col gap-2 lg:flex-row">
             <div className="flex min-w-0 flex-1">
               <div className="flex items-center rounded-l-md border border-r-0 border-border bg-muted px-3 text-sm text-muted-foreground">
                 {origin}/c/
               </div>
               <Input
+                id="consultation-slug"
                 value={slug}
                 onChange={(event) => onSlugChange(event.target.value)}
                 placeholder="my-academy"
@@ -86,7 +90,7 @@ export function ReservationLinkSection({
         </div>
 
         {slug && originalSlug && (
-          <div className="flex flex-col gap-2 rounded-lg bg-blue-50 p-3 dark:bg-blue-950 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2 rounded-md border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/60 dark:bg-blue-950/40 sm:flex-row sm:items-center">
             <span className="min-w-0 flex-1 break-all text-sm text-blue-800 dark:text-blue-200">
               {origin}/c/{originalSlug}
             </span>

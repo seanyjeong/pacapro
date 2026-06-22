@@ -23,6 +23,7 @@ const SUPPRESS_API_ERROR_TOAST = { suppressErrorToast: true };
 export function useConsultationSettingsState() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [academyName, setAcademyName] = useState('');
   const [slug, setSlug] = useState('');
   const [originalSlug, setOriginalSlug] = useState('');
@@ -48,8 +49,9 @@ export function useConsultationSettingsState() {
 
   useEffect(() => {
     async function loadData() {
+      setLoadError(null);
       try {
-        const response = await getConsultationSettings();
+        const response = await getConsultationSettings(SUPPRESS_API_ERROR_TOAST);
         const loadedSlug = response.academy?.slug || '';
         const loadedHours = response.weeklyHours || [];
         const savedTemplate = (response.settings as { checklist_template?: ChecklistTemplate[] })?.checklist_template;
@@ -64,8 +66,8 @@ export function useConsultationSettingsState() {
         if (savedTemplate && savedTemplate.length > 0) {
           setChecklistTemplate(savedTemplate);
         }
-      } catch (error) {
-        console.error('설정 로드 오류:', error);
+      } catch {
+        setLoadError('잠시 후 다시 시도해주세요.');
       } finally {
         setLoading(false);
       }
@@ -101,7 +103,7 @@ export function useConsultationSettingsState() {
       if (result.available) {
         toast.success('사용 가능한 주소입니다.');
       } else {
-        toast.error(result.message || '이미 사용 중인 주소입니다.');
+        toast.error('이미 사용 중인 주소입니다. 다른 주소를 입력해주세요.');
       }
     } catch {
       toast.error('페이지 주소 확인에 실패했습니다.');
@@ -127,7 +129,7 @@ export function useConsultationSettingsState() {
       setSlugAvailable(null);
       toast.success('페이지 주소가 저장되었습니다.');
     } catch {
-      toast.error('페이지 주소 저장에 실패했습니다.');
+      toast.error('페이지 주소를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSavingSlug(false);
     }
@@ -139,7 +141,7 @@ export function useConsultationSettingsState() {
       await updateConsultationSettings({ ...settings }, SUPPRESS_API_ERROR_TOAST);
       toast.success('설정이 저장되었습니다.');
     } catch {
-      toast.error('설정 저장에 실패했습니다.');
+      toast.error('설정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSaving(false);
     }
@@ -151,7 +153,7 @@ export function useConsultationSettingsState() {
       await updateWeeklyHours(weeklyHours, SUPPRESS_API_ERROR_TOAST);
       toast.success('운영 시간이 저장되었습니다.');
     } catch {
-      toast.error('운영 시간 저장에 실패했습니다.');
+      toast.error('운영 시간을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSaving(false);
     }
@@ -186,7 +188,7 @@ export function useConsultationSettingsState() {
       setNewBlockReason('');
       toast.success('날짜가 차단되었습니다.');
     } catch {
-      toast.error('날짜 차단에 실패했습니다.');
+      toast.error('날짜를 차단하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setAddingBlock(false);
     }
@@ -198,7 +200,7 @@ export function useConsultationSettingsState() {
       setBlockedSlots((prev) => prev.filter((slot) => slot.id !== id));
       toast.success('차단이 해제되었습니다.');
     } catch {
-      toast.error('차단 해제에 실패했습니다.');
+      toast.error('차단을 해제하지 못했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -238,7 +240,7 @@ export function useConsultationSettingsState() {
       }
       toast.success(`${newHolidays.length}개 공휴일이 차단되었습니다.`);
     } catch {
-      toast.error('공휴일 추가 중 오류가 발생했습니다.');
+      toast.error('공휴일을 추가하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setAddingHolidays(false);
     }
@@ -336,7 +338,7 @@ export function useConsultationSettingsState() {
       } as ConsultationSettingsPatch, SUPPRESS_API_ERROR_TOAST);
       toast.success('체크리스트가 저장되었습니다.');
     } catch {
-      toast.error('체크리스트 저장에 실패했습니다.');
+      toast.error('체크리스트를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSavingChecklist(false);
     }
@@ -358,6 +360,7 @@ export function useConsultationSettingsState() {
   return {
     loading,
     saving,
+    loadError,
     academyName,
     slug,
     originalSlug,

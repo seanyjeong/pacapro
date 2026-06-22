@@ -42,12 +42,18 @@ export function BlockedSlotDialog({
 
         <div className="space-y-4 px-6 py-6">
           <div className="space-y-2">
-            <Label>날짜</Label>
-            <Input type="date" value={newBlockedDate} onChange={(event) => onDateChange(event.target.value)} />
+            <Label htmlFor="blocked-date">날짜</Label>
+            <Input
+              id="blocked-date"
+              type="date"
+              value={newBlockedDate}
+              onChange={(event) => onDateChange(event.target.value)}
+            />
           </div>
           <div className="space-y-2">
-            <Label>사유 (선택)</Label>
+            <Label htmlFor="blocked-reason">사유</Label>
             <Input
+              id="blocked-reason"
               value={newBlockReason}
               onChange={(event) => onReasonChange(event.target.value)}
               placeholder="예: 공휴일, 학원 행사"

@@ -7,6 +7,7 @@ import type {
   SlotsResponse,
   SettingsResponse,
   WeeklyHour,
+  ChecklistTemplate,
   ConsultationStatus
 } from '../types/consultation';
 
@@ -162,9 +163,11 @@ export async function updateConsultationSettings(data: {
   slotDuration?: number;
   maxReservationsPerSlot?: number;
   advanceDays?: number;
+  minAdvanceHours?: number;
   referralSources?: string[];
   sendConfirmationAlimtalk?: boolean;
   confirmationTemplateCode?: string;
+  checklist_template?: ChecklistTemplate[];
 }, config?: APIRequestConfig): Promise<{ message: string }> {
   return apiClient.put<{ message: string }>('/consultations/settings/info', data, config);
 }

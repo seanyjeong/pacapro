@@ -16,22 +16,25 @@ interface PageSettingsSectionProps {
 
 export function PageSettingsSection({ settings, saving, onSettingChange, onSave }: PageSettingsSectionProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>페이지 설정</CardTitle>
+    <Card className="rounded-md shadow-none">
+      <CardHeader className="space-y-1">
+        <CardTitle>예약 정책</CardTitle>
+        <p className="text-sm text-muted-foreground">예약 페이지에 보이는 문구와 신청 가능한 시간 기준을 조정합니다.</p>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label>페이지 제목</Label>
+        <div className="space-y-2">
+          <Label htmlFor="page-title">페이지 제목</Label>
           <Input
+            id="page-title"
             value={settings.pageTitle || ''}
             onChange={(event) => onSettingChange('pageTitle', event.target.value)}
             placeholder="상담 예약"
           />
         </div>
-        <div>
-          <Label>안내 문구</Label>
+        <div className="space-y-2">
+          <Label htmlFor="page-description">안내 문구</Label>
           <Textarea
+            id="page-description"
             value={settings.pageDescription || ''}
             onChange={(event) => onSettingChange('pageDescription', event.target.value)}
             placeholder="상담 예약 페이지 상단에 표시될 안내 문구를 입력하세요."
@@ -39,8 +42,8 @@ export function PageSettingsSection({ settings, saving, onSettingChange, onSave 
           />
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div>
-            <Label>상담 시간 (분)</Label>
+          <div className="space-y-2">
+            <Label>상담 시간</Label>
             <Select
               value={settings.slotDuration?.toString() || '30'}
               onValueChange={(value) => onSettingChange('slotDuration', Number.parseInt(value, 10))}
@@ -55,7 +58,7 @@ export function PageSettingsSection({ settings, saving, onSettingChange, onSave 
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>슬롯당 최대 예약</Label>
             <Select
               value={settings.maxReservationsPerSlot?.toString() || '1'}
@@ -71,7 +74,7 @@ export function PageSettingsSection({ settings, saving, onSettingChange, onSave 
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>예약 가능 기간</Label>
             <Select
               value={settings.advanceDays?.toString() || '30'}
@@ -88,7 +91,7 @@ export function PageSettingsSection({ settings, saving, onSettingChange, onSave 
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="space-y-2">
             <Label>최소 예약 시간</Label>
             <Select
               value={settings.minAdvanceHours?.toString() || '4'}
@@ -114,7 +117,7 @@ export function PageSettingsSection({ settings, saving, onSettingChange, onSave 
 
         <Button onClick={onSave} disabled={saving}>
           {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          설정 저장
+          예약 정책 저장
         </Button>
       </CardContent>
     </Card>

@@ -25,8 +25,8 @@ export function ReferralSourcesSection({
   onSave,
 }: ReferralSourcesSectionProps) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="rounded-md shadow-none">
+      <CardHeader className="space-y-1">
         <CardTitle>알게 된 경로 옵션</CardTitle>
         <CardDescription>상담 신청 시 선택할 수 있는 &quot;학원을 알게 된 경로&quot; 옵션입니다.</CardDescription>
       </CardHeader>
@@ -44,6 +44,7 @@ export function ReferralSourcesSection({
 
         <div className="flex gap-2">
           <Input
+            aria-label="새 경로"
             value={newReferralSource}
             onChange={(event) => onNewReferralSourceChange(event.target.value)}
             placeholder="새 항목 추가"
@@ -58,7 +59,7 @@ export function ReferralSourcesSection({
 
         <Button onClick={onSave} disabled={saving}>
           {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-          저장
+          경로 저장
         </Button>
       </CardContent>
     </Card>

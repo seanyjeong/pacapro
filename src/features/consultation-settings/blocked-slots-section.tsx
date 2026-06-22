@@ -21,8 +21,8 @@ export function BlockedSlotsSection({
   onRemoveBlockedSlot,
 }: BlockedSlotsSectionProps) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="rounded-md shadow-none">
+      <CardHeader className="space-y-1">
         <CardTitle className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           차단된 날짜
@@ -46,7 +46,7 @@ export function BlockedSlotsSection({
             {blockedSlots.map((slot) => (
               <div
                 key={slot.id}
-                className="flex flex-col gap-2 rounded-lg bg-red-50 p-3 dark:bg-red-950 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 rounded-md border border-red-100 bg-red-50 p-3 dark:border-red-900/60 dark:bg-red-950/40 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div>
                   <span className="font-medium text-foreground">
@@ -66,6 +66,11 @@ export function BlockedSlotsSection({
             ))}
           </div>
         )}
+        {blockedSlots.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border p-4 text-sm text-muted-foreground">
+            차단된 날짜가 없습니다.
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );

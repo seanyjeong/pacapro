@@ -35,8 +35,8 @@ export function WeeklyHoursSection({
   onSave,
 }: WeeklyHoursSectionProps) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="rounded-md shadow-none">
+      <CardHeader className="space-y-1">
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
           요일별 운영 시간
@@ -44,7 +44,7 @@ export function WeeklyHoursSection({
         <CardDescription>상담 가능한 요일과 시간을 설정합니다.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-3 rounded-lg bg-blue-50 p-4 dark:bg-blue-950">
+        <div className="space-y-3 rounded-md border border-blue-100 bg-blue-50 p-4 dark:border-blue-900/60 dark:bg-blue-950/40">
           <p className="text-sm font-medium text-blue-900 dark:text-blue-100">기본 시간 일괄 설정</p>
           <div className="flex flex-wrap items-center gap-3">
             <Select value={defaultStartTime} onValueChange={onDefaultStartTimeChange}>
