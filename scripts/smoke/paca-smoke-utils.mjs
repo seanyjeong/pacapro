@@ -14,7 +14,7 @@ export async function launchSmokeBrowser() {
 }
 
 export async function createAuthedContext(browser, viewport, baseURL = DEFAULT_BASE_URL) {
-  const context = await browser.newContext({ viewport, baseURL });
+  const context = await browser.newContext({ viewport, baseURL, serviceWorkers: 'block' });
   await context.addCookies([{ name: 'paca_auth', value: '1', domain: 'localhost', path: '/' }]);
   await context.addInitScript(() => {
     window.localStorage.setItem('token', 'smoke-token');

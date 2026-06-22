@@ -91,7 +91,7 @@ export const schedulesApi = {
    * 슬롯별 학생 조회 (웹 time-slot-detail-modal과 동일한 API)
    * 모바일 출석체크에서도 동일한 결과를 보장
    */
-  getSlotData: async (date: string, timeSlot: string): Promise<{
+  getSlotData: async (date: string, timeSlot: string, config?: APIRequestConfig): Promise<{
     schedule: {
       id: number;
       students: Array<{
@@ -99,6 +99,7 @@ export const schedulesApi = {
         student_name: string;
         grade?: string | null;
         attendance_status: string | null;
+        notes?: string | null;
         season_type?: string | null;
         is_trial?: boolean | null;
         trial_remaining?: number | null;
@@ -109,7 +110,7 @@ export const schedulesApi = {
     } | null;
     available_students: Array<{ id: number; name: string; grade: string }>;
   }> => {
-    return apiClient.get(`${BASE_PATH}/slot?date=${date}&time_slot=${timeSlot}`);
+    return apiClient.get(`${BASE_PATH}/slot?date=${date}&time_slot=${timeSlot}`, config);
   },
 
   /**
