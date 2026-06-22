@@ -91,10 +91,22 @@ export function ClassInfoSection({
             </div>
           )}
 
-          {/* 적용 시작월 선택 (수정 모드에서 수업요일 변경 시) */}
-          {mode === 'edit' && classDaysChanged && (
-            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <label className="block text-sm font-medium text-blue-700 dark:text-blue-400 mb-2">적용 시작월</label>
+          {mode === 'edit' && (
+            <div className="mt-3 rounded-md border border-border bg-muted/25 p-3">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-foreground">변경 저장 방식</p>
+                  <p className="text-xs text-muted-foreground">
+                    요일이나 시간대를 바꾸면 즉시 적용 또는 예약 적용을 선택할 수 있습니다.
+                  </p>
+                </div>
+                <span className={`w-fit rounded-md px-2 py-1 text-xs font-medium ${classDaysChanged ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'}`}>
+                  {classDaysChanged ? '변경 있음' : '변경 없음'}
+                </span>
+              </div>
+              {classDaysChanged ? (
+                <div className="mt-3">
+                  <label className="block text-sm font-medium text-foreground mb-2">적용 시작월</label>
               <select value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)}
                 className="w-full sm:w-[220px] bg-background border border-border rounded-lg px-3 py-2 text-sm">
                 {effectiveMonthOptions.map(opt => (
@@ -107,6 +119,8 @@ export function ClassInfoSection({
               {effectiveFrom !== 'immediate' && (
                 <p className="text-xs text-blue-600 dark:text-blue-500 mt-2">선택한 달부터 수업요일이 변경됩니다. 현재 수업요일은 유지됩니다.</p>
               )}
+                </div>
+              ) : null}
             </div>
           )}
         </div>

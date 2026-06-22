@@ -21,6 +21,7 @@ import { ClassInfoSection } from './_components/ClassInfoSection';
 import { SeasonSection } from './_components/SeasonSection';
 import { TuitionSection } from './_components/TuitionSection';
 import { AdditionalInfoSection } from './_components/AdditionalInfoSection';
+import { SubmitConfirmDialog } from './_components/SubmitConfirmDialog';
 
 interface StudentFormProps {
   mode: 'create' | 'edit';
@@ -162,6 +163,14 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
           }}
         />
       )}
+
+      <SubmitConfirmDialog
+        confirmState={hook.confirmState}
+        open={hook.confirmState !== null}
+        submitting={hook.submitting}
+        onCancel={() => hook.setConfirmState(null)}
+        onConfirm={hook.confirmPendingSubmit}
+      />
     </form>
   );
 }

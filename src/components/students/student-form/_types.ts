@@ -21,6 +21,17 @@ export interface AcademySettings {
   evening_class_time?: string;
 }
 
+export type StudentFormConfirmType = 'immediate_class_days' | 'same_name';
+
+export interface StudentFormConfirmState {
+  type: StudentFormConfirmType;
+  existingStudent?: {
+    gender?: string;
+    name: string;
+    phone: string;
+  };
+}
+
 export const DEFAULT_TUITION: TuitionByWeeklyCount = {
   weekly_1: 0,
   weekly_2: 0,

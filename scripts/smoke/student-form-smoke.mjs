@@ -57,7 +57,7 @@ function makeStudent(overrides = {}) {
 }
 
 function makeState(mode) {
-  return { editPayload: null, hits: [], mode, studentPayload: null };
+  return { editPayload: null, hits: [], mode, studentPayload: null, studentPayloads: [] };
 }
 
 async function installRoutes(context, state) {
@@ -107,6 +107,14 @@ async function installRoutes(context, state) {
 
     if (method === 'POST' && path === '/students') {
       state.studentPayload = JSON.parse(request.postData() || '{}');
+      state.studentPayloads.push(state.studentPayload);
+      if (state.mode === 'same-name-warning' && !state.studentPayload.confirm_force) {
+        return jsonRoute(route, {
+          code: 'SAME_NAME_EXISTS',
+          existingStudent: { gender: 'male', name: '김신규', phone: '010-9999-0000' },
+          message: 'same name',
+        }, 409);
+      }
       if (state.mode === 'save-error') {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
       }
@@ -186,13 +194,32 @@ async function submitStudentForm(page, label) {
   await page.getByRole('button', { name: label }).click();
 }
 
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
+}
+
 async function runCreateSuccess(browser) {
   const result = await createStudentFormPage(browser, 'success');
   const { context, page, state } = result;
 
   await page.goto('/students/new', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 등록' }).waitFor();
+  await page.getByText('학원비 자동 계산').waitFor();
   await fillRequiredStudentFields(page);
+  await assertNoRawVisibleText(page, 'student form create input');
+  await assertNoHorizontalOverflow(page, 'student form create input');
+  await page.screenshot({ path: '/Users/etlab/paca-student-form-create-input.png', fullPage: true });
   state.lastFieldValues = await readRequiredStudentFields(page);
   await submitStudentForm(page, '등록');
   await waitForUrlWithDiagnostics(page, '**/students', state, 'create success');
@@ -228,20 +255,59 @@ async function runCreateError(browser) {
   return result;
 }
 
+async function runCreateSameNameWarning(browser) {
+  const result = await createStudentFormPage(browser, 'same-name-warning');
+  const { context, page, state } = result;
+
+  await page.goto('/students/new', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 등록' }).waitFor();
+  await fillRequiredStudentFields(page);
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '등록' }), 'same name save');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '같은 이름 학생 확인' }).waitFor();
+  await page.getByText('010-9999-0000').waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-student-form-same-name-dialog.png', fullPage: true });
+  await page.getByRole('button', { name: '그래도 저장' }).click();
+  await waitForUrlWithDiagnostics(page, '**/students', state, 'same name create');
+
+  if (state.studentPayloads.length !== 2) {
+    throw new Error(`expected two create attempts: ${JSON.stringify(state.studentPayloads)}`);
+  }
+  if (state.studentPayloads[1].confirm_force !== true) {
+    throw new Error(`same name confirm_force mismatch: ${JSON.stringify(state.studentPayloads[1])}`);
+  }
+
+  await context.close();
+  return result;
+}
+
 async function runEditSuccess(browser) {
   const result = await createStudentFormPage(browser, 'success');
   const { context, page } = result;
 
   await page.goto('/students/77/edit', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 정보 수정' }).waitFor();
+  await page.getByText('변경 저장 방식').waitFor();
   await page.locator('#field-name').waitFor();
   await page.locator('#field-name').fill('김수정완료');
+  await page.getByRole('button', { name: '월' }).click();
+  await assertNoRawVisibleText(page, 'student form edit class days');
+  await assertNoHorizontalOverflow(page, 'student form edit class days');
+  await page.screenshot({ path: '/Users/etlab/paca-student-edit-classdays.png', fullPage: true });
   await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-  await submitStudentForm(page, '수정');
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '수정' }), 'class day edit save');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '수업요일 즉시 변경' }).waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-student-edit-immediate-dialog.png', fullPage: true });
+  await page.getByRole('button', { name: '즉시 변경하고 저장' }).click();
   await waitForUrlWithDiagnostics(page, '**/students/77', result.state, 'edit success');
 
   if (!result.state.editPayload) throw new Error('student edit payload was not sent');
   if (result.state.editPayload.name !== '김수정완료') throw new Error(`edit name mismatch: ${result.state.editPayload.name}`);
+  if (result.state.editPayload.effective_from !== undefined) {
+    throw new Error(`immediate edit should not send effective_from: ${JSON.stringify(result.state.editPayload)}`);
+  }
+  if (!result.state.editPayload.class_days?.some((slot) => slot.day === 1 && slot.timeSlot === 'evening')) {
+    throw new Error(`class day payload mismatch: ${JSON.stringify(result.state.editPayload.class_days)}`);
+  }
 
   await assertNoRawVisibleText(page, 'student form edit success');
   await assertNoHorizontalOverflow(page, 'student form edit success');
@@ -304,15 +370,18 @@ async function main() {
   try {
     const createSuccess = await runCreateSuccess(browser);
     const createError = await runCreateError(browser);
+    const createSameName = await runCreateSameNameWarning(browser);
     const editSuccess = await runEditSuccess(browser);
     const editError = await runEditError(browser);
     const editLoadError = await runEditLoadError(browser);
-    [createSuccess, createError, editSuccess, editError, editLoadError].forEach(assertDiagnostics);
+    [createSuccess, createError, createSameName, editSuccess, editError, editLoadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       createHits: createSuccess.state.hits,
       createPayload: createSuccess.state.studentPayload,
       errorConsoleErrors: createError.diagnostics.consoleErrors,
       errorHits: createError.state.hits,
+      sameNameHits: createSameName.state.hits,
+      sameNamePayloads: createSameName.state.studentPayloads,
       editHits: editSuccess.state.hits,
       editPayload: editSuccess.state.editPayload,
       editErrorHits: editError.state.hits,

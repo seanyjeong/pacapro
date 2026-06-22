@@ -19,11 +19,24 @@ export function TuitionSection({
   isTrial, formData, errors, finalTuition, academySettings, handleChange, formatCurrency,
 }: TuitionSectionProps) {
   if (isTrial) return null;
+  const tuitionTable = formData.student_type === 'exam' ? academySettings.exam_tuition : academySettings.adult_tuition;
+  const weeklyKey = `weekly_${formData.weekly_count || 0}` as keyof typeof tuitionTable;
+  const automaticTuition = tuitionTable[weeklyKey] || 0;
 
   return (
     <Card className="rounded-md shadow-none">
       <CardHeader><CardTitle>학원비 정보</CardTitle></CardHeader>
       <CardContent className="space-y-4">
+        <div className="rounded-md border border-border bg-muted/25 p-3">
+          <p className="text-sm font-semibold text-foreground">학원비 자동 계산</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            수업요일을 바꾸면 주 수업횟수 기준으로 학원 설정 금액을 불러옵니다. 필요하면 월 학원비를 직접 수정할 수 있습니다.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            현재 기준: 주 {formData.weekly_count || 0}회, 자동 금액 {formatCurrency(automaticTuition)}
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* 월 학원비 */}
           <div>

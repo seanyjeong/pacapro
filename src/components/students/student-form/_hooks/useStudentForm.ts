@@ -8,7 +8,7 @@ import type { Season } from '@/lib/types/season';
 import { EXAM_ADMISSION_OPTIONS, ADULT_ADMISSION_OPTIONS } from '@/lib/types/student';
 import type { ClassDaySlot } from '@/lib/types/student';
 import { parseClassDaysWithSlots, extractDayNumbers } from '@/lib/utils/student-helpers';
-import { AcademySettings, TuitionByWeeklyCount, DEFAULT_TUITION } from '../_types';
+import { AcademySettings, TuitionByWeeklyCount, DEFAULT_TUITION, type StudentFormConfirmState } from '../_types';
 
 interface StudentFormProps {
   mode: 'create' | 'edit';
@@ -20,6 +20,7 @@ interface StudentFormProps {
 export function useStudentForm({ mode, initialData, initialIsTrial = false, onSubmit }: StudentFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [confirmState, setConfirmState] = useState<StudentFormConfirmState | null>(null);
   const [restModalOpen, setRestModalOpen] = useState(false);
 
   // 학원 설정
@@ -319,11 +320,11 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     setTrialDates(updated);
   };
 
-  const handleSubmit = async (e: React.FormEvent, forceSubmit = false) => {
-    e.preventDefault();
+  const submitCurrentForm = async (forceSubmit = false, skipImmediateConfirm = false) => {
     if (!validate()) return;
-    if (mode === 'edit' && classDaysChanged && effectiveFrom === 'immediate') {
-      if (!confirm('수업요일을 즉시 변경하시겠습니까?\n\n변경 즉시 출석부에 반영됩니다.\n예약 적용을 원하시면 적용 시작월을 변경해주세요.')) return;
+    if (mode === 'edit' && classDaysChanged && effectiveFrom === 'immediate' && !skipImmediateConfirm) {
+      setConfirmState({ type: 'immediate_class_days' });
+      return;
     }
     const trialRemaining = trialDates.filter(td => !td.attended).length || trialDates.length || 2;
     const submitData = {
@@ -344,15 +345,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
       console.warn('학생 정보 저장에 실패했습니다.');
       const sameNameCheck = isSameNameWarning(err);
       if (sameNameCheck.isWarning && sameNameCheck.existingStudent) {
-        const existing = sameNameCheck.existingStudent;
-        const genderText = existing.gender === 'male' ? '남' : existing.gender === 'female' ? '여' : '';
-        const confirmMessage = `같은 이름의 학생이 이미 존재합니다.\n\n` +
-          `기존 학생: ${existing.name} ${genderText ? `(${genderText})` : ''}\n` +
-          `전화번호: ${existing.phone || '없음'}\n\n` +
-          `그래도 등록하시겠습니까?`;
-        if (confirm(confirmMessage)) {
-          handleSubmit(e, true);
-        }
+        setConfirmState({ type: 'same_name', existingStudent: sameNameCheck.existingStudent });
         return;
       }
       const errorMessage = extractErrorMessage();
@@ -366,9 +359,25 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent, forceSubmit = false) => {
+    e.preventDefault();
+    await submitCurrentForm(forceSubmit);
+  };
+
+  const confirmPendingSubmit = async () => {
+    const current = confirmState;
+    setConfirmState(null);
+    if (current?.type === 'same_name') {
+      await submitCurrentForm(true, true);
+      return;
+    }
+    await submitCurrentForm(false, true);
+  };
+
   return {
     // state
     submitting, errors, setErrors,
+    confirmState, setConfirmState,
     restModalOpen, setRestModalOpen,
     academySettings,
     availableSeasons, seasonsLoading,
@@ -392,6 +401,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     handleDayTimeSlotChange,
     formatPhoneNumber,
     handleSubmit,
+    confirmPendingSubmit,
     addTrialDate,
     removeTrialDate,
     updateTrialDate,
