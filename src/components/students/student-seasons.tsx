@@ -42,6 +42,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     discount_reason: '',
   });
   const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [refundPreview, setRefundPreview] = useState<RefundPreviewResponse | null>(null);
@@ -149,7 +150,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
         registration_date: registrationDate,  // 시즌 중간 합류를 위한 등록일
         is_continuous: isContinuous,
         previous_season_id: isContinuous ? previousEnrollment?.season_id : undefined,
-      });
+      }, { suppressErrorToast: true });
 
       toast.success('시즌 등록이 완료되었습니다.');
       setShowEnrollModal(false);
@@ -158,14 +159,16 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
       setRegistrationDate(new Date().toISOString().split('T')[0]);
       setPreview(null);
       loadData();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '시즌 등록에 실패했습니다.');
+    } catch (err: unknown) {
+      console.warn('시즌 등록에 실패했습니다.', err);
+      toast.error('시즌 등록을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setEnrolling(false);
     }
   };
 
   const handleEditClick = (enrollment: StudentSeason) => {
+    setEditError(null);
     setEditingEnrollment(enrollment);
     setEditData({
       registration_date: enrollment.registration_date || '',
@@ -181,19 +184,21 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
 
     try {
       setSaving(true);
+      setEditError(null);
       await seasonsApi.updateEnrollment(editingEnrollment.id, {
         registration_date: editData.registration_date || undefined,
         season_fee: editData.season_fee,
         discount_amount: editData.discount_amount,
         discount_reason: editData.discount_reason || undefined,
-      });
+      }, { suppressErrorToast: true });
 
       toast.success('시즌 등록 정보가 수정되었습니다.');
       setShowEditModal(false);
       setEditingEnrollment(null);
       loadData();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '수정에 실패했습니다.');
+    } catch (err: unknown) {
+      console.warn('시즌 등록 정보 수정에 실패했습니다.', err);
+      setEditError('시즌 등록 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSaving(false);
     }
@@ -309,9 +314,11 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
           editingEnrollment={editingEnrollment}
           editData={editData}
           saving={saving}
+          errorMessage={editError}
           onClose={() => {
             setShowEditModal(false);
             setEditingEnrollment(null);
+            setEditError(null);
           }}
           onSave={handleSaveEdit}
           onEditDataChange={setEditData}

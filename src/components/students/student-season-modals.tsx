@@ -17,6 +17,7 @@ interface StudentSeasonEditModalProps {
   editingEnrollment: StudentSeason;
   editData: EditData;
   saving: boolean;
+  errorMessage: string | null;
   onClose: () => void;
   onSave: () => void;
   onEditDataChange: (editData: EditData) => void;
@@ -43,6 +44,7 @@ export function StudentSeasonEditModal({
   editingEnrollment,
   editData,
   saving,
+  errorMessage,
   onClose,
   onSave,
   onEditDataChange,
@@ -114,6 +116,15 @@ export function StudentSeasonEditModal({
             </div>
           </div>
         </div>
+
+        {errorMessage ? (
+          <div
+            role="alert"
+            className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          >
+            {errorMessage}
+          </div>
+        ) : null}
 
         <div className="flex gap-3 mt-6">
           <Button variant="outline" className="flex-1" onClick={onClose} disabled={saving}>

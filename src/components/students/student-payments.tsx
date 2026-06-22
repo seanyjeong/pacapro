@@ -101,7 +101,7 @@ export function StudentPaymentsComponent({
       setCredits(result.credits);
       setPendingTotal(result.pendingTotal);
     } catch (err) {
-      console.error('Failed to load credits:', err);
+      console.warn('크레딧 목록을 불러오지 못했습니다.', err);
     } finally {
       setCreditsLoading(false);
     }

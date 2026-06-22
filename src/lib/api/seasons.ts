@@ -2,7 +2,7 @@
  * 시즌 관리 API 클라이언트
  */
 
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 import type {
   Season,
   SeasonFormData,
@@ -138,8 +138,12 @@ export const seasonsApi = {
   /**
    * 시즌 등록 (학생을 시즌에 등록)
    */
-  enrollStudent: async (seasonId: number, data: SeasonEnrollData): Promise<SeasonEnrollResult> => {
-    return apiClient.post<SeasonEnrollResult>(`${BASE_PATH}/${seasonId}/enroll`, data);
+  enrollStudent: async (
+    seasonId: number,
+    data: SeasonEnrollData,
+    config?: APIRequestConfig
+  ): Promise<SeasonEnrollResult> => {
+    return apiClient.post<SeasonEnrollResult>(`${BASE_PATH}/${seasonId}/enroll`, data, config);
   },
 
   /**
@@ -153,11 +157,13 @@ export const seasonsApi = {
       discount_amount?: number;
       discount_reason?: string;
       time_slots?: string[];
-    }
+    },
+    config?: APIRequestConfig
   ): Promise<{ message: string; enrollment: StudentSeason }> => {
     return apiClient.put<{ message: string; enrollment: StudentSeason }>(
       `${BASE_PATH}/enrollments/${enrollmentId}`,
-      data
+      data,
+      config
     );
   },
 
