@@ -137,6 +137,18 @@ async function runNormal(browser) {
   await page.getByText('Finance Desk').waitFor();
   await page.locator('tr:has-text("박민수")').waitFor();
   await page.locator('tr:has-text("체험 특강 수입")').waitFor();
+  const tuitionRow = page.locator('tr:has-text("박민수")');
+  const paymentLink = tuitionRow.getByRole('link', { name: '박민수 결제 상세 보기' });
+  await paymentLink.waitFor();
+  if ((await paymentLink.getAttribute('href')) !== '/payments/701') {
+    throw new Error('missing payment detail link for tuition income row');
+  }
+  const studentLink = tuitionRow.getByRole('link', { name: '박민수 학생 상세 보기' });
+  await studentLink.waitFor();
+  if ((await studentLink.getAttribute('href')) !== '/students/41') {
+    throw new Error('missing student detail link for tuition income row');
+  }
+  await page.locator('tr:has-text("체험 특강 수입")').getByRole('button', { name: '체험 특강 수입 기타수입 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'incomes desktop');
   await assertNoHorizontalOverflow(page, 'incomes desktop');
   await page.screenshot({ path: '/Users/etlab/paca-incomes-desktop.png', fullPage: true });
@@ -145,7 +157,7 @@ async function runNormal(browser) {
   await page.getByLabel('날짜').fill('2026-06-18');
   await page.getByLabel('카테고리').selectOption('beverage');
   await page.getByLabel('금액').fill('45000');
-  await page.getByLabel('설명').fill('스포츠 음료 판매');
+  await page.getByLabel('설명', { exact: true }).fill('스포츠 음료 판매');
   await page.getByLabel('결제 방법').selectOption('transfer');
   await page.getByLabel('메모').fill('강남 저녁반');
   await page.getByRole('button', { name: '등록', exact: true }).click();
@@ -168,6 +180,10 @@ async function runNormal(browser) {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('article:has-text("박민수")').waitFor();
   await page.locator('article:has-text("체험 특강 수입")').waitFor();
+  const tuitionCard = page.locator('article:has-text("박민수")');
+  await tuitionCard.getByRole('link', { name: '박민수 결제 상세 보기' }).waitFor();
+  await tuitionCard.getByRole('link', { name: '박민수 학생 상세 보기' }).waitFor();
+  await page.locator('article:has-text("체험 특강 수입")').getByRole('button', { name: '체험 특강 수입 기타수입 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'incomes mobile');
   await assertNoHorizontalOverflow(page, 'incomes mobile');
   await page.screenshot({ path: '/Users/etlab/paca-incomes-mobile.png', fullPage: true });

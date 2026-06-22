@@ -1,4 +1,5 @@
-import { CreditCard } from 'lucide-react';
+import Link from 'next/link';
+import { CreditCard, ReceiptText, UserRound } from 'lucide-react';
 import { PAYMENT_METHOD_LABELS } from './incomes-constants';
 import type { TuitionPayment } from './incomes-types';
 import { formatAmount } from './incomes-utils';
@@ -39,12 +40,13 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
                 </p>
               </div>
             </div>
+            <TuitionPaymentActions payment={payment} mobile />
           </article>
         ))}
       </div>
 
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead className="border-b border-border bg-muted/40">
             <tr>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">학생</th>
@@ -52,6 +54,7 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
               <th className="px-5 py-3 text-right font-medium text-muted-foreground">금액</th>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">납부일</th>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">결제방법</th>
+              <th className="px-5 py-3 text-right font-medium text-muted-foreground">작업</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -66,11 +69,41 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
                 <td className="px-5 py-3 text-muted-foreground">
                   {PAYMENT_METHOD_LABELS[payment.payment_method] || payment.payment_method || '-'}
                 </td>
+                <td className="px-5 py-3 text-right">
+                  <TuitionPaymentActions payment={payment} />
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
     </section>
+  );
+}
+
+function TuitionPaymentActions({ payment, mobile = false }: { payment: TuitionPayment; mobile?: boolean }) {
+  const className = mobile
+    ? 'mt-4 grid grid-cols-2 gap-2 border-t border-border/70 pt-3'
+    : 'inline-flex items-center justify-end gap-2';
+
+  return (
+    <div className={className}>
+      <Link
+        aria-label={`${payment.student_name} 결제 상세 보기`}
+        className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        href={`/payments/${payment.id}`}
+      >
+        <ReceiptText className="h-3.5 w-3.5" />
+        결제
+      </Link>
+      <Link
+        aria-label={`${payment.student_name} 학생 상세 보기`}
+        className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        href={`/students/${payment.student_id}`}
+      >
+        <UserRound className="h-3.5 w-3.5" />
+        학생
+      </Link>
+    </div>
   );
 }
