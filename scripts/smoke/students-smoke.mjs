@@ -65,7 +65,7 @@ const STUDENTS = [
 ];
 
 function makeState(mode) {
-  return { hits: [], mode, trialMovePayload: null };
+  return { hits: [], mode, pendingDeletedId: null, trialMovePayload: null };
 }
 
 function filterStudents(url) {
@@ -116,6 +116,15 @@ async function installRoutes(context, state) {
       return jsonRoute(route, { message: 'updated', student: makeStudent({ id: 44, status: 'pending', is_trial: false }) });
     }
 
+    if (method === 'DELETE' && path === '/students/43') {
+      if (state.mode === 'pending-delete-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
+
+      state.pendingDeletedId = 43;
+      return jsonRoute(route, { message: 'deleted' });
+    }
+
     return jsonRoute(route, { message: 'mocked' });
   });
 }
@@ -162,16 +171,36 @@ async function runDesktop(browser) {
   await page.getByRole('button', { name: /미등록관리/ }).click();
   await page.locator('table').getByText('이민수').waitFor();
   await page.getByPlaceholder('이름, 학번, 전화번호로 검색...').fill('이민수');
-  await page.locator('table').getByText('이민수').waitFor();
+  const pendingRow = page.locator('tr:has-text("이민수")');
+  await pendingRow.waitFor();
+  await clickWithoutNativeDialog(page, pendingRow.locator('button').last(), 'pending student delete');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '미등록 학생 삭제' }).waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-students-pending-delete-dialog.png', fullPage: true });
+  await Promise.all([
+    page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'DELETE' && normalizePacaApiPath(url) === '/students/43';
+    }),
+    page.getByRole('button', { name: '삭제' }).click(),
+  ]);
+  if (state.pendingDeletedId !== 43) {
+    throw new Error(`pending delete id mismatch: ${state.pendingDeletedId}`);
+  }
 
   await page.getByPlaceholder('이름, 학번, 전화번호로 검색...').fill('');
-  await page.getByRole('button', { name: /체험생/ }).click();
+  await page.getByRole('button', { name: '체험생 등록 전환' }).click();
   const trialRow = page.locator('tr:has-text("최체험")');
   await trialRow.waitFor();
   await clickWithoutNativeDialog(page, trialRow.getByRole('button', { name: '미등록관리로 이동' }), 'trial move to pending');
   await page.getByRole('alertdialog').getByRole('heading', { name: '미등록관리 이동' }).waitFor();
   await page.screenshot({ path: '/Users/etlab/paca-students-trial-move-dialog.png', fullPage: true });
-  await page.getByRole('button', { name: '이동' }).click();
+  await Promise.all([
+    page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'PUT' && normalizePacaApiPath(url) === '/students/44';
+    }),
+    page.getByRole('button', { name: '이동' }).click(),
+  ]);
   if (state.trialMovePayload?.status !== 'pending' || state.trialMovePayload?.is_trial !== false) {
     throw new Error(`trial move payload mismatch: ${JSON.stringify(state.trialMovePayload)}`);
   }
@@ -213,6 +242,40 @@ async function runLoadError(browser) {
   return result;
 }
 
+async function runPendingDeleteError(browser) {
+  const result = await createStudentsPage(browser, 'pending-delete-error');
+  const { context, page, state } = result;
+
+  await page.goto('/students', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 운영' }).waitFor();
+  await page.locator('table').getByText('김진우').waitFor();
+  await page.getByRole('button', { name: '미등록관리 상담 후속' }).click();
+  const pendingRow = page.locator('tr:has-text("이민수")');
+  try {
+    await pendingRow.waitFor();
+  } catch (error) {
+    console.error(JSON.stringify({
+      hits: state.hits,
+      visibleText: await page.locator('body').innerText(),
+    }, null, 2));
+    await page.screenshot({ path: '/Users/etlab/paca-students-pending-delete-debug.png', fullPage: true });
+    throw error;
+  }
+  await clickWithoutNativeDialog(page, pendingRow.locator('button').last(), 'pending student delete error');
+  await page.getByRole('button', { name: '삭제' }).click();
+  await page
+    .getByRole('alertdialog')
+    .getByRole('alert')
+    .getByText('학생 삭제를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.')
+    .waitFor();
+  await assertNoRawVisibleText(page, 'pending delete error');
+  await assertNoHorizontalOverflow(page, 'pending delete error');
+  await page.screenshot({ path: '/Users/etlab/paca-students-pending-delete-error.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -224,13 +287,16 @@ async function main() {
     const desktop = await runDesktop(browser);
     const mobile = await runMobile(browser);
     const loadError = await runLoadError(browser);
-    [desktop, mobile, loadError].forEach(assertDiagnostics);
+    const pendingDeleteError = await runPendingDeleteError(browser);
+    [desktop, mobile, loadError, pendingDeleteError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       errorConsoleErrors: loadError.diagnostics.consoleErrors,
       errorHits: loadError.state.hits,
       mobileHits: mobile.state.hits,
       normalConsoleErrors: desktop.diagnostics.consoleErrors,
+      pendingDeleteErrorConsoleErrors: pendingDeleteError.diagnostics.consoleErrors,
+      pendingDeleteErrorHits: pendingDeleteError.state.hits,
     }, null, 2));
   } finally {
     await browser.close();

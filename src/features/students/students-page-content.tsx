@@ -37,12 +37,10 @@ export function StudentsPageContent() {
     useEffect(() => {
         if (isStudentTab(tabParam)) {
             setActiveTab(tabParam);
+            setSearchQuery('');
+            setFilters(getFiltersForTab(tabParam));
         }
-    }, [tabParam]);
-
-    useEffect(() => {
-        updateFilters(getFiltersForTab(activeTab));
-    }, [activeTab, updateFilters]);
+    }, [setFilters, tabParam]);
 
     const handleReload = () => {
         reload();
@@ -57,6 +55,12 @@ export function StudentsPageContent() {
     const handleResetFilters = () => {
         setSearchQuery('');
         setFilters(getFiltersForTab(activeTab));
+    };
+
+    const handleTabChange = (tab: StudentTab) => {
+        setActiveTab(tab);
+        setSearchQuery('');
+        setFilters(getFiltersForTab(tab));
     };
 
     const handleExcelDownload = async () => {
@@ -89,7 +93,7 @@ export function StudentsPageContent() {
                 <StudentsPageError onRetry={handleReload} />
             ) : (
                 <>
-                    <StudentsStatusTabs activeTab={activeTab} onChange={setActiveTab} />
+                    <StudentsStatusTabs activeTab={activeTab} onChange={handleTabChange} />
 
                     <StudentStatsCards refreshTrigger={statsRefreshTrigger} />
 
