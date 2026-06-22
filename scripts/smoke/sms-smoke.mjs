@@ -98,6 +98,12 @@ async function installRoutes(context, state) {
       });
     }
 
+    if (method === 'GET' && path === '/students/41') {
+      return jsonRoute(route, {
+        student: { id: 41, name: '김진우', phone: '010-1111-2222', parent_phone: '010-3333-4444' },
+      });
+    }
+
     if (method === 'POST' && path === '/sms/send') {
       state.sendPayload = JSON.parse(request.postData() || '{}');
       return jsonRoute(route, { message: '문자를 발송했습니다.', sent: 1, failed: 0, total: 1 });
@@ -151,6 +157,36 @@ async function runDesktopSend(browser) {
   return result;
 }
 
+async function runPrefilledStudent(browser) {
+  const result = await createSmsPage(browser, 'success');
+  const { context, page, state } = result;
+
+  page.on('dialog', (dialog) => dialog.accept());
+  await page.goto('/sms?studentId=41&recipient=parent', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
+  await page.getByRole('heading', { name: '김진우' }).waitFor();
+  await page.getByText('학생 010-1111-2222 · 학부모 010-3333-4444').waitFor();
+  await page.getByRole('button', { name: /학부모에게/ }).waitFor();
+  await page.getByLabel('발신번호').selectOption('7');
+  await page.getByPlaceholder(/내용을 입력해주세요/).fill('오늘 상담 후속 안내입니다.');
+  await page.getByRole('button', { name: 'SMS 발송' }).click();
+  await page.getByText('문자를 발송했습니다.').waitFor();
+
+  if (state.sendPayload?.target !== 'custom') {
+    throw new Error(`prefilled SMS target mismatch: ${JSON.stringify(state.sendPayload)}`);
+  }
+  if (state.sendPayload?.customPhones?.[0] !== '010-3333-4444') {
+    throw new Error(`prefilled SMS phone mismatch: ${JSON.stringify(state.sendPayload)}`);
+  }
+
+  await assertNoRawVisibleText(page, 'sms prefilled student');
+  await assertNoHorizontalOverflow(page, 'sms prefilled student');
+  await page.screenshot({ path: '/Users/etlab/paca-sms-prefilled-student.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 async function runMobile(browser) {
   const result = await createSmsPage(browser, 'success', { width: 390, height: 844 });
   const { context, page } = result;
@@ -195,14 +231,17 @@ async function main() {
   const browser = await launchSmokeBrowser();
   try {
     const desktop = await runDesktopSend(browser);
+    const prefilled = await runPrefilledStudent(browser);
     const mobile = await runMobile(browser);
     const loadError = await runLoadError(browser);
-    [desktop, mobile, loadError].forEach(assertDiagnostics);
+    [desktop, prefilled, mobile, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       errorConsoleErrors: loadError.diagnostics.consoleErrors,
       errorHits: loadError.state.hits,
       mobileHits: mobile.state.hits,
+      prefilledHits: prefilled.state.hits,
+      prefilledPayload: prefilled.state.sendPayload,
       sendPayload: desktop.state.sendPayload,
     }, null, 2));
   } finally {

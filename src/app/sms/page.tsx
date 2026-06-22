@@ -1,3 +1,10 @@
+import { Suspense } from 'react';
 import { SMSPage } from '@/features/sms/sms-page';
 
-export default SMSPage;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <SMSPage />
+    </Suspense>
+  );
+}

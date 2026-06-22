@@ -7,6 +7,7 @@ import {
   Pencil,
   ReceiptText,
   RotateCcw,
+  Send,
   Trash2,
   UserMinus,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ interface StudentDetailActionsProps {
   onOpenAction: (action: StudentDetailAction) => void;
   onOpenTab: (tab: StudentDetailTab) => void;
   onResume: () => void;
+  onSendSms: () => void;
 }
 
 interface ActionButton {
@@ -46,6 +48,7 @@ export function StudentDetailActions({
   onOpenAction,
   onOpenTab,
   onResume,
+  onSendSms,
 }: StudentDetailActionsProps) {
   const primaryActions: ActionButton[] = [
     {
@@ -59,6 +62,12 @@ export function StudentDetailActions({
       icon: CalendarDays,
       label: '수업/학원비 변경',
       onClick: onEdit,
+    },
+    {
+      description: '학부모 번호를 선택한 개별 문자 작성 화면으로 이동합니다.',
+      icon: Send,
+      label: '문자 보내기',
+      onClick: onSendSms,
     },
     {
       description: `${paymentCount}건의 청구와 납부 상태를 확인합니다.`,

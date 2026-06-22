@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import apiClient, { type APIRequestConfig } from '@/lib/api/client';
 import { smsAPI } from '@/lib/api/sms';
@@ -29,6 +30,10 @@ const MAX_IMAGE_SIZE = 300 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 
 export function useSmsPageState() {
+  const searchParams = useSearchParams();
+  const prefillStudentId = searchParams.get('studentId');
+  const prefillRecipient = searchParams.get('recipient') === 'student' ? 'student' : 'parent';
+  const prefilledStudentRef = useRef<string | null>(null);
   const [sendMode, setSendMode] = useState<SendMode>('all');
   const [recipientType, setRecipientType] = useState<RecipientType>('parent');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
@@ -124,6 +129,36 @@ export function useSmsPageState() {
       void loadRecipientsCount();
     }
   }, [loadRecipientsCount, sendMode]);
+
+  useEffect(() => {
+    if (!prefillStudentId || prefilledStudentRef.current === prefillStudentId) return;
+
+    const studentId = Number.parseInt(prefillStudentId, 10);
+    if (!Number.isFinite(studentId) || studentId <= 0) return;
+
+    prefilledStudentRef.current = prefillStudentId;
+    setSendMode('individual');
+    setRecipientType(prefillRecipient);
+    setSearching(true);
+    setSearchQuery('');
+    setSearchResults([]);
+
+    apiClient
+      .get<{ student: SmsStudent }>(`/students/${studentId}`, SILENT_CONFIG)
+      .then((response) => {
+        const student = response.student;
+        setSelectedStudent({
+          id: student.id,
+          name: student.name,
+          parent_phone: student.parent_phone || null,
+          phone: student.phone || null,
+        });
+      })
+      .catch(() => {
+        toast.error('학생 정보를 불러오지 못했습니다. 학생 상세에서 다시 시도해주세요.');
+      })
+      .finally(() => setSearching(false));
+  }, [prefillRecipient, prefillStudentId]);
 
   useEffect(() => {
     const query = searchQuery.trim();

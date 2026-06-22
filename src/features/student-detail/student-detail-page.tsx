@@ -42,6 +42,10 @@ export function StudentDetailPage() {
     router.push(`/students/${studentId}/edit`);
   };
 
+  const handleSendSms = () => {
+    router.push(`/sms?studentId=${studentId}&recipient=parent`);
+  };
+
   const handleDelete = async () => {
     if (!student) return;
     await studentsAPI.deleteStudent(studentId, { suppressErrorToast: true });
@@ -105,6 +109,7 @@ export function StudentDetailPage() {
         onOpenAction={setPendingAction}
         onOpenTab={setActiveTab}
         onResume={() => setResumeModalOpen(true)}
+        onSendSms={handleSendSms}
       />
 
       <StudentCard student={student} />
