@@ -29,11 +29,18 @@ export interface TrialDate {
 
 export interface PreviousConsultation {
   id: number;
+  consultation_id?: number;
   consultation_date: string;
   consultation_type: string;
+  admission_type?: 'early' | 'regular' | null;
+  school_grade_avg?: number | null;
+  mock_test_scores?: LearningForm['mockTestScores'] | string | null;
   general_memo: string | null;
   academic_memo: string | null;
+  physical_record_type?: 'latest' | 'average' | null;
   physical_memo: string | null;
+  target_university_1?: string | null;
+  target_university_2?: string | null;
   target_memo: string | null;
 }
 

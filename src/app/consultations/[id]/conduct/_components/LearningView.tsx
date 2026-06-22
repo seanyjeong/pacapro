@@ -31,11 +31,11 @@ export function LearningView({
   setMemoModal,
 }: LearningViewProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       {/* 왼쪽 컬럼: 학업 + 목표 */}
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* 학업 섹션 */}
-        <Card>
+        <Card className="rounded-md shadow-none">
           <CardHeader className="pb-3">
             <button
               onClick={() => toggleSection('학업')}
@@ -73,7 +73,7 @@ export function LearningView({
           )}
           {expandedSections['학업'] && (
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label className="text-sm text-muted-foreground">입시 유형</Label>
                   <Select
@@ -107,7 +107,7 @@ export function LearningView({
               <div>
                 <Label className="text-sm text-muted-foreground mb-2 block">모의고사 성적 (등급)</Label>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-sm border border-border rounded-lg">
+                  <table className="w-full rounded-md border border-border text-sm">
                     <thead>
                       <tr className="bg-muted">
                         <th className="p-2 text-left font-medium">회차</th>
@@ -168,7 +168,7 @@ export function LearningView({
         </Card>
 
         {/* 목표 섹션 */}
-        <Card>
+        <Card className="rounded-md shadow-none">
           <CardHeader className="pb-3">
             <button
               onClick={() => toggleSection('목표')}
@@ -206,7 +206,7 @@ export function LearningView({
           )}
           {expandedSections['목표'] && (
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label className="text-sm text-muted-foreground">목표 대학 1</Label>
                   <Input
@@ -241,9 +241,9 @@ export function LearningView({
       </div>
 
       {/* 오른쪽 컬럼: 실기 + 기타 */}
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* 실기 섹션 */}
-        <Card>
+        <Card className="rounded-md shadow-none">
           <CardHeader className="pb-3">
             <button
               onClick={() => toggleSection('실기')}
@@ -319,7 +319,7 @@ export function LearningView({
               ) : Object.keys(peakRecords).length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {Object.entries(peakRecords).map(([name, record]) => (
-                    <div key={name} className="bg-muted rounded-lg p-3 text-center">
+                    <div key={name} className="rounded-md bg-muted p-3 text-center">
                       <div className="text-xs text-muted-foreground mb-1">{name}</div>
                       <div className="text-lg font-bold text-foreground">
                         {record.value} <span className="text-sm font-normal">{record.unit}</span>
@@ -352,7 +352,7 @@ export function LearningView({
         </Card>
 
         {/* 기타 섹션 */}
-        <Card>
+        <Card className="rounded-md shadow-none">
           <CardHeader className="pb-3">
             <button
               onClick={() => toggleSection('기타')}

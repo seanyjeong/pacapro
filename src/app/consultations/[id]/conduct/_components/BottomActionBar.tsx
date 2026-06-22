@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Loader2, Save, ArrowLeft, Clock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Consultation } from '@/lib/types/consultation';
@@ -20,24 +21,40 @@ export function BottomActionBar({
   consultation, linkedStudent, checklist, saving,
   onBack, onSave, onOpenPending, onOpenTrial
 }: BottomActionBarProps) {
+  const checkedCount = checklist.filter(c => c.checked).length;
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    const syncSidebarState = () => {
+      setSidebarCollapsed(localStorage.getItem('sidebar_collapsed') === 'true');
+    };
+
+    syncSidebarState();
+    const interval = window.setInterval(syncSidebarState, 200);
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const sidebarOffsetClass = sidebarCollapsed ? 'md:left-[68px]' : 'md:left-64';
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+    <div className={`fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-card/95 shadow-lg backdrop-blur ${sidebarOffsetClass}`}>
+      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         {consultation.consultation_type === 'learning' ? (
           <>
-            <div className="text-sm text-muted-foreground">
-              {linkedStudent?.name || consultation.student_name} ({consultation.student_grade}) 재원생 상담
+            <div className="min-w-0 text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{linkedStudent?.name || consultation.student_name}</span>
+              <span className="ml-1">({consultation.student_grade}) 재원생 상담 기록</span>
             </div>
-            <div className="flex items-center space-x-3">
-              <Button variant="outline" onClick={onBack}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+              <Button variant="outline" className="gap-2" onClick={onBack}>
+                <ArrowLeft className="h-4 w-4" />
                 돌아가기
               </Button>
-              <Button onClick={onSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
+              <Button onClick={onSave} disabled={saving} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
                 {saving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save className="h-4 w-4" />
                 )}
                 상담 기록 저장
               </Button>
@@ -45,34 +62,35 @@ export function BottomActionBar({
           </>
         ) : (
           <>
-            <div className="text-sm text-muted-foreground">
-              체크된 항목: {checklist.filter(c => c.checked).length}/{checklist.length}
+            <div className="min-w-0 text-sm text-muted-foreground">
+              체크리스트 <span className="font-semibold text-foreground">{checkedCount}/{checklist.length}</span>
+              <span className="ml-2">완료 후 체험 또는 미등록관리로 연결합니다.</span>
             </div>
-            <div className="flex items-center space-x-3">
-              <Button onClick={onSave} disabled={saving}>
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
+              <Button className="col-span-2 gap-2 sm:col-span-1" onClick={onSave} disabled={saving}>
                 {saving ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save className="h-4 w-4" />
                 )}
-                저장
+                상담 완료 저장
               </Button>
               <Button
                 variant="outline"
-                className="border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-950"
+                className="gap-2 border-orange-300 text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-300 dark:hover:bg-orange-950"
                 onClick={onOpenPending}
                 disabled={!!consultation?.linked_student_id}
               >
-                <Clock className="h-4 w-4 mr-2" />
+                <Clock className="h-4 w-4" />
                 {consultation?.linked_student_id ? '등록 완료' : '미등록관리로 완료'}
               </Button>
               <Button
                 variant="default"
-                className="bg-green-600 hover:bg-green-700"
+                className="gap-2 bg-green-600 hover:bg-green-700"
                 onClick={onOpenTrial}
                 disabled={!!consultation?.linked_student_id}
               >
-                <Sparkles className="h-4 w-4 mr-2" />
+                <Sparkles className="h-4 w-4" />
                 {consultation?.linked_student_id ? '이미 체험 등록됨' : '체험 등록'}
               </Button>
             </div>

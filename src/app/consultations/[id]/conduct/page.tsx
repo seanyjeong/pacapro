@@ -4,7 +4,7 @@
 // 원본 1,651줄 → 9 서브모듈 분리 (Phase 4 #4)
 
 import { use } from 'react';
-import { Loader2 } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -52,28 +52,47 @@ export default function ConductPage({ params }: PageProps) {
 
   if (c.loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
+      <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl space-y-5">
+          <div className="h-28 rounded-md border border-border bg-card" />
+          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.8fr]">
+            <div className="space-y-5">
+              <div className="h-56 rounded-md border border-border bg-card" />
+              <div className="h-64 rounded-md border border-border bg-card" />
+            </div>
+            <div className="h-[520px] rounded-md border border-border bg-card" />
+          </div>
+        </div>
+      </main>
     );
   }
 
-  if (!c.consultation) {
+  if (c.loadError || !c.consultation) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">상담 정보를 찾을 수 없습니다.</p>
-        <Link href={c.backUrl}>
-          <Button variant="outline" className="mt-4">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {c.backLabel}
-          </Button>
-        </Link>
-      </div>
+      <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
+        <section className="mx-auto flex min-h-[60vh] w-full max-w-xl items-center">
+          <div className="w-full rounded-md border border-amber-200 bg-amber-50 p-5 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div className="min-w-0">
+                <h1 className="text-base font-semibold">상담 정보를 불러오지 못했습니다</h1>
+                <p className="mt-1 text-sm">{c.loadError || '잠시 후 다시 시도해주세요.'}</p>
+                <Link href={c.backUrl}>
+                  <Button variant="outline" className="mt-4 bg-background/80">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {c.backLabel}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <main className="min-h-screen bg-muted/20 pb-28">
       <ConductHeader
         consultation={c.consultation}
         backLabel={c.backLabel}
@@ -83,7 +102,7 @@ export default function ConductPage({ params }: PageProps) {
         onSave={handleSave}
       />
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
         {c.consultation.consultation_type === 'learning' ? (
           <LearningView
             learningForm={c.learningForm}
@@ -100,7 +119,6 @@ export default function ConductPage({ params }: PageProps) {
         ) : (
           <NewInquiryView
             consultation={c.consultation}
-            checklist={c.checklist}
             consultationMemo={c.consultationMemo}
             setConsultationMemo={c.setConsultationMemo}
             groupedChecklist={c.groupedChecklist}
@@ -159,6 +177,6 @@ export default function ConductPage({ params }: PageProps) {
         savingStudent={c.savingStudent}
         onSave={c.handleSaveStudentInfo}
       />
-    </div>
+    </main>
   );
 }

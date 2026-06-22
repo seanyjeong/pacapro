@@ -255,10 +255,12 @@ export async function convertToTrialStudent(
 export async function convertToPendingStudent(
   consultationId: number,
   studentPhone?: string,
-  memo?: string
+  memo?: string,
+  config?: APIRequestConfig
 ): Promise<{ message: string; studentId: number }> {
   return apiClient.post<{ message: string; studentId: number }>(
     `/consultations/${consultationId}/convert-to-pending`,
-    { studentPhone, memo }
+    { studentPhone, memo },
+    config
   );
 }

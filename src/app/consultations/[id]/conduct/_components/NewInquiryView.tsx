@@ -11,7 +11,6 @@ import type { Consultation, ChecklistItem } from '@/lib/types/consultation';
 
 interface NewInquiryViewProps {
   consultation: Consultation;
-  checklist: ChecklistItem[];
   consultationMemo: string;
   setConsultationMemo: (v: string) => void;
   groupedChecklist: Record<string, ChecklistItem[]>;
@@ -23,16 +22,16 @@ interface NewInquiryViewProps {
 }
 
 export function NewInquiryView({
-  consultation, checklist, consultationMemo, setConsultationMemo,
+  consultation, consultationMemo, setConsultationMemo,
   groupedChecklist, expandedCategories, toggleCategory,
   toggleCheck, updateInputValue, onOpenStudentEdit,
 }: NewInquiryViewProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-[0.9fr_1.8fr]">
       {/* 왼쪽: 기본 정보 + 메모 */}
-      <div className="space-y-6">
+      <div className="space-y-5">
         {/* 기본 정보 */}
-        <Card>
+        <Card className="rounded-md shadow-none">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg flex items-center">
@@ -114,7 +113,7 @@ export function NewInquiryView({
             scores.admissionType === 'regular' ? '정시' : scores.admissionType;
 
           return (
-            <Card>
+            <Card className="rounded-md shadow-none">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center">
                   <GraduationCap className="h-5 w-5 mr-2 text-primary-600" />
@@ -134,7 +133,7 @@ export function NewInquiryView({
                   {hasAdmissionType && (
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-sm">입시</span>
-                      <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-sm">
+                      <span className="rounded bg-blue-100 px-2 py-0.5 text-sm font-semibold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                         {admissionTypeLabel}
                       </span>
                     </div>
@@ -149,7 +148,7 @@ export function NewInquiryView({
                         const labels: Record<string, string> = { korean: '국', math: '수', english: '영', exploration: '탐' };
                         const value = scores.mockTestGrades?.[subject as keyof typeof scores.mockTestGrades];
                         return (
-                          <div key={subject} className="bg-muted rounded p-2 text-center">
+                          <div key={subject} className="rounded-md bg-muted p-2 text-center">
                             <div className="text-xs text-muted-foreground">{labels[subject]}</div>
                             <div className={`font-bold ${value === -1 ? 'text-muted-foreground text-sm' : 'text-foreground'}`}>
                               {value === -1 ? '-' : value ?? '-'}
@@ -166,7 +165,7 @@ export function NewInquiryView({
         })()}
 
         {/* 상담 메모 */}
-        <Card>
+        <Card className="rounded-md shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">상담 메모</CardTitle>
           </CardHeader>
@@ -183,7 +182,7 @@ export function NewInquiryView({
 
       {/* 오른쪽: 체크리스트 */}
       <div className="lg:col-span-2">
-        <Card>
+        <Card className="rounded-md shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center">
               <CheckSquare className="h-5 w-5 mr-2 text-primary-600" />
@@ -192,7 +191,7 @@ export function NewInquiryView({
           </CardHeader>
           <CardContent className="space-y-4">
             {Object.entries(groupedChecklist).map(([category, items]) => (
-              <div key={category} className="border border-border rounded-lg overflow-hidden">
+              <div key={category} className="overflow-hidden rounded-md border border-border">
                 <button
                   onClick={() => toggleCategory(category)}
                   className="w-full flex items-center justify-between px-4 py-3 bg-muted hover:bg-muted/80 transition-colors"

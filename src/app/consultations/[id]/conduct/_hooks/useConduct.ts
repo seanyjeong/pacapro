@@ -18,6 +18,8 @@ import type {
   LinkedStudent,
 } from '../_types';
 
+const SILENT_CONFIG = { suppressErrorToast: true };
+
 // 기본 체크리스트 템플릿 (체대입시 특화)
 export const DEFAULT_CHECKLIST_TEMPLATE: ChecklistTemplate[] = [
   { id: 1, category: '학생 배경', text: '타학원 경험 확인', input: { type: 'text', label: '학원명' } },
@@ -43,6 +45,7 @@ export function useConduct(consultationId: string) {
 
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -130,12 +133,12 @@ export function useConduct(consultationId: string) {
       const response = await apiClient.get<{
         found: boolean;
         records: Record<string, PeakRecord>;
-      }>(`/student-consultations/${studentId}/peak-records`, { params: { type } });
+      }>(`/student-consultations/${studentId}/peak-records`, { params: { type }, suppressErrorToast: true });
       if (response.found) {
         setPeakRecords(response.records);
       }
-    } catch (err) {
-      console.error('P-EAK 기록 로드 오류:', err);
+    } catch {
+      setPeakRecords({});
     } finally {
       setPeakLoading(false);
     }
@@ -144,27 +147,26 @@ export function useConduct(consultationId: string) {
   // 상담 정보 로드
   useEffect(() => {
     const loadConsultation = async () => {
+      setLoadError(null);
       try {
-        const data = await apiClient.get<Consultation>(`/consultations/${consultationId}`);
+        const data = await apiClient.get<Consultation>(`/consultations/${consultationId}`, SILENT_CONFIG);
         setConsultation(data);
         setConsultationMemo(data.consultation_memo || '');
 
         if (data.consultation_type === 'learning' && data.linked_student_id) {
           try {
-            const studentData = await apiClient.get<{ student: LinkedStudent }>(`/students/${data.linked_student_id}`);
+            const studentData = await apiClient.get<{ student: LinkedStudent }>(`/students/${data.linked_student_id}`, SILENT_CONFIG);
             setLinkedStudent(studentData.student);
-          } catch (err) {
-            console.error('학생 정보 로드 오류:', err);
+          } catch {
+            setLinkedStudent(null);
           }
 
           try {
-            const prevData = await apiClient.get<{ consultations: PreviousConsultation[] }>(`/student-consultations/${data.linked_student_id}`);
+            const prevData = await apiClient.get<{ consultations: PreviousConsultation[] }>(`/student-consultations/${data.linked_student_id}`, SILENT_CONFIG);
             const allConsultations = prevData.consultations || [];
             setPreviousConsultations(allConsultations);
 
-            const existing = (allConsultations as any[]).find(
-              (c: any) => c.consultation_id === data.id
-            );
+            const existing = allConsultations.find(item => item.consultation_id === data.id);
             if (existing) {
               setExistingStudentConsultationId(existing.id);
               const mockScores = existing.mock_test_scores
@@ -184,8 +186,8 @@ export function useConduct(consultationId: string) {
                 generalMemo: existing.general_memo || '',
               }));
             }
-          } catch (err) {
-            console.error('이전 상담 기록 로드 오류:', err);
+          } catch {
+            setPreviousConsultations([]);
           }
 
           loadPeakRecords(data.linked_student_id);
@@ -196,7 +198,7 @@ export function useConduct(consultationId: string) {
             setChecklist(data.checklist);
           } else {
             try {
-              const settingsResponse = await apiClient.get<{ settings: { checklist_template?: ChecklistTemplate[] } }>('/consultations/settings/info');
+              const settingsResponse = await apiClient.get<{ settings: { checklist_template?: ChecklistTemplate[] } }>('/consultations/settings/info', SILENT_CONFIG);
               const template = settingsResponse.settings?.checklist_template || DEFAULT_CHECKLIST_TEMPLATE;
               setChecklist(template.map(item => ({
                 ...item,
@@ -214,18 +216,14 @@ export function useConduct(consultationId: string) {
             }
           }
         }
-      } catch (error) {
-        console.error('상담 정보 로드 오류:', error);
-        toast.error('상담 정보를 불러오는데 실패했습니다.');
-        const nav = getBackNavigation(null);
-        router.push(nav.url);
+      } catch {
+        setLoadError('잠시 후 다시 시도해주세요.');
       } finally {
         setLoading(false);
       }
     };
 
     loadConsultation();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultationId]);
 
   // 체크리스트 체크 토글
@@ -281,10 +279,10 @@ export function useConduct(consultationId: string) {
           general_memo: learningForm.generalMemo,
         };
         if (existingStudentConsultationId) {
-          await apiClient.put(`/student-consultations/${existingStudentConsultationId}`, payload);
+          await apiClient.put(`/student-consultations/${existingStudentConsultationId}`, payload, SILENT_CONFIG);
           toast.success('상담 기록이 수정되었습니다.');
         } else {
-          const result = await apiClient.post<{ id: number }>('/student-consultations', payload);
+          const result = await apiClient.post<{ id: number }>('/student-consultations', payload, SILENT_CONFIG);
           setExistingStudentConsultationId(result.id);
           toast.success('상담 기록이 저장되었습니다.');
         }
@@ -294,13 +292,12 @@ export function useConduct(consultationId: string) {
           checklist,
           consultationMemo,
           status: 'completed',
-        });
+        }, SILENT_CONFIG);
         setConsultation({ ...consultation, status: 'completed' });
         toast.success('상담이 완료 처리되었습니다.');
       }
-    } catch (error) {
-      console.error('저장 오류:', error);
-      toast.error('저장에 실패했습니다.');
+    } catch {
+      toast.error('저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSaving(false);
     }
@@ -330,14 +327,13 @@ export function useConduct(consultationId: string) {
     }
     setConvertingToTrial(true);
     try {
-      await apiClient.put(`/consultations/${consultation.id}`, { checklist, consultationMemo });
-      await convertToTrialStudent(consultation.id, trialDates);
+      await apiClient.put(`/consultations/${consultation.id}`, { checklist, consultationMemo }, SILENT_CONFIG);
+      await convertToTrialStudent(consultation.id, trialDates, undefined, SILENT_CONFIG);
       toast.success('체험 학생으로 등록되었습니다.');
       setTrialModalOpen(false);
       router.push(backUrl);
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      toast.error(err.message || '체험 등록에 실패했습니다.');
+    } catch {
+      toast.error('체험 학생으로 등록하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setConvertingToTrial(false);
     }
@@ -367,7 +363,7 @@ export function useConduct(consultationId: string) {
         student_school: studentEditForm.student_school,
         parent_phone: studentEditForm.parent_phone,
         target_school: studentEditForm.target_school,
-      });
+      }, SILENT_CONFIG);
       setConsultation({
         ...consultation,
         student_name: studentEditForm.student_name,
@@ -379,9 +375,8 @@ export function useConduct(consultationId: string) {
       });
       toast.success('학생 정보가 수정되었습니다.');
       setStudentEditModalOpen(false);
-    } catch (error) {
-      console.error('학생 정보 수정 오류:', error);
-      toast.error('학생 정보 수정에 실패했습니다.');
+    } catch {
+      toast.error('학생 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSavingStudent(false);
     }
@@ -391,14 +386,13 @@ export function useConduct(consultationId: string) {
     if (!consultation) return;
     setConvertingToPending(true);
     try {
-      await apiClient.put(`/consultations/${consultation.id}`, { checklist, consultationMemo });
-      await convertToPendingStudent(consultation.id, undefined, pendingMemo || consultationMemo || undefined);
+      await apiClient.put(`/consultations/${consultation.id}`, { checklist, consultationMemo }, SILENT_CONFIG);
+      await convertToPendingStudent(consultation.id, undefined, pendingMemo || consultationMemo || undefined, SILENT_CONFIG);
       toast.success('미등록관리 학생으로 등록되었습니다.');
       setPendingModalOpen(false);
       router.push(backUrl);
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      toast.error(err.message || '미등록관리 등록에 실패했습니다.');
+    } catch {
+      toast.error('미등록관리 학생으로 등록하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setConvertingToPending(false);
     }
@@ -419,6 +413,7 @@ export function useConduct(consultationId: string) {
     // state
     consultation, setConsultation,
     loading,
+    loadError,
     saving,
     checklist,
     consultationMemo, setConsultationMemo,
