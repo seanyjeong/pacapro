@@ -4,7 +4,8 @@
  */
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Banknote, Calendar, Mail, Phone, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Banknote, Calendar, Eye, Mail, Phone, Users } from 'lucide-react';
 import type { Instructor } from '@/lib/types/instructor';
 import {
   formatPhoneNumber,
@@ -76,6 +77,9 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                   입사일
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium tracking-normal text-muted-foreground">
+                  작업
                 </th>
               </tr>
             </thead>
@@ -179,6 +183,23 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
                     <div className="text-xs text-muted-foreground">
                       {instructor.hire_date ? `근속 ${calculateYearsOfService(instructor.hire_date)}년` : '-'}
                     </div>
+                  </td>
+
+                  <td className="whitespace-nowrap px-4 py-4 text-right">
+                    <Button
+                      aria-label={`${instructor.name} 상세 보기`}
+                      className="gap-2"
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onInstructorClick(instructor.id);
+                      }}
+                    >
+                      <Eye className="h-4 w-4" />
+                      상세
+                    </Button>
                   </td>
                 </tr>
               ))}

@@ -169,6 +169,7 @@ async function runListDesktop(browser) {
   await page.getByRole('heading', { name: '강사 운영' }).waitFor();
   await page.locator('table').getByText('최강사').waitFor();
   await page.locator('table').getByText('박코치').waitFor();
+  await page.locator('table').getByRole('button', { name: '최강사 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'instructors list desktop');
   await assertNoHorizontalOverflow(page, 'instructors list desktop');
   await page.screenshot({ path: '/Users/etlab/paca-instructors-desktop.png', fullPage: true });
