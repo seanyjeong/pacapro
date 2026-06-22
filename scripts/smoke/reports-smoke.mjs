@@ -106,6 +106,7 @@ async function runNormal(browser) {
 
   await page.goto('/reports', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '리포트' }).waitFor();
+  await page.getByText('Finance Desk').waitFor();
   await page.getByText('970,000원').first().waitFor();
   await page.getByText('500,000원').waitFor();
   await assertNoRawVisibleText(page, 'reports desktop');
@@ -126,6 +127,7 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '리포트' }).waitFor();
+  await page.getByText('Finance Desk').waitFor();
   await assertNoRawVisibleText(page, 'reports mobile');
   await assertNoHorizontalOverflow(page, 'reports mobile');
   await page.screenshot({ path: '/Users/etlab/paca-reports-mobile.png', fullPage: true });

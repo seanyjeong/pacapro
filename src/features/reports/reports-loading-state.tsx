@@ -6,7 +6,7 @@ interface ReportsLoadingStateProps {
 
 export function ReportsLoadingState({ selectedMonth }: ReportsLoadingStateProps) {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5" aria-busy="true">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl" aria-busy="true">
       <header className="flex flex-col gap-3 border-b border-border/70 pb-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-2">
           <Skeleton className="h-3 w-28" />

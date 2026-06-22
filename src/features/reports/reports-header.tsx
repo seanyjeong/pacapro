@@ -31,7 +31,7 @@ export function ReportsHeader({
   return (
     <header className="flex flex-col gap-3 border-b border-border/70 pb-4 lg:flex-row lg:items-end lg:justify-between">
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Finance Report</p>
+        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Finance Desk</p>
         <h1 className="text-2xl font-semibold tracking-normal text-foreground">리포트</h1>
       </div>
 
@@ -44,7 +44,7 @@ export function ReportsHeader({
           type="month"
           value={selectedMonth}
           onChange={(event) => onMonthChange(event.target.value)}
-          className="h-10 rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary/30 sm:w-auto"
         />
 
         <div className="relative">
