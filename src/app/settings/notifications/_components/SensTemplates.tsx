@@ -1,9 +1,11 @@
 'use client';
 
 import React from 'react';
-import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, Image, Plus, Trash2, ClipboardCheck } from 'lucide-react';
+import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, ClipboardCheck } from 'lucide-react';
 import { NotificationSettings, ConsultationButton } from '@/lib/api/notifications';
 import type { TemplateType } from '../_types';
+import ButtonEditor from './ButtonEditor';
+import TemplateImageField from './TemplateImageField';
 
 interface SensTemplatesProps {
   activeTab: string;
@@ -48,93 +50,6 @@ interface SensTemplatesProps {
   addSensReminderButton: () => void;
   removeSensReminderButton: (i: number) => void;
   updateSensReminderButton: (i: number, field: keyof ConsultationButton, value: string) => void;
-}
-
-const BUTTON_OPTIONS = [
-  { value: 'WL', label: '웹링크 (WL)' },
-  { value: 'AL', label: '앱링크 (AL)' },
-  { value: 'BK', label: '봇키워드 (BK)' },
-  { value: 'MD', label: '메시지전달 (MD)' },
-];
-
-function ButtonList({
-  buttons,
-  onAdd,
-  onRemove,
-  onUpdate,
-  addColor,
-}: {
-  buttons: ConsultationButton[] | undefined;
-  onAdd: () => void;
-  onRemove: (i: number) => void;
-  onUpdate: (i: number, field: keyof ConsultationButton, value: string) => void;
-  addColor: string;
-}) {
-  return (
-    <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-medium text-foreground">버튼 설정</h4>
-        <button
-          type="button"
-          onClick={onAdd}
-          disabled={(buttons?.length || 0) >= 5}
-          className={`flex items-center gap-1 px-3 py-1.5 text-sm ${addColor} text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          <Plus className="w-4 h-4" />버튼 추가
-        </button>
-      </div>
-      {(buttons?.length || 0) === 0 ? (
-        <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">버튼이 없습니다. 템플릿에 버튼이 있다면 위의 &quot;버튼 추가&quot; 버튼을 클릭하세요.</p>
-      ) : (
-        <div className="space-y-4">
-          {buttons?.map((button, index) => (
-            <div key={index} className="p-4 bg-muted/30 rounded-lg border border-border">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-foreground">버튼 {index + 1}</span>
-                <button type="button" onClick={() => onRemove(index)} className="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">버튼 타입</label>
-                  <select
-                    value={button.buttonType}
-                    onChange={(e) => onUpdate(index, 'buttonType', e.target.value)}
-                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
-                  >
-                    {BUTTON_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">버튼 이름</label>
-                  <input
-                    type="text"
-                    value={button.buttonName || ''}
-                    onChange={(e) => onUpdate(index, 'buttonName', e.target.value)}
-                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm"
-                    placeholder="버튼 텍스트"
-                  />
-                </div>
-                {button.buttonType === 'WL' && (
-                  <>
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">모바일 링크</label>
-                      <input type="url" value={button.linkMo || ''} onChange={(e) => onUpdate(index, 'linkMo', e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm" placeholder="https://..." />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-muted-foreground mb-1">PC 링크</label>
-                      <input type="url" value={button.linkPc || ''} onChange={(e) => onUpdate(index, 'linkPc', e.target.value)} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg text-sm" placeholder="https://..." />
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 }
 
 export default function SensTemplates({
@@ -250,28 +165,19 @@ export default function SensTemplates({
                 ))}
               </div>
             </div>
-            {/* 이미지 */}
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3">
-                <Image className="w-4 h-4 text-muted-foreground" />
-                <h4 className="font-medium text-foreground">이미지 설정 (선택)</h4>
-              </div>
-              <input
-                type="url"
-                value={settings.sens_image_url || ''}
-                onChange={(e) => setSettings(prev => ({ ...prev, sens_image_url: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                placeholder="https://example.com/image.jpg"
-              />
-              <p className="text-xs text-muted-foreground mt-1">SENS 콘솔에서 이미지 업로드 후 URL을 입력하세요. 이미지 알림톡 템플릿인 경우에만 필요합니다.</p>
-            </div>
-            {/* 버튼 */}
-            <ButtonList
-              buttons={settings.sens_buttons}
+            <TemplateImageField
+              value={settings.sens_image_url || ''}
+              onChange={(value) => setSettings(prev => ({ ...prev, sens_image_url: value }))}
+              focusClassName="focus:ring-orange-500 focus:border-orange-500"
+              hint="SENS 콘솔에서 이미지 업로드 후 URL을 입력하세요. 이미지 알림톡 템플릿인 경우에만 필요합니다."
+            />
+            <ButtonEditor
+              buttons={settings.sens_buttons || []}
               onAdd={addSensUnpaidButton}
               onRemove={removeSensUnpaidButton}
               onUpdate={updateSensUnpaidButton}
-              addColor="bg-orange-600 hover:bg-orange-700"
+              colorScheme="orange"
+              providerName="SENS 콘솔"
             />
             {/* 자동 발송 */}
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
@@ -346,18 +252,14 @@ export default function SensTemplates({
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
               <textarea value={settings.sens_overdue_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_overdue_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 font-mono text-sm" placeholder={`[#{학원명}] 미납 안내\n\n#{이름} 학생의 학원비가 미납되었습니다.`} />
             </div>
-            {/* 이미지 */}
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
-              <input type="url" value={settings.sens_overdue_image_url || ''} onChange={(e) => setSettings(prev => ({ ...prev, sens_overdue_image_url: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="https://example.com/image.jpg" />
-            </div>
-            {/* 버튼 */}
-            <ButtonList
-              buttons={settings.sens_overdue_buttons}
+            <TemplateImageField value={settings.sens_overdue_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_overdue_image_url: value }))} focusClassName="focus:ring-red-500 focus:border-red-500" />
+            <ButtonEditor
+              buttons={settings.sens_overdue_buttons || []}
               onAdd={addSensOverdueButton}
               onRemove={removeSensOverdueButton}
               onUpdate={updateSensOverdueButton}
-              addColor="bg-red-600 hover:bg-red-700"
+              colorScheme="red"
+              providerName="SENS 콘솔"
             />
             {/* 자동 발송 */}
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
@@ -405,18 +307,14 @@ export default function SensTemplates({
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
               <textarea value={settings.sens_consultation_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_consultation_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 font-mono text-sm" placeholder={`[#{학원명}] 상담 확정 안내\n\n#{이름}님, 상담이 확정되었습니다.`} />
             </div>
-            {/* 이미지 */}
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
-              <input type="url" value={settings.sens_consultation_image_url || ''} onChange={(e) => setSettings(prev => ({ ...prev, sens_consultation_image_url: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="https://example.com/image.jpg" />
-            </div>
-            {/* 버튼 */}
-            <ButtonList
-              buttons={settings.sens_consultation_buttons}
+            <TemplateImageField value={settings.sens_consultation_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_consultation_image_url: value }))} focusClassName="focus:ring-green-500 focus:border-green-500" />
+            <ButtonEditor
+              buttons={settings.sens_consultation_buttons || []}
               onAdd={addSensConsultationButton}
               onRemove={removeSensConsultationButton}
               onUpdate={updateSensConsultationButton}
-              addColor="bg-green-600 hover:bg-green-700"
+              colorScheme="green"
+              providerName="SENS 콘솔"
             />
             {/* 테스트 */}
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
@@ -447,18 +345,14 @@ export default function SensTemplates({
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용)</label>
               <textarea value={settings.sens_trial_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_trial_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm" placeholder={`[#{학원명}] 체험수업 안내\n\n#{이름}님, 오늘 체험수업이 있습니다.`} />
             </div>
-            {/* 이미지 */}
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
-              <input type="url" value={settings.sens_trial_image_url || ''} onChange={(e) => setSettings(prev => ({ ...prev, sens_trial_image_url: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://example.com/image.jpg" />
-            </div>
-            {/* 버튼 */}
-            <ButtonList
-              buttons={settings.sens_trial_buttons}
+            <TemplateImageField value={settings.sens_trial_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_trial_image_url: value }))} focusClassName="focus:ring-blue-500 focus:border-blue-500" />
+            <ButtonEditor
+              buttons={settings.sens_trial_buttons || []}
               onAdd={addSensTrialButton}
               onRemove={removeSensTrialButton}
               onUpdate={updateSensTrialButton}
-              addColor="bg-blue-600 hover:bg-blue-700"
+              colorScheme="blue"
+              providerName="SENS 콘솔"
             />
             {/* 자동 발송 */}
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
@@ -507,18 +401,14 @@ export default function SensTemplates({
               <textarea value={settings.sens_reminder_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_reminder_template_content: e.target.value }))} rows={8} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm" placeholder={`[#{학원명}] 상담 리마인드\n\n#{이름}님, 상담 #{남은시간} 전입니다.\n\n일시: #{날짜} #{시간}\n\n문의: #{학원전화}`} />
               <p className="text-xs text-muted-foreground mt-1">사용 가능 변수: #{`{이름}`}, #{`{날짜}`}, #{`{시간}`}, #{`{남은시간}`}, #{`{예약번호}`}, #{`{학원명}`}, #{`{학원전화}`}</p>
             </div>
-            {/* 이미지 */}
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
-              <input type="url" value={settings.sens_reminder_image_url || ''} onChange={(e) => setSettings(prev => ({ ...prev, sens_reminder_image_url: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="https://example.com/image.jpg" />
-            </div>
-            {/* 버튼 */}
-            <ButtonList
-              buttons={settings.sens_reminder_buttons}
+            <TemplateImageField value={settings.sens_reminder_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, sens_reminder_image_url: value }))} focusClassName="focus:ring-purple-500 focus:border-purple-500" />
+            <ButtonEditor
+              buttons={settings.sens_reminder_buttons || []}
               onAdd={addSensReminderButton}
               onRemove={removeSensReminderButton}
               onUpdate={updateSensReminderButton}
-              addColor="bg-purple-600 hover:bg-purple-700"
+              colorScheme="purple"
+              providerName="SENS 콘솔"
             />
             {/* 자동 발송 */}
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">

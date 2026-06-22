@@ -11,6 +11,7 @@ interface Props {
   onUpdate: (index: number, field: keyof ConsultationButton, value: string) => void;
   colorScheme: 'orange' | 'green' | 'blue' | 'red' | 'purple';
   maxButtons?: number;
+  providerName?: string;
 }
 
 const COLOR_MAP: Record<string, { btn: string; border: string }> = {
@@ -21,7 +22,7 @@ const COLOR_MAP: Record<string, { btn: string; border: string }> = {
   purple: { btn: 'bg-purple-600 hover:bg-purple-700', border: 'border-purple-200 dark:border-purple-800' },
 };
 
-export default function ButtonEditor({ buttons, onAdd, onRemove, onUpdate, colorScheme, maxButtons = 5 }: Props) {
+export default function ButtonEditor({ buttons, onAdd, onRemove, onUpdate, colorScheme, maxButtons = 5, providerName = '솔라피' }: Props) {
   const colors = COLOR_MAP[colorScheme];
 
   return (
@@ -111,7 +112,7 @@ export default function ButtonEditor({ buttons, onAdd, onRemove, onUpdate, color
         </div>
       )}
       <p className="text-xs text-muted-foreground mt-2">
-        * 솔라피에서 등록한 템플릿의 버튼과 동일하게 설정해야 합니다
+        * {providerName}에서 등록한 템플릿의 버튼과 동일하게 설정해야 합니다
       </p>
     </div>
   );
