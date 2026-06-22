@@ -15,7 +15,7 @@ export function ExpenseCategoryBadge({ expense }: ExpenseCategoryBadgeProps) {
       <span
         className={cn(
           'rounded-md border border-border bg-muted/35 px-2 py-1 text-xs font-medium text-foreground',
-          isPending && 'border-amber-300 bg-amber-50 text-amber-800'
+          isPending && 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-300'
         )}
       >
         {EXPENSE_CATEGORY_LABELS[expense.category] || expense.category}

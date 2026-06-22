@@ -6,6 +6,7 @@ import { ExpenseDetailDialog } from './expense-detail-dialog';
 import { ExpenseForm } from './expense-form';
 import { ExpenseLoadingState } from './expense-loading-state';
 import { ExpenseSummaryStrip } from './expense-summary-strip';
+import { ExpensesError } from './expenses-error';
 import { ExpensesEmptyState } from './expenses-empty-state';
 import { ExpensesHeader } from './expenses-header';
 import { ExpensesTable } from './expenses-table';
@@ -21,8 +22,12 @@ export function ExpensesPage() {
     return <ExpenseLoadingState />;
   }
 
+  if (state.error) {
+    return <ExpensesError message={state.error} onRetry={state.reload} />;
+  }
+
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
       <ExpensesHeader
         viewMode={state.viewMode}
         selectedMonth={state.selectedMonth}

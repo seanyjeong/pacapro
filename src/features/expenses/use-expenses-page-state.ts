@@ -19,9 +19,12 @@ import {
   toExpenseFormData,
 } from './expenses-utils';
 
+const LOAD_ERROR_MESSAGE = '지출 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+
 export function useExpensesPageState() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -33,11 +36,11 @@ export function useExpensesPageState() {
 
   const loadExpenses = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       setExpenses(await getExpenses(selectedMonth));
     } catch {
-      console.error('Expense page data load failed');
-      toast.error('지출 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      setError(LOAD_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -82,7 +85,6 @@ export function useExpensesPageState() {
       resetForm();
       void loadExpenses();
     } catch {
-      console.error('Expense save failed');
       toast.error('지출 내역을 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도해주세요.');
     }
   };
@@ -100,7 +102,6 @@ export function useExpensesPageState() {
       toast.success('삭제되었습니다.');
       void loadExpenses();
     } catch {
-      console.error('Expense delete failed');
       toast.error('지출 내역을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
@@ -112,7 +113,6 @@ export function useExpensesPageState() {
       toast.success('환불이 완료 처리되었습니다.');
       void loadExpenses();
     } catch {
-      console.error('Refund completion failed');
       toast.error('환불 완료 처리를 하지 못했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
@@ -123,7 +123,6 @@ export function useExpensesPageState() {
       await downloadExpenses();
       toast.success('지출 내역 다운로드 완료');
     } catch {
-      console.error('Expense export failed');
       toast.error('지출 내역을 다운로드하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setExporting(false);
@@ -135,6 +134,7 @@ export function useExpensesPageState() {
     filteredExpenses,
     summary,
     loading,
+    error,
     exporting,
     showForm,
     editingId,
@@ -155,5 +155,6 @@ export function useExpensesPageState() {
     removeExpense,
     completeRefundExpense,
     exportExpenses,
+    reload: loadExpenses,
   };
 }

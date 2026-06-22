@@ -19,7 +19,7 @@ export function ExpenseRowActions({ expense, onEdit, onDelete, onCompleteRefund 
           size="sm"
           variant="outline"
           onClick={() => onCompleteRefund(expense.id)}
-          className="border-green-600 text-green-700 hover:bg-green-50"
+          className="border-green-600 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-950/35"
         >
           <CheckCircle className="mr-1.5 h-4 w-4" />
           환불 완료
@@ -38,7 +38,7 @@ export function ExpenseRowActions({ expense, onEdit, onDelete, onCompleteRefund 
         type="button"
         aria-label="지출 수정"
         onClick={() => onEdit(expense)}
-        className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+        className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
       >
         <Pencil className="h-4 w-4" />
       </button>
@@ -46,7 +46,7 @@ export function ExpenseRowActions({ expense, onEdit, onDelete, onCompleteRefund 
         type="button"
         aria-label="지출 삭제"
         onClick={() => onDelete(expense.id)}
-        className="rounded-md p-2 text-red-600 hover:bg-red-50"
+        className="rounded-md p-2 text-red-600 hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30 dark:text-red-300 dark:hover:bg-red-950/35"
       >
         <Trash2 className="h-4 w-4" />
       </button>

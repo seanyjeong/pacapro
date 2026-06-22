@@ -2,8 +2,9 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export function ExpenseLoadingState() {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
       <div className="space-y-2 border-b border-border/70 pb-4">
+        <div className="h-3 w-24 rounded-md bg-muted" />
         <div className="h-8 w-32 rounded-md bg-muted" />
         <div className="h-4 w-56 rounded-md bg-muted" />
       </div>
