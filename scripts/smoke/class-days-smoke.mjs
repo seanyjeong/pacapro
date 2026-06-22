@@ -89,19 +89,33 @@ async function runDesktopSave(browser) {
 
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
-  await page.locator('tbody tr').filter({ hasText: '김진우' }).getByRole('button', { name: '화' }).click();
+  const jinwooRow = page.locator('tbody tr').filter({ hasText: '김진우' });
+  await jinwooRow.getByRole('button', { name: '김진우 화요일 선택' }).click();
+  await jinwooRow.getByLabel('김진우 화요일 시간대').selectOption('morning');
   await page.getByRole('button', { name: /저장/ }).click();
   await page.getByText('수업일 변경이 저장되었습니다.').waitFor();
 
   if (!state.bulkPayload) throw new Error('class-days bulk payload was not sent');
   if (state.bulkPayload.students?.[0]?.id !== 41) throw new Error(`student id mismatch: ${JSON.stringify(state.bulkPayload)}`);
-  if (!state.bulkPayload.students[0].class_days.some((slot) => slot.day === 2)) {
+  const tuesday = state.bulkPayload.students[0].class_days.find((slot) => slot.day === 2);
+  if (!tuesday) {
     throw new Error(`Tuesday was not included: ${JSON.stringify(state.bulkPayload)}`);
   }
+  if (tuesday.timeSlot !== 'morning') throw new Error(`Tuesday time slot mismatch: ${JSON.stringify(state.bulkPayload)}`);
 
   await assertNoRawVisibleText(page, 'class days desktop');
   await assertNoHorizontalOverflow(page, 'class days desktop');
   await page.screenshot({ path: '/Users/etlab/paca-class-days-desktop.png', fullPage: true });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
+  const jinwooCard = page.locator('article').filter({ hasText: '김진우' });
+  await jinwooCard.waitFor();
+  await jinwooCard.getByRole('button', { name: '김진우 화요일 선택' }).waitFor();
+  await assertNoRawVisibleText(page, 'class days mobile');
+  await assertNoHorizontalOverflow(page, 'class days mobile');
+  await page.screenshot({ path: '/Users/etlab/paca-class-days-mobile.png', fullPage: true });
 
   await context.close();
   return result;
@@ -113,9 +127,9 @@ async function runSaveError(browser) {
 
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
-  await page.locator('tbody tr').filter({ hasText: '김진우' }).getByRole('button', { name: '화' }).click();
+  await page.locator('tbody tr').filter({ hasText: '김진우' }).getByRole('button', { name: '김진우 화요일 선택' }).click();
   await page.getByRole('button', { name: /저장/ }).click();
-  await page.getByText('저장 실패').waitFor();
+  await page.getByRole('alert').getByRole('heading', { name: '저장 실패' }).waitFor();
   await page.getByText('수업일 변경을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'class days save error');
   await assertNoHorizontalOverflow(page, 'class days save error');
@@ -131,7 +145,7 @@ async function runLoadError(browser) {
 
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
-  await page.getByText('수업일 목록을 불러오지 못했습니다').waitFor();
+  await page.getByRole('alert').getByRole('heading', { name: '수업일 목록을 불러오지 못했습니다' }).waitFor();
   await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'class days load error');
   await assertNoHorizontalOverflow(page, 'class days load error');

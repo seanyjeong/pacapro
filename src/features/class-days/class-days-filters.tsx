@@ -37,7 +37,7 @@ export function ClassDaysFilters({
       <div className="flex items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <Select value={filterGrade} onValueChange={onGradeChange}>
-          <SelectTrigger className="h-8 w-[120px] text-sm">
+          <SelectTrigger aria-label="학년 필터" className="h-8 w-[120px] text-sm">
             <SelectValue placeholder="학년" />
           </SelectTrigger>
           <SelectContent>
@@ -49,7 +49,7 @@ export function ClassDaysFilters({
           </SelectContent>
         </Select>
         <Select value={filterWeekly} onValueChange={onWeeklyChange}>
-          <SelectTrigger className="h-8 w-[130px] text-sm">
+          <SelectTrigger aria-label="수업 횟수 필터" className="h-8 w-[130px] text-sm">
             <SelectValue placeholder="수업 횟수" />
           </SelectTrigger>
           <SelectContent>
@@ -71,6 +71,7 @@ export function ClassDaysFilters({
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          aria-label="학생 이름 검색"
           className="h-8 w-[200px] pl-8 text-sm"
           placeholder="학생 이름 검색"
           type="search"

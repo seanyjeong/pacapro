@@ -35,9 +35,9 @@ export function ClassDaysControlBar({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Calendar className="h-5 w-5 text-muted-foreground" />
-            <span className="text-sm font-medium">적용 시작월:</span>
+            <span className="whitespace-nowrap text-sm font-medium">적용 시작월</span>
             <Select value={effectiveFrom} onValueChange={onEffectiveFromChange}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger aria-label="적용 시작월" className="w-[200px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -57,7 +57,7 @@ export function ClassDaysControlBar({
                 {scheduledCount}명 변경 예정
               </Badge>
             ) : null}
-            <Button disabled={changedCount === 0 || saving} onClick={onSave}>
+            <Button disabled={changedCount === 0 || saving} type="button" onClick={onSave}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               저장 ({changedCount}명)
             </Button>
