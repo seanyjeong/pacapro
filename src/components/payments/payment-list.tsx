@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Coins, Check, Loader2, CreditCard, Banknote, Wallet, DollarSign } from 'lucide-react';
+import { Coins, Check, Loader2, CreditCard, Banknote, Wallet } from 'lucide-react';
 import type { Payment } from '@/lib/types/payment';
 import {
   formatPaymentAmount,
@@ -91,10 +91,11 @@ export function PaymentList({
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">학원비 목록을 불러오는 중...</p>
+      <Card className="rounded-lg border-border/70 shadow-none">
+        <CardContent className="space-y-3 p-5">
+          <div className="h-10 w-full rounded-md bg-muted" />
+          <div className="h-10 w-full rounded-md bg-muted/70" />
+          <div className="h-10 w-full rounded-md bg-muted/50" />
         </CardContent>
       </Card>
     );
@@ -102,23 +103,9 @@ export function PaymentList({
 
   if (payments.length === 0) {
     return (
-      <Card>
+      <Card className="rounded-lg border-border/70 shadow-none">
         <CardContent className="p-12 text-center">
-          <div className="text-muted-foreground mb-4">
-            <svg
-              className="w-16 h-16 mx-auto"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
-          </div>
+          <Banknote className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
           <h3 className="text-lg font-semibold text-foreground mb-2">학원비 내역이 없습니다</h3>
           <p className="text-muted-foreground">
             학원비를 청구하시면 여기에 표시됩니다.
@@ -129,49 +116,49 @@ export function PaymentList({
   }
 
   return (
-    <Card>
+    <Card className="rounded-lg border-border/70 shadow-none">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-muted border-b border-border">
+          <table className="w-full min-w-[980px] text-sm">
+            <thead className="border-b border-border bg-muted/40">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-5 py-3 text-left font-medium text-muted-foreground">
                   학생 정보
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-5 py-3 text-left font-medium text-muted-foreground">
                   청구 내역
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-5 py-3 text-left font-medium text-muted-foreground">
                   금액
                 </th>
                 {!hideDueDate && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">
                     납부 기한
                   </th>
                 )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-5 py-3 text-left font-medium text-muted-foreground">
                   상태
                 </th>
                 {showCreditButton && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">
                     크레딧
                   </th>
                 )}
                 {showPaymentMarkButton && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left font-medium text-muted-foreground">
                     납부처리
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="bg-card divide-y divide-border">
+            <tbody className="divide-y divide-border">
               {payments.map((payment) => {
                 const overdue = isOverdue(payment);
                 return (
                   <tr
                     key={payment.id}
                     onClick={() => onPaymentClick(payment.id)}
-                    className={`hover:bg-muted cursor-pointer transition-colors ${
+                    className={`cursor-pointer transition-colors hover:bg-muted/35 ${
                       overdue ? 'bg-red-50 dark:bg-red-950' : ''
                     }`}
                   >
