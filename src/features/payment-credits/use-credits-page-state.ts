@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
 import type { Credit, CreditStats, CreditTypeStats, StudentWithCredit } from '@/lib/types/payment';
 import { getCreditsForPage, getCreditsSummaryForPage } from './credits-page-api';
 import type { CreditFilters, CreditStatusFilter, CreditTypeFilter } from './credits-types';
@@ -33,9 +32,7 @@ export function useCreditsPageState() {
       setStudentsWithCredit(normalizedSummary.studentsWithCredit);
       setTypeStats(normalizedSummary.typeStats);
     } catch {
-      console.error('Credits page data load failed');
       setError(LOAD_ERROR_MESSAGE);
-      toast.error(LOAD_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }

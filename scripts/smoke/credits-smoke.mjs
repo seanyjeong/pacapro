@@ -162,6 +162,7 @@ async function runError(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openCreditsPage(page);
+  await page.getByRole('alert').getByRole('heading', { name: '크레딧 정보를 불러오지 못했습니다' }).waitFor();
   await page.getByRole('main').getByText('크레딧 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'credits error');
   await assertNoHorizontalOverflow(page, 'credits error');
@@ -174,6 +175,10 @@ async function runError(browser) {
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
+  const appConsoleErrors = result.diagnostics.consoleErrors.filter((message) =>
+    message.includes('Credits page data load failed')
+  );
+  if (appConsoleErrors.length > 0) throw new Error(`unexpected app console errors: ${appConsoleErrors.join(' | ')}`);
 }
 
 async function main() {
