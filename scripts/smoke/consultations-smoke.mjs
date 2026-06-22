@@ -132,8 +132,11 @@ async function runDesktop(browser) {
   await page.getByText('010-1111-2222').click();
   await page.getByText('상담 신청 상세').waitFor();
   await page.getByText('정시 체대 상담 희망').waitFor();
-  await assertNoRawVisibleText(page, 'consultations detail dialog');
   await page.screenshot({ path: '/Users/etlab/paca-consultations-detail-desktop.png', fullPage: true });
+  await page.getByRole('button', { name: '체험 등록' }).click();
+  await page.getByRole('heading', { name: '체험 수업 일정 선택' }).waitFor();
+  await assertNoRawVisibleText(page, 'consultations detail dialog');
+  await page.screenshot({ path: '/Users/etlab/paca-consultations-trial-desktop.png', fullPage: true });
 
   await context.close();
   return result;
@@ -149,6 +152,14 @@ async function runMobile(browser) {
   await assertNoRawVisibleText(page, 'consultations mobile');
   await assertNoHorizontalOverflow(page, 'consultations mobile');
   await page.screenshot({ path: '/Users/etlab/paca-consultations-mobile.png', fullPage: true });
+
+  await page.getByText('김진우').first().click();
+  await page.getByText('상담 신청 상세').waitFor();
+  await page.getByRole('button', { name: '상담 진행' }).waitFor();
+  await page.getByRole('button', { name: '체험 등록' }).waitFor();
+  await assertNoRawVisibleText(page, 'consultations detail mobile');
+  await assertNoHorizontalOverflow(page, 'consultations detail mobile');
+  await page.screenshot({ path: '/Users/etlab/paca-consultations-detail-mobile.png', fullPage: true });
 
   await context.close();
   return result;

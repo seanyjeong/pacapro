@@ -2,7 +2,10 @@
 
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Calendar, Clock, MessageSquare, CheckSquare, Link2, Sparkles } from 'lucide-react';
+import {
+  Calendar, CheckSquare, Clock, Dumbbell, Edit3, Link2, MessageSquare,
+  Sparkles, UserRound
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -93,6 +96,23 @@ function AcademicScoresSection({ scores }: { scores: Consultation['academicScore
 export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onStatusChange, onTrialRegister }: Props) {
   if (!consultation) return null;
   const c = consultation;
+  const canRegisterTrial = c.consultation_type === 'new_registration' && !c.linked_student_id;
+  const linkedStudentHref = c.linked_student_id ? `/students/${c.linked_student_id}` : null;
+
+  const handleEditInfo = () => {
+    onEditInfo(c);
+    onOpenChange(false);
+  };
+
+  const handleStatusChange = () => {
+    onStatusChange();
+    onOpenChange(false);
+  };
+
+  const handleTrialRegister = () => {
+    onTrialRegister();
+    onOpenChange(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,6 +131,50 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
               </Badge>
             )}
           </div>
+
+          <section className="rounded-md border border-border bg-muted/30 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0 space-y-1">
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <CheckSquare className="h-4 w-4" />
+                  다음 작업
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  상담 진행, 일정 변경, 학생 전환을 여기서 바로 처리합니다.
+                </p>
+              </div>
+              <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 lg:w-auto">
+                <Link href={`/consultations/${c.id}/conduct`}>
+                  <Button className="w-full justify-center gap-2">
+                    <CheckSquare className="h-4 w-4" />
+                    상담 진행
+                  </Button>
+                </Link>
+                <Button variant="outline" className="w-full justify-center gap-2" onClick={handleStatusChange}>
+                  <Calendar className="h-4 w-4" />
+                  상태/일정 변경
+                </Button>
+                <Button variant="outline" className="w-full justify-center gap-2" onClick={handleEditInfo}>
+                  <Edit3 className="h-4 w-4" />
+                  정보 수정
+                </Button>
+                {linkedStudentHref ? (
+                  <Link href={linkedStudentHref}>
+                    <Button variant="outline" className="w-full justify-center gap-2">
+                      <UserRound className="h-4 w-4" />
+                      학생 상세
+                    </Button>
+                  </Link>
+                ) : null}
+                {canRegisterTrial ? (
+                  <Button variant="outline" className="w-full justify-center gap-2" onClick={handleTrialRegister}>
+                    <Dumbbell className="h-4 w-4" />
+                    체험 등록
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </section>
 
           <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4">
             <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">상담 일정</h4>
@@ -173,17 +237,6 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
             신청일: {format(parseISO(c.created_at), 'yyyy-MM-dd HH:mm')}
           </p>
 
-          <div className="border-t pt-4 mt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium flex items-center gap-2">
-                <CheckSquare className="h-4 w-4" />상담 진행
-              </h4>
-              <Link href={`/consultations/${c.id}/conduct`}>
-                <Button size="sm" className="gap-2">상담 진행 페이지로 이동</Button>
-              </Link>
-            </div>
-          </div>
-
           {c.linked_student_id && c.linked_student_is_trial && (
             <div className="bg-green-50 dark:bg-green-950 rounded-lg p-4">
               <p className="text-green-800 dark:text-green-200 flex items-center gap-2">
@@ -196,18 +249,6 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => { onEditInfo(c); onOpenChange(false); }}
-          >
-            정보 수정
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => { onStatusChange(); onOpenChange(false); }}
-          >
-            상태 변경
-          </Button>
           <Button onClick={() => onOpenChange(false)}>닫기</Button>
         </DialogFooter>
       </DialogContent>
