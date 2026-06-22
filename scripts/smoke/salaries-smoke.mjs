@@ -163,9 +163,21 @@ async function runNormal(browser) {
   await page.getByText('Finance Desk').waitFor();
   await page.locator('tr:has-text("김강사")').waitFor();
   await page.locator('tr:has-text("박트레이너")').waitFor();
+  await page.getByRole('button', { name: '김강사 급여 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'salaries desktop');
   await assertNoHorizontalOverflow(page, 'salaries desktop');
   await page.screenshot({ path: '/Users/etlab/paca-salaries-desktop.png', fullPage: true });
+
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes('/salaries') && response.url().includes('month=4')),
+    page.getByRole('button', { name: '이전 월' }).click(),
+  ]);
+  await page.getByLabel('조회 월').filter({ hasText: '2026년 4월' }).waitFor();
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes('/salaries') && response.url().includes('month=5')),
+    page.getByRole('button', { name: '다음 월' }).click(),
+  ]);
+  await page.getByLabel('조회 월').filter({ hasText: '2026년 5월' }).waitFor();
 
   await page.getByRole('button', { name: /모두 지급처리 \(2건\)/ }).click();
   await page.getByLabel('비밀번호').fill('owner-pass');
@@ -203,6 +215,7 @@ async function runError(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openSalariesPage(page);
+  await page.getByRole('alert').getByRole('heading', { name: '급여 정보를 불러오지 못했습니다' }).waitFor();
   await page.getByRole('main').getByText('급여 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'salaries error');
   await assertNoHorizontalOverflow(page, 'salaries error');

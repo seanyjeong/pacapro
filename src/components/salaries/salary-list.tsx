@@ -55,6 +55,7 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
           return (
             <article
               key={salary.id}
+              aria-label={`${salary.instructor_name} 급여 상세 보기`}
               role="button"
               tabIndex={0}
               onClick={() => onSalaryClick(salary.id)}
@@ -118,6 +119,7 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
             {salaries.map((salary) => (
               <tr
                 key={salary.id}
+                aria-label={`${salary.instructor_name} 급여 상세 보기`}
                 role="button"
                 tabIndex={0}
                 onClick={() => onSalaryClick(salary.id)}

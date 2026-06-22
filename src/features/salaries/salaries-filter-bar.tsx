@@ -57,13 +57,16 @@ export function SalariesFilterBar({
           ))}
         </select>
 
-        <div className="flex w-full items-center gap-1">
+        <div className="flex w-full items-center gap-1" aria-label="급여 월 이동">
           <Button type="button" variant="outline" size="sm" onClick={onPrevMonth} aria-label="이전 월">
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={onDefaultMonth} className="min-w-[118px] flex-1 sm:flex-none">
+          <div
+            aria-label="조회 월"
+            className="flex h-9 min-w-[118px] flex-1 items-center justify-center rounded-md border border-border bg-muted/35 px-3 text-sm font-medium text-foreground sm:flex-none"
+          >
             {filters.year && filters.month ? `${filters.year}년 ${filters.month}월` : '전체'}
-          </Button>
+          </div>
           <Button type="button" variant="outline" size="sm" onClick={onNextMonth} aria-label="다음 월">
             <ChevronRight className="h-4 w-4" />
           </Button>
