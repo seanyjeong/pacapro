@@ -40,6 +40,7 @@
     "smoke:onboarding": "node scripts/smoke/onboarding-smoke.mjs",
     "smoke:tablet-attendance": "node scripts/smoke/tablet-attendance-smoke.mjs",
     "smoke:tablet-students": "node scripts/smoke/tablet-students-smoke.mjs",
+    "smoke:tablet-payments": "node scripts/smoke/tablet-payments-smoke.mjs",
     "smoke:season-list": "node scripts/smoke/season-list-smoke.mjs",
     "smoke:season-create": "node scripts/smoke/season-create-smoke.mjs",
     "smoke:season-edit": "node scripts/smoke/season-edit-smoke.mjs",
