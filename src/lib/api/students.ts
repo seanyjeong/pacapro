@@ -276,7 +276,7 @@ export const studentsAPI = {
     rest_reason?: string;
     credit_type: 'carryover' | 'refund' | 'none';
     source_payment_id?: number;
-  }): Promise<{
+  }, config?: APIRequestConfig): Promise<{
     message: string;
     student: Student;
     restCredit?: {
@@ -286,7 +286,7 @@ export const studentsAPI = {
       status: string;
     };
   }> => {
-    return await apiClient.post(`/students/${id}/process-rest`, data);
+    return await apiClient.post(`/students/${id}/process-rest`, data, config);
   },
 
   // ===== 수업일 관리 API =====

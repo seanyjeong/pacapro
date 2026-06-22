@@ -115,7 +115,7 @@ export function StudentRestModal({
 
         setPaidAmount(totalPaid);
       } catch (err) {
-        console.error('결제 내역 조회 실패:', err);
+        console.warn('휴원 기준 결제 내역을 불러오지 못했습니다.', err);
         setPaidAmount(0);
       } finally {
         setLoadingPayment(false);
@@ -131,6 +131,11 @@ export function StudentRestModal({
       return;
     }
 
+    if (!isIndefinite && restEndDate && restEndDate < restStartDate) {
+      setError('휴원 종료일은 시작일 이후로 선택해주세요.');
+      return;
+    }
+
     setSubmitting(true);
     setError('');
 
@@ -140,13 +145,15 @@ export function StudentRestModal({
         rest_end_date: isIndefinite ? null : restEndDate || null,
         rest_reason: restReason || undefined,
         credit_type: creditType,
+      }, {
+        suppressErrorToast: true,
       });
 
       onSuccess();
       onClose();
-    } catch (err: any) {
-      console.error('휴원 처리 실패:', err);
-      setError(err.response?.data?.message || '휴원 처리에 실패했습니다.');
+    } catch (err: unknown) {
+      console.warn('휴원 처리에 실패했습니다.', err);
+      setError('휴원 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSubmitting(false);
     }
@@ -165,7 +172,7 @@ export function StudentRestModal({
       {/* Modal */}
       <Card className="relative z-10 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between py-4 px-6">
-          <CardTitle className="text-lg">⏸️ 휴원 처리</CardTitle>
+          <CardTitle className="text-lg">휴원 처리</CardTitle>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="w-4 h-4" />
           </Button>
@@ -238,7 +245,12 @@ export function StudentRestModal({
 
           {/* 수업료 처리 옵션 */}
           <div className="space-y-3">
-            <h4 className="font-medium">수업료 처리</h4>
+            <div>
+              <h4 className="font-medium">수업료 처리</h4>
+              <p className="mt-1 text-xs text-muted-foreground">
+                시작일과 종료일을 바꾸면 예상 이월/환불 금액이 바로 다시 계산됩니다.
+              </p>
+            </div>
 
             {loadingPayment ? (
               <div className="p-3 bg-muted rounded-lg text-sm">
@@ -353,7 +365,10 @@ export function StudentRestModal({
 
           {/* 에러 메시지 */}
           {error && (
-            <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+            <div
+              className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg"
+              role="alert"
+            >
               <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
             </div>
           )}

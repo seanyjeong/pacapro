@@ -57,7 +57,7 @@ function makeStudent(overrides = {}) {
 }
 
 function makeState(mode) {
-  return { editPayload: null, hits: [], mode, studentPayload: null, studentPayloads: [] };
+  return { editPayload: null, hits: [], mode, restPayload: null, studentPayload: null, studentPayloads: [] };
 }
 
 async function installRoutes(context, state) {
@@ -130,6 +130,33 @@ async function installRoutes(context, state) {
         payments: [],
         performances: [],
         student: makeStudent({ id: 77, name: '김수정', phone: '010-7777-8888' }),
+      });
+    }
+
+    if (method === 'GET' && path === '/payments') {
+      return jsonRoute(route, {
+        message: 'ok',
+        payments: [
+          {
+            id: 8801,
+            student_id: 77,
+            student_name: '김수정',
+            year_month: '2026-06',
+            paid_amount: 520000,
+            payment_status: 'paid',
+          },
+        ],
+      });
+    }
+
+    if (method === 'POST' && path === '/students/77/process-rest') {
+      state.restPayload = JSON.parse(request.postData() || '{}');
+      if (state.mode === 'rest-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
+      return jsonRoute(route, {
+        message: 'paused',
+        student: makeStudent({ id: 77, name: '김수정', status: 'paused' }),
       });
     }
 
@@ -335,6 +362,29 @@ async function runEditError(browser) {
   return result;
 }
 
+async function runRestError(browser) {
+  const result = await createStudentFormPage(browser, 'rest-error', { width: 390, height: 844 });
+  const { context, page, state } = result;
+
+  await page.goto('/students/77/edit', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 정보 수정' }).waitFor();
+  await page.locator('select').last().selectOption('paused');
+  await page.getByRole('heading', { name: /휴원 처리/ }).waitFor();
+  await page.getByRole('heading', { name: '수업료 처리' }).waitFor();
+  await page.getByRole('button', { name: '휴원 처리' }).click();
+  await page.getByText('휴원 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'student rest modal error');
+  await assertNoHorizontalOverflow(page, 'student rest modal error');
+  await page.screenshot({ path: '/Users/etlab/paca-student-rest-error-mobile.png', fullPage: true });
+
+  if (state.restPayload?.credit_type !== 'none') {
+    throw new Error(`unexpected rest payload: ${JSON.stringify(state.restPayload)}`);
+  }
+
+  await context.close();
+  return result;
+}
+
 async function runEditLoadError(browser) {
   const result = await createStudentFormPage(browser, 'edit-load-error', { width: 390, height: 844 });
   const { context, page } = result;
@@ -373,8 +423,9 @@ async function main() {
     const createSameName = await runCreateSameNameWarning(browser);
     const editSuccess = await runEditSuccess(browser);
     const editError = await runEditError(browser);
+    const restError = await runRestError(browser);
     const editLoadError = await runEditLoadError(browser);
-    [createSuccess, createError, createSameName, editSuccess, editError, editLoadError].forEach(assertDiagnostics);
+    [createSuccess, createError, createSameName, editSuccess, editError, restError, editLoadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       createHits: createSuccess.state.hits,
       createPayload: createSuccess.state.studentPayload,
@@ -385,6 +436,8 @@ async function main() {
       editHits: editSuccess.state.hits,
       editPayload: editSuccess.state.editPayload,
       editErrorHits: editError.state.hits,
+      restErrorHits: restError.state.hits,
+      restPayload: restError.state.restPayload,
       editLoadErrorHits: editLoadError.state.hits,
     }, null, 2));
   } finally {
