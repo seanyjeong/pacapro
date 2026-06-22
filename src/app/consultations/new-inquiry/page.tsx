@@ -12,7 +12,7 @@
 //   _components/ConsultationListSection.tsx
 
 import {
-  Calendar, CheckCircle2, ClipboardList, Clock3, Plus, RefreshCw, Search, Settings, UserCheck, UsersRound
+  AlertCircle, Calendar, CheckCircle2, ClipboardList, Clock3, Plus, RefreshCw, Search, Settings, UserCheck, UsersRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,7 +35,7 @@ import type { Consultation, ConsultationStatus } from '@/lib/types/consultation'
 export default function NewInquiryConsultationsPage() {
   const {
     // 목록 state
-    loading, stats, pagination, setPagination,
+    loading, loadError, stats, pagination, setPagination,
     // 필터
     search, setSearch, statusFilter, setStatusFilter,
     dateFilter, setDateFilter,
@@ -139,6 +139,22 @@ export default function NewInquiryConsultationsPage() {
           </Button>
         </div>
       </header>
+
+      {loadError ? (
+        <section className="flex flex-col gap-3 rounded-md border border-rose-200 bg-rose-50 p-4 text-rose-950 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-700" />
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">{loadError}</p>
+              <p className="text-xs text-rose-800">목록은 다시 불러올 수 있고, 신규상담 등록은 화면에서 계속 확인할 수 있습니다.</p>
+            </div>
+          </div>
+          <Button className="shrink-0" size="sm" variant="outline" onClick={loadData}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            다시 불러오기
+          </Button>
+        </section>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
         {statCards.map((card) => {
@@ -267,11 +283,13 @@ export default function NewInquiryConsultationsPage() {
       {/* 목록 */}
       <ConsultationListSection
         loading={loading}
+        errorMessage={loadError}
         statusFilter={statusFilter}
         completedTab={completedTab}
         groupedByMonth={groupedByMonth}
         isMonthExpanded={isMonthExpanded}
         toggleMonth={toggleMonth}
+        onRetry={loadData}
         onSelect={(c) => { setSelectedConsultation(c); setDetailOpen(true); }}
         onStatusModal={openStatusModal}
         onEditStudent={openEditStudentModal}

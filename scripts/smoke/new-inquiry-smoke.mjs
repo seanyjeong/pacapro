@@ -73,6 +73,13 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'GET' && path === '/consultations') {
+      const isPageList = url.searchParams.get('page') === '1' &&
+        url.searchParams.get('consultationType') === 'new_registration' &&
+        !url.searchParams.has('status');
+      if (state.mode === 'list-error' && isPageList) {
+        return jsonRoute(route, { message: 'DB timeout' }, 500);
+      }
+
       return jsonRoute(route, {
         consultations: [mockConsultation()],
         pagination: { total: 1, page: 1, limit: 20, totalPages: 1 },
@@ -82,6 +89,9 @@ async function installRoutes(context, state) {
 
     if (method === 'POST' && path === '/consultations/direct') {
       state.directPayload = JSON.parse(request.postData() || '{}');
+      if (state.mode === 'save-error') {
+        return jsonRoute(route, { message: 'DB timeout' }, 500);
+      }
       return jsonRoute(route, { message: 'created', id: 77 });
     }
 
@@ -127,6 +137,22 @@ async function runMissingHours(browser) {
   return result;
 }
 
+async function runListError(browser) {
+  const result = await createNewInquiryPage(browser, 'list-error', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/consultations/new-inquiry', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '신규상담', exact: true }).waitFor({ timeout: 15000 });
+  await page.getByText('상담 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').first().waitFor({ timeout: 15000 });
+  await page.getByRole('button', { name: '다시 불러오기' }).first().waitFor();
+  await assertNoRawVisibleText(page, 'new inquiry list error');
+  await assertNoHorizontalOverflow(page, 'new inquiry list error');
+  await page.screenshot({ path: '/Users/etlab/paca-new-inquiry-list-error.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 async function runCreateHappyPath(browser) {
   const result = await createNewInquiryPage(browser, 'success');
   const { context, page, state } = result;
@@ -158,6 +184,29 @@ async function runCreateHappyPath(browser) {
   return result;
 }
 
+async function runCreateSaveError(browser) {
+  const result = await createNewInquiryPage(browser, 'save-error');
+  const { context, page, state } = result;
+
+  await openCreateDialog(page);
+  await page.getByLabel('학생명').fill('김진우');
+  await page.getByLabel('연락처').fill('010-9999-0000');
+  await selectOption(page, '학년', '고2');
+  await page.getByLabel('상담 날짜').fill(TEST_DATE);
+  await selectOption(page, '상담 시간', '09:30');
+  await page.getByRole('button', { name: '등록', exact: true }).last().click();
+  await page.getByText('신규상담 등록에 실패했습니다. 잠시 후 다시 시도해주세요.').waitFor({ timeout: 15000 });
+
+  if (!state.directPayload) throw new Error('direct consultation payload was not sent before save error');
+
+  await assertNoRawVisibleText(page, 'new inquiry save error');
+  await assertNoHorizontalOverflow(page, 'new inquiry save error');
+  await page.screenshot({ path: '/Users/etlab/paca-new-inquiry-save-error.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -166,12 +215,16 @@ function assertDiagnostics(result) {
 async function main() {
   const browser = await launchSmokeBrowser();
   try {
+    const listError = await runListError(browser);
     const missingHours = await runMissingHours(browser);
     const createHappyPath = await runCreateHappyPath(browser);
-    [missingHours, createHappyPath].forEach(assertDiagnostics);
+    const createSaveError = await runCreateSaveError(browser);
+    [listError, missingHours, createHappyPath, createSaveError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
+      listErrorHits: listError.state.hits,
       missingHoursHits: missingHours.state.hits,
       createHits: createHappyPath.state.hits,
+      saveErrorHits: createSaveError.state.hits,
       directPayload: createHappyPath.state.directPayload,
     }, null, 2));
   } finally {

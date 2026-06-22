@@ -1,6 +1,4 @@
 'use client';
-// Phase 4 #3 (ADR-018) — 신규상담 페이지 훅
-// 모든 state + handler + derived 값 관리
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
@@ -18,14 +16,15 @@ import type { WeeklyHour } from '@/lib/types/consultation';
 import type { TagFilter, CreateForm, EditStudentForm, CompletedStats, GroupedMonth } from '../_types';
 import { INITIAL_CREATE_FORM } from '../_types';
 
+const QUIET_API = { suppressErrorToast: true };
+
 export function useNewInquiry() {
-  // ── 목록 state ────────────────────────────────────────────────
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
 
-  // ── 필터 state ────────────────────────────────────────────────
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week'>('all');
@@ -33,11 +32,9 @@ export function useNewInquiry() {
   const [selectedTags, setSelectedTags] = useState<TagFilter[]>([]);
   const [expandedMonths, setExpandedMonths] = useState<Record<string, boolean>>({});
 
-  // ── 상세 모달 state ────────────────────────────────────────────
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // ── 상태변경 모달 state ────────────────────────────────────────
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [newStatus, setNewStatus] = useState<ConsultationStatus>('pending');
   const [adminNotes, setAdminNotes] = useState('');
@@ -47,11 +44,9 @@ export function useNewInquiry() {
   const [editBookedTimes, setEditBookedTimes] = useState<string[]>([]);
   const [loadingEditBookedTimes, setLoadingEditBookedTimes] = useState(false);
 
-  // ── 삭제 모달 state ───────────────────────────────────────────
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // ── 신규상담 등록 모달 state ───────────────────────────────────
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateForm>(INITIAL_CREATE_FORM);
   const [creating, setCreating] = useState(false);
@@ -59,7 +54,6 @@ export function useNewInquiry() {
   const [loadingBookedTimes, setLoadingBookedTimes] = useState(false);
   const [weeklyHours, setWeeklyHours] = useState<WeeklyHour[]>([]);
 
-  // ── 체험 등록 모달 state ───────────────────────────────────────
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [trialConsultation, setTrialConsultation] = useState<Consultation | null>(null);
   const [trialDates, setTrialDates] = useState<{ date: string; timeSlot: string }[]>([
@@ -67,7 +61,6 @@ export function useNewInquiry() {
   ]);
   const [convertingToTrial, setConvertingToTrial] = useState(false);
 
-  // ── 학생 정보 수정 모달 state ──────────────────────────────────
   const [editStudentModalOpen, setEditStudentModalOpen] = useState(false);
   const [editStudentForm, setEditStudentForm] = useState<EditStudentForm>({
     studentGrade: '',
@@ -76,7 +69,6 @@ export function useNewInquiry() {
   });
   const [updatingStudent, setUpdatingStudent] = useState(false);
 
-  // ── 헬퍼 ──────────────────────────────────────────────────────
   const addDays = (date: Date, days: number) => {
     const result = new Date(date);
     result.setDate(result.getDate() + days);
@@ -96,7 +88,6 @@ export function useNewInquiry() {
     return { startDate: undefined, endDate: undefined };
   }, [dateFilter]);
 
-  // ── 시간 슬롯 생성 ────────────────────────────────────────────
   const generateTimeSlots = useCallback((date: string): string[] => {
     if (!date || weeklyHours.length === 0) return [];
     const dayOfWeek = new Date(date).getDay();
@@ -120,9 +111,9 @@ export function useNewInquiry() {
     return slots;
   }, [weeklyHours]);
 
-  // ── 데이터 로드 ───────────────────────────────────────────────
   const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const { startDate, endDate } = getDateRange();
       const response = await getConsultations({
@@ -133,12 +124,13 @@ export function useNewInquiry() {
         endDate,
         page: pagination.page,
         limit: pagination.limit
-      });
+      }, QUIET_API);
       setConsultations(response.consultations);
       setStats(response.stats);
       setPagination(response.pagination);
     } catch (error) {
       console.error('데이터 로드 오류:', error);
+      setLoadError('상담 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -146,17 +138,18 @@ export function useNewInquiry() {
 
   useEffect(() => {
     loadData();
-  }, [search, statusFilter, dateFilter, pagination.page]);
+  }, [loadData]);
 
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await getConsultationSettings();
+        const response = await getConsultationSettings(QUIET_API);
         if (response.weeklyHours) {
           setWeeklyHours(response.weeklyHours);
         }
       } catch (error) {
         console.error('운영시간 설정 로드 오류:', error);
+        toast.error('상담 운영시간 설정을 불러오지 못했습니다. 상담 설정을 확인해주세요.');
       }
     };
     loadSettings();
@@ -166,10 +159,11 @@ export function useNewInquiry() {
     if (!date) return;
     setLoadingBookedTimes(true);
     try {
-      const response = await getBookedTimes(date);
+      const response = await getBookedTimes(date, QUIET_API);
       setBookedTimes(response.bookedTimes || []);
     } catch (error) {
       console.error('예약 시간 로드 오류:', error);
+      toast.error('예약 시간을 불러오지 못했습니다. 날짜를 다시 선택해주세요.');
     } finally {
       setLoadingBookedTimes(false);
     }
@@ -179,16 +173,16 @@ export function useNewInquiry() {
     if (!date) return;
     setLoadingEditBookedTimes(true);
     try {
-      const response = await getBookedTimes(date);
+      const response = await getBookedTimes(date, QUIET_API);
       setEditBookedTimes(response.bookedTimes || []);
     } catch (error) {
       console.error('예약 시간 로드 오류:', error);
+      toast.error('예약 시간을 불러오지 못했습니다. 날짜를 다시 선택해주세요.');
     } finally {
       setLoadingEditBookedTimes(false);
     }
   };
 
-  // ── 핸들러 ────────────────────────────────────────────────────
   const handleCreateConsultation = async () => {
     const missing: string[] = [];
     if (!createForm.studentName) missing.push('학생명');
@@ -203,13 +197,14 @@ export function useNewInquiry() {
 
     setCreating(true);
     try {
-      await createDirectConsultation(createForm);
+      await createDirectConsultation(createForm, QUIET_API);
       toast.success('상담이 등록되었습니다.');
       setCreateModalOpen(false);
       setCreateForm(INITIAL_CREATE_FORM);
       loadData();
     } catch (error) {
       console.error('상담 등록 오류:', error);
+      toast.error('신규상담 등록에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setCreating(false);
     }
@@ -224,13 +219,14 @@ export function useNewInquiry() {
         adminNotes: adminNotes || undefined,
         preferredDate: newDate || undefined,
         preferredTime: newTime || undefined
-      });
+      }, QUIET_API);
       toast.success('상담 상태가 변경되었습니다.');
       setStatusModalOpen(false);
       setDetailOpen(false);
       loadData();
     } catch (error) {
       console.error('상태 변경 오류:', error);
+      toast.error('상담 상태 변경에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setUpdating(false);
     }
@@ -240,13 +236,14 @@ export function useNewInquiry() {
     if (!selectedConsultation) return;
     setDeleting(true);
     try {
-      await deleteConsultation(selectedConsultation.id);
+      await deleteConsultation(selectedConsultation.id, QUIET_API);
       toast.success('상담이 삭제되었습니다.');
       setDeleteModalOpen(false);
       setDetailOpen(false);
       loadData();
     } catch (error) {
       console.error('삭제 오류:', error);
+      toast.error('상담 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setDeleting(false);
     }
@@ -270,7 +267,7 @@ export function useNewInquiry() {
     }
     setConvertingToTrial(true);
     try {
-      await convertToTrialStudent(trialConsultation.id, trialDates.filter(td => td.date && td.timeSlot));
+      await convertToTrialStudent(trialConsultation.id, trialDates.filter(td => td.date && td.timeSlot), undefined, QUIET_API);
       toast.success('체험생으로 등록되었습니다.');
       setTrialModalOpen(false);
       setDetailOpen(false);
@@ -278,6 +275,7 @@ export function useNewInquiry() {
       loadData();
     } catch (error) {
       console.error('체험 등록 오류:', error);
+      toast.error('체험생 등록에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setConvertingToTrial(false);
     }
@@ -301,12 +299,13 @@ export function useNewInquiry() {
         studentGrade: editStudentForm.studentGrade || undefined,
         parentPhone: editStudentForm.parentPhone || undefined,
         studentSchool: editStudentForm.studentSchool || undefined
-      });
+      }, QUIET_API);
       toast.success('학생 정보가 수정되었습니다.');
       setEditStudentModalOpen(false);
       loadData();
     } catch (error) {
       console.error('학생 정보 수정 오류:', error);
+      toast.error('학생 정보 수정에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setUpdatingStudent(false);
     }
@@ -318,7 +317,7 @@ export function useNewInquiry() {
     );
   };
 
-  const matchesTagFilter = (c: Consultation): boolean => {
+  const matchesTagFilter = useCallback((c: Consultation): boolean => {
     if (selectedTags.length === 0) return true;
     return selectedTags.some(tag => {
       switch (tag) {
@@ -336,9 +335,8 @@ export function useNewInquiry() {
           return true;
       }
     });
-  };
+  }, [selectedTags]);
 
-  // ── 현재 월 키 ────────────────────────────────────────────────
   const currentMonthKey = format(new Date(), 'yyyy-MM');
 
   const isMonthExpanded = (monthKey: string): boolean => {
@@ -353,7 +351,6 @@ export function useNewInquiry() {
     }));
   };
 
-  // ── Derived 값 ────────────────────────────────────────────────
   const completedStats = useMemo((): CompletedStats => {
     const completedList = consultations.filter(c => c.status === 'completed');
     const registered = completedList.filter(c =>
@@ -388,7 +385,7 @@ export function useNewInquiry() {
       result = result.filter(c => c.status === 'completed' && matchesTagFilter(c));
     }
     return result;
-  }, [consultations, statusFilter, completedTab, selectedTags]);
+  }, [consultations, statusFilter, completedTab, selectedTags, matchesTagFilter]);
 
   const groupedByMonth = useMemo((): GroupedMonth[] => {
     const groups: { [key: string]: { label: string; consultations: Consultation[] } } = {};
@@ -405,13 +402,12 @@ export function useNewInquiry() {
   }, [filteredConsultations]);
 
   return {
-    // 목록 state
     consultations,
     loading,
+    loadError,
     stats,
     pagination,
     setPagination,
-    // 필터 state + setters
     search,
     setSearch,
     statusFilter,
@@ -423,16 +419,13 @@ export function useNewInquiry() {
     selectedTags,
     toggleTag,
     setSelectedTags,
-    // 월별 펼침
     isMonthExpanded,
     toggleMonth,
     currentMonthKey,
-    // 상세 모달
     selectedConsultation,
     setSelectedConsultation,
     detailOpen,
     setDetailOpen,
-    // 상태 변경 모달
     statusModalOpen,
     setStatusModalOpen,
     newStatus,
@@ -446,11 +439,9 @@ export function useNewInquiry() {
     setNewTime,
     editBookedTimes,
     loadingEditBookedTimes,
-    // 삭제 모달
     deleteModalOpen,
     setDeleteModalOpen,
     deleting,
-    // 신규상담 등록 모달
     createModalOpen,
     setCreateModalOpen,
     createForm,
@@ -459,7 +450,6 @@ export function useNewInquiry() {
     bookedTimes,
     loadingBookedTimes,
     weeklyHours,
-    // 체험 등록 모달
     trialModalOpen,
     setTrialModalOpen,
     trialConsultation,
@@ -467,13 +457,11 @@ export function useNewInquiry() {
     trialDates,
     setTrialDates,
     convertingToTrial,
-    // 학생 정보 수정 모달
     editStudentModalOpen,
     setEditStudentModalOpen,
     editStudentForm,
     setEditStudentForm,
     updatingStudent,
-    // 핸들러
     loadData,
     loadBookedTimes,
     loadEditBookedTimes,
@@ -486,7 +474,6 @@ export function useNewInquiry() {
     handleConvertToTrial,
     openEditStudentModal,
     handleUpdateStudent,
-    // Derived 값
     completedStats,
     filteredConsultations,
     groupedByMonth,

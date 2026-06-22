@@ -4,9 +4,9 @@
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import {
-  Calendar, Clock, Phone, Eye, Edit, Trash2,
+  AlertCircle, Calendar, Clock, Phone, Eye, Edit, Trash2,
   MoreHorizontal, Loader2, ChevronDown, ChevronRight, User,
-  UserCheck, UserX, Dumbbell, CheckSquare
+  UserCheck, UserX, Dumbbell, CheckSquare, RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,11 +24,13 @@ import type { GroupedMonth } from '../_types';
 
 interface ConsultationListSectionProps {
   loading: boolean;
+  errorMessage: string | null;
   statusFilter: string;
   completedTab: 'all' | 'registered' | 'trial_ongoing' | 'unregistered';
   groupedByMonth: GroupedMonth[];
   isMonthExpanded: (monthKey: string) => boolean;
   toggleMonth: (monthKey: string) => void;
+  onRetry: () => void;
   onSelect: (c: Consultation) => void;
   onStatusModal: (c: Consultation) => void;
   onEditStudent: (c: Consultation) => void;
@@ -38,11 +40,13 @@ interface ConsultationListSectionProps {
 
 export function ConsultationListSection({
   loading,
+  errorMessage,
   statusFilter,
   completedTab,
   groupedByMonth,
   isMonthExpanded,
   toggleMonth,
+  onRetry,
   onSelect,
   onStatusModal,
   onEditStudent,
@@ -57,6 +61,20 @@ export function ConsultationListSection({
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+          </div>
+        ) : errorMessage ? (
+          <div className="flex flex-col items-center justify-center gap-3 px-5 py-12 text-center">
+            <span className="flex h-10 w-10 items-center justify-center rounded-md bg-rose-50 text-rose-700">
+              <AlertCircle className="h-5 w-5" />
+            </span>
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-foreground">{errorMessage}</p>
+              <p className="text-xs text-muted-foreground">잠시 뒤 다시 시도하거나 상담 설정 상태를 확인해주세요.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={onRetry}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              다시 불러오기
+            </Button>
           </div>
         ) : filteredCount === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
