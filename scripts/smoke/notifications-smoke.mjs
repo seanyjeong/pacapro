@@ -188,6 +188,13 @@ async function runDesktop(browser) {
   await assertNoHorizontalOverflow(page, 'notifications desktop');
   await page.screenshot({ path: '/Users/etlab/paca-notifications-desktop.png', fullPage: true });
 
+  await page.getByRole('button', { name: /솔라피/ }).click();
+  await page.getByRole('heading', { name: '알림톡 템플릿 설정' }).waitFor();
+  await page.getByText('솔라피 콘솔에서 이미지 업로드').first().waitFor();
+  await assertNoRawVisibleText(page, 'notifications solapi desktop');
+  await assertNoHorizontalOverflow(page, 'notifications solapi desktop');
+  await page.screenshot({ path: '/Users/etlab/paca-notifications-solapi-desktop.png', fullPage: true });
+
   await context.close();
   return result;
 }

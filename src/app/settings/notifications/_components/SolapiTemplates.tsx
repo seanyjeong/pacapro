@@ -1,11 +1,12 @@
 'use client';
 
 // Phase 4 #1 — 솔라피 템플릿 탭 + 5개 템플릿 폼 sub-component
-import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, Image, ClipboardCheck } from 'lucide-react';
+import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, ClipboardCheck } from 'lucide-react';
 import { NotificationSettings, ConsultationButton } from '@/lib/api/notifications';
 import { TemplateType } from '../_types';
 import AlimtalkPreview from './AlimtalkPreview';
 import ButtonEditor from './ButtonEditor';
+import TemplateImageField from './TemplateImageField';
 
 interface Props {
   settings: NotificationSettings;
@@ -126,13 +127,12 @@ export default function SolapiTemplates({
                 ))}
               </div>
             </div>
-            {/* 이미지 */}
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
-              <input type="url" value={settings.solapi_image_url || ''} onChange={e => setSettings(prev => ({ ...prev, solapi_image_url: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" placeholder="https://example.com/image.jpg" />
-              <p className="text-xs text-muted-foreground mt-1">솔라피 콘솔에서 이미지 업로드 후 URL을 입력하세요. 이미지 알림톡 템플릿인 경우에만 필요합니다.</p>
-            </div>
+            <TemplateImageField
+              value={settings.solapi_image_url || ''}
+              onChange={(value) => setSettings(prev => ({ ...prev, solapi_image_url: value }))}
+              focusClassName="focus:ring-orange-500 focus:border-orange-500"
+              hint="솔라피 콘솔에서 이미지 업로드 후 URL을 입력하세요. 이미지 알림톡 템플릿인 경우에만 필요합니다."
+            />
             <ButtonEditor buttons={settings.solapi_buttons || []} onAdd={addUnpaidButton} onRemove={removeUnpaidButton} onUpdate={updateUnpaidButton} colorScheme="orange" />
             <AlimtalkPreview academyName={academyName} templateContent={settings.solapi_template_content} imageUrl={settings.solapi_image_url} buttons={settings.solapi_buttons}
               replacements={{'#{이름}':'홍길동','#{월}':'12','#{교육비}':'300,000','#{날짜}':'10일','#{학원명}':academyName,'#{학원전화}':'010-0000-0000'}} />
@@ -195,12 +195,12 @@ export default function SolapiTemplates({
             </div>
             <AlimtalkPreview academyName={academyName} templateContent={settings.solapi_consultation_template_content} imageUrl={settings.solapi_consultation_image_url} buttons={settings.solapi_consultation_buttons}
               replacements={{'#{이름}':'홍길동','#{날짜}':'12월 20일','#{시간}':'14:00','#{예약번호}':'C20251215001','#{학원명}':academyName}} />
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
-              <input type="url" value={settings.solapi_consultation_image_url || ''} onChange={e => setSettings(prev => ({ ...prev, solapi_consultation_image_url: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" placeholder="https://example.com/image.jpg (이미지 알림톡인 경우)" />
-              <p className="text-xs text-muted-foreground mt-1">솔라피 콘솔에서 이미지 업로드 후 URL을 입력하세요. 이미지 알림톡 템플릿인 경우에만 필요합니다.</p>
-            </div>
+            <TemplateImageField
+              value={settings.solapi_consultation_image_url || ''}
+              onChange={(value) => setSettings(prev => ({ ...prev, solapi_consultation_image_url: value }))}
+              focusClassName="focus:ring-green-500 focus:border-green-500"
+              hint="솔라피 콘솔에서 이미지 업로드 후 URL을 입력하세요. 이미지 알림톡 템플릿인 경우에만 필요합니다."
+            />
             <ButtonEditor buttons={settings.solapi_consultation_buttons || []} onAdd={addConsultationButton} onRemove={removeConsultationButton} onUpdate={updateConsultationButton} colorScheme="green" />
             <div className="md:col-span-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-800 dark:text-blue-200"><strong>자동 발송:</strong> 상담 예약을 &apos;확정&apos;으로 변경하면 자동으로 발송됩니다.</p>
@@ -254,11 +254,7 @@ export default function SolapiTemplates({
             </div>
             <AlimtalkPreview academyName={academyName} templateContent={settings.solapi_trial_template_content} imageUrl={settings.solapi_trial_image_url} buttons={settings.solapi_trial_buttons}
               replacements={{'#{이름}':'홍길동','#{학원명}':academyName,'#{체험일정}':'✓ 1회차: 12/18(수) 18:30\n2회차: 12/20(금) 18:30'}} />
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
-              <input type="url" value={settings.solapi_trial_image_url || ''} onChange={e => setSettings(prev => ({ ...prev, solapi_trial_image_url: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="https://example.com/image.jpg (이미지 알림톡인 경우)" />
-            </div>
+            <TemplateImageField value={settings.solapi_trial_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, solapi_trial_image_url: value }))} focusClassName="focus:ring-blue-500 focus:border-blue-500" />
             <ButtonEditor buttons={settings.solapi_trial_buttons || []} onAdd={addTrialButton} onRemove={removeTrialButton} onUpdate={updateTrialButton} colorScheme="blue" />
             {/* 자동 발송 */}
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
@@ -331,11 +327,7 @@ export default function SolapiTemplates({
             </div>
             <AlimtalkPreview academyName={academyName} templateContent={settings.solapi_overdue_template_content} imageUrl={settings.solapi_overdue_image_url} buttons={settings.solapi_overdue_buttons}
               replacements={{'#{이름}':'홍길동','#{월}':'12','#{교육비}':'300,000','#{날짜}':'10일','#{학원명}':academyName,'#{학원전화}':'010-0000-0000'}} />
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
-              <input type="url" value={settings.solapi_overdue_image_url || ''} onChange={e => setSettings(prev => ({ ...prev, solapi_overdue_image_url: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500" placeholder="https://example.com/image.jpg (이미지 알림톡인 경우)" />
-            </div>
+            <TemplateImageField value={settings.solapi_overdue_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, solapi_overdue_image_url: value }))} focusClassName="focus:ring-red-500 focus:border-red-500" />
             <ButtonEditor buttons={settings.solapi_overdue_buttons || []} onAdd={addOverdueButton} onRemove={removeOverdueButton} onUpdate={updateOverdueButton} colorScheme="red" />
             {/* 발송 안내 */}
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
@@ -396,11 +388,7 @@ export default function SolapiTemplates({
             <AlimtalkPreview academyName={academyName} templateContent={settings.solapi_reminder_template_content} imageUrl={settings.solapi_reminder_image_url} buttons={settings.solapi_reminder_buttons}
               replacements={{'#{이름}':'홍길동','#{학원명}':academyName,'#{날짜}':'1월 15일(수)','#{시간}':'14:00','#{남은시간}':'1시간','#{예약번호}':'C2025011501'}}
               timeLabel="오전 10:00" />
-            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
-              <div className="flex items-center gap-2 mb-3"><Image className="w-4 h-4 text-muted-foreground" /><h4 className="font-medium text-foreground">이미지 설정 (선택)</h4></div>
-              <input type="url" value={settings.solapi_reminder_image_url || ''} onChange={e => setSettings(prev => ({ ...prev, solapi_reminder_image_url: e.target.value }))}
-                className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" placeholder="https://example.com/image.jpg (이미지 알림톡인 경우)" />
-            </div>
+            <TemplateImageField value={settings.solapi_reminder_image_url || ''} onChange={(value) => setSettings(prev => ({ ...prev, solapi_reminder_image_url: value }))} focusClassName="focus:ring-purple-500 focus:border-purple-500" />
             <ButtonEditor buttons={settings.solapi_reminder_buttons || []} onAdd={addReminderButton} onRemove={removeReminderButton} onUpdate={updateReminderButton} colorScheme="purple" />
             {/* 자동 발송 */}
             <div className="md:col-span-2 border-t border-border pt-4 mt-2">
