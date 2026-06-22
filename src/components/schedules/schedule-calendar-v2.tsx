@@ -20,12 +20,6 @@ import {
 import type { ClassSchedule, TimeSlot } from '@/lib/types/schedule';
 import type { Consultation } from '@/lib/types/consultation';
 
-interface StudentInSlot {
-  id: number;
-  name: string;
-  student_id: number;
-}
-
 interface SlotInstructorCounts {
   scheduled: number;
   attended: number;
@@ -112,17 +106,6 @@ export function ScheduleCalendarV2({
     onDateSelect(formatDateToString(today));
   };
 
-  const handleDragStart = (
-    e: React.DragEvent,
-    studentId: number,
-    studentName: string,
-    fromDate: string,
-    fromSlot: TimeSlot
-  ) => {
-    setDraggedStudent({ studentId, studentName, fromDate, fromSlot });
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
@@ -136,10 +119,6 @@ export function ScheduleCalendarV2({
         onStudentMove(studentId, fromDate, fromSlot, toDate, toSlot);
       }
     }
-    setDraggedStudent(null);
-  };
-
-  const handleDragEnd = () => {
     setDraggedStudent(null);
   };
 
@@ -248,6 +227,7 @@ export function ScheduleCalendarV2({
                         return (
                           <div
                             key={slot}
+                            aria-label={label}
                             onClick={(e) => {
                               e.stopPropagation();
                               onSlotClick?.(dateStr, slot);
@@ -255,13 +235,13 @@ export function ScheduleCalendarV2({
                             onDragOver={handleDragOver}
                             onDrop={(e) => handleDrop(e, dateStr, slot)}
                             className={cn(
-                              'flex items-center gap-1 px-1 py-0.5 rounded text-xs border transition-all cursor-pointer overflow-hidden',
+                              'flex items-center gap-1 px-0.5 py-0.5 rounded text-xs border transition-all cursor-pointer overflow-hidden sm:px-1',
                               bgColor,
                               draggedStudent && 'ring-1 ring-dashed ring-muted-foreground'
                             )}
                           >
                             <Icon className={cn('h-3 w-3 shrink-0', color)} />
-                            <span className={cn('font-medium shrink-0', color)}>{label}</span>
+                            <span className={cn('hidden shrink-0 font-medium sm:inline', color)}>{label}</span>
                             <div className="ml-auto flex items-center gap-1 shrink-0 overflow-hidden">
                               {/* 강사 출근/배정 현황 */}
                               {scheduledInstructors > 0 && (
