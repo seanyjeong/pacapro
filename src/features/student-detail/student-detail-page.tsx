@@ -26,13 +26,15 @@ export function StudentDetailPage() {
   const router = useRouter();
   const params = useParams();
   const studentId = Number.parseInt(params.id as string, 10);
-  const [activeTab, setActiveTab] = useState<StudentDetailTab>('performance');
+  const [activeTab, setActiveTab] = useState<StudentDetailTab | null>(null);
   const [pendingAction, setPendingAction] = useState<StudentDetailAction | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [resumeModalOpen, setResumeModalOpen] = useState(false);
 
   const { error, loading, payments, performances, reload, student } = useStudent(studentId);
   const tabs = useMemo(() => (student ? buildStudentTabs(student, payments.length) : []), [payments.length, student]);
+  const unpaidPaymentCount = payments.filter((payment) => payment.payment_status !== 'paid').length;
+  const resolvedActiveTab = activeTab ?? (unpaidPaymentCount > 0 ? 'payments' : 'performance');
 
   const goBack = () => router.push('/students');
 
@@ -82,7 +84,6 @@ export function StudentDetailPage() {
   const canGraduate = (student.grade === '고3' || student.grade === 'N수') && student.status === 'active';
   const canWithdraw = student.status === 'active' || student.status === 'paused';
   const canResume = student.status === 'paused';
-  const unpaidPaymentCount = payments.filter((payment) => payment.payment_status !== 'paid').length;
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
@@ -115,11 +116,11 @@ export function StudentDetailPage() {
             <p className="text-xs text-muted-foreground">현재 상태: {STATUS_LABELS[student.status]}</p>
           </div>
         </div>
-        <StudentDetailTabs activeTab={activeTab} tabs={tabs} onTabChange={setActiveTab} />
+        <StudentDetailTabs activeTab={resolvedActiveTab} tabs={tabs} onTabChange={setActiveTab} />
         <div className="p-4">
-          {activeTab === 'performance' ? <StudentPerformanceComponent loading={false} performances={performances} /> : null}
-          {activeTab === 'attendance' ? <StudentAttendanceComponent studentId={studentId} /> : null}
-          {activeTab === 'payments' ? (
+          {resolvedActiveTab === 'performance' ? <StudentPerformanceComponent loading={false} performances={performances} /> : null}
+          {resolvedActiveTab === 'attendance' ? <StudentAttendanceComponent studentId={studentId} /> : null}
+          {resolvedActiveTab === 'payments' ? (
             <StudentPaymentsComponent
               classDays={student.class_days}
               loading={false}
@@ -131,8 +132,8 @@ export function StudentDetailPage() {
               onChanged={reload}
             />
           ) : null}
-          {activeTab === 'seasons' ? <StudentSeasonsComponent studentId={studentId} studentType={student.student_type} /> : null}
-          {activeTab === 'consultations' ? <StudentConsultationsComponent studentId={studentId} studentName={student.name} /> : null}
+          {resolvedActiveTab === 'seasons' ? <StudentSeasonsComponent studentId={studentId} studentType={student.student_type} /> : null}
+          {resolvedActiveTab === 'consultations' ? <StudentConsultationsComponent studentId={studentId} studentName={student.name} /> : null}
         </div>
       </section>
 

@@ -319,7 +319,7 @@ async function runNormalDesktop(browser) {
   await page.getByRole('heading', { name: '운영 액션' }).waitFor();
   await page.getByRole('button', { name: '수업/학원비 변경' }).waitFor();
   await page.getByRole('button', { name: '납부 내역 보기' }).waitFor();
-  await page.getByText('성적 기록이 없습니다').waitFor();
+  await page.getByText('2026-06', { exact: true }).waitFor();
   if (await page.getByText('개발 중').count()) {
     throw new Error('student detail exposes internal development copy');
   }
@@ -386,7 +386,7 @@ async function runNormalMobile(browser) {
   await page.getByText('김진우').first().waitFor();
   await page.getByRole('heading', { name: '운영 액션' }).waitFor();
   await page.getByRole('button', { name: '수업/학원비 변경' }).waitFor();
-  await page.getByText('성적 기록이 없습니다').waitFor();
+  await page.getByText('2026-06', { exact: true }).waitFor();
   await assertNoRawVisibleText(page, 'student detail mobile');
   await assertNoHorizontalOverflow(page, 'student detail mobile');
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-mobile.png', fullPage: true });
