@@ -57,6 +57,8 @@ const CATEGORY_MAP: Record<string, string> = {
   supplies: '소모품',
   marketing: '홍보비',
   refund: '환불',
+  '환불': '환불',
+  '환불(대기)': '환불(대기)',
   other: '기타',
 };
 
@@ -169,17 +171,17 @@ export function ExpenseCalendar({
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
               <CardTitle className="flex items-center gap-2">
                 <CalendarIcon className="h-5 w-5" />
                 {currentYear}년 {currentMonth + 1}월 지출
               </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="mt-1 text-sm text-muted-foreground">
                 월간 총 지출: <span className="font-semibold text-red-600">{monthlyTotal.toLocaleString()}원</span>
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-end lg:self-auto">
               <Button variant="outline" size="sm" onClick={handleToday}>
                 오늘
               </Button>
