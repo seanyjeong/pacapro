@@ -121,6 +121,33 @@ async function installRoutes(context, state) {
         ],
       });
     }
+    if (method === 'GET' && path === '/schedules/slot') {
+      return jsonRoute(route, {
+        schedule: {
+          ...schedules[0],
+          students: [
+            {
+              student_id: 41,
+              student_name: '김진우',
+              grade: '고2',
+              attendance_status: null,
+              is_trial: false,
+              is_makeup: false,
+              notes: null,
+            },
+          ],
+        },
+        available_students: [],
+      });
+    }
+    if (method === 'GET' && path === `/schedules/date/${range.today}/instructor-attendance`) {
+      const instructor = { id: 3, name: '박코치', salary_type: 'hourly' };
+      return jsonRoute(route, {
+        instructors: [instructor],
+        instructors_by_slot: { afternoon: [instructor] },
+        attendances: [],
+      });
+    }
     if (method === 'GET' && path === '/instructors') {
       return jsonRoute(route, {
         message: 'ok',
@@ -171,6 +198,17 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'schedules desktop');
   await page.screenshot({ path: '/Users/etlab/paca-schedules-desktop.png', fullPage: true });
 
+  await page.locator('[aria-label="오후"]').filter({ hasText: '8' }).click();
+  await page.getByText('김진우').waitFor();
+  const studentDetailHref = await page.getByRole('link', { name: '학생 상세' }).getAttribute('href');
+  if (studentDetailHref !== '/students/41') {
+    throw new Error(`student detail href mismatch: ${studentDetailHref}`);
+  }
+  await assertNoRawVisibleText(page, 'schedules slot detail');
+  await assertNoHorizontalOverflow(page, 'schedules slot detail');
+  await page.screenshot({ path: '/Users/etlab/paca-schedules-slot-detail.png', fullPage: true });
+  await page.getByRole('button', { name: '닫기' }).click();
+
   await page.getByRole('button', { name: '목록' }).click();
   await page.getByText('오후 실기 집중반').waitFor();
   await page.getByRole('button', { name: '삭제' }).click();
@@ -183,6 +221,13 @@ async function runNormal(browser) {
   await assertNoRawVisibleText(page, 'schedules mobile');
   await assertNoHorizontalOverflow(page, 'schedules mobile');
   await page.screenshot({ path: '/Users/etlab/paca-schedules-mobile.png', fullPage: true });
+
+  await page.locator('[aria-label="오후"]').filter({ hasText: '8' }).click();
+  await page.getByRole('link', { name: '학생 상세' }).waitFor();
+  await assertNoRawVisibleText(page, 'schedules slot detail mobile');
+  await assertNoHorizontalOverflow(page, 'schedules slot detail mobile');
+  await page.screenshot({ path: '/Users/etlab/paca-schedules-slot-detail-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: '닫기' }).click();
 
   if (!state.hits.some((hit) => hit.includes(`/schedules?start_date=${range.start}&end_date=${range.end}`))) {
     throw new Error(`missing schedules month request: ${state.hits.join(' | ')}`);

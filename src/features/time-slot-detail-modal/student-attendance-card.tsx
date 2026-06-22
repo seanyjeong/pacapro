@@ -1,6 +1,7 @@
-import { AlertCircle, Check, Clock, Loader2, Sparkles, User, X } from 'lucide-react';
+import Link from 'next/link';
+import { AlertCircle, Check, Clock, Loader2, Sparkles, User, UserRound, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { TimeSlot } from '@/lib/types/schedule';
 import { OTHER_SLOTS, STUDENT_ATTENDANCE_STATUS, TIME_SLOT_INFO } from './time-slot-detail-constants';
@@ -84,7 +85,17 @@ export function StudentAttendanceCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+        <div className="flex flex-wrap items-center gap-1">
+          <Link
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'sm' }),
+              'h-7 gap-1 px-2 text-xs font-medium'
+            )}
+            href={`/students/${student.student_id}`}
+          >
+            <UserRound className="h-3.5 w-3.5 shrink-0" />
+            <span className="shrink-0">학생 상세</span>
+          </Link>
           {OTHER_SLOTS[timeSlot].map((otherSlot) => {
             const otherInfo = TIME_SLOT_INFO[otherSlot];
             const OtherIcon = otherInfo.icon;
