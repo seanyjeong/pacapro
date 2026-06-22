@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { AlertCircle, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -152,7 +153,13 @@ function ClassDaysMobileCard({
             onCheckedChange={() => onToggleSelect(student.id)}
           />
           <div className="min-w-0">
-            <p className="font-semibold text-foreground">{student.name}</p>
+            <Link
+              aria-label={`${student.name} 학생 상세 보기`}
+              className="font-semibold text-foreground underline-offset-4 hover:text-primary hover:underline"
+              href={`/students/${student.id}`}
+            >
+              {student.name}
+            </Link>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="outline">{student.grade || '-'}</Badge>
               <span>{formatClassDaysWithSlots(student.class_days, defaultTimeSlot)} (주{student.weekly_count}회)</span>
@@ -218,7 +225,13 @@ function ClassDaysRow({
         />
       </td>
       <td className="p-3">
-        <span className="font-medium">{student.name}</span>
+        <Link
+          aria-label={`${student.name} 학생 상세 보기`}
+          className="font-medium text-foreground underline-offset-4 hover:text-primary hover:underline"
+          href={`/students/${student.id}`}
+        >
+          {student.name}
+        </Link>
       </td>
       <td className="p-3">
         <Badge variant="outline">{student.grade || '-'}</Badge>

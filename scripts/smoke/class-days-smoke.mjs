@@ -89,6 +89,11 @@ async function runDesktopSave(browser) {
 
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
+  const jinwooDetailLink = page.getByRole('link', { name: '김진우 학생 상세 보기' });
+  await jinwooDetailLink.waitFor();
+  if ((await jinwooDetailLink.getAttribute('href')) !== '/students/41') {
+    throw new Error('missing class-days student detail link');
+  }
   await page.locator('tbody tr').filter({ hasText: '김진우' }).getByLabel('김진우 선택').click();
   await page.locator('tbody tr').filter({ hasText: '박서연' }).getByLabel('박서연 선택').click();
   await page.getByRole('button', { name: '일괄 화요일 선택' }).click();
@@ -121,6 +126,7 @@ async function runDesktopSave(browser) {
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
   const jinwooCard = page.locator('article').filter({ hasText: '김진우' });
   await jinwooCard.waitFor();
+  await jinwooCard.getByRole('link', { name: '김진우 학생 상세 보기' }).waitFor();
   await jinwooCard.getByRole('button', { name: '김진우 화요일 선택' }).waitFor();
   await assertNoRawVisibleText(page, 'class days mobile');
   await assertNoHorizontalOverflow(page, 'class days mobile');
