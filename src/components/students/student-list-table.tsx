@@ -5,7 +5,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Loader2, Phone, Sparkles, Users } from 'lucide-react';
+import { Calendar, ChevronRight, Loader2, Phone, Sparkles, Users } from 'lucide-react';
 import type { Student } from '@/lib/types/student';
 import {
   formatStudentNumber,
@@ -94,6 +94,9 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   등록일
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-normal text-muted-foreground">
+                  관리
                 </th>
               </tr>
             </thead>
@@ -234,6 +237,20 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                         <Calendar className="mr-1 h-4 w-4" />
                         {formatDate(student.enrollment_date)}
                       </div>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 text-right">
+                      <button
+                        type="button"
+                        aria-label={`${student.name} 상세 보기`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onStudentClick(student.id);
+                        }}
+                        className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                      >
+                        상세
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
                     </td>
                   </tr>
                 );

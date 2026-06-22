@@ -133,6 +133,7 @@ async function runDesktop(browser) {
   await page.getByRole('heading', { name: '학생 운영' }).waitFor();
   await page.locator('table').getByText('김진우').waitFor();
   await page.locator('table').getByText('박서연').waitFor();
+  await page.locator('table').getByRole('button', { name: '김진우 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'students desktop');
   await assertNoHorizontalOverflow(page, 'students desktop');
   await page.screenshot({ path: '/Users/etlab/paca-students-desktop.png', fullPage: true });
@@ -152,7 +153,9 @@ async function runMobile(browser) {
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영' }).waitFor();
-  await page.locator('button').filter({ hasText: '김진우' }).first().waitFor();
+  const detailButton = page.getByRole('button', { name: '김진우 상세 보기' });
+  await detailButton.waitFor();
+  await detailButton.scrollIntoViewIfNeeded();
   await assertNoRawVisibleText(page, 'students mobile');
   await assertNoHorizontalOverflow(page, 'students mobile');
   await page.screenshot({ path: '/Users/etlab/paca-students-mobile.png', fullPage: true });
@@ -166,7 +169,7 @@ async function runLoadError(browser) {
   const { context, page } = result;
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
-  await page.getByText('학생 정보를 불러오지 못했습니다').waitFor();
+  await page.getByRole('alert').getByRole('heading', { name: '학생 정보를 불러오지 못했습니다' }).waitFor();
   await page.getByRole('button', { name: '학생 등록' }).waitFor();
   await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'students load error');

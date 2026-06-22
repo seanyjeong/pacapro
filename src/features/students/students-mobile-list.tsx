@@ -1,4 +1,4 @@
-import { Calendar, Phone, School, UserRound } from 'lucide-react';
+import { Calendar, ChevronRight, Phone, School, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Student } from '@/lib/types/student';
 import { STATUS_LABELS } from '@/lib/types/student';
@@ -44,11 +44,9 @@ export function StudentsMobileList({
     return (
         <div className="space-y-3">
             {students.map((student) => (
-                <button
+                <article
                     key={student.id}
-                    type="button"
-                    onClick={() => onStudentClick(student.id)}
-                    className="w-full rounded-lg border border-border bg-card p-4 text-left shadow-sm transition-colors hover:bg-muted/40"
+                    className="rounded-lg border border-border bg-card p-4 shadow-sm"
                 >
                     <div className="flex items-start gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -91,7 +89,18 @@ export function StudentsMobileList({
                             </span>
                         </div>
                     )}
-                </button>
+                    <div className="mt-4 flex justify-end border-t border-border/70 pt-3">
+                        <button
+                            type="button"
+                            aria-label={`${student.name} 상세 보기`}
+                            onClick={() => onStudentClick(student.id)}
+                            className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                        >
+                            상세
+                            <ChevronRight className="h-4 w-4" />
+                        </button>
+                    </div>
+                </article>
             ))}
         </div>
     );
