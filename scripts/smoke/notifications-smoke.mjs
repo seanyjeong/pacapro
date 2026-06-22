@@ -98,7 +98,7 @@ function makeLog() {
     id: 701,
     academy_id: 1,
     student_id: 41,
-    payment_id: null,
+    payment_id: 501,
     recipient_name: '김진우 학부모',
     recipient_phone: '010-3333-4444',
     message_type: 'alimtalk',
@@ -193,6 +193,16 @@ async function runDesktop(browser) {
   await page.getByRole('heading', { name: '네이버 SENS API 설정' }).waitFor();
   await page.getByText('010-2144-6755', { exact: true }).waitFor();
   await page.getByText('김진우 학부모').waitFor();
+  const studentLink = page.getByRole('link', { name: '김진우 학부모 학생 상세 보기' });
+  await studentLink.waitFor();
+  if ((await studentLink.getAttribute('href')) !== '/students/41') {
+    throw new Error('missing notification student detail link');
+  }
+  const paymentLink = page.getByRole('link', { name: '김진우 학부모 결제 상세 보기' });
+  await paymentLink.waitFor();
+  if ((await paymentLink.getAttribute('href')) !== '/payments/501') {
+    throw new Error('missing notification payment detail link');
+  }
   await assertNoRawVisibleText(page, 'notifications desktop');
   await assertNoHorizontalOverflow(page, 'notifications desktop');
   await page.screenshot({ path: '/Users/etlab/paca-notifications-desktop.png', fullPage: true });
@@ -232,6 +242,8 @@ async function runMobile(browser) {
   await page.goto('/settings/notifications', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '알림톡 및 SMS 설정' }).waitFor();
   await page.getByText('010-2144-6755', { exact: true }).waitFor();
+  await page.getByRole('link', { name: '김진우 학부모 학생 상세 보기' }).waitFor();
+  await page.getByRole('link', { name: '김진우 학부모 결제 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'notifications mobile');
   await assertNoHorizontalOverflow(page, 'notifications mobile');
   await page.screenshot({ path: '/Users/etlab/paca-notifications-mobile.png', fullPage: true });
