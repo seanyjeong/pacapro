@@ -104,8 +104,23 @@ async function runNormal(browser) {
   await page.goto('/seasons', { waitUntil: 'networkidle' });
   await page.getByTestId('season-list-workspace').waitFor();
   await page.getByRole('heading', { name: '시즌 관리' }).waitFor();
+  await page.getByTestId('season-active-panel').waitFor();
+  await page.getByText('진행 중 시즌').waitFor();
+  const activePanel = page.getByTestId('season-active-panel');
+  const enrollHref = await page
+    .getByTestId('season-active-panel')
+    .getByRole('link', { name: '2026 정시 집중반 학생 등록' })
+    .getAttribute('href');
+  if (enrollHref !== '/seasons/88/enroll') {
+    throw new Error(`season enroll href mismatch: ${enrollHref}`);
+  }
+  const detailHref = await activePanel.getByRole('link', { name: '2026 정시 집중반 상세' }).getAttribute('href');
+  if (detailHref !== '/seasons/88') {
+    throw new Error(`season detail href mismatch: ${detailHref}`);
+  }
   await page.locator('[data-testid="season-row"]:has-text("2026 정시 집중반")').first().waitFor();
   await page.locator('[data-testid="season-row"]:has-text("2026 수시 실전반")').first().waitFor();
+  await page.locator('[data-testid="season-row"]:has-text("2026 정시 집중반")').getByRole('link', { name: '학생 등록' }).waitFor();
   await assertNoRawVisibleText(page, 'season list desktop');
   await assertNoHorizontalOverflow(page, 'season list desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-list-desktop.png', fullPage: true });
@@ -125,6 +140,8 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByTestId('season-list-workspace').waitFor();
+  await page.getByTestId('season-active-panel').waitFor();
+  await page.getByTestId('season-active-panel').getByRole('link', { name: '2026 정시 집중반 학생 등록' }).waitFor();
   await assertNoRawVisibleText(page, 'season list mobile');
   await assertNoHorizontalOverflow(page, 'season list mobile');
   await page.screenshot({ path: '/Users/etlab/paca-season-list-mobile.png', fullPage: true });

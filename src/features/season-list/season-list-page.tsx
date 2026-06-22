@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SeasonConfirmDialog } from '@/features/seasons/season-confirm-dialog';
+import { SeasonActivePanel } from './season-active-panel';
 import { SeasonListEmpty } from './season-list-empty';
 import { SeasonListError } from './season-list-error';
 import { SeasonListFilters } from './season-list-filters';
@@ -35,6 +36,7 @@ export function SeasonListPage() {
       ) : (
         <>
           <SeasonListSummary stats={state.stats} />
+          <SeasonActivePanel seasons={state.seasons} onRefresh={state.reload} />
           <SeasonListFilters
             filters={state.filters}
             years={state.years}
@@ -50,7 +52,6 @@ export function SeasonListPage() {
             <SeasonListTable
               seasons={state.seasons}
               onDelete={(seasonId, seasonName) => setDeleteTarget({ seasonId, seasonName })}
-              onEdit={(seasonId) => router.push(`/seasons/${seasonId}/edit`)}
               onOpen={(seasonId) => router.push(`/seasons/${seasonId}`)}
             />
           )}
