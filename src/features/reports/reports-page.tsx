@@ -2,6 +2,7 @@
 
 import { PeopleAnalysisPanel } from './people-analysis-panel';
 import { ProfitAnalysisPanel } from './profit-analysis-panel';
+import { ReportActionStrip } from './report-action-strip';
 import { ReportSummaryStrip } from './report-summary-strip';
 import { ReportsErrorState } from './reports-error-state';
 import { ReportsHeader } from './reports-header';
@@ -39,6 +40,7 @@ export function ReportsPage() {
       />
 
       <ReportSummaryStrip computed={state.computed} stats={state.stats} />
+      <ReportActionStrip stats={state.stats} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
         <RevenueAnalysisPanel computed={state.computed} stats={state.stats} />

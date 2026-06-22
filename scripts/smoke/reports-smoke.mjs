@@ -97,6 +97,16 @@ async function waitForState(predicate, label) {
   }
 }
 
+async function openReportsPage(page) {
+  await page.goto('/reports', { waitUntil: 'domcontentloaded' });
+  try {
+    await page.getByRole('heading', { name: '리포트' }).waitFor({ timeout: 10000 });
+  } catch {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByRole('heading', { name: '리포트' }).waitFor();
+  }
+}
+
 async function runNormal(browser) {
   const state = makeState();
   const context = await createAuthedContext(browser, { width: 1365, height: 900 });
@@ -104,11 +114,25 @@ async function runNormal(browser) {
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
 
-  await page.goto('/reports', { waitUntil: 'networkidle' });
-  await page.getByRole('heading', { name: '리포트' }).waitFor();
+  await openReportsPage(page);
   await page.getByText('Finance Desk').waitFor();
   await page.getByText('970,000원').first().waitFor();
   await page.getByText('500,000원').waitFor();
+  const unpaidLink = page.getByRole('link', { name: /미수납 관리 1건/ });
+  await unpaidLink.waitFor();
+  if ((await unpaidLink.getAttribute('href')) !== '/payments?payment_status=pending') {
+    throw new Error('missing unpaid payments quick link');
+  }
+  const incomeLink = page.getByRole('link', { name: /수입 내역 기타 1건/ });
+  await incomeLink.waitFor();
+  if ((await incomeLink.getAttribute('href')) !== '/incomes') {
+    throw new Error('missing incomes quick link');
+  }
+  const expensesLink = page.getByRole('link', { name: /지출 내역 2건/ });
+  await expensesLink.waitFor();
+  if ((await expensesLink.getAttribute('href')) !== '/expenses') {
+    throw new Error('missing expenses quick link');
+  }
   await assertNoRawVisibleText(page, 'reports desktop');
   await assertNoHorizontalOverflow(page, 'reports desktop');
   await page.screenshot({ path: '/Users/etlab/paca-reports-desktop.png', fullPage: true });
@@ -125,9 +149,11 @@ async function runNormal(browser) {
   await waitForState(() => state.exportHits.some((hit) => hit.startsWith('/exports/revenue?')), 'revenue export');
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '리포트' }).waitFor();
   await page.getByText('Finance Desk').waitFor();
+  await page.getByRole('link', { name: /미수납 관리 1건/ }).waitFor();
+  await page.getByRole('link', { name: /학생 관리 재원생 2명/ }).waitFor();
   await assertNoRawVisibleText(page, 'reports mobile');
   await assertNoHorizontalOverflow(page, 'reports mobile');
   await page.screenshot({ path: '/Users/etlab/paca-reports-mobile.png', fullPage: true });
@@ -143,7 +169,7 @@ async function runLoadError(browser) {
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
 
-  await page.goto('/reports', { waitUntil: 'networkidle' });
+  await page.goto('/reports', { waitUntil: 'domcontentloaded' });
   await page.getByText('리포트 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'reports error');
   await assertNoHorizontalOverflow(page, 'reports error');
