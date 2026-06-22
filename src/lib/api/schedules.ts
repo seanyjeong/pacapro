@@ -150,9 +150,10 @@ export const schedulesApi = {
    */
   submitInstructorAttendance: async (
     date: string,
-    data: { attendances: InstructorAttendanceSubmission[] }
+    data: { attendances: InstructorAttendanceSubmission[] },
+    config?: APIRequestConfig
   ): Promise<void> => {
-    return apiClient.post(`${BASE_PATH}/date/${date}/instructor-attendance`, data);
+    return apiClient.post(`${BASE_PATH}/date/${date}/instructor-attendance`, data, config);
   },
 
   /**
@@ -182,7 +183,7 @@ export interface InstructorAttendanceRecord {
 export interface InstructorAttendanceSubmission {
   instructor_id: number;
   time_slot: 'morning' | 'afternoon' | 'evening';
-  attendance_status: 'present' | 'absent' | 'late' | 'half_day';
+  attendance_status: 'present' | 'absent' | 'late' | 'half_day' | 'none';
   check_in_time?: string;
   check_out_time?: string;
   notes?: string;
