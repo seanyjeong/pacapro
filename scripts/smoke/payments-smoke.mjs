@@ -114,6 +114,15 @@ async function installRoutes(context, state) {
     if (state.failPayments && method === 'GET' && path === '/payments') {
       return jsonRoute(route, { message: 'DB timeout 500 stack trace' }, 500);
     }
+    if (method === 'GET' && path === '/settings/academy') {
+      return jsonRoute(route, {
+        message: 'ok',
+        settings: {
+          exam_tuition: { 2: 560000 },
+          adult_tuition: { 2: 420000 },
+        },
+      });
+    }
     if (method === 'GET' && path === '/payments') return jsonRoute(route, { message: 'ok', payments: state.payments });
     if (method === 'GET' && path === '/students/class-days') return jsonRoute(route, makeClassDays());
     if (method === 'POST' && path === '/notifications/send-unpaid') {
@@ -155,6 +164,17 @@ async function runNormal(browser) {
   await page.goto('/payments', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 관리' }).waitFor();
   await waitForInitialRows(page);
+  await page.getByRole('button', { name: '일할계산기' }).click();
+  await page.getByText('일할계산 계산기').waitFor();
+  await page.getByRole('button', { name: '월', exact: true }).click();
+  await page.getByRole('button', { name: '수', exact: true }).click();
+  const tuitionInput = page.locator('input[type="number"]');
+  await tuitionInput.waitFor();
+  if ((await tuitionInput.inputValue()) !== '560000') {
+    throw new Error(`proration calculator did not load weekly tuition: ${await tuitionInput.inputValue()}`);
+  }
+  await page.getByText(/560,000원/).waitFor();
+  await page.getByRole('button', { name: '닫기' }).click();
   await assertNoRawVisibleText(page, 'payments desktop');
   await assertNoHorizontalOverflow(page, 'payments desktop');
   await page.screenshot({ path: '/Users/etlab/paca-payments-desktop.png', fullPage: true });

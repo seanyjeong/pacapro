@@ -11,6 +11,7 @@ import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -37,6 +38,10 @@ const DAY_OPTIONS = [
   { num: 6, label: '토' },
   { num: 0, label: '일' },
 ];
+
+function getTuitionForWeeklyCount(tuitionTable: TuitionTable, weeklyCount: number) {
+  return tuitionTable[String(weeklyCount)] || tuitionTable[`weekly_${weeklyCount}`] || 0;
+}
 
 // backend truncateToThousands와 동일 (천원 단위 절삭)
 function truncateToThousands(value: number) {
@@ -70,7 +75,7 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
 
   const weeklyCount = selectedDays.length;
   const tuitionTable = studentType === 'exam' ? examTuition : adultTuition;
-  const autoTuition = weeklyCount > 0 ? tuitionTable[`weekly_${weeklyCount}`] || 0 : 0;
+  const autoTuition = weeklyCount > 0 ? getTuitionForWeeklyCount(tuitionTable, weeklyCount) : 0;
   const tuition = tuitionOverride !== null ? tuitionOverride : autoTuition;
 
   // 구분/요일 변경 시 수동 입력값 초기화 → 요금표 자동 반영
@@ -230,6 +235,11 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
             </div>
           )}
         </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            닫기
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
