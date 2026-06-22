@@ -2,7 +2,7 @@
  * 알림 설정 API
  */
 
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 
 export interface NotificationSettings {
   unpaid_attendance: boolean;    // 미납자 출석 알림
@@ -22,14 +22,14 @@ interface UpdateResponse {
 
 export const notificationSettingsAPI = {
   // 알림 설정 조회
-  get: async (): Promise<NotificationSettings> => {
-    const response = await apiClient.get<NotificationSettingsResponse>('/notification-settings');
+  get: async (config?: APIRequestConfig): Promise<NotificationSettings> => {
+    const response = await apiClient.get<NotificationSettingsResponse>('/notification-settings', config);
     return response.settings;
   },
 
   // 알림 설정 업데이트
-  update: async (settings: Partial<NotificationSettings>): Promise<NotificationSettings> => {
-    const response = await apiClient.put<UpdateResponse>('/notification-settings', settings);
+  update: async (settings: Partial<NotificationSettings>, config?: APIRequestConfig): Promise<NotificationSettings> => {
+    const response = await apiClient.put<UpdateResponse>('/notification-settings', settings, config);
     return response.settings;
   },
 };

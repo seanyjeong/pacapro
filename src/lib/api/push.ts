@@ -2,7 +2,7 @@
  * PWA 푸시 알림 API 클라이언트
  */
 
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 
 export interface PushSubscription {
   id: number;
@@ -28,19 +28,23 @@ interface TestPushResponse {
 
 export const pushAPI = {
   // VAPID 공개키 조회
-  getVapidPublicKey: async (): Promise<string> => {
-    const response = await apiClient.get<VapidPublicKeyResponse>('/push/vapid-public-key');
+  getVapidPublicKey: async (config?: APIRequestConfig): Promise<string> => {
+    const response = await apiClient.get<VapidPublicKeyResponse>('/push/vapid-public-key', config);
     return response.publicKey;
   },
 
   // 푸시 구독 등록
-  subscribe: async (subscription: PushSubscriptionJSON, deviceName?: string): Promise<void> => {
-    await apiClient.post('/push/subscribe', { subscription, deviceName });
+  subscribe: async (
+    subscription: PushSubscriptionJSON,
+    deviceName?: string,
+    config?: APIRequestConfig
+  ): Promise<void> => {
+    await apiClient.post('/push/subscribe', { subscription, deviceName }, config);
   },
 
   // 푸시 구독 해제
-  unsubscribe: async (endpoint: string): Promise<void> => {
-    await apiClient.delete('/push/subscribe', { data: { endpoint } });
+  unsubscribe: async (endpoint: string, config?: APIRequestConfig): Promise<void> => {
+    await apiClient.delete('/push/subscribe', { ...config, data: { endpoint } });
   },
 
   // 내 구독 목록 조회
