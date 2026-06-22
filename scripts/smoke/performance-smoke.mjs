@@ -84,6 +84,22 @@ async function installRoutes(context, state) {
   });
 }
 
+async function waitForConnectedStatus(page) {
+  try {
+    await page.getByText('정시엔진 연결됨').first().waitFor({ timeout: 10000 });
+  } catch {
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.getByTestId('performance-workspace').waitFor();
+    await page.getByText('정시엔진 연결됨').first().waitFor();
+  }
+}
+
+async function openMockExamTab(page) {
+  const trigger = page.getByRole('button', { name: '모의고사·수능' });
+  await trigger.waitFor({ state: 'visible' });
+  await trigger.click();
+}
+
 async function runNormal(browser) {
   const state = makeState();
   const context = await createAuthedContext(browser, { width: 1365, height: 900 });
@@ -91,11 +107,11 @@ async function runNormal(browser) {
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
 
-  await page.goto('/performance', { waitUntil: 'networkidle' });
+  await page.goto('/performance', { waitUntil: 'domcontentloaded' });
   await page.getByTestId('performance-workspace').waitFor();
   await page.getByRole('heading', { name: '성적관리' }).waitFor();
-  await page.getByRole('button', { name: '모의고사·수능' }).click();
-  await page.getByText('정시엔진 연결됨').first().waitFor();
+  await waitForConnectedStatus(page);
+  await openMockExamTab(page);
   await page.getByText('김민서').waitFor();
   await assertNoRawVisibleText(page, 'performance desktop');
   await assertNoHorizontalOverflow(page, 'performance desktop');
@@ -113,8 +129,10 @@ async function runNormal(browser) {
   await page.screenshot({ path: '/Users/etlab/paca-performance-desktop.png', fullPage: true });
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.reload({ waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: '모의고사·수능' }).click();
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.getByTestId('performance-workspace').waitFor();
+  await waitForConnectedStatus(page);
+  await openMockExamTab(page);
   await assertNoRawVisibleText(page, 'performance mobile');
   await assertNoHorizontalOverflow(page, 'performance mobile');
   await page.screenshot({ path: '/Users/etlab/paca-performance-mobile.png', fullPage: true });
@@ -130,8 +148,11 @@ async function runStatusError(browser) {
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
 
-  await page.goto('/performance', { waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: '모의고사·수능' }).click();
+  await page.goto('/performance', { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('performance-workspace').waitFor();
+  await page.getByRole('heading', { name: '성적관리' }).waitFor();
+  await page.getByText('연결 확인 필요').waitFor();
+  await openMockExamTab(page);
   await page.getByText('정시엔진 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'performance status error');
   await assertNoHorizontalOverflow(page, 'performance status error');
@@ -148,8 +169,11 @@ async function runStudentsError(browser) {
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
 
-  await page.goto('/performance', { waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: '모의고사·수능' }).click();
+  await page.goto('/performance', { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('performance-workspace').waitFor();
+  await page.getByRole('heading', { name: '성적관리' }).waitFor();
+  await waitForConnectedStatus(page);
+  await openMockExamTab(page);
   await page.getByText('학생 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'performance students error');
 
@@ -164,8 +188,12 @@ async function runScoresError(browser) {
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
 
-  await page.goto('/performance', { waitUntil: 'networkidle' });
-  await page.getByRole('button', { name: '모의고사·수능' }).click();
+  await page.goto('/performance', { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('performance-workspace').waitFor();
+  await page.getByRole('heading', { name: '성적관리' }).waitFor();
+  await waitForConnectedStatus(page);
+  await openMockExamTab(page);
+  await page.getByText('김민서').waitFor();
   await page.locator('[data-testid="performance-student-row"]:has-text("김민서")').click();
   await page.getByText('성적 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'performance scores error');

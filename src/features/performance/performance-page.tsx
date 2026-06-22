@@ -19,7 +19,7 @@ export function PerformancePage() {
       />
 
       <Tabs value={state.activeTab} onValueChange={(value) => state.setActiveTab(value as '내신' | '모의고사')}>
-        <TabsList className="grid w-full max-w-md grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-1">
+        <TabsList className="grid w-full max-w-md grid-cols-2 rounded-md border border-border bg-muted/40 p-1">
           <TabsTrigger value="내신" className="flex items-center gap-2 rounded-sm">
             <BookOpen className="h-4 w-4" />
             내신

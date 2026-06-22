@@ -23,7 +23,7 @@ export function PerformanceStudentList({
 }: PerformanceStudentListProps) {
   if (studentsLoading) {
     return (
-      <div className="flex min-h-56 items-center justify-center gap-2 text-sm text-slate-500">
+      <div className="flex min-h-56 items-center justify-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
         학생 목록을 불러오는 중입니다.
       </div>
@@ -32,18 +32,18 @@ export function PerformanceStudentList({
 
   return (
     <div className="min-w-0">
-      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+      <div className="flex items-center justify-between border-b border-border bg-muted/30 px-4 py-3">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
           <GraduationCap className="h-4 w-4" />
           학생별 모의고사 성적
         </h2>
-        <span className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600">{students.length}명</span>
+        <span className="rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground">{students.length}명</span>
       </div>
 
       {students.length === 0 ? (
-        <p className="px-4 py-12 text-center text-sm text-slate-500">검색 결과가 없습니다.</p>
+        <p className="px-4 py-12 text-center text-sm text-muted-foreground">검색 결과가 없습니다.</p>
       ) : (
-        <div className="divide-y divide-slate-100">
+        <div className="divide-y divide-border">
           {students.map((student) => (
             <PerformanceStudentRow
               key={student.id}

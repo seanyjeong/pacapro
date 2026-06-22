@@ -12,7 +12,7 @@ interface PerformanceScoreGridProps {
 export function PerformanceScoreGrid({ scores, scoresError, scoresLoading }: PerformanceScoreGridProps) {
   if (scoresLoading) {
     return (
-      <div className="flex min-h-36 items-center justify-center gap-2 text-sm text-slate-500">
+      <div className="flex min-h-36 items-center justify-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="h-5 w-5 animate-spin" />
         성적 조회 중입니다.
       </div>
@@ -29,7 +29,7 @@ export function PerformanceScoreGrid({ scores, scoresError, scoresLoading }: Per
   }
 
   if (!scores) {
-    return <p className="py-8 text-center text-sm text-slate-500">학생을 선택하면 성적을 조회합니다.</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">학생을 선택하면 성적을 조회합니다.</p>;
   }
 
   return (
