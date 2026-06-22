@@ -45,6 +45,7 @@
     "smoke:tablet-schedule": "node scripts/smoke/tablet-schedule-smoke.mjs",
     "smoke:tablet-consultations": "node scripts/smoke/tablet-consultations-smoke.mjs",
     "smoke:tablet-settings": "node scripts/smoke/tablet-settings-smoke.mjs",
+    "smoke:tablet-home": "node scripts/smoke/tablet-home-smoke.mjs",
     "smoke:season-list": "node scripts/smoke/season-list-smoke.mjs",
     "smoke:season-create": "node scripts/smoke/season-create-smoke.mjs",
     "smoke:season-edit": "node scripts/smoke/season-edit-smoke.mjs",
