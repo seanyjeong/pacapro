@@ -4,6 +4,7 @@ import { EnrolledConsultationCreateDialog } from './enrolled-consultation-create
 import { EnrolledConsultationDeleteDialog } from './enrolled-consultation-delete-dialog';
 import { EnrolledConsultationDetailDialog } from './enrolled-consultation-detail-dialog';
 import { EnrolledConsultationStatusDialog } from './enrolled-consultation-status-dialog';
+import { EnrolledConsultationsError } from './enrolled-consultations-error';
 import { EnrolledConsultationsFilters } from './enrolled-consultations-filters';
 import { EnrolledConsultationsHeader } from './enrolled-consultations-header';
 import { EnrolledConsultationsList } from './enrolled-consultations-list';
@@ -15,29 +16,35 @@ export default function EnrolledConsultationsPage() {
   const state = useEnrolledConsultationsState();
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 pb-24 md:max-w-7xl">
       <EnrolledConsultationsHeader onCreate={state.openCreateModal} />
-      <EnrolledConsultationsStats stats={state.stats} />
-      <EnrolledConsultationsFilters
-        search={state.search}
-        statusFilter={state.statusFilter}
-        dateFilter={state.dateFilter}
-        onSearchChange={state.setSearch}
-        onStatusChange={state.setStatusFilter}
-        onDateFilterChange={state.setDateFilter}
-        onRefresh={state.loadData}
-      />
-      <EnrolledConsultationsList
-        consultations={state.consultations}
-        loading={state.loading}
-        onOpenDetail={state.openDetail}
-        onOpenStatus={state.openStatusModal}
-        onOpenDelete={state.openDeleteModal}
-      />
-      <EnrolledConsultationsPagination
-        pagination={state.pagination}
-        onChange={state.setPagination}
-      />
+      {state.errorMessage ? (
+        <EnrolledConsultationsError message={state.errorMessage} onRetry={state.loadData} />
+      ) : (
+        <>
+          <EnrolledConsultationsStats stats={state.stats} />
+          <EnrolledConsultationsFilters
+            search={state.search}
+            statusFilter={state.statusFilter}
+            dateFilter={state.dateFilter}
+            onSearchChange={state.setSearch}
+            onStatusChange={state.setStatusFilter}
+            onDateFilterChange={state.setDateFilter}
+            onRefresh={state.loadData}
+          />
+          <EnrolledConsultationsList
+            consultations={state.consultations}
+            loading={state.loading}
+            onOpenDetail={state.openDetail}
+            onOpenStatus={state.openStatusModal}
+            onOpenDelete={state.openDeleteModal}
+          />
+          <EnrolledConsultationsPagination
+            pagination={state.pagination}
+            onChange={state.setPagination}
+          />
+        </>
+      )}
       <EnrolledConsultationDetailDialog
         open={state.detailOpen}
         consultation={state.selectedConsultation}
@@ -56,6 +63,7 @@ export default function EnrolledConsultationsPage() {
         newDate={state.newDate}
         newTime={state.newTime}
         editBookedTimes={state.editBookedTimes}
+        loadingBookedTimes={state.loadingEditBookedTimes}
         updating={state.updating}
         onOpenChange={state.setStatusModalOpen}
         onStatusChange={state.setNewStatus}

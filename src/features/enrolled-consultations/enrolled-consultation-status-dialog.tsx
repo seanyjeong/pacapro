@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,6 +20,7 @@ interface EnrolledConsultationStatusDialogProps {
   newDate: string;
   newTime: string;
   editBookedTimes: string[];
+  loadingBookedTimes: boolean;
   updating: boolean;
   onOpenChange: (open: boolean) => void;
   onStatusChange: (status: ConsultationStatus) => void;
@@ -37,6 +39,7 @@ export function EnrolledConsultationStatusDialog({
   newDate,
   newTime,
   editBookedTimes,
+  loadingBookedTimes,
   updating,
   onOpenChange,
   onStatusChange,
@@ -47,17 +50,21 @@ export function EnrolledConsultationStatusDialog({
   onSave,
   generateTimeSlots,
 }: EnrolledConsultationStatusDialogProps) {
+  const timeSlots = newDate ? generateTimeSlots(newDate) : [];
+  const hasNoTimeSlots = Boolean(newDate) && !loadingBookedTimes && timeSlots.length === 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md px-6 py-6">
+      <DialogContent className="max-w-md rounded-md px-6 py-6">
         <DialogHeader>
           <DialogTitle>상태 변경</DialogTitle>
+          <p className="text-sm text-muted-foreground">상태와 상담 일정을 함께 조정합니다.</p>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label>상태</Label>
+            <Label htmlFor="enrolled-consultation-status">상태</Label>
             <Select value={newStatus} onValueChange={(value) => onStatusChange(value as ConsultationStatus)}>
-              <SelectTrigger className="mt-1">
+              <SelectTrigger id="enrolled-consultation-status" className="mt-1">
                 <SelectValue placeholder="대기중" />
               </SelectTrigger>
               <SelectContent>
@@ -70,9 +77,10 @@ export function EnrolledConsultationStatusDialog({
             </Select>
           </div>
           <div>
-            <Label>일정 변경 (선택)</Label>
-            <div className="mt-1 grid grid-cols-2 gap-2">
+            <Label htmlFor="enrolled-consultation-status-date">일정 변경 (선택)</Label>
+            <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <Input
+                id="enrolled-consultation-status-date"
                 type="date"
                 value={newDate}
                 onChange={(event) => {
@@ -80,26 +88,45 @@ export function EnrolledConsultationStatusDialog({
                   if (event.target.value) onLoadBookedTimes(event.target.value);
                 }}
               />
-              <Select value={newTime} onValueChange={onTimeChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="시간" />
-                </SelectTrigger>
-                <SelectContent>
-                  {generateTimeSlots(newDate).map((time) => {
-                    const isBooked = editBookedTimes.includes(time);
-                    return (
-                      <SelectItem key={time} value={time}>
-                        {time} {isBooked && '(예약있음)'}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
+              {loadingBookedTimes ? (
+                <div className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">시간을 불러오는 중입니다.</div>
+              ) : hasNoTimeSlots ? (
+                <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+                  <p className="font-medium">상담 가능 시간이 설정되지 않았습니다.</p>
+                  <Link className="mt-1 inline-flex text-xs font-semibold underline" href="/consultations/settings">
+                    상담 설정으로 이동
+                  </Link>
+                </div>
+              ) : newDate ? (
+                <Select value={newTime} onValueChange={onTimeChange}>
+                  <SelectTrigger aria-label="상담 시간">
+                    <SelectValue placeholder="시간" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeSlots.map((time) => {
+                      const isBooked = editBookedTimes.includes(time);
+                      return (
+                        <SelectItem key={time} value={time}>
+                          {time} {isBooked && '(예약있음)'}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">날짜를 먼저 선택해주세요.</p>
+              )}
             </div>
           </div>
           <div>
-            <Label>메모</Label>
-            <Textarea value={adminNotes} onChange={(event) => onAdminNotesChange(event.target.value)} className="mt-1" rows={3} />
+            <Label htmlFor="enrolled-consultation-status-notes">메모</Label>
+            <Textarea
+              id="enrolled-consultation-status-notes"
+              value={adminNotes}
+              onChange={(event) => onAdminNotesChange(event.target.value)}
+              className="mt-1"
+              rows={3}
+            />
           </div>
         </div>
         <DialogFooter>

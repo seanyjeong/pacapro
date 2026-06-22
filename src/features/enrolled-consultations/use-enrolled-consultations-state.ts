@@ -25,6 +25,7 @@ import { generateTimeSlots, getDateRange } from './enrolled-consultations-utils'
 export function useEnrolledConsultationsState() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [pagination, setPagination] = useState<PaginationState>({ total: 0, page: 1, limit: 20, totalPages: 0 });
   const [search, setSearch] = useState('');
@@ -62,6 +63,7 @@ export function useEnrolledConsultationsState() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       const { startDate, endDate } = getDateRange(dateFilter);
       const response = await getConsultations(
@@ -80,9 +82,11 @@ export function useEnrolledConsultationsState() {
       setConsultations(response.consultations);
       setStats(response.stats);
       setPagination(response.pagination);
-    } catch (error) {
-      console.error('데이터 로드 오류:', error);
-      toast.error('상담 목록을 불러오지 못했습니다.');
+    } catch {
+      setConsultations([]);
+      setStats({});
+      setErrorMessage('재원생상담 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error('재원생상담 목록을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
     }
@@ -366,6 +370,7 @@ export function useEnrolledConsultationsState() {
   return {
     consultations,
     loading,
+    errorMessage,
     stats,
     pagination,
     search,
