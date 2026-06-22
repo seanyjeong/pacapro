@@ -67,7 +67,6 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
     try {
       setPayments(await getPaymentsForPage(remoteFilters));
     } catch {
-      console.error('Payments page data load failed');
       setError(LOAD_ERROR_MESSAGE);
     } finally {
       setLoading(false);
@@ -93,7 +92,7 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
         if (!cancelled) setStudentClassDaysMap(createClassDaysMap(response));
       })
       .catch(() => {
-        console.error('Payment class-days load failed');
+        // Class-day hints are optional for this page; keep the payment list usable.
       });
     return () => {
       cancelled = true;
@@ -118,14 +117,11 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
       toast.error('미납자가 없습니다.');
       return;
     }
-    if (!window.confirm(`미납자 ${unpaidList.length}명에게 알림톡을 발송하시겠습니까?`)) return;
-
     setSendingNotification(true);
     try {
       const result = await sendUnpaidNotifications(filters.year || new Date().getFullYear(), filters.month || new Date().getMonth() + 1);
       toast.success(`알림 발송 완료: ${result.sent}명 성공, ${result.failed}명 실패`);
     } catch {
-      console.error('Unpaid notification send failed');
       toast.error('미납 알림을 발송하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSendingNotification(false);
@@ -146,7 +142,6 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
       );
       setCreditModalOpen(true);
     } catch {
-      console.error('Credit student load failed');
       toast.error('학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
@@ -163,7 +158,6 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
       toast.success(`${payment.student_name}님의 학원비가 납부 처리되었습니다.`);
       void loadPayments();
     } catch {
-      console.error('Quick payment mark failed');
       toast.error('납부 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setMarkingPaymentId(null);

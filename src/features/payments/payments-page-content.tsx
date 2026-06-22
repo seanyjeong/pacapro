@@ -1,9 +1,20 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ManualCreditModal } from '@/components/students/manual-credit-modal';
 import { PaymentList } from '@/components/payments/payment-list';
 import { ProrationCalculatorModal } from '@/components/payments/proration-calculator-modal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { usePermissions } from '@/lib/utils/permissions';
 import { PaymentFilterBar } from './payment-filter-bar';
 import { PaymentPageError } from './payment-page-error';
@@ -14,6 +25,7 @@ import { usePaymentsPageState } from './use-payments-page-state';
 export function PaymentsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [unpaidDialogOpen, setUnpaidDialogOpen] = useState(false);
   const { canEdit, canView, isOwner } = usePermissions();
   const canEditPayments = canEdit('payments');
   const canViewPayments = canView('payments');
@@ -33,7 +45,7 @@ export function PaymentsPageContent() {
         unpaidCount={state.summary.unpaidCount}
         onOpenCalculator={() => state.setCalculatorOpen(true)}
         onReload={state.reload}
-        onSendUnpaid={state.sendUnpaid}
+        onSendUnpaid={() => setUnpaidDialogOpen(true)}
         onAddPayment={() => router.push('/payments/new')}
       />
 
@@ -60,6 +72,29 @@ export function PaymentsPageContent() {
       />
 
       <ProrationCalculatorModal open={state.calculatorOpen} onClose={() => state.setCalculatorOpen(false)} />
+
+      <AlertDialog open={unpaidDialogOpen} onOpenChange={setUnpaidDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>미납 알림 발송</AlertDialogTitle>
+            <AlertDialogDescription>
+              미납자 {state.summary.unpaidCount}명에게 알림톡을 발송할까요?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={state.sendingNotification}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={state.sendingNotification}
+              onClick={(event) => {
+                event.preventDefault();
+                void state.sendUnpaid().then(() => setUnpaidDialogOpen(false));
+              }}
+            >
+              발송
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {state.creditStudentInfo ? (
         <ManualCreditModal

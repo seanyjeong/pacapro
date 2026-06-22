@@ -10,6 +10,12 @@ import {
 } from './paca-smoke-utils.mjs';
 
 const BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
+const CURRENT_DATE = new Date();
+const CURRENT_YEAR = CURRENT_DATE.getFullYear();
+const CURRENT_MONTH = CURRENT_DATE.getMonth() + 1;
+const CURRENT_YEAR_MONTH = `${CURRENT_YEAR}-${String(CURRENT_MONTH).padStart(2, '0')}`;
+const PREVIOUS_YEAR_MONTH = new Date(CURRENT_YEAR, CURRENT_MONTH - 2, 1);
+const PREVIOUS_PAYMENT_MONTH = `${PREVIOUS_YEAR_MONTH.getFullYear()}-${String(PREVIOUS_YEAR_MONTH.getMonth() + 1).padStart(2, '0')}`;
 
 function makePayments() {
   return [
@@ -18,18 +24,18 @@ function makePayments() {
       student_id: 41,
       student_name: '박민수',
       student_number: 'S-2026-041',
-      year_month: '2026-06',
+      year_month: CURRENT_YEAR_MONTH,
       payment_type: 'monthly',
       base_amount: 560000,
       discount_amount: 0,
       additional_amount: 0,
       final_amount: 560000,
       paid_amount: 0,
-      due_date: '2026-06-10',
+      due_date: `${CURRENT_YEAR_MONTH}-10`,
       payment_status: 'pending',
-      description: '6월 수강료',
+      description: `${CURRENT_MONTH}월 수강료`,
       notes: '',
-      created_at: '2026-06-01T09:00:00Z',
+      created_at: `${CURRENT_YEAR_MONTH}-01T09:00:00Z`,
       credit_balance: 120000,
     },
     {
@@ -37,27 +43,27 @@ function makePayments() {
       student_id: 42,
       student_name: '이서연',
       student_number: 'S-2026-042',
-      year_month: '2026-06',
+      year_month: CURRENT_YEAR_MONTH,
       payment_type: 'monthly',
       base_amount: 520000,
       discount_amount: 20000,
       additional_amount: 0,
       final_amount: 500000,
       paid_amount: 500000,
-      paid_date: '2026-06-05',
-      due_date: '2026-06-10',
+      paid_date: `${CURRENT_YEAR_MONTH}-05`,
+      due_date: `${CURRENT_YEAR_MONTH}-10`,
       payment_status: 'paid',
       payment_method: 'card',
-      description: '6월 수강료',
+      description: `${CURRENT_MONTH}월 수강료`,
       notes: '',
-      created_at: '2026-06-01T09:00:00Z',
+      created_at: `${CURRENT_YEAR_MONTH}-01T09:00:00Z`,
     },
     {
       id: 703,
       student_id: 43,
       student_name: '한서준',
       student_number: 'S-2026-043',
-      year_month: '2026-05',
+      year_month: PREVIOUS_PAYMENT_MONTH,
       payment_type: 'season',
       base_amount: 600000,
       discount_amount: 0,
@@ -110,6 +116,10 @@ async function installRoutes(context, state) {
     }
     if (method === 'GET' && path === '/payments') return jsonRoute(route, { message: 'ok', payments: state.payments });
     if (method === 'GET' && path === '/students/class-days') return jsonRoute(route, makeClassDays());
+    if (method === 'POST' && path === '/notifications/send-unpaid') {
+      state.notificationPayload = request.postDataJSON();
+      return jsonRoute(route, { sent: 1, failed: 0 });
+    }
     if (method === 'POST' && path === '/payments/701/pay') {
       state.payPayload = request.postDataJSON();
       state.payments = state.payments.map((payment) =>
@@ -124,6 +134,17 @@ async function installRoutes(context, state) {
   });
 }
 
+async function waitForInitialRows(page) {
+  const firstPaymentRow = page.locator('tr:has-text("박민수")');
+  try {
+    await firstPaymentRow.waitFor({ timeout: 20000 });
+  } catch {
+    await page.reload({ waitUntil: 'networkidle' });
+    await firstPaymentRow.waitFor({ timeout: 20000 });
+  }
+  await page.locator('tr:has-text("한서준")').waitFor();
+}
+
 async function runNormal(browser) {
   const state = makeState();
   const context = await createAuthedContext(browser, { width: 1365, height: 900 });
@@ -131,10 +152,9 @@ async function runNormal(browser) {
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
 
-  await page.goto('/payments', { waitUntil: 'domcontentloaded' });
+  await page.goto('/payments', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 관리' }).waitFor();
-  await page.locator('tr:has-text("박민수")').waitFor();
-  await page.locator('tr:has-text("한서준")').waitFor();
+  await waitForInitialRows(page);
   await assertNoRawVisibleText(page, 'payments desktop');
   await assertNoHorizontalOverflow(page, 'payments desktop');
   await page.screenshot({ path: '/Users/etlab/paca-payments-desktop.png', fullPage: true });
@@ -145,6 +165,13 @@ async function runNormal(browser) {
   await page.getByRole('button', { name: '필터 초기화' }).click();
   await page.locator('tr:has-text("박민수")').waitFor();
 
+  await page.getByRole('button', { name: '미납 알림 (1명)' }).click();
+  await page.getByRole('alertdialog').getByText('미납자 1명에게 알림톡을 발송할까요?').waitFor();
+  await page.getByRole('alertdialog').getByRole('button', { name: '발송' }).click();
+  await page.getByText('알림 발송 완료: 1명 성공, 0명 실패').waitFor();
+  if (state.notificationPayload?.year !== CURRENT_YEAR) throw new Error(`unexpected notification payload ${JSON.stringify(state.notificationPayload)}`);
+  if (state.notificationPayload?.month !== CURRENT_MONTH) throw new Error(`unexpected notification payload ${JSON.stringify(state.notificationPayload)}`);
+
   await page.locator('tr:has-text("박민수")').getByRole('button', { name: '계좌' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: '납부 처리' }).click();
   await page.getByText('박민수님의 학원비가 납부 처리되었습니다.').waitFor();
@@ -152,7 +179,7 @@ async function runNormal(browser) {
   if (state.payPayload?.payment_method !== 'account') throw new Error(`unexpected pay method ${JSON.stringify(state.payPayload)}`);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 관리' }).waitFor();
   await page.locator('article:has-text("박민수")').waitFor();
   await assertNoRawVisibleText(page, 'payments mobile');
@@ -170,7 +197,7 @@ async function runError(browser) {
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
 
-  await page.goto('/payments', { waitUntil: 'domcontentloaded' });
+  await page.goto('/payments', { waitUntil: 'networkidle' });
   await page.getByText('학원비 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'payments error');
   await assertNoHorizontalOverflow(page, 'payments error');
@@ -194,6 +221,7 @@ async function main() {
     console.log(JSON.stringify({
       hits: normal.state.hits,
       payPayload: normal.state.payPayload,
+      notificationPayload: normal.state.notificationPayload,
       normalConsoleErrors: normal.diagnostics.consoleErrors,
       errorConsoleErrors: error.diagnostics.consoleErrors,
       normalExternalContinues: normal.state.externalContinues,

@@ -131,6 +131,8 @@ async function runEdit(browser) {
   await page.getByLabel('내부 메모').fill('수정 후 메모');
   await assertNoRawVisibleText(page, 'payment edit');
   await assertNoHorizontalOverflow(page, 'payment edit');
+  await page.getByRole('heading', { name: '학원비 수정' }).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(100);
   await page.screenshot({ path: '/Users/etlab/paca-payment-edit-mobile.png', fullPage: true });
 
   await page.getByRole('button', { name: '수정' }).click();
@@ -153,6 +155,7 @@ async function runCreateError(browser) {
   await page.getByText('학생 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'payment create error');
   await assertNoHorizontalOverflow(page, 'payment create error');
+  await page.screenshot({ path: '/Users/etlab/paca-payment-create-error-mobile.png', fullPage: true });
   await context.close();
   return { state, diagnostics };
 }
@@ -168,6 +171,7 @@ async function runEditError(browser) {
   await page.getByText('학원비 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'payment edit error');
   await assertNoHorizontalOverflow(page, 'payment edit error');
+  await page.screenshot({ path: '/Users/etlab/paca-payment-edit-error-mobile.png', fullPage: true });
   await context.close();
   return { state, diagnostics };
 }

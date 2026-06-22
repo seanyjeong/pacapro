@@ -66,7 +66,6 @@ export function usePaymentDetailState(paymentId: number) {
   };
 
   const deletePayment = async (onDeleted: () => void) => {
-    if (!window.confirm('이 학원비 청구를 삭제하시겠습니까? 삭제 후에는 목록에서 확인할 수 없습니다.')) return;
     setDeleting(true);
     try {
       await deletePaymentForDetail(paymentId);

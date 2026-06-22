@@ -108,7 +108,11 @@ async function runNormal(browser) {
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
-  page.on('dialog', async (dialog) => dialog.accept());
+  let nativeDialogMessage = null;
+  page.on('dialog', async (dialog) => {
+    nativeDialogMessage = dialog.message();
+    await dialog.dismiss();
+  });
 
   await page.goto('/payments/301', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 상세' }).waitFor();
@@ -138,8 +142,14 @@ async function runNormal(browser) {
   await page.screenshot({ path: '/Users/etlab/paca-payment-detail-mobile.png', fullPage: true });
 
   await page.getByRole('button', { name: '삭제' }).click();
+  await page.getByRole('alertdialog').getByText('학원비 청구 삭제').waitFor();
+  await page.getByRole('alertdialog').getByText('삭제 후에는 목록에서 확인할 수 없습니다.').waitFor();
+  await page.waitForTimeout(250);
+  await page.screenshot({ path: '/Users/etlab/paca-payment-delete-dialog-mobile.png', fullPage: true });
+  await page.getByRole('alertdialog').getByRole('button', { name: '삭제' }).click();
   await page.waitForURL('**/payments');
   if (!state.deleted) throw new Error('delete endpoint not called');
+  if (nativeDialogMessage) throw new Error(`unexpected native dialog: ${nativeDialogMessage}`);
 
   await context.close();
   return { state, diagnostics };
