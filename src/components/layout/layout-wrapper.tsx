@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils/cn';
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -85,7 +85,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
             <Sidebar />
             <div className={cn(
                 "flex-1 flex flex-col transition-all duration-300 ease-in-out",
-                mounted ? (sidebarCollapsed ? "md:ml-[68px]" : "md:ml-64") : "md:ml-[68px]"
+                mounted ? (sidebarCollapsed ? "md:ml-[68px]" : "md:ml-64") : "md:ml-64"
             )}>
                 <TopNav />
                 {/* 메인 콘텐츠 영역에 배경색 추가 (깊이감 부여) */}

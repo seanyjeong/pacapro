@@ -2,6 +2,7 @@
  * 권한 체크 유틸리티
  */
 
+import { useEffect, useState } from 'react';
 import type { Permissions, PagePermission } from '@/lib/types/staff';
 
 interface User {
@@ -31,23 +32,7 @@ export function getCurrentUser(): User | null {
  * @returns boolean
  */
 export function hasPermission(pageKey: string, action: 'view' | 'edit'): boolean {
-  const user = getCurrentUser();
-  if (!user) return false;
-
-  // owner는 모든 권한
-  if (user.role === 'owner') return true;
-
-  // admin(시스템 관리자)도 모든 권한
-  if (user.role === 'admin') return true;
-
-  // staff는 permissions 체크
-  if (user.role === 'staff') {
-    const permissions = user.permissions || {};
-    const pagePerm = permissions[pageKey as keyof Permissions] as PagePermission | undefined;
-    return pagePerm?.[action] === true;
-  }
-
-  return false;
+  return userHasPermission(getCurrentUser(), pageKey, action);
 }
 
 /**
@@ -93,26 +78,28 @@ export function canEdit(pageKey: string): boolean {
  * 사용 예: const { canEditPayments, canViewPayments } = usePermissions();
  */
 export function usePermissions() {
-  // SSR에서는 기본값 반환, 클라이언트에서만 실제 권한 체크
-  if (typeof window === 'undefined') {
-    return {
-      user: null,
-      isOwner: false,
-      isAdmin: false,
-      isStaff: false,
-      canView: () => false,
-      canEdit: () => false,
-    };
-  }
+  const [user, setUser] = useState<User | null>(null);
 
-  const user = getCurrentUser();
+  useEffect(() => {
+    setUser(getCurrentUser());
+  }, []);
 
   return {
     user,
     isOwner: user?.role === 'owner',
     isAdmin: user?.role === 'admin',
     isStaff: user?.role === 'staff',
-    canView: (pageKey: string) => hasPermission(pageKey, 'view'),
-    canEdit: (pageKey: string) => hasPermission(pageKey, 'edit'),
+    canView: (pageKey: string) => userHasPermission(user, pageKey, 'view'),
+    canEdit: (pageKey: string) => userHasPermission(user, pageKey, 'edit'),
   };
+}
+
+function userHasPermission(user: User | null, pageKey: string, action: 'view' | 'edit'): boolean {
+  if (!user) return false;
+  if (user.role === 'owner' || user.role === 'admin') return true;
+  if (user.role !== 'staff') return false;
+
+  const permissions = user.permissions || {};
+  const pagePerm = permissions[pageKey as keyof Permissions] as PagePermission | undefined;
+  return pagePerm?.[action] === true;
 }

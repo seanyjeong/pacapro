@@ -12,16 +12,16 @@ interface PaymentStatCardProps {
 
 export function PaymentStatCard({ label, value, icon, subValue, tone = 'default' }: PaymentStatCardProps) {
   return (
-    <Card className="rounded-lg border-border/70 shadow-none">
+    <Card className="rounded-md border-border shadow-none">
       <CardContent className="flex items-center justify-between gap-3 p-5">
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">{label}</p>
           <p
             className={cn(
               'mt-1 truncate text-2xl font-semibold tracking-normal tabular-nums text-foreground',
-              tone === 'success' && 'text-green-700',
-              tone === 'danger' && 'text-red-600',
-              tone === 'info' && 'text-blue-700'
+              tone === 'success' && 'text-emerald-700 dark:text-emerald-300',
+              tone === 'danger' && 'text-red-600 dark:text-red-300',
+              tone === 'info' && 'text-blue-700 dark:text-blue-300'
             )}
           >
             {value}
@@ -31,9 +31,9 @@ export function PaymentStatCard({ label, value, icon, subValue, tone = 'default'
         <div
           className={cn(
             'flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/35 text-muted-foreground',
-            tone === 'success' && 'border-green-200 bg-green-50 text-green-700',
-            tone === 'danger' && 'border-red-200 bg-red-50 text-red-600',
-            tone === 'info' && 'border-blue-200 bg-blue-50 text-blue-700'
+            tone === 'success' && 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300',
+            tone === 'danger' && 'border-red-200 bg-red-50 text-red-600 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300',
+            tone === 'info' && 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300'
           )}
         >
           {icon}

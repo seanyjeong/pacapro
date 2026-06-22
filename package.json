@@ -11,6 +11,7 @@
     "smoke:salary-detail": "node scripts/smoke/salary-detail-smoke.mjs",
     "smoke:payment-detail": "node scripts/smoke/payment-detail-smoke.mjs",
     "smoke:payment-editor": "node scripts/smoke/payment-editor-smoke.mjs",
+    "smoke:payments": "node scripts/smoke/payments-smoke.mjs",
     "smoke:performance": "node scripts/smoke/performance-smoke.mjs",
     "smoke:reports": "node scripts/smoke/reports-smoke.mjs",
     "smoke:schedules": "node scripts/smoke/schedules-smoke.mjs",

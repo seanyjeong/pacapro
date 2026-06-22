@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Coins, Check, Loader2, CreditCard, Banknote, Wallet } from 'lucide-react';
 import type { Payment } from '@/lib/types/payment';
+import { cn } from '@/lib/utils/cn';
 import {
   formatPaymentAmount,
   formatYearMonth,
@@ -34,13 +35,21 @@ import {
   PAYMENT_METHOD_LABELS,
 } from '@/lib/types/payment';
 
+type MarkMethod = 'account' | 'card' | 'cash';
+
+const PAYMENT_ACTIONS = [
+  { method: 'account', label: '계좌', Icon: Wallet, className: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300' },
+  { method: 'card', label: '카드', Icon: CreditCard, className: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-300' },
+  { method: 'cash', label: '현금', Icon: Banknote, className: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300' },
+] as const;
+
 interface PaymentListProps {
   payments: Payment[];
   loading?: boolean;
   onPaymentClick: (id: number) => void;
   onCreditClick?: (payment: Payment) => void;
   showCreditButton?: boolean;
-  onPaymentMark?: (payment: Payment, method: 'account' | 'card' | 'cash') => Promise<void>;
+  onPaymentMark?: (payment: Payment, method: MarkMethod) => Promise<void>;
   showPaymentMarkButton?: boolean;
   markingPaymentId?: number | null;
   hideDueDate?: boolean;
@@ -63,7 +72,7 @@ export function PaymentList({
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [pendingPayment, setPendingPayment] = useState<{
     payment: Payment;
-    method: 'account' | 'card' | 'cash';
+    method: MarkMethod;
   } | null>(null);
 
   const methodLabels = {
@@ -72,7 +81,7 @@ export function PaymentList({
     cash: '현금결제',
   };
 
-  const handlePaymentMarkClick = (payment: Payment, method: 'account' | 'card' | 'cash') => {
+  const handlePaymentMarkClick = (payment: Payment, method: MarkMethod) => {
     if (confirmBeforePayment) {
       setPendingPayment({ payment, method });
       setConfirmDialogOpen(true);
@@ -89,9 +98,76 @@ export function PaymentList({
     setPendingPayment(null);
   };
 
+  const renderCreditAction = (payment: Payment) => {
+    if (!showCreditButton || !onCreditClick) return null;
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(event) => {
+            event.stopPropagation();
+            onCreditClick(payment);
+          }}
+          className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
+        >
+          <Coins className="mr-1 h-4 w-4" />
+          크레딧
+        </Button>
+        {payment.credit_balance && payment.credit_balance > 0 ? (
+          <span className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+            {Math.floor(payment.credit_balance).toLocaleString()}원
+          </span>
+        ) : null}
+      </div>
+    );
+  };
+
+  const renderPaymentActions = (payment: Payment) => {
+    if (!showPaymentMarkButton || !onPaymentMark) return null;
+    if (payment.payment_status === 'paid') {
+      return (
+        <span className="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <Check className="mr-1 h-4 w-4" />
+          완납
+        </span>
+      );
+    }
+
+    if (markingPaymentId === payment.id) {
+      return (
+        <span className="inline-flex items-center rounded-md border border-border bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground">
+          <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+          처리중...
+        </span>
+      );
+    }
+
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {PAYMENT_ACTIONS.map(({ method, label, Icon, className }) => (
+          <Button
+            key={method}
+            variant="outline"
+            size="sm"
+            onClick={(event) => {
+              event.stopPropagation();
+              handlePaymentMarkClick(payment, method);
+            }}
+            className={cn('gap-1 border px-2 text-xs font-semibold shadow-none active:scale-95', className)}
+            title={`${methodLabels[method]}로 납부 처리`}
+          >
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <span className="shrink-0">{label}</span>
+          </Button>
+        ))}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
-      <Card className="rounded-lg border-border/70 shadow-none">
+      <Card className="rounded-md border-border shadow-none">
         <CardContent className="space-y-3 p-5">
           <div className="h-10 w-full rounded-md bg-muted" />
           <div className="h-10 w-full rounded-md bg-muted/70" />
@@ -103,7 +179,7 @@ export function PaymentList({
 
   if (payments.length === 0) {
     return (
-      <Card className="rounded-lg border-border/70 shadow-none">
+      <Card className="rounded-md border-border shadow-none">
         <CardContent className="p-12 text-center">
           <Banknote className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
           <h3 className="text-lg font-semibold text-foreground mb-2">학원비 내역이 없습니다</h3>
@@ -116,10 +192,72 @@ export function PaymentList({
   }
 
   return (
-    <Card className="rounded-lg border-border/70 shadow-none">
+    <Card className="rounded-md border-border shadow-none">
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-sm">
+        <div className="space-y-3 p-3 lg:hidden">
+          {payments.map((payment) => {
+            const overdue = isOverdue(payment);
+            return (
+              <article
+                key={payment.id}
+                className={cn(
+                  'overflow-hidden rounded-md border border-border bg-background',
+                  overdue && 'border-red-200 bg-red-50/70 dark:border-red-900 dark:bg-red-950/20'
+                )}
+              >
+                <button className="block w-full px-4 py-4 text-left" type="button" onClick={() => onPaymentClick(payment.id)}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">{payment.student_name}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{payment.student_number}</p>
+                    </div>
+                    <span
+                      className={`inline-flex shrink-0 items-center rounded-md px-2.5 py-1 text-xs font-medium ${getPaymentStatusColor(
+                        payment.payment_status
+                      )}`}
+                    >
+                      {PAYMENT_STATUS_LABELS[payment.payment_status]}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs text-muted-foreground">청구</p>
+                      <p className="mt-1 font-medium text-foreground">{formatYearMonth(payment.year_month)}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{PAYMENT_TYPE_LABELS[payment.payment_type]}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">금액</p>
+                      <p className="mt-1 font-semibold text-foreground">{formatPaymentAmount(payment.final_amount)}</p>
+                      {payment.paid_amount > 0 ? (
+                        <p className="mt-1 text-xs text-muted-foreground">납부 {formatPaymentAmount(payment.paid_amount)}</p>
+                      ) : null}
+                    </div>
+                    {!hideDueDate ? (
+                      <div className="col-span-2">
+                        <p className="text-xs text-muted-foreground">납부 기한</p>
+                        <p className={cn('mt-1 text-sm text-foreground', overdue && 'font-semibold text-red-600 dark:text-red-300')}>
+                          {formatDate(payment.due_date)}
+                          {overdue ? ' · 연체' : ''}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+                </button>
+
+                {(showCreditButton || showPaymentMarkButton) && (
+                  <div className="space-y-2 border-t border-border bg-muted/25 px-4 py-3">
+                    {renderCreditAction(payment)}
+                    {renderPaymentActions(payment)}
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="hidden overflow-x-auto lg:block">
+          <table className="w-full min-w-[1040px] text-sm">
             <thead className="border-b border-border bg-muted/40">
               <tr>
                 <th className="px-5 py-3 text-left font-medium text-muted-foreground">
@@ -243,84 +381,10 @@ export function PaymentList({
                       </div>
                     </td>
                     {showCreditButton && onCreditClick && (
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onCreditClick(payment);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950"
-                          >
-                            <Coins className="w-4 h-4 mr-1" />
-                            크레딧
-                          </Button>
-                          {payment.credit_balance && payment.credit_balance > 0 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300">
-                              {Math.floor(payment.credit_balance).toLocaleString()}원
-                            </span>
-                          )}
-                        </div>
-                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">{renderCreditAction(payment)}</td>
                     )}
                     {showPaymentMarkButton && onPaymentMark && (
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {payment.payment_status === 'paid' ? (
-                          <span className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                            <Check className="w-4 h-4 mr-1" />
-                            완납
-                          </span>
-                        ) : markingPaymentId === payment.id ? (
-                          <span className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-muted text-muted-foreground">
-                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
-                            처리중...
-                          </span>
-                        ) : (
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePaymentMarkClick(payment, 'account');
-                              }}
-                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border-2 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800 dark:hover:bg-blue-900 shadow-sm hover:shadow transition-all active:scale-95"
-                              title="계좌이체로 납부 처리"
-                            >
-                              <Wallet className="h-3.5 w-3.5 shrink-0" />
-                              <span className="shrink-0">계좌</span>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePaymentMarkClick(payment, 'card');
-                              }}
-                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border-2 bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:border-purple-300 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800 dark:hover:bg-purple-900 shadow-sm hover:shadow transition-all active:scale-95"
-                              title="카드결제로 납부 처리"
-                            >
-                              <CreditCard className="h-3.5 w-3.5 shrink-0" />
-                              <span className="shrink-0">카드</span>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePaymentMarkClick(payment, 'cash');
-                              }}
-                              className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold border-2 bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 dark:hover:bg-emerald-900 shadow-sm hover:shadow transition-all active:scale-95"
-                              title="현금결제로 납부 처리"
-                            >
-                              <Banknote className="h-3.5 w-3.5 shrink-0" />
-                              <span className="shrink-0">현금</span>
-                            </Button>
-                          </div>
-                        )}
-                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">{renderPaymentActions(payment)}</td>
                     )}
                   </tr>
                 );
