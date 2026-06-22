@@ -21,7 +21,7 @@ export function SeasonStatusBadge({ status, label, tone }: SeasonStatusBadgeProp
 
 function getStatusTone(status?: SeasonStatus): 'default' | 'success' | 'warning' | 'info' {
   if (status === 'active') return 'success';
-  if (status === 'draft') return 'warning';
+  if (status === 'draft' || status === 'upcoming') return 'warning';
   if (status === 'completed' || status === 'ended') return 'info';
   return 'default';
 }

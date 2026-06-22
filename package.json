@@ -16,6 +16,7 @@
     "smoke:schedules": "node scripts/smoke/schedules-smoke.mjs",
     "smoke:season-list": "node scripts/smoke/season-list-smoke.mjs",
     "smoke:season-create": "node scripts/smoke/season-create-smoke.mjs",
+    "smoke:season-edit": "node scripts/smoke/season-edit-smoke.mjs",
     "smoke:season-detail": "node scripts/smoke/season-detail-smoke.mjs",
     "smoke:season-enroll": "node scripts/smoke/season-enroll-smoke.mjs"
   },

@@ -9,7 +9,7 @@ export function SeasonStatusBadge({ status }: SeasonStatusBadgeProps) {
   const className =
     status === 'active'
       ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-      : status === 'draft'
+      : status === 'draft' || status === 'upcoming'
         ? 'border-yellow-200 bg-yellow-50 text-yellow-700'
         : status === 'completed' || status === 'ended'
           ? 'border-slate-200 bg-slate-50 text-slate-600'
