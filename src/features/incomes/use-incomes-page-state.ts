@@ -27,6 +27,8 @@ export function useIncomesPageState() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
   const [activeTab, setActiveTab] = useState<IncomeTab>('all');
   const [viewMode, setViewMode] = useState<IncomeViewMode>('list');
   const [selectedMonth, setSelectedMonth] = useState(getCurrentYearMonth);
@@ -85,6 +87,7 @@ export function useIncomesPageState() {
   };
 
   const submitForm = async () => {
+    setSaving(true);
     try {
       if (editingId) {
         await updateOtherIncome(editingId, formData);
@@ -97,6 +100,8 @@ export function useIncomesPageState() {
       void loadData();
     } catch {
       toast.error('수입 내역을 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도해주세요.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -107,13 +112,17 @@ export function useIncomesPageState() {
   };
 
   const removeIncome = async (id: number) => {
-    if (!window.confirm('이 수입 내역을 삭제하시겠습니까?')) return;
+    setActionBusy(true);
     try {
       await deleteOtherIncome(id);
       toast.success('삭제되었습니다.');
       void loadData();
+      return true;
     } catch {
       toast.error('수입 내역을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      return false;
+    } finally {
+      setActionBusy(false);
     }
   };
 
@@ -138,6 +147,8 @@ export function useIncomesPageState() {
     loading,
     error,
     exporting,
+    saving,
+    actionBusy,
     activeTab,
     viewMode,
     selectedMonth,

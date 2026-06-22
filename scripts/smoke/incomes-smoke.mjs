@@ -95,6 +95,12 @@ async function installRoutes(context, state) {
     if (method === 'GET' && path === '/payments') {
       return jsonRoute(route, { message: 'ok', payments: state.payments });
     }
+    if (method === 'POST' && path === '/incomes') {
+      const payload = JSON.parse(request.postData() || '{}');
+      state.createdPayload = payload;
+      state.incomes = [{ id: 1003, ...payload }, ...state.incomes];
+      return jsonRoute(route, { message: 'created', income: { id: 1003, ...payload } });
+    }
     if (method === 'DELETE' && path === '/incomes/1002') {
       state.deletedId = 1002;
       state.incomes = state.incomes.filter((income) => income.id !== 1002);
@@ -121,7 +127,11 @@ async function runNormal(browser) {
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
-  page.on('dialog', async (dialog) => dialog.accept());
+  let nativeDialogMessage = null;
+  page.on('dialog', async (dialog) => {
+    nativeDialogMessage = dialog.message();
+    await dialog.dismiss();
+  });
 
   await openIncomesPage(page);
   await page.getByText('Finance Desk').waitFor();
@@ -131,13 +141,28 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'incomes desktop');
   await page.screenshot({ path: '/Users/etlab/paca-incomes-desktop.png', fullPage: true });
 
+  await page.getByRole('button', { name: '기타수입 등록' }).click();
+  await page.getByLabel('날짜').fill('2026-06-18');
+  await page.getByLabel('카테고리').selectOption('beverage');
+  await page.getByLabel('금액').fill('45000');
+  await page.getByLabel('설명').fill('스포츠 음료 판매');
+  await page.getByLabel('결제 방법').selectOption('transfer');
+  await page.getByLabel('메모').fill('강남 저녁반');
+  await page.getByRole('button', { name: '등록', exact: true }).click();
+  await page.getByText('수입이 등록되었습니다.').waitFor();
+  if (state.createdPayload?.amount !== 45000) throw new Error(`unexpected created income ${JSON.stringify(state.createdPayload)}`);
+  if (state.createdPayload?.category !== 'beverage') throw new Error(`unexpected category ${state.createdPayload?.category}`);
+
   await page.getByLabel('수입 검색').fill('이서연');
   await page.locator('tr:has-text("이서연")').waitFor();
   await page.locator('tr:has-text("박민수")').waitFor({ state: 'hidden' });
   await page.getByLabel('수입 검색').fill('');
   await page.locator('tr:has-text("입시 설명회 참가비")').getByRole('button', { name: '기타 수입 삭제' }).click();
+  await page.getByRole('alertdialog').getByRole('heading', { name: '기타 수입 삭제' }).waitFor();
+  await page.getByRole('alertdialog').getByRole('button', { name: '삭제' }).click();
   await page.getByText('삭제되었습니다.').waitFor();
   if (state.deletedId !== 1002) throw new Error(`unexpected deleted income ${state.deletedId}`);
+  if (nativeDialogMessage) throw new Error(`unexpected native dialog: ${nativeDialogMessage}`);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -161,6 +186,7 @@ async function runError(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openIncomesPage(page);
+  await page.getByRole('alert').getByRole('heading', { name: '수입 내역을 불러오지 못했습니다' }).waitFor();
   await page.getByText('수입 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'incomes error');
   await assertNoHorizontalOverflow(page, 'incomes error');
@@ -184,6 +210,7 @@ async function main() {
     [normal, error].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
+      createdPayload: normal.state.createdPayload,
       deletedId: normal.state.deletedId,
       normalConsoleErrors: normal.diagnostics.consoleErrors,
       errorConsoleErrors: error.diagnostics.consoleErrors,

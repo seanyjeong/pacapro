@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { IncomeCalendar } from '@/components/incomes/income-calendar';
 import { usePermissions } from '@/lib/utils/permissions';
+import { IncomeDeleteDialog } from './income-delete-dialog';
 import { IncomeLoadingState } from './income-loading-state';
 import { IncomeSummaryStrip } from './income-summary-strip';
 import { IncomeTabs } from './income-tabs';
@@ -16,12 +18,22 @@ import { useIncomesPageState } from './use-incomes-page-state';
 
 export function IncomesPage() {
   const state = useIncomesPageState();
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const { canEdit } = usePermissions();
   const canEditIncomes = canEdit('incomes');
   const hasSearch = state.searchQuery.trim().length > 0;
   const visibleTuition = state.activeTab !== 'other' ? state.filteredTuitionPayments : [];
   const visibleOther = state.activeTab !== 'tuition' ? state.filteredOtherIncomes : [];
   const hasVisibleRows = visibleTuition.length + visibleOther.length > 0;
+  const pendingIncome = pendingDeleteId
+    ? state.otherIncomes.find((income) => income.id === pendingDeleteId) || null
+    : null;
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return;
+    const completed = await state.removeIncome(pendingDeleteId);
+    if (completed) setPendingDeleteId(null);
+  };
 
   if (state.loading) {
     return <IncomeLoadingState />;
@@ -54,6 +66,7 @@ export function IncomesPage() {
         <OtherIncomeForm
           formData={state.formData}
           editingId={state.editingId}
+          saving={state.saving}
           onUpdate={state.updateForm}
           onSubmit={state.submitForm}
           onCancel={state.resetForm}
@@ -83,7 +96,7 @@ export function IncomesPage() {
               canEdit={canEditIncomes}
               onSelect={state.setSelectedIncome}
               onEdit={state.editIncome}
-              onDelete={state.removeIncome}
+              onDelete={setPendingDeleteId}
             />
           ) : null}
           {!hasVisibleRows && !state.showForm ? <IncomesEmptyState hasSearch={hasSearch} /> : null}
@@ -95,7 +108,13 @@ export function IncomesPage() {
         canEdit={canEditIncomes}
         onClose={() => state.setSelectedIncome(null)}
         onEdit={state.editIncome}
-        onDelete={state.removeIncome}
+        onDelete={setPendingDeleteId}
+      />
+      <IncomeDeleteDialog
+        busy={state.actionBusy}
+        income={pendingIncome}
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={confirmDelete}
       />
     </div>
   );
