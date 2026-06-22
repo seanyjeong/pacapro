@@ -8,7 +8,7 @@
  */
 
 import { use } from 'react';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useConsultationDraftAutosave } from '@/hooks/useConsultationDraftAutosave';
 import { useTabletConduct } from './_hooks/useTabletConduct';
@@ -34,6 +34,7 @@ export default function TabletConductPage({ params }: PageProps) {
     backLabel,
     consultation,
     loading,
+    loadError,
     saving,
     checklist,
     consultationMemo,
@@ -104,14 +105,22 @@ export default function TabletConductPage({ params }: PageProps) {
     );
   }
 
-  if (!consultation) {
+  if (loadError || !consultation) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh]">
-        <p className="text-muted-foreground">상담 정보를 찾을 수 없습니다.</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push(backUrl)}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {backLabel}
-        </Button>
+      <div className="flex min-h-[50vh] items-center justify-center px-4">
+        <section className="w-full max-w-xl rounded-md border border-amber-200 bg-amber-50 p-5 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <h1 className="text-base font-semibold">상담 정보를 불러오지 못했습니다</h1>
+              <p className="mt-1 text-sm">{loadError || '잠시 후 다시 시도해주세요.'}</p>
+              <Button variant="outline" className="mt-4 bg-background/80" onClick={() => router.push(backUrl)}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {backLabel}
+              </Button>
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
@@ -139,7 +148,6 @@ export default function TabletConductPage({ params }: PageProps) {
       ) : (
         <TabletNewInquiryView
           consultation={consultation}
-          checklist={checklist}
           consultationMemo={consultationMemo}
           setConsultationMemo={setConsultationMemo}
           groupedChecklist={groupedChecklist}

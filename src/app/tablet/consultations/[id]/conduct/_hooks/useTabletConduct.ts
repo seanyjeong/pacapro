@@ -14,7 +14,10 @@ import type {
   LearningForm,
   LinkedStudent,
   PeakRecord,
+  PreviousTabletConsultation,
 } from '../_types';
+
+const SILENT_CONFIG = { suppressErrorToast: true };
 
 // 기본 체크리스트 템플릿 (체대입시 특화)
 export const DEFAULT_CHECKLIST_TEMPLATE: ChecklistTemplate[] = [
@@ -62,6 +65,7 @@ export function useTabletConduct(consultationId: string) {
 
   const [consultation, setConsultation] = useState<Consultation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -107,29 +111,25 @@ export function useTabletConduct(consultationId: string) {
     '기타': true,
   });
 
-  // 상담 정보 로드
   useEffect(() => {
     const loadConsultation = async () => {
+      setLoadError(null);
       try {
-        const data = await apiClient.get<Consultation>(`/consultations/${consultationId}`);
+        const data = await apiClient.get<Consultation>(`/consultations/${consultationId}`, SILENT_CONFIG);
         setConsultation(data);
         setConsultationMemo(data.consultation_memo || '');
 
-        // 재원생 상담인 경우 학생 정보 및 P-EAK 기록 로드
         if (data.consultation_type === 'learning' && data.linked_student_id) {
           try {
-            const studentData = await apiClient.get<{ student: LinkedStudent }>(`/students/${data.linked_student_id}`);
+            const studentData = await apiClient.get<{ student: LinkedStudent }>(`/students/${data.linked_student_id}`, SILENT_CONFIG);
             setLinkedStudent(studentData.student);
-          } catch (err) {
-            console.error('학생 정보 로드 오류:', err);
+          } catch {
+            setLinkedStudent(null);
           }
 
-          // 이 consultation_id로 이미 생성된 student_consultation이 있으면 폼에 로드
           try {
-            const prevData = await apiClient.get<{ consultations: any[] }>(`/student-consultations/${data.linked_student_id}`);
-            const existing = (prevData.consultations || []).find(
-              (c: any) => c.consultation_id === data.id
-            );
+            const prevData = await apiClient.get<{ consultations: PreviousTabletConsultation[] }>(`/student-consultations/${data.linked_student_id}`, SILENT_CONFIG);
+            const existing = (prevData.consultations || []).find(item => item.consultation_id === data.id);
             if (existing) {
               setExistingStudentConsultationId(existing.id);
               const mockScores = existing.mock_test_scores
@@ -149,20 +149,19 @@ export function useTabletConduct(consultationId: string) {
                 generalMemo: existing.general_memo || '',
               }));
             }
-          } catch (err) {
-            console.error('기존 상담 기록 로드 오류:', err);
+          } catch {
+            setExistingStudentConsultationId(null);
           }
 
           loadPeakRecords(data.linked_student_id);
         }
 
-        // 체크리스트 설정 로드 또는 기본값 사용 (신규 상담인 경우에만)
         if (data.consultation_type !== 'learning') {
           if (data.checklist && data.checklist.length > 0) {
             setChecklist(data.checklist);
           } else {
             try {
-              const settingsResponse = await apiClient.get<{ settings: { checklist_template?: ChecklistTemplate[] } }>('/consultations/settings/info');
+              const settingsResponse = await apiClient.get<{ settings: { checklist_template?: ChecklistTemplate[] } }>('/consultations/settings/info', SILENT_CONFIG);
               const template = settingsResponse.settings?.checklist_template || DEFAULT_CHECKLIST_TEMPLATE;
               setChecklist(template.map(item => ({
                 ...item,
@@ -180,16 +179,14 @@ export function useTabletConduct(consultationId: string) {
             }
           }
         }
-      } catch (error) {
-        console.error('상담 정보 로드 오류:', error);
-        router.push(backUrl);
+      } catch {
+        setLoadError('잠시 후 다시 시도해주세요.');
       } finally {
         setLoading(false);
       }
     };
 
     loadConsultation();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [consultationId]);
 
   // P-EAK 기록 로드
@@ -201,25 +198,24 @@ export function useTabletConduct(consultationId: string) {
         records: Record<string, PeakRecord>;
       }>(`/student-consultations/${studentId}/peak-records`, {
         params: { type },
+        suppressErrorToast: true,
       });
       if (response.found) {
         setPeakRecords(response.records);
       }
-    } catch (err) {
-      console.error('P-EAK 기록 로드 오류:', err);
+    } catch {
+      setPeakRecords({});
     } finally {
       setPeakLoading(false);
     }
   };
 
-  // 체크리스트 체크 토글
   const toggleCheck = (itemId: number) => {
     setChecklist(prev => prev.map(item =>
       item.id === itemId ? { ...item, checked: !item.checked } : item
     ));
   };
 
-  // 입력값 변경
   const updateInputValue = (itemId: number, inputIndex: number | null, value: string) => {
     setChecklist(prev => prev.map(item => {
       if (item.id !== itemId) return item;
@@ -235,17 +231,14 @@ export function useTabletConduct(consultationId: string) {
     }));
   };
 
-  // 카테고리 토글
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({ ...prev, [category]: !prev[category] }));
   };
 
-  // 섹션 토글 (재원생 상담용)
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  // 저장
   const handleSave = async () => {
     if (!consultation) return;
 
@@ -271,10 +264,10 @@ export function useTabletConduct(consultationId: string) {
         };
 
         if (existingStudentConsultationId) {
-          await apiClient.put(`/student-consultations/${existingStudentConsultationId}`, payload);
+          await apiClient.put(`/student-consultations/${existingStudentConsultationId}`, payload, SILENT_CONFIG);
           toast.success('상담 기록이 수정되었습니다.');
         } else {
-          const result = await apiClient.post<{ id: number }>('/student-consultations', payload);
+          const result = await apiClient.post<{ id: number }>('/student-consultations', payload, SILENT_CONFIG);
           setExistingStudentConsultationId(result.id);
           toast.success('상담 기록이 저장되었습니다.');
         }
@@ -284,23 +277,21 @@ export function useTabletConduct(consultationId: string) {
           checklist,
           consultationMemo,
           status: 'completed',
-        });
+        }, SILENT_CONFIG);
         setConsultation({ ...consultation, status: 'completed' });
         toast.success('상담이 완료 처리되었습니다.');
       }
-    } catch (error) {
-      console.error('저장 오류:', error);
+    } catch {
+      toast.error('저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSaving(false);
     }
   };
 
-  // 체험 일정 추가
   const addTrialDate = () => {
     setTrialDates(prev => [...prev, { date: '', timeSlot: '' }]);
   };
 
-  // 체험 일정 삭제
   const removeTrialDate = (index: number) => {
     if (trialDates.length <= 1) {
       toast.error('최소 1개의 체험 일정이 필요합니다.');
@@ -309,7 +300,6 @@ export function useTabletConduct(consultationId: string) {
     setTrialDates(prev => prev.filter((_, i) => i !== index));
   };
 
-  // 체험 학생 등록
   const handleConvertToTrial = async () => {
     if (!consultation) return;
 
@@ -343,20 +333,18 @@ export function useTabletConduct(consultationId: string) {
       await apiClient.put(`/consultations/${consultation.id}`, {
         checklist,
         consultationMemo,
-      });
-      await convertToTrialStudent(consultation.id, trialDates);
+      }, SILENT_CONFIG);
+      await convertToTrialStudent(consultation.id, trialDates, undefined, SILENT_CONFIG);
       toast.success('체험 학생으로 등록되었습니다.');
       setTrialModalOpen(false);
       router.push(backUrl);
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      toast.error(err.message || '체험 등록에 실패했습니다.');
+    } catch {
+      toast.error('체험 학생으로 등록하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setConvertingToTrial(false);
     }
   };
 
-  // 학생 정보 수정 모달 열기
   const openStudentEditModal = () => {
     if (!consultation) return;
     setStudentEditForm({
@@ -370,7 +358,6 @@ export function useTabletConduct(consultationId: string) {
     setStudentEditModalOpen(true);
   };
 
-  // 학생 정보 저장
   const handleSaveStudentInfo = async () => {
     if (!consultation) return;
 
@@ -383,7 +370,7 @@ export function useTabletConduct(consultationId: string) {
         student_school: studentEditForm.student_school,
         parent_phone: studentEditForm.parent_phone,
         target_school: studentEditForm.target_school,
-      });
+      }, SILENT_CONFIG);
 
       setConsultation({
         ...consultation,
@@ -397,14 +384,13 @@ export function useTabletConduct(consultationId: string) {
 
       toast.success('학생 정보가 수정되었습니다.');
       setStudentEditModalOpen(false);
-    } catch (error) {
-      console.error('학생 정보 수정 오류:', error);
+    } catch {
+      toast.error('학생 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSavingStudent(false);
     }
   };
 
-  // 미등록관리 학생 등록
   const handleConvertToPending = async () => {
     if (!consultation) return;
 
@@ -413,18 +399,18 @@ export function useTabletConduct(consultationId: string) {
       await apiClient.put(`/consultations/${consultation.id}`, {
         checklist,
         consultationMemo,
-      });
+      }, SILENT_CONFIG);
       await convertToPendingStudent(
         consultation.id,
         undefined,
-        pendingMemo || consultationMemo || undefined
+        pendingMemo || consultationMemo || undefined,
+        SILENT_CONFIG
       );
       toast.success('미등록관리 학생으로 등록되었습니다.');
       setPendingModalOpen(false);
       router.push(backUrl);
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      toast.error(err.message || '미등록관리 등록에 실패했습니다.');
+    } catch {
+      toast.error('미등록관리 학생으로 등록하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setConvertingToPending(false);
     }
@@ -446,10 +432,10 @@ export function useTabletConduct(consultationId: string) {
     router,
     backUrl,
     backLabel,
-    // core state
     consultation,
     setConsultation,
     loading,
+    loadError,
     saving,
     // checklist
     checklist,

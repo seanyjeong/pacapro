@@ -26,24 +26,24 @@ export function TabletConductHeader({
 }: TabletConductHeaderProps) {
   return (
     <>
-      {/* 헤더 - 태블릿 최적화 */}
-      <Card className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="lg" className="h-11" onClick={onBack}>
-              <ArrowLeft className="h-5 w-5 mr-2" />
+      <Card className="rounded-md p-4 shadow-none">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex min-w-0 items-start gap-4">
+            <Button variant="outline" size="lg" className="h-11 shrink-0 gap-2" onClick={onBack}>
+              <ArrowLeft className="h-5 w-5" />
               {backLabel}
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                {consultation.student_name}
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Tablet Consultation Desk</p>
+              <h1 className="flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-normal text-foreground">
+                {consultation.consultation_type === 'learning' ? '재원생 상담' : '상담 진행'} · {consultation.student_name}
                 {consultation.consultation_type === 'learning' && consultation.learning_type && (
                   <Badge variant="secondary" className="text-sm bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
                     {LEARNING_TYPE_LABELS[consultation.learning_type]}
                   </Badge>
                 )}
               </h1>
-              <p className="text-base text-muted-foreground flex items-center gap-2 mt-1">
+              <p className="mt-1 flex flex-wrap items-center gap-2 text-base text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 {format(parseISO(consultation.preferred_date), 'yyyy년 M월 d일 (EEEE)', { locale: ko })}
                 <Clock className="h-4 w-4 ml-2" />
@@ -59,17 +59,16 @@ export function TabletConductHeader({
         </div>
       </Card>
 
-      {/* 진행률 - 신규 상담에만 표시 */}
       {consultation.consultation_type !== 'learning' && (
-        <Card>
+        <Card className="rounded-md shadow-none">
           <CardContent className="py-3">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-muted-foreground">진행률</span>
               <span className="font-medium">{progressPercent}%</span>
             </div>
-            <div className="w-full bg-muted rounded-full h-2">
+            <div className="h-2 w-full rounded-full bg-muted">
               <div
-                className="bg-primary h-2 rounded-full transition-all duration-300"
+                className="h-2 rounded-full bg-blue-600 transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
