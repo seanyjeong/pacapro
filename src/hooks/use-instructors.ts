@@ -16,6 +16,10 @@ import type {
 } from '@/lib/types/instructor';
 import { toast } from 'sonner';
 
+const INSTRUCTOR_LOAD_ERROR_MESSAGE = '강사 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+const INSTRUCTOR_SAVE_ERROR_MESSAGE = '강사 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
+const INSTRUCTOR_DELETE_ERROR_MESSAGE = '강사 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.';
+
 const QUERY_KEYS = {
   instructors: (filters?: InstructorFilters) => ['instructors', filters] as const,
   instructor: (id: number) => ['instructors', id] as const,
@@ -30,13 +34,21 @@ export function useInstructors(initialFilters?: InstructorFilters) {
   const query = useQuery({
     queryKey: QUERY_KEYS.instructors(filters),
     queryFn: async () => {
-      const data = await instructorsAPI.getInstructors(filters);
+      const data = await instructorsAPI.getInstructors(filters, { suppressErrorToast: true });
       return data.instructors as Instructor[];
     },
   });
 
   const updateFilters = useCallback((newFilters: Partial<InstructorFilters>) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
+    setFilters((prev) => {
+      const merged = { ...prev, ...newFilters };
+      Object.keys(merged).forEach((key) => {
+        if (merged[key as keyof InstructorFilters] === undefined) {
+          delete merged[key as keyof InstructorFilters];
+        }
+      });
+      return merged;
+    });
   }, []);
 
   const resetFilters = useCallback(() => {
@@ -50,7 +62,7 @@ export function useInstructors(initialFilters?: InstructorFilters) {
   return {
     instructors: query.data || [],
     loading: query.isLoading,
-    error: query.error?.message || null,
+    error: query.error ? INSTRUCTOR_LOAD_ERROR_MESSAGE : null,
     filters,
     setFilters,
     updateFilters,
@@ -66,7 +78,7 @@ export function useInstructor(id: number) {
   const query = useQuery({
     queryKey: QUERY_KEYS.instructor(id),
     queryFn: async () => {
-      const data = await instructorsAPI.getInstructor(id);
+      const data = await instructorsAPI.getInstructor(id, { suppressErrorToast: true });
       return {
         instructor: data.instructor as InstructorDetail,
         attendances: (data.attendances || []) as InstructorAttendance[],
@@ -85,7 +97,7 @@ export function useInstructor(id: number) {
     attendances: query.data?.attendances || [],
     salaries: query.data?.salaries || [],
     loading: query.isLoading,
-    error: query.error?.message || null,
+    error: query.error ? INSTRUCTOR_LOAD_ERROR_MESSAGE : null,
     reload,
   };
 }
@@ -97,13 +109,13 @@ export function useCreateInstructor() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: InstructorFormData) => instructorsAPI.createInstructor(data),
+    mutationFn: (data: InstructorFormData) => instructorsAPI.createInstructor(data, { suppressErrorToast: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['instructors'] });
       toast.success('강사가 등록되었습니다.');
     },
-    onError: (error: Error) => {
-      toast.error(`강사 등록 실패: ${error.message}`);
+    onError: () => {
+      toast.error(INSTRUCTOR_SAVE_ERROR_MESSAGE);
     },
   });
 }
@@ -116,14 +128,14 @@ export function useUpdateInstructor() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<InstructorFormData> }) =>
-      instructorsAPI.updateInstructor(id, data),
+      instructorsAPI.updateInstructor(id, data, { suppressErrorToast: true }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['instructors'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.instructor(variables.id) });
       toast.success('강사 정보가 수정되었습니다.');
     },
-    onError: (error: Error) => {
-      toast.error(`강사 수정 실패: ${error.message}`);
+    onError: () => {
+      toast.error(INSTRUCTOR_SAVE_ERROR_MESSAGE);
     },
   });
 }
@@ -135,13 +147,13 @@ export function useDeleteInstructor() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => instructorsAPI.deleteInstructor(id),
+    mutationFn: (id: number) => instructorsAPI.deleteInstructor(id, { suppressErrorToast: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['instructors'] });
       toast.success('강사가 삭제되었습니다.');
     },
-    onError: (error: Error) => {
-      toast.error(`강사 삭제 실패: ${error.message}`);
+    onError: () => {
+      toast.error(INSTRUCTOR_DELETE_ERROR_MESSAGE);
     },
   });
 }

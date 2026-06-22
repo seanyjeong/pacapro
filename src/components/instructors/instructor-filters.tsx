@@ -25,7 +25,7 @@ export function InstructorFiltersComponent({
   onFilterChange,
   onReset,
 }: InstructorFiltersComponentProps) {
-  const handleChange = (key: keyof InstructorFilters, value: any) => {
+  const handleChange = (key: keyof InstructorFilters, value: InstructorFilters[keyof InstructorFilters]) => {
     onFilterChange({
       ...filters,
       [key]: value,
@@ -35,29 +35,29 @@ export function InstructorFiltersComponent({
   const hasActiveFilters = filters.status || filters.salary_type || filters.instructor_type || filters.gender;
 
   return (
-    <Card>
+    <Card className="rounded-md">
       <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-muted-foreground" />
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
             <h3 className="text-sm font-semibold text-foreground">필터</h3>
           </div>
           {hasActiveFilters && (
-            <Button variant="outline" size="sm" onClick={onReset}>
-              <X className="w-4 h-4 mr-1" />
+            <Button variant="outline" size="sm" className="gap-1" onClick={onReset}>
+              <X className="h-4 w-4" />
               초기화
             </Button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
           {/* 급여타입 */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">급여타입</label>
+            <label className="mb-2 block text-xs font-medium text-muted-foreground">급여타입</label>
             <select
               value={filters.salary_type || ''}
               onChange={(e) => handleChange('salary_type', e.target.value || undefined)}
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">전체</option>
               {SALARY_TYPE_OPTIONS.map((option) => (
@@ -70,11 +70,11 @@ export function InstructorFiltersComponent({
 
           {/* 강사 유형 */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">강사 유형</label>
+            <label className="mb-2 block text-xs font-medium text-muted-foreground">강사 유형</label>
             <select
               value={filters.instructor_type || ''}
               onChange={(e) => handleChange('instructor_type', e.target.value || undefined)}
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">전체</option>
               {INSTRUCTOR_TYPE_OPTIONS.map((option) => (
@@ -87,11 +87,11 @@ export function InstructorFiltersComponent({
 
           {/* 성별 */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">성별</label>
+            <label className="mb-2 block text-xs font-medium text-muted-foreground">성별</label>
             <select
               value={filters.gender || ''}
               onChange={(e) => handleChange('gender', e.target.value || undefined)}
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">전체</option>
               {GENDER_OPTIONS.map((option) => (
@@ -104,11 +104,11 @@ export function InstructorFiltersComponent({
 
           {/* 상태 */}
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">상태</label>
+            <label className="mb-2 block text-xs font-medium text-muted-foreground">상태</label>
             <select
               value={filters.status || ''}
               onChange={(e) => handleChange('status', e.target.value || undefined)}
-              className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="">전체</option>
               {INSTRUCTOR_STATUS_OPTIONS.map((option) => (

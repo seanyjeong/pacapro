@@ -24,15 +24,15 @@ export function InstructorStatsCards({ instructors }: InstructorStatsCardsProps)
       title: '전체 강사',
       value: stats.total,
       icon: Users,
-      bgColor: 'bg-blue-100 dark:bg-blue-900',
-      iconColor: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-slate-100 dark:bg-slate-900/60',
+      iconColor: 'text-slate-700 dark:text-slate-200',
     },
     {
       title: '재직',
       value: stats.active,
       icon: UserCheck,
-      bgColor: 'bg-green-100 dark:bg-green-900',
-      iconColor: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-emerald-100 dark:bg-emerald-900/50',
+      iconColor: 'text-emerald-700 dark:text-emerald-300',
     },
     {
       title: '휴직',
@@ -45,25 +45,25 @@ export function InstructorStatsCards({ instructors }: InstructorStatsCardsProps)
       title: '퇴사',
       value: stats.retired,
       icon: UserMinus,
-      bgColor: 'bg-red-100 dark:bg-red-900',
-      iconColor: 'text-red-600 dark:text-red-400',
+      bgColor: 'bg-rose-100 dark:bg-rose-900/50',
+      iconColor: 'text-rose-700 dark:text-rose-300',
     },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
       {cards.map((card) => {
         const Icon = card.icon;
         return (
-          <Card key={card.title}>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className={`p-3 ${card.bgColor} rounded-xl`}>
-                  <Icon className={`w-6 h-6 ${card.iconColor}`} />
+          <Card key={card.title} className="rounded-md">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={`rounded-md p-2.5 ${card.bgColor}`}>
+                  <Icon className={`h-5 w-5 ${card.iconColor}`} />
                 </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">{card.title}</div>
-                  <div className="text-2xl font-bold text-foreground">{card.value}명</div>
+                <div className="min-w-0">
+                  <div className="text-xs font-medium text-muted-foreground">{card.title}</div>
+                  <div className="mt-1 text-xl font-semibold tracking-normal text-foreground">{card.value}명</div>
                 </div>
               </div>
             </CardContent>

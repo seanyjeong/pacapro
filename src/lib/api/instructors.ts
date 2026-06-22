@@ -3,7 +3,7 @@
  * 강사 관련 API 호출 함수
  */
 
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 import type {
   InstructorFormData,
   InstructorsResponse,
@@ -19,49 +19,55 @@ export const instructorsAPI = {
    * 강사 목록 조회 (필터링)
    * GET /paca/instructors
    */
-  getInstructors: async (filters?: InstructorFilters): Promise<InstructorsResponse> => {
+  getInstructors: async (filters?: InstructorFilters, config?: APIRequestConfig): Promise<InstructorsResponse> => {
     const params = new URLSearchParams();
 
     if (filters?.status) params.append('status', filters.status);
     if (filters?.salary_type) params.append('salary_type', filters.salary_type);
+    if (filters?.instructor_type) params.append('instructor_type', filters.instructor_type);
+    if (filters?.gender) params.append('gender', filters.gender);
     if (filters?.search) params.append('search', filters.search);
 
     const queryString = params.toString();
     const url = queryString ? `/instructors?${queryString}` : '/instructors';
 
-    return await apiClient.get(url);
+    return await apiClient.get(url, config);
   },
 
   /**
    * 강사 상세 조회
    * GET /paca/instructors/:id
    */
-  getInstructor: async (id: number): Promise<InstructorDetailResponse> => {
-    return await apiClient.get(`/instructors/${id}`);
+  getInstructor: async (id: number, config?: APIRequestConfig): Promise<InstructorDetailResponse> => {
+    return await apiClient.get(`/instructors/${id}`, config);
   },
 
   /**
    * 강사 등록
    * POST /paca/instructors
    */
-  createInstructor: async (data: InstructorFormData): Promise<InstructorCreateResponse> => {
-    return await apiClient.post('/instructors', data);
+  createInstructor: async (data: InstructorFormData, config?: APIRequestConfig): Promise<InstructorCreateResponse> => {
+    return await apiClient.post('/instructors', data, config);
   },
 
   /**
    * 강사 수정
    * PUT /paca/instructors/:id
    */
-  updateInstructor: async (id: number, data: Partial<InstructorFormData>): Promise<InstructorUpdateResponse> => {
-    return await apiClient.put(`/instructors/${id}`, data);
+  updateInstructor: async (
+    id: number,
+    data: Partial<InstructorFormData>,
+    config?: APIRequestConfig
+  ): Promise<InstructorUpdateResponse> => {
+    return await apiClient.put(`/instructors/${id}`, data, config);
   },
 
   /**
    * 강사 삭제 (soft delete)
    * DELETE /paca/instructors/:id
    */
-  deleteInstructor: async (id: number): Promise<InstructorDeleteResponse> => {
-    return await apiClient.delete(`/instructors/${id}`);
+  deleteInstructor: async (id: number, config?: APIRequestConfig): Promise<InstructorDeleteResponse> => {
+    return await apiClient.delete(`/instructors/${id}`, config);
   },
 
   /**
@@ -75,16 +81,17 @@ export const instructorsAPI = {
       check_in?: string;
       check_out?: string;
       notes?: string;
-    }
+    },
+    config?: APIRequestConfig
   ) => {
-    return await apiClient.post(`/instructors/${id}/attendance`, data);
+    return await apiClient.post(`/instructors/${id}/attendance`, data, config);
   },
 
   /**
    * 출퇴근 기록 조회
    * GET /paca/instructors/:id/attendance
    */
-  getAttendances: async (id: number, year?: number, month?: number) => {
+  getAttendances: async (id: number, year?: number, month?: number, config?: APIRequestConfig) => {
     const params = new URLSearchParams();
     if (year) params.append('year', year.toString());
     if (month) params.append('month', month.toString());
@@ -94,7 +101,7 @@ export const instructorsAPI = {
       ? `/instructors/${id}/attendance?${queryString}`
       : `/instructors/${id}/attendance`;
 
-    return await apiClient.get(url);
+    return await apiClient.get(url, config);
   },
 
   // ==========================================
@@ -114,20 +121,21 @@ export const instructorsAPI = {
       original_end_time?: string;  // 시급제: 예정 시작 시간
       actual_end_time?: string;    // 시급제: 예정 종료 시간
       notes?: string;
-    }
+    },
+    config?: APIRequestConfig
   ): Promise<{ message: string; overtime: OvertimeApproval }> => {
     return await apiClient.post(`/instructors/${instructorId}/overtime`, {
       ...data,
       request_type: data.request_type || 'extra_day',
-    });
+    }, config);
   },
 
   /**
    * 대기 중인 승인 요청 조회
    * GET /paca/instructors/overtime/pending
    */
-  getPendingOvertimes: async (): Promise<{ requests: OvertimeApproval[] }> => {
-    return await apiClient.get('/instructors/overtime/pending');
+  getPendingOvertimes: async (config?: APIRequestConfig): Promise<{ requests: OvertimeApproval[] }> => {
+    return await apiClient.get('/instructors/overtime/pending', config);
   },
 
   /**
@@ -138,7 +146,7 @@ export const instructorsAPI = {
     year?: number;
     month?: number;
     instructor_id?: number;
-  }): Promise<{ requests: OvertimeApproval[] }> => {
+  }, config?: APIRequestConfig): Promise<{ requests: OvertimeApproval[] }> => {
     const params = new URLSearchParams();
     if (filters?.year) params.append('year', filters.year.toString());
     if (filters?.month) params.append('month', filters.month.toString());
@@ -147,7 +155,7 @@ export const instructorsAPI = {
     const queryString = params.toString();
     const url = queryString ? `/instructors/overtime/history?${queryString}` : '/instructors/overtime/history';
 
-    return await apiClient.get(url);
+    return await apiClient.get(url, config);
   },
 
   /**
@@ -159,9 +167,10 @@ export const instructorsAPI = {
     data: {
       status: 'approved' | 'rejected';
       notes?: string;
-    }
+    },
+    config?: APIRequestConfig
   ): Promise<{ message: string; overtime: OvertimeApproval }> => {
-    return await apiClient.put(`/instructors/overtime/${approvalId}/approve`, data);
+    return await apiClient.put(`/instructors/overtime/${approvalId}/approve`, data, config);
   },
 };
 

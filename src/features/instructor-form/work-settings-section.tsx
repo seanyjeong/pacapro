@@ -17,7 +17,7 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
   return (
     <>
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label className="mb-2 block text-sm font-medium text-foreground">
           출근 요일 <span className="text-red-500">*</span>
         </label>
         <div className="flex flex-wrap gap-2">
@@ -32,7 +32,7 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
                 key={day.value}
                 type="button"
                 onClick={() => onChange('work_days', nextDays)}
-                className={`px-4 py-2 rounded-lg border transition-colors ${
+                className={`rounded-md border px-4 py-2 transition-colors ${
                   active
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-card text-foreground border-border hover:bg-muted'
@@ -46,12 +46,13 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
         {errors.work_days && <p className="text-red-500 text-sm mt-1">{errors.work_days}</p>}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label htmlFor="instructor-work-start-time" className="mb-2 block text-sm font-medium text-foreground">
             출근 시간 <span className="text-red-500">*</span>
           </label>
           <input
+            id="instructor-work-start-time"
             type="time"
             value={formData.work_start_time || '09:00'}
             onChange={(event) => onChange('work_start_time', event.target.value)}
@@ -60,10 +61,11 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
           {errors.work_start_time && <p className="text-red-500 text-sm mt-1">{errors.work_start_time}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label htmlFor="instructor-work-end-time" className="mb-2 block text-sm font-medium text-foreground">
             퇴근 시간 <span className="text-red-500">*</span>
           </label>
           <input
+            id="instructor-work-end-time"
             type="time"
             value={formData.work_end_time || '18:00'}
             onChange={(event) => onChange('work_end_time', event.target.value)}

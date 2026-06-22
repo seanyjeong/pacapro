@@ -1,8 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { InstructorForm } from '@/components/instructors/instructor-form';
 import { useInstructor, useUpdateInstructor } from '@/hooks/use-instructors';
 import type { InstructorFormData } from '@/lib/types/instructor';
@@ -32,84 +31,79 @@ export default function EditInstructorPage() {
     router.back();
   };
 
-  // 로딩 화면
   if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </button>
+      <div className="mx-auto w-full max-w-5xl space-y-5">
+        <header className="border-b border-border/70 pb-4">
+          <Button size="sm" type="button" variant="outline" onClick={() => router.push('/instructors')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            목록으로
+          </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">강사 수정</h1>
-            <p className="text-gray-600 mt-1">강사 정보를 불러오는 중...</p>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-normal text-muted-foreground">Instructor Profile</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">강사 수정</h1>
+            <p className="mt-1 text-sm text-muted-foreground">강사 정보를 불러오는 중입니다.</p>
           </div>
-        </div>
+        </header>
 
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">강사 정보를 불러오는 중...</p>
-          </CardContent>
-        </Card>
+        <section className="flex min-h-[320px] items-center justify-center rounded-md border border-border bg-card p-6 text-center">
+          <div>
+            <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-sm text-muted-foreground">강사 정보를 불러오는 중...</p>
+          </div>
+        </section>
       </div>
     );
   }
 
-  // 에러 화면
   if (error || !instructor) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </button>
+      <div className="mx-auto w-full max-w-5xl space-y-5">
+        <header className="border-b border-border/70 pb-4">
+          <Button size="sm" type="button" variant="outline" onClick={() => router.push('/instructors')}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            목록으로
+          </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">강사 수정</h1>
-            <p className="text-gray-600 mt-1">강사 정보 조회 실패</p>
+            <p className="mt-3 text-xs font-semibold uppercase tracking-normal text-muted-foreground">Instructor Profile</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">강사 수정</h1>
           </div>
-        </div>
+        </header>
 
-        <Card>
-          <CardContent className="p-12 text-center">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-            <p className="text-gray-600 mb-4">{error || '강사 정보를 찾을 수 없습니다.'}</p>
-            <div className="flex items-center justify-center space-x-3">
-              <Button variant="outline" onClick={() => router.back()}>
-                뒤로 가기
+        <section className="flex min-h-[320px] items-center justify-center rounded-md border border-red-200 bg-red-50 p-6 text-center text-red-950 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-100">
+          <div>
+            <AlertCircle className="mx-auto h-9 w-9" />
+            <h2 className="mt-4 text-base font-semibold">강사 정보를 불러오지 못했습니다</h2>
+            <p className="mt-2 text-sm text-red-800 dark:text-red-200">잠시 후 다시 시도해 주세요.</p>
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+              <Button variant="outline" onClick={() => router.push('/instructors')}>
+                목록으로
               </Button>
-              <Button onClick={reload}>다시 시도</Button>
+              <Button className="gap-2" onClick={reload}>
+                <RefreshCw className="h-4 w-4" />
+                다시 불러오기
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={() => router.back()}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-gray-600" />
-        </button>
+    <div className="mx-auto w-full max-w-5xl space-y-5">
+      <header className="border-b border-border/70 pb-4">
+        <Button size="sm" type="button" variant="outline" onClick={() => router.push('/instructors')}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          목록으로
+        </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">강사 수정</h1>
-          <p className="text-gray-600 mt-1">{instructor.name} 강사의 정보를 수정합니다</p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-normal text-muted-foreground">Instructor Profile</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">강사 수정</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{instructor.name} 강사의 정보를 수정합니다.</p>
         </div>
-      </div>
+      </header>
 
-      {/* Form */}
       <InstructorForm
         mode="edit"
         initialData={instructor}

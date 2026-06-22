@@ -13,21 +13,20 @@ import { PAYMENT_STATUS_LABELS } from '@/lib/types/instructor';
 interface InstructorSalariesProps {
   salaries: SalaryRecord[];
   loading?: boolean;
-  instructorName?: string;
 }
 
-export function InstructorSalaries({ salaries, loading, instructorName }: InstructorSalariesProps) {
+export function InstructorSalaries({ salaries, loading }: InstructorSalariesProps) {
   const [selectedSalary, setSelectedSalary] = useState<SalaryRecord | null>(null);
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>급여 기록</CardTitle>
+      <Card className="rounded-md">
+        <CardHeader className="border-b border-border px-4 py-3">
+          <CardTitle className="text-base tracking-normal">급여 기록</CardTitle>
         </CardHeader>
         <CardContent className="p-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">급여 기록을 불러오는 중...</p>
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-muted-foreground">급여 기록을 불러오는 중...</p>
         </CardContent>
       </Card>
     );
@@ -35,16 +34,16 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
 
   if (salaries.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>급여 기록</CardTitle>
+      <Card className="rounded-md">
+        <CardHeader className="border-b border-border px-4 py-3">
+          <CardTitle className="text-base tracking-normal">급여 기록</CardTitle>
         </CardHeader>
         <CardContent className="p-12 text-center">
-          <div className="text-gray-400 mb-4">
-            <Banknote className="w-16 h-16 mx-auto" />
+          <div className="mb-4 text-muted-foreground">
+            <Banknote className="mx-auto h-12 w-12" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">급여 기록이 없습니다</h3>
-          <p className="text-gray-600">급여 기록이 추가되면 여기에 표시됩니다.</p>
+          <h3 className="mb-2 text-lg font-semibold text-foreground">급여 기록이 없습니다</h3>
+          <p className="text-muted-foreground">급여 기록이 추가되면 여기에 표시됩니다.</p>
         </CardContent>
       </Card>
     );
@@ -61,59 +60,59 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>급여 기록</CardTitle>
-            <div className="flex items-center space-x-4 text-sm">
-              <div className="flex items-center space-x-1">
-                <span className="text-gray-600">지급완료:</span>
-                <span className="font-semibold text-green-600">{formatCurrency(totalPaid)}</span>
+      <Card className="overflow-hidden rounded-md">
+        <CardHeader className="border-b border-border px-4 py-3">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <CardTitle className="text-base tracking-normal">급여 기록</CardTitle>
+            <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:gap-4">
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground">지급완료:</span>
+                <span className="font-semibold text-emerald-700 dark:text-emerald-300">{formatCurrency(totalPaid)}</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <span className="text-gray-600">미지급:</span>
-                <span className="font-semibold text-yellow-600">{formatCurrency(totalPending)}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-muted-foreground">미지급:</span>
+                <span className="font-semibold text-amber-700 dark:text-amber-300">{formatCurrency(totalPending)}</span>
               </div>
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="border-b border-border bg-muted/60">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                     급여월
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                     근무시간
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                     기본급
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                     세금
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                     실수령액
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                     상태
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-border bg-card">
                 {salaries.map((salary) => (
                   <tr
                     key={salary.id}
                     onClick={() => setSelectedSalary(salary)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    className="cursor-pointer transition-colors hover:bg-muted/60"
                   >
                     {/* 급여월 */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">
                           {salary.year_month}
                         </span>
                       </div>
@@ -122,18 +121,18 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
                     {/* 근무시간 */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       {salary.total_hours ? (
-                        <div className="flex items-center space-x-1 text-gray-900">
-                          <Clock className="w-3.5 h-3.5 text-gray-400" />
+                        <div className="flex items-center gap-1 text-foreground">
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                           <span className="text-sm">{salary.total_hours.toFixed(1)}시간</span>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400">-</span>
+                        <span className="text-sm text-muted-foreground">-</span>
                       )}
                     </td>
 
                     {/* 기본급 */}
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-foreground">
                         {formatCurrency(parseFloat(salary.base_amount || '0'))}
                       </span>
                     </td>
@@ -148,15 +147,15 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
                           </span>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400">-</span>
+                        <span className="text-sm text-muted-foreground">-</span>
                       )}
                     </td>
 
                     {/* 실수령액 */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center space-x-2">
-                        <Banknote className="w-4 h-4 text-blue-500" />
-                        <span className="text-sm font-bold text-blue-600">
+                        <Banknote className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-semibold text-primary">
                           {formatCurrency(parseFloat(salary.net_salary || '0'))}
                         </span>
                       </div>
@@ -183,18 +182,18 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
       {/* 급여 상세 모달 */}
       {selectedSalary && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+          <div className="mx-4 w-full max-w-md rounded-md border border-border bg-card shadow-xl">
             {/* 모달 헤더 */}
-            <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center justify-between border-b border-border p-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">급여 상세</h3>
-                <p className="text-sm text-gray-500">{selectedSalary.year_month} 급여</p>
+                <h3 className="text-lg font-semibold text-foreground">급여 상세</h3>
+                <p className="text-sm text-muted-foreground">{selectedSalary.year_month} 급여</p>
               </div>
               <button
                 onClick={() => setSelectedSalary(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="rounded-md p-2 transition-colors hover:bg-muted"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="h-5 w-5 text-muted-foreground" />
               </button>
             </div>
 
@@ -202,10 +201,10 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
             <div className="p-4 space-y-4">
               {/* 근무시간 (시급제인 경우) */}
               {selectedSalary.total_hours && (
-                <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="rounded-md bg-muted p-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">총 근무시간</span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="text-sm text-muted-foreground">총 근무시간</span>
+                    <span className="font-semibold text-foreground">
                       {selectedSalary.total_hours.toFixed(1)}시간
                     </span>
                   </div>
@@ -215,15 +214,15 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
               {/* 급여 내역 */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">기본급</span>
-                  <span className="text-gray-900">
+                  <span className="text-sm text-muted-foreground">기본급</span>
+                  <span className="text-foreground">
                     {formatCurrency(parseFloat(selectedSalary.base_amount || '0'))}
                   </span>
                 </div>
 
                 {parseFloat(selectedSalary.incentive_amount || '0') > 0 && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">인센티브</span>
+                    <span className="text-sm text-muted-foreground">인센티브</span>
                     <span className="text-green-600">
                       +{formatCurrency(parseFloat(selectedSalary.incentive_amount || '0'))}
                     </span>
@@ -232,7 +231,7 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
 
                 {parseFloat(selectedSalary.total_deduction || '0') > 0 && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">공제</span>
+                    <span className="text-sm text-muted-foreground">공제</span>
                     <span className="text-red-600">
                       -{formatCurrency(parseFloat(selectedSalary.total_deduction || '0'))}
                     </span>
@@ -241,17 +240,17 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
 
                 {parseFloat(selectedSalary.tax_amount || '0') > 0 && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">세금 (3.3%)</span>
+                    <span className="text-sm text-muted-foreground">세금 (3.3%)</span>
                     <span className="text-red-600">
                       -{formatCurrency(parseFloat(selectedSalary.tax_amount || '0'))}
                     </span>
                   </div>
                 )}
 
-                <div className="pt-3 border-t">
+                <div className="border-t border-border pt-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-900">실수령액</span>
-                    <span className="text-xl font-bold text-blue-600">
+                    <span className="font-medium text-foreground">실수령액</span>
+                    <span className="text-xl font-semibold text-primary">
                       {formatCurrency(parseFloat(selectedSalary.net_salary || '0'))}
                     </span>
                   </div>
@@ -259,9 +258,9 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
               </div>
 
               {/* 상태 및 지급일 */}
-              <div className="pt-3 border-t space-y-2">
+              <div className="space-y-2 border-t border-border pt-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">지급 상태</span>
+                  <span className="text-sm text-muted-foreground">지급 상태</span>
                   <span
                     className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getPaymentStatusColor(
                       selectedSalary.payment_status
@@ -272,8 +271,8 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
                 </div>
                 {selectedSalary.payment_date && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">지급일</span>
-                    <span className="text-gray-900">
+                    <span className="text-sm text-muted-foreground">지급일</span>
+                    <span className="text-foreground">
                       {new Date(selectedSalary.payment_date).toLocaleDateString('ko-KR')}
                     </span>
                   </div>
@@ -282,18 +281,18 @@ export function InstructorSalaries({ salaries, loading, instructorName }: Instru
 
               {/* 메모 */}
               {selectedSalary.notes && (
-                <div className="pt-3 border-t">
-                  <span className="text-sm text-gray-600">메모</span>
-                  <p className="mt-1 text-gray-900">{selectedSalary.notes}</p>
+                <div className="border-t border-border pt-3">
+                  <span className="text-sm text-muted-foreground">메모</span>
+                  <p className="mt-1 text-foreground">{selectedSalary.notes}</p>
                 </div>
               )}
             </div>
 
             {/* 모달 푸터 */}
-            <div className="p-4 border-t bg-gray-50 rounded-b-xl">
+            <div className="border-t border-border bg-muted p-4">
               <button
                 onClick={() => setSelectedSalary(null)}
-                className="w-full py-2 px-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 닫기
               </button>

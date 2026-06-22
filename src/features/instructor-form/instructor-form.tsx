@@ -12,6 +12,8 @@ import { WorkSettingsSection } from './work-settings-section';
 import type { InstructorFormErrors, InstructorFormProps } from './instructor-form-types';
 import { buildInitialInstructorFormData, getApiErrorMessage } from './instructor-form-utils';
 
+const SUBMIT_ERROR_MESSAGE = '강사 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
+
 export function InstructorForm({ mode, initialData, onSubmit, onCancel }: InstructorFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<InstructorFormErrors>({});
@@ -65,7 +67,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
       await onSubmit(formData);
     } catch (error) {
       console.error('Form submit error:', error);
-      const errorMessage = getApiErrorMessage(error, '저장에 실패했습니다.');
+      const errorMessage = getApiErrorMessage(error, SUBMIT_ERROR_MESSAGE);
       setErrors({ submit: errorMessage });
       toast.error(errorMessage);
     } finally {
@@ -74,7 +76,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <FormSection title="기본 정보">
         <BasicInfoSection formData={formData} errors={errors} onChange={handleChange} />
       </FormSection>
@@ -96,7 +98,7 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
       </FormSection>
 
       {errors.submit && (
-        <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="rounded-md border border-red-200 bg-red-50 p-4 dark:border-red-900/70 dark:bg-red-950/30">
           <p className="text-red-600 dark:text-red-400 text-sm">{errors.submit}</p>
         </div>
       )}

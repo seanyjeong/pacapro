@@ -19,12 +19,13 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
   const showBaseSalary = formData.salary_type === 'monthly' || formData.salary_type === 'mixed';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label htmlFor="instructor-salary-type" className="mb-2 block text-sm font-medium text-foreground">
           급여타입 <span className="text-red-500">*</span>
         </label>
         <select
+          id="instructor-salary-type"
           value={formData.salary_type}
           onChange={(event) => onChange('salary_type', event.target.value as SalaryType)}
           className={inputClassName(errors.salary_type)}
@@ -39,13 +40,14 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">
+        <label htmlFor="instructor-tax-type" className="mb-2 block text-sm font-medium text-foreground">
           세금타입 <span className="text-red-500">*</span>
         </label>
         <select
+          id="instructor-tax-type"
           value={formData.tax_type}
           onChange={(event) => onChange('tax_type', event.target.value as TaxType)}
-          className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           {TAX_TYPE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
@@ -57,13 +59,14 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
 
       {formData.salary_type === 'hourly' && (
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label htmlFor="instructor-type" className="mb-2 block text-sm font-medium text-foreground">
             강사 유형 <span className="text-red-500">*</span>
           </label>
           <select
+            id="instructor-type"
             value={formData.instructor_type || 'teacher'}
             onChange={(event) => onChange('instructor_type', event.target.value as InstructorType)}
-            className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full rounded-md border border-border bg-background px-4 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             {INSTRUCTOR_TYPE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -79,10 +82,11 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
 
       {showHourlyRate && (
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label htmlFor="instructor-hourly-rate" className="mb-2 block text-sm font-medium text-foreground">
             {formData.salary_type === 'per_class' ? '수업료' : '시급'} <span className="text-red-500">*</span>
           </label>
           <MoneyInput
+            id="instructor-hourly-rate"
             value={formData.hourly_rate || 0}
             onChange={(value) => onChange('hourly_rate', value)}
             className={errors.hourly_rate ? 'border-red-500' : ''}
@@ -94,10 +98,11 @@ export function SalaryInfoSection({ formData, errors, onChange }: SalaryInfoSect
 
       {showBaseSalary && (
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label htmlFor="instructor-base-salary" className="mb-2 block text-sm font-medium text-foreground">
             월급 <span className="text-red-500">*</span>
           </label>
           <MoneyInput
+            id="instructor-base-salary"
             value={formData.base_salary || 0}
             onChange={(value) => onChange('base_salary', value)}
             className={errors.base_salary ? 'border-red-500' : ''}

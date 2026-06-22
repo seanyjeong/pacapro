@@ -37,17 +37,11 @@ export function buildInitialInstructorFormData(initialData?: Instructor): Instru
 }
 
 export function getApiErrorMessage(error: unknown, fallback: string) {
-  if (typeof error !== 'object' || error === null || !('response' in error)) {
-    return fallback;
-  }
-
-  const response = (error as { response?: { data?: { message?: unknown } } }).response;
-  const message = response?.data?.message;
-  return typeof message === 'string' && message.trim() ? message : fallback;
+  return fallback;
 }
 
 export function inputClassName(error?: string) {
-  return `w-full px-4 py-2 border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+  return `w-full px-4 py-2 border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 ${
     error ? 'border-red-500' : 'border-border'
   }`;
 }

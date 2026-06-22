@@ -80,13 +80,13 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
   };
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>출퇴근 기록</CardTitle>
+      <Card className="rounded-md">
+        <CardHeader className="border-b border-border px-4 py-3">
+          <CardTitle className="text-base tracking-normal">출퇴근 기록</CardTitle>
         </CardHeader>
         <CardContent className="p-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">출퇴근 기록을 불러오는 중...</p>
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-muted-foreground">출퇴근 기록을 불러오는 중...</p>
         </CardContent>
       </Card>
     );
@@ -109,76 +109,76 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
 
   if (attendances.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>출퇴근 기록</CardTitle>
+      <Card className="rounded-md">
+        <CardHeader className="border-b border-border px-4 py-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-base tracking-normal">출퇴근 기록</CardTitle>
             <MonthNavigation />
           </div>
         </CardHeader>
         <CardContent className="p-12 text-center">
-          <div className="text-gray-400 mb-4">
-            <Calendar className="w-16 h-16 mx-auto" />
+          <div className="mb-4 text-muted-foreground">
+            <Calendar className="mx-auto h-12 w-12" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">출퇴근 기록이 없습니다</h3>
-          <p className="text-gray-600">출퇴근 기록이 추가되면 여기에 표시됩니다.</p>
+          <h3 className="mb-2 text-lg font-semibold text-foreground">출퇴근 기록이 없습니다</h3>
+          <p className="text-muted-foreground">출퇴근 기록이 추가되면 여기에 표시됩니다.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>출퇴근 기록</CardTitle>
-          <div className="flex items-center space-x-4">
+    <Card className="overflow-hidden rounded-md">
+      <CardHeader className="border-b border-border px-4 py-3">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <CardTitle className="text-base tracking-normal">출퇴근 기록</CardTitle>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <MonthNavigation />
-            <div className="text-sm text-gray-600">
-              {currentYear}년 {currentMonth}월: <span className="font-semibold text-gray-900">{filteredAttendances.length}</span>건
+            <div className="text-sm text-muted-foreground">
+              {currentYear}년 {currentMonth}월: <span className="font-semibold text-foreground">{filteredAttendances.length}</span>건
             </div>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="border-b border-border bg-muted/60">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                   날짜
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                   시간대
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                   상태
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                   출근
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                   퇴근
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
                   메모
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-border bg-card">
               {filteredAttendances.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     {currentYear}년 {currentMonth}월에 출퇴근 기록이 없습니다.
                   </td>
                 </tr>
               ) : filteredAttendances.map((attendance) => (
-                <tr key={attendance.id} className="hover:bg-gray-50">
+                <tr key={attendance.id} className="hover:bg-muted/60">
                   {/* 날짜 */}
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-foreground">
                         {formatDate(attendance.work_date)}
                       </span>
                     </div>
@@ -212,12 +212,12 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
                     {attendance.check_in_time ? (
                       <div className="flex items-center space-x-2">
                         <LogIn className="w-4 h-4 text-green-500" />
-                        <span className="text-sm text-gray-900">
+                      <span className="text-sm text-foreground">
                           {formatTime(attendance.check_in_time)}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-400">-</span>
+                      <span className="text-sm text-muted-foreground">-</span>
                     )}
                   </td>
 
@@ -226,21 +226,21 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
                     {attendance.check_out_time ? (
                       <div className="flex items-center space-x-2">
                         <LogOut className="w-4 h-4 text-red-500" />
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-foreground">
                           {formatTime(attendance.check_out_time)}
                         </span>
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-400">-</span>
+                      <span className="text-sm text-muted-foreground">-</span>
                     )}
                   </td>
 
                   {/* 메모 */}
                   <td className="px-4 py-3">
                     {attendance.notes ? (
-                      <span className="text-sm text-gray-600">{attendance.notes}</span>
+                      <span className="text-sm text-muted-foreground">{attendance.notes}</span>
                     ) : (
-                      <span className="text-sm text-gray-400">-</span>
+                      <span className="text-sm text-muted-foreground">-</span>
                     )}
                   </td>
                 </tr>

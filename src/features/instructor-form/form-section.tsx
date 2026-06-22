@@ -11,11 +11,11 @@ export function FormSection({ title, visible = true, children }: FormSectionProp
   if (!visible) return null;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card className="rounded-md">
+      <CardHeader className="border-b border-border px-4 py-3">
+        <CardTitle className="text-base tracking-normal">{title}</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">{children}</CardContent>
+      <CardContent className="space-y-4 p-4">{children}</CardContent>
     </Card>
   );
 }
