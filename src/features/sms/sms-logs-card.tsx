@@ -1,4 +1,5 @@
-import { History } from 'lucide-react';
+import Link from 'next/link';
+import { History, UserRound } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { SmsLog } from './sms-types';
 import { SmsStatusBadge } from './sms-status-badge';
@@ -49,6 +50,16 @@ export function SmsLogsCard({ logs, isLoading, errorMessage }: SmsLogsCardProps)
                   <p className="truncate text-xs text-muted-foreground">{log.recipient_phone}</p>
                 </div>
                 <p className="line-clamp-2 text-sm text-muted-foreground">{log.message_content}</p>
+                {log.student_id ? (
+                  <Link
+                    aria-label={`${log.recipient_name || log.recipient_phone} 학생 상세 보기`}
+                    className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                    href={`/students/${log.student_id}`}
+                  >
+                    <UserRound className="h-3.5 w-3.5" />
+                    학생 상세
+                  </Link>
+                ) : null}
                 <p className="text-xs text-muted-foreground">{formatLogDate(log.sent_at || log.created_at)}</p>
               </div>
             ))}

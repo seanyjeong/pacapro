@@ -126,6 +126,11 @@ async function runDesktopSend(browser) {
   await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
   await page.getByText('Messaging Desk').waitFor();
   await page.getByText('김진우 학부모').waitFor();
+  const studentLink = page.getByRole('link', { name: '김진우 학부모 학생 상세 보기' });
+  await studentLink.waitFor();
+  if ((await studentLink.getAttribute('href')) !== '/students/41') {
+    throw new Error('missing student detail link in SMS log');
+  }
   await page.getByLabel('발신번호').selectOption('7');
   await page.getByRole('button', { name: /학부모에게 7명/ }).waitFor();
   await page.getByPlaceholder(/내용을 입력해주세요/).fill('오늘 수업은 정상 진행됩니다.');
@@ -154,6 +159,7 @@ async function runMobile(browser) {
   await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
   await page.getByText('Messaging Desk').waitFor();
   await page.getByRole('button', { name: /학부모에게 7명/ }).waitFor();
+  await page.getByRole('link', { name: '김진우 학부모 학생 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'sms mobile');
   await assertNoHorizontalOverflow(page, 'sms mobile');
   await page.screenshot({ path: '/Users/etlab/paca-sms-mobile.png', fullPage: true });
