@@ -19,6 +19,22 @@ const formatLocalDate = (date: Date): string => {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
+const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+
+const formatEventDate = (dateString: string) => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    const dayOfWeek = weekDays[new Date(year, month - 1, day).getDay()];
+    return `${month}.${day}(${dayOfWeek})`;
+};
+
+const formatEventTime = (event: AcademyEvent) => {
+    if (event.is_all_day) return '종일';
+    const start = event.start_time?.slice(0, 5);
+    const end = event.end_time?.slice(0, 5);
+    if (start && end) return `${start}-${end}`;
+    return start || end || '시간 미정';
+};
+
 export function EventCalendar({
     events,
     onDateClick,
@@ -81,7 +97,13 @@ export function EventCalendar({
         onMonthChange(`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`);
     };
 
-    const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+    const monthEvents = useMemo(() => {
+        return [...events].sort((a, b) => {
+            const dateOrder = a.event_date.localeCompare(b.event_date);
+            if (dateOrder !== 0) return dateOrder;
+            return (a.start_time || '').localeCompare(b.start_time || '');
+        });
+    }, [events]);
 
     // 로컬 시간 기준 오늘 날짜
     const todayStr = formatLocalDate(new Date());
@@ -91,19 +113,63 @@ export function EventCalendar({
             {/* 헤더 */}
             <div className="flex items-center justify-between p-4 border-b border-border">
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={handlePrevMonth}>
+                    <Button variant="outline" size="sm" onClick={handlePrevMonth} aria-label="이전 달">
                         <ChevronLeft className="w-4 h-4" />
                     </Button>
                     <h2 className="text-lg font-semibold text-foreground min-w-[140px] text-center">
                         {year}년 {month + 1}월
                     </h2>
-                    <Button variant="outline" size="sm" onClick={handleNextMonth}>
+                    <Button variant="outline" size="sm" onClick={handleNextMonth} aria-label="다음 달">
                         <ChevronRight className="w-4 h-4" />
                     </Button>
                 </div>
                 <Button variant="outline" size="sm" onClick={handleToday}>
                     오늘
                 </Button>
+            </div>
+
+            <div className="border-b border-border bg-muted/20 p-4">
+                <div className="mb-3 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground">이번 달 일정</h3>
+                    <span className="text-xs text-muted-foreground">{monthEvents.length}건</span>
+                </div>
+                {monthEvents.length === 0 ? (
+                    <p className="rounded-md border border-dashed border-border bg-background px-3 py-4 text-sm text-muted-foreground">
+                        등록된 일정이 없습니다. 날짜의 + 버튼이나 일정 등록으로 새 일정을 추가하세요.
+                    </p>
+                ) : (
+                    <div className="max-h-52 space-y-2 overflow-y-auto pr-1">
+                        {monthEvents.map((event) => (
+                            <div key={event.id} className="flex items-center gap-2 rounded-md border border-border bg-background p-2">
+                                <button
+                                    type="button"
+                                    onClick={() => onEventClick(event)}
+                                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                                    aria-label={`${event.title} 수정`}
+                                >
+                                    <span
+                                        className="h-8 w-1.5 shrink-0 rounded-full"
+                                        style={{ backgroundColor: event.color }}
+                                    />
+                                    <span className="min-w-0">
+                                        <span className="block text-xs text-muted-foreground">
+                                            {formatEventDate(event.event_date)} · {formatEventTime(event)}
+                                        </span>
+                                        <span className="block truncate text-sm font-medium text-foreground">{event.title}</span>
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => onEventDelete(event)}
+                                    className="rounded-md p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                                    aria-label={`${event.title} 삭제`}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* 요일 헤더 */}
@@ -152,6 +218,7 @@ export function EventCalendar({
                                         onDateClick(dateStr);
                                     }}
                                     className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
+                                    aria-label={`${dateStr} 일정 등록`}
                                 >
                                     <Plus className="w-3 h-3" />
                                 </button>
@@ -174,6 +241,7 @@ export function EventCalendar({
                                                 onEventDelete(event);
                                             }}
                                             className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900"
+                                            aria-label={`${event.title} 삭제`}
                                         >
                                             <Trash2 className="w-3 h-3 text-red-500" />
                                         </button>

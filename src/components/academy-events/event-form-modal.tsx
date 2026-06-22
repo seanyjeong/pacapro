@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { X, AlertCircle } from 'lucide-react';
 import type { AcademyEvent, AcademyEventFormData, AcademyEventType } from '@/lib/types/academyEvent';
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/lib/types/academyEvent';
+import { formatDate } from '@/lib/utils/format';
 
 interface EventFormModalProps {
     isOpen: boolean;
@@ -19,7 +20,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
         title: '',
         description: '',
         event_type: 'academy',
-        event_date: selectedDate || new Date().toISOString().split('T')[0],
+        event_date: selectedDate || formatDate(new Date()),
         start_time: '',
         end_time: '',
         is_all_day: true,
@@ -47,7 +48,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                 title: '',
                 description: '',
                 event_type: 'academy',
-                event_date: selectedDate || new Date().toISOString().split('T')[0],
+                event_date: selectedDate || formatDate(new Date()),
                 start_time: '',
                 end_time: '',
                 is_all_day: true,

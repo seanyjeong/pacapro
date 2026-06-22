@@ -10,6 +10,7 @@ import { AcademyEventsError, AcademyEventsLoading } from '@/features/academy-eve
 import { AcademyEventsSummary } from '@/features/academy-events/academy-events-summary';
 import { getAcademyEvents, createAcademyEvent, updateAcademyEvent, deleteAcademyEvent } from '@/lib/api/academyEvents';
 import type { AcademyEvent, AcademyEventFormData } from '@/lib/types/academyEvent';
+import { formatDate } from '@/lib/utils/format';
 import { usePermissions } from '@/lib/utils/permissions';
 
 const QUIET_REQUEST = { suppressErrorToast: true };
@@ -56,7 +57,7 @@ export default function AcademyEventsPage() {
 
     const openCreateModal = () => {
         setSelectedEvent(null);
-        setSelectedDate(new Date().toISOString().split('T')[0]);
+        setSelectedDate(formatDate(new Date()));
         setIsModalOpen(true);
     };
 

@@ -89,16 +89,41 @@ async function createPage(browser, mode, viewport = { width: 1365, height: 900 }
   return { context, diagnostics, page, state };
 }
 
+async function gotoAcademyEvents(page) {
+  const eventsResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return response.request().method() === 'GET' && normalizePacaApiPath(url) === '/academy-events';
+  });
+  await page.goto('/academy-events', { waitUntil: 'domcontentloaded' });
+  await eventsResponse;
+}
+
 async function runDesktop(browser) {
   const result = await createPage(browser, 'success');
   const { context, page } = result;
 
-  await page.goto('/academy-events', { waitUntil: 'domcontentloaded' });
+  await gotoAcademyEvents(page);
   await page.getByRole('heading', { level: 1, name: '학원일정' }).waitFor();
-  await page.getByText('월말 운영 회의').waitFor();
+  await page.getByRole('button', { name: '월말 운영 회의 수정' }).waitFor();
   await assertNoRawVisibleText(page, 'academy events desktop');
   await assertNoHorizontalOverflow(page, 'academy events desktop');
   await page.screenshot({ path: '/Users/etlab/paca-academy-events-desktop.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
+async function runMobile(browser) {
+  const result = await createPage(browser, 'success', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await gotoAcademyEvents(page);
+  await page.getByRole('heading', { level: 1, name: '학원일정' }).waitFor();
+  await page.getByRole('button', { name: '일정 등록', exact: true }).waitFor();
+  await page.getByRole('button', { name: '월말 운영 회의 수정' }).waitFor();
+  await assertNoRawVisibleText(page, 'academy events mobile');
+  await assertNoHorizontalOverflow(page, 'academy events mobile');
+  await page.screenshot({ path: '/Users/etlab/paca-academy-events-mobile.png', fullPage: true });
 
   await context.close();
   return result;
@@ -108,7 +133,7 @@ async function runLoadError(browser) {
   const result = await createPage(browser, 'load-error', { width: 390, height: 844 });
   const { context, page } = result;
 
-  await page.goto('/academy-events', { waitUntil: 'domcontentloaded' });
+  await gotoAcademyEvents(page);
   await page.getByText('학원 일정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'academy events load error');
   await assertNoHorizontalOverflow(page, 'academy events load error');
@@ -122,13 +147,16 @@ async function runCreateError(browser) {
   const result = await createPage(browser, 'create-error', { width: 390, height: 844 });
   const { context, page } = result;
 
-  await page.goto('/academy-events', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: '일정 등록' }).click();
+  await gotoAcademyEvents(page);
+  await page.getByRole('button', { name: '일정 등록', exact: true }).click();
   await page.getByRole('heading', { name: '일정 등록' }).waitFor();
   await page.getByPlaceholder('일정 제목').fill('저장 실패 테스트');
   await page.locator('form button[type="submit"]').click();
   await page.locator('form').getByText('저장 실패').waitFor();
   await page.locator('form').getByText('학원 일정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  if (result.state.createPayload?.event_date !== range.today) {
+    throw new Error(`default event date mismatch: ${result.state.createPayload?.event_date} !== ${range.today}`);
+  }
   await assertNoRawVisibleText(page, 'academy events create error');
   await assertNoHorizontalOverflow(page, 'academy events create error');
   await page.screenshot({ path: '/Users/etlab/paca-academy-events-create-error-mobile.png', fullPage: true });
@@ -146,13 +174,15 @@ async function main() {
   const browser = await launchSmokeBrowser();
   try {
     const desktop = await runDesktop(browser);
+    const mobile = await runMobile(browser);
     const loadError = await runLoadError(browser);
     const createError = await runCreateError(browser);
-    [desktop, loadError, createError].forEach(assertDiagnostics);
+    [desktop, mobile, loadError, createError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       createPayload: createError.state.createPayload,
       desktopHits: desktop.state.hits,
       loadErrorHits: loadError.state.hits,
+      mobileHits: mobile.state.hits,
       normalConsoleErrors: desktop.diagnostics.consoleErrors,
     }, null, 2));
   } finally {
