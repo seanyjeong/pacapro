@@ -38,7 +38,7 @@ export function SeasonEnrollStudentPanel({
         </label>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 divide-y divide-slate-200 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.55fr)] xl:divide-x xl:divide-y-0">
+      <div className="grid min-w-0 grid-cols-1 divide-y divide-slate-200 2xl:grid-cols-2 2xl:divide-x 2xl:divide-y-0">
         <SeasonEnrollStudentSection
           emptyMessage={searchTerm ? '검색 결과가 없습니다.' : '등록 가능한 학생이 없습니다.'}
           enrollingId={enrollingId}

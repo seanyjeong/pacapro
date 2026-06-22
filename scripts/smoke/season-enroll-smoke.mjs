@@ -154,6 +154,18 @@ async function runNormal(browser) {
   await page.getByRole('heading', { name: '학생 등록' }).waitFor();
   await page.getByText('김민서').waitFor();
   await page.getByText('이등록').waitFor();
+  const availableDetailLink = page.getByRole('link', { name: '김민서 학생 상세' }).first();
+  await availableDetailLink.waitFor();
+  const availableHref = await availableDetailLink.getAttribute('href');
+  if (availableHref !== '/students/10') {
+    throw new Error(`season enroll available student href mismatch: ${availableHref}`);
+  }
+  const enrolledDetailLink = page.getByRole('link', { name: '이등록 학생 상세' }).first();
+  await enrolledDetailLink.waitFor();
+  const enrolledHref = await enrolledDetailLink.getAttribute('href');
+  if (enrolledHref !== '/students/12') {
+    throw new Error(`season enroll enrolled student href mismatch: ${enrolledHref}`);
+  }
   await assertNoRawVisibleText(page, 'season enroll desktop');
   await assertNoHorizontalOverflow(page, 'season enroll desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-enroll-desktop.png', fullPage: true });
@@ -178,6 +190,16 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByTestId('season-enroll-workspace').waitFor();
+  await page
+    .getByTestId('available-student-row')
+    .first()
+    .getByRole('link', { exact: true, name: '김민서 학생 상세' })
+    .waitFor();
+  await page
+    .getByTestId('enrolled-student-row')
+    .first()
+    .getByRole('link', { exact: true, name: '이등록 학생 상세' })
+    .waitFor();
   await assertNoRawVisibleText(page, 'season enroll mobile');
   await assertNoHorizontalOverflow(page, 'season enroll mobile');
   await page.screenshot({ path: '/Users/etlab/paca-season-enroll-mobile.png', fullPage: true });
