@@ -308,6 +308,7 @@ export function useSmsPageState() {
     handleImageSelect,
     removeImage,
     handleSend,
+    reloadLogs: loadLogs,
   };
 }
 
