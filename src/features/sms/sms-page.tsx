@@ -1,5 +1,6 @@
 'use client';
 
+import { AlertCircle } from 'lucide-react';
 import { SmsComposeCard } from './sms-compose-card';
 import { SmsHeader } from './sms-header';
 import { SmsInfoPanel } from './sms-info-panel';
@@ -11,7 +12,7 @@ export function SMSPage() {
 
   return (
     <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-5">
+      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
         <SmsHeader
           messageType={sms.messageType}
           recipientCount={
@@ -28,13 +29,29 @@ export function SMSPage() {
           senderCount={sms.senderNumbers.length}
         />
 
+        {sms.loadErrors.length > 0 ? (
+          <section className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div>
+                <h2 className="text-sm font-semibold">문자 준비 정보를 일부 불러오지 못했습니다</h2>
+                <ul className="mt-2 space-y-1 text-sm">
+                  {sms.loadErrors.map((message) => (
+                    <li key={message}>{message}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <div className="grid gap-5 lg:grid-cols-12">
           <div className="lg:col-span-8">
             <SmsComposeCard sms={sms} />
           </div>
           <aside className="space-y-5 lg:col-span-4">
             <SmsInfoPanel senderCount={sms.senderNumbers.length} selectedSenderId={sms.selectedSenderId} />
-            <SmsLogsCard logs={sms.logs} isLoading={sms.logsLoading} />
+            <SmsLogsCard logs={sms.logs} isLoading={sms.logsLoading} errorMessage={sms.logsError} />
           </aside>
         </div>
       </div>

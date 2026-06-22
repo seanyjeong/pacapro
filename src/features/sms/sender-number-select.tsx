@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Phone } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import type { SmsSenderNumber } from './sms-types';
@@ -5,12 +6,14 @@ import type { SmsSenderNumber } from './sms-types';
 interface SenderNumberSelectProps {
   senderNumbers: SmsSenderNumber[];
   selectedSenderId: number | null;
+  errorMessage?: string | null;
   onSelectedSenderIdChange: (value: number | null) => void;
 }
 
 export function SenderNumberSelect({
   senderNumbers,
   selectedSenderId,
+  errorMessage,
   onSelectedSenderIdChange,
 }: SenderNumberSelectProps) {
   return (
@@ -41,9 +44,12 @@ export function SenderNumberSelect({
           <p className="mt-2 text-xs text-muted-foreground">설정의 알림톡 및 SMS 메뉴에서 관리합니다.</p>
         </>
       ) : (
-        <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800">
-          등록된 발신번호를 확인하지 못했습니다. 설정을 확인한 뒤 발송해주세요.
-        </p>
+        <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+          <p>{errorMessage || '등록된 발신번호를 확인하지 못했습니다. 설정을 확인한 뒤 발송해주세요.'}</p>
+          <Link href="/settings/notifications" className="mt-1 inline-flex font-semibold underline">
+            알림톡 및 SMS 설정으로 이동
+          </Link>
+        </div>
       )}
     </section>
   );

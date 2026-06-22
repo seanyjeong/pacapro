@@ -6,6 +6,7 @@ interface AllRecipientFiltersProps {
   statusFilter: StatusFilter;
   gradeFilter: GradeFilter;
   recipientsCount: SmsRecipientsCount;
+  errorMessage?: string | null;
   onStatusFilterChange: (value: StatusFilter) => void;
   onGradeFilterChange: (value: GradeFilter) => void;
 }
@@ -25,6 +26,7 @@ export function AllRecipientFilters({
   statusFilter,
   gradeFilter,
   recipientsCount,
+  errorMessage,
   onStatusFilterChange,
   onGradeFilterChange,
 }: AllRecipientFiltersProps) {
@@ -83,6 +85,11 @@ export function AllRecipientFilters({
         <span>학생 {recipientsCount.students}명</span>
         <span>학부모 {recipientsCount.parents}명</span>
       </div>
+      {errorMessage ? (
+        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
+          {errorMessage}
+        </p>
+      ) : null}
     </section>
   );
 }

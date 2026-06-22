@@ -7,9 +7,10 @@ import { SmsTypeBadge } from './sms-type-badge';
 interface SmsLogsCardProps {
   logs: SmsLog[];
   isLoading: boolean;
+  errorMessage?: string | null;
 }
 
-export function SmsLogsCard({ logs, isLoading }: SmsLogsCardProps) {
+export function SmsLogsCard({ logs, isLoading, errorMessage }: SmsLogsCardProps) {
   return (
     <Card className="rounded-lg border-border/80 shadow-none">
       <CardHeader className="border-b border-border/70 p-4">
@@ -24,6 +25,11 @@ export function SmsLogsCard({ logs, isLoading }: SmsLogsCardProps) {
             {Array.from({ length: 4 }).map((_, index) => (
               <div key={index} className="h-12 animate-pulse rounded-md bg-muted" />
             ))}
+          </div>
+        ) : errorMessage ? (
+          <div className="px-4 py-10 text-center">
+            <p className="text-sm font-semibold text-foreground">발송 내역을 불러오지 못했습니다</p>
+            <p className="mt-1 text-xs text-muted-foreground">{errorMessage}</p>
           </div>
         ) : logs.length === 0 ? (
           <div className="px-4 py-10 text-center">

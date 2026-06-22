@@ -38,6 +38,7 @@ export function useSmsPageState() {
   const [sending, setSending] = useState(false);
   const [recipientsCount, setRecipientsCount] = useState<SmsRecipientsCount>({ all: 0, students: 0, parents: 0 });
   const [logs, setLogs] = useState<SmsLog[]>([]);
+  const [logsError, setLogsError] = useState<string | null>(null);
   const [logsLoading, setLogsLoading] = useState(false);
   const [images, setImages] = useState<SmsImageFile[]>([]);
   const imagesRef = useRef<SmsImageFile[]>([]);
@@ -46,6 +47,8 @@ export function useSmsPageState() {
   const [searching, setSearching] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<SmsStudent | null>(null);
   const [senderNumbers, setSenderNumbers] = useState<SmsSenderNumber[]>([]);
+  const [recipientsError, setRecipientsError] = useState<string | null>(null);
+  const [senderNumbersError, setSenderNumbersError] = useState<string | null>(null);
   const [selectedSenderId, setSelectedSenderId] = useState<number | null>(null);
 
   const contentBytes = useMemo(() => getContentBytes(content), [content]);
@@ -65,11 +68,13 @@ export function useSmsPageState() {
 
   const loadLogs = useCallback(async () => {
     setLogsLoading(true);
+    setLogsError(null);
     try {
       const data = await smsAPI.getLogs({ limit: 20 }, SILENT_CONFIG);
       setLogs(data.logs);
     } catch {
-      console.error('SMS logs load failed');
+      setLogs([]);
+      setLogsError('발송 내역을 불러오지 못했습니다. 잠시 후 다시 확인해주세요.');
       toast.error('문자 발송 내역을 불러오지 못했습니다.');
     } finally {
       setLogsLoading(false);
@@ -77,16 +82,19 @@ export function useSmsPageState() {
   }, []);
 
   const loadRecipientsCount = useCallback(async () => {
+    setRecipientsError(null);
     try {
       const data = await smsAPI.getRecipientsCount(statusFilter, gradeFilter, SILENT_CONFIG);
       setRecipientsCount(data);
     } catch {
-      console.error('SMS recipient count load failed');
+      setRecipientsCount({ all: 0, students: 0, parents: 0 });
+      setRecipientsError('문자 수신자 수를 불러오지 못했습니다. 필터를 확인한 뒤 다시 시도해주세요.');
       toast.error('문자 수신자 수를 불러오지 못했습니다.');
     }
   }, [gradeFilter, statusFilter]);
 
   const loadSenderNumbers = useCallback(async () => {
+    setSenderNumbersError(null);
     try {
       const settingsResponse = await apiClient.get<{ settings: { service_type?: string } }>(
         '/notifications/settings',
@@ -99,7 +107,9 @@ export function useSmsPageState() {
       const defaultSender = numbers.find((sender) => sender.is_default === 1);
       setSelectedSenderId(defaultSender?.id || numbers[0]?.id || null);
     } catch {
-      console.error('SMS sender numbers load failed');
+      setSenderNumbers([]);
+      setSelectedSenderId(null);
+      setSenderNumbersError('발신번호 정보를 불러오지 못했습니다. 알림톡 및 SMS 설정을 확인해주세요.');
       toast.error('발신번호 정보를 불러오지 못했습니다.');
     }
   }, []);
@@ -132,7 +142,6 @@ export function useSmsPageState() {
         });
         setSearchResults(response.students || []);
       } catch {
-        console.error('SMS student search failed');
         toast.error('학생 검색을 완료하지 못했습니다. 이름을 다시 확인해주세요.');
         setSearchResults([]);
       } finally {
@@ -265,7 +274,6 @@ export function useSmsPageState() {
       toast.success(result.message || '문자를 발송했습니다.');
       void loadLogs();
     } catch {
-      console.error('SMS send failed');
       toast.error('문자 발송에 실패했습니다. 수신자와 발신번호를 확인한 뒤 다시 시도해주세요.');
     } finally {
       setSending(false);
@@ -282,6 +290,7 @@ export function useSmsPageState() {
     sending,
     recipientsCount,
     logs,
+    logsError,
     logsLoading,
     images,
     searchQuery,
@@ -289,7 +298,10 @@ export function useSmsPageState() {
     searching,
     selectedStudent,
     senderNumbers,
+    recipientsError,
+    senderNumbersError,
     selectedSenderId,
+    loadErrors: [recipientsError, senderNumbersError, logsError].filter(Boolean) as string[],
     contentBytes,
     isMMS,
     isLMS,

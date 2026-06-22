@@ -43,6 +43,7 @@ export function SmsComposeCard({ sms }: SmsComposeCardProps) {
                 statusFilter={sms.statusFilter}
                 gradeFilter={sms.gradeFilter}
                 recipientsCount={sms.recipientsCount}
+                errorMessage={sms.recipientsError}
                 onStatusFilterChange={sms.setStatusFilter}
                 onGradeFilterChange={sms.setGradeFilter}
               />
@@ -91,6 +92,7 @@ export function SmsComposeCard({ sms }: SmsComposeCardProps) {
             <SenderNumberSelect
               senderNumbers={sms.senderNumbers}
               selectedSenderId={sms.selectedSenderId}
+              errorMessage={sms.senderNumbersError}
               onSelectedSenderIdChange={sms.setSelectedSenderId}
             />
 
