@@ -107,6 +107,11 @@ async function runNormal(browser) {
   await page.getByRole('heading', { name: '시즌 수정' }).waitFor();
   const initialName = await page.getByLabel('시즌명 *').inputValue();
   if (initialName !== '2027 정시 집중반') throw new Error(`season name not loaded: ${initialName}`);
+  const summary = page.getByTestId('season-form-summary');
+  await summary.getByText('운영 요약').waitFor();
+  await summary.getByText('월, 수, 금').waitFor();
+  await summary.getByText('고3 저녁').waitFor();
+  await summary.getByText('N수 오전').waitFor();
   await assertNoRawVisibleText(page, 'season edit desktop');
   await assertNoHorizontalOverflow(page, 'season edit desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-edit-desktop.png', fullPage: true });
@@ -144,6 +149,7 @@ async function runMobile(browser) {
 
   await page.goto('/seasons/88/edit', { waitUntil: 'networkidle' });
   await page.getByTestId('season-edit-workspace').waitFor();
+  await page.getByTestId('season-form-summary').getByText('운영 요약').waitFor();
   await assertNoRawVisibleText(page, 'season edit mobile');
   await assertNoHorizontalOverflow(page, 'season edit mobile');
   await page.screenshot({ path: '/Users/etlab/paca-season-edit-mobile.png', fullPage: true });

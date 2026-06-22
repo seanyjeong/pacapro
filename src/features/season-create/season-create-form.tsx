@@ -3,6 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MoneyInput } from '@/components/ui/money-input';
 import { SeasonAlert } from '@/features/seasons/season-alert';
+import { SeasonFormSummary } from '@/features/seasons/season-form-summary';
 import type { ContinuousDiscountType, SeasonFormData, SeasonType, TimeSlot } from '@/lib/types/season';
 import { OPERATING_DAY_OPTIONS, SEASON_TARGET_GRADES, TIME_SLOT_OPTIONS } from '@/lib/types/season';
 
@@ -45,6 +46,8 @@ export function SeasonCreateForm({
       {error && (
         <SeasonAlert message={error} testId="season-create-error" title="저장할 수 없습니다" />
       )}
+
+      <SeasonFormSummary formData={formData} />
 
       <section className="rounded-md border border-border bg-card">
         <SectionHeader title="기본 정보" />

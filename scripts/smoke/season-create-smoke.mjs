@@ -80,6 +80,11 @@ async function runNormal(browser) {
   await page.goto('/seasons/new', { waitUntil: 'networkidle' });
   await page.getByTestId('season-create-workspace').waitFor();
   await page.getByRole('heading', { name: '시즌 등록' }).waitFor();
+  const summary = page.getByTestId('season-form-summary');
+  await summary.getByText('운영 요약').waitFor();
+  await summary.getByText('월, 화, 수, 목, 금, 토').waitFor();
+  await summary.getByText('고3 저녁').waitFor();
+  await summary.getByText('N수 오전').waitFor();
   await assertNoRawVisibleText(page, 'season create desktop');
   await assertNoHorizontalOverflow(page, 'season create desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-create-desktop.png', fullPage: true });
@@ -127,6 +132,7 @@ async function runMobile(browser) {
 
   await page.goto('/seasons/new', { waitUntil: 'networkidle' });
   await page.getByTestId('season-create-workspace').waitFor();
+  await page.getByTestId('season-form-summary').getByText('운영 요약').waitFor();
   await assertNoRawVisibleText(page, 'season create mobile');
   await assertNoHorizontalOverflow(page, 'season create mobile');
   await page.screenshot({ path: '/Users/etlab/paca-season-create-mobile.png', fullPage: true });
