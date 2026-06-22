@@ -4,107 +4,21 @@
 // 모든 state + handler + API 호출을 이 hook으로 추출
 // props 전달: page.tsx → sub-components
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { notificationsAPI, NotificationSettings, NotificationLog, ConsultationButton } from '@/lib/api/notifications';
 import apiClient from '@/lib/api/client';
 import { smsAPI } from '@/lib/api/sms';
 import { SenderNumber, ServiceType, TemplateType } from '../_types';
+import { createDefaultNotificationSettings } from './notification-default-settings';
+import {
+  appendNotificationButton,
+  removeNotificationButton,
+  type NotificationButtonField,
+  updateNotificationButton,
+} from './notification-button-updaters';
 
 export function useNotificationSettings() {
-  const [settings, setSettings] = useState<NotificationSettings>({
-    service_type: 'sens',
-    // ===== SENS 설정 =====
-    naver_access_key: '',
-    naver_secret_key: '',
-    naver_service_id: '',
-    sms_service_id: '',
-    kakao_channel_id: '',
-    // SENS 납부안내
-    template_code: '',
-    template_content: '',
-    sens_buttons: [],
-    sens_image_url: '',
-    sens_auto_enabled: false,
-    sens_auto_hour: 10,
-    // SENS 상담확정
-    sens_consultation_template_code: '',
-    sens_consultation_template_content: '',
-    sens_consultation_buttons: [],
-    sens_consultation_image_url: '',
-    // SENS 체험수업
-    sens_trial_template_code: '',
-    sens_trial_template_content: '',
-    sens_trial_buttons: [],
-    sens_trial_image_url: '',
-    sens_trial_auto_enabled: false,
-    sens_trial_auto_hour: 9,
-    // SENS 미납자
-    sens_overdue_template_code: '',
-    sens_overdue_template_content: '',
-    sens_overdue_buttons: [],
-    sens_overdue_image_url: '',
-    sens_overdue_auto_enabled: false,
-    sens_overdue_auto_hour: 9,
-    // SENS 상담 리마인드
-    sens_reminder_template_code: '',
-    sens_reminder_template_content: '',
-    sens_reminder_buttons: [],
-    sens_reminder_image_url: '',
-    sens_reminder_auto_enabled: false,
-    sens_reminder_hours: 1,
-    // ===== 솔라피 설정 =====
-    solapi_api_key: '',
-    solapi_api_secret: '',
-    solapi_pfid: '',
-    solapi_sender_phone: '',
-    // 솔라피 납부안내
-    solapi_template_id: '',
-    solapi_template_content: '',
-    solapi_buttons: [],
-    solapi_image_url: '',
-    solapi_auto_enabled: false,
-    solapi_auto_hour: 10,
-    // 솔라피 상담확정
-    solapi_consultation_template_id: '',
-    solapi_consultation_template_content: '',
-    solapi_consultation_buttons: [],
-    solapi_consultation_image_url: '',
-    // 솔라피 체험수업
-    solapi_trial_template_id: '',
-    solapi_trial_template_content: '',
-    solapi_trial_buttons: [],
-    solapi_trial_image_url: '',
-    solapi_trial_auto_enabled: false,
-    solapi_trial_auto_hour: 9,
-    // 솔라피 미납자
-    solapi_overdue_template_id: '',
-    solapi_overdue_template_content: '',
-    solapi_overdue_buttons: [],
-    solapi_overdue_image_url: '',
-    solapi_overdue_auto_enabled: false,
-    solapi_overdue_auto_hour: 9,
-    // 솔라피 상담 리마인드
-    solapi_reminder_template_id: '',
-    solapi_reminder_template_content: '',
-    solapi_reminder_buttons: [],
-    solapi_reminder_image_url: '',
-    solapi_reminder_auto_enabled: false,
-    solapi_reminder_hours: 1,
-    // 솔라피 출결관리
-    solapi_attendance_template_id: '',
-    solapi_attendance_template_content: '',
-    solapi_attendance_buttons: [],
-    solapi_attendance_image_url: '',
-    // SENS 출결관리
-    sens_attendance_template_code: '',
-    sens_attendance_template_content: '',
-    sens_attendance_buttons: [],
-    sens_attendance_image_url: '',
-    // ===== 공통 설정 =====
-    is_enabled: false,
-    solapi_enabled: false,
-    attendance_alimtalk_enabled: false,
-  });
+  const [settings, setSettings] = useState<NotificationSettings>(() => createDefaultNotificationSettings());
 
   const [activeTab, setActiveTab] = useState<ServiceType>('sens');
   const [activeSensTemplate, setActiveSensTemplate] = useState<TemplateType>('unpaid');
@@ -148,6 +62,15 @@ export function useNotificationSettings() {
   const [newSenderLabel, setNewSenderLabel] = useState('');
   const [addingSender, setAddingSender] = useState(false);
 
+  const loadSenderNumbers = useCallback(async () => {
+    try {
+      const { senderNumbers: numbers } = await smsAPI.getSenderNumbers(activeTab);
+      setSenderNumbers(numbers);
+    } catch {
+      setSenderNumbers([]);
+    }
+  }, [activeTab]);
+
   useEffect(() => {
     loadSettings();
     loadLogs();
@@ -156,7 +79,7 @@ export function useNotificationSettings() {
 
   useEffect(() => {
     loadSenderNumbers();
-  }, [activeTab]);
+  }, [loadSenderNumbers]);
 
   const loadAcademyName = async () => {
     try {
@@ -166,15 +89,6 @@ export function useNotificationSettings() {
       }
     } catch {
       // 실패 시 기본값 유지
-    }
-  };
-
-  const loadSenderNumbers = async () => {
-    try {
-      const { senderNumbers: numbers } = await smsAPI.getSenderNumbers(activeTab);
-      setSenderNumbers(numbers);
-    } catch {
-      setSenderNumbers([]);
     }
   };
 
@@ -258,326 +172,123 @@ export function useNotificationSettings() {
     }
   };
 
-  const handleTest = async () => {
-    if (!testPhone) {
+  const runNotificationTest = async (
+    phone: string,
+    setTestingState: (value: boolean) => void,
+    send: () => Promise<unknown>,
+    successText: string,
+    fallbackErrorText: string
+  ) => {
+    if (!phone) {
       setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
       return;
     }
-    setTesting(true);
+    setTestingState(true);
     setMessage(null);
     try {
-      await notificationsAPI.sendTest(testPhone);
-      setMessage({ type: 'success', text: '테스트 메시지가 발송되었습니다.' });
+      await send();
+      setMessage({ type: 'success', text: successText });
       loadLogs();
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || '테스트 발송에 실패했습니다.' });
+      setMessage({ type: 'error', text: err.response?.data?.message || fallbackErrorText });
     } finally {
-      setTesting(false);
+      setTestingState(false);
     }
   };
 
-  // 납부 안내 버튼
-  const addUnpaidButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, solapi_buttons: [...(prev.solapi_buttons || []), newButton] }));
+  const handleTest = () => runNotificationTest(
+    testPhone,
+    setTesting,
+    () => notificationsAPI.sendTest(testPhone),
+    '테스트 메시지가 발송되었습니다.',
+    '테스트 발송에 실패했습니다.'
+  );
+
+  const addButton = (field: NotificationButtonField) => {
+    setSettings(prev => appendNotificationButton(prev, field));
   };
-  const removeUnpaidButton = (index: number) => {
-    setSettings(prev => ({ ...prev, solapi_buttons: prev.solapi_buttons.filter((_, i) => i !== index) }));
+  const removeButton = (field: NotificationButtonField, index: number) => {
+    setSettings(prev => removeNotificationButton(prev, field, index));
   };
+  const updateButton = (
+    field: NotificationButtonField,
+    index: number,
+    buttonField: keyof ConsultationButton,
+    value: string
+  ) => {
+    setSettings(prev => updateNotificationButton(prev, field, index, buttonField, value));
+  };
+
+  const addUnpaidButton = () => addButton('solapi_buttons');
+  const removeUnpaidButton = (index: number) => removeButton('solapi_buttons', index);
   const updateUnpaidButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      solapi_buttons: prev.solapi_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('solapi_buttons', index, field, value);
   };
 
-  // 상담확정 버튼
-  const addConsultationButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, solapi_consultation_buttons: [...(prev.solapi_consultation_buttons || []), newButton] }));
-  };
-  const removeConsultationButton = (index: number) => {
-    setSettings(prev => ({ ...prev, solapi_consultation_buttons: prev.solapi_consultation_buttons.filter((_, i) => i !== index) }));
-  };
+  const addConsultationButton = () => addButton('solapi_consultation_buttons');
+  const removeConsultationButton = (index: number) => removeButton('solapi_consultation_buttons', index);
   const updateConsultationButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      solapi_consultation_buttons: prev.solapi_consultation_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('solapi_consultation_buttons', index, field, value);
   };
 
-  // 상담확정 알림톡 테스트
-  const handleTestConsultation = async () => {
-    if (!testPhoneConsultation) {
-      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
-      return;
-    }
-    setTestingConsultation(true);
-    setMessage(null);
-    try {
-      await notificationsAPI.sendTestConsultation(testPhoneConsultation);
-      setMessage({ type: 'success', text: '상담확정 테스트 메시지가 발송되었습니다.' });
-      loadLogs();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || '상담확정 테스트 발송에 실패했습니다.' });
-    } finally {
-      setTestingConsultation(false);
-    }
-  };
-
-  // 체험수업 알림톡 테스트
-  const handleTestTrial = async () => {
-    if (!testPhoneTrial) {
-      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
-      return;
-    }
-    setTestingTrial(true);
-    setMessage(null);
-    try {
-      await notificationsAPI.sendTestTrial(testPhoneTrial);
-      setMessage({ type: 'success', text: '체험수업 테스트 메시지가 발송되었습니다.' });
-      loadLogs();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || '체험수업 테스트 발송에 실패했습니다.' });
-    } finally {
-      setTestingTrial(false);
-    }
-  };
-
-  // 미납자 알림톡 테스트
-  const handleTestOverdue = async () => {
-    if (!testPhoneOverdue) {
-      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
-      return;
-    }
-    setTestingOverdue(true);
-    setMessage(null);
-    try {
-      await notificationsAPI.sendTestOverdue(testPhoneOverdue);
-      setMessage({ type: 'success', text: '미납자 테스트 메시지가 발송되었습니다.' });
-      loadLogs();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || '미납자 테스트 발송에 실패했습니다.' });
-    } finally {
-      setTestingOverdue(false);
-    }
-  };
-
-  const handleTestReminder = async () => {
-    if (!testPhoneReminder) {
-      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
-      return;
-    }
-    setTestingReminder(true);
-    setMessage(null);
-    try {
-      await notificationsAPI.sendTestReminder(testPhoneReminder);
-      setMessage({ type: 'success', text: '상담 리마인드 테스트 메시지가 발송되었습니다.' });
-      loadLogs();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || '상담 리마인드 테스트 발송에 실패했습니다.' });
-    } finally {
-      setTestingReminder(false);
-    }
-  };
-
-  // 체험수업 버튼
-  const addTrialButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, solapi_trial_buttons: [...(prev.solapi_trial_buttons || []), newButton] }));
-  };
-  const removeTrialButton = (index: number) => {
-    setSettings(prev => ({ ...prev, solapi_trial_buttons: prev.solapi_trial_buttons.filter((_, i) => i !== index) }));
-  };
+  const addTrialButton = () => addButton('solapi_trial_buttons');
+  const removeTrialButton = (index: number) => removeButton('solapi_trial_buttons', index);
   const updateTrialButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      solapi_trial_buttons: prev.solapi_trial_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('solapi_trial_buttons', index, field, value);
   };
 
-  // 미납자 버튼
-  const addOverdueButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, solapi_overdue_buttons: [...(prev.solapi_overdue_buttons || []), newButton] }));
-  };
-  const removeOverdueButton = (index: number) => {
-    setSettings(prev => ({ ...prev, solapi_overdue_buttons: prev.solapi_overdue_buttons.filter((_, i) => i !== index) }));
-  };
+  const addOverdueButton = () => addButton('solapi_overdue_buttons');
+  const removeOverdueButton = (index: number) => removeButton('solapi_overdue_buttons', index);
   const updateOverdueButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      solapi_overdue_buttons: prev.solapi_overdue_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('solapi_overdue_buttons', index, field, value);
   };
 
-  // 솔라피 리마인드 버튼
-  const addReminderButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, solapi_reminder_buttons: [...(prev.solapi_reminder_buttons || []), newButton] }));
-  };
-  const removeReminderButton = (index: number) => {
-    setSettings(prev => ({ ...prev, solapi_reminder_buttons: prev.solapi_reminder_buttons.filter((_, i) => i !== index) }));
-  };
+  const addReminderButton = () => addButton('solapi_reminder_buttons');
+  const removeReminderButton = (index: number) => removeButton('solapi_reminder_buttons', index);
   const updateReminderButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      solapi_reminder_buttons: prev.solapi_reminder_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('solapi_reminder_buttons', index, field, value);
   };
 
-  // ===== SENS 버튼 관리 =====
-  const addSensUnpaidButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, sens_buttons: [...(prev.sens_buttons || []), newButton] }));
-  };
-  const removeSensUnpaidButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_buttons: prev.sens_buttons.filter((_, i) => i !== index) }));
-  };
+  const handleTestConsultation = () => runNotificationTest(testPhoneConsultation, setTestingConsultation, () => notificationsAPI.sendTestConsultation(testPhoneConsultation), '상담확정 테스트 메시지가 발송되었습니다.', '상담확정 테스트 발송에 실패했습니다.');
+  const handleTestTrial = () => runNotificationTest(testPhoneTrial, setTestingTrial, () => notificationsAPI.sendTestTrial(testPhoneTrial), '체험수업 테스트 메시지가 발송되었습니다.', '체험수업 테스트 발송에 실패했습니다.');
+  const handleTestOverdue = () => runNotificationTest(testPhoneOverdue, setTestingOverdue, () => notificationsAPI.sendTestOverdue(testPhoneOverdue), '미납자 테스트 메시지가 발송되었습니다.', '미납자 테스트 발송에 실패했습니다.');
+  const handleTestReminder = () => runNotificationTest(testPhoneReminder, setTestingReminder, () => notificationsAPI.sendTestReminder(testPhoneReminder), '상담 리마인드 테스트 메시지가 발송되었습니다.', '상담 리마인드 테스트 발송에 실패했습니다.');
+
+  const addSensUnpaidButton = () => addButton('sens_buttons');
+  const removeSensUnpaidButton = (index: number) => removeButton('sens_buttons', index);
   const updateSensUnpaidButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      sens_buttons: prev.sens_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('sens_buttons', index, field, value);
   };
 
-  const addSensConsultationButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, sens_consultation_buttons: [...(prev.sens_consultation_buttons || []), newButton] }));
-  };
-  const removeSensConsultationButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_consultation_buttons: prev.sens_consultation_buttons.filter((_, i) => i !== index) }));
-  };
+  const addSensConsultationButton = () => addButton('sens_consultation_buttons');
+  const removeSensConsultationButton = (index: number) => removeButton('sens_consultation_buttons', index);
   const updateSensConsultationButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      sens_consultation_buttons: prev.sens_consultation_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('sens_consultation_buttons', index, field, value);
   };
 
-  const addSensTrialButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, sens_trial_buttons: [...(prev.sens_trial_buttons || []), newButton] }));
-  };
-  const removeSensTrialButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_trial_buttons: prev.sens_trial_buttons.filter((_, i) => i !== index) }));
-  };
+  const addSensTrialButton = () => addButton('sens_trial_buttons');
+  const removeSensTrialButton = (index: number) => removeButton('sens_trial_buttons', index);
   const updateSensTrialButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      sens_trial_buttons: prev.sens_trial_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('sens_trial_buttons', index, field, value);
   };
 
-  const addSensOverdueButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, sens_overdue_buttons: [...(prev.sens_overdue_buttons || []), newButton] }));
-  };
-  const removeSensOverdueButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_overdue_buttons: prev.sens_overdue_buttons.filter((_, i) => i !== index) }));
-  };
+  const addSensOverdueButton = () => addButton('sens_overdue_buttons');
+  const removeSensOverdueButton = (index: number) => removeButton('sens_overdue_buttons', index);
   const updateSensOverdueButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      sens_overdue_buttons: prev.sens_overdue_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('sens_overdue_buttons', index, field, value);
   };
 
-  const addSensReminderButton = () => {
-    const newButton: ConsultationButton = { buttonType: 'WL', buttonName: '', linkMo: '', linkPc: '' };
-    setSettings(prev => ({ ...prev, sens_reminder_buttons: [...(prev.sens_reminder_buttons || []), newButton] }));
-  };
-  const removeSensReminderButton = (index: number) => {
-    setSettings(prev => ({ ...prev, sens_reminder_buttons: prev.sens_reminder_buttons.filter((_, i) => i !== index) }));
-  };
+  const addSensReminderButton = () => addButton('sens_reminder_buttons');
+  const removeSensReminderButton = (index: number) => removeButton('sens_reminder_buttons', index);
   const updateSensReminderButton = (index: number, field: keyof ConsultationButton, value: string) => {
-    setSettings(prev => ({
-      ...prev,
-      sens_reminder_buttons: prev.sens_reminder_buttons.map((btn, i) => i === index ? { ...btn, [field]: value } : btn),
-    }));
+    updateButton('sens_reminder_buttons', index, field, value);
   };
 
-  // ===== SENS 테스트 발송 =====
-  const handleTestSensConsultation = async () => {
-    if (!testPhoneSensConsultation) {
-      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
-      return;
-    }
-    setTestingSensConsultation(true);
-    setMessage(null);
-    try {
-      await notificationsAPI.sendTestSensConsultation(testPhoneSensConsultation);
-      setMessage({ type: 'success', text: 'SENS 상담확정 테스트 메시지가 발송되었습니다.' });
-      loadLogs();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || 'SENS 상담확정 테스트 발송에 실패했습니다.' });
-    } finally {
-      setTestingSensConsultation(false);
-    }
-  };
-
-  const handleTestSensTrial = async () => {
-    if (!testPhoneSensTrial) {
-      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
-      return;
-    }
-    setTestingSensTrial(true);
-    setMessage(null);
-    try {
-      await notificationsAPI.sendTestSensTrial(testPhoneSensTrial);
-      setMessage({ type: 'success', text: 'SENS 체험수업 테스트 메시지가 발송되었습니다.' });
-      loadLogs();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || 'SENS 체험수업 테스트 발송에 실패했습니다.' });
-    } finally {
-      setTestingSensTrial(false);
-    }
-  };
-
-  const handleTestSensOverdue = async () => {
-    if (!testPhoneSensOverdue) {
-      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
-      return;
-    }
-    setTestingSensOverdue(true);
-    setMessage(null);
-    try {
-      await notificationsAPI.sendTestSensOverdue(testPhoneSensOverdue);
-      setMessage({ type: 'success', text: 'SENS 미납자 테스트 메시지가 발송되었습니다.' });
-      loadLogs();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || 'SENS 미납자 테스트 발송에 실패했습니다.' });
-    } finally {
-      setTestingSensOverdue(false);
-    }
-  };
-
-  const handleTestSensReminder = async () => {
-    if (!testPhoneSensReminder) {
-      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
-      return;
-    }
-    setTestingSensReminder(true);
-    setMessage(null);
-    try {
-      await notificationsAPI.sendTestSensReminder(testPhoneSensReminder);
-      setMessage({ type: 'success', text: 'SENS 상담 리마인드 테스트 메시지가 발송되었습니다.' });
-      loadLogs();
-    } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || 'SENS 상담 리마인드 테스트 발송에 실패했습니다.' });
-    } finally {
-      setTestingSensReminder(false);
-    }
-  };
+  const handleTestSensConsultation = () => runNotificationTest(testPhoneSensConsultation, setTestingSensConsultation, () => notificationsAPI.sendTestSensConsultation(testPhoneSensConsultation), 'SENS 상담확정 테스트 메시지가 발송되었습니다.', 'SENS 상담확정 테스트 발송에 실패했습니다.');
+  const handleTestSensTrial = () => runNotificationTest(testPhoneSensTrial, setTestingSensTrial, () => notificationsAPI.sendTestSensTrial(testPhoneSensTrial), 'SENS 체험수업 테스트 메시지가 발송되었습니다.', 'SENS 체험수업 테스트 발송에 실패했습니다.');
+  const handleTestSensOverdue = () => runNotificationTest(testPhoneSensOverdue, setTestingSensOverdue, () => notificationsAPI.sendTestSensOverdue(testPhoneSensOverdue), 'SENS 미납자 테스트 메시지가 발송되었습니다.', 'SENS 미납자 테스트 발송에 실패했습니다.');
+  const handleTestSensReminder = () => runNotificationTest(testPhoneSensReminder, setTestingSensReminder, () => notificationsAPI.sendTestSensReminder(testPhoneSensReminder), 'SENS 상담 리마인드 테스트 메시지가 발송되었습니다.', 'SENS 상담 리마인드 테스트 발송에 실패했습니다.');
 
   // 미납자 수동 발송
   const handleSendUnpaid = async () => {
