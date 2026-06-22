@@ -6,19 +6,21 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Plus, Coins, Banknote, Calculator } from 'lucide-react';
+import { Plus, Coins, Banknote } from 'lucide-react';
 import type { StudentPayment, RestCredit } from '@/lib/types/student';
-import { formatDate, formatCurrency, getPaymentStatusColor } from '@/lib/utils/student-helpers';
-import { PAYMENT_STATUS_LABELS, REST_CREDIT_TYPE_LABELS, REST_CREDIT_STATUS_LABELS, parseClassDays } from '@/lib/types/student';
-import { PAYMENT_METHOD_LABELS } from '@/lib/types/payment';
+import { formatDate } from '@/lib/utils/student-helpers';
+import { REST_CREDIT_TYPE_LABELS, REST_CREDIT_STATUS_LABELS, parseClassDays } from '@/lib/types/student';
 import { studentsAPI } from '@/lib/api/students';
 import { ManualCreditModal } from './manual-credit-modal';
 import { PrepaidPaymentModal } from '@/components/payments/prepaid-payment-modal';
+import { StudentPaymentHistory } from './student-payment-history';
+import { StudentPaymentRecalculateDialog } from './student-payment-recalculate-dialog';
 
 interface StudentPaymentsProps {
   payments: StudentPayment[];
@@ -29,6 +31,7 @@ interface StudentPaymentsProps {
   monthlyTuition?: number;
   weeklyCount?: number;
   classDays?: number[] | string | import('@/lib/types/student').ClassDaySlot[];
+  onChanged?: () => void;
 }
 
 // 크레딧 타입별 배지 색상
@@ -73,6 +76,7 @@ export function StudentPaymentsComponent({
   monthlyTuition,
   weeklyCount,
   classDays,
+  onChanged,
 }: StudentPaymentsProps) {
   // 크레딧 상태
   const [credits, setCredits] = useState<RestCredit[]>([]);
@@ -128,35 +132,36 @@ export function StudentPaymentsComponent({
     try {
       setApplying(true);
       const result = await studentsAPI.applyCredit(studentId, selectedCredit.id, applyYearMonth);
-      alert(result.message);
+      toast.success(result.message || '크레딧을 적용했습니다.');
       setApplyModalOpen(false);
       setSelectedCredit(null);
-      loadCredits(); // 크레딧 목록 새로고침
-      window.location.reload(); // 페이지 새로고침으로 학원비도 갱신
-    } catch (err: any) {
-      console.error('Failed to apply credit:', err);
-      alert(err.response?.data?.message || '크레딧 적용에 실패했습니다.');
+      loadCredits();
+      onChanged?.();
+    } catch (err: unknown) {
+      console.warn('크레딧 적용에 실패했습니다.', err);
+      toast.error('크레딧을 적용하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setApplying(false);
     }
   };
 
   // 첫 달 일할 재계산 상태
+  const [recalculateDialogOpen, setRecalculateDialogOpen] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
 
   // 첫 달 일할계산 학원비 재계산 (현재 등록일 기준, 미납 건만)
   const handleRecalculateFirstPayment = async () => {
     if (!studentId) return;
-    if (!confirm('현재 등록일 기준으로 첫 달 학원비를 다시 일할계산합니다. 진행할까요?')) return;
 
     try {
       setRecalculating(true);
       const result = await studentsAPI.recalculateFirstPayment(studentId);
-      alert(result.message);
-      window.location.reload(); // 페이지 새로고침으로 학원비 갱신
-    } catch (err: any) {
-      console.error('Failed to recalculate first payment:', err);
-      alert(err.response?.data?.message || '첫 달 학원비 재계산에 실패했습니다.');
+      toast.success(result.message || '첫 달 학원비를 다시 계산했습니다.');
+      setRecalculateDialogOpen(false);
+      onChanged?.();
+    } catch (err: unknown) {
+      console.warn('첫 달 학원비 재계산에 실패했습니다.', err);
+      toast.error('첫 달 학원비를 다시 계산하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setRecalculating(false);
     }
@@ -281,125 +286,12 @@ export function StudentPaymentsComponent({
         </Card>
       )}
 
-      {/* 납부 내역 섹션 */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <CreditCard className="w-5 h-5" />
-            납부 내역
-            {payments.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                ({payments.length}건)
-              </span>
-            )}
-          </CardTitle>
-          {studentId && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleRecalculateFirstPayment}
-              disabled={recalculating}
-            >
-              <Calculator className="w-4 h-4 mr-1" />
-              {recalculating ? '재계산 중...' : '첫 달 일할 재계산'}
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent className="p-0">
-          {payments.length === 0 ? (
-            <div className="p-12 text-center">
-              <CreditCard className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">납부 내역이 없습니다</h3>
-              <p className="text-muted-foreground">아직 등록된 납부 내역이 없습니다.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-muted/50 border-b border-border">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      납부 기간
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      금액
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      납부 금액
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      납부 방법
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      납부일
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      상태
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-background divide-y divide-border">
-                  {payments.map((payment) => {
-                    const finalAmount = parseFloat(payment.final_amount) || 0;
-                    const paidAmount = parseFloat(payment.paid_amount) || 0;
-                    const remaining = finalAmount - paidAmount;
-
-                    return (
-                      <tr key={payment.id} className="hover:bg-muted/50">
-                        {/* 납부 기간 */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-foreground">{payment.year_month}</div>
-                          <div className="text-xs text-muted-foreground">납부기한: {formatDate(payment.due_date)}</div>
-                        </td>
-
-                        {/* 금액 */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-semibold text-foreground">{formatCurrency(payment.final_amount)}</div>
-                          {parseFloat(payment.discount_amount) > 0 && (
-                            <div className="text-xs text-muted-foreground">할인: {formatCurrency(payment.discount_amount)}</div>
-                          )}
-                        </td>
-
-                        {/* 납부 금액 */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-foreground">{formatCurrency(payment.paid_amount)}</div>
-                          {remaining > 0 && (
-                            <div className="text-xs text-red-500 dark:text-red-400">
-                              미납: {formatCurrency(remaining)}
-                            </div>
-                          )}
-                        </td>
-
-                        {/* 납부 방법 */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-foreground">{payment.payment_method ? PAYMENT_METHOD_LABELS[payment.payment_method] || payment.payment_method : '-'}</div>
-                        </td>
-
-                        {/* 납부일 */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-foreground">
-                            {payment.paid_date ? formatDate(payment.paid_date) : '-'}
-                          </div>
-                        </td>
-
-                        {/* 상태 */}
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getPaymentStatusColor(
-                              payment.payment_status
-                            )}`}
-                          >
-                            {PAYMENT_STATUS_LABELS[payment.payment_status] || payment.payment_status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <StudentPaymentHistory
+        payments={payments}
+        recalculating={recalculating}
+        studentId={studentId}
+        onRecalculateClick={() => setRecalculateDialogOpen(true)}
+      />
 
       {/* 수동 크레딧 모달 */}
       {canUseCredit && (
@@ -484,6 +376,15 @@ export function StudentPaymentsComponent({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <StudentPaymentRecalculateDialog
+        busy={recalculating}
+        open={recalculateDialogOpen}
+        onConfirm={handleRecalculateFirstPayment}
+        onOpenChange={(open) => {
+          if (!open && !recalculating) setRecalculateDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

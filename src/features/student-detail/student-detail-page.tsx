@@ -128,6 +128,7 @@ export function StudentDetailPage() {
               studentId={studentId}
               studentName={student.name}
               weeklyCount={student.weekly_count || 2}
+              onChanged={reload}
             />
           ) : null}
           {activeTab === 'seasons' ? <StudentSeasonsComponent studentId={studentId} studentType={student.student_type} /> : null}

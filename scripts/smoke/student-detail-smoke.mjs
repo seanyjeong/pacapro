@@ -80,6 +80,7 @@ function makeState(mode) {
     hits: [],
     mode,
     payment: makePayment(),
+    recalculated: false,
     student: makeStudent(),
     withdrawPayload: null,
   };
@@ -122,6 +123,21 @@ async function installRoutes(context, state) {
         student_id: 41,
         summary: { absent: 0, attendance_rate: 50, excused: 0, late: 1, makeup: 0, present: 1, total: 2 },
         year_month: url.searchParams.get('year_month') || '2026-06',
+      });
+    }
+
+    if (method === 'POST' && path === '/students/41/recalculate-first-payment') {
+      state.recalculated = true;
+      return jsonRoute(route, {
+        message: '첫 달 학원비를 다시 계산했습니다.',
+        payment: {
+          id: 501,
+          year_month: '2026-06',
+          base_amount: 520000,
+          discount_amount: 52000,
+          due_date: '2026-06-05',
+          final_amount: 468000,
+        },
       });
     }
 
@@ -206,6 +222,12 @@ async function runNormalDesktop(browser) {
   await page.getByRole('button', { name: '납부 내역 보기' }).click();
   await page.getByText('2026-06', { exact: true }).waitFor();
   await page.getByText('468,000원').first().waitFor();
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '첫 달 일할 재계산' }), 'first payment recalculation');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '첫 달 일할 재계산' }).waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-student-detail-recalculate-dialog.png', fullPage: true });
+  await page.getByRole('button', { name: '재계산 실행' }).click();
+  await page.getByText('2026-06', { exact: true }).waitFor();
+  if (!state.recalculated) throw new Error('first payment recalculation API was not called');
 
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '삭제' }), 'delete action');
   await page.getByRole('alertdialog').getByRole('heading', { name: '학생 삭제' }).waitFor();
