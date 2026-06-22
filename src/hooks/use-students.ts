@@ -74,7 +74,7 @@ export function useStudent(id: number) {
   const query = useQuery({
     queryKey: QUERY_KEYS.student(id),
     queryFn: async () => {
-      const data = await studentsAPI.getStudent(id);
+      const data = await studentsAPI.getStudent(id, { suppressErrorToast: true });
       return {
         student: data.student as StudentDetail,
         performances: data.performances || [],
@@ -93,7 +93,7 @@ export function useStudent(id: number) {
     performances: query.data?.performances || [],
     payments: query.data?.payments || [],
     loading: query.isLoading,
-    error: query.error?.message || null,
+    error: query.error ? '학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' : null,
     reload,
   };
 }

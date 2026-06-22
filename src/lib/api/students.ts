@@ -49,8 +49,8 @@ export const studentsAPI = {
    * 학생 상세 조회
    * GET /paca/students/:id
    */
-  getStudent: async (id: number): Promise<StudentDetailResponse> => {
-    return await apiClient.get(`/students/${id}`);
+  getStudent: async (id: number, config?: APIRequestConfig): Promise<StudentDetailResponse> => {
+    return await apiClient.get(`/students/${id}`, config);
   },
 
   /**
@@ -66,17 +66,17 @@ export const studentsAPI = {
    * 학생 수정
    * PUT /paca/students/:id
    */
-  updateStudent: async (id: number, data: Partial<StudentFormData>): Promise<StudentUpdateResponse> => {
+  updateStudent: async (id: number, data: Partial<StudentFormData>, config?: APIRequestConfig): Promise<StudentUpdateResponse> => {
     // class_days는 배열 그대로 전송 (백엔드에서 JSON.stringify 처리)
-    return await apiClient.put(`/students/${id}`, data);
+    return await apiClient.put(`/students/${id}`, data, config);
   },
 
   /**
    * 학생 삭제 (soft delete)
    * DELETE /paca/students/:id
    */
-  deleteStudent: async (id: number): Promise<StudentDeleteResponse> => {
-    return await apiClient.delete(`/students/${id}`);
+  deleteStudent: async (id: number, config?: APIRequestConfig): Promise<StudentDeleteResponse> => {
+    return await apiClient.delete(`/students/${id}`, config);
   },
 
   /**
@@ -91,7 +91,7 @@ export const studentsAPI = {
    * 퇴원 처리
    * POST /paca/students/:id/withdraw
    */
-  withdrawStudent: async (id: number, reason?: string, withdrawalDate?: string): Promise<{
+  withdrawStudent: async (id: number, reason?: string, withdrawalDate?: string, config?: APIRequestConfig): Promise<{
     message: string;
     student: {
       id: number;
@@ -106,10 +106,14 @@ export const studentsAPI = {
       message: string;
     };
   }> => {
-    return await apiClient.post(`/students/${id}/withdraw`, {
-      reason,
-      withdrawal_date: withdrawalDate
-    });
+    return await apiClient.post(
+      `/students/${id}/withdraw`,
+      {
+        reason,
+        withdrawal_date: withdrawalDate
+      },
+      config
+    );
   },
 
   /**
