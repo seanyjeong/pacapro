@@ -18,7 +18,7 @@ function makePermissions() {
 }
 
 function makeState(mode) {
-  return { hits: [], mode, permissionPayload: null };
+  return { deletedStaffId: null, hits: [], mode, permissionPayload: null };
 }
 
 async function installRoutes(context, state) {
@@ -50,7 +50,7 @@ async function installRoutes(context, state) {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
       }
       return jsonRoute(route, {
-        staff: [
+        staff: state.deletedStaffId ? [] : [
           {
             id: 11,
             email: 'manager@example.com',
@@ -81,6 +81,11 @@ async function installRoutes(context, state) {
       return jsonRoute(route, { message: 'updated' });
     }
 
+    if (method === 'DELETE' && path === '/staff/11') {
+      state.deletedStaffId = 11;
+      return jsonRoute(route, { message: 'deleted' });
+    }
+
     return jsonRoute(route, { message: 'mocked' });
   });
 }
@@ -95,11 +100,35 @@ async function createStaffPage(browser, mode, viewport = { width: 1365, height: 
   return { context, diagnostics, page, state };
 }
 
+async function gotoStaff(page) {
+  const staffResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return response.request().method() === 'GET' && normalizePacaApiPath(url) === '/staff';
+  });
+  await page.goto('/staff', { waitUntil: 'domcontentloaded' });
+  await staffResponse;
+}
+
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
+}
+
 async function runDesktop(browser) {
   const result = await createStaffPage(browser, 'success');
   const { context, page, state } = result;
 
-  await page.goto('/staff', { waitUntil: 'domcontentloaded' });
+  await gotoStaff(page);
   await page.getByRole('heading', { name: '직원 관리' }).waitFor();
   const desktopList = page.getByTestId('staff-desktop-list');
   await desktopList.getByText('김관리').waitFor();
@@ -119,6 +148,22 @@ async function runDesktop(browser) {
     throw new Error(`permission payload mismatch: ${JSON.stringify(state.permissionPayload)}`);
   }
 
+  await clickWithoutNativeDialog(page, desktopList.getByRole('button', { name: '김관리 삭제' }), 'staff delete');
+  const deleteDialog = page.getByRole('alertdialog');
+  await deleteDialog.getByRole('heading', { name: '직원 계정 삭제' }).waitFor();
+  await deleteDialog.getByText('김관리').waitFor();
+  await Promise.all([
+    page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'DELETE' && normalizePacaApiPath(url) === '/staff/11';
+    }),
+    deleteDialog.getByRole('button', { name: '삭제' }).click(),
+  ]);
+  await page.getByText('직원 계정이 삭제되었습니다.').waitFor();
+  await deleteDialog.waitFor({ state: 'hidden' });
+  await page.getByText('등록된 직원이 없습니다').waitFor();
+  if (state.deletedStaffId !== 11) throw new Error('staff delete endpoint was not called');
+
   await assertNoRawVisibleText(page, 'staff desktop');
   await assertNoHorizontalOverflow(page, 'staff desktop');
   await page.screenshot({ path: '/Users/etlab/paca-staff-desktop.png', fullPage: true });
@@ -131,7 +176,7 @@ async function runMobile(browser) {
   const result = await createStaffPage(browser, 'success', { width: 390, height: 844 });
   const { context, page } = result;
 
-  await page.goto('/staff', { waitUntil: 'domcontentloaded' });
+  await gotoStaff(page);
   await page.getByRole('heading', { name: '직원 관리' }).waitFor();
   const mobileList = page.getByTestId('staff-mobile-list');
   await mobileList.getByText('김관리').waitFor();
@@ -153,7 +198,7 @@ async function runLoadError(browser) {
   const result = await createStaffPage(browser, 'load-error', { width: 390, height: 844 });
   const { context, page } = result;
 
-  await page.goto('/staff', { waitUntil: 'domcontentloaded' });
+  await gotoStaff(page);
   await page.getByRole('heading', { name: '직원 관리' }).waitFor();
   await page.getByRole('heading', { name: '직원 정보를 불러오지 못했습니다' }).waitFor();
   await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
@@ -179,6 +224,7 @@ async function main() {
     [desktop, mobile, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
+      deletedStaffId: desktop.state.deletedStaffId,
       errorConsoleErrors: loadError.diagnostics.consoleErrors,
       errorHits: loadError.state.hits,
       mobileHits: mobile.state.hits,

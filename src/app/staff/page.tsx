@@ -8,6 +8,7 @@ import { staffApi } from '@/lib/api/staff';
 import { StaffList } from '@/components/staff/staff-list';
 import { StaffFormModal } from '@/components/staff/staff-form-modal';
 import { PermissionModal } from '@/components/staff/permission-modal';
+import { StaffDeleteDialog } from '@/components/staff/staff-delete-dialog';
 import type { Staff, AvailableInstructor } from '@/lib/types/staff';
 import { toast } from 'sonner';
 
@@ -21,6 +22,9 @@ export default function StaffPage() {
   const [showFormModal, setShowFormModal] = useState(false);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Staff | null>(null);
 
   useEffect(() => {
     loadData();
@@ -60,15 +64,30 @@ export default function StaffPage() {
     setShowFormModal(true);
   };
 
-  const handleDeleteStaff = async (staff: Staff) => {
-    if (!confirm(`${staff.name}님의 계정을 삭제하시겠습니까?`)) return;
+  const handleDeleteStaff = (staff: Staff) => {
+    setDeleteTarget(staff);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    if (deleteLoading) return;
+    setDeleteDialogOpen(open);
+  };
+
+  const confirmDeleteStaff = async () => {
+    if (!deleteTarget) return;
 
     try {
-      await staffApi.deleteStaff(staff.id, { suppressErrorToast: true });
+      setDeleteLoading(true);
+      await staffApi.deleteStaff(deleteTarget.id, { suppressErrorToast: true });
       toast.success('직원 계정이 삭제되었습니다.');
-      loadData();
+      setDeleteLoading(false);
+      setDeleteDialogOpen(false);
+      await loadData();
     } catch {
       toast.error('직원 계정을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -212,6 +231,14 @@ export default function StaffPage() {
           onSubmit={handlePermissionSubmit}
         />
       )}
+
+      <StaffDeleteDialog
+        loading={deleteLoading}
+        open={deleteDialogOpen}
+        staff={deleteTarget}
+        onConfirm={() => void confirmDeleteStaff()}
+        onOpenChange={handleDeleteDialogOpenChange}
+      />
     </div>
   );
 }
