@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudentForm } from '@/components/students/student-form';
+import { StudentFormCancelDialog } from '@/features/student-form/student-form-cancel-dialog';
 import { StudentFormPageHeader } from '@/features/student-form/student-form-page-header';
 import { useStudent } from '@/hooks/use-students';
 import { studentsAPI } from '@/lib/api/students';
@@ -16,6 +18,7 @@ export default function EditStudentPage() {
   const params = useParams();
   const studentId = parseInt(params.id as string);
   const queryClient = useQueryClient();
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   // useStudent 훅 사용
   const { student, loading, error, reload } = useStudent(studentId);
@@ -53,9 +56,7 @@ export default function EditStudentPage() {
   };
 
   const handleCancel = () => {
-    if (confirm('수정 중인 내용이 사라집니다. 취소하시겠습니까?')) {
-      router.push(`/students/${studentId}`);
-    }
+    setCancelOpen(true);
   };
 
   // 로딩 화면
@@ -122,7 +123,7 @@ export default function EditStudentPage() {
         description={`${student.name} 학생의 정보, 수업 요일, 학원비 기준을 수정합니다.`}
         eyebrow="Student Profile"
         title="학생 정보 수정"
-        onBack={() => router.push(`/students/${studentId}`)}
+        onBack={handleCancel}
       />
 
       {/* Form */}
@@ -131,6 +132,12 @@ export default function EditStudentPage() {
         initialData={student}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+      />
+      <StudentFormCancelDialog
+        mode="edit"
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        onLeave={() => router.push(`/students/${studentId}`)}
       />
     </div>
   );

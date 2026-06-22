@@ -307,6 +307,23 @@ async function runCreateSameNameWarning(browser) {
   return result;
 }
 
+async function runCreateCancelDialog(browser) {
+  const result = await createStudentFormPage(browser, 'success');
+  const { context, page } = result;
+
+  await page.goto('/students/new', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 등록' }).waitFor();
+  await fillRequiredStudentFields(page);
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '취소' }), 'create cancel');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '등록 취소' }).waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-student-form-create-cancel-dialog.png', fullPage: true });
+  await page.getByRole('button', { name: '나가기' }).click();
+  await page.waitForURL('**/students', { timeout: 15000 });
+
+  await context.close();
+  return result;
+}
+
 async function runEditSuccess(browser) {
   const result = await createStudentFormPage(browser, 'success');
   const { context, page } = result;
@@ -338,6 +355,24 @@ async function runEditSuccess(browser) {
 
   await assertNoRawVisibleText(page, 'student form edit success');
   await assertNoHorizontalOverflow(page, 'student form edit success');
+
+  await context.close();
+  return result;
+}
+
+async function runEditCancelDialog(browser) {
+  const result = await createStudentFormPage(browser, 'success');
+  const { context, page } = result;
+
+  await page.goto('/students/77/edit', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 정보 수정' }).waitFor();
+  await page.locator('#field-name').waitFor();
+  await page.locator('#field-name').fill('김수정취소');
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '취소' }), 'edit cancel');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '수정 취소' }).waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-student-form-edit-cancel-dialog.png', fullPage: true });
+  await page.getByRole('button', { name: '나가기' }).click();
+  await page.waitForURL('**/students/77', { timeout: 15000 });
 
   await context.close();
   return result;
@@ -421,11 +456,23 @@ async function main() {
     const createSuccess = await runCreateSuccess(browser);
     const createError = await runCreateError(browser);
     const createSameName = await runCreateSameNameWarning(browser);
+    const createCancel = await runCreateCancelDialog(browser);
     const editSuccess = await runEditSuccess(browser);
+    const editCancel = await runEditCancelDialog(browser);
     const editError = await runEditError(browser);
     const restError = await runRestError(browser);
     const editLoadError = await runEditLoadError(browser);
-    [createSuccess, createError, createSameName, editSuccess, editError, restError, editLoadError].forEach(assertDiagnostics);
+    [
+      createSuccess,
+      createError,
+      createSameName,
+      createCancel,
+      editSuccess,
+      editCancel,
+      editError,
+      restError,
+      editLoadError,
+    ].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       createHits: createSuccess.state.hits,
       createPayload: createSuccess.state.studentPayload,

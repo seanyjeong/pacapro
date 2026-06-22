@@ -1,10 +1,11 @@
 'use client';
 
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { StudentForm } from '@/components/students/student-form';
+import { StudentFormCancelDialog } from '@/features/student-form/student-form-cancel-dialog';
 import { StudentFormPageHeader } from '@/features/student-form/student-form-page-header';
 import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
@@ -14,6 +15,7 @@ function NewStudentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isTrial = searchParams.get('is_trial') === 'true';
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   // 미등록관리 또는 체험생에서 넘어온 경우 학생 정보 초기값 설정
   const fromPendingId = searchParams.get('from_pending');
@@ -74,7 +76,7 @@ function NewStudentContent() {
             description: '시즌 등록도 완료되었습니다.'
           });
         } catch (seasonError) {
-          console.error('Season enrollment failed:', seasonError);
+          console.warn('Season enrollment failed:', seasonError);
           toast.warning(`${student.name} 학생이 등록되었습니다.`, {
             description: '시즌 등록에 실패했습니다. 학생 상세 페이지에서 다시 시도해주세요.'
           });
@@ -92,9 +94,7 @@ function NewStudentContent() {
   };
 
   const handleCancel = () => {
-    if (confirm('작성 중인 내용이 사라집니다. 취소하시겠습니까?')) {
-      router.push('/students');
-    }
+    setCancelOpen(true);
   };
 
   return (
@@ -103,7 +103,7 @@ function NewStudentContent() {
         description="학생 기본 정보, 수업 정보, 학원비 기준을 한 번에 저장합니다."
         eyebrow="Student Intake"
         title="학생 등록"
-        onBack={() => router.push('/students')}
+        onBack={handleCancel}
       />
 
       {/* Form */}
@@ -113,6 +113,12 @@ function NewStudentContent() {
         initialIsTrial={isTrial}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+      />
+      <StudentFormCancelDialog
+        mode="create"
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        onLeave={() => router.push('/students')}
       />
     </div>
   );
