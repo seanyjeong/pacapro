@@ -27,6 +27,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
         color: EVENT_TYPE_COLORS.academy,
     });
     const [loading, setLoading] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
     useEffect(() => {
         if (event) {
@@ -54,6 +55,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                 color: EVENT_TYPE_COLORS.academy,
             });
         }
+        setSubmitError(null);
     }, [event, selectedDate, isOpen]);
 
     const handleEventTypeChange = (type: AcademyEventType) => {
@@ -68,9 +70,12 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        setSubmitError(null);
         try {
             await onSubmit(formData);
             onClose();
+        } catch {
+            setSubmitError('학원 일정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setLoading(false);
         }
@@ -79,13 +84,13 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-background rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="mx-4 w-full max-w-md rounded-md border border-border bg-background shadow-xl">
                 <div className="flex items-center justify-between p-4 border-b border-border">
                     <h2 className="text-lg font-semibold text-foreground">
                         {event ? '일정 수정' : '일정 등록'}
                     </h2>
-                    <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+                    <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -94,13 +99,13 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                     {/* 일정 타입 선택 */}
                     <div>
                         <label className="block text-sm font-medium text-foreground mb-2">일정 타입</label>
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                             {(Object.keys(EVENT_TYPE_LABELS) as AcademyEventType[]).map((type) => (
                                 <button
                                     key={type}
                                     type="button"
                                     onClick={() => handleEventTypeChange(type)}
-                                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors border
+                                    className={`min-h-10 whitespace-nowrap rounded-md border px-2 py-2 text-sm font-medium transition-colors
                                         ${formData.event_type === type
                                             ? 'text-white border-transparent'
                                             : 'bg-background text-foreground border-border hover:bg-muted'
@@ -230,7 +235,6 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                         />
                     </div>
 
-                    {/* 휴일 여부 */}
                     <div className="p-3 bg-red-50 dark:bg-red-950/30 rounded-md border border-red-200 dark:border-red-900">
                         <div className="flex items-center gap-2 mb-2">
                             <input
@@ -252,7 +256,12 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                         )}
                     </div>
 
-                    {/* 버튼 */}
+                    {submitError && (
+                        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-200">
+                            {submitError}
+                        </div>
+                    )}
+
                     <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="outline" onClick={onClose}>
                             취소

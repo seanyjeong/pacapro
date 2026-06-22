@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Edit2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AcademyEvent } from '@/lib/types/academyEvent';
-import { EVENT_TYPE_LABELS } from '@/lib/types/academyEvent';
 
 interface EventCalendarProps {
     events: AcademyEvent[];

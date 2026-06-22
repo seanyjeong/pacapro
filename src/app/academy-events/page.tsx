@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCallback, useEffect, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, CalendarDays, AlertTriangle } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Calendar, CalendarDays, Plus, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { EventCalendar } from '@/components/academy-events/event-calendar';
 import { EventFormModal } from '@/components/academy-events/event-form-modal';
@@ -12,9 +12,15 @@ import type { AcademyEvent, AcademyEventFormData } from '@/lib/types/academyEven
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/lib/types/academyEvent';
 import { usePermissions } from '@/lib/utils/permissions';
 
+const QUIET_REQUEST = { suppressErrorToast: true };
+const LOAD_ERROR_MESSAGE = '학원 일정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+const SAVE_ERROR_MESSAGE = '학원 일정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
+const DELETE_ERROR_MESSAGE = '학원 일정을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.';
+
 export default function AcademyEventsPage() {
     const [events, setEvents] = useState<AcademyEvent[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [selectedMonth, setSelectedMonth] = useState(() => {
         const today = new Date();
         return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -24,39 +30,41 @@ export default function AcademyEventsPage() {
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [deleteConfirm, setDeleteConfirm] = useState<AcademyEvent | null>(null);
     const { canEdit } = usePermissions();
-    const canEditSchedules = canEdit('schedules');
+    const canEditEvents = canEdit('academy_events');
 
-    useEffect(() => {
-        loadEvents();
-    }, [selectedMonth]);
-
-    const loadEvents = async () => {
+    const loadEvents = useCallback(async () => {
         try {
             setLoading(true);
+            setLoadError(null);
             const [year, month] = selectedMonth.split('-');
             const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
             const response = await getAcademyEvents({
                 start_date: `${selectedMonth}-01`,
                 end_date: `${selectedMonth}-${lastDay}`,
-            });
+            }, QUIET_REQUEST);
             setEvents(response.events || []);
         } catch (err) {
             console.error('Failed to load events:', err);
-            toast.error('일정을 불러오는데 실패했습니다.');
+            setEvents([]);
+            setLoadError(LOAD_ERROR_MESSAGE);
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedMonth]);
+
+    useEffect(() => {
+        loadEvents();
+    }, [loadEvents]);
 
     const handleDateClick = (date: string) => {
-        if (!canEditSchedules) return;
+        if (!canEditEvents) return;
         setSelectedDate(date);
         setSelectedEvent(null);
         setIsModalOpen(true);
     };
 
     const handleEventClick = (event: AcademyEvent) => {
-        if (!canEditSchedules) return;
+        if (!canEditEvents) return;
         setSelectedEvent(event);
         setSelectedDate(event.event_date);
         setIsModalOpen(true);
@@ -65,15 +73,16 @@ export default function AcademyEventsPage() {
     const handleSubmit = async (data: AcademyEventFormData) => {
         try {
             if (selectedEvent) {
-                await updateAcademyEvent(selectedEvent.id, data);
+                await updateAcademyEvent(selectedEvent.id, data, QUIET_REQUEST);
                 toast.success('일정이 수정되었습니다.');
             } else {
-                await createAcademyEvent(data);
+                await createAcademyEvent(data, QUIET_REQUEST);
                 toast.success('일정이 등록되었습니다.');
             }
             loadEvents();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || '일정 처리에 실패했습니다.');
+        } catch (err) {
+            console.error('Failed to save academy event:', err);
+            toast.error(SAVE_ERROR_MESSAGE);
             throw err;
         }
     };
@@ -81,16 +90,16 @@ export default function AcademyEventsPage() {
     const handleDelete = async () => {
         if (!deleteConfirm) return;
         try {
-            await deleteAcademyEvent(deleteConfirm.id);
+            await deleteAcademyEvent(deleteConfirm.id, QUIET_REQUEST);
             toast.success('일정이 삭제되었습니다.');
             setDeleteConfirm(null);
             loadEvents();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || '일정 삭제에 실패했습니다.');
+        } catch (err) {
+            console.error('Failed to delete academy event:', err);
+            toast.error(DELETE_ERROR_MESSAGE);
         }
     };
 
-    const holidayCount = events.filter(e => e.is_holiday).length;
     const eventsByType = events.reduce((acc, event) => {
         acc[event.event_type] = (acc[event.event_type] || 0) + 1;
         return acc;
@@ -98,67 +107,84 @@ export default function AcademyEventsPage() {
 
     if (loading) {
         return (
-            <div className="space-y-6">
-                <h1 className="text-3xl font-bold text-foreground">학원일정</h1>
-                <Card>
-                    <CardContent className="p-12 text-center">
-                        <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                        <p className="text-muted-foreground">일정을 불러오는 중...</p>
-                    </CardContent>
-                </Card>
+            <div className="mx-auto w-full max-w-7xl space-y-5 py-4 md:py-8">
+                <header>
+                    <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Academy Calendar</div>
+                    <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">학원일정</h1>
+                </header>
+                <section className="flex min-h-[320px] items-center justify-center rounded-md border border-border bg-card p-6 text-center">
+                    <div>
+                        <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                        <p className="text-sm text-muted-foreground">일정을 불러오는 중...</p>
+                    </div>
+                </section>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-            {/* 헤더 */}
-            <div className="flex items-center justify-between">
+        <div className="mx-auto w-full max-w-7xl space-y-5 py-4 md:py-8">
+            <header className="flex flex-col gap-3 border-b border-border/70 pb-4 md:flex-row md:items-end md:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">학원일정</h1>
-                    <p className="text-muted-foreground mt-1">업무일정 및 학원일정 관리</p>
+                    <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Academy Calendar</div>
+                    <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">학원일정</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">업무일정, 학원일정, 휴일 지정을 월 단위로 관리합니다.</p>
                 </div>
-                {canEditSchedules && (
-                    <Button onClick={() => {
+                {canEditEvents && (
+                    <Button className="gap-2" onClick={() => {
                         setSelectedEvent(null);
                         setSelectedDate(new Date().toISOString().split('T')[0]);
                         setIsModalOpen(true);
                     }}>
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="h-4 w-4" />
                         일정 등록
                     </Button>
                 )}
-            </div>
+            </header>
 
-            {/* 통계 카드 */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <Card>
+            {loadError ? (
+                <section className="flex min-h-[320px] items-center justify-center rounded-md border border-red-200 bg-red-50 p-6 text-center text-red-950 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-100">
+                    <div>
+                        <AlertCircle className="mx-auto h-9 w-9" />
+                        <h2 className="mt-4 text-base font-semibold">{LOAD_ERROR_MESSAGE}</h2>
+                        <Button variant="outline" className="mt-5 gap-2" onClick={loadEvents}>
+                            <RefreshCw className="h-4 w-4" />
+                            다시 불러오기
+                        </Button>
+                    </div>
+                </section>
+            ) : null}
+
+            {!loadError && (
+            <>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+                <Card className="rounded-md">
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm text-muted-foreground">전체 일정</p>
-                                <p className="text-2xl font-bold text-foreground">{events.length}건</p>
+                                <p className="text-2xl font-semibold tracking-normal text-foreground">{events.length}건</p>
                             </div>
-                            <CalendarDays className="w-8 h-8 text-primary" />
+                            <CalendarDays className="h-8 w-8 text-primary" />
                         </div>
                     </CardContent>
                 </Card>
 
                 {(Object.keys(EVENT_TYPE_LABELS) as Array<keyof typeof EVENT_TYPE_LABELS>).map((type) => (
-                    <Card key={type}>
+                    <Card key={type} className="rounded-md">
                         <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-muted-foreground">{EVENT_TYPE_LABELS[type]}</p>
-                                    <p className="text-2xl font-bold" style={{ color: EVENT_TYPE_COLORS[type] }}>
+                                    <p className="text-2xl font-semibold tracking-normal" style={{ color: EVENT_TYPE_COLORS[type] }}>
                                         {eventsByType[type] || 0}건
                                     </p>
                                 </div>
                                 <div
-                                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                                    className="flex h-8 w-8 items-center justify-center rounded-md"
                                     style={{ backgroundColor: EVENT_TYPE_COLORS[type] + '20' }}
                                 >
-                                    <Calendar className="w-4 h-4" style={{ color: EVENT_TYPE_COLORS[type] }} />
+                                    <Calendar className="h-4 w-4" style={{ color: EVENT_TYPE_COLORS[type] }} />
                                 </div>
                             </div>
                         </CardContent>
@@ -166,7 +192,6 @@ export default function AcademyEventsPage() {
                 ))}
             </div>
 
-            {/* 달력 */}
             <EventCalendar
                 events={events}
                 onDateClick={handleDateClick}
@@ -175,8 +200,9 @@ export default function AcademyEventsPage() {
                 onMonthChange={setSelectedMonth}
                 initialYearMonth={selectedMonth}
             />
+            </>
+            )}
 
-            {/* 모달 */}
             <EventFormModal
                 isOpen={isModalOpen}
                 onClose={() => {
@@ -188,13 +214,12 @@ export default function AcademyEventsPage() {
                 selectedDate={selectedDate}
             />
 
-            {/* 삭제 확인 다이얼로그 */}
             {deleteConfirm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-background rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="mx-4 w-full max-w-sm rounded-md border border-border bg-background p-6 shadow-xl">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                                <AlertTriangle className="w-5 h-5 text-red-600" />
+                            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-red-100 dark:bg-red-900/30">
+                                <AlertTriangle className="h-5 w-5 text-red-600" />
                             </div>
                             <div>
                                 <h3 className="font-semibold text-foreground">일정 삭제</h3>
