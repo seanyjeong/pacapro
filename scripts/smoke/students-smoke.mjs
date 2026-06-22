@@ -167,6 +167,8 @@ async function runLoadError(browser) {
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
   await page.getByText('학생 정보를 불러오지 못했습니다').waitFor();
+  await page.getByRole('button', { name: '학생 등록' }).waitFor();
+  await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'students load error');
   await assertNoHorizontalOverflow(page, 'students load error');
   await page.screenshot({ path: '/Users/etlab/paca-students-error-mobile.png', fullPage: true });

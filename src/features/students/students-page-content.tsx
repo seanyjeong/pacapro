@@ -71,10 +71,6 @@ export function StudentsPageContent() {
         }
     };
 
-    if (error && !loading) {
-        return <StudentsPageError onRetry={handleReload} />;
-    }
-
     const filterLabels = getActiveFilterLabels(filters);
     const showFilters = shouldShowStudentFilters(activeTab);
     const showEmptyGuide = !loading && students.length === 0 && !searchQuery && !filters.grade && !filters.student_type;
@@ -89,35 +85,41 @@ export function StudentsPageContent() {
                 onReload={handleReload}
             />
 
-            <StudentsStatusTabs activeTab={activeTab} onChange={setActiveTab} />
+            {error && !loading ? (
+                <StudentsPageError onRetry={handleReload} />
+            ) : (
+                <>
+                    <StudentsStatusTabs activeTab={activeTab} onChange={setActiveTab} />
 
-            <StudentStatsCards refreshTrigger={statsRefreshTrigger} />
+                    <StudentStatsCards refreshTrigger={statsRefreshTrigger} />
 
-            {showFilters && (
-                <StudentFiltersComponent
-                    filters={filters}
-                    onFilterChange={updateFilters}
-                    hideStatusFilter
-                    onReset={handleResetFilters}
-                />
+                    {showFilters && (
+                        <StudentFiltersComponent
+                            filters={filters}
+                            onFilterChange={updateFilters}
+                            hideStatusFilter
+                            onReset={handleResetFilters}
+                        />
+                    )}
+
+                    <StudentsResultsToolbar
+                        count={students.length}
+                        filterLabels={filterLabels}
+                        searchQuery={searchQuery}
+                        onSearch={handleSearch}
+                    />
+
+                    <StudentsPageList
+                        activeTab={activeTab}
+                        loading={loading}
+                        students={students}
+                        onReload={handleReload}
+                        onStudentClick={(id) => router.push(`/students/${id}`)}
+                    />
+
+                    {showEmptyGuide && <StudentsEmptyGuide />}
+                </>
             )}
-
-            <StudentsResultsToolbar
-                count={students.length}
-                filterLabels={filterLabels}
-                searchQuery={searchQuery}
-                onSearch={handleSearch}
-            />
-
-            <StudentsPageList
-                activeTab={activeTab}
-                loading={loading}
-                students={students}
-                onReload={handleReload}
-                onStudentClick={(id) => router.push(`/students/${id}`)}
-            />
-
-            {showEmptyGuide && <StudentsEmptyGuide />}
         </div>
     );
 }
