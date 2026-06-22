@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "smoke:salary-detail": "node scripts/smoke/salary-detail-smoke.mjs",
     "smoke:payment-detail": "node scripts/smoke/payment-detail-smoke.mjs",
-    "smoke:payment-editor": "node scripts/smoke/payment-editor-smoke.mjs"
+    "smoke:payment-editor": "node scripts/smoke/payment-editor-smoke.mjs",
+    "smoke:reports": "node scripts/smoke/reports-smoke.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
