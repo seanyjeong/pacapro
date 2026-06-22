@@ -91,16 +91,16 @@ export function DashboardKpiStrip({ stats, permissions, amountsVisible }: Dashbo
     });
 
     return (
-        <section className="grid overflow-hidden rounded-lg border border-border bg-border lg:grid-cols-3 xl:grid-cols-6">
+        <section className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 2xl:grid-cols-3">
             {items.map((item) => {
                 const Icon = item.icon;
                 return (
-                    <div key={item.label} className="min-w-0 border-b border-border bg-card p-4 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
+                    <div key={item.label} className="min-w-0 bg-card p-4">
                         <div className="flex items-center justify-between gap-3">
                             <div className="text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">{item.label}</div>
                             <Icon className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <div className="mt-2 truncate text-2xl font-semibold tracking-normal text-foreground">{item.value}</div>
+                        <div className="mt-2 break-keep text-2xl font-semibold tracking-normal text-foreground">{item.value}</div>
                         <div className={cn('mt-1 text-xs', toneClass[item.tone || 'normal'])}>{item.note}</div>
                     </div>
                 );
