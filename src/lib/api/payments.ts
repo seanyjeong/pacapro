@@ -3,9 +3,8 @@
  * 학원비 관련 API 호출 함수
  */
 
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 import type {
-  Payment,
   PaymentFormData,
   PaymentRecordData,
   BulkMonthlyChargeData,
@@ -60,8 +59,8 @@ export const paymentsAPI = {
    * 오늘 출석 예정인 학생 중 미납자 조회
    * GET /paca/payments/unpaid-today
    */
-  getUnpaidTodayPayments: async (): Promise<UnpaidTodayResponse> => {
-    return await apiClient.get<UnpaidTodayResponse>('/payments/unpaid-today');
+  getUnpaidTodayPayments: async (config?: APIRequestConfig): Promise<UnpaidTodayResponse> => {
+    return await apiClient.get<UnpaidTodayResponse>('/payments/unpaid-today', config);
   },
 
   /**
@@ -92,8 +91,12 @@ export const paymentsAPI = {
    * 납부 기록
    * POST /paca/payments/:id/pay
    */
-  recordPayment: async (id: number, data: PaymentRecordData): Promise<PaymentUpdateResponse> => {
-    return await apiClient.post<PaymentUpdateResponse>(`/payments/${id}/pay`, data);
+  recordPayment: async (
+    id: number,
+    data: PaymentRecordData,
+    config?: APIRequestConfig
+  ): Promise<PaymentUpdateResponse> => {
+    return await apiClient.post<PaymentUpdateResponse>(`/payments/${id}/pay`, data, config);
   },
 
   /**
