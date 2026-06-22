@@ -135,6 +135,8 @@ async function runDetail(browser) {
   await actions.getByRole('link', { name: '김진우 결제 확인' }).waitFor();
   await actions.getByRole('link', { name: '김진우 문자 보내기' }).waitFor();
   await actions.getByRole('link', { name: '김진우 출석 체크' }).waitFor();
+  const classDaysHref = await actions.getByRole('link', { name: '김진우 수업일관리' }).getAttribute('href');
+  if (classDaysHref !== '/students/class-days') throw new Error(`class days href mismatch: ${classDaysHref}`);
   const pcDetailHref = await actions.getByRole('link', { name: '김진우 PC 상세 열기' }).getAttribute('href');
   if (pcDetailHref !== '/students/41') throw new Error(`PC detail href mismatch: ${pcDetailHref}`);
   await page.getByText('010-3333-4444').waitFor();
