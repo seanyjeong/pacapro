@@ -221,25 +221,25 @@ export function IncomeCalendar({
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <CalendarIcon className="h-5 w-5" />
                 {currentYear}년 {currentMonth + 1}월 수입
               </CardTitle>
-              <div className="flex items-center gap-4 mt-2 text-sm">
-                <span className="text-muted-foreground">
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                <span className="whitespace-nowrap text-muted-foreground">
                   총 수입: <span className="font-semibold text-green-600">{monthlyTotal.total.toLocaleString()}원</span>
                 </span>
-                <span className="text-muted-foreground">
+                <span className="whitespace-nowrap text-muted-foreground">
                   학원비: <span className="font-medium text-blue-600">{monthlyTotal.tuition.toLocaleString()}원</span>
                 </span>
-                <span className="text-muted-foreground">
+                <span className="whitespace-nowrap text-muted-foreground">
                   기타: <span className="font-medium text-purple-600">{monthlyTotal.other.toLocaleString()}원</span>
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 self-end lg:self-auto">
               <Button variant="outline" size="sm" onClick={handleToday}>
                 오늘
               </Button>
