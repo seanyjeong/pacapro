@@ -28,6 +28,17 @@ interface InstructorListTableProps {
 }
 
 export function InstructorListTable({ instructors, loading, onInstructorClick }: InstructorListTableProps) {
+  const getPaySummary = (instructor: Instructor) => {
+    if (instructor.salary_type === 'monthly') {
+      return `${formatCurrency(parseFloat(instructor.base_salary || '0'))} / 월급`;
+    }
+    if (instructor.salary_type === 'mixed') {
+      return `${formatCurrency(parseFloat(instructor.hourly_rate || '0'))} + ${formatCurrency(parseFloat(instructor.base_salary || '0'))}`;
+    }
+    const suffix = instructor.salary_type === 'per_class' ? '수업당' : '시급';
+    return `${formatCurrency(parseFloat(instructor.hourly_rate || '0'))} / ${suffix}`;
+  };
+
   if (loading) {
     return (
       <Card className="rounded-md">
@@ -54,8 +65,88 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
   }
 
   return (
-    <Card className="overflow-hidden rounded-md">
-      <CardContent className="p-0">
+    <>
+      <div className="space-y-3 md:hidden" data-testid="instructor-mobile-list">
+        {instructors.map((instructor) => (
+          <Card key={instructor.id} className="rounded-md">
+            <CardContent className="space-y-4 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${
+                    instructor.gender === 'male'
+                      ? 'bg-slate-800'
+                      : instructor.gender === 'female'
+                      ? 'bg-rose-700'
+                      : 'bg-primary'
+                  }`}>
+                    <span className="text-sm font-bold text-white">{instructor.name.charAt(0)}</span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-foreground">{instructor.name}</div>
+                    <div className="mt-1 flex items-center text-xs text-muted-foreground">
+                      <Phone className="mr-1 h-3 w-3" />
+                      {instructor.phone ? formatPhoneNumber(instructor.phone) : '-'}
+                    </div>
+                    {instructor.email ? (
+                      <div className="mt-0.5 flex items-center text-xs text-muted-foreground">
+                        <Mail className="mr-1 h-3 w-3" />
+                        <span className="truncate">{instructor.email}</span>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+                <span
+                  className={`inline-flex shrink-0 rounded-md border px-2 py-1 text-xs font-medium ${getStatusColor(
+                    instructor.status
+                  )}`}
+                >
+                  {INSTRUCTOR_STATUS_LABELS[instructor.status]}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md border border-border bg-muted/30 p-3">
+                  <div className="text-muted-foreground">급여 방식</div>
+                  <div className="mt-1 font-medium text-foreground">
+                    {SALARY_TYPE_LABELS[instructor.salary_type]}
+                    {instructor.salary_type === 'hourly' && instructor.instructor_type
+                      ? ` · ${INSTRUCTOR_TYPE_LABELS[instructor.instructor_type]}`
+                      : ''}
+                  </div>
+                </div>
+                <div className="rounded-md border border-border bg-muted/30 p-3">
+                  <div className="text-muted-foreground">시급/월급</div>
+                  <div className="mt-1 font-medium text-foreground">{getPaySummary(instructor)}</div>
+                </div>
+                <div className="rounded-md border border-border bg-muted/30 p-3">
+                  <div className="text-muted-foreground">세금</div>
+                  <div className="mt-1 font-medium text-foreground">{TAX_TYPE_LABELS[instructor.tax_type]}</div>
+                </div>
+                <div className="rounded-md border border-border bg-muted/30 p-3">
+                  <div className="text-muted-foreground">입사일</div>
+                  <div className="mt-1 font-medium text-foreground">
+                    {instructor.hire_date ? formatDate(instructor.hire_date) : '-'}
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                aria-label={`${instructor.name} 상세 보기`}
+                className="w-full gap-2"
+                type="button"
+                variant="outline"
+                onClick={() => onInstructorClick(instructor.id)}
+              >
+                <Eye className="h-4 w-4" />
+                상세 보기
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="hidden overflow-hidden rounded-md md:block" data-testid="instructor-desktop-list">
+        <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="border-b border-border bg-muted/60">
@@ -206,7 +297,8 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
             </tbody>
           </table>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </>
   );
 }

@@ -50,7 +50,7 @@ export function InstructorFiltersComponent({
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {/* 급여타입 */}
           <div>
             <label className="mb-2 block text-xs font-medium text-muted-foreground">급여타입</label>

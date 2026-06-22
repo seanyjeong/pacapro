@@ -46,6 +46,10 @@ function makeInstructor(overrides = {}) {
   };
 }
 
+function formatDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 function makeAttendance(overrides = {}) {
   return {
     id: 701,
@@ -88,6 +92,8 @@ const INSTRUCTORS = [
   makeInstructor({ id: 32, name: '박코치', gender: 'male', phone: '010-3333-4444', salary_type: 'monthly', base_salary: '2600000' }),
   makeInstructor({ id: 33, name: '이휴직', status: 'on_leave', salary_type: 'per_class', hourly_rate: '70000' }),
 ];
+
+const TODAY = formatDate(new Date());
 
 function makeState(mode) {
   return { createPayload: null, editPayload: null, hits: [], mode };
@@ -167,15 +173,36 @@ async function runListDesktop(browser) {
 
   await page.goto('/instructors', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '강사 운영' }).waitFor();
-  await page.locator('table').getByText('최강사').waitFor();
-  await page.locator('table').getByText('박코치').waitFor();
-  await page.locator('table').getByRole('button', { name: '최강사 상세 보기' }).waitFor();
+  const desktopList = page.getByTestId('instructor-desktop-list');
+  await desktopList.getByText('최강사').waitFor();
+  await desktopList.getByText('박코치').waitFor();
+  await desktopList.getByRole('button', { name: '최강사 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'instructors list desktop');
   await assertNoHorizontalOverflow(page, 'instructors list desktop');
   await page.screenshot({ path: '/Users/etlab/paca-instructors-desktop.png', fullPage: true });
 
   await page.getByPlaceholder('이름, 전화번호, 이메일로 검색...').fill('박코치');
-  await page.locator('table').getByText('박코치').waitFor();
+  await desktopList.getByText('박코치').waitFor();
+
+  await context.close();
+  return result;
+}
+
+async function runListMobile(browser) {
+  const result = await createInstructorPage(browser, 'success', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/instructors', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '강사 운영' }).waitFor();
+  const mobileList = page.getByTestId('instructor-mobile-list');
+  await mobileList.getByText('최강사').waitFor();
+  await mobileList.getByText('45,000원 / 시급').waitFor();
+  await mobileList.getByRole('button', { name: '최강사 상세 보기' }).waitFor();
+  await assertNoRawVisibleText(page, 'instructors list mobile');
+  await assertNoHorizontalOverflow(page, 'instructors list mobile');
+  await page.screenshot({ path: '/Users/etlab/paca-instructors-mobile.png', fullPage: true });
+  await mobileList.scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/Users/etlab/paca-instructors-mobile-list.png', fullPage: false });
 
   await context.close();
   return result;
@@ -236,6 +263,9 @@ async function runCreateError(browser) {
   await page.locator('form button[type="submit"]').click();
   await page.locator('form').getByText('저장 실패').waitFor();
   await page.locator('form').getByText('강사 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  if (result.state.createPayload?.hire_date !== TODAY) {
+    throw new Error(`default hire_date mismatch: ${result.state.createPayload?.hire_date} !== ${TODAY}`);
+  }
   await assertNoRawVisibleText(page, 'instructors create error');
   await assertNoHorizontalOverflow(page, 'instructors create error');
   await page.screenshot({ path: '/Users/etlab/paca-instructor-create-error-mobile.png', fullPage: true });
@@ -287,19 +317,21 @@ async function main() {
   const browser = await launchSmokeBrowser();
   try {
     const listDesktop = await runListDesktop(browser);
+    const listMobile = await runListMobile(browser);
     const listError = await runListError(browser);
     const detailDesktop = await runDetailDesktop(browser);
     const detailError = await runDetailError(browser);
     const createError = await runCreateError(browser);
     const editLoadError = await runEditLoadError(browser);
     const editError = await runEditError(browser);
-    [listDesktop, listError, detailDesktop, detailError, createError, editLoadError, editError].forEach(assertDiagnostics);
+    [listDesktop, listMobile, listError, detailDesktop, detailError, createError, editLoadError, editError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       createPayload: createError.state.createPayload,
       detailHits: detailDesktop.state.hits,
       editPayload: editError.state.editPayload,
       editLoadErrorHits: editLoadError.state.hits,
       listHits: listDesktop.state.hits,
+      listMobileHits: listMobile.state.hits,
       listErrorHits: listError.state.hits,
       normalConsoleErrors: listDesktop.diagnostics.consoleErrors,
     }, null, 2));

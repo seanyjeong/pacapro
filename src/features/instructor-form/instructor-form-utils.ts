@@ -1,4 +1,5 @@
 import type { Instructor, InstructorFormData } from '@/lib/types/instructor';
+import { formatDate } from '@/lib/utils/format';
 
 export function parseWorkDays(workDays: number[] | string | null | undefined): number[] {
   if (!workDays) return [];
@@ -19,7 +20,7 @@ export function buildInitialInstructorFormData(initialData?: Instructor): Instru
     gender: initialData?.gender || undefined,
     email: initialData?.email || '',
     resident_number: initialData?.resident_number || '',
-    hire_date: initialData?.hire_date || new Date().toISOString().split('T')[0],
+    hire_date: initialData?.hire_date || formatDate(new Date()),
     salary_type: initialData?.salary_type || 'hourly',
     instructor_type: initialData?.instructor_type || 'teacher',
     hourly_rate: initialData?.hourly_rate ? parseFloat(initialData.hourly_rate) : 0,

@@ -76,12 +76,6 @@ export default function InstructorsPage() {
 
       <InstructorStatsCards instructors={instructors} />
 
-      <InstructorFiltersComponent
-        filters={filters}
-        onFilterChange={updateFilters}
-        onReset={handleResetFilters}
-      />
-
       <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0 flex-1">
           <InstructorSearch value={searchQuery} onChange={handleSearch} />
@@ -90,6 +84,12 @@ export default function InstructorsPage() {
           총 <span className="font-semibold text-foreground">{instructors.length}</span>명
         </div>
       </section>
+
+      <InstructorFiltersComponent
+        filters={filters}
+        onFilterChange={updateFilters}
+        onReset={handleResetFilters}
+      />
 
       <InstructorListTable
         instructors={instructors}
