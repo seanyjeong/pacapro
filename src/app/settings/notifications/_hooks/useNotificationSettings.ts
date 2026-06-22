@@ -16,6 +16,13 @@ import {
   type NotificationButtonField,
   updateNotificationButton,
 } from './notification-button-updaters';
+import {
+  getNotificationErrorText,
+  NOTIFICATION_LOAD_ERROR_MESSAGES,
+  type NotificationLoadErrorKey,
+  type NotificationLoadErrors,
+  SILENT_CONFIG,
+} from './notification-error-utils';
 
 export function useNotificationSettings() {
   const [settings, setSettings] = useState<NotificationSettings>(() => createDefaultNotificationSettings());
@@ -23,6 +30,7 @@ export function useNotificationSettings() {
   const [activeTab, setActiveTab] = useState<ServiceType>('sens');
   const [activeSensTemplate, setActiveSensTemplate] = useState<TemplateType>('unpaid');
   const [logs, setLogs] = useState<NotificationLog[]>([]);
+  const [loadErrors, setLoadErrors] = useState<NotificationLoadErrors>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -62,35 +70,71 @@ export function useNotificationSettings() {
   const [newSenderLabel, setNewSenderLabel] = useState('');
   const [addingSender, setAddingSender] = useState(false);
 
+  const setLoadError = useCallback((key: NotificationLoadErrorKey, message?: string) => {
+    setLoadErrors(prev => {
+      const next = { ...prev };
+      if (message) next[key] = message;
+      else delete next[key];
+      return next;
+    });
+  }, []);
+
   const loadSenderNumbers = useCallback(async () => {
+    setLoadError('senderNumbers');
     try {
-      const { senderNumbers: numbers } = await smsAPI.getSenderNumbers(activeTab);
+      const { senderNumbers: numbers } = await smsAPI.getSenderNumbers(activeTab, SILENT_CONFIG);
       setSenderNumbers(numbers);
     } catch {
       setSenderNumbers([]);
+      setLoadError('senderNumbers', NOTIFICATION_LOAD_ERROR_MESSAGES.senderNumbers);
     }
-  }, [activeTab]);
+  }, [activeTab, setLoadError]);
+
+  const loadAcademyName = useCallback(async () => {
+    setLoadError('academy');
+    try {
+      const response = await apiClient.get<{ settings: { academy_name?: string } }>('/settings/academy', SILENT_CONFIG);
+      if (response.settings?.academy_name) {
+        setAcademyName(response.settings.academy_name);
+      }
+    } catch {
+      setLoadError('academy', NOTIFICATION_LOAD_ERROR_MESSAGES.academy);
+    }
+  }, [setLoadError]);
+
+  const loadSettings = useCallback(async () => {
+    setLoadError('settings');
+    try {
+      const data = await notificationsAPI.getSettings(SILENT_CONFIG);
+      setSettings(data);
+      setActiveTab(data.service_type || 'sens');
+    } catch {
+      setLoadError('settings', NOTIFICATION_LOAD_ERROR_MESSAGES.settings);
+    } finally {
+      setLoading(false);
+    }
+  }, [setLoadError]);
+
+  const loadLogs = useCallback(async () => {
+    setLoadError('logs');
+    try {
+      const data = await notificationsAPI.getLogs({ limit: 10 }, SILENT_CONFIG);
+      setLogs(data.logs);
+    } catch {
+      setLogs([]);
+      setLoadError('logs', NOTIFICATION_LOAD_ERROR_MESSAGES.logs);
+    }
+  }, [setLoadError]);
 
   useEffect(() => {
     loadSettings();
     loadLogs();
     loadAcademyName();
-  }, []);
+  }, [loadAcademyName, loadLogs, loadSettings]);
 
   useEffect(() => {
     loadSenderNumbers();
   }, [loadSenderNumbers]);
-
-  const loadAcademyName = async () => {
-    try {
-      const response = await apiClient.get<{ settings: { academy_name?: string } }>('/settings/academy');
-      if (response.settings?.academy_name) {
-        setAcademyName(response.settings.academy_name);
-      }
-    } catch {
-      // 실패 시 기본값 유지
-    }
-  };
 
   const handleAddSenderNumber = async () => {
     if (!newSenderPhone.trim()) {
@@ -103,14 +147,13 @@ export function useNotificationSettings() {
         serviceType: activeTab,
         phone: newSenderPhone.trim(),
         label: newSenderLabel.trim() || undefined
-      });
+      }, SILENT_CONFIG);
       setNewSenderPhone('');
       setNewSenderLabel('');
       loadSenderNumbers();
       setMessage({ type: 'success', text: '발신번호가 추가되었습니다.' });
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || '발신번호 추가에 실패했습니다.' });
+      setMessage({ type: 'error', text: getNotificationErrorText(error, '발신번호 추가에 실패했습니다.') });
     } finally {
       setAddingSender(false);
     }
@@ -118,7 +161,7 @@ export function useNotificationSettings() {
 
   const handleSetDefaultSender = async (id: number) => {
     try {
-      await smsAPI.updateSenderNumber(id, { isDefault: true });
+      await smsAPI.updateSenderNumber(id, { isDefault: true }, SILENT_CONFIG);
       loadSenderNumbers();
       setMessage({ type: 'success', text: '기본 발신번호가 변경되었습니다.' });
     } catch {
@@ -129,7 +172,7 @@ export function useNotificationSettings() {
   const handleDeleteSenderNumber = async (id: number) => {
     if (!confirm('이 발신번호를 삭제하시겠습니까?')) return;
     try {
-      await smsAPI.deleteSenderNumber(id);
+      await smsAPI.deleteSenderNumber(id, SILENT_CONFIG);
       loadSenderNumbers();
       setMessage({ type: 'success', text: '발신번호가 삭제되었습니다.' });
     } catch {
@@ -137,36 +180,15 @@ export function useNotificationSettings() {
     }
   };
 
-  const loadSettings = async () => {
-    try {
-      const data = await notificationsAPI.getSettings();
-      setSettings(data);
-      setActiveTab(data.service_type || 'sens');
-    } catch {
-      // 설정 로드 실패 시 기본값 유지
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadLogs = async () => {
-    try {
-      const data = await notificationsAPI.getLogs({ limit: 10 });
-      setLogs(data.logs);
-    } catch {
-      // 로그 로드 실패 시 빈 배열 유지
-    }
-  };
-
   const handleSave = async () => {
     setSaving(true);
     setMessage(null);
     try {
-      await notificationsAPI.saveSettings(settings);
+      await notificationsAPI.saveSettings(settings, SILENT_CONFIG);
       setMessage({ type: 'success', text: '설정이 저장되었습니다.' });
       loadSettings();
     } catch {
-      setMessage({ type: 'error', text: '설정 저장에 실패했습니다.' });
+      setMessage({ type: 'error', text: '설정 저장에 실패했습니다. 입력값을 확인한 뒤 다시 시도해주세요.' });
     } finally {
       setSaving(false);
     }
@@ -190,8 +212,7 @@ export function useNotificationSettings() {
       setMessage({ type: 'success', text: successText });
       loadLogs();
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || fallbackErrorText });
+      setMessage({ type: 'error', text: getNotificationErrorText(error, fallbackErrorText) });
     } finally {
       setTestingState(false);
     }
@@ -200,7 +221,7 @@ export function useNotificationSettings() {
   const handleTest = () => runNotificationTest(
     testPhone,
     setTesting,
-    () => notificationsAPI.sendTest(testPhone),
+    () => notificationsAPI.sendTest(testPhone, SILENT_CONFIG),
     '테스트 메시지가 발송되었습니다.',
     '테스트 발송에 실패했습니다.'
   );
@@ -250,10 +271,10 @@ export function useNotificationSettings() {
     updateButton('solapi_reminder_buttons', index, field, value);
   };
 
-  const handleTestConsultation = () => runNotificationTest(testPhoneConsultation, setTestingConsultation, () => notificationsAPI.sendTestConsultation(testPhoneConsultation), '상담확정 테스트 메시지가 발송되었습니다.', '상담확정 테스트 발송에 실패했습니다.');
-  const handleTestTrial = () => runNotificationTest(testPhoneTrial, setTestingTrial, () => notificationsAPI.sendTestTrial(testPhoneTrial), '체험수업 테스트 메시지가 발송되었습니다.', '체험수업 테스트 발송에 실패했습니다.');
-  const handleTestOverdue = () => runNotificationTest(testPhoneOverdue, setTestingOverdue, () => notificationsAPI.sendTestOverdue(testPhoneOverdue), '미납자 테스트 메시지가 발송되었습니다.', '미납자 테스트 발송에 실패했습니다.');
-  const handleTestReminder = () => runNotificationTest(testPhoneReminder, setTestingReminder, () => notificationsAPI.sendTestReminder(testPhoneReminder), '상담 리마인드 테스트 메시지가 발송되었습니다.', '상담 리마인드 테스트 발송에 실패했습니다.');
+  const handleTestConsultation = () => runNotificationTest(testPhoneConsultation, setTestingConsultation, () => notificationsAPI.sendTestConsultation(testPhoneConsultation, SILENT_CONFIG), '상담확정 테스트 메시지가 발송되었습니다.', '상담확정 테스트 발송에 실패했습니다.');
+  const handleTestTrial = () => runNotificationTest(testPhoneTrial, setTestingTrial, () => notificationsAPI.sendTestTrial(testPhoneTrial, SILENT_CONFIG), '체험수업 테스트 메시지가 발송되었습니다.', '체험수업 테스트 발송에 실패했습니다.');
+  const handleTestOverdue = () => runNotificationTest(testPhoneOverdue, setTestingOverdue, () => notificationsAPI.sendTestOverdue(testPhoneOverdue, SILENT_CONFIG), '미납자 테스트 메시지가 발송되었습니다.', '미납자 테스트 발송에 실패했습니다.');
+  const handleTestReminder = () => runNotificationTest(testPhoneReminder, setTestingReminder, () => notificationsAPI.sendTestReminder(testPhoneReminder, SILENT_CONFIG), '상담 리마인드 테스트 메시지가 발송되었습니다.', '상담 리마인드 테스트 발송에 실패했습니다.');
 
   const addSensUnpaidButton = () => addButton('sens_buttons');
   const removeSensUnpaidButton = (index: number) => removeButton('sens_buttons', index);
@@ -285,10 +306,10 @@ export function useNotificationSettings() {
     updateButton('sens_reminder_buttons', index, field, value);
   };
 
-  const handleTestSensConsultation = () => runNotificationTest(testPhoneSensConsultation, setTestingSensConsultation, () => notificationsAPI.sendTestSensConsultation(testPhoneSensConsultation), 'SENS 상담확정 테스트 메시지가 발송되었습니다.', 'SENS 상담확정 테스트 발송에 실패했습니다.');
-  const handleTestSensTrial = () => runNotificationTest(testPhoneSensTrial, setTestingSensTrial, () => notificationsAPI.sendTestSensTrial(testPhoneSensTrial), 'SENS 체험수업 테스트 메시지가 발송되었습니다.', 'SENS 체험수업 테스트 발송에 실패했습니다.');
-  const handleTestSensOverdue = () => runNotificationTest(testPhoneSensOverdue, setTestingSensOverdue, () => notificationsAPI.sendTestSensOverdue(testPhoneSensOverdue), 'SENS 미납자 테스트 메시지가 발송되었습니다.', 'SENS 미납자 테스트 발송에 실패했습니다.');
-  const handleTestSensReminder = () => runNotificationTest(testPhoneSensReminder, setTestingSensReminder, () => notificationsAPI.sendTestSensReminder(testPhoneSensReminder), 'SENS 상담 리마인드 테스트 메시지가 발송되었습니다.', 'SENS 상담 리마인드 테스트 발송에 실패했습니다.');
+  const handleTestSensConsultation = () => runNotificationTest(testPhoneSensConsultation, setTestingSensConsultation, () => notificationsAPI.sendTestSensConsultation(testPhoneSensConsultation, SILENT_CONFIG), 'SENS 상담확정 테스트 메시지가 발송되었습니다.', 'SENS 상담확정 테스트 발송에 실패했습니다.');
+  const handleTestSensTrial = () => runNotificationTest(testPhoneSensTrial, setTestingSensTrial, () => notificationsAPI.sendTestSensTrial(testPhoneSensTrial, SILENT_CONFIG), 'SENS 체험수업 테스트 메시지가 발송되었습니다.', 'SENS 체험수업 테스트 발송에 실패했습니다.');
+  const handleTestSensOverdue = () => runNotificationTest(testPhoneSensOverdue, setTestingSensOverdue, () => notificationsAPI.sendTestSensOverdue(testPhoneSensOverdue, SILENT_CONFIG), 'SENS 미납자 테스트 메시지가 발송되었습니다.', 'SENS 미납자 테스트 발송에 실패했습니다.');
+  const handleTestSensReminder = () => runNotificationTest(testPhoneSensReminder, setTestingSensReminder, () => notificationsAPI.sendTestSensReminder(testPhoneSensReminder, SILENT_CONFIG), 'SENS 상담 리마인드 테스트 메시지가 발송되었습니다.', 'SENS 상담 리마인드 테스트 발송에 실패했습니다.');
 
   // 미납자 수동 발송
   const handleSendUnpaid = async () => {
@@ -303,15 +324,14 @@ export function useNotificationSettings() {
     setSendingUnpaid(true);
     setMessage(null);
     try {
-      const result = await notificationsAPI.sendUnpaid(year, month);
+      const result = await notificationsAPI.sendUnpaid(year, month, SILENT_CONFIG);
       setMessage({
         type: 'success',
         text: `발송 완료: ${result.sent}명 성공, ${result.failed}명 실패`
       });
       loadLogs();
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      setMessage({ type: 'error', text: err.response?.data?.message || '발송에 실패했습니다.' });
+      setMessage({ type: 'error', text: getNotificationErrorText(error, '발송에 실패했습니다. 잠시 후 다시 시도해주세요.') });
     } finally {
       setSendingUnpaid(false);
     }
@@ -331,6 +351,7 @@ export function useNotificationSettings() {
     settings, setSettings,
     activeTab, activeSensTemplate, setActiveSensTemplate,
     logs,
+    loadErrors: Object.values(loadErrors),
     loading,
     saving,
     testing, testingConsultation, testingTrial, testingOverdue,

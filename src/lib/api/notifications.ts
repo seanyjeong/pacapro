@@ -2,7 +2,7 @@
  * 알림톡 API 클라이언트
  */
 
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 
 // 알림톡 버튼 타입
 export interface ConsultationButton {
@@ -181,103 +181,103 @@ export const notificationsAPI = {
   /**
    * 알림 설정 조회
    */
-  getSettings: async (): Promise<NotificationSettings> => {
-    const response = await apiClient.get<SettingsResponse>('/notifications/settings');
+  getSettings: async (config?: APIRequestConfig): Promise<NotificationSettings> => {
+    const response = await apiClient.get<SettingsResponse>('/notifications/settings', config);
     return response.settings;
   },
 
   /**
    * 알림 설정 저장
    */
-  saveSettings: async (settings: Partial<NotificationSettings>): Promise<void> => {
-    await apiClient.put<{ message: string }>('/notifications/settings', settings);
+  saveSettings: async (settings: Partial<NotificationSettings>, config?: APIRequestConfig): Promise<void> => {
+    await apiClient.put<{ message: string }>('/notifications/settings', settings, config);
   },
 
   /**
    * 테스트 메시지 발송 (미납자 알림톡)
    */
-  sendTest: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
-    const response = await apiClient.post<SendResponse>('/notifications/test', { phone });
+  sendTest: async (phone: string, config?: APIRequestConfig): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test', { phone }, config);
     return { success: response.success || false, requestId: response.requestId };
   },
 
   /**
    * 상담확정 알림톡 테스트 발송
    */
-  sendTestConsultation: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
-    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-consultation', { phone });
+  sendTestConsultation: async (phone: string, config?: APIRequestConfig): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-consultation', { phone }, config);
     return { success: response.success || false, groupId: response.groupId };
   },
 
   /**
    * 체험수업 알림톡 테스트 발송
    */
-  sendTestTrial: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
-    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-trial', { phone });
+  sendTestTrial: async (phone: string, config?: APIRequestConfig): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-trial', { phone }, config);
     return { success: response.success || false, groupId: response.groupId };
   },
 
   /**
    * 미납자 알림톡 테스트 발송 (솔라피)
    */
-  sendTestOverdue: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
-    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-overdue', { phone });
+  sendTestOverdue: async (phone: string, config?: APIRequestConfig): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-overdue', { phone }, config);
     return { success: response.success || false, groupId: response.groupId };
   },
 
   /**
    * SENS 상담확정 알림톡 테스트 발송
    */
-  sendTestSensConsultation: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
-    const response = await apiClient.post<SendResponse>('/notifications/test-sens-consultation', { phone });
+  sendTestSensConsultation: async (phone: string, config?: APIRequestConfig): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-consultation', { phone }, config);
     return { success: response.success || false, requestId: response.requestId };
   },
 
   /**
    * SENS 체험수업 알림톡 테스트 발송
    */
-  sendTestSensTrial: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
-    const response = await apiClient.post<SendResponse>('/notifications/test-sens-trial', { phone });
+  sendTestSensTrial: async (phone: string, config?: APIRequestConfig): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-trial', { phone }, config);
     return { success: response.success || false, requestId: response.requestId };
   },
 
   /**
    * SENS 미납자 알림톡 테스트 발송
    */
-  sendTestSensOverdue: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
-    const response = await apiClient.post<SendResponse>('/notifications/test-sens-overdue', { phone });
+  sendTestSensOverdue: async (phone: string, config?: APIRequestConfig): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-overdue', { phone }, config);
     return { success: response.success || false, requestId: response.requestId };
   },
 
   /**
    * 솔라피 상담 리마인드 알림톡 테스트 발송
    */
-  sendTestReminder: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
-    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-reminder', { phone });
+  sendTestReminder: async (phone: string, config?: APIRequestConfig): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-reminder', { phone }, config);
     return { success: response.success || false, groupId: response.groupId };
   },
 
   /**
    * SENS 상담 리마인드 알림톡 테스트 발송
    */
-  sendTestSensReminder: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
-    const response = await apiClient.post<SendResponse>('/notifications/test-sens-reminder', { phone });
+  sendTestSensReminder: async (phone: string, config?: APIRequestConfig): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-reminder', { phone }, config);
     return { success: response.success || false, requestId: response.requestId };
   },
 
   /**
    * 미납자 일괄 알림 발송
    */
-  sendUnpaid: async (year: number, month: number): Promise<{ sent: number; failed: number }> => {
-    const response = await apiClient.post<SendResponse>('/notifications/send-unpaid', { year, month });
+  sendUnpaid: async (year: number, month: number, config?: APIRequestConfig): Promise<{ sent: number; failed: number }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/send-unpaid', { year, month }, config);
     return { sent: response.sent || 0, failed: response.failed || 0 };
   },
 
   /**
    * 개별 학생 알림 발송
    */
-  sendIndividual: async (paymentId: number): Promise<{ success: boolean }> => {
-    const response = await apiClient.post<SendResponse>('/notifications/send-individual', { payment_id: paymentId });
+  sendIndividual: async (paymentId: number, config?: APIRequestConfig): Promise<{ success: boolean }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/send-individual', { payment_id: paymentId }, config);
     return { success: response.success || false };
   },
 
@@ -290,7 +290,7 @@ export const notificationsAPI = {
     status?: string;
     start_date?: string;
     end_date?: string;
-  }): Promise<{
+  }, config?: APIRequestConfig): Promise<{
     logs: NotificationLog[];
     pagination: {
       total: number;
@@ -299,16 +299,16 @@ export const notificationsAPI = {
       totalPages: number;
     };
   }> => {
-    const response = await apiClient.get<LogsResponse>('/notifications/logs', { params });
+    const response = await apiClient.get<LogsResponse>('/notifications/logs', { ...config, params });
     return { logs: response.logs, pagination: response.pagination };
   },
 
   /**
    * 발송 통계 조회
    */
-  getStats: async (year?: number, month?: number): Promise<NotificationStats> => {
+  getStats: async (year?: number, month?: number, config?: APIRequestConfig): Promise<NotificationStats> => {
     const params = year && month ? { year, month } : {};
-    const response = await apiClient.get<StatsResponse>('/notifications/stats', { params });
+    const response = await apiClient.get<StatsResponse>('/notifications/stats', { ...config, params });
     return response.stats;
   },
 };

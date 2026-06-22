@@ -119,8 +119,8 @@ export const smsAPI = {
     serviceType: 'solapi' | 'sens';
     phone: string;
     label?: string;
-  }): Promise<{ message: string; senderNumber: SenderNumber }> => {
-    return apiClient.post('/sms/sender-numbers', params);
+  }, config?: APIRequestConfig): Promise<{ message: string; senderNumber: SenderNumber }> => {
+    return apiClient.post('/sms/sender-numbers', params, config);
   },
 
   /**
@@ -129,14 +129,14 @@ export const smsAPI = {
   updateSenderNumber: async (id: number, params: {
     label?: string;
     isDefault?: boolean;
-  }): Promise<{ message: string }> => {
-    return apiClient.put(`/sms/sender-numbers/${id}`, params);
+  }, config?: APIRequestConfig): Promise<{ message: string }> => {
+    return apiClient.put(`/sms/sender-numbers/${id}`, params, config);
   },
 
   /**
    * 발신번호 삭제
    */
-  deleteSenderNumber: async (id: number): Promise<{ message: string }> => {
-    return apiClient.delete(`/sms/sender-numbers/${id}`);
+  deleteSenderNumber: async (id: number, config?: APIRequestConfig): Promise<{ message: string }> => {
+    return apiClient.delete(`/sms/sender-numbers/${id}`, config);
   },
 };

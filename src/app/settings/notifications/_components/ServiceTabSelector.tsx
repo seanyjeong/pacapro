@@ -14,35 +14,40 @@ interface Props {
 }
 
 export default function ServiceTabSelector({ settings, activeTab, showPriceModal, setShowPriceModal, onServiceTypeChange }: Props) {
+  const baseServiceButton = 'inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-semibold transition-colors';
+  const selectedServiceButton = 'border-blue-600 bg-blue-600 text-white dark:border-blue-500 dark:bg-blue-500 dark:text-white';
+  const idleServiceButton = 'border-border bg-background text-muted-foreground hover:bg-muted/70 hover:text-foreground';
+  const selectedBadge = <span aria-hidden="true" className="rounded bg-white/20 px-1.5 py-0.5 text-[11px] font-semibold text-white">선택됨</span>;
+
   return (
     <>
-      <div className="bg-card rounded-lg shadow-sm border border-border p-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="rounded-md border border-border bg-card p-5 shadow-none">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-foreground">서비스 선택</h2>
           <button
             onClick={() => setShowPriceModal(true)}
-            className="flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors"
+            className="flex items-center gap-1 rounded-md bg-blue-50 px-3 py-1.5 text-sm text-blue-700 transition-colors hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900"
           >
             <DollarSign className="w-4 h-4" />
             가격 비교
           </button>
         </div>
-        <div className="flex gap-2 mb-4">
+        <div className="mb-4 flex flex-wrap gap-2">
           <button
+            aria-pressed={activeTab === 'sens'}
             onClick={() => onServiceTypeChange('sens')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'sens' ? 'bg-green-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'
-            }`}
+            className={`${baseServiceButton} ${activeTab === 'sens' ? selectedServiceButton : idleServiceButton}`}
           >
             네이버 SENS
+            {activeTab === 'sens' ? selectedBadge : null}
           </button>
           <button
+            aria-pressed={activeTab === 'solapi'}
             onClick={() => onServiceTypeChange('solapi')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === 'solapi' ? 'bg-purple-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'
-            }`}
+            className={`${baseServiceButton} ${activeTab === 'solapi' ? selectedServiceButton : idleServiceButton}`}
           >
             솔라피 (Solapi)
+            {activeTab === 'solapi' ? selectedBadge : null}
           </button>
         </div>
         <p className="text-sm text-muted-foreground">

@@ -113,8 +113,8 @@ function makeLog() {
   };
 }
 
-function makeState() {
-  return { hits: [] };
+function makeState(mode = 'success') {
+  return { hits: [], mode };
 }
 
 async function installRoutes(context, state) {
@@ -142,10 +142,16 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'GET' && path === '/notifications/settings') {
+      if (state.mode === 'load-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
       return jsonRoute(route, { message: 'ok', settings: makeSettings() });
     }
 
     if (method === 'GET' && path === '/notifications/logs') {
+      if (state.mode === 'load-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
       return jsonRoute(route, {
         message: 'ok',
         logs: [makeLog()],
@@ -154,6 +160,9 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'GET' && path === '/sms/sender-numbers') {
+      if (state.mode === 'load-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
       return jsonRoute(route, {
         senderNumbers: [
           { id: 7, service_type: 'sens', phone: '010-2144-6755', label: '대표', is_default: 1, created_at: '2026-06-01T09:00:00.000Z' },
@@ -165,8 +174,8 @@ async function installRoutes(context, state) {
   });
 }
 
-async function createNotificationsPage(browser, viewport = { width: 1365, height: 900 }) {
-  const state = makeState();
+async function createNotificationsPage(browser, viewport = { width: 1365, height: 900 }, mode = 'success') {
+  const state = makeState(mode);
   const context = await createAuthedContext(browser, viewport);
   await installRoutes(context, state);
   const page = await context.newPage();
@@ -188,9 +197,26 @@ async function runDesktop(browser) {
   await assertNoHorizontalOverflow(page, 'notifications desktop');
   await page.screenshot({ path: '/Users/etlab/paca-notifications-desktop.png', fullPage: true });
 
-  await page.getByRole('button', { name: /솔라피/ }).click();
+  const sensButton = page.getByRole('button', { name: '네이버 SENS' });
+  const solapiButton = page.getByRole('button', { name: '솔라피 (Solapi)' });
+  await solapiButton.click();
+  await page.getByRole('heading', { name: '솔라피 API 설정' }).waitFor();
   await page.getByRole('heading', { name: '알림톡 템플릿 설정' }).waitFor();
   await page.getByText('솔라피 콘솔에서 이미지 업로드').first().waitFor();
+  if (await solapiButton.getAttribute('aria-pressed') !== 'true') {
+    throw new Error('solapi service button was not selected');
+  }
+  if (await sensButton.getAttribute('aria-pressed') !== 'false') {
+    throw new Error('sens service button was not deselected');
+  }
+  const solapiClassName = await solapiButton.getAttribute('class');
+  const sensClassName = await sensButton.getAttribute('class');
+  if (!solapiClassName?.includes('bg-blue-600')) {
+    throw new Error(`solapi service button did not receive selected styling: ${solapiClassName}`);
+  }
+  if (sensClassName?.includes('bg-blue-600')) {
+    throw new Error(`sens service button kept selected styling: ${sensClassName}`);
+  }
   await assertNoRawVisibleText(page, 'notifications solapi desktop');
   await assertNoHorizontalOverflow(page, 'notifications solapi desktop');
   await page.screenshot({ path: '/Users/etlab/paca-notifications-solapi-desktop.png', fullPage: true });
@@ -214,6 +240,23 @@ async function runMobile(browser) {
   return result;
 }
 
+async function runLoadError(browser) {
+  const result = await createNotificationsPage(browser, { width: 390, height: 844 }, 'load-error');
+  const { context, page } = result;
+
+  await page.goto('/settings/notifications', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '알림톡 준비 정보를 일부 불러오지 못했습니다' }).waitFor();
+  await page.getByText('알림톡 설정을 불러오지 못했습니다').waitFor();
+  await page.getByText('발송 내역을 불러오지 못했습니다').waitFor();
+  await page.getByText('발신번호 정보를 불러오지 못했습니다').waitFor();
+  await assertNoRawVisibleText(page, 'notifications load error');
+  await assertNoHorizontalOverflow(page, 'notifications load error');
+  await page.screenshot({ path: '/Users/etlab/paca-notifications-error-mobile.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -224,9 +267,11 @@ async function main() {
   try {
     const desktop = await runDesktop(browser);
     const mobile = await runMobile(browser);
-    [desktop, mobile].forEach(assertDiagnostics);
+    const loadError = await runLoadError(browser);
+    [desktop, mobile, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
+      errorHits: loadError.state.hits,
       mobileHits: mobile.state.hits,
     }, null, 2));
   } finally {
