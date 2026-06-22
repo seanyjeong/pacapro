@@ -37,6 +37,7 @@
     "smoke:sms": "node scripts/smoke/sms-smoke.mjs",
     "smoke:notifications": "node scripts/smoke/notifications-smoke.mjs",
     "smoke:staff": "node scripts/smoke/staff-smoke.mjs",
+    "smoke:admin-users": "node scripts/smoke/admin-users-smoke.mjs",
     "smoke:onboarding": "node scripts/smoke/onboarding-smoke.mjs",
     "smoke:tablet-attendance": "node scripts/smoke/tablet-attendance-smoke.mjs",
     "smoke:tablet-students": "node scripts/smoke/tablet-students-smoke.mjs",
