@@ -9,14 +9,16 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, List, Loader2, ChevronLeft, ChevronRight, Users, Clock, UserCheck, AlertCircle, UserCog } from 'lucide-react';
+import { Calendar, List, Loader2, ChevronLeft, ChevronRight, Users, UserCog } from 'lucide-react';
 import { ScheduleCalendarV2 } from '@/components/schedules/schedule-calendar-v2';
 import { ScheduleList } from '@/components/schedules/schedule-list';
 import { TimeSlotDetailModal } from '@/components/schedules/time-slot-detail-modal';
 import { InstructorScheduleModal } from '@/components/schedules/instructor-schedule-modal';
+import { TabletScheduleError } from '@/features/tablet-schedule/tablet-schedule-error';
+import { TabletScheduleOperations } from '@/features/tablet-schedule/tablet-schedule-operations';
 import { useSchedules } from '@/hooks/use-schedules';
 import { schedulesApi, type DailyInstructorStats } from '@/lib/api/schedules';
 import { getCalendarEvents } from '@/lib/api/consultations';
@@ -51,15 +53,15 @@ export default function TabletSchedulePage() {
   const [consultations, setConsultations] = useState<Record<string, Consultation[]>>({});
 
   // 데이터 조회
-  const { data: schedules = [], isLoading, refetch } = useSchedules(filters);
+  const { data: schedules = [], isLoading, isError, refetch } = useSchedules(filters);
 
   // 월별 강사 통계 조회
   const loadInstructorStats = useCallback(async () => {
     try {
-      const response = await schedulesApi.getMonthlyInstructorStats(currentYear, currentMonth);
+      const response = await schedulesApi.getMonthlyInstructorStats(currentYear, currentMonth, { suppressErrorToast: true });
       setInstructorStats(response.schedules || {});
-    } catch (err) {
-      console.error('Failed to load instructor stats:', err);
+    } catch {
+      setInstructorStats({});
     }
   }, [currentYear, currentMonth]);
 
@@ -67,10 +69,10 @@ export default function TabletSchedulePage() {
   const loadConsultations = useCallback(async () => {
     try {
       const { start, end } = getMonthRange(currentYear, currentMonth);
-      const response = await getCalendarEvents(start, end);
+      const response = await getCalendarEvents(start, end, { suppressErrorToast: true });
       setConsultations(response.events || {});
-    } catch (err) {
-      console.error('Failed to load consultations:', err);
+    } catch {
+      setConsultations({});
     }
   }, [currentYear, currentMonth]);
 
@@ -115,7 +117,7 @@ export default function TabletSchedulePage() {
     return `${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
   };
 
-  const isToday = selectedDate === new Date().toISOString().split('T')[0];
+  const isToday = selectedDate === getToday();
 
   if (isLoading) {
     return (
@@ -126,6 +128,10 @@ export default function TabletSchedulePage() {
         </div>
       </div>
     );
+  }
+
+  if (isError) {
+    return <TabletScheduleError onRetry={() => refetch()} />;
   }
 
   return (
@@ -140,6 +146,14 @@ export default function TabletSchedulePage() {
           새로고침
         </Button>
       </div>
+
+      <TabletScheduleOperations
+        dateLabel={selectedDate ? formatDate(selectedDate) : '날짜 선택'}
+        isToday={isToday}
+        schedules={selectedDateSchedules}
+        totalStudents={totalStudents}
+        onAssignInstructor={() => setInstructorModalOpen(true)}
+      />
 
       {/* 날짜 선택 */}
       <Card>

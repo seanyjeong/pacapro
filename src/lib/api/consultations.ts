@@ -201,10 +201,12 @@ export async function removeBlockedSlot(id: number, config?: APIRequestConfig): 
 // 캘린더용 상담 일정 조회
 export async function getCalendarEvents(
   startDate: string,
-  endDate: string
+  endDate: string,
+  config?: APIRequestConfig
 ): Promise<{ events: Record<string, Consultation[]> }> {
   return apiClient.get<{ events: Record<string, Consultation[]> }>(
-    `/consultations/calendar/events?startDate=${startDate}&endDate=${endDate}`
+    `/consultations/calendar/events?startDate=${startDate}&endDate=${endDate}`,
+    config
   );
 }
 
