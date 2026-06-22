@@ -59,6 +59,9 @@ async function installRoutes(context, state) {
 
     if (method === 'PUT' && path === '/students/class-days/bulk') {
       state.bulkPayload = JSON.parse(request.postData() || '{}');
+      if (state.mode === 'save-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
       return jsonRoute(route, { message: '수업일 변경이 저장되었습니다.', mode: 'immediate', results: [{ id: 41, success: true }] });
     }
 
@@ -104,12 +107,32 @@ async function runDesktopSave(browser) {
   return result;
 }
 
+async function runSaveError(browser) {
+  const result = await createClassDaysPage(browser, 'save-error');
+  const { context, page } = result;
+
+  await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
+  await page.locator('tbody tr').filter({ hasText: '김진우' }).getByRole('button', { name: '화' }).click();
+  await page.getByRole('button', { name: /저장/ }).click();
+  await page.getByText('저장 실패').waitFor();
+  await page.getByText('수업일 변경을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'class days save error');
+  await assertNoHorizontalOverflow(page, 'class days save error');
+  await page.screenshot({ path: '/Users/etlab/paca-class-days-save-error-desktop.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 async function runLoadError(browser) {
   const result = await createClassDaysPage(browser, 'load-error', { width: 390, height: 844 });
   const { context, page } = result;
 
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
   await page.getByText('수업일 목록을 불러오지 못했습니다').waitFor();
+  await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'class days load error');
   await assertNoHorizontalOverflow(page, 'class days load error');
   await page.screenshot({ path: '/Users/etlab/paca-class-days-error-mobile.png', fullPage: true });
@@ -127,11 +150,13 @@ async function main() {
   const browser = await launchSmokeBrowser();
   try {
     const desktop = await runDesktopSave(browser);
+    const saveError = await runSaveError(browser);
     const loadError = await runLoadError(browser);
-    [desktop, loadError].forEach(assertDiagnostics);
+    [desktop, saveError, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       bulkPayload: desktop.state.bulkPayload,
+      saveErrorHits: saveError.state.hits,
       errorConsoleErrors: loadError.diagnostics.consoleErrors,
       errorHits: loadError.state.hits,
     }, null, 2));
