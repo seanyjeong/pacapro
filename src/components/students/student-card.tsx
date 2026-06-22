@@ -8,12 +8,12 @@ import {
   STUDENT_TYPE_LABELS,
 } from '@/lib/types/student';
 import {
-  calculateDiscountedTuition,
   formatClassDays,
   formatCurrency,
   formatDate,
   formatPhoneNumber,
   formatStudentNumber,
+  getEffectiveMonthlyTuition,
   getStatusColor,
   getStudentDisplayInfo,
 } from '@/lib/utils/student-helpers';
@@ -24,7 +24,7 @@ interface StudentCardProps {
 
 export function StudentCard({ student }: StudentCardProps) {
   const discountRate = Number.parseFloat(student.discount_rate) || 0;
-  const discountedTuition = calculateDiscountedTuition(student.monthly_tuition, student.discount_rate);
+  const effectiveTuition = getEffectiveMonthlyTuition(student);
   const academyName = student.academy_name || 'P-ACA';
 
   return (
@@ -77,7 +77,12 @@ export function StudentCard({ student }: StudentCardProps) {
             <DetailRow
               label="월 학원비"
               value={formatCurrency(student.monthly_tuition)}
-              helper={discountRate > 0 ? `${discountRate}% 할인, 실납부 ${formatCurrency(discountedTuition)}` : undefined}
+              helper={discountRate > 0 ? `${discountRate}% 할인, 실납부 ${formatCurrency(effectiveTuition)}` : undefined}
+            />
+            <DetailRow
+              label="실납부 기준"
+              value={formatCurrency(effectiveTuition)}
+              helper={student.payment_due_day ? `매월 ${student.payment_due_day}일 납부` : '학원 기본 납부일 적용'}
             />
           </div>
         </section>

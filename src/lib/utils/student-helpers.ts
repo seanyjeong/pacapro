@@ -210,6 +210,15 @@ export function calculateDiscountedTuition(tuition: number | string, discountRat
   return Math.round(t * (1 - d / 100));
 }
 
+export function getEffectiveMonthlyTuition(
+  student: Pick<Student, 'discount_rate' | 'final_monthly_tuition' | 'monthly_tuition'>
+): number {
+  if (student.final_monthly_tuition !== null && student.final_monthly_tuition !== '') {
+    return Number.parseFloat(student.final_monthly_tuition) || 0;
+  }
+  return calculateDiscountedTuition(student.monthly_tuition, student.discount_rate);
+}
+
 /**
  * 할인 금액 계산
  * @example calculateDiscountAmount(300000, 10) => 30000

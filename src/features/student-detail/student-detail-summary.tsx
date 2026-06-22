@@ -1,5 +1,6 @@
 import { Banknote, CalendarDays, GraduationCap, ReceiptText } from 'lucide-react';
 import { ADMISSION_TYPE_LABELS, type StudentDetail, type StudentPayment } from '@/lib/types/student';
+import { getEffectiveMonthlyTuition } from '@/lib/utils/student-helpers';
 import { getClassSummary, getOutstandingAmount, formatWon } from './student-detail-utils';
 
 interface StudentDetailSummaryProps {
@@ -9,9 +10,10 @@ interface StudentDetailSummaryProps {
 
 export function StudentDetailSummary({ payments, student }: StudentDetailSummaryProps) {
   const outstanding = getOutstandingAmount(payments);
+  const effectiveTuition = getEffectiveMonthlyTuition(student);
   const items = [
     { label: '수업', value: getClassSummary(student), icon: CalendarDays, tone: 'bg-slate-50 text-slate-700' },
-    { label: '학원비', value: formatWon(Number.parseFloat(student.monthly_tuition) || 0), icon: Banknote, tone: 'bg-emerald-50 text-emerald-700' },
+    { label: '실납부', value: formatWon(effectiveTuition), icon: Banknote, tone: 'bg-emerald-50 text-emerald-700' },
     { label: '미납', value: formatWon(outstanding), icon: ReceiptText, tone: outstanding > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-50 text-slate-700' },
     { label: '입시 유형', value: ADMISSION_TYPE_LABELS[student.admission_type], icon: GraduationCap, tone: 'bg-sky-50 text-sky-700' },
   ];

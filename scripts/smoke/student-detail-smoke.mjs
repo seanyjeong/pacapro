@@ -313,7 +313,9 @@ async function runNormalDesktop(browser) {
   await page.getByRole('heading', { name: '학생 상세' }).waitFor({ timeout: 15000 });
   await page.getByText('김진우').first().waitFor();
   await page.getByText('S-2026-041').waitFor();
+  await page.locator('section').filter({ hasText: /^실납부\s*468,000원/ }).waitFor();
   await page.getByText('수업 및 학원비', { exact: true }).waitFor();
+  await page.locator('section').filter({ hasText: '수업 및 학원비' }).getByText('매월 5일 납부').waitFor();
   await page.getByText('연락처', { exact: true }).waitFor();
   await page.getByText('기타 정보', { exact: true }).waitFor();
   await page.getByRole('heading', { name: '운영 액션' }).waitFor();
