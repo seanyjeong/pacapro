@@ -17,7 +17,7 @@ export function PerformanceHeader({ status, statusError, statusLoading }: Perfor
         <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">성적관리</h1>
         <p className="mt-1 text-sm text-muted-foreground">내신과 모의고사 성적을 한 화면에서 확인합니다.</p>
       </div>
-      <div className="flex h-9 w-fit items-center gap-2 rounded-md border border-border bg-card px-3 text-sm">
+      <div className="flex h-9 w-fit items-center gap-2 rounded-md border border-border bg-card px-3 text-sm shadow-sm">
         {statusLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -30,8 +30,8 @@ export function PerformanceHeader({ status, statusError, statusLoading }: Perfor
           </>
         ) : (
           <>
-            <AlertCircle className="h-4 w-4 text-rose-600" />
-            <span className="font-medium text-rose-700">{statusError ? '연결 확인 필요' : '정시엔진 연결 안됨'}</span>
+            <AlertCircle className="h-4 w-4 text-amber-700" />
+            <span className="font-medium text-amber-800">{statusError ? '연결 확인 필요' : '정시엔진 연결 안됨'}</span>
           </>
         )}
       </div>

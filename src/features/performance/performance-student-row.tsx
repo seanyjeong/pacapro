@@ -19,6 +19,11 @@ export function PerformanceStudentRow({
   student,
   onToggle,
 }: PerformanceStudentRowProps) {
+  const statusLabel = student.status === 'paused' ? '휴원' : '재원';
+  const statusClass = student.status === 'paused'
+    ? 'border-amber-200 bg-amber-50 text-amber-700'
+    : 'border-emerald-200 bg-emerald-50 text-emerald-700';
+
   return (
     <div data-testid="performance-student-row">
       <button
@@ -31,7 +36,10 @@ export function PerformanceStudentRow({
             <User className="h-5 w-5" />
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-foreground">{student.name}</span>
+            <span className="flex min-w-0 items-center gap-2">
+              <span className="truncate text-sm font-semibold text-foreground">{student.name}</span>
+              <span className={`rounded-md border px-1.5 py-0.5 text-[11px] font-medium ${statusClass}`}>{statusLabel}</span>
+            </span>
             <span className="mt-1 block truncate text-xs text-muted-foreground">
               {student.grade} · {student.school || '학교 미등록'}
             </span>
@@ -41,7 +49,7 @@ export function PerformanceStudentRow({
       </button>
 
       {expanded && (
-        <div className="border-t border-border bg-muted/30 px-4 py-4">
+        <div className="border-t border-border bg-muted/25 px-4 py-4">
           <PerformanceScoreGrid scores={scores} scoresError={scoresError} scoresLoading={scoresLoading} />
         </div>
       )}

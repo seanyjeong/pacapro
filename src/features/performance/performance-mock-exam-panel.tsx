@@ -39,24 +39,33 @@ export function MockExamPanel({
   onSearchChange,
   onStudentToggle,
 }: MockExamPanelProps) {
-  if (statusError) return <PerformanceErrorPanel message={statusError} onRetry={onRefreshStatus} />;
+  if (statusError) {
+    return <PerformanceErrorPanel message={statusError} title="정시엔진 정보를 확인하지 못했습니다" onRetry={onRefreshStatus} />;
+  }
 
   if (!jungsiStatus?.isConfigured) {
     return (
       <PerformanceErrorPanel
         message="이 학원은 아직 정시엔진과 연동되지 않았습니다. 관리자에게 문의해주세요."
+        title="정시엔진 연동이 필요합니다"
         onRetry={onRefreshStatus}
       />
     );
   }
 
   if (!jungsiStatus.jungsiApi.healthy) {
-    return <PerformanceErrorPanel message="정시엔진과 연결할 수 없습니다. 잠시 후 다시 시도해주세요." onRetry={onRefreshStatus} />;
+    return (
+      <PerformanceErrorPanel
+        message="정시엔진과 연결할 수 없습니다. 잠시 후 다시 시도해주세요."
+        title="정시엔진 연결을 확인해주세요"
+        onRetry={onRefreshStatus}
+      />
+    );
   }
 
   return (
     <div className="space-y-4">
-      <section className="rounded-md border border-border bg-card">
+      <section className="rounded-md border border-border bg-card shadow-sm">
         <div className="flex flex-col gap-3 border-b border-border px-4 py-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700">
@@ -86,7 +95,7 @@ export function MockExamPanel({
 
         {studentsError ? (
           <div className="p-4">
-            <PerformanceErrorPanel message={studentsError} onRetry={onRefreshStudents} />
+            <PerformanceErrorPanel message={studentsError} title="학생 목록을 불러오지 못했습니다" onRetry={onRefreshStudents} />
           </div>
         ) : (
           <PerformanceStudentList

@@ -20,17 +20,17 @@ export function PerformanceScoreCard({ examTitle, scores }: PerformanceScoreCard
   }
 
   return (
-    <section className="rounded-md border border-border bg-background px-4 py-4">
+    <section className="rounded-md border border-border bg-background px-4 py-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-foreground">{examTitle}</h3>
         <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
           조회됨
         </span>
       </div>
-      <div className="mt-4 grid grid-cols-3 gap-2 text-center sm:grid-cols-6">
+      <div className="mt-4 grid grid-cols-2 gap-2 text-center sm:grid-cols-3 xl:grid-cols-6">
         {getScoreSubjects(scores).map((subject) => (
-          <div key={subject.label} className="min-w-0 rounded-md bg-muted/40 px-2 py-2">
-            <p className="text-xs text-muted-foreground">{subject.label}</p>
+          <div key={subject.label} className="min-w-0 rounded-md border border-border bg-muted/30 px-2 py-2">
+            <p className="text-xs font-medium text-muted-foreground">{subject.label}</p>
             <p className="mt-1 text-xl font-semibold tracking-normal text-foreground">{subject.grade}</p>
             <p className="mt-1 truncate text-[11px] text-muted-foreground">{subject.subject}</p>
           </div>

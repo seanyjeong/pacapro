@@ -1,5 +1,6 @@
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { StudentAllScores } from './performance-types';
+import { PerformanceErrorPanel } from './performance-error-panel';
 import { PerformanceScoreCard } from './performance-score-card';
 import { EXAM_TYPES, getExamTitle } from './performance-utils';
 
@@ -21,10 +22,7 @@ export function PerformanceScoreGrid({ scores, scoresError, scoresLoading }: Per
 
   if (scoresError) {
     return (
-      <div className="flex min-h-32 items-center justify-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-4 text-sm font-medium text-rose-900">
-        <AlertCircle className="h-4 w-4 shrink-0" />
-        {scoresError}
-      </div>
+      <PerformanceErrorPanel message={scoresError} title="성적 정보를 불러오지 못했습니다" />
     );
   }
 
