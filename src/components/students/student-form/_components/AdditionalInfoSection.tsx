@@ -9,7 +9,6 @@ interface AdditionalInfoSectionProps {
   mode: 'create' | 'edit';
   formData: StudentFormData;
   initialData?: Student;
-  errors: Record<string, string>;
   isIndefiniteRest: boolean;
   setIsIndefiniteRest: (v: boolean) => void;
   handleChange: (field: keyof StudentFormData, value: unknown) => void;
@@ -17,10 +16,10 @@ interface AdditionalInfoSectionProps {
 }
 
 export function AdditionalInfoSection({
-  mode, formData, initialData, errors, isIndefiniteRest, setIsIndefiniteRest, handleChange, onOpenRestModal,
+  mode, formData, initialData, isIndefiniteRest, setIsIndefiniteRest, handleChange, onOpenRestModal,
 }: AdditionalInfoSectionProps) {
   return (
-    <Card>
+    <Card className="rounded-md shadow-none">
       <CardHeader><CardTitle>추가 정보</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         {/* 주소 */}
@@ -79,7 +78,7 @@ export function AdditionalInfoSection({
             </select>
             {formData.status !== 'paused' && initialData?.id && (
               <p className="text-xs text-muted-foreground mt-1">
-                💡 휴원 선택 시 수업료 처리 옵션을 선택할 수 있습니다.
+                휴원 선택 시 수업료 처리 옵션을 선택할 수 있습니다.
               </p>
             )}
           </div>
@@ -89,7 +88,7 @@ export function AdditionalInfoSection({
         {mode === 'edit' && formData.status === 'paused' && (
           <div className="col-span-2 p-4 bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 rounded-lg space-y-4">
             <h4 className="font-medium text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
-              <span className="text-lg">⏸️</span> 휴식 설정
+              휴식 설정
             </h4>
 
             <div className="grid grid-cols-2 gap-4">
@@ -137,7 +136,7 @@ export function AdditionalInfoSection({
             </div>
 
             <p className="text-xs text-yellow-700 dark:text-yellow-300">
-              💡 휴식 기간 동안 학원비 이월/환불 처리는 학생 상세 페이지에서 별도로 진행할 수 있습니다.
+              휴식 기간 동안 학원비 이월/환불 처리는 학생 상세 페이지에서 별도로 진행할 수 있습니다.
             </p>
           </div>
         )}

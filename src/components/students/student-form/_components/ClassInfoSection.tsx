@@ -25,7 +25,7 @@ export function ClassInfoSection({
   handleChange, handleClassDayToggle, handleDayTimeSlotChange,
 }: ClassInfoSectionProps) {
   return (
-    <Card>
+    <Card className="rounded-md shadow-none">
       <CardHeader><CardTitle>수업 정보</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         {/* 수업요일 + 시간대 */}

@@ -57,9 +57,9 @@ export const studentsAPI = {
    * 학생 등록
    * POST /paca/students
    */
-  createStudent: async (data: StudentFormData): Promise<StudentCreateResponse> => {
+  createStudent: async (data: StudentFormData, config?: APIRequestConfig): Promise<StudentCreateResponse> => {
     // class_days는 배열 그대로 전송 (백엔드에서 JSON.stringify 처리)
-    return await apiClient.post('/students', data);
+    return await apiClient.post('/students', data, config);
   },
 
   /**

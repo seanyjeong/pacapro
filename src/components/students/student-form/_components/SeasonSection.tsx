@@ -24,7 +24,7 @@ export function SeasonSection({
   if (!isSeasonTarget || mode !== 'create' || isTrial) return null;
 
   return (
-    <Card>
+    <Card className="rounded-md shadow-none">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Trophy className="w-5 h-5 mr-2 text-yellow-500" />

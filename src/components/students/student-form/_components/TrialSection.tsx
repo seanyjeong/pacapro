@@ -22,7 +22,7 @@ export function TrialSection({
 }: TrialSectionProps) {
   if (mode === 'create') {
     return (
-      <Card className={isTrial ? 'border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950' : ''}>
+      <Card className={isTrial ? 'rounded-md border-purple-300 bg-purple-50 shadow-none dark:border-purple-700 dark:bg-purple-950' : 'rounded-md shadow-none'}>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Sparkles className={`w-5 h-5 mr-2 ${isTrial ? 'text-purple-600' : 'text-gray-400'}`} />
@@ -104,7 +104,7 @@ export function TrialSection({
   if (!isTrial) return null;
 
   return (
-    <Card className="border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950">
+    <Card className="rounded-md border-purple-300 bg-purple-50 shadow-none dark:border-purple-700 dark:bg-purple-950">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Sparkles className="w-5 h-5 mr-2 text-purple-600" />

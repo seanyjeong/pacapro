@@ -14,7 +14,7 @@ interface BasicInfoSectionProps {
 
 export function BasicInfoSection({ mode, formData, errors, handleChange, formatPhoneNumber }: BasicInfoSectionProps) {
   return (
-    <Card>
+    <Card className="rounded-md shadow-none">
       <CardHeader><CardTitle>기본 정보</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

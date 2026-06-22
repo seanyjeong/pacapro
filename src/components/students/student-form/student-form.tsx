@@ -34,7 +34,7 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
   const hook = useStudentForm({ mode, initialData, initialIsTrial, onSubmit });
 
   return (
-    <form onSubmit={hook.handleSubmit} className="space-y-6">
+    <form onSubmit={hook.handleSubmit} className="space-y-5">
       {/* 체험생 섹션 (create: 등록 옵션, edit: 일정 수정) */}
       <TrialSection
         mode={mode}
@@ -107,7 +107,6 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
         mode={mode}
         formData={hook.formData}
         initialData={initialData}
-        errors={hook.errors}
         isIndefiniteRest={hook.isIndefiniteRest}
         setIsIndefiniteRest={hook.setIsIndefiniteRest}
         handleChange={hook.handleChange}
@@ -116,13 +115,13 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
       {/* 에러 메시지 */}
       {hook.errors.submit && (
-        <div className="p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-red-600 dark:text-red-400 text-sm">{hook.errors.submit}</p>
+        <div className="rounded-md border border-rose-200 bg-rose-50 p-4 dark:border-rose-900 dark:bg-rose-950" role="alert">
+          <p className="text-sm text-rose-700 dark:text-rose-200">{hook.errors.submit}</p>
         </div>
       )}
 
       {/* 버튼 */}
-      <div className="flex items-center justify-end space-x-3">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
         <Button type="button" variant="outline" onClick={onCancel} disabled={hook.submitting}>
           취소
         </Button>

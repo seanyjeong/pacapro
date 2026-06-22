@@ -1,0 +1,268 @@
+import {
+  assertNoHorizontalOverflow,
+  assertNoRawVisibleText,
+  createAuthedContext,
+  createDiagnostics,
+  jsonRoute,
+  launchSmokeBrowser,
+  nonServiceWorkerErrors,
+  normalizePacaApiPath,
+} from './paca-smoke-utils.mjs';
+
+function makeStudent(overrides = {}) {
+  return {
+    id: 77,
+    academy_id: 1,
+    student_number: '2026077',
+    name: '김신규',
+    gender: 'male',
+    student_type: 'exam',
+    phone: '010-2222-3333',
+    parent_phone: '',
+    school: '일산고',
+    grade: '고2',
+    age: null,
+    address: null,
+    admission_type: 'regular',
+    profile_image_url: null,
+    class_days: [],
+    weekly_count: 0,
+    monthly_tuition: '0',
+    discount_rate: '0',
+    discount_reason: null,
+    payment_due_day: 5,
+    final_monthly_tuition: '0',
+    is_season_registered: false,
+    current_season_id: null,
+    status: 'active',
+    rest_start_date: null,
+    rest_end_date: null,
+    rest_reason: null,
+    enrollment_date: '2026-06-22',
+    withdrawal_date: null,
+    notes: null,
+    is_trial: false,
+    trial_remaining: null,
+    trial_dates: null,
+    time_slot: 'evening',
+    memo: null,
+    class_days_next: null,
+    class_days_effective_from: null,
+    consultation_date: null,
+    created_at: '2026-06-22T09:00:00.000Z',
+    updated_at: '2026-06-22T09:00:00.000Z',
+    deleted_at: null,
+    ...overrides,
+  };
+}
+
+function makeState(mode) {
+  return { editPayload: null, hits: [], mode, studentPayload: null };
+}
+
+async function installRoutes(context, state) {
+  await context.route('**/*', async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+
+    if (!isApi) return route.continue();
+
+    const method = request.method();
+    const path = normalizePacaApiPath(url);
+    state.hits.push(`${method} ${path}${url.search}`);
+
+    if (method === 'GET' && path === '/settings/academy') {
+      return jsonRoute(route, {
+        settings: {
+          exam_tuition: {
+            weekly_1: 260000,
+            weekly_2: 520000,
+            weekly_3: 690000,
+            weekly_4: 840000,
+            weekly_5: 980000,
+            weekly_6: 1100000,
+            weekly_7: 1200000,
+          },
+          adult_tuition: {
+            weekly_1: 180000,
+            weekly_2: 320000,
+            weekly_3: 450000,
+            weekly_4: 580000,
+            weekly_5: 700000,
+            weekly_6: 820000,
+            weekly_7: 900000,
+          },
+          tuition_due_day: 5,
+          morning_class_time: '09:00-12:00',
+          afternoon_class_time: '13:00-18:00',
+          evening_class_time: '18:00-21:00',
+        },
+      });
+    }
+
+    if (method === 'GET' && path === '/seasons/active') {
+      return jsonRoute(route, { seasons: [] });
+    }
+
+    if (method === 'POST' && path === '/students') {
+      state.studentPayload = JSON.parse(request.postData() || '{}');
+      if (state.mode === 'save-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
+      return jsonRoute(route, { message: 'created', student: makeStudent({ name: state.studentPayload.name }) });
+    }
+
+    if (method === 'GET' && path === '/students/77') {
+      return jsonRoute(route, {
+        message: 'ok',
+        payments: [],
+        performances: [],
+        student: makeStudent({ id: 77, name: '김수정', phone: '010-7777-8888' }),
+      });
+    }
+
+    if (method === 'PUT' && path === '/students/77') {
+      state.editPayload = JSON.parse(request.postData() || '{}');
+      if (state.mode === 'edit-save-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
+      return jsonRoute(route, { message: 'updated', student: makeStudent({ id: 77, name: state.editPayload.name }) });
+    }
+
+    if (method === 'GET' && path === '/students') {
+      return jsonRoute(route, { message: 'ok', students: [makeStudent()], pagination: { total: 1 } });
+    }
+
+    return jsonRoute(route, { message: 'mocked' });
+  });
+}
+
+async function createStudentFormPage(browser, mode, viewport = { width: 1365, height: 900 }) {
+  const state = makeState(mode);
+  const context = await createAuthedContext(browser, viewport);
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  const diagnostics = createDiagnostics(page);
+  return { context, page, state, diagnostics };
+}
+
+async function fillRequiredStudentFields(page) {
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+  await page.locator('#field-name').fill('김신규');
+  await page.locator('#field-phone').fill('010-2222-3333');
+  await page.locator('#field-grade').selectOption('고2');
+}
+
+async function runCreateSuccess(browser) {
+  const result = await createStudentFormPage(browser, 'success');
+  const { context, page, state } = result;
+
+  await page.goto('/students/new', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 등록' }).waitFor();
+  await fillRequiredStudentFields(page);
+  await page.locator('form button[type="submit"]').click();
+  await page.waitForURL('**/students', { timeout: 15000 });
+
+  if (!state.studentPayload) throw new Error('student create payload was not sent');
+  if (state.studentPayload.name !== '김신규') throw new Error(`name mismatch: ${state.studentPayload.name}`);
+  if (state.studentPayload.phone !== '010-2222-3333') throw new Error(`phone mismatch: ${state.studentPayload.phone}`);
+  if (state.studentPayload.grade !== '고2') throw new Error(`grade mismatch: ${state.studentPayload.grade}`);
+
+  await assertNoRawVisibleText(page, 'student form create success');
+  await assertNoHorizontalOverflow(page, 'student form create success');
+  await page.screenshot({ path: '/Users/etlab/paca-student-form-create.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
+async function runCreateError(browser) {
+  const result = await createStudentFormPage(browser, 'save-error', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/students/new', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 등록' }).waitFor();
+  await fillRequiredStudentFields(page);
+  await page.locator('form button[type="submit"]').click();
+  await page.getByText('학생 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'student form create error');
+  await assertNoHorizontalOverflow(page, 'student form create error');
+  await page.screenshot({ path: '/Users/etlab/paca-student-form-error-mobile.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
+async function runEditSuccess(browser) {
+  const result = await createStudentFormPage(browser, 'success');
+  const { context, page } = result;
+
+  await page.goto('/students/77/edit', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 정보 수정' }).waitFor();
+  await page.locator('#field-name').waitFor();
+  await page.locator('#field-name').fill('김수정완료');
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+  await page.locator('form button[type="submit"]').click();
+  await page.waitForURL('**/students/77', { timeout: 15000 });
+
+  if (!result.state.editPayload) throw new Error('student edit payload was not sent');
+  if (result.state.editPayload.name !== '김수정완료') throw new Error(`edit name mismatch: ${result.state.editPayload.name}`);
+
+  await assertNoRawVisibleText(page, 'student form edit success');
+  await assertNoHorizontalOverflow(page, 'student form edit success');
+
+  await context.close();
+  return result;
+}
+
+async function runEditError(browser) {
+  const result = await createStudentFormPage(browser, 'edit-save-error', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/students/77/edit', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 정보 수정' }).waitFor();
+  await page.locator('#field-name').fill('김수정실패');
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+  await page.locator('form button[type="submit"]').click();
+  await page.getByText('학생 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'student form edit error');
+  await assertNoHorizontalOverflow(page, 'student form edit error');
+  await page.screenshot({ path: '/Users/etlab/paca-student-edit-error-mobile.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
+function assertDiagnostics(result) {
+  const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
+  if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
+}
+
+async function main() {
+  const browser = await launchSmokeBrowser();
+  try {
+    const createSuccess = await runCreateSuccess(browser);
+    const createError = await runCreateError(browser);
+    const editSuccess = await runEditSuccess(browser);
+    const editError = await runEditError(browser);
+    [createSuccess, createError, editSuccess, editError].forEach(assertDiagnostics);
+    console.log(JSON.stringify({
+      createHits: createSuccess.state.hits,
+      createPayload: createSuccess.state.studentPayload,
+      errorConsoleErrors: createError.diagnostics.consoleErrors,
+      errorHits: createError.state.hits,
+      editHits: editSuccess.state.hits,
+      editPayload: editSuccess.state.editPayload,
+      editErrorHits: editError.state.hits,
+    }, null, 2));
+  } finally {
+    await browser.close();
+  }
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

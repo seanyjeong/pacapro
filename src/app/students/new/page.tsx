@@ -3,12 +3,11 @@
 import { Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudentForm } from '@/components/students/student-form';
 import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
-import apiClient from '@/lib/api/client';
 import type { StudentFormData, Student, Gender, StudentType, Grade, StudentStatus } from '@/lib/types/student';
 
 function NewStudentContent() {
@@ -50,11 +49,11 @@ function NewStudentContent() {
           status: 'active' as StudentStatus,
           is_trial: false,
         };
-        const response = await studentsAPI.updateStudent(parseInt(existingStudentId), updateData);
+        const response = await studentsAPI.updateStudent(parseInt(existingStudentId), updateData, { suppressErrorToast: true });
         student = response.student;
       } else {
         // 신규 등록: 새 학생 생성
-        const response = await studentsAPI.createStudent(data);
+        const response = await studentsAPI.createStudent(data, { suppressErrorToast: true });
         student = response.student;
       }
 
@@ -87,7 +86,7 @@ function NewStudentContent() {
       // 학생 목록으로 이동
       router.push('/students');
     } catch (error: unknown) {
-      console.error('Failed to create student:', error);
+      console.warn('학생 등록 저장에 실패했습니다.');
       throw error; // StudentForm에서 에러 처리
     }
   };
@@ -99,22 +98,22 @@ function NewStudentContent() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
+    <div className="mx-auto w-full max-w-7xl space-y-5">
+      <header className="border-b border-border/70 pb-4">
         <Button
           variant="outline"
           size="sm"
           onClick={() => router.push('/students')}
           className="mb-4"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           목록으로
         </Button>
 
-        <h1 className="text-3xl font-bold text-foreground">학생 등록</h1>
-        <p className="text-muted-foreground mt-1">새로운 학생 정보를 등록합니다</p>
-      </div>
+        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Student Intake</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">학생 등록</h1>
+        <p className="mt-1 text-sm text-muted-foreground">학생 기본 정보, 수업 정보, 학원비 기준을 한 번에 저장합니다.</p>
+      </header>
 
       {/* Form */}
       <StudentForm
@@ -124,21 +123,6 @@ function NewStudentContent() {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
       />
-
-      {/* 안내 */}
-      <div className="p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-        <div className="flex items-start space-x-3">
-          <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-          <div className="flex-1">
-            <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-1">안내사항</h4>
-            <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-              <li>• 학번을 입력하지 않으면 자동으로 생성됩니다.</li>
-              <li>• 필수 항목(*)은 반드시 입력해야 합니다.</li>
-              <li>• 등록 후 학생 상세 페이지에서 수정할 수 있습니다.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -147,8 +131,8 @@ function NewStudentContent() {
 export default function NewStudentPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="flex min-h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     }>
       <NewStudentContent />

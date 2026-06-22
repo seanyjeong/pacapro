@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import apiClient from '@/lib/api/client';
 import { seasonsApi } from '@/lib/api/seasons';
-import type { Student, StudentFormData, StudentType, Grade, AdmissionType, StudentStatus, Gender, TrialDate } from '@/lib/types/student';
+import type { Student, StudentFormData, StudentType, Grade, AdmissionType, StudentStatus, TrialDate } from '@/lib/types/student';
 import type { Season } from '@/lib/types/season';
 import { EXAM_ADMISSION_OPTIONS, ADULT_ADMISSION_OPTIONS } from '@/lib/types/student';
 import type { ClassDaySlot } from '@/lib/types/student';
@@ -141,7 +141,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
 
   const loadAcademySettings = async () => {
     try {
-      const response = await apiClient.get<{ settings: AcademySettings }>('/settings/academy');
+      const response = await apiClient.get<{ settings: AcademySettings }>('/settings/academy', { suppressErrorToast: true });
       if (response.settings) {
         setAcademySettings({
           exam_tuition: response.settings.exam_tuition || { ...DEFAULT_TUITION },
@@ -290,14 +290,8 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     return Object.keys(newErrors).length === 0;
   };
 
-  const extractErrorMessage = (err: unknown): string => {
-    if (err && typeof err === 'object') {
-      const axiosError = err as { response?: { data?: { message?: string; error?: string } } };
-      if (axiosError.response?.data?.message) return axiosError.response.data.message;
-      if (axiosError.response?.data?.error) return axiosError.response.data.error;
-    }
-    if (err instanceof Error) return err.message;
-    return '저장에 실패했습니다.';
+  const extractErrorMessage = (): string => {
+    return '학생 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
   };
 
   const isSameNameWarning = (err: unknown): { isWarning: boolean; existingStudent?: { name: string; phone: string; gender?: string } } => {
@@ -347,7 +341,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
       setSubmitting(true);
       await onSubmit(submitData);
     } catch (err: unknown) {
-      console.error('Form submit error:', err);
+      console.warn('학생 정보 저장에 실패했습니다.');
       const sameNameCheck = isSameNameWarning(err);
       if (sameNameCheck.isWarning && sameNameCheck.existingStudent) {
         const existing = sameNameCheck.existingStudent;
@@ -361,7 +355,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
         }
         return;
       }
-      const errorMessage = extractErrorMessage(err);
+      const errorMessage = extractErrorMessage();
       setErrors({ submit: errorMessage });
       setTimeout(() => {
         const errorElement = document.querySelector('[class*="bg-red-50"]');
