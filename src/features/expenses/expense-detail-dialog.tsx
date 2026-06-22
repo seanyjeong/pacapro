@@ -1,4 +1,5 @@
-import { CheckCircle, Pencil, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle, FileText, Pencil, Trash2, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PAYMENT_METHOD_LABELS } from './expenses-constants';
@@ -43,6 +44,33 @@ export function ExpenseDetailDialog({
             <ExpenseDetailItem label="지불 방법" value={PAYMENT_METHOD_LABELS[expense.payment_method || 'account']} />
             {expense.description ? <ExpenseDetailItem label="설명" value={expense.description} wide /> : null}
             {expense.notes ? <ExpenseDetailItem label="메모" value={expense.notes} wide /> : null}
+            {expense.salary_id || expense.instructor_id ? (
+              <div className="rounded-md border border-border bg-muted/25 p-3 sm:col-span-2">
+                <p className="text-sm font-medium text-foreground">관련 작업</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {expense.salary_id ? (
+                    <Link
+                      aria-label={`${expense.description || '선택한 지출'} 급여 명세서 보기`}
+                      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                      href={`/salaries/${expense.salary_id}`}
+                    >
+                      <FileText className="h-3.5 w-3.5" />
+                      급여 명세서
+                    </Link>
+                  ) : null}
+                  {expense.instructor_id ? (
+                    <Link
+                      aria-label={`${expense.instructor_name || expense.description || '강사'} 강사 상세 보기`}
+                      className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                      href={`/instructors/${expense.instructor_id}`}
+                    >
+                      <UserRound className="h-3.5 w-3.5" />
+                      강사 상세
+                    </Link>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </div>
           <DialogFooter>
             {canEdit && isRefundPendingExpense(expense) ? (

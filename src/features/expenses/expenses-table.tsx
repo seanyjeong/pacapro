@@ -1,4 +1,3 @@
-import type { KeyboardEvent } from 'react';
 import { Banknote } from 'lucide-react';
 import { PAYMENT_METHOD_LABELS } from './expenses-constants';
 import { ExpenseCategoryBadge } from './expense-category-badge';
@@ -27,11 +26,7 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
         {expenses.map((expense) => (
           <article
             key={expense.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => onSelect(expense)}
-            onKeyDown={(event) => handleExpenseKeyDown(event, expense, onSelect)}
-            className="rounded-md border border-border bg-background p-4 text-left transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+            className="rounded-md border border-border bg-background p-4 text-left transition-colors hover:bg-muted/35"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -60,22 +55,22 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
               <p className="mt-4 rounded-md bg-muted/35 px-3 py-2 text-xs text-muted-foreground">{expense.notes}</p>
             ) : null}
 
-            {canEdit ? (
-              <div className="mt-4 border-t border-border/70 pt-3">
-                <ExpenseRowActions
-                  expense={expense}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onCompleteRefund={onCompleteRefund}
-                />
-              </div>
-            ) : null}
+            <div className="mt-4 border-t border-border/70 pt-3">
+              <ExpenseRowActions
+                expense={expense}
+                canEdit={canEdit}
+                onSelect={onSelect}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onCompleteRefund={onCompleteRefund}
+              />
+            </div>
           </article>
         ))}
       </div>
 
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="w-full min-w-[1040px] text-sm">
           <thead className="border-b border-border bg-muted/40">
             <tr>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">날짜</th>
@@ -83,18 +78,14 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">설명</th>
               <th className="px-5 py-3 text-right font-medium text-muted-foreground">금액</th>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">지불</th>
-              {canEdit ? <th className="px-5 py-3 text-right font-medium text-muted-foreground">관리</th> : null}
+              <th className="px-5 py-3 text-right font-medium text-muted-foreground">작업</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {expenses.map((expense) => (
               <tr
                 key={expense.id}
-                role="button"
-                tabIndex={0}
-                className="cursor-pointer transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-                onClick={() => onSelect(expense)}
-                onKeyDown={(event) => handleExpenseKeyDown(event, expense, onSelect)}
+                className="transition-colors hover:bg-muted/35"
               >
                 <td className="px-5 py-3 text-muted-foreground">{expense.expense_date.split('T')[0]}</td>
                 <td className="px-5 py-3">
@@ -107,16 +98,16 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
                 <td className="px-5 py-3 text-muted-foreground">
                   {PAYMENT_METHOD_LABELS[expense.payment_method || 'account']}
                 </td>
-                {canEdit ? (
-                  <td className="px-5 py-3">
-                    <ExpenseRowActions
-                      expense={expense}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onCompleteRefund={onCompleteRefund}
-                    />
-                  </td>
-                ) : null}
+                <td className="px-5 py-3">
+                  <ExpenseRowActions
+                    expense={expense}
+                    canEdit={canEdit}
+                    onSelect={onSelect}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onCompleteRefund={onCompleteRefund}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -124,10 +115,4 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
       </div>
     </section>
   );
-}
-
-function handleExpenseKeyDown(event: KeyboardEvent<HTMLElement>, expense: Expense, onSelect: (expense: Expense) => void) {
-  if (event.key !== 'Enter' && event.key !== ' ') return;
-  event.preventDefault();
-  onSelect(expense);
 }

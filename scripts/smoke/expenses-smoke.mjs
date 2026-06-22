@@ -118,6 +118,22 @@ async function runNormal(browser) {
   await page.getByText('Finance Desk').waitFor();
   await page.locator('tr:has-text("강남 지점 월세")').waitFor();
   await page.locator('tr:has-text("박민수 휴원 환불 대기")').waitFor();
+  const salaryRow = page.locator('tr:has-text("5월 강사 급여")');
+  await salaryRow.getByRole('button', { name: '5월 강사 급여 지출 상세 보기' }).waitFor();
+  const salaryLink = salaryRow.getByRole('link', { name: '5월 강사 급여 급여 명세서 보기' });
+  await salaryLink.waitFor();
+  if ((await salaryLink.getAttribute('href')) !== '/salaries/202') {
+    throw new Error('missing salary detail link for salary expense row');
+  }
+  const instructorLink = salaryRow.getByRole('link', { name: '이코치 강사 상세 보기' });
+  await instructorLink.waitFor();
+  if ((await instructorLink.getAttribute('href')) !== '/instructors/12') {
+    throw new Error('missing instructor detail link for salary expense row');
+  }
+  await salaryRow.getByRole('button', { name: '5월 강사 급여 지출 상세 보기' }).click();
+  await page.getByText('관련 작업').waitFor();
+  await page.getByRole('link', { name: '5월 강사 급여 급여 명세서 보기' }).last().waitFor();
+  await page.getByRole('button', { name: '닫기' }).click();
   await assertNoRawVisibleText(page, 'expenses desktop');
   await assertNoHorizontalOverflow(page, 'expenses desktop');
   await page.screenshot({ path: '/Users/etlab/paca-expenses-desktop.png', fullPage: true });
@@ -144,6 +160,10 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('article:has-text("5월 강사 급여")').waitFor();
+  const salaryCard = page.locator('article:has-text("5월 강사 급여")');
+  await salaryCard.getByRole('button', { name: '5월 강사 급여 지출 상세 보기' }).waitFor();
+  await salaryCard.getByRole('link', { name: '5월 강사 급여 급여 명세서 보기' }).waitFor();
+  await salaryCard.getByRole('link', { name: '이코치 강사 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'expenses mobile');
   await assertNoHorizontalOverflow(page, 'expenses mobile');
   await page.screenshot({ path: '/Users/etlab/paca-expenses-mobile.png', fullPage: true });
