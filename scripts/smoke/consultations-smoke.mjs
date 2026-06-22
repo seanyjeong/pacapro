@@ -161,6 +161,7 @@ async function runLoadError(browser) {
   await page.goto('/consultations', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 목록을 불러오지 못했습니다' }).waitFor();
   await page.getByText('잠시 후 다시 시도해주세요.').waitFor();
+  await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'consultations load error');
   await assertNoHorizontalOverflow(page, 'consultations load error');
   await page.screenshot({ path: '/Users/etlab/paca-consultations-error-mobile.png', fullPage: true });

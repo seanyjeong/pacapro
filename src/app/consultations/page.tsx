@@ -65,12 +65,18 @@ export default function ConsultationsPage() {
 
         {h.loadError ? (
           <section className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-              <div>
-                <h2 className="text-sm font-semibold">상담 목록을 불러오지 못했습니다</h2>
-                <p className="mt-1 text-sm">잠시 후 다시 시도해주세요.</p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <h2 className="text-sm font-semibold">상담 목록을 불러오지 못했습니다</h2>
+                  <p className="mt-1 text-sm">잠시 후 다시 시도해주세요.</p>
+                </div>
               </div>
+              <Button size="sm" variant="outline" onClick={h.loadData}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                다시 불러오기
+              </Button>
             </div>
           </section>
         ) : null}
