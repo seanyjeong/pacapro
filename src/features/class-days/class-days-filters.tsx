@@ -12,6 +12,7 @@ import {
 interface ClassDaysFiltersProps {
   filterGrade: string;
   filterWeekly: string;
+  focusedStudentName?: string | null;
   hasActiveFilters: boolean;
   onGradeChange: (value: string) => void;
   onReset: () => void;
@@ -24,6 +25,7 @@ interface ClassDaysFiltersProps {
 export function ClassDaysFilters({
   filterGrade,
   filterWeekly,
+  focusedStudentName,
   hasActiveFilters,
   onGradeChange,
   onReset,
@@ -68,6 +70,11 @@ export function ClassDaysFilters({
           </Button>
         ) : null}
       </div>
+      {focusedStudentName ? (
+        <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
+          {focusedStudentName} 집중 보기
+        </span>
+      ) : null}
       <div className="relative">
         <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input

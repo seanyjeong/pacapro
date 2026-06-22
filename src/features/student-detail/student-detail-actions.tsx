@@ -1,5 +1,6 @@
 import {
   Banknote,
+  CalendarCog,
   CalendarCheck,
   CalendarDays,
   GraduationCap,
@@ -23,6 +24,7 @@ interface StudentDetailActionsProps {
   student: StudentDetail;
   unpaidPaymentCount: number;
   onEdit: () => void;
+  onOpenClassDays: () => void;
   onOpenAction: (action: StudentDetailAction) => void;
   onOpenTab: (tab: StudentDetailTab) => void;
   onResume: () => void;
@@ -45,6 +47,7 @@ export function StudentDetailActions({
   student,
   unpaidPaymentCount,
   onEdit,
+  onOpenClassDays,
   onOpenAction,
   onOpenTab,
   onResume,
@@ -62,6 +65,12 @@ export function StudentDetailActions({
       icon: CalendarDays,
       label: '수업/학원비 변경',
       onClick: onEdit,
+    },
+    {
+      description: '요일별 수업일과 시간대를 바로 바꿉니다.',
+      icon: CalendarCog,
+      label: '수업일관리',
+      onClick: onOpenClassDays,
     },
     {
       description: '학부모 번호를 선택한 개별 문자 작성 화면으로 이동합니다.',

@@ -320,6 +320,7 @@ async function runNormalDesktop(browser) {
   await page.getByText('기타 정보', { exact: true }).waitFor();
   await page.getByRole('heading', { name: '운영 액션' }).waitFor();
   await page.getByRole('button', { name: '수업/학원비 변경' }).waitFor();
+  await page.getByRole('button', { name: '수업일관리' }).waitFor();
   await page.getByRole('button', { name: '문자 보내기' }).waitFor();
   await page.getByRole('button', { name: '납부 내역 보기' }).waitFor();
   await page.getByText('2026-06', { exact: true }).waitFor();
@@ -389,6 +390,7 @@ async function runNormalMobile(browser) {
   await page.getByText('김진우').first().waitFor();
   await page.getByRole('heading', { name: '운영 액션' }).waitFor();
   await page.getByRole('button', { name: '수업/학원비 변경' }).waitFor();
+  await page.getByRole('button', { name: '수업일관리' }).waitFor();
   await page.getByText('2026-06', { exact: true }).waitFor();
   await assertNoRawVisibleText(page, 'student detail mobile');
   await assertNoHorizontalOverflow(page, 'student detail mobile');

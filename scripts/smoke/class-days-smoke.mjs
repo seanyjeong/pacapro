@@ -136,6 +136,25 @@ async function runDesktopSave(browser) {
   return result;
 }
 
+async function runFocusedStudent(browser) {
+  const result = await createClassDaysPage(browser, 'success');
+  const { context, page } = result;
+
+  await page.goto('/students/class-days?studentId=41', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
+  await page.getByText('김진우 집중 보기').waitFor();
+  await page.locator('tbody tr').filter({ hasText: '김진우' }).waitFor();
+  const visibleRows = await page.locator('tbody tr').filter({ hasNotText: '표시할 학생이 없습니다.' }).count();
+  if (visibleRows !== 1) throw new Error(`focused class-days row count mismatch: ${visibleRows}`);
+  if (await page.getByText('박서연').count()) throw new Error('focused class-days view includes another student');
+  await assertNoRawVisibleText(page, 'class days focused student');
+  await assertNoHorizontalOverflow(page, 'class days focused student');
+  await page.screenshot({ path: '/Users/etlab/paca-class-days-focused-student.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 async function runSaveError(browser) {
   const result = await createClassDaysPage(browser, 'save-error');
   const { context, page } = result;
@@ -179,11 +198,13 @@ async function main() {
   const browser = await launchSmokeBrowser();
   try {
     const desktop = await runDesktopSave(browser);
+    const focusedStudent = await runFocusedStudent(browser);
     const saveError = await runSaveError(browser);
     const loadError = await runLoadError(browser);
-    [desktop, saveError, loadError].forEach(assertDiagnostics);
+    [desktop, focusedStudent, saveError, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
+      focusedStudentHits: focusedStudent.state.hits,
       bulkPayload: desktop.state.bulkPayload,
       saveErrorHits: saveError.state.hits,
       errorConsoleErrors: loadError.diagnostics.consoleErrors,

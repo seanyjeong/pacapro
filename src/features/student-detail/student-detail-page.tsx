@@ -42,6 +42,10 @@ export function StudentDetailPage() {
     router.push(`/students/${studentId}/edit`);
   };
 
+  const handleOpenClassDays = () => {
+    router.push(`/students/class-days?studentId=${studentId}`);
+  };
+
   const handleSendSms = () => {
     router.push(`/sms?studentId=${studentId}&recipient=parent`);
   };
@@ -106,6 +110,7 @@ export function StudentDetailPage() {
         student={student}
         unpaidPaymentCount={unpaidPaymentCount}
         onEdit={handleEdit}
+        onOpenClassDays={handleOpenClassDays}
         onOpenAction={setPendingAction}
         onOpenTab={setActiveTab}
         onResume={() => setResumeModalOpen(true)}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { studentsAPI } from '@/lib/api/students';
 import type { ClassDaysStudent, ClassDaySlot } from '@/lib/types/student';
@@ -17,6 +18,8 @@ import type { StudentEdit, TimeSlot } from './class-days-types';
 import { filterAndSortClassDaysStudents, getEffectiveMonthOptions } from './class-days-utils';
 
 export function ClassDaysPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [students, setStudents] = useState<ClassDaysStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -29,12 +32,18 @@ export function ClassDaysPage() {
   const [filterGrade, setFilterGrade] = useState('all');
   const [filterWeekly, setFilterWeekly] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const requestedStudentId = Number.parseInt(searchParams.get('studentId') || '', 10);
+  const focusedStudentId = Number.isFinite(requestedStudentId) ? requestedStudentId : null;
 
   const monthOptions = useMemo(() => getEffectiveMonthOptions(), []);
   const filteredStudents = useMemo(
-    () => filterAndSortClassDaysStudents(students, filterGrade, filterWeekly, searchQuery),
-    [students, filterGrade, filterWeekly, searchQuery]
+    () => filterAndSortClassDaysStudents(students, filterGrade, filterWeekly, searchQuery, focusedStudentId),
+    [focusedStudentId, students, filterGrade, filterWeekly, searchQuery]
   );
+  const focusedStudentName = useMemo(() => {
+    if (focusedStudentId === null) return null;
+    return students.find((student) => student.id === focusedStudentId)?.name || '선택 학생';
+  }, [focusedStudentId, students]);
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -225,11 +234,14 @@ export function ClassDaysPage() {
     setFilterGrade('all');
     setFilterWeekly('all');
     setSearchQuery('');
+    if (focusedStudentId !== null) {
+      router.replace('/students/class-days');
+    }
   };
 
   const changedCount = Array.from(edits.values()).filter((edit) => edit.changed).length;
   const scheduledCount = students.filter((student) => student.class_days_next !== null).length;
-  const hasActiveFilters = filterGrade !== 'all' || filterWeekly !== 'all' || searchQuery;
+  const hasActiveFilters = filterGrade !== 'all' || filterWeekly !== 'all' || searchQuery || focusedStudentId !== null;
 
   if (loading) {
     return <ClassDaysLoading />;
@@ -255,6 +267,7 @@ export function ClassDaysPage() {
       <ClassDaysFilters
         filterGrade={filterGrade}
         filterWeekly={filterWeekly}
+        focusedStudentName={focusedStudentName}
         searchQuery={searchQuery}
         resultCount={filteredStudents.length}
         hasActiveFilters={!!hasActiveFilters}

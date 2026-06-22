@@ -30,12 +30,14 @@ export function filterAndSortClassDaysStudents(
   students: ClassDaysStudent[],
   filterGrade: string,
   filterWeekly: string,
-  searchQuery: string
+  searchQuery: string,
+  focusedStudentId: number | null = null
 ) {
   const q = searchQuery.trim().toLowerCase();
 
   return students
     .filter((student) => {
+      if (focusedStudentId !== null && student.id !== focusedStudentId) return false;
       if (filterGrade !== 'all' && student.grade !== filterGrade) return false;
       if (filterWeekly !== 'all' && student.weekly_count !== Number(filterWeekly)) return false;
       if (q && !student.name.toLowerCase().includes(q)) return false;
