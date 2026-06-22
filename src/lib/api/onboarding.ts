@@ -1,7 +1,7 @@
 /**
  * 온보딩 API 클라이언트
  */
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 
 export interface OnboardingStatus {
     onboarding_completed: boolean;
@@ -60,35 +60,38 @@ export const onboardingAPI = {
     /**
      * 온보딩 완료 여부 확인
      */
-    getStatus: async (): Promise<OnboardingStatus> => {
-        return await apiClient.get<OnboardingStatus>('/onboarding/status');
+    getStatus: async (config?: APIRequestConfig): Promise<OnboardingStatus> => {
+        return await apiClient.get<OnboardingStatus>('/onboarding/status', config);
     },
 
     /**
      * 온보딩에 필요한 기존 데이터 조회
      */
-    getData: async (): Promise<OnboardingData> => {
-        return await apiClient.get<OnboardingData>('/onboarding/data');
+    getData: async (config?: APIRequestConfig): Promise<OnboardingData> => {
+        return await apiClient.get<OnboardingData>('/onboarding/data', config);
     },
 
     /**
      * 온보딩 완료 처리
      */
-    complete: async (payload: OnboardingCompletePayload): Promise<{ success: boolean; message: string }> => {
-        return await apiClient.post<{ success: boolean; message: string }>('/onboarding/complete', payload);
+    complete: async (
+        payload: OnboardingCompletePayload,
+        config?: APIRequestConfig
+    ): Promise<{ success: boolean; message: string }> => {
+        return await apiClient.post<{ success: boolean; message: string }>('/onboarding/complete', payload, config);
     },
 
     /**
      * 샘플 데이터 생성
      */
-    createSampleData: async (): Promise<SampleDataResult> => {
-        return await apiClient.post<SampleDataResult>('/onboarding/sample-data');
+    createSampleData: async (config?: APIRequestConfig): Promise<SampleDataResult> => {
+        return await apiClient.post<SampleDataResult>('/onboarding/sample-data', undefined, config);
     },
 
     /**
      * 온보딩 건너뛰기
      */
-    skip: async (): Promise<{ success: boolean; message: string }> => {
-        return await apiClient.post<{ success: boolean; message: string }>('/onboarding/skip');
+    skip: async (config?: APIRequestConfig): Promise<{ success: boolean; message: string }> => {
+        return await apiClient.post<{ success: boolean; message: string }>('/onboarding/skip', undefined, config);
     }
 };
