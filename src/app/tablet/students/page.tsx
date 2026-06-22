@@ -7,15 +7,14 @@
  */
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Users, UserCheck, UserX, Sparkles, Clock, Loader2, School, GraduationCap, RefreshCw, Search, X } from 'lucide-react';
+import { AlertCircle, Clock, Loader2, RefreshCw, Search, Sparkles, UserCheck, Users, X } from 'lucide-react';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
-import { StudentListTable } from '@/components/students/student-list-table';
 import { TrialStudentList } from '@/components/students/trial-student-list';
 import { PendingStudentList } from '@/components/students/pending-student-list';
+import { TabletStudentCardList } from '@/features/tablet-students/tablet-student-card-list';
 import { useStudents } from '@/hooks/use-students';
 import { cn } from '@/lib/utils';
 import type { StudentStatus } from '@/lib/types/student';
@@ -25,7 +24,6 @@ type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending' | 'gra
 
 // 내부 컴포넌트 (useSearchParams 사용)
 function TabletStudentsPageContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab') as StudentTab | null;
 
@@ -51,7 +49,7 @@ function TabletStudentsPageContent() {
   };
 
   // useStudents 훅 사용
-  const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents({
+  const { students, loading, error, updateFilters, reload } = useStudents({
     status: getStatusFromTab(initialTab),
     is_trial: undefined
   });
@@ -65,17 +63,12 @@ function TabletStudentsPageContent() {
   // 탭 변경 시 필터 업데이트
   useEffect(() => {
     updateFilters({ status: activeTab as StudentStatus, is_trial: undefined });
-  }, [activeTab]);
+  }, [activeTab, updateFilters]);
 
   // 검색어 필터링 적용
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     updateFilters({ search: query });
-  };
-
-  // 학생 클릭 → 상세 페이지로 이동
-  const handleStudentClick = (id: number) => {
-    router.push(`/tablet/students/${id}`);
   };
 
   // 에러 화면
@@ -90,8 +83,8 @@ function TabletStudentsPageContent() {
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">학생 정보를 불러오지 못했습니다</h3>
+            <p className="text-muted-foreground mb-4">잠시 후 다시 시도해주세요.</p>
             <Button onClick={handleReload}>다시 시도</Button>
           </CardContent>
         </Card>
@@ -123,7 +116,7 @@ function TabletStudentsPageContent() {
 
       {/* 탭 네비게이션 */}
       <div className="border-b border-border">
-        <nav className="-mb-px flex space-x-6 overflow-x-auto">
+        <nav aria-label="학생 상태" className="-mb-px flex space-x-6 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -192,11 +185,9 @@ function TabletStudentsPageContent() {
           onReload={handleReload}
         />
       ) : (
-        <StudentListTable
+        <TabletStudentCardList
           students={students}
           loading={loading}
-          onStudentClick={handleStudentClick}
-          hideMonthlyTuition
         />
       )}
 
