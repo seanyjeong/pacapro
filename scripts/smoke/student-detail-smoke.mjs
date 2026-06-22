@@ -343,7 +343,7 @@ async function runNormalDesktop(browser) {
   await page.getByRole('button', { name: '크레딧 추가' }).click();
   await page.getByRole('heading', { name: '크레딧 관리' }).waitFor();
   await page.getByRole('button', { name: '크레딧 목록' }).click();
-  await page.getByText('휴원 기간 이월').waitFor();
+  await page.getByText('휴원 기간 이월').first().waitFor();
   const deleteCreditButton = page.getByRole('button', { name: '크레딧 삭제' });
   await clickWithoutNativeDialog(page, deleteCreditButton, 'manual credit deletion');
   await page.getByRole('alertdialog').getByRole('heading', { name: '크레딧 삭제' }).waitFor();

@@ -217,10 +217,13 @@ async function runMobile(browser) {
   await page.getByRole('heading', { name: '학생 운영' }).waitFor();
   const detailButton = page.getByRole('button', { name: '김진우 상세 보기' });
   await detailButton.waitFor();
-  await detailButton.scrollIntoViewIfNeeded();
+  await page.getByText('김진우').first().waitFor();
+  await page.getByText('010-1111-2222').first().waitFor();
+  await page.getByText('월 학원비').first().waitFor();
   await assertNoRawVisibleText(page, 'students mobile');
   await assertNoHorizontalOverflow(page, 'students mobile');
   await page.screenshot({ path: '/Users/etlab/paca-students-mobile.png', fullPage: true });
+  await detailButton.scrollIntoViewIfNeeded();
 
   await context.close();
   return result;
