@@ -12,7 +12,8 @@
     "smoke:payment-detail": "node scripts/smoke/payment-detail-smoke.mjs",
     "smoke:payment-editor": "node scripts/smoke/payment-editor-smoke.mjs",
     "smoke:reports": "node scripts/smoke/reports-smoke.mjs",
-    "smoke:season-detail": "node scripts/smoke/season-detail-smoke.mjs"
+    "smoke:season-detail": "node scripts/smoke/season-detail-smoke.mjs",
+    "smoke:season-enroll": "node scripts/smoke/season-enroll-smoke.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
