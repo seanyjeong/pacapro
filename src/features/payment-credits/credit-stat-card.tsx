@@ -9,25 +9,25 @@ interface CreditStatCardProps {
 }
 
 const toneClasses = {
-  default: 'text-foreground bg-muted text-muted-foreground',
-  orange: 'text-orange-700 bg-orange-50 text-orange-600',
-  green: 'text-emerald-700 bg-emerald-50 text-emerald-600',
-  blue: 'text-blue-700 bg-blue-50 text-blue-600',
+  default: { value: 'text-foreground', iconBg: 'bg-muted', icon: 'text-muted-foreground' },
+  orange: { value: 'text-orange-700 dark:text-orange-300', iconBg: 'bg-orange-50', icon: 'text-orange-600 dark:text-orange-300' },
+  green: { value: 'text-emerald-700 dark:text-emerald-300', iconBg: 'bg-emerald-50', icon: 'text-emerald-600 dark:text-emerald-300' },
+  blue: { value: 'text-blue-700 dark:text-blue-300', iconBg: 'bg-blue-50', icon: 'text-blue-600 dark:text-blue-300' },
 };
 
 export function CreditStatCard({ label, value, detail, icon: Icon, tone = 'default' }: CreditStatCardProps) {
-  const [valueClass, iconBgClass, iconClass] = toneClasses[tone].split(' ');
+  const toneClass = toneClasses[tone];
 
   return (
-    <section className="rounded-lg border border-border/70 bg-card p-5 shadow-none">
+    <section className="rounded-md border border-border bg-card p-5 shadow-none">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">{label}</p>
-          <p className={`mt-2 text-2xl font-semibold ${valueClass}`}>{value}</p>
+          <p className={`mt-2 text-2xl font-semibold ${toneClass.value}`}>{value}</p>
           <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
         </div>
-        <div className={`rounded-md border border-border/60 p-2 ${iconBgClass}`}>
-          <Icon className={`h-4 w-4 ${iconClass}`} />
+        <div className={`rounded-md border border-border/60 p-2 ${toneClass.iconBg} dark:bg-muted/40`}>
+          <Icon className={`h-4 w-4 ${toneClass.icon}`} />
         </div>
       </div>
     </section>

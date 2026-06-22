@@ -10,7 +10,7 @@ export function CreditsStudentsSection({ students }: CreditsStudentsSectionProps
   if (students.length === 0) return null;
 
   return (
-    <section className="rounded-lg border border-border/70 bg-card p-4 shadow-none" aria-label="크레딧 보유 학생">
+    <section className="rounded-md border border-border bg-card p-4 shadow-none" aria-label="크레딧 보유 학생">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-sm font-medium text-foreground">크레딧 보유 학생</h2>
         <span className="text-xs text-muted-foreground">{students.length}명</span>

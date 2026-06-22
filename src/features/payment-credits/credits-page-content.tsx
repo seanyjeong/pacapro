@@ -22,7 +22,7 @@ export function CreditsPageContent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
       <CreditsHeader loading={state.loading} onReload={state.reload} />
       <CreditsSummaryStrip stats={state.stats} studentsWithCredit={state.studentsWithCredit} />
       <CreditsStudentsSection students={state.studentsWithCredit} />
