@@ -12,7 +12,6 @@ import type {
 import { toast } from 'sonner';
 
 const QUIET_REQUEST = { suppressErrorToast: true };
-const SCHEDULE_SAVE_ERROR = '수업 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
 
 const QUERY_KEYS = {
   schedules: (filters?: ScheduleFilters) => ['schedules', filters] as const,
@@ -80,9 +79,6 @@ export function useCreateSchedule() {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
       toast.success('수업이 등록되었습니다.');
     },
-    onError: () => {
-      toast.error(SCHEDULE_SAVE_ERROR);
-    },
   });
 }
 
@@ -99,9 +95,6 @@ export function useUpdateSchedule() {
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.schedule(variables.id) });
       toast.success('수업이 수정되었습니다.');
-    },
-    onError: () => {
-      toast.error(SCHEDULE_SAVE_ERROR);
     },
   });
 }

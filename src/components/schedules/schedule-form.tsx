@@ -7,6 +7,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -96,8 +97,17 @@ export function ScheduleForm({
       <CardContent className="p-4">
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
           {loadError && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
-              {loadError}
+            <div
+              className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+              role="alert"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold">강사 목록 확인 필요</h2>
+                  <p className="text-sm">{loadError}</p>
+                </div>
+              </div>
             </div>
           )}
 
@@ -198,8 +208,17 @@ export function ScheduleForm({
           </div>
 
           {submitError && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-200">
-              {submitError}
+            <div
+              className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+              role="alert"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                <div className="space-y-1">
+                  <h2 className="text-sm font-semibold">저장 실패</h2>
+                  <p className="text-sm">{submitError}</p>
+                </div>
+              </div>
             </div>
           )}
 

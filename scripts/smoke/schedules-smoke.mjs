@@ -246,6 +246,7 @@ async function runDetailLoadError(browser) {
   await page.getByText('수업 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'schedule detail load error');
   await assertNoHorizontalOverflow(page, 'schedule detail load error');
+  await page.screenshot({ path: '/Users/etlab/paca-schedule-detail-error-mobile.png', fullPage: true });
 
   await context.close();
   return result;
@@ -259,9 +260,11 @@ async function runCreateSaveError(browser) {
   await page.getByRole('heading', { level: 1, name: '수업 등록' }).waitFor();
   await fillScheduleForm(page, '신규 등록 실패 테스트');
   await page.locator('form button[type="submit"]').click();
+  await page.locator('form').getByText('저장 실패').waitFor();
   await page.locator('form').getByText('수업 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'schedule create save error');
   await assertNoHorizontalOverflow(page, 'schedule create save error');
+  await page.screenshot({ path: '/Users/etlab/paca-schedule-create-error-mobile.png', fullPage: true });
 
   await context.close();
   return result;
@@ -275,9 +278,11 @@ async function runEditSaveError(browser) {
   await page.getByRole('heading', { level: 1, name: '수업 수정' }).waitFor();
   await page.locator('#title').fill('수정 실패 테스트');
   await page.locator('form button[type="submit"]').click();
+  await page.locator('form').getByText('저장 실패').waitFor();
   await page.locator('form').getByText('수업 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'schedule edit save error');
   await assertNoHorizontalOverflow(page, 'schedule edit save error');
+  await page.screenshot({ path: '/Users/etlab/paca-schedule-edit-error-mobile.png', fullPage: true });
 
   await context.close();
   return result;
@@ -291,6 +296,7 @@ async function runAttendanceLoadError(browser) {
   await page.getByText('출석 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'schedule attendance load error');
   await assertNoHorizontalOverflow(page, 'schedule attendance load error');
+  await page.screenshot({ path: '/Users/etlab/paca-schedule-attendance-error-mobile.png', fullPage: true });
 
   await context.close();
   return result;

@@ -5,9 +5,9 @@
  */
 
 import { useRouter, useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { AlertCircle, ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { ScheduleCard } from '@/components/schedules/schedule-card';
+import { SchedulePageHeader } from '@/features/schedules/schedule-page-header';
+import { ScheduleErrorPanel, ScheduleLoadingPanel } from '@/features/schedules/schedule-page-states';
 import { useSchedule, useDeleteSchedule } from '@/hooks/use-schedules';
 
 const SCHEDULE_LOAD_ERROR = '수업 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
@@ -35,8 +35,8 @@ export default function ScheduleDetailPage() {
     try {
       await deleteSchedule.mutateAsync(scheduleId);
       router.push('/schedules');
-    } catch (error) {
-      console.error('Failed to delete schedule:', error);
+    } catch {
+      // Korean user-facing error is handled by the mutation toast.
     }
   };
 
@@ -47,17 +47,13 @@ export default function ScheduleDetailPage() {
   if (isLoading) {
     return (
       <div className="mx-auto w-full max-w-4xl space-y-5 py-4 md:py-8">
-        <header className="border-b border-border/70 pb-4">
-          <Button size="sm" type="button" variant="outline" onClick={() => router.push('/schedules')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            목록으로
-          </Button>
-          <p className="mt-3 text-xs font-semibold uppercase tracking-normal text-muted-foreground">Schedule Detail</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">수업 상세</h1>
-        </header>
-        <section className="flex min-h-[280px] items-center justify-center rounded-md border border-border bg-card p-6">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </section>
+        <SchedulePageHeader
+          description="수업 정보를 불러오는 중입니다."
+          eyebrow="Schedule Detail"
+          onBack={() => router.push('/schedules')}
+          title="수업 상세"
+        />
+        <ScheduleLoadingPanel message="수업 정보를 불러오는 중입니다." />
       </div>
     );
   }
@@ -65,44 +61,25 @@ export default function ScheduleDetailPage() {
   if (error || !schedule) {
     return (
       <div className="mx-auto w-full max-w-4xl space-y-5 py-4 md:py-8">
-        <header className="border-b border-border/70 pb-4">
-          <Button size="sm" type="button" variant="outline" onClick={() => router.push('/schedules')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            목록으로
-          </Button>
-          <p className="mt-3 text-xs font-semibold uppercase tracking-normal text-muted-foreground">Schedule Detail</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">수업 상세</h1>
-        </header>
-        <section className="flex min-h-[280px] items-center justify-center rounded-md border border-red-200 bg-red-50 p-6 text-center text-red-950 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-100">
-          <div>
-            <AlertCircle className="mx-auto h-9 w-9" />
-            <h2 className="mt-4 text-base font-semibold">{SCHEDULE_LOAD_ERROR}</h2>
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-              <Button variant="outline" onClick={() => router.push('/schedules')}>
-                목록으로
-              </Button>
-              <Button className="gap-2" onClick={() => refetch()}>
-                <RefreshCw className="h-4 w-4" />
-                다시 불러오기
-              </Button>
-            </div>
-          </div>
-        </section>
+        <SchedulePageHeader
+          description="수업 정보를 다시 불러올 수 있습니다."
+          eyebrow="Schedule Detail"
+          onBack={() => router.push('/schedules')}
+          title="수업 상세"
+        />
+        <ScheduleErrorPanel message={SCHEDULE_LOAD_ERROR} onRetry={() => refetch()} title="수업 정보를 불러오지 못했습니다" />
       </div>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-5 py-4 md:py-8">
-      <header className="border-b border-border/70 pb-4">
-        <Button size="sm" type="button" variant="outline" onClick={() => router.push('/schedules')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          목록으로
-        </Button>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-normal text-muted-foreground">Schedule Detail</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">수업 상세</h1>
-        <p className="mt-1 text-sm text-muted-foreground">수업 정보와 출석 처리 상태를 확인합니다.</p>
-      </header>
+      <SchedulePageHeader
+        description="수업 정보와 출석 처리 상태를 확인합니다."
+        eyebrow="Schedule Detail"
+        onBack={() => router.push('/schedules')}
+        title="수업 상세"
+      />
 
       <ScheduleCard
         schedule={schedule}
