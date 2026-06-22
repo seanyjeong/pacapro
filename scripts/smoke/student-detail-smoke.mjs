@@ -146,6 +146,13 @@ async function runNormalDesktop(browser) {
   await page.getByRole('heading', { name: '학생 상세' }).waitFor({ timeout: 15000 });
   await page.getByText('김진우').first().waitFor();
   await page.getByText('S-2026-041').waitFor();
+  await page.getByText('수업 및 학원비', { exact: true }).waitFor();
+  await page.getByText('연락처', { exact: true }).waitFor();
+  await page.getByText('기타 정보', { exact: true }).waitFor();
+  await page.getByText('성적 기록이 없습니다').waitFor();
+  if (await page.getByText('개발 중').count()) {
+    throw new Error('student detail exposes internal development copy');
+  }
   await assertNoRawVisibleText(page, 'student detail desktop');
   await assertNoHorizontalOverflow(page, 'student detail desktop');
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-desktop.png', fullPage: true });
@@ -165,6 +172,7 @@ async function runNormalMobile(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
   await page.getByText('김진우').first().waitFor();
+  await page.getByText('성적 기록이 없습니다').waitFor();
   await assertNoRawVisibleText(page, 'student detail mobile');
   await assertNoHorizontalOverflow(page, 'student detail mobile');
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-mobile.png', fullPage: true });
@@ -178,7 +186,10 @@ async function runError(browser) {
   const { context, page } = result;
 
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 상세' }).waitFor({ timeout: 15000 });
   await page.getByText('학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor({ timeout: 15000 });
+  await page.getByRole('button', { name: '목록으로' }).waitFor();
+  await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'student detail error');
   await assertNoHorizontalOverflow(page, 'student detail error');
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-error-mobile.png', fullPage: true });

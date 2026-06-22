@@ -1,172 +1,157 @@
-/**
- * Student Card Component
- * 학생 기본 정보 카드
- */
-
+import { Calendar, MapPin, NotebookText, Phone, UserRound } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Phone, Mail, MapPin, Calendar, Banknote } from 'lucide-react';
 import type { StudentDetail } from '@/lib/types/student';
 import {
-  formatStudentNumber,
-  formatPhoneNumber,
-  getStudentDisplayInfo,
+  ADMISSION_TYPE_LABELS,
+  GENDER_LABELS,
+  STATUS_LABELS,
+  STUDENT_TYPE_LABELS,
+} from '@/lib/types/student';
+import {
+  calculateDiscountedTuition,
   formatClassDays,
   formatCurrency,
   formatDate,
+  formatPhoneNumber,
+  formatStudentNumber,
   getStatusColor,
-  calculateDiscountedTuition,
+  getStudentDisplayInfo,
 } from '@/lib/utils/student-helpers';
-import {
-  ADMISSION_TYPE_LABELS,
-  STATUS_LABELS,
-  STUDENT_TYPE_LABELS,
-  GENDER_LABELS,
-} from '@/lib/types/student';
 
 interface StudentCardProps {
   student: StudentDetail;
 }
 
 export function StudentCard({ student }: StudentCardProps) {
+  const discountRate = Number.parseFloat(student.discount_rate) || 0;
   const discountedTuition = calculateDiscountedTuition(student.monthly_tuition, student.discount_rate);
+  const academyName = student.academy_name || 'P-ACA';
 
   return (
     <Card className="rounded-md shadow-none">
       <CardHeader className="border-b border-border pb-4">
-        <div className="flex items-center justify-between gap-3">
-          <CardTitle>학생 정보</CardTitle>
-          <span className="text-xs font-medium text-muted-foreground">{student.academy_name || 'P-ACA'}</span>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="text-base font-semibold">학생 정보</CardTitle>
+            <p className="mt-1 text-xs text-muted-foreground">{academyName} 기준의 등록 정보입니다.</p>
+          </div>
+          <StatusBadge status={student.status} />
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          {/* 프로필 */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-slate-900">
-              <span className="text-white font-bold text-3xl">{student.name.charAt(0)}</span>
-            </div>
-            <div className="flex-1">
-              <div className="mb-2 flex flex-wrap items-center gap-2">
-                <h2 className="text-2xl font-bold text-foreground">{student.name}</h2>
-                <span
-                  className={`inline-flex rounded-md border px-2.5 py-1 text-sm font-medium ${getStatusColor(
-                    student.status
-                  )}`}
-                >
-                  {STATUS_LABELS[student.status]}
-                </span>
-              </div>
-              <div className="text-muted-foreground space-y-1">
-                <p className="text-base">학번: {formatStudentNumber(student.student_number)}</p>
-                <p>
-                  <span className={`mr-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
-                    student.student_type === 'exam' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                  }`}>
-                    {STUDENT_TYPE_LABELS[student.student_type]}
-                  </span>
-                  {student.gender && (
-                    <span className={`mr-2 inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${
-                      student.gender === 'male' ? 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200' : 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200'
-                    }`}>
-                      {GENDER_LABELS[student.gender]}
-                    </span>
-                  )}
-                  {getStudentDisplayInfo(student)} • {ADMISSION_TYPE_LABELS[student.admission_type]}
-                </p>
-                {student.school && <p>학교: {student.school}</p>}
-              </div>
-            </div>
+      <CardContent className="space-y-6 p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-slate-950 text-lg font-semibold text-slate-50">
+            {student.name.charAt(0)}
           </div>
-
-          {/* 연락처 정보 */}
-          <div className="grid grid-cols-1 gap-4 rounded-md border border-border bg-muted/40 p-4 md:grid-cols-2">
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">학생 연락처</div>
-              <a href={student.phone ? `tel:${student.phone}` : undefined} className="flex items-center text-foreground">
-                <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
-                {formatPhoneNumber(student.phone)}
-              </a>
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-semibold text-foreground">{student.name}</h2>
+              <span className="text-sm text-muted-foreground">학번: {displayValue(formatStudentNumber(student.student_number))}</span>
             </div>
-            <div>
-              <div className="text-sm text-muted-foreground mb-1">학부모 연락처</div>
-              <div className="flex items-center text-foreground">
-                <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
-                {formatPhoneNumber(student.parent_phone)}
-              </div>
+            <div className="flex flex-wrap gap-1.5">
+              <QuietBadge>{STUDENT_TYPE_LABELS[student.student_type]}</QuietBadge>
+              {student.gender ? <QuietBadge>{GENDER_LABELS[student.gender]}</QuietBadge> : null}
+              <QuietBadge>{getStudentDisplayInfo(student)}</QuietBadge>
+              <QuietBadge>{ADMISSION_TYPE_LABELS[student.admission_type]}</QuietBadge>
             </div>
-          </div>
-
-          {/* 수업 정보 */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">수업 정보</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-start">
-                <Calendar className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
-                <div>
-                  <div className="text-sm text-muted-foreground">수업 요일</div>
-                  <div className="text-foreground font-medium">
-                    {formatClassDays(student.class_days)} (주 {student.weekly_count}회)
-                  </div>
-                  {student.class_days_next && student.class_days_effective_from && (
-                    <div className="text-xs text-orange-600 mt-1">
-                      변경 예정: {formatClassDays(student.class_days_next)} ({student.class_days_effective_from.slice(0, 7)}~)
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-start">
-                <Banknote className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
-                <div>
-                  <div className="text-sm text-muted-foreground">월 학원비</div>
-                  <div className="text-foreground font-medium">
-                    {formatCurrency(student.monthly_tuition)}
-                    {parseFloat(student.discount_rate) > 0 && (
-                      <>
-                        <span className="text-red-500 text-sm ml-2">({student.discount_rate}% 할인)</span>
-                        <div className="text-sm text-primary-600 font-semibold">
-                          실납부: {formatCurrency(discountedTuition)}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 기타 정보 */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">기타 정보</h3>
-            <div className="space-y-3">
-              {student.address && (
-                <div className="flex items-start">
-                  <MapPin className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">주소</div>
-                    <div className="text-foreground">{student.address}</div>
-                  </div>
-                </div>
-              )}
-              <div className="flex items-start">
-                <Calendar className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
-                <div>
-                  <div className="text-sm text-muted-foreground">등록일</div>
-                  <div className="text-foreground">{formatDate(student.enrollment_date)}</div>
-                </div>
-              </div>
-              {student.notes && (
-                <div className="flex items-start">
-                  <Mail className="w-5 h-5 mr-3 text-muted-foreground mt-0.5" />
-                  <div>
-                    <div className="text-sm text-muted-foreground">메모</div>
-                    <div className="text-foreground whitespace-pre-wrap">{student.notes}</div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {student.school ? <p className="text-sm text-muted-foreground">학교: {student.school}</p> : null}
           </div>
         </div>
+
+        <section className="rounded-md border border-border bg-muted/30 p-4">
+          <SectionTitle icon={Phone} title="연락처" />
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <DetailRow label="학생 연락처" value={displayValue(formatPhoneNumber(student.phone))} />
+            <DetailRow label="학부모 연락처" value={displayValue(formatPhoneNumber(student.parent_phone))} />
+          </div>
+        </section>
+
+        <section className="rounded-md border border-border bg-muted/30 p-4">
+          <SectionTitle icon={Calendar} title="수업 및 학원비" />
+          <div className="mt-3 grid gap-4 md:grid-cols-2">
+            <DetailRow
+              label="수업 요일"
+              value={`${formatClassDays(student.class_days)} (주 ${student.weekly_count}회)`}
+              helper={getNextClassDaysText(student)}
+            />
+            <DetailRow
+              label="월 학원비"
+              value={formatCurrency(student.monthly_tuition)}
+              helper={discountRate > 0 ? `${discountRate}% 할인, 실납부 ${formatCurrency(discountedTuition)}` : undefined}
+            />
+          </div>
+        </section>
+
+        <section className="rounded-md border border-border bg-muted/30 p-4">
+          <SectionTitle icon={NotebookText} title="기타 정보" />
+          <div className="mt-3 grid gap-4 md:grid-cols-2">
+            <DetailRow icon={MapPin} label="주소" value={displayValue(student.address)} />
+            <DetailRow icon={Calendar} label="등록일" value={displayValue(formatDate(student.enrollment_date))} />
+            {student.notes ? (
+              <DetailRow className="md:col-span-2" label="메모" value={student.notes} />
+            ) : null}
+          </div>
+        </section>
       </CardContent>
     </Card>
   );
+}
+
+function StatusBadge({ status }: { status: StudentDetail['status'] }) {
+  return (
+    <span className={`inline-flex w-fit rounded-md border px-2.5 py-1 text-xs font-medium ${getStatusColor(status)}`}>
+      {STATUS_LABELS[status]}
+    </span>
+  );
+}
+
+function QuietBadge({ children }: { children: string }) {
+  return (
+    <span className="inline-flex rounded-md border border-border bg-background px-2 py-0.5 text-xs font-medium text-muted-foreground">
+      {children}
+    </span>
+  );
+}
+
+function SectionTitle({ icon: Icon, title }: { icon: typeof UserRound; title: string }) {
+  return (
+    <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      {title}
+    </div>
+  );
+}
+
+function DetailRow({
+  className,
+  helper,
+  icon: Icon,
+  label,
+  value,
+}: {
+  className?: string;
+  helper?: string;
+  icon?: typeof UserRound;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className={className}>
+      <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+        {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+        {label}
+      </div>
+      <div className="mt-1 text-sm font-medium text-foreground">{value}</div>
+      {helper ? <div className="mt-1 text-xs text-muted-foreground">{helper}</div> : null}
+    </div>
+  );
+}
+
+function displayValue(value: string | null | undefined) {
+  return value && value.trim().length > 0 ? value : '-';
+}
+
+function getNextClassDaysText(student: StudentDetail) {
+  if (!student.class_days_next || !student.class_days_effective_from) return undefined;
+  return `변경 예정: ${formatClassDays(student.class_days_next)} (${student.class_days_effective_from.slice(0, 7)}부터)`;
 }

@@ -1,5 +1,6 @@
-import { AlertCircle, ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { StudentDetailHeader } from './student-detail-header';
 
 interface StudentDetailStateProps {
   message?: string | null;
@@ -10,15 +11,24 @@ interface StudentDetailStateProps {
 export function StudentDetailLoading({ onBack }: StudentDetailStateProps) {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
-      <Button size="sm" type="button" variant="outline" onClick={onBack}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        목록으로
-      </Button>
-      <section className="rounded-md border border-border bg-card p-8">
-        <div className="flex min-h-[260px] items-center justify-center">
-          <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            학생 정보를 불러오는 중입니다
+      <StudentDetailHeader description="학생 상세 정보를 불러오는 중입니다." onBack={onBack} />
+      <section className="rounded-md border border-border bg-card p-5">
+        <div className="grid gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="rounded-md border border-border/70 p-4">
+              <div className="h-3 w-16 rounded-md bg-muted" />
+              <div className="mt-3 h-5 w-28 rounded-md bg-muted" />
+            </div>
+          ))}
+        </div>
+        <div className="mt-5 rounded-md border border-border/70 p-5">
+          <div className="flex items-start gap-4">
+            <div className="h-16 w-16 rounded-md bg-muted" />
+            <div className="flex-1 space-y-3">
+              <div className="h-6 w-32 rounded-md bg-muted" />
+              <div className="h-4 w-full max-w-xl rounded-md bg-muted" />
+              <div className="h-4 w-full max-w-md rounded-md bg-muted" />
+            </div>
           </div>
         </div>
       </section>
@@ -29,27 +39,27 @@ export function StudentDetailLoading({ onBack }: StudentDetailStateProps) {
 export function StudentDetailError({ message, onBack, onRetry }: StudentDetailStateProps) {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
-      <Button size="sm" type="button" variant="outline" onClick={onBack}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        목록으로
-      </Button>
-      <section className="rounded-md border border-border bg-card p-8" role="alert">
-        <div className="flex min-h-[260px] items-center justify-center">
-          <div className="max-w-md text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-rose-50 text-rose-700">
-              <AlertCircle className="h-6 w-6" />
+      <StudentDetailHeader description="학생 상세 정보를 다시 불러올 수 있습니다." onBack={onBack} />
+      <section
+        className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+        role="alert"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold">학생 정보를 불러올 수 없습니다</h2>
+              <p className="text-sm">
+                {message || '학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'}
+              </p>
             </div>
-            <h2 className="mt-4 text-lg font-semibold text-foreground">학생 정보를 불러올 수 없습니다</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {message || '학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'}
-            </p>
-            {onRetry ? (
-              <Button className="mt-5" type="button" variant="outline" onClick={onRetry}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                다시 시도
-              </Button>
-            ) : null}
           </div>
+          {onRetry ? (
+            <Button className="gap-2" size="sm" type="button" variant="outline" onClick={onRetry}>
+              <RefreshCw className="h-4 w-4" />
+              다시 불러오기
+            </Button>
+          ) : null}
         </div>
       </section>
     </div>

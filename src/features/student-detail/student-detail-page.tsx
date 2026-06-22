@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { ArrowLeft, Edit, Trash2, UserMinus, GraduationCap, RotateCcw } from 'lucide-react';
+import { Edit, Trash2, UserMinus, GraduationCap, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudentAttendanceComponent } from '@/components/students/student-attendance';
 import { StudentCard } from '@/components/students/student-card';
@@ -16,6 +16,7 @@ import { useStudent } from '@/hooks/use-students';
 import { studentsAPI } from '@/lib/api/students';
 import { STATUS_LABELS } from '@/lib/types/student';
 import { StudentDetailError, StudentDetailLoading } from './student-detail-states';
+import { StudentDetailHeader } from './student-detail-header';
 import { StudentDetailSummary } from './student-detail-summary';
 import { StudentDetailTabs } from './student-detail-tabs';
 import type { StudentDetailTab } from './student-detail-types';
@@ -108,48 +109,40 @@ export function StudentDetailPage() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
-      <header className="flex flex-col gap-3 border-b border-border/70 pb-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-1">
-          <Button className="mb-2" size="sm" type="button" variant="outline" onClick={goBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            목록으로
-          </Button>
-          <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Student Profile</p>
-          <h1 className="text-2xl font-semibold tracking-normal text-foreground">학생 상세</h1>
-          <p className="text-sm text-muted-foreground">
-            {student.name} 학생의 정보, 출결, 납부, 시즌, 상담 기록을 확인합니다.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
-          <Button className="justify-center" type="button" variant="outline" onClick={handleEdit}>
-            <Edit className="mr-2 h-4 w-4" />
-            수정
-          </Button>
-          {canGraduate ? (
-            <Button className="justify-center" type="button" variant="outline" onClick={handleGraduate}>
-              <GraduationCap className="mr-2 h-4 w-4" />
-              졸업 처리
+      <StudentDetailHeader
+        description={`${student.name} 학생의 정보, 출결, 납부, 시즌, 상담 기록을 확인합니다.`}
+        onBack={goBack}
+        actions={(
+          <>
+            <Button className="justify-center" type="button" variant="outline" onClick={handleEdit}>
+              <Edit className="mr-2 h-4 w-4" />
+              수정
             </Button>
-          ) : null}
-          {canWithdraw ? (
-            <Button className="justify-center" type="button" variant="outline" onClick={handleWithdraw}>
-              <UserMinus className="mr-2 h-4 w-4" />
-              퇴원 처리
+            {canGraduate ? (
+              <Button className="justify-center" type="button" variant="outline" onClick={handleGraduate}>
+                <GraduationCap className="mr-2 h-4 w-4" />
+                졸업 처리
+              </Button>
+            ) : null}
+            {canWithdraw ? (
+              <Button className="justify-center" type="button" variant="outline" onClick={handleWithdraw}>
+                <UserMinus className="mr-2 h-4 w-4" />
+                퇴원 처리
+              </Button>
+            ) : null}
+            {canResume ? (
+              <Button className="justify-center" type="button" variant="outline" onClick={() => setResumeModalOpen(true)}>
+                <RotateCcw className="mr-2 h-4 w-4" />
+                복귀 처리
+              </Button>
+            ) : null}
+            <Button className="justify-center text-rose-700 hover:text-rose-800" type="button" variant="outline" onClick={handleDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              삭제
             </Button>
-          ) : null}
-          {canResume ? (
-            <Button className="justify-center" type="button" variant="outline" onClick={() => setResumeModalOpen(true)}>
-              <RotateCcw className="mr-2 h-4 w-4" />
-              복귀 처리
-            </Button>
-          ) : null}
-          <Button className="justify-center text-rose-700 hover:text-rose-800" type="button" variant="outline" onClick={handleDelete}>
-            <Trash2 className="mr-2 h-4 w-4" />
-            삭제
-          </Button>
-        </div>
-      </header>
+          </>
+        )}
+      />
 
       <StudentDetailSummary payments={payments} student={student} />
 
