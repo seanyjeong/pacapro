@@ -46,7 +46,14 @@ const schedules = [
 ];
 
 function makeState(overrides = {}) {
-  return { externalContinues: [], hits: [], deletedScheduleId: null, ...overrides };
+  return {
+    createPayload: null,
+    deletedScheduleId: null,
+    editPayload: null,
+    externalContinues: [],
+    hits: [],
+    ...overrides,
+  };
 }
 
 async function installRoutes(context, state) {
@@ -72,9 +79,56 @@ async function installRoutes(context, state) {
     if (method === 'GET' && path === '/schedules') {
       return jsonRoute(route, { schedules });
     }
+    if (method === 'GET' && path === '/schedules/101') {
+      if (state.failScheduleDetail) {
+        return jsonRoute(route, { message: 'HTTP 500 DB stack trace' }, 500);
+      }
+      return jsonRoute(route, { schedule: schedules[0] });
+    }
+    if (method === 'POST' && path === '/schedules') {
+      state.createPayload = JSON.parse(request.postData() || '{}');
+      if (state.failScheduleSave) {
+        return jsonRoute(route, { message: 'HTTP 500 DB stack trace' }, 500);
+      }
+      return jsonRoute(route, { ...schedules[0], id: 102, ...state.createPayload });
+    }
+    if (method === 'PUT' && path === '/schedules/101') {
+      state.editPayload = JSON.parse(request.postData() || '{}');
+      if (state.failScheduleEdit) {
+        return jsonRoute(route, { message: 'HTTP 500 DB stack trace' }, 500);
+      }
+      return jsonRoute(route, { ...schedules[0], ...state.editPayload });
+    }
     if (method === 'DELETE' && path === '/schedules/101') {
       state.deletedScheduleId = 101;
       return jsonRoute(route, { message: 'deleted' });
+    }
+    if (method === 'GET' && path === '/schedules/101/attendance') {
+      if (state.failAttendanceLoad) {
+        return jsonRoute(route, { message: 'HTTP 500 DB stack trace' }, 500);
+      }
+      return jsonRoute(route, {
+        schedule: schedules[0],
+        students: [
+          {
+            student_id: 41,
+            student_name: '김진우',
+            student_number: '2026041',
+            attendance_status: null,
+            makeup_date: null,
+            notes: null,
+          },
+        ],
+      });
+    }
+    if (method === 'GET' && path === '/instructors') {
+      return jsonRoute(route, {
+        message: 'ok',
+        instructors: [
+          { id: 3, name: '박코치', status: 'active' },
+          { id: 4, name: '최강사', status: 'active' },
+        ],
+      });
     }
     if (method === 'GET' && path === '/schedules/instructor-schedules/month') {
       return jsonRoute(route, {
@@ -161,6 +215,87 @@ async function runLoadError(browser) {
   return { state, diagnostics };
 }
 
+async function createPage(browser, stateOverrides = {}, viewport = { width: 390, height: 844 }) {
+  const state = makeState(stateOverrides);
+  const context = await createAuthedContext(browser, viewport);
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  const diagnostics = createDiagnostics(page);
+  return { context, diagnostics, page, state };
+}
+
+async function chooseSelectOption(page, triggerSelector, optionName) {
+  await page.locator(triggerSelector).click();
+  await page.getByText(optionName, { exact: true }).last().click();
+}
+
+async function fillScheduleForm(page, title = '오후 실기 집중반') {
+  await page.locator('#class_date').fill(range.today);
+  await chooseSelectOption(page, '#time_slot', '오후');
+  await chooseSelectOption(page, '#instructor', '박코치');
+  await page.locator('#title').fill(title);
+  await page.locator('#content').fill('기록 점검');
+}
+
+async function runDetailLoadError(browser) {
+  const result = await createPage(browser, { failScheduleDetail: true });
+  const { context, page } = result;
+
+  await page.goto('/schedules/101', { waitUntil: 'networkidle' });
+  await page.getByText('수업 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'schedule detail load error');
+  await assertNoHorizontalOverflow(page, 'schedule detail load error');
+
+  await context.close();
+  return result;
+}
+
+async function runCreateSaveError(browser) {
+  const result = await createPage(browser, { failScheduleSave: true });
+  const { context, page } = result;
+
+  await page.goto('/schedules/new', { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { level: 1, name: '수업 등록' }).waitFor();
+  await fillScheduleForm(page, '신규 등록 실패 테스트');
+  await page.locator('form button[type="submit"]').click();
+  await page.locator('form').getByText('수업 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'schedule create save error');
+  await assertNoHorizontalOverflow(page, 'schedule create save error');
+
+  await context.close();
+  return result;
+}
+
+async function runEditSaveError(browser) {
+  const result = await createPage(browser, { failScheduleEdit: true });
+  const { context, page } = result;
+
+  await page.goto('/schedules/101/edit', { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { level: 1, name: '수업 수정' }).waitFor();
+  await page.locator('#title').fill('수정 실패 테스트');
+  await page.locator('form button[type="submit"]').click();
+  await page.locator('form').getByText('수업 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'schedule edit save error');
+  await assertNoHorizontalOverflow(page, 'schedule edit save error');
+
+  await context.close();
+  return result;
+}
+
+async function runAttendanceLoadError(browser) {
+  const result = await createPage(browser, { failAttendanceLoad: true });
+  const { context, page } = result;
+
+  await page.goto('/schedules/101/attendance', { waitUntil: 'networkidle' });
+  await page.getByText('출석 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'schedule attendance load error');
+  await assertNoHorizontalOverflow(page, 'schedule attendance load error');
+
+  await context.close();
+  return result;
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -171,10 +306,16 @@ async function main() {
   try {
     const normal = await runNormal(browser);
     const loadError = await runLoadError(browser);
-    [normal, loadError].forEach(assertDiagnostics);
+    const detailLoadError = await runDetailLoadError(browser);
+    const createSaveError = await runCreateSaveError(browser);
+    const editSaveError = await runEditSaveError(browser);
+    const attendanceLoadError = await runAttendanceLoadError(browser);
+    [normal, loadError, detailLoadError, createSaveError, editSaveError, attendanceLoadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
+      createPayload: createSaveError.state.createPayload,
       deletedScheduleId: normal.state.deletedScheduleId,
+      editPayload: editSaveError.state.editPayload,
       normalConsoleErrors: normal.diagnostics.consoleErrors,
       loadErrorConsoleErrors: loadError.diagnostics.consoleErrors,
     }, null, 2));

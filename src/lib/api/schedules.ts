@@ -18,7 +18,7 @@ export const schedulesApi = {
   /**
    * 수업 목록 조회
    */
-  getSchedules: async (filters?: ScheduleFilters): Promise<ClassSchedule[]> => {
+  getSchedules: async (filters?: ScheduleFilters, config?: APIRequestConfig): Promise<ClassSchedule[]> => {
     const params = new URLSearchParams();
 
     if (filters?.start_date) params.append('start_date', filters.start_date);
@@ -32,15 +32,15 @@ export const schedulesApi = {
     const queryString = params.toString();
     const url = queryString ? `${BASE_PATH}?${queryString}` : BASE_PATH;
 
-    const response = await apiClient.get<{ schedules: ClassSchedule[] }>(url);
+    const response = await apiClient.get<{ schedules: ClassSchedule[] }>(url, config);
     return response.schedules || [];
   },
 
   /**
    * 수업 상세 조회
    */
-  getSchedule: async (id: number): Promise<ClassSchedule> => {
-    const response = await apiClient.get<{ schedule: ClassSchedule }>(`${BASE_PATH}/${id}`);
+  getSchedule: async (id: number, config?: APIRequestConfig): Promise<ClassSchedule> => {
+    const response = await apiClient.get<{ schedule: ClassSchedule }>(`${BASE_PATH}/${id}`, config);
     return response.schedule;
   },
 
@@ -72,8 +72,14 @@ export const schedulesApi = {
   /**
    * 출석 현황 조회
    */
-  getAttendance: async (scheduleId: number): Promise<{ schedule: ClassSchedule; students: Attendance[] }> => {
-    return apiClient.get<{ schedule: ClassSchedule; students: Attendance[] }>(`${BASE_PATH}/${scheduleId}/attendance`);
+  getAttendance: async (
+    scheduleId: number,
+    config?: APIRequestConfig
+  ): Promise<{ schedule: ClassSchedule; students: Attendance[] }> => {
+    return apiClient.get<{ schedule: ClassSchedule; students: Attendance[] }>(
+      `${BASE_PATH}/${scheduleId}/attendance`,
+      config
+    );
   },
 
   /**
@@ -116,7 +122,7 @@ export const schedulesApi = {
   /**
    * 수업 통계 조회
    */
-  getStats: async (filters?: ScheduleFilters): Promise<ScheduleStats> => {
+  getStats: async (filters?: ScheduleFilters, config?: APIRequestConfig): Promise<ScheduleStats> => {
     const params = new URLSearchParams();
 
     if (filters?.start_date) params.append('start_date', filters.start_date);
@@ -126,7 +132,7 @@ export const schedulesApi = {
     const queryString = params.toString();
     const url = queryString ? `${BASE_PATH}/stats?${queryString}` : `${BASE_PATH}/stats`;
 
-    return apiClient.get<ScheduleStats>(url);
+    return apiClient.get<ScheduleStats>(url, config);
   },
 
   /**
@@ -162,9 +168,10 @@ export const schedulesApi = {
    */
   getMonthlyInstructorStats: async (
     year: number,
-    month: number
+    month: number,
+    config?: APIRequestConfig
   ): Promise<MonthlyInstructorStatsResponse> => {
-    return apiClient.get(`${BASE_PATH}/instructor-schedules/month?year=${year}&month=${month + 1}`);
+    return apiClient.get(`${BASE_PATH}/instructor-schedules/month?year=${year}&month=${month + 1}`, config);
   },
 };
 

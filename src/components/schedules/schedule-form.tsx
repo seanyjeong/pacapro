@@ -48,6 +48,8 @@ interface ScheduleFormProps {
   onSubmit: (data: ScheduleFormData) => void;
   onCancel?: () => void;
   isSubmitting?: boolean;
+  loadError?: string | null;
+  submitError?: string | null;
 }
 
 export function ScheduleForm({
@@ -56,6 +58,8 @@ export function ScheduleForm({
   onSubmit,
   onCancel,
   isSubmitting,
+  loadError,
+  submitError,
 }: ScheduleFormProps) {
   const {
     register,
@@ -85,13 +89,18 @@ export function ScheduleForm({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{schedule ? '수업 수정' : '수업 등록'}</CardTitle>
+    <Card className="rounded-md">
+      <CardHeader className="border-b border-border px-4 py-3">
+        <CardTitle className="text-base tracking-normal">{schedule ? '수업 수정' : '수업 등록'}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-          {/* 수업 날짜 */}
+      <CardContent className="p-4">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
+          {loadError && (
+            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-100">
+              {loadError}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="class_date">
               수업 날짜 <span className="text-red-500">*</span>
@@ -107,7 +116,6 @@ export function ScheduleForm({
             )}
           </div>
 
-          {/* 시간대 */}
           <div className="space-y-2">
             <Label htmlFor="time_slot">
               시간대 <span className="text-red-500">*</span>
@@ -130,7 +138,6 @@ export function ScheduleForm({
             )}
           </div>
 
-          {/* 강사 */}
           <div className="space-y-2">
             <Label htmlFor="instructor">
               강사 <span className="text-red-500">*</span>
@@ -158,7 +165,6 @@ export function ScheduleForm({
             )}
           </div>
 
-          {/* 수업 제목 */}
           <div className="space-y-2">
             <Label htmlFor="title">수업 제목</Label>
             <Input
@@ -171,7 +177,6 @@ export function ScheduleForm({
             </p>
           </div>
 
-          {/* 수업 내용 */}
           <div className="space-y-2">
             <Label htmlFor="content">수업 내용</Label>
             <Textarea
@@ -182,7 +187,6 @@ export function ScheduleForm({
             />
           </div>
 
-          {/* 메모 */}
           <div className="space-y-2">
             <Label htmlFor="notes">메모</Label>
             <Textarea
@@ -193,7 +197,12 @@ export function ScheduleForm({
             />
           </div>
 
-          {/* 버튼 */}
+          {submitError && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-200">
+              {submitError}
+            </div>
+          )}
+
           <div className="flex justify-end gap-3">
             {onCancel && (
               <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>

@@ -43,19 +43,19 @@ export function ScheduleCard({
   showActions = true,
 }: ScheduleCardProps) {
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-xl">{getScheduleTitle(schedule)}</CardTitle>
+    <Card className="rounded-md">
+      <CardHeader className="border-b border-border px-4 py-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <CardTitle className="text-lg tracking-normal">{getScheduleTitle(schedule)}</CardTitle>
           <div className="flex items-center gap-2">
             {schedule.attendance_taken ? (
-              <Badge variant="default" className="bg-green-500">
-                <CheckCircle className="h-3 w-3 mr-1" />
+              <Badge variant="default" className="bg-emerald-600">
+                <CheckCircle className="mr-1 h-3 w-3" />
                 출석 완료
               </Badge>
             ) : (
               <Badge variant="secondary">
-                <XCircle className="h-3 w-3 mr-1" />
+                <XCircle className="mr-1 h-3 w-3" />
                 출석 대기
               </Badge>
             )}
@@ -63,10 +63,9 @@ export function ScheduleCard({
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="p-4">
         <div className="space-y-4">
-          {/* 기본 정보 */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="flex items-center gap-3">
               <Calendar className="h-5 w-5 text-muted-foreground" />
               <div>
@@ -105,7 +104,7 @@ export function ScheduleCard({
                 <BookOpen className="h-4 w-4 text-muted-foreground" />
                 <p className="text-sm font-medium">수업 내용</p>
               </div>
-              <div className="bg-muted p-4 rounded-lg">
+              <div className="rounded-md bg-muted p-4">
                 <p className="text-sm whitespace-pre-wrap">{schedule.content}</p>
               </div>
             </div>
@@ -118,7 +117,7 @@ export function ScheduleCard({
                 <FileText className="h-4 w-4 text-muted-foreground" />
                 <p className="text-sm font-medium">메모</p>
               </div>
-              <div className="bg-muted p-4 rounded-lg">
+              <div className="rounded-md bg-muted p-4">
                 <p className="text-sm whitespace-pre-wrap">{schedule.notes}</p>
               </div>
             </div>
@@ -126,25 +125,25 @@ export function ScheduleCard({
 
           {/* 액션 버튼 */}
           {showActions && (
-            <div className="flex flex-wrap gap-2 pt-4 border-t">
+            <div className="flex flex-wrap gap-2 border-t border-border pt-4">
               {onAttendanceClick && (
                 <Button
                   variant={schedule.attendance_taken ? 'outline' : 'default'}
                   onClick={onAttendanceClick}
                 >
-                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <CheckCircle className="mr-2 h-4 w-4" />
                   {schedule.attendance_taken ? '출석 보기' : '출석 체크'}
                 </Button>
               )}
               {onEdit && (
                 <Button variant="outline" onClick={onEdit}>
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className="mr-2 h-4 w-4" />
                   수정
                 </Button>
               )}
               {onDelete && (
                 <Button variant="outline" onClick={onDelete}>
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="mr-2 h-4 w-4" />
                   삭제
                 </Button>
               )}

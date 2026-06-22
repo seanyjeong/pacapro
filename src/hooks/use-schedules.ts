@@ -11,6 +11,9 @@ import type {
 } from '@/lib/types/schedule';
 import { toast } from 'sonner';
 
+const QUIET_REQUEST = { suppressErrorToast: true };
+const SCHEDULE_SAVE_ERROR = '수업 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
+
 const QUERY_KEYS = {
   schedules: (filters?: ScheduleFilters) => ['schedules', filters] as const,
   schedule: (id: number) => ['schedules', id] as const,
@@ -24,7 +27,7 @@ const QUERY_KEYS = {
 export function useSchedules(filters?: ScheduleFilters) {
   return useQuery({
     queryKey: QUERY_KEYS.schedules(filters),
-    queryFn: () => schedulesApi.getSchedules(filters),
+    queryFn: () => schedulesApi.getSchedules(filters, QUIET_REQUEST),
   });
 }
 
@@ -34,7 +37,7 @@ export function useSchedules(filters?: ScheduleFilters) {
 export function useSchedule(id: number) {
   return useQuery({
     queryKey: QUERY_KEYS.schedule(id),
-    queryFn: () => schedulesApi.getSchedule(id),
+    queryFn: () => schedulesApi.getSchedule(id, QUIET_REQUEST),
     enabled: !!id,
   });
 }
@@ -46,7 +49,7 @@ export function useAttendance(scheduleId: number) {
   return useQuery({
     queryKey: QUERY_KEYS.attendance(scheduleId),
     queryFn: async () => {
-      const response = await schedulesApi.getAttendance(scheduleId);
+      const response = await schedulesApi.getAttendance(scheduleId, QUIET_REQUEST);
       // students 배열만 반환 (백엔드가 { schedule, students } 형태로 반환)
       return response.students || [];
     },
@@ -60,7 +63,7 @@ export function useAttendance(scheduleId: number) {
 export function useScheduleStats(filters?: ScheduleFilters) {
   return useQuery({
     queryKey: QUERY_KEYS.stats(filters),
-    queryFn: () => schedulesApi.getStats(filters),
+    queryFn: () => schedulesApi.getStats(filters, QUIET_REQUEST),
   });
 }
 
@@ -78,7 +81,7 @@ export function useCreateSchedule() {
       toast.success('수업이 등록되었습니다.');
     },
     onError: () => {
-      toast.error('수업을 등록하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해주세요.');
+      toast.error(SCHEDULE_SAVE_ERROR);
     },
   });
 }
@@ -98,7 +101,7 @@ export function useUpdateSchedule() {
       toast.success('수업이 수정되었습니다.');
     },
     onError: () => {
-      toast.error('수업 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error(SCHEDULE_SAVE_ERROR);
     },
   });
 }
