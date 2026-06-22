@@ -75,12 +75,38 @@ function makePayment() {
   };
 }
 
+function makeSeasonEnrollment() {
+  return {
+    id: 701,
+    student_id: 41,
+    season_id: 7,
+    season_name: '2026 정시 시즌',
+    season_fee: '1200000',
+    registration_date: '2026-06-10',
+    prorated_month: '2026-06',
+    prorated_amount: '840000',
+    prorated_details: null,
+    is_continuous: false,
+    previous_season_id: null,
+    discount_type: null,
+    discount_amount: '0',
+    final_fee: '1200000',
+    status: 'registered',
+    payment_status: 'pending',
+    registered_at: '2026-06-10T09:00:00.000Z',
+    notes: null,
+    time_slots: ['evening'],
+  };
+}
+
 function makeState(mode) {
   return {
     hits: [],
     mode,
     payment: makePayment(),
     recalculated: false,
+    seasonCancelled: false,
+    seasonEnrollments: [makeSeasonEnrollment()],
     student: makeStudent(),
     withdrawPayload: null,
   };
@@ -112,6 +138,47 @@ async function installRoutes(context, state) {
 
     if (method === 'GET' && path === '/students/41/rest-credits') {
       return jsonRoute(route, { credits: [], message: 'ok', pendingTotal: 0 });
+    }
+
+    if (method === 'GET' && path === '/students/41/seasons') {
+      return jsonRoute(route, { message: 'ok', seasons: state.seasonEnrollments });
+    }
+
+    if (method === 'GET' && path === '/seasons/active') {
+      return jsonRoute(route, {
+        message: 'ok',
+        seasons: [
+          {
+            id: 7,
+            academy_id: 1,
+            season_name: '2026 정시 시즌',
+            season_type: 'regular',
+            season_start_date: '2026-07-01',
+            season_end_date: '2026-12-31',
+            non_season_end_date: '2026-06-30',
+            operating_days: [1, 3, 5],
+            grade_time_slots: { 고3: ['evening'] },
+            default_season_fee: '1200000',
+            allows_continuous: true,
+            continuous_to_season_type: null,
+            continuous_discount_type: 'none',
+            continuous_discount_rate: 0,
+            status: 'active',
+            created_at: '2026-06-01T09:00:00.000Z',
+            updated_at: '2026-06-01T09:00:00.000Z',
+          },
+        ],
+      });
+    }
+
+    if (method === 'DELETE' && path === '/seasons/7/students/41') {
+      state.seasonCancelled = true;
+      state.seasonEnrollments = state.seasonEnrollments.map((enrollment) => ({
+        ...enrollment,
+        status: 'cancelled',
+        payment_status: 'cancelled',
+      }));
+      return jsonRoute(route, { message: '시즌 등록이 취소되었습니다.' });
     }
 
     if (method === 'GET' && path === '/students/41/attendance') {
@@ -229,6 +296,16 @@ async function runNormalDesktop(browser) {
   await page.getByText('2026-06', { exact: true }).waitFor();
   if (!state.recalculated) throw new Error('first payment recalculation API was not called');
 
+  await page.getByRole('button', { name: '시즌 등록 보기' }).click();
+  await page.getByRole('heading', { name: '시즌 등록 현황' }).waitFor();
+  await page.getByText('2026 정시 시즌').waitFor();
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '취소' }).first(), 'season enrollment cancellation');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '시즌 등록 취소' }).waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-student-detail-season-cancel-dialog.png', fullPage: true });
+  await page.getByRole('button', { name: '등록 취소' }).click();
+  await page.getByText('취소됨').waitFor();
+  if (!state.seasonCancelled) throw new Error('season cancellation API was not called');
+
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '삭제' }), 'delete action');
   await page.getByRole('alertdialog').getByRole('heading', { name: '학생 삭제' }).waitFor();
   await page.getByRole('button', { name: '취소' }).click();
@@ -259,6 +336,15 @@ async function runNormalMobile(browser) {
   await assertNoRawVisibleText(page, 'student detail mobile');
   await assertNoHorizontalOverflow(page, 'student detail mobile');
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-mobile.png', fullPage: true });
+
+  await page.getByRole('button', { name: '시즌 등록 보기' }).click();
+  const seasonHeading = page.getByRole('heading', { name: '시즌 등록 현황' });
+  await seasonHeading.waitFor();
+  await seasonHeading.scrollIntoViewIfNeeded();
+  await page.getByText('2026 정시 시즌').waitFor();
+  await assertNoRawVisibleText(page, 'student detail season mobile');
+  await assertNoHorizontalOverflow(page, 'student detail season mobile');
+  await page.screenshot({ path: '/Users/etlab/paca-student-detail-season-mobile.png', fullPage: true });
 
   await context.close();
   return result;
