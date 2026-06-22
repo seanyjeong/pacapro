@@ -3,10 +3,10 @@
 import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { StudentForm } from '@/components/students/student-form';
+import { StudentFormPageHeader } from '@/features/student-form/student-form-page-header';
 import { useStudent } from '@/hooks/use-students';
 import { studentsAPI } from '@/lib/api/students';
 import type { StudentFormData } from '@/lib/types/student';
@@ -62,19 +62,23 @@ export default function EditStudentPage() {
   if (loading) {
     return (
       <div className="mx-auto w-full max-w-7xl space-y-5">
-        <Button variant="outline" size="sm" onClick={() => router.push(`/students/${studentId}`)}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          돌아가기
-        </Button>
-
-        <Card className="rounded-md shadow-none">
-          <CardContent className="flex min-h-[260px] items-center justify-center p-8 text-center">
-            <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              학생 정보를 불러오는 중입니다
-            </div>
-          </CardContent>
-        </Card>
+        <StudentFormPageHeader
+          backLabel="돌아가기"
+          description="학생 정보를 불러오는 중입니다."
+          eyebrow="Student Profile"
+          title="학생 정보 수정"
+          onBack={() => router.push(`/students/${studentId}`)}
+        />
+        <section className="rounded-md border border-border bg-card p-5" aria-busy="true">
+          <div className="grid gap-4 md:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div key={index} className="rounded-md border border-border/70 p-4">
+                <div className="h-3 w-20 rounded-md bg-muted" />
+                <div className="mt-3 h-9 rounded-md bg-muted" />
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     );
   }
@@ -83,42 +87,43 @@ export default function EditStudentPage() {
   if (error || !student) {
     return (
       <div className="mx-auto w-full max-w-7xl space-y-5">
-        <Button variant="outline" size="sm" onClick={() => router.push('/students')}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          목록으로
-        </Button>
-
-        <Card className="rounded-md border-rose-200 bg-rose-50 shadow-none dark:border-rose-900/70 dark:bg-rose-950/30" role="alert">
-          <CardContent className="flex min-h-[260px] items-center justify-center p-8 text-center">
-            <div className="max-w-md">
-              <AlertCircle className="mx-auto h-10 w-10 text-rose-800 dark:text-rose-100" />
-              <h3 className="mt-4 text-base font-semibold text-rose-950 dark:text-rose-100">학생 정보를 불러올 수 없습니다</h3>
-              <p className="mt-2 text-sm text-rose-800 dark:text-rose-200">{error || '잠시 후 다시 시도해 주세요.'}</p>
-              <Button className="mt-5" variant="outline" onClick={reload}>다시 시도</Button>
+        <StudentFormPageHeader
+          description="학생 정보를 다시 불러올 수 있습니다."
+          eyebrow="Student Profile"
+          title="학생 정보 수정"
+          onBack={() => router.push('/students')}
+        />
+        <section
+          className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+          role="alert"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div className="space-y-1">
+                <h2 className="text-sm font-semibold">학생 정보를 불러올 수 없습니다</h2>
+                <p className="text-sm">{error || '학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'}</p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+            <Button className="gap-2" size="sm" type="button" variant="outline" onClick={reload}>
+              <RefreshCw className="h-4 w-4" />
+              다시 불러오기
+            </Button>
+          </div>
+        </section>
       </div>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
-      <header className="border-b border-border/70 pb-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push(`/students/${studentId}`)}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          돌아가기
-        </Button>
-
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Student Profile</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">학생 정보 수정</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{student.name} 학생의 정보, 수업 요일, 학원비 기준을 수정합니다.</p>
-      </header>
+      <StudentFormPageHeader
+        backLabel="돌아가기"
+        description={`${student.name} 학생의 정보, 수업 요일, 학원비 기준을 수정합니다.`}
+        eyebrow="Student Profile"
+        title="학생 정보 수정"
+        onBack={() => router.push(`/students/${studentId}`)}
+      />
 
       {/* Form */}
       <StudentForm

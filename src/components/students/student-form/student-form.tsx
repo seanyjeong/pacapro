@@ -9,6 +9,7 @@
  * UI 섹션 → _components/<XxxSection>.tsx
  */
 
+import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudentRestModal } from '../student-rest-modal';
 import type { Student, StudentFormData } from '@/lib/types/student';
@@ -115,9 +116,19 @@ export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmi
 
       {/* 에러 메시지 */}
       {hook.errors.submit && (
-        <div className="rounded-md border border-rose-200 bg-rose-50 p-4 dark:border-rose-900 dark:bg-rose-950" role="alert">
-          <p className="text-sm text-rose-700 dark:text-rose-200">{hook.errors.submit}</p>
-        </div>
+        <section
+          className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+          data-testid="student-form-submit-error"
+          role="alert"
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div className="space-y-1">
+              <h2 className="text-sm font-semibold">저장 실패</h2>
+              <p className="text-sm">{hook.errors.submit}</p>
+            </div>
+          </div>
+        </section>
       )}
 
       {/* 버튼 */}

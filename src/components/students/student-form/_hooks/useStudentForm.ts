@@ -358,7 +358,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
       const errorMessage = extractErrorMessage();
       setErrors({ submit: errorMessage });
       setTimeout(() => {
-        const errorElement = document.querySelector('[class*="bg-red-50"]');
+        const errorElement = document.querySelector('[data-testid="student-form-submit-error"]');
         if (errorElement) errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 100);
     } finally {

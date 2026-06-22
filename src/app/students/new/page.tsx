@@ -3,9 +3,9 @@
 import { Suspense, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { StudentForm } from '@/components/students/student-form';
+import { StudentFormPageHeader } from '@/features/student-form/student-form-page-header';
 import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
 import type { StudentFormData, Student, Gender, StudentType, Grade, StudentStatus } from '@/lib/types/student';
@@ -99,21 +99,12 @@ function NewStudentContent() {
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
-      <header className="border-b border-border/70 pb-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push('/students')}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          목록으로
-        </Button>
-
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Student Intake</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">학생 등록</h1>
-        <p className="mt-1 text-sm text-muted-foreground">학생 기본 정보, 수업 정보, 학원비 기준을 한 번에 저장합니다.</p>
-      </header>
+      <StudentFormPageHeader
+        description="학생 기본 정보, 수업 정보, 학원비 기준을 한 번에 저장합니다."
+        eyebrow="Student Intake"
+        title="학생 등록"
+        onBack={() => router.push('/students')}
+      />
 
       {/* Form */}
       <StudentForm
