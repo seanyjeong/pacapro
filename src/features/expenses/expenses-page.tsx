@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { ExpenseCalendar } from '@/components/expenses/expense-calendar';
 import { usePermissions } from '@/lib/utils/permissions';
+import { ExpenseActionDialog } from './expense-action-dialog';
+import type { PendingExpenseAction } from './expense-action-dialog';
 import { ExpenseDetailDialog } from './expense-detail-dialog';
 import { ExpenseForm } from './expense-form';
 import { ExpenseLoadingState } from './expense-loading-state';
@@ -14,9 +17,23 @@ import { useExpensesPageState } from './use-expenses-page-state';
 
 export function ExpensesPage() {
   const state = useExpensesPageState();
+  const [pendingAction, setPendingAction] = useState<PendingExpenseAction | null>(null);
   const { canEdit } = usePermissions();
   const canEditExpenses = canEdit('expenses');
   const hasSearch = state.searchQuery.trim().length > 0;
+  const pendingExpense = pendingAction ? state.expenses.find((expense) => expense.id === pendingAction.id) || null : null;
+
+  const openDeleteDialog = (id: number) => setPendingAction({ id, type: 'delete' });
+  const openRefundDialog = (id: number) => setPendingAction({ id, type: 'refund' });
+
+  const confirmPendingAction = async () => {
+    if (!pendingAction) return;
+    const completed =
+      pendingAction.type === 'delete'
+        ? await state.removeExpense(pendingAction.id)
+        : await state.completeRefundExpense(pendingAction.id);
+    if (completed) setPendingAction(null);
+  };
 
   if (state.loading) {
     return <ExpenseLoadingState />;
@@ -69,8 +86,8 @@ export function ExpensesPage() {
               canEdit={canEditExpenses}
               onSelect={state.setSelectedExpense}
               onEdit={state.editExpense}
-              onDelete={state.removeExpense}
-              onCompleteRefund={state.completeRefundExpense}
+              onDelete={openDeleteDialog}
+              onCompleteRefund={openRefundDialog}
             />
           ) : null}
           {state.filteredExpenses.length === 0 && !state.showForm ? <ExpensesEmptyState hasSearch={hasSearch} /> : null}
@@ -82,8 +99,15 @@ export function ExpensesPage() {
         canEdit={canEditExpenses}
         onClose={() => state.setSelectedExpense(null)}
         onEdit={state.editExpense}
-        onDelete={state.removeExpense}
-        onCompleteRefund={state.completeRefundExpense}
+        onDelete={openDeleteDialog}
+        onCompleteRefund={openRefundDialog}
+      />
+      <ExpenseActionDialog
+        action={pendingAction}
+        busy={state.actionBusy}
+        expense={pendingExpense}
+        onCancel={() => setPendingAction(null)}
+        onConfirm={confirmPendingAction}
       />
     </div>
   );

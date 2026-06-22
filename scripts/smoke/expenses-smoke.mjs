@@ -82,6 +82,11 @@ async function installRoutes(context, state) {
       state.expenses = state.expenses.filter((expense) => expense.id !== 902);
       return jsonRoute(route, { message: 'refund completed' });
     }
+    if (method === 'DELETE' && path === '/expenses/901') {
+      state.deletedExpenseId = 901;
+      state.expenses = state.expenses.filter((expense) => expense.id !== 901);
+      return jsonRoute(route, { message: 'deleted' });
+    }
 
     return jsonRoute(route, { message: 'mocked' });
   });
@@ -103,7 +108,11 @@ async function runNormal(browser) {
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
-  page.on('dialog', async (dialog) => dialog.accept());
+  let nativeDialogMessage = null;
+  page.on('dialog', async (dialog) => {
+    nativeDialogMessage = dialog.message();
+    await dialog.dismiss();
+  });
 
   await openExpensesPage(page);
   await page.getByText('Finance Desk').waitFor();
@@ -120,16 +129,25 @@ async function runNormal(browser) {
   await page.locator('tr:has-text("박민수 휴원 환불 대기")').waitFor();
 
   await page.locator('tr:has-text("박민수 휴원 환불 대기")').getByRole('button', { name: '환불 완료' }).click();
+  await page.getByRole('alertdialog').getByRole('heading', { name: '환불 완료 처리' }).waitFor();
+  await page.getByRole('alertdialog').getByRole('button', { name: '완료 처리' }).click();
   await page.getByText('환불이 완료 처리되었습니다.').waitFor();
   if (state.refundPayload?.payment_method !== 'cash') throw new Error(`unexpected refund payload ${JSON.stringify(state.refundPayload)}`);
 
+  await page.locator('tr:has-text("강남 지점 월세")').getByRole('button', { name: '지출 삭제' }).click();
+  await page.getByRole('alertdialog').getByRole('heading', { name: '지출 삭제' }).waitFor();
+  await page.getByRole('alertdialog').getByRole('button', { name: '삭제' }).click();
+  await page.getByText('삭제되었습니다.').waitFor();
+  if (state.deletedExpenseId !== 901) throw new Error(`delete endpoint not called: ${state.deletedExpenseId}`);
+  if (nativeDialogMessage) throw new Error(`unexpected native dialog: ${nativeDialogMessage}`);
+
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.locator('article:has-text("강남 지점 월세")').waitFor();
+  await page.locator('article:has-text("5월 강사 급여")').waitFor();
   await assertNoRawVisibleText(page, 'expenses mobile');
   await assertNoHorizontalOverflow(page, 'expenses mobile');
   await page.screenshot({ path: '/Users/etlab/paca-expenses-mobile.png', fullPage: true });
-  await page.locator('article:has-text("강남 지점 월세")').scrollIntoViewIfNeeded();
+  await page.locator('article:has-text("5월 강사 급여")').scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/Users/etlab/paca-expenses-mobile-list.png', fullPage: true });
 
   await context.close();
@@ -144,6 +162,7 @@ async function runError(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openExpensesPage(page);
+  await page.getByRole('alert').getByRole('heading', { name: '지출 내역을 불러오지 못했습니다' }).waitFor();
   await page.getByText('지출 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'expenses error');
   await assertNoHorizontalOverflow(page, 'expenses error');

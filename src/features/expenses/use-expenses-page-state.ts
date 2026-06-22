@@ -26,6 +26,7 @@ export function useExpensesPageState() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [actionBusy, setActionBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<ExpenseViewMode>('list');
@@ -96,24 +97,32 @@ export function useExpensesPageState() {
   };
 
   const removeExpense = async (id: number) => {
-    if (!window.confirm('이 지출 내역을 삭제하시겠습니까?')) return;
+    setActionBusy(true);
     try {
       await deleteExpense(id);
       toast.success('삭제되었습니다.');
       void loadExpenses();
+      return true;
     } catch {
       toast.error('지출 내역을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      return false;
+    } finally {
+      setActionBusy(false);
     }
   };
 
   const completeRefundExpense = async (id: number, paymentMethod = 'cash') => {
-    if (!window.confirm('환불을 완료 처리하시겠습니까?')) return;
+    setActionBusy(true);
     try {
       await completeRefund(id, paymentMethod);
       toast.success('환불이 완료 처리되었습니다.');
       void loadExpenses();
+      return true;
     } catch {
       toast.error('환불 완료 처리를 하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      return false;
+    } finally {
+      setActionBusy(false);
     }
   };
 
@@ -136,6 +145,7 @@ export function useExpensesPageState() {
     loading,
     error,
     exporting,
+    actionBusy,
     showForm,
     editingId,
     viewMode,
