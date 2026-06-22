@@ -19,7 +19,7 @@ export function SalariesPageContent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
       <SalariesHeader
         exporting={state.exporting}
         pdfExporting={state.pdfExporting}

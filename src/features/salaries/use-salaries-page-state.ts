@@ -48,7 +48,6 @@ export function useSalariesPageState() {
         setInstructors(instructorList);
         setFilters(createDefaultFilters(payDay, monthType));
       } catch {
-        console.error('Salary base data load failed');
         if (!cancelled) setFilters(createDefaultFilters(10, 'next'));
       } finally {
         if (!cancelled) setSettingsLoaded(true);
@@ -68,7 +67,6 @@ export function useSalariesPageState() {
       const response = await getSalariesForPage(filters);
       setSalaries(response.salaries || []);
     } catch {
-      console.error('Salaries page data load failed');
       setError(LOAD_ERROR_MESSAGE);
     } finally {
       setLoading(false);
@@ -111,7 +109,6 @@ export function useSalariesPageState() {
       await downloadSalariesExcel(filters);
       toast.success('급여 명세서 다운로드가 완료되었습니다.');
     } catch {
-      console.error('Salary excel export failed');
       toast.error('급여 명세서를 다운로드하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setExporting(false);
@@ -136,7 +133,6 @@ export function useSalariesPageState() {
               attendance_summary: (response as { attendance_summary?: SalaryWithAttendance['attendance_summary'] }).attendance_summary || null,
             };
           } catch {
-            console.error('Salary PDF detail load failed');
             return { salary, attendance_summary: null };
           }
         })
@@ -150,7 +146,6 @@ export function useSalariesPageState() {
       );
       toast.success(`PDF ${salaries.length}개 다운로드가 완료되었습니다.`);
     } catch {
-      console.error('Salary PDF export failed');
       toast.error('PDF를 다운로드하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setPdfExporting(false);
@@ -174,7 +169,6 @@ export function useSalariesPageState() {
       toast.success(result.message || '급여 지급 처리가 완료되었습니다.');
       void loadSalaries();
     } catch {
-      console.error('Salary bulk pay failed');
       toast.error('일괄 지급 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setBulkPaying(false);
