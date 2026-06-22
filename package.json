@@ -43,6 +43,7 @@
     "smoke:tablet-payments": "node scripts/smoke/tablet-payments-smoke.mjs",
     "smoke:tablet-sms": "node scripts/smoke/tablet-sms-smoke.mjs",
     "smoke:tablet-schedule": "node scripts/smoke/tablet-schedule-smoke.mjs",
+    "smoke:tablet-consultations": "node scripts/smoke/tablet-consultations-smoke.mjs",
     "smoke:season-list": "node scripts/smoke/season-list-smoke.mjs",
     "smoke:season-create": "node scripts/smoke/season-create-smoke.mjs",
     "smoke:season-edit": "node scripts/smoke/season-edit-smoke.mjs",
