@@ -172,6 +172,13 @@ async function runNormal(browser) {
   if (state.notificationPayload?.year !== CURRENT_YEAR) throw new Error(`unexpected notification payload ${JSON.stringify(state.notificationPayload)}`);
   if (state.notificationPayload?.month !== CURRENT_MONTH) throw new Error(`unexpected notification payload ${JSON.stringify(state.notificationPayload)}`);
 
+  await page.locator('tr:has-text("한서준")').getByRole('button', { name: '계좌' }).click();
+  await page.getByRole('alertdialog').getByText(/400,000/).waitFor();
+  if (await page.getByRole('alertdialog').getByText(/600,000/).count()) {
+    throw new Error('partial payment dialog showed full amount instead of remaining amount');
+  }
+  await page.getByRole('alertdialog').getByRole('button', { name: '취소' }).click();
+
   await page.locator('tr:has-text("박민수")').getByRole('button', { name: '계좌' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: '납부 처리' }).click();
   await page.getByText('박민수님의 학원비가 납부 처리되었습니다.').waitFor();

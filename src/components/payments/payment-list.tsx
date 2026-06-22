@@ -403,8 +403,8 @@ export function PaymentList({
               {pendingPayment && (
                 <>
                   <span className="font-semibold">{pendingPayment.payment.student_name}</span>님의{' '}
-                  <span className="font-semibold">{formatYearMonth(pendingPayment.payment.year_month)}</span> 학원비{' '}
-                  <span className="font-semibold text-primary">{formatPaymentAmount(pendingPayment.payment.final_amount)}</span>을{' '}
+                  <span className="font-semibold">{formatYearMonth(pendingPayment.payment.year_month)}</span> 남은 학원비{' '}
+                  <span className="font-semibold text-primary">{formatPaymentAmount(getRemainingPaymentAmount(pendingPayment.payment))}</span>을{' '}
                   <span className="font-semibold text-blue-600">{methodLabels[pendingPayment.method]}</span>로 납부 처리하시겠습니까?
                 </>
               )}
@@ -420,4 +420,8 @@ export function PaymentList({
       </AlertDialog>
     </Card>
   );
+}
+
+function getRemainingPaymentAmount(payment: Payment) {
+  return Math.max(Number(payment.final_amount || 0) - Number(payment.paid_amount || 0), 0);
 }
