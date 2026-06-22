@@ -21,6 +21,7 @@ export function useSalaryDetailState(salaryId: number) {
   const [paying, setPaying] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showRecalculateDialog, setShowRecalculateDialog] = useState(false);
   const [editingIncentive, setEditingIncentive] = useState(false);
   const [incentiveInput, setIncentiveInput] = useState(0);
   const [savingIncentive, setSavingIncentive] = useState(false);
@@ -63,9 +64,14 @@ export function useSalaryDetailState(salaryId: number) {
     }
   };
 
-  const recalculate = async () => {
+  const requestRecalculate = () => {
     if (!salary || salary.payment_status !== 'pending') return;
-    if (!window.confirm('현재 단가와 출근 기록으로 급여를 재계산하시겠습니까?')) return;
+    setShowRecalculateDialog(true);
+  };
+
+  const executeRecalculate = async () => {
+    setShowRecalculateDialog(false);
+    if (!salary || salary.payment_status !== 'pending') return;
     setRecalculating(true);
     try {
       const result = await recalculateSalaryForPage(salaryId);
@@ -116,15 +122,18 @@ export function useSalaryDetailState(salaryId: number) {
     paying,
     recalculating,
     showPasswordModal,
+    showRecalculateDialog,
     editingIncentive,
     incentiveInput,
     savingIncentive,
     setShowPasswordModal,
+    setShowRecalculateDialog,
     setIncentiveInput,
     reload: loadSalary,
     requestPayment,
     executePayment,
-    recalculate,
+    requestRecalculate,
+    executeRecalculate,
     startEditIncentive,
     cancelEditIncentive,
     saveIncentive,

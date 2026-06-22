@@ -12,6 +12,7 @@ import { SalaryDetailLoading } from './salary-detail-loading';
 import { SalaryPaidInfo } from './salary-paid-info';
 import { SalaryPrintStyles } from './salary-print-styles';
 import { SalaryRateInfo } from './salary-rate-info';
+import { SalaryRecalculateDialog } from './salary-recalculate-dialog';
 import { useSalaryDetailState } from './use-salary-detail-state';
 import { formatCurrency } from './salary-detail-utils';
 
@@ -37,7 +38,7 @@ export function SalaryDetailPage() {
           onBack={() => router.back()}
           onPrint={() => window.print()}
           onPay={state.requestPayment}
-          onRecalculate={state.recalculate}
+          onRecalculate={state.requestRecalculate}
         />
         <SalaryBasicInfo salary={state.salary} attendanceSummary={state.attendanceSummary} />
         <SalaryRateInfo salary={state.salary} />
@@ -60,9 +61,15 @@ export function SalaryDetailPage() {
           recalculating={state.recalculating}
           onBack={() => router.back()}
           onPay={state.requestPayment}
-          onRecalculate={state.recalculate}
+          onRecalculate={state.requestRecalculate}
         />
       </div>
+      <SalaryRecalculateDialog
+        busy={state.recalculating}
+        open={state.showRecalculateDialog}
+        onCancel={() => state.setShowRecalculateDialog(false)}
+        onConfirm={state.executeRecalculate}
+      />
       <PasswordConfirmModal
         open={state.showPasswordModal}
         onClose={() => state.setShowPasswordModal(false)}

@@ -54,11 +54,30 @@ export function SalaryCalculationSection({
           <span className="text-muted-foreground">인센티브</span>
           {editingIncentive ? (
             <div className="flex items-center gap-2">
-              <MoneyInput value={incentiveInput} onChange={onIncentiveChange} className="w-32 py-1 text-sm" />
-              <button type="button" onClick={onSave} disabled={savingIncentive} className="rounded p-1 text-green-600 hover:bg-green-50">
+              <label htmlFor="salary-incentive-amount" className="sr-only">
+                인센티브 금액
+              </label>
+              <MoneyInput
+                id="salary-incentive-amount"
+                value={incentiveInput}
+                onChange={onIncentiveChange}
+                className="w-32 py-1 text-sm"
+              />
+              <button
+                type="button"
+                aria-label="인센티브 저장"
+                onClick={onSave}
+                disabled={savingIncentive}
+                className="rounded p-1 text-green-600 hover:bg-green-50"
+              >
                 <Save className="h-4 w-4" />
               </button>
-              <button type="button" onClick={onCancelEdit} className="rounded p-1 text-muted-foreground hover:bg-muted">
+              <button
+                type="button"
+                aria-label="인센티브 수정 취소"
+                onClick={onCancelEdit}
+                className="rounded p-1 text-muted-foreground hover:bg-muted"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -68,7 +87,12 @@ export function SalaryCalculationSection({
                 {salary.incentive_amount > 0 ? `+${formatCurrency(salary.incentive_amount)}` : '0원'}
               </span>
               {salary.payment_status === 'pending' ? (
-                <button type="button" onClick={onStartEdit} className="rounded p-1 text-muted-foreground hover:bg-muted no-print">
+                <button
+                  type="button"
+                  aria-label="인센티브 수정"
+                  onClick={onStartEdit}
+                  className="rounded p-1 text-muted-foreground hover:bg-muted no-print"
+                >
                   <Edit3 className="h-4 w-4" />
                 </button>
               ) : null}

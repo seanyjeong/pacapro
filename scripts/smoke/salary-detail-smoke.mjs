@@ -126,7 +126,11 @@ async function runNormal(browser) {
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
-  page.on('dialog', async (dialog) => dialog.accept());
+  let nativeDialogMessage = null;
+  page.on('dialog', async (dialog) => {
+    nativeDialogMessage = dialog.message();
+    await dialog.dismiss();
+  });
 
   await page.goto('/salaries/201', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '급여 명세서' }).waitFor();
@@ -137,15 +141,18 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'desktop normal');
   await page.screenshot({ path: '/Users/etlab/paca-salary-detail-desktop.png', fullPage: true });
 
-  await page.locator('section:has-text("급여 계산") button').first().click();
-  await page.locator('section:has-text("급여 계산") input').fill('125000');
-  await page.locator('section:has-text("급여 계산") button').first().click();
+  await page.getByRole('button', { name: '인센티브 수정' }).click();
+  await page.getByLabel('인센티브 금액').fill('125000');
+  await page.getByRole('button', { name: '인센티브 저장' }).click();
   await page.getByText('인센티브가 저장되었습니다.').waitFor();
   if (state.putPayload?.incentive_amount !== 125000) throw new Error(`unexpected incentive payload ${JSON.stringify(state.putPayload)}`);
 
   await page.getByRole('button', { name: /재계산/ }).first().click();
+  await page.getByRole('alertdialog').getByRole('heading', { name: '급여 재계산' }).waitFor();
+  await page.getByRole('alertdialog').getByRole('button', { name: '재계산' }).click();
   await page.getByText(/재계산 완료/).waitFor();
   if (!state.hits.includes('POST /salaries/201/recalculate')) throw new Error('recalculate endpoint not called');
+  if (nativeDialogMessage) throw new Error(`unexpected native dialog: ${nativeDialogMessage}`);
 
   await page.getByRole('button', { name: /지급 완료/ }).first().click();
   await page.getByLabel('비밀번호').fill('secret-pass');
@@ -173,6 +180,7 @@ async function runError(browser) {
   const diagnostics = createDiagnostics(page);
 
   await page.goto('/salaries/201', { waitUntil: 'networkidle' });
+  await page.getByRole('alert').getByRole('heading', { name: '급여 정보를 불러오지 못했습니다' }).waitFor();
   await page.getByText('급여 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'mobile error');
   await assertNoHorizontalOverflow(page, 'mobile error');
