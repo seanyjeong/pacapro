@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DEFAULT_ACADEMY_SETTINGS } from './settings-constants';
 import {
@@ -20,10 +20,17 @@ import type {
   TuitionKind,
   WeeklyTuitionKey,
 } from './settings-types';
-import { formatTimeRange, mergeOperationSettings, normalizeAcademySettings, parseTimeRange } from './settings-utils';
+import {
+  formatTimeRange,
+  mergeOperationSettings,
+  normalizeAcademySettings,
+  parseTimeRange,
+  serializeAcademySettings,
+} from './settings-utils';
 
 export function useSettingsPageState() {
   const [settings, setSettings] = useState<AcademySettings>(DEFAULT_ACADEMY_SETTINGS);
+  const [savedSettings, setSavedSettings] = useState<AcademySettings>(DEFAULT_ACADEMY_SETTINGS);
   const [user, setUser] = useState<SettingsUser | null>(null);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,20 +48,19 @@ export function useSettingsPageState() {
         getOperationSettings(),
       ]);
 
-      setSettings((prev) => {
-        let next = prev;
-        if (academyResult.status === 'fulfilled') {
-          next = normalizeAcademySettings(academyResult.value.settings, next);
-        } else {
-          console.error('Academy settings load failed');
-        }
-        if (operationResult.status === 'fulfilled') {
-          next = mergeOperationSettings(operationResult.value.settings, next);
-        } else {
-          console.error('Operation settings load failed');
-        }
-        return next;
-      });
+      let nextSettings = DEFAULT_ACADEMY_SETTINGS;
+      if (academyResult.status === 'fulfilled') {
+        nextSettings = normalizeAcademySettings(academyResult.value.settings, nextSettings);
+      } else {
+        console.error('Academy settings load failed');
+      }
+      if (operationResult.status === 'fulfilled') {
+        nextSettings = mergeOperationSettings(operationResult.value.settings, nextSettings);
+      } else {
+        console.error('Operation settings load failed');
+      }
+      setSettings(nextSettings);
+      setSavedSettings(nextSettings);
     } catch {
       console.error('Settings user load failed');
       toast.error('설정 화면을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
@@ -99,11 +105,17 @@ export function useSettingsPageState() {
     }));
   };
 
+  const hasUnsavedChanges = useMemo(
+    () => serializeAcademySettings(settings) !== serializeAcademySettings(savedSettings),
+    [savedSettings, settings]
+  );
+
   const saveSettings = async () => {
     setIsSaving(true);
     try {
       await saveAcademySettings(settings);
       await saveOperationSettings(settings);
+      setSavedSettings(settings);
       toast.success('학원 설정이 저장되었습니다.');
     } catch {
       console.error('Settings save failed');
@@ -141,6 +153,7 @@ export function useSettingsPageState() {
     isSaving,
     resetConfirmation,
     isResetting,
+    hasUnsavedChanges,
     updateSetting,
     updateClassTime,
     updateTuition,

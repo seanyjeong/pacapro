@@ -13,6 +13,7 @@ interface MoneyInputProps {
   disabled?: boolean;
   id?: string;
   name?: string;
+  'aria-label'?: string;
 }
 
 export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
@@ -27,6 +28,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
       disabled,
       id,
       name,
+      'aria-label': ariaLabel,
     },
     ref
   ) => {
@@ -50,6 +52,7 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(
           disabled={disabled}
           id={id}
           name={name}
+          aria-label={ariaLabel}
           className={cn(
             "w-full px-3 py-2 pr-10 border border-border bg-background text-foreground rounded-md text-right",
             className

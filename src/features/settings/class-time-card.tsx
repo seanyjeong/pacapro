@@ -11,7 +11,7 @@ interface ClassTimeCardProps {
 
 export function ClassTimeCard({ settings, updateClassTime }: ClassTimeCardProps) {
   return (
-    <SettingsSectionCard title="수업 시간대" description="반별 기본 시작/종료 시간" icon={Clock}>
+    <SettingsSectionCard id="class-times" title="수업 시간대" description="반별 기본 시작/종료 시간" icon={Clock}>
       <div className="grid gap-3 md:grid-cols-3">
         {CLASS_TIME_FIELDS.map((field) => (
           <TimeRangeSelect

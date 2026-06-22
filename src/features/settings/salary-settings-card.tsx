@@ -13,7 +13,13 @@ interface SalarySettingsCardProps {
 
 export function SalarySettingsCard({ settings, updateSetting }: SalarySettingsCardProps) {
   return (
-    <SettingsSectionCard title="급여 설정" description="강사 급여 지급 기준" icon={Banknote} contentClassName="space-y-4">
+    <SettingsSectionCard
+      id="salary-settings"
+      title="급여 설정"
+      description="강사 급여 지급 기준"
+      icon={Banknote}
+      contentClassName="space-y-4"
+    >
       <div className="grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
         <SettingsSelect
           label="급여 지급일"

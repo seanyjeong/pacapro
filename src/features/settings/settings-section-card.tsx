@@ -9,6 +9,7 @@ interface SettingsSectionCardProps {
   children: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  id?: string;
 }
 
 export function SettingsSectionCard({
@@ -18,9 +19,10 @@ export function SettingsSectionCard({
   children,
   className,
   contentClassName,
+  id,
 }: SettingsSectionCardProps) {
   return (
-    <Card className={cn('rounded-lg border-border/70 shadow-none', className)}>
+    <Card id={id} className={cn('scroll-mt-24 rounded-lg border-border/70 shadow-none', className)}>
       <CardHeader className="border-b border-border/60 px-5 py-4">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-muted/40">

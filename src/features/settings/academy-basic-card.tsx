@@ -12,7 +12,12 @@ interface AcademyBasicCardProps {
 
 export function AcademyBasicCard({ settings, updateSetting }: AcademyBasicCardProps) {
   return (
-    <SettingsSectionCard title="학원 기본 정보" description="청구서와 상담 기록에 공통으로 쓰이는 값" icon={Building}>
+    <SettingsSectionCard
+      id="academy-basic"
+      title="학원 기본 정보"
+      description="청구서와 상담 기록에 공통으로 쓰이는 값"
+      icon={Building}
+    >
       <div className="grid gap-4 md:grid-cols-2">
         <SettingsTextInput
           label="학원명"

@@ -35,6 +35,10 @@ export function getSalaryExampleRows(settings: AcademySettings): string[] {
   return [`11월 ${payDay} 급여: 11월 근무분 정산`, `12월 ${payDay} 급여: 12월 근무분 정산`];
 }
 
+export function serializeAcademySettings(settings: AcademySettings): string {
+  return JSON.stringify(settings);
+}
+
 export function normalizeAcademySettings(
   patch: AcademySettingsPatch | null | undefined,
   base: AcademySettings = DEFAULT_ACADEMY_SETTINGS
