@@ -81,6 +81,7 @@ function makeState(mode) {
     mode,
     payment: makePayment(),
     student: makeStudent(),
+    withdrawPayload: null,
   };
 }
 
@@ -124,8 +125,50 @@ async function installRoutes(context, state) {
       });
     }
 
+    if (method === 'POST' && path === '/students/41/withdraw') {
+      const payload = JSON.parse(request.postData() || '{}');
+      state.withdrawPayload = payload;
+      state.student = {
+        ...state.student,
+        rest_end_date: null,
+        rest_reason: null,
+        rest_start_date: null,
+        status: 'withdrawn',
+        withdrawal_date: payload.withdrawal_date || '2026-06-23',
+      };
+      return jsonRoute(route, {
+        message: 'withdrawn',
+        student: {
+          id: 41,
+          name: '김진우',
+          status: 'withdrawn',
+          withdrawal_date: state.student.withdrawal_date,
+          withdrawal_reason: payload.reason || null,
+        },
+      });
+    }
+
+    if (method === 'DELETE' && path === '/students/41') {
+      return jsonRoute(route, { message: 'deleted', student: { id: 41, name: '김진우' } });
+    }
+
     return jsonRoute(route, { message: 'mocked' });
   });
+}
+
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
 }
 
 async function createStudentDetailPage(browser, mode, viewport = { width: 1365, height: 900 }) {
@@ -149,6 +192,9 @@ async function runNormalDesktop(browser) {
   await page.getByText('수업 및 학원비', { exact: true }).waitFor();
   await page.getByText('연락처', { exact: true }).waitFor();
   await page.getByText('기타 정보', { exact: true }).waitFor();
+  await page.getByRole('heading', { name: '운영 액션' }).waitFor();
+  await page.getByRole('button', { name: '수업/학원비 변경' }).waitFor();
+  await page.getByRole('button', { name: '납부 내역 보기' }).waitFor();
   await page.getByText('성적 기록이 없습니다').waitFor();
   if (await page.getByText('개발 중').count()) {
     throw new Error('student detail exposes internal development copy');
@@ -157,9 +203,22 @@ async function runNormalDesktop(browser) {
   await assertNoHorizontalOverflow(page, 'student detail desktop');
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-desktop.png', fullPage: true });
 
-  await page.getByRole('button', { name: /납부 내역/ }).click();
+  await page.getByRole('button', { name: '납부 내역 보기' }).click();
   await page.getByText('2026-06', { exact: true }).waitFor();
   await page.getByText('468,000원').first().waitFor();
+
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '삭제' }), 'delete action');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '학생 삭제' }).waitFor();
+  await page.getByRole('button', { name: '취소' }).click();
+
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '퇴원 처리' }), 'withdraw action');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '퇴원 처리' }).waitFor();
+  await page.getByLabel('퇴원 사유').fill('타 학원 이동');
+  await page.getByRole('button', { name: '퇴원 처리 완료' }).click();
+  await page.getByText('현재 상태: 퇴원').waitFor();
+  if (state.withdrawPayload?.reason !== '타 학원 이동') {
+    throw new Error(`unexpected withdraw payload: ${JSON.stringify(state.withdrawPayload)}`);
+  }
 
   await context.close();
   return { diagnostics: result.diagnostics, state };
@@ -172,6 +231,8 @@ async function runNormalMobile(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
   await page.getByText('김진우').first().waitFor();
+  await page.getByRole('heading', { name: '운영 액션' }).waitFor();
+  await page.getByRole('button', { name: '수업/학원비 변경' }).waitFor();
   await page.getByText('성적 기록이 없습니다').waitFor();
   await assertNoRawVisibleText(page, 'student detail mobile');
   await assertNoHorizontalOverflow(page, 'student detail mobile');

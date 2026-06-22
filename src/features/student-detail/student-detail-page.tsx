@@ -3,8 +3,6 @@
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Edit, Trash2, UserMinus, GraduationCap, RotateCcw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { StudentAttendanceComponent } from '@/components/students/student-attendance';
 import { StudentCard } from '@/components/students/student-card';
 import { StudentConsultationsComponent } from '@/components/students/student-consultations';
@@ -15,11 +13,13 @@ import { StudentSeasonsComponent } from '@/components/students/student-seasons';
 import { useStudent } from '@/hooks/use-students';
 import { studentsAPI } from '@/lib/api/students';
 import { STATUS_LABELS } from '@/lib/types/student';
+import { StudentDetailActionDialog } from './student-detail-action-dialog';
+import { StudentDetailActions } from './student-detail-actions';
 import { StudentDetailError, StudentDetailLoading } from './student-detail-states';
 import { StudentDetailHeader } from './student-detail-header';
 import { StudentDetailSummary } from './student-detail-summary';
 import { StudentDetailTabs } from './student-detail-tabs';
-import type { StudentDetailTab } from './student-detail-types';
+import type { StudentDetailAction, StudentDetailTab } from './student-detail-types';
 import { buildStudentTabs } from './student-detail-utils';
 
 export function StudentDetailPage() {
@@ -27,6 +27,8 @@ export function StudentDetailPage() {
   const params = useParams();
   const studentId = Number.parseInt(params.id as string, 10);
   const [activeTab, setActiveTab] = useState<StudentDetailTab>('performance');
+  const [pendingAction, setPendingAction] = useState<StudentDetailAction | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
   const [resumeModalOpen, setResumeModalOpen] = useState(false);
 
   const { error, loading, payments, performances, reload, student } = useStudent(studentId);
@@ -40,63 +42,37 @@ export function StudentDetailPage() {
 
   const handleDelete = async () => {
     if (!student) return;
-    const confirmation = prompt(`"${student.name}" 학생을 삭제하려면 "삭제"를 입력해주세요.`);
-    if (confirmation !== '삭제') {
-      if (confirmation !== null) toast.error('입력값이 일치하지 않습니다.');
-      return;
-    }
-
-    try {
-      await studentsAPI.deleteStudent(studentId, { suppressErrorToast: true });
-      toast.success(`${student.name} 학생이 삭제되었습니다.`);
-      router.push('/students');
-    } catch (err) {
-      console.error('Failed to delete student:', err);
-      toast.error('학생 삭제에 실패했습니다.');
-    }
+    await studentsAPI.deleteStudent(studentId, { suppressErrorToast: true });
+    toast.success(`${student.name} 학생이 삭제되었습니다.`);
+    router.push('/students');
   };
 
   const handleGraduate = async () => {
     if (!student) return;
-    const confirmation = prompt(`"${student.name}" 학생을 졸업 처리하려면 "졸업"을 입력해주세요.`);
-    if (confirmation !== '졸업') {
-      if (confirmation !== null) toast.error('입력값이 일치하지 않습니다.');
-      return;
-    }
-
-    try {
-      await studentsAPI.updateStudent(studentId, { status: 'graduated' }, { suppressErrorToast: true });
-      toast.success(`${student.name} 학생이 졸업 처리되었습니다.`);
-      reload();
-    } catch (err) {
-      console.error('Failed to graduate student:', err);
-      toast.error('졸업 처리에 실패했습니다.');
-    }
+    await studentsAPI.updateStudent(studentId, { status: 'graduated' }, { suppressErrorToast: true });
+    toast.success(`${student.name} 학생이 졸업 처리되었습니다.`);
+    reload();
   };
 
-  const handleWithdraw = async () => {
+  const handleWithdraw = async (reason?: string) => {
     if (!student) return;
-    const unpaidPayments = payments.filter((payment) => payment.payment_status !== 'paid');
-    const warning = unpaidPayments.length > 0
-      ? `"${student.name}" 학생은 미납 학원비 ${unpaidPayments.length}건이 있습니다. 퇴원 처리하려면 "퇴원"을 입력해주세요.`
-      : `"${student.name}" 학생을 퇴원 처리하려면 "퇴원"을 입력해주세요.`;
-    const confirmation = prompt(warning);
+    await studentsAPI.withdrawStudent(studentId, reason, undefined, { suppressErrorToast: true });
+    toast.success(`${student.name} 학생이 퇴원 처리되었습니다.`);
+    reload();
+  };
 
-    if (confirmation !== '퇴원') {
-      if (confirmation !== null) toast.error('입력값이 일치하지 않습니다.');
-      return;
-    }
-
-    const reason = prompt('퇴원 사유를 입력해주세요. 빈칸으로 둘 수 있습니다.');
-    if (reason === null) return;
-
+  const handleConfirmAction = async (action: StudentDetailAction, data: { reason?: string }) => {
+    setActionBusy(true);
     try {
-      await studentsAPI.withdrawStudent(studentId, reason || undefined, undefined, { suppressErrorToast: true });
-      toast.success(`${student.name} 학생이 퇴원 처리되었습니다.`);
-      reload();
+      if (action === 'delete') await handleDelete();
+      if (action === 'graduate') await handleGraduate();
+      if (action === 'withdraw') await handleWithdraw(data.reason);
+      setPendingAction(null);
     } catch (err) {
-      console.error('Failed to withdraw student:', err);
-      toast.error('퇴원 처리에 실패했습니다.');
+      console.warn('학생 상태 변경에 실패했습니다.', err);
+      toast.error('학생 상태를 변경하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setActionBusy(false);
     }
   };
 
@@ -106,45 +82,29 @@ export function StudentDetailPage() {
   const canGraduate = (student.grade === '고3' || student.grade === 'N수') && student.status === 'active';
   const canWithdraw = student.status === 'active' || student.status === 'paused';
   const canResume = student.status === 'paused';
+  const unpaidPaymentCount = payments.filter((payment) => payment.payment_status !== 'paid').length;
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
       <StudentDetailHeader
         description={`${student.name} 학생의 정보, 출결, 납부, 시즌, 상담 기록을 확인합니다.`}
         onBack={goBack}
-        actions={(
-          <>
-            <Button className="justify-center" type="button" variant="outline" onClick={handleEdit}>
-              <Edit className="mr-2 h-4 w-4" />
-              수정
-            </Button>
-            {canGraduate ? (
-              <Button className="justify-center" type="button" variant="outline" onClick={handleGraduate}>
-                <GraduationCap className="mr-2 h-4 w-4" />
-                졸업 처리
-              </Button>
-            ) : null}
-            {canWithdraw ? (
-              <Button className="justify-center" type="button" variant="outline" onClick={handleWithdraw}>
-                <UserMinus className="mr-2 h-4 w-4" />
-                퇴원 처리
-              </Button>
-            ) : null}
-            {canResume ? (
-              <Button className="justify-center" type="button" variant="outline" onClick={() => setResumeModalOpen(true)}>
-                <RotateCcw className="mr-2 h-4 w-4" />
-                복귀 처리
-              </Button>
-            ) : null}
-            <Button className="justify-center text-rose-700 hover:text-rose-800" type="button" variant="outline" onClick={handleDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              삭제
-            </Button>
-          </>
-        )}
       />
 
       <StudentDetailSummary payments={payments} student={student} />
+
+      <StudentDetailActions
+        canGraduate={canGraduate}
+        canResume={canResume}
+        canWithdraw={canWithdraw}
+        paymentCount={payments.length}
+        student={student}
+        unpaidPaymentCount={unpaidPaymentCount}
+        onEdit={handleEdit}
+        onOpenAction={setPendingAction}
+        onOpenTab={setActiveTab}
+        onResume={() => setResumeModalOpen(true)}
+      />
 
       <StudentCard student={student} />
 
@@ -200,6 +160,18 @@ export function StudentDetailPage() {
           }}
         />
       ) : null}
+
+      <StudentDetailActionDialog
+        action={pendingAction}
+        busy={actionBusy}
+        open={pendingAction !== null}
+        studentName={student.name}
+        unpaidPaymentCount={unpaidPaymentCount}
+        onConfirm={handleConfirmAction}
+        onOpenChange={(open) => {
+          if (!open && !actionBusy) setPendingAction(null);
+        }}
+      />
     </div>
   );
 }
