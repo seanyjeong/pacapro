@@ -187,12 +187,11 @@ async function runNormal(browser) {
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
-  page.on('dialog', async (dialog) => dialog.accept());
 
   await page.goto('/schedules', { waitUntil: 'networkidle' });
   await page.getByTestId('schedules-workspace').waitFor();
   await page.getByRole('heading', { name: '수업 관리' }).waitFor();
-  await page.getByRole('heading', { name: `${range.year}년 ${range.month + 1}월`, exact: true }).waitFor();
+  await page.getByText(`${range.year}년 ${range.month + 1}월`, { exact: true }).waitFor();
   await page.getByText('승인 대기').waitFor();
   await page.getByTestId('selected-date-operations').waitFor();
   await page.getByText('선택일 운영').waitFor();
@@ -221,7 +220,17 @@ async function runNormal(browser) {
   await page.getByRole('button', { name: '목록' }).click();
   await page.getByTestId('schedule-list-table').waitFor();
   await page.getByTestId('schedule-list-table').getByText('오후 실기 집중반').waitFor();
-  await page.getByRole('button', { name: '삭제' }).click();
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '삭제' }), 'schedule list delete');
+  const listDeleteDialog = page.getByRole('alertdialog');
+  await listDeleteDialog.getByRole('heading', { name: '수업 삭제' }).waitFor();
+  await listDeleteDialog.getByText('오후 실기 집중반').waitFor();
+  await Promise.all([
+    page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'DELETE' && normalizePacaApiPath(url) === '/schedules/101';
+    }),
+    listDeleteDialog.getByRole('button', { name: '삭제' }).click(),
+  ]);
   await page.getByText('수업이 삭제되었습니다.').waitFor();
   if (state.deletedScheduleId !== 101) throw new Error('schedule delete endpoint not called');
 
@@ -306,6 +315,21 @@ async function createPage(browser, stateOverrides = {}, viewport = { width: 390,
   return { context, diagnostics, page, state };
 }
 
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
+}
+
 async function chooseSelectOption(page, triggerSelector, optionName) {
   await page.locator(triggerSelector).click();
   await page.getByText(optionName, { exact: true }).last().click();
@@ -328,6 +352,34 @@ async function runDetailLoadError(browser) {
   await assertNoRawVisibleText(page, 'schedule detail load error');
   await assertNoHorizontalOverflow(page, 'schedule detail load error');
   await page.screenshot({ path: '/Users/etlab/paca-schedule-detail-error-mobile.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
+async function runDetailDelete(browser) {
+  const result = await createPage(browser, {}, { width: 1365, height: 900 });
+  const { context, page, state } = result;
+
+  await page.goto('/schedules/101', { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { level: 1, name: '수업 상세' }).waitFor();
+  await page.getByText('오후 실기 집중반').waitFor();
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '삭제' }), 'schedule detail delete');
+  const dialog = page.getByRole('alertdialog');
+  await dialog.getByRole('heading', { name: '수업 삭제' }).waitFor();
+  await dialog.getByText('오후 실기 집중반').waitFor();
+  await Promise.all([
+    page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'DELETE' && normalizePacaApiPath(url) === '/schedules/101';
+    }),
+    dialog.getByRole('button', { name: '삭제' }).click(),
+  ]);
+  await page.waitForURL('**/schedules');
+  if (state.deletedScheduleId !== 101) throw new Error('schedule detail delete endpoint not called');
+  await assertNoRawVisibleText(page, 'schedule detail delete');
+  await assertNoHorizontalOverflow(page, 'schedule detail delete');
+  await page.screenshot({ path: '/Users/etlab/paca-schedule-detail-delete.png', fullPage: true });
 
   await context.close();
   return result;
@@ -394,14 +446,16 @@ async function main() {
     const normal = await runNormal(browser);
     const loadError = await runLoadError(browser);
     const detailLoadError = await runDetailLoadError(browser);
+    const detailDelete = await runDetailDelete(browser);
     const createSaveError = await runCreateSaveError(browser);
     const editSaveError = await runEditSaveError(browser);
     const attendanceNormal = await runAttendanceNormal(browser);
     const attendanceLoadError = await runAttendanceLoadError(browser);
-    [normal, loadError, detailLoadError, createSaveError, editSaveError, attendanceNormal, attendanceLoadError].forEach(assertDiagnostics);
+    [normal, loadError, detailLoadError, detailDelete, createSaveError, editSaveError, attendanceNormal, attendanceLoadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
       createPayload: createSaveError.state.createPayload,
+      detailDeletedScheduleId: detailDelete.state.deletedScheduleId,
       deletedScheduleId: normal.state.deletedScheduleId,
       editPayload: editSaveError.state.editPayload,
       normalConsoleErrors: normal.diagnostics.consoleErrors,

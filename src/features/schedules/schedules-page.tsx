@@ -1,23 +1,47 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { InstructorAttendanceModal } from '@/components/schedules/instructor-attendance-modal';
 import { TimeSlotDetailModal } from '@/components/schedules/time-slot-detail-modal';
 import { ExtraDayRequestModal } from '@/components/schedules/extra-day-request-modal';
 import { PendingApprovalsModal } from '@/components/schedules/pending-approvals-modal';
+import { ScheduleDeleteDialog } from './schedule-delete-dialog';
 import { SchedulesHeader } from './schedules-page-header';
 import { SchedulesLoading } from './schedules-page-loading';
 import { SchedulesError } from './schedules-page-error';
 import { SchedulesWorkspace } from './schedules-workspace';
 import { useSchedulesPageState } from './use-schedules-page-state';
 
+type DeleteTarget = { scheduleId: number; scheduleName: string } | null;
+
 export function SchedulesPage() {
   const router = useRouter();
   const state = useSchedulesPageState();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>(null);
 
-  const handleDeleteSchedule = async (scheduleId: number, scheduleName: string) => {
-    if (!confirm(`"${scheduleName}" 수업을 삭제하시겠습니까?`)) return;
-    await state.deleteSchedule(scheduleId);
+  const handleDeleteSchedule = (scheduleId: number, scheduleName: string) => {
+    setDeleteTarget({ scheduleId, scheduleName });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    if (deleteLoading) return;
+    setDeleteDialogOpen(open);
+  };
+
+  const confirmDeleteSchedule = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      setDeleteLoading(true);
+      const deleted = await state.deleteSchedule(deleteTarget.scheduleId);
+      if (deleted) setDeleteDialogOpen(false);
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   return (
@@ -95,6 +119,14 @@ export function SchedulesPage() {
           onApproved={state.refreshAfterApproval}
         />
       )}
+
+      <ScheduleDeleteDialog
+        loading={deleteLoading}
+        open={deleteDialogOpen}
+        scheduleName={deleteTarget?.scheduleName || '선택한'}
+        onConfirm={() => void confirmDeleteSchedule()}
+        onOpenChange={handleDeleteDialogOpenChange}
+      />
     </div>
   );
 }

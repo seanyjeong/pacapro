@@ -4,8 +4,10 @@
  * 수업 상세 페이지
  */
 
+import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { ScheduleCard } from '@/components/schedules/schedule-card';
+import { ScheduleDeleteDialog } from '@/features/schedules/schedule-delete-dialog';
 import { SchedulePageHeader } from '@/features/schedules/schedule-page-header';
 import { ScheduleErrorPanel, ScheduleLoadingPanel } from '@/features/schedules/schedule-page-states';
 import { useSchedule, useDeleteSchedule } from '@/hooks/use-schedules';
@@ -16,6 +18,8 @@ export default function ScheduleDetailPage() {
   const router = useRouter();
   const params = useParams();
   const scheduleId = parseInt(params.id as string);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const { data: schedule, isLoading, error, refetch } = useSchedule(scheduleId);
   const deleteSchedule = useDeleteSchedule();
@@ -24,20 +28,26 @@ export default function ScheduleDetailPage() {
     router.push(`/schedules/${scheduleId}/edit`);
   };
 
-  const handleDelete = async () => {
-    if (!schedule) return;
+  const handleDelete = () => {
+    setDeleteDialogOpen(true);
+  };
 
-    const scheduleName = schedule.title || `${schedule.instructor_name} 수업`;
-    if (!confirm(`"${scheduleName}" 수업을 삭제하시겠습니까?`)) {
-      return;
-    }
-
+  const confirmDelete = async () => {
     try {
+      setDeleteLoading(true);
       await deleteSchedule.mutateAsync(scheduleId);
+      setDeleteDialogOpen(false);
       router.push('/schedules');
     } catch {
       // Korean user-facing error is handled by the mutation toast.
+    } finally {
+      setDeleteLoading(false);
     }
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    if (deleteLoading) return;
+    setDeleteDialogOpen(open);
   };
 
   const handleAttendanceClick = () => {
@@ -86,6 +96,14 @@ export default function ScheduleDetailPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onAttendanceClick={handleAttendanceClick}
+      />
+
+      <ScheduleDeleteDialog
+        loading={deleteLoading || deleteSchedule.isPending}
+        open={deleteDialogOpen}
+        scheduleName={schedule.title || `${schedule.instructor_name} 수업`}
+        onConfirm={() => void confirmDelete()}
+        onOpenChange={handleDeleteDialogOpenChange}
       />
     </div>
   );
