@@ -96,7 +96,7 @@ const INSTRUCTORS = [
 const TODAY = formatDate(new Date());
 
 function makeState(mode) {
-  return { createPayload: null, editPayload: null, hits: [], mode };
+  return { createPayload: null, deletedInstructor: null, editPayload: null, hits: [], mode };
 }
 
 async function installRoutes(context, state) {
@@ -146,6 +146,11 @@ async function installRoutes(context, state) {
       return jsonRoute(route, { message: 'updated', instructor: makeInstructor({ id: 31, name: state.editPayload.name }) });
     }
 
+    if (method === 'DELETE' && path === '/instructors/31') {
+      state.deletedInstructor = 31;
+      return jsonRoute(route, { message: 'deleted' });
+    }
+
     return jsonRoute(route, { message: 'mocked' });
   });
 }
@@ -165,6 +170,21 @@ async function fillInstructorFields(page, name = '김신규') {
   await page.locator('#instructor-name').fill(name);
   await page.locator('#instructor-phone').fill('010-2222-3333');
   await page.locator('#instructor-hourly-rate').fill('45000');
+}
+
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
 }
 
 async function runListDesktop(browser) {
@@ -234,6 +254,12 @@ async function runDetailDesktop(browser) {
   await assertNoRawVisibleText(page, 'instructors detail desktop');
   await assertNoHorizontalOverflow(page, 'instructors detail desktop');
   await page.screenshot({ path: '/Users/etlab/paca-instructor-detail-desktop.png', fullPage: true });
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '삭제' }), 'instructor delete');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '강사 삭제' }).waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-instructor-delete-dialog.png', fullPage: true });
+  await page.getByRole('alertdialog').getByRole('button', { name: '삭제' }).click();
+  await page.waitForURL('**/instructors');
+  if (result.state.deletedInstructor !== 31) throw new Error('instructor delete API was not called');
 
   await context.close();
   return result;

@@ -1,9 +1,20 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Edit, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { InstructorCard } from '@/components/instructors/instructor-card';
 import { InstructorAttendanceComponent } from '@/components/instructors/instructor-attendance';
 import { InstructorSalaries } from '@/components/instructors/instructor-salaries';
@@ -11,13 +22,13 @@ import { InstructorPageHeader } from '@/features/instructors/instructor-page-hea
 import { InstructorErrorPanel, InstructorLoadingPanel } from '@/features/instructors/instructor-page-states';
 import { useInstructor } from '@/hooks/use-instructors';
 import { instructorsAPI } from '@/lib/api/instructors';
-import { useState } from 'react';
 
 export default function InstructorDetailPage() {
   const params = useParams();
   const router = useRouter();
   const instructorId = Number(params.id);
   const [deleting, setDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { instructor, attendances, salaries, loading, error, reload } = useInstructor(instructorId);
 
@@ -30,16 +41,11 @@ export default function InstructorDetailPage() {
   const handleDelete = async () => {
     if (!instructor) return;
 
-    const confirmed = window.confirm(
-      `정말로 ${instructor.name} 강사를 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`
-    );
-
-    if (!confirmed) return;
-
     try {
       setDeleting(true);
       await instructorsAPI.deleteInstructor(instructorId, { suppressErrorToast: true });
       toast.success('강사가 삭제되었습니다.');
+      setDeleteDialogOpen(false);
       router.push('/instructors');
     } catch (err) {
       console.error('Failed to delete instructor:', err);
@@ -90,7 +96,7 @@ export default function InstructorDetailPage() {
             <Edit className="h-4 w-4" />
             수정
           </Button>
-          <Button className="justify-center gap-2" variant="destructive" onClick={handleDelete} disabled={deleting}>
+          <Button className="justify-center gap-2" variant="destructive" onClick={() => setDeleteDialogOpen(true)} disabled={deleting}>
             <Trash2 className="h-4 w-4" />
             {deleting ? '삭제 중...' : '삭제'}
           </Button>
@@ -126,6 +132,30 @@ export default function InstructorDetailPage() {
       <InstructorAttendanceComponent attendances={attendances} loading={false} />
 
       <InstructorSalaries salaries={salaries} loading={false} />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => !deleting && setDeleteDialogOpen(open)}>
+        <AlertDialogContent className="max-w-md rounded-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>강사 삭제</AlertDialogTitle>
+            <AlertDialogDescription>
+              {instructor.name} 강사 기록을 삭제합니다. 삭제 후에는 강사 목록에서 보이지 않습니다.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleting}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleDelete();
+              }}
+            >
+              {deleting ? '삭제 중...' : '삭제'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
