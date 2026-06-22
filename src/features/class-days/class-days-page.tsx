@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { studentsAPI } from '@/lib/api/students';
 import type { ClassDaysStudent, ClassDaySlot } from '@/lib/types/student';
 import { extractDayNumbers, parseClassDaysWithSlots } from '@/lib/utils/student-helpers';
+import { ClassDaysBulkEditor } from './class-days-bulk-editor';
 import { ClassDaysControlBar } from './class-days-control-bar';
 import { ClassDaysError } from './class-days-error';
 import { ClassDaysFilters } from './class-days-filters';
@@ -24,6 +25,7 @@ export function ClassDaysPage() {
   const [effectiveFrom, setEffectiveFrom] = useState('immediate');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [edits, setEdits] = useState<Map<number, StudentEdit>>(new Map());
+  const [bulkSlots, setBulkSlots] = useState<ClassDaySlot[]>([]);
   const [filterGrade, setFilterGrade] = useState('all');
   const [filterWeekly, setFilterWeekly] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,21 +89,12 @@ export function ClassDaysPage() {
   };
 
   const updateStudentEdit = (student: ClassDaysStudent, newSlots: ClassDaySlot[]) => {
-    const defaultTimeSlot = student.time_slot || 'evening';
-    const originalSlots = parseClassDaysWithSlots(student.class_days, defaultTimeSlot);
-    const originalDayNums = new Set(extractDayNumbers(originalSlots));
-    const newDayNums = new Set(extractDayNumbers(newSlots));
-    const daysChanged = originalDayNums.size !== newDayNums.size ||
-      [...originalDayNums].some((day) => !newDayNums.has(day));
-    const timeSlotsChanged = !daysChanged && newSlots.some((newSlot) => {
-      const originalSlot = originalSlots.find((slot) => slot.day === newSlot.day);
-      return originalSlot && originalSlot.timeSlot !== newSlot.timeSlot;
-    });
+    const nextEdit = buildStudentEdit(student, newSlots);
 
     setEdits((prev) => {
       const next = new Map(prev);
-      if (daysChanged || timeSlotsChanged) {
-        next.set(student.id, { class_days: newSlots, changed: true });
+      if (nextEdit) {
+        next.set(student.id, nextEdit);
       } else {
         next.delete(student.id);
       }
@@ -127,6 +120,54 @@ export function ClassDaysPage() {
       }
       return next;
     });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const toggleBulkDay = (dayValue: number) => {
+    setBulkSlots((prev) => {
+      if (prev.some((slot) => slot.day === dayValue)) {
+        return prev.filter((slot) => slot.day !== dayValue);
+      }
+      return sortClassDaySlots([...prev, { day: dayValue, timeSlot: 'evening' }]);
+    });
+  };
+
+  const changeBulkTimeSlot = (dayValue: number, timeSlot: TimeSlot) => {
+    setBulkSlots((prev) => sortClassDaySlots(prev.map((slot) => (
+      slot.day === dayValue ? { ...slot, timeSlot } : slot
+    ))));
+  };
+
+  const applyBulkSlotsToSelected = () => {
+    const selectedStudents = students.filter((student) => selectedIds.has(student.id));
+
+    if (selectedStudents.length === 0) {
+      toast.info('학생을 먼저 선택해주세요.');
+      return;
+    }
+
+    if (bulkSlots.length === 0) {
+      toast.info('적용할 요일을 선택해주세요.');
+      return;
+    }
+
+    const nextSlots = sortClassDaySlots(bulkSlots);
+    setEdits((prev) => {
+      const next = new Map(prev);
+      selectedStudents.forEach((student) => {
+        const nextEdit = buildStudentEdit(student, nextSlots);
+        if (nextEdit) {
+          next.set(student.id, nextEdit);
+        } else {
+          next.delete(student.id);
+        }
+      });
+      return next;
+    });
+    toast.success(`${selectedStudents.length}명에게 수업일 변경을 적용했습니다.`);
   };
 
   const resetStudentEdit = (studentId: number) => {
@@ -222,6 +263,14 @@ export function ClassDaysPage() {
         onSearchChange={setSearchQuery}
         onReset={resetFilters}
       />
+      <ClassDaysBulkEditor
+        selectedCount={selectedIds.size}
+        slots={bulkSlots}
+        onApply={applyBulkSlotsToSelected}
+        onChangeTimeSlot={changeBulkTimeSlot}
+        onClearSelection={clearSelection}
+        onToggleDay={toggleBulkDay}
+      />
       <ClassDaysTable
         students={filteredStudents}
         selectedIds={selectedIds}
@@ -235,4 +284,25 @@ export function ClassDaysPage() {
       />
     </div>
   );
+}
+
+function buildStudentEdit(student: ClassDaysStudent, newSlots: ClassDaySlot[]): StudentEdit | null {
+  const defaultTimeSlot = student.time_slot || 'evening';
+  const originalSlots = parseClassDaysWithSlots(student.class_days, defaultTimeSlot);
+  const originalDayNums = new Set(extractDayNumbers(originalSlots));
+  const newDayNums = new Set(extractDayNumbers(newSlots));
+  const daysChanged = originalDayNums.size !== newDayNums.size ||
+    [...originalDayNums].some((day) => !newDayNums.has(day));
+  const timeSlotsChanged = !daysChanged && newSlots.some((newSlot) => {
+    const originalSlot = originalSlots.find((slot) => slot.day === newSlot.day);
+    return originalSlot && originalSlot.timeSlot !== newSlot.timeSlot;
+  });
+
+  return daysChanged || timeSlotsChanged
+    ? { class_days: sortClassDaySlots(newSlots), changed: true }
+    : null;
+}
+
+function sortClassDaySlots(slots: ClassDaySlot[]) {
+  return [...slots].sort((a, b) => (a.day === 0 ? 7 : a.day) - (b.day === 0 ? 7 : b.day));
 }

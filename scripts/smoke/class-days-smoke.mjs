@@ -89,19 +89,28 @@ async function runDesktopSave(browser) {
 
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
-  const jinwooRow = page.locator('tbody tr').filter({ hasText: '김진우' });
-  await jinwooRow.getByRole('button', { name: '김진우 화요일 선택' }).click();
-  await jinwooRow.getByLabel('김진우 화요일 시간대').selectOption('morning');
+  await page.locator('tbody tr').filter({ hasText: '김진우' }).getByLabel('김진우 선택').click();
+  await page.locator('tbody tr').filter({ hasText: '박서연' }).getByLabel('박서연 선택').click();
+  await page.getByRole('button', { name: '일괄 화요일 선택' }).click();
+  await page.getByRole('button', { name: '일괄 금요일 선택' }).click();
+  await page.getByLabel('일괄 화요일 시간대').selectOption('morning');
+  await page.getByLabel('일괄 금요일 시간대').selectOption('afternoon');
+  await page.getByRole('button', { name: '선택 학생에 적용' }).click();
+  await page.getByText('2명 변경됨').waitFor();
   await page.getByRole('button', { name: /저장/ }).click();
   await page.getByText('수업일 변경이 저장되었습니다.').waitFor();
 
   if (!state.bulkPayload) throw new Error('class-days bulk payload was not sent');
-  if (state.bulkPayload.students?.[0]?.id !== 41) throw new Error(`student id mismatch: ${JSON.stringify(state.bulkPayload)}`);
-  const tuesday = state.bulkPayload.students[0].class_days.find((slot) => slot.day === 2);
-  if (!tuesday) {
-    throw new Error(`Tuesday was not included: ${JSON.stringify(state.bulkPayload)}`);
+  if (state.bulkPayload.students?.length !== 2) throw new Error(`student count mismatch: ${JSON.stringify(state.bulkPayload)}`);
+  for (const student of state.bulkPayload.students) {
+    const tuesday = student.class_days.find((slot) => slot.day === 2);
+    const friday = student.class_days.find((slot) => slot.day === 5);
+    if (!tuesday || !friday) {
+      throw new Error(`bulk weekdays were not included: ${JSON.stringify(state.bulkPayload)}`);
+    }
+    if (tuesday.timeSlot !== 'morning') throw new Error(`Tuesday time slot mismatch: ${JSON.stringify(state.bulkPayload)}`);
+    if (friday.timeSlot !== 'afternoon') throw new Error(`Friday time slot mismatch: ${JSON.stringify(state.bulkPayload)}`);
   }
-  if (tuesday.timeSlot !== 'morning') throw new Error(`Tuesday time slot mismatch: ${JSON.stringify(state.bulkPayload)}`);
 
   await assertNoRawVisibleText(page, 'class days desktop');
   await assertNoHorizontalOverflow(page, 'class days desktop');
