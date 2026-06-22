@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MoneyInput } from '@/components/ui/money-input';
+import { SeasonAlert } from '@/features/seasons/season-alert';
 import type { ContinuousDiscountType, SeasonFormData, SeasonType, TimeSlot } from '@/lib/types/season';
 import { OPERATING_DAY_OPTIONS, SEASON_TARGET_GRADES, TIME_SLOT_OPTIONS } from '@/lib/types/season';
 
@@ -42,9 +43,7 @@ export function SeasonCreateForm({
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
       {error && (
-        <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" data-testid="season-create-error">
-          {error}
-        </div>
+        <SeasonAlert message={error} testId="season-create-error" title="저장할 수 없습니다" />
       )}
 
       <section className="rounded-md border border-border bg-card">

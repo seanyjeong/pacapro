@@ -147,8 +147,15 @@ async function installRoutes(context, state) {
     if (method === 'GET' && path === '/seasons/88') {
       return jsonRoute(route, { message: 'ok', season, enrolled_students: state.students });
     }
+    if (method === 'GET' && path === '/seasons') {
+      return jsonRoute(route, { message: 'ok', seasons: [] });
+    }
     if (method === 'GET' && path === '/seasons/88/students') {
       return jsonRoute(route, { enrolled_students: state.students });
+    }
+    if (method === 'DELETE' && path === '/seasons/88') {
+      state.deletedSeasonId = 88;
+      return jsonRoute(route, { message: 'deleted' });
     }
     if (method === 'PUT' && path === '/seasons/enrollments/501') {
       state.timeSlotPayload = request.postDataJSON();
@@ -177,7 +184,7 @@ async function installRoutes(context, state) {
 }
 
 function makeState(overrides = {}) {
-  return { externalContinues: [], hits: [], students: structuredClone(initialStudents), ...overrides };
+  return { deletedSeasonId: null, externalContinues: [], hits: [], students: structuredClone(initialStudents), ...overrides };
 }
 
 async function runNormal(browser) {
@@ -186,7 +193,6 @@ async function runNormal(browser) {
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
-  page.on('dialog', async (dialog) => dialog.accept());
 
   await page.goto('/seasons/88', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '2026 정시 집중반' }).waitFor();
@@ -214,6 +220,8 @@ async function runNormal(browser) {
   }
 
   await page.locator('tr:has-text("윤서아")').getByRole('button', { name: '취소' }).click();
+  await page.getByRole('alertdialog', { name: '시즌 등록 취소' }).waitFor();
+  await page.getByRole('alertdialog', { name: '시즌 등록 취소' }).getByRole('button', { name: '등록 취소' }).click();
   await page.getByText('시즌 등록이 취소되었습니다.').first().waitFor();
   if (state.cancelledStudentId !== 2) throw new Error('pending enrollment cancel endpoint not called');
 
@@ -227,6 +235,12 @@ async function runNormal(browser) {
   if (state.refundCancelPayload?.final_refund_amount !== 900000) {
     throw new Error(`unexpected refund cancel payload ${JSON.stringify(state.refundCancelPayload)}`);
   }
+
+  await page.getByRole('button', { name: '삭제' }).click();
+  await page.getByRole('alertdialog', { name: '시즌 삭제' }).waitFor();
+  await page.getByRole('alertdialog', { name: '시즌 삭제' }).getByRole('button', { name: '삭제' }).click();
+  await page.waitForURL('**/seasons');
+  if (state.deletedSeasonId !== 88) throw new Error('season detail delete endpoint not called');
 
   await context.close();
   return { state, diagnostics };

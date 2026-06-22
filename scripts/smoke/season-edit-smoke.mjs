@@ -180,6 +180,7 @@ async function runUpdateError(browser) {
   await page.getByTestId('season-edit-workspace').waitFor();
   await editForm(page);
   await page.getByRole('button', { name: '저장' }).click();
+  await page.getByText('저장할 수 없습니다').waitFor();
   await page.getByText('시즌을 수정하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'season edit update error');
   await assertNoHorizontalOverflow(page, 'season edit update error');

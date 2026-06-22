@@ -12,12 +12,12 @@ export function SeasonListFilters({ filters, years, onChange, onClear }: SeasonL
   const hasFilters = Boolean(filters.year || filters.season_type || filters.status);
 
   return (
-    <section className="rounded-md border border-slate-200 bg-white px-4 py-4">
+    <section className="rounded-md border border-border bg-card px-4 py-4">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-[repeat(3,minmax(0,180px))_auto] md:items-end">
-        <label className="grid gap-1 text-sm font-medium text-slate-700">
+        <label className="grid gap-1 text-sm font-medium text-foreground">
           연도
           <select
-            className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900"
+            className="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             value={filters.year || ''}
             onChange={(event) => onChange({ ...filters, year: event.target.value ? Number(event.target.value) : undefined })}
           >
@@ -27,10 +27,10 @@ export function SeasonListFilters({ filters, years, onChange, onClear }: SeasonL
             ))}
           </select>
         </label>
-        <label className="grid gap-1 text-sm font-medium text-slate-700">
+        <label className="grid gap-1 text-sm font-medium text-foreground">
           시즌 타입
           <select
-            className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900"
+            className="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             value={filters.season_type || ''}
             onChange={(event) => onChange({ ...filters, season_type: (event.target.value as SeasonType) || undefined })}
           >
@@ -39,10 +39,10 @@ export function SeasonListFilters({ filters, years, onChange, onClear }: SeasonL
             <option value="regular">정시</option>
           </select>
         </label>
-        <label className="grid gap-1 text-sm font-medium text-slate-700">
+        <label className="grid gap-1 text-sm font-medium text-foreground">
           상태
           <select
-            className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900"
+            className="h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
             value={filters.status || ''}
             onChange={(event) => onChange({ ...filters, status: (event.target.value as SeasonStatus) || undefined })}
           >

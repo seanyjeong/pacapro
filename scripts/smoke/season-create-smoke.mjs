@@ -146,6 +146,7 @@ async function runCreateError(browser) {
   await page.getByTestId('season-create-workspace').waitFor();
   await fillRequiredForm(page);
   await page.getByRole('button', { name: '등록' }).click();
+  await page.getByText('저장할 수 없습니다').waitFor();
   await page.getByText('시즌을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'season create error');
   await assertNoHorizontalOverflow(page, 'season create error');

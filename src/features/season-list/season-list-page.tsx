@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { SeasonConfirmDialog } from '@/features/seasons/season-confirm-dialog';
 import { SeasonListEmpty } from './season-list-empty';
 import { SeasonListError } from './season-list-error';
 import { SeasonListFilters } from './season-list-filters';
@@ -13,11 +15,15 @@ import { useSeasonListState } from './use-season-list-state';
 export function SeasonListPage() {
   const router = useRouter();
   const state = useSeasonListState();
+  const [deleteTarget, setDeleteTarget] = useState<{ seasonId: number; seasonName: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  const handleDeleteSeason = async (seasonId: number, seasonName: string) => {
-    const confirmed = confirm(`"${seasonName}" 시즌을 삭제하시겠습니까?\n등록된 학생이 있으면 삭제할 수 없습니다.`);
-    if (!confirmed) return;
-    await state.deleteSeason(seasonId);
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const deleted = await state.deleteSeason(deleteTarget.seasonId);
+    setDeleting(false);
+    if (deleted) setDeleteTarget(null);
   };
 
   return (
@@ -43,13 +49,26 @@ export function SeasonListPage() {
           ) : (
             <SeasonListTable
               seasons={state.seasons}
-              onDelete={handleDeleteSeason}
+              onDelete={(seasonId, seasonName) => setDeleteTarget({ seasonId, seasonName })}
               onEdit={(seasonId) => router.push(`/seasons/${seasonId}/edit`)}
               onOpen={(seasonId) => router.push(`/seasons/${seasonId}`)}
             />
           )}
         </>
       )}
+
+      {deleteTarget ? (
+        <SeasonConfirmDialog
+          busy={deleting}
+          confirmLabel="삭제"
+          description="이 시즌을 삭제할까요?"
+          detail={deleteTarget.seasonName}
+          title="시즌 삭제"
+          warning="등록된 학생이 있으면 삭제할 수 없습니다."
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={handleConfirmDelete}
+        />
+      ) : null}
     </div>
   );
 }

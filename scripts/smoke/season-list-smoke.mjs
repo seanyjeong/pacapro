@@ -100,7 +100,6 @@ async function runNormal(browser) {
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
-  page.on('dialog', async (dialog) => dialog.accept());
 
   await page.goto('/seasons', { waitUntil: 'networkidle' });
   await page.getByTestId('season-list-workspace').waitFor();
@@ -118,6 +117,8 @@ async function runNormal(browser) {
   }
 
   await page.locator('[data-testid="season-row"]:has-text("2026 정시 집중반")').getByRole('button', { name: '삭제' }).click();
+  await page.getByRole('alertdialog', { name: '시즌 삭제' }).waitFor();
+  await page.getByRole('alertdialog', { name: '시즌 삭제' }).getByRole('button', { name: '삭제' }).click();
   await page.getByText('시즌이 삭제되었습니다.').waitFor();
   if (state.deletedSeasonId !== 88) throw new Error('season delete endpoint not called');
 

@@ -1,7 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { RefundModal } from '@/components/refund/refund-modal';
+import { SeasonConfirmDialog } from '@/features/seasons/season-confirm-dialog';
+import type { StudentSeason } from '@/lib/types/season';
 import { EnrolledStudentsSection } from './enrolled-students-section';
 import { SeasonDetailError } from './season-detail-error';
 import { SeasonDetailHeader } from './season-detail-header';
@@ -17,6 +20,9 @@ export function SeasonDetailPage() {
   const params = useParams();
   const seasonId = parseSeasonId(params.id);
   const state = useSeasonDetailState(seasonId);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<StudentSeason | null>(null);
 
   if (state.loading) {
     return <SeasonDetailLoading />;
@@ -26,11 +32,14 @@ export function SeasonDetailPage() {
     return <SeasonDetailError message={state.error} onBack={() => router.push('/seasons')} onRetry={state.reload} />;
   }
 
-  const handleDelete = async () => {
-    if (!confirm(`"${state.season?.season_name}" 시즌을 삭제하시겠습니까?\n등록된 학생이 있으면 삭제할 수 없습니다.`)) {
-      return;
-    }
+  const handleDelete = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setConfirmingDelete(true);
     const deleted = await state.deleteSeason();
+    setConfirmingDelete(false);
     if (deleted) router.push('/seasons');
   };
 
@@ -38,10 +47,16 @@ export function SeasonDetailPage() {
     const enrollment = state.enrolledStudents.find((student) => student.id === enrollmentId);
     if (!enrollment) return;
     if (enrollment.payment_status !== 'paid') {
-      const confirmed = confirm(`${enrollment.student_name} 학생의 시즌 등록을 취소하시겠습니까?`);
-      if (!confirmed) return;
+      setCancelTarget(enrollment);
+      return;
     }
     await state.cancelEnrollment(enrollment);
+  };
+
+  const handleConfirmCancelEnrollment = async () => {
+    if (!cancelTarget) return;
+    await state.cancelEnrollment(cancelTarget);
+    setCancelTarget(null);
   };
 
   return (
@@ -81,6 +96,32 @@ export function SeasonDetailPage() {
         onClose={state.closeRefundModal}
         onConfirm={state.confirmRefund}
       />
+
+      {deleteDialogOpen ? (
+        <SeasonConfirmDialog
+          busy={confirmingDelete}
+          confirmLabel="삭제"
+          description="이 시즌을 삭제할까요?"
+          detail={state.season.season_name}
+          title="시즌 삭제"
+          warning="등록된 학생이 있으면 삭제할 수 없습니다."
+          onCancel={() => setDeleteDialogOpen(false)}
+          onConfirm={handleConfirmDelete}
+        />
+      ) : null}
+
+      {cancelTarget ? (
+        <SeasonConfirmDialog
+          busy={state.cancellingId === cancelTarget.id}
+          confirmLabel="등록 취소"
+          description={`${cancelTarget.student_name} 학생의 시즌 등록을 취소할까요?`}
+          detail={state.season.season_name}
+          title="시즌 등록 취소"
+          warning="취소하면 등록 학생 목록에서 제외됩니다."
+          onCancel={() => setCancelTarget(null)}
+          onConfirm={handleConfirmCancelEnrollment}
+        />
+      ) : null}
     </div>
   );
 }
