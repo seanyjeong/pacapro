@@ -1,5 +1,7 @@
-import { AlertCircle, Calendar, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
+import { AlertCircle, Calendar, CheckCircle, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -13,6 +15,7 @@ import { cn } from '@/lib/utils';
 import type { Attendance, AttendanceStatus } from '@/lib/types/schedule';
 import { ATTENDANCE_STATUS_LABELS } from '@/lib/types/schedule';
 import {
+  formatDateToString,
   getAttendanceStatusColor,
   getAttendanceStatusLabel,
 } from '@/lib/utils/schedule-helpers';
@@ -50,7 +53,7 @@ export function AttendanceStudentRow({
       )}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="font-medium">
             {isFromMakeup && (
               <Badge variant="outline" className="mr-2 bg-purple-100 text-purple-700 border-purple-300">
@@ -68,12 +71,22 @@ export function AttendanceStudentRow({
             )}
           </p>
         </div>
-        {currentStatus && (
-          <Badge variant="outline" className={cn(getAttendanceStatusColor(currentStatus))}>
-            <CheckCircle className="h-3 w-3 mr-1" />
-            {getAttendanceStatusLabel(currentStatus)}
-          </Badge>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            aria-label={`${attendance.student_name} 학생 상세`}
+            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-8 gap-1.5 px-2')}
+            href={`/students/${attendance.student_id}`}
+          >
+            <UserRound className="h-3.5 w-3.5" />
+            학생 상세
+          </Link>
+          {currentStatus && (
+            <Badge variant="outline" className={cn(getAttendanceStatusColor(currentStatus))}>
+              <CheckCircle className="h-3 w-3 mr-1" />
+              {getAttendanceStatusLabel(currentStatus)}
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -114,7 +127,7 @@ export function AttendanceStudentRow({
                 type="date"
                 value={currentMakeupDate}
                 onChange={(event) => onMakeupDateChange(attendance.student_id, event.target.value)}
-                min={currentDate || new Date().toISOString().split('T')[0]}
+                min={currentDate || formatDateToString(new Date())}
                 className="flex-1 text-sm"
                 disabled={readOnly}
                 aria-label={`${attendance.student_name} 보충 날짜`}

@@ -192,8 +192,17 @@ async function runNormal(browser) {
   await page.goto('/schedules', { waitUntil: 'networkidle' });
   await page.getByTestId('schedules-workspace').waitFor();
   await page.getByRole('heading', { name: '수업 관리' }).waitFor();
-  await page.getByText(`${range.year}년 ${range.month + 1}월`).waitFor();
+  await page.getByRole('heading', { name: `${range.year}년 ${range.month + 1}월`, exact: true }).waitFor();
   await page.getByText('승인 대기').waitFor();
+  await page.getByTestId('selected-date-operations').waitFor();
+  await page.getByText('선택일 운영').waitFor();
+  await page.getByText('오후 실기 집중반').waitFor();
+  const attendanceHref = await page
+    .getByRole('link', { name: '오후 실기 집중반 출석 체크' })
+    .getAttribute('href');
+  if (attendanceHref !== '/schedules/101/attendance') {
+    throw new Error(`schedule attendance href mismatch: ${attendanceHref}`);
+  }
   await assertNoRawVisibleText(page, 'schedules desktop');
   await assertNoHorizontalOverflow(page, 'schedules desktop');
   await page.screenshot({ path: '/Users/etlab/paca-schedules-desktop.png', fullPage: true });
@@ -210,7 +219,8 @@ async function runNormal(browser) {
   await page.getByRole('button', { name: '닫기' }).click();
 
   await page.getByRole('button', { name: '목록' }).click();
-  await page.getByText('오후 실기 집중반').waitFor();
+  await page.getByTestId('schedule-list-table').waitFor();
+  await page.getByTestId('schedule-list-table').getByText('오후 실기 집중반').waitFor();
   await page.getByRole('button', { name: '삭제' }).click();
   await page.getByText('수업이 삭제되었습니다.').waitFor();
   if (state.deletedScheduleId !== 101) throw new Error('schedule delete endpoint not called');
@@ -218,9 +228,14 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByTestId('schedules-workspace').waitFor();
+  await page.getByTestId('selected-date-operations').waitFor();
   await assertNoRawVisibleText(page, 'schedules mobile');
   await assertNoHorizontalOverflow(page, 'schedules mobile');
   await page.screenshot({ path: '/Users/etlab/paca-schedules-mobile.png', fullPage: true });
+
+  await page.getByRole('button', { name: '목록' }).click();
+  await page.getByTestId('schedule-list-mobile').waitFor();
+  await page.getByRole('button', { name: '캘린더' }).click();
 
   await page.locator('[aria-label="오후"]').filter({ hasText: '8' }).click();
   await page.getByRole('link', { name: '학생 상세' }).waitFor();
@@ -241,6 +256,27 @@ async function runNormal(browser) {
 
   await context.close();
   return { state, diagnostics };
+}
+
+async function runAttendanceNormal(browser) {
+  const result = await createPage(browser, {}, { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/schedules/101/attendance', { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { level: 1, name: '출석 체크' }).waitFor();
+  await page.getByText('학생 출석 체크').waitFor();
+  const studentHref = await page
+    .getByRole('link', { name: '김진우 학생 상세' })
+    .getAttribute('href');
+  if (studentHref !== '/students/41') {
+    throw new Error(`attendance student href mismatch: ${studentHref}`);
+  }
+  await assertNoRawVisibleText(page, 'schedule attendance normal mobile');
+  await assertNoHorizontalOverflow(page, 'schedule attendance normal mobile');
+  await page.screenshot({ path: '/Users/etlab/paca-schedule-attendance-mobile.png', fullPage: true });
+
+  await context.close();
+  return result;
 }
 
 async function runLoadError(browser) {
@@ -277,7 +313,7 @@ async function chooseSelectOption(page, triggerSelector, optionName) {
 
 async function fillScheduleForm(page, title = '오후 실기 집중반') {
   await page.locator('#class_date').fill(range.today);
-  await chooseSelectOption(page, '#time_slot', '오후');
+  await page.getByRole('button', { name: '오후', exact: true }).click();
   await chooseSelectOption(page, '#instructor', '박코치');
   await page.locator('#title').fill(title);
   await page.locator('#content').fill('기록 점검');
@@ -360,8 +396,9 @@ async function main() {
     const detailLoadError = await runDetailLoadError(browser);
     const createSaveError = await runCreateSaveError(browser);
     const editSaveError = await runEditSaveError(browser);
+    const attendanceNormal = await runAttendanceNormal(browser);
     const attendanceLoadError = await runAttendanceLoadError(browser);
-    [normal, loadError, detailLoadError, createSaveError, editSaveError, attendanceLoadError].forEach(assertDiagnostics);
+    [normal, loadError, detailLoadError, createSaveError, editSaveError, attendanceNormal, attendanceLoadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
       createPayload: createSaveError.state.createPayload,

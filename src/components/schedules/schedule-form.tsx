@@ -22,6 +22,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ClassSchedule, ScheduleFormData, TimeSlot } from '@/lib/types/schedule';
 import { TIME_SLOT_LABELS } from '@/lib/types/schedule';
+import { cn } from '@/lib/utils';
+import { formatDateToString } from '@/lib/utils/schedule-helpers';
 
 const scheduleFormSchema = z.object({
   class_date: z.string().min(1, '수업 날짜를 선택해주세요'),
@@ -37,6 +39,8 @@ const scheduleFormSchema = z.object({
 });
 
 type FormData = z.infer<typeof scheduleFormSchema>;
+
+const TIME_SLOT_OPTIONS: TimeSlot[] = ['morning', 'afternoon', 'evening'];
 
 interface Instructor {
   id: number;
@@ -79,7 +83,13 @@ export function ScheduleForm({
           content: schedule.content || '',
           notes: schedule.notes || '',
         }
-      : undefined,
+      : {
+          class_date: formatDateToString(new Date()),
+          time_slot: 'afternoon',
+          title: '',
+          content: '',
+          notes: '',
+        },
   });
 
   const timeSlot = watch('time_slot');
@@ -130,19 +140,20 @@ export function ScheduleForm({
             <Label htmlFor="time_slot">
               시간대 <span className="text-red-500">*</span>
             </Label>
-            <Select
-              value={timeSlot}
-              onValueChange={(value) => setValue('time_slot', value as TimeSlot)}
-            >
-              <SelectTrigger id="time_slot" className={errors.time_slot ? 'border-red-500' : ''}>
-                <SelectValue placeholder="시간대를 선택하세요" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="morning">{TIME_SLOT_LABELS.morning}</SelectItem>
-                <SelectItem value="afternoon">{TIME_SLOT_LABELS.afternoon}</SelectItem>
-                <SelectItem value="evening">{TIME_SLOT_LABELS.evening}</SelectItem>
-              </SelectContent>
-            </Select>
+            <div id="time_slot" className="grid grid-cols-3 gap-2" role="group" aria-label="시간대 선택">
+              {TIME_SLOT_OPTIONS.map((slot) => (
+                <Button
+                  key={slot}
+                  type="button"
+                  variant={timeSlot === slot ? 'default' : 'outline'}
+                  className={cn('h-10', errors.time_slot && 'border-red-500')}
+                  aria-pressed={timeSlot === slot}
+                  onClick={() => setValue('time_slot', slot, { shouldDirty: true, shouldValidate: true })}
+                >
+                  {TIME_SLOT_LABELS[slot]}
+                </Button>
+              ))}
+            </div>
             {errors.time_slot && (
               <p className="text-sm text-red-500">{errors.time_slot.message}</p>
             )}
@@ -154,7 +165,7 @@ export function ScheduleForm({
             </Label>
             <Select
               value={instructorId?.toString()}
-              onValueChange={(value) => setValue('instructor_id', parseInt(value))}
+              onValueChange={(value) => setValue('instructor_id', parseInt(value), { shouldDirty: true, shouldValidate: true })}
             >
               <SelectTrigger
                 id="instructor"

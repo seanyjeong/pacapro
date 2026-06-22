@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { DailyInstructorStats } from '@/lib/api/schedules';
 import type { Consultation } from '@/lib/types/consultation';
 import type { ClassSchedule, TimeSlot } from '@/lib/types/schedule';
+import { SelectedDateOperations } from './selected-date-operations';
 import { SchedulesPanelToggle } from './schedules-panel-toggle';
 
 interface SchedulesWorkspaceProps {
@@ -43,6 +44,15 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
       </TabsList>
 
       <TabsContent value="calendar" className="space-y-4">
+        <SelectedDateOperations
+          consultations={props.consultations}
+          instructorStats={props.instructorStats}
+          schedules={props.schedules}
+          selectedDate={props.selectedDate}
+          onConsultationClick={props.onConsultationClick}
+          onSlotClick={props.onSlotClick}
+        />
+
         <div className="flex min-w-0 gap-4">
           <div className="min-w-0 flex-1">
             <ScheduleCalendarV2
