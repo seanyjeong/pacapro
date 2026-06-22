@@ -5,6 +5,7 @@ import { usePermissions } from '@/lib/utils/permissions';
 import { IncomeLoadingState } from './income-loading-state';
 import { IncomeSummaryStrip } from './income-summary-strip';
 import { IncomeTabs } from './income-tabs';
+import { IncomesError } from './incomes-error';
 import { IncomesEmptyState } from './incomes-empty-state';
 import { IncomesHeader } from './incomes-header';
 import { OtherIncomeDetailDialog } from './other-income-detail-dialog';
@@ -26,8 +27,12 @@ export function IncomesPage() {
     return <IncomeLoadingState />;
   }
 
+  if (state.error) {
+    return <IncomesError message={state.error} onRetry={state.reload} />;
+  }
+
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
       <IncomesHeader
         viewMode={state.viewMode}
         selectedMonth={state.selectedMonth}

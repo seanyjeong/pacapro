@@ -16,18 +16,18 @@ export function IncomeTabs({ activeTab, tuitionCount, otherCount, onTabChange }:
   ];
 
   return (
-    <div className="border-b border-border">
-      <nav className="flex gap-6 overflow-x-auto">
+    <div className="rounded-md border border-border bg-card p-1 shadow-none">
+      <nav className="grid grid-cols-3 gap-1" aria-label="수입 구분">
         {tabs.map((tab) => (
           <button
             key={tab.value}
             type="button"
             onClick={() => onTabChange(tab.value)}
             className={cn(
-              'whitespace-nowrap border-b-2 px-1 py-3 text-sm font-medium transition-colors',
+              'min-w-0 rounded px-2 py-2 text-sm font-medium transition-colors',
               activeTab === tab.value
-                ? 'border-foreground text-foreground'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-muted/55 hover:text-foreground'
             )}
           >
             {tab.label} ({tab.count})

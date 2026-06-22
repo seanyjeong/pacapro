@@ -19,10 +19,13 @@ import {
   toIncomeFormData,
 } from './incomes-utils';
 
+const LOAD_ERROR_MESSAGE = '수입 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+
 export function useIncomesPageState() {
   const [otherIncomes, setOtherIncomes] = useState<OtherIncome[]>([]);
   const [tuitionPayments, setTuitionPayments] = useState<TuitionPayment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [activeTab, setActiveTab] = useState<IncomeTab>('all');
   const [viewMode, setViewMode] = useState<IncomeViewMode>('list');
@@ -35,13 +38,13 @@ export function useIncomesPageState() {
 
   const loadData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const data = await getIncomePageData(selectedMonth);
       setOtherIncomes(data.otherIncomes);
       setTuitionPayments(data.tuitionPayments);
     } catch {
-      console.error('Income page data load failed');
-      toast.error('수입 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      setError(LOAD_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -93,7 +96,6 @@ export function useIncomesPageState() {
       resetForm();
       void loadData();
     } catch {
-      console.error('Income save failed');
       toast.error('수입 내역을 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도해주세요.');
     }
   };
@@ -111,7 +113,6 @@ export function useIncomesPageState() {
       toast.success('삭제되었습니다.');
       void loadData();
     } catch {
-      console.error('Income delete failed');
       toast.error('수입 내역을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
@@ -122,7 +123,6 @@ export function useIncomesPageState() {
       await downloadRevenue(selectedMonth);
       toast.success('수입 내역 다운로드 완료');
     } catch {
-      console.error('Income export failed');
       toast.error('수입 내역을 다운로드하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setExporting(false);
@@ -136,6 +136,7 @@ export function useIncomesPageState() {
     filteredOtherIncomes,
     summary,
     loading,
+    error,
     exporting,
     activeTab,
     viewMode,
@@ -157,5 +158,6 @@ export function useIncomesPageState() {
     editIncome,
     removeIncome,
     exportRevenue,
+    reload: loadData,
   };
 }

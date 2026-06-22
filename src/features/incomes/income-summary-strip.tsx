@@ -1,5 +1,4 @@
 import { Banknote, CreditCard, Percent, TrendingUp } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
 import { IncomeStatCard } from './income-stat-card';
 import type { IncomeSummary } from './incomes-types';
 
@@ -9,7 +8,7 @@ interface IncomeSummaryStripProps {
 
 export function IncomeSummaryStrip({ summary }: IncomeSummaryStripProps) {
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="수입 요약">
       <IncomeStatCard label="총 수입" amount={summary.totalIncome} icon={TrendingUp} />
       <IncomeStatCard
         label="학원비 수납"
@@ -23,8 +22,7 @@ export function IncomeSummaryStrip({ summary }: IncomeSummaryStripProps) {
         detail={`${summary.otherCount}건`}
         icon={Banknote}
       />
-      <Card className="rounded-lg border-border/70 shadow-none">
-        <CardContent className="p-5">
+      <section className="rounded-md border border-border bg-card p-5 shadow-none">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">수입 비율</p>
             <Percent className="h-5 w-5 text-muted-foreground" />
@@ -35,8 +33,7 @@ export function IncomeSummaryStrip({ summary }: IncomeSummaryStripProps) {
           <p className="mt-2 text-xs text-muted-foreground">
             학원비 {summary.tuitionRatio}% / 기타 {summary.otherRatio}%
           </p>
-        </CardContent>
-      </Card>
-    </div>
+      </section>
+    </section>
   );
 }
