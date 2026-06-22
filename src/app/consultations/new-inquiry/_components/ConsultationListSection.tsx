@@ -15,8 +15,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
+import type { Consultation } from '@/lib/types/consultation';
 import {
   CONSULTATION_STATUS_LABELS,
   CONSULTATION_STATUS_COLORS

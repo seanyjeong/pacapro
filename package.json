@@ -20,6 +20,7 @@
     "smoke:mobile-instructor": "node scripts/smoke/mobile-instructor-smoke.mjs",
     "smoke:mobile-unpaid": "node scripts/smoke/mobile-unpaid-smoke.mjs",
     "smoke:mobile-home": "node scripts/smoke/mobile-home-smoke.mjs",
+    "smoke:new-inquiry": "node scripts/smoke/new-inquiry-smoke.mjs",
     "smoke:onboarding": "node scripts/smoke/onboarding-smoke.mjs",
     "smoke:tablet-attendance": "node scripts/smoke/tablet-attendance-smoke.mjs",
     "smoke:season-list": "node scripts/smoke/season-list-smoke.mjs",

@@ -12,12 +12,11 @@
 //   _components/ConsultationListSection.tsx
 
 import {
-  Calendar, Search, Plus, UserCheck, RefreshCw, Settings, ClipboardList
+  Calendar, CheckCircle2, ClipboardList, Clock3, Plus, RefreshCw, Search, Settings, UserCheck, UsersRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { UserX, Dumbbell } from 'lucide-react';
@@ -53,7 +52,7 @@ export default function NewInquiryConsultationsPage() {
     updating,
     newDate, setNewDate,
     newTime, setNewTime,
-    editBookedTimes,
+    editBookedTimes, loadingEditBookedTimes,
     deleteModalOpen, setDeleteModalOpen,
     deleting,
     createModalOpen, setCreateModalOpen,
@@ -75,6 +74,14 @@ export default function NewInquiryConsultationsPage() {
     // Derived 값
     completedStats, groupedByMonth,
   } = useNewInquiry();
+
+  const statCards = [
+    { label: '전체', value: stats.total || pagination.total || 0, helper: '신규상담 전체', icon: UsersRound, tone: 'text-slate-700 bg-slate-50' },
+    { label: '대기중', value: stats.pending || 0, helper: '확인 필요', icon: Clock3, tone: 'text-amber-700 bg-amber-50' },
+    { label: '확정', value: stats.confirmed || 0, helper: '일정 확정', icon: Calendar, tone: 'text-sky-700 bg-sky-50' },
+    { label: '완료', value: stats.completed || 0, helper: '상담 완료', icon: CheckCircle2, tone: 'text-emerald-700 bg-emerald-50' },
+    { label: '등록완료', value: completedStats.registered, helper: '학생 전환', icon: UserCheck, tone: 'text-primary bg-primary/5' },
+  ];
 
   // 상태변경 모달 열기 헬퍼
   const openStatusModal = (c: Consultation) => {
@@ -100,71 +107,62 @@ export default function NewInquiryConsultationsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 pb-24">
-      {/* 헤더 */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">신규상담</h1>
-          <p className="text-muted-foreground">신규 학생 상담 관리</p>
+    <div className="mx-auto w-full max-w-7xl space-y-5 pb-24">
+      <header className="flex flex-col gap-3 border-b border-border/70 pb-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Admissions Desk</p>
+          <h1 className="text-2xl font-semibold tracking-normal text-foreground">신규상담</h1>
+          <p className="text-sm text-muted-foreground">상담 접수, 일정 확정, 등록 전환까지 한 화면에서 처리합니다.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Link href="/consultations">
-            <Button variant="outline">
+            <Button className="w-full justify-center sm:w-auto" variant="outline">
               <ClipboardList className="h-4 w-4 mr-2" />
               상담 관리
             </Button>
           </Link>
           <Link href="/consultations/settings">
-            <Button variant="outline">
+            <Button className="w-full justify-center sm:w-auto" variant="outline">
               <Settings className="h-4 w-4 mr-2" />
               상담 설정
             </Button>
           </Link>
           <Link href="/consultations/calendar?type=new">
-            <Button variant="outline">
+            <Button className="w-full justify-center sm:w-auto" variant="outline">
               <Calendar className="h-4 w-4 mr-2" />
               캘린더
             </Button>
           </Link>
-          <Button onClick={() => setCreateModalOpen(true)}>
+          <Button className="w-full justify-center sm:w-auto" onClick={() => setCreateModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             신규상담 등록
           </Button>
         </div>
+      </header>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {statCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <section key={card.label} className="rounded-md border border-border bg-card p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">{card.label}</p>
+                  <p className="mt-1 text-2xl font-semibold tracking-normal text-foreground">{card.value}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{card.helper}</p>
+                </div>
+                <span className={cn('flex h-9 w-9 items-center justify-center rounded-md', card.tone)}>
+                  <Icon className="h-4 w-4" />
+                </span>
+              </div>
+            </section>
+          );
+        })}
       </div>
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-        <Card><CardContent className="p-4">
-          <div className="text-sm text-muted-foreground">전체</div>
-          <div className="text-2xl font-bold">{stats.total || 0}</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="text-sm text-muted-foreground">대기중</div>
-          <div className="text-2xl font-bold text-yellow-600">{stats.pending || 0}</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="text-sm text-muted-foreground">확정</div>
-          <div className="text-2xl font-bold text-blue-600">{stats.confirmed || 0}</div>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="text-sm text-muted-foreground">완료</div>
-          <div className="text-2xl font-bold text-green-600">{stats.completed || 0}</div>
-        </CardContent></Card>
-        <Card className="border-primary/30 bg-primary/5"><CardContent className="p-4">
-          <div className="text-sm text-muted-foreground flex items-center gap-1">
-            <UserCheck className="h-3.5 w-3.5" />
-            등록완료
-          </div>
-          <div className="text-2xl font-bold text-primary">{completedStats.registered}</div>
-        </CardContent></Card>
-      </div>
-
-      {/* 필터 */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
+      <section className="rounded-md border border-border bg-card p-4">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+          <div className="relative min-w-0 flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="학생명, 연락처 검색..."
@@ -172,9 +170,10 @@ export default function NewInquiryConsultationsPage() {
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
               />
-            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_160px_auto]">
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCompletedTab('all'); }}>
-              <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="상태" /></SelectTrigger>
+              <SelectTrigger aria-label="상태 필터"><SelectValue placeholder="상태" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="">전체</SelectItem>
                 <SelectItem value="pending">대기중</SelectItem>
@@ -185,24 +184,23 @@ export default function NewInquiryConsultationsPage() {
               </SelectContent>
             </Select>
             <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as 'all' | 'today' | 'week')}>
-              <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="기간" /></SelectTrigger>
+              <SelectTrigger aria-label="기간 필터"><SelectValue placeholder="기간" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">전체 기간</SelectItem>
                 <SelectItem value="today">오늘</SelectItem>
                 <SelectItem value="week">이번 주</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={loadData}>
+            <Button aria-label="새로고침" variant="outline" onClick={loadData}>
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       {/* 완료 탭 필터 */}
       {statusFilter === 'completed' && (
-        <Card>
-          <CardContent className="p-4">
+        <section className="rounded-md border border-border bg-card p-4">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-sm text-muted-foreground mr-2">완료 상담 분류:</span>
               <div className="flex gap-1 flex-wrap">
@@ -232,13 +230,11 @@ export default function NewInquiryConsultationsPage() {
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+        </section>
       )}
 
       {/* 태그 필터 */}
-      <Card>
-        <CardContent className="p-4">
+      <section className="rounded-md border border-border bg-card p-4">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm text-muted-foreground mr-2">태그 필터:</span>
             <div className="flex gap-1 flex-wrap">
@@ -266,8 +262,7 @@ export default function NewInquiryConsultationsPage() {
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+      </section>
 
       {/* 목록 */}
       <ConsultationListSection
@@ -312,7 +307,7 @@ export default function NewInquiryConsultationsPage() {
         newTime={newTime}
         onTimeChange={setNewTime}
         editBookedTimes={editBookedTimes}
-        loadingEditBookedTimes={false}
+        loadingEditBookedTimes={loadingEditBookedTimes}
         generateTimeSlots={generateTimeSlots}
         onLoadEditBookedTimes={loadEditBookedTimes}
         onSave={handleStatusChange}
