@@ -65,7 +65,7 @@ const STUDENTS = [
 ];
 
 function makeState(mode) {
-  return { hits: [], mode };
+  return { hits: [], mode, trialMovePayload: null };
 }
 
 function filterStudents(url) {
@@ -111,6 +111,11 @@ async function installRoutes(context, state) {
       });
     }
 
+    if (method === 'PUT' && path === '/students/44') {
+      state.trialMovePayload = JSON.parse(request.postData() || '{}');
+      return jsonRoute(route, { message: 'updated', student: makeStudent({ id: 44, status: 'pending', is_trial: false }) });
+    }
+
     return jsonRoute(route, { message: 'mocked' });
   });
 }
@@ -125,12 +130,28 @@ async function createStudentsPage(browser, mode, viewport = { width: 1365, heigh
   return { context, page, state, diagnostics };
 }
 
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
+}
+
 async function runDesktop(browser) {
   const result = await createStudentsPage(browser, 'success');
   const { context, page, state } = result;
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영' }).waitFor();
+  await page.getByRole('button', { name: /재원생/ }).click();
   await page.locator('table').getByText('김진우').waitFor();
   await page.locator('table').getByText('박서연').waitFor();
   await page.locator('table').getByRole('button', { name: '김진우 상세 보기' }).waitFor();
@@ -142,6 +163,18 @@ async function runDesktop(browser) {
   await page.locator('table').getByText('이민수').waitFor();
   await page.getByPlaceholder('이름, 학번, 전화번호로 검색...').fill('이민수');
   await page.locator('table').getByText('이민수').waitFor();
+
+  await page.getByPlaceholder('이름, 학번, 전화번호로 검색...').fill('');
+  await page.getByRole('button', { name: /체험생/ }).click();
+  const trialRow = page.locator('tr:has-text("최체험")');
+  await trialRow.waitFor();
+  await clickWithoutNativeDialog(page, trialRow.getByRole('button', { name: '미등록관리로 이동' }), 'trial move to pending');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '미등록관리 이동' }).waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-students-trial-move-dialog.png', fullPage: true });
+  await page.getByRole('button', { name: '이동' }).click();
+  if (state.trialMovePayload?.status !== 'pending' || state.trialMovePayload?.is_trial !== false) {
+    throw new Error(`trial move payload mismatch: ${JSON.stringify(state.trialMovePayload)}`);
+  }
 
   await context.close();
   return { diagnostics: result.diagnostics, state };

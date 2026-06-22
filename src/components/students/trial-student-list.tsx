@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles, Pencil, Clock, Check, FileText } from 'lucide-react';
 import type { Student, TrialDate } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
+import { TrialStudentActionDialog, type TrialStudentAction } from './trial-student-action-dialog';
 
 interface TrialStudentListProps {
   students: Student[];
@@ -26,6 +27,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [movingToPendingId, setMovingToPendingId] = useState<number | null>(null);
   const [loadingConsultationId, setLoadingConsultationId] = useState<number | null>(null);
+  const [pendingAction, setPendingAction] = useState<{ type: TrialStudentAction; student: Student } | null>(null);
 
   // 체험 일정 파싱
   const parseTrialDates = (trialDates: TrialDate[] | string | null): TrialDate[] => {
@@ -81,47 +83,45 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
   };
 
   // 체험 종료 처리 (미등록관리로 이동)
-  const handleDelete = async (student: Student) => {
-    if (!confirm(`${student.name} 학생의 체험을 종료하시겠습니까?\n(미등록관리로 이동됩니다)`)) {
-      return;
-    }
+  const handleDelete = (student: Student) => {
+    setPendingAction({ type: 'end_trial', student });
+  };
 
+  const handleConfirmAction = async () => {
+    if (!pendingAction) return;
+    const { student, type } = pendingAction;
+    const isEndTrial = type === 'end_trial';
     try {
-      setDeletingId(student.id);
+      if (isEndTrial) {
+        setDeletingId(student.id);
+      } else {
+        setMovingToPendingId(student.id);
+      }
       await apiClient.put(`/students/${student.id}`, {
         status: 'pending',
         is_trial: false
+      }, {
+        suppressErrorToast: true,
       });
-      toast.success(`${student.name} 학생의 체험이 종료되어 미등록관리로 이동했습니다.`);
+      toast.success(
+        isEndTrial
+          ? `${student.name} 학생의 체험이 종료되어 미등록관리로 이동했습니다.`
+          : `${student.name} 학생을 미등록관리로 이동했습니다.`
+      );
+      setPendingAction(null);
       onReload();
     } catch (error) {
-      console.error('Failed to end trial:', error);
-      toast.error('체험 종료에 실패했습니다.');
+      console.warn('체험생 상태 변경에 실패했습니다.', error);
+      toast.error('학생을 미등록관리로 이동하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setDeletingId(null);
+      setMovingToPendingId(null);
     }
   };
 
   // 미등록관리로 이동 처리
-  const handleMoveToPending = async (student: Student) => {
-    if (!confirm(`${student.name} 학생을 미등록관리로 이동하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      setMovingToPendingId(student.id);
-      await apiClient.put(`/students/${student.id}`, {
-        status: 'pending',
-        is_trial: false
-      });
-      toast.success(`${student.name} 학생을 미등록관리로 이동했습니다.`);
-      onReload();
-    } catch (error) {
-      console.error('Failed to move to pending:', error);
-      toast.error('미등록관리로 이동에 실패했습니다.');
-    } finally {
-      setMovingToPendingId(null);
-    }
+  const handleMoveToPending = (student: Student) => {
+    setPendingAction({ type: 'move_pending', student });
   };
 
   if (loading) {
@@ -154,9 +154,10 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
   }
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <table className="w-full">
+    <>
+      <Card>
+        <CardContent className="p-0">
+          <table className="w-full">
           <thead className="bg-muted border-b border-border">
             <tr>
               <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">이름</th>
@@ -230,6 +231,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button
+                        aria-label="상담 정보 보기"
                         size="sm"
                         variant="ghost"
                         onClick={() => handleViewConsultation(student)}
@@ -243,6 +245,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                         )}
                       </Button>
                       <Button
+                        aria-label="체험 일정 수정"
                         size="sm"
                         variant="outline"
                         onClick={() => router.push(`/students/${student.id}/edit`)}
@@ -251,6 +254,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                         <Pencil className="w-4 h-4" />
                       </Button>
                       <Button
+                        aria-label="미등록관리로 이동"
                         size="sm"
                         variant="outline"
                         className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-950"
@@ -273,6 +277,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                         정식 등록
                       </Button>
                       <Button
+                        aria-label="체험 종료"
                         size="sm"
                         variant="outline"
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
@@ -291,8 +296,17 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
               );
             })}
           </tbody>
-        </table>
-      </CardContent>
-    </Card>
+          </table>
+        </CardContent>
+      </Card>
+
+      <TrialStudentActionDialog
+        action={pendingAction?.type || null}
+        busy={deletingId !== null || movingToPendingId !== null}
+        student={pendingAction?.student || null}
+        onCancel={() => setPendingAction(null)}
+        onConfirm={handleConfirmAction}
+      />
+    </>
   );
 }
