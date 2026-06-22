@@ -16,6 +16,7 @@ import { studentsAPI } from '@/lib/api/students';
 import type { CreditInputMode, MainTab, ManualCredit, ManualCreditModalProps } from './manual-credit-types';
 import { ManualCreditApplyDialog } from './manual-credit-apply-dialog';
 import { ManualCreditCreateForm } from './manual-credit-create-form';
+import { ManualCreditDeleteDialog } from './manual-credit-delete-dialog';
 import { ManualCreditList } from './manual-credit-list';
 import { DAY_NAMES, countClassDaysInPeriod, getApiErrorMessage } from './manual-credit-utils';
 
@@ -48,6 +49,8 @@ export function ManualCreditModal({
   const [applyingCredit, setApplyingCredit] = useState<ManualCredit | null>(null);
   const [applyYearMonth, setApplyYearMonth] = useState('');
   const [applying, setApplying] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ManualCredit | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const perClassFee = useMemo(() => {
     const fee = monthlyTuition / (weeklyCount * 4);
@@ -90,7 +93,8 @@ export function ManualCreditModal({
       const response = await studentsAPI.getCredits(studentId);
       setCredits(response.credits || []);
     } catch (err) {
-      console.error('크레딧 목록 로드 실패:', err);
+      console.warn('크레딧 목록을 불러오지 못했습니다.', err);
+      toast.error('크레딧 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoadingCredits(false);
     }
@@ -117,6 +121,7 @@ export function ManualCreditModal({
   const handleClose = () => {
     resetForm();
     setMainTab('create');
+    setDeleteTarget(null);
     setEditingCredit(null);
     onClose();
   };
@@ -188,16 +193,24 @@ export function ManualCreditModal({
     return { direct_amount: directAmount, reason: finalReason, notes: notes || undefined };
   };
 
-  const handleDelete = async (creditId: number) => {
-    if (!confirm('이 크레딧을 삭제하시겠습니까?')) return;
+  const handleDelete = (credit: ManualCredit) => {
+    setDeleteTarget(credit);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
 
     try {
-      await studentsAPI.deleteCredit(studentId, creditId);
+      setDeleting(true);
+      await studentsAPI.deleteCredit(studentId, deleteTarget.id);
       toast.success('크레딧이 삭제되었습니다.');
+      setDeleteTarget(null);
       void loadCredits();
       onSuccess();
     } catch (err) {
       toast.error(getApiErrorMessage(err, '크레딧 삭제에 실패했습니다.'));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -337,6 +350,13 @@ export function ManualCreditModal({
         onApplyYearMonthChange={setApplyYearMonth}
         onClose={() => setApplyingCredit(null)}
         onApply={handleApplyCredit}
+      />
+
+      <ManualCreditDeleteDialog
+        busy={deleting}
+        credit={deleteTarget}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
       />
     </>
   );

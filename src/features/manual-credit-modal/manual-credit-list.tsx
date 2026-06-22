@@ -23,7 +23,7 @@ interface ManualCreditListProps {
   onEditAmountChange: (value: number) => void;
   onEditNotesChange: (value: string) => void;
   onSaveEdit: () => void;
-  onDelete: (creditId: number) => void;
+  onDelete: (credit: ManualCredit) => void;
   onApply: (credit: ManualCredit) => void;
   onClose: () => void;
 }
@@ -98,7 +98,7 @@ interface CreditRowProps {
   onEditAmountChange: (value: number) => void;
   onEditNotesChange: (value: string) => void;
   onSaveEdit: () => void;
-  onDelete: (creditId: number) => void;
+  onDelete: (credit: ManualCredit) => void;
   onApply: (credit: ManualCredit) => void;
 }
 
@@ -152,7 +152,7 @@ function CreditSummary({
 }: {
   credit: ManualCredit;
   onEdit: (credit: ManualCredit) => void;
-  onDelete: (creditId: number) => void;
+  onDelete: (credit: ManualCredit) => void;
   onApply: (credit: ManualCredit) => void;
 }) {
   const canApply = credit.status === 'pending' || credit.status === 'partial';
@@ -185,14 +185,20 @@ function CreditSummary({
           )}
           {canEdit && (
             <>
-              <Button size="sm" variant="ghost" onClick={() => onEdit(credit)}>
+              <Button
+                aria-label="크레딧 수정"
+                size="sm"
+                variant="ghost"
+                onClick={() => onEdit(credit)}
+              >
                 <Pencil className="w-4 h-4" />
               </Button>
               <Button
+                aria-label="크레딧 삭제"
                 size="sm"
                 variant="ghost"
                 className="text-red-600 hover:text-red-700"
-                onClick={() => onDelete(credit.id)}
+                onClick={() => onDelete(credit)}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>

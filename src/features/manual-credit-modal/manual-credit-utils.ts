@@ -66,5 +66,8 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
 
   const response = (error as { response?: { data?: { message?: unknown } } }).response;
   const message = response?.data?.message;
-  return typeof message === 'string' && message.trim() ? message : fallback;
+  if (typeof message !== 'string' || !message.trim()) return fallback;
+
+  const technicalMessagePattern = /(CORS|Axios|stack trace|HTTP\s*(400|401|403|404|500)|status\s*(400|401|403|404|500))/i;
+  return technicalMessagePattern.test(message) ? fallback : message;
 }

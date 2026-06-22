@@ -99,9 +99,32 @@ function makeSeasonEnrollment() {
   };
 }
 
+function makeManualCredit() {
+  return {
+    id: 901,
+    student_id: 41,
+    academy_id: 1,
+    source_payment_id: null,
+    rest_start_date: '2026-06-12',
+    rest_end_date: '2026-06-19',
+    rest_days: 2,
+    credit_amount: 78000,
+    remaining_amount: 78000,
+    credit_type: 'manual',
+    status: 'pending',
+    applied_to_payment_id: null,
+    created_at: '2026-06-12T09:00:00.000Z',
+    processed_at: null,
+    notes: '휴원 기간 이월',
+  };
+}
+
 function makeState(mode) {
+  const manualCredits = [makeManualCredit()];
   return {
     hits: [],
+    manualCreditDeleted: false,
+    manualCredits,
     mode,
     payment: makePayment(),
     recalculated: false,
@@ -137,7 +160,18 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'GET' && path === '/students/41/rest-credits') {
-      return jsonRoute(route, { credits: [], message: 'ok', pendingTotal: 0 });
+      const pendingTotal = state.manualCredits.reduce((sum, credit) => sum + credit.remaining_amount, 0);
+      return jsonRoute(route, { credits: state.manualCredits, message: 'ok', pendingTotal });
+    }
+
+    if (method === 'GET' && path === '/students/41/credits') {
+      return jsonRoute(route, { credits: state.manualCredits, message: 'ok' });
+    }
+
+    if (method === 'DELETE' && path === '/students/41/credits/901') {
+      state.manualCreditDeleted = true;
+      state.manualCredits = [];
+      return jsonRoute(route, { message: '크레딧이 삭제되었습니다.' });
     }
 
     if (method === 'GET' && path === '/students/41/seasons') {
@@ -295,6 +329,19 @@ async function runNormalDesktop(browser) {
   await page.getByRole('button', { name: '재계산 실행' }).click();
   await page.getByText('2026-06', { exact: true }).waitFor();
   if (!state.recalculated) throw new Error('first payment recalculation API was not called');
+
+  await page.getByRole('button', { name: '크레딧 추가' }).click();
+  await page.getByRole('heading', { name: '크레딧 관리' }).waitFor();
+  await page.getByRole('button', { name: '크레딧 목록' }).click();
+  await page.getByText('휴원 기간 이월').waitFor();
+  const deleteCreditButton = page.getByRole('button', { name: '크레딧 삭제' });
+  await clickWithoutNativeDialog(page, deleteCreditButton, 'manual credit deletion');
+  await page.getByRole('alertdialog').getByRole('heading', { name: '크레딧 삭제' }).waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-student-detail-credit-delete-dialog.png', fullPage: true });
+  await page.getByRole('button', { name: '삭제' }).click();
+  await page.getByText('등록된 크레딧이 없습니다.').last().waitFor();
+  if (!state.manualCreditDeleted) throw new Error('manual credit deletion API was not called');
+  await page.getByRole('button', { name: '닫기' }).click();
 
   await page.getByRole('button', { name: '시즌 등록 보기' }).click();
   await page.getByRole('heading', { name: '시즌 등록 현황' }).waitFor();
