@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Shield, ChevronDown, ChevronRight } from 'lucide-react';
 import { staffApi } from '@/lib/api/staff';
-import type { Staff, Permissions } from '@/lib/types/staff';
+import type { PermissionKey, Permissions, Staff } from '@/lib/types/staff';
 import { PERMISSION_CATEGORIES } from '@/lib/types/staff';
 import { toast } from 'sonner';
 
@@ -27,21 +27,21 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
 
     try {
       setLoading(true);
-      await staffApi.updatePermissions(staff.id, permissions);
+      await staffApi.updatePermissions(staff.id, permissions, { suppressErrorToast: true });
       toast.success('권한이 수정되었습니다.');
       onSubmit();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || '저장에 실패했습니다.');
+    } catch {
+      toast.error('권한을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePermissionChange = (pageKey: string, action: 'view' | 'edit', value: boolean) => {
+  const handlePermissionChange = (pageKey: PermissionKey, action: 'view' | 'edit', value: boolean) => {
     setPermissions((prev) => ({
       ...prev,
       [pageKey]: {
-        ...((prev as any)[pageKey] || { view: false, edit: false }),
+        ...(prev[pageKey] || { view: false, edit: false }),
         [action]: value,
         // edit를 true로 하면 view도 자동으로 true
         ...(action === 'edit' && value ? { view: true } : {}),
@@ -59,8 +59,8 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
     setPermissions((prev) => {
       const newPermissions = { ...prev };
       category.items.forEach((page) => {
-        newPermissions[page.key as keyof Permissions] = {
-          ...((prev as any)[page.key] || { view: false, edit: false }),
+        newPermissions[page.key] = {
+          ...(prev[page.key] || { view: false, edit: false }),
           [action]: value,
           // edit를 true로 하면 view도 자동으로 true
           ...(action === 'edit' && value ? { view: true } : {}),
@@ -77,7 +77,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
     const category = PERMISSION_CATEGORIES.find(cat => cat.title === categoryTitle);
     if (!category) return false;
     return category.items.every((page) => {
-      const perm = (permissions as any)[page.key];
+      const perm = permissions[page.key];
       return perm?.[action] === true;
     });
   };
@@ -87,7 +87,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
     const category = PERMISSION_CATEGORIES.find(cat => cat.title === categoryTitle);
     if (!category) return false;
     const checkedCount = category.items.filter((page) => {
-      const perm = (permissions as any)[page.key];
+      const perm = permissions[page.key];
       return perm?.[action] === true;
     }).length;
     return checkedCount > 0 && checkedCount < category.items.length;
@@ -97,9 +97,9 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
     const newPermissions: Permissions = {};
     PERMISSION_CATEGORIES.forEach((category) => {
       category.items.forEach((page) => {
-        newPermissions[page.key as keyof Permissions] = {
-          view: action === 'edit' && value ? true : (action === 'view' ? value : ((permissions as any)[page.key]?.view || false)),
-          edit: action === 'edit' ? value : ((permissions as any)[page.key]?.edit || false),
+        newPermissions[page.key] = {
+          view: action === 'edit' && value ? true : (action === 'view' ? value : (permissions[page.key]?.view || false)),
+          edit: action === 'edit' ? value : (permissions[page.key]?.edit || false),
         };
       });
     });
@@ -126,14 +126,14 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
               <p className="text-sm text-muted-foreground">{staff.position || '직급 미지정'}</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="권한 설정 닫기">
             <X className="w-5 h-5" />
           </Button>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* 빠른 설정 */}
-            <div className="flex gap-2 pb-4 border-b border-border">
+            <div className="grid grid-cols-3 gap-2 pb-4 border-b border-border sm:flex">
               <Button
                 type="button"
                 variant="outline"
@@ -176,11 +176,11 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                   <div key={category.title} className="border border-border rounded-lg overflow-hidden">
                     {/* 카테고리 헤더 */}
                     <div className="bg-muted">
-                      <div className="flex items-center">
+                      <div className="flex flex-col sm:flex-row sm:items-center">
                         <button
                           type="button"
                           onClick={() => toggleCategory(category.title)}
-                          className="flex items-center gap-2 px-4 py-3 flex-1 text-left hover:bg-muted/80 transition-colors"
+                          className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/80 sm:flex-1"
                         >
                           {isExpanded ? (
                             <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -190,8 +190,8 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                           <span className="font-semibold text-sm">{category.title}</span>
                           <span className="text-xs text-muted-foreground">({category.items.length}개)</span>
                         </button>
-                        <div className="flex items-center gap-6 px-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
+                        <div className="grid grid-cols-2 gap-2 px-4 pb-3 sm:flex sm:items-center sm:gap-6 sm:pb-0">
+                          <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/70 px-2 py-2 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
                             <input
                               type="checkbox"
                               checked={categoryViewChecked}
@@ -203,7 +203,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                             />
                             <span className="text-xs text-muted-foreground">전체 보기</span>
                           </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
+                          <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/70 px-2 py-2 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
                             <input
                               type="checkbox"
                               checked={categoryEditChecked}
@@ -224,14 +224,14 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                       <table className="w-full">
                         <tbody className="divide-y divide-border bg-card">
                           {category.items.map((page) => {
-                            const perm = (permissions as any)[page.key] || { view: false, edit: false };
+                            const perm = permissions[page.key] || { view: false, edit: false };
                             return (
                               <tr key={page.key} className="hover:bg-muted/50">
-                                <td className="px-4 py-2.5 pl-10">
+                                <td className="px-3 py-2.5 sm:px-4 sm:pl-10">
                                   <div className="text-sm font-medium text-foreground">{page.label}</div>
                                   <div className="text-xs text-muted-foreground">{page.description}</div>
                                 </td>
-                                <td className="px-4 py-2.5 text-center w-20">
+                                <td className="w-14 px-2 py-2.5 text-center sm:w-20 sm:px-4">
                                   <input
                                     type="checkbox"
                                     checked={perm.view}
@@ -241,7 +241,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                                     className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
                                   />
                                 </td>
-                                <td className="px-4 py-2.5 text-center w-20">
+                                <td className="w-14 px-2 py-2.5 text-center sm:w-20 sm:px-4">
                                   <input
                                     type="checkbox"
                                     checked={perm.edit}

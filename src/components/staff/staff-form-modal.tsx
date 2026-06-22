@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, Eye, EyeOff, ChevronDown, ChevronRight } from 'lucide-react';
 import { staffApi } from '@/lib/api/staff';
-import type { Staff, AvailableInstructor, Permissions } from '@/lib/types/staff';
+import type { AvailableInstructor, PermissionKey, Permissions, Staff } from '@/lib/types/staff';
 import { DEFAULT_PERMISSIONS, PERMISSION_CATEGORIES } from '@/lib/types/staff';
 import { toast } from 'sonner';
 
@@ -73,7 +73,7 @@ export function StaffFormModal({
           position: formData.position || undefined,
           permissions: formData.permissions,
           password: formData.password || undefined,
-        });
+        }, { suppressErrorToast: true });
         toast.success('직원 정보가 수정되었습니다.');
       } else {
         await staffApi.createStaff({
@@ -82,25 +82,25 @@ export function StaffFormModal({
           password: formData.password,
           position: formData.position || undefined,
           permissions: formData.permissions,
-        });
+        }, { suppressErrorToast: true });
         toast.success('직원 계정이 생성되었습니다.');
       }
 
       onSubmit();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || '저장에 실패했습니다.');
+    } catch {
+      toast.error('직원 정보를 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePermissionChange = (pageKey: string, action: 'view' | 'edit', value: boolean) => {
+  const handlePermissionChange = (pageKey: PermissionKey, action: 'view' | 'edit', value: boolean) => {
     setFormData((prev) => ({
       ...prev,
       permissions: {
         ...prev.permissions,
         [pageKey]: {
-          ...((prev.permissions as any)[pageKey] || { view: false, edit: false }),
+          ...(prev.permissions[pageKey] || { view: false, edit: false }),
           [action]: value,
           // edit를 true로 하면 view도 자동으로 true
           ...(action === 'edit' && value ? { view: true } : {}),
@@ -119,8 +119,8 @@ export function StaffFormModal({
     setFormData((prev) => {
       const newPermissions = { ...prev.permissions };
       category.items.forEach((page) => {
-        newPermissions[page.key as keyof Permissions] = {
-          ...((prev.permissions as any)[page.key] || { view: false, edit: false }),
+        newPermissions[page.key] = {
+          ...(prev.permissions[page.key] || { view: false, edit: false }),
           [action]: value,
           // edit를 true로 하면 view도 자동으로 true
           ...(action === 'edit' && value ? { view: true } : {}),
@@ -137,7 +137,7 @@ export function StaffFormModal({
     const category = PERMISSION_CATEGORIES.find(cat => cat.title === categoryTitle);
     if (!category) return false;
     return category.items.every((page) => {
-      const perm = (formData.permissions as any)[page.key];
+      const perm = formData.permissions[page.key];
       return perm?.[action] === true;
     });
   };
@@ -147,7 +147,7 @@ export function StaffFormModal({
     const category = PERMISSION_CATEGORIES.find(cat => cat.title === categoryTitle);
     if (!category) return false;
     const checkedCount = category.items.filter((page) => {
-      const perm = (formData.permissions as any)[page.key];
+      const perm = formData.permissions[page.key];
       return perm?.[action] === true;
     }).length;
     return checkedCount > 0 && checkedCount < category.items.length;
@@ -157,9 +157,9 @@ export function StaffFormModal({
     const newPermissions: Permissions = {};
     PERMISSION_CATEGORIES.forEach((category) => {
       category.items.forEach((page) => {
-        newPermissions[page.key as keyof Permissions] = {
-          view: action === 'edit' && value ? true : (action === 'view' ? value : ((formData.permissions as any)[page.key]?.view || false)),
-          edit: action === 'edit' ? value : ((formData.permissions as any)[page.key]?.edit || false),
+        newPermissions[page.key] = {
+          view: action === 'edit' && value ? true : (action === 'view' ? value : (formData.permissions[page.key]?.view || false)),
+          edit: action === 'edit' ? value : (formData.permissions[page.key]?.edit || false),
         };
       });
     });
@@ -178,11 +178,11 @@ export function StaffFormModal({
       <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <CardHeader className="flex flex-row items-center justify-between border-b sticky top-0 bg-card z-10">
           <CardTitle>{isEdit ? '직원 정보 수정' : '권한 부여'}</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="직원 정보 닫기">
             <X className="w-5 h-5" />
           </Button>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
             {/* 강사 선택 (신규만) */}
             {!isEdit && (
@@ -246,6 +246,7 @@ export function StaffFormModal({
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -267,9 +268,9 @@ export function StaffFormModal({
 
             {/* 권한 설정 */}
             <div>
-              <div className="flex items-center justify-between mb-3">
+              <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label className="block text-sm font-medium text-foreground">페이지 권한</label>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-3 gap-2 sm:flex">
                   <Button
                     type="button"
                     variant="outline"
@@ -313,11 +314,11 @@ export function StaffFormModal({
                     <div key={category.title} className="border border-border rounded-lg overflow-hidden">
                       {/* 카테고리 헤더 */}
                       <div className="bg-muted">
-                        <div className="flex items-center">
+                        <div className="flex flex-col sm:flex-row sm:items-center">
                           <button
                             type="button"
                             onClick={() => toggleCategory(category.title)}
-                            className="flex items-center gap-2 px-4 py-3 flex-1 text-left hover:bg-muted/80 transition-colors"
+                            className="flex w-full items-center gap-2 px-4 py-3 text-left transition-colors hover:bg-muted/80 sm:flex-1"
                           >
                             {isExpanded ? (
                               <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -327,8 +328,8 @@ export function StaffFormModal({
                             <span className="font-semibold text-sm">{category.title}</span>
                             <span className="text-xs text-muted-foreground">({category.items.length}개)</span>
                           </button>
-                          <div className="flex items-center gap-6 px-4">
-                            <label className="flex items-center gap-2 cursor-pointer">
+                          <div className="grid grid-cols-2 gap-2 px-4 pb-3 sm:flex sm:items-center sm:gap-6 sm:pb-0">
+                            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/70 px-2 py-2 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
                               <input
                                 type="checkbox"
                                 checked={categoryViewChecked}
@@ -340,7 +341,7 @@ export function StaffFormModal({
                               />
                               <span className="text-xs text-muted-foreground">전체 보기</span>
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer">
+                            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/70 px-2 py-2 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
                               <input
                                 type="checkbox"
                                 checked={categoryEditChecked}
@@ -361,14 +362,14 @@ export function StaffFormModal({
                         <table className="w-full">
                           <tbody className="divide-y divide-border bg-card">
                             {category.items.map((page) => {
-                              const perm = (formData.permissions as any)[page.key] || { view: false, edit: false };
+                              const perm = formData.permissions[page.key] || { view: false, edit: false };
                               return (
                                 <tr key={page.key} className="hover:bg-muted/50">
-                                  <td className="px-4 py-2.5 pl-10">
+                                  <td className="px-3 py-2.5 sm:px-4 sm:pl-10">
                                     <div className="text-sm font-medium text-foreground">{page.label}</div>
                                     <div className="text-xs text-muted-foreground">{page.description}</div>
                                   </td>
-                                  <td className="px-4 py-2.5 text-center w-20">
+                                  <td className="w-14 px-2 py-2.5 text-center sm:w-20 sm:px-4">
                                     <input
                                       type="checkbox"
                                       checked={perm.view}
@@ -378,7 +379,7 @@ export function StaffFormModal({
                                       className="w-4 h-4 text-blue-600 border-border rounded focus:ring-blue-500"
                                     />
                                   </td>
-                                  <td className="px-4 py-2.5 text-center w-20">
+                                  <td className="w-14 px-2 py-2.5 text-center sm:w-20 sm:px-4">
                                     <input
                                       type="checkbox"
                                       checked={perm.edit}

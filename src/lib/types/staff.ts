@@ -37,6 +37,8 @@ export interface Permissions {
   class_days?: PagePermission;  // 수업일 관리
 }
 
+export type PermissionKey = keyof Permissions;
+
 // 직원 정보
 export interface Staff {
   id: number;
@@ -81,7 +83,7 @@ export interface UpdateStaffRequest {
 
 // 페이지 권한 정보 (UI용)
 export interface PermissionPage {
-  key: string;
+  key: PermissionKey;
   label: string;
   description: string;
 }

@@ -55,8 +55,79 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
   };
 
   return (
-    <Card>
-      <CardContent className="p-0">
+    <>
+      <div className="space-y-3 md:hidden" data-testid="staff-mobile-list">
+        {staff.map((member) => (
+          <Card key={member.id}>
+            <CardContent className="space-y-4 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                    <User className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-foreground">{member.name}</div>
+                    <div className="truncate text-xs text-muted-foreground">{member.email}</div>
+                  </div>
+                </div>
+                {member.is_active ? (
+                  <span className="inline-flex shrink-0 items-center rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
+                    <CheckCircle className="mr-1 h-3 w-3" />
+                    활성
+                  </span>
+                ) : (
+                  <span className="inline-flex shrink-0 items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                    <XCircle className="mr-1 h-3 w-3" />
+                    비활성
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-md border border-border bg-muted/30 p-3">
+                  <div className="text-muted-foreground">직급</div>
+                  <div className="mt-1 font-medium text-foreground">{member.position || '미지정'}</div>
+                </div>
+                <div className="rounded-md border border-border bg-muted/30 p-3">
+                  <div className="text-muted-foreground">권한 요약</div>
+                  <div className="mt-1 font-medium text-foreground">{getPermissionSummary(member.permissions)}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label={`${member.name} 권한 설정`}
+                  onClick={() => onEditPermission(member)}
+                >
+                  권한
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label={`${member.name} 정보 수정`}
+                  onClick={() => onEdit(member)}
+                >
+                  수정
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  aria-label={`${member.name} 삭제`}
+                  onClick={() => onDelete(member)}
+                  className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  삭제
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="hidden md:block" data-testid="staff-desktop-list">
+        <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-muted border-b border-border">
@@ -120,6 +191,7 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
                       <Button
                         variant="ghost"
                         size="sm"
+                        aria-label={`${member.name} 권한 설정`}
                         onClick={() => onEditPermission(member)}
                         title="권한 설정"
                       >
@@ -128,6 +200,7 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
                       <Button
                         variant="ghost"
                         size="sm"
+                        aria-label={`${member.name} 정보 수정`}
                         onClick={() => onEdit(member)}
                         title="정보 수정"
                       >
@@ -136,6 +209,7 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
                       <Button
                         variant="ghost"
                         size="sm"
+                        aria-label={`${member.name} 삭제`}
                         onClick={() => onDelete(member)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         title="삭제"
@@ -149,7 +223,8 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
             </tbody>
           </table>
         </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </>
   );
 }

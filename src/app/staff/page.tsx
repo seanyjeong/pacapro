@@ -30,15 +30,16 @@ export default function StaffPage() {
     try {
       setLoading(true);
       setError(null);
+      const silentErrors = { suppressErrorToast: true };
       const [staffRes, instructorsRes] = await Promise.all([
-        staffApi.getStaffList(),
-        staffApi.getAvailableInstructors(),
+        staffApi.getStaffList(silentErrors),
+        staffApi.getAvailableInstructors(silentErrors),
       ]);
       setStaffList(staffRes.staff);
       setAvailableInstructors(instructorsRes.instructors);
-    } catch (err: any) {
-      console.error('Failed to load data:', err);
-      setError(err.response?.data?.message || '데이터를 불러오는데 실패했습니다.');
+    } catch {
+      console.warn('직원 관리 정보를 불러오지 못했습니다.');
+      setError('직원 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -63,11 +64,11 @@ export default function StaffPage() {
     if (!confirm(`${staff.name}님의 계정을 삭제하시겠습니까?`)) return;
 
     try {
-      await staffApi.deleteStaff(staff.id);
+      await staffApi.deleteStaff(staff.id, { suppressErrorToast: true });
       toast.success('직원 계정이 삭제되었습니다.');
       loadData();
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || '삭제에 실패했습니다.');
+    } catch {
+      toast.error('직원 계정을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -91,9 +92,9 @@ export default function StaffPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">직원 정보를 불러오지 못했습니다</h3>
             <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={loadData}>다시 시도</Button>
+            <Button onClick={loadData}>다시 불러오기</Button>
           </CardContent>
         </Card>
       </div>
@@ -104,17 +105,17 @@ export default function StaffPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">직원 관리</h1>
           <p className="text-muted-foreground mt-1">등록된 강사에게 관리 권한을 부여합니다</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={loadData}>
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <Button variant="outline" onClick={loadData} className="justify-center">
             <RefreshCw className="w-4 h-4 mr-2" />
             새로고침
           </Button>
-          <Button onClick={handleAddStaff} disabled={availableInstructors.length === 0}>
+          <Button onClick={handleAddStaff} disabled={availableInstructors.length === 0} className="justify-center">
             <UserPlus className="w-4 h-4 mr-2" />
             권한 부여
           </Button>

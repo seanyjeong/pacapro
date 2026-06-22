@@ -34,6 +34,7 @@
     "smoke:enrolled-consultations": "node scripts/smoke/enrolled-consultations-smoke.mjs",
     "smoke:sms": "node scripts/smoke/sms-smoke.mjs",
     "smoke:notifications": "node scripts/smoke/notifications-smoke.mjs",
+    "smoke:staff": "node scripts/smoke/staff-smoke.mjs",
     "smoke:onboarding": "node scripts/smoke/onboarding-smoke.mjs",
     "smoke:tablet-attendance": "node scripts/smoke/tablet-attendance-smoke.mjs",
     "smoke:season-list": "node scripts/smoke/season-list-smoke.mjs",
