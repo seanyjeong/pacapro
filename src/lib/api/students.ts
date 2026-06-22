@@ -295,8 +295,8 @@ export const studentsAPI = {
    * 수업일 관리 목록 조회
    * GET /paca/students/class-days
    */
-  getClassDays: async (): Promise<ClassDaysResponse> => {
-    return await apiClient.get('/students/class-days');
+  getClassDays: async (config?: APIRequestConfig): Promise<ClassDaysResponse> => {
+    return await apiClient.get('/students/class-days', config);
   },
 
   /**
@@ -314,20 +314,20 @@ export const studentsAPI = {
    * 여러 학생 수업일 일괄 변경
    * PUT /paca/students/class-days/bulk
    */
-  bulkUpdateClassDays: async (data: ClassDaysBulkUpdateRequest): Promise<{
+  bulkUpdateClassDays: async (data: ClassDaysBulkUpdateRequest, config?: APIRequestConfig): Promise<{
     message: string;
     mode: 'immediate' | 'scheduled';
     results: Array<{ id: number; success: boolean; mode?: string }>;
   }> => {
-    return await apiClient.put('/students/class-days/bulk', data);
+    return await apiClient.put('/students/class-days/bulk', data, config);
   },
 
   /**
    * 예약된 수업일 변경 취소
    * DELETE /paca/students/:id/class-days-schedule
    */
-  cancelClassDaysSchedule: async (id: number): Promise<{ message: string }> => {
-    return await apiClient.delete(`/students/${id}/class-days-schedule`);
+  cancelClassDaysSchedule: async (id: number, config?: APIRequestConfig): Promise<{ message: string }> => {
+    return await apiClient.delete(`/students/${id}/class-days-schedule`, config);
   },
 
   /**

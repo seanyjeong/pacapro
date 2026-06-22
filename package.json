@@ -30,7 +30,8 @@
     "smoke:season-enroll": "node scripts/smoke/season-enroll-smoke.mjs",
     "smoke:student-detail": "node scripts/smoke/student-detail-smoke.mjs",
     "smoke:students": "node scripts/smoke/students-smoke.mjs",
-    "smoke:student-form": "node scripts/smoke/student-form-smoke.mjs"
+    "smoke:student-form": "node scripts/smoke/student-form-smoke.mjs",
+    "smoke:class-days": "node scripts/smoke/class-days-smoke.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

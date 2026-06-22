@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Calendar, Filter, Loader2, Save, Search } from 'lucide-react';
+import { AlertCircle, Calendar, Filter, Loader2, RefreshCw, Save, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import { filterAndSortClassDaysStudents, getEffectiveMonthOptions } from './clas
 export function ClassDaysPage() {
   const [students, setStudents] = useState<ClassDaysStudent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [effectiveFrom, setEffectiveFrom] = useState('immediate');
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -41,13 +42,14 @@ export function ClassDaysPage() {
   const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await studentsAPI.getClassDays();
+      const res = await studentsAPI.getClassDays({ suppressErrorToast: true });
       setStudents(res.students);
       setEdits(new Map());
       setSelectedIds(new Set());
-    } catch (error) {
-      console.error('Failed to fetch class days:', error);
-      toast.error('수업일 목록을 불러오지 못했습니다.');
+      setLoadError(false);
+    } catch {
+      console.warn('수업일 목록을 불러오지 못했습니다.');
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -153,16 +155,19 @@ export function ClassDaysPage() {
     try {
       setSaving(true);
       const effective = effectiveFrom === 'immediate' ? null : effectiveFrom;
-      const res = await studentsAPI.bulkUpdateClassDays({
-        effective_from: effective,
-        students: changedStudents,
-      });
+      const res = await studentsAPI.bulkUpdateClassDays(
+        {
+          effective_from: effective,
+          students: changedStudents,
+        },
+        { suppressErrorToast: true }
+      );
 
       toast.success(res.message);
       await fetchStudents();
-    } catch (error) {
-      console.error('Save failed:', error);
-      toast.error('저장에 실패했습니다.');
+    } catch {
+      console.warn('수업일 변경 저장에 실패했습니다.');
+      toast.error('수업일 변경을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSaving(false);
     }
@@ -170,12 +175,12 @@ export function ClassDaysPage() {
 
   const handleCancelSchedule = async (studentId: number) => {
     try {
-      await studentsAPI.cancelClassDaysSchedule(studentId);
+      await studentsAPI.cancelClassDaysSchedule(studentId, { suppressErrorToast: true });
       toast.success('예약된 변경이 취소되었습니다.');
       await fetchStudents();
-    } catch (error) {
-      console.error('Cancel failed:', error);
-      toast.error('예약 취소에 실패했습니다.');
+    } catch {
+      console.warn('수업일 변경 예약 취소에 실패했습니다.');
+      toast.error('예약된 변경을 취소하지 못했습니다. 잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -191,14 +196,21 @@ export function ClassDaysPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      <div className="mx-auto flex min-h-[360px] w-full max-w-7xl items-center justify-center">
+        <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          수업일 목록을 불러오는 중입니다
+        </div>
       </div>
     );
   }
 
+  if (loadError) {
+    return <ClassDaysError onRetry={fetchStudents} />;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-5">
       <ClassDaysHeader totalCount={students.length} />
       <ClassDaysControlBar
         effectiveFrom={effectiveFrom}
@@ -237,13 +249,36 @@ export function ClassDaysPage() {
 
 function ClassDaysHeader({ totalCount }: { totalCount: number }) {
   return (
-    <div className="flex items-center justify-between">
+    <header className="border-b border-border/70 pb-4">
       <div>
-        <h1 className="text-2xl font-bold">수업일 관리</h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Class Days</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">수업일 관리</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           재원생 {totalCount}명의 수업 요일을 관리합니다.
         </p>
       </div>
+    </header>
+  );
+}
+
+function ClassDaysError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="mx-auto w-full max-w-7xl space-y-5">
+      <header className="border-b border-border/70 pb-4">
+        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Class Days</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">수업일 관리</h1>
+      </header>
+      <section className="flex min-h-[320px] items-center justify-center rounded-md border border-rose-200 bg-rose-50 p-6 text-center text-rose-950 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-100" role="alert">
+        <div className="max-w-md">
+          <AlertCircle className="mx-auto h-10 w-10" />
+          <h2 className="mt-4 text-base font-semibold">수업일 목록을 불러오지 못했습니다</h2>
+          <p className="mt-2 text-sm text-rose-800 dark:text-rose-200">잠시 후 다시 시도해주세요.</p>
+          <Button className="mt-5" type="button" variant="outline" onClick={onRetry}>
+            <RefreshCw className="mr-2 h-4 w-4" />
+            다시 불러오기
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }
@@ -266,11 +301,11 @@ function ClassDaysControlBar({
   onSave: () => void;
 }) {
   return (
-    <Card>
+    <Card className="rounded-md shadow-none">
       <CardContent className="py-4 px-6">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-muted-foreground" />
+            <Calendar className="h-5 w-5 text-muted-foreground" />
             <span className="text-sm font-medium">적용 시작월:</span>
             <Select value={effectiveFrom} onValueChange={onEffectiveFromChange}>
               <SelectTrigger className="w-[200px]">
@@ -294,7 +329,7 @@ function ClassDaysControlBar({
               </Badge>
             )}
             <Button onClick={onSave} disabled={changedCount === 0 || saving}>
-              {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               저장 ({changedCount}명)
             </Button>
           </div>
@@ -326,9 +361,9 @@ function ClassDaysFilters({
   onReset: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <section className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card p-4">
       <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-muted-foreground" />
+        <Filter className="h-4 w-4 text-muted-foreground" />
         <Select value={filterGrade} onValueChange={onGradeChange}>
           <SelectTrigger className="w-[120px] h-8 text-sm">
             <SelectValue placeholder="학년" />
@@ -362,7 +397,7 @@ function ClassDaysFilters({
         )}
       </div>
       <div className="relative">
-        <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
           value={searchQuery}
@@ -372,6 +407,6 @@ function ClassDaysFilters({
         />
       </div>
       <span className="text-sm text-muted-foreground">{resultCount}명</span>
-    </div>
+    </section>
   );
 }

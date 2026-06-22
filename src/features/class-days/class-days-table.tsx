@@ -34,23 +34,23 @@ export function ClassDaysTable({
   onCancelSchedule,
 }: ClassDaysTableProps) {
   return (
-    <Card>
+    <Card className="rounded-md shadow-none">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b bg-muted/50">
-                <th className="p-3 text-left w-10">
+              <tr className="border-b bg-muted/60">
+                <th className="w-10 p-3 text-left">
                   <Checkbox
                     checked={selectedIds.size === students.length && students.length > 0}
                     onCheckedChange={onToggleSelectAll}
                   />
                 </th>
-                <th className="p-3 text-left text-sm font-medium">이름</th>
-                <th className="p-3 text-left text-sm font-medium">학년</th>
-                <th className="p-3 text-left text-sm font-medium">현재 수업일</th>
-                <th className="p-3 text-center text-sm font-medium">수업일 변경</th>
-                <th className="p-3 text-left text-sm font-medium">변경 예정</th>
+                <th className="p-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">이름</th>
+                <th className="p-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">학년</th>
+                <th className="p-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">현재 수업일</th>
+                <th className="p-3 text-center text-xs font-semibold uppercase tracking-normal text-muted-foreground">수업일 변경</th>
+                <th className="p-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">변경 예정</th>
               </tr>
             </thead>
             <tbody>
@@ -70,7 +70,7 @@ export function ClassDaysTable({
               {students.length === 0 && (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <AlertCircle className="mx-auto mb-2 h-8 w-8 opacity-50" />
                     표시할 학생이 없습니다.
                   </td>
                 </tr>
@@ -114,7 +114,7 @@ function ClassDaysRow({
   return (
     <tr
       className={cn(
-        'border-b hover:bg-muted/30 transition-colors',
+        'border-b transition-colors hover:bg-muted/30',
         hasChange && 'bg-blue-50/50 dark:bg-blue-950/20'
       )}
     >
