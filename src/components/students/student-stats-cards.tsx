@@ -40,8 +40,8 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
       setLoading(true);
       // 모든 학생 가져오기 (필터 없이)
       const [allStudents, trialStudents] = await Promise.all([
-        studentsAPI.getStudents({ is_trial: false }),
-        studentsAPI.getStudents({ is_trial: true }),
+        studentsAPI.getStudents({ is_trial: false }, { suppressErrorToast: true }),
+        studentsAPI.getStudents({ is_trial: true }, { suppressErrorToast: true }),
       ]);
 
       const students = allStudents.students || [];
@@ -64,8 +64,8 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
 
       setStats(newStats);
       onStatsLoaded?.(newStats);
-    } catch (error) {
-      console.error('Failed to load student stats:', error);
+    } catch {
+      console.warn('학생 통계를 불러오지 못했습니다.');
     } finally {
       setLoading(false);
     }

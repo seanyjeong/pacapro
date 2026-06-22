@@ -14,20 +14,23 @@ interface StudentSearchProps {
 export function StudentSearch({ value, onChange, placeholder = '이름, 학번, 전화번호로 검색...' }: StudentSearchProps) {
   return (
     <div className="relative">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
       <input
+        aria-label="학생 검색"
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+        className="h-10 w-full rounded-md border border-border bg-card py-2 pl-9 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-slate-300"
       />
       {value && (
         <button
+          aria-label="검색어 지우기"
+          type="button"
           onClick={() => onChange('')}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
         >
-          <X className="w-5 h-5" />
+          <X className="h-4 w-4" />
         </button>
       )}
     </div>

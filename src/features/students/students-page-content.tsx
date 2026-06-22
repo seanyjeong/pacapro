@@ -80,7 +80,7 @@ export function StudentsPageContent() {
     const showEmptyGuide = !loading && students.length === 0 && !searchQuery && !filters.grade && !filters.student_type;
 
     return (
-        <div className="max-w-full space-y-5" style={{ width: 'min(100%, calc(100vw - 2rem))' }}>
+        <div className="w-full max-w-full space-y-5">
             <StudentsPageHeader
                 activeTab={activeTab}
                 excelDownloading={excelDownloading}

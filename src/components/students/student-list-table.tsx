@@ -5,7 +5,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Calendar, Sparkles } from 'lucide-react';
+import { Calendar, Loader2, Phone, Sparkles, Users } from 'lucide-react';
 import type { Student } from '@/lib/types/student';
 import {
   formatStudentNumber,
@@ -33,10 +33,12 @@ interface StudentListTableProps {
 export function StudentListTable({ students, loading, onStudentClick, hideMonthlyTuition }: StudentListTableProps) {
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">학생 목록을 불러오는 중...</p>
+      <Card className="rounded-md shadow-none">
+        <CardContent className="flex min-h-[260px] items-center justify-center p-8 text-center">
+          <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            학생 목록을 불러오는 중입니다
+          </div>
         </CardContent>
       </Card>
     );
@@ -44,100 +46,84 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
 
   if (students.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-12 text-center">
-          <div className="text-muted-foreground mb-4">
-            <svg
-              className="w-16 h-16 mx-auto"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
+      <Card className="rounded-md shadow-none">
+        <CardContent className="flex min-h-[260px] items-center justify-center p-8 text-center">
+          <div>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-muted text-muted-foreground">
+              <Users className="h-6 w-6" />
+            </div>
+            <h3 className="mt-4 text-base font-semibold text-foreground">학생이 없습니다</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              학생을 등록하시면 여기에 표시됩니다.
+            </p>
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">학생이 없습니다</h3>
-          <p className="text-muted-foreground">
-            학생을 등록하시면 여기에 표시됩니다.
-          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card className="rounded-md shadow-none">
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-muted border-b border-border">
+            <thead className="border-b border-border bg-muted/60">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   학생 정보
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   성별
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   유형
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   입시유형
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   수업일
                 </th>
                 {!hideMonthlyTuition && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                     월 학원비
                   </th>
                 )}
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   상태
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   등록일
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-card divide-y divide-border">
+            <tbody className="divide-y divide-border bg-card">
               {students.map((student) => {
                 // discount_rate는 string이므로 parseFloat
-                const discountRate = parseFloat(student.discount_rate) || 0;
+                const discountRate = Number.parseFloat(student.discount_rate) || 0;
 
                 return (
                   <tr
                     key={student.id}
                     onClick={() => onStudentClick(student.id)}
-                    className="hover:bg-muted cursor-pointer transition-colors"
+                    className="cursor-pointer transition-colors hover:bg-muted/45"
                   >
                     {/* 학생 정보 */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-4 py-4">
                       <div className="flex items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          student.gender === 'male'
-                            ? 'bg-sky-500'
-                            : student.gender === 'female'
-                            ? 'bg-pink-500'
-                            : 'bg-gray-500'
-                        }`}>
+                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-900">
                           <span className="text-white font-bold text-sm">
                             {student.name.charAt(0)}
                           </span>
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-foreground flex items-center gap-2">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                             {student.name}
                             {student.school && (
                               <span className="text-xs text-muted-foreground">{student.school}</span>
                             )}
                             {!!student.is_trial && (
-                              <Badge className="bg-purple-100 text-purple-700 border-purple-200 text-xs flex items-center gap-1 px-1.5 py-0">
+                              <Badge className="flex items-center gap-1 rounded-md border-purple-200 bg-purple-100 px-1.5 py-0 text-xs text-purple-700">
                                 <Sparkles className="h-3 w-3" />
                                 체험
                               </Badge>
@@ -148,8 +134,8 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                               {formatStudentNumber(student.student_number)}
                             </div>
                           )}
-                          <div className="text-xs text-muted-foreground flex items-center mt-1">
-                            <Phone className="w-3 h-3 mr-1" />
+                          <div className="mt-1 flex items-center text-xs text-muted-foreground">
+                            <Phone className="mr-1 h-3 w-3" />
                             {formatPhoneNumber(student.phone)}
                           </div>
                         </div>
@@ -157,9 +143,9 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     </td>
 
                     {/* 성별 */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-4 py-4">
                       {student.gender ? (
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
                           student.gender === 'male'
                             ? 'bg-sky-100 text-sky-800'
                             : 'bg-pink-100 text-pink-800'
@@ -172,9 +158,9 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     </td>
 
                     {/* 학생 유형/학년 */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-4 py-4">
                       <div className="text-sm text-foreground">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
                           student.student_type === 'exam' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
                         }`}>
                           {STUDENT_TYPE_LABELS[student.student_type]}
@@ -184,8 +170,8 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     </td>
 
                     {/* 입시유형 */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                    <td className="whitespace-nowrap px-4 py-4">
+                      <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
                         student.admission_type === 'regular'
                           ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                           : student.admission_type === 'early'
@@ -197,7 +183,7 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     </td>
 
                     {/* 수업일 */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-4 py-4">
                       <div className="text-sm text-foreground">
                         {formatClassDays(student.class_days)}
                       </div>
@@ -208,7 +194,7 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
 
                     {/* 월 학원비 */}
                     {!hideMonthlyTuition && (
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="whitespace-nowrap px-4 py-4">
                         <div className="text-sm font-medium text-foreground">
                           {formatCurrency(student.monthly_tuition)}
                         </div>
@@ -221,10 +207,10 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     )}
 
                     {/* 상태 */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-4 py-4">
                       <div>
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
+                          className={`inline-flex rounded-md border px-2 py-1 text-xs font-medium ${getStatusColor(
                             student.status
                           )}`}
                         >
@@ -243,9 +229,9 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     </td>
 
                     {/* 등록일 */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
+                    <td className="whitespace-nowrap px-4 py-4">
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Calendar className="mr-1 h-4 w-4" />
                         {formatDate(student.enrollment_date)}
                       </div>
                     </td>

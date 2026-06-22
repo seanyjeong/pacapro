@@ -30,7 +30,7 @@ export function useStudents(initialFilters?: StudentFilters) {
   const query = useQuery({
     queryKey: QUERY_KEYS.students(filters),
     queryFn: async () => {
-      const data = await studentsAPI.getStudents(filters);
+      const data = await studentsAPI.getStudents(filters, { suppressErrorToast: true });
       return data.students as Student[];
     },
   });
@@ -58,7 +58,7 @@ export function useStudents(initialFilters?: StudentFilters) {
   return {
     students: query.data || [],
     loading: query.isLoading,
-    error: query.error?.message || null,
+    error: query.error ? '학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' : null,
     filters,
     setFilters,
     updateFilters,

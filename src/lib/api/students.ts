@@ -28,7 +28,7 @@ export const studentsAPI = {
    * 학생 목록 조회 (필터링)
    * GET /paca/students
    */
-  getStudents: async (filters?: StudentFilters): Promise<StudentsResponse> => {
+  getStudents: async (filters?: StudentFilters, config?: APIRequestConfig): Promise<StudentsResponse> => {
     const params = new URLSearchParams();
 
     if (filters?.student_type) params.append('student_type', filters.student_type);
@@ -42,7 +42,7 @@ export const studentsAPI = {
     const queryString = params.toString();
     const url = queryString ? `/students?${queryString}` : '/students';
 
-    return await apiClient.get(url);
+    return await apiClient.get(url, config);
   },
 
   /**

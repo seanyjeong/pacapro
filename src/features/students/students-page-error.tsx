@@ -9,7 +9,7 @@ export function StudentsPageError({ onRetry }: StudentsPageErrorProps) {
     return (
         <div className="space-y-5">
             <header>
-                <div className="text-xs font-semibold uppercase tracking-[0.06em] text-muted-foreground">PACA Student Desk</div>
+                <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">PACA Student Desk</div>
                 <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">학생 운영</h1>
             </header>
             <section className="flex min-h-[320px] items-center justify-center rounded-lg border border-red-200 bg-red-50 p-6 text-center text-red-950 dark:border-red-900/70 dark:bg-red-950/30 dark:text-red-100">
