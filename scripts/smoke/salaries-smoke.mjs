@@ -163,7 +163,12 @@ async function runNormal(browser) {
   await page.getByText('Finance Desk').waitFor();
   await page.locator('tr:has-text("김강사")').waitFor();
   await page.locator('tr:has-text("박트레이너")').waitFor();
-  await page.getByRole('button', { name: '김강사 급여 상세 보기' }).waitFor();
+  await page.getByRole('button', { name: '김강사 급여 명세서 보기' }).waitFor();
+  const instructorLink = page.getByRole('link', { name: '김강사 강사 상세 보기' });
+  await instructorLink.waitFor();
+  if ((await instructorLink.getAttribute('href')) !== '/instructors/11') {
+    throw new Error('missing instructor detail link for salary row');
+  }
   await assertNoRawVisibleText(page, 'salaries desktop');
   await assertNoHorizontalOverflow(page, 'salaries desktop');
   await page.screenshot({ path: '/Users/etlab/paca-salaries-desktop.png', fullPage: true });
@@ -197,6 +202,8 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.locator('article:has-text("김강사")').waitFor();
+  await page.getByRole('button', { name: '김강사 급여 명세서 보기' }).waitFor();
+  await page.getByRole('link', { name: '김강사 강사 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'salaries mobile');
   await assertNoHorizontalOverflow(page, 'salaries mobile');
   await page.screenshot({ path: '/Users/etlab/paca-salaries-mobile.png', fullPage: true });

@@ -1,5 +1,5 @@
-import type { KeyboardEvent } from 'react';
-import { Banknote } from 'lucide-react';
+import Link from 'next/link';
+import { Banknote, Eye, UserRound } from 'lucide-react';
 import type { Salary } from '@/lib/types/salary';
 import {
   formatSalaryAmount,
@@ -55,11 +55,7 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
           return (
             <article
               key={salary.id}
-              aria-label={`${salary.instructor_name} 급여 상세 보기`}
-              role="button"
-              tabIndex={0}
-              onClick={() => onSalaryClick(salary.id)}
-              onKeyDown={(event) => handleSalaryKeyDown(event, salary.id, onSalaryClick)}
+              aria-label={`${salary.instructor_name} 급여 내역`}
               className="rounded-md border border-border bg-background p-4 text-left transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
             >
               <div className="flex items-start justify-between gap-3">
@@ -98,13 +94,15 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
                   지급일 {formatDate(salary.payment_date)}
                 </p>
               ) : null}
+
+              <SalaryActions salary={salary} onSalaryClick={onSalaryClick} mobile />
             </article>
           );
         })}
       </div>
 
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[920px] text-sm">
+        <table className="w-full min-w-[1040px] text-sm">
           <thead className="border-b border-border bg-muted/40">
             <tr>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">강사</th>
@@ -113,18 +111,14 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">공제</th>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">실수령액</th>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">상태</th>
+              <th className="px-5 py-3 text-right font-medium text-muted-foreground">작업</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {salaries.map((salary) => (
               <tr
                 key={salary.id}
-                aria-label={`${salary.instructor_name} 급여 상세 보기`}
-                role="button"
-                tabIndex={0}
-                onClick={() => onSalaryClick(salary.id)}
-                onKeyDown={(event) => handleSalaryKeyDown(event, salary.id, onSalaryClick)}
-                className="cursor-pointer transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                className="transition-colors hover:bg-muted/35"
               >
                 <td className="whitespace-nowrap px-5 py-4">
                   <div className="font-medium text-foreground">{salary.instructor_name}</div>
@@ -159,6 +153,9 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
                     {PAYMENT_STATUS_LABELS[salary.payment_status]}
                   </span>
                 </td>
+                <td className="whitespace-nowrap px-5 py-4 text-right">
+                  <SalaryActions salary={salary} onSalaryClick={onSalaryClick} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -168,8 +165,38 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
   );
 }
 
-function handleSalaryKeyDown(event: KeyboardEvent<HTMLElement>, id: number, onSalaryClick: (id: number) => void) {
-  if (event.key !== 'Enter' && event.key !== ' ') return;
-  event.preventDefault();
-  onSalaryClick(id);
+function SalaryActions({
+  salary,
+  onSalaryClick,
+  mobile = false,
+}: {
+  salary: Salary;
+  onSalaryClick: (id: number) => void;
+  mobile?: boolean;
+}) {
+  const className = mobile
+    ? 'mt-4 grid grid-cols-2 gap-2'
+    : 'inline-flex items-center justify-end gap-2';
+
+  return (
+    <div className={className}>
+      <button
+        aria-label={`${salary.instructor_name} 급여 명세서 보기`}
+        className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        type="button"
+        onClick={() => onSalaryClick(salary.id)}
+      >
+        <Eye className="h-3.5 w-3.5" />
+        명세서
+      </button>
+      <Link
+        aria-label={`${salary.instructor_name} 강사 상세 보기`}
+        className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        href={`/instructors/${salary.instructor_id}`}
+      >
+        <UserRound className="h-3.5 w-3.5" />
+        강사
+      </Link>
+    </div>
+  );
 }
