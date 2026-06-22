@@ -266,6 +266,22 @@ export const notificationsAPI = {
   },
 
   /**
+   * 출결 알림톡 테스트 발송 (솔라피)
+   */
+  sendTestAttendance: async (phone: string): Promise<{ success: boolean; groupId?: string }> => {
+    const response = await apiClient.post<SendResponse & { groupId?: string }>('/notifications/test-attendance', { phone });
+    return { success: response.success || false, groupId: response.groupId };
+  },
+
+  /**
+   * SENS 출결 알림톡 테스트 발송
+   */
+  sendTestSensAttendance: async (phone: string): Promise<{ success: boolean; requestId?: string }> => {
+    const response = await apiClient.post<SendResponse>('/notifications/test-sens-attendance', { phone });
+    return { success: response.success || false, requestId: response.requestId };
+  },
+
+  /**
    * 미납자 일괄 알림 발송
    */
   sendUnpaid: async (year: number, month: number): Promise<{ sent: number; failed: number }> => {

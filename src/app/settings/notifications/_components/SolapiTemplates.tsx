@@ -38,6 +38,10 @@ interface Props {
   testPhoneReminder: string;
   setTestPhoneReminder: (v: string) => void;
   onTestReminder: () => void;
+  testingAttendance: boolean;
+  testPhoneAttendance: string;
+  setTestPhoneAttendance: (v: string) => void;
+  onTestAttendance: () => void;
   // 버튼 핸들러
   addUnpaidButton: () => void;
   removeUnpaidButton: (i: number) => void;
@@ -64,6 +68,7 @@ export default function SolapiTemplates({
   testingTrial, testPhoneTrial, setTestPhoneTrial, onTestTrial,
   testingOverdue, testPhoneOverdue, setTestPhoneOverdue, onTestOverdue,
   testingReminder, testPhoneReminder, setTestPhoneReminder, onTestReminder,
+  testingAttendance, testPhoneAttendance, setTestPhoneAttendance, onTestAttendance,
   addUnpaidButton, removeUnpaidButton, updateUnpaidButton,
   addConsultationButton, removeConsultationButton, updateConsultationButton,
   addTrialButton, removeTrialButton, updateTrialButton,
@@ -482,7 +487,20 @@ export default function SolapiTemplates({
               </div>
             </div>
             <AlimtalkPreview academyName={academyName} templateContent={settings.solapi_attendance_template_content} imageUrl="" buttons={[]}
-              replacements={{'#{학원명}':academyName,'#{이름}':'홍길동','#{월}':'5','#{일}':'18','#{요일}':'월','#{출결상태}':'출석'}} />
+              replacements={{'#{학원명}':academyName,'#{이름}':'홍길동','#{월}':'5월','#{일}':'18일','#{요일}':'월','#{출결상태}':'출석'}} />
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <h4 className="font-medium text-foreground mb-4">테스트 발송</h4>
+              <div className="flex gap-3">
+                <input type="tel" value={testPhoneAttendance} onChange={e => setTestPhoneAttendance(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="010-1234-5678" />
+                <button onClick={onTestAttendance} disabled={testingAttendance || !settings.solapi_enabled || !settings.solapi_attendance_template_id}
+                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {testingAttendance ? '발송 중...' : '테스트'}
+                </button>
+              </div>
+              {!settings.solapi_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
+              {settings.solapi_enabled && !settings.solapi_attendance_template_id && <p className="text-sm text-amber-600 mt-1">템플릿 ID를 먼저 설정해야 테스트 발송이 가능합니다</p>}
+            </div>
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={onSave} disabled={saving} className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
                 {saving ? '저장 중...' : '출결관리 알림톡 설정 저장'}

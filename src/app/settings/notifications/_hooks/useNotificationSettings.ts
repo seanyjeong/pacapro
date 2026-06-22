@@ -132,6 +132,11 @@ export function useNotificationSettings() {
   const [testPhoneSensTrial, setTestPhoneSensTrial] = useState('');
   const [testPhoneSensOverdue, setTestPhoneSensOverdue] = useState('');
   const [testPhoneSensReminder, setTestPhoneSensReminder] = useState('');
+  // 출결 테스트 상태
+  const [testingAttendance, setTestingAttendance] = useState(false);
+  const [testingSensAttendance, setTestingSensAttendance] = useState(false);
+  const [testPhoneAttendance, setTestPhoneAttendance] = useState('');
+  const [testPhoneSensAttendance, setTestPhoneSensAttendance] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [sendingUnpaid, setSendingUnpaid] = useState(false);
 
@@ -522,6 +527,44 @@ export function useNotificationSettings() {
     }
   };
 
+  const handleTestAttendance = async () => {
+    if (!testPhoneAttendance) {
+      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
+      return;
+    }
+    setTestingAttendance(true);
+    setMessage(null);
+    try {
+      await notificationsAPI.sendTestAttendance(testPhoneAttendance);
+      setMessage({ type: 'success', text: '출결 테스트 메시지가 발송되었습니다.' });
+      loadLogs();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || '출결 테스트 발송에 실패했습니다.' });
+    } finally {
+      setTestingAttendance(false);
+    }
+  };
+
+  const handleTestSensAttendance = async () => {
+    if (!testPhoneSensAttendance) {
+      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
+      return;
+    }
+    setTestingSensAttendance(true);
+    setMessage(null);
+    try {
+      await notificationsAPI.sendTestSensAttendance(testPhoneSensAttendance);
+      setMessage({ type: 'success', text: 'SENS 출결 테스트 메시지가 발송되었습니다.' });
+      loadLogs();
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      setMessage({ type: 'error', text: err.response?.data?.message || 'SENS 출결 테스트 발송에 실패했습니다.' });
+    } finally {
+      setTestingSensAttendance(false);
+    }
+  };
+
   const handleTestSensTrial = async () => {
     if (!testPhoneSensTrial) {
       setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
@@ -625,6 +668,7 @@ export function useNotificationSettings() {
     testing, testingConsultation, testingTrial, testingOverdue,
     testingSensConsultation, testingSensTrial, testingSensOverdue, testingSensReminder,
     testingReminder,
+    testingAttendance, testingSensAttendance,
     testPhone, setTestPhone,
     testPhoneConsultation, setTestPhoneConsultation,
     testPhoneTrial, setTestPhoneTrial,
@@ -634,6 +678,8 @@ export function useNotificationSettings() {
     testPhoneSensTrial, setTestPhoneSensTrial,
     testPhoneSensOverdue, setTestPhoneSensOverdue,
     testPhoneSensReminder, setTestPhoneSensReminder,
+    testPhoneAttendance, setTestPhoneAttendance,
+    testPhoneSensAttendance, setTestPhoneSensAttendance,
     message,
     sendingUnpaid,
     showPriceModal, setShowPriceModal,
@@ -657,6 +703,8 @@ export function useNotificationSettings() {
     handleTestSensTrial,
     handleTestSensOverdue,
     handleTestSensReminder,
+    handleTestAttendance,
+    handleTestSensAttendance,
     handleSendUnpaid,
     handleServiceTypeChange,
     handleAddSenderNumber,

@@ -111,8 +111,8 @@ async function notifyAttendance({ pool: callerPool, decrypt: callerDecrypt, acad
         ? classDate
         : classDate.toISOString().split('T')[0];
     const dateObj = new Date(dateStr + 'T00:00:00');
-    const month = String(dateObj.getMonth() + 1);   // zero-pad 없음 (Plan §8)
-    const day   = String(dateObj.getDate());
+    const month = String(dateObj.getMonth() + 1) + '월';   // "5월" (단위 포함)
+    const day   = String(dateObj.getDate()) + '일';        // "18일"
     const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
     const dayName = dayNames[dateObj.getDay()];
     const academyName = setting.academy_name || '학원';

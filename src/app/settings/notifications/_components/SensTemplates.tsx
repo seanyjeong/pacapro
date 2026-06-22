@@ -19,6 +19,7 @@ interface SensTemplatesProps {
   testingSensTrial: boolean;
   testingSensOverdue: boolean;
   testingSensReminder: boolean;
+  testingSensAttendance: boolean;
   testPhoneSensConsultation: string;
   setTestPhoneSensConsultation: (v: string) => void;
   testPhoneSensTrial: string;
@@ -27,12 +28,15 @@ interface SensTemplatesProps {
   setTestPhoneSensOverdue: (v: string) => void;
   testPhoneSensReminder: string;
   setTestPhoneSensReminder: (v: string) => void;
+  testPhoneSensAttendance: string;
+  setTestPhoneSensAttendance: (v: string) => void;
   handleSave: () => void;
   handleTest: () => void;
   handleTestSensConsultation: () => void;
   handleTestSensTrial: () => void;
   handleTestSensOverdue: () => void;
   handleTestSensReminder: () => void;
+  handleTestSensAttendance: () => void;
   addSensUnpaidButton: () => void;
   removeSensUnpaidButton: (i: number) => void;
   updateSensUnpaidButton: (i: number, field: keyof ConsultationButton, value: string) => void;
@@ -151,6 +155,7 @@ export default function SensTemplates({
   testingSensTrial,
   testingSensOverdue,
   testingSensReminder,
+  testingSensAttendance,
   testPhoneSensConsultation,
   setTestPhoneSensConsultation,
   testPhoneSensTrial,
@@ -159,12 +164,15 @@ export default function SensTemplates({
   setTestPhoneSensOverdue,
   testPhoneSensReminder,
   setTestPhoneSensReminder,
+  testPhoneSensAttendance,
+  setTestPhoneSensAttendance,
   handleSave,
   handleTest,
   handleTestSensConsultation,
   handleTestSensTrial,
   handleTestSensOverdue,
   handleTestSensReminder,
+  handleTestSensAttendance,
   addSensUnpaidButton,
   removeSensUnpaidButton,
   updateSensUnpaidButton,
@@ -580,6 +588,15 @@ export default function SensTemplates({
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용 · SENS 승인본과 동일하게)</label>
               <textarea value={settings.sens_attendance_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_attendance_template_content: e.target.value }))} rows={6} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-mono text-sm" placeholder={`안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월}월 #{일}일 #{요일}요일 수업 #{출결상태}하였습니다.`} />
               <p className="text-xs text-muted-foreground mt-1">사용 가능 변수: #{`{학원명}`}, #{`{이름}`}, #{`{월}`}, #{`{일}`}, #{`{요일}`}, #{`{출결상태}`}(출석/지각/결석)</p>
+            </div>
+            {/* 테스트 */}
+            <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+              <label className="block text-sm font-medium text-foreground mb-2">출결 테스트 발송</label>
+              <div className="flex gap-3">
+                <input type="tel" value={testPhoneSensAttendance} onChange={e => setTestPhoneSensAttendance(e.target.value)} className="flex-1 px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500" placeholder="테스트 전화번호 (예: 01012345678)" />
+                <button onClick={handleTestSensAttendance} disabled={testingSensAttendance || !settings.is_enabled || !settings.sens_attendance_template_code} className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">{testingSensAttendance ? '발송 중...' : '테스트'}</button>
+              </div>
+              {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
             </div>
             {/* 저장 */}
             <div className="md:col-span-2 pt-4 border-t border-border">

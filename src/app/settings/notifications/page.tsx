@@ -149,6 +149,10 @@ export default function NotificationSettingsPage() {
           testPhoneReminder={h.testPhoneReminder}
           setTestPhoneReminder={h.setTestPhoneReminder}
           onTestReminder={h.handleTestReminder}
+          testingAttendance={h.testingAttendance}
+          testPhoneAttendance={h.testPhoneAttendance}
+          setTestPhoneAttendance={h.setTestPhoneAttendance}
+          onTestAttendance={h.handleTestAttendance}
           addUnpaidButton={h.addUnpaidButton}
           removeUnpaidButton={h.removeUnpaidButton}
           updateUnpaidButton={h.updateUnpaidButton}
@@ -182,6 +186,7 @@ export default function NotificationSettingsPage() {
         testingSensTrial={h.testingSensTrial}
         testingSensOverdue={h.testingSensOverdue}
         testingSensReminder={h.testingSensReminder}
+        testingSensAttendance={h.testingSensAttendance}
         testPhoneSensConsultation={h.testPhoneSensConsultation}
         setTestPhoneSensConsultation={h.setTestPhoneSensConsultation}
         testPhoneSensTrial={h.testPhoneSensTrial}
@@ -190,12 +195,15 @@ export default function NotificationSettingsPage() {
         setTestPhoneSensOverdue={h.setTestPhoneSensOverdue}
         testPhoneSensReminder={h.testPhoneSensReminder}
         setTestPhoneSensReminder={h.setTestPhoneSensReminder}
+        testPhoneSensAttendance={h.testPhoneSensAttendance}
+        setTestPhoneSensAttendance={h.setTestPhoneSensAttendance}
         handleSave={h.handleSave}
         handleTest={h.handleTest}
         handleTestSensConsultation={h.handleTestSensConsultation}
         handleTestSensTrial={h.handleTestSensTrial}
         handleTestSensOverdue={h.handleTestSensOverdue}
         handleTestSensReminder={h.handleTestSensReminder}
+        handleTestSensAttendance={h.handleTestSensAttendance}
         addSensUnpaidButton={h.addSensUnpaidButton}
         removeSensUnpaidButton={h.removeSensUnpaidButton}
         updateSensUnpaidButton={h.updateSensUnpaidButton}
