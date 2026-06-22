@@ -11,6 +11,12 @@ import {
 
 const BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
 
+function formatDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+const today = formatDate(new Date());
+
 const season = {
   id: 88,
   academy_id: 1,
@@ -93,7 +99,7 @@ function makeRefundPreview() {
       paid_amount: 1400000,
       payment_status: 'paid',
     },
-    cancellation_date: new Date().toISOString().split('T')[0],
+    cancellation_date: today,
     refund: {
       paidAmount: 1400000,
       originalFee: 1500000,
@@ -196,7 +202,12 @@ async function runNormal(browser) {
 
   await page.goto('/seasons/88', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '2026 정시 집중반' }).waitFor();
-  await page.getByText('강하준').waitFor();
+  const studentDetailLink = page.getByRole('link', { name: '강하준 학생 상세' }).first();
+  await studentDetailLink.waitFor();
+  const studentHref = await studentDetailLink.getAttribute('href');
+  if (studentHref !== '/students/1') {
+    throw new Error(`season detail student href mismatch: ${studentHref}`);
+  }
   await assertNoRawVisibleText(page, 'season detail desktop');
   await assertNoHorizontalOverflow(page, 'season detail desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-detail-desktop.png', fullPage: true });
@@ -205,6 +216,8 @@ async function runNormal(browser) {
   await page.reload({ waitUntil: 'networkidle' });
   const enrolledSection = page.getByTestId('enrolled-students-section');
   await enrolledSection.scrollIntoViewIfNeeded();
+  await page.getByTestId('enrolled-student-card').first().waitFor();
+  await page.getByTestId('enrolled-student-card').first().getByRole('link', { name: '강하준 학생 상세' }).waitFor();
   await assertNoRawVisibleText(page, 'season detail mobile');
   await assertNoHorizontalOverflow(page, 'season detail mobile');
   await enrolledSection.screenshot({ path: '/Users/etlab/paca-season-detail-mobile.png' });
@@ -227,7 +240,7 @@ async function runNormal(browser) {
 
   await page.locator('tr:has-text("강하준")').getByRole('button', { name: '환불' }).click();
   await page.getByRole('button', { name: '환불 확정' }).waitFor();
-  if (state.refundPreviewPayload?.include_vat !== false) {
+  if (state.refundPreviewPayload?.include_vat !== false || state.refundPreviewPayload?.cancellation_date !== today) {
     throw new Error(`unexpected refund preview payload ${JSON.stringify(state.refundPreviewPayload)}`);
   }
   await page.getByRole('button', { name: '환불 확정' }).click();

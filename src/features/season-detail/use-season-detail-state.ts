@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import type { Season, StudentSeason, TimeSlot } from '@/lib/types/season';
+import { formatDate } from '@/lib/utils/format';
 import {
   cancelEnrollmentWithRefund,
   fetchEnrolledStudents,
@@ -34,7 +35,7 @@ export function useSeasonDetailState(seasonId: number | null) {
   const [refundLoading, setRefundLoading] = useState(false);
   const [selectedEnrollment, setSelectedEnrollment] = useState<StudentSeason | null>(null);
   const [refundPreview, setRefundPreview] = useState<SeasonRefundPreview | null>(null);
-  const [cancellationDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [cancellationDate] = useState(() => formatDate(new Date()));
 
   const loadStudents = useCallback(async () => {
     if (!seasonId) return;

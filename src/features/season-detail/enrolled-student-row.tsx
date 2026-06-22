@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Loader2, Receipt, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Season, StudentSeason, TimeSlot } from '@/lib/types/season';
@@ -33,7 +34,18 @@ export function EnrolledStudentRow({
 
   return (
     <tr className="border-b border-border last:border-0 hover:bg-muted/40">
-      <td className="px-4 py-3 font-medium text-foreground">{enrollment.student_name ?? '-'}</td>
+      <td className="px-4 py-3">
+        <Link
+          aria-label={`${enrollment.student_name ?? '학생'} 학생 상세`}
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+          href={`/students/${enrollment.student_id}`}
+        >
+          {enrollment.student_name ?? '-'}
+        </Link>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {[enrollment.student_grade, enrollment.student_number].filter(Boolean).join(' · ') || '학생 정보'}
+        </p>
+      </td>
       <td className="px-4 py-3">
         {discountAmount > 0 ? (
           <div className="space-y-0.5">

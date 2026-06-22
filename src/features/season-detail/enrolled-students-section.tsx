@@ -1,6 +1,7 @@
 import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Season, StudentSeason, TimeSlot } from '@/lib/types/season';
+import { EnrolledStudentCard } from './enrolled-student-card';
 import { EnrolledStudentRow } from './enrolled-student-row';
 
 interface EnrolledStudentsSectionProps {
@@ -45,34 +46,50 @@ export function EnrolledStudentsSection({
           <p className="text-sm">등록된 학생이 없습니다.</p>
         </div>
       ) : (
-        <div className="w-full overflow-x-auto">
-          <table className="w-full min-w-[820px]">
-            <thead>
-              <tr className="border-b border-border bg-muted/40 text-left">
-                <th className="px-4 py-2 text-sm font-medium text-muted-foreground">학생명</th>
-                <th className="px-4 py-2 text-sm font-medium text-muted-foreground">시즌비</th>
-                <th className="px-4 py-2 text-sm font-medium text-muted-foreground">등록일</th>
-                <th className="px-4 py-2 text-sm font-medium text-muted-foreground">납부상태</th>
-                <th className="px-4 py-2 text-sm font-medium text-muted-foreground">시간대</th>
-                <th className="px-4 py-2 text-right text-sm font-medium text-muted-foreground">관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {enrolledStudents.map((enrollment) => (
-                <EnrolledStudentRow
-                  key={enrollment.id}
-                  cancelling={cancellingId === enrollment.id}
-                  enrollment={enrollment}
-                  season={season}
-                  updatingTimeSlot={updatingTimeSlotId === enrollment.id}
-                  onCancel={() => onCancelEnrollment(enrollment.id)}
-                  onOpenRefund={() => onOpenRefund(enrollment)}
-                  onTimeSlotChange={(slot) => onTimeSlotChange(enrollment, slot)}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="hidden w-full overflow-x-auto md:block">
+            <table className="w-full min-w-[820px]">
+              <thead>
+                <tr className="border-b border-border bg-muted/40 text-left">
+                  <th className="px-4 py-2 text-sm font-medium text-muted-foreground">학생명</th>
+                  <th className="px-4 py-2 text-sm font-medium text-muted-foreground">시즌비</th>
+                  <th className="px-4 py-2 text-sm font-medium text-muted-foreground">등록일</th>
+                  <th className="px-4 py-2 text-sm font-medium text-muted-foreground">납부상태</th>
+                  <th className="px-4 py-2 text-sm font-medium text-muted-foreground">시간대</th>
+                  <th className="px-4 py-2 text-right text-sm font-medium text-muted-foreground">관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {enrolledStudents.map((enrollment) => (
+                  <EnrolledStudentRow
+                    key={enrollment.id}
+                    cancelling={cancellingId === enrollment.id}
+                    enrollment={enrollment}
+                    season={season}
+                    updatingTimeSlot={updatingTimeSlotId === enrollment.id}
+                    onCancel={() => onCancelEnrollment(enrollment.id)}
+                    onOpenRefund={() => onOpenRefund(enrollment)}
+                    onTimeSlotChange={(slot) => onTimeSlotChange(enrollment, slot)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="divide-y divide-border md:hidden">
+            {enrolledStudents.map((enrollment) => (
+              <EnrolledStudentCard
+                key={enrollment.id}
+                cancelling={cancellingId === enrollment.id}
+                enrollment={enrollment}
+                season={season}
+                updatingTimeSlot={updatingTimeSlotId === enrollment.id}
+                onCancel={() => onCancelEnrollment(enrollment.id)}
+                onOpenRefund={() => onOpenRefund(enrollment)}
+                onTimeSlotChange={(slot) => onTimeSlotChange(enrollment, slot)}
+              />
+            ))}
+          </div>
+        </>
       )}
     </section>
   );
