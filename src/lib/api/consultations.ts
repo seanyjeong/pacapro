@@ -238,11 +238,13 @@ export async function createDirectConsultation(data: {
 export async function convertToTrialStudent(
   consultationId: number,
   trialDates: { date: string; timeSlot: string }[],
-  studentPhone?: string
+  studentPhone?: string,
+  config?: APIRequestConfig
 ): Promise<{ message: string; studentId: number }> {
   return apiClient.post<{ message: string; studentId: number }>(
     `/consultations/${consultationId}/convert-to-trial`,
-    { trialDates, studentPhone }
+    { trialDates, studentPhone },
+    config
   );
 }
 

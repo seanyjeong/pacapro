@@ -14,6 +14,7 @@ import type { Consultation, ConsultationStatus } from '@/lib/types/consultation'
 import type { LearningType, WeeklyHour } from '@/lib/types/consultation';
 import apiClient from '@/lib/api/client';
 import type { EditForm, DirectForm, LearningForm, TrialDate } from '../_types';
+import { getConsultationErrorText, SILENT_CONFIG } from './consultation-error-utils';
 
 const DEFAULT_DIRECT_FORM: DirectForm = {
   studentName: '',
@@ -42,6 +43,7 @@ const DEFAULT_LEARNING_FORM: LearningForm = {
 export function useConsultations() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
 
@@ -154,6 +156,7 @@ export function useConsultations() {
   // 데이터 로드
   const loadData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const { startDate, endDate } = getDateRange();
       const response = await getConsultations({
@@ -164,12 +167,14 @@ export function useConsultations() {
         endDate,
         page: pagination.page,
         limit: pagination.limit
-      });
+      }, SILENT_CONFIG);
       setConsultations(response.consultations);
       setStats(response.stats);
       setPagination(response.pagination);
     } catch {
-      toast.error('데이터를 불러오는데 실패했습니다.');
+      setConsultations([]);
+      setStats({});
+      setLoadError('상담 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setLoading(false);
     }
@@ -177,13 +182,13 @@ export function useConsultations() {
 
   useEffect(() => {
     loadData();
-  }, [search, statusFilter, typeFilter, dateFilter, pagination.page]);
+  }, [loadData]);
 
   // 운영 시간 설정 로드
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await getConsultationSettings();
+        const response = await getConsultationSettings(SILENT_CONFIG);
         if (response.weeklyHours) setWeeklyHours(response.weeklyHours);
       } catch {
         // 설정 로드 실패 시 무시 (시간 옵션만 비어있음)
@@ -226,7 +231,7 @@ export function useConsultations() {
     if (!date) { setEditBookedTimes([]); return; }
     setLoadingEditBookedTimes(true);
     try {
-      const response = await getBookedTimes(date);
+      const response = await getBookedTimes(date, SILENT_CONFIG);
       const currentTime = selectedConsultation?.preferred_time?.substring(0, 5);
       const currentDate = selectedConsultation?.preferred_date;
       const booked = response.bookedTimes || [];
@@ -253,7 +258,7 @@ export function useConsultations() {
       } = { status: newStatus, adminNotes };
       if (newDate) updateData.preferredDate = newDate;
       if (newTime) updateData.preferredTime = newTime;
-      await updateConsultation(selectedConsultation.id, updateData);
+      await updateConsultation(selectedConsultation.id, updateData, SILENT_CONFIG);
       toast.success(newDate || newTime ? '상담 정보가 수정되었습니다.' : '상태가 변경되었습니다.');
       setStatusModalOpen(false);
       setNewDate('');
@@ -271,7 +276,7 @@ export function useConsultations() {
     if (!selectedConsultation) return;
     setDeleting(true);
     try {
-      await deleteConsultation(selectedConsultation.id);
+      await deleteConsultation(selectedConsultation.id, SILENT_CONFIG);
       toast.success('상담 신청이 삭제되었습니다.');
       setDeleteModalOpen(false);
       setSelectedConsultation(null);
@@ -304,7 +309,7 @@ export function useConsultations() {
         mockTestGrades: editForm.mockTestGrades,
         targetSchool: editForm.targetSchool,
         referrerStudent: editForm.referrerStudent
-      });
+      }, SILENT_CONFIG);
       toast.success('정보가 수정되었습니다.');
       setEditInfoModalOpen(false);
       setEditInfoConsultation(null);
@@ -323,7 +328,7 @@ export function useConsultations() {
     if (!date) { setBookedTimes([]); return; }
     setLoadingBookedTimes(true);
     try {
-      const response = await getBookedTimes(date);
+      const response = await getBookedTimes(date, SILENT_CONFIG);
       setBookedTimes(response.bookedTimes || []);
     } catch {
       setBookedTimes([]);
@@ -346,15 +351,14 @@ export function useConsultations() {
     }
     setRegistering(true);
     try {
-      await createDirectConsultation(directForm);
+      await createDirectConsultation(directForm, SILENT_CONFIG);
       toast.success('상담이 등록되었습니다.');
       setDirectRegisterOpen(false);
       setDirectForm(DEFAULT_DIRECT_FORM);
       setBookedTimes([]);
       loadData();
     } catch (error: unknown) {
-      const err = error as { message?: string };
-      toast.error(err.message || '등록에 실패했습니다.');
+      toast.error(getConsultationErrorText(error, '등록에 실패했습니다. 입력값을 확인한 뒤 다시 시도해주세요.'));
     } finally {
       setRegistering(false);
     }
@@ -365,6 +369,7 @@ export function useConsultations() {
     setStudentsLoading(true);
     try {
       const response = await apiClient.get<{ students: Array<{ id: number; name: string; grade: string }> }>('/students', {
+        ...SILENT_CONFIG,
         params: { status: 'active', limit: 500 }
       });
       setStudents(response.students || []);
@@ -389,14 +394,13 @@ export function useConsultations() {
         preferredTime: learningForm.preferredTime,
         learningType: learningForm.learningType,
         adminNotes: learningForm.adminNotes
-      });
+      }, SILENT_CONFIG);
       toast.success('재원생 상담이 등록되었습니다.');
       setLearningModalOpen(false);
       setLearningForm(DEFAULT_LEARNING_FORM);
       loadData();
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err.response?.data?.error || '상담 등록에 실패했습니다.');
+      toast.error(getConsultationErrorText(error, '상담 등록에 실패했습니다. 입력값을 확인한 뒤 다시 시도해주세요.'));
     } finally {
       setSubmittingLearning(false);
     }
@@ -427,15 +431,14 @@ export function useConsultations() {
     }
     setConvertingToTrial(true);
     try {
-      await convertToTrialStudent(selectedConsultation.id, trialDates);
+      await convertToTrialStudent(selectedConsultation.id, trialDates, undefined, SILENT_CONFIG);
       toast.success('체험 학생으로 등록되었습니다.');
       setTrialModalOpen(false);
       setDetailOpen(false);
       setTrialDates([{ date: '', timeSlot: '' }]);
       loadData();
     } catch (error: unknown) {
-      const err = error as { message?: string };
-      toast.error(err.message || '체험 등록에 실패했습니다.');
+      toast.error(getConsultationErrorText(error, '체험 등록에 실패했습니다. 잠시 후 다시 시도해주세요.'));
     } finally {
       setConvertingToTrial(false);
     }
@@ -449,7 +452,7 @@ export function useConsultations() {
 
   return {
     // 데이터
-    consultations, loading, stats, pagination, setPagination,
+    consultations, loading, loadError, stats, pagination, setPagination,
     // 필터
     search, setSearch, statusFilter, setStatusFilter,
     typeFilter, setTypeFilter, dateFilter, setDateFilter,

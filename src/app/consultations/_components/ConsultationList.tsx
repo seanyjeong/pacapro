@@ -28,11 +28,6 @@ interface Props {
   onOpenDetail: (c: Consultation) => void;
   onOpenStatusModal: (c: Consultation) => void;
   onOpenDeleteModal: (c: Consultation) => void;
-  setSelectedConsultation: (c: Consultation) => void;
-  setNewStatus: (s: ConsultationStatus) => void;
-  setAdminNotes: (n: string) => void;
-  setStatusModalOpen: (v: boolean) => void;
-  setDeleteModalOpen: (v: boolean) => void;
 }
 
 function StatusBadge({ status }: { status: ConsultationStatus }) {
@@ -46,11 +41,10 @@ function StatusBadge({ status }: { status: ConsultationStatus }) {
 export function ConsultationList({
   consultations, loading, pagination, setPagination,
   onOpenDetail, onOpenStatusModal, onOpenDeleteModal,
-  setSelectedConsultation, setNewStatus, setAdminNotes, setStatusModalOpen, setDeleteModalOpen,
 }: Props) {
   return (
     <>
-      <Card>
+      <Card className="rounded-md shadow-none">
         <CardContent className="p-0">
           {loading ? (
             <div className="flex items-center justify-center py-16">
@@ -63,18 +57,18 @@ export function ConsultationList({
               {consultations.map((c) => (
                 <div
                   key={c.id}
-                  className="p-4 hover:bg-muted cursor-pointer transition-colors"
+                  className="cursor-pointer p-4 transition-colors hover:bg-muted/40"
                   onClick={() => onOpenDetail(c)}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium text-foreground">{c.student_name}</span>
                         <span className="text-sm text-muted-foreground">{c.student_grade}</span>
                         <StatusBadge status={c.status} />
                         <Badge variant="outline">{CONSULTATION_TYPE_LABELS[c.consultation_type]}</Badge>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Phone className="h-3.5 w-3.5" />
                           {c.student_phone || c.parent_phone}
