@@ -273,6 +273,18 @@ export function useConsultationSettingsState() {
     toast.success('평일(월~금)에 적용되었습니다.');
   };
 
+  const applyRecommendedWeekdays = () => {
+    setDefaultStartTime('10:00:00');
+    setDefaultEndTime('20:00:00');
+    setWeeklyHours((prev) => prev.map((hour) => ({
+      ...hour,
+      isAvailable: hour.dayOfWeek >= 1 && hour.dayOfWeek <= 5,
+      startTime: '10:00:00',
+      endTime: '20:00:00',
+    })));
+    toast.success('평일 10:00-20:00 운영시간이 적용되었습니다.');
+  };
+
   const addReferralSource = () => {
     const trimmed = newReferralSource.trim();
     if (!trimmed) return;
@@ -408,6 +420,7 @@ export function useConsultationSettingsState() {
     updateHour,
     applyDefaultTimeToAll,
     applyDefaultTimeToWeekdays,
+    applyRecommendedWeekdays,
     addReferralSource,
     removeReferralSource,
     updateNewChecklistItem,

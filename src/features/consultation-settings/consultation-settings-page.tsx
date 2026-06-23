@@ -90,12 +90,14 @@ export function ConsultationSettingsPage() {
                 weeklyHours={state.weeklyHours}
                 defaultStartTime={state.defaultStartTime}
                 defaultEndTime={state.defaultEndTime}
+                hasSavedWeeklyHours={state.hasSavedWeeklyHours}
                 timeOptions={state.timeOptions}
                 saving={state.saving}
                 onDefaultStartTimeChange={state.setDefaultStartTime}
                 onDefaultEndTimeChange={state.setDefaultEndTime}
                 onApplyAll={state.applyDefaultTimeToAll}
                 onApplyWeekdays={state.applyDefaultTimeToWeekdays}
+                onApplyRecommendedWeekdays={state.applyRecommendedWeekdays}
                 onUpdateHour={state.updateHour}
                 onSave={state.handleSaveWeeklyHours}
               />

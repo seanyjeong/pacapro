@@ -188,7 +188,7 @@ async function runSaveFlows(browser) {
 
 async function runMissingHours(browser) {
   const result = await createSettingsPage(browser, 'missing-hours', { width: 390, height: 844 });
-  const { context, page } = result;
+  const { context, page, state } = result;
 
   await page.goto('/consultations/settings', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 예약 설정' }).waitFor();
@@ -198,6 +198,16 @@ async function runMissingHours(browser) {
   await board.getByText('상담 시간 저장 필요').waitFor();
   await board.getByText('저장된 운영 요일').first().waitFor();
   await board.getByText('0일').first().waitFor();
+  const recovery = page.getByTestId('weekly-hours-recovery-panel');
+  await recovery.getByRole('heading', { name: '빠른 운영시간 복구' }).waitFor();
+  await recovery.getByText('권장 시간: 평일 10:00-20:00', { exact: true }).waitFor();
+  await recovery.getByRole('button', { name: '평일 10:00-20:00 적용' }).click();
+  await page.getByRole('button', { name: '운영 시간 저장' }).click();
+  await page.getByText('운영 시간이 저장되었습니다.').waitFor();
+  const weekdayHours = state.weeklyPayload?.weeklyHours?.filter((hour) => hour.dayOfWeek >= 1 && hour.dayOfWeek <= 5) || [];
+  if (weekdayHours.length !== 5 || weekdayHours.some((hour) => !hour.isAvailable || hour.startTime !== '10:00:00' || hour.endTime !== '20:00:00')) {
+    throw new Error(`recommended weekly hours payload mismatch: ${JSON.stringify(state.weeklyPayload)}`);
+  }
   await assertNoRawVisibleText(page, 'consultation settings missing hours');
   await assertNoHorizontalOverflow(page, 'consultation settings missing hours');
   await page.screenshot({ path: '/Users/etlab/paca-consultation-settings-missing-hours-mobile.png', fullPage: true });
