@@ -248,6 +248,15 @@ async function runDesktop(browser) {
   await assertNoHorizontalOverflow(page, 'notifications desktop');
   await page.screenshot({ path: '/Users/etlab/paca-notifications-desktop.png', fullPage: true });
 
+  await page.getByRole('button', { name: '가격 비교' }).click();
+  await page.getByTestId('notification-price-modal').waitFor();
+  await page.getByRole('heading', { name: '발송 단가 비교' }).waitFor();
+  await assertNoRawVisibleText(page, 'notifications price modal');
+  await assertNoHorizontalOverflow(page, 'notifications price modal');
+  await page.screenshot({ path: '/Users/etlab/paca-notifications-price-modal.png', fullPage: true });
+  await page.getByRole('button', { name: '가격 비교 닫기' }).click();
+  await page.getByTestId('notification-price-modal').waitFor({ state: 'hidden' });
+
   const sensButton = page.getByRole('button', { name: '네이버 SENS' });
   const solapiButton = page.getByRole('button', { name: '솔라피 (Solapi)' });
   await solapiButton.click();
