@@ -8,6 +8,7 @@ import { ChecklistTemplateSection } from './checklist-template-section';
 import { PageSettingsSection } from './page-settings-section';
 import { ReferralSourcesSection } from './referral-sources-section';
 import { ReservationLinkSection } from './reservation-link-section';
+import { SettingsOperationsBoard } from './settings-operations-board';
 import { SettingsHeader } from './settings-header';
 import { useConsultationSettingsState } from './use-consultation-settings-state';
 import { WeeklyHoursSection } from './weekly-hours-section';
@@ -35,17 +36,19 @@ export function ConsultationSettingsPage() {
     );
   }
 
-  const weeklyAvailableCount = state.weeklyHours.filter((hour) => hour.isAvailable).length;
+  const savedWeeklyAvailableCount = state.hasSavedWeeklyHours
+    ? state.weeklyHours.filter((hour) => hour.isAvailable).length
+    : 0;
 
   return (
     <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
+      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl" data-testid="consultation-settings-operations-workspace">
         <SettingsHeader
           academyName={state.academyName}
           blockedCount={state.blockedSlots.length}
           isEnabled={state.settings.isEnabled}
           originalSlug={state.originalSlug}
-          weeklyAvailableCount={weeklyAvailableCount}
+          weeklyAvailableCount={savedWeeklyAvailableCount}
         />
 
         {state.loadError ? (
@@ -60,7 +63,7 @@ export function ConsultationSettingsPage() {
           </section>
         ) : (
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
-            <div className="min-w-0 space-y-5">
+            <div className="order-2 min-w-0 space-y-5 lg:order-1">
               <ReservationLinkSection
                 isEnabled={state.settings.isEnabled}
                 slug={state.slug}
@@ -98,7 +101,16 @@ export function ConsultationSettingsPage() {
               />
             </div>
 
-            <aside className="min-w-0 space-y-5">
+            <aside className="order-1 min-w-0 space-y-5 lg:order-2">
+              <SettingsOperationsBoard
+                blockedCount={state.blockedSlots.length}
+                hasSavedWeeklyHours={state.hasSavedWeeklyHours}
+                isEnabled={state.settings.isEnabled}
+                originalSlug={state.originalSlug}
+                referralCount={state.settings.referralSources?.length || 0}
+                weeklyAvailableCount={savedWeeklyAvailableCount}
+              />
+
               <BlockedSlotsSection
                 blockedSlots={state.blockedSlots}
                 addingHolidays={state.addingHolidays}

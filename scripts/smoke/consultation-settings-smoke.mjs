@@ -19,9 +19,11 @@ function makeState(mode = 'success') {
   };
 }
 
-function settingsResponse() {
+function settingsResponse(mode = 'success') {
+  const missingHours = mode === 'missing-hours';
+
   return {
-    academy: { id: 1, name: 'PACA 일산', slug: 'paca-ilsan' },
+    academy: { id: 1, name: missingHours ? 'PACA 강남' : 'PACA 일산', slug: missingHours ? 'paca-gangnam' : 'paca-ilsan' },
     settings: {
       isEnabled: true,
       pageTitle: 'PACA 상담 예약',
@@ -33,7 +35,7 @@ function settingsResponse() {
       referralSources: ['블로그', '지인 소개', 'SNS'],
       sendConfirmationAlimtalk: true,
     },
-    weeklyHours: [
+    weeklyHours: missingHours ? [] : [
       { dayOfWeek: 0, isAvailable: false, startTime: '09:00:00', endTime: '18:00:00' },
       { dayOfWeek: 1, isAvailable: true, startTime: '09:00:00', endTime: '18:00:00' },
       { dayOfWeek: 2, isAvailable: true, startTime: '09:00:00', endTime: '18:00:00' },
@@ -70,7 +72,7 @@ async function installRoutes(context, state) {
       if (state.mode === 'load-error') {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
       }
-      return jsonRoute(route, settingsResponse());
+      return jsonRoute(route, settingsResponse(state.mode));
     }
 
     if (method === 'GET' && path === '/public/check-slug/paca-gangnam') {
@@ -116,6 +118,7 @@ async function runDesktop(browser) {
 
   await page.goto('/consultations/settings', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 예약 설정' }).waitFor();
+  await waitForSettingsShell(page);
   await page.getByText('PACA 일산').waitFor();
   await page.getByRole('heading', { name: '예약 링크' }).waitFor();
   await page.getByRole('heading', { name: '요일별 운영 시간' }).waitFor();
@@ -134,6 +137,7 @@ async function runMobile(browser) {
 
   await page.goto('/consultations/settings', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 예약 설정' }).waitFor();
+  await waitForSettingsShell(page);
   await page.getByRole('heading', { name: '예약 정책' }).waitFor();
   await assertNoRawVisibleText(page, 'consultation settings mobile');
   await assertNoHorizontalOverflow(page, 'consultation settings mobile');
@@ -149,6 +153,7 @@ async function runSaveFlows(browser) {
 
   await page.goto('/consultations/settings', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 예약 설정' }).waitFor();
+  await waitForSettingsShell(page);
   await page.getByLabel('페이지 제목').fill('강남 상담 예약');
   await page.getByRole('button', { name: '예약 정책 저장' }).click();
   await page.getByText('설정이 저장되었습니다.').waitFor();
@@ -181,6 +186,26 @@ async function runSaveFlows(browser) {
   return result;
 }
 
+async function runMissingHours(browser) {
+  const result = await createSettingsPage(browser, 'missing-hours', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/consultations/settings', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '상담 예약 설정' }).waitFor();
+  await waitForSettingsShell(page);
+  await page.getByText('PACA 강남').waitFor();
+  const board = page.getByTestId('consultation-settings-operations-board');
+  await board.getByText('상담 시간 저장 필요').waitFor();
+  await board.getByText('저장된 운영 요일').first().waitFor();
+  await board.getByText('0일').first().waitFor();
+  await assertNoRawVisibleText(page, 'consultation settings missing hours');
+  await assertNoHorizontalOverflow(page, 'consultation settings missing hours');
+  await page.screenshot({ path: '/Users/etlab/paca-consultation-settings-missing-hours-mobile.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 async function runLoadError(browser) {
   const result = await createSettingsPage(browser, 'load-error', { width: 390, height: 844 });
   const { context, page } = result;
@@ -196,6 +221,14 @@ async function runLoadError(browser) {
   return result;
 }
 
+async function waitForSettingsShell(page) {
+  await page.getByTestId('consultation-settings-operations-workspace').waitFor();
+  const board = page.getByTestId('consultation-settings-operations-board');
+  await board.waitFor();
+  await board.getByText('상담 설정 운영 보드').waitFor();
+  await board.getByText('예약 공개', { exact: true }).waitFor();
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -207,11 +240,13 @@ async function main() {
     const desktop = await runDesktop(browser);
     const mobile = await runMobile(browser);
     const saveFlows = await runSaveFlows(browser);
+    const missingHours = await runMissingHours(browser);
     const loadError = await runLoadError(browser);
-    [desktop, mobile, saveFlows, loadError].forEach(assertDiagnostics);
+    [desktop, mobile, saveFlows, missingHours, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       errorHits: loadError.state.hits,
+      missingHoursHits: missingHours.state.hits,
       savePayload: saveFlows.state.settingsPayload,
       weeklyPayload: saveFlows.state.weeklyPayload,
     }, null, 2));

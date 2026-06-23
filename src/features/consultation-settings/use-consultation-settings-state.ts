@@ -32,6 +32,7 @@ export function useConsultationSettingsState() {
   const [savingSlug, setSavingSlug] = useState(false);
   const [settings, setSettings] = useState<Partial<ConsultationSettings>>(INITIAL_CONSULTATION_SETTINGS);
   const [weeklyHours, setWeeklyHours] = useState<WeeklyHour[]>([]);
+  const [hasSavedWeeklyHours, setHasSavedWeeklyHours] = useState(false);
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [newBlockedDate, setNewBlockedDate] = useState('');
@@ -60,6 +61,7 @@ export function useConsultationSettingsState() {
         setSlug(loadedSlug);
         setOriginalSlug(loadedSlug);
         setSettings(response.settings || {});
+        setHasSavedWeeklyHours(loadedHours.length > 0);
         setWeeklyHours(loadedHours.length === 0 ? createDefaultWeeklyHours() : loadedHours);
         setBlockedSlots(response.blockedSlots || []);
 
@@ -151,6 +153,7 @@ export function useConsultationSettingsState() {
     setSaving(true);
     try {
       await updateWeeklyHours(weeklyHours, SUPPRESS_API_ERROR_TOAST);
+      setHasSavedWeeklyHours(true);
       toast.success('운영 시간이 저장되었습니다.');
     } catch {
       toast.error('운영 시간을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
@@ -369,6 +372,7 @@ export function useConsultationSettingsState() {
     savingSlug,
     settings,
     weeklyHours,
+    hasSavedWeeklyHours,
     blockedSlots,
     blockModalOpen,
     newBlockedDate,
