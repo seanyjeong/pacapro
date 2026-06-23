@@ -5,10 +5,10 @@
  * 시간대(오전/오후/저녁) + 상태(출근/지각/결근/반차) 혼합형
  */
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, UserCheck, Clock, Check, X, AlertCircle } from 'lucide-react';
+import { Loader2, Save, UserCheck, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { schedulesApi, type InstructorAttendanceRecord, type InstructorAttendanceSubmission } from '@/lib/api/schedules';
 import { TIME_SLOT_LABELS } from '@/lib/types/schedule';
@@ -31,6 +31,10 @@ const ATTENDANCE_STATUS_COLORS: Record<AttendanceStatus, string> = {
   half_day: 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700',
 };
 
+const LOAD_ERROR_MESSAGE = '강사 출근 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+const SAVE_ERROR_MESSAGE = '강사 출근 정보를 저장하지 못했습니다. 선택 내용을 확인한 뒤 다시 시도해주세요.';
+const QUIET_REQUEST = { suppressErrorToast: true };
+
 interface InstructorAttendanceCheckerProps {
   date: string;
   onSuccess?: () => void;
@@ -46,7 +50,8 @@ interface EditedAttendance {
 export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAttendanceCheckerProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [instructorsBySlot, setInstructorsBySlot] = useState<Record<TimeSlot, { id: number; name: string }[]>>({
     morning: [],
@@ -62,16 +67,11 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
   // 현재 선택된 시간대에 배정된 강사들
   const currentSlotInstructors = instructorsBySlot[selectedTimeSlot] || [];
 
-  // 데이터 로드
-  useEffect(() => {
-    loadData();
-  }, [date]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
-      const response = await schedulesApi.getInstructorAttendanceByDate(date);
+      setLoadError(null);
+      const response = await schedulesApi.getInstructorAttendanceByDate(date, QUIET_REQUEST);
 
       // 시간대별 강사 목록 설정
       if (response.instructors_by_slot) {
@@ -86,26 +86,18 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
         });
       }
       setExistingRecords(response.attendances || []);
-
-      // 기존 기록으로 편집 상태 초기화
-      const initialEdits = new Map<number, EditedAttendance>();
-      response.attendances?.forEach(record => {
-        if (record.time_slot === selectedTimeSlot) {
-          initialEdits.set(record.instructor_id, {
-            status: record.attendance_status,
-            checkInTime: record.check_in_time,
-            checkOutTime: record.check_out_time,
-            notes: record.notes,
-          });
-        }
-      });
-      setEditedAttendances(initialEdits);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '데이터를 불러오는데 실패했습니다.');
+      console.warn('강사 출근 정보를 불러오지 못했습니다.', err);
+      setLoadError(LOAD_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
-  };
+  }, [date]);
+
+  // 데이터 로드
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // 시간대 변경 시 해당 시간대의 기존 기록으로 초기화
   useEffect(() => {
@@ -124,6 +116,7 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
   }, [selectedTimeSlot, existingRecords]);
 
   const handleStatusChange = (instructorId: number, status: AttendanceStatus) => {
+    setSaveError(null);
     setEditedAttendances(prev => {
       const newMap = new Map(prev);
       const current = newMap.get(instructorId) || { status: 'present' };
@@ -133,6 +126,7 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
   };
 
   const handleTimeChange = (instructorId: number, field: 'checkInTime' | 'checkOutTime', value: string) => {
+    setSaveError(null);
     setEditedAttendances(prev => {
       const newMap = new Map(prev);
       const current = newMap.get(instructorId) || { status: 'present' };
@@ -149,7 +143,7 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
 
     try {
       setSaving(true);
-      setError(null);
+      setSaveError(null);
 
       const attendances: InstructorAttendanceSubmission[] = [];
       editedAttendances.forEach((data, instructorId) => {
@@ -163,13 +157,13 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
         });
       });
 
-      await schedulesApi.submitInstructorAttendance(date, { attendances });
+      await schedulesApi.submitInstructorAttendance(date, { attendances }, QUIET_REQUEST);
       toast.success(`${attendances.length}명의 강사 출근이 체크되었습니다.`);
       onSuccess?.();
       loadData(); // 데이터 새로고침
     } catch (err) {
-      setError(err instanceof Error ? err.message : '출근 체크에 실패했습니다.');
-      toast.error('출근 체크에 실패했습니다.');
+      console.warn('강사 출근 정보를 저장하지 못했습니다.', err);
+      setSaveError(SAVE_ERROR_MESSAGE);
     } finally {
       setSaving(false);
     }
@@ -177,6 +171,7 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
 
   // 전체 출근 처리
   const handleMarkAllPresent = () => {
+    setSaveError(null);
     const newMap = new Map<number, EditedAttendance>();
     currentSlotInstructors.forEach(instructor => {
       const existing = editedAttendances.get(instructor.id);
@@ -213,12 +208,12 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
     );
   }
 
-  if (error) {
+  if (loadError) {
     return (
       <Card>
         <CardContent className="p-12 text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600" role="alert">{loadError}</p>
           <Button onClick={loadData} className="mt-4">다시 시도</Button>
         </CardContent>
       </Card>
@@ -250,10 +245,13 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
                   className={cn(
                     'flex-1 px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors',
                     selectedTimeSlot === slot
-                      ? 'bg-primary-600 text-white border-primary-600'
+                      ? 'bg-primary text-primary-foreground border-primary'
                       : 'bg-card text-foreground border-border hover:bg-muted'
                   )}
-                  onClick={() => setSelectedTimeSlot(slot)}
+                  onClick={() => {
+                    setSaveError(null);
+                    setSelectedTimeSlot(slot);
+                  }}
                 >
                   {TIME_SLOT_LABELS[slot]}
                   {slotCounts[slot] > 0 && (
@@ -308,6 +306,15 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
           </div>
         </CardHeader>
         <CardContent>
+          {saveError && (
+            <div
+              className="mb-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+              role="alert"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />
+              <span>{saveError}</span>
+            </div>
+          )}
           {currentSlotInstructors.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <UserCheck className="w-12 h-12 mx-auto mb-4 opacity-50" />
