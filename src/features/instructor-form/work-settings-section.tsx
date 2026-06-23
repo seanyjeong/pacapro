@@ -3,6 +3,12 @@ import type { InstructorFormData } from '@/lib/types/instructor';
 import type { InstructorFormChangeHandler, InstructorFormErrors } from './instructor-form-types';
 import { inputClassName } from './instructor-form-utils';
 
+const WORK_DAY_PRESETS = [
+  { label: '평일 전체', value: [1, 2, 3, 4, 5] },
+  { label: '주말', value: [0, 6] },
+  { label: '초기화', value: [] },
+];
+
 interface WorkSettingsSectionProps {
   formData: InstructorFormData;
   errors: InstructorFormErrors;
@@ -20,6 +26,18 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
         <label className="mb-2 block text-sm font-medium text-foreground">
           출근 요일 <span className="text-red-500">*</span>
         </label>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {WORK_DAY_PRESETS.map((preset) => (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => onChange('work_days', preset.value)}
+              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-wrap gap-2">
           {WEEKDAY_OPTIONS.map((day) => {
             const active = workDays.includes(day.value);

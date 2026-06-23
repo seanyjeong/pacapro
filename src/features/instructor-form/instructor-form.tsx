@@ -7,6 +7,7 @@ import { AdditionalInfoSection } from './additional-info-section';
 import { BasicInfoSection } from './basic-info-section';
 import { FormActions } from './form-actions';
 import { FormSection } from './form-section';
+import { InstructorFormSummary } from './instructor-form-summary';
 import { SalaryInfoSection } from './salary-info-section';
 import { WorkSettingsSection } from './work-settings-section';
 import type { InstructorFormErrors, InstructorFormProps } from './instructor-form-types';
@@ -79,43 +80,49 @@ export function InstructorForm({ mode, initialData, onSubmit, onCancel }: Instru
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <FormSection title="기본 정보">
-        <BasicInfoSection formData={formData} errors={errors} onChange={handleChange} />
-      </FormSection>
+    <form onSubmit={handleSubmit} className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
+      <div className="order-2 space-y-5 xl:order-1">
+        <FormSection title="기본 정보">
+          <BasicInfoSection formData={formData} errors={errors} onChange={handleChange} />
+        </FormSection>
 
-      <FormSection title="급여 정보">
-        <SalaryInfoSection formData={formData} errors={errors} onChange={handleChange} />
-      </FormSection>
+        <FormSection title="급여 정보">
+          <SalaryInfoSection formData={formData} errors={errors} onChange={handleChange} />
+        </FormSection>
 
-      <FormSection title="근무 설정" visible={formData.salary_type === 'hourly' && formData.instructor_type === 'assistant'}>
-        <WorkSettingsSection formData={formData} errors={errors} onChange={handleChange} />
-      </FormSection>
+        <FormSection title="근무 설정" visible={formData.salary_type === 'hourly' && formData.instructor_type === 'assistant'}>
+          <WorkSettingsSection formData={formData} errors={errors} onChange={handleChange} />
+        </FormSection>
 
-      <FormSection title="계좌 정보">
-        <AccountInfoSection formData={formData} onChange={handleChange} />
-      </FormSection>
+        <FormSection title="계좌 정보">
+          <AccountInfoSection formData={formData} onChange={handleChange} />
+        </FormSection>
 
-      <FormSection title="추가 정보">
-        <AdditionalInfoSection mode={mode} formData={formData} onChange={handleChange} />
-      </FormSection>
+        <FormSection title="추가 정보">
+          <AdditionalInfoSection mode={mode} formData={formData} onChange={handleChange} />
+        </FormSection>
 
-      {errors.submit && (
-        <div
-          className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
-          role="alert"
-        >
-          <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-            <div className="space-y-1">
-              <h2 className="text-sm font-semibold">저장 실패</h2>
-              <p className="text-sm">{errors.submit}</p>
+        {errors.submit && (
+          <div
+            className="rounded-md border border-amber-200 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/70 dark:bg-amber-950/35 dark:text-amber-100"
+            role="alert"
+          >
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div className="space-y-1">
+                <h2 className="text-sm font-semibold">저장 실패</h2>
+                <p className="text-sm">{errors.submit}</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <FormActions mode={mode} submitting={submitting} onCancel={onCancel} />
+        <FormActions mode={mode} submitting={submitting} onCancel={onCancel} />
+      </div>
+
+      <div className="order-1 xl:sticky xl:top-20 xl:order-2">
+        <InstructorFormSummary formData={formData} errors={errors} />
+      </div>
     </form>
   );
 }

@@ -306,12 +306,21 @@ async function runCreateError(browser) {
 
   await page.goto('/instructors/new', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '강사 등록' }).waitFor();
+  const formSummary = page.getByTestId('instructor-form-summary');
+  await formSummary.getByRole('heading', { name: '입력 체크' }).waitFor();
+  await formSummary.getByText('저장 전 확인').waitFor();
   await fillInstructorFields(page);
+  await page.locator('#instructor-type').selectOption('assistant');
+  await page.getByRole('button', { name: '평일 전체' }).click();
+  await formSummary.getByText('월, 화, 수, 목, 금').waitFor();
   await page.locator('form button[type="submit"]').click();
   await page.locator('form').getByText('저장 실패').waitFor();
   await page.locator('form').getByText('강사 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   if (result.state.createPayload?.hire_date !== TODAY) {
     throw new Error(`default hire_date mismatch: ${result.state.createPayload?.hire_date} !== ${TODAY}`);
+  }
+  if (JSON.stringify(result.state.createPayload?.work_days) !== JSON.stringify([1, 2, 3, 4, 5])) {
+    throw new Error(`work_days preset mismatch: ${JSON.stringify(result.state.createPayload?.work_days)}`);
   }
   await assertNoRawVisibleText(page, 'instructors create error');
   await assertNoHorizontalOverflow(page, 'instructors create error');
