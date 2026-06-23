@@ -32,14 +32,15 @@ export function ClassDaysPage() {
   const [bulkSlots, setBulkSlots] = useState<ClassDaySlot[]>([]);
   const [filterGrade, setFilterGrade] = useState('all');
   const [filterWeekly, setFilterWeekly] = useState('all');
+  const [showScheduledOnly, setShowScheduledOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const requestedStudentId = Number.parseInt(searchParams.get('studentId') || '', 10);
   const focusedStudentId = Number.isFinite(requestedStudentId) ? requestedStudentId : null;
 
   const monthOptions = useMemo(() => getEffectiveMonthOptions(), []);
   const filteredStudents = useMemo(
-    () => filterAndSortClassDaysStudents(students, filterGrade, filterWeekly, searchQuery, focusedStudentId),
-    [focusedStudentId, students, filterGrade, filterWeekly, searchQuery]
+    () => filterAndSortClassDaysStudents(students, filterGrade, filterWeekly, searchQuery, focusedStudentId, showScheduledOnly),
+    [focusedStudentId, students, filterGrade, filterWeekly, searchQuery, showScheduledOnly]
   );
   const focusedStudentName = useMemo(() => {
     if (focusedStudentId === null) return null;
@@ -242,6 +243,7 @@ export function ClassDaysPage() {
   const resetFilters = () => {
     setFilterGrade('all');
     setFilterWeekly('all');
+    setShowScheduledOnly(false);
     setSearchQuery('');
     if (focusedStudentId !== null) {
       router.replace('/students/class-days');
@@ -250,7 +252,7 @@ export function ClassDaysPage() {
 
   const changedCount = Array.from(edits.values()).filter((edit) => edit.changed).length;
   const scheduledCount = students.filter((student) => student.class_days_next !== null).length;
-  const hasActiveFilters = filterGrade !== 'all' || filterWeekly !== 'all' || searchQuery || focusedStudentId !== null;
+  const hasActiveFilters = filterGrade !== 'all' || filterWeekly !== 'all' || searchQuery || focusedStudentId !== null || showScheduledOnly;
   const effectiveFromLabel = monthOptions.find((option) => option.value === effectiveFrom)?.label || '즉시 적용 (이번 달)';
 
   if (loading) {
@@ -281,6 +283,7 @@ export function ClassDaysPage() {
             filterWeekly={filterWeekly}
             focusedStudentName={focusedStudentName}
             searchQuery={searchQuery}
+            showScheduledOnly={showScheduledOnly}
             resultCount={filteredStudents.length}
             hasActiveFilters={!!hasActiveFilters}
             onGradeChange={setFilterGrade}
@@ -319,10 +322,12 @@ export function ClassDaysPage() {
             saving={saving}
             scheduledCount={scheduledCount}
             selectedCount={selectedIds.size}
+            showScheduledOnly={showScheduledOnly}
             totalCount={students.length}
             onClearSelection={clearSelection}
             onResetFilters={resetFilters}
             onSave={handleSave}
+            onToggleScheduledOnly={() => setShowScheduledOnly((value) => !value)}
           />
         </div>
       </div>

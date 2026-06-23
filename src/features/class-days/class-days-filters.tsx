@@ -20,6 +20,7 @@ interface ClassDaysFiltersProps {
   onWeeklyChange: (value: string) => void;
   resultCount: number;
   searchQuery: string;
+  showScheduledOnly: boolean;
 }
 
 export function ClassDaysFilters({
@@ -33,6 +34,7 @@ export function ClassDaysFilters({
   onWeeklyChange,
   resultCount,
   searchQuery,
+  showScheduledOnly,
 }: ClassDaysFiltersProps) {
   return (
     <section className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card p-4">
@@ -73,6 +75,11 @@ export function ClassDaysFilters({
       {focusedStudentName ? (
         <span className="rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">
           {focusedStudentName} 집중 보기
+        </span>
+      ) : null}
+      {showScheduledOnly ? (
+        <span className="rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700">
+          예약 변경만 보기
         </span>
       ) : null}
       <div className="relative">

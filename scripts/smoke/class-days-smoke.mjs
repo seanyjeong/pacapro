@@ -96,6 +96,17 @@ async function runDesktopSave(browser) {
     scheduled: 1,
     selected: 0,
   });
+  const scheduledFilter = page.getByTestId('class-days-operations-board').getByRole('button', { name: '예약 변경 보기' });
+  await scheduledFilter.click();
+  if ((await scheduledFilter.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('scheduled class-days filter is not active');
+  }
+  await page.locator('tbody tr').filter({ hasText: '박서연' }).waitFor();
+  if ((await page.locator('tbody tr').filter({ hasText: '김진우' }).count()) !== 0) {
+    throw new Error('scheduled class-days filter still shows unscheduled student');
+  }
+  await page.getByTestId('class-days-operations-board').getByRole('button', { name: '필터 초기화' }).click();
+  await page.locator('tbody tr').filter({ hasText: '김진우' }).waitFor();
   const effectiveFromLabel = await page.getByLabel('적용 시작월').locator('option:checked').textContent();
   if (effectiveFromLabel !== '즉시 적용 (이번 달)') {
     throw new Error(`class-days effective month label is blank or wrong: ${effectiveFromLabel}`);

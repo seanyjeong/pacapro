@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { CalendarClock, FilterX, Save, UserPlus, Users, X } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface ClassDaysOperationsBoardProps {
   changedCount: number;
@@ -13,10 +14,12 @@ interface ClassDaysOperationsBoardProps {
   saving: boolean;
   scheduledCount: number;
   selectedCount: number;
+  showScheduledOnly: boolean;
   totalCount: number;
   onClearSelection: () => void;
   onResetFilters: () => void;
   onSave: () => void;
+  onToggleScheduledOnly: () => void;
 }
 
 export function ClassDaysOperationsBoard({
@@ -28,10 +31,12 @@ export function ClassDaysOperationsBoard({
   saving,
   scheduledCount,
   selectedCount,
+  showScheduledOnly,
   totalCount,
   onClearSelection,
   onResetFilters,
   onSave,
+  onToggleScheduledOnly,
 }: ClassDaysOperationsBoardProps) {
   return (
     <aside
@@ -50,7 +55,13 @@ export function ClassDaysOperationsBoard({
         <Metric label="표시 학생" value={`${resultCount}명`} />
         <Metric label="선택 학생" value={`${selectedCount}명`} />
         <Metric label="변경 대기" value={`${changedCount}명`} />
-        <Metric label="예약 변경" value={`${scheduledCount}명`} />
+        <Metric
+          ariaLabel="예약 변경 보기"
+          label="예약 변경"
+          pressed={showScheduledOnly}
+          value={`${scheduledCount}명`}
+          onClick={onToggleScheduledOnly}
+        />
       </div>
 
       <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
@@ -118,15 +129,43 @@ export function ClassDaysOperationsBoard({
 }
 
 interface MetricProps {
+  ariaLabel?: string;
   label: string;
+  onClick?: () => void;
+  pressed?: boolean;
   value: string;
 }
 
-function Metric({ label, value }: MetricProps) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+function Metric({ ariaLabel, label, onClick, pressed = false, value }: MetricProps) {
+  const className = cn(
+    'rounded-md border border-slate-200 bg-slate-50 p-3',
+    onClick && 'w-full text-left transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400',
+    pressed && 'border-orange-300 bg-orange-50 hover:bg-orange-50'
+  );
+  const content = (
+    <>
       <p className="text-xs font-medium text-slate-500">{label}</p>
       <p className="mt-1 text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        aria-label={ariaLabel || label}
+        aria-pressed={pressed}
+        className={className}
+        type="button"
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className}>
+      {content}
     </div>
   );
 }
