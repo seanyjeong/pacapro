@@ -83,6 +83,10 @@ export function PaymentRecordModal({
       toast.error('납부 금액을 입력해주세요.');
       return;
     }
+    // 과납 경고 (차단하지 않고 안내만 — 선납/실수 대응)
+    if (formData.paid_amount > actualRemainingAmount) {
+      toast.warning(`미납액 ${actualRemainingAmount.toLocaleString()}원을 초과해 입금됩니다. (과납)`);
+    }
     try {
       setSubmitting(true);
       await onSubmit({
