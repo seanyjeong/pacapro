@@ -28,6 +28,10 @@ export function SchedulesPage() {
     setDeleteDialogOpen(true);
   };
 
+  const openNewSchedule = () => {
+    router.push(state.selectedDate ? `/schedules/new?date=${state.selectedDate}` : '/schedules/new');
+  };
+
   const handleDeleteDialogOpenChange = (open: boolean) => {
     if (deleteLoading) return;
     setDeleteDialogOpen(open);
@@ -54,7 +58,7 @@ export function SchedulesPage() {
         canViewOvertimeApproval={state.canViewOvertimeApproval}
         pendingCount={state.pendingCount}
         selectedDate={state.selectedDate}
-        onAddSchedule={() => router.push('/schedules/new')}
+        onAddSchedule={openNewSchedule}
         onOpenApprovals={() => state.setApprovalsModalOpen(true)}
         onOpenInstructorAttendance={() => state.setInstructorAttendanceModalOpen(true)}
       />

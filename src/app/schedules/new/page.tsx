@@ -4,8 +4,8 @@
  * 수업 등록 페이지
  */
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ScheduleForm } from '@/components/schedules/schedule-form';
 import { SchedulePageHeader } from '@/features/schedules/schedule-page-header';
 import { useCreateSchedule } from '@/hooks/use-schedules';
@@ -16,11 +16,22 @@ const INSTRUCTORS_LOAD_ERROR = '강사 목록을 불러오지 못했습니다. �
 const SCHEDULE_SAVE_ERROR = '수업 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
 
 export default function NewSchedulePage() {
+  return (
+    <Suspense fallback={<div className="mx-auto w-full max-w-3xl py-8 text-sm text-muted-foreground">수업 등록 화면을 준비하는 중입니다.</div>}>
+      <NewSchedulePageContent />
+    </Suspense>
+  );
+}
+
+function NewSchedulePageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const createSchedule = useCreateSchedule();
   const [instructors, setInstructors] = useState<{ id: number; name: string }[]>([]);
   const [instructorsError, setInstructorsError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const requestedDate = searchParams.get('date') || '';
+  const defaultClassDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate) ? requestedDate : undefined;
 
   useEffect(() => {
     instructorsAPI
@@ -65,6 +76,7 @@ export default function NewSchedulePage() {
         onCancel={handleCancel}
         isSubmitting={createSchedule.isPending}
         submitError={submitError}
+        defaultClassDate={defaultClassDate}
       />
     </div>
   );

@@ -36,6 +36,7 @@ export function SchedulesOperationsBoard({
   const selectedStudentCount = selectedSchedules.reduce((total, schedule) => total + (schedule.student_count || 0), 0);
   const selectedConsultationCount = selectedDate ? consultations[selectedDate]?.length || 0 : 0;
   const firstSchedule = selectedSchedules[0];
+  const createHref = selectedDate ? `/schedules/new?date=${selectedDate}` : '/schedules/new';
 
   return (
     <aside
@@ -64,7 +65,7 @@ export function SchedulesOperationsBoard({
       <div className="grid gap-2">
         <Link
           className={buttonVariants({ variant: 'outline', className: 'w-full justify-start gap-2' })}
-          href="/schedules/new"
+          href={createHref}
         >
           <CalendarCheck2 className="h-4 w-4" />
           수업 등록

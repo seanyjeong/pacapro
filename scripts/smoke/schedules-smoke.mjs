@@ -340,8 +340,8 @@ async function chooseSelectOption(page, triggerSelector, optionName) {
   await page.getByText(optionName, { exact: true }).last().click();
 }
 
-async function fillScheduleForm(page, title = '오후 실기 집중반') {
-  await page.locator('#class_date').fill(range.today);
+async function fillScheduleForm(page, title = '오후 실기 집중반', classDate = range.today) {
+  await page.locator('#class_date').fill(classDate);
   await page.getByRole('button', { name: '오후', exact: true }).click();
   await chooseSelectOption(page, '#instructor', '박코치');
   await page.locator('#title').fill(title);
@@ -393,11 +393,18 @@ async function runDetailDelete(browser) {
 async function runCreateSaveError(browser) {
   const result = await createPage(browser, { failScheduleSave: true });
   const { context, page } = result;
+  const seededDate = formatDate(new Date(range.year, range.month, 15));
 
-  await page.goto('/schedules/new', { waitUntil: 'networkidle' });
+  await page.goto(`/schedules/new?date=${seededDate}`, { waitUntil: 'networkidle' });
   await page.getByRole('heading', { level: 1, name: '수업 등록' }).waitFor();
-  await fillScheduleForm(page, '신규 등록 실패 테스트');
+  if (await page.locator('#class_date').inputValue() !== seededDate) {
+    throw new Error(`schedule create date seed mismatch: ${await page.locator('#class_date').inputValue()}`);
+  }
+  await fillScheduleForm(page, '신규 등록 실패 테스트', seededDate);
   await page.locator('form button[type="submit"]').click();
+  if (result.state.createPayload?.class_date !== seededDate) {
+    throw new Error(`schedule create payload date mismatch: ${JSON.stringify(result.state.createPayload)}`);
+  }
   await page.locator('form').getByText('저장 실패').waitFor();
   await page.locator('form').getByText('수업 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'schedule create save error');
@@ -477,22 +484,16 @@ async function main() {
     const attendanceLoadError = await runAttendanceLoadError(browser);
     const extraDayRequestError = await runExtraDayRequestError(browser);
     [normal, loadError, detailLoadError, detailDelete, createSaveError, editSaveError, attendanceNormal, attendanceLoadError, extraDayRequestError].forEach(assertDiagnostics);
-    console.log(JSON.stringify({
-      hits: normal.state.hits,
-      createPayload: createSaveError.state.createPayload,
-      detailDeletedScheduleId: detailDelete.state.deletedScheduleId,
-      deletedScheduleId: normal.state.deletedScheduleId,
-      editPayload: editSaveError.state.editPayload,
-      normalConsoleErrors: normal.diagnostics.consoleErrors,
-      loadErrorConsoleErrors: loadError.diagnostics.consoleErrors,
-      extraDayPayload: extraDayRequestError.state.extraDayPayload,
-    }, null, 2));
+    const output = {
+      hits: normal.state.hits, createPayload: createSaveError.state.createPayload,
+      detailDeletedScheduleId: detailDelete.state.deletedScheduleId, deletedScheduleId: normal.state.deletedScheduleId,
+      editPayload: editSaveError.state.editPayload, normalConsoleErrors: normal.diagnostics.consoleErrors,
+      loadErrorConsoleErrors: loadError.diagnostics.consoleErrors, extraDayPayload: extraDayRequestError.state.extraDayPayload,
+    };
+    console.log(JSON.stringify(output, null, 2));
   } finally {
     await browser.close();
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+main().catch((error) => { console.error(error); process.exit(1); });

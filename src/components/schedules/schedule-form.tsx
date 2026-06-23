@@ -49,6 +49,7 @@ interface Instructor {
 
 interface ScheduleFormProps {
   schedule?: ClassSchedule;
+  defaultClassDate?: string;
   instructors: Instructor[];
   onSubmit: (data: ScheduleFormData) => void;
   onCancel?: () => void;
@@ -59,6 +60,7 @@ interface ScheduleFormProps {
 
 export function ScheduleForm({
   schedule,
+  defaultClassDate,
   instructors,
   onSubmit,
   onCancel,
@@ -84,7 +86,7 @@ export function ScheduleForm({
           notes: schedule.notes || '',
         }
       : {
-          class_date: formatDateToString(new Date()),
+          class_date: defaultClassDate || formatDateToString(new Date()),
           time_slot: 'afternoon',
           title: '',
           content: '',
