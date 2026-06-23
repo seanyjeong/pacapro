@@ -13,7 +13,7 @@ interface SmsLogsCardProps {
 
 export function SmsLogsCard({ logs, isLoading, errorMessage }: SmsLogsCardProps) {
   return (
-    <Card className="rounded-lg border-border/80 shadow-none">
+    <Card id="sms-logs" className="scroll-mt-24 rounded-lg border-border/80 shadow-none">
       <CardHeader className="border-b border-border/70 p-4">
         <div className="flex items-center gap-2">
           <History className="h-4 w-4 text-muted-foreground" />

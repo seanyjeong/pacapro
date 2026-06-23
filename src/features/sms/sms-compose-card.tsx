@@ -19,7 +19,7 @@ export function SmsComposeCard({ sms }: SmsComposeCardProps) {
   const canSend = !sms.sending && sms.content.trim().length > 0;
 
   return (
-    <Card className="rounded-lg border-border/80 shadow-none">
+    <Card id="sms-compose" className="scroll-mt-24 rounded-lg border-border/80 shadow-none">
       <CardHeader className="border-b border-border/70 p-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>

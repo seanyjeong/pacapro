@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { MessageSquare, RadioTower, Send, Settings, Users } from 'lucide-react';
+import { History, MessageSquare, RadioTower, Send, Settings, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SendMode } from './sms-types';
 import type { UseSmsPageState } from './use-sms-page-state';
@@ -50,6 +50,11 @@ export function SmsOperationsBoard({ sms }: SmsOperationsBoardProps) {
         ))}
       </div>
 
+      <div className="grid gap-2">
+        <BoardLink href="#sms-compose" icon={<MessageSquare className="h-4 w-4" />} label="문자 작성으로 이동" />
+        <BoardLink href="#sms-logs" icon={<History className="h-4 w-4" />} label="발송 내역으로 이동" />
+      </div>
+
       <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
         <p className="text-xs font-medium text-slate-500">발송 전 상태</p>
         <p className="mt-1 text-sm font-semibold text-slate-950">
@@ -79,6 +84,18 @@ export function SmsOperationsBoard({ sms }: SmsOperationsBoardProps) {
         알림톡 및 SMS 설정
       </Link>
     </aside>
+  );
+}
+
+function BoardLink({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
+  return (
+    <Link
+      className="flex h-9 items-center justify-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+      href={href}
+    >
+      {icon}
+      {label}
+    </Link>
   );
 }
 

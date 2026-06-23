@@ -293,6 +293,16 @@ async function assertOperationsBoard(page) {
   await board.getByRole('button', { name: '전체' }).waitFor();
   await board.getByRole('button', { name: '개별' }).waitFor();
   await board.getByRole('button', { name: '직접' }).waitFor();
+  const composeLink = board.getByRole('link', { name: '문자 작성으로 이동' });
+  await composeLink.waitFor();
+  if ((await composeLink.getAttribute('href')) !== '#sms-compose') {
+    throw new Error('SMS compose quick link mismatch');
+  }
+  const logsLink = board.getByRole('link', { name: '발송 내역으로 이동' });
+  await logsLink.waitFor();
+  if ((await logsLink.getAttribute('href')) !== '#sms-logs') {
+    throw new Error('SMS logs quick link mismatch');
+  }
   await board.getByRole('link', { name: '알림톡 및 SMS 설정' }).waitFor();
 }
 
