@@ -54,7 +54,7 @@ export default function ServiceTabSelector({ settings, activeTab, showPriceModal
             가격 비교
           </button>
         </div>
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-2" data-testid="notification-service-tabs">
           <button
             type="button"
             aria-pressed={activeTab === 'sens'}

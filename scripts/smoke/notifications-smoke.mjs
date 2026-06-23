@@ -232,6 +232,7 @@ async function runDesktop(browser) {
 
   await page.goto('/settings/notifications', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '알림톡 및 SMS 설정' }).waitFor();
+  await assertOperationsBoard(page, { service: '네이버 SENS' });
   await page.getByRole('heading', { name: '네이버 SENS API 설정' }).waitFor();
   await page.getByText('010-2144-6755', { exact: true }).waitFor();
   await page.getByText('김진우 학부모').waitFor();
@@ -246,7 +247,7 @@ async function runDesktop(browser) {
     throw new Error('missing notification payment detail link');
   }
 
-  await page.getByRole('button', { name: '출결관리' }).click();
+  await page.getByRole('button', { name: '출결관리 설정됨' }).click();
   await page.getByLabel('SENS 출결 테스트 전화번호').fill('01055556666');
   await page.getByRole('button', { name: '출결 테스트' }).click();
   await page.getByText('SENS 출결관리 테스트 메시지가 발송되었습니다.').waitFor();
@@ -282,8 +283,9 @@ async function runDesktop(browser) {
   await page.getByRole('button', { name: '가격 비교 닫기' }).click();
   await page.getByTestId('notification-price-modal').waitFor({ state: 'hidden' });
 
-  const sensButton = page.getByRole('button', { name: '네이버 SENS' });
-  const solapiButton = page.getByRole('button', { name: '솔라피 (Solapi)' });
+  const serviceTabs = page.getByTestId('notification-service-tabs');
+  const sensButton = serviceTabs.getByRole('button', { name: '네이버 SENS' });
+  const solapiButton = serviceTabs.getByRole('button', { name: '솔라피 (Solapi)' });
   await solapiButton.click();
   await page.getByRole('heading', { name: '솔라피 API 설정' }).waitFor();
   await page.getByRole('heading', { name: '알림톡 템플릿 설정' }).waitFor();
@@ -341,6 +343,9 @@ async function runMobile(browser) {
 
   await page.goto('/settings/notifications', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '알림톡 및 SMS 설정' }).waitFor();
+  await assertOperationsBoard(page, { service: '네이버 SENS' });
+  await page.getByTestId('notifications-operations-board').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/Users/etlab/paca-notifications-mobile-board.png', fullPage: false });
   await page.getByText('010-2144-6755', { exact: true }).waitFor();
   await page.getByRole('link', { name: '김진우 학부모 학생 상세 보기' }).waitFor();
   await page.getByRole('link', { name: '김진우 학부모 결제 상세 보기' }).waitFor();
@@ -359,6 +364,7 @@ async function runAttendanceDeepLink(browser) {
   await page.goto('/settings/notifications?service=solapi&template=attendance', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '알림톡 및 SMS 설정' }).waitFor();
   await page.getByRole('heading', { name: '솔라피 API 설정' }).waitFor();
+  await assertOperationsBoard(page, { service: '솔라피' });
   await page.getByLabel('솔라피 출결 테스트 전화번호').fill('01099990000');
   await page.getByRole('button', { name: '출결 테스트' }).click();
   await page.getByText('출결관리 테스트 메시지가 발송되었습니다.').waitFor();
@@ -372,6 +378,19 @@ async function runAttendanceDeepLink(browser) {
 
   await context.close();
   return result;
+}
+
+async function assertOperationsBoard(page, options = {}) {
+  const expected = { service: '네이버 SENS', ...options };
+  const board = page.getByTestId('notifications-operations-board');
+  await board.getByRole('heading', { name: '알림톡 작업 보드' }).waitFor();
+  await board.getByTestId('notifications-board-metric-service').getByText(expected.service).waitFor();
+  await board.getByTestId('notifications-board-metric-status').getByText('발송 가능').waitFor();
+  await board.getByTestId('notifications-board-metric-senders').getByText('1개').waitFor();
+  await board.getByRole('button', { name: '네이버 SENS' }).waitFor();
+  await board.getByRole('button', { name: '솔라피' }).waitFor();
+  await board.getByRole('button', { name: '출결관리 템플릿 열기' }).waitFor();
+  await board.getByRole('link', { name: '문자 보내기' }).waitFor();
 }
 
 async function runLoadError(browser) {

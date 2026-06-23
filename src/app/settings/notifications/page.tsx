@@ -11,6 +11,7 @@ import NotificationToggles from './_components/NotificationToggles';
 import NotificationConfirmDialog from './_components/NotificationConfirmDialog';
 import NotificationsHeader from './_components/NotificationsHeader';
 import NotificationsLoadingState from './_components/NotificationsLoadingState';
+import NotificationsOperationsBoard from './_components/NotificationsOperationsBoard';
 import NotificationsStatusBanner from './_components/NotificationsStatusBanner';
 import ServiceTabSelector from './_components/ServiceTabSelector';
 import SensApiSettings from './_components/SensApiSettings';
@@ -41,8 +42,12 @@ export default function NotificationSettingsPage() {
 
         <NotificationsStatusBanner loadErrors={h.loadErrors} message={h.message} />
 
-        <div className="grid gap-5 xl:grid-cols-12">
-          <section className="min-w-0 space-y-5 xl:col-span-8">
+        <div className="grid gap-5 xl:grid-cols-12 xl:items-start">
+          <aside className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2 xl:col-span-4 xl:col-start-9 xl:row-start-1">
+            <NotificationsOperationsBoard state={h} />
+          </aside>
+
+          <section className="order-2 min-w-0 space-y-5 xl:order-1 xl:col-span-8 xl:row-span-2 xl:row-start-1">
             <NotificationToggles
               settings={h.settings}
               setSettings={h.setSettings}
@@ -195,7 +200,7 @@ export default function NotificationSettingsPage() {
             />
           </section>
 
-          <aside className="min-w-0 space-y-5 xl:col-span-4 xl:sticky xl:top-5 xl:self-start">
+          <aside className="order-3 min-w-0 space-y-5 xl:col-span-4 xl:col-start-9 xl:row-start-2">
             <div className="rounded-md border border-border bg-card shadow-none">
               <button
                 onClick={() => h.setShowPushSection(!h.showPushSection)}
