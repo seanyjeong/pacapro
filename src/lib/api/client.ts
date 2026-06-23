@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { toast } from 'sonner';
+import { getSafeApiToastMessage } from './error-message';
 
 const PRIMARY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
 const FALLBACK_URL = process.env.NEXT_PUBLIC_FALLBACK_API_URL || 'https://supermax.kr/paca';
@@ -62,7 +63,7 @@ class APIClient {
             } else if (error.response?.status && typeof window !== 'undefined' && !error.config?.suppressErrorToast) {
                 const msg = error.response?.data?.error || error.response?.data?.message;
                 if (msg && error.response.status >= 400) {
-                    toast.error(msg);
+                    toast.error(getSafeApiToastMessage(msg));
                 }
             }
             return Promise.reject(error);

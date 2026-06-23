@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Loader2, MessageSquare, Plus } from 'lucide-react';
+import { AlertCircle, Loader2, MessageSquare, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ConsultationDetailModal } from '@/components/students/consultation-detail-modal';
@@ -28,10 +28,13 @@ export function StudentConsultationsComponent({
     const [selectedConsultation, setSelectedConsultation] = useState<StudentConsultation | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [academyName, setAcademyName] = useState('');
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     const loadAcademyName = useCallback(async () => {
         try {
-            const response = await apiClient.get<{ settings: { academy_name?: string } }>('/settings/academy');
+            const response = await apiClient.get<{ settings: { academy_name?: string } }>('/settings/academy', {
+                suppressErrorToast: true,
+            });
             if (response.settings?.academy_name) {
                 setAcademyName(response.settings.academy_name);
             }
@@ -42,15 +45,19 @@ export function StudentConsultationsComponent({
 
     const loadConsultations = useCallback(async () => {
         setLoading(true);
+        setLoadError(null);
         try {
             const response = await apiClient.get<{
                 consultations: StudentConsultation[];
                 initialConsultations?: InitialConsultation[];
-            }>(`/student-consultations/${studentId}`);
+            }>(`/student-consultations/${studentId}`, { suppressErrorToast: true });
             setConsultations(response.consultations || []);
             setInitialConsultations(response.initialConsultations || []);
-        } catch (error) {
-            console.error('상담 기록 로드 오류:', error);
+        } catch {
+            console.warn('상담 기록을 불러오지 못했습니다.');
+            setConsultations([]);
+            setInitialConsultations([]);
+            setLoadError('상담 기록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setLoading(false);
         }
@@ -89,6 +96,10 @@ export function StudentConsultationsComponent({
                 </CardContent>
             </Card>
         );
+    }
+
+    if (loadError) {
+        return <StudentConsultationsErrorState message={loadError} onRetry={loadConsultations} />;
     }
 
     if (timeline.length === 0) {
@@ -145,6 +156,28 @@ export function StudentConsultationsComponent({
                 academyName={academyName}
             />
         </div>
+    );
+}
+
+function StudentConsultationsErrorState({
+    message,
+    onRetry,
+}: {
+    message: string;
+    onRetry: () => void;
+}) {
+    return (
+        <Card>
+            <CardContent className="py-7 text-center">
+                <AlertCircle className="mx-auto mb-3 h-9 w-9 text-red-500" />
+                <h3 className="mb-2 text-base font-semibold text-foreground">상담 기록을 불러오지 못했습니다</h3>
+                <p className="mx-auto mb-4 max-w-sm text-sm text-muted-foreground">{message}</p>
+                <Button variant="outline" onClick={onRetry}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    다시 불러오기
+                </Button>
+            </CardContent>
+        </Card>
     );
 }
 
