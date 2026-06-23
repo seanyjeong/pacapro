@@ -1,6 +1,5 @@
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Settings, Trash2, Edit, User, CheckCircle, XCircle } from 'lucide-react';
 import type { Staff } from '@/lib/types/staff';
@@ -17,32 +16,26 @@ interface StaffListProps {
 export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }: StaffListProps) {
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-8">
-          <div className="flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <span className="ml-3 text-muted-foreground">로딩 중...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <section className="rounded-md border border-border bg-card p-4">
+        <div className="space-y-2">
+          {[0, 1, 2].map((item) => (
+            <div key={item} className="h-12 rounded-md bg-muted" />
+          ))}
+        </div>
+      </section>
     );
   }
 
   if (staff.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-12 text-center">
-          <User className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">등록된 직원이 없습니다</h3>
-          <p className="text-muted-foreground">
-            강사에게 관리 권한을 부여하려면 &quot;권한 부여&quot; 버튼을 클릭하세요.
-          </p>
-        </CardContent>
-      </Card>
+      <section className="rounded-md border border-border bg-card p-10 text-center">
+        <User className="mx-auto h-10 w-10 text-muted-foreground" />
+        <h3 className="mt-3 text-lg font-semibold text-foreground">등록된 직원이 없습니다</h3>
+        <p className="mt-1 text-sm text-muted-foreground">권한 부여 대기 강사를 선택해 관리 계정을 만드세요.</p>
+      </section>
     );
   }
 
-  // 권한 요약 표시
   const getPermissionSummary = (permissions: Staff['permissions']) => {
     const viewCount = PERMISSION_PAGES.filter(
       (page) => permissions[page.key as keyof typeof permissions]?.view
@@ -58,135 +51,139 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
     <>
       <div className="space-y-3 md:hidden" data-testid="staff-mobile-list">
         {staff.map((member) => (
-          <Card key={member.id}>
-            <CardContent className="space-y-4 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-foreground">{member.name}</div>
-                    <div className="truncate text-xs text-muted-foreground">{member.email}</div>
-                  </div>
+          <article key={member.id} className="space-y-4 rounded-md border border-border bg-card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+                  <User className="h-5 w-5 text-muted-foreground" />
                 </div>
-                {member.is_active ? (
-                  <span className="inline-flex shrink-0 items-center rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
-                    <CheckCircle className="mr-1 h-3 w-3" />
-                    활성
-                  </span>
-                ) : (
-                  <span className="inline-flex shrink-0 items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
-                    <XCircle className="mr-1 h-3 w-3" />
-                    비활성
-                  </span>
-                )}
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold text-foreground">{member.name}</div>
+                  <div className="truncate text-xs text-muted-foreground">{member.email}</div>
+                </div>
               </div>
+              {member.is_active ? (
+                <span className="inline-flex shrink-0 items-center rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
+                  <CheckCircle className="mr-1 h-3 w-3" />
+                  활성
+                </span>
+              ) : (
+                <span className="inline-flex shrink-0 items-center rounded-md bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                  <XCircle className="mr-1 h-3 w-3" />
+                  비활성
+                </span>
+              )}
+            </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md border border-border bg-muted/30 p-3">
-                  <div className="text-muted-foreground">직급</div>
-                  <div className="mt-1 font-medium text-foreground">{member.position || '미지정'}</div>
-                </div>
-                <div className="rounded-md border border-border bg-muted/30 p-3">
-                  <div className="text-muted-foreground">권한 요약</div>
-                  <div className="mt-1 font-medium text-foreground">{getPermissionSummary(member.permissions)}</div>
-                </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="text-muted-foreground">직급</div>
+                <div className="mt-1 font-medium text-foreground">{member.position || '미지정'}</div>
               </div>
+              <div className="rounded-md border border-border bg-muted/30 p-3">
+                <div className="text-muted-foreground">권한 요약</div>
+                <div className="mt-1 font-medium text-foreground">{getPermissionSummary(member.permissions)}</div>
+              </div>
+            </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  aria-label={`${member.name} 권한 설정`}
-                  onClick={() => onEditPermission(member)}
-                >
-                  권한
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  aria-label={`${member.name} 정보 수정`}
-                  onClick={() => onEdit(member)}
-                >
-                  수정
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  aria-label={`${member.name} 삭제`}
-                  onClick={() => onDelete(member)}
-                  className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
-                >
-                  삭제
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label={`${member.name} 권한 설정`}
+                onClick={() => onEditPermission(member)}
+              >
+                권한
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label={`${member.name} 정보 수정`}
+                onClick={() => onEdit(member)}
+              >
+                수정
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label={`${member.name} 삭제`}
+                onClick={() => onDelete(member)}
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                삭제
+              </Button>
+            </div>
+          </article>
         ))}
       </div>
 
-      <Card className="hidden md:block" data-testid="staff-desktop-list">
-        <CardContent className="p-0">
+      <section className="hidden overflow-hidden rounded-md border border-border bg-card md:block" data-testid="staff-desktop-list">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">관리 계정 목록</h2>
+            <p className="text-sm text-muted-foreground">계정, 직급, 권한 범위, 상태를 빠르게 확인합니다.</p>
+          </div>
+          <span className="rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">{staff.length}명</span>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-muted border-b border-border">
+            <thead className="sticky top-0 border-b border-border bg-muted">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-normal text-muted-foreground">
                   직원 정보
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-normal text-muted-foreground">
                   직급
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-normal text-muted-foreground">
                   권한 요약
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-normal text-muted-foreground">
                   상태
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-normal text-muted-foreground">
                   관리
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-card divide-y divide-border">
+            <tbody className="divide-y divide-border bg-card">
               {staff.map((member) => (
-                <tr key={member.id} className="hover:bg-muted/50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-muted-foreground" />
+                <tr key={member.id} className="transition-colors hover:bg-muted/40">
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted">
+                        <User className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <div className="ml-4">
+                      <div>
                         <div className="text-sm font-medium text-foreground">{member.name}</div>
-                        <div className="text-sm text-muted-foreground">{member.email}</div>
+                        <div className="text-xs text-muted-foreground">{member.email}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 py-1 text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full">
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-900 dark:text-slate-200">
                       {member.position || '미지정'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-4 py-3">
                     <span className="text-sm text-muted-foreground">
                       {getPermissionSummary(member.permissions)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="whitespace-nowrap px-4 py-3">
                     {member.is_active ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                        <CheckCircle className="w-3 h-3 mr-1" />
+                      <span className="inline-flex items-center rounded-md bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
+                        <CheckCircle className="mr-1 h-3 w-3" />
                         활성
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                        <XCircle className="w-3 h-3 mr-1" />
+                      <span className="inline-flex items-center rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                        <XCircle className="mr-1 h-3 w-3" />
                         비활성
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         variant="ghost"
@@ -223,8 +220,7 @@ export function StaffList({ staff, loading, onEditPermission, onEdit, onDelete }
             </tbody>
           </table>
         </div>
-        </CardContent>
-      </Card>
+      </section>
     </>
   );
 }

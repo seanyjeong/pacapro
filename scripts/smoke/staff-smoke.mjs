@@ -130,6 +130,11 @@ async function runDesktop(browser) {
 
   await gotoStaff(page);
   await page.getByRole('heading', { name: '직원 관리' }).waitFor();
+  await page.getByTestId('staff-operations-workspace').waitFor();
+  await page.getByTestId('staff-summary-strip').waitFor();
+  await page.getByTestId('staff-work-queue').waitFor();
+  await page.getByText('관리 계정 운영 보드').waitFor();
+  await page.getByText('권한 부여 대기 1명').waitFor();
   const desktopList = page.getByTestId('staff-desktop-list');
   await desktopList.getByText('김관리').waitFor();
   await desktopList.getByText('manager@example.com').waitFor();
@@ -178,6 +183,9 @@ async function runMobile(browser) {
 
   await gotoStaff(page);
   await page.getByRole('heading', { name: '직원 관리' }).waitFor();
+  await page.getByTestId('staff-operations-workspace').waitFor();
+  await page.getByTestId('staff-summary-strip').waitFor();
+  await page.getByTestId('staff-work-queue').waitFor();
   const mobileList = page.getByTestId('staff-mobile-list');
   await mobileList.getByText('김관리').waitFor();
   await mobileList.getByRole('button', { name: '김관리 권한 설정' }).waitFor();
