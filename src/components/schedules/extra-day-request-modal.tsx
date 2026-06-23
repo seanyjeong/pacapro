@@ -18,9 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, User, Calendar, Clock, Sun, Sunrise, Moon, AlertCircle } from 'lucide-react';
+import { Loader2, Calendar, Clock, Sun, Sunrise, Moon, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { instructorsAPI, OvertimeApproval } from '@/lib/api/instructors';
+import { instructorsAPI } from '@/lib/api/instructors';
 import { toast } from 'sonner';
 
 interface Instructor {
@@ -30,6 +30,9 @@ interface Instructor {
 }
 
 type TimeSlot = 'morning' | 'afternoon' | 'evening';
+
+const INSTRUCTORS_LOAD_ERROR_MESSAGE = '강사 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+const EXTRA_DAY_REQUEST_ERROR_MESSAGE = '출근 요청을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.';
 
 const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; defaultStart: string; defaultEnd: string }[] = [
   { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-orange-600', defaultStart: '09:00', defaultEnd: '12:00' },
@@ -93,11 +96,11 @@ export function ExtraDayRequestModal({
   const loadInstructors = async () => {
     try {
       setLoading(true);
-      const response = await instructorsAPI.getInstructors({ status: 'active' });
+      const response = await instructorsAPI.getInstructors({ status: 'active' }, { suppressErrorToast: true });
       setInstructors(response.instructors || []);
     } catch (err) {
-      console.error('Failed to load instructors:', err);
-      setError('강사 목록을 불러오는데 실패했습니다.');
+      console.warn('미배정 출근 요청 강사 목록을 불러오지 못했습니다.', err);
+      setError(INSTRUCTORS_LOAD_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -113,21 +116,24 @@ export function ExtraDayRequestModal({
       setSubmitting(true);
       setError(null);
 
-      await instructorsAPI.requestExtraDay(selectedInstructorId, {
-        work_date: date,
-        time_slot: selectedTimeSlot,
-        original_end_time: isHourly ? startTime : undefined,
-        actual_end_time: isHourly ? endTime : undefined,
-        notes: notes || undefined,
-      });
+      await instructorsAPI.requestExtraDay(
+        selectedInstructorId,
+        {
+          work_date: date,
+          time_slot: selectedTimeSlot,
+          original_end_time: isHourly ? startTime : undefined,
+          actual_end_time: isHourly ? endTime : undefined,
+          notes: notes || undefined,
+        },
+        { suppressErrorToast: true }
+      );
 
       toast.success('출근 요청이 등록되었습니다. 관리자 승인을 기다려주세요.');
       onSuccess?.();
       handleClose();
-    } catch (err: any) {
-      const message = err?.response?.data?.message || '요청 등록에 실패했습니다.';
-      setError(message);
-      toast.error(message);
+    } catch (err: unknown) {
+      console.warn('미배정 출근 요청 등록에 실패했습니다.', err);
+      setError(EXTRA_DAY_REQUEST_ERROR_MESSAGE);
     } finally {
       setSubmitting(false);
     }
@@ -157,7 +163,7 @@ export function ExtraDayRequestModal({
 
         <div className="space-y-4 py-4 px-1">
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div role="alert" className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>

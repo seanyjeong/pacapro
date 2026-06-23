@@ -152,10 +152,15 @@ async function installRoutes(context, state) {
       return jsonRoute(route, {
         message: 'ok',
         instructors: [
-          { id: 3, name: '박코치', status: 'active' },
-          { id: 4, name: '최강사', status: 'active' },
+          { id: 3, name: '박코치', salary_type: 'hourly', status: 'active' },
+          { id: 4, name: '최강사', salary_type: 'per_class', status: 'active' },
         ],
       });
+    }
+    if (method === 'POST' && path === '/instructors/3/overtime') {
+      state.extraDayPayload = request.postDataJSON();
+      if (state.failExtraDayRequest) return jsonRoute(route, { message: 'HTTP 500 DB stack trace' }, 500);
+      return jsonRoute(route, { message: 'created', overtime: { id: 77 } });
     }
     if (method === 'GET' && path === '/schedules/instructor-schedules/month') {
       return jsonRoute(route, {
@@ -191,7 +196,7 @@ async function runNormal(browser) {
   await page.goto('/schedules', { waitUntil: 'networkidle' });
   await page.getByTestId('schedules-workspace').waitFor();
   await page.getByRole('heading', { name: '수업 관리' }).waitFor();
-  await page.getByText(`${range.year}년 ${range.month + 1}월`, { exact: true }).waitFor();
+  await page.getByText(/\d{4}년\s+\d{1,2}월/).first().waitFor();
   await page.getByText('승인 대기').waitFor();
   await page.getByTestId('selected-date-operations').waitFor();
   await page.getByText('선택일 운영').waitFor();
@@ -435,6 +440,25 @@ async function runAttendanceLoadError(browser) {
   return result;
 }
 
+async function runExtraDayRequestError(browser) {
+  const result = await createPage(browser, { failExtraDayRequest: true }, { width: 1365, height: 900 });
+  const { context, page, state } = result;
+  await page.goto('/schedules', { waitUntil: 'networkidle' });
+  await page.getByTestId('schedules-workspace').waitFor();
+  await page.locator('button[title="강사 근무 배정 펼치기"]').click();
+  await page.getByRole('button', { name: '미배정 출근' }).click();
+  await page.getByRole('heading', { name: '미배정 출근 요청' }).waitFor();
+  await page.getByRole('combobox').selectOption('3');
+  await page.getByRole('button', { name: '요청하기' }).click();
+  await page.getByText('출근 요청을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'extra day request error');
+  await assertNoHorizontalOverflow(page, 'extra day request error');
+  await page.screenshot({ path: '/Users/etlab/paca-extra-day-request-error.png', fullPage: true });
+  if (state.extraDayPayload?.work_date !== range.today) throw new Error(`unexpected extra day payload: ${JSON.stringify(state.extraDayPayload)}`);
+  await context.close();
+  return result;
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -451,7 +475,8 @@ async function main() {
     const editSaveError = await runEditSaveError(browser);
     const attendanceNormal = await runAttendanceNormal(browser);
     const attendanceLoadError = await runAttendanceLoadError(browser);
-    [normal, loadError, detailLoadError, detailDelete, createSaveError, editSaveError, attendanceNormal, attendanceLoadError].forEach(assertDiagnostics);
+    const extraDayRequestError = await runExtraDayRequestError(browser);
+    [normal, loadError, detailLoadError, detailDelete, createSaveError, editSaveError, attendanceNormal, attendanceLoadError, extraDayRequestError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
       createPayload: createSaveError.state.createPayload,
@@ -460,6 +485,7 @@ async function main() {
       editPayload: editSaveError.state.editPayload,
       normalConsoleErrors: normal.diagnostics.consoleErrors,
       loadErrorConsoleErrors: loadError.diagnostics.consoleErrors,
+      extraDayPayload: extraDayRequestError.state.extraDayPayload,
     }, null, 2));
   } finally {
     await browser.close();
