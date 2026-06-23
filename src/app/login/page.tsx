@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { authAPI } from '@/lib/api/auth';
 import { onboardingAPI } from '@/lib/api/onboarding';
 
+const LOGIN_ERROR_MESSAGE = '로그인 정보를 확인하지 못했습니다. 이메일과 비밀번호를 확인한 뒤 다시 시도해주세요.';
+
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -19,7 +21,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const response = await authAPI.login({ email, password });
+            const response = await authAPI.login({ email, password }, { suppressErrorToast: true });
 
             // 토큰과 사용자 정보 저장
             localStorage.setItem('token', response.token);
@@ -45,8 +47,8 @@ export default function LoginPage() {
             // 대시보드로 이동 (전체 페이지 새로고침으로 사이드바 메뉴 업데이트)
             window.location.href = '/';
         } catch (err: unknown) {
-            const axiosErr = err as { response?: { data?: { message?: string } } };
-            setError(axiosErr.response?.data?.message || '로그인에 실패했습니다.');
+            console.warn('로그인에 실패했습니다.', err);
+            setError(LOGIN_ERROR_MESSAGE);
         } finally {
             setLoading(false);
         }
@@ -99,7 +101,7 @@ export default function LoginPage() {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg">
                                 <p className="text-sm text-red-600">{error}</p>
                             </div>
                         )}

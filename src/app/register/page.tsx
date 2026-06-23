@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { authAPI } from '@/lib/api/auth';
 import { CheckCircle } from 'lucide-react';
 
+const REGISTER_ERROR_MESSAGE = '회원가입을 완료하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해주세요.';
+
 export default function RegisterPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({
@@ -60,7 +62,7 @@ export default function RegisterPage() {
                 name: formData.name,
                 phone: formData.phone,
                 academyName: formData.academyName,
-            });
+            }, { suppressErrorToast: true });
 
             setSuccess(true);
 
@@ -68,9 +70,9 @@ export default function RegisterPage() {
             setTimeout(() => {
                 router.push('/login');
             }, 3000);
-        } catch (err: any) {
-            console.error('Registration error:', err);
-            setError(err.response?.data?.message || '회원가입에 실패했습니다.');
+        } catch (err: unknown) {
+            console.warn('회원가입에 실패했습니다.', err);
+            setError(REGISTER_ERROR_MESSAGE);
         } finally {
             setLoading(false);
         }
@@ -211,7 +213,7 @@ export default function RegisterPage() {
 
                         {/* Error Message */}
                         {error && (
-                            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-lg">
                                 <p className="text-sm text-red-600">{error}</p>
                             </div>
                         )}

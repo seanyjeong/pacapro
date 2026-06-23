@@ -14,6 +14,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/c/') ||        // 상담 예약 공개 페이지
     pathname.startsWith('/consultation') || // 상담 예약
     pathname.startsWith('/register') ||
+    pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
     pathname.includes('.')
   ) {

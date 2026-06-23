@@ -1,4 +1,4 @@
-import apiClient from './client';
+import apiClient, { type APIRequestConfig } from './client';
 import type { Permissions } from '@/lib/types/staff';
 
 export interface LoginRequest {
@@ -47,15 +47,15 @@ export const authAPI = {
     /**
      * 로그인
      */
-    async login(data: LoginRequest): Promise<LoginResponse> {
-        return apiClient.post('/auth/login', data);
+    async login(data: LoginRequest, config?: APIRequestConfig): Promise<LoginResponse> {
+        return apiClient.post('/auth/login', data, config);
     },
 
     /**
      * 회원가입
      */
-    async register(data: RegisterRequest): Promise<RegisterResponse> {
-        return apiClient.post('/auth/register', data);
+    async register(data: RegisterRequest, config?: APIRequestConfig): Promise<RegisterResponse> {
+        return apiClient.post('/auth/register', data, config);
     },
 
     /**

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Lock, ArrowLeft, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
+const RESET_PASSWORD_ERROR_MESSAGE = '비밀번호를 변경하지 못했습니다. 잠시 후 다시 시도해주세요.';
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -75,15 +76,14 @@ function ResetPasswordContent() {
         body: JSON.stringify({ token, newPassword }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || '비밀번호 재설정에 실패했습니다');
+        throw new Error('reset password request failed');
       }
 
       setIsSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '비밀번호 재설정에 실패했습니다');
+      console.warn('비밀번호 재설정에 실패했습니다.', err);
+      setError(RESET_PASSWORD_ERROR_MESSAGE);
     } finally {
       setIsLoading(false);
     }
@@ -216,7 +216,7 @@ function ResetPasswordContent() {
             </div>
 
             {error && (
-              <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              <div role="alert" className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
                 {error}
               </div>
             )}

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
+const FORGOT_PASSWORD_ERROR_MESSAGE = '비밀번호 재설정 메일을 보내지 못했습니다. 잠시 후 다시 시도해주세요.';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -30,15 +31,14 @@ export default function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.message || '요청 처리 중 오류가 발생했습니다');
+        throw new Error('forgot password request failed');
       }
 
       setIsSubmitted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '요청 처리 중 오류가 발생했습니다');
+      console.warn('비밀번호 재설정 메일 요청에 실패했습니다.', err);
+      setError(FORGOT_PASSWORD_ERROR_MESSAGE);
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             {error && (
-              <div className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
+              <div role="alert" className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
                 {error}
               </div>
             )}
