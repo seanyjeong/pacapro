@@ -24,6 +24,10 @@ import {
   SILENT_CONFIG,
 } from './notification-error-utils';
 
+export type NotificationPendingConfirmation =
+  | { kind: 'sender-delete'; senderId: number; phone: string }
+  | { kind: 'unpaid-send'; year: number; month: number };
+
 export function useNotificationSettings() {
   const [settings, setSettings] = useState<NotificationSettings>(() => createDefaultNotificationSettings());
 
@@ -56,6 +60,8 @@ export function useNotificationSettings() {
   const [testPhoneSensReminder, setTestPhoneSensReminder] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [sendingUnpaid, setSendingUnpaid] = useState(false);
+  const [deletingSenderId, setDeletingSenderId] = useState<number | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState<NotificationPendingConfirmation | null>(null);
 
   const [showPriceModal, setShowPriceModal] = useState(false);
   const [openGuides, setOpenGuides] = useState<Record<string, boolean>>({});
@@ -169,14 +175,28 @@ export function useNotificationSettings() {
     }
   };
 
-  const handleDeleteSenderNumber = async (id: number) => {
-    if (!confirm('이 발신번호를 삭제하시겠습니까?')) return;
+  const handleDeleteSenderNumber = (id: number) => {
+    const sender = senderNumbers.find(item => item.id === id);
+    setPendingConfirmation({
+      kind: 'sender-delete',
+      senderId: id,
+      phone: sender?.phone || '선택한',
+    });
+  };
+
+  const confirmDeleteSenderNumber = async (id: number): Promise<boolean> => {
+    setDeletingSenderId(id);
+    setMessage(null);
     try {
       await smsAPI.deleteSenderNumber(id, SILENT_CONFIG);
       loadSenderNumbers();
       setMessage({ type: 'success', text: '발신번호가 삭제되었습니다.' });
+      return true;
     } catch {
       setMessage({ type: 'error', text: '발신번호 삭제에 실패했습니다.' });
+      return false;
+    } finally {
+      setDeletingSenderId(null);
     }
   };
 
@@ -312,15 +332,15 @@ export function useNotificationSettings() {
   const handleTestSensReminder = () => runNotificationTest(testPhoneSensReminder, setTestingSensReminder, () => notificationsAPI.sendTestSensReminder(testPhoneSensReminder, SILENT_CONFIG), 'SENS 상담 리마인드 테스트 메시지가 발송되었습니다.', 'SENS 상담 리마인드 테스트 발송에 실패했습니다.');
 
   // 미납자 수동 발송
-  const handleSendUnpaid = async () => {
+  const handleSendUnpaid = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
 
-    if (!confirm(`${year}년 ${month}월 미납자에게 알림톡을 발송하시겠습니까?`)) {
-      return;
-    }
+    setPendingConfirmation({ kind: 'unpaid-send', year, month });
+  };
 
+  const confirmSendUnpaid = async (year: number, month: number): Promise<boolean> => {
     setSendingUnpaid(true);
     setMessage(null);
     try {
@@ -330,11 +350,31 @@ export function useNotificationSettings() {
         text: `발송 완료: ${result.sent}명 성공, ${result.failed}명 실패`
       });
       loadLogs();
+      return true;
     } catch (error: unknown) {
       setMessage({ type: 'error', text: getNotificationErrorText(error, '발송에 실패했습니다. 잠시 후 다시 시도해주세요.') });
+      return false;
     } finally {
       setSendingUnpaid(false);
     }
+  };
+
+  const confirmPendingAction = async () => {
+    if (!pendingConfirmation) return;
+
+    if (pendingConfirmation.kind === 'sender-delete') {
+      const ok = await confirmDeleteSenderNumber(pendingConfirmation.senderId);
+      if (ok) setPendingConfirmation(null);
+      return;
+    }
+
+    const ok = await confirmSendUnpaid(pendingConfirmation.year, pendingConfirmation.month);
+    if (ok) setPendingConfirmation(null);
+  };
+
+  const handlePendingConfirmationOpenChange = (open: boolean) => {
+    if (open || deletingSenderId !== null || sendingUnpaid) return;
+    setPendingConfirmation(null);
   };
 
   const toggleGuide = (key: string) => {
@@ -368,6 +408,8 @@ export function useNotificationSettings() {
     testPhoneSensReminder, setTestPhoneSensReminder,
     message,
     sendingUnpaid,
+    deletingSenderId,
+    pendingConfirmation,
     showPriceModal, setShowPriceModal,
     openGuides,
     activeTemplate, setActiveTemplate,
@@ -394,6 +436,8 @@ export function useNotificationSettings() {
     handleAddSenderNumber,
     handleSetDefaultSender,
     handleDeleteSenderNumber,
+    confirmPendingAction,
+    handlePendingConfirmationOpenChange,
     toggleGuide,
     // solapi button handlers
     addUnpaidButton, removeUnpaidButton, updateUnpaidButton,

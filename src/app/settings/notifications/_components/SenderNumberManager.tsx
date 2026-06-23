@@ -87,6 +87,7 @@ export default function SenderNumberManager({
                   </button>
                 )}
                 <button
+                  aria-label={`${sender.phone} 발신번호 삭제`}
                   onClick={() => onDelete(sender.id)}
                   className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded"
                 >

@@ -8,6 +8,7 @@ import { Bell, ChevronDown, ChevronUp } from 'lucide-react';
 import PushNotificationSettings from '@/components/push-notification-settings';
 import { useNotificationSettings } from './_hooks/useNotificationSettings';
 import NotificationToggles from './_components/NotificationToggles';
+import NotificationConfirmDialog from './_components/NotificationConfirmDialog';
 import NotificationsHeader from './_components/NotificationsHeader';
 import NotificationsLoadingState from './_components/NotificationsLoadingState';
 import NotificationsStatusBanner from './_components/NotificationsStatusBanner';
@@ -214,6 +215,15 @@ export default function NotificationSettingsPage() {
             />
           </aside>
         </div>
+
+        <NotificationConfirmDialog
+          deletingSenderId={h.deletingSenderId}
+          open={Boolean(h.pendingConfirmation)}
+          pending={h.pendingConfirmation}
+          sendingUnpaid={h.sendingUnpaid}
+          onConfirm={h.confirmPendingAction}
+          onOpenChange={h.handlePendingConfirmationOpenChange}
+        />
       </div>
     </main>
   );

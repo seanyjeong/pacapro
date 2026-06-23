@@ -89,7 +89,7 @@ function makeSettings() {
     sens_attendance_image_url: '',
     attendance_alimtalk_enabled: true,
     is_enabled: true,
-    solapi_enabled: false,
+    solapi_enabled: true,
   };
 }
 
@@ -114,7 +114,7 @@ function makeLog() {
 }
 
 function makeState(mode = 'success') {
-  return { hits: [], mode };
+  return { deletedSenderId: null, hits: [], mode, unpaidPayload: null };
 }
 
 async function installRoutes(context, state) {
@@ -170,6 +170,16 @@ async function installRoutes(context, state) {
       });
     }
 
+    if (method === 'DELETE' && path === '/sms/sender-numbers/7') {
+      state.deletedSenderId = 7;
+      return jsonRoute(route, { message: '발신번호가 삭제되었습니다.' });
+    }
+
+    if (method === 'POST' && path === '/notifications/send-unpaid') {
+      state.unpaidPayload = JSON.parse(request.postData() || '{}');
+      return jsonRoute(route, { message: '발송 완료', sent: 3, failed: 1 });
+    }
+
     return jsonRoute(route, { message: 'mocked' });
   });
 }
@@ -184,9 +194,24 @@ async function createNotificationsPage(browser, viewport = { width: 1365, height
   return { context, diagnostics, page, state };
 }
 
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
+}
+
 async function runDesktop(browser) {
   const result = await createNotificationsPage(browser);
-  const { context, page } = result;
+  const { context, page, state } = result;
 
   await page.goto('/settings/notifications', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '알림톡 및 SMS 설정' }).waitFor();
@@ -203,6 +228,22 @@ async function runDesktop(browser) {
   if ((await paymentLink.getAttribute('href')) !== '/payments/501') {
     throw new Error('missing notification payment detail link');
   }
+
+  await clickWithoutNativeDialog(
+    page,
+    page.getByRole('button', { name: '010-2144-6755 발신번호 삭제' }),
+    'notification sender delete'
+  );
+  const deleteDialog = page.getByRole('alertdialog');
+  await deleteDialog.getByRole('heading', { name: '발신번호 삭제 확인' }).waitFor();
+  await deleteDialog.getByText('010-2144-6755 발신번호를 삭제합니다.').waitFor();
+  await deleteDialog.getByRole('button', { name: '삭제' }).click();
+  await page.getByText('발신번호가 삭제되었습니다.').waitFor();
+  await deleteDialog.waitFor({ state: 'hidden' });
+  if (state.deletedSenderId !== 7) {
+    throw new Error(`sender delete id mismatch: ${state.deletedSenderId}`);
+  }
+
   await assertNoRawVisibleText(page, 'notifications desktop');
   await assertNoHorizontalOverflow(page, 'notifications desktop');
   await page.screenshot({ path: '/Users/etlab/paca-notifications-desktop.png', fullPage: true });
@@ -227,6 +268,21 @@ async function runDesktop(browser) {
   if (sensClassName?.includes('bg-blue-600')) {
     throw new Error(`sens service button kept selected styling: ${sensClassName}`);
   }
+  await clickWithoutNativeDialog(
+    page,
+    page.getByRole('button', { name: /월 미납자에게 즉시 발송/ }),
+    'notification unpaid send'
+  );
+  const sendDialog = page.getByRole('alertdialog');
+  await sendDialog.getByRole('heading', { name: '미납자 알림톡 발송 확인' }).waitFor();
+  await sendDialog.getByText(/미납자에게 알림톡을 발송합니다/).waitFor();
+  await sendDialog.getByRole('button', { name: '발송' }).click();
+  await page.getByText('발송 완료: 3명 성공, 1명 실패').waitFor();
+  await sendDialog.waitFor({ state: 'hidden' });
+  if (state.unpaidPayload?.month !== new Date().getMonth() + 1) {
+    throw new Error(`unpaid send payload mismatch: ${JSON.stringify(state.unpaidPayload)}`);
+  }
+
   await assertNoRawVisibleText(page, 'notifications solapi desktop');
   await assertNoHorizontalOverflow(page, 'notifications solapi desktop');
   await page.screenshot({ path: '/Users/etlab/paca-notifications-solapi-desktop.png', fullPage: true });
@@ -283,8 +339,10 @@ async function main() {
     [desktop, mobile, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
+      deletedSenderId: desktop.state.deletedSenderId,
       errorHits: loadError.state.hits,
       mobileHits: mobile.state.hits,
+      unpaidPayload: desktop.state.unpaidPayload,
     }, null, 2));
   } finally {
     await browser.close();
