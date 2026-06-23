@@ -1,5 +1,7 @@
-import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ChevronLeft, ChevronRight, RefreshCw, Send } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { ATTENDANCE_TEST_NOTIFICATION_HREF } from '@/lib/constants/notification-links';
 import type { TimeSlot } from '@/lib/types/schedule';
 import { TABLET_TIME_SLOTS } from './tablet-attendance-constants';
 import type { TabletAttendanceStats } from './tablet-attendance-types';
@@ -46,6 +48,13 @@ export function TabletAttendanceHeader({
         <Button variant="outline" size="icon" onClick={onRefresh} aria-label="출석 새로고침" disabled={loading}>
           <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
         </Button>
+        <Link
+          className={buttonVariants({ variant: 'outline', className: 'h-10 gap-2 px-3' })}
+          href={ATTENDANCE_TEST_NOTIFICATION_HREF}
+        >
+          <Send className="h-4 w-4" />
+          출결 테스트발송
+        </Link>
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2" role="tablist" aria-label="수업 시간대">

@@ -10,6 +10,7 @@ import {
 } from './paca-smoke-utils.mjs';
 
 const BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
+const ATTENDANCE_TEST_HREF = '/settings/notifications?service=solapi&template=attendance';
 
 function toLocalDateStr(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -104,6 +105,12 @@ async function runNormal(browser) {
   await gotoWorkspace(page);
   const workspace = page.getByTestId('tablet-attendance-workspace');
   await workspace.getByRole('heading', { name: '출석체크' }).waitFor();
+  const testSendLink = workspace.getByRole('link', { name: '출결 테스트발송' });
+  await testSendLink.waitFor();
+  const testSendHref = await testSendLink.getAttribute('href');
+  if (testSendHref !== ATTENDANCE_TEST_HREF) {
+    throw new Error(`attendance test send href mismatch: ${testSendHref}`);
+  }
   await workspace.getByLabel('학생 이름 검색').fill('박서윤');
   await workspace.getByTestId('tablet-attendance-card').filter({ hasText: '박서윤' }).waitFor();
   await workspace.getByTestId('tablet-attendance-card').filter({ hasText: '김민서' }).waitFor({ state: 'detached' });

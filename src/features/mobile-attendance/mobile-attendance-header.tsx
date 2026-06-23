@@ -1,5 +1,7 @@
-import { ArrowLeft, Calendar, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowLeft, Calendar, RefreshCw, Send } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { ATTENDANCE_TEST_NOTIFICATION_HREF } from '@/lib/constants/notification-links';
 import type { TimeSlot } from '@/lib/types/schedule';
 import { TIME_SLOT_OPTIONS } from './mobile-attendance-constants';
 import type { AttendanceStats } from './mobile-attendance-types';
@@ -72,6 +74,17 @@ export function MobileAttendanceHeader({
           </button>
         ))}
       </div>
+
+      <Link
+        className={buttonVariants({
+          variant: 'outline',
+          className: 'mt-3 h-10 w-full justify-center gap-2 border-zinc-300 bg-white dark:border-zinc-700 dark:bg-zinc-900',
+        })}
+        href={ATTENDANCE_TEST_NOTIFICATION_HREF}
+      >
+        <Send className="h-4 w-4" />
+        출결 테스트발송
+      </Link>
     </header>
   );
 }

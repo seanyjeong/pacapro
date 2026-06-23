@@ -10,6 +10,7 @@ import {
 } from './paca-smoke-utils.mjs';
 
 const BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
+const ATTENDANCE_TEST_HREF = '/settings/notifications?service=solapi&template=attendance';
 
 function toLocalDateStr(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -138,6 +139,12 @@ async function runNormal(browser) {
 
   await gotoWorkspace(page);
   await page.getByRole('heading', { name: '학생 출석체크' }).waitFor();
+  const testSendLink = page.getByRole('link', { name: '출결 테스트발송' });
+  await testSendLink.waitFor();
+  const testSendHref = await testSendLink.getAttribute('href');
+  if (testSendHref !== ATTENDANCE_TEST_HREF) {
+    throw new Error(`attendance test send href mismatch: ${testSendHref}`);
+  }
   await page.screenshot({ path: '/Users/etlab/paca-mobile-attendance-list.png', fullPage: true });
   await page.locator('[data-testid="mobile-attendance-row"]:has-text("김민서")').getByRole('button', { name: '출석' }).click();
   await page.locator('[data-testid="mobile-attendance-row"]:has-text("박서윤")').getByRole('button', { name: '결석' }).click();

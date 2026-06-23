@@ -22,6 +22,7 @@
     "smoke:reports": "node scripts/smoke/reports-smoke.mjs",
     "smoke:schedules": "node scripts/smoke/schedules-smoke.mjs",
     "smoke:schedule-workspace": "node scripts/smoke/schedule-workspace-smoke.mjs",
+    "smoke:attendance-checker": "node scripts/smoke/attendance-checker-smoke.mjs",
     "smoke:instructor-attendance": "node scripts/smoke/instructor-attendance-smoke.mjs",
     "smoke:settings": "node scripts/smoke/settings-smoke.mjs",
     "smoke:consultations": "node scripts/smoke/consultations-smoke.mjs",

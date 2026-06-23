@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { CalendarCheck2, CheckCircle2, ClipboardCheck, Send, UserCheck, Users } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { ATTENDANCE_TEST_NOTIFICATION_HREF } from '@/lib/constants/notification-links';
 import type { Consultation } from '@/lib/types/consultation';
 import type { ClassSchedule } from '@/lib/types/schedule';
 import { formatDateKorean } from '@/lib/utils/schedule-helpers';
@@ -18,8 +19,6 @@ interface SchedulesOperationsBoardProps {
   onOpenExtraDay: () => void;
   onOpenInstructorAttendance: () => void;
 }
-
-const ATTENDANCE_TEST_HREF = '/settings/notifications?service=solapi&template=attendance';
 
 export function SchedulesOperationsBoard({
   canViewOvertimeApproval,
@@ -86,7 +85,7 @@ export function SchedulesOperationsBoard({
         )}
         <Link
           className={buttonVariants({ variant: 'outline', className: 'w-full justify-start gap-2' })}
-          href={ATTENDANCE_TEST_HREF}
+          href={ATTENDANCE_TEST_NOTIFICATION_HREF}
         >
           <Send className="h-4 w-4" />
           출결 테스트발송

@@ -1,6 +1,8 @@
-import { Save, UserCheck, UserPlus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Save, Send, UserCheck, UserPlus } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ATTENDANCE_TEST_NOTIFICATION_HREF } from '@/lib/constants/notification-links';
 import type { Attendance, AttendanceStatus } from '@/lib/types/schedule';
 import type { EditedAttendanceData } from './attendance-checker-types';
 import { AttendanceStudentRow } from './attendance-student-row';
@@ -40,6 +42,13 @@ export function AttendanceListCard({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>학생 출석 체크</CardTitle>
           <div className="flex gap-2 flex-wrap">
+            <Link
+              className={buttonVariants({ variant: 'outline', className: 'gap-2' })}
+              href={ATTENDANCE_TEST_NOTIFICATION_HREF}
+            >
+              <Send className="h-4 w-4" />
+              출결 테스트발송
+            </Link>
             {!readOnly && currentDate && timeSlot && (
               <Button variant="outline" onClick={onOpenAddStudent}>
                 <UserPlus className="h-4 w-4 mr-2" />
