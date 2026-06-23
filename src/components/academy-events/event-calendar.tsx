@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import type { AcademyEvent } from '@/lib/types/academyEvent';
 
 interface EventCalendarProps {
+    canEditEvents?: boolean;
     events: AcademyEvent[];
     onDateClick: (date: string) => void;
     onEventClick: (event: AcademyEvent) => void;
@@ -36,6 +37,7 @@ const formatEventTime = (event: AcademyEvent) => {
 };
 
 export function EventCalendar({
+    canEditEvents = true,
     events,
     onDateClick,
     onEventClick,
@@ -143,9 +145,10 @@ export function EventCalendar({
                             <div key={event.id} className="flex items-center gap-2 rounded-md border border-border bg-background p-2">
                                 <button
                                     type="button"
+                                    disabled={!canEditEvents}
                                     onClick={() => onEventClick(event)}
-                                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
-                                    aria-label={`${event.title} 수정`}
+                                    className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
+                                    aria-label={canEditEvents ? `${event.title} 수정` : `${event.title} 일정`}
                                 >
                                     <span
                                         className="h-8 w-1.5 shrink-0 rounded-full"
@@ -158,14 +161,16 @@ export function EventCalendar({
                                         <span className="block truncate text-sm font-medium text-foreground">{event.title}</span>
                                     </span>
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={() => onEventDelete(event)}
-                                    className="rounded-md p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600"
-                                    aria-label={`${event.title} 삭제`}
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </button>
+                                {canEditEvents ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => onEventDelete(event)}
+                                        className="rounded-md p-2 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                                        aria-label={`${event.title} 삭제`}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </button>
+                                ) : null}
                             </div>
                         ))}
                     </div>
@@ -200,9 +205,12 @@ export function EventCalendar({
                     return (
                         <div
                             key={index}
-                            className={`min-h-[100px] border-b border-r border-border p-1 cursor-pointer hover:bg-muted/50 transition-colors
+                            className={`min-h-[100px] border-b border-r border-border p-1 transition-colors
+                                ${canEditEvents ? 'cursor-pointer hover:bg-muted/50' : ''}
                                 ${hasHoliday ? 'bg-red-50 dark:bg-red-950/20' : ''}`}
-                            onClick={() => onDateClick(dateStr)}
+                            onClick={() => {
+                                if (canEditEvents) onDateClick(dateStr);
+                            }}
                         >
                             <div className="flex items-center justify-between mb-1">
                                 <span
@@ -212,16 +220,18 @@ export function EventCalendar({
                                 >
                                     {cell.date.getDate()}
                                 </span>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDateClick(dateStr);
-                                    }}
-                                    className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
-                                    aria-label={`${dateStr} 일정 등록`}
-                                >
-                                    <Plus className="w-3 h-3" />
-                                </button>
+                                {canEditEvents ? (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDateClick(dateStr);
+                                        }}
+                                        className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
+                                        aria-label={`${dateStr} 일정 등록`}
+                                    >
+                                        <Plus className="w-3 h-3" />
+                                    </button>
+                                ) : null}
                             </div>
                             <div className="space-y-1">
                                 {cell.events.slice(0, 3).map((event) => (
@@ -229,22 +239,24 @@ export function EventCalendar({
                                         key={event.id}
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            onEventClick(event);
+                                            if (canEditEvents) onEventClick(event);
                                         }}
-                                        className="group relative px-1.5 py-0.5 rounded text-xs font-medium truncate cursor-pointer"
+                                        className={`group relative px-1.5 py-0.5 rounded text-xs font-medium truncate ${canEditEvents ? 'cursor-pointer' : ''}`}
                                         style={{ backgroundColor: event.color + '20', color: event.color }}
                                     >
                                         <span className="truncate">{event.title}</span>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onEventDelete(event);
-                                            }}
-                                            className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900"
-                                            aria-label={`${event.title} 삭제`}
-                                        >
-                                            <Trash2 className="w-3 h-3 text-red-500" />
-                                        </button>
+                                        {canEditEvents ? (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onEventDelete(event);
+                                                }}
+                                                className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900"
+                                                aria-label={`${event.title} 삭제`}
+                                            >
+                                                <Trash2 className="w-3 h-3 text-red-500" />
+                                            </button>
+                                        ) : null}
                                     </div>
                                 ))}
                                 {cell.events.length > 3 && (

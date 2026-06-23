@@ -98,12 +98,23 @@ async function gotoAcademyEvents(page) {
   await eventsResponse;
 }
 
+async function assertOperationsBoard(page) {
+  const board = page.getByTestId('academy-events-operations-board');
+  await board.getByRole('heading', { name: '일정 작업 보드' }).waitFor();
+  await board.getByTestId('academy-events-metric-month').getByText('1건').waitFor();
+  await board.getByTestId('academy-events-metric-today').getByText('1건').waitFor();
+  await board.getByTestId('academy-events-metric-holiday').getByText('0건').waitFor();
+  await board.getByTestId('academy-events-metric-work').getByText('1건').waitFor();
+  await board.getByRole('button', { name: '새 일정 등록' }).waitFor();
+}
+
 async function runDesktop(browser) {
   const result = await createPage(browser, 'success');
   const { context, page } = result;
 
   await gotoAcademyEvents(page);
   await page.getByRole('heading', { level: 1, name: '학원일정' }).waitFor();
+  await assertOperationsBoard(page);
   await page.getByRole('button', { name: '월말 운영 회의 수정' }).waitFor();
   await assertNoRawVisibleText(page, 'academy events desktop');
   await assertNoHorizontalOverflow(page, 'academy events desktop');
@@ -119,6 +130,7 @@ async function runMobile(browser) {
 
   await gotoAcademyEvents(page);
   await page.getByRole('heading', { level: 1, name: '학원일정' }).waitFor();
+  await assertOperationsBoard(page);
   await page.getByRole('button', { name: '일정 등록', exact: true }).waitFor();
   await page.getByRole('button', { name: '월말 운영 회의 수정' }).waitFor();
   await assertNoRawVisibleText(page, 'academy events mobile');
