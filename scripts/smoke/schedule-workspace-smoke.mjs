@@ -104,6 +104,10 @@ async function assertScheduleBoard(page, label) {
   await board.getByText(/승인 대기\s*1건/).waitFor();
   await board.getByRole('button', { name: '강사 출근' }).waitFor();
   await board.getByRole('button', { name: '미배정 출근' }).waitFor();
+  const consultationHref = await board.getByRole('link', { name: '상담 일정 보기' }).getAttribute('href');
+  if (consultationHref !== `/consultations/calendar?from=schedule&date=${range.today}`) {
+    throw new Error(`schedule consultation href mismatch: ${consultationHref}`);
+  }
   const addHref = await board.getByRole('link', { name: '수업 등록' }).getAttribute('href');
   if (addHref !== `/schedules/new?date=${range.today}`) throw new Error(`schedule create href mismatch: ${addHref}`);
   const attendanceHref = await board.getByRole('link', { name: '출석 체크' }).getAttribute('href');

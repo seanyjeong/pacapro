@@ -37,6 +37,7 @@ export function SchedulesOperationsBoard({
   const selectedConsultationCount = selectedDate ? consultations[selectedDate]?.length || 0 : 0;
   const firstSchedule = selectedSchedules[0];
   const createHref = selectedDate ? `/schedules/new?date=${selectedDate}` : '/schedules/new';
+  const consultationHref = selectedDate ? `/consultations/calendar?from=schedule&date=${selectedDate}` : undefined;
 
   return (
     <aside
@@ -56,7 +57,13 @@ export function SchedulesOperationsBoard({
         <Metric icon={<CalendarCheck2 className="h-4 w-4" />} label="이번 달 수업" value={`${schedules.length}건`} />
         <Metric icon={<ClipboardCheck className="h-4 w-4" />} label="선택일 수업" value={`${selectedSchedules.length}건`} />
         <Metric icon={<Users className="h-4 w-4" />} label="선택일 학생" value={`${selectedStudentCount}명`} />
-        <Metric icon={<UserCheck className="h-4 w-4" />} label="상담 일정" value={`${selectedConsultationCount}건`} />
+        <Metric
+          ariaLabel="상담 일정 보기"
+          href={consultationHref}
+          icon={<UserCheck className="h-4 w-4" />}
+          label="상담 일정"
+          value={`${selectedConsultationCount}건`}
+        />
         {canViewOvertimeApproval && (
           <Metric icon={<CheckCircle2 className="h-4 w-4" />} label="승인 대기" value={`${pendingCount}건`} />
         )}
@@ -113,19 +120,39 @@ export function SchedulesOperationsBoard({
 }
 
 interface MetricProps {
+  ariaLabel?: string;
+  href?: string;
   icon: ReactNode;
   label: string;
   value: string;
 }
 
-function Metric({ icon, label, value }: MetricProps) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+function Metric({ ariaLabel, href, icon, label, value }: MetricProps) {
+  const content = (
+    <>
       <div className="mb-2 flex items-center gap-2 text-slate-500">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
       <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        aria-label={ariaLabel || label}
+        className="block rounded-md border border-slate-200 bg-slate-50 p-3 transition hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        href={href}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+      {content}
     </div>
   );
 }
