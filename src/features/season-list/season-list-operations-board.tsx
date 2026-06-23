@@ -19,6 +19,7 @@ interface SeasonListOperationsBoardProps {
   };
   onAddSeason: () => void;
   onClearFilters: () => void;
+  onFilterChange: (filters: SeasonFilters) => void;
   onRefresh: () => void;
 }
 
@@ -28,10 +29,12 @@ export function SeasonListOperationsBoard({
   stats,
   onAddSeason,
   onClearFilters,
+  onFilterChange,
   onRefresh,
 }: SeasonListOperationsBoardProps) {
   const primarySeason = selectPrimarySeason(seasons);
   const hasActiveFilters = Boolean(filters.year || filters.season_type || filters.status);
+  const currentYearFilter = filters.year ? { year: filters.year } : {};
 
   return (
     <aside
@@ -46,10 +49,38 @@ export function SeasonListOperationsBoard({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Metric icon={<CalendarDays className="h-4 w-4" />} label="전체 시즌" testId="season-list-metric-total" value={`${stats.total}개`} />
-        <Metric icon={<CircleCheck className="h-4 w-4" />} label="진행 중" testId="season-list-metric-active" value={`${stats.active}개`} />
-        <Metric icon={<Trophy className="h-4 w-4" />} label="정시 시즌" testId="season-list-metric-regular" value={`${stats.regular}개`} />
-        <Metric icon={<Flag className="h-4 w-4" />} label="수시 시즌" testId="season-list-metric-early" value={`${stats.early}개`} />
+        <Metric
+          active={!hasActiveFilters}
+          icon={<CalendarDays className="h-4 w-4" />}
+          label="전체 시즌"
+          testId="season-list-metric-total"
+          value={`${stats.total}개`}
+          onClick={onClearFilters}
+        />
+        <Metric
+          active={filters.status === 'active'}
+          icon={<CircleCheck className="h-4 w-4" />}
+          label="진행 중"
+          testId="season-list-metric-active"
+          value={`${stats.active}개`}
+          onClick={() => onFilterChange({ ...currentYearFilter, status: 'active' })}
+        />
+        <Metric
+          active={filters.season_type === 'regular'}
+          icon={<Trophy className="h-4 w-4" />}
+          label="정시 시즌"
+          testId="season-list-metric-regular"
+          value={`${stats.regular}개`}
+          onClick={() => onFilterChange({ ...currentYearFilter, season_type: 'regular' })}
+        />
+        <Metric
+          active={filters.season_type === 'early'}
+          icon={<Flag className="h-4 w-4" />}
+          label="수시 시즌"
+          testId="season-list-metric-early"
+          value={`${stats.early}개`}
+          onClick={() => onFilterChange({ ...currentYearFilter, season_type: 'early' })}
+        />
       </div>
 
       <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
@@ -103,20 +134,31 @@ export function SeasonListOperationsBoard({
 }
 
 interface MetricProps {
+  active: boolean;
   icon: ReactNode;
   label: string;
   testId: string;
   value: string;
+  onClick: () => void;
 }
 
-function Metric({ icon, label, testId, value }: MetricProps) {
+function Metric({ active, icon, label, testId, value, onClick }: MetricProps) {
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
-      <div className="mb-2 flex items-center gap-2 text-slate-500">
+    <button
+      className={`rounded-md border p-3 text-left transition-colors ${
+        active
+          ? 'border-blue-200 bg-blue-50 text-blue-950'
+          : 'border-slate-200 bg-slate-50 text-slate-950 hover:border-slate-300 hover:bg-white'
+      }`}
+      data-testid={testId}
+      type="button"
+      onClick={onClick}
+    >
+      <div className={`mb-2 flex items-center gap-2 ${active ? 'text-blue-600' : 'text-slate-500'}`}>
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
-      <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
-    </div>
+      <p className="text-lg font-semibold tracking-normal">{value}</p>
+    </button>
   );
 }

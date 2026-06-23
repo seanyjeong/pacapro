@@ -67,6 +67,7 @@ export function SeasonListPage() {
                 stats={state.stats}
                 onAddSeason={() => router.push('/seasons/new')}
                 onClearFilters={state.clearFilters}
+                onFilterChange={state.setFilters}
                 onRefresh={state.reload}
               />
             </div>

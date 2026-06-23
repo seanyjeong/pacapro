@@ -126,8 +126,18 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'season list desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-list-desktop.png', fullPage: true });
 
+  const board = page.getByTestId('season-list-operations-board');
+  await board.getByRole('button', { name: /진행 중\s*1개/ }).click();
+  await waitForSeasonAbsent(page, '2026 수시 실전반');
+  if (!state.hits.some((hit) => hit.includes('/seasons?status=active'))) {
+    throw new Error(`missing active filter request: ${state.hits.join(' | ')}`);
+  }
+
+  await board.getByRole('button', { name: /전체 시즌/ }).click();
+  await page.locator('[data-testid="season-row"]:has-text("2026 수시 실전반")').first().waitFor();
+
   await page.getByLabel('시즌 타입').selectOption('regular');
-  await page.locator('[data-testid="season-row"]:has-text("2026 수시 실전반")').waitFor({ state: 'detached' });
+  await waitForSeasonAbsent(page, '2026 수시 실전반');
   if (!state.hits.some((hit) => hit.includes('/seasons?season_type=regular'))) {
     throw new Error(`missing regular filter request: ${state.hits.join(' | ')}`);
   }
@@ -161,6 +171,14 @@ async function assertOperationsBoard(page) {
   await board.getByTestId('season-list-metric-early').getByText('1개').waitFor();
   await board.getByRole('button', { name: '새 시즌 등록' }).waitFor();
   await board.getByRole('link', { name: '2026 정시 집중반 학생 등록' }).waitFor();
+}
+
+async function waitForSeasonAbsent(page, seasonName) {
+  await page.waitForFunction(
+    (name) => !Array.from(document.querySelectorAll('[data-testid="season-row"]'))
+      .some((element) => element.textContent?.includes(name)),
+    seasonName
+  );
 }
 
 async function runLoadError(browser) {
