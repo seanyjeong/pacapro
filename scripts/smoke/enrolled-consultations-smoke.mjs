@@ -156,10 +156,19 @@ async function selectOption(page, label, optionName) {
 
 async function openCreateDialog(page) {
   await page.goto('/consultations/enrolled', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '재원생상담' }).waitFor();
+  await page.getByRole('heading', { name: '재원생상담', exact: true }).waitFor();
+  await waitForEnrolledShell(page);
   await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   await page.getByRole('button', { name: '재원생상담 등록', exact: true }).click();
   await page.getByRole('heading', { name: '재원생상담 등록' }).waitFor();
+}
+
+async function waitForEnrolledShell(page) {
+  await page.getByTestId('enrolled-consultations-operations-workspace').waitFor();
+  const board = page.getByTestId('enrolled-consultations-work-queue');
+  await board.waitFor();
+  await board.getByText('재원생상담 운영 보드').waitFor();
+  await board.getByText('확인 대기').first().waitFor();
 }
 
 async function runDesktop(browser) {
@@ -167,8 +176,19 @@ async function runDesktop(browser) {
   const { context, page } = result;
 
   await page.goto('/consultations/enrolled', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '재원생상담' }).waitFor();
+  await page.getByRole('heading', { name: '재원생상담', exact: true }).waitFor();
+  await waitForEnrolledShell(page);
   await page.getByText('Learning Desk').waitFor();
+  const board = page.getByTestId('enrolled-consultations-work-queue');
+  await board.getByText('확인 대기 1건').waitFor();
+  await board.getByText('일정 확정 1건').waitFor();
+  await board.getByRole('link', { name: '상담 달력' }).waitFor();
+  if ((await board.getByRole('link', { name: '상담 달력' }).getAttribute('href')) !== '/consultations/calendar?type=learning') {
+    throw new Error('learning calendar quick link mismatch');
+  }
+  if ((await board.getByRole('link', { name: '상담 시간 설정' }).getAttribute('href')) !== '/consultations/settings') {
+    throw new Error('consultation settings quick link mismatch');
+  }
   await page.getByText('김진우').first().waitFor();
   await page.getByPlaceholder('학생명, 학년 검색...').fill('박서연');
   await page.getByText('박서연').first().waitFor();
@@ -247,8 +267,10 @@ async function runMobile(browser) {
   const { context, page } = result;
 
   await page.goto('/consultations/enrolled', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '재원생상담' }).waitFor();
+  await page.getByRole('heading', { name: '재원생상담', exact: true }).waitFor();
+  await waitForEnrolledShell(page);
   await page.getByText('Learning Desk').waitFor();
+  await page.getByText('상담 시간 설정 정상').waitFor();
   await page.getByRole('button', { name: /김진우/ }).first().waitFor();
   await assertNoRawVisibleText(page, 'enrolled consultations mobile');
   await assertNoHorizontalOverflow(page, 'enrolled consultations mobile');
