@@ -174,6 +174,19 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'salaries desktop');
   await page.screenshot({ path: '/Users/etlab/paca-salaries-desktop.png', fullPage: true });
 
+  const board = page.getByTestId('salaries-operations-board');
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes('/salaries') && response.url().includes('payment_status=pending')),
+    board.getByRole('button', { name: '지급 대기 2건' }).click(),
+  ]);
+  await page.locator('article:has-text("김강사")').waitFor();
+  await page.locator('article:has-text("이코치")').waitFor({ state: 'hidden' });
+  await Promise.all([
+    page.waitForResponse((response) => response.url().includes('/salaries') && !response.url().includes('payment_status=')),
+    board.getByRole('button', { name: '전체 2건' }).click(),
+  ]);
+  await page.locator('article:has-text("이코치")').waitFor();
+
   await Promise.all([
     page.waitForResponse((response) => response.url().includes('/salaries') && response.url().includes('month=4')),
     page.getByRole('button', { name: '이전 월' }).click(),

@@ -5,6 +5,7 @@ import { AlertCircle, CheckCircle, FileDown, FileSpreadsheet, RefreshCw, RotateC
 import { Button } from '@/components/ui/button';
 import type { Instructor } from '@/lib/types/instructor';
 import { PAYMENT_STATUS_LABELS, type SalaryFilters } from '@/lib/types/salary';
+import { cn } from '@/lib/utils';
 import type { SalarySummary } from './salaries-page-types';
 import { formatWon, getCurrentFilterYearMonth } from './salaries-page-utils';
 
@@ -61,10 +62,31 @@ export function SalariesOperationsBoard({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Metric icon={<WalletCards className="h-4 w-4" />} label="전체" testId="salaries-metric-total" value={`${summary.totalCount}건`} />
-        <Metric icon={<AlertCircle className="h-4 w-4" />} label="지급 대기" testId="salaries-metric-pending" value={`${summary.pendingCount}건`} />
+        <Metric
+          icon={<WalletCards className="h-4 w-4" />}
+          label="전체"
+          selected={!filters.payment_status}
+          testId="salaries-metric-total"
+          value={`${summary.totalCount}건`}
+          onClick={() => onFilterChange({ payment_status: undefined })}
+        />
+        <Metric
+          icon={<AlertCircle className="h-4 w-4" />}
+          label="지급 대기"
+          selected={filters.payment_status === 'pending'}
+          testId="salaries-metric-pending"
+          value={`${summary.pendingCount}건`}
+          onClick={() => onFilterChange({ payment_status: 'pending' })}
+        />
         <Metric icon={<FileDown className="h-4 w-4" />} label="미지급액" testId="salaries-metric-unpaid" value={formatWon(summary.totalUnpaid)} />
-        <Metric icon={<CheckCircle className="h-4 w-4" />} label="지급 완료" testId="salaries-metric-paid" value={`${summary.paidCount}건`} />
+        <Metric
+          icon={<CheckCircle className="h-4 w-4" />}
+          label="지급 완료"
+          selected={filters.payment_status === 'paid'}
+          testId="salaries-metric-paid"
+          value={`${summary.paidCount}건`}
+          onClick={() => onFilterChange({ payment_status: 'paid' })}
+        />
       </div>
 
       <div className="grid gap-2">
@@ -117,18 +139,39 @@ export function SalariesOperationsBoard({
 interface MetricProps {
   icon: ReactNode;
   label: string;
+  selected?: boolean;
   testId: string;
   value: string;
+  onClick?: () => void;
 }
 
-function Metric({ icon, label, testId, value }: MetricProps) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
+function Metric({ icon, label, selected = false, testId, value, onClick }: MetricProps) {
+  const className = cn(
+    'rounded-md border border-slate-200 bg-slate-50 p-3 text-left transition',
+    onClick && 'hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900',
+    selected && 'border-blue-300 bg-blue-50 text-blue-950'
+  );
+  const content = (
+    <>
       <div className="mb-2 flex items-center gap-2 text-slate-500">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
       <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button aria-pressed={selected} className={className} data-testid={testId} type="button" onClick={onClick}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className} data-testid={testId}>
+      {content}
     </div>
   );
 }
