@@ -3,7 +3,7 @@
  * 납부 기록 모달 컴포넌트
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +53,18 @@ export function PaymentRecordModal({
     discount_amount: 0, // 추가 할인
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // 모달이 열릴 때마다 현재 미납액 기준으로 입력값 리셋 (부분납 후 재오픈 시 직전 입력값 잔존 버그 방지)
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        paid_amount: remainingAmount,
+        payment_method: 'account',
+        payment_date: new Date().toISOString().split('T')[0],
+        discount_amount: 0,
+      });
+    }
+  }, [isOpen, remainingAmount]);
 
   // 추가 할인 적용 후 실제 납부해야 할 금액
   const actualRemainingAmount = Math.max(0, remainingAmount - formData.discount_amount);
