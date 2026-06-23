@@ -109,12 +109,16 @@ async function createNewInquiryPage(browser, mode, viewport = { width: 1280, hei
 }
 
 async function openCreateDialog(page) {
+  await openNewInquiryPage(page);
+  await page.getByRole('button', { name: '신규상담 등록' }).click();
+  await page.getByRole('heading', { name: '신규상담 등록' }).waitFor();
+}
+
+async function openNewInquiryPage(page) {
   await page.goto('/consultations/new-inquiry', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '신규상담', exact: true }).waitFor({ timeout: 15000 });
   await waitForNewInquiryShell(page);
   await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-  await page.getByRole('button', { name: '신규상담 등록' }).click();
-  await page.getByRole('heading', { name: '신규상담 등록' }).waitFor();
 }
 
 async function waitForNewInquiryShell(page) {
@@ -130,6 +134,14 @@ async function waitForNewInquiryShell(page) {
 async function selectOption(page, label, optionName) {
   await page.getByLabel(label).click();
   await page.getByText(optionName, { exact: true }).last().click();
+}
+
+async function waitForHit(state, expected) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if (state.hits.some((hit) => hit.includes(expected))) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`missing API hit containing ${expected}: ${state.hits.join(' | ')}`);
 }
 
 async function runMissingHours(browser) {
@@ -174,7 +186,23 @@ async function runCreateHappyPath(browser) {
   const result = await createNewInquiryPage(browser, 'success');
   const { context, page, state } = result;
 
-  await openCreateDialog(page);
+  await openNewInquiryPage(page);
+  const workQueue = page.getByTestId('new-inquiry-work-queue');
+  const pendingFilter = workQueue.getByRole('button', { name: '확인 대기 보기' });
+  await pendingFilter.click();
+  if ((await pendingFilter.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('new inquiry pending queue filter is not active');
+  }
+  await waitForHit(state, 'status=pending');
+  const confirmedFilter = workQueue.getByRole('button', { name: '일정 확정 보기' });
+  await confirmedFilter.click();
+  if ((await confirmedFilter.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('new inquiry confirmed queue filter is not active');
+  }
+  await waitForHit(state, 'status=confirmed');
+
+  await page.getByRole('button', { name: '신규상담 등록' }).click();
+  await page.getByRole('heading', { name: '신규상담 등록' }).waitFor();
   await page.getByLabel('학생명').fill('김진우');
   await page.getByLabel('연락처').fill('010-9999-0000');
   await selectOption(page, '학년', '고2');

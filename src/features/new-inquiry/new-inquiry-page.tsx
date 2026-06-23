@@ -67,6 +67,11 @@ export function NewInquiryPage() {
     h.setTrialModalOpen(true);
   };
 
+  const toggleStatusFilter = (status: 'pending' | 'confirmed') => {
+    h.setStatusFilter(h.statusFilter === status ? '' : status);
+    h.setCompletedTab('all');
+  };
+
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5 pb-24" data-testid="new-inquiry-operations-workspace">
       <header className="rounded-md border border-border bg-card px-5 py-4">
@@ -225,9 +230,12 @@ export function NewInquiryPage() {
         </div>
 
         <NewInquiryWorkQueue
+          activeStatus={h.statusFilter}
           confirmedCount={confirmedCount}
           hasWeeklyHours={hasWeeklyHours}
           onCreate={() => h.setCreateModalOpen(true)}
+          onFilterConfirmed={() => toggleStatusFilter('confirmed')}
+          onFilterPending={() => toggleStatusFilter('pending')}
           pendingCount={pendingCount}
           registeredCount={h.completedStats.registered}
           totalCount={totalCount}

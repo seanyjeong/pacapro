@@ -3,20 +3,27 @@
 import Link from 'next/link';
 import { AlertTriangle, CalendarDays, CheckCircle2, ClipboardList, Settings, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface NewInquiryWorkQueueProps {
+  activeStatus: string;
   confirmedCount: number;
   hasWeeklyHours: boolean;
   onCreate: () => void;
+  onFilterConfirmed: () => void;
+  onFilterPending: () => void;
   pendingCount: number;
   registeredCount: number;
   totalCount: number;
 }
 
 export function NewInquiryWorkQueue({
+  activeStatus,
   confirmedCount,
   hasWeeklyHours,
   onCreate,
+  onFilterConfirmed,
+  onFilterPending,
   pendingCount,
   registeredCount,
   totalCount,
@@ -37,8 +44,20 @@ export function NewInquiryWorkQueue({
         </div>
 
         <div className="mt-4 space-y-2">
-          <QueueRow label="확인 대기" value={`${pendingCount}건`} />
-          <QueueRow label="일정 확정" value={`${confirmedCount}건`} />
+          <QueueRow
+            ariaLabel="확인 대기 보기"
+            label="확인 대기"
+            pressed={activeStatus === 'pending'}
+            value={`${pendingCount}건`}
+            onClick={onFilterPending}
+          />
+          <QueueRow
+            ariaLabel="일정 확정 보기"
+            label="일정 확정"
+            pressed={activeStatus === 'confirmed'}
+            value={`${confirmedCount}건`}
+            onClick={onFilterConfirmed}
+          />
           <QueueRow label="등록 전환" value={`${registeredCount}건`} />
         </div>
 
@@ -94,11 +113,48 @@ export function NewInquiryWorkQueue({
   );
 }
 
-function QueueRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm">
+function QueueRow({
+  ariaLabel,
+  label,
+  onClick,
+  pressed = false,
+  value,
+}: {
+  ariaLabel?: string;
+  label: string;
+  onClick?: () => void;
+  pressed?: boolean;
+  value: string;
+}) {
+  const className = cn(
+    'flex w-full items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm',
+    onClick && 'text-left transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+    pressed && 'border-primary/40 bg-primary/5'
+  );
+  const content = (
+    <>
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold text-foreground">{value}</span>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        aria-label={ariaLabel || label}
+        aria-pressed={pressed}
+        className={className}
+        type="button"
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className}>
+      {content}
     </div>
   );
 }
