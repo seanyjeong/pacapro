@@ -10,6 +10,7 @@ import {
 
 const BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
 const SLUG = 'ilsan';
+const RESERVATION_NUMBER = 'R-2026-0001';
 
 const pageInfo = {
   academy: { id: 1, name: 'P-ACA 일산', slug: SLUG },
@@ -36,7 +37,7 @@ function nextAvailableDate() {
 }
 
 function makeState(overrides = {}) {
-  return { applyPayloads: [], externalContinues: [], hits: [], ...overrides };
+  return { applyPayloads: [], externalContinues: [], hits: [], reservationPayloads: [], ...overrides };
 }
 
 async function installRoutes(context, state) {
@@ -76,6 +77,27 @@ async function installRoutes(context, state) {
         ],
       });
     }
+    if (method === 'GET' && path === `/public/reservation/${RESERVATION_NUMBER}`) {
+      return jsonRoute(route, {
+        id: 701,
+        reservationNumber: RESERVATION_NUMBER,
+        studentName: '김민서',
+        studentGrade: '고3',
+        preferredDate: nextAvailableDate(),
+        preferredTime: '14:00',
+        status: 'confirmed',
+        academyName: 'P-ACA 일산',
+        academySlug: SLUG,
+      });
+    }
+    if (method === 'PUT' && path === `/public/reservation/${RESERVATION_NUMBER}`) {
+      const payload = request.postDataJSON();
+      state.reservationPayloads.push(payload);
+      if (state.failReservationUpdate) {
+        return jsonRoute(route, { error: 'HTTP 500 DB stack trace' }, 500);
+      }
+      return jsonRoute(route, { message: '예약이 변경되었습니다.' });
+    }
     if (state.failApply && method === 'POST' && path === `/public/consultation/${SLUG}/apply`) {
       return jsonRoute(route, { error: 'HTTP 500 DB stack trace' }, 500);
     }
@@ -93,6 +115,21 @@ async function createContext(browser, state, viewport) {
   const context = await browser.newContext({ baseURL: BASE_URL, viewport });
   await installRoutes(context, state);
   return context;
+}
+
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
 }
 
 async function fillInfoStep(page) {
@@ -155,6 +192,48 @@ async function runNormal(browser) {
   if (payload.preferredDate !== date || payload.preferredTime !== '14:00') {
     throw new Error(`unexpected schedule: ${JSON.stringify(payload)}`);
   }
+
+  await context.close();
+  return { state, diagnostics };
+}
+
+async function runReservationChangeSuccess(browser) {
+  const state = makeState();
+  const context = await createContext(browser, state, { width: 390, height: 844 });
+  const page = await context.newPage();
+  const diagnostics = createDiagnostics(page);
+
+  await page.goto(`/consultation/${RESERVATION_NUMBER}`, { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { name: '상담 예약 변경' }).waitFor();
+  await page.getByRole('button', { name: '15:00:00' }).click();
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '예약 변경하기' }), 'reservation change success');
+  await page.getByRole('heading', { name: '예약이 변경되었습니다' }).waitFor();
+  const payload = state.reservationPayloads.at(-1);
+  if (payload?.preferredTime !== '15:00:00') {
+    throw new Error(`reservation change payload mismatch: ${JSON.stringify(payload)}`);
+  }
+  await assertNoRawVisibleText(page, 'reservation change success');
+  await assertNoHorizontalOverflow(page, 'reservation change success');
+  await page.screenshot({ path: '/Users/etlab/paca-reservation-change-success-mobile.png', fullPage: true });
+
+  await context.close();
+  return { state, diagnostics };
+}
+
+async function runReservationChangeError(browser) {
+  const state = makeState({ failReservationUpdate: true });
+  const context = await createContext(browser, state, { width: 390, height: 844 });
+  const page = await context.newPage();
+  const diagnostics = createDiagnostics(page);
+
+  await page.goto(`/consultation/${RESERVATION_NUMBER}`, { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { name: '상담 예약 변경' }).waitFor();
+  await page.getByRole('button', { name: '15:00:00' }).click();
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '예약 변경하기' }), 'reservation change error');
+  await page.getByText('예약을 변경하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'reservation change error');
+  await assertNoHorizontalOverflow(page, 'reservation change error');
+  await page.screenshot({ path: '/Users/etlab/paca-reservation-change-error-mobile.png', fullPage: true });
 
   await context.close();
   return { state, diagnostics };
@@ -224,13 +303,17 @@ async function main() {
     const mobile = await runMobile(browser);
     const pageError = await runPageError(browser);
     const submitError = await runSubmitError(browser);
-    [normal, mobile, pageError, submitError].forEach(assertDiagnostics);
+    const reservationSuccess = await runReservationChangeSuccess(browser);
+    const reservationError = await runReservationChangeError(browser);
+    [normal, mobile, pageError, submitError, reservationSuccess, reservationError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
       applyPayload: normal.state.applyPayloads.at(-1),
+      reservationPayload: reservationSuccess.state.reservationPayloads.at(-1),
       normalConsoleErrors: normal.diagnostics.consoleErrors,
       mobileConsoleErrors: mobile.diagnostics.consoleErrors,
       pageErrorConsoleErrors: pageError.diagnostics.consoleErrors,
+      reservationErrorConsoleErrors: reservationError.diagnostics.consoleErrors,
       submitErrorConsoleErrors: submitError.diagnostics.consoleErrors,
     }, null, 2));
   } finally {

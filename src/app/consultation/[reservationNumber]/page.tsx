@@ -42,6 +42,7 @@ export default function ReservationChangePage({
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   // 예약 정보 조회
@@ -52,7 +53,7 @@ export default function ReservationChangePage({
         const data = await response.json();
 
         if (!response.ok) {
-          setError(data.error || '예약 정보를 찾을 수 없습니다.');
+          setError('예약 정보를 불러오지 못했습니다. 예약번호를 확인한 뒤 다시 시도해주세요.');
           return;
         }
 
@@ -60,7 +61,7 @@ export default function ReservationChangePage({
         setSelectedDate(new Date(data.preferredDate).toISOString().split('T')[0]);
         setSelectedTime(data.preferredTime);
       } catch {
-        setError('서버 오류가 발생했습니다.');
+        setError('예약 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
       } finally {
         setLoading(false);
       }
@@ -96,8 +97,10 @@ export default function ReservationChangePage({
 
   // 예약 변경 제출
   const handleSubmit = async () => {
+    setSubmitError(null);
+
     if (!selectedDate || !selectedTime) {
-      alert('날짜와 시간을 선택해주세요.');
+      setSubmitError('날짜와 시간을 선택해주세요.');
       return;
     }
 
@@ -112,16 +115,14 @@ export default function ReservationChangePage({
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        alert(data.error || '예약 변경에 실패했습니다.');
+        setSubmitError('예약을 변경하지 못했습니다. 잠시 후 다시 시도해주세요.');
         return;
       }
 
       setSuccess(true);
     } catch {
-      alert('서버 오류가 발생했습니다.');
+      setSubmitError('예약을 변경하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSubmitting(false);
     }
@@ -293,6 +294,13 @@ export default function ReservationChangePage({
             </div>
           )}
         </div>
+
+        {submitError ? (
+          <div role="alert" className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <p className="text-sm font-medium">{submitError}</p>
+          </div>
+        ) : null}
 
         {/* 변경 버튼 */}
         <button
