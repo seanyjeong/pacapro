@@ -202,6 +202,10 @@ async function runNormal(browser) {
 
   await page.goto('/seasons/88', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '2026 정시 집중반' }).waitFor();
+  const enrollHref = await page.getByRole('link', { name: '2026 정시 집중반 학생 등록' }).getAttribute('href');
+  if (enrollHref !== '/seasons/88/enroll') {
+    throw new Error(`season detail enroll href mismatch: ${enrollHref}`);
+  }
   const studentDetailLink = page.getByRole('link', { name: '강하준 학생 상세' }).first();
   await studentDetailLink.waitFor();
   const studentHref = await studentDetailLink.getAttribute('href');

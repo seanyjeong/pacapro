@@ -62,6 +62,7 @@ export function SeasonDetailPage() {
   return (
     <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
       <SeasonDetailHeader
+        addStudentHref={`/seasons/${seasonId}/enroll`}
         season={state.season}
         onBack={() => router.push('/seasons')}
         onDelete={handleDelete}
