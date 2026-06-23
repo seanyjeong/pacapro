@@ -154,6 +154,7 @@ describe('PUT /paca/consultations/:id', () => {
                 inquiry_content: '문의내용', consultation_memo: null,
             }]]) // SELECT existing
             .mockResolvedValueOnce([{}]) // UPDATE consultations (status)
+            .mockResolvedValueOnce([[]]) // [중복방지] SELECT students 매칭 조회 → 매칭 없음(신규)
             .mockResolvedValueOnce([{ insertId: 77 }]) // INSERT students (pending)
             .mockResolvedValueOnce([{}]); // UPDATE consultations (completed + link)
 
@@ -162,12 +163,42 @@ describe('PUT /paca/consultations/:id', () => {
             .send({ status: 'completed' });
 
         expect(res.status).toBe(200);
-        expect(pool.execute).toHaveBeenCalledTimes(4);
-        const insertCall = pool.execute.mock.calls[2];
+        expect(pool.execute).toHaveBeenCalledTimes(5);
+        const insertCall = pool.execute.mock.calls[3];
         expect(insertCall[0]).toContain('INSERT INTO students');
         expect(insertCall[0]).toContain("'pending'");
-        const linkCall = pool.execute.mock.calls[3];
+        const linkCall = pool.execute.mock.calls[4];
         expect(linkCall[1]).toEqual([77, 5]);
+    });
+
+    test('completed 전환 + 이미 같은 학생(이름+전번+성별) 존재 → 새로 안 만들고 기존 학생에 연결(통합)', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{
+                id: 5, academy_id: 1, status: 'confirmed', linked_student_id: null,
+                consultation_type: 'new_registration', reservation_number: 'C20260601002',
+                preferred_date: '2026-06-02', preferred_time: '15:00:00',
+                student_name: '홍길동', parent_phone: '01011112222',
+                student_grade: 'high3', student_school: '행신고', gender: 'male',
+                inquiry_content: '재신청', consultation_memo: null,
+            }]]) // SELECT existing consultation
+            .mockResolvedValueOnce([{}]) // UPDATE consultations (status)
+            .mockResolvedValueOnce([[
+                { id: 88, name: '홍길동', phone: '01011112222', gender: 'male' },
+            ]]) // [중복방지] SELECT students → 동일인 #88 존재
+            .mockResolvedValueOnce([{}]); // UPDATE consultations (link to 88)
+
+        const res = await request(makeApp())
+            .put('/paca/consultations/5')
+            .send({ status: 'completed' });
+
+        expect(res.status).toBe(200);
+        // INSERT students 가 호출되지 않아야 한다 (통합)
+        const calledSqls = pool.execute.mock.calls.map((c) => c[0]);
+        expect(calledSqls.some((sql) => sql.includes('INSERT INTO students'))).toBe(false);
+        // 마지막 호출이 기존 학생 #88 로 상담 연결
+        const linkCall = pool.execute.mock.calls[pool.execute.mock.calls.length - 1];
+        expect(linkCall[0]).toContain('UPDATE consultations');
+        expect(linkCall[1]).toEqual([88, 5]);
     });
 
     test('completed 전환이지만 이미 학생 연결됨 → 자동 생성 X', async () => {

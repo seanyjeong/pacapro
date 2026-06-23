@@ -111,6 +111,37 @@ async function createPendingStudentFromConsultation(consultation, { studentPhone
     // 학부모 연락처는 정식 등록 시 입력
     const phone = studentPhone || consultation.parent_phone;
 
+    // [중복 방지] 이미 같은 학생(이름+전번+성별)이 존재하면 새 pending 을 만들지 않고 기존 학생에 연결한다.
+    // (2026-06-23: 상담완료 자동전환이 재원생을 복제 pending 으로 양산하던 버그 차단)
+    const _norm = (v) => (v || '').toString().replace(/[^0-9]/g, '');
+    const _trim = (v) => (v || '').toString().trim();
+    const _rawName = consultation.student_name;
+    const _targetName = _trim(typeof _rawName === 'string' && _rawName.startsWith('ENC:') ? decrypt(_rawName) : _rawName);
+    const _targetPhone = _norm(typeof phone === 'string' && phone.startsWith('ENC:') ? decrypt(phone) : phone);
+    const _targetGender = _trim(consultation.gender);
+    if (_targetName) {
+        const [_existing] = await pool.execute(
+            `SELECT id, name, phone, gender FROM students WHERE academy_id = ? AND deleted_at IS NULL`,
+            [consultation.academy_id]
+        );
+        const _match = _existing.find((row) => {
+            const rName = _trim((() => { try { return decrypt(row.name); } catch (e) { return ''; } })());
+            if (rName !== _targetName) return false;
+            const rPhone = _norm((() => { try { return decrypt(row.phone); } catch (e) { return ''; } })());
+            if (_targetPhone && rPhone) return rPhone === _targetPhone;        // 전번 둘 다 있으면 전번까지 일치해야 동일인
+            const rGender = _trim(row.gender);
+            return rGender && _targetGender ? rGender === _targetGender : false; // 전번 없으면 성별로 보조 (전번 한쪽만 있으면 동일인 아님)
+        });
+        if (_match) {
+            await pool.execute(
+                `UPDATE consultations SET status = 'completed', linked_student_id = ? WHERE id = ?`,
+                [_match.id, consultation.id]
+            );
+            logger.info(`[중복방지] 기존 학생 #${_match.id} 에 상담 #${consultation.id} 연결 (신규 pending 미생성)`);
+            return _match.id;
+        }
+    }
+
     // 민감 정보 암호화 (이미 암호화된 값이면 그대로 사용)
     const isAlreadyEncrypted = (val) => val && typeof val === 'string' && val.startsWith('ENC:');
     const encryptedName = isAlreadyEncrypted(consultation.student_name)

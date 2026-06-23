@@ -71,7 +71,7 @@ export default function SeasonEnrollPage() {
         setSeason(seasonResponse.season);
 
         // 학생 목록 조회 (고3, N수만 - 시즌 대상)
-        const studentsResponse = await apiClient.get<{ students: Student[] }>('/students?grade_type=high');
+        const studentsResponse = await apiClient.get<{ students: Student[] }>('/students?status=active');
         // 고3 또는 N수 학생만 필터링
         const eligibleStudents = studentsResponse.students.filter(
           s => s.grade === '고3' || s.grade === 'N수' || s.grade_type === 'n_su'
