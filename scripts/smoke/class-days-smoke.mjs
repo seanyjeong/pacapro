@@ -163,7 +163,7 @@ async function runDesktopSave(browser) {
 
 async function runFocusedStudent(browser) {
   const result = await createClassDaysPage(browser, 'success');
-  const { context, page } = result;
+  const { context, page, state } = result;
 
   await page.goto('/students/class-days?studentId=41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
@@ -173,8 +173,21 @@ async function runFocusedStudent(browser) {
     focused: '김진우',
     result: 1,
     scheduled: 1,
-    selected: 0,
+    selected: 1,
   });
+  await page.getByRole('button', { name: '월/수/금 프리셋' }).click();
+  await page.getByRole('button', { name: '선택 학생에 적용' }).click();
+  await page.getByText('1명 변경됨').waitFor();
+  await page.getByTestId('class-days-operations-board').getByRole('button', { name: '적용 내용 저장' }).click();
+  await page.getByText('수업일 변경이 저장되었습니다.').waitFor();
+  const studentPayload = state.bulkPayload?.students?.[0];
+  if (state.bulkPayload?.students?.length !== 1 || studentPayload?.id !== 41) {
+    throw new Error(`focused student payload mismatch: ${JSON.stringify(state.bulkPayload)}`);
+  }
+  const days = studentPayload.class_days.map((slot) => slot.day).join(',');
+  if (days !== '1,3,5' || studentPayload.class_days.some((slot) => slot.timeSlot !== 'evening')) {
+    throw new Error(`focused preset payload mismatch: ${JSON.stringify(state.bulkPayload)}`);
+  }
   await page.locator('tbody tr').filter({ hasText: '김진우' }).waitFor();
   const visibleRows = await page.locator('tbody tr').filter({ hasNotText: '표시할 학생이 없습니다.' }).count();
   if (visibleRows !== 1) throw new Error(`focused class-days row count mismatch: ${visibleRows}`);

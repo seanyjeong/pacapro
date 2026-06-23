@@ -12,6 +12,28 @@ const TIME_SLOT_OPTIONS: Array<{ value: TimeSlot; label: string }> = [
   { value: 'evening', label: '저녁' },
 ];
 
+const DAY_PRESETS: Array<{ label: string; slots: ClassDaySlot[] }> = [
+  {
+    label: '월/수/금 프리셋',
+    slots: [
+      { day: 1, timeSlot: 'evening' },
+      { day: 3, timeSlot: 'evening' },
+      { day: 5, timeSlot: 'evening' },
+    ],
+  },
+  {
+    label: '화/목 프리셋',
+    slots: [
+      { day: 2, timeSlot: 'evening' },
+      { day: 4, timeSlot: 'evening' },
+    ],
+  },
+  {
+    label: '평일 프리셋',
+    slots: [1, 2, 3, 4, 5].map((day) => ({ day, timeSlot: 'evening' })),
+  },
+];
+
 interface ClassDaysBulkEditorProps {
   selectedCount: number;
   slots: ClassDaySlot[];
@@ -19,6 +41,7 @@ interface ClassDaysBulkEditorProps {
   onChangeTimeSlot: (dayValue: number, timeSlot: TimeSlot) => void;
   onClearSelection: () => void;
   onToggleDay: (dayValue: number) => void;
+  onUsePreset: (slots: ClassDaySlot[]) => void;
 }
 
 export function ClassDaysBulkEditor({
@@ -28,6 +51,7 @@ export function ClassDaysBulkEditor({
   onChangeTimeSlot,
   onClearSelection,
   onToggleDay,
+  onUsePreset,
 }: ClassDaysBulkEditorProps) {
   const selectedDays = new Set(slots.map((slot) => slot.day));
   const sortedSlots = [...slots].sort(sortSlotsMondayFirst);
@@ -41,6 +65,20 @@ export function ClassDaysBulkEditor({
             <Users className="h-4 w-4 text-muted-foreground" />
             <h2 className="text-sm font-semibold text-foreground">선택 학생 일괄 변경</h2>
             <Badge variant={selectedCount > 0 ? 'secondary' : 'outline'}>{selectedCount}명 선택</Badge>
+          </div>
+
+          <div className="flex flex-wrap gap-2" aria-label="수업일 프리셋">
+            {DAY_PRESETS.map((preset) => (
+              <Button
+                key={preset.label}
+                className="h-8 px-2.5 text-xs"
+                type="button"
+                variant="outline"
+                onClick={() => onUsePreset(preset.slots)}
+              >
+                {preset.label}
+              </Button>
+            ))}
           </div>
 
           <div className="flex flex-wrap gap-1.5">

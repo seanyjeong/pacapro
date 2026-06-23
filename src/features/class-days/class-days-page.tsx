@@ -52,7 +52,11 @@ export function ClassDaysPage() {
       const res = await studentsAPI.getClassDays({ suppressErrorToast: true });
       setStudents(res.students);
       setEdits(new Map());
-      setSelectedIds(new Set());
+      setSelectedIds(
+        focusedStudentId !== null && res.students.some((student) => student.id === focusedStudentId)
+          ? new Set([focusedStudentId])
+          : new Set()
+      );
       setLoadError(false);
     } catch {
       console.warn('수업일 목록을 불러오지 못했습니다.');
@@ -60,7 +64,7 @@ export function ClassDaysPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [focusedStudentId]);
 
   useEffect(() => {
     void fetchStudents();
@@ -149,6 +153,10 @@ export function ClassDaysPage() {
     setBulkSlots((prev) => sortClassDaySlots(prev.map((slot) => (
       slot.day === dayValue ? { ...slot, timeSlot } : slot
     ))));
+  };
+
+  const applyBulkPreset = (slots: ClassDaySlot[]) => {
+    setBulkSlots(sortClassDaySlots(slots));
   };
 
   const applyBulkSlotsToSelected = () => {
@@ -286,6 +294,7 @@ export function ClassDaysPage() {
             onApply={applyBulkSlotsToSelected}
             onChangeTimeSlot={changeBulkTimeSlot}
             onClearSelection={clearSelection}
+            onUsePreset={applyBulkPreset}
             onToggleDay={toggleBulkDay}
           />
           <ClassDaysTable
