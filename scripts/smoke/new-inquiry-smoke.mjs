@@ -111,9 +111,20 @@ async function createNewInquiryPage(browser, mode, viewport = { width: 1280, hei
 async function openCreateDialog(page) {
   await page.goto('/consultations/new-inquiry', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '신규상담', exact: true }).waitFor({ timeout: 15000 });
+  await waitForNewInquiryShell(page);
   await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   await page.getByRole('button', { name: '신규상담 등록' }).click();
   await page.getByRole('heading', { name: '신규상담 등록' }).waitFor();
+}
+
+async function waitForNewInquiryShell(page) {
+  await page.getByTestId('new-inquiry-operations-workspace').waitFor();
+  await page.getByTestId('new-inquiry-filter-bar').waitFor();
+  const workQueue = page.getByTestId('new-inquiry-work-queue');
+  await workQueue.waitFor();
+  await workQueue.getByText('신규상담 운영 보드').waitFor();
+  await workQueue.getByText('확인 대기', { exact: true }).waitFor();
+  return workQueue;
 }
 
 async function selectOption(page, label, optionName) {
@@ -126,6 +137,7 @@ async function runMissingHours(browser) {
   const { context, page } = result;
 
   await openCreateDialog(page);
+  await page.getByTestId('new-inquiry-work-queue').getByText('상담 시간 설정 필요').waitFor();
   await page.getByLabel('상담 날짜').fill(TEST_DATE);
   await page.getByText('상담 가능 시간이 설정되지 않았습니다').waitFor({ timeout: 10000 });
   await page.getByRole('link', { name: '상담 설정으로 이동' }).waitFor();
@@ -143,6 +155,7 @@ async function runListError(browser) {
 
   await page.goto('/consultations/new-inquiry', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '신규상담', exact: true }).waitFor({ timeout: 15000 });
+  await waitForNewInquiryShell(page);
   await page.getByText('상담 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').first().waitFor({ timeout: 15000 });
   await page.getByRole('button', { name: '다시 불러오기' }).first().waitFor();
   await assertNoRawVisibleText(page, 'new inquiry list error');
