@@ -116,6 +116,32 @@ async function runLoadError(browser) {
   return result;
 }
 
+async function runSaveSuccess(browser) {
+  const result = await createPage(browser);
+  const { context, page, state } = result;
+  await openInstructorAttendance(page);
+  await page.getByText('강사 출근 현황').waitFor();
+  await page.getByRole('button', { name: '전체 출근' }).click();
+
+  const saveResponse = page.waitForResponse((response) => (
+    response.request().method() === 'POST'
+    && response.url().includes(`/schedules/date/${today}/instructor-attendance`)
+  ));
+  await page.getByRole('button', { name: '저장' }).click();
+  await saveResponse;
+
+  await page.getByText('박코치').waitFor();
+  await assertNoRawVisibleText(page, 'instructor attendance save success');
+  await assertNoHorizontalOverflow(page, 'instructor attendance save success');
+
+  const submitted = state.instructorAttendancePayload?.attendances?.[0];
+  if (submitted?.instructor_id !== 3 || submitted?.time_slot !== 'afternoon' || submitted?.attendance_status !== 'present') {
+    throw new Error(`unexpected instructor attendance success payload: ${JSON.stringify(state.instructorAttendancePayload)}`);
+  }
+  await context.close();
+  return result;
+}
+
 async function runSaveError(browser) {
   const result = await createPage(browser, { failSave: true });
   const { context, page, state } = result;
@@ -145,10 +171,12 @@ function assertDiagnostics(result) {
 async function main() {
   const browser = await launchSmokeBrowser();
   try {
+    const saveSuccess = await runSaveSuccess(browser);
     const loadError = await runLoadError(browser);
     const saveError = await runSaveError(browser);
-    [loadError, saveError].forEach(assertDiagnostics);
+    [saveSuccess, loadError, saveError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
+      successPayload: saveSuccess.state.instructorAttendancePayload,
       hits: saveError.state.hits,
       instructorAttendancePayload: saveError.state.instructorAttendancePayload,
     }, null, 2));
