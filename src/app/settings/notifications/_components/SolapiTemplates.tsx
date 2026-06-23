@@ -5,6 +5,7 @@ import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, ClipboardCheck } f
 import { NotificationSettings, ConsultationButton } from '@/lib/api/notifications';
 import { TemplateType } from '../_types';
 import AlimtalkPreview from './AlimtalkPreview';
+import AttendanceTestPanel from './AttendanceTestPanel';
 import ButtonEditor from './ButtonEditor';
 import TemplateImageField from './TemplateImageField';
 
@@ -16,7 +17,6 @@ interface Props {
   academyName: string;
   saving: boolean;
   onSave: () => void;
-  // 테스트
   testing: boolean;
   testPhone: string;
   setTestPhone: (v: string) => void;
@@ -39,7 +39,10 @@ interface Props {
   testPhoneReminder: string;
   setTestPhoneReminder: (v: string) => void;
   onTestReminder: () => void;
-  // 버튼 핸들러
+  testingAttendance: boolean;
+  testPhoneAttendance: string;
+  setTestPhoneAttendance: (v: string) => void;
+  onTestAttendance: () => void;
   addUnpaidButton: () => void;
   removeUnpaidButton: (i: number) => void;
   updateUnpaidButton: (i: number, f: keyof ConsultationButton, v: string) => void;
@@ -65,6 +68,7 @@ export default function SolapiTemplates({
   testingTrial, testPhoneTrial, setTestPhoneTrial, onTestTrial,
   testingOverdue, testPhoneOverdue, setTestPhoneOverdue, onTestOverdue,
   testingReminder, testPhoneReminder, setTestPhoneReminder, onTestReminder,
+  testingAttendance, testPhoneAttendance, setTestPhoneAttendance, onTestAttendance,
   addUnpaidButton, removeUnpaidButton, updateUnpaidButton,
   addConsultationButton, removeConsultationButton, updateConsultationButton,
   addTrialButton, removeTrialButton, updateTrialButton,
@@ -73,7 +77,6 @@ export default function SolapiTemplates({
 }: Props) {
   return (
     <>
-      {/* 템플릿 선택 탭 */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-4">
         <h2 className="text-lg font-semibold text-foreground mb-4">알림톡 템플릿 설정</h2>
         <div className="flex gap-2 flex-wrap">
@@ -471,6 +474,14 @@ export default function SolapiTemplates({
             </div>
             <AlimtalkPreview academyName={academyName} templateContent={settings.solapi_attendance_template_content} imageUrl="" buttons={[]}
               replacements={{'#{학원명}':academyName,'#{이름}':'홍길동','#{월}':'5','#{일}':'18','#{요일}':'월','#{출결상태}':'출석'}} />
+            <AttendanceTestPanel
+              enabled={settings.solapi_enabled && Boolean(settings.solapi_attendance_template_id)}
+              phone={testPhoneAttendance}
+              providerName="솔라피"
+              testing={testingAttendance}
+              onPhoneChange={setTestPhoneAttendance}
+              onTest={onTestAttendance}
+            />
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={onSave} disabled={saving} className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
                 {saving ? '저장 중...' : '출결관리 알림톡 설정 저장'}

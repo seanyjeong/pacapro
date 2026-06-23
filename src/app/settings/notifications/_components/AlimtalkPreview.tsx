@@ -1,6 +1,6 @@
 'use client';
 
-// Phase 4 #1 — 알림톡 말풍선 미리보기 재사용 sub-component
+import { MessageCircle, UserRound } from 'lucide-react';
 import { ConsultationButton } from '@/lib/api/notifications';
 
 interface Props {
@@ -12,62 +12,73 @@ interface Props {
   timeLabel?: string;
 }
 
-export default function AlimtalkPreview({ academyName, templateContent, imageUrl, buttons, replacements, timeLabel = '오전 9:00' }: Props) {
+export default function AlimtalkPreview({
+  academyName,
+  templateContent,
+  imageUrl,
+  buttons,
+  replacements,
+  timeLabel = '오전 9:00',
+}: Props) {
   if (!templateContent) return null;
 
-  let preview = templateContent;
-  Object.entries(replacements).forEach(([key, val]) => {
-    preview = preview.replace(new RegExp(key.replace(/[{}#]/g, c => `\\${c}`), 'g'), val);
-  });
+  const preview = buildPreview(templateContent, replacements);
 
   return (
     <div className="md:col-span-2">
-      <p className="text-sm font-medium text-foreground mb-2">미리보기</p>
-      <div className="bg-[#B2C7D9] rounded-2xl p-4 max-w-sm mx-auto shadow-lg">
-        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#9BB3C7]">
-          <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center">
-            <svg className="w-5 h-5 text-yellow-800" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
-            </svg>
-          </div>
-          <span className="font-medium text-gray-800 text-sm">알림톡</span>
+      <p className="mb-2 text-sm font-medium text-foreground">미리보기</p>
+      <section
+        className="mx-auto max-w-sm rounded-md border border-slate-200 bg-slate-50 p-4 shadow-none dark:border-slate-800 dark:bg-slate-950/40"
+        data-testid="alimtalk-preview-card"
+        aria-label="알림톡 미리보기"
+      >
+        <div className="mb-3 flex items-center gap-2 border-b border-slate-200 pb-3 dark:border-slate-800">
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-yellow-100 text-yellow-800">
+            <MessageCircle className="h-4 w-4" />
+          </span>
+          <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">알림톡</span>
         </div>
+
         <div className="flex gap-2">
-          <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            </div>
-          </div>
-          <div className="flex-1">
-            <p className="text-xs text-gray-600 mb-1">{academyName}</p>
-            <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
-              {imageUrl && (
-                <div className="mb-2 -mx-1 -mt-1">
-                  <img
-                    src={imageUrl}
-                    alt="알림톡 이미지"
-                    className="w-full h-32 object-cover rounded-t-lg"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                </div>
-              )}
-              <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{preview}</p>
-              {buttons && buttons.length > 0 && (
-                <div className="mt-3 pt-2 border-t border-gray-200 space-y-1.5">
-                  {buttons.map((btn, idx) => (
-                    <div key={idx} className="text-center py-2 px-3 bg-gray-100 rounded-md text-sm text-blue-600 font-medium hover:bg-gray-200 cursor-pointer">
-                      {btn.buttonName || '버튼'}
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+            <UserRound className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="mb-1 truncate text-xs text-slate-500">{academyName}</p>
+            <div className="rounded-md rounded-tl-sm border border-slate-200 bg-white p-3 shadow-none dark:border-slate-800 dark:bg-slate-900">
+              {imageUrl ? (
+                <div
+                  role="img"
+                  aria-label="알림톡 이미지"
+                  className="mb-2 h-32 rounded-md bg-slate-100 bg-cover bg-center dark:bg-slate-800"
+                  style={{ backgroundImage: `url(${imageUrl})` }}
+                />
+              ) : null}
+              <p className="whitespace-pre-wrap text-sm leading-6 text-slate-800 dark:text-slate-100">{preview}</p>
+              {buttons && buttons.length > 0 ? (
+                <div className="mt-3 space-y-1.5 border-t border-slate-200 pt-2 dark:border-slate-800">
+                  {buttons.map((button, index) => (
+                    <div
+                      key={`${button.buttonName || 'button'}-${index}`}
+                      className="rounded-md bg-slate-100 px-3 py-2 text-center text-sm font-medium text-blue-700 dark:bg-slate-800 dark:text-blue-300"
+                    >
+                      {button.buttonName || '버튼'}
                     </div>
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
-            <p className="text-xs text-gray-500 mt-1">{timeLabel}</p>
+            <p className="mt-1 text-xs text-slate-500">{timeLabel}</p>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
+}
+
+function buildPreview(templateContent: string, replacements: Record<string, string>) {
+  return Object.entries(replacements).reduce((content, [key, value]) => {
+    const escapedKey = key.replace(/[{}#]/g, (character) => `\\${character}`);
+    return content.replace(new RegExp(escapedKey, 'g'), value);
+  }, templateContent);
 }

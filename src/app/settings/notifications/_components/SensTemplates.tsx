@@ -4,6 +4,7 @@ import React from 'react';
 import { DollarSign, AlertCircle, Bell, GraduationCap, Clock, ClipboardCheck } from 'lucide-react';
 import { NotificationSettings, ConsultationButton } from '@/lib/api/notifications';
 import type { TemplateType } from '../_types';
+import AttendanceTestPanel from './AttendanceTestPanel';
 import ButtonEditor from './ButtonEditor';
 import TemplateImageField from './TemplateImageField';
 
@@ -21,6 +22,7 @@ interface SensTemplatesProps {
   testingSensTrial: boolean;
   testingSensOverdue: boolean;
   testingSensReminder: boolean;
+  testingSensAttendance: boolean;
   testPhoneSensConsultation: string;
   setTestPhoneSensConsultation: (v: string) => void;
   testPhoneSensTrial: string;
@@ -29,12 +31,15 @@ interface SensTemplatesProps {
   setTestPhoneSensOverdue: (v: string) => void;
   testPhoneSensReminder: string;
   setTestPhoneSensReminder: (v: string) => void;
+  testPhoneSensAttendance: string;
+  setTestPhoneSensAttendance: (v: string) => void;
   handleSave: () => void;
   handleTest: () => void;
   handleTestSensConsultation: () => void;
   handleTestSensTrial: () => void;
   handleTestSensOverdue: () => void;
   handleTestSensReminder: () => void;
+  handleTestSensAttendance: () => void;
   addSensUnpaidButton: () => void;
   removeSensUnpaidButton: (i: number) => void;
   updateSensUnpaidButton: (i: number, field: keyof ConsultationButton, value: string) => void;
@@ -66,6 +71,7 @@ export default function SensTemplates({
   testingSensTrial,
   testingSensOverdue,
   testingSensReminder,
+  testingSensAttendance,
   testPhoneSensConsultation,
   setTestPhoneSensConsultation,
   testPhoneSensTrial,
@@ -74,12 +80,15 @@ export default function SensTemplates({
   setTestPhoneSensOverdue,
   testPhoneSensReminder,
   setTestPhoneSensReminder,
+  testPhoneSensAttendance,
+  setTestPhoneSensAttendance,
   handleSave,
   handleTest,
   handleTestSensConsultation,
   handleTestSensTrial,
   handleTestSensOverdue,
   handleTestSensReminder,
+  handleTestSensAttendance,
   addSensUnpaidButton,
   removeSensUnpaidButton,
   updateSensUnpaidButton,
@@ -100,7 +109,6 @@ export default function SensTemplates({
 
   return (
     <>
-      {/* SENS 템플릿 선택 탭 */}
       <div className="bg-card rounded-lg shadow-sm border border-border p-4">
         <h2 className="text-lg font-semibold text-foreground mb-4">SENS 알림톡 템플릿 설정</h2>
         <div className="flex gap-2 flex-wrap">
@@ -153,7 +161,6 @@ export default function SensTemplates({
                 placeholder={`[#{학원명}] 학원비 납부 안내\n\n안녕하세요, #{이름} 학부모님.\n#{월}월 학원비 #{교육비}원이 아직 납부되지 않았습니다.`}
               />
             </div>
-            {/* 사용 가능한 변수 */}
             <div className="md:col-span-2 p-3 bg-orange-50 dark:bg-orange-950 rounded-lg border border-orange-200 dark:border-orange-800">
               <p className="text-sm font-medium text-orange-800 dark:text-orange-200 mb-2">사용 가능한 변수</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
@@ -230,7 +237,6 @@ export default function SensTemplates({
               {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
               {settings.is_enabled && !settings.template_code && <p className="text-sm text-amber-600 mt-1">템플릿 코드를 먼저 설정해야 테스트 발송이 가능합니다</p>}
             </div>
-            {/* 저장 */}
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">
                 {saving ? '저장 중...' : '납부안내 설정 저장'}
@@ -287,7 +293,6 @@ export default function SensTemplates({
               </div>
               {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
             </div>
-            {/* 저장 */}
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '미납자 설정 저장'}</button>
             </div>
@@ -325,7 +330,6 @@ export default function SensTemplates({
               </div>
               {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
             </div>
-            {/* 저장 */}
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '상담확정 설정 저장'}</button>
             </div>
@@ -380,7 +384,6 @@ export default function SensTemplates({
               </div>
               {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
             </div>
-            {/* 저장 */}
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '체험수업 설정 저장'}</button>
             </div>
@@ -441,7 +444,6 @@ export default function SensTemplates({
               </div>
               {!settings.is_enabled && <p className="text-sm text-amber-600 mt-1">알림톡을 먼저 활성화해야 테스트 발송이 가능합니다</p>}
             </div>
-            {/* 저장 */}
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '상담 리마인드 설정 저장'}</button>
             </div>
@@ -471,7 +473,14 @@ export default function SensTemplates({
               <textarea value={settings.sens_attendance_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_attendance_template_content: e.target.value }))} rows={6} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-mono text-sm" placeholder={`안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월}월 #{일}일 #{요일}요일 수업 #{출결상태}하였습니다.`} />
               <p className="text-xs text-muted-foreground mt-1">사용 가능 변수: #{`{학원명}`}, #{`{이름}`}, #{`{월}`}, #{`{일}`}, #{`{요일}`}, #{`{출결상태}`}(출석/지각/결석)</p>
             </div>
-            {/* 저장 */}
+            <AttendanceTestPanel
+              enabled={settings.is_enabled && Boolean(settings.sens_attendance_template_code)}
+              phone={testPhoneSensAttendance}
+              providerName="SENS"
+              testing={testingSensAttendance}
+              onPhoneChange={setTestPhoneSensAttendance}
+              onTest={handleTestSensAttendance}
+            />
             <div className="md:col-span-2 pt-4 border-t border-border">
               <button onClick={handleSave} disabled={saving} className="w-full px-4 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium">{saving ? '저장 중...' : '출결관리 설정 저장'}</button>
             </div>

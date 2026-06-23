@@ -46,8 +46,10 @@ export function useNotificationSettings() {
   const [testingSensTrial, setTestingSensTrial] = useState(false);
   const [testingSensOverdue, setTestingSensOverdue] = useState(false);
   const [testingSensReminder, setTestingSensReminder] = useState(false);
+  const [testingSensAttendance, setTestingSensAttendance] = useState(false);
   // 솔라피 리마인드 테스트 상태
   const [testingReminder, setTestingReminder] = useState(false);
+  const [testingAttendance, setTestingAttendance] = useState(false);
   const [testPhone, setTestPhone] = useState('');
   const [testPhoneConsultation, setTestPhoneConsultation] = useState('');
   const [testPhoneTrial, setTestPhoneTrial] = useState('');
@@ -58,6 +60,8 @@ export function useNotificationSettings() {
   const [testPhoneSensTrial, setTestPhoneSensTrial] = useState('');
   const [testPhoneSensOverdue, setTestPhoneSensOverdue] = useState('');
   const [testPhoneSensReminder, setTestPhoneSensReminder] = useState('');
+  const [testPhoneSensAttendance, setTestPhoneSensAttendance] = useState('');
+  const [testPhoneAttendance, setTestPhoneAttendance] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [sendingUnpaid, setSendingUnpaid] = useState(false);
   const [deletingSenderId, setDeletingSenderId] = useState<number | null>(null);
@@ -295,6 +299,7 @@ export function useNotificationSettings() {
   const handleTestTrial = () => runNotificationTest(testPhoneTrial, setTestingTrial, () => notificationsAPI.sendTestTrial(testPhoneTrial, SILENT_CONFIG), '체험수업 테스트 메시지가 발송되었습니다.', '체험수업 테스트 발송에 실패했습니다.');
   const handleTestOverdue = () => runNotificationTest(testPhoneOverdue, setTestingOverdue, () => notificationsAPI.sendTestOverdue(testPhoneOverdue, SILENT_CONFIG), '미납자 테스트 메시지가 발송되었습니다.', '미납자 테스트 발송에 실패했습니다.');
   const handleTestReminder = () => runNotificationTest(testPhoneReminder, setTestingReminder, () => notificationsAPI.sendTestReminder(testPhoneReminder, SILENT_CONFIG), '상담 리마인드 테스트 메시지가 발송되었습니다.', '상담 리마인드 테스트 발송에 실패했습니다.');
+  const handleTestAttendance = () => runNotificationTest(testPhoneAttendance, setTestingAttendance, () => notificationsAPI.sendTestAttendance(testPhoneAttendance, SILENT_CONFIG), '출결관리 테스트 메시지가 발송되었습니다.', '출결관리 테스트 발송에 실패했습니다.');
 
   const addSensUnpaidButton = () => addButton('sens_buttons');
   const removeSensUnpaidButton = (index: number) => removeButton('sens_buttons', index);
@@ -330,6 +335,7 @@ export function useNotificationSettings() {
   const handleTestSensTrial = () => runNotificationTest(testPhoneSensTrial, setTestingSensTrial, () => notificationsAPI.sendTestSensTrial(testPhoneSensTrial, SILENT_CONFIG), 'SENS 체험수업 테스트 메시지가 발송되었습니다.', 'SENS 체험수업 테스트 발송에 실패했습니다.');
   const handleTestSensOverdue = () => runNotificationTest(testPhoneSensOverdue, setTestingSensOverdue, () => notificationsAPI.sendTestSensOverdue(testPhoneSensOverdue, SILENT_CONFIG), 'SENS 미납자 테스트 메시지가 발송되었습니다.', 'SENS 미납자 테스트 발송에 실패했습니다.');
   const handleTestSensReminder = () => runNotificationTest(testPhoneSensReminder, setTestingSensReminder, () => notificationsAPI.sendTestSensReminder(testPhoneSensReminder, SILENT_CONFIG), 'SENS 상담 리마인드 테스트 메시지가 발송되었습니다.', 'SENS 상담 리마인드 테스트 발송에 실패했습니다.');
+  const handleTestSensAttendance = () => runNotificationTest(testPhoneSensAttendance, setTestingSensAttendance, () => notificationsAPI.sendTestSensAttendance(testPhoneSensAttendance, SILENT_CONFIG), 'SENS 출결관리 테스트 메시지가 발송되었습니다.', 'SENS 출결관리 테스트 발송에 실패했습니다.');
 
   // 미납자 수동 발송
   const handleSendUnpaid = () => {
@@ -395,8 +401,8 @@ export function useNotificationSettings() {
     loading,
     saving,
     testing, testingConsultation, testingTrial, testingOverdue,
-    testingSensConsultation, testingSensTrial, testingSensOverdue, testingSensReminder,
-    testingReminder,
+    testingSensConsultation, testingSensTrial, testingSensOverdue, testingSensReminder, testingSensAttendance,
+    testingReminder, testingAttendance,
     testPhone, setTestPhone,
     testPhoneConsultation, setTestPhoneConsultation,
     testPhoneTrial, setTestPhoneTrial,
@@ -406,6 +412,8 @@ export function useNotificationSettings() {
     testPhoneSensTrial, setTestPhoneSensTrial,
     testPhoneSensOverdue, setTestPhoneSensOverdue,
     testPhoneSensReminder, setTestPhoneSensReminder,
+    testPhoneSensAttendance, setTestPhoneSensAttendance,
+    testPhoneAttendance, setTestPhoneAttendance,
     message,
     sendingUnpaid,
     deletingSenderId,
@@ -427,10 +435,12 @@ export function useNotificationSettings() {
     handleTestTrial,
     handleTestOverdue,
     handleTestReminder,
+    handleTestAttendance,
     handleTestSensConsultation,
     handleTestSensTrial,
     handleTestSensOverdue,
     handleTestSensReminder,
+    handleTestSensAttendance,
     handleSendUnpaid,
     handleServiceTypeChange,
     handleAddSenderNumber,

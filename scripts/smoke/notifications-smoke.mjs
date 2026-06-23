@@ -52,7 +52,7 @@ function makeSettings() {
     solapi_sender_phone: '',
     has_solapi_secret: false,
     solapi_template_id: '',
-    solapi_template_content: '',
+    solapi_template_content: '#{이름} 학생의 #{월}월 학원비 안내입니다.',
     solapi_buttons: [],
     solapi_image_url: '',
     solapi_auto_enabled: false,
@@ -79,12 +79,12 @@ function makeSettings() {
     solapi_reminder_image_url: '',
     solapi_reminder_auto_enabled: false,
     solapi_reminder_hours: 1,
-    solapi_attendance_template_id: '',
-    solapi_attendance_template_content: '',
+    solapi_attendance_template_id: 'PACA_SOLAPI_ATTENDANCE',
+    solapi_attendance_template_content: '안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월}월 #{일}일 #{요일}요일 수업 #{출결상태}하였습니다.',
     solapi_attendance_buttons: [],
     solapi_attendance_image_url: '',
-    sens_attendance_template_code: '',
-    sens_attendance_template_content: '',
+    sens_attendance_template_code: 'PACA_SENS_ATTENDANCE',
+    sens_attendance_template_content: '안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월}월 #{일}일 #{요일}요일 수업 #{출결상태}하였습니다.',
     sens_attendance_buttons: [],
     sens_attendance_image_url: '',
     attendance_alimtalk_enabled: true,
@@ -114,7 +114,14 @@ function makeLog() {
 }
 
 function makeState(mode = 'success') {
-  return { deletedSenderId: null, hits: [], mode, unpaidPayload: null };
+  return {
+    deletedSenderId: null,
+    hits: [],
+    mode,
+    sensAttendancePayload: null,
+    solapiAttendancePayload: null,
+    unpaidPayload: null,
+  };
 }
 
 async function installRoutes(context, state) {
@@ -180,6 +187,16 @@ async function installRoutes(context, state) {
       return jsonRoute(route, { message: '발송 완료', sent: 3, failed: 1 });
     }
 
+    if (method === 'POST' && path === '/notifications/test-attendance') {
+      state.solapiAttendancePayload = JSON.parse(request.postData() || '{}');
+      return jsonRoute(route, { message: 'ok', success: true, groupId: 'attendance-test-1' });
+    }
+
+    if (method === 'POST' && path === '/notifications/test-sens-attendance') {
+      state.sensAttendancePayload = JSON.parse(request.postData() || '{}');
+      return jsonRoute(route, { message: 'ok', success: true, requestId: 'sens-attendance-test-1' });
+    }
+
     return jsonRoute(route, { message: 'mocked' });
   });
 }
@@ -229,6 +246,14 @@ async function runDesktop(browser) {
     throw new Error('missing notification payment detail link');
   }
 
+  await page.getByRole('button', { name: '출결관리' }).click();
+  await page.getByLabel('SENS 출결 테스트 전화번호').fill('01055556666');
+  await page.getByRole('button', { name: '출결 테스트' }).click();
+  await page.getByText('SENS 출결관리 테스트 메시지가 발송되었습니다.').waitFor();
+  if (state.sensAttendancePayload?.phone !== '01055556666') {
+    throw new Error(`sens attendance payload mismatch: ${JSON.stringify(state.sensAttendancePayload)}`);
+  }
+
   await clickWithoutNativeDialog(
     page,
     page.getByRole('button', { name: '010-2144-6755 발신번호 삭제' }),
@@ -262,6 +287,8 @@ async function runDesktop(browser) {
   await solapiButton.click();
   await page.getByRole('heading', { name: '솔라피 API 설정' }).waitFor();
   await page.getByRole('heading', { name: '알림톡 템플릿 설정' }).waitFor();
+  await page.getByTestId('alimtalk-preview-card').waitFor();
+  await page.getByText('홍길동 학생의 12월 학원비 안내입니다.').waitFor();
   await page.getByText('솔라피 콘솔에서 이미지 업로드').first().waitFor();
   if (await solapiButton.getAttribute('aria-pressed') !== 'true') {
     throw new Error('solapi service button was not selected');
@@ -290,6 +317,14 @@ async function runDesktop(browser) {
   await sendDialog.waitFor({ state: 'hidden' });
   if (state.unpaidPayload?.month !== new Date().getMonth() + 1) {
     throw new Error(`unpaid send payload mismatch: ${JSON.stringify(state.unpaidPayload)}`);
+  }
+
+  await page.getByRole('button', { name: '출결관리 알림톡' }).click();
+  await page.getByLabel('솔라피 출결 테스트 전화번호').fill('01077778888');
+  await page.getByRole('button', { name: '출결 테스트' }).click();
+  await page.getByText('출결관리 테스트 메시지가 발송되었습니다.').waitFor();
+  if (state.solapiAttendancePayload?.phone !== '01077778888') {
+    throw new Error(`solapi attendance payload mismatch: ${JSON.stringify(state.solapiAttendancePayload)}`);
   }
 
   await assertNoRawVisibleText(page, 'notifications solapi desktop');
@@ -351,6 +386,8 @@ async function main() {
       deletedSenderId: desktop.state.deletedSenderId,
       errorHits: loadError.state.hits,
       mobileHits: mobile.state.hits,
+      sensAttendancePayload: desktop.state.sensAttendancePayload,
+      solapiAttendancePayload: desktop.state.solapiAttendancePayload,
       unpaidPayload: desktop.state.unpaidPayload,
     }, null, 2));
   } finally {
