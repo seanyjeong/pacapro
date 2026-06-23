@@ -59,6 +59,7 @@ export function StudentConsultationCard({
                     <button
                         type="button"
                         onClick={onViewDetail}
+                        aria-label="상담 기록 상세 및 PDF 저장"
                         className="rounded-md p-1.5 text-primary transition-colors hover:bg-primary/10"
                         title="상세보기 / PDF 저장"
                     >

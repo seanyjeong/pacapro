@@ -52,6 +52,7 @@
     "smoke:season-edit": "node scripts/smoke/season-edit-smoke.mjs",
     "smoke:season-detail": "node scripts/smoke/season-detail-smoke.mjs",
     "smoke:season-enroll": "node scripts/smoke/season-enroll-smoke.mjs",
+    "smoke:student-consultation-detail": "node scripts/smoke/student-consultation-detail-smoke.mjs",
     "smoke:student-detail": "node scripts/smoke/student-detail-smoke.mjs",
     "smoke:students": "node scripts/smoke/students-smoke.mjs",
     "smoke:student-form": "node scripts/smoke/student-form-smoke.mjs",

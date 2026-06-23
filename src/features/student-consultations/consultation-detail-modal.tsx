@@ -5,7 +5,7 @@ import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { Download, Loader2, X } from 'lucide-react';
+import { AlertCircle, Download, Loader2, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -52,9 +52,15 @@ export function ConsultationDetailModal({
 }: ConsultationDetailModalProps) {
   const printRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const handleDownloadPDF = async () => {
-    if (!printRef.current) return;
+    setPdfError(null);
+
+    if (!printRef.current) {
+      setPdfError('PDF를 준비하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
 
     try {
       setDownloading(true);
@@ -88,9 +94,8 @@ export function ConsultationDetailModal({
 
       pdf.addImage(imgData, 'PNG', x, margin, finalWidth, finalHeight);
       pdf.save(`상담기록_${studentName}_${consultation?.consultation_date || ''}.pdf`);
-    } catch (error) {
-      console.error('PDF 생성 실패:', error);
-      alert('PDF 생성에 실패했습니다.');
+    } catch {
+      setPdfError('PDF를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setDownloading(false);
     }
@@ -98,13 +103,20 @@ export function ConsultationDetailModal({
 
   if (!consultation) return null;
 
+  const handleClose = () => {
+    setPdfError(null);
+    onClose();
+  };
+
   const mockTestScores = parseJsonRecord(consultation.mock_test_scores);
   const physicalRecords = parseJsonRecord(consultation.physical_records);
   const hasPhysicalRecords = physicalRecords && Object.keys(physicalRecords).length > 0;
   const hasMockTestScores = mockTestScores && Object.keys(mockTestScores).length > 0;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(nextOpen) => {
+      if (!nextOpen) handleClose();
+    }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
         <DialogHeader className="p-4 border-b sticky top-0 bg-white z-10">
           <div className="flex items-center justify-between">
@@ -123,21 +135,30 @@ export function ConsultationDetailModal({
                   </>
                 )}
               </Button>
-              <Button variant="ghost" size="sm" onClick={onClose}>
+              <Button aria-label="상담 상세 닫기" variant="ghost" size="sm" onClick={handleClose}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </DialogHeader>
 
-        <div ref={printRef} data-pdf-content style={pdfStyles.container}>
-          <ConsultationPdfHeader academyName={academyName} />
-          <ConsultationInfoBox consultation={consultation} studentName={studentName} studentGrade={studentGrade} />
-          <AcademicSection consultation={consultation} mockTestScores={mockTestScores} hasMockTestScores={!!hasMockTestScores} />
-          <PhysicalSection consultation={consultation} physicalRecords={physicalRecords} hasPhysicalRecords={!!hasPhysicalRecords} />
-          <TargetUniversitySection consultation={consultation} />
-          <GeneralMemoSection memo={consultation.general_memo} />
-          <ConsultationFooter consultation={consultation} academyName={academyName} />
+        {pdfError ? (
+          <div role="alert" className="mx-4 mt-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-sm font-medium">{pdfError}</p>
+          </div>
+        ) : null}
+
+        <div className="overflow-x-auto pb-4">
+          <div ref={printRef} data-pdf-content style={pdfStyles.container}>
+            <ConsultationPdfHeader academyName={academyName} />
+            <ConsultationInfoBox consultation={consultation} studentName={studentName} studentGrade={studentGrade} />
+            <AcademicSection consultation={consultation} mockTestScores={mockTestScores} hasMockTestScores={!!hasMockTestScores} />
+            <PhysicalSection consultation={consultation} physicalRecords={physicalRecords} hasPhysicalRecords={!!hasPhysicalRecords} />
+            <TargetUniversitySection consultation={consultation} />
+            <GeneralMemoSection memo={consultation.general_memo} />
+            <ConsultationFooter consultation={consultation} academyName={academyName} />
+          </div>
         </div>
       </DialogContent>
     </Dialog>
