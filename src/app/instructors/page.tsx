@@ -124,6 +124,7 @@ export default function InstructorsPage() {
         <div className="order-1 xl:sticky xl:top-20 xl:order-2">
           <InstructorsWorkQueue
             currentCount={instructors.length}
+            filters={filters}
             instructors={instructors}
             onAddInstructor={handleAddInstructor}
             onFilterChange={handleBoardFilter}

@@ -5,6 +5,7 @@ import type { Instructor, InstructorFilters } from '@/lib/types/instructor';
 
 interface InstructorsWorkQueueProps {
   currentCount: number;
+  filters: InstructorFilters;
   instructors: Instructor[];
   onAddInstructor: () => void;
   onFilterChange: (filters: InstructorFilters) => void;
@@ -13,6 +14,7 @@ interface InstructorsWorkQueueProps {
 
 export function InstructorsWorkQueue({
   currentCount,
+  filters,
   instructors,
   onAddInstructor,
   onFilterChange,
@@ -24,6 +26,7 @@ export function InstructorsWorkQueue({
   const monthlyCount = instructors.filter((instructor) => instructor.salary_type === 'monthly').length;
   const perClassCount = instructors.filter((instructor) => instructor.salary_type === 'per_class').length;
   const focusInstructor = instructors.find((instructor) => instructor.status === 'active') ?? instructors[0] ?? null;
+  const isAllActive = !filters.status && !filters.salary_type && !filters.search;
 
   return (
     <aside className="space-y-4" data-testid="instructors-work-queue">
@@ -36,12 +39,12 @@ export function InstructorsWorkQueue({
 
         <div className="space-y-4 p-4">
           <div className="grid gap-2">
-            <QueueRow icon={Users} label="현재 목록" value={`${currentCount}명`} actionLabel="전체 강사 보기" onClick={onResetFilters} />
-            <QueueRow icon={UserCheck} label="재직" value={`${activeCount}명`} actionLabel="재직 보기" onClick={() => onFilterChange({ status: 'active' })} />
-            <QueueRow icon={UserX} label="휴직" value={`${leaveCount}명`} actionLabel="휴직 보기" onClick={() => onFilterChange({ status: 'on_leave' })} />
-            <QueueRow icon={Banknote} label="시급제" value={`${hourlyCount}명`} actionLabel="시급제 보기" onClick={() => onFilterChange({ salary_type: 'hourly' })} />
-            <QueueRow icon={CalendarDays} label="월급제" value={`${monthlyCount}명`} actionLabel="월급제 보기" onClick={() => onFilterChange({ salary_type: 'monthly' })} />
-            <QueueRow icon={ClipboardCheck} label="수업당" value={`${perClassCount}명`} actionLabel="수업당 보기" onClick={() => onFilterChange({ salary_type: 'per_class' })} />
+            <QueueRow active={isAllActive} icon={Users} label="현재 목록" value={`${currentCount}명`} actionLabel="전체 강사 보기" onClick={onResetFilters} />
+            <QueueRow active={filters.status === 'active'} icon={UserCheck} label="재직" value={`${activeCount}명`} actionLabel="재직 보기" onClick={() => onFilterChange({ status: 'active' })} />
+            <QueueRow active={filters.status === 'on_leave'} icon={UserX} label="휴직" value={`${leaveCount}명`} actionLabel="휴직 보기" onClick={() => onFilterChange({ status: 'on_leave' })} />
+            <QueueRow active={filters.salary_type === 'hourly'} icon={Banknote} label="시급제" value={`${hourlyCount}명`} actionLabel="시급제 보기" onClick={() => onFilterChange({ salary_type: 'hourly' })} />
+            <QueueRow active={filters.salary_type === 'monthly'} icon={CalendarDays} label="월급제" value={`${monthlyCount}명`} actionLabel="월급제 보기" onClick={() => onFilterChange({ salary_type: 'monthly' })} />
+            <QueueRow active={filters.salary_type === 'per_class'} icon={ClipboardCheck} label="수업당" value={`${perClassCount}명`} actionLabel="수업당 보기" onClick={() => onFilterChange({ salary_type: 'per_class' })} />
           </div>
 
           <Button className="w-full justify-start gap-2" type="button" onClick={onAddInstructor}>
@@ -82,12 +85,14 @@ export function InstructorsWorkQueue({
 
 function QueueRow({
   actionLabel,
+  active,
   icon: Icon,
   label,
   onClick,
   value,
 }: {
   actionLabel: string;
+  active: boolean;
   icon: typeof Users;
   label: string;
   onClick: () => void;
@@ -96,7 +101,11 @@ function QueueRow({
   return (
     <button
       aria-label={actionLabel}
-      className="rounded-md border border-border bg-muted/30 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      aria-pressed={active}
+      className={[
+        'rounded-md border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+        active ? 'border-blue-300 bg-blue-50' : 'border-border bg-muted/30 hover:bg-muted',
+      ].join(' ')}
       type="button"
       onClick={onClick}
     >

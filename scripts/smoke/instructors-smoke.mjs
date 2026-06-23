@@ -219,10 +219,16 @@ async function runListDesktop(browser) {
   await page.getByTestId('instructors-work-queue').getByRole('button', { name: '휴직 보기' }).click();
   await desktopList.getByText('이휴직').waitFor();
   await page.getByTestId('instructors-work-queue').getByText(/현재 목록\s*1명/).waitFor();
+  if ((await page.getByTestId('instructors-work-queue').getByRole('button', { name: '휴직 보기' }).getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('instructor leave shortcut did not expose selected state');
+  }
   if (await desktopList.getByText('최강사').count()) {
     throw new Error('instructor leave shortcut did not filter active instructors');
   }
   await page.getByTestId('instructors-work-queue').getByRole('button', { name: '전체 강사 보기' }).click();
+  if ((await page.getByTestId('instructors-work-queue').getByRole('button', { name: '전체 강사 보기' }).getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('instructor reset shortcut did not expose selected state');
+  }
   await desktopList.getByText('최강사').waitFor();
   await assertNoRawVisibleText(page, 'instructors list desktop');
   await assertNoHorizontalOverflow(page, 'instructors list desktop');
