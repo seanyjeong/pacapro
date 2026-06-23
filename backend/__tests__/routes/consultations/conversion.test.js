@@ -180,6 +180,7 @@ describe('POST /paca/consultations/:id/convert-to-pending', () => {
                 parent_phone: 'enc:010', inquiry_content: '문의내용',
                 preferred_date: '2026-05-01',
             }]])
+            .mockResolvedValueOnce([[]]) // SELECT students 중복 확인 (기존 학생 없음)
             .mockResolvedValueOnce([{ insertId: 250 }])
             .mockResolvedValueOnce([{}]); // UPDATE consultations
 
