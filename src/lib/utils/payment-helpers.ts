@@ -198,3 +198,17 @@ export function getOverdueWarningMessage(daysOverdue: number): string {
   if (daysOverdue <= 14) return `${daysOverdue}일 연체 중입니다.`;
   return `${daysOverdue}일 연체 - 즉시 납부가 필요합니다.`;
 }
+
+
+/**
+ * 시즌비 납부예정 판정 — 시즌비이고 납부 마감일(due_date)이 아직 안 지났으면 true.
+ * 마감 전 시즌비는 "미납"이 아니라 "납부예정" (미납 집계/알림 대상에서 제외).
+ */
+export function isSeasonUpcoming(p: { payment_type?: string; payment_status?: string; due_date?: string }): boolean {
+  if (!p || p.payment_type !== 'season') return false;
+  if (p.payment_status === 'paid') return false;
+  if (!p.due_date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return new Date(p.due_date) > today;
+}

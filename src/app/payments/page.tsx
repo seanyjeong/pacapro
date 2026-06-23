@@ -14,6 +14,7 @@ import { paymentsAPI } from '@/lib/api/payments';
 import { studentsAPI } from '@/lib/api/students';
 import { notificationsAPI } from '@/lib/api/notifications';
 import { usePermissions } from '@/lib/utils/permissions';
+import { isSeasonUpcoming } from '@/lib/utils/payment-helpers';
 import {
   PAYMENT_STATUS_OPTIONS,
   PAYMENT_TYPE_OPTIONS,
@@ -110,7 +111,7 @@ function PaymentsPageContent() {
   };
 
   const handleSendUnpaidNotification = async () => {
-    const unpaidList = filteredPayments.filter(p => p.payment_status !== 'paid');
+    const unpaidList = filteredPayments.filter(p => p.payment_status !== 'paid' && !isSeasonUpcoming(p));
     if (unpaidList.length === 0) {
       toast.error('미납자가 없습니다.');
       return;
@@ -209,7 +210,7 @@ function PaymentsPageContent() {
   const previousUnpaidPayments = filteredPayments.filter((p) => p.year_month !== selectedYearMonth);
 
   const paidCount = currentMonthPayments.filter((p) => p.payment_status === 'paid').length;
-  const unpaidCount = currentMonthPayments.filter((p) => p.payment_status === 'pending').length;
+  const unpaidCount = currentMonthPayments.filter((p) => p.payment_status === 'pending' && !isSeasonUpcoming(p)).length;
   const partialCount = currentMonthPayments.filter((p) => p.payment_status === 'partial').length;
   const totalAmount = Math.floor(currentMonthPayments.reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
   const paidAmount = Math.floor(currentMonthPayments

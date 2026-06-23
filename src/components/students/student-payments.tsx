@@ -16,6 +16,7 @@ import type { StudentPayment, RestCredit } from '@/lib/types/student';
 import { formatDate, formatCurrency, getPaymentStatusColor } from '@/lib/utils/student-helpers';
 import { PAYMENT_STATUS_LABELS, REST_CREDIT_TYPE_LABELS, REST_CREDIT_STATUS_LABELS, parseClassDays } from '@/lib/types/student';
 import { PAYMENT_METHOD_LABELS } from '@/lib/types/payment';
+import { isSeasonUpcoming } from '@/lib/utils/payment-helpers';
 import { studentsAPI } from '@/lib/api/students';
 import { ManualCreditModal } from './manual-credit-modal';
 import { PrepaidPaymentModal } from '@/components/payments/prepaid-payment-modal';
@@ -404,11 +405,13 @@ export function StudentPaymentsComponent({
                         {/* 상태 */}
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getPaymentStatusColor(
-                              payment.payment_status
-                            )}`}
+                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${
+                              isSeasonUpcoming(payment)
+                                ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700'
+                                : getPaymentStatusColor(payment.payment_status)
+                            }`}
                           >
-                            {PAYMENT_STATUS_LABELS[payment.payment_status] || payment.payment_status}
+                            {isSeasonUpcoming(payment) ? '납부예정' : (PAYMENT_STATUS_LABELS[payment.payment_status] || payment.payment_status)}
                           </span>
                         </td>
 

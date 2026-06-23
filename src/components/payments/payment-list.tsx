@@ -27,6 +27,7 @@ import {
   getPaymentStatusColor,
   getPaymentTypeColor,
   isOverdue,
+  isSeasonUpcoming,
 } from '@/lib/utils/payment-helpers';
 import {
   PAYMENT_TYPE_LABELS,
@@ -242,11 +243,13 @@ export function PaymentList({
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentStatusColor(
-                            payment.payment_status
-                          )}`}
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            isSeasonUpcoming(payment)
+                              ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-700'
+                              : getPaymentStatusColor(payment.payment_status)
+                          }`}
                         >
-                          {PAYMENT_STATUS_LABELS[payment.payment_status]}
+                          {isSeasonUpcoming(payment) ? '납부예정' : PAYMENT_STATUS_LABELS[payment.payment_status]}
                         </span>
                         {payment.payment_method && payment.payment_status === 'paid' && (
                           <span className="text-xs text-muted-foreground">
