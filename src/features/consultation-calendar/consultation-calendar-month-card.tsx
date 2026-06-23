@@ -34,7 +34,7 @@ export function ConsultationCalendarMonthCard({
   onCreateLearning,
 }: ConsultationCalendarMonthCardProps) {
   return (
-    <Card className="rounded-md shadow-none">
+    <Card className="rounded-md shadow-none" data-testid="consultation-calendar-month-card">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={onPreviousMonth}>

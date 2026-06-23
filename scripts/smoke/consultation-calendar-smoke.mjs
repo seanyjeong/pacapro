@@ -120,7 +120,8 @@ async function runDesktop(browser) {
 
   await page.goto(`/consultations/calendar?date=${TEST_DATE}`, { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 달력' }).waitFor();
-  await page.getByText('2026년 6월').waitFor();
+  await waitForCalendarShell(page);
+  await page.getByTestId('consultation-calendar-month-card').getByText('2026년 6월').waitFor();
   await page.getByText('김진우').first().waitFor();
   await page.getByText('상담 일정').waitFor();
   await assertNoRawVisibleText(page, 'consultation calendar desktop');
@@ -143,6 +144,7 @@ async function runMobile(browser) {
 
   await page.goto('/consultations/calendar', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 달력' }).waitFor();
+  await waitForCalendarShell(page);
   await page.getByText('김진우').first().waitFor();
   await assertNoRawVisibleText(page, 'consultation calendar mobile');
   await assertNoHorizontalOverflow(page, 'consultation calendar mobile');
@@ -157,6 +159,8 @@ async function runLoadError(browser) {
   const { context, page } = result;
 
   await page.goto('/consultations/calendar', { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('consultation-calendar-operations-workspace').waitFor();
+  await page.getByTestId('consultation-calendar-work-queue').waitFor();
   await page.getByRole('heading', { name: '상담 달력 정보를 불러오지 못했습니다' }).waitFor();
   await page.getByText('잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'consultation calendar load error');
@@ -165,6 +169,17 @@ async function runLoadError(browser) {
 
   await context.close();
   return result;
+}
+
+async function waitForCalendarShell(page) {
+  await page.getByTestId('consultation-calendar-operations-workspace').waitFor();
+  await page.getByTestId('consultation-calendar-month-card').waitFor();
+  const queue = page.getByTestId('consultation-calendar-work-queue');
+  await queue.waitFor();
+  await queue.getByText('월간 상담 운영 보드').waitFor();
+  await queue.getByText('신규 상담', { exact: true }).waitFor();
+  await queue.getByText('재원생 상담', { exact: true }).waitFor();
+  await queue.getByText('상담 메모', { exact: true }).waitFor();
 }
 
 function assertDiagnostics(result) {

@@ -6,14 +6,19 @@ import { ConsultationCalendarDetailDialog } from './consultation-calendar-detail
 import { ConsultationCalendarHeader } from './consultation-calendar-header';
 import { ConsultationCalendarLearningDialog } from './consultation-calendar-learning-dialog';
 import { ConsultationCalendarMonthCard } from './consultation-calendar-month-card';
+import { ConsultationCalendarWorkQueue } from './consultation-calendar-work-queue';
 import { useConsultationCalendarState } from './use-consultation-calendar-state';
 
 export function ConsultationCalendarContent() {
   const state = useConsultationCalendarState();
+  const newInquiryCount = state.consultations.filter((item) => item.consultation_type === 'new_registration').length;
+  const learningCount = state.consultations.filter((item) => item.consultation_type === 'learning').length;
+  const pendingCount = state.consultations.filter((item) => item.status === 'pending').length;
+  const confirmedCount = state.consultations.filter((item) => item.status === 'confirmed').length;
 
   return (
     <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
+      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl" data-testid="consultation-calendar-operations-workspace">
         <ConsultationCalendarHeader
           fromSchedule={state.fromSchedule}
           memoCount={state.studentMemos.length}
@@ -31,18 +36,29 @@ export function ConsultationCalendarContent() {
             </div>
           </section>
         ) : null}
-        <ConsultationCalendarMonthCard
-          currentMonth={state.currentMonth}
-          loading={state.loading}
-          calendarDays={state.calendarDays}
-          startPadding={state.startPadding}
-          onPreviousMonth={state.previousMonth}
-          onNextMonth={state.nextMonth}
-          getConsultationsForDate={state.getConsultationsForDate}
-          getMemosForDate={state.getMemosForDate}
-          onDateClick={state.handleDateClick}
-          onCreateLearning={state.openLearningModal}
-        />
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <ConsultationCalendarMonthCard
+            currentMonth={state.currentMonth}
+            loading={state.loading}
+            calendarDays={state.calendarDays}
+            startPadding={state.startPadding}
+            onPreviousMonth={state.previousMonth}
+            onNextMonth={state.nextMonth}
+            getConsultationsForDate={state.getConsultationsForDate}
+            getMemosForDate={state.getMemosForDate}
+            onDateClick={state.handleDateClick}
+            onCreateLearning={state.openLearningModal}
+          />
+          <ConsultationCalendarWorkQueue
+            confirmedCount={confirmedCount}
+            learningCount={learningCount}
+            memoCount={state.studentMemos.length}
+            newInquiryCount={newInquiryCount}
+            onCreateLearningToday={() => state.openLearningModal(new Date())}
+            pendingCount={pendingCount}
+            totalCount={state.consultations.length}
+          />
+        </div>
       </div>
       <ConsultationCalendarDayListDialog
         open={state.dayListModalOpen}
