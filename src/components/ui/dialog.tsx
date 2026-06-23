@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import { cn } from '@/lib/utils/cn';
-import { X } from 'lucide-react';
 
 interface DialogProps {
   open: boolean;
@@ -34,6 +33,8 @@ interface DialogContentProps {
 export function DialogContent({ children, className }: DialogContentProps) {
   return (
     <div
+      role="dialog"
+      aria-modal="true"
       className={cn(
         'relative bg-card rounded-xl border border-border/50',
         'shadow-[0_4px_8px_0_rgba(0,0,0,0.06)] dark:shadow-[0_4px_8px_0_rgba(0,0,0,0.12)]',

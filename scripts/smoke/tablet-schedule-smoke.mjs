@@ -44,7 +44,7 @@ const SCHEDULES = [
 ];
 
 function makeState(mode = 'success') {
-  return { hits: [], mode };
+  return { assignmentPayload: null, hits: [], mode };
 }
 
 async function installRoutes(context, state) {
@@ -82,6 +82,32 @@ async function installRoutes(context, state) {
 
     if (method === 'GET' && path === '/consultations/calendar/events') {
       return jsonRoute(route, { events: { [range.today]: [{ id: 1, student_name: '상담학생' }] } });
+    }
+
+    if (method === 'GET' && path === `/schedules/date/${range.today}/instructor-schedules`) {
+      const schedulesBySlot = { afternoon: [], evening: [], morning: [] };
+      (state.assignmentPayload?.schedules || []).forEach((schedule) => {
+        schedulesBySlot[schedule.time_slot].push({
+          instructor_id: schedule.instructor_id,
+          instructor_name: schedule.instructor_id === 3 ? '박코치' : '김코치',
+          salary_type: schedule.instructor_id === 3 ? 'hourly' : 'monthly',
+          scheduled_start_time: schedule.scheduled_start_time,
+          scheduled_end_time: schedule.scheduled_end_time,
+        });
+      });
+
+      return jsonRoute(route, {
+        instructors: [
+          { id: 3, name: '박코치', salary_type: 'hourly' },
+          { id: 4, name: '김코치', salary_type: 'monthly' },
+        ],
+        schedules: schedulesBySlot,
+      });
+    }
+
+    if (method === 'POST' && path === `/schedules/date/${range.today}/instructor-schedules`) {
+      state.assignmentPayload = request.postDataJSON();
+      return jsonRoute(route, { message: 'saved' });
     }
 
     return jsonRoute(route, { message: 'mocked' });
@@ -128,6 +154,46 @@ async function runNormal(browser, viewport, label) {
   return result;
 }
 
+async function runInstructorAssignmentSave(browser) {
+  const result = await createTabletSchedulePage(browser, 'success', { width: 1180, height: 820 });
+  const { context, page, state } = result;
+
+  await page.goto('/tablet/schedule', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '오늘 수업 운영' }).waitFor();
+  await page.getByRole('button', { name: '강사 배정', exact: true }).click();
+
+  const dialog = page.getByRole('dialog');
+  await dialog.getByRole('heading', { name: '강사 근무 배정' }).waitFor();
+  await dialog.getByRole('button', { name: /박코치/ }).click();
+  await dialog.locator('input[type="time"]').first().fill('10:00');
+  await dialog.locator('input[type="time"]').nth(1).fill('12:30');
+
+  const saveResponse = page.waitForResponse((response) => (
+    response.request().method() === 'POST'
+    && response.url().includes(`/schedules/date/${range.today}/instructor-schedules`)
+  ));
+  await dialog.getByRole('button', { name: '저장' }).click();
+  await saveResponse;
+  await dialog.getByText('현재 1명').waitFor();
+
+  const submitted = state.assignmentPayload?.schedules?.[0];
+  if (
+    submitted?.instructor_id !== 3
+    || submitted?.time_slot !== 'morning'
+    || submitted?.scheduled_start_time !== '10:00'
+    || submitted?.scheduled_end_time !== '12:30'
+  ) {
+    throw new Error(`unexpected instructor assignment payload: ${JSON.stringify(state.assignmentPayload)}`);
+  }
+
+  await assertNoRawVisibleText(page, 'tablet schedule instructor assignment');
+  await assertNoHorizontalOverflow(page, 'tablet schedule instructor assignment');
+  await page.screenshot({ path: '/Users/etlab/paca-tablet-schedule-assignment.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 async function runLoadError(browser) {
   const result = await createTabletSchedulePage(browser, 'load-error', { width: 820, height: 1180 });
   const { context, page } = result;
@@ -153,9 +219,11 @@ async function main() {
   try {
     const landscape = await runNormal(browser, { width: 1180, height: 820 }, 'landscape');
     const portrait = await runNormal(browser, { width: 820, height: 1180 }, 'portrait');
+    const assignment = await runInstructorAssignmentSave(browser);
     const loadError = await runLoadError(browser);
-    [landscape, portrait, loadError].forEach(assertDiagnostics);
+    [landscape, portrait, assignment, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
+      assignmentPayload: assignment.state.assignmentPayload,
       landscapeHits: landscape.state.hits,
       loadErrorHits: loadError.state.hits,
       portraitHits: portrait.state.hits,

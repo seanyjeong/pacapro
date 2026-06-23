@@ -6,12 +6,7 @@
  * - 태블릿/모바일에서 날짜 클릭 시 사용
  */
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { InstructorSchedulePanel } from './instructor-schedule-panel';
 
 interface InstructorScheduleModalProps {
