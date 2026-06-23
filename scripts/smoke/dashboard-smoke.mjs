@@ -103,6 +103,12 @@ async function installRoutes(context, state) {
       state.verifyPayloads.push(JSON.parse(request.postData() || '{}'));
       return jsonRoute(route, { message: 'verified', verified: true });
     }
+    if (method === 'POST' && path === '/peak-sso/code') {
+      if (state.failPeakSso) {
+        return jsonRoute(route, { message: 'PEAK SSO HTTP 500 stack trace' }, 500);
+      }
+      return jsonRoute(route, { peakUrl: 'https://peak-rose.vercel.app/login?code=smoke', success: true });
+    }
 
     return jsonRoute(route, { message: 'mocked' });
   });
@@ -136,6 +142,21 @@ async function revealAmounts(page, state) {
   }
 }
 
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
+}
+
 async function runDesktopPrivacy(browser) {
   const state = makeState();
   const context = await createAuthedContext(browser, { width: 1365, height: 900 });
@@ -154,6 +175,30 @@ async function runDesktopPrivacy(browser) {
   await assertAmountHidden(page, 'dashboard desktop rehiden');
   await assertNoRawVisibleText(page, 'dashboard desktop');
   await assertNoHorizontalOverflow(page, 'dashboard desktop');
+
+  await context.close();
+  return { state, diagnostics };
+}
+
+async function runPeakSsoFallback(browser) {
+  const state = makeState({ failPeakSso: true });
+  const context = await createAuthedContext(browser, { width: 1365, height: 900 });
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  const diagnostics = createDiagnostics(page);
+
+  await openDashboard(page);
+  const popupPromise = page.waitForEvent('popup');
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: 'P-EAK 실기관리' }), 'peak SSO fallback');
+  const popup = await popupPromise;
+  if (!popup.url().startsWith('https://peak-rose.vercel.app')) {
+    throw new Error(`unexpected peak fallback URL: ${popup.url()}`);
+  }
+  await page.getByText('피크 자동 로그인을 준비하지 못했습니다. 피크 로그인 화면으로 이동합니다.').waitFor();
+  await assertNoRawVisibleText(page, 'peak SSO fallback');
+  await assertNoHorizontalOverflow(page, 'peak SSO fallback');
+  await page.screenshot({ path: '/Users/etlab/paca-dashboard-peak-sso-fallback.png', fullPage: true });
+  await popup.close();
 
   await context.close();
   return { state, diagnostics };
@@ -202,15 +247,18 @@ async function main() {
   const browser = await launchSmokeBrowser();
   try {
     const desktop = await runDesktopPrivacy(browser);
+    const peakFallback = await runPeakSsoFallback(browser);
     const mobile = await runMobilePrivacy(browser);
     const loadError = await runLoadError(browser);
-    [desktop, mobile, loadError].forEach(assertDiagnostics);
+    [desktop, peakFallback, mobile, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
+      peakFallbackHits: peakFallback.state.hits,
       mobileHits: mobile.state.hits,
       loadErrorHits: loadError.state.hits,
       verifyPayloads: desktop.state.verifyPayloads,
       desktopConsoleErrors: desktop.diagnostics.consoleErrors,
+      peakFallbackConsoleErrors: peakFallback.diagnostics.consoleErrors,
       mobileConsoleErrors: mobile.diagnostics.consoleErrors,
       loadErrorConsoleErrors: loadError.diagnostics.consoleErrors,
     }, null, 2));

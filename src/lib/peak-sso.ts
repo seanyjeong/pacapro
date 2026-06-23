@@ -1,3 +1,5 @@
+import { toast } from 'sonner';
+
 const PACA_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
 const PEAK_FRONTEND_URL = process.env.NEXT_PUBLIC_PEAK_URL || 'https://peak-rose.vercel.app';
 
@@ -31,7 +33,7 @@ export async function openPeakSso(): Promise<void> {
     const peakUrl = data.peakUrl || (data.code ? `${PEAK_FRONTEND_URL}/login?code=${encodeURIComponent(data.code)}` : PEAK_FRONTEND_URL);
     window.open(peakUrl, '_blank');
   } catch {
-    alert('피크 자동 로그인을 준비하지 못했습니다. 피크 로그인 화면으로 이동합니다.');
+    toast.warning('피크 자동 로그인을 준비하지 못했습니다. 피크 로그인 화면으로 이동합니다.');
     window.open(PEAK_FRONTEND_URL, '_blank');
   }
 }
