@@ -1,18 +1,22 @@
 import Link from 'next/link';
-import { Banknote, CalendarDays, ClipboardCheck, Plus, Smartphone, UserCheck, Users, UserX } from 'lucide-react';
+import { Banknote, CalendarDays, ClipboardCheck, Eye, Plus, Smartphone, UserCheck, Users, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Instructor } from '@/lib/types/instructor';
+import type { Instructor, InstructorFilters } from '@/lib/types/instructor';
 
 interface InstructorsWorkQueueProps {
   currentCount: number;
   instructors: Instructor[];
   onAddInstructor: () => void;
+  onFilterChange: (filters: InstructorFilters) => void;
+  onResetFilters: () => void;
 }
 
 export function InstructorsWorkQueue({
   currentCount,
   instructors,
   onAddInstructor,
+  onFilterChange,
+  onResetFilters,
 }: InstructorsWorkQueueProps) {
   const activeCount = instructors.filter((instructor) => instructor.status === 'active').length;
   const leaveCount = instructors.filter((instructor) => instructor.status === 'on_leave').length;
@@ -32,12 +36,12 @@ export function InstructorsWorkQueue({
 
         <div className="space-y-4 p-4">
           <div className="grid gap-2">
-            <QueueRow icon={Users} label="현재 목록" value={`${currentCount}명`} />
-            <QueueRow icon={UserCheck} label="재직" value={`${activeCount}명`} />
-            <QueueRow icon={UserX} label="휴직" value={`${leaveCount}명`} />
-            <QueueRow icon={Banknote} label="시급제" value={`${hourlyCount}명`} />
-            <QueueRow icon={CalendarDays} label="월급제" value={`${monthlyCount}명`} />
-            <QueueRow icon={ClipboardCheck} label="수업당" value={`${perClassCount}명`} />
+            <QueueRow icon={Users} label="현재 목록" value={`${currentCount}명`} actionLabel="전체 강사 보기" onClick={onResetFilters} />
+            <QueueRow icon={UserCheck} label="재직" value={`${activeCount}명`} actionLabel="재직 보기" onClick={() => onFilterChange({ status: 'active' })} />
+            <QueueRow icon={UserX} label="휴직" value={`${leaveCount}명`} actionLabel="휴직 보기" onClick={() => onFilterChange({ status: 'on_leave' })} />
+            <QueueRow icon={Banknote} label="시급제" value={`${hourlyCount}명`} actionLabel="시급제 보기" onClick={() => onFilterChange({ salary_type: 'hourly' })} />
+            <QueueRow icon={CalendarDays} label="월급제" value={`${monthlyCount}명`} actionLabel="월급제 보기" onClick={() => onFilterChange({ salary_type: 'monthly' })} />
+            <QueueRow icon={ClipboardCheck} label="수업당" value={`${perClassCount}명`} actionLabel="수업당 보기" onClick={() => onFilterChange({ salary_type: 'per_class' })} />
           </div>
 
           <Button className="w-full justify-start gap-2" type="button" onClick={onAddInstructor}>
@@ -50,10 +54,17 @@ export function InstructorsWorkQueue({
       {focusInstructor ? (
         <section className="rounded-md border border-border bg-card p-4">
           <p className="text-xs font-semibold text-muted-foreground">바로 확인할 강사</p>
-          <div className="mt-3 rounded-md border border-border bg-muted/30 p-3">
-            <p className="text-sm font-semibold text-foreground">{focusInstructor.name}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{focusInstructor.phone || '연락처 없음'}</p>
-          </div>
+          <Link
+            aria-label={`${focusInstructor.name} 상세 보기`}
+            className="mt-3 flex items-start justify-between gap-3 rounded-md border border-border bg-muted/30 p-3 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            href={`/instructors/${focusInstructor.id}`}
+          >
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-foreground">{focusInstructor.name}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">{focusInstructor.phone || '연락처 없음'}</span>
+            </span>
+            <Eye className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+          </Link>
         </section>
       ) : null}
 
@@ -70,16 +81,25 @@ export function InstructorsWorkQueue({
 }
 
 function QueueRow({
+  actionLabel,
   icon: Icon,
   label,
+  onClick,
   value,
 }: {
+  actionLabel: string;
   icon: typeof Users;
   label: string;
+  onClick: () => void;
   value: string;
 }) {
   return (
-    <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5">
+    <button
+      aria-label={actionLabel}
+      className="rounded-md border border-border bg-muted/30 px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      type="button"
+      onClick={onClick}
+    >
       <div className="grid grid-cols-1 gap-1 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
         <div className="flex min-w-0 items-center gap-2">
           <Icon className="h-4 w-4 text-muted-foreground" />
@@ -87,7 +107,7 @@ function QueueRow({
         </div>
         <span className="text-sm font-semibold text-foreground">{value}</span>
       </div>
-    </div>
+    </button>
   );
 }
 

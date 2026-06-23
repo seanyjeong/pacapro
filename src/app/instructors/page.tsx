@@ -12,13 +12,14 @@ import { InstructorPageHeader } from '@/features/instructors/instructor-page-hea
 import { InstructorErrorPanel } from '@/features/instructors/instructor-page-states';
 import { InstructorsWorkQueue } from '@/features/instructors/instructors-work-queue';
 import { useInstructors } from '@/hooks/use-instructors';
+import type { InstructorFilters } from '@/lib/types/instructor';
 
 export default function InstructorsPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
 
   // useInstructors 훅 사용
-  const { instructors, loading, error, filters, updateFilters, resetFilters, reload } = useInstructors();
+  const { instructors, loading, error, filters, setFilters, updateFilters, resetFilters, reload } = useInstructors();
 
   // 검색어 필터링 적용
   const handleSearch = (query: string) => {
@@ -39,6 +40,11 @@ export default function InstructorsPage() {
   const handleResetFilters = () => {
     setSearchQuery('');
     resetFilters();
+  };
+
+  const handleBoardFilter = (nextFilters: InstructorFilters) => {
+    setSearchQuery('');
+    setFilters(nextFilters);
   };
 
   if (error && !loading) {
@@ -120,6 +126,8 @@ export default function InstructorsPage() {
             currentCount={instructors.length}
             instructors={instructors}
             onAddInstructor={handleAddInstructor}
+            onFilterChange={handleBoardFilter}
+            onResetFilters={handleResetFilters}
           />
         </div>
       </div>

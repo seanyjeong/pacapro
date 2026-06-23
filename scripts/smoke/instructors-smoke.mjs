@@ -99,6 +99,19 @@ function makeState(mode) {
   return { createPayload: null, deletedInstructor: null, editPayload: null, hits: [], mode };
 }
 
+function filterInstructors(url) {
+  const status = url.searchParams.get('status');
+  const salaryType = url.searchParams.get('salary_type');
+  const search = url.searchParams.get('search')?.trim().toLowerCase();
+
+  return INSTRUCTORS.filter((instructor) => {
+    if (status && instructor.status !== status) return false;
+    if (salaryType && instructor.salary_type !== salaryType) return false;
+    if (search && !`${instructor.name} ${instructor.phone || ''} ${instructor.email || ''}`.toLowerCase().includes(search)) return false;
+    return true;
+  });
+}
+
 async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
@@ -115,7 +128,7 @@ async function installRoutes(context, state) {
       if (state.mode === 'list-error') {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
       }
-      return jsonRoute(route, { message: 'ok', instructors: INSTRUCTORS });
+      return jsonRoute(route, { message: 'ok', instructors: filterInstructors(url) });
     }
 
     if (method === 'GET' && path === '/instructors/31') {
@@ -198,6 +211,19 @@ async function runListDesktop(browser) {
   await desktopList.getByText('최강사').waitFor();
   await desktopList.getByText('박코치').waitFor();
   await desktopList.getByRole('button', { name: '최강사 상세 보기' }).waitFor();
+  const focusLink = page.getByTestId('instructors-work-queue').getByRole('link', { name: '최강사 상세 보기' });
+  await focusLink.waitFor();
+  if ((await focusLink.getAttribute('href')) !== '/instructors/31') {
+    throw new Error('focused instructor detail link mismatch');
+  }
+  await page.getByTestId('instructors-work-queue').getByRole('button', { name: '휴직 보기' }).click();
+  await desktopList.getByText('이휴직').waitFor();
+  await page.getByTestId('instructors-work-queue').getByText(/현재 목록\s*1명/).waitFor();
+  if (await desktopList.getByText('최강사').count()) {
+    throw new Error('instructor leave shortcut did not filter active instructors');
+  }
+  await page.getByTestId('instructors-work-queue').getByRole('button', { name: '전체 강사 보기' }).click();
+  await desktopList.getByText('최강사').waitFor();
   await assertNoRawVisibleText(page, 'instructors list desktop');
   await assertNoHorizontalOverflow(page, 'instructors list desktop');
   await page.screenshot({ path: '/Users/etlab/paca-instructors-desktop.png', fullPage: true });
