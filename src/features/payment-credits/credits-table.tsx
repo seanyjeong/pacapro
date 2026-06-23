@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { WalletCards } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { Credit } from '@/lib/types/payment';
@@ -39,7 +40,13 @@ export function CreditsTable({ credits }: CreditsTableProps) {
           <article key={credit.id} className="rounded-md border border-border bg-background p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{credit.student_name}</p>
+                <Link
+                  aria-label={`${credit.student_name} 학생 상세 보기`}
+                  className="truncate text-sm font-semibold text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                  href={`/students/${credit.student_id}`}
+                >
+                  {credit.student_name}
+                </Link>
                 {credit.student_status !== 'active' ? (
                   <p className="mt-1 text-xs text-muted-foreground">{getStudentStatusLabel(credit.student_status)}</p>
                 ) : null}
@@ -99,7 +106,13 @@ export function CreditsTable({ credits }: CreditsTableProps) {
             {credits.map((credit) => (
               <tr key={credit.id} className="transition-colors hover:bg-muted/35">
                 <td className="px-5 py-4">
-                  <div className="font-medium text-foreground">{credit.student_name}</div>
+                  <Link
+                    aria-label={`${credit.student_name} 학생 상세 보기`}
+                    className="font-medium text-foreground underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                    href={`/students/${credit.student_id}`}
+                  >
+                    {credit.student_name}
+                  </Link>
                   {credit.student_status !== 'active' ? (
                     <div className="mt-1 text-xs text-muted-foreground">{getStudentStatusLabel(credit.student_status)}</div>
                   ) : null}

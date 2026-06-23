@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { AlertCircle, Layers3, RefreshCw, RotateCcw, Users, WalletCards } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -101,7 +102,12 @@ export function CreditsOperationsBoard({
           </div>
           <div className="space-y-2">
             {visibleStudents.map((student) => (
-              <div key={student.id} className="rounded-md border border-slate-200 bg-slate-50 p-3">
+              <Link
+                key={student.id}
+                aria-label={`${student.name} 학생 상세 보기`}
+                className="block rounded-md border border-slate-200 bg-slate-50 p-3 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900"
+                href={`/students/${student.id}`}
+              >
                 <div className="flex items-center justify-between gap-2">
                   <p className="min-w-0 truncate text-sm font-semibold text-slate-950">{student.name}</p>
                   <span className="text-xs text-slate-500">{getStudentStatusLabel(student.student_status)}</span>
@@ -109,7 +115,7 @@ export function CreditsOperationsBoard({
                 <p className="mt-1 text-sm text-slate-700">
                   {formatWon(student.total_remaining)} · {student.credit_count}건
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
           {hiddenStudentCount > 0 ? <p className="text-xs text-slate-500">외 {hiddenStudentCount}명은 표에서 확인하세요.</p> : null}

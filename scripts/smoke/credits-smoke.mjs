@@ -131,6 +131,11 @@ async function runNormal(browser) {
   await page.locator('tr:has-text("박민수")').waitFor();
   await page.getByText('230,000원').first().waitFor();
   await assertOperationsBoard(page);
+  const tableStudentLink = page.locator('tr:has-text("박민수")').getByRole('link', { name: '박민수 학생 상세 보기' });
+  await tableStudentLink.waitFor();
+  if ((await tableStudentLink.getAttribute('href')) !== '/students/41') {
+    throw new Error('missing credit table student link');
+  }
   await assertNoRawVisibleText(page, 'credits desktop');
   await assertNoHorizontalOverflow(page, 'credits desktop');
   await page.screenshot({ path: '/Users/etlab/paca-credits-desktop.png', fullPage: true });
@@ -166,6 +171,11 @@ async function assertOperationsBoard(page) {
   await board.getByRole('button', { name: '대기 크레딧 보기' }).waitFor();
   await board.getByRole('button', { name: '부분적용 보기' }).waitFor();
   await board.getByRole('button', { name: '전체 크레딧 보기' }).waitFor();
+  const boardStudentLink = board.getByRole('link', { name: '박민수 학생 상세 보기' });
+  await boardStudentLink.waitFor();
+  if ((await boardStudentLink.getAttribute('href')) !== '/students/41') {
+    throw new Error('missing credit board student link');
+  }
 }
 
 async function runError(browser) {
