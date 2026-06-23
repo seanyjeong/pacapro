@@ -372,8 +372,9 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                     due_date,
                     payment_status,
                     description,
+                    is_prorated,
                     recorded_by
-                ) VALUES (?, ?, ?, 'monthly', ?, ?, 0, ?, ?, 'pending', ?, ?)`,
+                ) VALUES (?, ?, ?, 'monthly', ?, ?, 0, ?, ?, 'pending', ?, 1, ?)`,
                 [
                     result.insertId,
                     req.user.academyId,
