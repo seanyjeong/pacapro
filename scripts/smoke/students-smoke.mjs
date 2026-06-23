@@ -160,7 +160,23 @@ async function runDesktop(browser) {
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영' }).waitFor();
+  await waitForStudentsShell(page);
   await page.getByRole('button', { name: /재원생/ }).click();
+  const board = page.getByTestId('students-work-queue');
+  await board.getByText('학생 운영 보드').waitFor();
+  await board.getByText(/현재 목록\s*2명/).first().waitFor();
+  await board.getByText(/체험\s*1명/).waitFor();
+  await board.getByText(/미등록\s*1명/).waitFor();
+  await board.getByRole('link', { name: '수업일 관리' }).waitFor();
+  if ((await board.getByRole('link', { name: '수업일 관리' }).getAttribute('href')) !== '/students/class-days') {
+    throw new Error('student class-days quick link mismatch');
+  }
+  if ((await board.getByRole('link', { name: '상담 관리' }).getAttribute('href')) !== '/consultations/enrolled') {
+    throw new Error('student consultation quick link mismatch');
+  }
+  if ((await board.getByRole('link', { name: '문자 발송' }).getAttribute('href')) !== '/sms') {
+    throw new Error('student sms quick link mismatch');
+  }
   await page.locator('table').getByText('김진우').waitFor();
   await page.locator('table').getByText('박서연').waitFor();
   await page.locator('table').getByRole('button', { name: '김진우 상세 보기' }).waitFor();
@@ -215,6 +231,9 @@ async function runMobile(browser) {
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영' }).waitFor();
+  await waitForStudentsShell(page);
+  await page.getByTestId('students-work-queue').getByText('학생 운영 보드').waitFor();
+  await page.getByTestId('students-work-queue').getByText(/현재 목록\s*2명/).first().waitFor();
   const detailButton = page.getByRole('button', { name: '김진우 상세 보기' });
   await detailButton.waitFor();
   await page.getByText('김진우').first().waitFor();
@@ -227,6 +246,11 @@ async function runMobile(browser) {
 
   await context.close();
   return result;
+}
+
+async function waitForStudentsShell(page) {
+  await page.getByTestId('students-operations-workspace').waitFor();
+  await page.getByTestId('students-work-queue').waitFor();
 }
 
 async function runLoadError(browser) {

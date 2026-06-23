@@ -20,6 +20,23 @@ import { StudentsPageHeader } from './students-page-header';
 import { StudentsPageList } from './students-page-list';
 import { StudentsResultsToolbar } from './students-results-toolbar';
 import { StudentsStatusTabs } from './students-status-tabs';
+import { StudentsWorkQueue } from './students-work-queue';
+
+interface StudentSummaryStats {
+    active: number;
+    paused: number;
+    pending: number;
+    total: number;
+    trial: number;
+}
+
+const EMPTY_SUMMARY_STATS: StudentSummaryStats = {
+    active: 0,
+    paused: 0,
+    pending: 0,
+    total: 0,
+    trial: 0,
+};
 
 export function StudentsPageContent() {
     const router = useRouter();
@@ -31,6 +48,7 @@ export function StudentsPageContent() {
     const [activeTab, setActiveTab] = useState<StudentTab>(initialTab);
     const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
     const [excelDownloading, setExcelDownloading] = useState(false);
+    const [summaryStats, setSummaryStats] = useState<StudentSummaryStats>(EMPTY_SUMMARY_STATS);
 
     const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents(getFiltersForTab(initialTab));
 
@@ -78,9 +96,10 @@ export function StudentsPageContent() {
     const filterLabels = getActiveFilterLabels(filters);
     const showFilters = shouldShowStudentFilters(activeTab);
     const showEmptyGuide = !loading && students.length === 0 && !searchQuery && !filters.grade && !filters.student_type;
+    const openStudentDetail = (id: number) => router.push(`/students/${id}`);
 
     return (
-        <div className="w-full max-w-full space-y-5">
+        <div className="w-full max-w-full space-y-5" data-testid="students-operations-workspace">
             <StudentsPageHeader
                 activeTab={activeTab}
                 excelDownloading={excelDownloading}
@@ -95,33 +114,48 @@ export function StudentsPageContent() {
                 <>
                     <StudentsStatusTabs activeTab={activeTab} onChange={handleTabChange} />
 
-                    <StudentStatsCards refreshTrigger={statsRefreshTrigger} />
+                    <StudentStatsCards refreshTrigger={statsRefreshTrigger} onStatsLoaded={setSummaryStats} />
 
-                    {showFilters && (
-                        <StudentFiltersComponent
-                            filters={filters}
-                            onFilterChange={updateFilters}
-                            hideStatusFilter
-                            onReset={handleResetFilters}
-                        />
-                    )}
+                    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+                        <div className="order-2 min-w-0 space-y-5 xl:order-1">
+                            {showFilters && (
+                                <StudentFiltersComponent
+                                    filters={filters}
+                                    onFilterChange={updateFilters}
+                                    hideStatusFilter
+                                    onReset={handleResetFilters}
+                                />
+                            )}
 
-                    <StudentsResultsToolbar
-                        count={students.length}
-                        filterLabels={filterLabels}
-                        searchQuery={searchQuery}
-                        onSearch={handleSearch}
-                    />
+                            <StudentsResultsToolbar
+                                count={students.length}
+                                filterLabels={filterLabels}
+                                searchQuery={searchQuery}
+                                onSearch={handleSearch}
+                            />
 
-                    <StudentsPageList
-                        activeTab={activeTab}
-                        loading={loading}
-                        students={students}
-                        onReload={handleReload}
-                        onStudentClick={(id) => router.push(`/students/${id}`)}
-                    />
+                            <StudentsPageList
+                                activeTab={activeTab}
+                                loading={loading}
+                                students={students}
+                                onReload={handleReload}
+                                onStudentClick={openStudentDetail}
+                            />
 
-                    {showEmptyGuide && <StudentsEmptyGuide />}
+                            {showEmptyGuide && <StudentsEmptyGuide />}
+                        </div>
+
+                        <aside className="order-1 min-w-0 xl:order-2">
+                            <StudentsWorkQueue
+                                activeTab={activeTab}
+                                currentCount={students.length}
+                                stats={summaryStats}
+                                students={students}
+                                onAddStudent={() => router.push('/students/new')}
+                                onStudentClick={openStudentDetail}
+                            />
+                        </aside>
+                    </div>
                 </>
             )}
         </div>
