@@ -22,7 +22,7 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
         <h2 className="text-sm font-medium text-foreground">지출 내역</h2>
       </div>
 
-      <div className="space-y-3 p-3 lg:hidden">
+      <div className="space-y-3 p-3 2xl:hidden">
         {expenses.map((expense) => (
           <article
             key={expense.id}
@@ -69,7 +69,7 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
         ))}
       </div>
 
-      <div className="hidden overflow-x-auto lg:block">
+      <div className="hidden overflow-x-auto 2xl:block">
         <table className="w-full min-w-[1040px] text-sm">
           <thead className="border-b border-border bg-muted/40">
             <tr>

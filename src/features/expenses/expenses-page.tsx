@@ -12,6 +12,7 @@ import { ExpenseSummaryStrip } from './expense-summary-strip';
 import { ExpensesError } from './expenses-error';
 import { ExpensesEmptyState } from './expenses-empty-state';
 import { ExpensesHeader } from './expenses-header';
+import { ExpensesOperationsBoard } from './expenses-operations-board';
 import { ExpensesTable } from './expenses-table';
 import { useExpensesPageState } from './use-expenses-page-state';
 
@@ -62,38 +63,59 @@ export function ExpensesPage() {
 
       <ExpenseSummaryStrip summary={state.summary} />
 
-      {state.showForm && canEditExpenses ? (
-        <ExpenseForm
-          formData={state.formData}
-          editingId={state.editingId}
-          saving={state.saving}
-          onUpdate={state.updateForm}
-          onSubmit={state.submitForm}
-          onCancel={state.resetForm}
-        />
-      ) : null}
-
-      {state.viewMode === 'calendar' ? (
-        <ExpenseCalendar
-          expenses={state.expenses}
-          onMonthChange={state.setSelectedMonth}
-          initialYearMonth={state.selectedMonth}
-        />
-      ) : (
-        <div className="space-y-4">
-          {state.filteredExpenses.length > 0 ? (
-            <ExpensesTable
-              expenses={state.filteredExpenses}
-              canEdit={canEditExpenses}
-              onSelect={state.setSelectedExpense}
-              onEdit={state.editExpense}
-              onDelete={openDeleteDialog}
-              onCompleteRefund={openRefundDialog}
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+        <main className="order-2 min-w-0 space-y-5 xl:order-1">
+          {state.showForm && canEditExpenses ? (
+            <ExpenseForm
+              formData={state.formData}
+              editingId={state.editingId}
+              saving={state.saving}
+              onUpdate={state.updateForm}
+              onSubmit={state.submitForm}
+              onCancel={state.resetForm}
             />
           ) : null}
-          {state.filteredExpenses.length === 0 && !state.showForm ? <ExpensesEmptyState hasSearch={hasSearch} /> : null}
+
+          {state.viewMode === 'calendar' ? (
+            <ExpenseCalendar
+              expenses={state.expenses}
+              onMonthChange={state.setSelectedMonth}
+              initialYearMonth={state.selectedMonth}
+            />
+          ) : (
+            <div className="space-y-4">
+              {state.filteredExpenses.length > 0 ? (
+                <ExpensesTable
+                  expenses={state.filteredExpenses}
+                  canEdit={canEditExpenses}
+                  onSelect={state.setSelectedExpense}
+                  onEdit={state.editExpense}
+                  onDelete={openDeleteDialog}
+                  onCompleteRefund={openRefundDialog}
+                />
+              ) : null}
+              {state.filteredExpenses.length === 0 && !state.showForm ? <ExpensesEmptyState hasSearch={hasSearch} /> : null}
+            </div>
+          )}
+        </main>
+        <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
+          <ExpensesOperationsBoard
+            canEdit={canEditExpenses}
+            editingId={state.editingId}
+            exporting={state.exporting}
+            searchQuery={state.searchQuery}
+            selectedMonth={state.selectedMonth}
+            showForm={state.showForm}
+            summary={state.summary}
+            viewMode={state.viewMode}
+            onCreateClick={state.openCreateForm}
+            onExport={state.exportExpenses}
+            onMonthChange={state.setSelectedMonth}
+            onSearchChange={state.setSearchQuery}
+            onViewModeChange={state.setViewMode}
+          />
         </div>
-      )}
+      </div>
 
       <ExpenseDetailDialog
         expense={state.selectedExpense}
