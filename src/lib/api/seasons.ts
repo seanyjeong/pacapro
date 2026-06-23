@@ -76,6 +76,7 @@ export const seasonsApi = {
       operating_days: data.operating_days,
       grade_time_slots: data.grade_time_slots,
       default_season_fee: data.season_fee,
+      payment_due_date: data.payment_due_date || null,
       continuous_discount_type: data.continuous_discount_type,
       continuous_discount_rate: data.continuous_discount_rate,
     };
@@ -98,6 +99,7 @@ export const seasonsApi = {
     if (data.operating_days !== undefined) apiData.operating_days = data.operating_days;
     if (data.grade_time_slots !== undefined) apiData.grade_time_slots = data.grade_time_slots;
     if (data.season_fee !== undefined) apiData.default_season_fee = data.season_fee;
+    if (data.payment_due_date !== undefined) apiData.payment_due_date = data.payment_due_date || null;
     if (data.continuous_discount_type !== undefined) apiData.continuous_discount_type = data.continuous_discount_type;
     if (data.continuous_discount_rate !== undefined) apiData.continuous_discount_rate = data.continuous_discount_rate;
     if (data.status !== undefined) apiData.status = data.status;

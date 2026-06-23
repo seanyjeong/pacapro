@@ -27,6 +27,7 @@ export default function NewSeasonPage() {
     operating_days: [1, 2, 3, 4, 5, 6], // 월~토 기본
     grade_time_slots: { '고3': ['evening'], 'N수': ['morning'] }, // 기본값: 고3 저녁, N수 오전
     season_fee: 0,
+    payment_due_date: '',
     continuous_discount_type: 'none',
     continuous_discount_rate: 0,
     status: 'draft',
@@ -280,6 +281,20 @@ export default function NewSeasonPage() {
                 className="focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
               <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
+            </div>
+
+            {/* 시즌비 납부 마감일 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                시즌비 납부 마감일
+              </label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                value={formData.payment_due_date || ''}
+                onChange={e => handleChange('payment_due_date', e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">이 날짜까지 미납 시 미납자에 표시 (비우면 등록일+7일)</p>
             </div>
 
             {/* 연속등록 할인 */}

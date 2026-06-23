@@ -256,13 +256,18 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
 
         const yearMonth = `${regDate.getFullYear()}-${String(regDate.getMonth() + 1).padStart(2, '0')}`;
 
-        const dueDate = new Date(regDate);
-        dueDate.setDate(dueDate.getDate() + 7);
         let actualDueDate;
-        if (regDate > seasonStartDate) {
-            actualDueDate = dueDate;
+        if (season.payment_due_date) {
+            // 시즌 설정에 납부 마감일이 있으면 등록일 무관 항상 그 날짜 (미납자 판정 기준)
+            actualDueDate = new Date(season.payment_due_date);
         } else {
-            actualDueDate = dueDate < seasonStartDate ? dueDate : seasonStartDate;
+            const dueDate = new Date(regDate);
+            dueDate.setDate(dueDate.getDate() + 7);
+            if (regDate > seasonStartDate) {
+                actualDueDate = dueDate;
+            } else {
+                actualDueDate = dueDate < seasonStartDate ? dueDate : seasonStartDate;
+            }
         }
 
         let seasonFeeDescription = `${season.season_name} 시즌비`;

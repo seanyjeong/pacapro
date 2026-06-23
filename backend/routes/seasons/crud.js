@@ -50,6 +50,7 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
             operating_days,
             grade_time_slots,
             default_season_fee,
+            payment_due_date,
             allows_continuous,
             continuous_to_season_type,
             continuous_discount_type,
@@ -99,12 +100,13 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
                 operating_days,
                 grade_time_slots,
                 default_season_fee,
+                payment_due_date,
                 allows_continuous,
                 continuous_to_season_type,
                 continuous_discount_type,
                 continuous_discount_rate,
                 status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
             [
                 req.user.academyId,
                 season_name,
@@ -115,6 +117,7 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
                 JSON.stringify(operating_days),
                 grade_time_slots ? JSON.stringify(grade_time_slots) : null,
                 default_season_fee || 0,
+                payment_due_date || null,
                 allows_continuous || false,
                 continuous_to_season_type || null,
                 continuous_discount_type || 'none',
@@ -165,6 +168,7 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
             operating_days,
             grade_time_slots,
             default_season_fee,
+            payment_due_date,
             allows_continuous,
             continuous_to_season_type,
             continuous_discount_type,
@@ -206,6 +210,10 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
         if (default_season_fee !== undefined) {
             updates.push('default_season_fee = ?');
             params.push(default_season_fee);
+        }
+        if (payment_due_date !== undefined) {
+            updates.push('payment_due_date = ?');
+            params.push(payment_due_date || null);
         }
         if (allows_continuous !== undefined) {
             updates.push('allows_continuous = ?');

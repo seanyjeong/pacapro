@@ -30,6 +30,7 @@ export default function EditSeasonPage() {
     operating_days: [],
     grade_time_slots: {},
     season_fee: 0,
+    payment_due_date: '',
     continuous_discount_type: 'none',
     continuous_discount_rate: 0,
     status: 'draft',
@@ -66,6 +67,7 @@ export default function EditSeasonPage() {
           operating_days: parseOperatingDays(season.operating_days),
           grade_time_slots: gradeTimeSlots || { '고3': ['evening'], 'N수': ['morning'] },
           season_fee: parseFloat(season.default_season_fee) || 0,
+          payment_due_date: season.payment_due_date || '',
           continuous_discount_type: season.continuous_discount_type || 'none',
           continuous_discount_rate: season.continuous_discount_rate || 0,
           status: season.status,
@@ -290,6 +292,18 @@ export default function EditSeasonPage() {
                 onChange={(season_fee) => handleChange('season_fee', season_fee)}
               />
               <p className="text-xs text-gray-500 mt-1">시즌 등록 시 학생이 납부해야 할 금액 (1만원 단위)</p>
+            </div>
+
+            {/* 시즌비 납부 마감일 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">시즌비 납부 마감일</label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                value={formData.payment_due_date || ''}
+                onChange={e => handleChange('payment_due_date', e.target.value)}
+              />
+              <p className="text-xs text-gray-500 mt-1">이 날짜까지 미납 시 미납자에 표시 (비우면 등록일+7일)</p>
             </div>
 
             {/* 상태 */}
