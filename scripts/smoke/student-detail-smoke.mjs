@@ -322,11 +322,11 @@ async function runNormalDesktop(browser) {
   await page.locator('section').filter({ hasText: '수업 및 학원비' }).getByText('매월 5일 납부').waitFor();
   await page.getByText('연락처', { exact: true }).waitFor();
   await page.getByText('기타 정보', { exact: true }).waitFor();
-  await page.getByRole('heading', { name: '운영 액션' }).waitFor();
-  await page.getByRole('button', { name: '수업/학원비 변경' }).waitFor();
-  await page.getByRole('button', { name: '수업일관리' }).waitFor();
-  await page.getByRole('button', { name: '문자 보내기' }).waitFor();
-  await page.getByRole('button', { name: '납부 내역 보기' }).waitFor();
+  await page.getByRole('heading', { name: '학생 작업 보드' }).waitFor();
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '수업/학원비 변경' }).waitFor();
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '수업일 변경' }).waitFor();
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '문자 발송' }).waitFor();
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '납부 내역' }).waitFor();
   await page.getByText('2026-06', { exact: true }).waitFor();
   if (await page.getByText('개발 중').count()) {
     throw new Error('student detail exposes internal development copy');
@@ -335,7 +335,7 @@ async function runNormalDesktop(browser) {
   await assertNoHorizontalOverflow(page, 'student detail desktop');
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-desktop.png', fullPage: true });
 
-  await page.getByRole('button', { name: '납부 내역 보기' }).click();
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '납부 내역' }).click();
   await page.getByText('2026-06', { exact: true }).waitFor();
   await page.getByText('468,000원').first().waitFor();
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '첫 달 일할 재계산' }), 'first payment recalculation');
@@ -392,9 +392,9 @@ async function runNormalMobile(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
   await page.getByText('김진우').first().waitFor();
-  await page.getByRole('heading', { name: '운영 액션' }).waitFor();
-  await page.getByRole('button', { name: '수업/학원비 변경' }).waitFor();
-  await page.getByRole('button', { name: '수업일관리' }).waitFor();
+  await page.getByRole('heading', { name: '학생 작업 보드' }).waitFor();
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '수업/학원비 변경' }).waitFor();
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '수업일 변경' }).waitFor();
   await page.getByText('2026-06', { exact: true }).waitFor();
   await assertNoRawVisibleText(page, 'student detail mobile');
   await assertNoHorizontalOverflow(page, 'student detail mobile');
@@ -455,7 +455,7 @@ async function runAttendanceError(browser) {
   const { context, page } = result;
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
-  await page.getByRole('button', { name: '출결 현황' }).click();
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '출결 현황' }).click();
   await page.getByText('출결 데이터를 불러올 수 없습니다.').waitFor();
   await page.waitForTimeout(300);
   if (await page.getByText('요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.').count()) {

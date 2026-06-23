@@ -20,7 +20,7 @@ import { StudentDetailHeader } from './student-detail-header';
 import { StudentDetailSummary } from './student-detail-summary';
 import { StudentDetailTabs } from './student-detail-tabs';
 import type { StudentDetailAction, StudentDetailTab } from './student-detail-types';
-import { buildStudentTabs } from './student-detail-utils';
+import { buildStudentTabs, getOutstandingAmount } from './student-detail-utils';
 
 export function StudentDetailPage() {
   const router = useRouter();
@@ -33,6 +33,7 @@ export function StudentDetailPage() {
 
   const { error, loading, payments, performances, reload, student } = useStudent(studentId);
   const tabs = useMemo(() => (student ? buildStudentTabs(student, payments.length) : []), [payments.length, student]);
+  const outstandingAmount = getOutstandingAmount(payments);
   const unpaidPaymentCount = payments.filter((payment) => payment.payment_status !== 'paid').length;
   const resolvedActiveTab = activeTab ?? (unpaidPaymentCount > 0 ? 'payments' : 'performance');
 
@@ -94,7 +95,7 @@ export function StudentDetailPage() {
   const canResume = student.status === 'paused';
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full max-w-7xl space-y-5" data-testid="student-detail-workspace">
       <StudentDetailHeader
         description={`${student.name} 학생의 정보, 출결, 납부, 시즌, 상담 기록을 확인합니다.`}
         onBack={goBack}
@@ -102,50 +103,57 @@ export function StudentDetailPage() {
 
       <StudentDetailSummary payments={payments} student={student} />
 
-      <StudentDetailActions
-        canGraduate={canGraduate}
-        canResume={canResume}
-        canWithdraw={canWithdraw}
-        paymentCount={payments.length}
-        student={student}
-        unpaidPaymentCount={unpaidPaymentCount}
-        onEdit={handleEdit}
-        onOpenClassDays={handleOpenClassDays}
-        onOpenAction={setPendingAction}
-        onOpenTab={setActiveTab}
-        onResume={() => setResumeModalOpen(true)}
-        onSendSms={handleSendSms}
-      />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+        <main className="order-2 min-w-0 space-y-5 xl:order-1">
+          <StudentCard student={student} />
 
-      <StudentCard student={student} />
+          <section className="rounded-md border border-border bg-card">
+            <div className="flex flex-col gap-2 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-foreground">운영 기록</p>
+                <p className="text-xs text-muted-foreground">현재 상태: {STATUS_LABELS[student.status]}</p>
+              </div>
+            </div>
+            <StudentDetailTabs activeTab={resolvedActiveTab} tabs={tabs} onTabChange={setActiveTab} />
+            <div className="p-4">
+              {resolvedActiveTab === 'performance' ? <StudentPerformanceComponent loading={false} performances={performances} /> : null}
+              {resolvedActiveTab === 'attendance' ? <StudentAttendanceComponent studentId={studentId} /> : null}
+              {resolvedActiveTab === 'payments' ? (
+                <StudentPaymentsComponent
+                  classDays={student.class_days}
+                  loading={false}
+                  monthlyTuition={Number.parseFloat(student.monthly_tuition) || 0}
+                  payments={payments}
+                  studentId={studentId}
+                  studentName={student.name}
+                  weeklyCount={student.weekly_count || 2}
+                  onChanged={reload}
+                />
+              ) : null}
+              {resolvedActiveTab === 'seasons' ? <StudentSeasonsComponent studentId={studentId} studentType={student.student_type} /> : null}
+              {resolvedActiveTab === 'consultations' ? <StudentConsultationsComponent studentId={studentId} studentName={student.name} /> : null}
+            </div>
+          </section>
+        </main>
 
-      <section className="rounded-md border border-border bg-card">
-        <div className="flex flex-col gap-2 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-foreground">운영 기록</p>
-            <p className="text-xs text-muted-foreground">현재 상태: {STATUS_LABELS[student.status]}</p>
-          </div>
+        <div className="order-1 xl:sticky xl:top-20 xl:order-2">
+          <StudentDetailActions
+            canGraduate={canGraduate}
+            canResume={canResume}
+            canWithdraw={canWithdraw}
+            outstandingAmount={outstandingAmount}
+            paymentCount={payments.length}
+            student={student}
+            unpaidPaymentCount={unpaidPaymentCount}
+            onEdit={handleEdit}
+            onOpenClassDays={handleOpenClassDays}
+            onOpenAction={setPendingAction}
+            onOpenTab={setActiveTab}
+            onResume={() => setResumeModalOpen(true)}
+            onSendSms={handleSendSms}
+          />
         </div>
-        <StudentDetailTabs activeTab={resolvedActiveTab} tabs={tabs} onTabChange={setActiveTab} />
-        <div className="p-4">
-          {resolvedActiveTab === 'performance' ? <StudentPerformanceComponent loading={false} performances={performances} /> : null}
-          {resolvedActiveTab === 'attendance' ? <StudentAttendanceComponent studentId={studentId} /> : null}
-          {resolvedActiveTab === 'payments' ? (
-            <StudentPaymentsComponent
-              classDays={student.class_days}
-              loading={false}
-              monthlyTuition={Number.parseFloat(student.monthly_tuition) || 0}
-              payments={payments}
-              studentId={studentId}
-              studentName={student.name}
-              weeklyCount={student.weekly_count || 2}
-              onChanged={reload}
-            />
-          ) : null}
-          {resolvedActiveTab === 'seasons' ? <StudentSeasonsComponent studentId={studentId} studentType={student.student_type} /> : null}
-          {resolvedActiveTab === 'consultations' ? <StudentConsultationsComponent studentId={studentId} studentName={student.name} /> : null}
-        </div>
-      </section>
+      </div>
 
       {student.status === 'paused' ? (
         <StudentResumeModal
