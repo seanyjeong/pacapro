@@ -197,8 +197,8 @@ export default function OnboardingPage() {
                     <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-green-200 animate-bounce-in">
                         <PartyPopper className="w-12 h-12 text-white" />
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900 mb-2">설정 완료!</h2>
-                    <p className="text-gray-600">잠시 후 대시보드로 이동합니다...</p>
+                    <h2 className="text-3xl font-bold text-foreground mb-2">설정 완료!</h2>
+                    <p className="text-muted-foreground">잠시 후 대시보드로 이동합니다...</p>
                 </div>
             </div>
         );
@@ -207,15 +207,15 @@ export default function OnboardingPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
             {/* Header */}
-            <div className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-b z-50">
+            <div className="fixed top-0 left-0 right-0 bg-card/80 backdrop-blur-sm border-b z-50">
                 <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
                             <span className="text-white font-bold text-lg">P</span>
                         </div>
                         <div>
-                            <h1 className="font-bold text-gray-900">P-ACA 초기 설정</h1>
-                            <p className="text-xs text-gray-500">학원 운영에 필요한 기본 설정을 완료해주세요</p>
+                            <h1 className="font-bold text-foreground">P-ACA 초기 설정</h1>
+                            <p className="text-xs text-muted-foreground">학원 운영에 필요한 기본 설정을 완료해주세요</p>
                         </div>
                     </div>
                     <Button variant="ghost" size="sm" onClick={handleSkip}>
@@ -225,7 +225,7 @@ export default function OnboardingPage() {
             </div>
 
             {/* Progress Bar */}
-            <div className="fixed top-[73px] left-0 right-0 bg-white border-b z-40">
+            <div className="fixed top-[73px] left-0 right-0 bg-card border-b z-40">
                 <div className="max-w-4xl mx-auto px-4 py-3">
                     <div className="flex items-center justify-between mb-2">
                         {STEPS.map((step, index) => (
@@ -236,7 +236,7 @@ export default function OnboardingPage() {
                                             ? 'bg-green-500 text-white'
                                             : currentStep === step.id
                                             ? 'bg-indigo-600 text-white ring-4 ring-indigo-100'
-                                            : 'bg-gray-200 text-gray-500'
+                                            : 'bg-muted text-muted-foreground'
                                     }`}
                                 >
                                     {currentStep > step.id ? (
@@ -248,14 +248,14 @@ export default function OnboardingPage() {
                                 {index < STEPS.length - 1 && (
                                     <div
                                         className={`w-12 sm:w-24 h-1 mx-1 rounded transition-all duration-300 ${
-                                            currentStep > step.id ? 'bg-green-500' : 'bg-gray-200'
+                                            currentStep > step.id ? 'bg-green-500' : 'bg-muted'
                                         }`}
                                     />
                                 )}
                             </div>
                         ))}
                     </div>
-                    <div className="flex justify-between text-xs text-gray-500">
+                    <div className="flex justify-between text-xs text-muted-foreground">
                         {STEPS.map(step => (
                             <span key={step.id} className={`${currentStep === step.id ? 'text-indigo-600 font-medium' : ''}`}>
                                 {step.title}
@@ -290,7 +290,7 @@ export default function OnboardingPage() {
             </div>
 
             {/* Footer Navigation */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t">
+            <div className="fixed bottom-0 left-0 right-0 bg-card border-t">
                 <div className="max-w-2xl mx-auto px-4 py-4 flex justify-between">
                     <Button
                         variant="outline"
@@ -341,54 +341,54 @@ function StepAcademy({ formData, updateFormData }: { formData: FormData; updateF
                 <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
                     <Building2 className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">학원 정보</h2>
-                <p className="text-gray-600 mt-1">학원의 기본 정보를 입력해주세요</p>
+                <h2 className="text-2xl font-bold text-foreground">학원 정보</h2>
+                <p className="text-muted-foreground mt-1">학원의 기본 정보를 입력해주세요</p>
             </div>
 
             <Card>
                 <CardContent className="p-6 space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-foreground mb-1">
                             학원명 <span className="text-red-500">*</span>
                         </label>
                         <input
                             type="text"
                             value={formData.academy_name}
                             onChange={(e) => updateFormData('academy_name', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                             placeholder="예: 파파 체육입시학원"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">전화번호</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">전화번호</label>
                         <input
                             type="tel"
                             value={formData.phone}
                             onChange={(e) => updateFormData('phone', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                             placeholder="예: 02-1234-5678"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">주소</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">주소</label>
                         <input
                             type="text"
                             value={formData.address}
                             onChange={(e) => updateFormData('address', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                             placeholder="예: 서울시 강남구 역삼동 123-45"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">사업자등록번호</label>
+                        <label className="block text-sm font-medium text-foreground mb-1">사업자등록번호</label>
                         <input
                             type="text"
                             value={formData.business_number}
                             onChange={(e) => updateFormData('business_number', e.target.value)}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                             placeholder="예: 123-45-67890"
                         />
                     </div>
@@ -423,8 +423,8 @@ function StepClassTime({ formData, updateFormData }: { formData: FormData; updat
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
                     <Clock className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">수업 시간대</h2>
-                <p className="text-gray-600 mt-1">각 시간대별 수업 시간을 설정해주세요</p>
+                <h2 className="text-2xl font-bold text-foreground">수업 시간대</h2>
+                <p className="text-muted-foreground mt-1">각 시간대별 수업 시간을 설정해주세요</p>
             </div>
 
             <div className="space-y-4">
@@ -436,26 +436,26 @@ function StepClassTime({ formData, updateFormData }: { formData: FormData; updat
                             <CardContent className="p-6">
                                 <div className="flex items-center space-x-3 mb-4">
                                     <span className="text-2xl">{slot.icon}</span>
-                                    <h3 className="font-semibold text-gray-900">{slot.label}</h3>
+                                    <h3 className="font-semibold text-foreground">{slot.label}</h3>
                                 </div>
                                 <div className="flex items-center space-x-4">
                                     <div className="flex-1">
-                                        <label className="block text-xs text-gray-500 mb-1">시작</label>
+                                        <label className="block text-xs text-muted-foreground mb-1">시작</label>
                                         <input
                                             type="time"
                                             value={times.start}
                                             onChange={(e) => updateTime(slot.key, 'start', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
-                                    <span className="text-gray-400 pt-5">~</span>
+                                    <span className="text-muted-foreground pt-5">~</span>
                                     <div className="flex-1">
-                                        <label className="block text-xs text-gray-500 mb-1">종료</label>
+                                        <label className="block text-xs text-muted-foreground mb-1">종료</label>
                                         <input
                                             type="time"
                                             value={times.end}
                                             onChange={(e) => updateTime(slot.key, 'end', e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         />
                                     </div>
                                 </div>
@@ -499,20 +499,20 @@ function StepTuition({ formData, updateFormData }: { formData: FormData; updateF
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-200">
                     <Wallet className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">학원비 설정</h2>
-                <p className="text-gray-600 mt-1">주당 수업 횟수별 학원비를 설정해주세요</p>
+                <h2 className="text-2xl font-bold text-foreground">학원비 설정</h2>
+                <p className="text-muted-foreground mt-1">주당 수업 횟수별 학원비를 설정해주세요</p>
             </div>
 
             {/* Tabs */}
-            <div className="flex space-x-2 bg-gray-100 p-1 rounded-xl">
+            <div className="flex space-x-2 bg-muted p-1 rounded-xl">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as 'exam' | 'adult')}
                         className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
                             activeTab === tab.id
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
+                                ? 'bg-card text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
                         <span className="mr-2">{tab.icon}</span>
@@ -530,7 +530,7 @@ function StepTuition({ formData, updateFormData }: { formData: FormData; updateF
                             const value = formData.tuition_settings[key]?.[sessions.toString()] || 0;
                             return (
                                 <div key={sessions}>
-                                    <label className="block text-xs text-gray-500 mb-1">
+                                    <label className="block text-xs text-muted-foreground mb-1">
                                         주 {sessions}회
                                     </label>
                                     <div className="relative">
@@ -538,10 +538,10 @@ function StepTuition({ formData, updateFormData }: { formData: FormData; updateF
                                             type="text"
                                             value={formatNumber(value)}
                                             onChange={(e) => updateTuition(activeTab, sessions.toString(), e.target.value)}
-                                            className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-right"
+                                            className="w-full px-3 py-2 pr-8 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-right"
                                             placeholder="0"
                                         />
-                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">원</span>
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">원</span>
                                     </div>
                                 </div>
                             );
@@ -550,7 +550,7 @@ function StepTuition({ formData, updateFormData }: { formData: FormData; updateF
                 </CardContent>
             </Card>
 
-            <p className="text-sm text-gray-500 text-center">
+            <p className="text-sm text-muted-foreground text-center">
                 나중에 설정 페이지에서 언제든 수정할 수 있어요
             </p>
         </div>
@@ -568,15 +568,15 @@ function StepSalary({ formData, updateFormData }: { formData: FormData; updateFo
                 <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200">
                     <CreditCard className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">급여 설정</h2>
-                <p className="text-gray-600 mt-1">급여 지급일과 정산 방식을 설정해주세요</p>
+                <h2 className="text-2xl font-bold text-foreground">급여 설정</h2>
+                <p className="text-muted-foreground mt-1">급여 지급일과 정산 방식을 설정해주세요</p>
             </div>
 
             <div className="space-y-4">
                 {/* 급여 지급일 */}
                 <Card>
                     <CardContent className="p-6">
-                        <h3 className="font-semibold text-gray-900 mb-4">급여 지급일</h3>
+                        <h3 className="font-semibold text-foreground mb-4">급여 지급일</h3>
                         <div className="flex flex-wrap gap-2">
                             {paymentDays.map(day => (
                                 <button
@@ -585,7 +585,7 @@ function StepSalary({ formData, updateFormData }: { formData: FormData; updateFo
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                         formData.salary_payment_day === day
                                             ? 'bg-indigo-600 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            : 'bg-muted text-foreground hover:bg-muted'
                                     }`}
                                 >
                                     {day === 0 ? '말일' : `${day}일`}
@@ -598,29 +598,29 @@ function StepSalary({ formData, updateFormData }: { formData: FormData; updateFo
                 {/* 정산 방식 */}
                 <Card>
                     <CardContent className="p-6">
-                        <h3 className="font-semibold text-gray-900 mb-4">정산 방식</h3>
+                        <h3 className="font-semibold text-foreground mb-4">정산 방식</h3>
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => updateFormData('salary_month_type', 'current')}
                                 className={`p-4 rounded-xl border-2 transition-all ${
                                     formData.salary_month_type === 'current'
                                         ? 'border-indigo-600 bg-indigo-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                        : 'border-border hover:border-border'
                                 }`}
                             >
-                                <div className="text-lg font-semibold text-gray-900">당월 정산</div>
-                                <div className="text-sm text-gray-500">11월 근무 → 11월 지급</div>
+                                <div className="text-lg font-semibold text-foreground">당월 정산</div>
+                                <div className="text-sm text-muted-foreground">11월 근무 → 11월 지급</div>
                             </button>
                             <button
                                 onClick={() => updateFormData('salary_month_type', 'next')}
                                 className={`p-4 rounded-xl border-2 transition-all ${
                                     formData.salary_month_type === 'next'
                                         ? 'border-indigo-600 bg-indigo-50'
-                                        : 'border-gray-200 hover:border-gray-300'
+                                        : 'border-border hover:border-border'
                                 }`}
                             >
-                                <div className="text-lg font-semibold text-gray-900">익월 정산</div>
-                                <div className="text-sm text-gray-500">11월 근무 → 12월 지급</div>
+                                <div className="text-lg font-semibold text-foreground">익월 정산</div>
+                                <div className="text-sm text-muted-foreground">11월 근무 → 12월 지급</div>
                             </button>
                         </div>
                     </CardContent>
@@ -629,11 +629,11 @@ function StepSalary({ formData, updateFormData }: { formData: FormData; updateFo
                 {/* 학원비 납부일 */}
                 <Card>
                     <CardContent className="p-6">
-                        <h3 className="font-semibold text-gray-900 mb-4">학원비 기본 납부일</h3>
+                        <h3 className="font-semibold text-foreground mb-4">학원비 기본 납부일</h3>
                         <select
                             value={formData.tuition_due_day}
                             onChange={(e) => updateFormData('tuition_due_day', parseInt(e.target.value))}
-                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
                         >
                             {dueDays.map(day => (
                                 <option key={day} value={day}>매월 {day}일</option>
@@ -654,32 +654,32 @@ function StepComplete({ formData, updateFormData }: { formData: FormData; update
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-200">
                     <CheckCircle className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900">설정 완료!</h2>
-                <p className="text-gray-600 mt-1">설정 내용을 확인하고 시작해주세요</p>
+                <h2 className="text-2xl font-bold text-foreground">설정 완료!</h2>
+                <p className="text-muted-foreground mt-1">설정 내용을 확인하고 시작해주세요</p>
             </div>
 
             {/* 설정 요약 */}
             <Card>
                 <CardContent className="p-6 space-y-4">
                     <div className="flex items-center justify-between py-2 border-b">
-                        <span className="text-gray-600">학원명</span>
-                        <span className="font-medium text-gray-900">{formData.academy_name || '-'}</span>
+                        <span className="text-muted-foreground">학원명</span>
+                        <span className="font-medium text-foreground">{formData.academy_name || '-'}</span>
                     </div>
                     <div className="flex items-center justify-between py-2 border-b">
-                        <span className="text-gray-600">수업 시간대</span>
-                        <span className="font-medium text-gray-900">
+                        <span className="text-muted-foreground">수업 시간대</span>
+                        <span className="font-medium text-foreground">
                             오전 {formData.morning_class_time.split('-')[0]}~
                         </span>
                     </div>
                     <div className="flex items-center justify-between py-2 border-b">
-                        <span className="text-gray-600">급여 지급일</span>
-                        <span className="font-medium text-gray-900">
+                        <span className="text-muted-foreground">급여 지급일</span>
+                        <span className="font-medium text-foreground">
                             매월 {formData.salary_payment_day === 0 ? '말일' : `${formData.salary_payment_day}일`}
                         </span>
                     </div>
                     <div className="flex items-center justify-between py-2">
-                        <span className="text-gray-600">정산 방식</span>
-                        <span className="font-medium text-gray-900">
+                        <span className="text-muted-foreground">정산 방식</span>
+                        <span className="font-medium text-foreground">
                             {formData.salary_month_type === 'current' ? '당월 정산' : '익월 정산'}
                         </span>
                     </div>
@@ -694,14 +694,14 @@ function StepComplete({ formData, updateFormData }: { formData: FormData; update
                             type="checkbox"
                             checked={formData.create_sample_data}
                             onChange={(e) => updateFormData('create_sample_data', e.target.checked)}
-                            className="mt-1 w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                            className="mt-1 w-5 h-5 rounded border-border text-indigo-600 focus:ring-indigo-500"
                         />
                         <div>
-                            <div className="font-semibold text-gray-900 flex items-center">
+                            <div className="font-semibold text-foreground flex items-center">
                                 <Sparkles className="w-4 h-4 mr-2 text-indigo-600" />
                                 테스트용 샘플 데이터 생성
                             </div>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                                 시스템을 먼저 체험해보고 싶으시면 체크해주세요.
                             </p>
                             <div className="mt-3 flex flex-wrap gap-2">

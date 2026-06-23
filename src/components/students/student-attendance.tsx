@@ -103,7 +103,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
       {/* Summary Stats */}
       {data?.summary && (
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-          <StatCard label="전체" value={data.summary.total} color="bg-gray-100 dark:bg-gray-800" textColor="text-foreground" />
+          <StatCard label="전체" value={data.summary.total} color="bg-muted dark:bg-gray-800" textColor="text-foreground" />
           <StatCard label="출석" value={data.summary.present} color="bg-green-50 dark:bg-green-900/30" textColor="text-green-700 dark:text-green-400" />
           <StatCard label="결석" value={data.summary.absent} color="bg-red-50 dark:bg-red-900/30" textColor="text-red-700 dark:text-red-400" />
           <StatCard label="지각" value={data.summary.late} color="bg-yellow-50 dark:bg-yellow-900/30" textColor="text-yellow-700 dark:text-yellow-400" />

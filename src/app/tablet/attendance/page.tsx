@@ -601,7 +601,7 @@ export default function TabletAttendancePage() {
                         ? reasonModalData.status === 'excused'
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-red-500 bg-red-50 text-red-700'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        : 'border-slate-200 bg-card text-slate-700 hover:border-slate-300'
                     }`}
                   >
                     {option.label}
@@ -616,7 +616,7 @@ export default function TabletAttendancePage() {
                   className={`w-full p-4 border-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${
                     reasonModalData.reason === '기타'
                       ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      : 'border-slate-200 bg-card text-slate-700 hover:border-slate-300'
                   }`}
                 >
                   기타 (직접 입력)

@@ -123,7 +123,7 @@ export function AttendanceCard({
                 return (
                   <span className={`px-1.5 py-0.5 rounded-full shrink-0 ${isTablet ? 'text-[10px]' : 'text-xs'} ${
                     remaining === 0
-                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                      ? 'bg-muted dark:bg-gray-800 text-muted-foreground dark:text-gray-400'
                       : 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300'
                   }`}>
                     {remaining === 0 ? '완료' : `${currentSession}/2`}

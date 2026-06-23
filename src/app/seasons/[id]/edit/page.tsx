@@ -136,7 +136,7 @@ export default function EditSeasonPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -150,8 +150,8 @@ export default function EditSeasonPage() {
           뒤로
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">시즌 수정</h1>
-          <p className="text-gray-600">시즌 정보를 수정합니다</p>
+          <h1 className="text-2xl font-bold text-foreground">시즌 수정</h1>
+          <p className="text-muted-foreground">시즌 정보를 수정합니다</p>
         </div>
       </div>
 
@@ -171,20 +171,20 @@ export default function EditSeasonPage() {
             {/* 시즌명 & 타입 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   시즌명 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border rounded-md"
                   value={formData.season_name}
                   onChange={e => handleChange('season_name', e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">시즌 타입</label>
+                <label className="block text-sm font-medium text-foreground mb-1">시즌 타입</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border rounded-md"
                   value={formData.season_type}
                   onChange={e => handleChange('season_type', e.target.value as SeasonType)}
                 >
@@ -197,32 +197,32 @@ export default function EditSeasonPage() {
             {/* 날짜 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">비시즌 종강일</label>
+                <label className="block text-sm font-medium text-foreground mb-1">비시즌 종강일</label>
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border rounded-md"
                   value={formData.non_season_end_date || ''}
                   onChange={e => handleChange('non_season_end_date', e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   시즌 시작일 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border rounded-md"
                   value={formData.start_date}
                   onChange={e => handleChange('start_date', e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   시즌 종료일 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-3 py-2 border border-border rounded-md"
                   value={formData.end_date}
                   onChange={e => handleChange('end_date', e.target.value)}
                 />
@@ -231,7 +231,7 @@ export default function EditSeasonPage() {
 
             {/* 운영 요일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">운영 요일</label>
+              <label className="block text-sm font-medium text-foreground mb-2">운영 요일</label>
               <div className="flex flex-wrap gap-2">
                 {OPERATING_DAY_OPTIONS.map(day => (
                   <button
@@ -240,7 +240,7 @@ export default function EditSeasonPage() {
                     className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                       formData.operating_days.includes(day.value)
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        : 'bg-card text-foreground border-border hover:bg-muted'
                     }`}
                     onClick={() => toggleOperatingDay(day.value)}
                   >
@@ -252,12 +252,12 @@ export default function EditSeasonPage() {
 
             {/* 학년별 시간대 */}
             <div className="border-t pt-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">학년별 수업 시간대</h3>
-              <p className="text-xs text-gray-500 mb-4">여러 시간대를 선택할 수 있습니다.</p>
+              <h3 className="text-sm font-semibold text-foreground mb-3">학년별 수업 시간대</h3>
+              <p className="text-xs text-muted-foreground mb-4">여러 시간대를 선택할 수 있습니다.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {SEASON_TARGET_GRADES.map(grade => (
                   <div key={grade} className="flex items-center space-x-3">
-                    <label className="block text-sm font-medium text-gray-700 w-16">{grade}</label>
+                    <label className="block text-sm font-medium text-foreground w-16">{grade}</label>
                     <div className="flex-1 flex gap-2">
                       {TIME_SLOT_OPTIONS.map(slot => {
                         const isSelected = formData.grade_time_slots?.[grade]?.includes(slot.value);
@@ -268,7 +268,7 @@ export default function EditSeasonPage() {
                             className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                               isSelected
                                 ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                : 'bg-card text-foreground border-border hover:bg-muted'
                             }`}
                             onClick={() => toggleGradeTimeSlot(grade, slot.value)}
                           >
@@ -284,33 +284,33 @@ export default function EditSeasonPage() {
 
             {/* 시즌비 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 시즌비 (원) <span className="text-red-500">*</span>
               </label>
               <MoneyInput
                 value={formData.season_fee}
                 onChange={(season_fee) => handleChange('season_fee', season_fee)}
               />
-              <p className="text-xs text-gray-500 mt-1">시즌 등록 시 학생이 납부해야 할 금액 (1만원 단위)</p>
+              <p className="text-xs text-muted-foreground mt-1">시즌 등록 시 학생이 납부해야 할 금액 (1만원 단위)</p>
             </div>
 
             {/* 시즌비 납부 마감일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">시즌비 납부 마감일</label>
+              <label className="block text-sm font-medium text-foreground mb-1">시즌비 납부 마감일</label>
               <input
                 type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-border rounded-md"
                 value={formData.payment_due_date || ''}
                 onChange={e => handleChange('payment_due_date', e.target.value)}
               />
-              <p className="text-xs text-gray-500 mt-1">이 날짜까지 미납 시 미납자에 표시 (비우면 등록일+7일)</p>
+              <p className="text-xs text-muted-foreground mt-1">이 날짜까지 미납 시 미납자에 표시 (비우면 등록일+7일)</p>
             </div>
 
             {/* 상태 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">상태</label>
+              <label className="block text-sm font-medium text-foreground mb-1">상태</label>
               <select
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-border rounded-md"
                 value={formData.status}
                 onChange={e => handleChange('status', e.target.value as SeasonStatus)}
               >

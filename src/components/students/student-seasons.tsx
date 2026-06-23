@@ -132,8 +132,8 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
       <Card>
         <CardContent className="p-8 text-center">
           <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">시즌 등록 대상이 아닙니다</h3>
-          <p className="text-gray-500">
+          <h3 className="text-lg font-semibold text-foreground mb-2">시즌 등록 대상이 아닙니다</h3>
+          <p className="text-muted-foreground">
             성인/공무원 학생은 시즌 시스템 대신 연중 월회비로 관리됩니다.
           </p>
         </CardContent>
@@ -273,8 +273,8 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     return (
       <Card>
         <CardContent className="p-8 text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">시즌 정보 로딩 중...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">시즌 정보 로딩 중...</p>
         </CardContent>
       </Card>
     );
@@ -285,8 +285,8 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
       <Card>
         <CardContent className="p-8 text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-          <p className="text-gray-500 mb-4">{error}</p>
+          <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+          <p className="text-muted-foreground mb-4">{error}</p>
           <Button onClick={loadData}>다시 시도</Button>
         </CardContent>
       </Card>
@@ -315,7 +315,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
           {enrollments.length === 0 ? (
             <div className="text-center py-8">
               <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">등록된 시즌이 없습니다.</p>
+              <p className="text-muted-foreground">등록된 시즌이 없습니다.</p>
               {availableSeasons.length > 0 && (
                 <Button className="mt-4" onClick={() => setShowEnrollModal(true)}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -328,14 +328,14 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
               {enrollments.map((enrollment, index) => (
                 <div
                   key={enrollment.id || `enrollment-${index}`}
-                  className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                  className="p-4 border border-border rounded-lg hover:bg-muted"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">
+                      <h4 className="font-medium text-foreground">
                         {enrollment.season_name}
                       </h4>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-muted-foreground">
                         <span className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
                           등록일: {enrollment.registration_date || '미지정'}
@@ -366,7 +366,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                         <>
                           <button
                             onClick={() => handleEditClick(enrollment)}
-                            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                             title="수정"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -405,7 +405,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
                             : enrollment.status === 'registered'
                             ? 'bg-blue-100 text-blue-800'
                             : enrollment.status === 'completed'
-                            ? 'bg-gray-100 text-gray-800'
+                            ? 'bg-muted text-foreground'
                             : 'bg-red-100 text-red-800'
                         }`}
                       >

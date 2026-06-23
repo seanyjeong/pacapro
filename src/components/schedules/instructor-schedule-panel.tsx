@@ -260,7 +260,7 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
       <CardContent className="space-y-4">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
           <>
@@ -322,7 +322,7 @@ export function InstructorSchedulePanel({ date, onClose, onRequestExtraDay, onSa
                           <div
                             className={cn(
                               'w-8 h-8 rounded-full flex items-center justify-center transition-colors',
-                              isSelected ? 'bg-white dark:bg-gray-800' : 'bg-muted'
+                              isSelected ? 'bg-card dark:bg-gray-800' : 'bg-muted'
                             )}
                           >
                             {isSelected ? (

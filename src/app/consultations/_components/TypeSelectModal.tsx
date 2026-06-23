@@ -23,7 +23,7 @@ export function TypeSelectModal({ open, onOpenChange, onSelectNew, onSelectLearn
         <div className="grid grid-cols-2 gap-4 px-6 py-6">
           <button
             onClick={() => { onOpenChange(false); onSelectNew(); }}
-            className="flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-all"
+            className="flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-border hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 transition-all"
           >
             <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
               <GraduationCap className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -35,7 +35,7 @@ export function TypeSelectModal({ open, onOpenChange, onSelectNew, onSelectLearn
           </button>
           <button
             onClick={() => { onOpenChange(false); onSelectLearning(); }}
-            className="flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-all"
+            className="flex flex-col items-center gap-3 p-6 rounded-lg border-2 border-border hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-all"
           >
             <div className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center">
               <UserCheck className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />

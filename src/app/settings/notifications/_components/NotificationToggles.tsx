@@ -65,7 +65,7 @@ export default function NotificationToggles({
                 }}
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${isEnabled ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'}`}
               >
-                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-card shadow transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
 
@@ -91,7 +91,7 @@ export default function NotificationToggles({
                           }
                         }}
                         disabled={settings.service_type === 'solapi' ? !settings.solapi_auto_enabled : !settings.sens_auto_enabled}
-                        className="px-2 py-1 text-sm border border-orange-300 dark:border-orange-700 bg-white dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-orange-500 disabled:opacity-50"
+                        className="px-2 py-1 text-sm border border-orange-300 dark:border-orange-700 bg-card dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-orange-500 disabled:opacity-50"
                       >
                         {[...Array(24)].map((_, hour) => (
                           <option key={hour} value={hour}>{hour.toString().padStart(2, '0')}시</option>
@@ -110,7 +110,7 @@ export default function NotificationToggles({
                             ? 'bg-orange-600' : 'bg-gray-300 dark:bg-gray-600'
                         }`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform ${
                           (settings.service_type === 'solapi' ? settings.solapi_auto_enabled : settings.sens_auto_enabled)
                             ? 'translate-x-6' : 'translate-x-1'
                         }`} />
@@ -136,7 +136,7 @@ export default function NotificationToggles({
                           ? 'bg-red-600' : 'bg-gray-300 dark:bg-gray-600'
                       }`}
                     >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform ${
                         (settings.service_type === 'solapi' ? settings.solapi_overdue_auto_enabled : settings.sens_overdue_auto_enabled)
                           ? 'translate-x-6' : 'translate-x-1'
                       }`} />
@@ -172,7 +172,7 @@ export default function NotificationToggles({
                           }
                         }}
                         disabled={settings.service_type === 'solapi' ? !settings.solapi_trial_auto_enabled : !settings.sens_trial_auto_enabled}
-                        className="px-2 py-1 text-sm border border-blue-300 dark:border-blue-700 bg-white dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
+                        className="px-2 py-1 text-sm border border-blue-300 dark:border-blue-700 bg-card dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
                       >
                         {[...Array(24)].map((_, hour) => (
                           <option key={hour} value={hour}>{hour.toString().padStart(2, '0')}시</option>
@@ -191,7 +191,7 @@ export default function NotificationToggles({
                             ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
                         }`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform ${
                           (settings.service_type === 'solapi' ? settings.solapi_trial_auto_enabled : settings.sens_trial_auto_enabled)
                             ? 'translate-x-6' : 'translate-x-1'
                         }`} />
@@ -217,7 +217,7 @@ export default function NotificationToggles({
                           }
                         }}
                         disabled={settings.service_type === 'solapi' ? !settings.solapi_reminder_auto_enabled : !settings.sens_reminder_auto_enabled}
-                        className="px-2 py-1 text-sm border border-purple-300 dark:border-purple-700 bg-white dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
+                        className="px-2 py-1 text-sm border border-purple-300 dark:border-purple-700 bg-card dark:bg-gray-800 text-foreground rounded focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
                       >
                         <option value={1}>1시간 전</option>
                         <option value={2}>2시간 전</option>
@@ -239,7 +239,7 @@ export default function NotificationToggles({
                             ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'
                         }`}
                       >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-card shadow transition-transform ${
                           (settings.service_type === 'solapi' ? settings.solapi_reminder_auto_enabled : settings.sens_reminder_auto_enabled)
                             ? 'translate-x-6' : 'translate-x-1'
                         }`} />

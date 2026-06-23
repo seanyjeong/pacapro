@@ -460,7 +460,7 @@ export default function SeasonDetailPage() {
                         <td className="py-2 px-3">
                           {hasDiscount ? (
                             <div className="flex flex-col">
-                              <span className="line-through text-gray-400 text-sm">
+                              <span className="line-through text-muted-foreground text-sm">
                                 {formatSeasonFee(originalFee.toString())}
                               </span>
                               <div className="flex items-center gap-1">

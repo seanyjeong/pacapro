@@ -170,7 +170,7 @@ export default function TabletSettingsPage() {
       staff: 'bg-green-100/80 dark:bg-green-900 text-green-800 dark:text-green-200',
       instructor: 'bg-orange-100/80 dark:bg-orange-900 text-orange-800 dark:text-orange-200'
     };
-    return colors[role] || 'bg-gray-100/80 dark:bg-gray-900 text-gray-800 dark:text-gray-200';
+    return colors[role] || 'bg-muted/80 dark:bg-gray-900 text-foreground dark:text-gray-200';
   };
 
   if (loading) {
@@ -293,7 +293,7 @@ export default function TabletSettingsPage() {
                     } disabled:opacity-50`}
                   >
                     <span
-                      className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                      className={`absolute top-1 w-5 h-5 bg-card rounded-full transition-transform ${
                         notificationSettings[item.key] ? 'left-6' : 'left-1'
                       }`}
                     />

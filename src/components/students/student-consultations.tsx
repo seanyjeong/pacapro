@@ -586,7 +586,7 @@ function renderInitialConsultation(
           {(consultation.student_name || consultation.student_grade) && (
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <PhoneCall className="h-4 w-4 text-gray-600" />
+                <PhoneCall className="h-4 w-4 text-muted-foreground" />
                 신청자 정보
               </div>
               <div className="pl-6 space-y-1">

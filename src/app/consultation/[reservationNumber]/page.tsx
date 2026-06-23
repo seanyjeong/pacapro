@@ -148,7 +148,7 @@ export default function ReservationChangePage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     );
@@ -156,11 +156,11 @@ export default function ReservationChangePage({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center p-4">
+        <div className="bg-card rounded-xl shadow-lg p-8 max-w-md w-full text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-900 mb-2">예약 조회 실패</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h1 className="text-xl font-bold text-foreground mb-2">예약 조회 실패</h1>
+          <p className="text-muted-foreground mb-6">{error}</p>
           <Link
             href="/"
             className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -175,16 +175,16 @@ export default function ReservationChangePage({
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center p-4">
+        <div className="bg-card rounded-xl shadow-lg p-8 max-w-md w-full text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-xl font-bold text-gray-900 mb-2">예약이 변경되었습니다</h1>
-          <p className="text-gray-600 mb-2">
+          <h1 className="text-xl font-bold text-foreground mb-2">예약이 변경되었습니다</h1>
+          <p className="text-muted-foreground mb-2">
             관리자 확인 후 다시 확정 알림을 받으실 수 있습니다.
           </p>
-          <div className="bg-gray-100 rounded-lg p-4 mt-4">
-            <p className="text-sm text-gray-600">새로운 일정</p>
-            <p className="text-lg font-semibold text-gray-900">
+          <div className="bg-muted rounded-lg p-4 mt-4">
+            <p className="text-sm text-muted-foreground">새로운 일정</p>
+            <p className="text-lg font-semibold text-foreground">
               {formatDate(selectedDate)} {selectedTime}
             </p>
           </div>
@@ -194,34 +194,34 @@ export default function ReservationChangePage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-muted py-8 px-4">
       <div className="max-w-lg mx-auto">
         {/* 헤더 */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-4">
-          <h1 className="text-xl font-bold text-gray-900 mb-1">상담 예약 변경</h1>
-          <p className="text-gray-600 text-sm">{reservation?.academyName}</p>
+        <div className="bg-card rounded-xl shadow-sm p-6 mb-4">
+          <h1 className="text-xl font-bold text-foreground mb-1">상담 예약 변경</h1>
+          <p className="text-muted-foreground text-sm">{reservation?.academyName}</p>
         </div>
 
         {/* 현재 예약 정보 */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">현재 예약 정보</h2>
+        <div className="bg-card rounded-xl shadow-sm p-6 mb-4">
+          <h2 className="text-lg font-semibold text-foreground mb-4">현재 예약 정보</h2>
           <div className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-gray-500">예약번호</span>
-              <span className="font-medium text-gray-900">{reservation?.reservationNumber}</span>
+              <span className="text-muted-foreground">예약번호</span>
+              <span className="font-medium text-foreground">{reservation?.reservationNumber}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">학생명</span>
-              <span className="font-medium text-gray-900">{reservation?.studentName} ({reservation?.studentGrade})</span>
+              <span className="text-muted-foreground">학생명</span>
+              <span className="font-medium text-foreground">{reservation?.studentName} ({reservation?.studentGrade})</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">현재 일정</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-muted-foreground">현재 일정</span>
+              <span className="font-medium text-foreground">
                 {reservation && formatDate(reservation.preferredDate)} {reservation?.preferredTime}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">상태</span>
+              <span className="text-muted-foreground">상태</span>
               <span className={`font-medium ${
                 reservation?.status === 'confirmed' ? 'text-green-600' : 'text-yellow-600'
               }`}>
@@ -232,10 +232,10 @@ export default function ReservationChangePage({
         </div>
 
         {/* 날짜 선택 */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-4">
+        <div className="bg-card rounded-xl shadow-sm p-6 mb-4">
           <div className="flex items-center gap-2 mb-4">
             <Calendar className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">새로운 날짜 선택</h2>
+            <h2 className="text-lg font-semibold text-foreground">새로운 날짜 선택</h2>
           </div>
           <div className="grid grid-cols-4 gap-2">
             {getAvailableDates().map((date) => (
@@ -248,7 +248,7 @@ export default function ReservationChangePage({
                 className={`py-2 px-3 text-sm rounded-lg transition-colors ${
                   selectedDate === date
                     ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    : 'bg-muted text-foreground hover:bg-muted'
                 }`}
               >
                 {formatDate(date)}
@@ -258,10 +258,10 @@ export default function ReservationChangePage({
         </div>
 
         {/* 시간 선택 */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-4">
+        <div className="bg-card rounded-xl shadow-sm p-6 mb-4">
           <div className="flex items-center gap-2 mb-4">
             <Clock className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-gray-900">새로운 시간 선택</h2>
+            <h2 className="text-lg font-semibold text-foreground">새로운 시간 선택</h2>
           </div>
 
           {loadingSlots ? (
@@ -269,7 +269,7 @@ export default function ReservationChangePage({
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto" />
             </div>
           ) : availableSlots.length === 0 ? (
-            <p className="text-gray-500 text-center py-4">
+            <p className="text-muted-foreground text-center py-4">
               {selectedDate ? '선택하신 날짜에 가능한 시간이 없습니다.' : '날짜를 먼저 선택해주세요.'}
             </p>
           ) : (
@@ -283,8 +283,8 @@ export default function ReservationChangePage({
                     selectedTime === slot.time
                       ? 'bg-blue-600 text-white'
                       : slot.available
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      : 'bg-gray-50 text-gray-300 cursor-not-allowed'
+                      ? 'bg-muted text-foreground hover:bg-muted'
+                      : 'bg-muted text-gray-300 cursor-not-allowed'
                   }`}
                 >
                   {slot.time}
@@ -300,14 +300,14 @@ export default function ReservationChangePage({
           disabled={submitting || !selectedDate || !selectedTime}
           className={`w-full py-4 rounded-xl text-lg font-semibold transition-colors ${
             submitting || !selectedDate || !selectedTime
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? 'bg-gray-300 text-muted-foreground cursor-not-allowed'
               : 'bg-blue-600 text-white hover:bg-blue-700'
           }`}
         >
           {submitting ? '변경 중...' : '예약 변경하기'}
         </button>
 
-        <p className="text-sm text-gray-500 text-center mt-4">
+        <p className="text-sm text-muted-foreground text-center mt-4">
           예약 변경 시 관리자 확인 후 다시 확정 알림이 발송됩니다.
         </p>
       </div>

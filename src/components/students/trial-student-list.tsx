@@ -206,7 +206,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                           className={`text-xs flex items-center gap-1 ${
                             td.attended
                               ? 'bg-green-50 text-green-700 border-green-300 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
-                              : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700'
+                              : 'bg-muted text-muted-foreground border-border dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700'
                           }`}
                         >
                           <Calendar className="w-3 h-3" />

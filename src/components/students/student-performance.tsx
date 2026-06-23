@@ -17,8 +17,8 @@ export function StudentPerformanceComponent({ performances, loading }: StudentPe
     <Card>
       <CardContent className="p-12 text-center">
         <Construction className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">추후 업데이트 예정</h3>
-        <p className="text-gray-600">
+        <h3 className="text-xl font-semibold text-foreground mb-2">추후 업데이트 예정</h3>
+        <p className="text-muted-foreground">
           성적 기록 기능은 현재 개발 중입니다.
           <br />
           빠른 시일 내에 제공될 예정입니다.

@@ -72,7 +72,7 @@ export default function MobileUnpaidPage() {
     if (days >= 30) return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30';
     if (days >= 14) return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30';
     if (days >= 7) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-950/30';
-    return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900';
+    return 'text-muted-foreground dark:text-gray-400 bg-muted dark:bg-gray-900';
   };
 
   // 완납 처리

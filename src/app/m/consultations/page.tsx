@@ -246,8 +246,8 @@ export default function MobileConsultationsPage() {
     const colors: Record<ConsultationStatus, string> = {
       pending: 'text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/30',
       confirmed: 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30',
-      completed: 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800',
-      cancelled: 'text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800',
+      completed: 'text-muted-foreground dark:text-gray-400 bg-muted dark:bg-gray-800',
+      cancelled: 'text-muted-foreground dark:text-gray-400 bg-muted dark:bg-gray-800',
       no_show: 'text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-900/30',
     };
     return colors[status];
@@ -429,8 +429,8 @@ export default function MobileConsultationsPage() {
                                 ${finished ? 'opacity-60' : ''}`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-full ${finished ? 'bg-gray-100 dark:bg-gray-800' : 'bg-green-50 dark:bg-green-900/30'}`}>
-                        <User className={`h-5 w-5 ${finished ? 'text-gray-400 dark:text-gray-500' : 'text-green-600 dark:text-green-400'}`} />
+                      <div className={`p-2 rounded-full ${finished ? 'bg-muted dark:bg-gray-800' : 'bg-green-50 dark:bg-green-900/30'}`}>
+                        <User className={`h-5 w-5 ${finished ? 'text-muted-foreground dark:text-gray-500' : 'text-green-600 dark:text-green-400'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">

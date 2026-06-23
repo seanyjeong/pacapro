@@ -429,7 +429,7 @@ export function TimeSlotDetailModal({
         <div className={cn('px-5 py-4 border-b shrink-0', slotInfo.bgColor)}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={cn('p-2 rounded-full bg-white/80 dark:bg-black/30')}>
+              <div className={cn('p-2 rounded-full bg-card/80 dark:bg-black/30')}>
                 <Icon className={cn('h-5 w-5', slotInfo.color)} />
               </div>
               <div>
@@ -442,7 +442,7 @@ export function TimeSlotDetailModal({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-full hover:bg-white/50"
+              className="h-8 w-8 rounded-full hover:bg-card/50"
               onClick={onClose}
             >
               <X className="h-4 w-4" />
@@ -454,7 +454,7 @@ export function TimeSlotDetailModal({
         <div className="p-5 overflow-y-auto flex-1">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <div className="space-y-6">
@@ -569,7 +569,7 @@ export function TimeSlotDetailModal({
                                       ? 'bg-blue-500 text-white'
                                       : attendance?.checkIn
                                         ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                        : 'bg-muted text-muted-foreground cursor-not-allowed'
                                   )}
                                 >
                                   {attendance?.checkOut ? `퇴근 ${attendance.checkOut}` : '퇴근'}
@@ -773,7 +773,7 @@ export function TimeSlotDetailModal({
                                       <Badge className={cn(
                                         "text-xs flex items-center gap-1",
                                         isLastSession && isAttended
-                                          ? "bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
+                                          ? "bg-muted text-muted-foreground border-border dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700"
                                           : "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-400 dark:border-purple-800"
                                       )}>
                                         <Sparkles className="h-3 w-3" />
@@ -899,7 +899,7 @@ export function TimeSlotDetailModal({
                                           ? reasonInput.status === 'excused'
                                             ? "bg-blue-500 text-white border-blue-500"
                                             : "bg-red-500 text-white border-red-500"
-                                          : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                          : "bg-card dark:bg-gray-800 border-border dark:border-gray-700 hover:border-border"
                                       )}
                                     >
                                       {option.label}
@@ -914,7 +914,7 @@ export function TimeSlotDetailModal({
                                         ? reasonInput.status === 'excused'
                                           ? "bg-blue-500 text-white border-blue-500"
                                           : "bg-red-500 text-white border-red-500"
-                                        : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300"
+                                        : "bg-card dark:bg-gray-800 border-border dark:border-gray-700 hover:border-border"
                                     )}
                                   >
                                     기타

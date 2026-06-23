@@ -182,11 +182,11 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">강사 *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">강사 *</label>
             <select
               value={instructorId}
               onChange={(e) => setInstructorId(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
             >
               <option value={0}>강사 선택</option>
               {instructors.map((instructor) => (
@@ -198,12 +198,12 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">급여월 *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">급여월 *</label>
             <input
               type="month"
               value={yearMonth}
               onChange={(e) => setYearMonth(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
             />
           </div>
         </div>
@@ -212,7 +212,7 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
         {loadingWorkData && (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            <span className="text-sm text-gray-600">근무 기록 조회 중...</span>
+            <span className="text-sm text-muted-foreground">근무 기록 조회 중...</span>
           </div>
         )}
 
@@ -304,7 +304,7 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">인센티브</label>
+            <label className="block text-sm font-medium text-foreground mb-1">인센티브</label>
             <MoneyInput
               value={incentive}
               onChange={(v) => setIncentive(v)}
@@ -313,7 +313,7 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">공제액</label>
+            <label className="block text-sm font-medium text-foreground mb-1">공제액</label>
             <MoneyInput
               value={deduction}
               onChange={(v) => setDeduction(v)}
@@ -333,25 +333,25 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
         </Button>
 
         {result && (
-          <div className="bg-gray-50 border border-gray-200 rounded-md p-4 space-y-2">
-            <h4 className="font-semibold text-gray-900 mb-3">계산 결과</h4>
+          <div className="bg-muted border border-border rounded-md p-4 space-y-2">
+            <h4 className="font-semibold text-foreground mb-3">계산 결과</h4>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">기본 급여</span>
+              <span className="text-muted-foreground">기본 급여</span>
               <span className="font-medium">{formatSalaryAmount(result.base_amount)}</span>
             </div>
             {result.incentive_amount > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">인센티브</span>
+                <span className="text-muted-foreground">인센티브</span>
                 <span className="font-medium text-blue-600">+{formatSalaryAmount(result.incentive_amount)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm font-semibold border-t pt-2">
-              <span className="text-gray-900">총 급여</span>
+              <span className="text-foreground">총 급여</span>
               <span>{formatSalaryAmount(result.gross_salary)}</span>
             </div>
             {result.tax_amount > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">
+                <span className="text-muted-foreground">
                   세금 ({TAX_TYPE_LABELS[result.tax_type as keyof typeof TAX_TYPE_LABELS] || result.tax_type})
                 </span>
                 <span className="font-medium text-red-600">-{formatSalaryAmount(result.tax_amount)}</span>
@@ -359,12 +359,12 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
             )}
             {result.total_deduction > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">공제액</span>
+                <span className="text-muted-foreground">공제액</span>
                 <span className="font-medium text-red-600">-{formatSalaryAmount(result.total_deduction)}</span>
               </div>
             )}
             <div className="flex justify-between text-lg font-bold border-t pt-2">
-              <span className="text-gray-900">실수령액</span>
+              <span className="text-foreground">실수령액</span>
               <span className="text-primary-600">{formatSalaryAmount(result.net_salary)}</span>
             </div>
 

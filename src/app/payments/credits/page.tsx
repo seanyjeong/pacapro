@@ -40,7 +40,7 @@ const STATUS_COLORS: Record<string, string> = {
   partial: 'bg-blue-100 text-blue-800',
   applied: 'bg-green-100 text-green-800',
   refunded: 'bg-purple-100 text-purple-800',
-  cancelled: 'bg-gray-100 text-gray-800',
+  cancelled: 'bg-muted text-foreground',
 };
 
 export default function CreditsPage() {

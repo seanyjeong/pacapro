@@ -155,7 +155,7 @@ export function PrepaidPaymentModal({
     switch (status) {
       case 'new': return null;
       case 'existing_unpaid': return <span className="text-xs text-amber-600 dark:text-amber-400">미납</span>;
-      case 'already_paid': return <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">완납</span>;
+      case 'already_paid': return <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground dark:bg-gray-800 dark:text-gray-400">완납</span>;
     }
   };
 
@@ -261,7 +261,7 @@ export function PrepaidPaymentModal({
                     </div>
                     <div className="text-right">
                       {m.status === 'already_paid' ? (
-                        <span className="text-gray-400 line-through">{m.base_amount.toLocaleString()}원</span>
+                        <span className="text-muted-foreground line-through">{m.base_amount.toLocaleString()}원</span>
                       ) : (
                         <div>
                           {m.prepaid_discount > 0 && (

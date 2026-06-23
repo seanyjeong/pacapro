@@ -46,7 +46,7 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   withdrawn: { label: '퇴원', color: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300' },
   graduated: { label: '졸업', color: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' },
   trial: { label: '체험', color: 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300' },
-  pending: { label: '대기', color: 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300' },
+  pending: { label: '대기', color: 'bg-muted dark:bg-gray-900 text-foreground dark:text-gray-300' },
 };
 
 const DAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -155,7 +155,7 @@ export default function TabletStudentDetailPage() {
   return (
     <div className="space-y-4">
       {/* 헤더 */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm">
+      <div className="bg-card dark:bg-slate-800 rounded-2xl p-4 shadow-sm">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-slate-600 dark:text-slate-300 mb-4"
@@ -175,7 +175,7 @@ export default function TabletStudentDetailPage() {
             <div className="flex items-center gap-2 mb-1">
               <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{student.name}</h1>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                STATUS_LABELS[student.status]?.color || 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                STATUS_LABELS[student.status]?.color || 'bg-muted dark:bg-gray-900 text-foreground dark:text-gray-300'
               }`}>
                 {STATUS_LABELS[student.status]?.label || student.status}
               </span>
@@ -193,7 +193,7 @@ export default function TabletStudentDetailPage() {
       {/* 요약 카드 */}
       <div className={`grid gap-4 ${orientation === 'landscape' ? 'grid-cols-2' : 'grid-cols-1'}`}>
         {/* 출석 현황 */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
+        <div className="bg-card dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <CheckCircle2 className="text-green-500 dark:text-green-400" size={20} />
             <h3 className="font-bold text-slate-800 dark:text-slate-100">이번달 출석</h3>
@@ -219,7 +219,7 @@ export default function TabletStudentDetailPage() {
         </div>
 
         {/* 수업 정보 */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
+        <div className="bg-card dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="text-blue-500 dark:text-blue-400" size={20} />
             <h3 className="font-bold text-slate-800 dark:text-slate-100">수업 정보</h3>
@@ -240,7 +240,7 @@ export default function TabletStudentDetailPage() {
       </div>
 
       {/* 연락처 */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
+      <div className="bg-card dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
         <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-4">연락처</h3>
         <div className="grid gap-4 grid-cols-2">
           <div className="flex items-center gap-3">
@@ -266,7 +266,7 @@ export default function TabletStudentDetailPage() {
 
       {/* 메모 */}
       {student.memo && (
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
+        <div className="bg-card dark:bg-slate-800 rounded-2xl p-5 shadow-sm">
           <h3 className="font-bold text-slate-800 dark:text-slate-100 mb-2">메모</h3>
           <p className="text-slate-600 dark:text-slate-300 whitespace-pre-wrap">{student.memo}</p>
         </div>

@@ -55,20 +55,20 @@ export default function InstructorDetailPage() {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">강사 상세</h1>
-            <p className="text-gray-600 mt-1">강사 정보를 불러오는 중...</p>
+            <h1 className="text-3xl font-bold text-foreground">강사 상세</h1>
+            <p className="text-muted-foreground mt-1">강사 정보를 불러오는 중...</p>
           </div>
         </div>
 
         <Card>
           <CardContent className="p-12 text-center">
             <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">강사 정보를 불러오는 중...</p>
+            <p className="text-muted-foreground">강사 정보를 불러오는 중...</p>
           </CardContent>
         </Card>
       </div>
@@ -82,21 +82,21 @@ export default function InstructorDetailPage() {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">강사 상세</h1>
-            <p className="text-gray-600 mt-1">강사 정보 조회 실패</p>
+            <h1 className="text-3xl font-bold text-foreground">강사 상세</h1>
+            <p className="text-muted-foreground mt-1">강사 정보 조회 실패</p>
           </div>
         </div>
 
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-            <p className="text-gray-600 mb-4">{error || '강사 정보를 찾을 수 없습니다.'}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <p className="text-muted-foreground mb-4">{error || '강사 정보를 찾을 수 없습니다.'}</p>
             <div className="flex items-center justify-center space-x-3">
               <Button variant="outline" onClick={() => router.back()}>
                 뒤로 가기
@@ -116,13 +116,13 @@ export default function InstructorDetailPage() {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-muted rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{instructor.name}</h1>
-            <p className="text-gray-600 mt-1">강사 상세 정보</p>
+            <h1 className="text-3xl font-bold text-foreground">{instructor.name}</h1>
+            <p className="text-muted-foreground mt-1">강사 상세 정보</p>
           </div>
         </div>
         <div className="flex items-center space-x-3">

@@ -183,7 +183,7 @@ export default function TossPaymentsPage() {
       case 'matched':
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">매칭완료</Badge>;
       case 'ignored':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">무시됨</Badge>;
+        return <Badge variant="outline" className="bg-muted text-foreground border-border">무시됨</Badge>;
       case 'error':
         return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">오류</Badge>;
       default:

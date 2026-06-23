@@ -83,27 +83,27 @@ export default function SolapiTemplates({
         <div className="flex gap-2 flex-wrap">
           <button onClick={() => setActiveTemplate('unpaid')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTemplate === 'unpaid' ? 'bg-orange-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}>
             <DollarSign className="w-4 h-4" />납부 안내 알림톡
-            {settings.solapi_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'unpaid' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
+            {settings.solapi_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'unpaid' ? 'bg-card/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
           </button>
           <button onClick={() => setActiveTemplate('overdue')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTemplate === 'overdue' ? 'bg-red-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}>
             <AlertCircle className="w-4 h-4" />미납자 알림톡
-            {settings.solapi_overdue_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'overdue' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
+            {settings.solapi_overdue_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'overdue' ? 'bg-card/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
           </button>
           <button onClick={() => setActiveTemplate('consultation')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTemplate === 'consultation' ? 'bg-green-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}>
             <Bell className="w-4 h-4" />상담확정 알림톡
-            {settings.solapi_consultation_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'consultation' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
+            {settings.solapi_consultation_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'consultation' ? 'bg-card/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
           </button>
           <button onClick={() => setActiveTemplate('trial')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTemplate === 'trial' ? 'bg-blue-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}>
             <GraduationCap className="w-4 h-4" />체험수업 알림톡
-            {settings.solapi_trial_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'trial' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
+            {settings.solapi_trial_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'trial' ? 'bg-card/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
           </button>
           <button onClick={() => setActiveTemplate('reminder')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTemplate === 'reminder' ? 'bg-purple-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}>
             <Clock className="w-4 h-4" />상담 리마인드
-            {settings.solapi_reminder_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'reminder' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
+            {settings.solapi_reminder_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'reminder' ? 'bg-card/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
           </button>
           <button onClick={() => setActiveTemplate('attendance')} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-colors ${activeTemplate === 'attendance' ? 'bg-teal-600 text-white' : 'bg-muted text-foreground hover:bg-muted/80'}`}>
             <ClipboardCheck className="w-4 h-4" />출결관리 알림톡
-            {settings.solapi_attendance_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'attendance' ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
+            {settings.solapi_attendance_template_id && <span className={`text-xs px-1.5 py-0.5 rounded ${activeTemplate === 'attendance' ? 'bg-card/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>}
           </button>
         </div>
       </div>
@@ -273,7 +273,7 @@ export default function SolapiTemplates({
                   <div><p className="font-medium text-foreground">자동 발송</p><p className="text-sm text-muted-foreground">체험수업이 있는 날 지정 시간에 자동 발송</p></div>
                   <button onClick={() => setSettings(prev => ({ ...prev, solapi_trial_auto_enabled: !prev.solapi_trial_auto_enabled }))}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_trial_auto_enabled ? 'bg-blue-600' : 'bg-muted'}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_trial_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.solapi_trial_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                 </div>
                 <div>
@@ -415,7 +415,7 @@ export default function SolapiTemplates({
                   <div><p className="font-medium text-foreground">자동 발송</p><p className="text-sm text-muted-foreground">상담 N시간 전에 자동으로 리마인드 알림톡 발송</p></div>
                   <button onClick={() => setSettings(prev => ({ ...prev, solapi_reminder_auto_enabled: !prev.solapi_reminder_auto_enabled }))}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.solapi_reminder_auto_enabled ? 'bg-purple-600' : 'bg-muted'}`}>
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.solapi_reminder_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.solapi_reminder_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                 </div>
                 <div>
@@ -464,7 +464,7 @@ export default function SolapiTemplates({
               </div>
               <button onClick={() => setSettings(prev => ({ ...prev, attendance_alimtalk_enabled: !prev.attendance_alimtalk_enabled }))}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.attendance_alimtalk_enabled ? 'bg-teal-600' : 'bg-muted'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.attendance_alimtalk_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.attendance_alimtalk_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
             <div className="md:col-span-2">

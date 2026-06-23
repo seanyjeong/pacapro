@@ -215,7 +215,7 @@ export default function SensTemplates({
               {icon}
               {label}
               {setCode && (
-                <span className={`text-xs px-1.5 py-0.5 rounded ${activeSensTemplate === key ? 'bg-white/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
+                <span className={`text-xs px-1.5 py-0.5 rounded ${activeSensTemplate === key ? 'bg-card/20' : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'}`}>설정됨</span>
               )}
             </button>
           ))}
@@ -292,7 +292,7 @@ export default function SensTemplates({
                   onClick={() => setSettings(prev => ({ ...prev, sens_auto_enabled: !prev.sens_auto_enabled }))}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_auto_enabled ? 'bg-orange-600' : 'bg-muted'}`}
                 >
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.sens_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.sens_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
               {settings.sens_auto_enabled && (
@@ -372,7 +372,7 @@ export default function SensTemplates({
               <div className="flex items-center justify-between mb-4">
                 <div><p className="font-medium text-foreground">미납자 수업일 자동 발송</p><p className="text-sm text-muted-foreground">미납 학생의 수업이 있는 날에만 자동 발송</p></div>
                 <button onClick={() => setSettings(prev => ({ ...prev, sens_overdue_auto_enabled: !prev.sens_overdue_auto_enabled }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_overdue_auto_enabled ? 'bg-red-600' : 'bg-muted'}`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.sens_overdue_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.sens_overdue_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
               {settings.sens_overdue_auto_enabled && (
@@ -473,7 +473,7 @@ export default function SensTemplates({
               <div className="flex items-center justify-between mb-4">
                 <div><p className="font-medium text-foreground">체험수업 당일 자동 발송</p><p className="text-sm text-muted-foreground">체험수업 예정일에 자동 발송</p></div>
                 <button onClick={() => setSettings(prev => ({ ...prev, sens_trial_auto_enabled: !prev.sens_trial_auto_enabled }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_trial_auto_enabled ? 'bg-blue-600' : 'bg-muted'}`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.sens_trial_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.sens_trial_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
               {settings.sens_trial_auto_enabled && (
@@ -533,7 +533,7 @@ export default function SensTemplates({
               <div className="flex items-center justify-between mb-4">
                 <div><p className="font-medium text-foreground">상담 리마인드 자동 발송</p><p className="text-sm text-muted-foreground">상담 N시간 전에 자동 발송</p></div>
                 <button onClick={() => setSettings(prev => ({ ...prev, sens_reminder_auto_enabled: !prev.sens_reminder_auto_enabled }))} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.sens_reminder_auto_enabled ? 'bg-purple-600' : 'bg-muted'}`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.sens_reminder_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.sens_reminder_auto_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
               </div>
               {settings.sens_reminder_auto_enabled && (
@@ -577,7 +577,7 @@ export default function SensTemplates({
               </div>
               <button onClick={() => setSettings(prev => ({ ...prev, attendance_alimtalk_enabled: !prev.attendance_alimtalk_enabled }))}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${settings.attendance_alimtalk_enabled ? 'bg-teal-600' : 'bg-muted'}`}>
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.attendance_alimtalk_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-card transition-transform ${settings.attendance_alimtalk_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
             <div className="md:col-span-2">

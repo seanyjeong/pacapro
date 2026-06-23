@@ -171,7 +171,7 @@ function ConsultationRow({
                   </Badge>
                 )}
                 {c.matched_student_status === 'no_trial' && (
-                  <Badge className="bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 flex items-center gap-1">
+                  <Badge className="bg-muted text-foreground border-border dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 flex items-center gap-1">
                     미체험
                   </Badge>
                 )}

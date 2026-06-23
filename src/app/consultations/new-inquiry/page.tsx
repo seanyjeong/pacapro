@@ -247,7 +247,7 @@ export default function NewInquiryConsultationsPage() {
                 { tag: 'trial_completed' as const, label: '체험완료', icon: <Dumbbell className="h-3 w-3 mr-1" />, colorClass: 'text-purple-600 border-purple-200 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-950' },
                 { tag: 'trial_ongoing' as const, label: '체험중', icon: <Dumbbell className="h-3 w-3 mr-1" />, colorClass: 'text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-950' },
                 { tag: 'unregistered' as const, label: '미등록', icon: <UserX className="h-3 w-3 mr-1" />, colorClass: 'text-orange-600 border-orange-200 hover:bg-orange-50 dark:border-orange-800 dark:hover:bg-orange-950' },
-                { tag: 'no_trial' as const, label: '미체험', icon: null, colorClass: 'text-gray-600 border-gray-200 hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900' },
+                { tag: 'no_trial' as const, label: '미체험', icon: null, colorClass: 'text-muted-foreground border-border hover:bg-muted dark:border-gray-700 dark:hover:bg-gray-900' },
               ] as const).map(({ tag, label, icon, colorClass }) => (
                 <Button
                   key={tag}

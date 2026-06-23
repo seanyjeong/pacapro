@@ -66,13 +66,13 @@ export default function EditPaymentPage({ params }: { params: Promise<{ id: stri
             뒤로
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">학원비 수정</h1>
+            <h1 className="text-3xl font-bold text-foreground">학원비 수정</h1>
           </div>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
             <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">데이터를 불러오는 중...</p>
+            <p className="text-muted-foreground">데이터를 불러오는 중...</p>
           </CardContent>
         </Card>
       </div>
@@ -88,14 +88,14 @@ export default function EditPaymentPage({ params }: { params: Promise<{ id: stri
             뒤로
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">학원비 수정</h1>
+            <h1 className="text-3xl font-bold text-foreground">학원비 수정</h1>
           </div>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">데이터 로드 실패</h3>
-            <p className="text-gray-600 mb-4">{paymentError || '학원비 정보를 찾을 수 없습니다.'}</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">데이터 로드 실패</h3>
+            <p className="text-muted-foreground mb-4">{paymentError || '학원비 정보를 찾을 수 없습니다.'}</p>
             <Button onClick={() => router.push('/payments')}>목록으로</Button>
           </CardContent>
         </Card>
@@ -123,8 +123,8 @@ export default function EditPaymentPage({ params }: { params: Promise<{ id: stri
           뒤로
         </Button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">학원비 수정</h1>
-          <p className="text-gray-600 mt-1">{payment.student_name}님의 학원비 정보 수정</p>
+          <h1 className="text-3xl font-bold text-foreground">학원비 수정</h1>
+          <p className="text-muted-foreground mt-1">{payment.student_name}님의 학원비 정보 수정</p>
         </div>
       </div>
 

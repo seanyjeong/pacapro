@@ -30,19 +30,19 @@ export default function AlimtalkPreview({ academyName, templateContent, imageUrl
               <path d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.64 6.72-.22.82-.87 3.04-.92 3.28 0 0-.02.08.04.11.06.03.12.01.12.01.17-.02 3.03-1.97 3.58-2.33.83.12 1.69.18 2.54.18 5.52 0 10-3.58 10-8 0-4.42-4.48-8-10-8z"/>
             </svg>
           </div>
-          <span className="font-medium text-gray-800 text-sm">알림톡</span>
+          <span className="font-medium text-foreground text-sm">알림톡</span>
         </div>
         <div className="flex gap-2">
           <div className="flex-shrink-0">
             <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-muted-foreground" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
               </svg>
             </div>
           </div>
           <div className="flex-1">
-            <p className="text-xs text-gray-600 mb-1">{academyName}</p>
-            <div className="bg-white rounded-lg rounded-tl-none p-3 shadow-sm">
+            <p className="text-xs text-muted-foreground mb-1">{academyName}</p>
+            <div className="bg-card rounded-lg rounded-tl-none p-3 shadow-sm">
               {imageUrl && (
                 <div className="mb-2 -mx-1 -mt-1">
                   <img
@@ -53,18 +53,18 @@ export default function AlimtalkPreview({ academyName, templateContent, imageUrl
                   />
                 </div>
               )}
-              <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{preview}</p>
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{preview}</p>
               {buttons && buttons.length > 0 && (
-                <div className="mt-3 pt-2 border-t border-gray-200 space-y-1.5">
+                <div className="mt-3 pt-2 border-t border-border space-y-1.5">
                   {buttons.map((btn, idx) => (
-                    <div key={idx} className="text-center py-2 px-3 bg-gray-100 rounded-md text-sm text-blue-600 font-medium hover:bg-gray-200 cursor-pointer">
+                    <div key={idx} className="text-center py-2 px-3 bg-muted rounded-md text-sm text-blue-600 font-medium hover:bg-muted cursor-pointer">
                       {btn.buttonName || '버튼'}
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            <p className="text-xs text-gray-500 mt-1">{timeLabel}</p>
+            <p className="text-xs text-muted-foreground mt-1">{timeLabel}</p>
           </div>
         </div>
       </div>

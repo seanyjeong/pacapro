@@ -68,11 +68,11 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
     if (isPublicPage) {
         return (
-            <div className="min-h-screen bg-gray-50">
+            <div className="min-h-screen bg-muted">
                 <main className="w-full max-w-lg mx-auto px-4 py-6 sm:py-8">
                     {children}
                 </main>
-                <footer className="py-4 text-center text-xs text-gray-400">
+                <footer className="py-4 text-center text-xs text-muted-foreground">
                     Powered by P-ACA
                 </footer>
             </div>

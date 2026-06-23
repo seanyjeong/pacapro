@@ -104,7 +104,7 @@ export function TabletStudentEditModal({
           </div>
 
           <div className="space-y-2">
-            <Label>학부모 연락처</Label>
+            <Label>연락처</Label>
             <Input
               value={studentEditForm.parent_phone}
               onChange={(e) => setStudentEditForm({ ...studentEditForm, parent_phone: e.target.value })}

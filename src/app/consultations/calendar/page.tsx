@@ -313,7 +313,7 @@ function ConsultationCalendarContent() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">상담 달력</h1>
-            <p className="text-gray-500">월별 상담 일정을 확인합니다.</p>
+            <p className="text-muted-foreground">월별 상담 일정을 확인합니다.</p>
           </div>
         </div>
         <Link href="/consultations">
@@ -361,7 +361,7 @@ function ConsultationCalendarContent() {
                   <div
                     key={day}
                     className={`text-center py-2 text-sm font-medium ${
-                      i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-gray-600'
+                      i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-muted-foreground'
                     }`}
                   >
                     {day}
@@ -389,8 +389,8 @@ function ConsultationCalendarContent() {
                     <div
                       key={date.toISOString()}
                       className={`min-h-[100px] border rounded-lg p-1 transition-colors group relative ${
-                        dayConsultations.length > 0 || dayMemos.length > 0 ? 'hover:bg-blue-50' : 'hover:bg-gray-50'
-                      } ${isToday ? 'bg-blue-50 border-blue-300' : 'border-gray-200'}`}
+                        dayConsultations.length > 0 || dayMemos.length > 0 ? 'hover:bg-blue-50' : 'hover:bg-muted'
+                      } ${isToday ? 'bg-blue-50 border-blue-300' : 'border-border'}`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-1">
@@ -398,7 +398,7 @@ function ConsultationCalendarContent() {
                             className={`text-sm font-medium cursor-pointer ${
                               dayOfWeek === 0 ? 'text-red-500' :
                               dayOfWeek === 6 ? 'text-blue-500' :
-                              'text-gray-700'
+                              'text-foreground'
                             }`}
                             onClick={() => handleDateClick(date)}
                           >
@@ -434,14 +434,14 @@ function ConsultationCalendarContent() {
                             >
                               <div className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusDot(c.status, isLearning)}`} />
                               {isLearning && <UserCheck className="h-2.5 w-2.5 text-emerald-600 flex-shrink-0" />}
-                              <span className={`truncate ${isDone ? 'line-through text-gray-400' : ''}`}>
+                              <span className={`truncate ${isDone ? 'line-through text-muted-foreground' : ''}`}>
                                 {c.student_name}
                               </span>
                             </div>
                           );
                         })}
                         {dayConsultations.length > 3 && (
-                          <div className="text-xs text-gray-500 pl-3">
+                          <div className="text-xs text-muted-foreground pl-3">
                             +{dayConsultations.length - 3}건 더
                           </div>
                         )}
@@ -469,7 +469,7 @@ function ConsultationCalendarContent() {
               {/* 범례 */}
               <div className="flex flex-wrap items-center gap-4 mt-4 pt-4 border-t justify-center">
                 <div className="flex items-center gap-3 text-xs border-r pr-4">
-                  <span className="text-gray-500 font-medium">신규상담:</span>
+                  <span className="text-muted-foreground font-medium">신규상담:</span>
                   <div className="flex items-center gap-1">
                     <div className="w-3 h-3 rounded-full bg-yellow-400" />
                     <span>대기</span>
@@ -556,7 +556,7 @@ function ConsultationCalendarContent() {
                         <Clock className="h-4 w-4 text-blue-600" />
                         <span className="font-semibold text-blue-700">{time}</span>
                       </div>
-                      <div className="flex-1 border-t border-gray-200" />
+                      <div className="flex-1 border-t border-border" />
                     </div>
                     <div className="space-y-2 pl-2">
                       {consultations.map((c) => {
@@ -578,10 +578,10 @@ function ConsultationCalendarContent() {
                                   <div className="flex items-center gap-2">
                                     <div className={`w-2.5 h-2.5 rounded-full ${getStatusDot(c.status, isLearning)}`} />
                                     {isLearning && <UserCheck className="h-3.5 w-3.5 text-emerald-600" />}
-                                    <span className={`font-medium ${isDone ? 'line-through text-gray-400' : 'text-gray-900'}`}>
+                                    <span className={`font-medium ${isDone ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                                       {c.student_name}
                                     </span>
-                                    <span className="text-sm text-gray-500">{c.student_grade}</span>
+                                    <span className="text-sm text-muted-foreground">{c.student_grade}</span>
                                     <StatusBadge status={c.status} />
                                     {isLearning && c.learning_type && (
                                       <Badge variant="outline" className="text-emerald-700 border-emerald-300 text-xs">
@@ -589,7 +589,7 @@ function ConsultationCalendarContent() {
                                       </Badge>
                                     )}
                                   </div>
-                                  <span className="text-sm text-gray-500 flex items-center gap-1.5">
+                                  <span className="text-sm text-muted-foreground flex items-center gap-1.5">
                                     <Phone className="h-3.5 w-3.5" />
                                     {c.student_phone || c.parent_phone}
                                   </span>
@@ -659,11 +659,11 @@ function ConsultationCalendarContent() {
               <div>
                 <h4 className="font-medium mb-2">학생 정보</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
-                  <p><span className="text-gray-500">이름:</span> {selectedConsultation.student_name}</p>
-                  <p><span className="text-gray-500">연락처:</span> {selectedConsultation.student_phone || selectedConsultation.parent_phone}</p>
-                  <p><span className="text-gray-500">학년:</span> {selectedConsultation.student_grade}</p>
+                  <p><span className="text-muted-foreground">이름:</span> {selectedConsultation.student_name}</p>
+                  <p><span className="text-muted-foreground">연락처:</span> {selectedConsultation.student_phone || selectedConsultation.parent_phone}</p>
+                  <p><span className="text-muted-foreground">학년:</span> {selectedConsultation.student_grade}</p>
                   {selectedConsultation.student_school && (
-                    <p><span className="text-gray-500">학교:</span> {selectedConsultation.student_school}</p>
+                    <p><span className="text-muted-foreground">학교:</span> {selectedConsultation.student_school}</p>
                   )}
                 </div>
               </div>
@@ -694,24 +694,24 @@ function ConsultationCalendarContent() {
                       <GraduationCap className="h-4 w-4" />
                       성적 정보
                     </h4>
-                    <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+                    <div className="bg-muted rounded-lg p-4 space-y-4">
                       <div className="flex gap-6">
                         {hasSchoolGradeAvg && (
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-500 text-sm">내신 평균</span>
+                            <span className="text-muted-foreground text-sm">내신 평균</span>
                             <span className="font-semibold text-blue-600">{gradeDisplay(scores.schoolGradeAvg)}</span>
                           </div>
                         )}
                         {hasAdmissionType && (
                           <div className="flex items-center gap-2">
-                            <span className="text-gray-500 text-sm">입시 유형</span>
+                            <span className="text-muted-foreground text-sm">입시 유형</span>
                             <span className="font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700">{admissionTypeLabel}</span>
                           </div>
                         )}
                       </div>
                       {hasMockGrades && (
                         <div>
-                          <p className="text-sm text-gray-500 mb-2">모의고사 등급</p>
+                          <p className="text-sm text-muted-foreground mb-2">모의고사 등급</p>
                           <div className="grid grid-cols-4 gap-2">
                             {['korean', 'math', 'english', 'exploration'].map((subject) => {
                               const labels: Record<string, string> = {
@@ -719,13 +719,13 @@ function ConsultationCalendarContent() {
                               };
                               const value = scores.mockTestGrades?.[subject as keyof typeof scores.mockTestGrades];
                               return (
-                                <div key={subject} className="bg-white rounded-lg p-3 text-center border">
-                                  <div className="text-xs text-gray-500 mb-1">{labels[subject]}</div>
-                                  <div className={`font-bold text-lg ${value === -1 ? 'text-gray-400' : 'text-gray-800'}`}>
+                                <div key={subject} className="bg-card rounded-lg p-3 text-center border">
+                                  <div className="text-xs text-muted-foreground mb-1">{labels[subject]}</div>
+                                  <div className={`font-bold text-lg ${value === -1 ? 'text-muted-foreground' : 'text-foreground'}`}>
                                     {value === -1 ? '-' : value ?? '-'}
                                   </div>
                                   {value !== -1 && value !== null && value !== undefined && (
-                                    <div className="text-xs text-gray-400">등급</div>
+                                    <div className="text-xs text-muted-foreground">등급</div>
                                   )}
                                 </div>
                               );
@@ -741,13 +741,13 @@ function ConsultationCalendarContent() {
               {/* 기타 정보 */}
               <div className="space-y-2 text-sm">
                 {selectedConsultation.target_school && (
-                  <p><span className="text-gray-500">목표 학교:</span> {selectedConsultation.target_school}</p>
+                  <p><span className="text-muted-foreground">목표 학교:</span> {selectedConsultation.target_school}</p>
                 )}
                 {selectedConsultation.referrer_student && (
-                  <p><span className="text-gray-500">추천 원생:</span> {selectedConsultation.referrer_student}</p>
+                  <p><span className="text-muted-foreground">추천 원생:</span> {selectedConsultation.referrer_student}</p>
                 )}
                 {selectedConsultation.referralSources && selectedConsultation.referralSources.length > 0 && (
-                  <p><span className="text-gray-500">알게 된 경로:</span> {selectedConsultation.referralSources.join(', ')}</p>
+                  <p><span className="text-muted-foreground">알게 된 경로:</span> {selectedConsultation.referralSources.join(', ')}</p>
                 )}
               </div>
 
@@ -758,7 +758,7 @@ function ConsultationCalendarContent() {
                     <MessageSquare className="h-4 w-4" />
                     문의 내용
                   </h4>
-                  <p className="text-sm bg-gray-50 rounded p-3 whitespace-pre-wrap">
+                  <p className="text-sm bg-muted rounded p-3 whitespace-pre-wrap">
                     {selectedConsultation.inquiry_content}
                   </p>
                 </div>
@@ -775,7 +775,7 @@ function ConsultationCalendarContent() {
               )}
 
               {/* 신청일 */}
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 신청일: {format(parseISO(selectedConsultation.created_at), 'yyyy-MM-dd HH:mm')}
               </p>
 
@@ -844,7 +844,7 @@ function ConsultationCalendarContent() {
             <div className="space-y-2">
               <Label>학생 선택 *</Label>
               {studentsLoading ? (
-                <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   학생 목록 로딩중...
                 </div>

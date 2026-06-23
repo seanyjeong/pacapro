@@ -183,15 +183,15 @@ export default function SalaryDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg">
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <button onClick={() => router.back()} className="p-2 hover:bg-muted rounded-lg">
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">급여 명세서</h1>
+          <h1 className="text-2xl font-bold text-foreground">급여 명세서</h1>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
             <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">불러오는 중...</p>
+            <p className="text-muted-foreground">불러오는 중...</p>
           </CardContent>
         </Card>
       </div>
@@ -203,15 +203,15 @@ export default function SalaryDetailPage() {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg">
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
+          <button onClick={() => router.back()} className="p-2 hover:bg-muted rounded-lg">
+            <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">급여 명세서</h1>
+          <h1 className="text-2xl font-bold text-foreground">급여 명세서</h1>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <p className="text-gray-600 mb-4">{error || '급여 정보를 찾을 수 없습니다.'}</p>
+            <p className="text-muted-foreground mb-4">{error || '급여 정보를 찾을 수 없습니다.'}</p>
             <Button variant="outline" onClick={() => router.back()}>뒤로 가기</Button>
           </CardContent>
         </Card>
@@ -271,12 +271,12 @@ export default function SalaryDetailPage() {
         {/* 헤더 (화면용) */}
         <div className="flex items-center justify-between no-print">
           <div className="flex items-center space-x-4">
-            <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-lg">
-              <ArrowLeft className="w-5 h-5 text-gray-600" />
+            <button onClick={() => router.back()} className="p-2 hover:bg-muted rounded-lg">
+              <ArrowLeft className="w-5 h-5 text-muted-foreground" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">급여 명세서</h1>
-              <p className="text-gray-600 text-sm">{salary.year_month}</p>
+              <h1 className="text-2xl font-bold text-foreground">급여 명세서</h1>
+              <p className="text-muted-foreground text-sm">{salary.year_month}</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -302,26 +302,26 @@ export default function SalaryDetailPage() {
         {/* 인쇄용 헤더 */}
         <div className="hidden print:block text-center border-b-2 border-gray-800 pb-3 mb-4">
           <h1 className="text-xl font-bold print-title">급 여 명 세 서</h1>
-          <p className="text-sm text-gray-600">{salary.year_month} ({attendanceSummary?.work_year_month} 근무분)</p>
+          <p className="text-sm text-muted-foreground">{salary.year_month} ({attendanceSummary?.work_year_month} 근무분)</p>
         </div>
 
         {/* 기본 정보 */}
         <div className="print-section border rounded-lg p-3 print-compact">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 print-gap text-sm">
             <div>
-              <span className="text-gray-500">강사명:</span>
+              <span className="text-muted-foreground">강사명:</span>
               <span className="ml-2 font-semibold">{salary.instructor_name}</span>
             </div>
             <div>
-              <span className="text-gray-500">급여유형:</span>
+              <span className="text-muted-foreground">급여유형:</span>
               <span className="ml-2 font-semibold">{salaryTypeLabel}</span>
             </div>
             <div>
-              <span className="text-gray-500">급여월:</span>
+              <span className="text-muted-foreground">급여월:</span>
               <span className="ml-2 font-semibold">{salary.year_month}</span>
             </div>
             <div className="no-print">
-              <span className="text-gray-500">상태:</span>
+              <span className="text-muted-foreground">상태:</span>
               <span className={`ml-2 font-semibold ${salary.payment_status === 'paid' ? 'text-green-600' : 'text-yellow-600'}`}>
                 {PAYMENT_STATUS_LABELS[salary.payment_status]}
               </span>
@@ -331,12 +331,12 @@ export default function SalaryDetailPage() {
 
         {/* 단가 정보 */}
         {((salary as any).salary_type === 'per_class' || (salary as any).salary_type === 'hourly') && (
-          <div className="print-section border rounded-lg p-3 print-compact bg-gray-50">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">단가 정보</h3>
+          <div className="print-section border rounded-lg p-3 print-compact bg-muted">
+            <h3 className="text-sm font-semibold text-foreground mb-2">단가 정보</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 print-gap text-sm">
               {(salary as any).salary_type === 'hourly' && hourlyRate > 0 && (
                 <div>
-                  <span className="text-gray-500">시급:</span>
+                  <span className="text-muted-foreground">시급:</span>
                   <span className="ml-2 font-semibold">{formatCurrency(hourlyRate)}</span>
                 </div>
               )}
@@ -344,25 +344,25 @@ export default function SalaryDetailPage() {
                 <>
                   {morningRate > 0 && (
                     <div>
-                      <span className="text-gray-500">오전:</span>
+                      <span className="text-muted-foreground">오전:</span>
                       <span className="ml-2 font-semibold">{formatCurrency(morningRate)}/회</span>
                     </div>
                   )}
                   {afternoonRate > 0 && (
                     <div>
-                      <span className="text-gray-500">오후:</span>
+                      <span className="text-muted-foreground">오후:</span>
                       <span className="ml-2 font-semibold">{formatCurrency(afternoonRate)}/회</span>
                     </div>
                   )}
                   {eveningRate > 0 && (
                     <div>
-                      <span className="text-gray-500">저녁:</span>
+                      <span className="text-muted-foreground">저녁:</span>
                       <span className="ml-2 font-semibold">{formatCurrency(eveningRate)}/회</span>
                     </div>
                   )}
                   {morningRate === 0 && afternoonRate === 0 && eveningRate === 0 && hourlyRate > 0 && (
                     <div>
-                      <span className="text-gray-500">수업당:</span>
+                      <span className="text-muted-foreground">수업당:</span>
                       <span className="ml-2 font-semibold">{formatCurrency(hourlyRate)}/회</span>
                     </div>
                   )}
@@ -391,13 +391,13 @@ export default function SalaryDetailPage() {
               </div>
             </div>
             <table className="w-full text-xs print-table">
-              <thead className="bg-gray-100">
+              <thead className="bg-muted">
                 <tr>
-                  <th className="px-2 py-1 text-left font-medium text-gray-600 w-16">날짜</th>
-                  <th className="px-2 py-1 text-left font-medium text-gray-600 w-10">요일</th>
-                  <th className="px-2 py-1 text-left font-medium text-gray-600">시간대</th>
-                  <th className="px-2 py-1 text-left font-medium text-gray-600 w-16">출근</th>
-                  <th className="px-2 py-1 text-left font-medium text-gray-600 w-16">퇴근</th>
+                  <th className="px-2 py-1 text-left font-medium text-muted-foreground w-16">날짜</th>
+                  <th className="px-2 py-1 text-left font-medium text-muted-foreground w-10">요일</th>
+                  <th className="px-2 py-1 text-left font-medium text-muted-foreground">시간대</th>
+                  <th className="px-2 py-1 text-left font-medium text-muted-foreground w-16">출근</th>
+                  <th className="px-2 py-1 text-left font-medium text-muted-foreground w-16">퇴근</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -424,15 +424,15 @@ export default function SalaryDetailPage() {
                           </>
                         )}
                         <td className="px-2 py-1">{detail.time_slot_label}</td>
-                        <td className="px-2 py-1 text-gray-500">{detail.check_in_time || '-'}</td>
-                        <td className="px-2 py-1 text-gray-500">{detail.check_out_time || '-'}</td>
+                        <td className="px-2 py-1 text-muted-foreground">{detail.check_in_time || '-'}</td>
+                        <td className="px-2 py-1 text-muted-foreground">{detail.check_out_time || '-'}</td>
                       </tr>
                     ));
                   })}
               </tbody>
             </table>
             {attendanceSummary.total_hours > 0 && (
-              <div className="px-2 py-1 text-right text-xs text-gray-600 bg-gray-50 border-t">
+              <div className="px-2 py-1 text-right text-xs text-muted-foreground bg-muted border-t">
                 총 근무시간: <span className="font-semibold">{attendanceSummary.total_hours}시간</span>
               </div>
             )}
@@ -447,7 +447,7 @@ export default function SalaryDetailPage() {
           <div className="p-3 print-compact space-y-2 text-sm">
             {/* 계산식 */}
             {attendanceSummary && (salary as any).salary_type === 'per_class' && (
-              <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-2">
+              <div className="text-xs text-muted-foreground bg-muted p-2 rounded mb-2">
                 {morningRate > 0 && attendanceSummary.morning_classes > 0 && (
                   <div>오전: {formatCurrency(morningRate)} × {attendanceSummary.morning_classes}회 = {formatCurrency(morningRate * attendanceSummary.morning_classes)}</div>
                 )}
@@ -460,18 +460,18 @@ export default function SalaryDetailPage() {
               </div>
             )}
             {attendanceSummary && (salary as any).salary_type === 'hourly' && hourlyRate > 0 && (
-              <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded mb-2">
+              <div className="text-xs text-muted-foreground bg-muted p-2 rounded mb-2">
                 시급 {formatCurrency(hourlyRate)} × {attendanceSummary.total_hours}시간 = {formatCurrency(hourlyRate * attendanceSummary.total_hours)}
               </div>
             )}
 
             <div className="flex justify-between py-1 border-b">
-              <span className="text-gray-600">기본급</span>
+              <span className="text-muted-foreground">기본급</span>
               <span className="font-medium">{formatCurrency(salary.base_amount)}</span>
             </div>
             {/* 인센티브 - 항상 표시 (수정 가능) */}
             <div className="flex justify-between py-1 border-b items-center">
-              <span className="text-gray-600">인센티브</span>
+              <span className="text-muted-foreground">인센티브</span>
               {editingIncentive ? (
                 <div className="flex items-center space-x-2">
                   <MoneyInput
@@ -488,20 +488,20 @@ export default function SalaryDetailPage() {
                   </button>
                   <button
                     onClick={cancelEditIncentive}
-                    className="p-1 text-gray-500 hover:bg-gray-100 rounded"
+                    className="p-1 text-muted-foreground hover:bg-muted rounded"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
-                  <span className={`font-medium ${salary.incentive_amount > 0 ? 'text-green-600' : 'text-gray-400'}`}>
+                  <span className={`font-medium ${salary.incentive_amount > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
                     {salary.incentive_amount > 0 ? `+${formatCurrency(salary.incentive_amount)}` : '0원'}
                   </span>
                   {salary.payment_status === 'pending' && (
                     <button
                       onClick={startEditIncentive}
-                      className="p-1 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded no-print"
+                      className="p-1 text-muted-foreground hover:text-primary-600 hover:bg-primary-50 rounded no-print"
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
@@ -511,7 +511,7 @@ export default function SalaryDetailPage() {
             </div>
             {salary.total_deduction > 0 && (
               <div className="flex justify-between py-1 border-b">
-                <span className="text-gray-600">공제액</span>
+                <span className="text-muted-foreground">공제액</span>
                 <span className="font-medium text-red-600">-{formatCurrency(salary.total_deduction)}</span>
               </div>
             )}
@@ -523,24 +523,24 @@ export default function SalaryDetailPage() {
               return (
                 <div className="py-1 border-b">
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-600 font-medium">4대보험 공제 내역</span>
+                    <span className="text-muted-foreground font-medium">4대보험 공제 내역</span>
                     <span className="font-medium text-red-600">-{formatCurrency(salary.tax_amount)}</span>
                   </div>
                   <div className="pl-4 space-y-1 text-sm bg-red-50 rounded p-2 -mx-1">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">국민연금 (4.5%)</span>
+                      <span className="text-muted-foreground">국민연금 (4.5%)</span>
                       <span className="text-red-600">{formatCurrency(details.nationalPension || 0)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">건강보험 (3.545%)</span>
+                      <span className="text-muted-foreground">건강보험 (3.545%)</span>
                       <span className="text-red-600">{formatCurrency(details.healthInsurance || 0)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">장기요양보험</span>
+                      <span className="text-muted-foreground">장기요양보험</span>
                       <span className="text-red-600">{formatCurrency(details.longTermCare || 0)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">고용보험 (0.9%)</span>
+                      <span className="text-muted-foreground">고용보험 (0.9%)</span>
                       <span className="text-red-600">{formatCurrency(details.employmentInsurance || 0)}</span>
                     </div>
                   </div>
@@ -548,12 +548,12 @@ export default function SalaryDetailPage() {
               );
             })() : (
               <div className="flex justify-between py-1 border-b">
-                <span className="text-gray-600">세금 ({TAX_TYPE_LABELS[salary.tax_type] || salary.tax_type})</span>
+                <span className="text-muted-foreground">세금 ({TAX_TYPE_LABELS[salary.tax_type] || salary.tax_type})</span>
                 <span className="font-medium text-red-600">-{formatCurrency(salary.tax_amount)}</span>
               </div>
             )}
             <div className="flex justify-between py-2 bg-blue-50 -mx-3 px-3 rounded mt-2">
-              <span className="font-bold text-gray-900">실수령액</span>
+              <span className="font-bold text-foreground">실수령액</span>
               <span className="text-xl font-bold text-blue-600">{formatCurrency(salary.net_salary)}</span>
             </div>
           </div>

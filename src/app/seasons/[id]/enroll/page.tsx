@@ -167,7 +167,7 @@ export default function SeasonEnrollPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -197,8 +197,8 @@ export default function SeasonEnrollPage() {
           뒤로
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">학생 등록</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">학생 등록</h1>
+          <p className="text-muted-foreground">
             {season.season_name} ({SEASON_TYPE_LABELS[season.season_type]}) -
             시즌비: {formatSeasonFee(season.default_season_fee)}
           </p>
@@ -209,11 +209,11 @@ export default function SeasonEnrollPage() {
       <Card>
         <CardContent className="p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="학생 이름 또는 전화번호 검색..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md"
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-md"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
@@ -228,7 +228,7 @@ export default function SeasonEnrollPage() {
         </CardHeader>
         <CardContent>
           {notEnrolledStudents.length === 0 ? (
-            <p className="text-center py-8 text-gray-500">
+            <p className="text-center py-8 text-muted-foreground">
               {searchTerm ? '검색 결과가 없습니다.' : '등록 가능한 학생이 없습니다.'}
             </p>
           ) : (
@@ -236,11 +236,11 @@ export default function SeasonEnrollPage() {
               {notEnrolledStudents.map(student => (
                 <div
                   key={student.id}
-                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted"
                 >
                   <div>
                     <p className="font-medium">{student.name}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       {student.grade || student.grade_type} · {student.phone}
                     </p>
                   </div>
@@ -282,7 +282,7 @@ export default function SeasonEnrollPage() {
                 >
                   <div>
                     <p className="font-medium">{student.name}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       {student.grade || student.grade_type} · {student.phone}
                     </p>
                   </div>
@@ -297,12 +297,12 @@ export default function SeasonEnrollPage() {
       {/* 시간대 선택 모달 */}
       {showTimeSlotModal && selectedStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4">
+          <div className="bg-card rounded-xl shadow-xl w-full max-w-md mx-4">
             {/* 모달 헤더 */}
             <div className="flex items-center justify-between p-4 border-b">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">시간대 선택</h3>
-                <p className="text-sm text-gray-500">
+                <h3 className="text-lg font-semibold text-foreground">시간대 선택</h3>
+                <p className="text-sm text-muted-foreground">
                   {selectedStudent.name} ({selectedStudent.grade})
                 </p>
               </div>
@@ -311,15 +311,15 @@ export default function SeasonEnrollPage() {
                   setShowTimeSlotModal(false);
                   setSelectedStudent(null);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
             {/* 모달 내용 */}
             <div className="p-4">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 시간대를 선택하세요 (여러 개 선택 가능).
                 <br />
                 선택한 시간대에 수업 스케줄이 자동으로 생성됩니다.
@@ -333,15 +333,15 @@ export default function SeasonEnrollPage() {
                     className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-colors ${
                       selectedTimeSlots.includes(slot)
                         ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        : 'border-border hover:border-border'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
                       <Clock className={`w-5 h-5 ${
-                        selectedTimeSlots.includes(slot) ? 'text-blue-500' : 'text-gray-400'
+                        selectedTimeSlots.includes(slot) ? 'text-blue-500' : 'text-muted-foreground'
                       }`} />
                       <span className={`font-medium ${
-                        selectedTimeSlots.includes(slot) ? 'text-blue-700' : 'text-gray-700'
+                        selectedTimeSlots.includes(slot) ? 'text-blue-700' : 'text-foreground'
                       }`}>
                         {TIME_SLOT_LABELS[slot]}
                       </span>
@@ -353,13 +353,13 @@ export default function SeasonEnrollPage() {
                 ))}
               </div>
 
-              <p className="text-xs text-gray-500 mt-4">
+              <p className="text-xs text-muted-foreground mt-4">
                 선택된 시간대: {selectedTimeSlots.map(ts => TIME_SLOT_LABELS[ts]).join(', ')}
               </p>
 
               {/* 할인 금액 입력 */}
               <div className="mt-6 pt-4 border-t">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-foreground mb-2">
                   할인 금액 (선택사항)
                 </label>
                 <MoneyInput
@@ -367,11 +367,11 @@ export default function SeasonEnrollPage() {
                   onChange={(v) => setDiscountAmount(v)}
                   className="rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
+                <p className="text-xs text-muted-foreground mt-1">1만원 단위</p>
                 {discountAmount > 0 && season && (
                   <p className="mt-2 text-sm">
-                    <span className="text-gray-500">시즌비: </span>
-                    <span className="line-through text-gray-400 mr-1">
+                    <span className="text-muted-foreground">시즌비: </span>
+                    <span className="line-through text-muted-foreground mr-1">
                       {parseInt(season.default_season_fee).toLocaleString()}원
                     </span>
                     <span className="text-red-500 mr-1">-{discountAmount.toLocaleString()}원</span>
@@ -384,7 +384,7 @@ export default function SeasonEnrollPage() {
             </div>
 
             {/* 모달 푸터 */}
-            <div className="p-4 border-t bg-gray-50 rounded-b-xl flex space-x-3">
+            <div className="p-4 border-t bg-muted rounded-b-xl flex space-x-3">
               <Button
                 variant="outline"
                 className="flex-1"

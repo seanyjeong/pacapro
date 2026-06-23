@@ -376,7 +376,7 @@ function TabletSMSPageContent() {
   const getTypeBadge = (type: string) => {
     const typeUpper = type?.toUpperCase() || 'SMS';
     const colors: Record<string, string> = {
-      SMS: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+      SMS: 'bg-muted dark:bg-gray-800 text-foreground dark:text-gray-300',
       LMS: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300',
       MMS: 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300',
     };
@@ -534,7 +534,7 @@ function TabletSMSPageContent() {
                     onClick={() => setGradeFilter('all')}
                     className={`p-3 rounded-lg border-2 transition-all text-base min-h-[56px] ${
                       gradeFilter === 'all'
-                        ? 'border-gray-500 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300'
+                        ? 'border-gray-500 bg-muted dark:bg-gray-900 text-foreground dark:text-gray-300'
                         : 'border-border hover:border-muted-foreground text-foreground'
                     }`}
                   >

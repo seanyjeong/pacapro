@@ -368,7 +368,7 @@ export function ConsultationDetailModal({ open, onClose, consultation, studentNa
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="p-4 border-b sticky top-0 bg-white z-10">
+        <DialogHeader className="p-4 border-b sticky top-0 bg-card z-10">
           <div className="flex items-center justify-between">
             <DialogTitle>상담 기록 상세</DialogTitle>
             <div className="flex gap-2">

@@ -339,7 +339,7 @@ export default function MobileHomePage() {
                     } disabled:opacity-50`}
                   >
                     <span
-                      className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                      className={`absolute top-1 w-4 h-4 bg-card rounded-full transition-transform ${
                         notificationSettings[item.key] ? 'left-6' : 'left-1'
                       }`}
                     />

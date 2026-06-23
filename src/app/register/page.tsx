@@ -78,17 +78,17 @@ export default function RegisterPage() {
 
     if (success) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+            <div className="min-h-screen bg-muted flex items-center justify-center p-4">
                 <Card className="w-full max-w-md">
                     <CardContent className="p-8 text-center">
                         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">회원가입 완료!</h2>
-                        <p className="text-gray-600 mb-4">
+                        <h2 className="text-2xl font-bold text-foreground mb-2">회원가입 완료!</h2>
+                        <p className="text-muted-foreground mb-4">
                             관리자 승인 후 로그인이 가능합니다.
                             <br />
                             승인까지 조금만 기다려주세요.
                         </p>
-                        <p className="text-sm text-gray-500">잠시 후 로그인 페이지로 이동합니다...</p>
+                        <p className="text-sm text-muted-foreground">잠시 후 로그인 페이지로 이동합니다...</p>
                     </CardContent>
                 </Card>
             </div>
@@ -96,7 +96,7 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-muted flex items-center justify-center p-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1 text-center">
                     {/* Logo */}
@@ -110,7 +110,7 @@ export default function RegisterPage() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Academy Name */}
                         <div className="space-y-2">
-                            <label htmlFor="academyName" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="academyName" className="text-sm font-medium text-foreground">
                                 학원명 <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -120,14 +120,14 @@ export default function RegisterPage() {
                                 value={formData.academyName}
                                 onChange={handleChange}
                                 placeholder="OO체대입시학원"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 required
                             />
                         </div>
 
                         {/* Name */}
                         <div className="space-y-2">
-                            <label htmlFor="name" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="name" className="text-sm font-medium text-foreground">
                                 이름 <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -137,14 +137,14 @@ export default function RegisterPage() {
                                 value={formData.name}
                                 onChange={handleChange}
                                 placeholder="홍길동"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 required
                             />
                         </div>
 
                         {/* Email */}
                         <div className="space-y-2">
-                            <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="email" className="text-sm font-medium text-foreground">
                                 이메일 <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -154,14 +154,14 @@ export default function RegisterPage() {
                                 value={formData.email}
                                 onChange={handleChange}
                                 placeholder="academy@example.com"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 required
                             />
                         </div>
 
                         {/* Phone */}
                         <div className="space-y-2">
-                            <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="phone" className="text-sm font-medium text-foreground">
                                 전화번호
                             </label>
                             <input
@@ -171,13 +171,13 @@ export default function RegisterPage() {
                                 value={formData.phone}
                                 onChange={handleChange}
                                 placeholder="010-1234-5678"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                             />
                         </div>
 
                         {/* Password */}
                         <div className="space-y-2">
-                            <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="password" className="text-sm font-medium text-foreground">
                                 비밀번호 <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -187,14 +187,14 @@ export default function RegisterPage() {
                                 value={formData.password}
                                 onChange={handleChange}
                                 placeholder="최소 8자 이상"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 required
                             />
                         </div>
 
                         {/* Confirm Password */}
                         <div className="space-y-2">
-                            <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
                                 비밀번호 확인 <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -204,7 +204,7 @@ export default function RegisterPage() {
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                                 placeholder="비밀번호 재입력"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 required
                             />
                         </div>
@@ -223,7 +223,7 @@ export default function RegisterPage() {
 
                         {/* Login Link */}
                         <div className="text-center">
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                                 이미 계정이 있으신가요?{' '}
                                 <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
                                     로그인

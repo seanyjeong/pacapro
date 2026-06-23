@@ -53,7 +53,7 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-muted flex items-center justify-center p-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1 text-center">
                     {/* Logo */}
@@ -67,7 +67,7 @@ export default function LoginPage() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {/* Email */}
                         <div className="space-y-2">
-                            <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="email" className="text-sm font-medium text-foreground">
                                 이메일
                             </label>
                             <input
@@ -76,14 +76,14 @@ export default function LoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="test@example.com"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 required
                             />
                         </div>
 
                         {/* Password */}
                         <div className="space-y-2">
-                            <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                            <label htmlFor="password" className="text-sm font-medium text-foreground">
                                 비밀번호
                             </label>
                             <input
@@ -92,7 +92,7 @@ export default function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 required
                             />
                         </div>
@@ -119,7 +119,7 @@ export default function LoginPage() {
 
                     {/* Register Link */}
                     <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-muted-foreground dark:text-gray-400">
                             계정이 없으신가요?{' '}
                             <Link href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
                                 회원가입

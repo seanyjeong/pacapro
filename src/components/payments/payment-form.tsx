@@ -73,11 +73,11 @@ export function PaymentForm({ initialData, students, onSubmit, onCancel, loading
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">학생 *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">학생 *</label>
             <select
               value={formData.student_id}
               onChange={(e) => handleStudentChange(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
               required
               disabled={!!initialData}
             >
@@ -92,11 +92,11 @@ export function PaymentForm({ initialData, students, onSubmit, onCancel, loading
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">청구 유형 *</label>
+              <label className="block text-sm font-medium text-foreground mb-1">청구 유형 *</label>
               <select
                 value={formData.payment_type}
                 onChange={(e) => setFormData({ ...formData, payment_type: e.target.value as any })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
                 required
               >
                 {PAYMENT_TYPE_OPTIONS.map((option) => (
@@ -108,12 +108,12 @@ export function PaymentForm({ initialData, students, onSubmit, onCancel, loading
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">청구 월 *</label>
+              <label className="block text-sm font-medium text-foreground mb-1">청구 월 *</label>
               <input
                 type="month"
                 value={formData.year_month}
                 onChange={(e) => setFormData({ ...formData, year_month: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
                 required
               />
             </div>
@@ -121,33 +121,33 @@ export function PaymentForm({ initialData, students, onSubmit, onCancel, loading
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">기본 금액 *</label>
+              <label className="block text-sm font-medium text-foreground mb-1">기본 금액 *</label>
               <MoneyInput
                 value={formData.base_amount}
                 onChange={(base_amount) => setFormData({ ...formData, base_amount })}
                 className="focus:ring-primary-500 focus:border-primary-500" required
               />
-              <p className="text-xs text-gray-500 mt-1">1천원 단위</p>
+              <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">할인 금액</label>
+              <label className="block text-sm font-medium text-foreground mb-1">할인 금액</label>
               <MoneyInput
                 value={formData.discount_amount}
                 onChange={(discount_amount) => setFormData({ ...formData, discount_amount })}
                 className="focus:ring-primary-500 focus:border-primary-500"
               />
-              <p className="text-xs text-gray-500 mt-1">1천원 단위</p>
+              <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">추가 금액</label>
+              <label className="block text-sm font-medium text-foreground mb-1">추가 금액</label>
               <MoneyInput
                 value={formData.additional_amount}
                 onChange={(additional_amount) => setFormData({ ...formData, additional_amount })}
                 className="focus:ring-primary-500 focus:border-primary-500"
               />
-              <p className="text-xs text-gray-500 mt-1">1천원 단위</p>
+              <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
             </div>
           </div>
 
@@ -159,33 +159,33 @@ export function PaymentForm({ initialData, students, onSubmit, onCancel, loading
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">납부 기한 *</label>
+            <label className="block text-sm font-medium text-foreground mb-1">납부 기한 *</label>
             <input
               type="date"
               value={formData.due_date}
               onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
+            <label className="block text-sm font-medium text-foreground mb-1">설명</label>
             <input
               type="text"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
               placeholder="예: 2025년 1월 수강료"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
+            <label className="block text-sm font-medium text-foreground mb-1">메모</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+              className="w-full px-3 py-2 border border-border rounded-md focus:ring-primary-500 focus:border-primary-500"
               rows={3}
               placeholder="내부 메모"
             />

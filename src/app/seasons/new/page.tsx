@@ -104,8 +104,8 @@ export default function NewSeasonPage() {
           뒤로
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">시즌 등록</h1>
-          <p className="text-gray-600">새로운 시즌(수시/정시)을 등록합니다</p>
+          <h1 className="text-2xl font-bold text-foreground">시즌 등록</h1>
+          <p className="text-muted-foreground">새로운 시즌(수시/정시)을 등록합니다</p>
         </div>
       </div>
 
@@ -125,21 +125,21 @@ export default function NewSeasonPage() {
             {/* 시즌명 & 연도 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   시즌명 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="예: 2025 수시 시즌, 2026 정시 시즌"
                   value={formData.season_name}
                   onChange={e => handleChange('season_name', e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">연도</label>
+                <label className="block text-sm font-medium text-foreground mb-1">연도</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   value={formData.year}
                   onChange={e => handleChange('year', parseInt(e.target.value))}
                 >
@@ -153,9 +153,9 @@ export default function NewSeasonPage() {
             {/* 시즌 타입 & 상태 */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">시즌 타입</label>
+                <label className="block text-sm font-medium text-foreground mb-1">시즌 타입</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   value={formData.season_type}
                   onChange={e => handleChange('season_type', e.target.value as SeasonType)}
                 >
@@ -164,9 +164,9 @@ export default function NewSeasonPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">상태</label>
+                <label className="block text-sm font-medium text-foreground mb-1">상태</label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   value={formData.status}
                   onChange={e => handleChange('status', e.target.value as SeasonStatus)}
                 >
@@ -180,35 +180,35 @@ export default function NewSeasonPage() {
             {/* 날짜 */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   비시즌 종강일
                 </label>
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   value={formData.non_season_end_date || ''}
                   onChange={e => handleChange('non_season_end_date', e.target.value)}
                 />
-                <p className="text-xs text-gray-500 mt-1">일할계산 기준일</p>
+                <p className="text-xs text-muted-foreground mt-1">일할계산 기준일</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   시즌 시작일 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   value={formData.start_date}
                   onChange={e => handleChange('start_date', e.target.value)}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   시즌 종료일 <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   value={formData.end_date}
                   onChange={e => handleChange('end_date', e.target.value)}
                 />
@@ -217,7 +217,7 @@ export default function NewSeasonPage() {
 
             {/* 운영 요일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-foreground mb-2">
                 운영 요일 <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2">
@@ -228,7 +228,7 @@ export default function NewSeasonPage() {
                     className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
                       formData.operating_days.includes(day.value)
                         ? 'bg-primary text-primary-foreground border-primary'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        : 'bg-card text-foreground border-border hover:bg-muted'
                     }`}
                     onClick={() => toggleOperatingDay(day.value)}
                   >
@@ -240,12 +240,12 @@ export default function NewSeasonPage() {
 
             {/* 학년별 시간대 설정 */}
             <div className="border-t pt-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">학년별 수업 시간대</h3>
-              <p className="text-xs text-gray-500 mb-4">고3, N수 학생의 수업 시간대를 각각 설정합니다. 여러 시간대를 선택할 수 있습니다.</p>
+              <h3 className="text-sm font-semibold text-foreground mb-3">학년별 수업 시간대</h3>
+              <p className="text-xs text-muted-foreground mb-4">고3, N수 학생의 수업 시간대를 각각 설정합니다. 여러 시간대를 선택할 수 있습니다.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {SEASON_TARGET_GRADES.map(grade => (
                   <div key={grade} className="flex items-center space-x-3">
-                    <label className="block text-sm font-medium text-gray-700 w-16">{grade}</label>
+                    <label className="block text-sm font-medium text-foreground w-16">{grade}</label>
                     <div className="flex-1 flex gap-2">
                       {TIME_SLOT_OPTIONS.map(slot => {
                         const isSelected = formData.grade_time_slots?.[grade]?.includes(slot.value);
@@ -256,7 +256,7 @@ export default function NewSeasonPage() {
                             className={`flex-1 px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
                               isSelected
                                 ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                : 'bg-card text-foreground border-border hover:bg-muted'
                             }`}
                             onClick={() => toggleGradeTimeSlot(grade, slot.value)}
                           >
@@ -272,7 +272,7 @@ export default function NewSeasonPage() {
 
             {/* 시즌비 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 기본 시즌비 (원)
               </label>
               <MoneyInput
@@ -280,31 +280,31 @@ export default function NewSeasonPage() {
                 onChange={(season_fee) => handleChange('season_fee', season_fee)}
                 className="focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
-              <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
+              <p className="text-xs text-muted-foreground mt-1">1만원 단위</p>
             </div>
 
             {/* 시즌비 납부 마감일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-foreground mb-1">
                 시즌비 납부 마감일
               </label>
               <input
                 type="date"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 value={formData.payment_due_date || ''}
                 onChange={e => handleChange('payment_due_date', e.target.value)}
               />
-              <p className="text-xs text-gray-500 mt-1">이 날짜까지 미납 시 미납자에 표시 (비우면 등록일+7일)</p>
+              <p className="text-xs text-muted-foreground mt-1">이 날짜까지 미납 시 미납자에 표시 (비우면 등록일+7일)</p>
             </div>
 
             {/* 연속등록 할인 */}
             <div className="border-t pt-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">연속등록 할인 (수시→정시)</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-3">연속등록 할인 (수시→정시)</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">할인 타입</label>
+                  <label className="block text-sm font-medium text-foreground mb-1">할인 타입</label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     value={formData.continuous_discount_type}
                     onChange={e => handleChange('continuous_discount_type', e.target.value as ContinuousDiscountType)}
                   >
@@ -315,10 +315,10 @@ export default function NewSeasonPage() {
                 </div>
                 {formData.continuous_discount_type === 'rate' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">할인율 (%)</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">할인율 (%)</label>
                     <input
                       type="number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-right"
+                      className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-right"
                       placeholder="0"
                       value={formData.continuous_discount_rate || ''}
                       onChange={e => handleChange('continuous_discount_rate', e.target.value === '' ? 0 : parseInt(e.target.value))}
@@ -332,9 +332,9 @@ export default function NewSeasonPage() {
 
             {/* 메모 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">메모</label>
+              <label className="block text-sm font-medium text-foreground mb-1">메모</label>
               <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="w-full px-3 py-2 border border-border rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 rows={3}
                 placeholder="시즌에 대한 메모를 입력하세요 (선택)"
                 value={formData.notes || ''}

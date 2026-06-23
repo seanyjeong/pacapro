@@ -54,13 +54,13 @@ export default function NewPaymentPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">학원비 청구</h1>
-          <p className="text-gray-600 mt-1">새로운 학원비 청구 등록</p>
+          <h1 className="text-3xl font-bold text-foreground">학원비 청구</h1>
+          <p className="text-muted-foreground mt-1">새로운 학원비 청구 등록</p>
         </div>
         <Card>
           <CardContent className="p-12 text-center">
             <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">학생 목록을 불러오는 중...</p>
+            <p className="text-muted-foreground">학생 목록을 불러오는 중...</p>
           </CardContent>
         </Card>
       </div>
@@ -70,8 +70,8 @@ export default function NewPaymentPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">학원비 청구</h1>
-        <p className="text-gray-600 mt-1">새로운 학원비 청구 등록</p>
+        <h1 className="text-3xl font-bold text-foreground">학원비 청구</h1>
+        <p className="text-muted-foreground mt-1">새로운 학원비 청구 등록</p>
       </div>
 
       <PaymentForm

@@ -95,7 +95,7 @@ export function StatusChangeModal({
                 <div>
                   <Label className="text-xs">시간</Label>
                   {loadingEditBookedTimes ? (
-                    <div className="flex items-center gap-2 py-2 text-sm text-gray-500">
+                    <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />예약 현황 확인 중...
                     </div>
                   ) : editTimeOptions.length > 0 ? (

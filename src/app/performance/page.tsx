@@ -155,55 +155,55 @@ export default function PerformancePage() {
   const renderScoreCard = (scores: ScoreData | null, examName: string) => {
     if (!scores) {
       return (
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-muted rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="font-medium text-gray-700">{examName}</h4>
-            <Badge variant="outline" className="text-gray-400">데이터 없음</Badge>
+            <h4 className="font-medium text-foreground">{examName}</h4>
+            <Badge variant="outline" className="text-muted-foreground">데이터 없음</Badge>
           </div>
-          <p className="text-sm text-gray-400 text-center py-2">성적 정보가 없습니다</p>
+          <p className="text-sm text-muted-foreground text-center py-2">성적 정보가 없습니다</p>
         </div>
       );
     }
 
     return (
-      <div className="bg-white rounded-lg border p-4">
+      <div className="bg-card rounded-lg border p-4">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="font-medium text-gray-900">{examName}</h4>
+          <h4 className="font-medium text-foreground">{examName}</h4>
           <Badge className="bg-green-100 text-green-800">조회됨</Badge>
         </div>
         <div className="grid grid-cols-6 gap-2 text-center">
           {/* 국어 */}
           <div>
-            <p className="text-xs text-gray-500">국어</p>
+            <p className="text-xs text-muted-foreground">국어</p>
             <p className="text-xl font-bold">{scores.국어?.등급 || '-'}</p>
-            <p className="text-[10px] text-gray-400 truncate">{scores.국어?.선택과목 || ''}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{scores.국어?.선택과목 || ''}</p>
           </div>
           {/* 수학 */}
           <div>
-            <p className="text-xs text-gray-500">수학</p>
+            <p className="text-xs text-muted-foreground">수학</p>
             <p className="text-xl font-bold">{scores.수학?.등급 || '-'}</p>
-            <p className="text-[10px] text-gray-400 truncate">{scores.수학?.선택과목 || ''}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{scores.수학?.선택과목 || ''}</p>
           </div>
           {/* 영어 */}
           <div>
-            <p className="text-xs text-gray-500">영어</p>
+            <p className="text-xs text-muted-foreground">영어</p>
             <p className="text-xl font-bold">{scores.영어?.등급 || '-'}</p>
           </div>
           {/* 탐구1 */}
           <div>
-            <p className="text-xs text-gray-500">탐구1</p>
+            <p className="text-xs text-muted-foreground">탐구1</p>
             <p className="text-xl font-bold">{scores.탐구1?.등급 || '-'}</p>
-            <p className="text-[10px] text-gray-400 truncate">{scores.탐구1?.선택과목 || ''}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{scores.탐구1?.선택과목 || ''}</p>
           </div>
           {/* 탐구2 */}
           <div>
-            <p className="text-xs text-gray-500">탐구2</p>
+            <p className="text-xs text-muted-foreground">탐구2</p>
             <p className="text-xl font-bold">{scores.탐구2?.등급 || '-'}</p>
-            <p className="text-[10px] text-gray-400 truncate">{scores.탐구2?.선택과목 || ''}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{scores.탐구2?.선택과목 || ''}</p>
           </div>
           {/* 한국사 */}
           <div>
-            <p className="text-xs text-gray-500">한국사</p>
+            <p className="text-xs text-muted-foreground">한국사</p>
             <p className="text-xl font-bold">{scores.한국사?.등급 || '-'}</p>
           </div>
         </div>
@@ -215,8 +215,8 @@ export default function PerformancePage() {
     <Card>
       <CardContent className="p-12 text-center">
         <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-        <h3 className="text-xl font-semibold text-gray-700 mb-2">내신 성적 관리</h3>
-        <p className="text-gray-500 mb-4">
+        <h3 className="text-xl font-semibold text-foreground mb-2">내신 성적 관리</h3>
+        <p className="text-muted-foreground mb-4">
           내신 성적 입력 및 관리 기능은 추후 업데이트 예정입니다.
         </p>
         <Badge variant="outline" className="text-sm">Coming Soon</Badge>
@@ -231,7 +231,7 @@ export default function PerformancePage() {
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
             <h3 className="text-lg font-semibold mb-2">정시엔진 연동 미설정</h3>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               이 학원은 아직 정시엔진과 연동되지 않았습니다.
               <br />
               관리자에게 문의해주세요.
@@ -247,7 +247,7 @@ export default function PerformancePage() {
           <CardContent className="p-12 text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-500" />
             <h3 className="text-lg font-semibold mb-2">정시엔진 연결 오류</h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               정시엔진 서버와 연결할 수 없습니다.
             </p>
             <Button onClick={fetchJungsiStatus} variant="outline">
@@ -274,7 +274,7 @@ export default function PerformancePage() {
               </div>
               <div className="flex-1 max-w-md">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="학생 이름, 학교, 학년으로 검색..."
                     value={searchQuery}
@@ -306,7 +306,7 @@ export default function PerformancePage() {
           </CardHeader>
           <CardContent>
             {filteredStudents.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-muted-foreground">
                 <p>검색 결과가 없습니다.</p>
               </div>
             ) : (
@@ -321,7 +321,7 @@ export default function PerformancePage() {
                   >
                     {/* 학생 행 */}
                     <div
-                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted"
                       onClick={() => {
                         if (expandedStudent === student.id) {
                           setExpandedStudent(null);
@@ -338,25 +338,25 @@ export default function PerformancePage() {
                         </div>
                         <div>
                           <p className="font-medium">{student.name}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             {student.grade} / {student.school || '학교 미등록'}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {expandedStudent === student.id ? (
-                          <ChevronUp className="w-5 h-5 text-gray-400" />
+                          <ChevronUp className="w-5 h-5 text-muted-foreground" />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-400" />
+                          <ChevronDown className="w-5 h-5 text-muted-foreground" />
                         )}
                       </div>
                     </div>
 
                     {/* 성적 상세 (확장) - 3월/6월/9월/수능 한번에 */}
                     {expandedStudent === student.id && (
-                      <div className="border-t bg-gray-50 p-4">
+                      <div className="border-t bg-muted p-4">
                         {scoresLoading ? (
-                          <div className="text-center py-8 text-gray-500">
+                          <div className="text-center py-8 text-muted-foreground">
                             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
                             <p>성적 조회 중...</p>
                           </div>
@@ -368,7 +368,7 @@ export default function PerformancePage() {
                             {renderScoreCard(studentScores['수능'], '수능')}
                           </div>
                         ) : (
-                          <div className="text-center py-8 text-gray-500">
+                          <div className="text-center py-8 text-muted-foreground">
                             <AlertCircle className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
                             <p>성적을 조회할 수 없습니다.</p>
                           </div>
@@ -390,11 +390,11 @@ export default function PerformancePage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">성적관리</h1>
-          <p className="text-gray-600 mt-1">내신 및 모의고사 성적 관리</p>
+          <h1 className="text-3xl font-bold text-foreground">성적관리</h1>
+          <p className="text-muted-foreground mt-1">내신 및 모의고사 성적 관리</p>
         </div>
         {statusLoading ? (
-          <div className="flex items-center gap-2 text-gray-500">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
             <span className="text-sm">연결 확인 중...</span>
           </div>

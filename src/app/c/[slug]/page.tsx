@@ -263,15 +263,15 @@ export default function ConsultationPage() {
             e.stopPropagation();
             setOpenDropdown(isOpen ? null : id);
           }}
-          className="w-full px-3 py-2 text-left border rounded-lg bg-white text-sm flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 text-left border rounded-lg bg-card text-sm flex items-center justify-between hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
+          <span className={selectedOption ? 'text-foreground' : 'text-muted-foreground'}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${isOpen ? 'rotate-90' : ''}`} />
+          <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-90' : ''}`} />
         </button>
         {isOpen && (
-          <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-auto">
+          <div className="absolute z-50 w-full mt-1 bg-card border rounded-lg shadow-lg max-h-60 overflow-auto">
             {options.map((opt) => (
               <button
                 key={opt.value}
@@ -282,7 +282,7 @@ export default function ConsultationPage() {
                   setOpenDropdown(null);
                 }}
                 className={`w-full px-3 py-2 text-left text-sm hover:bg-blue-50 ${
-                  value === opt.value ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                  value === opt.value ? 'bg-blue-50 text-blue-600' : 'text-foreground'
                 }`}
               >
                 {renderOption ? renderOption(opt) : opt.label}
@@ -332,7 +332,7 @@ export default function ConsultationPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600 mb-4" />
-        <p className="text-gray-500">로딩 중...</p>
+        <p className="text-muted-foreground">로딩 중...</p>
       </div>
     );
   }
@@ -341,8 +341,8 @@ export default function ConsultationPage() {
     return (
       <div className="text-center py-12">
         <div className="text-6xl mb-4">404</div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">페이지를 찾을 수 없습니다</h2>
-        <p className="text-gray-500">올바른 링크인지 확인해주세요.</p>
+        <h2 className="text-xl font-semibold text-foreground mb-2">페이지를 찾을 수 없습니다</h2>
+        <p className="text-muted-foreground">올바른 링크인지 확인해주세요.</p>
       </div>
     );
   }
@@ -351,11 +351,11 @@ export default function ConsultationPage() {
     <div className="space-y-6">
       {/* 헤더 */}
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-foreground mb-2">
           {pageInfo.academy?.name} 상담예약
         </h1>
         {pageInfo.settings?.pageDescription && (
-          <p className="text-sm text-gray-600">{pageInfo.settings.pageDescription}</p>
+          <p className="text-sm text-muted-foreground">{pageInfo.settings.pageDescription}</p>
         )}
       </div>
 
@@ -367,18 +367,18 @@ export default function ConsultationPage() {
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                 step >= s
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-500'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
               {step > s ? <Check className="h-4 w-4" /> : s}
             </div>
             {s < 3 && (
-              <div className={`w-8 h-0.5 ${step > s ? 'bg-blue-600' : 'bg-gray-200'}`} />
+              <div className={`w-8 h-0.5 ${step > s ? 'bg-blue-600' : 'bg-muted'}`} />
             )}
           </div>
         ))}
       </div>
-      <div className="flex justify-center gap-6 text-xs text-gray-500">
+      <div className="flex justify-center gap-6 text-xs text-muted-foreground">
         <span>정보 입력</span>
         <span>일정 선택</span>
         <span>확인</span>
@@ -386,10 +386,10 @@ export default function ConsultationPage() {
 
       {/* Step 1: 정보 입력 */}
       {step === 1 && (
-        <div className="bg-white rounded-xl shadow-sm p-5 space-y-5">
+        <div className="bg-card rounded-xl shadow-sm p-5 space-y-5">
           {/* 학생 정보 */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <User className="h-4 w-4" />
               학생 정보
             </h3>
@@ -457,7 +457,7 @@ export default function ConsultationPage() {
 
           {/* 성적 정보 */}
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700">성적 정보 <span className="text-red-500">*</span></h3>
+            <h3 className="text-sm font-semibold text-foreground">성적 정보 <span className="text-red-500">*</span></h3>
 
             {/* 내신등급 + 입시유형 */}
             <div className="grid grid-cols-2 gap-3">
@@ -498,7 +498,7 @@ export default function ConsultationPage() {
                   const key = subject === '국어' ? 'korean' : subject === '수학' ? 'math' : subject === '영어' ? 'english' : 'exploration';
                   return (
                     <div key={subject}>
-                      <Label className="text-xs text-center block mb-1 text-gray-500">{subject}</Label>
+                      <Label className="text-xs text-center block mb-1 text-muted-foreground">{subject}</Label>
                       <CustomDropdown
                         id={`mock_${key}`}
                         value={formData.mockTestGrades?.[key]?.toString() || ''}
@@ -581,15 +581,15 @@ export default function ConsultationPage() {
 
       {/* Step 2: 일정 선택 */}
       {step === 2 && (
-        <div className="bg-white rounded-xl shadow-sm p-5 space-y-5">
+        <div className="bg-card rounded-xl shadow-sm p-5 space-y-5">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setStep(1)}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-muted rounded"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               상담 일정 선택
             </h3>
@@ -600,7 +600,7 @@ export default function ConsultationPage() {
             <div className="flex items-center justify-between mb-3">
               <button
                 onClick={() => setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-muted rounded"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -609,7 +609,7 @@ export default function ConsultationPage() {
               </span>
               <button
                 onClick={() => setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-muted rounded"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -619,7 +619,7 @@ export default function ConsultationPage() {
               {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
                 <div
                   key={day}
-                  className={`py-1 font-medium ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-gray-600'}`}
+                  className={`py-1 font-medium ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-muted-foreground'}`}
                 >
                   {day}
                 </div>
@@ -648,7 +648,7 @@ export default function ConsultationPage() {
                         isSelected
                           ? 'bg-blue-600 text-white font-semibold'
                           : available
-                            ? 'hover:bg-blue-50 text-gray-700'
+                            ? 'hover:bg-blue-50 text-foreground'
                             : 'text-gray-300 cursor-not-allowed'
                       } ${isToday && !isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''} ${
                         dayOfWeek === 0 && !isSelected ? 'text-red-400' : dayOfWeek === 6 && !isSelected ? 'text-blue-400' : ''
@@ -665,17 +665,17 @@ export default function ConsultationPage() {
           {/* 시간 선택 */}
           {selectedDate && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 {format(selectedDate, 'M월 d일 (EEEE)', { locale: ko })} 가능 시간
               </h4>
 
               {slotsLoading ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
               ) : availableSlots.filter(s => s.available).length === 0 ? (
-                <div className="text-center py-6 text-gray-500 text-sm">
+                <div className="text-center py-6 text-muted-foreground text-sm">
                   예약 가능한 시간이 없습니다.
                 </div>
               ) : (
@@ -687,7 +687,7 @@ export default function ConsultationPage() {
                       className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
                         selectedTime === slot.time
                           ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-blue-50'
+                          : 'bg-muted text-foreground hover:bg-blue-50'
                       }`}
                     >
                       {slot.time.slice(0, 5)}
@@ -712,15 +712,15 @@ export default function ConsultationPage() {
 
       {/* Step 3: 확인 */}
       {step === 3 && (
-        <div className="bg-white rounded-xl shadow-sm p-5 space-y-5">
+        <div className="bg-card rounded-xl shadow-sm p-5 space-y-5">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setStep(2)}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="p-1 hover:bg-muted rounded"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <h3 className="text-sm font-semibold text-gray-700">신청 내용 확인</h3>
+            <h3 className="text-sm font-semibold text-foreground">신청 내용 확인</h3>
           </div>
 
           <div className="space-y-4 text-sm">
@@ -733,35 +733,35 @@ export default function ConsultationPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-gray-600">
+            <div className="grid grid-cols-2 gap-3 text-muted-foreground">
               <div>
-                <div className="text-xs text-gray-400">이름</div>
-                <div className="font-medium text-gray-900">{formData.studentName}</div>
+                <div className="text-xs text-muted-foreground">이름</div>
+                <div className="font-medium text-foreground">{formData.studentName}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-400">연락처</div>
-                <div className="font-medium text-gray-900">{formData.studentPhone}</div>
+                <div className="text-xs text-muted-foreground">연락처</div>
+                <div className="font-medium text-foreground">{formData.studentPhone}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-400">학년</div>
-                <div className="font-medium text-gray-900">{formData.studentGrade}</div>
+                <div className="text-xs text-muted-foreground">학년</div>
+                <div className="font-medium text-foreground">{formData.studentGrade}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-400">학교</div>
-                <div className="font-medium text-gray-900">{formData.studentSchool}</div>
+                <div className="text-xs text-muted-foreground">학교</div>
+                <div className="font-medium text-foreground">{formData.studentSchool}</div>
               </div>
               {formData.schoolGradeAvg != null && (
                 <div>
-                  <div className="text-xs text-gray-400">내신 평균</div>
-                  <div className="font-medium text-gray-900">
+                  <div className="text-xs text-muted-foreground">내신 평균</div>
+                  <div className="font-medium text-foreground">
                     {formData.schoolGradeAvg === -1 ? '미응시' : `${formData.schoolGradeAvg}등급`}
                   </div>
                 </div>
               )}
               {formData.admissionType && (
                 <div>
-                  <div className="text-xs text-gray-400">입시 유형</div>
-                  <div className="font-medium text-gray-900">
+                  <div className="text-xs text-muted-foreground">입시 유형</div>
+                  <div className="font-medium text-foreground">
                     {formData.admissionType === 'early' ? '수시' : formData.admissionType === 'regular' ? '정시' : '수시+정시'}
                   </div>
                 </div>
@@ -770,8 +770,8 @@ export default function ConsultationPage() {
 
             {(formData.mockTestGrades?.korean != null || formData.mockTestGrades?.math != null || formData.mockTestGrades?.english != null || formData.mockTestGrades?.exploration != null) && (
               <div>
-                <div className="text-xs text-gray-400 mb-1">모의고사 등급</div>
-                <div className="flex flex-wrap gap-3 text-gray-700">
+                <div className="text-xs text-muted-foreground mb-1">모의고사 등급</div>
+                <div className="flex flex-wrap gap-3 text-foreground">
                   {formData.mockTestGrades?.korean != null && <span>국어 {formData.mockTestGrades.korean === -1 ? '미응시' : `${formData.mockTestGrades.korean}등급`}</span>}
                   {formData.mockTestGrades?.math != null && <span>수학 {formData.mockTestGrades.math === -1 ? '미응시' : `${formData.mockTestGrades.math}등급`}</span>}
                   {formData.mockTestGrades?.english != null && <span>영어 {formData.mockTestGrades.english === -1 ? '미응시' : `${formData.mockTestGrades.english}등급`}</span>}
@@ -782,8 +782,8 @@ export default function ConsultationPage() {
 
             {formData.inquiryContent && (
               <div>
-                <div className="text-xs text-gray-400 mb-1">문의 내용</div>
-                <div className="text-gray-700 bg-gray-50 rounded-lg p-3">
+                <div className="text-xs text-muted-foreground mb-1">문의 내용</div>
+                <div className="text-foreground bg-muted rounded-lg p-3">
                   {formData.inquiryContent}
                 </div>
               </div>

@@ -525,7 +525,7 @@ export function AttendanceChecker({
       {/* 보충 학생 추가 모달 */}
       {showAddStudentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+          <div className="bg-card rounded-lg shadow-xl w-full max-w-md mx-4">
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="text-lg font-semibold">보충 학생 추가</h3>
               <Button
@@ -544,7 +544,7 @@ export function AttendanceChecker({
             <div className="p-4">
               <div className="flex gap-2 mb-4">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="text"
                     placeholder="학생 이름 검색..."
@@ -569,7 +569,7 @@ export function AttendanceChecker({
                     {searchResults.map((student) => (
                       <div
                         key={student.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted"
                       >
                         <div>
                           <p className="font-medium">{student.name}</p>
@@ -597,7 +597,7 @@ export function AttendanceChecker({
       {/* 결석/공결 사유 입력 모달 */}
       {showReasonModal && reasonModalData && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md">
+          <div className="bg-card dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-md">
             {/* 헤더 */}
             <div className="flex items-center justify-between p-4 border-b dark:border-gray-700">
               <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -694,7 +694,7 @@ export function AttendanceChecker({
                           ? reasonModalData.status === 'excused'
                             ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                             : "border-red-500 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                          : "border-border dark:border-gray-700 hover:border-border dark:hover:border-gray-600"
                       )}
                     >
                       {option.label}
@@ -710,7 +710,7 @@ export function AttendanceChecker({
                         ? reasonModalData.status === 'excused'
                           ? "border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
                           : "border-red-500 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                        : "border-border dark:border-gray-700 hover:border-border dark:hover:border-gray-600"
                     )}
                   >
                     기타 (직접 입력)

@@ -137,10 +137,10 @@ export function PendingApprovalsModal({
         <div className="flex-1 overflow-y-auto py-4">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : requests.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-muted-foreground">
               <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-green-400" />
               <p>대기 중인 요청이 없습니다.</p>
             </div>
@@ -154,7 +154,7 @@ export function PendingApprovalsModal({
                 return (
                   <div
                     key={request.id}
-                    className="p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    className="p-4 bg-muted rounded-lg border border-border"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
@@ -164,7 +164,7 @@ export function PendingApprovalsModal({
                             <User className="w-4 h-4 text-blue-600" />
                           </div>
                           <div>
-                            <span className="font-semibold text-gray-900">
+                            <span className="font-semibold text-foreground">
                               {request.instructor_name}
                             </span>
                             {request.salary_type === 'hourly' && (
@@ -176,7 +176,7 @@ export function PendingApprovalsModal({
                         </div>
 
                         {/* 날짜 및 시간대 */}
-                        <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             {formatDate(request.work_date)}
@@ -191,7 +191,7 @@ export function PendingApprovalsModal({
 
                         {/* 시급제: 시간 정보 */}
                         {request.salary_type === 'hourly' && (request.original_end_time || request.actual_end_time) && (
-                          <div className="flex items-center gap-1 mt-1 text-sm text-gray-500">
+                          <div className="flex items-center gap-1 mt-1 text-sm text-muted-foreground">
                             <Clock className="w-4 h-4" />
                             {formatTime(request.original_end_time)} ~ {formatTime(request.actual_end_time)}
                           </div>
@@ -199,13 +199,13 @@ export function PendingApprovalsModal({
 
                         {/* 사유 */}
                         {request.notes && (
-                          <p className="mt-2 text-sm text-gray-600 bg-white p-2 rounded">
+                          <p className="mt-2 text-sm text-muted-foreground bg-card p-2 rounded">
                             {request.notes}
                           </p>
                         )}
 
                         {/* 요청일 */}
-                        <p className="mt-2 text-xs text-gray-400">
+                        <p className="mt-2 text-xs text-muted-foreground">
                           요청일: {new Date(request.created_at).toLocaleDateString('ko-KR')}
                         </p>
                       </div>

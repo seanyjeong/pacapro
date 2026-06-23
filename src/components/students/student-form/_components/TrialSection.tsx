@@ -25,7 +25,7 @@ export function TrialSection({
       <Card className={isTrial ? 'border-purple-300 dark:border-purple-700 bg-purple-50 dark:bg-purple-950' : ''}>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <Sparkles className={`w-5 h-5 mr-2 ${isTrial ? 'text-purple-600' : 'text-gray-400'}`} />
+            <Sparkles className={`w-5 h-5 mr-2 ${isTrial ? 'text-purple-600' : 'text-muted-foreground'}`} />
             체험생 등록
           </CardTitle>
         </CardHeader>
@@ -39,7 +39,7 @@ export function TrialSection({
                 setIsTrial(e.target.checked);
                 if (e.target.checked && trialDates.length === 0) addTrialDate();
               }}
-              className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+              className="w-4 h-4 text-purple-600 border-border rounded focus:ring-purple-500"
             />
             <label htmlFor="isTrial" className="text-sm font-medium text-foreground">
               체험 수업 학생으로 등록 (2회 무료 체험)
@@ -77,7 +77,7 @@ export function TrialSection({
                         ))}
                       </select>
                       <button type="button" onClick={() => removeTrialDate(idx)}
-                        className="p-1 text-gray-400 hover:text-red-500">
+                        className="p-1 text-muted-foreground hover:text-red-500">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
