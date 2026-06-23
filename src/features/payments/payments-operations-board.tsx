@@ -3,14 +3,18 @@
 import type { ReactNode } from 'react';
 import { AlertCircle, Banknote, Bell, Calculator, Percent, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import type { PaymentSummary } from './payments-types';
+import type { PaymentFilters } from '@/lib/types/payment';
 
 interface PaymentsOperationsBoardProps {
   canEdit: boolean;
   sendingNotification: boolean;
   summary: PaymentSummary;
   viewOnly: boolean;
+  filters: PaymentFilters;
   onAddPayment: () => void;
+  onFilterChange: (filters: Partial<PaymentFilters>) => void;
   onOpenCalculator: () => void;
   onReload: () => void;
   onSendUnpaid: () => void;
@@ -21,7 +25,9 @@ export function PaymentsOperationsBoard({
   sendingNotification,
   summary,
   viewOnly,
+  filters,
   onAddPayment,
+  onFilterChange,
   onOpenCalculator,
   onReload,
   onSendUnpaid,
@@ -45,8 +51,22 @@ export function PaymentsOperationsBoard({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Metric icon={<Banknote className="h-4 w-4" />} label="총 청구" testId="payments-metric-total" value={`${summary.filteredCount}건`} />
-        <Metric icon={<AlertCircle className="h-4 w-4" />} label="미납" testId="payments-metric-unpaid" value={`${summary.unpaidCount}건`} />
+        <Metric
+          icon={<Banknote className="h-4 w-4" />}
+          label="총 청구"
+          selected={!filters.payment_status}
+          testId="payments-metric-total"
+          value={`${summary.filteredCount}건`}
+          onClick={() => onFilterChange({ payment_status: undefined })}
+        />
+        <Metric
+          icon={<AlertCircle className="h-4 w-4" />}
+          label="미납"
+          selected={filters.payment_status === 'pending'}
+          testId="payments-metric-unpaid"
+          value={`${summary.unpaidCount}건`}
+          onClick={() => onFilterChange({ payment_status: 'pending' })}
+        />
         <Metric
           icon={<RefreshCw className="h-4 w-4" />}
           label="전달 미납"
@@ -91,18 +111,39 @@ export function PaymentsOperationsBoard({
 interface MetricProps {
   icon: ReactNode;
   label: string;
+  selected?: boolean;
   testId: string;
   value: string;
+  onClick?: () => void;
 }
 
-function Metric({ icon, label, testId, value }: MetricProps) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
+function Metric({ icon, label, selected = false, testId, value, onClick }: MetricProps) {
+  const className = cn(
+    'rounded-md border border-slate-200 bg-slate-50 p-3 text-left transition',
+    onClick && 'hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900',
+    selected && 'border-blue-300 bg-blue-50 text-blue-950'
+  );
+  const content = (
+    <>
       <div className="mb-2 flex items-center gap-2 text-slate-500">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
       <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button aria-pressed={selected} className={className} data-testid={testId} type="button" onClick={onClick}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className} data-testid={testId}>
+      {content}
     </div>
   );
 }

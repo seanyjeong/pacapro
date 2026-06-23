@@ -77,10 +77,12 @@ export function PaymentsPageContent() {
         <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
           <PaymentsOperationsBoard
             canEdit={canEditPayments}
+            filters={state.filters}
             sendingNotification={state.sendingNotification}
             summary={state.summary}
             viewOnly={viewOnly}
             onAddPayment={() => router.push('/payments/new')}
+            onFilterChange={state.updateFilters}
             onOpenCalculator={() => state.setCalculatorOpen(true)}
             onReload={state.reload}
             onSendUnpaid={() => setUnpaidDialogOpen(true)}

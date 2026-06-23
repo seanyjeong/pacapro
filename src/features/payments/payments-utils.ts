@@ -44,6 +44,8 @@ export function filterPayments(
   const todayDayOfWeek = new Date().getDay();
 
   return payments.filter((payment) => {
+    if (filters.payment_status && payment.payment_status !== filters.payment_status) return false;
+    if (filters.payment_type && payment.payment_type !== filters.payment_type) return false;
     if (viewOnly && payment.payment_status === 'paid') return false;
     if (query && !payment.student_name?.toLowerCase().includes(query)) return false;
     if (!todayUnpaidOnly) return true;

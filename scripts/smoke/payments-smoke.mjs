@@ -186,6 +186,17 @@ async function runNormal(browser) {
   await page.getByRole('button', { name: '필터 초기화' }).click();
   await page.locator('tr:has-text("박민수")').waitFor();
 
+  const board = page.getByTestId('payments-operations-board');
+  await board.getByRole('button', { name: '미납 1건' }).click();
+  await page.locator('tr:has-text("박민수")').waitFor();
+  await page.locator('tr:has-text("이서연")').waitFor({ state: 'hidden' });
+  if (!state.hits.some((hit) => hit.includes('/payments?') && hit.includes('payment_status=pending'))) {
+    throw new Error(`missing pending metric query: ${state.hits.join(' | ')}`);
+  }
+  await board.getByRole('button', { name: '총 청구 1건' }).click();
+  await page.locator('tr:has-text("이서연")').waitFor();
+  await page.locator('tr:has-text("한서준")').waitFor();
+
   await page.getByRole('button', { name: '미납 알림 (1명)' }).click();
   await page.getByRole('alertdialog').getByText('미납자 1명에게 알림톡을 발송할까요?').waitFor();
   await page.getByRole('alertdialog').getByRole('button', { name: '발송' }).click();
