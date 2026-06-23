@@ -3,8 +3,8 @@
 import { AlertCircle } from 'lucide-react';
 import { SmsComposeCard } from './sms-compose-card';
 import { SmsHeader } from './sms-header';
-import { SmsInfoPanel } from './sms-info-panel';
 import { SmsLogsCard } from './sms-logs-card';
+import { SmsOperationsBoard } from './sms-operations-board';
 import { SmsSendConfirmDialog } from './sms-send-confirm-dialog';
 import { useSmsPageState } from './use-sms-page-state';
 
@@ -36,12 +36,12 @@ export function SMSPage() {
           </section>
         ) : null}
 
-        <div className="grid gap-5 lg:grid-cols-12">
-          <div className="lg:col-span-8">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+          <main className="min-w-0">
             <SmsComposeCard sms={sms} />
-          </div>
-          <aside className="space-y-5 lg:col-span-4">
-            <SmsInfoPanel senderCount={sms.senderNumbers.length} selectedSenderId={sms.selectedSenderId} />
+          </main>
+          <aside className="space-y-5 xl:sticky xl:top-20">
+            <SmsOperationsBoard sms={sms} />
             <SmsLogsCard logs={sms.logs} isLoading={sms.logsLoading} errorMessage={sms.logsError} />
           </aside>
         </div>

@@ -144,7 +144,8 @@ async function runDesktopSend(browser) {
 
   await page.goto('/sms', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
-  await page.getByText('Messaging Desk').waitFor();
+  await page.locator('header').getByText('Messaging Desk').waitFor();
+  await assertOperationsBoard(page);
   await page.getByText('김진우 학부모').waitFor();
   const studentLink = page.getByRole('link', { name: '김진우 학부모 학생 상세 보기' });
   await studentLink.waitFor();
@@ -154,7 +155,11 @@ async function runDesktopSend(browser) {
   await page.getByLabel('발신번호').selectOption('7');
   await page.getByRole('button', { name: /학부모에게 7명/ }).waitFor();
   await page.getByPlaceholder(/내용을 입력해주세요/).fill('오늘 수업은 정상 진행됩니다.');
-  await clickWithoutNativeDialog(page, page.getByRole('button', { name: 'SMS 발송' }), 'sms desktop send');
+  await clickWithoutNativeDialog(
+    page,
+    page.getByTestId('sms-operations-board').getByRole('button', { name: 'SMS 발송' }),
+    'sms desktop send'
+  );
   const dialog = page.getByRole('alertdialog');
   await dialog.getByRole('heading', { name: '문자 발송 확인' }).waitFor();
   await dialog.getByText('7명에게 SMS를 발송합니다.').waitFor();
@@ -187,7 +192,11 @@ async function runPrefilledStudent(browser) {
   await page.getByRole('button', { name: /학부모에게/ }).waitFor();
   await page.getByLabel('발신번호').selectOption('7');
   await page.getByPlaceholder(/내용을 입력해주세요/).fill('오늘 상담 후속 안내입니다.');
-  await clickWithoutNativeDialog(page, page.getByRole('button', { name: 'SMS 발송' }), 'sms prefilled student send');
+  await clickWithoutNativeDialog(
+    page,
+    page.getByTestId('sms-operations-board').getByRole('button', { name: 'SMS 발송' }),
+    'sms prefilled student send'
+  );
   const dialog = page.getByRole('alertdialog');
   await dialog.getByRole('heading', { name: '문자 발송 확인' }).waitFor();
   await dialog.getByText('1명에게 SMS를 발송합니다.').waitFor();
@@ -216,7 +225,10 @@ async function runMobile(browser) {
 
   await page.goto('/sms', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
-  await page.getByText('Messaging Desk').waitFor();
+  await page.locator('header').getByText('Messaging Desk').waitFor();
+  await assertOperationsBoard(page);
+  await page.getByTestId('sms-operations-board').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/Users/etlab/paca-sms-mobile-board.png', fullPage: false });
   await page.getByRole('button', { name: /학부모에게 7명/ }).waitFor();
   await page.getByRole('link', { name: '김진우 학부모 학생 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'sms mobile');
@@ -253,7 +265,7 @@ async function runMissingSenderPreventsSend(browser) {
   await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
   await page.getByRole('heading', { name: '문자 준비 정보를 일부 불러오지 못했습니다' }).waitFor();
   await page.getByPlaceholder(/내용을 입력해주세요/).fill('발신번호가 없으면 발송하지 않습니다.');
-  const sendButton = page.getByRole('button', { name: 'SMS 발송' });
+  const sendButton = page.getByTestId('sms-operations-board').getByRole('button', { name: 'SMS 발송' });
   await page.waitForFunction(() => {
     const button = Array.from(document.querySelectorAll('button')).find((item) => item.textContent?.includes('SMS 발송'));
     return button instanceof HTMLButtonElement && !button.disabled;
@@ -270,6 +282,18 @@ async function runMissingSenderPreventsSend(browser) {
 
   await context.close();
   return result;
+}
+
+async function assertOperationsBoard(page) {
+  const board = page.getByTestId('sms-operations-board');
+  await board.getByRole('heading', { name: '문자 작업 보드' }).waitFor();
+  await board.getByTestId('sms-board-metric-type').getByText('SMS').waitFor();
+  await board.getByTestId('sms-board-metric-recipients').getByText('7명').waitFor();
+  await board.getByTestId('sms-board-metric-senders').getByText('1개').waitFor();
+  await board.getByRole('button', { name: '전체' }).waitFor();
+  await board.getByRole('button', { name: '개별' }).waitFor();
+  await board.getByRole('button', { name: '직접' }).waitFor();
+  await board.getByRole('link', { name: '알림톡 및 SMS 설정' }).waitFor();
 }
 
 function assertDiagnostics(result) {
