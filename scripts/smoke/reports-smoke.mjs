@@ -138,6 +138,12 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'reports desktop');
   await page.screenshot({ path: '/Users/etlab/paca-reports-desktop.png', fullPage: true });
 
+  const board = page.getByTestId('reports-operations-board');
+  await board.getByRole('button', { name: '이전 달' }).click();
+  await waitForState(() => state.hits.includes('GET /payments?year=2026&month=5'), 'previous month query');
+  await board.getByRole('button', { name: '다음 달' }).click();
+  await waitForState(() => state.hits.filter((hit) => hit === 'GET /payments?year=2026&month=6').length >= 3, 'next month query');
+
   await page.locator('#report-month').fill('2026-05');
   await page.locator('#report-month').dispatchEvent('change');
   await page.waitForLoadState('networkidle');

@@ -15,6 +15,13 @@ export function getCurrentYearMonth(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
+export function shiftReportMonth(selectedMonth: string, offset: number): string {
+  const [yearText, monthText] = selectedMonth.split('-');
+  const year = Number(yearText);
+  const monthIndex = Number(monthText) - 1 + offset;
+  return getCurrentYearMonth(new Date(year, monthIndex, 1));
+}
+
 export function getReportDateRange(selectedMonth: string): ReportDateRange {
   const [yearText, monthText] = selectedMonth.split('-');
   const year = Number(yearText);

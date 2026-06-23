@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { Banknote, Download, RefreshCw, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { Banknote, ChevronLeft, ChevronRight, Download, RefreshCw, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { ReportComputedStats, ReportExportType, ReportStats } from './reports-types';
-import { formatReportAmount, getCurrentYearMonth } from './reports-utils';
+import { formatReportAmount, getCurrentYearMonth, shiftReportMonth } from './reports-utils';
 
 interface ReportsOperationsBoardProps {
   computed: ReportComputedStats;
@@ -56,13 +56,33 @@ export function ReportsOperationsBoard({
       </div>
 
       <div className="space-y-2">
-        <input
-          aria-label="작업 보드 리포트 조회 월"
-          className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-blue-500/20"
-          type="month"
-          value={selectedMonth}
-          onChange={(event) => onMonthChange(event.target.value)}
-        />
+        <div className="grid grid-cols-[40px_minmax(0,1fr)_40px] gap-2">
+          <Button
+            aria-label="이전 달"
+            className="px-0"
+            type="button"
+            variant="outline"
+            onClick={() => onMonthChange(shiftReportMonth(selectedMonth, -1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <input
+            aria-label="작업 보드 리포트 조회 월"
+            className="h-10 min-w-0 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none focus:ring-2 focus:ring-blue-500/20"
+            type="month"
+            value={selectedMonth}
+            onChange={(event) => onMonthChange(event.target.value)}
+          />
+          <Button
+            aria-label="다음 달"
+            className="px-0"
+            type="button"
+            variant="outline"
+            onClick={() => onMonthChange(shiftReportMonth(selectedMonth, 1))}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
         <Button className="w-full justify-start gap-2" type="button" variant="outline" onClick={() => onMonthChange(getCurrentYearMonth())}>
           <RefreshCw className="h-4 w-4" />
           이번 달
