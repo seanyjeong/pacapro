@@ -138,6 +138,16 @@ async function runNormal(browser) {
   await assertOperationsBoard(page);
   await page.locator('article:has-text("박민수")').waitFor();
   await page.locator('article:has-text("체험 특강 수입")').waitFor();
+  const operationsBoard = page.getByTestId('incomes-operations-board');
+  await operationsBoard.getByRole('button', { name: '학원비 수입 보기' }).click();
+  await page.locator('article:has-text("박민수")').waitFor();
+  await page.locator('article:has-text("체험 특강 수입")').waitFor({ state: 'hidden' });
+  await operationsBoard.getByRole('button', { name: '기타 수입 보기' }).click();
+  await page.locator('article:has-text("체험 특강 수입")').waitFor();
+  await page.locator('article:has-text("박민수")').waitFor({ state: 'hidden' });
+  await operationsBoard.getByRole('button', { name: '전체 수입 보기' }).click();
+  await page.locator('article:has-text("박민수")').waitFor();
+  await page.locator('article:has-text("체험 특강 수입")').waitFor();
   const tuitionRow = page.locator('article:has-text("박민수")');
   const paymentLink = tuitionRow.getByRole('link', { name: '박민수 결제 상세 보기' });
   await paymentLink.waitFor();

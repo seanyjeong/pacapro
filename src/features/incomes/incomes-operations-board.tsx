@@ -63,9 +63,33 @@ export function IncomesOperationsBoard({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Metric icon={<TrendingUp className="h-4 w-4" />} label="총 수입" testId="incomes-metric-total" value={`${formatAmount(summary.totalIncome)}원`} />
-        <Metric icon={<CreditCard className="h-4 w-4" />} label="학원비" testId="incomes-metric-tuition" value={`${summary.tuitionCount}건`} />
-        <Metric icon={<Banknote className="h-4 w-4" />} label="기타" testId="incomes-metric-other" value={`${summary.otherCount}건`} />
+        <Metric
+          active={activeTab === 'all'}
+          ariaLabel="전체 수입 보기"
+          icon={<TrendingUp className="h-4 w-4" />}
+          label="총 수입"
+          testId="incomes-metric-total"
+          value={`${formatAmount(summary.totalIncome)}원`}
+          onClick={() => onTabChange('all')}
+        />
+        <Metric
+          active={activeTab === 'tuition'}
+          ariaLabel="학원비 수입 보기"
+          icon={<CreditCard className="h-4 w-4" />}
+          label="학원비"
+          testId="incomes-metric-tuition"
+          value={`${summary.tuitionCount}건`}
+          onClick={() => onTabChange('tuition')}
+        />
+        <Metric
+          active={activeTab === 'other'}
+          ariaLabel="기타 수입 보기"
+          icon={<Banknote className="h-4 w-4" />}
+          label="기타"
+          testId="incomes-metric-other"
+          value={`${summary.otherCount}건`}
+          onClick={() => onTabChange('other')}
+        />
         <Metric icon={<List className="h-4 w-4" />} label="학원비 비율" testId="incomes-metric-ratio" value={`${summary.tuitionRatio}%`} />
       </div>
 
@@ -134,21 +158,50 @@ export function IncomesOperationsBoard({
 }
 
 interface MetricProps {
+  active?: boolean;
+  ariaLabel?: string;
   icon: ReactNode;
   label: string;
+  onClick?: () => void;
   testId: string;
   value: string;
 }
 
-function Metric({ icon, label, testId, value }: MetricProps) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
+function Metric({ active, ariaLabel, icon, label, onClick, testId, value }: MetricProps) {
+  const content = (
+    <>
       <div className="mb-2 flex items-center gap-2 text-slate-500">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
       <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
-    </div>
+    </>
+  );
+
+  if (!onClick) {
+    return (
+      <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      aria-label={ariaLabel}
+      aria-pressed={Boolean(active)}
+      className={cn(
+        'rounded-md border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500/25',
+        active
+          ? 'border-blue-300 bg-blue-50 shadow-sm'
+          : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+      )}
+      data-testid={testId}
+      type="button"
+      onClick={onClick}
+    >
+      {content}
+    </button>
   );
 }
 
