@@ -40,4 +40,5 @@ export interface ScoreData {
 
 export type ExamType = '3월' | '6월' | '9월' | '수능';
 export type PerformanceTab = '내신' | '모의고사';
+export type PerformanceStudentStatusFilter = 'all' | 'active' | 'paused';
 export type StudentAllScores = Record<ExamType, ScoreData | null>;

@@ -3,7 +3,8 @@
 import type { ReactNode } from 'react';
 import { Award, CheckCircle2, Clock, GraduationCap, RefreshCw, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { JungsiStatus, PerformanceStudent } from './performance-types';
+import { cn } from '@/lib/utils';
+import type { JungsiStatus, PerformanceStudent, PerformanceStudentStatusFilter } from './performance-types';
 import { EXAM_TYPES, getBranchLabel } from './performance-utils';
 
 interface PerformanceOperationsBoardProps {
@@ -13,9 +14,11 @@ interface PerformanceOperationsBoardProps {
   students: PerformanceStudent[];
   studentsError: string | null;
   studentsLoading: boolean;
+  studentStatusFilter: PerformanceStudentStatusFilter;
   onOpenMockExam: () => void;
   onRefreshStatus: () => void;
   onRefreshStudents: () => void;
+  onStudentStatusFilterChange: (filter: PerformanceStudentStatusFilter) => void;
 }
 
 export function PerformanceOperationsBoard({
@@ -25,9 +28,11 @@ export function PerformanceOperationsBoard({
   students,
   studentsError,
   studentsLoading,
+  studentStatusFilter,
   onOpenMockExam,
   onRefreshStatus,
   onRefreshStudents,
+  onStudentStatusFilterChange,
 }: PerformanceOperationsBoardProps) {
   const activeCount = students.filter((student) => student.status === 'active').length;
   const pausedCount = students.filter((student) => student.status === 'paused').length;
@@ -64,15 +69,19 @@ export function PerformanceOperationsBoard({
           icon={<GraduationCap className="h-4 w-4" />}
           label="재원 학생"
           loading={studentsLoading}
+          selected={studentStatusFilter === 'active'}
           testId="performance-metric-active"
           value={`${activeCount}명`}
+          onClick={() => onStudentStatusFilterChange('active')}
         />
         <Metric
           icon={<Clock className="h-4 w-4" />}
           label="휴원 학생"
           loading={studentsLoading}
+          selected={studentStatusFilter === 'paused'}
           testId="performance-metric-paused"
           value={`${pausedCount}명`}
+          onClick={() => onStudentStatusFilterChange('paused')}
         />
         <Metric
           icon={<Award className="h-4 w-4" />}
@@ -83,10 +92,12 @@ export function PerformanceOperationsBoard({
         />
         <Metric
           icon={<CheckCircle2 className="h-4 w-4" />}
-          label="조회 상태"
+          label="전체 조회"
           loading={studentsLoading}
+          selected={studentStatusFilter === 'all'}
           testId="performance-metric-ready"
           value={studentsError ? '확인' : `${students.length}명`}
+          onClick={() => onStudentStatusFilterChange('all')}
         />
       </div>
 
@@ -112,18 +123,46 @@ interface MetricProps {
   icon: ReactNode;
   label: string;
   loading: boolean;
+  selected?: boolean;
   testId: string;
   value: string;
+  onClick?: () => void;
 }
 
-function Metric({ icon, label, loading, testId, value }: MetricProps) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
+function Metric({ icon, label, loading, selected = false, testId, value, onClick }: MetricProps) {
+  const className = cn(
+    'rounded-md border border-slate-200 bg-slate-50 p-3 text-left transition',
+    onClick && 'hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900',
+    selected && 'border-blue-300 bg-blue-50 text-blue-950'
+  );
+  const content = (
+    <>
       <div className="mb-2 flex items-center gap-2 text-slate-500">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
       <p className="text-lg font-semibold tracking-normal text-slate-950">{loading ? '-' : value}</p>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        aria-pressed={selected}
+        className={className}
+        data-testid={testId}
+        disabled={loading}
+        type="button"
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className} data-testid={testId}>
+      {content}
     </div>
   );
 }

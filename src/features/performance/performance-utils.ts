@@ -1,4 +1,11 @@
-import type { ExamType, PerformanceStudent, ScoreData, StudentAllScores, SubjectScore } from './performance-types';
+import type {
+  ExamType,
+  PerformanceStudent,
+  PerformanceStudentStatusFilter,
+  ScoreData,
+  StudentAllScores,
+  SubjectScore,
+} from './performance-types';
 
 export const EXAM_TYPES: ExamType[] = ['3월', '6월', '9월', '수능'];
 export const STATUS_LOAD_ERROR = '정시엔진 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
@@ -9,14 +16,21 @@ export function createEmptyScores(): StudentAllScores {
   return { '3월': null, '6월': null, '9월': null, 수능: null };
 }
 
-export function filterStudents(students: PerformanceStudent[], query: string): PerformanceStudent[] {
+export function filterStudents(
+  students: PerformanceStudent[],
+  query: string,
+  statusFilter: PerformanceStudentStatusFilter
+): PerformanceStudent[] {
   const term = query.trim().toLowerCase();
-  if (!term) return students;
-  return students.filter((student) =>
-    student.name.toLowerCase().includes(term) ||
-    (student.school ?? '').toLowerCase().includes(term) ||
-    student.grade.includes(query.trim())
-  );
+  return students.filter((student) => {
+    if (statusFilter !== 'all' && student.status !== statusFilter) return false;
+    if (!term) return true;
+    return (
+      student.name.toLowerCase().includes(term) ||
+      (student.school ?? '').toLowerCase().includes(term) ||
+      student.grade.includes(query.trim())
+    );
+  });
 }
 
 export function getExamTitle(exam: ExamType): string {

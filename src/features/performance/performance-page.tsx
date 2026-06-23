@@ -66,9 +66,11 @@ export function PerformancePage() {
             students={state.students}
             studentsError={state.studentsError}
             studentsLoading={state.studentsLoading}
+            studentStatusFilter={state.studentStatusFilter}
             onOpenMockExam={() => state.setActiveTab('모의고사')}
             onRefreshStatus={state.loadStatus}
             onRefreshStudents={state.loadStudents}
+            onStudentStatusFilterChange={state.setStudentStatusFilter}
           />
         </div>
       </div>

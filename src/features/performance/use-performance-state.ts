@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchJungsiStatus, fetchPerformanceStudents, fetchStudentExamScore } from './performance-api';
-import type { JungsiStatus, PerformanceStudent, PerformanceTab, StudentAllScores } from './performance-types';
+import type {
+  JungsiStatus,
+  PerformanceStudent,
+  PerformanceStudentStatusFilter,
+  PerformanceTab,
+  StudentAllScores,
+} from './performance-types';
 import {
   createEmptyScores,
   EXAM_TYPES,
@@ -20,6 +26,7 @@ export function usePerformanceState() {
   const [studentsError, setStudentsError] = useState<string | null>(null);
   const [scoresError, setScoresError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [studentStatusFilter, setStudentStatusFilter] = useState<PerformanceStudentStatusFilter>('all');
   const [expandedStudentId, setExpandedStudentId] = useState<number | null>(null);
   const [studentScores, setStudentScores] = useState<StudentAllScores | null>(null);
   const [scoresLoading, setScoresLoading] = useState(false);
@@ -62,7 +69,10 @@ export function usePerformanceState() {
     loadStudents();
   }, [loadStatus, loadStudents]);
 
-  const filteredStudents = useMemo(() => filterStudents(students, searchQuery), [searchQuery, students]);
+  const filteredStudents = useMemo(
+    () => filterStudents(students, searchQuery, studentStatusFilter),
+    [searchQuery, studentStatusFilter, students]
+  );
 
   const openStudentScores = async (studentId: number) => {
     if (expandedStudentId === studentId) {
@@ -110,9 +120,11 @@ export function usePerformanceState() {
     searchQuery,
     setActiveTab,
     setSearchQuery,
+    setStudentStatusFilter,
     statusError,
     statusLoading,
     studentScores,
+    studentStatusFilter,
     students,
     studentsError,
     studentsLoading,

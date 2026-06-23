@@ -114,6 +114,15 @@ async function runNormal(browser) {
   await assertOperationsBoard(page);
   await openMockExamTab(page);
   await page.getByText('김민서').waitFor();
+  const board = page.getByTestId('performance-operations-board');
+  await board.getByRole('button', { name: '휴원 학생 1명' }).click();
+  await page.locator('[data-testid="performance-student-row"]:has-text("한서준")').waitFor();
+  await page.locator('[data-testid="performance-student-row"]:has-text("김민서")').waitFor({ state: 'hidden' });
+  await board.getByRole('button', { name: '재원 학생 1명' }).click();
+  await page.locator('[data-testid="performance-student-row"]:has-text("김민서")').waitFor();
+  await page.locator('[data-testid="performance-student-row"]:has-text("한서준")').waitFor({ state: 'hidden' });
+  await board.getByRole('button', { name: '전체 조회 2명' }).click();
+  await page.locator('[data-testid="performance-student-row"]:has-text("한서준")').waitFor();
   await assertNoRawVisibleText(page, 'performance desktop');
   await assertNoHorizontalOverflow(page, 'performance desktop');
 
