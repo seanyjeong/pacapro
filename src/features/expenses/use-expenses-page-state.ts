@@ -26,6 +26,7 @@ export function useExpensesPageState() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [actionBusy, setActionBusy] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -75,6 +76,7 @@ export function useExpensesPageState() {
   };
 
   const submitForm = async () => {
+    setSaving(true);
     try {
       if (editingId) {
         await updateExpense(editingId, formData);
@@ -87,6 +89,8 @@ export function useExpensesPageState() {
       void loadExpenses();
     } catch {
       toast.error('지출 내역을 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도해주세요.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -145,6 +149,7 @@ export function useExpensesPageState() {
     loading,
     error,
     exporting,
+    saving,
     actionBusy,
     showForm,
     editingId,

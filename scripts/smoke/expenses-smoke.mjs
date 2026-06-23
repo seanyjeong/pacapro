@@ -77,6 +77,12 @@ async function installRoutes(context, state) {
     if (method === 'GET' && path === '/expenses') {
       return jsonRoute(route, { message: 'ok', expenses: state.expenses });
     }
+    if (method === 'POST' && path === '/expenses') {
+      const payload = JSON.parse(request.postData() || '{}');
+      state.createdPayload = payload;
+      state.expenses = [{ id: 904, ...payload }, ...state.expenses];
+      return jsonRoute(route, { message: 'created', expense: { id: 904, ...payload } });
+    }
     if (method === 'POST' && path === '/expenses/902/complete-refund') {
       state.refundPayload = request.postDataJSON();
       state.expenses = state.expenses.filter((expense) => expense.id !== 902);
@@ -137,6 +143,22 @@ async function runNormal(browser) {
   await assertNoRawVisibleText(page, 'expenses desktop');
   await assertNoHorizontalOverflow(page, 'expenses desktop');
   await page.screenshot({ path: '/Users/etlab/paca-expenses-desktop.png', fullPage: true });
+
+  await page.getByRole('button', { name: '지출 등록' }).click();
+  await page.getByLabel('지출일').fill('2026-06-18');
+  await page.getByLabel('카테고리').selectOption('supplies');
+  await page.getByLabel('금액').fill('85000');
+  await page.getByLabel('설명').fill('테이핑 소모품 구입');
+  await page.getByLabel('지불 방법').selectOption('card');
+  await page.getByLabel('메모').fill('강남 저녁반 비품');
+  await page.getByRole('button', { name: '등록', exact: true }).click();
+  await page.getByText('지출이 등록되었습니다.').waitFor();
+  if (state.createdPayload?.amount !== 85000) {
+    throw new Error(`unexpected created expense ${JSON.stringify(state.createdPayload)}`);
+  }
+  if (state.createdPayload?.category !== 'supplies') {
+    throw new Error(`unexpected expense category ${state.createdPayload?.category}`);
+  }
 
   await page.getByLabel('지출 검색').fill('월세');
   await page.locator('tr:has-text("강남 지점 월세")').waitFor();
@@ -206,6 +228,7 @@ async function main() {
     [normal, error].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
+      createdPayload: normal.state.createdPayload,
       refundPayload: normal.state.refundPayload,
       normalConsoleErrors: normal.diagnostics.consoleErrors,
       errorConsoleErrors: error.diagnostics.consoleErrors,

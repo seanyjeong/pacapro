@@ -1,4 +1,5 @@
 interface ExpenseInputProps {
+  id?: string;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -7,11 +8,12 @@ interface ExpenseInputProps {
   required?: boolean;
 }
 
-export function ExpenseInput({ label, value, onChange, type = 'text', placeholder, required }: ExpenseInputProps) {
+export function ExpenseInput({ id, label, value, onChange, type = 'text', placeholder, required }: ExpenseInputProps) {
   return (
     <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-foreground">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-foreground">{label}</label>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}

@@ -66,6 +66,7 @@ export function ExpensesPage() {
         <ExpenseForm
           formData={state.formData}
           editingId={state.editingId}
+          saving={state.saving}
           onUpdate={state.updateForm}
           onSubmit={state.submitForm}
           onCancel={state.resetForm}
