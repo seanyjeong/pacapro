@@ -180,6 +180,14 @@ async function waitForCalendarShell(page) {
   await queue.getByText('신규 상담', { exact: true }).waitFor();
   await queue.getByText('재원생 상담', { exact: true }).waitFor();
   await queue.getByText('상담 메모', { exact: true }).waitFor();
+  const newInquiryHref = await queue.getByRole('link', { name: '신규 상담 보기' }).getAttribute('href');
+  if (newInquiryHref !== '/consultations/new-inquiry') {
+    throw new Error(`new inquiry calendar queue href mismatch: ${newInquiryHref}`);
+  }
+  const learningHref = await queue.getByRole('link', { name: '재원생 상담 보기' }).getAttribute('href');
+  if (learningHref !== '/consultations/enrolled') {
+    throw new Error(`learning calendar queue href mismatch: ${learningHref}`);
+  }
 }
 
 function assertDiagnostics(result) {

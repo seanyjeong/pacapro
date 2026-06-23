@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { CalendarPlus, ClipboardList, FileText, ListChecks, Settings, UserCheck, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface ConsultationCalendarWorkQueueProps {
   confirmedCount: number;
@@ -39,8 +40,8 @@ export function ConsultationCalendarWorkQueue({
         </div>
 
         <div className="mt-4 space-y-2">
-          <QueueRow label="신규 상담" value={`${newInquiryCount}건`} />
-          <QueueRow label="재원생 상담" value={`${learningCount}건`} />
+          <QueueRow ariaLabel="신규 상담 보기" href="/consultations/new-inquiry" label="신규 상담" value={`${newInquiryCount}건`} />
+          <QueueRow ariaLabel="재원생 상담 보기" href="/consultations/enrolled" label="재원생 상담" value={`${learningCount}건`} />
           <QueueRow label="상담 메모" value={`${memoCount}건`} />
         </div>
 
@@ -94,11 +95,39 @@ export function ConsultationCalendarWorkQueue({
   );
 }
 
-function QueueRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm">
+function QueueRow({
+  ariaLabel,
+  href,
+  label,
+  value,
+}: {
+  ariaLabel?: string;
+  href?: string;
+  label: string;
+  value: string;
+}) {
+  const className = cn(
+    'flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm',
+    href && 'transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30'
+  );
+  const content = (
+    <>
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold text-foreground">{value}</span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link aria-label={ariaLabel || label} className={className} href={href}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={className}>
+      {content}
     </div>
   );
 }
