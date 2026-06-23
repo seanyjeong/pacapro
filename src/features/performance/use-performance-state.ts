@@ -113,6 +113,7 @@ export function usePerformanceState() {
     statusError,
     statusLoading,
     studentScores,
+    students,
     studentsError,
     studentsLoading,
   };

@@ -95,7 +95,7 @@ async function waitForConnectedStatus(page) {
 }
 
 async function openMockExamTab(page) {
-  const trigger = page.getByRole('button', { name: '모의고사·수능' });
+  const trigger = page.getByRole('button', { name: '모의고사·수능', exact: true });
   await trigger.waitFor({ state: 'visible' });
   await trigger.click();
 }
@@ -111,6 +111,7 @@ async function runNormal(browser) {
   await page.getByTestId('performance-workspace').waitFor();
   await page.getByRole('heading', { name: '성적관리' }).waitFor();
   await waitForConnectedStatus(page);
+  await assertOperationsBoard(page);
   await openMockExamTab(page);
   await page.getByText('김민서').waitFor();
   await assertNoRawVisibleText(page, 'performance desktop');
@@ -132,6 +133,7 @@ async function runNormal(browser) {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.getByTestId('performance-workspace').waitFor();
   await waitForConnectedStatus(page);
+  await assertOperationsBoard(page);
   await openMockExamTab(page);
   await assertNoRawVisibleText(page, 'performance mobile');
   await assertNoHorizontalOverflow(page, 'performance mobile');
@@ -139,6 +141,16 @@ async function runNormal(browser) {
 
   await context.close();
   return { state, diagnostics };
+}
+
+async function assertOperationsBoard(page) {
+  const board = page.getByTestId('performance-operations-board');
+  await board.getByRole('heading', { name: '성적 작업 보드' }).waitFor();
+  await board.getByTestId('performance-metric-active').getByText('1명').waitFor();
+  await board.getByTestId('performance-metric-paused').getByText('1명').waitFor();
+  await board.getByTestId('performance-metric-exams').getByText('4종').waitFor();
+  await board.getByText('일산 지점').waitFor();
+  await board.getByRole('button', { name: '모의고사·수능 보기' }).waitFor();
 }
 
 async function runStatusError(browser) {
