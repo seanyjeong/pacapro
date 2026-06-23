@@ -116,10 +116,17 @@ async function runDesktop(browser) {
 
   await page.goto('/consultations', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 관리' }).waitFor();
+  await page.getByTestId('consultations-operations-workspace').waitFor();
+  await page.getByTestId('consultations-filter-bar').waitFor();
+  const desktopQueue = page.getByTestId('consultations-work-queue');
+  await desktopQueue.waitFor();
+  await page.getByText('오늘 상담 운영 보드').waitFor();
+  await desktopQueue.getByText('확인 필요', { exact: true }).waitFor();
   await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   try {
     await page.getByText('김진우').first().waitFor();
     await page.getByText('박서연').first().waitFor();
+    await desktopQueue.getByText('1건').first().waitFor();
   } catch (error) {
     const bodyText = (await page.locator('body').innerText()).slice(0, 1200);
     throw new Error(`consultation rows did not render; hits=${JSON.stringify(state.hits)}; pageErrors=${JSON.stringify(diagnostics.pageErrors)}; consoleErrors=${JSON.stringify(diagnostics.consoleErrors)}; body=${bodyText}; cause=${error}`);
@@ -148,6 +155,11 @@ async function runMobile(browser) {
 
   await page.goto('/consultations', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 관리' }).waitFor();
+  await page.getByTestId('consultations-operations-workspace').waitFor();
+  await page.getByTestId('consultations-filter-bar').waitFor();
+  const mobileQueue = page.getByTestId('consultations-work-queue');
+  await mobileQueue.waitFor();
+  await mobileQueue.getByText('확인 필요', { exact: true }).waitFor();
   await page.getByText('김진우').first().waitFor();
   await assertNoRawVisibleText(page, 'consultations mobile');
   await assertNoHorizontalOverflow(page, 'consultations mobile');
