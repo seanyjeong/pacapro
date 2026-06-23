@@ -1,16 +1,29 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ArrowLeft, CheckCircle, Eye, EyeOff, Lock, XCircle } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Lock, ArrowLeft, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
+import { AuthPageShell } from '@/features/auth/auth-page-shell';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
 const RESET_PASSWORD_ERROR_MESSAGE = '비밀번호를 변경하지 못했습니다. 잠시 후 다시 시도해주세요.';
+
+function ResetLoadingState({ label }: { label: string }) {
+  return (
+    <AuthPageShell
+      icon={<div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-400 border-t-transparent" />}
+      title={label}
+      tone="loading"
+      description="재설정 링크 상태를 확인하고 있습니다."
+    >
+      <p className="text-sm text-slate-600">잠시만 기다려주세요.</p>
+    </AuthPageShell>
+  );
+}
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -26,7 +39,6 @@ function ResetPasswordContent() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // 토큰 유효성 검사
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
@@ -46,22 +58,20 @@ function ResetPasswordContent() {
       }
     };
 
-    validateToken();
+    void validateToken();
   }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // 비밀번호 일치 확인
     if (newPassword !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다');
+      setError('비밀번호가 일치하지 않습니다.');
       return;
     }
 
-    // 비밀번호 길이 확인
     if (newPassword.length < 8) {
-      setError('비밀번호는 8자 이상이어야 합니다');
+      setError('비밀번호는 8자 이상이어야 합니다.');
       return;
     }
 
@@ -69,16 +79,12 @@ function ResetPasswordContent() {
 
     try {
       const response = await fetch(`${API_URL}/auth/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ token, newPassword }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
       });
 
-      if (!response.ok) {
-        throw new Error('reset password request failed');
-      }
+      if (!response.ok) throw new Error('reset password request failed');
 
       setIsSuccess(true);
     } catch (err) {
@@ -89,170 +95,114 @@ function ResetPasswordContent() {
     }
   };
 
-  // 로딩 중
-  if (isValidating) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="py-12 text-center">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-muted-foreground">링크 확인 중...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  if (isValidating) return <ResetLoadingState label="링크 확인 중" />;
 
-  // 토큰 없거나 유효하지 않음
   if (!isTokenValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mb-4">
-              <XCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
-            </div>
-            <CardTitle className="text-2xl">링크가 만료되었습니다</CardTitle>
-            <CardDescription>
-              비밀번호 재설정 링크가 유효하지 않거나 만료되었습니다.<br />
-              비밀번호 찾기를 다시 시도해주세요.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Link href="/forgot-password">
-              <Button className="w-full">비밀번호 찾기</Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="outline" className="w-full">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                로그인으로 돌아가기
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <AuthPageShell
+        icon={<XCircle className="h-6 w-6" />}
+        title="링크가 만료되었습니다"
+        tone="danger"
+        description="비밀번호 재설정 링크가 유효하지 않거나 만료되었습니다. 비밀번호 찾기를 다시 시도해주세요."
+      >
+        <div className="grid gap-3">
+          <Link href="/forgot-password" className={buttonVariants({ className: 'w-full' })}>
+            비밀번호 찾기
+          </Link>
+          <Link href="/login" className={buttonVariants({ variant: 'outline', className: 'w-full gap-2' })}>
+            <ArrowLeft className="h-4 w-4" />
+            로그인으로 돌아가기
+          </Link>
+        </div>
+      </AuthPageShell>
     );
   }
 
-  // 성공
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-            </div>
-            <CardTitle className="text-2xl">비밀번호 변경 완료</CardTitle>
-            <CardDescription>
-              비밀번호가 성공적으로 변경되었습니다.<br />
-              새 비밀번호로 로그인해주세요.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              className="w-full"
-              onClick={() => router.push('/login')}
-            >
-              로그인하기
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <AuthPageShell
+        icon={<CheckCircle className="h-6 w-6" />}
+        title="비밀번호 변경 완료"
+        tone="success"
+        description="비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요."
+      >
+        <Button className="w-full" onClick={() => router.push('/login')}>
+          로그인하기
+        </Button>
+      </AuthPageShell>
     );
   }
 
-  // 비밀번호 재설정 폼
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <Lock className="w-8 h-8 text-primary" />
+    <AuthPageShell
+      icon={<Lock className="h-6 w-6" />}
+      title="새 비밀번호 설정"
+      description="새 비밀번호를 8자 이상으로 입력해주세요."
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="newPassword">새 비밀번호</Label>
+          <div className="relative">
+            <Input
+              id="newPassword"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="8자 이상 입력"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              disabled={isLoading}
+              minLength={8}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
-          <CardTitle className="text-2xl">새 비밀번호 설정</CardTitle>
-          <CardDescription>
-            새로운 비밀번호를 입력해주세요.<br />
-            8자 이상으로 설정해주세요.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">새 비밀번호</Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="8자 이상 입력"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                  minLength={8}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">비밀번호 확인</Label>
-              <Input
-                id="confirmPassword"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="비밀번호 다시 입력"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                disabled={isLoading}
-                minLength={8}
-              />
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">비밀번호 확인</Label>
+          <Input
+            id="confirmPassword"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="비밀번호 다시 입력"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            disabled={isLoading}
+            minLength={8}
+          />
+        </div>
 
-            {error && (
-              <div role="alert" className="text-sm text-red-500 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg">
-                {error}
-              </div>
-            )}
+        {error ? (
+          <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? '변경 중...' : '비밀번호 변경'}
-            </Button>
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? '변경 중...' : '비밀번호 변경'}
+        </Button>
 
-            <div className="text-center">
-              <Link
-                href="/login"
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4 inline mr-1" />
-                로그인으로 돌아가기
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <div className="text-center">
+          <Link href="/login" className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary">
+            <ArrowLeft className="h-4 w-4" />
+            로그인으로 돌아가기
+          </Link>
+        </div>
+      </form>
+    </AuthPageShell>
   );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-        <Card className="w-full max-w-md">
-          <CardContent className="py-12 text-center">
-            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-            <p className="text-muted-foreground">로딩 중...</p>
-          </CardContent>
-        </Card>
-      </div>
-    }>
+    <Suspense fallback={<ResetLoadingState label="로딩 중" />}>
       <ResetPasswordContent />
     </Suspense>
   );

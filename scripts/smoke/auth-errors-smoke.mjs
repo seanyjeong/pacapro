@@ -53,6 +53,7 @@ async function runLoginError(browser) {
   const { context, page } = result;
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
+  await page.getByText('P-ACA 계정 보안').waitFor();
   await page.locator('#email').fill('owner@example.com');
   await page.locator('#password').fill('bad-password');
   await page.getByRole('button', { name: '로그인' }).click();
@@ -67,6 +68,7 @@ async function runRegisterError(browser) {
   const { context, page } = result;
   await page.goto('/register', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
+  await page.getByText('P-ACA 계정 보안').waitFor();
   await page.locator('#academyName').fill('PACA 일산');
   await page.locator('#name').fill('원장');
   await page.locator('#email').fill('owner@example.com');
@@ -85,6 +87,7 @@ async function runForgotError(browser) {
   const { context, page } = result;
   await page.goto('/forgot-password', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
+  await page.getByText('P-ACA 계정 보안').waitFor();
   await page.locator('#email').fill('owner@example.com');
   await page.getByRole('button', { name: '재설정 링크 받기' }).click();
   await assertSafeAuthError(page, result.state, 'forgot password error', AUTH_ERRORS.forgot);
@@ -98,6 +101,7 @@ async function runResetError(browser) {
   const { context, page } = result;
   await page.goto('/reset-password?token=valid-token', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
+  await page.getByText('P-ACA 계정 보안').waitFor();
   await page.getByRole('heading', { name: '새 비밀번호 설정' }).waitFor();
   await page.locator('#newPassword').fill('password123');
   await page.locator('#confirmPassword').fill('password123');
