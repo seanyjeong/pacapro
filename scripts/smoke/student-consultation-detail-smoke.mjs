@@ -118,6 +118,13 @@ async function clickWithoutNativeDialog(page, locator, label) {
   if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
 }
 
+async function openConsultationTab(page) {
+  await page
+    .getByRole('tablist', { name: '학생 운영 기록' })
+    .getByRole('tab', { exact: true, name: '상담 기록' })
+    .click();
+}
+
 async function runPdfFailure(browser) {
   const state = makeState();
   const context = await createAuthedContext(browser, { width: 390, height: 844 });
@@ -128,7 +135,7 @@ async function runPdfFailure(browser) {
 
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
-  await page.getByRole('button', { exact: true, name: '상담 기록' }).click();
+  await openConsultationTab(page);
   await page.getByTitle('상세보기 / PDF 저장').waitFor();
   await page.getByTitle('상세보기 / PDF 저장').click();
   await page.getByRole('heading', { name: '상담 기록 상세' }).waitFor();
@@ -160,7 +167,7 @@ async function runConsultationLoadError(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
   const loadResponse = page.waitForResponse((response) => response.url().includes('/student-consultations/41'));
-  await page.getByRole('button', { exact: true, name: '상담 기록' }).click();
+  await openConsultationTab(page);
   await loadResponse;
   await page.waitForTimeout(100);
   await assertNoRawVisibleText(page, 'student consultation load error');
