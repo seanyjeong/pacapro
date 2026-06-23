@@ -164,6 +164,7 @@ async function runNormal(browser) {
   await page.goto('/payments', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 관리' }).waitFor();
   await waitForInitialRows(page);
+  await assertOperationsBoard(page);
   await page.getByRole('button', { name: '일할계산기' }).click();
   await page.getByText('일할계산 계산기').waitFor();
   await page.getByRole('button', { name: '월', exact: true }).click();
@@ -208,6 +209,7 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 관리' }).waitFor();
+  await assertOperationsBoard(page, { paidRate: '67%', unpaid: '0건', unpaidAction: '미납 알림 발송 (0명)' });
   await page.locator('article:has-text("박민수")').waitFor();
   await assertNoRawVisibleText(page, 'payments mobile');
   await assertNoHorizontalOverflow(page, 'payments mobile');
@@ -215,6 +217,26 @@ async function runNormal(browser) {
 
   await context.close();
   return { state, diagnostics };
+}
+
+async function assertOperationsBoard(page, options = {}) {
+  const expected = {
+    paidRate: '33%',
+    total: '3건',
+    unpaid: '1건',
+    previous: '1건',
+    unpaidAction: '미납 알림 발송 (1명)',
+    ...options,
+  };
+  const board = page.getByTestId('payments-operations-board');
+  await board.getByRole('heading', { name: '수납 작업 보드' }).waitFor();
+  await board.getByTestId('payments-metric-total').getByText(expected.total).waitFor();
+  await board.getByTestId('payments-metric-unpaid').getByText(expected.unpaid).waitFor();
+  await board.getByTestId('payments-metric-previous').getByText(expected.previous).waitFor();
+  await board.getByTestId('payments-metric-rate').getByText(expected.paidRate).waitFor();
+  await board.getByRole('button', { name: '일할계산 열기' }).waitFor();
+  await board.getByRole('button', { name: expected.unpaidAction }).waitFor();
+  await board.getByRole('button', { name: '신규 학원비 청구' }).waitFor();
 }
 
 async function runError(browser) {

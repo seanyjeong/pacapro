@@ -23,7 +23,7 @@ export function PaymentFilterBar({
 
   return (
     <section className="rounded-md border border-border bg-card p-4 shadow-none" aria-label="학원비 필터">
-      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_160px_160px_150px_auto_auto]">
+      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(220px,1fr)_160px_160px_150px_auto_auto]">
         <div className="relative min-w-0">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
