@@ -89,6 +89,10 @@ async function runDesktopSave(browser) {
 
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
+  const effectiveFromLabel = await page.getByLabel('적용 시작월').locator('option:checked').textContent();
+  if (effectiveFromLabel !== '즉시 적용 (이번 달)') {
+    throw new Error(`class-days effective month label is blank or wrong: ${effectiveFromLabel}`);
+  }
   const jinwooDetailLink = page.getByRole('link', { name: '김진우 학생 상세 보기' });
   await jinwooDetailLink.waitFor();
   if ((await jinwooDetailLink.getAttribute('href')) !== '/students/41') {

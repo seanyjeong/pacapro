@@ -2,13 +2,6 @@ import { Calendar, Loader2, Save } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 interface ClassDaysControlBarProps {
   changedCount: number;
@@ -36,18 +29,18 @@ export function ClassDaysControlBar({
           <div className="flex items-center gap-3">
             <Calendar className="h-5 w-5 text-muted-foreground" />
             <span className="whitespace-nowrap text-sm font-medium">적용 시작월</span>
-            <Select value={effectiveFrom} onValueChange={onEffectiveFromChange}>
-              <SelectTrigger aria-label="적용 시작월" className="w-[200px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {monthOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <select
+              aria-label="적용 시작월"
+              className="h-10 w-[200px] rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={effectiveFrom}
+              onChange={(event) => onEffectiveFromChange(event.target.value)}
+            >
+              {monthOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex items-center gap-3">
