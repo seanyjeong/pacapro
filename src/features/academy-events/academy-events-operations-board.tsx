@@ -11,6 +11,7 @@ interface AcademyEventsOperationsBoardProps {
   events: AcademyEvent[];
   selectedMonth: string;
   onAddEvent: () => void;
+  onSelectEvent: (event: AcademyEvent) => void;
 }
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
@@ -43,6 +44,7 @@ export function AcademyEventsOperationsBoard({
   events,
   selectedMonth,
   onAddEvent,
+  onSelectEvent,
 }: AcademyEventsOperationsBoardProps) {
   const today = formatLocalDate(new Date());
   const todayEvents = events.filter((event) => event.event_date === today);
@@ -98,12 +100,20 @@ export function AcademyEventsOperationsBoard({
       <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
         <p className="text-xs font-medium text-slate-500">다음 일정</p>
         {upcomingEvent ? (
-          <div className="mt-2 min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-950">{upcomingEvent.title}</p>
-            <p className="mt-1 text-xs text-slate-600">
-              {formatEventDate(upcomingEvent.event_date)} · {formatEventTime(upcomingEvent)}
-            </p>
-          </div>
+          canEditEvents ? (
+            <button
+              aria-label={`${upcomingEvent.title} 일정 수정`}
+              className="mt-2 block min-w-0 rounded-md border border-slate-200 bg-white p-3 text-left transition hover:border-slate-300 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/25"
+              type="button"
+              onClick={() => onSelectEvent(upcomingEvent)}
+            >
+              <UpcomingEventContent event={upcomingEvent} />
+            </button>
+          ) : (
+            <div className="mt-2 min-w-0">
+              <UpcomingEventContent event={upcomingEvent} />
+            </div>
+          )
         ) : (
           <p className="mt-2 text-sm text-slate-600">남은 일정이 없습니다.</p>
         )}
@@ -135,6 +145,17 @@ export function AcademyEventsOperationsBoard({
         </Link>
       </div>
     </aside>
+  );
+}
+
+function UpcomingEventContent({ event }: { event: AcademyEvent }) {
+  return (
+    <>
+      <p className="truncate text-sm font-semibold text-slate-950">{event.title}</p>
+      <p className="mt-1 text-xs text-slate-600">
+        {formatEventDate(event.event_date)} · {formatEventTime(event)}
+      </p>
+    </>
   );
 }
 

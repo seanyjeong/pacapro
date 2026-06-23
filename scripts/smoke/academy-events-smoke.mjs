@@ -115,6 +115,17 @@ async function runDesktop(browser) {
   await gotoAcademyEvents(page);
   await page.getByRole('heading', { level: 1, name: '학원일정' }).waitFor();
   await assertOperationsBoard(page);
+  await page
+    .getByTestId('academy-events-operations-board')
+    .getByRole('button', { name: '월말 운영 회의 일정 수정' })
+    .click();
+  const editDialog = page.getByRole('dialog', { name: '일정 수정' });
+  await editDialog.waitFor();
+  await editDialog.getByPlaceholder('일정 제목').waitFor();
+  if ((await editDialog.getByPlaceholder('일정 제목').inputValue()) !== '월말 운영 회의') {
+    throw new Error('operations board upcoming event did not open the selected event');
+  }
+  await editDialog.getByRole('button', { name: '일정 수정 닫기' }).click();
   await page.getByRole('button', { name: '월말 운영 회의 수정' }).waitFor();
   await assertNoRawVisibleText(page, 'academy events desktop');
   await assertNoHorizontalOverflow(page, 'academy events desktop');

@@ -137,6 +137,7 @@ export function AcademyEventsPage() {
                 events={events}
                 selectedMonth={selectedMonth}
                 onAddEvent={openCreateModal}
+                onSelectEvent={handleEventClick}
               />
             </div>
           </div>
