@@ -130,12 +130,12 @@ export const paymentsAPI = {
     return await apiClient.get<PaymentStatsResponse>(url);
   },
 
-  prepaidPreview: async (data: PrepaidPreviewRequest): Promise<PrepaidPreviewResponse> => {
-    return await apiClient.post<PrepaidPreviewResponse>('/payments/prepaid-preview', data);
+  prepaidPreview: async (data: PrepaidPreviewRequest, config?: APIRequestConfig): Promise<PrepaidPreviewResponse> => {
+    return await apiClient.post<PrepaidPreviewResponse>('/payments/prepaid-preview', data, config);
   },
 
-  prepaidPay: async (data: PrepaidPayRequest): Promise<PrepaidPayResponse> => {
-    return await apiClient.post<PrepaidPayResponse>('/payments/prepaid-pay', data);
+  prepaidPay: async (data: PrepaidPayRequest, config?: APIRequestConfig): Promise<PrepaidPayResponse> => {
+    return await apiClient.post<PrepaidPayResponse>('/payments/prepaid-pay', data, config);
   },
 
   // ===== 크레딧 관리 =====

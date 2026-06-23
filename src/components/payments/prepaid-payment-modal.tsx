@@ -34,6 +34,8 @@ const PAYMENT_METHODS = [
   { value: 'cash', label: '현금' },
   { value: 'other', label: '기타' },
 ] as const;
+const PREPAID_PREVIEW_ERROR = '선납 금액을 미리 계산하지 못했습니다. 잠시 후 다시 시도해주세요.';
+const PREPAID_PAY_ERROR = '선납 결제를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
 
 function getStartMonthOptions(): { value: string; label: string }[] {
   const options: { value: string; label: string }[] = [];
@@ -74,6 +76,7 @@ export function PrepaidPaymentModal({
   const [preview, setPreview] = useState<PrepaidPreviewResponse | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const startMonthOptions = getStartMonthOptions();
 
@@ -88,6 +91,7 @@ export function PrepaidPaymentModal({
       setPrepaidRate('5');
       setPaymentMethod('account');
       setPreview(null);
+      setFormError(null);
     }
   }, [open]);
 
@@ -101,16 +105,17 @@ export function PrepaidPaymentModal({
     const months = generateMonths(startMonth, monthCount);
 
     try {
+      setFormError(null);
       setPreviewLoading(true);
       const result = await paymentsAPI.prepaidPreview({
         student_id: studentId,
         months,
         prepaid_discount_rate: rate,
-      });
+      }, { suppressErrorToast: true });
       setPreview(result);
-    } catch (err: any) {
-      console.error('Preview failed:', err);
-      toast.error(err.response?.data?.message || '미리보기에 실패했습니다.');
+    } catch (err: unknown) {
+      console.warn('선납 금액 미리 계산에 실패했습니다.', err);
+      setFormError(PREPAID_PREVIEW_ERROR);
       setPreview(null);
     } finally {
       setPreviewLoading(false);
@@ -132,6 +137,7 @@ export function PrepaidPaymentModal({
     const months = generateMonths(startMonth, monthCount);
 
     try {
+      setFormError(null);
       setPaying(true);
       const result = await paymentsAPI.prepaidPay({
         student_id: studentId,
@@ -139,13 +145,13 @@ export function PrepaidPaymentModal({
         prepaid_discount_rate: rate,
         payment_method: paymentMethod as 'account' | 'card' | 'cash' | 'other',
         payment_date: paymentDate,
-      });
+      }, { suppressErrorToast: true });
       toast.success(result.message);
       onSuccess();
       onClose();
-    } catch (err: any) {
-      console.error('Prepaid pay failed:', err);
-      toast.error(err.response?.data?.message || '선납 결제에 실패했습니다.');
+    } catch (err: unknown) {
+      console.warn('선납 결제 처리에 실패했습니다.', err);
+      setFormError(PREPAID_PAY_ERROR);
     } finally {
       setPaying(false);
     }
@@ -334,6 +340,13 @@ export function PrepaidPaymentModal({
             />
           </div>
         </div>
+
+        {formError ? (
+          <div role="alert" className="mx-6 mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-red-800">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p className="text-sm font-medium">{formError}</p>
+          </div>
+        ) : null}
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={paying}>
