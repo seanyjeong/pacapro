@@ -14,6 +14,13 @@ import type {
 } from '@/lib/types/student';
 import { toast } from 'sonner';
 
+const STUDENT_LOAD_ERROR_MESSAGE = '학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+const STUDENT_SEARCH_ERROR_MESSAGE = '학생 검색 결과를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
+const STUDENT_ATTENDANCE_ERROR_MESSAGE = '출결 데이터를 불러올 수 없습니다.';
+const STUDENT_CREATE_ERROR_MESSAGE = '학생 등록을 완료하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해주세요.';
+const STUDENT_UPDATE_ERROR_MESSAGE = '학생 수정을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+const STUDENT_DELETE_ERROR_MESSAGE = '학생 삭제를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+
 const QUERY_KEYS = {
   students: (filters?: StudentFilters) => ['students', filters] as const,
   student: (id: number) => ['students', id] as const,
@@ -58,7 +65,7 @@ export function useStudents(initialFilters?: StudentFilters) {
   return {
     students: query.data || [],
     loading: query.isLoading,
-    error: query.error ? '학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' : null,
+    error: query.error ? STUDENT_LOAD_ERROR_MESSAGE : null,
     filters,
     setFilters,
     updateFilters,
@@ -93,7 +100,7 @@ export function useStudent(id: number) {
     performances: query.data?.performances || [],
     payments: query.data?.payments || [],
     loading: query.isLoading,
-    error: query.error ? '학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' : null,
+    error: query.error ? STUDENT_LOAD_ERROR_MESSAGE : null,
     reload,
   };
 }
@@ -105,7 +112,7 @@ export function useStudentSearch(searchQuery: string) {
   const query = useQuery({
     queryKey: QUERY_KEYS.search(searchQuery),
     queryFn: async () => {
-      const data = await studentsAPI.searchStudents(searchQuery);
+      const data = await studentsAPI.searchStudents(searchQuery, { suppressErrorToast: true });
       return data.students as Student[];
     },
     enabled: searchQuery.length >= 2,
@@ -115,7 +122,7 @@ export function useStudentSearch(searchQuery: string) {
   return {
     students: query.data || [],
     loading: query.isLoading,
-    error: query.error?.message || null,
+    error: query.error ? STUDENT_SEARCH_ERROR_MESSAGE : null,
   };
 }
 
@@ -125,7 +132,7 @@ export function useStudentSearch(searchQuery: string) {
 export function useStudentAttendance(studentId: number, yearMonth: string) {
   const query = useQuery({
     queryKey: QUERY_KEYS.attendance(studentId, yearMonth),
-    queryFn: () => studentsAPI.getStudentAttendance(studentId, yearMonth),
+    queryFn: () => studentsAPI.getStudentAttendance(studentId, yearMonth, { suppressErrorToast: true }),
     enabled: !!studentId && !!yearMonth,
     staleTime: 60 * 1000,
   });
@@ -133,7 +140,7 @@ export function useStudentAttendance(studentId: number, yearMonth: string) {
   return {
     data: query.data || null,
     loading: query.isLoading,
-    error: query.error?.message || null,
+    error: query.error ? STUDENT_ATTENDANCE_ERROR_MESSAGE : null,
   };
 }
 
@@ -144,13 +151,14 @@ export function useCreateStudent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: StudentFormData) => studentsAPI.createStudent(data),
+    mutationFn: (data: StudentFormData) => studentsAPI.createStudent(data, { suppressErrorToast: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
       toast.success('학생이 등록되었습니다.');
     },
     onError: (error: Error) => {
-      toast.error(`학생 등록 실패: ${error.message}`);
+      console.warn('학생 등록에 실패했습니다.', error);
+      toast.error(STUDENT_CREATE_ERROR_MESSAGE);
     },
   });
 }
@@ -163,14 +171,15 @@ export function useUpdateStudent() {
 
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<StudentFormData> }) =>
-      studentsAPI.updateStudent(id, data),
+      studentsAPI.updateStudent(id, data, { suppressErrorToast: true }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.student(variables.id) });
       toast.success('학생 정보가 수정되었습니다.');
     },
     onError: (error: Error) => {
-      toast.error(`학생 수정 실패: ${error.message}`);
+      console.warn('학생 수정에 실패했습니다.', error);
+      toast.error(STUDENT_UPDATE_ERROR_MESSAGE);
     },
   });
 }
@@ -182,13 +191,14 @@ export function useDeleteStudent() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => studentsAPI.deleteStudent(id),
+    mutationFn: (id: number) => studentsAPI.deleteStudent(id, { suppressErrorToast: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['students'] });
       toast.success('학생이 삭제되었습니다.');
     },
     onError: (error: Error) => {
-      toast.error(`학생 삭제 실패: ${error.message}`);
+      console.warn('학생 삭제에 실패했습니다.', error);
+      toast.error(STUDENT_DELETE_ERROR_MESSAGE);
     },
   });
 }

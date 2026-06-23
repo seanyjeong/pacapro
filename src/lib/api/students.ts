@@ -83,8 +83,8 @@ export const studentsAPI = {
    * 학생 검색 (자동완성용)
    * GET /paca/students/search?q=query
    */
-  searchStudents: async (query: string): Promise<StudentsResponse> => {
-    return await apiClient.get(`/students/search?q=${encodeURIComponent(query)}`);
+  searchStudents: async (query: string, config?: APIRequestConfig): Promise<StudentsResponse> => {
+    return await apiClient.get(`/students/search?q=${encodeURIComponent(query)}`, config);
   },
 
   /**
@@ -334,7 +334,7 @@ export const studentsAPI = {
    * 학생 월별 출결 현황 조회
    * GET /paca/students/:id/attendance?year_month=YYYY-MM
    */
-  getStudentAttendance: async (id: number, yearMonth: string): Promise<StudentAttendanceResponse> => {
-    return await apiClient.get(`/students/${id}/attendance?year_month=${yearMonth}`);
+  getStudentAttendance: async (id: number, yearMonth: string, config?: APIRequestConfig): Promise<StudentAttendanceResponse> => {
+    return await apiClient.get(`/students/${id}/attendance?year_month=${yearMonth}`, config);
   },
 };

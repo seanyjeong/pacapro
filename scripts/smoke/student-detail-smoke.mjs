@@ -223,6 +223,10 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'GET' && path === '/students/41/attendance') {
+      if (state.mode === 'attendance-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
+
       return jsonRoute(route, {
         records: [
           { attendance_status: 'present', date: '2026-06-03', is_makeup: false, notes: null, time_slot: 'evening' },
@@ -437,10 +441,7 @@ async function runSeasonEditError(browser) {
   await page.getByRole('button', { name: '시즌 등록 수정' }).click();
   await page.getByRole('heading', { name: '시즌 등록 정보 수정' }).waitFor();
   await page.getByRole('button', { name: '저장' }).click();
-  await page
-    .getByRole('alert')
-    .getByText('시즌 등록 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.')
-    .waitFor();
+  await page.getByRole('alert').getByText('시즌 등록 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'student detail season edit error');
   await assertNoHorizontalOverflow(page, 'student detail season edit error');
   await page.screenshot({ path: '/Users/etlab/paca-student-season-edit-error.png', fullPage: true });
@@ -449,11 +450,27 @@ async function runSeasonEditError(browser) {
   return result;
 }
 
+async function runAttendanceError(browser) {
+  const result = await createStudentDetailPage(browser, 'attendance-error', { width: 390, height: 844 });
+  const { context, page } = result;
+  await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 상세' }).waitFor();
+  await page.getByRole('button', { name: '출결 현황' }).click();
+  await page.getByText('출결 데이터를 불러올 수 없습니다.').waitFor();
+  await page.waitForTimeout(300);
+  if (await page.getByText('요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.').count()) {
+    throw new Error('attendance error should stay inline without a duplicate global toast');
+  }
+  await assertNoRawVisibleText(page, 'student detail attendance error');
+  await assertNoHorizontalOverflow(page, 'student detail attendance error');
+  await page.screenshot({ path: '/Users/etlab/paca-student-attendance-error-mobile.png', fullPage: true });
+  await context.close();
+  return result;
+}
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
 }
-
 async function main() {
   const browser = await launchSmokeBrowser();
   try {
@@ -461,8 +478,10 @@ async function main() {
     const mobile = await runNormalMobile(browser);
     const error = await runError(browser);
     const seasonEditError = await runSeasonEditError(browser);
-    [desktop, mobile, error, seasonEditError].forEach(assertDiagnostics);
+    const attendanceError = await runAttendanceError(browser);
+    [desktop, mobile, error, seasonEditError, attendanceError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
+      attendanceErrorHits: attendanceError.state.hits,
       desktopHits: desktop.state.hits,
       errorConsoleErrors: error.diagnostics.consoleErrors,
       errorHits: error.state.hits,
