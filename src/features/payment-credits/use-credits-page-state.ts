@@ -50,6 +50,10 @@ export function useCreditsPageState() {
     setFilters((current) => ({ ...current, type }));
   };
 
+  const resetFilters = () => {
+    setFilters({ status: 'all', type: 'all' });
+  };
+
   return {
     credits,
     stats,
@@ -59,6 +63,7 @@ export function useCreditsPageState() {
     loading,
     error,
     reload: loadCredits,
+    resetFilters,
     setStatusFilter,
     setTypeFilter,
   };

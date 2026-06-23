@@ -83,7 +83,7 @@ export function CreditsTable({ credits }: CreditsTableProps) {
       </div>
 
       <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[920px] text-sm">
+        <table className="w-full min-w-[760px] text-sm">
           <thead className="border-b border-border bg-muted/40">
             <tr>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">학생</th>

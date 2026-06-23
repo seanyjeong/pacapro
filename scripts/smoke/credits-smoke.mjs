@@ -130,6 +130,7 @@ async function runNormal(browser) {
   await openCreditsPage(page);
   await page.locator('tr:has-text("박민수")').waitFor();
   await page.getByText('230,000원').first().waitFor();
+  await assertOperationsBoard(page);
   await assertNoRawVisibleText(page, 'credits desktop');
   await assertNoHorizontalOverflow(page, 'credits desktop');
   await page.screenshot({ path: '/Users/etlab/paca-credits-desktop.png', fullPage: true });
@@ -145,6 +146,7 @@ async function runNormal(browser) {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await assertOperationsBoard(page);
   await page.locator('article:has-text("박민수")').waitFor();
   await assertNoRawVisibleText(page, 'credits mobile');
   await assertNoHorizontalOverflow(page, 'credits mobile');
@@ -152,6 +154,18 @@ async function runNormal(browser) {
 
   await context.close();
   return { state, diagnostics };
+}
+
+async function assertOperationsBoard(page) {
+  const board = page.getByTestId('credits-operations-board');
+  await board.getByRole('heading', { name: '크레딧 작업 보드' }).waitFor();
+  await board.getByTestId('credits-metric-remaining').getByText('170,000원').waitFor();
+  await board.getByTestId('credits-metric-pending').getByText('50,000원').waitFor();
+  await board.getByTestId('credits-metric-students').getByText('2명').waitFor();
+  await board.getByTestId('credits-metric-types').getByText('2개').waitFor();
+  await board.getByRole('button', { name: '대기 크레딧 보기' }).waitFor();
+  await board.getByRole('button', { name: '부분적용 보기' }).waitFor();
+  await board.getByRole('button', { name: '전체 크레딧 보기' }).waitFor();
 }
 
 async function runError(browser) {
