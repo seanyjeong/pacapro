@@ -121,14 +121,16 @@ async function createPendingStudentFromConsultation(consultation, { studentPhone
     const _targetGender = _trim(consultation.gender);
     if (_targetName) {
         const [_existing] = await pool.execute(
-            `SELECT id, name, phone, gender FROM students WHERE academy_id = ? AND deleted_at IS NULL`,
+            `SELECT id, name, phone, parent_phone, gender FROM students WHERE academy_id = ? AND deleted_at IS NULL`,
             [consultation.academy_id]
         );
         const _match = _existing.find((row) => {
             const rName = _trim((() => { try { return decrypt(row.name); } catch (e) { return ''; } })());
             if (rName !== _targetName) return false;
-            const rPhone = _norm((() => { try { return decrypt(row.phone); } catch (e) { return ''; } })());
-            if (_targetPhone && rPhone) return rPhone === _targetPhone;        // 전번 둘 다 있으면 전번까지 일치해야 동일인
+            const rPhones = [row.phone, row.parent_phone]
+                .map((v) => _norm((() => { try { return decrypt(v); } catch (e) { return ''; } })()))
+                .filter(Boolean);
+            if (_targetPhone && rPhones.length) return rPhones.includes(_targetPhone); // 학생폰/부모폰 교차 일치 시 동일인 (자동전환이 부모폰을 phone 칸에 넣는 케이스 대응)
             const rGender = _trim(row.gender);
             return rGender && _targetGender ? rGender === _targetGender : false; // 전번 없으면 성별로 보조 (전번 한쪽만 있으면 동일인 아님)
         });
