@@ -48,7 +48,7 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
         <h2 className="text-sm font-medium text-foreground">급여 내역</h2>
       </div>
 
-      <div className="space-y-3 p-3 lg:hidden">
+      <div className="space-y-3 p-3 2xl:hidden">
         {salaries.map((salary) => {
           const grossAmount = salary.base_amount + salary.incentive_amount;
           const deductionAmount = salary.tax_amount + salary.total_deduction;
@@ -101,8 +101,8 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
         })}
       </div>
 
-      <div className="hidden overflow-x-auto lg:block">
-        <table className="w-full min-w-[1040px] text-sm">
+      <div className="hidden overflow-x-auto 2xl:block">
+        <table className="w-full min-w-[920px] text-sm">
           <thead className="border-b border-border bg-muted/40">
             <tr>
               <th className="px-5 py-3 text-left font-medium text-muted-foreground">강사</th>

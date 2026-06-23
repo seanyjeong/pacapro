@@ -160,9 +160,10 @@ async function runNormal(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openSalariesPage(page);
-  await page.getByText('Finance Desk').waitFor();
-  await page.locator('tr:has-text("김강사")').waitFor();
-  await page.locator('tr:has-text("박트레이너")').waitFor();
+  await page.locator('header').getByText('Finance Desk').waitFor();
+  await page.locator('article:has-text("김강사")').waitFor();
+  await page.locator('article:has-text("박트레이너")').waitFor();
+  await assertOperationsBoard(page);
   await page.getByRole('button', { name: '김강사 급여 명세서 보기' }).waitFor();
   const instructorLink = page.getByRole('link', { name: '김강사 강사 상세 보기' });
   await instructorLink.waitFor();
@@ -184,7 +185,7 @@ async function runNormal(browser) {
   ]);
   await page.getByLabel('조회 월').filter({ hasText: '2026년 5월' }).waitFor();
 
-  await page.getByRole('button', { name: /모두 지급처리 \(2건\)/ }).click();
+  await page.getByTestId('salaries-operations-board').getByRole('button', { name: /모두 지급처리 \(2건\)/ }).click();
   await page.getByLabel('비밀번호').fill('owner-pass');
   await page.getByRole('button', { name: '확인' }).click();
   await page.getByText('급여 일괄 지급이 완료되었습니다.').waitFor();
@@ -201,6 +202,7 @@ async function runNormal(browser) {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await assertOperationsBoard(page, { paid: '3건', pending: '0건', unpaid: '0원', bulkAction: '모두 지급처리 (0건)' });
   await page.locator('article:has-text("김강사")').waitFor();
   await page.getByRole('button', { name: '김강사 급여 명세서 보기' }).waitFor();
   await page.getByRole('link', { name: '김강사 강사 상세 보기' }).waitFor();
@@ -212,6 +214,26 @@ async function runNormal(browser) {
 
   await context.close();
   return { state, diagnostics };
+}
+
+async function assertOperationsBoard(page, options = {}) {
+  const expected = {
+    bulkAction: '모두 지급처리 (2건)',
+    paid: '1건',
+    pending: '2건',
+    total: '3건',
+    unpaid: '1,873,750원',
+    ...options,
+  };
+  const board = page.getByTestId('salaries-operations-board');
+  await board.getByRole('heading', { name: '급여 작업 보드' }).waitFor();
+  await board.getByTestId('salaries-metric-total').getByText(expected.total).waitFor();
+  await board.getByTestId('salaries-metric-pending').getByText(expected.pending).waitFor();
+  await board.getByTestId('salaries-metric-unpaid').getByText(expected.unpaid).waitFor();
+  await board.getByTestId('salaries-metric-paid').getByText(expected.paid).waitFor();
+  await board.getByRole('button', { name: '지급 대기 보기' }).waitFor();
+  await board.getByRole('button', { name: '지급 완료 보기' }).waitFor();
+  await board.getByRole('button', { name: expected.bulkAction }).waitFor();
 }
 
 async function runError(browser) {

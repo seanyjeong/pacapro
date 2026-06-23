@@ -28,7 +28,7 @@ export function SalariesFilterBar({
 }: SalariesFilterBarProps) {
   return (
     <section className="rounded-md border border-border bg-card p-4 shadow-none" aria-label="급여 필터">
-      <div className="grid gap-2 lg:grid-cols-[minmax(150px,auto)_minmax(150px,auto)_auto_auto_auto] lg:items-center">
+      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(150px,auto)_minmax(150px,auto)_auto_auto_auto] 2xl:items-center">
         <select
           aria-label="강사"
           value={filters.instructor_id || ''}
