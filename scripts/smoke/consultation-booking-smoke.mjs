@@ -209,8 +209,10 @@ async function runReservationChangeSuccess(browser) {
   const diagnostics = createDiagnostics(page);
 
   await page.goto(`/consultation/${RESERVATION_NUMBER}`, { waitUntil: 'networkidle' });
+  await page.getByTestId('reservation-change-workspace').waitFor();
+  await page.getByText('예약 변경 데스크').waitFor();
   await page.getByRole('heading', { name: '상담 예약 변경' }).waitFor();
-  await page.getByRole('button', { name: '15:00:00' }).click();
+  await page.getByRole('button', { name: '15:00' }).click();
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '예약 변경하기' }), 'reservation change success');
   await page.getByRole('heading', { name: '예약이 변경되었습니다' }).waitFor();
   const payload = state.reservationPayloads.at(-1);
@@ -232,8 +234,10 @@ async function runReservationChangeError(browser) {
   const diagnostics = createDiagnostics(page);
 
   await page.goto(`/consultation/${RESERVATION_NUMBER}`, { waitUntil: 'networkidle' });
+  await page.getByTestId('reservation-change-workspace').waitFor();
+  await page.getByText('예약 변경 데스크').waitFor();
   await page.getByRole('heading', { name: '상담 예약 변경' }).waitFor();
-  await page.getByRole('button', { name: '15:00:00' }).click();
+  await page.getByRole('button', { name: '15:00' }).click();
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '예약 변경하기' }), 'reservation change error');
   await page.getByText('예약을 변경하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'reservation change error');
