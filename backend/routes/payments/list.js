@@ -154,6 +154,7 @@ router.get('/unpaid', verifyToken, checkPermission('payments', 'view'), async (r
             JOIN students s ON p.student_id = s.id
             WHERE p.academy_id = ?
             AND p.payment_status IN ('pending', 'partial')
+            AND NOT (p.payment_type = 'season' AND p.due_date > CURDATE())
             ORDER BY p.due_date ASC`,
             [req.user.academyId]
         );
@@ -221,6 +222,7 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
             JOIN students s ON p.student_id = s.id
             WHERE p.academy_id = ?
             AND p.payment_status IN ('pending', 'partial')
+            AND NOT (p.payment_type = 'season' AND p.due_date > CURDATE())
             AND p.year_month <= ?
             AND s.status = 'active'
             AND s.deleted_at IS NULL

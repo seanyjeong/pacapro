@@ -114,6 +114,7 @@ module.exports = function(router) {
                         JOIN students s ON p.student_id = s.id
                         WHERE p.academy_id = ?
                         AND p.payment_status IN ('pending', 'partial')
+                        AND NOT (p.payment_type = 'season' AND p.due_date > CURDATE())
                         AND p.final_amount > 0
                         AND p.year_month = ?
                         AND s.status = 'active'

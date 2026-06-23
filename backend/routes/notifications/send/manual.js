@@ -122,6 +122,7 @@ module.exports = function(router) {
                 WHERE p.academy_id = ?
                     AND p.year_month = ?
                     AND p.payment_status IN ('pending', 'partial')
+                    AND NOT (p.payment_type = 'season' AND p.due_date > CURDATE())
                     AND p.final_amount > 0
                     AND s.status = 'active'
                     AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)

@@ -254,7 +254,7 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
             [seasonId, student_id]
         );
 
-        const yearMonth = `${regDate.getFullYear()}-${String(regDate.getMonth() + 1).padStart(2, '0')}`;
+        const yearMonth = `${seasonStartDate.getFullYear()}-${String(seasonStartDate.getMonth() + 1).padStart(2, "0")}`;
 
         let actualDueDate;
         if (season.payment_due_date) {
