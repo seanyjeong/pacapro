@@ -19,7 +19,7 @@ export function OtherIncomesTable({ incomes, canEdit, onSelect, onEdit, onDelete
         <h2 className="text-sm font-medium text-foreground">기타 수입 내역</h2>
       </div>
 
-      <div className="space-y-3 p-3 lg:hidden">
+      <div className="space-y-3 p-3 2xl:hidden">
         {incomes.map((income) => (
           <article
             key={`other-${income.id}`}
@@ -57,7 +57,7 @@ export function OtherIncomesTable({ incomes, canEdit, onSelect, onEdit, onDelete
         ))}
       </div>
 
-      <div className="hidden overflow-x-auto lg:block">
+      <div className="hidden overflow-x-auto 2xl:block">
         <table className="w-full min-w-[860px] text-sm">
           <thead className="border-b border-border bg-muted/40">
             <tr>

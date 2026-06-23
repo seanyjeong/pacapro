@@ -16,7 +16,7 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
         <h2 className="text-sm font-medium text-foreground">학원비 수납 내역</h2>
       </div>
 
-      <div className="space-y-3 p-3 lg:hidden">
+      <div className="space-y-3 p-3 2xl:hidden">
         {payments.map((payment) => (
           <article key={`tuition-${payment.id}`} className="rounded-md border border-border bg-background p-4">
             <div className="flex items-start justify-between gap-3">
@@ -45,7 +45,7 @@ export function TuitionPaymentsTable({ payments }: TuitionPaymentsTableProps) {
         ))}
       </div>
 
-      <div className="hidden overflow-x-auto lg:block">
+      <div className="hidden overflow-x-auto 2xl:block">
         <table className="w-full min-w-[900px] text-sm">
           <thead className="border-b border-border bg-muted/40">
             <tr>

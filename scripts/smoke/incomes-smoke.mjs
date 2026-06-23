@@ -134,10 +134,11 @@ async function runNormal(browser) {
   });
 
   await openIncomesPage(page);
-  await page.getByText('Finance Desk').waitFor();
-  await page.locator('tr:has-text("박민수")').waitFor();
-  await page.locator('tr:has-text("체험 특강 수입")').waitFor();
-  const tuitionRow = page.locator('tr:has-text("박민수")');
+  await page.locator('header').getByText('Finance Desk').waitFor();
+  await assertOperationsBoard(page);
+  await page.locator('article:has-text("박민수")').waitFor();
+  await page.locator('article:has-text("체험 특강 수입")').waitFor();
+  const tuitionRow = page.locator('article:has-text("박민수")');
   const paymentLink = tuitionRow.getByRole('link', { name: '박민수 결제 상세 보기' });
   await paymentLink.waitFor();
   if ((await paymentLink.getAttribute('href')) !== '/payments/701') {
@@ -148,12 +149,12 @@ async function runNormal(browser) {
   if ((await studentLink.getAttribute('href')) !== '/students/41') {
     throw new Error('missing student detail link for tuition income row');
   }
-  await page.locator('tr:has-text("체험 특강 수입")').getByRole('button', { name: '체험 특강 수입 기타수입 상세 보기' }).waitFor();
+  await page.locator('article:has-text("체험 특강 수입")').getByRole('button', { name: '체험 특강 수입 기타수입 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'incomes desktop');
   await assertNoHorizontalOverflow(page, 'incomes desktop');
   await page.screenshot({ path: '/Users/etlab/paca-incomes-desktop.png', fullPage: true });
 
-  await page.getByRole('button', { name: '기타수입 등록' }).click();
+  await page.getByTestId('incomes-operations-board').getByRole('button', { name: '기타수입 등록' }).click();
   await page.getByLabel('날짜').fill('2026-06-18');
   await page.getByLabel('카테고리').selectOption('beverage');
   await page.getByLabel('금액').fill('45000');
@@ -165,11 +166,11 @@ async function runNormal(browser) {
   if (state.createdPayload?.amount !== 45000) throw new Error(`unexpected created income ${JSON.stringify(state.createdPayload)}`);
   if (state.createdPayload?.category !== 'beverage') throw new Error(`unexpected category ${state.createdPayload?.category}`);
 
-  await page.getByLabel('수입 검색').fill('이서연');
-  await page.locator('tr:has-text("이서연")').waitFor();
-  await page.locator('tr:has-text("박민수")').waitFor({ state: 'hidden' });
-  await page.getByLabel('수입 검색').fill('');
-  await page.locator('tr:has-text("입시 설명회 참가비")').getByRole('button', { name: '기타 수입 삭제' }).click();
+  await page.getByLabel('수입 검색', { exact: true }).fill('이서연');
+  await page.locator('article:has-text("이서연")').waitFor();
+  await page.locator('article:has-text("박민수")').waitFor({ state: 'hidden' });
+  await page.getByLabel('수입 검색', { exact: true }).fill('');
+  await page.locator('article:has-text("입시 설명회 참가비")').getByRole('button', { name: '기타 수입 삭제' }).click();
   await page.getByRole('alertdialog').getByRole('heading', { name: '기타 수입 삭제' }).waitFor();
   await page.getByRole('alertdialog').getByRole('button', { name: '삭제' }).click();
   await page.getByText('삭제되었습니다.').waitFor();
@@ -178,6 +179,9 @@ async function runNormal(browser) {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await assertOperationsBoard(page, { other: '2건', ratio: '82%', total: '1,285,000원' });
+  await page.getByTestId('incomes-operations-board').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/Users/etlab/paca-incomes-mobile-board.png', fullPage: false });
   await page.locator('article:has-text("박민수")').waitFor();
   await page.locator('article:has-text("체험 특강 수입")').waitFor();
   const tuitionCard = page.locator('article:has-text("박민수")');
@@ -192,6 +196,25 @@ async function runNormal(browser) {
 
   await context.close();
   return { state, diagnostics };
+}
+
+async function assertOperationsBoard(page, options = {}) {
+  const expected = {
+    other: '2건',
+    ratio: '78%',
+    total: '1,360,000원',
+    tuition: '2건',
+    ...options,
+  };
+  const board = page.getByTestId('incomes-operations-board');
+  await board.getByRole('heading', { name: '수입 작업 보드' }).waitFor();
+  await board.getByTestId('incomes-metric-total').getByText(expected.total).waitFor();
+  await board.getByTestId('incomes-metric-tuition').getByText(expected.tuition).waitFor();
+  await board.getByTestId('incomes-metric-other').getByText(expected.other).waitFor();
+  await board.getByTestId('incomes-metric-ratio').getByText(expected.ratio).waitFor();
+  await board.getByRole('button', { name: '전체 보기' }).waitFor();
+  await board.getByRole('button', { name: '학원비 보기' }).waitFor();
+  await board.getByRole('button', { name: '기타수입 등록' }).waitFor();
 }
 
 async function runError(browser) {
