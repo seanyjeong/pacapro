@@ -65,7 +65,7 @@ function AdminUsersListRow({ actionLoading, pendingAction, user, onOpenAction }:
     const isRowLoading = actionLoading === user.id;
 
     return (
-        <div className="grid gap-4 px-5 py-4 transition-colors hover:bg-muted/45 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] md:items-center">
+        <div className="grid gap-4 px-5 py-4 transition-colors hover:bg-muted/45 md:grid-cols-[minmax(0,1.15fr)_minmax(190px,0.95fr)_auto] md:items-center">
             <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
                     {getInitial(user.name)}
@@ -81,7 +81,7 @@ function AdminUsersListRow({ actionLoading, pendingAction, user, onOpenAction }:
                     <span className="text-foreground">{user.academy_name || '학원 미지정'}</span>
                 </div>
                 <div className="truncate">{user.phone || '연락처 없음'}</div>
-                <div className="truncate">
+                <div className="break-keep leading-6">
                     {getRoleLabel(user.role)} · {formatAdminUserDate(user.created_at)}
                 </div>
             </div>

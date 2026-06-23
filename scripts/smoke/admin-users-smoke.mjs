@@ -131,14 +131,25 @@ async function clickWithoutNativeDialog(page, locator, label) {
   if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
 }
 
+async function assertOperationsBoard(page, expectedPendingCount) {
+  const board = page.getByTestId('admin-users-operations-board');
+  await board.getByRole('heading', { name: '승인 작업 보드' }).waitFor();
+  await board.getByText(`${expectedPendingCount}명`).first().waitFor();
+  await board.getByText('원장 1명').waitFor();
+  await board.getByText('강사 1명').waitFor();
+  await board.getByRole('button', { name: '목록 새로고침' }).waitFor();
+}
+
 async function runApproveDesktop(browser) {
   const result = await createAdminUsersPage(browser, 'success');
   const { context, page, state } = result;
 
   await page.goto('/admin/users', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '사용자 승인 관리' }).waitFor();
-  await page.getByText('김대기').waitFor();
-  await page.getByText('PACA 강남').waitFor();
+  const list = page.getByTestId('admin-users-list');
+  await list.getByText('김대기').waitFor();
+  await list.getByText('PACA 강남').waitFor();
+  await assertOperationsBoard(page, 2);
   await assertNoRawVisibleText(page, 'admin users desktop');
   await assertNoHorizontalOverflow(page, 'admin users desktop');
   await page.screenshot({ path: '/Users/etlab/paca-admin-users-desktop.png', fullPage: true });
@@ -156,7 +167,7 @@ async function runApproveDesktop(browser) {
   ]);
   if (state.approvedUser !== 501) throw new Error('approve API was not called');
   await dialog.waitFor({ state: 'hidden' });
-  await page.getByText('김대기').waitFor({ state: 'hidden' });
+  await list.getByText('김대기').waitFor({ state: 'hidden' });
 
   await context.close();
   return result;
@@ -168,7 +179,12 @@ async function runRejectMobile(browser) {
 
   await page.goto('/admin/users', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '사용자 승인 관리' }).waitFor();
-  await page.getByText('김대기').waitFor();
+  await page.getByTestId('admin-users-list').getByText('김대기').waitFor();
+  await assertOperationsBoard(page, 2);
+  await assertNoRawVisibleText(page, 'admin users mobile');
+  await assertNoHorizontalOverflow(page, 'admin users mobile');
+  await page.screenshot({ path: '/Users/etlab/paca-admin-users-mobile.png', fullPage: true });
+
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '거절' }).first(), 'admin user reject');
   const dialog = page.getByRole('alertdialog');
   await dialog.getByRole('heading', { name: '사용자 거절' }).waitFor();
@@ -181,9 +197,6 @@ async function runRejectMobile(browser) {
   ]);
   if (state.rejectedUser !== 501) throw new Error('reject API was not called');
   await dialog.waitFor({ state: 'hidden' });
-  await assertNoRawVisibleText(page, 'admin users reject mobile');
-  await assertNoHorizontalOverflow(page, 'admin users reject mobile');
-  await page.screenshot({ path: '/Users/etlab/paca-admin-users-mobile.png', fullPage: true });
 
   await context.close();
   return result;

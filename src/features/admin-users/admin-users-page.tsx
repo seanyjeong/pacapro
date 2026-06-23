@@ -7,6 +7,7 @@ import { usersAPI } from '@/lib/api/users';
 import { toast } from 'sonner';
 import { AdminUsersActionDialog } from './admin-users-action-dialog';
 import { AdminUsersList } from './admin-users-list';
+import { AdminUsersOperationsBoard } from './admin-users-operations-board';
 import {
     AccessDeniedPanel,
     AdminUsersErrorPanel,
@@ -118,13 +119,22 @@ export default function AdminUsersPage() {
     return (
         <div className="space-y-6">
             <AdminUsersHeader withRefresh onRefresh={loadPendingUsers} />
-            <AdminUsersSummary pendingCount={pendingUsers.length} />
-            <AdminUsersList
-                actionLoading={actionLoading}
-                pendingAction={pendingAction}
-                users={pendingUsers}
-                onOpenAction={openPendingAction}
-            />
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+                <div className="order-2 space-y-5 xl:order-1">
+                    <AdminUsersSummary pendingCount={pendingUsers.length} />
+                    <AdminUsersList
+                        actionLoading={actionLoading}
+                        pendingAction={pendingAction}
+                        users={pendingUsers}
+                        onOpenAction={openPendingAction}
+                    />
+                </div>
+                <div className="order-1 xl:order-2">
+                    <div className="xl:sticky xl:top-20">
+                        <AdminUsersOperationsBoard users={pendingUsers} onRefresh={loadPendingUsers} />
+                    </div>
+                </div>
+            </div>
             <AdminUsersActionDialog
                 action={pendingAction}
                 loadingUserId={actionLoading}
