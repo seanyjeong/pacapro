@@ -159,7 +159,7 @@ async function runDesktop(browser) {
   const { context, page, state } = result;
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '학생 운영' }).waitFor();
+  await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
   await waitForStudentsShell(page);
   await page.getByRole('button', { name: /재원생/ }).click();
   const board = page.getByTestId('students-work-queue');
@@ -177,6 +177,13 @@ async function runDesktop(browser) {
   if ((await board.getByRole('link', { name: '문자 발송' }).getAttribute('href')) !== '/sms') {
     throw new Error('student sms quick link mismatch');
   }
+  await board.getByRole('button', { name: '체험 학생 보기' }).click();
+  await page.locator('table').getByText('최체험').waitFor();
+  await page.locator('table').getByText('김진우').waitFor({ state: 'hidden' });
+  await board.getByRole('button', { name: '미등록 학생 보기' }).click();
+  await page.locator('table').getByText('이민수').waitFor();
+  await page.locator('table').getByText('최체험').waitFor({ state: 'hidden' });
+  await board.getByRole('button', { name: '재원 학생 보기' }).click();
   await page.locator('table').getByText('김진우').waitFor();
   await page.locator('table').getByText('박서연').waitFor();
   await page.locator('table').getByRole('button', { name: '김진우 상세 보기' }).waitFor();
@@ -230,7 +237,7 @@ async function runMobile(browser) {
   const { context, page } = result;
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '학생 운영' }).waitFor();
+  await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
   await waitForStudentsShell(page);
   await page.getByTestId('students-work-queue').getByText('학생 운영 보드').waitFor();
   await page.getByTestId('students-work-queue').getByText(/현재 목록\s*2명/).first().waitFor();
@@ -274,7 +281,7 @@ async function runPendingDeleteError(browser) {
   const { context, page, state } = result;
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '학생 운영' }).waitFor();
+  await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
   await page.locator('table').getByText('김진우').waitFor();
   await page.getByRole('button', { name: '미등록관리 상담 후속' }).click();
   const pendingRow = page.locator('tr:has-text("이민수")');

@@ -22,6 +22,7 @@ interface StudentsWorkQueueProps {
     stats: StudentSummaryStats;
     students: Student[];
     onAddStudent: () => void;
+    onTabChange: (tab: StudentTab) => void;
     onStudentClick: (id: number) => void;
 }
 
@@ -31,6 +32,7 @@ export function StudentsWorkQueue({
     stats,
     students,
     onAddStudent,
+    onTabChange,
     onStudentClick,
 }: StudentsWorkQueueProps) {
     const activeTabLabel = STUDENT_TABS.find((tab) => tab.id === activeTab)?.label || '학생';
@@ -53,10 +55,34 @@ export function StudentsWorkQueue({
 
                 <div className="mt-4 space-y-2">
                     <QueueRow label="현재 목록" value={`${currentCount}명`} />
-                    <QueueRow label="재원" value={`${stats.active}명`} />
-                    <QueueRow label="휴원" value={`${stats.paused}명`} />
-                    <QueueRow label="체험" value={`${stats.trial}명`} />
-                    <QueueRow label="미등록" value={`${stats.pending}명`} />
+                    <QueueRow
+                        active={activeTab === 'active'}
+                        ariaLabel="재원 학생 보기"
+                        label="재원"
+                        value={`${stats.active}명`}
+                        onClick={() => onTabChange('active')}
+                    />
+                    <QueueRow
+                        active={activeTab === 'paused'}
+                        ariaLabel="휴원 학생 보기"
+                        label="휴원"
+                        value={`${stats.paused}명`}
+                        onClick={() => onTabChange('paused')}
+                    />
+                    <QueueRow
+                        active={activeTab === 'trial'}
+                        ariaLabel="체험 학생 보기"
+                        label="체험"
+                        value={`${stats.trial}명`}
+                        onClick={() => onTabChange('trial')}
+                    />
+                    <QueueRow
+                        active={activeTab === 'pending'}
+                        ariaLabel="미등록 학생 보기"
+                        label="미등록"
+                        value={`${stats.pending}명`}
+                        onClick={() => onTabChange('pending')}
+                    />
                 </div>
 
                 <Button className="mt-4 w-full justify-start gap-2" onClick={onAddStudent}>
@@ -104,11 +130,43 @@ export function StudentsWorkQueue({
     );
 }
 
-function QueueRow({ label, value }: { label: string; value: string }) {
-    return (
-        <div className="grid grid-cols-1 gap-1 rounded-md border border-border bg-background px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3">
+function QueueRow({
+    active,
+    ariaLabel,
+    label,
+    onClick,
+    value,
+}: {
+    active?: boolean;
+    ariaLabel?: string;
+    label: string;
+    onClick?: () => void;
+    value: string;
+}) {
+    const className = cn(
+        'grid w-full grid-cols-1 gap-1 rounded-md border px-3 py-2 text-sm sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3',
+        onClick ? 'text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500/25' : '',
+        active ? 'border-blue-300 bg-blue-50' : 'border-border bg-background',
+        onClick && !active ? 'hover:border-border/80 hover:bg-muted/40' : ''
+    );
+    const content = (
+        <>
             <span className="min-w-0 truncate text-muted-foreground">{label}</span>
             <span className="shrink-0 text-base font-semibold text-foreground sm:text-sm">{value}</span>
+        </>
+    );
+
+    if (onClick) {
+        return (
+            <button aria-label={ariaLabel} aria-pressed={Boolean(active)} className={className} type="button" onClick={onClick}>
+                {content}
+            </button>
+        );
+    }
+
+    return (
+        <div className={className}>
+            {content}
         </div>
     );
 }

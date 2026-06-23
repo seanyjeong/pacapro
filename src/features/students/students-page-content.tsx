@@ -152,6 +152,7 @@ export function StudentsPageContent() {
                                 stats={summaryStats}
                                 students={students}
                                 onAddStudent={() => router.push('/students/new')}
+                                onTabChange={handleTabChange}
                                 onStudentClick={openStudentDetail}
                             />
                         </aside>
