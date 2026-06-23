@@ -233,6 +233,20 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             notes
         } = req.body;
 
+        // 금액 필드 검증 (음수/NaN 차단 — 수동 수정 시 잘못된 값 방지)
+        const _amountFields = { base_amount, discount_amount, additional_amount, paid_amount };
+        for (const [key, val] of Object.entries(_amountFields)) {
+            if (val !== undefined) {
+                const num = parseFloat(val);
+                if (isNaN(num) || num < 0) {
+                    return res.status(400).json({
+                        error: 'Validation Error',
+                        message: `${key}는 0 이상의 숫자여야 합니다.`
+                    });
+                }
+            }
+        }
+
         // Build update query dynamically
         const updates = [];
         const params = [];
@@ -266,6 +280,12 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             const finalAmount = truncateToThousands(
                 parseFloat(newBase) - parseFloat(newDiscount) + parseFloat(newAdditional)
             );
+            if (finalAmount < 0) {
+                return res.status(400).json({
+                    error: 'Validation Error',
+                    message: '할인 금액이 기본+추가 금액보다 커서 최종 금액이 음수가 됩니다.'
+                });
+            }
             updates.push('final_amount = ?');
             params.push(finalAmount);
         }
