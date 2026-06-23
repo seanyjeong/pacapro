@@ -67,9 +67,11 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     const isPublicPage = pathname?.startsWith('/c/') || pathname?.startsWith('/m') || pathname?.startsWith('/consultation/');
 
     if (isPublicPage) {
+        const publicContentWidth = pathname?.startsWith('/c/') ? 'max-w-6xl' : 'max-w-lg';
+
         return (
             <div className="min-h-screen bg-gray-50">
-                <main className="w-full max-w-lg mx-auto px-4 py-6 sm:py-8">
+                <main className={cn('mx-auto w-full px-4 py-6 sm:py-8', publicContentWidth)}>
                     {children}
                 </main>
                 <footer className="py-4 text-center text-xs text-gray-400">

@@ -2,6 +2,7 @@ import type { ConsultationFormData, MockTestGrades, StudentGrade } from '@/lib/t
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { admissionOptions, formatPhoneNumber, genderOptions, gradeScoreOptions, gradeSelectOptions } from './booking-constants';
+import { BookingIntakePanel } from './booking-intake-panel';
 
 interface BookingInfoStepProps {
   error: string | null;
@@ -21,26 +22,29 @@ export function BookingInfoStep({
   referralSources,
 }: BookingInfoStepProps) {
   return (
-    <section className="rounded-md border border-slate-200 bg-white">
-      <div className="border-b border-slate-200 px-4 py-3">
-        <h2 className="text-sm font-semibold text-slate-950">정보 입력</h2>
-      </div>
-      <div className="space-y-5 p-4">
-        {error && (
-          <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
-            {error}
-          </div>
-        )}
+    <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start">
+      <BookingIntakePanel formData={formData} />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <TextField label="이름 *" value={formData.studentName} onChange={(studentName) => onChange({ studentName })} />
-          <TextField
-            inputMode="numeric"
-            label="연락처 *"
-            value={formData.studentPhone || ''}
-            onChange={(studentPhone) => onChange({ studentPhone: formatPhoneNumber(studentPhone) })}
-          />
+      <section className="rounded-md border border-slate-200 bg-white">
+        <div className="border-b border-slate-200 px-4 py-3">
+          <h2 className="text-sm font-semibold text-slate-950">정보 입력</h2>
         </div>
+        <div className="space-y-5 p-4">
+          {error && (
+            <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+              {error}
+            </div>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <TextField label="이름 *" value={formData.studentName} onChange={(studentName) => onChange({ studentName })} />
+            <TextField
+              inputMode="numeric"
+              label="연락처 *"
+              value={formData.studentPhone || ''}
+              onChange={(studentPhone) => onChange({ studentPhone: formatPhoneNumber(studentPhone) })}
+            />
+          </div>
 
         <div className="grid gap-4 md:grid-cols-3">
           <SelectField
@@ -106,9 +110,10 @@ export function BookingInfoStep({
           />
         </label>
 
-        <Button className="w-full" onClick={onNext}>다음: 일정 선택</Button>
-      </div>
-    </section>
+          <Button className="w-full" onClick={onNext}>다음: 일정 선택</Button>
+        </div>
+      </section>
+    </div>
   );
 }
 

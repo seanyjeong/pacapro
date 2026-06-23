@@ -23,7 +23,7 @@ export function ConsultationBookingPage() {
   }
 
   return (
-    <main className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 py-5 md:max-w-3xl" data-testid="consultation-booking-workspace">
+    <main className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 py-5 md:max-w-5xl" data-testid="consultation-booking-workspace">
       <BookingHeader pageInfo={state.pageInfo} />
       <BookingStepper step={state.step} />
 

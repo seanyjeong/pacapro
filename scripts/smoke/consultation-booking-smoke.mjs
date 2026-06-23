@@ -133,6 +133,8 @@ async function clickWithoutNativeDialog(page, locator, label) {
 }
 
 async function fillInfoStep(page) {
+  await page.getByTestId('booking-intake-panel').getByRole('heading', { name: '입력 가이드' }).waitFor();
+  await page.getByTestId('booking-intake-panel').getByText('소요 1분').waitFor();
   await page.getByLabel('이름 *').fill('김민서');
   await page.getByLabel('연락처 *').fill('01012345678');
   await page.getByLabel('학년 *').selectOption('고3');
@@ -147,6 +149,7 @@ async function fillInfoStep(page) {
   await page.getByLabel('희망 학교').fill('한국체대');
   await page.getByLabel('학원을 알게 된 경로').selectOption('지인 소개');
   await page.getByLabel('문의 내용').fill('정시 상담을 받고 싶습니다.');
+  await page.getByTestId('booking-intake-panel').getByText('필수 11/11').waitFor();
   await page.getByRole('button', { name: '다음: 일정 선택' }).click();
 }
 
