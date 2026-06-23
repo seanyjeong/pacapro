@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Bell, User, LogOut, Menu, Users, UserCog, Download } from 'lucide-react';
+import { toast } from 'sonner';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { authAPI } from '@/lib/api/auth';
@@ -135,8 +136,9 @@ export function TopNav() {
             }
             setDeferredPrompt(null);
         } else {
-            // deferredPrompt가 없으면 안내 메시지
-            alert('브라우저 메뉴에서 "앱 설치" 또는 "홈 화면에 추가"를 선택해주세요.\n\nChrome: 메뉴(⋮) → 앱 설치\nEdge: 메뉴(...) → 앱 → 이 사이트를 앱으로 설치');
+            toast.info('브라우저 메뉴에서 앱 설치를 선택해주세요.', {
+                description: 'Chrome은 메뉴 > 앱 설치, Edge는 메뉴 > 앱 > 이 사이트를 앱으로 설치를 사용합니다.',
+            });
         }
     };
 

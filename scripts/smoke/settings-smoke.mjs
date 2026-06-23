@@ -160,6 +160,8 @@ async function runDesktop(browser) {
   await page.getByRole('link', { name: '학원비 바로가기' }).waitFor();
   await page.getByRole('link', { name: '시즌비 바로가기' }).waitFor();
   await page.getByRole('link', { name: '급여 설정 바로가기' }).waitFor();
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '앱 설치' }), 'topnav install guide');
+  await page.getByText('브라우저 메뉴에서 앱 설치를 선택해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'settings desktop');
   await assertNoHorizontalOverflow(page, 'settings desktop');
   await page.screenshot({ path: '/Users/etlab/paca-settings-desktop.png', fullPage: true });

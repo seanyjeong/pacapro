@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils/cn';
 import packageJson from '../../../package.json';
 import {
@@ -271,7 +272,7 @@ export function Sidebar() {
             } else {
                 const perm = await requestNotificationPermission();
                 if (perm !== 'granted') {
-                    alert('알림 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해주세요.');
+                    toast.error('알림 권한이 꺼져 있습니다. 브라우저 설정에서 알림 권한을 허용해주세요.');
                     return;
                 }
                 const vapidPublicKey = await pushAPI.getVapidPublicKey();
@@ -294,7 +295,7 @@ export function Sidebar() {
             if (response.settings?.academy_name) {
                 setAcademyName(response.settings.academy_name);
             }
-        } catch (err) {
+        } catch {
             // 로그인 안된 상태에서는 에러 무시
         }
     };
@@ -361,6 +362,7 @@ export function Sidebar() {
                 {!collapsed && mounted && pushSupported && (
                     <div className="relative group">
                         <button
+                            aria-label={pushSubscribed ? '미납자 푸시 알림 끄기' : '미납자 푸시 알림 켜기'}
                             onClick={handlePushToggle}
                             disabled={pushLoading}
                             className={`p-2 rounded-lg transition-colors duration-200 ${
