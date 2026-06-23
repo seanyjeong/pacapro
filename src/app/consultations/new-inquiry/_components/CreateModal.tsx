@@ -227,7 +227,7 @@ export function CreateModal({
                       {timeSlots.map((time) => {
                         const isBooked = bookedTimes.includes(time);
                         return (
-                          <SelectItem key={time} value={time}>
+                          <SelectItem key={time} value={time} disabled={isBooked}>
                             {time} {isBooked && '(예약있음)'}
                           </SelectItem>
                         );

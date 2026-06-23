@@ -164,6 +164,10 @@ async function runCreateHappyPath(browser) {
   await selectOption(page, '성별', '남');
   await page.getByLabel('학교', { exact: true }).fill('강남고');
   await page.getByLabel('상담 날짜').fill(TEST_DATE);
+  await page.getByLabel('상담 시간').click();
+  await page.getByText('10:00 (예약있음)', { exact: true }).click();
+  await page.getByText('시간 선택').waitFor();
+  await page.keyboard.press('Escape');
   await selectOption(page, '상담 시간', '09:30');
   await page.getByRole('button', { name: '등록', exact: true }).last().click();
   await page.getByText('상담이 등록되었습니다.').waitFor({ timeout: 15000 });

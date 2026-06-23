@@ -111,7 +111,7 @@ export function StatusChangeModal({
                       {timeSlots.map((time) => {
                         const isBooked = editBookedTimes.includes(time);
                         return (
-                          <SelectItem key={time} value={time}>
+                          <SelectItem key={time} value={time} disabled={isBooked}>
                             {time} {isBooked && '(예약있음)'}
                           </SelectItem>
                         );

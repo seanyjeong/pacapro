@@ -56,7 +56,7 @@ const Select = ({ value, defaultValue, onValueChange, disabled, children }: Sele
 };
 
 // Select Trigger
-interface SelectTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+type SelectTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
 
 const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
   ({ className, children, ...props }, ref) => {
@@ -96,12 +96,20 @@ const SelectValue = ({ placeholder }: SelectValueProps) => {
 };
 
 // Select Content
-interface SelectContentProps extends React.HTMLAttributes<HTMLDivElement> {}
+type SelectContentProps = React.HTMLAttributes<HTMLDivElement>;
 
 const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
-  ({ className, children, ...props }, _ref) => {
+  ({ className, children, ...props }, forwardedRef) => {
     const { open, setOpen } = React.useContext(SelectContext);
-    const contentRef = React.useRef<HTMLDivElement>(null);
+    const contentRef = React.useRef<HTMLDivElement | null>(null);
+    const setContentRefs = React.useCallback((node: HTMLDivElement | null) => {
+      contentRef.current = node;
+      if (typeof forwardedRef === 'function') {
+        forwardedRef(node);
+      } else if (forwardedRef) {
+        (forwardedRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }
+    }, [forwardedRef]);
 
     // Close on click outside (but not on trigger button - it handles its own toggle)
     React.useEffect(() => {
@@ -130,7 +138,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
 
     return (
       <div
-        ref={contentRef}
+        ref={setContentRefs}
         className={cn(
           'absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-md border border-border bg-popover py-1 text-sm shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
           className
@@ -146,11 +154,12 @@ SelectContent.displayName = 'SelectContent';
 
 // Select Item
 interface SelectItemProps extends React.HTMLAttributes<HTMLDivElement> {
+  disabled?: boolean;
   value: string;
 }
 
 const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
-  ({ className, children, value, ...props }, ref) => {
+  ({ className, children, disabled = false, value, ...props }, ref) => {
     const context = React.useContext(SelectContext);
     const isSelected = context.value === value;
 
@@ -162,10 +171,18 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
     return (
       <div
         ref={ref}
-        onClick={() => context.onValueChange(value)}
+        aria-disabled={disabled}
+        onClick={() => {
+          if (disabled) {
+            context.setOpen(false);
+            return;
+          }
+          context.onValueChange(value);
+        }}
         className={cn(
           'relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-muted focus:bg-muted',
           isSelected && 'bg-muted',
+          disabled && 'cursor-not-allowed opacity-45 hover:bg-transparent',
           className
         )}
         {...props}
