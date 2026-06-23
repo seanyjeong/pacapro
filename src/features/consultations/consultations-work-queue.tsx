@@ -3,18 +3,25 @@
 import Link from 'next/link';
 import { CalendarDays, CheckCircle2, Clock3, Settings, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface Props {
+  activeStatus: string;
   confirmedCount: number;
   pendingCount: number;
   totalCount: number;
+  onFilterConfirmed: () => void;
+  onFilterPending: () => void;
   onOpenDirectRegister: () => void;
 }
 
 export function ConsultationsWorkQueue({
+  activeStatus,
   confirmedCount,
   pendingCount,
   totalCount,
+  onFilterConfirmed,
+  onFilterPending,
   onOpenDirectRegister,
 }: Props) {
   const followUpCount = Math.max(totalCount - pendingCount - confirmedCount, 0);
@@ -33,18 +40,21 @@ export function ConsultationsWorkQueue({
         </div>
 
         <div className="mt-4 grid gap-2 text-sm">
-          <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2">
-            <span className="text-muted-foreground">확인 필요</span>
-            <strong className="font-semibold text-foreground">{pendingCount}건</strong>
-          </div>
-          <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2">
-            <span className="text-muted-foreground">일정 확정</span>
-            <strong className="font-semibold text-foreground">{confirmedCount}건</strong>
-          </div>
-          <div className="flex items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2">
-            <span className="text-muted-foreground">후속 처리</span>
-            <strong className="font-semibold text-foreground">{followUpCount}건</strong>
-          </div>
+          <QueueRow
+            ariaLabel="확인 필요 보기"
+            label="확인 필요"
+            pressed={activeStatus === 'pending'}
+            value={`${pendingCount}건`}
+            onClick={onFilterPending}
+          />
+          <QueueRow
+            ariaLabel="일정 확정 보기"
+            label="일정 확정"
+            pressed={activeStatus === 'confirmed'}
+            value={`${confirmedCount}건`}
+            onClick={onFilterConfirmed}
+          />
+          <QueueRow label="후속 처리" value={`${followUpCount}건`} />
         </div>
 
         <Button className="mt-4 w-full rounded-md" onClick={onOpenDirectRegister}>
@@ -77,5 +87,51 @@ export function ConsultationsWorkQueue({
         </div>
       </section>
     </aside>
+  );
+}
+
+function QueueRow({
+  ariaLabel,
+  label,
+  onClick,
+  pressed = false,
+  value,
+}: {
+  ariaLabel?: string;
+  label: string;
+  onClick?: () => void;
+  pressed?: boolean;
+  value: string;
+}) {
+  const className = cn(
+    'flex w-full items-center justify-between rounded-md border border-border bg-muted/30 px-3 py-2 text-sm',
+    onClick && 'text-left transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+    pressed && 'border-primary/40 bg-primary/5'
+  );
+  const content = (
+    <>
+      <span className="text-muted-foreground">{label}</span>
+      <strong className="font-semibold text-foreground">{value}</strong>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        aria-label={ariaLabel || label}
+        aria-pressed={pressed}
+        className={className}
+        type="button"
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className}>
+      {content}
+    </div>
   );
 }

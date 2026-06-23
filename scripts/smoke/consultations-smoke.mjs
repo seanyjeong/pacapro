@@ -110,6 +110,14 @@ async function createConsultationsPage(browser, viewport = { width: 1365, height
   return { context, diagnostics, page, state };
 }
 
+async function waitForHit(state, expected) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if (state.hits.some((hit) => hit.includes(expected))) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`missing API hit containing ${expected}: ${state.hits.join(' | ')}`);
+}
+
 async function runDesktop(browser) {
   const result = await createConsultationsPage(browser);
   const { context, diagnostics, page, state } = result;
@@ -131,6 +139,18 @@ async function runDesktop(browser) {
     const bodyText = (await page.locator('body').innerText()).slice(0, 1200);
     throw new Error(`consultation rows did not render; hits=${JSON.stringify(state.hits)}; pageErrors=${JSON.stringify(diagnostics.pageErrors)}; consoleErrors=${JSON.stringify(diagnostics.consoleErrors)}; body=${bodyText}; cause=${error}`);
   }
+  const pendingFilter = desktopQueue.getByRole('button', { name: '확인 필요 보기' });
+  await pendingFilter.click();
+  if ((await pendingFilter.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('consultations pending queue filter is not active');
+  }
+  await waitForHit(state, 'status=pending');
+  const confirmedFilter = desktopQueue.getByRole('button', { name: '일정 확정 보기' });
+  await confirmedFilter.click();
+  if ((await confirmedFilter.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('consultations confirmed queue filter is not active');
+  }
+  await waitForHit(state, 'status=confirmed');
   await page.getByRole('button', { name: /직접 등록/ }).waitFor();
   await assertNoRawVisibleText(page, 'consultations desktop');
   await assertNoHorizontalOverflow(page, 'consultations desktop');

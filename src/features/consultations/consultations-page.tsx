@@ -27,6 +27,9 @@ export function ConsultationsPage() {
   const pendingCount = h.stats.pending || 0;
   const confirmedCount = h.stats.confirmed || 0;
   const totalCount = h.stats.total || h.consultations.length;
+  const toggleStatusFilter = (status: string) => {
+    h.setStatusFilter(h.statusFilter === status ? '' : status);
+  };
 
   return (
     <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
@@ -161,9 +164,12 @@ export function ConsultationsPage() {
           </section>
 
           <ConsultationsWorkQueue
+            activeStatus={h.statusFilter}
             confirmedCount={confirmedCount}
             pendingCount={pendingCount}
             totalCount={totalCount}
+            onFilterConfirmed={() => toggleStatusFilter('confirmed')}
+            onFilterPending={() => toggleStatusFilter('pending')}
             onOpenDirectRegister={() => h.setTypeSelectOpen(true)}
           />
         </div>
