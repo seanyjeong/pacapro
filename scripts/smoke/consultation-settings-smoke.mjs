@@ -122,6 +122,11 @@ async function runDesktop(browser) {
   await page.getByText('PACA 일산').waitFor();
   await page.getByRole('heading', { name: '예약 링크' }).waitFor();
   await page.getByRole('heading', { name: '요일별 운영 시간' }).waitFor();
+  const weeklyHoursLink = page.getByTestId('consultation-settings-operations-board').getByRole('link', { name: '운영시간 설정으로 이동' });
+  await weeklyHoursLink.waitFor();
+  if ((await weeklyHoursLink.getAttribute('href')) !== '#consultation-weekly-hours') {
+    throw new Error('weekly hours quick link mismatch');
+  }
   await page.getByText('추석').waitFor();
   await assertNoRawVisibleText(page, 'consultation settings desktop');
   await assertNoHorizontalOverflow(page, 'consultation settings desktop');
@@ -198,6 +203,11 @@ async function runMissingHours(browser) {
   await board.getByText('상담 시간 저장 필요').waitFor();
   await board.getByText('저장된 운영 요일').first().waitFor();
   await board.getByText('0일').first().waitFor();
+  const recoveryLink = board.getByRole('link', { name: '운영시간 설정으로 이동' });
+  await recoveryLink.waitFor();
+  if ((await recoveryLink.getAttribute('href')) !== '#consultation-weekly-hours') {
+    throw new Error('missing hours quick link mismatch');
+  }
   const recovery = page.getByTestId('weekly-hours-recovery-panel');
   await recovery.getByRole('heading', { name: '빠른 운영시간 복구' }).waitFor();
   await recovery.getByText('권장 시간: 평일 10:00-20:00', { exact: true }).waitFor();

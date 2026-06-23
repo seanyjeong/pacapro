@@ -50,6 +50,13 @@ export function SettingsOperationsBoard({
           <p className="mt-1 text-xs">
             {hasSavedWeeklyHours ? '신규상담 시간 선택에 저장된 운영 요일이 반영됩니다.' : '운영 시간을 저장해야 신규상담 시간 선택이 안정적으로 열립니다.'}
           </p>
+          <Link
+            href="#consultation-weekly-hours"
+            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'mt-3 w-full justify-start gap-2 bg-background')}
+          >
+            <Clock3 className="h-4 w-4" />
+            운영시간 설정으로 이동
+          </Link>
         </div>
       </section>
 

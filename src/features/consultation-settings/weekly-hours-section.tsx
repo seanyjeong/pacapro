@@ -39,7 +39,7 @@ export function WeeklyHoursSection({
   onSave,
 }: WeeklyHoursSectionProps) {
   return (
-    <Card className="rounded-md shadow-none">
+    <Card id="consultation-weekly-hours" className="scroll-mt-24 rounded-md shadow-none">
       <CardHeader className="space-y-1">
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
