@@ -104,6 +104,7 @@ async function runNormal(browser) {
   await page.goto('/seasons', { waitUntil: 'networkidle' });
   await page.getByTestId('season-list-workspace').waitFor();
   await page.getByRole('heading', { name: '시즌 관리' }).waitFor();
+  await assertOperationsBoard(page);
   await page.getByTestId('season-active-panel').waitFor();
   await page.getByText('진행 중 시즌').waitFor();
   const activePanel = page.getByTestId('season-active-panel');
@@ -140,6 +141,7 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByTestId('season-list-workspace').waitFor();
+  await assertOperationsBoard(page);
   await page.getByTestId('season-active-panel').waitFor();
   await page.getByTestId('season-active-panel').getByRole('link', { name: '2026 정시 집중반 학생 등록' }).waitFor();
   await assertNoRawVisibleText(page, 'season list mobile');
@@ -148,6 +150,17 @@ async function runNormal(browser) {
 
   await context.close();
   return { state, diagnostics };
+}
+
+async function assertOperationsBoard(page) {
+  const board = page.getByTestId('season-list-operations-board');
+  await board.getByRole('heading', { name: '시즌 작업 보드' }).waitFor();
+  await board.getByTestId('season-list-metric-total').getByText('2개').waitFor();
+  await board.getByTestId('season-list-metric-active').getByText('1개').waitFor();
+  await board.getByTestId('season-list-metric-regular').getByText('1개').waitFor();
+  await board.getByTestId('season-list-metric-early').getByText('1개').waitFor();
+  await board.getByRole('button', { name: '새 시즌 등록' }).waitFor();
+  await board.getByRole('link', { name: '2026 정시 집중반 학생 등록' }).waitFor();
 }
 
 async function runLoadError(browser) {

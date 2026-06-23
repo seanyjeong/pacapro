@@ -9,6 +9,7 @@ import { SeasonListError } from './season-list-error';
 import { SeasonListFilters } from './season-list-filters';
 import { SeasonListHeader } from './season-list-header';
 import { SeasonListLoading } from './season-list-loading';
+import { SeasonListOperationsBoard } from './season-list-operations-board';
 import { SeasonListSummary } from './season-list-summary';
 import { SeasonListTable } from './season-list-table';
 import { useSeasonListState } from './use-season-list-state';
@@ -36,25 +37,40 @@ export function SeasonListPage() {
       ) : (
         <>
           <SeasonListSummary stats={state.stats} />
-          <SeasonActivePanel seasons={state.seasons} onRefresh={state.reload} />
-          <SeasonListFilters
-            filters={state.filters}
-            years={state.years}
-            onClear={state.clearFilters}
-            onChange={state.setFilters}
-          />
 
-          {state.loading ? (
-            <SeasonListLoading />
-          ) : state.seasons.length === 0 ? (
-            <SeasonListEmpty onAddSeason={() => router.push('/seasons/new')} />
-          ) : (
-            <SeasonListTable
-              seasons={state.seasons}
-              onDelete={(seasonId, seasonName) => setDeleteTarget({ seasonId, seasonName })}
-              onOpen={(seasonId) => router.push(`/seasons/${seasonId}`)}
-            />
-          )}
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+            <main className="order-2 min-w-0 space-y-5 xl:order-1">
+              <SeasonActivePanel seasons={state.seasons} onRefresh={state.reload} />
+              <SeasonListFilters
+                filters={state.filters}
+                years={state.years}
+                onClear={state.clearFilters}
+                onChange={state.setFilters}
+              />
+
+              {state.loading ? (
+                <SeasonListLoading />
+              ) : state.seasons.length === 0 ? (
+                <SeasonListEmpty onAddSeason={() => router.push('/seasons/new')} />
+              ) : (
+                <SeasonListTable
+                  seasons={state.seasons}
+                  onDelete={(seasonId, seasonName) => setDeleteTarget({ seasonId, seasonName })}
+                  onOpen={(seasonId) => router.push(`/seasons/${seasonId}`)}
+                />
+              )}
+            </main>
+            <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
+              <SeasonListOperationsBoard
+                filters={state.filters}
+                seasons={state.seasons}
+                stats={state.stats}
+                onAddSeason={() => router.push('/seasons/new')}
+                onClearFilters={state.clearFilters}
+                onRefresh={state.reload}
+              />
+            </div>
+          </div>
         </>
       )}
 

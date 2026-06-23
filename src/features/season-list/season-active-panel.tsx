@@ -6,7 +6,7 @@ import { formatOperatingDays, formatSeasonFee, parseOperatingDays, TIME_SLOT_LAB
 import { cn } from '@/lib/utils';
 import { SeasonStatusBadge } from './season-status-badge';
 import { SeasonTypeBadge } from './season-type-badge';
-import { formatDateRange } from './season-list-utils';
+import { formatDateRange, selectPrimarySeason } from './season-list-utils';
 
 interface SeasonActivePanelProps {
   seasons: Season[];
@@ -79,15 +79,6 @@ function SeasonFact({ icon: Icon, label, value }: { icon: typeof CalendarDays; l
       </div>
       <p className="mt-2 text-sm font-medium text-slate-900">{value}</p>
     </div>
-  );
-}
-
-function selectPrimarySeason(seasons: Season[]): Season | null {
-  return (
-    seasons.find((season) => season.status === 'active') ||
-    seasons.find((season) => season.status === 'upcoming' || season.status === 'draft') ||
-    seasons[0] ||
-    null
   );
 }
 

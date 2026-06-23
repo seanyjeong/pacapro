@@ -22,3 +22,12 @@ export function getSeasonYears(seasons: Season[]): number[] {
 export function formatDateRange(startDate: string, endDate: string): string {
   return `${startDate} ~ ${endDate}`;
 }
+
+export function selectPrimarySeason(seasons: Season[]): Season | null {
+  return (
+    seasons.find((season) => season.status === 'active') ||
+    seasons.find((season) => season.status === 'upcoming' || season.status === 'draft') ||
+    seasons[0] ||
+    null
+  );
+}
