@@ -15,6 +15,7 @@ function makeState(mode = 'success') {
     hits: [],
     mode,
     operationPayload: null,
+    resetPayload: null,
   };
 }
 
@@ -113,6 +114,7 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'POST' && path === '/settings/reset-database') {
+      state.resetPayload = JSON.parse(request.postData() || '{}');
       return jsonRoute(route, { message: 'reset' });
     }
 
@@ -128,6 +130,21 @@ async function createSettingsPage(browser, mode = 'success', viewport = { width:
   page.setDefaultTimeout(15000);
   const diagnostics = createDiagnostics(page);
   return { context, diagnostics, page, state };
+}
+
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
 }
 
 async function runDesktop(browser) {
@@ -148,6 +165,35 @@ async function runDesktop(browser) {
   await page.screenshot({ path: '/Users/etlab/paca-settings-desktop.png', fullPage: true });
   await page.getByRole('link', { name: '수업 시간 바로가기' }).click();
   await page.getByRole('heading', { name: '수업 시간대' }).waitFor();
+
+  await context.close();
+  return result;
+}
+
+async function runResetFlow(browser) {
+  const result = await createSettingsPage(browser);
+  const { context, page, state } = result;
+
+  await page.goto('/settings', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '설정', exact: true }).waitFor();
+  await page.getByPlaceholder('초기화').fill('초기화');
+  await clickWithoutNativeDialog(
+    page,
+    page.getByRole('button', { name: '전체 데이터 초기화' }),
+    'settings reset'
+  );
+  const dialog = page.getByRole('alertdialog');
+  await dialog.getByRole('heading', { name: '전체 데이터 초기화 확인' }).waitFor();
+  await dialog.getByText('학생, 강사, 수납, 급여, 스케줄, 시즌 정보를 모두 삭제합니다.').waitFor();
+  const resetResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return response.request().method() === 'POST' && normalizePacaApiPath(url) === '/settings/reset-database';
+  });
+  await dialog.getByRole('button', { name: '초기화' }).click();
+  await resetResponse;
+  if (state.resetPayload?.confirmation !== '초기화') {
+    throw new Error(`reset payload mismatch: ${JSON.stringify(state.resetPayload)}`);
+  }
 
   await context.close();
   return result;
@@ -236,10 +282,12 @@ async function main() {
     const mobile = await runMobile(browser);
     const saveFlow = await runSaveFlow(browser);
     const saveError = await runSaveError(browser);
-    [desktop, mobile, saveFlow, saveError].forEach(assertDiagnostics);
+    const resetFlow = await runResetFlow(browser);
+    [desktop, mobile, saveFlow, saveError, resetFlow].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       mobileHits: mobile.state.hits,
+      resetPayload: resetFlow.state.resetPayload,
       savePayload: saveFlow.state.academyPayload,
       operationPayload: saveFlow.state.operationPayload,
       saveErrorHits: saveError.state.hits,

@@ -9,6 +9,7 @@ import { SalarySettingsCard } from './salary-settings-card';
 import { SeasonFeesCard } from './season-fees-card';
 import { SettingsHeader } from './settings-header';
 import { SettingsOperationPanel } from './settings-operation-panel';
+import { SettingsResetConfirmDialog } from './settings-reset-confirm-dialog';
 import { SettingsSystemCard } from './settings-system-card';
 import { TUITION_SECTIONS } from './settings-constants';
 import { TuitionSectionCard } from './tuition-section-card';
@@ -74,6 +75,13 @@ export function SettingsPage() {
           ) : null}
         </aside>
       </div>
+
+      <SettingsResetConfirmDialog
+        isResetting={state.isResetting}
+        open={state.resetDialogOpen}
+        onConfirm={state.confirmResetAllData}
+        onOpenChange={state.handleResetDialogOpenChange}
+      />
     </div>
   );
 }

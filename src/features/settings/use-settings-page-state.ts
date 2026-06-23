@@ -35,6 +35,7 @@ export function useSettingsPageState() {
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [resetConfirmation, setResetConfirmation] = useState('');
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
   const loadSettings = useCallback(async () => {
@@ -125,18 +126,19 @@ export function useSettingsPageState() {
     }
   };
 
-  const handleResetAllData = async () => {
+  const handleResetAllData = () => {
     if (resetConfirmation !== '초기화') return;
-    const confirmed = window.confirm(
-      '정말로 전체 데이터를 초기화하시겠습니까?\n\n삭제되는 정보:\n- 학생 정보\n- 강사 정보\n- 학원비 내역\n- 급여 내역\n- 스케줄\n- 시즌 정보\n\n이 작업은 되돌릴 수 없습니다.'
-    );
-    if (!confirmed) return;
+    setResetDialogOpen(true);
+  };
 
+  const confirmResetAllData = async () => {
+    if (resetConfirmation !== '초기화') return;
     setIsResetting(true);
     try {
       await resetAllData();
       toast.success('전체 데이터가 초기화되었습니다.');
       setResetConfirmation('');
+      setResetDialogOpen(false);
       window.location.reload();
     } catch {
       console.error('Settings reset failed');
@@ -146,12 +148,18 @@ export function useSettingsPageState() {
     }
   };
 
+  const handleResetDialogOpenChange = (open: boolean) => {
+    if (open || isResetting) return;
+    setResetDialogOpen(false);
+  };
+
   return {
     settings,
     user,
     isLoadingSettings,
     isSaving,
     resetConfirmation,
+    resetDialogOpen,
     isResetting,
     hasUnsavedChanges,
     updateSetting,
@@ -161,5 +169,7 @@ export function useSettingsPageState() {
     saveSettings,
     setResetConfirmation,
     handleResetAllData,
+    confirmResetAllData,
+    handleResetDialogOpenChange,
   };
 }
