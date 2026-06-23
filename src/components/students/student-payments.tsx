@@ -19,6 +19,9 @@ import { PAYMENT_METHOD_LABELS } from '@/lib/types/payment';
 import { studentsAPI } from '@/lib/api/students';
 import { ManualCreditModal } from './manual-credit-modal';
 import { PrepaidPaymentModal } from '@/components/payments/prepaid-payment-modal';
+import { PaymentAmountEditModal } from '@/components/payments/payment-amount-edit-modal';
+import { paymentsAPI } from '@/lib/api/payments';
+import { toast } from 'sonner';
 
 interface StudentPaymentsProps {
   payments: StudentPayment[];
@@ -143,6 +146,20 @@ export function StudentPaymentsComponent({
 
   // 첫 달 일할 재계산 상태
   const [recalculating, setRecalculating] = useState(false);
+  // 학원비 금액 수정 모달 대상
+  const [editingPayment, setEditingPayment] = useState<StudentPayment | null>(null);
+
+  const handleSaveAmount = async (data: { base_amount: number; discount_amount: number }) => {
+    if (!editingPayment) return;
+    try {
+      await paymentsAPI.updatePayment(editingPayment.id, data);
+      toast.success('학원비 금액이 수정되었습니다.');
+      window.location.reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '금액 수정에 실패했습니다.');
+      throw err;
+    }
+  };
 
   // 첫 달 일할계산 학원비 재계산 (현재 등록일 기준, 미납 건만)
   const handleRecalculateFirstPayment = async () => {
@@ -335,6 +352,9 @@ export function StudentPaymentsComponent({
                     <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       상태
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                      관리
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-background divide-y divide-border">
@@ -391,6 +411,18 @@ export function StudentPaymentsComponent({
                             {PAYMENT_STATUS_LABELS[payment.payment_status] || payment.payment_status}
                           </span>
                         </td>
+
+                        {/* 관리 */}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {payment.payment_status !== 'paid' && (
+                            <button
+                              onClick={() => setEditingPayment(payment)}
+                              className="text-xs text-primary hover:underline"
+                            >
+                              금액 수정
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     );
                   })}
@@ -429,6 +461,16 @@ export function StudentPaymentsComponent({
           }}
         />
       )}
+
+      {/* 학원비 금액 수정 모달 */}
+      <PaymentAmountEditModal
+        isOpen={editingPayment !== null}
+        onClose={() => setEditingPayment(null)}
+        onSubmit={handleSaveAmount}
+        yearMonth={editingPayment?.year_month || ''}
+        baseAmount={editingPayment ? parseFloat(editingPayment.base_amount) || 0 : 0}
+        discountAmount={editingPayment ? parseFloat(editingPayment.discount_amount) || 0 : 0}
+      />
 
       {/* 크레딧 적용 모달 */}
       <Dialog open={applyModalOpen} onOpenChange={setApplyModalOpen}>
