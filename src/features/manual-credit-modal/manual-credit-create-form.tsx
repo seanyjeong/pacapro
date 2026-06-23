@@ -247,7 +247,7 @@ export function ManualCreditCreateForm({
         </div>
 
         {error && (
-          <div className="flex items-center gap-1 text-sm text-red-600 dark:text-red-400">
+          <div className="flex items-center gap-1 text-sm text-red-600 dark:text-red-400" role="alert">
             <AlertTriangle className="w-4 h-4" />
             {error}
           </div>

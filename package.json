@@ -56,6 +56,7 @@
     "smoke:season-enroll": "node scripts/smoke/season-enroll-smoke.mjs",
     "smoke:student-consultation-detail": "node scripts/smoke/student-consultation-detail-smoke.mjs",
     "smoke:student-detail": "node scripts/smoke/student-detail-smoke.mjs",
+    "smoke:student-credit-errors": "node scripts/smoke/student-credit-errors-smoke.mjs",
     "smoke:student-prepaid-payment": "node scripts/smoke/student-prepaid-payment-smoke.mjs",
     "smoke:student-resume": "node scripts/smoke/student-resume-smoke.mjs",
     "smoke:students": "node scripts/smoke/students-smoke.mjs",

@@ -20,6 +20,8 @@ import { ManualCreditDeleteDialog } from './manual-credit-delete-dialog';
 import { ManualCreditList } from './manual-credit-list';
 import { DAY_NAMES, countClassDaysInPeriod, getApiErrorMessage } from './manual-credit-utils';
 
+const QUIET_REQUEST = { suppressErrorToast: true };
+
 export function ManualCreditModal({
   open,
   onClose,
@@ -90,7 +92,7 @@ export function ManualCreditModal({
   const loadCredits = useCallback(async () => {
     try {
       setLoadingCredits(true);
-      const response = await studentsAPI.getCredits(studentId);
+      const response = await studentsAPI.getCredits(studentId, QUIET_REQUEST);
       setCredits(response.credits || []);
     } catch (err) {
       console.warn('크레딧 목록을 불러오지 못했습니다.', err);
@@ -133,7 +135,7 @@ export function ManualCreditModal({
     try {
       setProcessing(true);
       setError('');
-      const result = await studentsAPI.createManualCredit(studentId, getCreditRequestData());
+      const result = await studentsAPI.createManualCredit(studentId, getCreditRequestData(), QUIET_REQUEST);
       toast.success('크레딧 생성 완료', { description: result.message });
       onSuccess();
       resetForm();
@@ -202,7 +204,7 @@ export function ManualCreditModal({
 
     try {
       setDeleting(true);
-      await studentsAPI.deleteCredit(studentId, deleteTarget.id);
+      await studentsAPI.deleteCredit(studentId, deleteTarget.id, QUIET_REQUEST);
       toast.success('크레딧이 삭제되었습니다.');
       setDeleteTarget(null);
       void loadCredits();
@@ -228,7 +230,7 @@ export function ManualCreditModal({
       await studentsAPI.updateCredit(studentId, editingCredit.id, {
         credit_amount: editAmount,
         notes: editNotes,
-      });
+      }, QUIET_REQUEST);
       toast.success('크레딧이 수정되었습니다.');
       setEditingCredit(null);
       void loadCredits();
@@ -251,7 +253,7 @@ export function ManualCreditModal({
 
     try {
       setApplying(true);
-      const result = await studentsAPI.applyCredit(studentId, applyingCredit.id, applyYearMonth);
+      const result = await studentsAPI.applyCredit(studentId, applyingCredit.id, applyYearMonth, QUIET_REQUEST);
       toast.success(result.message);
       setApplyingCredit(null);
       void loadCredits();

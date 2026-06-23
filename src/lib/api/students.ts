@@ -217,53 +217,62 @@ export const studentsAPI = {
    * 학생 크레딧 목록 조회
    * GET /paca/students/:id/rest-credits
    */
-  getRestCredits: async (id: number): Promise<RestCreditsResponse> => {
-    return await apiClient.get(`/students/${id}/rest-credits`);
+  getRestCredits: async (id: number, config?: APIRequestConfig): Promise<RestCreditsResponse> => {
+    return await apiClient.get(`/students/${id}/rest-credits`, config);
   },
 
   /**
    * 수동 크레딧 생성
    * POST /paca/students/:id/manual-credit
    */
-  createManualCredit: async (id: number, data: ManualCreditRequest): Promise<ManualCreditResponse> => {
-    return await apiClient.post(`/students/${id}/manual-credit`, data);
+  createManualCredit: async (
+    id: number,
+    data: ManualCreditRequest,
+    config?: APIRequestConfig
+  ): Promise<ManualCreditResponse> => {
+    return await apiClient.post(`/students/${id}/manual-credit`, data, config);
   },
 
   /**
    * 학생 크레딧 목록 조회 (새 API)
    * GET /paca/students/:id/credits
    */
-  getCredits: async (id: number): Promise<{ credits: RestCredit[] }> => {
-    return await apiClient.get(`/students/${id}/credits`);
+  getCredits: async (id: number, config?: APIRequestConfig): Promise<{ credits: RestCredit[] }> => {
+    return await apiClient.get(`/students/${id}/credits`, config);
   },
 
   /**
    * 크레딧 수정
    * PUT /paca/students/:id/credits/:creditId
    */
-  updateCredit: async (studentId: number, creditId: number, data: { credit_amount?: number; notes?: string; status?: string }): Promise<{ message: string }> => {
-    return await apiClient.put(`/students/${studentId}/credits/${creditId}`, data);
+  updateCredit: async (
+    studentId: number,
+    creditId: number,
+    data: { credit_amount?: number; notes?: string; status?: string },
+    config?: APIRequestConfig
+  ): Promise<{ message: string }> => {
+    return await apiClient.put(`/students/${studentId}/credits/${creditId}`, data, config);
   },
 
   /**
    * 크레딧 삭제
    * DELETE /paca/students/:id/credits/:creditId
    */
-  deleteCredit: async (studentId: number, creditId: number): Promise<{ message: string }> => {
-    return await apiClient.delete(`/students/${studentId}/credits/${creditId}`);
+  deleteCredit: async (studentId: number, creditId: number, config?: APIRequestConfig): Promise<{ message: string }> => {
+    return await apiClient.delete(`/students/${studentId}/credits/${creditId}`, config);
   },
 
   /**
    * 크레딧 수동 적용
    * POST /paca/students/:id/credits/:creditId/apply
    */
-  applyCredit: async (studentId: number, creditId: number, yearMonth: string): Promise<{
+  applyCredit: async (studentId: number, creditId: number, yearMonth: string, config?: APIRequestConfig): Promise<{
     message: string;
     applied_amount: number;
     new_final_amount: number;
     credit_remaining: number;
   }> => {
-    return await apiClient.post(`/students/${studentId}/credits/${creditId}/apply`, { year_month: yearMonth });
+    return await apiClient.post(`/students/${studentId}/credits/${creditId}/apply`, { year_month: yearMonth }, config);
   },
 
   /**
