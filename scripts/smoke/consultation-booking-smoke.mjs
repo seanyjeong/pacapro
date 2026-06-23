@@ -177,6 +177,11 @@ async function runNormal(browser) {
   await page.screenshot({ path: '/Users/etlab/paca-consultation-booking-confirm-desktop.png', fullPage: true });
   await page.getByRole('button', { name: '상담 신청하기' }).click();
   await page.waitForURL(`**/c/${SLUG}/success`);
+  await page.getByTestId('consultation-success-workspace').waitFor();
+  await page.getByText('상담 안내 데스크').waitFor();
+  await assertNoRawVisibleText(page, 'consultation booking success');
+  await assertNoHorizontalOverflow(page, 'consultation booking success');
+  await page.screenshot({ path: '/Users/etlab/paca-consultation-booking-success-desktop.png', fullPage: true });
 
   const payload = state.applyPayloads.at(-1);
   if (!payload) throw new Error('consultation apply endpoint not called');
@@ -255,6 +260,23 @@ async function runMobile(browser) {
   return { state, diagnostics };
 }
 
+async function runSuccessMobile(browser) {
+  const state = makeState();
+  const context = await createContext(browser, state, { width: 390, height: 844 });
+  const page = await context.newPage();
+  const diagnostics = createDiagnostics(page);
+
+  await page.goto(`/c/${SLUG}/success`, { waitUntil: 'networkidle' });
+  await page.getByTestId('consultation-success-workspace').waitFor();
+  await page.getByText('상담 안내 데스크').waitFor();
+  await assertNoRawVisibleText(page, 'consultation booking success mobile');
+  await assertNoHorizontalOverflow(page, 'consultation booking success mobile');
+  await page.screenshot({ path: '/Users/etlab/paca-consultation-booking-success-mobile.png', fullPage: true });
+
+  await context.close();
+  return { state, diagnostics };
+}
+
 async function runPageError(browser) {
   const state = makeState({ failPageInfo: true });
   const context = await createContext(browser, state, { width: 390, height: 844 });
@@ -301,17 +323,19 @@ async function main() {
   try {
     const normal = await runNormal(browser);
     const mobile = await runMobile(browser);
+    const successMobile = await runSuccessMobile(browser);
     const pageError = await runPageError(browser);
     const submitError = await runSubmitError(browser);
     const reservationSuccess = await runReservationChangeSuccess(browser);
     const reservationError = await runReservationChangeError(browser);
-    [normal, mobile, pageError, submitError, reservationSuccess, reservationError].forEach(assertDiagnostics);
+    [normal, mobile, successMobile, pageError, submitError, reservationSuccess, reservationError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
       applyPayload: normal.state.applyPayloads.at(-1),
       reservationPayload: reservationSuccess.state.reservationPayloads.at(-1),
       normalConsoleErrors: normal.diagnostics.consoleErrors,
       mobileConsoleErrors: mobile.diagnostics.consoleErrors,
+      successMobileConsoleErrors: successMobile.diagnostics.consoleErrors,
       pageErrorConsoleErrors: pageError.diagnostics.consoleErrors,
       reservationErrorConsoleErrors: reservationError.diagnostics.consoleErrors,
       submitErrorConsoleErrors: submitError.diagnostics.consoleErrors,
