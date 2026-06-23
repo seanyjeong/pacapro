@@ -7,19 +7,25 @@ import type { Consultation } from '@/lib/types/consultation';
 import { cn } from '@/lib/utils/cn';
 
 interface EnrolledConsultationsWorkQueueProps {
+  activeStatus: string;
   confirmedCount: number;
   hasWeeklyHours: boolean;
   nextConsultation: Consultation | null;
   onCreate: () => void;
+  onFilterConfirmed: () => void;
+  onFilterPending: () => void;
   pendingCount: number;
   totalCount: number;
 }
 
 export function EnrolledConsultationsWorkQueue({
+  activeStatus,
   confirmedCount,
   hasWeeklyHours,
   nextConsultation,
   onCreate,
+  onFilterConfirmed,
+  onFilterPending,
   pendingCount,
   totalCount,
 }: EnrolledConsultationsWorkQueueProps) {
@@ -41,8 +47,20 @@ export function EnrolledConsultationsWorkQueue({
         </div>
 
         <div className="mt-4 space-y-2">
-          <QueueRow label="확인 대기" value={`${pendingCount}건`} />
-          <QueueRow label="일정 확정" value={`${confirmedCount}건`} />
+          <QueueRow
+            ariaLabel="확인 대기 보기"
+            label="확인 대기"
+            pressed={activeStatus === 'pending'}
+            value={`${pendingCount}건`}
+            onClick={onFilterPending}
+          />
+          <QueueRow
+            ariaLabel="일정 확정 보기"
+            label="일정 확정"
+            pressed={activeStatus === 'confirmed'}
+            value={`${confirmedCount}건`}
+            onClick={onFilterConfirmed}
+          />
           <QueueRow label="후속 처리" value={`${followUpCount}건`} />
         </div>
 
@@ -106,11 +124,48 @@ export function EnrolledConsultationsWorkQueue({
   );
 }
 
-function QueueRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm">
+function QueueRow({
+  ariaLabel,
+  label,
+  onClick,
+  pressed = false,
+  value,
+}: {
+  ariaLabel?: string;
+  label: string;
+  onClick?: () => void;
+  pressed?: boolean;
+  value: string;
+}) {
+  const className = cn(
+    'flex w-full items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm',
+    onClick && 'text-left transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+    pressed && 'border-primary/40 bg-primary/5'
+  );
+  const content = (
+    <>
       <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold text-foreground">{value}</span>
+    </>
+  );
+
+  if (onClick) {
+    return (
+      <button
+        aria-label={ariaLabel || label}
+        aria-pressed={pressed}
+        className={className}
+        type="button"
+        onClick={onClick}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <div className={className}>
+      {content}
     </div>
   );
 }

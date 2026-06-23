@@ -171,9 +171,17 @@ async function waitForEnrolledShell(page) {
   await board.getByText('확인 대기').first().waitFor();
 }
 
+async function waitForHit(state, expected) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if (state.hits.some((hit) => hit.includes(expected))) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`missing API hit containing ${expected}: ${state.hits.join(' | ')}`);
+}
+
 async function runDesktop(browser) {
   const result = await createEnrolledPage(browser, 'success');
-  const { context, page } = result;
+  const { context, page, state } = result;
 
   await page.goto('/consultations/enrolled', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '재원생상담', exact: true }).waitFor();
@@ -182,6 +190,18 @@ async function runDesktop(browser) {
   const board = page.getByTestId('enrolled-consultations-work-queue');
   await board.getByText('확인 대기 1건').waitFor();
   await board.getByText('일정 확정 1건').waitFor();
+  const pendingFilter = board.getByRole('button', { name: '확인 대기 보기' });
+  await pendingFilter.click();
+  if ((await pendingFilter.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('enrolled consultations pending queue filter is not active');
+  }
+  await waitForHit(state, 'status=pending');
+  const confirmedFilter = board.getByRole('button', { name: '일정 확정 보기' });
+  await confirmedFilter.click();
+  if ((await confirmedFilter.getAttribute('aria-pressed')) !== 'true') {
+    throw new Error('enrolled consultations confirmed queue filter is not active');
+  }
+  await waitForHit(state, 'status=confirmed');
   await board.getByRole('link', { name: '상담 달력' }).waitFor();
   if ((await board.getByRole('link', { name: '상담 달력' }).getAttribute('href')) !== '/consultations/calendar?type=learning') {
     throw new Error('learning calendar quick link mismatch');

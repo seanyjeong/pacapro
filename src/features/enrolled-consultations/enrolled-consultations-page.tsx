@@ -20,6 +20,9 @@ export default function EnrolledConsultationsPage() {
   const confirmedCount = state.stats.confirmed || state.consultations.filter((item) => item.status === 'confirmed').length;
   const hasWeeklyHours = state.weeklyHours.some((hour) => hour.isAvailable && hour.startTime && hour.endTime);
   const nextConsultation = state.consultations.find((item) => item.status === 'pending' || item.status === 'confirmed') || state.consultations[0] || null;
+  const toggleStatusFilter = (status: string) => {
+    state.setStatusFilter(state.statusFilter === status ? '' : status);
+  };
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 pb-24 md:max-w-7xl" data-testid="enrolled-consultations-operations-workspace">
@@ -54,10 +57,13 @@ export default function EnrolledConsultationsPage() {
             </div>
             <aside className="order-1 min-w-0 xl:order-2">
               <EnrolledConsultationsWorkQueue
+                activeStatus={state.statusFilter}
                 confirmedCount={confirmedCount}
                 hasWeeklyHours={hasWeeklyHours}
                 nextConsultation={nextConsultation}
                 onCreate={state.openCreateModal}
+                onFilterConfirmed={() => toggleStatusFilter('confirmed')}
+                onFilterPending={() => toggleStatusFilter('pending')}
                 pendingCount={pendingCount}
                 totalCount={totalCount}
               />
