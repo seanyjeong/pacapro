@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { SmsComposeCard } from './sms-compose-card';
 import { SmsInfoPanel } from './sms-info-panel';
 import { SmsLogsCard } from './sms-logs-card';
+import { SmsSendConfirmDialog } from './sms-send-confirm-dialog';
 import { TabletSmsHeader } from './tablet-sms-header';
 import { getRecipientCount } from './sms-utils';
 import { useSmsPageState } from './use-sms-page-state';
@@ -60,6 +61,14 @@ export function TabletSmsPage() {
           <SmsLogsCard logs={sms.logs} isLoading={sms.logsLoading} errorMessage={sms.logsError} />
         </aside>
       </div>
+
+      <SmsSendConfirmDialog
+        confirmation={sms.sendConfirmation}
+        open={Boolean(sms.sendConfirmation)}
+        sending={sms.sending}
+        onConfirm={sms.confirmSend}
+        onOpenChange={sms.handleSendConfirmationOpenChange}
+      />
     </main>
   );
 }

@@ -5,6 +5,7 @@ import apiClient, { type APIRequestConfig } from '@/lib/api/client';
 import { smsAPI } from '@/lib/api/sms';
 import type {
   GradeFilter,
+  MessageType,
   RecipientType,
   SendMode,
   SmsImageFile,
@@ -16,7 +17,6 @@ import type {
 } from './sms-types';
 import {
   buildSmsPayload,
-  createSendConfirmMessage,
   formatPhoneNumber,
   getContentBytes,
   getIndividualTargetPhone,
@@ -28,6 +28,12 @@ const SILENT_CONFIG: APIRequestConfig = { suppressErrorToast: true };
 const MAX_IMAGE_COUNT = 3;
 const MAX_IMAGE_SIZE = 300 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+
+export interface SmsSendConfirmation {
+  recipientCount: number;
+  messageType: MessageType;
+  imageCount: number;
+}
 
 export function useSmsPageState() {
   const searchParams = useSearchParams();
@@ -55,6 +61,7 @@ export function useSmsPageState() {
   const [recipientsError, setRecipientsError] = useState<string | null>(null);
   const [senderNumbersError, setSenderNumbersError] = useState<string | null>(null);
   const [selectedSenderId, setSelectedSenderId] = useState<number | null>(null);
+  const [sendConfirmation, setSendConfirmation] = useState<SmsSendConfirmation | null>(null);
 
   const contentBytes = useMemo(() => getContentBytes(content), [content]);
   const messageType = useMemo(() => getMessageType(contentBytes, images.length), [contentBytes, images.length]);
@@ -286,11 +293,20 @@ export function useSmsPageState() {
     return recipientCount;
   };
 
-  const handleSend = async () => {
+  const handleSend = () => {
     const recipientCount = validateBeforeSend();
     if (recipientCount === null) return;
 
-    if (!window.confirm(createSendConfirmMessage(recipientCount, messageType, images.length))) return;
+    setSendConfirmation({
+      recipientCount,
+      messageType,
+      imageCount: images.length,
+    });
+  };
+
+  const confirmSend = async () => {
+    const recipientCount = validateBeforeSend();
+    if (recipientCount === null) return;
 
     setSending(true);
     try {
@@ -307,12 +323,18 @@ export function useSmsPageState() {
       });
       const result = await smsAPI.send(payload, SILENT_CONFIG);
       toast.success(result.message || '문자를 발송했습니다.');
+      setSendConfirmation(null);
       void loadLogs();
     } catch {
       toast.error('문자 발송에 실패했습니다. 수신자와 발신번호를 확인한 뒤 다시 시도해주세요.');
     } finally {
       setSending(false);
     }
+  };
+
+  const handleSendConfirmationOpenChange = (open: boolean) => {
+    if (open || sending) return;
+    setSendConfirmation(null);
   };
 
   return {
@@ -336,6 +358,7 @@ export function useSmsPageState() {
     recipientsError,
     senderNumbersError,
     selectedSenderId,
+    sendConfirmation,
     loadErrors: [recipientsError, senderNumbersError, logsError].filter(Boolean) as string[],
     contentBytes,
     isMMS,
@@ -355,6 +378,8 @@ export function useSmsPageState() {
     handleImageSelect,
     removeImage,
     handleSend,
+    confirmSend,
+    handleSendConfirmationOpenChange,
     reloadLogs: loadLogs,
   };
 }

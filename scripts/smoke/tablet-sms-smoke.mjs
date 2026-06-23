@@ -99,11 +99,25 @@ async function createTabletSmsPage(browser, mode, viewport) {
   return { context, diagnostics, page, state };
 }
 
+async function clickWithoutNativeDialog(page, locator, label) {
+  const nativeDialog = page
+    .waitForEvent('dialog', { timeout: 800 })
+    .then(async (dialog) => {
+      const message = dialog.message();
+      await dialog.dismiss();
+      return message;
+    })
+    .catch(() => null);
+
+  await locator.click();
+  const message = await nativeDialog;
+  if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
+}
+
 async function runPrefilledStudent(browser) {
   const result = await createTabletSmsPage(browser, 'success', { width: 1180, height: 820 });
   const { context, page, state } = result;
 
-  page.on('dialog', (dialog) => dialog.accept());
   await page.goto('/tablet/sms?studentId=41&recipient=parent', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '김진우 문자 보내기' }).waitFor();
   const detailLink = page.getByRole('link', { name: '김진우 학생 상세' });
@@ -116,8 +130,13 @@ async function runPrefilledStudent(browser) {
   await page.getByRole('button', { name: /학부모에게/ }).waitFor();
   await page.getByLabel('발신번호').selectOption('7');
   await page.getByPlaceholder(/내용을 입력해주세요/).fill('오늘 상담 후속 안내입니다.');
-  await page.getByRole('button', { name: 'SMS 발송' }).click();
+  await clickWithoutNativeDialog(page, page.getByRole('button', { name: 'SMS 발송' }), 'tablet sms send');
+  const dialog = page.getByRole('alertdialog');
+  await dialog.getByRole('heading', { name: '문자 발송 확인' }).waitFor();
+  await dialog.getByText('1명에게 SMS를 발송합니다.').waitFor();
+  await dialog.getByRole('button', { name: '발송' }).click();
   await page.getByText('문자를 발송했습니다.').waitFor();
+  await dialog.waitFor({ state: 'hidden' });
 
   if (state.sendPayload?.target !== 'custom') {
     throw new Error(`tablet SMS target mismatch: ${JSON.stringify(state.sendPayload)}`);

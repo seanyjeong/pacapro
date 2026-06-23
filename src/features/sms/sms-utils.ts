@@ -82,11 +82,3 @@ export function buildSmsPayload(params: {
     senderNumberId,
   };
 }
-
-export function createSendConfirmMessage(
-  recipientCount: number,
-  messageType: MessageType,
-  imageCount: number
-): string {
-  return `${recipientCount}명에게 ${messageType}를 발송하시겠습니까?${imageCount > 0 ? `\n\n이미지 ${imageCount}장 첨부` : ''}`;
-}
