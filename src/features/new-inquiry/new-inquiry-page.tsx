@@ -269,6 +269,7 @@ export function NewInquiryPage() {
         createForm={h.createForm}
         creating={h.creating}
         generateTimeSlots={h.generateTimeSlots}
+        hasWeeklyHours={hasWeeklyHours}
         loadingBookedTimes={h.loadingBookedTimes}
         onFormChange={h.setCreateForm}
         onLoadBookedTimes={h.loadBookedTimes}

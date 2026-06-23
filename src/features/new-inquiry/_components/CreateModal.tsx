@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import Link from 'next/link';
 import type { CreateForm } from '../_types';
+import { TimeReadinessPanel } from './TimeReadinessPanel';
 
 interface CreateModalProps {
   open: boolean;
@@ -20,6 +21,7 @@ interface CreateModalProps {
   onFormChange: (form: CreateForm) => void;
   creating: boolean;
   bookedTimes: string[];
+  hasWeeklyHours: boolean;
   loadingBookedTimes: boolean;
   generateTimeSlots: (date: string) => string[];
   onLoadBookedTimes: (date: string) => void;
@@ -33,6 +35,7 @@ export function CreateModal({
   onFormChange,
   creating,
   bookedTimes,
+  hasWeeklyHours,
   loadingBookedTimes,
   generateTimeSlots,
   onLoadBookedTimes,
@@ -195,6 +198,7 @@ export function CreateModal({
               <h3 className="text-sm font-semibold text-foreground">상담 일정</h3>
               <p className="text-xs text-muted-foreground">지점 상담 설정의 요일별 운영시간을 기준으로 선택지가 표시됩니다.</p>
             </div>
+            <TimeReadinessPanel hasWeeklyHours={hasWeeklyHours} />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Field label="상담 날짜" required htmlFor="new-inquiry-date">
                 <Input

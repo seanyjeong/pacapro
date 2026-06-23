@@ -138,6 +138,10 @@ async function runMissingHours(browser) {
 
   await openCreateDialog(page);
   await page.getByTestId('new-inquiry-work-queue').getByText('상담 시간 설정 필요').waitFor();
+  const readiness = page.getByTestId('new-inquiry-time-readiness');
+  await readiness.getByRole('heading', { name: '상담 시간 설정 필요' }).waitFor();
+  await readiness.getByText('요일별 상담 가능 시간을 먼저 등록해야 합니다.').waitFor();
+  await readiness.getByRole('link', { name: '상담 설정 열기' }).waitFor();
   await page.getByLabel('상담 날짜').fill(TEST_DATE);
   await page.getByText('상담 가능 시간이 설정되지 않았습니다').waitFor({ timeout: 10000 });
   await page.getByRole('link', { name: '상담 설정으로 이동' }).waitFor();
