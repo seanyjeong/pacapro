@@ -16,6 +16,8 @@ import { studentsAPI } from '@/lib/api/students';
 import { toast } from 'sonner';
 import { truncateToThousands } from '@/lib/utils/payment-helpers';
 
+const RESUME_ERROR_MESSAGE = '복귀 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+
 // 휴원 학생 타입 (무기한 휴원 지원)
 export interface RestEndedStudent {
   id: number;
@@ -167,7 +169,7 @@ export function StudentResumeModal({
       setProcessing(true);
       setError('');
 
-      const result = await studentsAPI.resumeStudent(student.id, resumeDate);
+      const result = await studentsAPI.resumeStudent(student.id, resumeDate, { suppressErrorToast: true });
 
       toast.success('복귀 처리 완료', {
         description: result.message,
@@ -176,8 +178,8 @@ export function StudentResumeModal({
       onSuccess();
       handleClose();
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      setError(axiosErr.response?.data?.message || '복귀 처리 중 오류가 발생했습니다.');
+      console.warn('학생 복귀 처리에 실패했습니다.', err);
+      setError(RESUME_ERROR_MESSAGE);
     } finally {
       setProcessing(false);
     }
@@ -287,7 +289,7 @@ export function StudentResumeModal({
             )}
 
             {error && (
-              <div className="flex items-center gap-1 text-sm text-red-600 dark:text-red-400">
+              <div role="alert" className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
                 <AlertTriangle className="w-4 h-4" />
                 {error}
               </div>

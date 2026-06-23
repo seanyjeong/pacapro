@@ -173,7 +173,7 @@ export const studentsAPI = {
    * @param id - 학생 ID
    * @param resumeDate - 복귀 날짜 (YYYY-MM-DD) - 없으면 오늘
    */
-  resumeStudent: async (id: number, resumeDate?: string): Promise<{
+  resumeStudent: async (id: number, resumeDate?: string, config?: APIRequestConfig): Promise<{
     message: string;
     student: Student;
     scheduleAssigned: {
@@ -192,7 +192,7 @@ export const studentsAPI = {
   }> => {
     return await apiClient.post(`/students/${id}/resume`, {
       resume_date: resumeDate
-    });
+    }, config);
   },
 
   /**
