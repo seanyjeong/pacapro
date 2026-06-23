@@ -67,6 +67,10 @@ export function useSmsPageState() {
   const messageType = useMemo(() => getMessageType(contentBytes, images.length), [contentBytes, images.length]);
   const isMMS = messageType === 'MMS';
   const isLMS = messageType === 'LMS';
+  const recipientCount = useMemo(
+    () => getRecipientCount(sendMode, recipientType, customPhones, recipientsCount, selectedStudent),
+    [customPhones, recipientType, recipientsCount, selectedStudent, sendMode]
+  );
 
   useEffect(() => {
     imagesRef.current = images;
@@ -285,9 +289,12 @@ export function useSmsPageState() {
       }
     }
 
-    const recipientCount = getRecipientCount(sendMode, recipientType, customPhones, recipientsCount);
     if (recipientCount === 0) {
       toast.error('발송할 수신자가 없습니다.');
+      return null;
+    }
+    if (!selectedSenderId) {
+      toast.error('발신번호를 선택해주세요. 설정에서 발신번호를 확인한 뒤 다시 시도해주세요.');
       return null;
     }
     return recipientCount;
@@ -359,6 +366,7 @@ export function useSmsPageState() {
     senderNumbersError,
     selectedSenderId,
     sendConfirmation,
+    recipientCount,
     loadErrors: [recipientsError, senderNumbersError, logsError].filter(Boolean) as string[],
     contentBytes,
     isMMS,

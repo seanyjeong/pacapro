@@ -63,7 +63,7 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'GET' && path === '/sms/sender-numbers') {
-      if (state.mode === 'load-error') {
+      if (state.mode === 'load-error' || state.mode === 'sender-error') {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
       }
       return jsonRoute(route, {
@@ -245,6 +245,33 @@ async function runLoadError(browser) {
   return result;
 }
 
+async function runMissingSenderPreventsSend(browser) {
+  const result = await createSmsPage(browser, 'sender-error');
+  const { context, page, state } = result;
+
+  await page.goto('/sms', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
+  await page.getByRole('heading', { name: '문자 준비 정보를 일부 불러오지 못했습니다' }).waitFor();
+  await page.getByPlaceholder(/내용을 입력해주세요/).fill('발신번호가 없으면 발송하지 않습니다.');
+  const sendButton = page.getByRole('button', { name: 'SMS 발송' });
+  await page.waitForFunction(() => {
+    const button = Array.from(document.querySelectorAll('button')).find((item) => item.textContent?.includes('SMS 발송'));
+    return button instanceof HTMLButtonElement && !button.disabled;
+  });
+  await clickWithoutNativeDialog(page, sendButton, 'sms missing sender send');
+  await page.getByText('발신번호를 선택해주세요. 설정에서 발신번호를 확인한 뒤 다시 시도해주세요.').waitFor();
+  if (await page.getByRole('alertdialog').isVisible().catch(() => false)) {
+    throw new Error('SMS confirmation dialog opened without a sender number');
+  }
+  if (state.sendPayload) throw new Error(`SMS was sent without a sender number: ${JSON.stringify(state.sendPayload)}`);
+
+  await assertNoRawVisibleText(page, 'sms missing sender');
+  await assertNoHorizontalOverflow(page, 'sms missing sender');
+
+  await context.close();
+  return result;
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -257,11 +284,13 @@ async function main() {
     const prefilled = await runPrefilledStudent(browser);
     const mobile = await runMobile(browser);
     const loadError = await runLoadError(browser);
-    [desktop, prefilled, mobile, loadError].forEach(assertDiagnostics);
+    const missingSender = await runMissingSenderPreventsSend(browser);
+    [desktop, prefilled, mobile, loadError, missingSender].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       errorConsoleErrors: loadError.diagnostics.consoleErrors,
       errorHits: loadError.state.hits,
+      missingSenderHits: missingSender.state.hits,
       mobileHits: mobile.state.hits,
       prefilledHits: prefilled.state.hits,
       prefilledPayload: prefilled.state.sendPayload,

@@ -8,24 +8,17 @@ import { SmsInfoPanel } from './sms-info-panel';
 import { SmsLogsCard } from './sms-logs-card';
 import { SmsSendConfirmDialog } from './sms-send-confirm-dialog';
 import { TabletSmsHeader } from './tablet-sms-header';
-import { getRecipientCount } from './sms-utils';
 import { useSmsPageState } from './use-sms-page-state';
 
 export function TabletSmsPage() {
   const sms = useSmsPageState();
   const orientation = useOrientation();
-  const recipientCount = getRecipientCount(
-    sms.sendMode,
-    sms.recipientType,
-    sms.customPhones,
-    sms.recipientsCount
-  );
 
   return (
     <main className="space-y-5 pb-20">
       <TabletSmsHeader
         messageType={sms.messageType}
-        recipientCount={recipientCount}
+        recipientCount={sms.recipientCount}
         senderCount={sms.senderNumbers.length}
         selectedStudent={sms.selectedStudent}
         onRefresh={sms.reloadLogs}

@@ -21,10 +21,11 @@ export function getRecipientCount(
   sendMode: SendMode,
   recipientType: RecipientType,
   customPhones: string[],
-  recipientsCount: SmsRecipientsCount
+  recipientsCount: SmsRecipientsCount,
+  selectedStudent?: SmsStudent | null
 ): number {
   if (sendMode === 'custom') return customPhones.filter((phone) => phone.trim()).length;
-  if (sendMode === 'individual') return 1;
+  if (sendMode === 'individual') return getIndividualTargetPhone(selectedStudent || null, recipientType) ? 1 : 0;
   return recipientType === 'student' ? recipientsCount.students : recipientsCount.parents;
 }
 

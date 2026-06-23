@@ -16,17 +16,7 @@ export function SMSPage() {
       <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
         <SmsHeader
           messageType={sms.messageType}
-          recipientCount={
-            sms.sendMode === 'all'
-              ? sms.recipientType === 'student'
-                ? sms.recipientsCount.students
-                : sms.recipientsCount.parents
-              : sms.sendMode === 'custom'
-                ? sms.customPhones.filter((phone) => phone.trim()).length
-                : sms.selectedStudent
-                  ? 1
-                  : 0
-          }
+          recipientCount={sms.recipientCount}
           senderCount={sms.senderNumbers.length}
         />
 
