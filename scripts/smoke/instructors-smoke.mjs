@@ -192,7 +192,8 @@ async function runListDesktop(browser) {
   const { context, page } = result;
 
   await page.goto('/instructors', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '강사 운영' }).waitFor();
+  await page.getByRole('heading', { exact: true, name: '강사 운영' }).waitFor();
+  await assertInstructorsWorkQueue(page, 'instructors work queue desktop');
   const desktopList = page.getByTestId('instructor-desktop-list');
   await desktopList.getByText('최강사').waitFor();
   await desktopList.getByText('박코치').waitFor();
@@ -213,7 +214,8 @@ async function runListMobile(browser) {
   const { context, page } = result;
 
   await page.goto('/instructors', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '강사 운영' }).waitFor();
+  await page.getByRole('heading', { exact: true, name: '강사 운영' }).waitFor();
+  await assertInstructorsWorkQueue(page, 'instructors work queue mobile');
   const mobileList = page.getByTestId('instructor-mobile-list');
   await mobileList.getByText('최강사').waitFor();
   await mobileList.getByText('45,000원 / 시급').waitFor();
@@ -226,6 +228,25 @@ async function runListMobile(browser) {
 
   await context.close();
   return result;
+}
+
+async function assertInstructorsWorkQueue(page, label) {
+  await page.getByTestId('instructors-operations-workspace').waitFor();
+  const board = page.getByTestId('instructors-work-queue');
+  await board.getByRole('heading', { name: '강사 운영 보드' }).waitFor();
+  await board.getByText(/현재 목록\s*3명/).waitFor();
+  await board.getByText(/재직\s*2명/).waitFor();
+  await board.getByText(/휴직\s*1명/).waitFor();
+  if ((await board.getByRole('link', { name: '수업스케줄' }).getAttribute('href')) !== '/schedules') {
+    throw new Error('instructor schedules link mismatch');
+  }
+  if ((await board.getByRole('link', { name: '급여 관리' }).getAttribute('href')) !== '/salaries') {
+    throw new Error('instructor salaries link mismatch');
+  }
+  if ((await board.getByRole('link', { name: '모바일 출근' }).getAttribute('href')) !== '/m/instructor') {
+    throw new Error('instructor mobile check-in link mismatch');
+  }
+  await assertNoRawVisibleText(page, label);
 }
 
 async function runListError(browser) {
