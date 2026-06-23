@@ -38,6 +38,8 @@ export function ExpensesOperationsBoard({
   onSearchChange,
   onViewModeChange,
 }: ExpensesOperationsBoardProps) {
+  const normalizedSearch = searchQuery.trim();
+
   return (
     <aside
       aria-label="지출 작업 보드"
@@ -59,15 +61,39 @@ export function ExpensesOperationsBoard({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Metric icon={<List className="h-4 w-4" />} label="총 건수" testId="expenses-metric-total" value={`${summary.totalCount}건`} />
+        <Metric
+          active={!normalizedSearch}
+          ariaLabel="전체 지출 보기"
+          icon={<List className="h-4 w-4" />}
+          label="총 건수"
+          testId="expenses-metric-total"
+          value={`${summary.totalCount}건`}
+          onClick={() => onSearchChange('')}
+        />
         <Metric
           icon={<TrendingDown className="h-4 w-4" />}
           label="총 지출"
           testId="expenses-metric-amount"
           value={`${formatAmount(summary.totalAmount)}원`}
         />
-        <Metric icon={<WalletCards className="h-4 w-4" />} label="환불 대기" testId="expenses-metric-refund" value={`${summary.refundPendingCount}건`} />
-        <Metric icon={<FileSpreadsheet className="h-4 w-4" />} label="급여 연동" testId="expenses-metric-salary" value={`${summary.salaryLinkedCount}건`} />
+        <Metric
+          active={normalizedSearch === '환불'}
+          ariaLabel="환불 대기 지출 보기"
+          icon={<WalletCards className="h-4 w-4" />}
+          label="환불 대기"
+          testId="expenses-metric-refund"
+          value={`${summary.refundPendingCount}건`}
+          onClick={() => onSearchChange('환불')}
+        />
+        <Metric
+          active={normalizedSearch === '급여'}
+          ariaLabel="급여 연동 지출 보기"
+          icon={<FileSpreadsheet className="h-4 w-4" />}
+          label="급여 연동"
+          testId="expenses-metric-salary"
+          value={`${summary.salaryLinkedCount}건`}
+          onClick={() => onSearchChange('급여')}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -123,21 +149,50 @@ export function ExpensesOperationsBoard({
 }
 
 interface MetricProps {
+  active?: boolean;
+  ariaLabel?: string;
   icon: ReactNode;
   label: string;
+  onClick?: () => void;
   testId: string;
   value: string;
 }
 
-function Metric({ icon, label, testId, value }: MetricProps) {
-  return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
+function Metric({ active, ariaLabel, icon, label, onClick, testId, value }: MetricProps) {
+  const content = (
+    <>
       <div className="mb-2 flex items-center gap-2 text-slate-500">
         {icon}
         <span className="text-xs font-medium">{label}</span>
       </div>
       <p className="text-lg font-semibold tracking-normal text-slate-950">{value}</p>
-    </div>
+    </>
+  );
+
+  if (!onClick) {
+    return (
+      <div className="rounded-md border border-slate-200 bg-slate-50 p-3" data-testid={testId}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      aria-label={ariaLabel}
+      aria-pressed={Boolean(active)}
+      className={cn(
+        'rounded-md border p-3 text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500/25',
+        active
+          ? 'border-blue-300 bg-blue-50 shadow-sm'
+          : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white'
+      )}
+      data-testid={testId}
+      type="button"
+      onClick={onClick}
+    >
+      {content}
+    </button>
   );
 }
 

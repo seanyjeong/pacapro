@@ -125,6 +125,25 @@ async function runNormal(browser) {
   await assertOperationsBoard(page);
   await page.locator('article:has-text("강남 지점 월세")').waitFor();
   await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor();
+  const operationsBoard = page.getByTestId('expenses-operations-board');
+  await operationsBoard.getByRole('button', { name: '환불 대기 지출 보기' }).click();
+  await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor();
+  await page.locator('article:has-text("강남 지점 월세")').waitFor({ state: 'hidden' });
+  if ((await page.getByLabel('지출 검색').inputValue()) !== '환불') {
+    throw new Error('refund metric did not sync the expense search input');
+  }
+  await operationsBoard.getByRole('button', { name: '급여 연동 지출 보기' }).click();
+  await page.locator('article:has-text("5월 강사 급여")').waitFor();
+  await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor({ state: 'hidden' });
+  if ((await page.getByLabel('지출 검색').inputValue()) !== '급여') {
+    throw new Error('salary metric did not sync the expense search input');
+  }
+  await operationsBoard.getByRole('button', { name: '전체 지출 보기' }).click();
+  await page.locator('article:has-text("강남 지점 월세")').waitFor();
+  await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor();
+  if ((await page.getByLabel('지출 검색').inputValue()) !== '') {
+    throw new Error('total metric did not clear the expense search input');
+  }
   const salaryRow = page.locator('article:has-text("5월 강사 급여")');
   await salaryRow.getByRole('button', { name: '5월 강사 급여 지출 상세 보기' }).waitFor();
   const salaryLink = salaryRow.getByRole('link', { name: '5월 강사 급여 급여 명세서 보기' });
