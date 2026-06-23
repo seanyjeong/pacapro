@@ -161,11 +161,13 @@ async function runCreateError(browser) {
 
   await gotoAcademyEvents(page);
   await page.getByRole('button', { name: '일정 등록', exact: true }).click();
-  await page.getByRole('heading', { name: '일정 등록' }).waitFor();
-  await page.getByPlaceholder('일정 제목').fill('저장 실패 테스트');
-  await page.locator('form button[type="submit"]').click();
-  await page.locator('form').getByText('저장 실패').waitFor();
-  await page.locator('form').getByText('학원 일정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  const dialog = page.getByRole('dialog', { name: '일정 등록' });
+  await dialog.waitFor();
+  await dialog.getByRole('button', { name: '일정 등록 닫기' }).waitFor();
+  await dialog.getByPlaceholder('일정 제목').fill('저장 실패 테스트');
+  await dialog.locator('form button[type="submit"]').click();
+  await dialog.locator('form').getByText('저장 실패').waitFor();
+  await dialog.locator('form').getByText('학원 일정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   if (result.state.createPayload?.event_date !== range.today) {
     throw new Error(`default event date mismatch: ${result.state.createPayload?.event_date} !== ${range.today}`);
   }

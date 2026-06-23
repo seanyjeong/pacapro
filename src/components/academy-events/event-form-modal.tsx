@@ -86,12 +86,22 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="mx-4 w-full max-w-md rounded-md border border-border bg-background shadow-xl">
+            <div
+                aria-labelledby="academy-event-form-title"
+                aria-modal="true"
+                className="mx-4 w-full max-w-md rounded-md border border-border bg-background shadow-xl"
+                role="dialog"
+            >
                 <div className="flex items-center justify-between p-4 border-b border-border">
-                    <h2 className="text-lg font-semibold text-foreground">
+                    <h2 id="academy-event-form-title" className="text-lg font-semibold text-foreground">
                         {event ? '일정 수정' : '일정 등록'}
                     </h2>
-                    <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="text-muted-foreground hover:text-foreground"
+                        aria-label={event ? '일정 수정 닫기' : '일정 등록 닫기'}
+                    >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
