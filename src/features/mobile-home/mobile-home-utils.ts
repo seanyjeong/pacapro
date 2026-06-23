@@ -1,7 +1,7 @@
 import type { MobileHomeUser } from './mobile-home-types';
 
 export function parseMobileHomeUser(): MobileHomeUser {
-  const fallback = { name: '', academyName: '' };
+  const fallback = { name: '', academyName: '', role: '' };
   const userStr = window.localStorage.getItem('user');
   if (!userStr) return fallback;
 
@@ -10,10 +10,22 @@ export function parseMobileHomeUser(): MobileHomeUser {
     return {
       name: user.name || user.username || '',
       academyName: user.academy?.name || user.academy_name || '',
+      role: user.role || '',
     };
   } catch {
     return fallback;
   }
+}
+
+export function getMobileRoleLabel(role: string) {
+  const labels: Record<string, string> = {
+    admin: '관리자 계정',
+    instructor: '강사 계정',
+    owner: '원장 계정',
+    staff: '데스크 계정',
+  };
+
+  return labels[role] ?? '운영 계정';
 }
 
 export function formatTodayLabels() {

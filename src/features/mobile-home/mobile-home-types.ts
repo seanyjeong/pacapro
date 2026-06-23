@@ -4,6 +4,7 @@ import type { NotificationSettings } from '@/lib/api/notificationSettings';
 export interface MobileHomeUser {
   name: string;
   academyName: string;
+  role: string;
 }
 
 export interface MobileHomeMenuItem {

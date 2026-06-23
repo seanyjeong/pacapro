@@ -83,6 +83,10 @@ async function runOwnerHome(browser) {
   await gotoWorkspace(page);
   await page.getByRole('heading', { name: 'PACA 일산' }).waitFor();
   await page.getByText('원장님 안녕하세요').waitFor();
+  const operationsPanel = page.getByTestId('mobile-home-operations-panel');
+  await operationsPanel.getByRole('heading', { name: '오늘 작업' }).waitFor();
+  await operationsPanel.getByText('4개 업무').waitFor();
+  await operationsPanel.getByText('원장 계정').waitFor();
 
   const expectedLinks = [
     ['학생 출석체크', '/m/attendance'],
@@ -130,6 +134,7 @@ async function runPermissionFilter(browser) {
   await gotoWorkspace(page);
   await page.getByRole('link', { name: /학생 출석체크/ }).waitFor();
   await page.getByRole('link', { name: /강사 출근체크/ }).waitFor();
+  await page.getByTestId('mobile-home-operations-panel').getByText('2개 업무').waitFor();
   if (await page.getByRole('link', { name: /미납자 확인/ }).count()) {
     throw new Error('payments menu should be hidden for staff without payments.view');
   }

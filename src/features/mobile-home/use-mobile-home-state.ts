@@ -16,12 +16,13 @@ import {
   makeMobileHomeMenu,
   MOBILE_HOME_MESSAGES,
 } from './mobile-home-constants';
-import { formatTodayLabels, getDeviceName, parseMobileHomeUser, withTimeout } from './mobile-home-utils';
+import { formatTodayLabels, getDeviceName, getMobileRoleLabel, parseMobileHomeUser, withTimeout } from './mobile-home-utils';
 
 export function useMobileHomeState() {
   const router = useRouter();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [userName, setUserName] = useState('');
+  const [userRoleLabel, setUserRoleLabel] = useState('운영 계정');
   const [academyName, setAcademyName] = useState('');
   const [pushSupported, setPushSupported] = useState(false);
   const [pushSubscribed, setPushSubscribed] = useState(false);
@@ -56,6 +57,7 @@ export function useMobileHomeState() {
 
     const user = parseMobileHomeUser();
     setUserName(user.name);
+    setUserRoleLabel(getMobileRoleLabel(user.role));
     setAcademyName(user.academyName);
 
     const canAccess = canEdit('schedules') || canView('payments') || canView('consultations');
@@ -150,5 +152,6 @@ export function useMobileHomeState() {
     settingsLoading,
     todayLabels,
     userName,
+    userRoleLabel,
   };
 }

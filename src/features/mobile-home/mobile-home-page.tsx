@@ -5,6 +5,7 @@ import packageJson from '../../../package.json';
 import { MobileHomeFooter } from './mobile-home-footer';
 import { MobileHomeHeader } from './mobile-home-header';
 import { MobileHomeMenu } from './mobile-home-menu';
+import { MobileHomeOperationsPanel } from './mobile-home-operations-panel';
 import { MobileHomePushPanel } from './mobile-home-push-panel';
 import { useMobileHomeState } from './use-mobile-home-state';
 
@@ -26,8 +27,13 @@ export function MobileHomePage() {
       <div className="mx-auto flex w-full max-w-md flex-col gap-5">
         <MobileHomeHeader
           academyName={state.academyName}
-          dateLabel={state.todayLabels.date}
           userName={state.userName}
+        />
+
+        <MobileHomeOperationsPanel
+          dateLabel={state.todayLabels.date}
+          items={state.menuItems}
+          roleLabel={state.userRoleLabel}
           weekdayLabel={state.todayLabels.weekday}
         />
 

@@ -17,23 +17,25 @@ export function MobileHomeMenu({ items }: MobileHomeMenuProps) {
   const visibleItems = items.filter((item) => item.permission);
 
   return (
-    <nav className="space-y-2" aria-label="모바일 업무 메뉴">
+    <nav className="grid grid-cols-2 gap-2" aria-label="모바일 업무 메뉴">
       {visibleItems.map((item) => {
         const Icon = item.icon;
         return (
           <Link
             key={item.href}
             href={item.href}
-            className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.99] dark:border-zinc-800 dark:bg-zinc-950"
+            className="flex min-h-32 flex-col rounded-lg border border-zinc-200 bg-white p-3 text-left shadow-sm transition active:scale-[0.99] dark:border-zinc-800 dark:bg-zinc-950"
           >
-            <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${toneClassNames[item.tone]}`}>
-              <Icon className="h-5 w-5" />
+            <span className="flex items-start justify-between gap-2">
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${toneClassNames[item.tone]}`}>
+                <Icon className="h-5 w-5" />
+              </span>
+              <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-zinc-400" />
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-base font-semibold text-zinc-950 dark:text-zinc-50">{item.label}</span>
-              <span className="mt-0.5 block truncate text-sm text-zinc-500 dark:text-zinc-400">{item.description}</span>
+            <span className="mt-4 block min-w-0">
+              <span className="block text-sm font-semibold leading-5 text-zinc-950 dark:text-zinc-50">{item.label}</span>
+              <span className="mt-1 block line-clamp-2 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{item.description}</span>
             </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-zinc-400" />
           </Link>
         );
       })}
