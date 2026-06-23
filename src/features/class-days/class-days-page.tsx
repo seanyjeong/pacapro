@@ -12,6 +12,7 @@ import { ClassDaysError } from './class-days-error';
 import { ClassDaysFilters } from './class-days-filters';
 import { ClassDaysHeader } from './class-days-header';
 import { ClassDaysLoading } from './class-days-loading';
+import { ClassDaysOperationsBoard } from './class-days-operations-board';
 import { ClassDaysSaveError } from './class-days-save-error';
 import { ClassDaysTable } from './class-days-table';
 import type { StudentEdit, TimeSlot } from './class-days-types';
@@ -242,6 +243,7 @@ export function ClassDaysPage() {
   const changedCount = Array.from(edits.values()).filter((edit) => edit.changed).length;
   const scheduledCount = students.filter((student) => student.class_days_next !== null).length;
   const hasActiveFilters = filterGrade !== 'all' || filterWeekly !== 'all' || searchQuery || focusedStudentId !== null;
+  const effectiveFromLabel = monthOptions.find((option) => option.value === effectiveFrom)?.label || '즉시 적용 (이번 달)';
 
   if (loading) {
     return <ClassDaysLoading />;
@@ -254,47 +256,67 @@ export function ClassDaysPage() {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
       <ClassDaysHeader totalCount={students.length} />
-      <ClassDaysControlBar
-        effectiveFrom={effectiveFrom}
-        monthOptions={monthOptions}
-        changedCount={changedCount}
-        scheduledCount={scheduledCount}
-        saving={saving}
-        onEffectiveFromChange={setEffectiveFrom}
-        onSave={handleSave}
-      />
-      <ClassDaysSaveError message={saveError} />
-      <ClassDaysFilters
-        filterGrade={filterGrade}
-        filterWeekly={filterWeekly}
-        focusedStudentName={focusedStudentName}
-        searchQuery={searchQuery}
-        resultCount={filteredStudents.length}
-        hasActiveFilters={!!hasActiveFilters}
-        onGradeChange={setFilterGrade}
-        onWeeklyChange={setFilterWeekly}
-        onSearchChange={setSearchQuery}
-        onReset={resetFilters}
-      />
-      <ClassDaysBulkEditor
-        selectedCount={selectedIds.size}
-        slots={bulkSlots}
-        onApply={applyBulkSlotsToSelected}
-        onChangeTimeSlot={changeBulkTimeSlot}
-        onClearSelection={clearSelection}
-        onToggleDay={toggleBulkDay}
-      />
-      <ClassDaysTable
-        students={filteredStudents}
-        selectedIds={selectedIds}
-        edits={edits}
-        onToggleSelectAll={toggleSelectAll}
-        onToggleSelect={toggleSelect}
-        onToggleDay={toggleDay}
-        onChangeDayTimeSlot={changeDayTimeSlot}
-        onResetEdit={resetStudentEdit}
-        onCancelSchedule={handleCancelSchedule}
-      />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+        <main className="order-2 min-w-0 space-y-5 xl:order-1">
+          <ClassDaysControlBar
+            effectiveFrom={effectiveFrom}
+            monthOptions={monthOptions}
+            changedCount={changedCount}
+            scheduledCount={scheduledCount}
+            saving={saving}
+            onEffectiveFromChange={setEffectiveFrom}
+            onSave={handleSave}
+          />
+          <ClassDaysSaveError message={saveError} />
+          <ClassDaysFilters
+            filterGrade={filterGrade}
+            filterWeekly={filterWeekly}
+            focusedStudentName={focusedStudentName}
+            searchQuery={searchQuery}
+            resultCount={filteredStudents.length}
+            hasActiveFilters={!!hasActiveFilters}
+            onGradeChange={setFilterGrade}
+            onWeeklyChange={setFilterWeekly}
+            onSearchChange={setSearchQuery}
+            onReset={resetFilters}
+          />
+          <ClassDaysBulkEditor
+            selectedCount={selectedIds.size}
+            slots={bulkSlots}
+            onApply={applyBulkSlotsToSelected}
+            onChangeTimeSlot={changeBulkTimeSlot}
+            onClearSelection={clearSelection}
+            onToggleDay={toggleBulkDay}
+          />
+          <ClassDaysTable
+            students={filteredStudents}
+            selectedIds={selectedIds}
+            edits={edits}
+            onToggleSelectAll={toggleSelectAll}
+            onToggleSelect={toggleSelect}
+            onToggleDay={toggleDay}
+            onChangeDayTimeSlot={changeDayTimeSlot}
+            onResetEdit={resetStudentEdit}
+            onCancelSchedule={handleCancelSchedule}
+          />
+        </main>
+        <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
+          <ClassDaysOperationsBoard
+            changedCount={changedCount}
+            effectiveFromLabel={effectiveFromLabel}
+            focusedStudentName={focusedStudentName}
+            hasActiveFilters={!!hasActiveFilters}
+            resultCount={filteredStudents.length}
+            saving={saving}
+            scheduledCount={scheduledCount}
+            selectedCount={selectedIds.size}
+            totalCount={students.length}
+            onClearSelection={clearSelection}
+            onResetFilters={resetFilters}
+            onSave={handleSave}
+          />
+        </div>
+      </div>
     </div>
   );
 }

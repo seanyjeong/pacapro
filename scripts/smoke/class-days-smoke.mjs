@@ -89,6 +89,13 @@ async function runDesktopSave(browser) {
 
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
+  await assertOperationsBoard(page, {
+    changed: 0,
+    focused: null,
+    result: 2,
+    scheduled: 1,
+    selected: 0,
+  });
   const effectiveFromLabel = await page.getByLabel('적용 시작월').locator('option:checked').textContent();
   if (effectiveFromLabel !== '즉시 적용 (이번 달)') {
     throw new Error(`class-days effective month label is blank or wrong: ${effectiveFromLabel}`);
@@ -106,7 +113,14 @@ async function runDesktopSave(browser) {
   await page.getByLabel('일괄 금요일 시간대').selectOption('afternoon');
   await page.getByRole('button', { name: '선택 학생에 적용' }).click();
   await page.getByText('2명 변경됨').waitFor();
-  await page.getByRole('button', { name: /저장/ }).click();
+  await assertOperationsBoard(page, {
+    changed: 2,
+    focused: null,
+    result: 2,
+    scheduled: 1,
+    selected: 2,
+  });
+  await page.getByTestId('class-days-operations-board').getByRole('button', { name: '적용 내용 저장' }).click();
   await page.getByText('수업일 변경이 저장되었습니다.').waitFor();
 
   if (!state.bulkPayload) throw new Error('class-days bulk payload was not sent');
@@ -128,6 +142,13 @@ async function runDesktopSave(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
+  await assertOperationsBoard(page, {
+    changed: 0,
+    focused: null,
+    result: 2,
+    scheduled: 1,
+    selected: 0,
+  });
   const jinwooCard = page.locator('article').filter({ hasText: '김진우' });
   await jinwooCard.waitFor();
   await jinwooCard.getByRole('link', { name: '김진우 학생 상세 보기' }).waitFor();
@@ -147,6 +168,13 @@ async function runFocusedStudent(browser) {
   await page.goto('/students/class-days?studentId=41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
   await page.getByText('김진우 집중 보기').waitFor();
+  await assertOperationsBoard(page, {
+    changed: 0,
+    focused: '김진우',
+    result: 1,
+    scheduled: 1,
+    selected: 0,
+  });
   await page.locator('tbody tr').filter({ hasText: '김진우' }).waitFor();
   const visibleRows = await page.locator('tbody tr').filter({ hasNotText: '표시할 학생이 없습니다.' }).count();
   if (visibleRows !== 1) throw new Error(`focused class-days row count mismatch: ${visibleRows}`);
@@ -159,6 +187,20 @@ async function runFocusedStudent(browser) {
   return result;
 }
 
+async function assertOperationsBoard(page, expected) {
+  const board = page.getByTestId('class-days-operations-board');
+  await board.waitFor();
+  await board.getByRole('heading', { name: '수업일 작업 보드' }).waitFor();
+  await board.getByText(new RegExp(`표시 학생\\s*${expected.result}명`)).waitFor();
+  await board.getByText(new RegExp(`선택 학생\\s*${expected.selected}명`)).waitFor();
+  await board.getByText(new RegExp(`변경 대기\\s*${expected.changed}명`)).waitFor();
+  await board.getByText(new RegExp(`예약 변경\\s*${expected.scheduled}명`)).waitFor();
+  await board.getByText(/적용 시작\s*즉시 적용 \(이번 달\)/).waitFor();
+  if (expected.focused) {
+    await board.getByText(new RegExp(`집중 학생\\s*${expected.focused}`)).waitFor();
+  }
+}
+
 async function runSaveError(browser) {
   const result = await createClassDaysPage(browser, 'save-error');
   const { context, page } = result;
@@ -166,7 +208,7 @@ async function runSaveError(browser) {
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
   await page.locator('tbody tr').filter({ hasText: '김진우' }).getByRole('button', { name: '김진우 화요일 선택' }).click();
-  await page.getByRole('button', { name: /저장/ }).click();
+  await page.getByTestId('class-days-operations-board').getByRole('button', { name: '적용 내용 저장' }).click();
   await page.getByRole('alert').getByRole('heading', { name: '저장 실패' }).waitFor();
   await page.getByText('수업일 변경을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'class days save error');
