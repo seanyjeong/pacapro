@@ -19,6 +19,7 @@ describe('cors config', () => {
 
         await expect(checkOrigin(options, 'https://pacapro.vercel.app')).resolves.toBe(true);
         await expect(checkOrigin(options, 'https://chejump.com')).resolves.toBe(true);
+        await expect(checkOrigin(options, 'https://seanyjeong.github.io')).resolves.toBe(true);
         await expect(checkOrigin(options, 'http://localhost:3000')).resolves.toBe(true);
         await expect(checkOrigin(options, 'http://localhost:3109')).resolves.toBe(true);
     });

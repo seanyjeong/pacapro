@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import apiClient from '@/lib/api/client';
+import { JungsiLinkButton } from './_components/JungsiLinkButton';
+import { jungsiAPI, type JungsiScoreData, type JungsiStatus } from '@/lib/api/jungsi';
 
 interface Student {
   id: number;
@@ -30,43 +32,11 @@ interface Student {
   status: string;
 }
 
-interface JungsiStatus {
-  success: boolean;
-  academyId: number;
-  branchName: string | null;
-  isConfigured: boolean;
-  jungsiApi: {
-    url: string;
-    healthy: boolean;
-  };
-  examTypes: string[];
-  defaultExam: string;
-}
-
-interface ScoreData {
-  year: string;
-  exam: string;
-  국어?: SubjectScore;
-  수학?: SubjectScore;
-  영어?: { 원점수?: number; 등급?: string };
-  한국사?: { 원점수?: number; 등급?: string };
-  탐구1?: SubjectScore;
-  탐구2?: SubjectScore;
-}
-
-interface SubjectScore {
-  선택과목?: string;
-  원점수?: number;
-  표준점수?: number;
-  백분위?: number;
-  등급?: string;
-}
-
 interface StudentAllScores {
-  '3월': ScoreData | null;
-  '6월': ScoreData | null;
-  '9월': ScoreData | null;
-  '수능': ScoreData | null;
+  '3월': JungsiScoreData | null;
+  '6월': JungsiScoreData | null;
+  '9월': JungsiScoreData | null;
+  '수능': JungsiScoreData | null;
 }
 
 const EXAM_TYPES = ['3월', '6월', '9월', '수능'] as const;
@@ -95,7 +65,7 @@ export default function PerformancePage() {
   const fetchJungsiStatus = async () => {
     try {
       setStatusLoading(true);
-      const data = await apiClient.get<JungsiStatus>('/jungsi/status');
+      const data = await jungsiAPI.getStatus();
       if (data.success) {
         setJungsiStatus(data);
       }
@@ -125,9 +95,7 @@ export default function PerformancePage() {
     try {
       const promises = EXAM_TYPES.map(async (exam) => {
         try {
-          const data = await apiClient.get<{ success: boolean; matched: boolean; scores: ScoreData }>(
-            `/jungsi/scores/${studentId}?exam=${encodeURIComponent(exam)}`
-          );
+          const data = await jungsiAPI.getScores(studentId, exam);
           if (data.success && data.matched && data.scores) {
             results[exam] = data.scores;
           }
@@ -152,7 +120,7 @@ export default function PerformancePage() {
   );
 
   // 성적 카드 렌더링
-  const renderScoreCard = (scores: ScoreData | null, examName: string) => {
+  const renderScoreCard = (scores: JungsiScoreData | null, examName: string) => {
     if (!scores) {
       return (
         <div className="bg-muted rounded-lg p-4">
@@ -234,8 +202,11 @@ export default function PerformancePage() {
             <p className="text-muted-foreground">
               이 학원은 아직 정시엔진과 연동되지 않았습니다.
               <br />
-              관리자에게 문의해주세요.
+              원장 계정으로 정시엔진 로그인을 연결해주세요.
             </p>
+            <div className="mt-5">
+              <JungsiLinkButton status={jungsiStatus} onRefresh={fetchJungsiStatus} />
+            </div>
           </CardContent>
         </Card>
       );
@@ -254,6 +225,9 @@ export default function PerformancePage() {
               <RefreshCw className="w-4 h-4 mr-2" />
               다시 시도
             </Button>
+            <div className="mt-3">
+              <JungsiLinkButton status={jungsiStatus} onRefresh={fetchJungsiStatus} />
+            </div>
           </CardContent>
         </Card>
       );
@@ -388,27 +362,30 @@ export default function PerformancePage() {
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">성적관리</h1>
           <p className="text-muted-foreground mt-1">내신 및 모의고사 성적 관리</p>
         </div>
-        {statusLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">연결 확인 중...</span>
-          </div>
-        ) : jungsiStatus?.jungsiApi.healthy ? (
-          <div className="flex items-center gap-2 text-green-600">
-            <CheckCircle2 className="w-4 h-4" />
-            <span className="text-sm">정시엔진 연결됨</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-red-600">
-            <AlertCircle className="w-4 h-4" />
-            <span className="text-sm">정시엔진 연결 안됨</span>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {statusLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">연결 확인 중...</span>
+            </div>
+          ) : jungsiStatus?.isConfigured && jungsiStatus?.jungsiApi.healthy ? (
+            <div className="flex items-center gap-2 text-green-600">
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="text-sm">정시엔진 연결됨</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-red-600">
+              <AlertCircle className="w-4 h-4" />
+              <span className="text-sm">정시엔진 연결 안됨</span>
+            </div>
+          )}
+          <JungsiLinkButton status={jungsiStatus} onRefresh={fetchJungsiStatus} compact />
+        </div>
       </div>
 
       {/* 탭 - 내신 / 모의고사·수능 */}

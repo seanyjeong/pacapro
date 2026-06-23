@@ -2,6 +2,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
     'https://pacapro.vercel.app',
     'https://chejump.com',
     'https://dev.sean8320.dedyn.io',
+    'https://seanyjeong.github.io',
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:3109',

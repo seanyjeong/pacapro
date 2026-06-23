@@ -45,7 +45,7 @@ app.use('/paca', generalLimiter);               // 전체 제한
 | `exports.js` | `/paca/exports` | 엑셀 내보내기 |
 | `incomes.js` | `/paca/incomes` | 기타수입 관리 |
 | `instructors.js` | `/paca/instructors` | 강사 관리 |
-| `jungsi.js` | `/paca/jungsi` | 정시엔진 연동 (성적 조회) |
+| `jungsi/` | `/paca/jungsi` | 정시엔진 연동 (로그인 연결/성적 조회) |
 | `notificationSettings.js` | `/paca/notification-settings` | 알림 설정 (글로벌) |
 | `onboarding.js` | `/paca/onboarding` | 온보딩 |
 | `payments.js` | `/paca/payments` | 결제/학원비 |
@@ -467,13 +467,21 @@ app.use('/paca', generalLimiter);               // 전체 제한
 | Method | Path | 설명 | 권한 |
 |--------|------|------|------|
 | GET | `/status` | 연동 상태 확인 | JWT |
+| POST | `/link/start` | 정시엔진 로그인 연동 시작 URL 발급 | owner/admin |
+| POST | `/link/callback` | 정시엔진 로그인 토큰 검증 후 학원 지점 연결 | Public callback |
+| DELETE | `/link` | 학원 정시엔진 연동 해제 | owner/admin |
 | GET | `/scores/:studentId` | 학생 수능 성적 조회 | JWT |
 | GET | `/match-preview` | 전체 학생 매칭 미리보기 | JWT |
 | POST | `/link` | 학생 수동 연결 | JWT |
 
 **쿼리 파라미터**
-- `year`: 학년도 (기본값: '2026')
+- `year`: 학년도 (기본값: '2027')
 - `exam`: 시험 유형 (기본값: '수능')
+
+**연동 저장**
+- 학원 지점 연결은 별도 테이블 없이 `academy_settings.settings.jungsiLink` JSON에 저장한다.
+- PACA 프론트는 `/link/start`의 `loginUrl`로 정시엔진 로그인을 열고, 정시엔진 로그인 페이지는 받은 JWT를 `/link/callback`으로 전달한다.
+- PACA 백엔드는 `JUNGSI_JWT_SECRET`으로 토큰을 검증한 뒤 JWT payload의 `branch`를 저장한다.
 
 **GET `/scores/:studentId` 응답**
 ```json
@@ -487,7 +495,7 @@ app.use('/paca', generalLimiter);               // 전체 제한
     "jungsi": { "student_id": 123, "student_name": "김철준", "school_name": "행신고등학교", "grade": "고3" }
   },
   "scores": {
-    "year": "2026",
+    "year": "2027",
     "exam": "수능",
     "국어": { "선택과목": "화법과 작문", "원점수": 85, "표준점수": 135, "백분위": 92, "등급": "2" },
     "수학": { "선택과목": "미적분", "원점수": 88, "표준점수": 140, "백분위": 95, "등급": "1" },
@@ -506,8 +514,9 @@ app.use('/paca', generalLimiter);               // 전체 제한
 
 **학교명 정규화**: "행신고등학교" → "행신고"로 변환하여 매칭
 
-**academy_id → branch_name 매핑**
-- academy_id=2 → '일산'
+**지점 매핑 정책**
+- 더 이상 `academy_id → branch_name`을 코드에 하드코딩하지 않는다.
+- 원장/관리자가 정시엔진 로그인으로 연결한 `branch`만 해당 학원의 연동 지점으로 사용한다.
 
 ---
 
@@ -520,6 +529,7 @@ app.use('/paca', generalLimiter);               // 전체 제한
 - `https://chejump.com`
 - `https://dev-paca.sean8320.dedyn.io`
 - `https://pacapro.vercel.app`
+- `https://seanyjeong.github.io`
 - `http://localhost:3000` (개발)
 
 ## 에러 핸들러
