@@ -101,7 +101,7 @@ async function openInstructorAttendance(page) {
   await page.goto('/schedules', { waitUntil: 'networkidle' });
   await page.getByTestId('schedules-workspace').waitFor();
   await page.getByText(/\d{4}년\s+\d{1,2}월/).first().waitFor();
-  await page.getByRole('button', { name: '강사 출근' }).click();
+  await page.getByRole('button', { name: '강사 출근' }).first().click();
 }
 
 async function runLoadError(browser) {

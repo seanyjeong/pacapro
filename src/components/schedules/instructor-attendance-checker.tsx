@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 
 type TimeSlot = 'morning' | 'afternoon' | 'evening';
 type AttendanceStatus = 'present' | 'absent' | 'late' | 'half_day';
+type InstructorOption = { id: number; name: string };
 
 const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
   present: '출근',
@@ -34,6 +35,21 @@ const ATTENDANCE_STATUS_COLORS: Record<AttendanceStatus, string> = {
 const LOAD_ERROR_MESSAGE = '강사 출근 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 const SAVE_ERROR_MESSAGE = '강사 출근 정보를 저장하지 못했습니다. 선택 내용을 확인한 뒤 다시 시도해주세요.';
 const QUIET_REQUEST = { suppressErrorToast: true };
+
+function normalizeInstructorsBySlot(
+  source: Partial<Record<TimeSlot, InstructorOption[]>> | undefined,
+  fallback: InstructorOption[]
+): Record<TimeSlot, InstructorOption[]> {
+  if (!source) {
+    return { morning: fallback, afternoon: fallback, evening: fallback };
+  }
+
+  return {
+    morning: source.morning || [],
+    afternoon: source.afternoon || [],
+    evening: source.evening || [],
+  };
+}
 
 interface InstructorAttendanceCheckerProps {
   date: string;
@@ -73,18 +89,8 @@ export function InstructorAttendanceChecker({ date, onSuccess }: InstructorAtten
       setLoadError(null);
       const response = await schedulesApi.getInstructorAttendanceByDate(date, QUIET_REQUEST);
 
-      // 시간대별 강사 목록 설정
-      if (response.instructors_by_slot) {
-        setInstructorsBySlot(response.instructors_by_slot);
-      } else {
-        // 레거시 호환: 모든 강사를 모든 시간대에 표시 (이전 API 버전)
-        const allInstructors = response.instructors || [];
-        setInstructorsBySlot({
-          morning: allInstructors,
-          afternoon: allInstructors,
-          evening: allInstructors,
-        });
-      }
+      const allInstructors = response.instructors || [];
+      setInstructorsBySlot(normalizeInstructorsBySlot(response.instructors_by_slot, allInstructors));
       setExistingRecords(response.attendances || []);
     } catch (err) {
       console.warn('강사 출근 정보를 불러오지 못했습니다.', err);

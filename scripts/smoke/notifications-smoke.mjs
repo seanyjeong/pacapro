@@ -352,6 +352,28 @@ async function runMobile(browser) {
   return result;
 }
 
+async function runAttendanceDeepLink(browser) {
+  const result = await createNotificationsPage(browser);
+  const { context, page, state } = result;
+
+  await page.goto('/settings/notifications?service=solapi&template=attendance', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '알림톡 및 SMS 설정' }).waitFor();
+  await page.getByRole('heading', { name: '솔라피 API 설정' }).waitFor();
+  await page.getByLabel('솔라피 출결 테스트 전화번호').fill('01099990000');
+  await page.getByRole('button', { name: '출결 테스트' }).click();
+  await page.getByText('출결관리 테스트 메시지가 발송되었습니다.').waitFor();
+  if (state.solapiAttendancePayload?.phone !== '01099990000') {
+    throw new Error(`attendance deep link payload mismatch: ${JSON.stringify(state.solapiAttendancePayload)}`);
+  }
+
+  await assertNoRawVisibleText(page, 'notifications attendance deep link');
+  await assertNoHorizontalOverflow(page, 'notifications attendance deep link');
+  await page.screenshot({ path: '/Users/etlab/paca-notifications-attendance-deeplink.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 async function runLoadError(browser) {
   const result = await createNotificationsPage(browser, { width: 390, height: 844 }, 'load-error');
   const { context, page } = result;
@@ -379,9 +401,11 @@ async function main() {
   try {
     const desktop = await runDesktop(browser);
     const mobile = await runMobile(browser);
+    const attendanceDeepLink = await runAttendanceDeepLink(browser);
     const loadError = await runLoadError(browser);
-    [desktop, mobile, loadError].forEach(assertDiagnostics);
+    [desktop, mobile, attendanceDeepLink, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
+      attendanceDeepLinkPayload: attendanceDeepLink.state.solapiAttendancePayload,
       desktopHits: desktop.state.hits,
       deletedSenderId: desktop.state.deletedSenderId,
       errorHits: loadError.state.hits,

@@ -36,6 +36,7 @@ export function InstructorAttendanceModal({
               variant="ghost"
               size="sm"
               onClick={onClose}
+              aria-label="닫기"
               className="h-8 w-8 p-0"
             >
               <X className="h-4 w-4" />

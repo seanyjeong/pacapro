@@ -146,6 +146,29 @@ export function useNotificationSettings() {
     loadSenderNumbers();
   }, [loadSenderNumbers]);
 
+  useEffect(() => {
+    if (loading) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const service = params.get('service');
+    const template = params.get('template');
+    const validTemplate = template === 'unpaid'
+      || template === 'consultation'
+      || template === 'trial'
+      || template === 'overdue'
+      || template === 'reminder'
+      || template === 'attendance';
+
+    if (service === 'sens' || service === 'solapi') {
+      setActiveTab(service);
+      setSettings(prev => (prev.service_type === service ? prev : { ...prev, service_type: service }));
+    }
+    if (validTemplate) {
+      setActiveTemplate(template);
+      setActiveSensTemplate(template);
+    }
+  }, [loading]);
+
   const handleAddSenderNumber = async () => {
     if (!newSenderPhone.trim()) {
       setMessage({ type: 'error', text: '발신번호를 입력해주세요.' });

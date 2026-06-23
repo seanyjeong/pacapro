@@ -197,7 +197,7 @@ async function runNormal(browser) {
   await page.getByTestId('schedules-workspace').waitFor();
   await page.getByRole('heading', { name: '수업 관리' }).waitFor();
   await page.getByText(/\d{4}년\s+\d{1,2}월/).first().waitFor();
-  await page.getByText('승인 대기').waitFor();
+  await page.getByRole('button', { name: /승인 대기\s+1/ }).waitFor();
   await page.getByTestId('selected-date-operations').waitFor();
   await page.getByText('선택일 운영').waitFor();
   await page.getByText('오후 실기 집중반').waitFor();
@@ -446,7 +446,7 @@ async function runExtraDayRequestError(browser) {
   await page.goto('/schedules', { waitUntil: 'networkidle' });
   await page.getByTestId('schedules-workspace').waitFor();
   await page.locator('button[title="강사 근무 배정 펼치기"]').click();
-  await page.getByRole('button', { name: '미배정 출근' }).click();
+  await page.getByRole('button', { name: '미배정 출근' }).first().click();
   await page.getByRole('heading', { name: '미배정 출근 요청' }).waitFor();
   await page.getByRole('combobox').selectOption('3');
   await page.getByRole('button', { name: '요청하기' }).click();
