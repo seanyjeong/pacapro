@@ -100,10 +100,10 @@ async function waitForState(predicate, label) {
 async function openReportsPage(page) {
   await page.goto('/reports', { waitUntil: 'domcontentloaded' });
   try {
-    await page.getByRole('heading', { name: '리포트' }).waitFor({ timeout: 10000 });
+    await page.getByRole('heading', { name: '리포트', exact: true }).waitFor({ timeout: 10000 });
   } catch {
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.getByRole('heading', { name: '리포트' }).waitFor();
+    await page.getByRole('heading', { name: '리포트', exact: true }).waitFor();
   }
 }
 
@@ -115,9 +115,10 @@ async function runNormal(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openReportsPage(page);
-  await page.getByText('Finance Desk').waitFor();
+  await page.locator('header').getByText('Finance Desk').waitFor();
+  await assertOperationsBoard(page);
   await page.getByText('970,000원').first().waitFor();
-  await page.getByText('500,000원').waitFor();
+  await page.getByLabel('수입 분석').getByText('500,000원').waitFor();
   const unpaidLink = page.getByRole('link', { name: /미수납 관리 1건/ });
   await unpaidLink.waitFor();
   if ((await unpaidLink.getAttribute('href')) !== '/payments?payment_status=pending') {
@@ -144,14 +145,16 @@ async function runNormal(browser) {
     throw new Error(`month query not called: ${JSON.stringify(state.hits)}`);
   }
 
-  await page.getByRole('button', { name: /엑셀 다운로드/ }).click();
-  await page.getByRole('button', { name: '수입 내역' }).click();
+  await page.getByTestId('reports-operations-board').getByRole('button', { name: '수입 내역 다운로드' }).click();
   await waitForState(() => state.exportHits.some((hit) => hit.startsWith('/exports/revenue?')), 'revenue export');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '리포트' }).waitFor();
-  await page.getByText('Finance Desk').waitFor();
+  await page.getByRole('heading', { name: '리포트', exact: true }).waitFor();
+  await page.locator('header').getByText('Finance Desk').waitFor();
+  await assertOperationsBoard(page);
+  await page.getByTestId('reports-operations-board').scrollIntoViewIfNeeded();
+  await page.screenshot({ path: '/Users/etlab/paca-reports-mobile-board.png', fullPage: false });
   await page.getByRole('link', { name: /미수납 관리 1건/ }).waitFor();
   await page.getByRole('link', { name: /학생 관리 재원생 2명/ }).waitFor();
   await assertNoRawVisibleText(page, 'reports mobile');
@@ -160,6 +163,17 @@ async function runNormal(browser) {
 
   await context.close();
   return { state, diagnostics };
+}
+
+async function assertOperationsBoard(page) {
+  const board = page.getByTestId('reports-operations-board');
+  await board.getByRole('heading', { name: '리포트 작업 보드' }).waitFor();
+  await board.getByTestId('reports-metric-net-profit').getByText('+570,000원').waitFor();
+  await board.getByTestId('reports-metric-collection').getByText('55%').waitFor();
+  await board.getByTestId('reports-metric-unpaid').getByText('500,000원').waitFor();
+  await board.getByRole('link', { name: /미수납 관리 1건/ }).waitFor();
+  await board.getByRole('button', { name: '수입 내역 다운로드' }).waitFor();
+  await board.getByRole('button', { name: '연간 재무 리포트 다운로드' }).waitFor();
 }
 
 async function runLoadError(browser) {

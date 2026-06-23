@@ -2,11 +2,11 @@
 
 import { PeopleAnalysisPanel } from './people-analysis-panel';
 import { ProfitAnalysisPanel } from './profit-analysis-panel';
-import { ReportActionStrip } from './report-action-strip';
 import { ReportSummaryStrip } from './report-summary-strip';
 import { ReportsErrorState } from './reports-error-state';
 import { ReportsHeader } from './reports-header';
 import { ReportsLoadingState } from './reports-loading-state';
+import { ReportsOperationsBoard } from './reports-operations-board';
 import { RevenueAnalysisPanel } from './revenue-analysis-panel';
 import { useReportsPageState } from './use-reports-page-state';
 
@@ -39,15 +39,30 @@ export function ReportsPage() {
         onMonthChange={state.setSelectedMonth}
       />
 
-      <ReportSummaryStrip computed={state.computed} stats={state.stats} />
-      <ReportActionStrip stats={state.stats} />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+        <div className="order-1 min-w-0 xl:col-start-1 xl:row-start-1">
+          <ReportSummaryStrip computed={state.computed} stats={state.stats} />
+        </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-        <RevenueAnalysisPanel computed={state.computed} stats={state.stats} />
-        <PeopleAnalysisPanel stats={state.stats} />
+        <main className="order-3 min-w-0 space-y-5 xl:col-start-1 xl:row-start-2">
+          <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
+            <RevenueAnalysisPanel computed={state.computed} stats={state.stats} />
+            <PeopleAnalysisPanel stats={state.stats} />
+          </div>
+
+          <ProfitAnalysisPanel computed={state.computed} stats={state.stats} />
+        </main>
+        <div className="order-2 min-w-0 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1">
+          <ReportsOperationsBoard
+            computed={state.computed}
+            exportingType={state.exportingType}
+            selectedMonth={state.selectedMonth}
+            stats={state.stats}
+            onExport={state.exportReport}
+            onMonthChange={state.setSelectedMonth}
+          />
+        </div>
       </div>
-
-      <ProfitAnalysisPanel computed={state.computed} stats={state.stats} />
     </div>
   );
 }

@@ -31,7 +31,7 @@ export function ReportSummaryStrip({ stats, computed }: ReportSummaryStripProps)
   ];
 
   return (
-    <section className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="리포트 요약">
+    <section className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-4" aria-label="리포트 요약">
       {items.map((item) => {
         const Icon = item.icon;
         return (
