@@ -208,30 +208,36 @@ export function PaymentList({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="font-semibold text-foreground">
-                          {formatPaymentAmount(payment.final_amount)}
-                        </div>
-                        {(payment.discount_amount > 0 || payment.additional_amount > 0) && (
-                          <div className="text-xs text-muted-foreground">
-                            {payment.base_amount !== payment.final_amount && (
-                              <>
-                                기본: {formatPaymentAmount(payment.base_amount)}
-                                {payment.discount_amount > 0 && (
-                                  <> | 할인: -{formatPaymentAmount(payment.discount_amount)}</>
+                        {isPartiallyPaid ? (
+                          <>
+                            <div className="font-semibold text-red-600 dark:text-red-400">
+                              {formatPaymentAmount(remainingAmount)}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              청구 {formatPaymentAmount(payment.final_amount)} · 납부 {formatPaymentAmount(paidAmount)}
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="font-semibold text-foreground">
+                              {formatPaymentAmount(payment.final_amount)}
+                            </div>
+                            {(payment.discount_amount > 0 || payment.additional_amount > 0) && (
+                              <div className="text-xs text-muted-foreground">
+                                {payment.base_amount !== payment.final_amount && (
+                                  <>
+                                    기본: {formatPaymentAmount(payment.base_amount)}
+                                    {payment.discount_amount > 0 && (
+                                      <> | 할인: -{formatPaymentAmount(payment.discount_amount)}</>
+                                    )}
+                                    {payment.additional_amount > 0 && (
+                                      <> | {payment.notes?.includes('비시즌 종강 일할') ? '비시즌 일할' : '추가'}: +{formatPaymentAmount(payment.additional_amount)}</>
+                                    )}
+                                  </>
                                 )}
-                                {payment.additional_amount > 0 && (
-                                  <> | {payment.notes?.includes('비시즌 종강 일할') ? '비시즌 일할' : '추가'}: +{formatPaymentAmount(payment.additional_amount)}</>
-                                )}
-                              </>
+                              </div>
                             )}
-                          </div>
-                        )}
-                        {isPartiallyPaid && (
-                          <div className="text-xs mt-0.5">
-                            <span className="text-muted-foreground">납부 {formatPaymentAmount(paidAmount)}</span>
-                            {' · '}
-                            <span className="font-semibold text-red-600 dark:text-red-400">미납 {formatPaymentAmount(remainingAmount)}</span>
-                          </div>
+                          </>
                         )}
                       </div>
                     </td>

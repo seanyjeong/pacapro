@@ -107,7 +107,19 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpda
         </div>
 
         <div className="border-t pt-4">
-          <h4 className="font-semibold mb-3">금액 정보</h4>
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="font-semibold">금액 정보</h4>
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded"
+                title="청구 금액(기본금액/할인) 수정"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                청구액 수정
+              </button>
+            )}
+          </div>
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-muted-foreground">기본 금액</span>
