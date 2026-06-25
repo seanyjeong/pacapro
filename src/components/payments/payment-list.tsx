@@ -168,6 +168,9 @@ export function PaymentList({
             <tbody className="bg-card divide-y divide-border">
               {payments.map((payment) => {
                 const overdue = isOverdue(payment);
+                const paidAmount = Number(payment.paid_amount) || 0;
+                const remainingAmount = Math.max(0, (Number(payment.final_amount) || 0) - paidAmount);
+                const isPartiallyPaid = payment.payment_status !== 'paid' && paidAmount > 0 && remainingAmount > 0;
                 return (
                   <tr
                     key={payment.id}
@@ -221,6 +224,13 @@ export function PaymentList({
                                 )}
                               </>
                             )}
+                          </div>
+                        )}
+                        {isPartiallyPaid && (
+                          <div className="text-xs mt-0.5">
+                            <span className="text-muted-foreground">납부 {formatPaymentAmount(paidAmount)}</span>
+                            {' · '}
+                            <span className="font-semibold text-red-600 dark:text-red-400">미납 {formatPaymentAmount(remainingAmount)}</span>
                           </div>
                         )}
                       </div>

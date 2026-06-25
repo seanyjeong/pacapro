@@ -35,6 +35,11 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpda
   const overdue = isOverdue(payment);
   const daysOverdue = overdue ? calculateOverdueDays(payment.due_date) : 0;
 
+  // 부분납부 표기: 일부라도 납부했고 미납 잔액이 남은 경우 (납부/잔액 분리 표시)
+  const paidAmount = Number(payment.paid_amount) || 0;
+  const remainingAmount = Math.max(0, (Number(payment.final_amount) || 0) - paidAmount);
+  const isPartiallyPaid = payment.payment_status !== 'paid' && paidAmount > 0 && remainingAmount > 0;
+
   // 납부일 수정 상태
   const [isEditingPaidDate, setIsEditingPaidDate] = useState(false);
   const [editPaidDate, setEditPaidDate] = useState(payment.paid_date?.split('T')[0] || '');
@@ -124,6 +129,18 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpda
               <span>최종 청구 금액</span>
               <span>{formatPaymentAmount(payment.final_amount)}</span>
             </div>
+            {isPartiallyPaid && (
+              <>
+                <div className="flex justify-between text-green-600 dark:text-green-400 pt-1">
+                  <span>납부 금액</span>
+                  <span className="font-medium">{formatPaymentAmount(paidAmount)}</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold text-red-600 dark:text-red-400">
+                  <span>미납 잔액</span>
+                  <span>{formatPaymentAmount(remainingAmount)}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
