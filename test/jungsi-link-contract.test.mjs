@@ -38,5 +38,6 @@ test('browser-facing PACA API calls use supermax directly', () => {
 
   const baseSource = readFileSync('src/lib/api/base-url.ts', 'utf8');
   assert.match(baseSource, /https:\/\/supermax\.kr\/paca/);
-  assert.match(baseSource, /LEGACY_PACA_API_URLS/);
+  assert.doesNotMatch(baseSource, /chejump\.com/);
+  assert.match(baseSource, /LOCAL_API_HOSTS/);
 });
