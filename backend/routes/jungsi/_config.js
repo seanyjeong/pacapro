@@ -2,6 +2,8 @@ const crypto = require('crypto');
 
 const EXAM_TYPES = ['3월', '6월', '9월', '수능'];
 const LINK_STATE_TTL_MS = 10 * 60 * 1000;
+const LEGACY_JUNGSI_FRONTEND_BASE = 'https://seanyjeong.github.io/maxjungsi222';
+const SUPERMAX_JUNGSI_FRONTEND_BASE = 'https://supermax.kr/jungsi';
 
 function trimSlash(value) {
   return String(value || '').replace(/\/+$/, '');
@@ -20,11 +22,15 @@ function getJungsiApiBase() {
 }
 
 function getJungsiFrontendBase() {
-  return trimSlash(process.env.JUNGSI_FRONTEND_BASE || 'https://seanyjeong.github.io/maxjungsi222');
+  const configuredBase = trimSlash(process.env.JUNGSI_FRONTEND_BASE);
+  if (!configuredBase || configuredBase === LEGACY_JUNGSI_FRONTEND_BASE) {
+    return SUPERMAX_JUNGSI_FRONTEND_BASE;
+  }
+  return configuredBase;
 }
 
 function getPacaApiBase() {
-  return trimSlash(process.env.PACA_API_BASE || process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca');
+  return trimSlash(process.env.PACA_API_BASE || 'https://supermax.kr/paca');
 }
 
 function getJungsiJwtSecret() {
