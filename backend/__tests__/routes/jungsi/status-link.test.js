@@ -29,6 +29,7 @@ const request = require('supertest');
 const jwt = require('jsonwebtoken');
 const db = require('../../../config/database');
 const axios = require('axios');
+const { getJungsiFrontendBase } = require('../../../routes/jungsi/_config');
 
 let mockUser;
 let settingsStore;
@@ -86,6 +87,38 @@ describe('GET /paca/jungsi/status', () => {
   });
 });
 
+describe('jungsi link config', () => {
+  test('기본 정시 로그인 베이스는 supermax.kr/jungsi를 사용한다', () => {
+    const originalBase = process.env.JUNGSI_FRONTEND_BASE;
+    delete process.env.JUNGSI_FRONTEND_BASE;
+
+    try {
+      expect(getJungsiFrontendBase()).toBe('https://supermax.kr/jungsi');
+    } finally {
+      if (originalBase === undefined) {
+        delete process.env.JUNGSI_FRONTEND_BASE;
+      } else {
+        process.env.JUNGSI_FRONTEND_BASE = originalBase;
+      }
+    }
+  });
+
+  test('기존 GitHub Pages 정시 로그인 베이스는 supermax.kr/jungsi로 정규화한다', () => {
+    const originalBase = process.env.JUNGSI_FRONTEND_BASE;
+    process.env.JUNGSI_FRONTEND_BASE = 'https://seanyjeong.github.io/maxjungsi222';
+
+    try {
+      expect(getJungsiFrontendBase()).toBe('https://supermax.kr/jungsi');
+    } finally {
+      if (originalBase === undefined) {
+        delete process.env.JUNGSI_FRONTEND_BASE;
+      } else {
+        process.env.JUNGSI_FRONTEND_BASE = originalBase;
+      }
+    }
+  });
+});
+
 describe('POST /paca/jungsi/link/start', () => {
   test('PACA 로그인 사용자의 학원에 1회성 연동 state를 저장하고 supermax callback URL을 반환한다', async () => {
     const res = await request(makeApp()).post('/paca/jungsi/link/start').send({});
@@ -93,7 +126,7 @@ describe('POST /paca/jungsi/link/start', () => {
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
     expect(res.body.mode).toBe('jungsi_login');
-    expect(res.body.loginUrl).toContain('https://seanyjeong.github.io/maxjungsi222/jungsilogin.html');
+    expect(res.body.loginUrl).toContain('https://supermax.kr/jungsi/jungsilogin.html');
     expect(res.body.loginUrl).toContain('paca_link_state=');
     expect(res.body.loginUrl).toContain(encodeURIComponent('https://supermax.kr/paca/jungsi/link/callback'));
     expect(res.body.loginUrl).not.toContain('chejump.com');
