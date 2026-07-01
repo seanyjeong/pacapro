@@ -1,8 +1,9 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { toast } from 'sonner';
+import { PACA_API_BASE_URL, PACA_API_FALLBACK_URL } from './base-url';
 
-const PRIMARY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
-const FALLBACK_URL = process.env.NEXT_PUBLIC_FALLBACK_API_URL || 'https://supermax.kr/paca';
+const PRIMARY_URL = PACA_API_BASE_URL;
+const FALLBACK_URL = PACA_API_FALLBACK_URL;
 
 function createClient(baseURL: string) {
     return axios.create({
@@ -86,6 +87,10 @@ class APIClient {
         return this.usingFallback ? this.fallback : this.primary;
     }
 
+    private hasFallback(): boolean {
+        return FALLBACK_URL !== PRIMARY_URL;
+    }
+
     private switchToFallback(): void {
         this.usingFallback = true;
         this.lastPrimaryCheck = Date.now();
@@ -97,7 +102,7 @@ class APIClient {
             const res: AxiosResponse<T> = await this.getClient().get(url, config);
             return res.data;
         } catch (error: any) {
-            if (!this.usingFallback && isNetworkError(error)) {
+            if (this.hasFallback() && !this.usingFallback && isNetworkError(error)) {
                 this.switchToFallback();
                 const res: AxiosResponse<T> = await this.fallback.get(url, config);
                 return res.data;
@@ -111,7 +116,7 @@ class APIClient {
             const res: AxiosResponse<T> = await this.getClient().post(url, data, config);
             return res.data;
         } catch (error: any) {
-            if (!this.usingFallback && isNetworkError(error)) {
+            if (this.hasFallback() && !this.usingFallback && isNetworkError(error)) {
                 this.switchToFallback();
                 const res: AxiosResponse<T> = await this.fallback.post(url, data, config);
                 return res.data;
@@ -125,7 +130,7 @@ class APIClient {
             const res: AxiosResponse<T> = await this.getClient().put(url, data, config);
             return res.data;
         } catch (error: any) {
-            if (!this.usingFallback && isNetworkError(error)) {
+            if (this.hasFallback() && !this.usingFallback && isNetworkError(error)) {
                 this.switchToFallback();
                 const res: AxiosResponse<T> = await this.fallback.put(url, data, config);
                 return res.data;
@@ -139,7 +144,7 @@ class APIClient {
             const res: AxiosResponse<T> = await this.getClient().delete(url, config);
             return res.data;
         } catch (error: any) {
-            if (!this.usingFallback && isNetworkError(error)) {
+            if (this.hasFallback() && !this.usingFallback && isNetworkError(error)) {
                 this.switchToFallback();
                 const res: AxiosResponse<T> = await this.fallback.delete(url, config);
                 return res.data;
@@ -153,7 +158,7 @@ class APIClient {
             const res: AxiosResponse<T> = await this.getClient().patch(url, data, config);
             return res.data;
         } catch (error: any) {
-            if (!this.usingFallback && isNetworkError(error)) {
+            if (this.hasFallback() && !this.usingFallback && isNetworkError(error)) {
                 this.switchToFallback();
                 const res: AxiosResponse<T> = await this.fallback.patch(url, data, config);
                 return res.data;

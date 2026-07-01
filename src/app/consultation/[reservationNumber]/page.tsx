@@ -3,8 +3,9 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { Calendar, Clock, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import { PACA_API_BASE_URL } from '@/lib/api/base-url';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
+const API_URL = PACA_API_BASE_URL;
 
 interface ReservationInfo {
   id: number;

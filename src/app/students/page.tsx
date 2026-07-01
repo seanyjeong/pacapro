@@ -14,6 +14,7 @@ import { TrialStudentList } from '@/components/students/trial-student-list';
 import { PendingStudentList } from '@/components/students/pending-student-list';
 import { SchoolStudentList } from '@/components/students/school-student-list';
 import { useStudents } from '@/hooks/use-students';
+import { PACA_API_BASE_URL } from '@/lib/api/base-url';
 import { cn } from '@/lib/utils';
 import type { StudentStatus, StudentFilters } from '@/lib/types/student';
 import {
@@ -138,7 +139,7 @@ function StudentsPageContent() {
     setExcelDownloading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com:8320/paca'}/exports/students`, {
+      const response = await fetch(`${PACA_API_BASE_URL}/exports/students`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

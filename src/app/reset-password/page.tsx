@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lock, ArrowLeft, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
+import { PACA_API_BASE_URL } from '@/lib/api/base-url';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
+const API_URL = PACA_API_BASE_URL;
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();

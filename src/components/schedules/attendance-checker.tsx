@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CheckCircle, Save, UserCheck, Calendar, UserPlus, Search, X, HelpCircle, AlertCircle } from 'lucide-react';
+import { PACA_API_BASE_URL } from '@/lib/api/base-url';
 import { cn } from '@/lib/utils';
 
 // 공결 사유 옵션
@@ -241,7 +242,7 @@ export function AttendanceChecker({
 
     setIsSearching(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca'}/students?search=${encodeURIComponent(searchQuery)}&status=active&limit=20`, {
+      const response = await fetch(`${PACA_API_BASE_URL}/students?search=${encodeURIComponent(searchQuery)}&status=active&limit=20`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
@@ -269,7 +270,7 @@ export function AttendanceChecker({
 
     setIsAddingStudent(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca'}/schedules/slot/student`, {
+      const response = await fetch(`${PACA_API_BASE_URL}/schedules/slot/student`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

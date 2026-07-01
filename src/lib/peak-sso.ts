@@ -1,4 +1,6 @@
-const PACA_API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
+import { PACA_API_BASE_URL } from './api/base-url';
+
+const PACA_API_URL = PACA_API_BASE_URL;
 const PEAK_FRONTEND_URL = process.env.NEXT_PUBLIC_PEAK_URL || 'https://peak-rose.vercel.app';
 
 interface PeakSsoResponse {
