@@ -30,9 +30,9 @@ export function SeasonActivePanel({ seasons, onRefresh }: SeasonActivePanelProps
           <p className="mt-1 text-sm text-slate-500">{formatDateRange(season.season_start_date, season.season_end_date)}</p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 lg:flex-nowrap">
           <Link
-            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')}
+            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'shrink-0 gap-1.5 whitespace-nowrap')}
             href={`/seasons/${season.id}`}
             aria-label={`${season.season_name} 상세`}
           >
@@ -40,7 +40,7 @@ export function SeasonActivePanel({ seasons, onRefresh }: SeasonActivePanelProps
             상세
           </Link>
           <Link
-            className={cn(buttonVariants({ size: 'sm' }), 'gap-1.5')}
+            className={cn(buttonVariants({ size: 'sm' }), 'shrink-0 gap-1.5 whitespace-nowrap')}
             href={`/seasons/${season.id}/enroll`}
             aria-label={`${season.season_name} 학생 등록`}
           >
@@ -48,14 +48,14 @@ export function SeasonActivePanel({ seasons, onRefresh }: SeasonActivePanelProps
             학생 등록
           </Link>
           <Link
-            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'gap-1.5')}
+            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'shrink-0 gap-1.5 whitespace-nowrap')}
             href={`/seasons/${season.id}/edit`}
             aria-label={`${season.season_name} 수정`}
           >
             <Edit2 className="h-4 w-4" />
             수정
           </Link>
-          <Button size="sm" variant="ghost" onClick={onRefresh}>
+          <Button className="shrink-0 whitespace-nowrap" size="sm" variant="ghost" onClick={onRefresh}>
             새로고침
           </Button>
         </div>

@@ -16,6 +16,7 @@ export interface Payment {
   additional_amount: number; // 추가 금액
   final_amount: number; // 최종 청구 금액
   paid_amount: number; // 납부 금액
+  remaining_amount?: number; // 남은 미납 금액
   paid_date?: string; // 납부일 (YYYY-MM-DD)
   due_date: string; // 납부 기한 (YYYY-MM-DD)
   payment_status: 'pending' | 'partial' | 'paid';

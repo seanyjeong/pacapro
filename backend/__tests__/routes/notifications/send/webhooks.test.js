@@ -17,7 +17,7 @@
  *  - DB 호출 통일 (ADR-005): pool.execute 만
  *  - 외부 API mock (sendAlimtalk + sendAlimtalkSolapi)
  *  - ADR-007 시그니처 보존
- *  - send-trial-today-auto-sens: 원본 ReferenceError (decryptField) 동작 보존
+ *  - send-trial-today-auto-sens: 복호화 후 SENS 체험수업 알림톡 발송
  */
 
 jest.mock('../../../../config/database', () => ({
@@ -64,7 +64,7 @@ const naverSens = require('../../../../utils/naverSens');
 const solapi = require('../../../../utils/solapi');
 const registerWebhooks = require('../../../../routes/notifications/send/webhooks');
 
-const VALID_API_KEY = 'replace-with-local-n8n-api-key';
+const VALID_API_KEY = 'paca-automation-api-key-2026';
 
 function buildApp() {
     const app = express();
@@ -76,6 +76,8 @@ function buildApp() {
 }
 
 beforeEach(() => {
+    process.env.PACA_NOTIFICATION_API_KEY = VALID_API_KEY;
+    delete process.env.N8N_API_KEY;
     jest.clearAllMocks();
     pool.execute.mockReset();
     pool.query.mockReset();
@@ -174,6 +176,12 @@ describe('POST /send-unpaid-today-auto-sens (X-API-Key)', () => {
         expect(pool.execute).toHaveBeenCalled();
         expect(pool.query).not.toHaveBeenCalled();
 
+        const unpaidQuery = pool.execute.mock.calls[1][0];
+        expect(unpaidQuery).toContain('GREATEST');
+        expect(unpaidQuery).toContain('p.paid_amount');
+        expect(unpaidQuery).toContain("NOT (p.payment_type = 'season' AND p.due_date > CURDATE())");
+        expect(unpaidQuery).toContain('nl.academy_id = s.academy_id');
+
         // ADR-007: sendAlimtalk 첫 인자 객체 셰이프 보존
         const [sensConfig] = naverSens.sendAlimtalk.mock.calls[0];
         expect(sensConfig).toEqual({
@@ -243,18 +251,22 @@ describe('POST /send-trial-today-auto-sens (X-API-Key, 원본 동작 보존)', (
         });
     });
 
-    test('200 — 원본 ReferenceError (decryptField) 동작 보존: 학원 단위 catch 로 떨어져 results 미포함', async () => {
-        // decryptField 가 정의되지 않아 trialStudents.length > 0 일 때 ReferenceError 발생.
-        // 원본 코드 동작: 학원 단위 try-catch 가 잡아서 logger.error 호출 후 results 에 미푸시.
+    test('200 — 체험학생이 있으면 SENS 체험수업 알림톡을 발송하고 로그를 남긴다', async () => {
+        const today = new Date().toISOString().split('T')[0];
         pool.execute
             .mockResolvedValueOnce([[{
                 academy_id: 1, academy_name: '학원A',
                 naver_access_key: 'AK', naver_secret_key: 'GOOD', naver_service_id: 'SID',
                 sens_trial_template_code: 'SENS_TRIAL',
+                sens_trial_template_content: '#{이름}님 #{학원명} 체험 #{체험일정}',
+                sens_trial_buttons: null,
             }]])
             .mockResolvedValueOnce([[
-                { id: 1, name: 'enc-name', phone: 'enc-phone', parent_phone: 'enc-parent', trial_dates: '[]' },
-            ]]);
+                { id: 1, name: '체험A', phone: null, parent_phone: '010-1234-5678', trial_dates: JSON.stringify([today]) },
+            ]])
+            .mockResolvedValueOnce([{ insertId: 123 }]);
+
+        naverSens.sendAlimtalk.mockResolvedValueOnce({ success: true, requestId: 'REQ-SENS-TRIAL' });
 
         const app = buildApp();
         const res = await request(app)
@@ -262,12 +274,24 @@ describe('POST /send-trial-today-auto-sens (X-API-Key, 원본 동작 보존)', (
             .set('x-api-key', VALID_API_KEY)
             .send({});
 
-        // ReferenceError 가 학원 단위 catch 로 떨어져 200 응답 + results 빈 배열 (원본 동작 보존)
         expect(res.status).toBe(200);
         expect(res.body.message).toBe('SENS 체험수업 자동발송 완료');
-        expect(res.body.results).toEqual([]); // 학원 catch 가 results.push 하지 않음
-        // 외부 API 호출 0건
-        expect(naverSens.sendAlimtalk).not.toHaveBeenCalled();
+        expect(res.body.results[0]).toEqual({
+            academy: '학원A',
+            sent: 1,
+            failed: 0,
+        });
+
+        const [sensConfig, templateCode, recipients] = naverSens.sendAlimtalk.mock.calls[0];
+        expect(sensConfig).toEqual({
+            naver_access_key: 'AK',
+            naver_secret_key: 'decrypted-GOOD',
+            naver_service_id: 'SID',
+            kakao_channel_id: undefined,
+        });
+        expect(templateCode).toBe('SENS_TRIAL');
+        expect(recipients[0].phone).toBe('010-1234-5678');
+        expect(recipients[0].content).toContain('체험A');
     });
 
     test('500 — 외부 5xx 시 한국어 메시지', async () => {
@@ -348,6 +372,12 @@ describe('POST /send-reminder-auto (X-API-Key, Solapi)', () => {
             solapi_sender_phone: '02-1234',
         });
         expect(templateCode).toBe('REM_TPL');
+
+        const updateCall = pool.execute.mock.calls.find(call =>
+            call[0].includes('UPDATE consultations SET reminder_alimtalk_sent_at')
+        );
+        expect(updateCall[0]).toContain('WHERE id = ? AND academy_id = ?');
+        expect(updateCall[1]).toEqual([200, 1]);
     });
 
     test('500 — 서버 에러 시 한국어 메시지', async () => {
@@ -425,6 +455,12 @@ describe('POST /send-reminder-auto-sens (X-API-Key, SENS)', () => {
             kakao_channel_id: 'CH',
         });
         expect(templateCode).toBe('SENS_REM');
+
+        const updateCall = pool.execute.mock.calls.find(call =>
+            call[0].includes('UPDATE consultations SET reminder_alimtalk_sent_at')
+        );
+        expect(updateCall[0]).toContain('WHERE id = ? AND academy_id = ?');
+        expect(updateCall[1]).toEqual([300, 1]);
     });
 
     test('500 — 서버 에러 시 한국어 메시지', async () => {

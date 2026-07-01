@@ -40,7 +40,8 @@ const isDev = process.env.NODE_ENV === 'development';
 
 const ALLOWED_ORIGINS = [
     'https://pacapro.vercel.app',
-    'https://chejump.com',
+    'https://supermax.kr',
+    'https://paca-preview.etlab.kr',
     'https://dev.sean8320.dedyn.io',
     'http://localhost:3000',
     'http://localhost:3001',

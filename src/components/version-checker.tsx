@@ -52,7 +52,7 @@ export function VersionChecker() {
                     // 서비스 워커 업데이트 강제
                     if ('serviceWorker' in navigator) {
                         const registrations = await navigator.serviceWorker.getRegistrations();
-                        registrations.forEach(registration => registration.update());
+                        await Promise.allSettled(registrations.map(registration => registration.update()));
                     }
                 } catch (e) {
                     console.error('[VersionChecker] 캐시 클리어 실패:', e);

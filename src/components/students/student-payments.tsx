@@ -31,7 +31,7 @@ interface StudentPaymentsProps {
   monthlyTuition?: number;
   weeklyCount?: number;
   classDays?: number[] | string | import('@/lib/types/student').ClassDaySlot[];
-  onChanged?: () => void;
+  onChanged?: () => void | Promise<void>;
 }
 
 // 크레딧 타입별 배지 색상
@@ -112,8 +112,12 @@ export function StudentPaymentsComponent({
   }, [loadCredits]);
 
   // 크레딧 생성 성공 시
+  const refreshPaymentSurface = useCallback(async () => {
+    await Promise.all([loadCredits(), onChanged?.()]);
+  }, [loadCredits, onChanged]);
+
   const handleCreditSuccess = () => {
-    loadCredits();
+    void refreshPaymentSurface();
   };
 
   // 크레딧 적용 모달 열기
@@ -135,8 +139,7 @@ export function StudentPaymentsComponent({
       toast.success(result.message || '크레딧을 적용했습니다.');
       setApplyModalOpen(false);
       setSelectedCredit(null);
-      loadCredits();
-      onChanged?.();
+      await refreshPaymentSurface();
     } catch (err: unknown) {
       console.warn('크레딧 적용에 실패했습니다.', err);
       toast.error('크레딧을 적용하지 못했습니다. 잠시 후 다시 시도해주세요.');
@@ -158,7 +161,7 @@ export function StudentPaymentsComponent({
       const result = await studentsAPI.recalculateFirstPayment(studentId);
       toast.success(result.message || '첫 달 학원비를 다시 계산했습니다.');
       setRecalculateDialogOpen(false);
-      onChanged?.();
+      await onChanged?.();
     } catch (err: unknown) {
       console.warn('첫 달 학원비 재계산에 실패했습니다.', err);
       toast.error('첫 달 학원비를 다시 계산하지 못했습니다. 잠시 후 다시 시도해주세요.');
@@ -315,10 +318,7 @@ export function StudentPaymentsComponent({
           studentId={studentId}
           studentName={studentName}
           monthlyTuition={monthlyTuition}
-          onSuccess={() => {
-            loadCredits();
-            window.location.reload();
-          }}
+          onSuccess={refreshPaymentSurface}
         />
       )}
 

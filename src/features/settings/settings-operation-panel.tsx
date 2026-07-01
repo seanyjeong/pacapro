@@ -1,4 +1,4 @@
-import { Banknote, Calendar, Clock, DollarSign, Home, MapPin } from 'lucide-react';
+import { Banknote, Clock, DollarSign, Home, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import type { AcademySettings } from './settings-types';
 import { getSalaryPayDayLabel } from './settings-utils';
@@ -13,7 +13,6 @@ const links = [
   { href: '#academy-basic', label: '학원 기본 바로가기', icon: Home },
   { href: '#class-times', label: '수업 시간 바로가기', icon: Clock },
   { href: '#tuition', label: '학원비 바로가기', icon: DollarSign },
-  { href: '#season-fees', label: '시즌비 바로가기', icon: Calendar },
   { href: '#salary-settings', label: '급여 설정 바로가기', icon: Banknote },
 ];
 

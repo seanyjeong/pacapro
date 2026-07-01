@@ -7,15 +7,36 @@ export const DEFAULT_CHROME_PATH = process.env.PACA_SMOKE_CHROME ||
 const RAW_VISIBLE_PATTERN = /(Failed to load|CORS|Axios|stack trace|DB timeout|HTTP\s*(400|401|403|404|500)|status\s*(400|401|403|404|500))/i;
 
 export async function launchSmokeBrowser() {
-  return chromium.launch({
+  const browser = await chromium.launch({
     executablePath: DEFAULT_CHROME_PATH,
     headless: process.env.PACA_SMOKE_HEADLESS !== 'false',
   });
+  const originalClose = browser.close.bind(browser);
+  const browserProcess = browser.process?.();
+
+  browser.close = async (...args) => {
+    const timeoutMs = Number(process.env.PACA_SMOKE_CLOSE_TIMEOUT_MS || 3000);
+    let timeout;
+    try {
+      await Promise.race([
+        originalClose(...args),
+        new Promise((resolve) => {
+          timeout = setTimeout(resolve, timeoutMs);
+        }),
+      ]);
+    } finally {
+      if (timeout) clearTimeout(timeout);
+      if (browserProcess && !browserProcess.killed) browserProcess.kill('SIGTERM');
+    }
+  };
+
+  return browser;
 }
 
 export async function createAuthedContext(browser, viewport, baseURL = DEFAULT_BASE_URL) {
   const context = await browser.newContext({ viewport, baseURL, serviceWorkers: 'block' });
-  await context.addCookies([{ name: 'paca_auth', value: '1', domain: 'localhost', path: '/' }]);
+  const authCookieUrl = new URL('/', baseURL).origin;
+  await context.addCookies([{ name: 'paca_auth', value: '1', url: authCookieUrl }]);
   await context.addInitScript(() => {
     window.localStorage.setItem('token', 'smoke-token');
     window.localStorage.setItem('user', JSON.stringify({
@@ -29,6 +50,13 @@ export async function createAuthedContext(browser, viewport, baseURL = DEFAULT_B
     }));
   });
   return context;
+}
+
+export function isPacaApiRequest(url, baseURL = DEFAULT_BASE_URL) {
+  const baseOrigin = new URL(baseURL).origin;
+  return url.hostname === 'supermax.kr' || (
+    url.origin === baseOrigin && url.pathname.startsWith('/paca')
+  );
 }
 
 export function normalizePacaApiPath(url) {

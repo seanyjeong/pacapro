@@ -22,7 +22,7 @@ const nextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://chejump.com wss://chejump.com https://supermax.kr wss://supermax.kr; frame-ancestors 'none'" },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://supermax.kr wss://supermax.kr; frame-ancestors 'none'" },
         ],
       },
     ];
@@ -31,9 +31,6 @@ const nextConfig = {
   outputFileTracingRoot: __dirname,
   images: {
     domains: ['localhost'],
-  },
-  env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca',
   },
   // 성능 최적화: barrel imports 자동 변환
   experimental: {

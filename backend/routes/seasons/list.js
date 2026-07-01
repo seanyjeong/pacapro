@@ -7,6 +7,7 @@
  * Endpoint (3건):
  *   - GET  /        — 학원 시즌 전체 목록 + 종료일 지난 active 자동 ended 처리 (status / season_type 필터 옵션)
  *   - GET  /active  — 오늘 기준 active 시즌 (다중 가능, season_type 정렬). /:id 보다 먼저 등록 필수
+ *   - GET  /registerable — 학생 등록 가능한 active/upcoming 시즌. /:id 보다 먼저 등록 필수
  *   - GET  /:id     — 시즌 상세 + 등록 학생 수 (cancelled 제외)
  *
  * 인증: 3건 모두 verifyToken 만 (조회 — checkPermission 없음).
@@ -84,10 +85,9 @@ router.get('/active', verifyToken, async (req, res) => {
             `SELECT * FROM seasons
             WHERE academy_id = ?
             AND status = 'active'
-            AND season_start_date <= ?
             AND season_end_date >= ?
-            ORDER BY season_type`,
-            [req.user.academyId, today, today]
+            ORDER BY season_start_date ASC, season_type`,
+            [req.user.academyId, today]
         );
 
         res.json({
@@ -99,6 +99,34 @@ router.get('/active', verifyToken, async (req, res) => {
         res.status(500).json({
             error: 'Server Error',
             message: '활성 시즌을 불러오지 못했습니다.'
+        });
+    }
+});
+
+router.get('/registerable', verifyToken, async (req, res) => {
+    try {
+        await pool.execute(
+            `UPDATE seasons SET status = 'ended' WHERE academy_id = ? AND status = 'active' AND season_end_date < CURDATE()`,
+            [req.user.academyId]
+        );
+
+        const [seasons] = await pool.execute(
+            `SELECT * FROM seasons
+            WHERE academy_id = ?
+            AND status IN ('active', 'upcoming')
+            ORDER BY FIELD(status, 'active', 'upcoming'), season_start_date ASC, season_type`,
+            [req.user.academyId]
+        );
+
+        res.json({
+            message: `Found ${seasons.length} registerable season(s)`,
+            seasons
+        });
+    } catch (error) {
+        logger.error('Error fetching registerable seasons:', error);
+        res.status(500).json({
+            error: 'Server Error',
+            message: '등록 가능한 시즌을 불러오지 못했습니다.'
         });
     }
 });

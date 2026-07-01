@@ -61,20 +61,21 @@ function makePayments() {
     {
       id: 703,
       student_id: 43,
-      student_name: '한서준',
+      student_name: '기아림',
       student_number: 'S-2026-043',
       year_month: PREVIOUS_PAYMENT_MONTH,
       payment_type: 'season',
-      base_amount: 600000,
+      base_amount: 3300000,
       discount_amount: 0,
       additional_amount: 0,
-      final_amount: 600000,
-      paid_amount: 200000,
+      final_amount: 3300000,
+      paid_amount: 1000000,
+      remaining_amount: 2300000,
       due_date: '2026-05-10',
       payment_status: 'partial',
       payment_method: 'account',
       description: '5월 시즌비',
-      notes: '분납 예정',
+      notes: '부분납부 1,000,000원',
       created_at: '2026-05-01T09:00:00Z',
     },
   ];
@@ -86,7 +87,7 @@ function makeClassDays() {
     students: [
       { id: 41, name: '박민수', grade: '고3', class_days: [1, 3], weekly_count: 2, time_slot: 'evening', class_days_next: null, class_days_effective_from: null },
       { id: 42, name: '이서연', grade: '고2', class_days: [2, 4], weekly_count: 2, time_slot: 'evening', class_days_next: null, class_days_effective_from: null },
-      { id: 43, name: '한서준', grade: 'N수', class_days: [1, 5], weekly_count: 2, time_slot: 'afternoon', class_days_next: null, class_days_effective_from: null },
+      { id: 43, name: '기아림', grade: 'N수', class_days: [1, 5], weekly_count: 2, time_slot: 'afternoon', class_days_next: null, class_days_effective_from: null },
     ],
   };
 }
@@ -100,7 +101,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -151,12 +152,12 @@ async function waitForInitialRows(page) {
     await page.reload({ waitUntil: 'networkidle' });
     await firstPaymentRow.waitFor({ timeout: 20000 });
   }
-  await page.locator('tr:has-text("한서준")').waitFor();
+  await page.locator('tr:has-text("기아림")').waitFor();
 }
 
 async function runNormal(browser) {
   const state = makeState();
-  const context = await createAuthedContext(browser, { width: 1365, height: 900 });
+  const context = await createAuthedContext(browser, { width: 1920, height: 1080 });
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
@@ -165,6 +166,7 @@ async function runNormal(browser) {
   await page.getByRole('heading', { name: '학원비 관리' }).waitFor();
   await waitForInitialRows(page);
   await assertOperationsBoard(page);
+  await assertPaymentDesktopLayout(page);
   await page.getByRole('button', { name: '일할계산기' }).click();
   await page.getByText('일할계산 계산기').waitFor();
   await page.getByRole('button', { name: '월', exact: true }).click();
@@ -183,7 +185,7 @@ async function runNormal(browser) {
   await page.getByLabel('학생 이름 검색').fill('이서연');
   await page.locator('tr:has-text("이서연")').waitFor();
   await page.locator('tr:has-text("박민수")').waitFor({ state: 'hidden' });
-  await page.getByRole('button', { name: '필터 초기화' }).click();
+  await page.getByRole('button', { name: '초기화' }).click();
   await page.locator('tr:has-text("박민수")').waitFor();
 
   const board = page.getByTestId('payments-operations-board');
@@ -195,7 +197,7 @@ async function runNormal(browser) {
   }
   await board.getByRole('button', { name: '총 청구 1건' }).click();
   await page.locator('tr:has-text("이서연")').waitFor();
-  await page.locator('tr:has-text("한서준")').waitFor();
+  await page.locator('tr:has-text("기아림")').waitFor();
 
   await page.getByRole('button', { name: '미납 알림 (1명)' }).click();
   await page.getByRole('alertdialog').getByText('미납자 1명에게 알림톡을 발송할까요?').waitFor();
@@ -204,12 +206,17 @@ async function runNormal(browser) {
   if (state.notificationPayload?.year !== CURRENT_YEAR) throw new Error(`unexpected notification payload ${JSON.stringify(state.notificationPayload)}`);
   if (state.notificationPayload?.month !== CURRENT_MONTH) throw new Error(`unexpected notification payload ${JSON.stringify(state.notificationPayload)}`);
 
-  await page.locator('tr:has-text("한서준")').getByRole('button', { name: '계좌' }).click();
-  await page.getByRole('alertdialog').getByText(/400,000/).waitFor();
-  if (await page.getByRole('alertdialog').getByText(/600,000/).count()) {
+  await page.locator('tr:has-text("기아림")').getByRole('button', { name: '계좌' }).click();
+  await page.getByRole('alertdialog').getByText(/2,300,000/).waitFor();
+  if (await page.getByRole('alertdialog').getByText(/3,300,000/).count()) {
     throw new Error('partial payment dialog showed full amount instead of remaining amount');
   }
   await page.getByRole('alertdialog').getByRole('button', { name: '취소' }).click();
+  const partialPaymentRow = page.locator('tr:has-text("기아림")');
+  await partialPaymentRow.getByText('남은 금액').waitFor();
+  await partialPaymentRow.getByText(/2,300,000/).waitFor();
+  await partialPaymentRow.getByText(/총 청구.*3,300,000/).waitFor();
+  await partialPaymentRow.getByText(/납부.*1,000,000/).waitFor();
 
   await page.locator('tr:has-text("박민수")').getByRole('button', { name: '계좌' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: '납부 처리' }).click();
@@ -248,6 +255,43 @@ async function assertOperationsBoard(page, options = {}) {
   await board.getByRole('button', { name: '일할계산 열기' }).waitFor();
   await board.getByRole('button', { name: expected.unpaidAction }).waitFor();
   await board.getByRole('button', { name: '신규 학원비 청구' }).waitFor();
+}
+
+async function assertPaymentDesktopLayout(page) {
+  const layout = await page.evaluate(() => {
+    const filter = document.querySelector('[data-testid="payment-filter-bar"]');
+    const reset = document.querySelector('[data-testid="payment-filter-reset"]');
+    const board = document.querySelector('[data-testid="payments-operations-board"]');
+    const summary = document.querySelector('[aria-label="학원비 요약"]');
+    const actionCells = [...document.querySelectorAll('tbody tr td:last-child')];
+    const statHeights = summary ? [...summary.children].map((node) => node.getBoundingClientRect().height) : [];
+    const filterRect = filter?.getBoundingClientRect();
+    const resetRect = reset?.getBoundingClientRect();
+    const boardRect = board?.getBoundingClientRect();
+    const actionButtonLineCounts = actionCells.map((cell) => {
+      const buttons = [...cell.querySelectorAll('button')];
+      return new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top))).size;
+    });
+    const actionCellWidths = actionCells.map((cell) => cell.getBoundingClientRect().width);
+    return {
+      actionButtonLineCounts,
+      minActionCellWidth: Math.min(...actionCellWidths),
+      filterOverflow: filter ? filter.scrollWidth - filter.clientWidth : 0,
+      filterRight: filterRect?.right || 0,
+      maxStatHeight: Math.max(0, ...statHeights),
+      resetRight: resetRect?.right || 0,
+      boardLeft: boardRect?.left || 0,
+    };
+  });
+  if (layout.filterOverflow > 1) throw new Error(`payment filters overflow ${layout.filterOverflow}px`);
+  if (layout.boardLeft > 0 && layout.resetRight > layout.boardLeft - 4) {
+    throw new Error(`payment filters overlap operations board: ${JSON.stringify(layout)}`);
+  }
+  if (layout.maxStatHeight > 130) throw new Error(`payment stat cards are too tall: ${JSON.stringify(layout)}`);
+  if (layout.actionButtonLineCounts.some((count) => count > 1)) {
+    throw new Error(`payment action buttons wrapped: ${JSON.stringify(layout)}`);
+  }
+  if (layout.minActionCellWidth < 198) throw new Error(`payment action column too narrow: ${JSON.stringify(layout)}`);
 }
 
 async function runError(browser) {

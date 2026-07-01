@@ -61,7 +61,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -452,7 +452,7 @@ async function runExtraDayRequestError(browser) {
   const { context, page, state } = result;
   await page.goto('/schedules', { waitUntil: 'networkidle' });
   await page.getByTestId('schedules-workspace').waitFor();
-  await page.locator('button[title="강사 근무 배정 펼치기"]').click();
+  await page.locator('button[title="강사 근무 패널 펼치기"]').click();
   await page.getByRole('button', { name: '미배정 출근' }).first().click();
   await page.getByRole('heading', { name: '미배정 출근 요청' }).waitFor();
   await page.getByRole('combobox').selectOption('3');

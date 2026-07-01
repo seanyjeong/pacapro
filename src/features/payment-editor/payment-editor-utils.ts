@@ -33,6 +33,10 @@ export function toPaymentFormData(payment: Payment): PaymentFormData {
 export function getStudentTuitionValues(student: PaymentFormStudent | undefined) {
   if (!student) return { base_amount: 0, discount_amount: 0 };
   const baseAmount = Math.floor(Number(student.monthly_tuition) || 0);
+  const finalMonthlyTuition = student.final_monthly_tuition;
+  if (typeof finalMonthlyTuition === 'number' && finalMonthlyTuition >= 0 && finalMonthlyTuition <= baseAmount) {
+    return { base_amount: baseAmount, discount_amount: baseAmount - Math.floor(finalMonthlyTuition) };
+  }
   const discountRate = Number(student.discount_rate) || 0;
   const discountAmount = Math.floor((baseAmount * (discountRate / 100)) / 1000) * 1000;
   return { base_amount: baseAmount, discount_amount: discountAmount };
@@ -44,12 +48,15 @@ export function getFinalPaymentAmount(data: PaymentFormData) {
 
 export function ensurePaymentStudent(students: PaymentFormStudent[], payment: Payment) {
   if (students.some((student) => student.id === payment.student_id)) return students;
+  const baseAmount = Number(payment.base_amount) || 0;
+  const discountAmount = Number(payment.discount_amount) || 0;
   return [
     {
       id: payment.student_id,
       name: payment.student_name,
       student_number: payment.student_number || '-',
-      monthly_tuition: Number(payment.base_amount) || 0,
+      monthly_tuition: baseAmount,
+      final_monthly_tuition: Math.max(baseAmount - discountAmount, 0),
       discount_rate: 0,
     },
     ...students,

@@ -55,7 +55,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -117,6 +117,9 @@ async function runNormal(browser) {
   await page.goto('/payments/301', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 상세' }).waitFor();
   await page.getByText('박민수').waitFor();
+  await page.getByText('총 청구', { exact: true }).waitFor();
+  await page.getByText('이미 납부', { exact: true }).waitFor();
+  await page.getByText('남은 금액', { exact: true }).waitFor();
   await page.getByText('400,000원').first().waitFor();
   await assertNoRawVisibleText(page, 'payment detail desktop');
   await assertNoHorizontalOverflow(page, 'payment detail desktop');
@@ -129,10 +132,23 @@ async function runNormal(browser) {
   if (state.putPayload?.paid_date !== '2026-06-20') throw new Error(`unexpected paid date payload ${JSON.stringify(state.putPayload)}`);
 
   await page.getByRole('button', { name: '납부 기록' }).first().click();
+  const paymentAmountInput = page.getByLabel('납부 금액');
+  await paymentAmountInput.waitFor();
+  if ((await paymentAmountInput.inputValue()) !== '400,000') {
+    throw new Error(`initial payment amount did not use remaining amount: ${await paymentAmountInput.inputValue()}`);
+  }
+  await paymentAmountInput.fill('100000');
   await page.locator('form').getByRole('button', { name: '납부 기록' }).click();
   await page.getByText('납부가 기록되었습니다.').waitFor();
-  if (state.payPayload?.paid_amount !== 400000) throw new Error(`unexpected payment payload ${JSON.stringify(state.payPayload)}`);
+  if (state.payPayload?.paid_amount !== 100000) throw new Error(`unexpected payment payload ${JSON.stringify(state.payPayload)}`);
   if (state.payPayload?.payment_method !== 'account') throw new Error(`unexpected payment method ${JSON.stringify(state.payPayload)}`);
+  await page.getByText('300,000원').first().waitFor();
+  await page.getByRole('button', { name: '납부 기록' }).first().click();
+  await paymentAmountInput.waitFor();
+  if ((await paymentAmountInput.inputValue()) !== '300,000') {
+    throw new Error(`reopened payment amount did not reset to remaining amount: ${await paymentAmountInput.inputValue()}`);
+  }
+  await page.getByRole('button', { name: '납부 기록 닫기' }).click();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });

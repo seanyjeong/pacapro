@@ -20,6 +20,7 @@
 
 const { pool, logger } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { paidAmountSql, remainingAmountSql, dueUnpaidSql } = require('../../utils/paymentAmountSql');
 
 module.exports = function(router) {
 
@@ -40,16 +41,24 @@ router.get('/stats/summary', verifyToken, checkPermission('payments', 'view'), a
             params.push(`${year}-${String(month).padStart(2, '0')}`);
         }
 
+        const paidAmount = paidAmountSql('p');
+        const remainingAmount = remainingAmountSql('p');
+        const dueUnpaid = dueUnpaidSql('p');
+
         // Get payment statistics
         const [stats] = await pool.execute(
             `SELECT
                 COUNT(*) as total_count,
                 SUM(CASE WHEN p.payment_status = 'paid' THEN 1 ELSE 0 END) as paid_count,
                 SUM(CASE WHEN p.payment_status = 'partial' THEN 1 ELSE 0 END) as partial_count,
-                SUM(CASE WHEN p.payment_status = 'pending' THEN 1 ELSE 0 END) as unpaid_count,
-                SUM(p.final_amount) as total_expected,
-                SUM(CASE WHEN p.payment_status = 'paid' THEN p.final_amount ELSE 0 END) as total_collected,
-                SUM(CASE WHEN p.payment_status IN ('pending', 'partial') THEN p.final_amount ELSE 0 END) as total_outstanding
+                SUM(CASE WHEN p.payment_status = 'pending' AND ${dueUnpaid} THEN 1 ELSE 0 END) as unpaid_count,
+                SUM(COALESCE(p.final_amount, 0)) as total_expected,
+                SUM(${paidAmount}) as total_collected,
+                SUM(CASE
+                    WHEN p.payment_status IN ('pending', 'partial') AND ${dueUnpaid}
+                        THEN ${remainingAmount}
+                    ELSE 0
+                END) as total_outstanding
             FROM student_payments p
             WHERE p.academy_id = ?${dateFilter}`,
             params

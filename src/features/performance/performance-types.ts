@@ -11,12 +11,28 @@ export interface JungsiStatus {
   academyId: number;
   branchName: string | null;
   isConfigured: boolean;
+  linkedAt?: string | null;
   jungsiApi: {
     url: string;
     healthy: boolean;
+    serviceTokenConfigured?: boolean;
+    error?: string | null;
   };
   examTypes: string[];
   defaultExam: string;
+  link?: {
+    required: boolean;
+    mode: 'jungsi_login';
+    linkedByUserId?: number | null;
+  };
+}
+
+export interface JungsiLinkStartResponse {
+  success: boolean;
+  mode: 'jungsi_login';
+  loginUrl: string;
+  expiresAt: string;
+  message: string;
 }
 
 export interface SubjectScore {

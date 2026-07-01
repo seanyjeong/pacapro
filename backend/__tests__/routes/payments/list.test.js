@@ -69,6 +69,9 @@ describe('GET /paca/payments', () => {
         expect(pool.execute).toHaveBeenCalledTimes(1);
         // academy_id binding
         expect(pool.execute.mock.calls[0][1][0]).toBe(5);
+        const [sql] = pool.execute.mock.calls[0];
+        expect(sql).toContain('p.paid_amount');
+        expect(sql).toContain('remaining_amount');
     });
 
     test('200: 빈 배열', async () => {
@@ -126,6 +129,10 @@ describe('GET /paca/payments/unpaid', () => {
         const [sql, params] = pool.execute.mock.calls[0];
         expect(sql).toContain("p.payment_status IN ('pending', 'partial')");
         expect(sql).toContain('DATEDIFF(CURDATE(), p.due_date)');
+        expect(sql).toContain('p.paid_amount');
+        expect(sql).toContain('remaining_amount');
+        expect(sql).toContain("NOT (p.payment_type = 'season' AND p.due_date > CURDATE())");
+        expect(sql).toContain('GREATEST');
         expect(params).toEqual([5]);
     });
 
@@ -160,6 +167,8 @@ describe('GET /paca/payments/unpaid-today', () => {
         expect(sql).toContain('FROM attendance a');
         expect(sql).toContain('class_schedules cs');
         expect(sql).toContain('today_attendance');
+        expect(sql).toContain("NOT (p.payment_type = 'season' AND p.due_date > CURDATE())");
+        expect(sql).toContain('remaining_amount');
     });
 
     test('500: 한국어 메시지', async () => {

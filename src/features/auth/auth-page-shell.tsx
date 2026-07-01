@@ -21,29 +21,11 @@ export function AuthPageShell({ children, description, icon, title, tone = 'defa
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="space-y-6">
+        <section className="space-y-5">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">P-ACA 계정 보안</p>
-            <h1 className="mt-3 text-3xl font-semibold tracking-normal text-slate-950">운영 계정 복구</h1>
-            <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
-              학원 운영 계정은 학생, 수납, 상담 정보와 연결됩니다. 본인 확인 링크를 통해 안전하게 접근을
-              복구합니다.
-            </p>
-          </div>
-
-          <div className="grid gap-2 text-sm text-slate-700">
-            <div className="rounded-md border border-slate-200 bg-white px-4 py-3">
-              <span className="font-medium text-slate-950">메일 확인</span>
-              <span className="ml-2 text-slate-500">재설정 링크는 요청 계정으로만 발송됩니다.</span>
-            </div>
-            <div className="rounded-md border border-slate-200 bg-white px-4 py-3">
-              <span className="font-medium text-slate-950">시간 제한</span>
-              <span className="ml-2 text-slate-500">링크는 1시간 동안만 사용할 수 있습니다.</span>
-            </div>
-            <div className="rounded-md border border-slate-200 bg-white px-4 py-3">
-              <span className="font-medium text-slate-950">운영 보호</span>
-              <span className="ml-2 text-slate-500">실패 사유는 화면에 기술 정보로 노출하지 않습니다.</span>
-            </div>
+            <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">P-ACA</p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-normal text-slate-950">체대입시 학원관리</h1>
+            <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">학생, 상담, 수납, 출결을 한 곳에서 관리합니다.</p>
           </div>
         </section>
 

@@ -1,10 +1,14 @@
 import apiClient, { type APIRequestConfig } from '@/lib/api/client';
-import type { ExamType, JungsiStatus, PerformanceStudent, ScoreData } from './performance-types';
+import type { ExamType, JungsiLinkStartResponse, JungsiStatus, PerformanceStudent, ScoreData } from './performance-types';
 
 const QUIET_REQUEST: APIRequestConfig = { suppressErrorToast: true };
 
 export async function fetchJungsiStatus(): Promise<JungsiStatus> {
   return apiClient.get<JungsiStatus>('/jungsi/status', QUIET_REQUEST);
+}
+
+export async function startJungsiLink(): Promise<JungsiLinkStartResponse> {
+  return apiClient.post<JungsiLinkStartResponse>('/jungsi/link/start', undefined, QUIET_REQUEST);
 }
 
 export async function fetchPerformanceStudents(): Promise<PerformanceStudent[]> {

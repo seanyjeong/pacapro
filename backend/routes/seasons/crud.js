@@ -36,6 +36,10 @@ const {
     autoAssignAllSeasonStudentsToSchedules
 } = require('./_utils');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
+const {
+    DEFAULT_SEASON_MONTHLY_POLICY,
+    isSeasonMonthlyPolicy,
+} = require('../../utils/seasonMonthlyPolicy');
 
 module.exports = function(router) {
 
@@ -50,6 +54,8 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
             operating_days,
             grade_time_slots,
             default_season_fee,
+            payment_due_date,
+            season_monthly_policy,
             allows_continuous,
             continuous_to_season_type,
             continuous_discount_type,
@@ -69,6 +75,15 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
                 message: 'season_type must be early or regular'
             });
         }
+
+        if (!isValidSeasonMonthlyPolicy(season_monthly_policy)) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '월납부 처리 방식을 확인해주세요.'
+            });
+        }
+
+        const monthlyPolicy = season_monthly_policy || DEFAULT_SEASON_MONTHLY_POLICY;
 
         const nonSeasonEnd = new Date(non_season_end_date);
         const seasonStart = new Date(season_start_date);
@@ -99,12 +114,14 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
                 operating_days,
                 grade_time_slots,
                 default_season_fee,
+                payment_due_date,
+                season_monthly_policy,
                 allows_continuous,
                 continuous_to_season_type,
                 continuous_discount_type,
                 continuous_discount_rate,
                 status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
             [
                 req.user.academyId,
                 season_name,
@@ -115,6 +132,8 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
                 JSON.stringify(operating_days),
                 grade_time_slots ? JSON.stringify(grade_time_slots) : null,
                 default_season_fee || 0,
+                payment_due_date || null,
+                monthlyPolicy,
                 allows_continuous || false,
                 continuous_to_season_type || null,
                 continuous_discount_type || 'none',
@@ -165,6 +184,8 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
             operating_days,
             grade_time_slots,
             default_season_fee,
+            payment_due_date,
+            season_monthly_policy,
             allows_continuous,
             continuous_to_season_type,
             continuous_discount_type,
@@ -206,6 +227,20 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
         if (default_season_fee !== undefined) {
             updates.push('default_season_fee = ?');
             params.push(default_season_fee);
+        }
+        if (payment_due_date !== undefined) {
+            updates.push('payment_due_date = ?');
+            params.push(payment_due_date || null);
+        }
+        if (season_monthly_policy !== undefined) {
+            if (!isSeasonMonthlyPolicy(season_monthly_policy)) {
+                return res.status(400).json({
+                    error: 'Validation Error',
+                    message: '월납부 처리 방식을 확인해주세요.'
+                });
+            }
+            updates.push('season_monthly_policy = ?');
+            params.push(season_monthly_policy);
         }
         if (allows_continuous !== undefined) {
             updates.push('allows_continuous = ?');
@@ -323,3 +358,7 @@ router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
 });
 
 };
+
+function isValidSeasonMonthlyPolicy(value) {
+    return value === undefined || isSeasonMonthlyPolicy(value);
+}

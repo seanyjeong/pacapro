@@ -1,5 +1,6 @@
 import type { Payment, PaymentFilters } from '@/lib/types/payment';
-import { createInitialPaymentFilters, getSelectedYearMonth, toAmount } from '@/features/payments/payments-utils';
+import { createInitialPaymentFilters, getSelectedYearMonth } from '@/features/payments/payments-utils';
+import { getRemainingPaymentAmount } from '@/lib/utils/payment-helpers';
 
 export function parseStudentId(value: string | null): number | undefined {
   if (!value) return undefined;
@@ -27,7 +28,7 @@ export function filterTabletPayments(payments: Payment[], filters: PaymentFilter
 }
 
 export function getRemainingAmount(payment: Payment): number {
-  return Math.max(toAmount(payment.final_amount) - toAmount(payment.paid_amount), 0);
+  return getRemainingPaymentAmount(payment);
 }
 
 export function shiftPaymentMonth(filters: PaymentFilters, delta: number): Pick<PaymentFilters, 'year' | 'month'> {

@@ -36,7 +36,7 @@
  * ⛔ ADR-014 — 광역 미들웨어 (router.use(verifyToken) 등) 추가 절대 금지.
  *    sub-라우터별 verifyToken + checkPermission 정책 차이 보존:
  *      - bulk / credits / stats / list (대부분) / crud / pay : verifyToken + checkPermission('payments', 'view'|'edit')
- *      - list GET /unpaid-today : verifyToken 만 (n8n service account 호환)
+ *      - list GET /unpaid-today : verifyToken 만 (PACA automation account 호환)
  *      - prepaid : verifyToken 만 (학원 관리자 직접 호출)
  *      - crud DELETE /:id : verifyToken + requireRole('owner') (owner only)
  *

@@ -65,7 +65,8 @@ function makePayment() {
     base_amount: '520000',
     discount_amount: '52000',
     final_amount: '468000',
-    paid_amount: '120000',
+    paid_amount: '0',
+    remaining_amount: '348000',
     payment_status: 'partial',
     payment_method: 'account',
     paid_date: '2026-06-10',
@@ -139,14 +140,11 @@ async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
-
+    const isApi = url.hostname === 'supermax.kr';
     if (!isApi) return route.continue();
-
     const method = request.method();
     const path = normalizePacaApiPath(url);
     state.hits.push(`${method} ${path}${url.search}`);
-
     if (method === 'GET' && path === '/students/41') {
       if (state.mode === 'load-error') {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
@@ -158,27 +156,22 @@ async function installRoutes(context, state) {
         student: state.student,
       });
     }
-
     if (method === 'GET' && path === '/students/41/rest-credits') {
       const pendingTotal = state.manualCredits.reduce((sum, credit) => sum + credit.remaining_amount, 0);
       return jsonRoute(route, { credits: state.manualCredits, message: 'ok', pendingTotal });
     }
-
     if (method === 'GET' && path === '/students/41/credits') {
       return jsonRoute(route, { credits: state.manualCredits, message: 'ok' });
     }
-
     if (method === 'DELETE' && path === '/students/41/credits/901') {
       state.manualCreditDeleted = true;
       state.manualCredits = [];
       return jsonRoute(route, { message: '크레딧이 삭제되었습니다.' });
     }
-
     if (method === 'GET' && path === '/students/41/seasons') {
       return jsonRoute(route, { message: 'ok', seasons: state.seasonEnrollments });
     }
-
-    if (method === 'GET' && path === '/seasons/active') {
+    if (method === 'GET' && path === '/seasons/registerable') {
       return jsonRoute(route, {
         message: 'ok',
         seasons: [
@@ -204,7 +197,6 @@ async function installRoutes(context, state) {
         ],
       });
     }
-
     if (method === 'DELETE' && path === '/seasons/7/students/41') {
       state.seasonCancelled = true;
       state.seasonEnrollments = state.seasonEnrollments.map((enrollment) => ({
@@ -494,7 +486,4 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+main().catch((error) => { console.error(error); process.exit(1); });

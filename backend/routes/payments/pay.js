@@ -31,6 +31,7 @@
 
 const { pool, decryptStudentName, logger } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { remainingAmountSql } = require('../../utils/paymentAmountSql');
 
 module.exports = function(router) {
 
@@ -183,6 +184,7 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
         const [updated] = await pool.execute(
             `SELECT
                 p.*,
+                ${remainingAmountSql('p')} as remaining_amount,
                 s.name as student_name,
                 s.student_number
             FROM student_payments p

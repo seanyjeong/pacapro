@@ -10,12 +10,19 @@ function toNumber(value: number | string | null | undefined) {
   return Number.isFinite(numeric) ? numeric : 0;
 }
 
+function toOptionalNumber(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === '') return null;
+  const numeric = typeof value === 'string' ? Number(value) : value;
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 function toPaymentFormStudent(student: Student): PaymentFormStudent {
   return {
     id: student.id,
     name: student.name,
     student_number: student.student_number || '-',
-    monthly_tuition: toNumber(student.final_monthly_tuition || student.monthly_tuition),
+    monthly_tuition: toNumber(student.monthly_tuition),
+    final_monthly_tuition: toOptionalNumber(student.final_monthly_tuition),
     discount_rate: toNumber(student.discount_rate),
   };
 }

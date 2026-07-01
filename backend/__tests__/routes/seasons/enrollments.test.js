@@ -191,6 +191,31 @@ describe('POST /paca/seasons/enrollments/:id/refund-preview', () => {
         expect(callArg).toHaveProperty('includeVat');
     });
 
+    test('부분납부 결제 레코드가 있으면 실제 기납부액으로 refund를 계산한다', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{
+            id: 2, academy_id: 1, payment_status: 'pending',
+            payment_paid_amount: '1000000', payment_final_amount: '3300000', payment_record_status: 'partial',
+            student_name: 'enc_기아림', class_days: '월수금', season_name: 'S',
+            season_start_date: '2026-07-01', season_end_date: '2026-09-30',
+            operating_days: '["월","수","금"]', default_season_fee: 3300000,
+            season_fee: 3300000, discount_amount: 0
+        }]]);
+        pool.execute.mockResolvedValueOnce([[{ academy_name: 'A', phone: '010', address: 'addr' }]]);
+
+        const res = await request(makeApp()).post('/paca/seasons/enrollments/2/refund-preview').send({
+            cancellation_date: '2026-07-20', include_vat: false
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body.enrollment).toMatchObject({
+            student_name: '기아림',
+            paid_amount: 1000000,
+            payment_status: 'partial'
+        });
+        expect(calculateSeasonRefund.mock.calls[0][0].paidAmount).toBe(1000000);
+    });
+
     test('5xx: 한국어 메시지', async () => {
         pool.execute.mockReset();
         pool.execute.mockRejectedValueOnce(new Error('DB'));

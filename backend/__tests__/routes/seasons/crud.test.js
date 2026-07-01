@@ -80,6 +80,17 @@ describe('POST /paca/seasons', () => {
         expect(res.body.message).toMatch(/early or regular/);
     });
 
+    test('400: season_monthly_policy 값 오류', async () => {
+        const res = await request(makeApp()).post('/paca/seasons').send({
+            season_name: 'X', season_type: 'regular',
+            season_start_date: '2026-03-01', season_end_date: '2026-08-31',
+            non_season_end_date: '2026-02-28', operating_days: ['월'],
+            season_monthly_policy: 'academy_global'
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('월납부 처리 방식을 확인해주세요.');
+    });
+
     test('400: non_season_end_date >= season_start_date', async () => {
         const res = await request(makeApp()).post('/paca/seasons').send({
             season_name: 'X', season_type: 'regular',
@@ -97,12 +108,17 @@ describe('POST /paca/seasons', () => {
         const res = await request(makeApp()).post('/paca/seasons').send({
             season_name: 'X', season_type: 'regular',
             season_start_date: '2026-03-01', season_end_date: '2026-08-31',
-            non_season_end_date: '2026-02-28', operating_days: ['월']
+            non_season_end_date: '2026-02-28', operating_days: ['월'],
+            season_monthly_policy: 'season_plus_monthly'
         });
         expect(res.status).toBe(201);
         expect(res.body.message).toBe('Season created successfully');
         expect(res.body.season.id).toBe(42);
         expect(pool.execute.mock.calls[0][0]).toMatch(/INSERT INTO seasons/);
+        expect(pool.execute.mock.calls[0][0]).toContain('season_monthly_policy');
+        expect(pool.execute.mock.calls[0][1]).toContain('season_plus_monthly');
+        const placeholderCount = (pool.execute.mock.calls[0][0].match(/\?/g) || []).length;
+        expect(placeholderCount).toBe(pool.execute.mock.calls[0][1].length);
     });
 
     test('5xx: 한국어 메시지 + e.message 누출 0건', async () => {
@@ -135,16 +151,31 @@ describe('PUT /paca/seasons/:id', () => {
         expect(res.body.message).toBe('No fields to update');
     });
 
+    test('400: season_monthly_policy 값 오류', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'upcoming' }]]);
+        const res = await request(makeApp()).put('/paca/seasons/5').send({
+            season_monthly_policy: 'academy_global'
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('월납부 처리 방식을 확인해주세요.');
+    });
+
     test('200: 정상 update + scheduleAssignment=null (status 미변경)', async () => {
         pool.execute.mockReset();
         pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'upcoming' }]]); // 조회
         pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);              // UPDATE
         pool.execute.mockResolvedValueOnce([[{ id: 5, season_name: 'New' }]]); // 재조회
-        const res = await request(makeApp()).put('/paca/seasons/5').send({ season_name: 'New' });
+        const res = await request(makeApp()).put('/paca/seasons/5').send({
+            season_name: 'New',
+            season_monthly_policy: 'season_plus_monthly'
+        });
         expect(res.status).toBe(200);
         expect(res.body.message).toBe('Season updated successfully');
         expect(res.body.season.id).toBe(5);
         expect(res.body.scheduleAssignment).toBeNull();
+        expect(pool.execute.mock.calls[1][0]).toContain('season_monthly_policy = ?');
+        expect(pool.execute.mock.calls[1][1]).toContain('season_plus_monthly');
     });
 
     test('5xx: 한국어 메시지', async () => {

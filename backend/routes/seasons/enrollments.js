@@ -39,6 +39,7 @@ const {
     calculateSeasonRefund,
     parseWeeklyDays
 } = require('./_utils');
+const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('./payment-summary');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 
 module.exports = function(router) {
@@ -267,10 +268,14 @@ router.post('/enrollments/:enrollment_id/refund-preview', verifyToken, checkPerm
                 se.season_start_date,
                 se.season_end_date,
                 se.operating_days,
-                se.default_season_fee
+                se.default_season_fee,
+                sp.payment_paid_amount,
+                sp.payment_final_amount,
+                sp.payment_record_status
             FROM student_seasons ss
             JOIN students s ON ss.student_id = s.id
             JOIN seasons se ON ss.season_id = se.id
+            ${SEASON_PAYMENT_SUMMARY_JOIN}
             WHERE ss.id = ?`,
             [enrollmentId]
         );
@@ -284,6 +289,7 @@ router.post('/enrollments/:enrollment_id/refund-preview', verifyToken, checkPerm
 
         const enrollment = enrollments[0];
         enrollment.student_name = decrypt(enrollment.student_name);
+        applySeasonPaymentSummary(enrollment);
 
         if (enrollment.academy_id !== req.user.academyId) {
             return res.status(403).json({
@@ -305,7 +311,7 @@ router.post('/enrollments/:enrollment_id/refund-preview', verifyToken, checkPerm
 
         const originalFee = parseFloat(enrollment.season_fee) || 0;
         const discountAmount = parseFloat(enrollment.discount_amount) || 0;
-        const paidAmount = originalFee - discountAmount;
+        const paidAmount = parseFloat(enrollment.paid_amount) || 0;
 
         const refundResult = calculateSeasonRefund({
             paidAmount: paidAmount,
@@ -361,10 +367,14 @@ router.post('/enrollments/:enrollment_id/cancel', verifyToken, checkPermission('
                 s.class_days,
                 se.season_name,
                 se.season_start_date,
-                se.season_end_date
+                se.season_end_date,
+                sp.payment_paid_amount,
+                sp.payment_final_amount,
+                sp.payment_record_status
             FROM student_seasons ss
             JOIN students s ON ss.student_id = s.id
             JOIN seasons se ON ss.season_id = se.id
+            ${SEASON_PAYMENT_SUMMARY_JOIN}
             WHERE ss.id = ?`,
             [enrollmentId]
         );
@@ -386,6 +396,7 @@ router.post('/enrollments/:enrollment_id/cancel', verifyToken, checkPermission('
         }
 
         enrollment.student_name = decrypt(enrollment.student_name);
+        applySeasonPaymentSummary(enrollment);
 
         if (enrollment.payment_status === 'cancelled') {
             return res.status(400).json({
@@ -411,7 +422,7 @@ router.post('/enrollments/:enrollment_id/cancel', verifyToken, checkPermission('
 
         const originalFee = parseFloat(enrollment.season_fee) || 0;
         const discountAmount = parseFloat(enrollment.discount_amount) || 0;
-        const paidAmount = originalFee - discountAmount;
+        const paidAmount = parseFloat(enrollment.paid_amount) || 0;
 
         const refundResult = calculateSeasonRefund({
             paidAmount: paidAmount,
@@ -427,7 +438,7 @@ router.post('/enrollments/:enrollment_id/cancel', verifyToken, checkPermission('
             ? parseFloat(final_refund_amount)
             : refundResult.finalRefundAmount;
 
-        if (actualRefundAmount > 0 && enrollment.payment_status === 'paid') {
+        if (actualRefundAmount > 0 && paidAmount > 0) {
             await pool.execute(
                 `INSERT INTO expenses (
                     academy_id,

@@ -1,3 +1,4 @@
+import { DEFAULT_SEASON_MONTHLY_POLICY } from '@/lib/season-monthly-policy';
 import type {
   AcademySettings,
   ClassTimeKey,
@@ -38,6 +39,7 @@ export const DEFAULT_ACADEMY_SETTINGS: AcademySettings = {
   exam_tuition: { ...DEFAULT_TUITION },
   adult_tuition: { ...DEFAULT_TUITION },
   season_fees: { ...DEFAULT_SEASON_FEES },
+  season_monthly_policy: DEFAULT_SEASON_MONTHLY_POLICY,
 };
 
 export const TIME_OPTIONS: string[] = Array.from({ length: 48 }, (_, index) => {

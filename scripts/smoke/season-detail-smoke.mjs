@@ -3,6 +3,7 @@ import {
   assertNoRawVisibleText,
   createAuthedContext,
   createDiagnostics,
+  isPacaApiRequest,
   jsonRoute,
   launchSmokeBrowser,
   nonServiceWorkerErrors,
@@ -84,6 +85,31 @@ const initialStudents = [
     notes: null,
     time_slots: '["morning"]',
   },
+  {
+    id: 503,
+    student_id: 3,
+    season_id: 88,
+    student_name: '기아림',
+    student_number: 'S-003',
+    student_grade: '고3',
+    season_fee: '3300000',
+    registration_date: '2026-06-22',
+    prorated_month: null,
+    prorated_amount: null,
+    prorated_details: null,
+    is_continuous: false,
+    previous_season_id: null,
+    discount_type: null,
+    discount_amount: null,
+    final_fee: '3300000',
+    paid_amount: 1000000,
+    remaining_amount: 2300000,
+    status: 'registered',
+    payment_status: 'partial',
+    registered_at: '2026-06-22T09:00:00Z',
+    notes: null,
+    time_slots: ['evening'],
+  },
 ];
 
 function makeRefundPreview() {
@@ -136,7 +162,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = isPacaApiRequest(url);
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -212,6 +238,9 @@ async function runNormal(browser) {
   if (studentHref !== '/students/1') {
     throw new Error(`season detail student href mismatch: ${studentHref}`);
   }
+  await page.locator('tr:has-text("기아림")').getByText('부분납부').waitFor();
+  await page.locator('tr:has-text("기아림")').getByText('기납부 1,000,000원').waitFor();
+  await page.locator('tr:has-text("기아림")').getByText('잔액 2,300,000원').waitFor();
   await assertNoRawVisibleText(page, 'season detail desktop');
   await assertNoHorizontalOverflow(page, 'season detail desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-detail-desktop.png', fullPage: true });

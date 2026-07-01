@@ -14,7 +14,6 @@ import {
 import type {
   AcademySettings,
   ClassTimeKey,
-  SeasonFeeKey,
   SettingsUser,
   TimeRangePart,
   TuitionKind,
@@ -96,16 +95,6 @@ export function useSettingsPageState() {
     }));
   };
 
-  const updateSeasonFee = (key: SeasonFeeKey, value: number) => {
-    setSettings((prev) => ({
-      ...prev,
-      season_fees: {
-        ...prev.season_fees,
-        [key]: value,
-      },
-    }));
-  };
-
   const hasUnsavedChanges = useMemo(
     () => serializeAcademySettings(settings) !== serializeAcademySettings(savedSettings),
     [savedSettings, settings]
@@ -165,7 +154,6 @@ export function useSettingsPageState() {
     updateSetting,
     updateClassTime,
     updateTuition,
-    updateSeasonFee,
     saveSettings,
     setResetConfirmation,
     handleResetAllData,

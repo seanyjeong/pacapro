@@ -1,14 +1,24 @@
 import type { Payment } from '@/lib/types/payment';
 import { PAYMENT_STATUS_LABELS } from '@/lib/types/payment';
-import { calculateOverdueDays, formatPaymentAmount, isOverdue } from '@/lib/utils/payment-helpers';
+import {
+  calculateOverdueDays,
+  formatPaymentAmount,
+  getPaidPaymentAmount,
+  getRemainingPaymentAmount,
+  isOverdue,
+} from '@/lib/utils/payment-helpers';
 
 export function getOutstandingAmount(payment: Payment) {
-  return Math.max(0, payment.final_amount - payment.paid_amount);
+  return getRemainingPaymentAmount(payment);
+}
+
+export function getSettledAmount(payment: Payment) {
+  return getPaidPaymentAmount(payment);
 }
 
 export function getPaymentProgress(payment: Payment) {
   if (payment.final_amount <= 0) return 100;
-  return Math.min(100, Math.round((payment.paid_amount / payment.final_amount) * 100));
+  return Math.min(100, Math.round((getSettledAmount(payment) / payment.final_amount) * 100));
 }
 
 export function getStatusTone(status: Payment['payment_status']) {

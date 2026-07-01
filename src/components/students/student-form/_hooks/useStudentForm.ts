@@ -131,7 +131,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
   const loadAvailableSeasons = async () => {
     try {
       setSeasonsLoading(true);
-      const seasons = await seasonsApi.getActiveSeasons();
+      const seasons = await seasonsApi.getRegisterableSeasons();
       setAvailableSeasons(seasons);
     } catch (err) {
       console.warn('등록 가능한 시즌을 불러오지 못했습니다.', err);

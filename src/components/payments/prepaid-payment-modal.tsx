@@ -24,7 +24,7 @@ interface PrepaidPaymentModalProps {
   studentName: string;
   monthlyTuition: number;
   discountRate?: number;
-  onSuccess: () => void;
+  onSuccess: () => void | Promise<void>;
 }
 
 const MONTH_COUNTS = [2, 3, 4, 5, 6];
@@ -147,7 +147,7 @@ export function PrepaidPaymentModal({
         payment_date: paymentDate,
       }, { suppressErrorToast: true });
       toast.success(result.message);
-      onSuccess();
+      await onSuccess();
       onClose();
     } catch (err: unknown) {
       console.warn('선납 결제 처리에 실패했습니다.', err);

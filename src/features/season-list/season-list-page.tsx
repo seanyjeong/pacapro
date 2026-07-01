@@ -29,7 +29,7 @@ export function SeasonListPage() {
   };
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl" data-testid="season-list-workspace">
+    <div className="mx-auto w-full min-w-0 max-w-[1760px] space-y-5" data-testid="season-list-workspace">
       <SeasonListHeader onAddSeason={() => router.push('/seasons/new')} onRefresh={state.reload} />
 
       {state.error ? (
@@ -38,8 +38,8 @@ export function SeasonListPage() {
         <>
           <SeasonListSummary stats={state.stats} />
 
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
-            <main className="order-2 min-w-0 space-y-5 xl:order-1">
+          <div className="grid gap-4 min-[1700px]:grid-cols-[minmax(0,1fr)_320px] min-[1700px]:items-start">
+            <main className="order-2 min-w-0 space-y-5 min-[1700px]:order-1">
               <SeasonActivePanel seasons={state.seasons} onRefresh={state.reload} />
               <SeasonListFilters
                 filters={state.filters}
@@ -60,7 +60,7 @@ export function SeasonListPage() {
                 />
               )}
             </main>
-            <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
+            <div className="order-1 min-w-0 min-[1700px]:sticky min-[1700px]:top-20 min-[1700px]:order-2">
               <SeasonListOperationsBoard
                 filters={state.filters}
                 seasons={state.seasons}

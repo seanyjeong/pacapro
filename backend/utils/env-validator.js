@@ -12,8 +12,8 @@ const REQUIRED_ENV = {
     DATA_ENCRYPTION_KEY: '데이터 암호화 키 (32자)',
     JWT_SECRET: 'JWT 서명 키',
 
-    // 외부 서비스
-    N8N_API_KEY: 'N8N API 키'
+    // 내부 자동화
+    PACA_NOTIFICATION_API_KEY: 'PACA 내부 자동화 API 키'
 };
 
 // 선택적 환경변수 (기본값 있음)
@@ -31,7 +31,7 @@ const DEV_DEFAULTS = {
     DB_PASSWORD: 'replace-with-local-db-password',
     DATA_ENCRYPTION_KEY: 'replace-with-local-32-byte-key',
     JWT_SECRET: 'replace-with-local-jwt-secret',
-    N8N_API_KEY: 'replace-with-local-n8n-api-key'
+    PACA_NOTIFICATION_API_KEY: 'replace-with-local-paca-notification-api-key'
 };
 
 /**

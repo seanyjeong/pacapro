@@ -18,14 +18,14 @@ function makePermissions() {
 }
 
 function makeState(mode) {
-  return { deletedStaffId: null, hits: [], mode, permissionPayload: null };
+  return { deletedStaffId: null, hits: [], mode, permissionPayload: null, permissions: makePermissions() };
 }
 
 async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) return route.continue();
 
@@ -56,7 +56,7 @@ async function installRoutes(context, state) {
             email: 'manager@example.com',
             name: '김관리',
             position: '실장',
-            permissions: makePermissions(),
+            permissions: state.permissions,
             instructor_id: 4,
             is_active: true,
             created_at: '2026-06-01T09:00:00.000Z',
@@ -78,6 +78,7 @@ async function installRoutes(context, state) {
 
     if (method === 'PUT' && path === '/staff/11/permissions') {
       state.permissionPayload = JSON.parse(request.postData() || '{}');
+      state.permissions = state.permissionPayload.permissions;
       return jsonRoute(route, { message: 'updated' });
     }
 
@@ -105,8 +106,12 @@ async function gotoStaff(page) {
     const url = new URL(response.url());
     return response.request().method() === 'GET' && normalizePacaApiPath(url) === '/staff';
   });
+  const instructorsResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return response.request().method() === 'GET' && normalizePacaApiPath(url) === '/staff/available-instructors';
+  });
   await page.goto('/staff', { waitUntil: 'domcontentloaded' });
-  await staffResponse;
+  await Promise.all([staffResponse, instructorsResponse]);
 }
 
 async function clickWithoutNativeDialog(page, locator, label) {
@@ -134,24 +139,31 @@ async function runDesktop(browser) {
   await page.getByTestId('staff-summary-strip').waitFor();
   await page.getByTestId('staff-work-queue').waitFor();
   await page.getByText('관리 계정 운영 보드').waitFor();
-  await page.getByText('권한 부여 대기 1명').waitFor();
+  await page.getByText('박강사').waitFor();
   const desktopList = page.getByTestId('staff-desktop-list');
   await desktopList.getByText('김관리').waitFor();
   await desktopList.getByText('manager@example.com').waitFor();
   await page.getByRole('button', { name: '김관리 권한 설정' }).click();
   await page.getByText('김관리 권한 설정').waitFor();
+  await page.getByText('저장된 권한과 동일합니다.').waitFor();
   await page.getByRole('button', { name: '전체 보기' }).click();
+  await page.getByText('저장하지 않은 변경사항이 있습니다.').waitFor();
   await Promise.all([
     page.waitForResponse((response) => {
       const url = new URL(response.url());
       return response.request().method() === 'PUT' && normalizePacaApiPath(url) === '/staff/11/permissions';
     }),
-    page.getByRole('button', { name: '저장' }).click(),
+    page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'GET' && normalizePacaApiPath(url) === '/staff';
+    }),
+    page.getByRole('button', { name: '권한 저장' }).click(),
   ]);
 
   if (!state.permissionPayload?.permissions?.students?.view) {
     throw new Error(`permission payload mismatch: ${JSON.stringify(state.permissionPayload)}`);
   }
+  await desktopList.getByText('보기: 19개, 수정: 1개').waitFor();
 
   await clickWithoutNativeDialog(page, desktopList.getByRole('button', { name: '김관리 삭제' }), 'staff delete');
   const deleteDialog = page.getByRole('alertdialog');
@@ -194,6 +206,8 @@ async function runMobile(browser) {
   await page.screenshot({ path: '/Users/etlab/paca-staff-mobile.png', fullPage: true });
   await mobileList.getByRole('button', { name: '김관리 권한 설정' }).click();
   await page.getByText('김관리 권한 설정').waitFor();
+  await page.getByText('저장된 권한과 동일합니다.').waitFor();
+  await page.getByRole('button', { name: '권한 저장' }).waitFor();
   await assertNoRawVisibleText(page, 'staff mobile permission modal');
   await assertNoHorizontalOverflow(page, 'staff mobile permission modal');
   await page.screenshot({ path: '/Users/etlab/paca-staff-modal-mobile.png', fullPage: true });

@@ -3,7 +3,8 @@ import { Loader2, Receipt, UserRound, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Season, StudentSeason, TimeSlot } from '@/lib/types/season';
 import { formatSeasonFee } from '@/lib/types/season';
-import { getEnrollmentTimeSlots } from './season-detail-utils';
+import { getEnrollmentTimeSlots, getSeasonPaymentAmounts, hasPaidSeasonAmount } from './season-detail-utils';
+import { SeasonPaymentAmountSummary } from './season-payment-amount-summary';
 import { SeasonPaymentStatusBadge } from './season-payment-status-badge';
 import { SeasonTimeSlotToggleGroup } from './season-time-slot-toggle-group';
 
@@ -26,11 +27,13 @@ export function EnrolledStudentCard({
   onOpenRefund,
   onTimeSlotChange,
 }: EnrolledStudentCardProps) {
-  const seasonFee = Number(enrollment.season_fee) || 0;
+  const { finalAmount } = getSeasonPaymentAmounts(enrollment);
+  const seasonFee = finalAmount || Number(enrollment.season_fee) || 0;
   const discountAmount = Number(enrollment.discount_amount ?? 0) || 0;
   const originalFee = seasonFee + discountAmount;
   const timeSlots = getEnrollmentTimeSlots(season, enrollment);
   const isCancelled = enrollment.payment_status === 'cancelled';
+  const hasPaidAmount = hasPaidSeasonAmount(enrollment);
 
   return (
     <article className="space-y-4 px-4 py-4" data-testid="enrolled-student-card">
@@ -62,6 +65,7 @@ export function EnrolledStudentCard({
           ) : (
             <p className="mt-1 font-semibold text-foreground">{formatSeasonFee(enrollment.season_fee)}</p>
           )}
+          <SeasonPaymentAmountSummary enrollment={enrollment} />
         </div>
         <div className="rounded-md bg-slate-50 p-3">
           <p className="text-xs text-muted-foreground">등록일</p>
@@ -84,7 +88,7 @@ export function EnrolledStudentCard({
 
       {!isCancelled ? (
         <div className="flex justify-end gap-2">
-          {enrollment.payment_status === 'paid' ? (
+          {hasPaidAmount ? (
             <Button className="text-orange-700 hover:text-orange-800" size="sm" type="button" variant="ghost" onClick={onOpenRefund}>
               <Receipt className="mr-1 h-4 w-4" />
               환불

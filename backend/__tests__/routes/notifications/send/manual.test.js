@@ -191,6 +191,11 @@ describe('POST /send-unpaid (verifyToken + checkPermission)', () => {
         expect(pool.execute).toHaveBeenCalledTimes(4);
         expect(pool.query).not.toHaveBeenCalled();
 
+        const unpaidQuery = pool.execute.mock.calls[2][0];
+        expect(unpaidQuery).toContain('GREATEST');
+        expect(unpaidQuery).toContain('p.paid_amount');
+        expect(unpaidQuery).toContain("NOT (p.payment_type = 'season' AND p.due_date > CURDATE())");
+
         // ADR-007: sendAlimtalk 첫 인자 객체 셰이프 보존
         expect(naverSens.sendAlimtalk).toHaveBeenCalledTimes(1);
         const [sensConfig, templateCode, batch] = naverSens.sendAlimtalk.mock.calls[0];

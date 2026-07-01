@@ -47,7 +47,16 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
+
+    if (url.hostname === 'jungsi.example.test') {
+      state.externalContinues.push(request.url());
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/html; charset=utf-8',
+        body: '<!doctype html><title>Jungsi Login</title><h1>정시엔진 로그인</h1>',
+      });
+    }
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -64,6 +73,15 @@ async function installRoutes(context, state) {
     }
     if (method === 'GET' && path === '/jungsi/status') {
       return jsonRoute(route, healthyStatus);
+    }
+    if (method === 'POST' && path === '/jungsi/link/start') {
+      return jsonRoute(route, {
+        success: true,
+        mode: 'jungsi_login',
+        loginUrl: 'https://jungsi.example.test/jungsilogin.html?paca_link_state=1.mock&paca_link_callback=https%3A%2F%2Fsupermax.kr%2Fpaca%2Fjungsi%2Flink%2Fcallback',
+        expiresAt: new Date(Date.now() + 600000).toISOString(),
+        message: '정시엔진 로그인 후 연동이 완료됩니다.',
+      });
     }
     if (state.failStudents && method === 'GET' && path === '/students') {
       return jsonRoute(route, { message: 'HTTP 500 stack trace' }, 500);
@@ -112,6 +130,7 @@ async function runNormal(browser) {
   await page.getByRole('heading', { name: '성적관리' }).waitFor();
   await waitForConnectedStatus(page);
   await assertOperationsBoard(page);
+  await assertJungsiLinkFlow(page, state);
   await openMockExamTab(page);
   await page.getByText('김민서').waitFor();
   const board = page.getByTestId('performance-operations-board');
@@ -160,6 +179,25 @@ async function assertOperationsBoard(page) {
   await board.getByTestId('performance-metric-exams').getByText('4종').waitFor();
   await board.getByText('일산 지점').waitFor();
   await board.getByRole('button', { name: '모의고사·수능 보기' }).waitFor();
+}
+
+async function assertJungsiLinkFlow(page, state) {
+  const board = page.getByTestId('performance-operations-board');
+  await board.getByRole('button', { name: '정시엔진 재연동' }).click();
+  await page.getByRole('dialog').getByText('정시엔진 아이디와 비밀번호로 로그인하면').waitFor();
+  await page.getByText('비밀번호는 PACA에 저장하지 않고').waitFor();
+  await page.screenshot({ path: '/Users/etlab/paca-performance-jungsi-link-dialog.png', fullPage: true });
+
+  const popupPromise = page.waitForEvent('popup');
+  await page.getByRole('button', { name: '정시엔진 로그인 열기' }).click();
+  const popup = await popupPromise;
+  await popup.waitForURL(/jungsi\.example\.test\/jungsilogin\.html/, { timeout: 10000 });
+  await popup.close();
+  await page.getByText('정시엔진 로그인 창을 열었습니다.').waitFor();
+
+  if (!state.hits.some((hit) => hit === 'POST /jungsi/link/start')) {
+    throw new Error(`missing jungsi link start request: ${state.hits.join(' | ')}`);
+  }
 }
 
 async function runStatusError(browser) {

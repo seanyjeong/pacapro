@@ -1,9 +1,10 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { toast } from 'sonner';
+import { PACA_API_BASE_URL, PACA_FALLBACK_API_BASE_URL } from './base-url';
 import { getSafeApiToastMessage } from './error-message';
 
-const PRIMARY_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
-const FALLBACK_URL = process.env.NEXT_PUBLIC_FALLBACK_API_URL || 'https://supermax.kr/paca';
+const PRIMARY_URL = PACA_API_BASE_URL;
+const FALLBACK_URL = PACA_FALLBACK_API_BASE_URL;
 
 export interface APIRequestConfig extends AxiosRequestConfig {
     suppressErrorToast?: boolean;

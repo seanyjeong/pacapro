@@ -96,7 +96,7 @@ export function SeasonListOperationsBoard({
       </div>
 
       <div className="grid gap-2">
-        <Button className="w-full justify-start gap-2" type="button" onClick={onAddSeason}>
+        <Button className="w-full justify-start gap-2 whitespace-nowrap" type="button" onClick={onAddSeason}>
           <Plus className="h-4 w-4" />
           새 시즌 등록
         </Button>
@@ -104,7 +104,7 @@ export function SeasonListOperationsBoard({
           <>
             <Link
               aria-label={`${primarySeason.season_name} 학생 등록`}
-              className={buttonVariants({ variant: 'outline', className: 'w-full justify-start gap-2' })}
+              className={buttonVariants({ variant: 'outline', className: 'w-full justify-start gap-2 whitespace-nowrap' })}
               href={`/seasons/${primarySeason.id}/enroll`}
             >
               <UserPlus className="h-4 w-4" />
@@ -112,7 +112,7 @@ export function SeasonListOperationsBoard({
             </Link>
             <Link
               aria-label={`${primarySeason.season_name} 상세`}
-              className={buttonVariants({ variant: 'outline', className: 'w-full justify-start gap-2' })}
+              className={buttonVariants({ variant: 'outline', className: 'w-full justify-start gap-2 whitespace-nowrap' })}
               href={`/seasons/${primarySeason.id}`}
             >
               <CalendarDays className="h-4 w-4" />
@@ -120,11 +120,11 @@ export function SeasonListOperationsBoard({
             </Link>
           </>
         ) : null}
-        <Button className="w-full justify-start gap-2" disabled={!hasActiveFilters} type="button" variant="outline" onClick={onClearFilters}>
+        <Button className="w-full justify-start gap-2 whitespace-nowrap" disabled={!hasActiveFilters} type="button" variant="outline" onClick={onClearFilters}>
           <FilterX className="h-4 w-4" />
           필터 초기화
         </Button>
-        <Button className="w-full justify-start gap-2" type="button" variant="ghost" onClick={onRefresh}>
+        <Button className="w-full justify-start gap-2 whitespace-nowrap" type="button" variant="ghost" onClick={onRefresh}>
           <RefreshCw className="h-4 w-4" />
           새로고침
         </Button>

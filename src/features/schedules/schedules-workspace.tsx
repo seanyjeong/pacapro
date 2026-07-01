@@ -30,6 +30,32 @@ interface SchedulesWorkspaceProps {
 }
 
 export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
+  const collapsedPanelStats = props.selectedDate ? props.instructorStats[props.selectedDate] : undefined;
+  const selectedScheduleCount = props.selectedDate
+    ? props.schedules.filter((schedule) => schedule.class_date === props.selectedDate).length
+    : 0;
+  const deskGridClass = props.isPanelExpanded
+    ? 'xl:grid-cols-[minmax(0,1fr)_320px]'
+    : 'xl:grid-cols-[minmax(0,1fr)_48px]';
+
+  const instructorPanel = props.isPanelExpanded ? (
+    <>
+      <SchedulesPanelToggle expanded onToggle={props.onTogglePanel} />
+      <InstructorSchedulePanel
+        date={props.selectedDate}
+        onRequestExtraDay={props.onOpenExtraDay}
+        onSave={props.onPanelSave}
+      />
+    </>
+  ) : (
+    <SchedulesPanelToggle
+      expanded={false}
+      instructorStats={collapsedPanelStats}
+      scheduleCount={selectedScheduleCount}
+      onToggle={props.onTogglePanel}
+    />
+  );
+
   return (
     <Tabs defaultValue="calendar" className="space-y-5">
       <TabsList className="grid w-full max-w-xs grid-cols-2 rounded-md border border-slate-200 bg-slate-50 p-1">
@@ -53,7 +79,27 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
           onSlotClick={props.onSlotClick}
         />
 
-        <div className="flex min-w-0 gap-4">
+        <div className={`grid min-w-0 gap-4 ${deskGridClass}`}>
+          <div className="min-w-0 xl:hidden">
+            {props.isPanelExpanded ? (
+              <div className="space-y-2">
+                <SchedulesPanelToggle expanded mode="bar" onToggle={props.onTogglePanel} />
+                <InstructorSchedulePanel
+                  date={props.selectedDate}
+                  onRequestExtraDay={props.onOpenExtraDay}
+                  onSave={props.onPanelSave}
+                />
+              </div>
+            ) : (
+              <SchedulesPanelToggle
+                expanded={false}
+                instructorStats={collapsedPanelStats}
+                mode="bar"
+                scheduleCount={selectedScheduleCount}
+                onToggle={props.onTogglePanel}
+              />
+            )}
+          </div>
           <div className="min-w-0 flex-1">
             <ScheduleCalendarV2
               consultations={props.consultations}
@@ -68,24 +114,8 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
               onSlotClick={props.onSlotClick}
             />
           </div>
-          <div className={`hidden flex-col transition-all duration-200 lg:flex ${props.isPanelExpanded ? 'w-80' : 'w-12'}`}>
-            {props.isPanelExpanded ? (
-              <>
-                <SchedulesPanelToggle expanded onToggle={props.onTogglePanel} />
-                <InstructorSchedulePanel
-                  date={props.selectedDate}
-                  onRequestExtraDay={props.onOpenExtraDay}
-                  onSave={props.onPanelSave}
-                />
-              </>
-            ) : (
-              <SchedulesPanelToggle
-                expanded={false}
-                instructorStats={props.selectedDate ? props.instructorStats[props.selectedDate] : undefined}
-                scheduleCount={props.selectedDate ? props.schedules.filter((schedule) => schedule.class_date === props.selectedDate).length : 0}
-                onToggle={props.onTogglePanel}
-              />
-            )}
+          <div className={`hidden flex-col transition-all duration-200 xl:flex ${props.isPanelExpanded ? 'w-80' : 'w-12'}`}>
+            {instructorPanel}
           </div>
         </div>
       </TabsContent>

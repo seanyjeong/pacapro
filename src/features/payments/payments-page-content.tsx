@@ -38,7 +38,7 @@ export function PaymentsPageContent() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full min-w-0 max-w-[1760px] space-y-5">
       <PaymentsHeader
         viewOnly={viewOnly}
         canEdit={canEditPayments}
@@ -52,8 +52,8 @@ export function PaymentsPageContent() {
 
       <PaymentSummaryStrip summary={state.summary} viewOnly={viewOnly} isOwner={isOwner} />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
-        <main className="order-2 min-w-0 space-y-5 xl:order-1">
+      <div className="grid gap-4 min-[1800px]:grid-cols-[minmax(0,1fr)_260px] min-[1800px]:items-start">
+        <main className="order-2 min-w-0 space-y-5 min-[1800px]:order-1">
           <PaymentFilterBar
             filters={state.filters}
             todayUnpaidOnly={state.todayUnpaidOnly}
@@ -74,7 +74,7 @@ export function PaymentsPageContent() {
             confirmBeforePayment
           />
         </main>
-        <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
+        <div className="order-1 min-w-0 min-[1800px]:sticky min-[1800px]:top-20 min-[1800px]:order-2">
           <PaymentsOperationsBoard
             canEdit={canEditPayments}
             filters={state.filters}

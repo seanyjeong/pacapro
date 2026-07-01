@@ -3,6 +3,7 @@
  */
 
 import apiClient, { type APIRequestConfig } from './client';
+import { DEFAULT_SEASON_MONTHLY_POLICY } from '@/lib/season-monthly-policy';
 import type {
   Season,
   SeasonFormData,
@@ -48,6 +49,14 @@ export const seasonsApi = {
   },
 
   /**
+   * 학생 등록 가능한 시즌 목록 조회
+   */
+  getRegisterableSeasons: async (): Promise<Season[]> => {
+    const response = await apiClient.get<SeasonsResponse>(`${BASE_PATH}/registerable`);
+    return response.seasons || [];
+  },
+
+  /**
    * 시즌 상세 조회
    */
   getSeason: async (id: number): Promise<SeasonDetailResponse> => {
@@ -76,6 +85,8 @@ export const seasonsApi = {
       operating_days: data.operating_days,
       grade_time_slots: data.grade_time_slots,
       default_season_fee: data.season_fee,
+      payment_due_date: data.payment_due_date || null,
+      season_monthly_policy: data.season_monthly_policy || DEFAULT_SEASON_MONTHLY_POLICY,
       continuous_discount_type: data.continuous_discount_type,
       continuous_discount_rate: data.continuous_discount_rate,
     };
@@ -98,6 +109,8 @@ export const seasonsApi = {
     if (data.operating_days !== undefined) apiData.operating_days = data.operating_days;
     if (data.grade_time_slots !== undefined) apiData.grade_time_slots = data.grade_time_slots;
     if (data.season_fee !== undefined) apiData.default_season_fee = data.season_fee;
+    if (data.payment_due_date !== undefined) apiData.payment_due_date = data.payment_due_date || null;
+    if (data.season_monthly_policy !== undefined) apiData.season_monthly_policy = data.season_monthly_policy;
     if (data.continuous_discount_type !== undefined) apiData.continuous_discount_type = data.continuous_discount_type;
     if (data.continuous_discount_rate !== undefined) apiData.continuous_discount_rate = data.continuous_discount_rate;
     if (data.status !== undefined) apiData.status = data.status;

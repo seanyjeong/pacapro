@@ -69,7 +69,21 @@ describe('GET /paca/payments/stats/summary', () => {
 
         const [sql, params] = pool.execute.mock.calls[0];
         expect(sql).not.toContain('AND p.year_month = ?');
+        expect(sql).toContain('p.paid_amount');
+        expect(sql).toContain('total_collected');
+        expect(sql).toContain('total_outstanding');
+        expect(sql).toContain('GREATEST');
+        expect(sql).toContain("NOT (p.payment_type = 'season' AND p.due_date > CURDATE())");
         expect(params).toEqual([5]);
+    });
+
+    test('SQL: 부분납부는 수납액 paid_amount, 미납액 final-paid 기준으로 집계', async () => {
+        await request(makeApp()).get('/paca/payments/stats/summary?year=2026&month=6');
+        const [sql] = pool.execute.mock.calls[0];
+        expect(sql).toContain('COALESCE(p.paid_amount, 0)');
+        expect(sql).toContain('COALESCE(p.final_amount, 0)');
+        expect(sql).toContain('GREATEST');
+        expect(sql).not.toContain("THEN p.final_amount ELSE 0 END) as total_outstanding");
     });
 
     test('200: year+month 지정 시 dateFilter 적용', async () => {

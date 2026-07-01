@@ -156,6 +156,34 @@ describe('POST /paca/payments/:id/pay', () => {
         expect(updateCall[1][3]).toBe('partial');
     });
 
+    test('200: 300만원 중 100만원 납부 → 납부액만 누적하고 잔액은 남긴다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[
+                { id: 1, payment_type: 'monthly', payment_status: 'pending', final_amount: 3000000, paid_amount: 0, discount_amount: 0, academy_id: 5, student_id: 7, description: 'd' },
+            ]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[{ id: 1, student_name: 'enc_홍', payment_status: 'partial', paid_amount: 1000000, final_amount: 3000000 }]]);
+
+        const res = await request(makeApp())
+            .post('/paca/payments/1/pay')
+            .send({ paid_amount: 1000000, payment_method: 'account', payment_date: '2026-06-24' });
+
+        expect(res.status).toBe(200);
+
+        const updateCall = pool.execute.mock.calls[1];
+        expect(updateCall[1][0]).toBe(1000000); // paid_amount 누적
+        expect(updateCall[1][1]).toBe(3000000); // final_amount 보존
+        expect(updateCall[1][3]).toBe('partial');
+
+        const revenueCall = pool.execute.mock.calls[2];
+        expect(revenueCall[1][2]).toBe(1000000); // 실제 납부액만 수입 기록
+
+        const selectUpdatedCall = pool.execute.mock.calls[3];
+        expect(selectUpdatedCall[0]).toContain('remaining_amount');
+        expect(selectUpdatedCall[0]).toContain('p.paid_amount');
+    });
+
     test('200: 추가 할인 (discount_amount) → final_amount 감소 + notes 기록', async () => {
         pool.execute
             .mockResolvedValueOnce([[

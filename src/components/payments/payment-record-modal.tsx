@@ -3,7 +3,7 @@
  * 납부 기록 모달 컴포넌트
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +29,10 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
   other: <HelpCircle className="w-5 h-5" />,
 };
 
+function getTodayString() {
+  return new Date().toISOString().split('T')[0];
+}
+
 export function PaymentRecordModal({
   isOpen,
   onClose,
@@ -36,23 +40,29 @@ export function PaymentRecordModal({
   studentName,
   finalAmount,
   paidAmount = 0,
-  baseAmount,
-  existingDiscount = 0,
 }: PaymentRecordModalProps) {
   // 소수점 제거하고 정수로 처리
   const finalAmountInt = Math.floor(finalAmount);
   const paidAmountInt = Math.floor(paidAmount);
-  const baseAmountInt = baseAmount ? Math.floor(baseAmount) : finalAmountInt;
-  const existingDiscountInt = Math.floor(existingDiscount);
-  const remainingAmount = finalAmountInt - paidAmountInt;
+  const remainingAmount = Math.max(finalAmountInt - paidAmountInt, 0);
 
   const [formData, setFormData] = useState({
     paid_amount: remainingAmount,
     payment_method: 'account',
-    payment_date: new Date().toISOString().split('T')[0],
+    payment_date: getTodayString(),
     discount_amount: 0, // 추가 할인
   });
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setFormData({
+      paid_amount: remainingAmount,
+      payment_method: 'account',
+      payment_date: getTodayString(),
+      discount_amount: 0,
+    });
+  }, [isOpen, remainingAmount]);
 
   // 추가 할인 적용 후 실제 납부해야 할 금액
   const actualRemainingAmount = Math.max(0, remainingAmount - formData.discount_amount);
@@ -80,7 +90,7 @@ export function PaymentRecordModal({
         discount_amount: formData.discount_amount > 0 ? formData.discount_amount : undefined,
       });
       onClose();
-    } catch (err) {
+    } catch {
       // Error handled in parent
     } finally {
       setSubmitting(false);
@@ -102,6 +112,7 @@ export function PaymentRecordModal({
             <CardTitle className="text-xl">납부 기록</CardTitle>
             <button
               onClick={onClose}
+              aria-label="납부 기록 닫기"
               className="p-1 hover:bg-muted rounded-full transition-colors"
             >
               <X className="w-5 h-5 text-muted-foreground" />
@@ -132,10 +143,11 @@ export function PaymentRecordModal({
 
             {/* 할인 금액 (선택) */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label htmlFor="payment-record-discount-amount" className="block text-sm font-medium text-foreground mb-2">
                 할인 금액 <span className="text-muted-foreground text-xs font-normal">(선택사항)</span>
               </label>
               <MoneyInput
+                id="payment-record-discount-amount"
                 value={formData.discount_amount}
                 onChange={(discount) => {
                   const newRemaining = Math.max(0, remainingAmount - discount);
@@ -160,10 +172,11 @@ export function PaymentRecordModal({
 
             {/* 납부 금액 */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
+              <label htmlFor="payment-record-paid-amount" className="block text-sm font-medium text-foreground mb-2">
                 납부 금액 <span className="text-red-500">*</span>
               </label>
               <MoneyInput
+                id="payment-record-paid-amount"
                 value={formData.paid_amount}
                 onChange={(paid_amount) => setFormData({ ...formData, paid_amount })}
                 className="py-3 rounded-lg text-lg font-semibold focus:ring-2 focus:ring-primary-500 focus:border-primary-500"

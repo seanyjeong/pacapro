@@ -61,7 +61,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -122,6 +122,7 @@ async function runNormal(browser) {
   await page.locator('[data-testid="season-row"]:has-text("2026 정시 집중반")').first().waitFor();
   await page.locator('[data-testid="season-row"]:has-text("2026 수시 실전반")').first().waitFor();
   await page.locator('[data-testid="season-row"]:has-text("2026 정시 집중반")').getByRole('link', { name: '학생 등록' }).waitFor();
+  await assertSeasonDesktopLayout(page);
   await assertNoRawVisibleText(page, 'season list desktop');
   await assertNoHorizontalOverflow(page, 'season list desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-list-desktop.png', fullPage: true });
@@ -171,6 +172,48 @@ async function assertOperationsBoard(page) {
   await board.getByTestId('season-list-metric-early').getByText('1개').waitFor();
   await board.getByRole('button', { name: '새 시즌 등록' }).waitFor();
   await board.getByRole('link', { name: '2026 정시 집중반 학생 등록' }).waitFor();
+}
+
+async function assertSeasonDesktopLayout(page) {
+  const layout = await page.evaluate(() => {
+    const board = document.querySelector('[data-testid="season-list-operations-board"]');
+    const table = document.querySelector('[data-testid="season-row"]')?.closest('table');
+    const activePanel = document.querySelector('[data-testid="season-active-panel"]');
+    const actionCells = [...document.querySelectorAll('tbody tr[data-testid="season-row"] td:last-child')];
+    const actionButtonLineCounts = actionCells.map((cell) => {
+      const buttons = [...cell.querySelectorAll('a, button')];
+      return new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top))).size;
+    });
+    const actionCellWidths = actionCells.map((cell) => cell.getBoundingClientRect().width);
+    const activePanelActionTops = activePanel
+      ? [...activePanel.querySelectorAll('a, button')].map((node) => Math.round(node.getBoundingClientRect().top))
+      : [];
+    const boardRect = board?.getBoundingClientRect();
+    const tableRect = table?.getBoundingClientRect();
+    const sharesVerticalBand = Boolean(
+      boardRect && tableRect && boardRect.top < tableRect.bottom && boardRect.bottom > tableRect.top
+    );
+    return {
+      activePanelLineCount: new Set(activePanelActionTops).size,
+      actionButtonLineCounts,
+      boardLeft: boardRect?.left || 0,
+      minActionCellWidth: Math.min(...actionCellWidths),
+      sharesVerticalBand,
+      tableRight: tableRect?.right || 0,
+    };
+  });
+  if (layout.actionButtonLineCounts.some((count) => count > 1)) {
+    throw new Error(`season row action buttons wrapped: ${JSON.stringify(layout)}`);
+  }
+  if (layout.minActionCellWidth < 320) {
+    throw new Error(`season action column too narrow: ${JSON.stringify(layout)}`);
+  }
+  if (layout.activePanelLineCount > 1) {
+    throw new Error(`season active panel actions wrapped: ${JSON.stringify(layout)}`);
+  }
+  if (layout.sharesVerticalBand && layout.boardLeft > 0 && layout.tableRight > layout.boardLeft - 4) {
+    throw new Error(`season list overlaps operations board: ${JSON.stringify(layout)}`);
+  }
 }
 
 async function waitForSeasonAbsent(page, seasonName) {

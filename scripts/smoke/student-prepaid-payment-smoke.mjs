@@ -99,9 +99,11 @@ function makePreview() {
 
 function makeState(overrides = {}) {
   return {
+    creditGetCount: 0,
     hits: [],
     prepaidPayPayloads: [],
     prepaidPreviewPayloads: [],
+    studentGetCount: 0,
     ...overrides,
   };
 }
@@ -110,7 +112,7 @@ async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) return route.continue();
 
@@ -119,6 +121,7 @@ async function installRoutes(context, state) {
     state.hits.push(`${method} ${path}${url.search}`);
 
     if (method === 'GET' && path === '/students/41') {
+      state.studentGetCount += 1;
       return jsonRoute(route, {
         message: 'ok',
         payments: [makePayment()],
@@ -128,6 +131,7 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'GET' && path === '/students/41/rest-credits') {
+      state.creditGetCount += 1;
       return jsonRoute(route, { credits: [], message: 'ok', pendingTotal: 0 });
     }
 
@@ -216,6 +220,55 @@ async function runPayError(browser) {
   return { diagnostics, state };
 }
 
+async function runPaySuccess(browser) {
+  const state = makeState();
+  const context = await createAuthedContext(browser, { width: 1280, height: 860 });
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  const diagnostics = createDiagnostics(page);
+
+  await openPrepaidModal(page);
+  await page.getByText('최종 납부').waitFor();
+
+  let mainFrameNavigations = 0;
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) mainFrameNavigations += 1;
+  });
+
+  const payResponse = page.waitForResponse((response) => response.url().includes('/payments/prepaid-pay'));
+  const studentReload = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return response.request().method() === 'GET' && normalizePacaApiPath(url) === '/students/41';
+  });
+  const creditReload = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return response.request().method() === 'GET' && normalizePacaApiPath(url) === '/students/41/rest-credits';
+  });
+
+  await page.getByRole('button', { name: '선납 결제 확정' }).click();
+  await Promise.all([payResponse, studentReload, creditReload]);
+  await page.getByText('선납 결제가 완료되었습니다.').waitFor();
+  await page.getByRole('heading', { name: '선납 할인 결제' }).waitFor({ state: 'hidden' });
+
+  if (mainFrameNavigations > 0) {
+    throw new Error(`prepaid success should not reload page, got ${mainFrameNavigations} navigations`);
+  }
+  if (state.studentGetCount < 2 || state.creditGetCount < 2) {
+    throw new Error(`prepaid success did not refresh student detail data: ${JSON.stringify({
+      creditGetCount: state.creditGetCount,
+      studentGetCount: state.studentGetCount,
+    })}`);
+  }
+
+  await assertNoRawVisibleText(page, 'prepaid pay success');
+  await assertNoHorizontalOverflow(page, 'prepaid pay success');
+  await page.screenshot({ path: '/Users/etlab/paca-student-prepaid-success-desktop.png', fullPage: true });
+
+  await context.close();
+  return { diagnostics, state };
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -226,11 +279,14 @@ async function main() {
   try {
     const previewError = await runPreviewError(browser);
     const payError = await runPayError(browser);
-    [previewError, payError].forEach(assertDiagnostics);
+    const paySuccess = await runPaySuccess(browser);
+    [previewError, payError, paySuccess].forEach(assertDiagnostics);
     console.log(JSON.stringify({
+      paySuccessHits: paySuccess.state.hits,
       previewErrorHits: previewError.state.hits,
       payErrorHits: payError.state.hits,
       payPayload: payError.state.prepaidPayPayloads.at(-1),
+      paySuccessPayload: paySuccess.state.prepaidPayPayloads.at(-1),
       previewConsoleErrors: previewError.diagnostics.consoleErrors,
       payConsoleErrors: payError.diagnostics.consoleErrors,
     }, null, 2));

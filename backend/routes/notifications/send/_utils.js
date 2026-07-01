@@ -15,9 +15,8 @@
  *    (`message` / `sent` / `failed` / `requestId` / `groupId` / `results` /
  *    `current_hour` / `academies_processed` / `total_sent` / `total_failed` /
  *    `date` / `day_name`) 를 노출하므로 헬퍼로 강제 통일 시도 X.
- *  - webhook (`/send-*-auto-sens` 4건 + `/send-reminder-auto` 4건 중 일부) 의
- *    X-API-Key 검증 로직은 무인증 endpoint 정책 보존을 위해 본 헬퍼에 통합한다
- *    (`assertWebhookApiKey`).
+ *  - 자동 발송 endpoint 의 X-API-Key 검증 로직은 무인증 endpoint 정책 보존과
+ *    내부 scheduler 호출을 위해 본 헬퍼에 통합한다.
  */
 
 const parent = require('../_utils');
@@ -40,7 +39,22 @@ const {
 } = parent;
 
 /**
- * X-API-Key 헤더 검증 (n8n webhook / cron 호출용 무인증 endpoint 4건 보호).
+ * 자동 발송용 X-API-Key 조회.
+ *
+ * - PACA_NOTIFICATION_API_KEY 가 canonical 자동화 키다.
+ * - legacy workflow key fallback 은 허용하지 않는다.
+ */
+function getNotificationAutomationApiKey() {
+    return process.env.PACA_NOTIFICATION_API_KEY || '';
+}
+
+function hasValidNotificationAutomationKey(req) {
+    const apiKey = getNotificationAutomationApiKey();
+    return Boolean(apiKey) && req.headers['x-api-key'] === apiKey;
+}
+
+/**
+ * X-API-Key 헤더 검증 (내부 scheduler / cron 호출용 무인증 endpoint 보호).
  *
  * - notifications/send 의 `/send-*-auto-sens` (4건) + `/send-reminder-auto` (1건) 가
  *   verifyToken 미적용 endpoint 로 등록되어 있다 (ADR-014 광역 미들웨어 금지 사유).
@@ -52,13 +66,28 @@ const {
  * @returns {boolean} true = 통과, false = 401 응답 후 호출자 종료 필요
  */
 function assertWebhookApiKey(req, res) {
-    const apiKey = req.headers['x-api-key'];
-    const expectedApiKey = process.env.N8N_API_KEY || 'replace-with-local-n8n-api-key';
-    if (apiKey !== expectedApiKey) {
+    if (!hasValidNotificationAutomationKey(req)) {
         res.status(401).json({ error: 'Unauthorized' });
         return false;
     }
     return true;
+}
+
+/**
+ * 내부 scheduler 는 X-API-Key 로 통과하고, 사용자는 JWT 로 통과한다.
+ */
+function verifyNotificationAutomation(req, res, next) {
+    if (hasValidNotificationAutomationKey(req)) {
+        req.user = {
+            id: 0,
+            userId: 0,
+            academyId: null,
+            role: 'scheduler',
+            isNotificationScheduler: true,
+        };
+        return next();
+    }
+    return verifyToken(req, res, next);
 }
 
 module.exports = {
@@ -68,6 +97,7 @@ module.exports = {
     // 인증 (manual/auto endpoint 용 — webhook 4건은 미사용)
     verifyToken,
     checkPermission,
+    verifyNotificationAutomation,
     // 외부 발송 채널 (ADR-007 시그니처 무변경)
     decryptApiKey,
     sendAlimtalk,
@@ -80,6 +110,8 @@ module.exports = {
     decryptStudentArray,
     ENCRYPTION_KEY,
     // webhook 보호 (X-API-Key 검증)
+    getNotificationAutomationApiKey,
+    hasValidNotificationAutomationKey,
     assertWebhookApiKey,
     // 로거
     logger,

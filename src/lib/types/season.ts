@@ -3,6 +3,8 @@
  * 수시/정시 시즌, 학생 시즌등록, 일할계산 관련
  */
 
+import type { SeasonMonthlyPolicy } from '@/lib/season-monthly-policy';
+
 // 시즌 타입 (수시/정시)
 export type SeasonType = 'early' | 'regular';
 
@@ -39,6 +41,8 @@ export interface Season {
   operating_days: number[] | string; // JSON string 또는 배열
   grade_time_slots: GradeTimeSlots | string | null; // 학년별 시간대 설정
   default_season_fee: string; // 백엔드 필드명 (decimal)
+  payment_due_date?: string | null; // 시즌비 납부 마감일 (null이면 등록일+7일 폴백)
+  season_monthly_policy?: SeasonMonthlyPolicy | null; // 시즌 기간 월납부 처리 방식
   allows_continuous: boolean;
   continuous_to_season_type: SeasonType | null;
   continuous_discount_type: ContinuousDiscountType;
@@ -59,6 +63,8 @@ export interface SeasonFormData {
   operating_days: number[];
   grade_time_slots?: GradeTimeSlots; // 학년별 시간대 설정
   season_fee: number;
+  payment_due_date?: string; // 시즌비 납부 마감일
+  season_monthly_policy?: SeasonMonthlyPolicy;
   continuous_discount_type?: ContinuousDiscountType;
   continuous_discount_rate?: number;
   status?: SeasonStatus;
@@ -93,6 +99,8 @@ export interface StudentSeason {
   discount_type: ContinuousDiscountType | 'custom' | null;
   discount_amount: string | null;
   final_fee: string;
+  paid_amount?: string | number | null;
+  remaining_amount?: string | number | null;
   status: StudentSeasonStatus;
   payment_status: PaymentStatus;  // 납부 상태
   registered_at: string;

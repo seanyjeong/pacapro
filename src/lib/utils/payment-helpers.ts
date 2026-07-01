@@ -52,9 +52,41 @@ export function calculateOverdueDays(dueDate: string): number {
  */
 export function isOverdue(payment: Payment): boolean {
   if (payment.payment_status === 'paid') return false;
+  if (isSeasonUpcoming(payment)) return false;
   // year_month가 현재 월보다 이전이면 연체
   const currentYearMonth = getCurrentYearMonth();
   return payment.year_month < currentYearMonth;
+}
+
+export function getPaidPaymentAmount(payment: Pick<Payment, 'final_amount' | 'paid_amount' | 'payment_status' | 'remaining_amount'>): number {
+  const paidAmount = parseFloat(String(payment.paid_amount || 0));
+  const finalAmount = parseFloat(String(payment.final_amount || 0));
+  if (payment.payment_status === 'paid' && paidAmount === 0) {
+    return finalAmount;
+  }
+  if (paidAmount === 0 && payment.remaining_amount !== undefined && payment.remaining_amount !== null) {
+    const remainingAmount = parseFloat(String(payment.remaining_amount)) || 0;
+    return Math.max(finalAmount - remainingAmount, 0);
+  }
+  return paidAmount;
+}
+
+export function getRemainingPaymentAmount(payment: Pick<Payment, 'final_amount' | 'paid_amount' | 'payment_status' | 'remaining_amount'>): number {
+  if (payment.remaining_amount !== undefined && payment.remaining_amount !== null) {
+    return Math.max(parseFloat(String(payment.remaining_amount)) || 0, 0);
+  }
+  const finalAmount = parseFloat(String(payment.final_amount || 0));
+  return Math.max(finalAmount - getPaidPaymentAmount(payment), 0);
+}
+
+export function isSeasonUpcoming(payment: Pick<Payment, 'payment_type' | 'due_date' | 'payment_status'>): boolean {
+  if (payment.payment_status === 'paid') return false;
+  if (payment.payment_type !== 'season' || !payment.due_date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(payment.due_date);
+  dueDate.setHours(0, 0, 0, 0);
+  return dueDate > today;
 }
 
 /**
@@ -147,8 +179,8 @@ export function groupPaymentsByStudent(payments: Payment[]): Record<number, Paym
  */
 export function calculateTotalUnpaid(payments: Payment[]): number {
   return Math.floor(payments
-    .filter((p) => p.payment_status !== 'paid')
-    .reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
+    .filter((p) => p.payment_status !== 'paid' && !isSeasonUpcoming(p))
+    .reduce((sum, p) => sum + getRemainingPaymentAmount(p), 0));
 }
 
 /**
@@ -156,8 +188,7 @@ export function calculateTotalUnpaid(payments: Payment[]): number {
  */
 export function calculateTotalPaid(payments: Payment[]): number {
   return Math.floor(payments
-    .filter((p) => p.payment_status === 'paid')
-    .reduce((sum, p) => sum + parseFloat(String(p.final_amount)), 0));
+    .reduce((sum, p) => sum + getPaidPaymentAmount(p), 0));
 }
 
 /**

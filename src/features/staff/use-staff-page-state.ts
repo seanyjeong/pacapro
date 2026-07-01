@@ -88,14 +88,14 @@ export function useStaffPageState() {
     }
   };
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
     setShowFormModal(false);
-    void loadData();
+    await loadData();
   };
 
-  const handlePermissionSubmit = () => {
+  const handlePermissionSubmit = async () => {
     setShowPermissionModal(false);
-    void loadData();
+    await loadData();
   };
 
   return {

@@ -23,6 +23,7 @@ export function PaymentEditPage() {
         <PaymentForm
           mode="edit"
           initialData={toPaymentFormData(state.payment)}
+          editingPayment={state.payment}
           students={state.students}
           onSubmit={(data) => state.submitPayment(data, () => router.push(`/payments/${paymentId}`))}
           onCancel={() => router.back()}

@@ -16,6 +16,7 @@ import {
   ENROLLED_STUDENTS_LOAD_ERROR,
   ENROLLMENT_CANCEL_ERROR,
   getEnrollmentTimeSlots,
+  hasPaidSeasonAmount,
   REFUND_CONFIRM_ERROR,
   REFUND_PREVIEW_ERROR,
   SEASON_DELETE_ERROR,
@@ -119,7 +120,7 @@ export function useSeasonDetailState(seasonId: number | null) {
 
   const cancelEnrollment = async (enrollment: StudentSeason) => {
     if (!seasonId) return;
-    if (enrollment.payment_status === 'paid') {
+    if (hasPaidSeasonAmount(enrollment)) {
       await openRefundModal(enrollment);
       return;
     }

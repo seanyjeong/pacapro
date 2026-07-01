@@ -35,6 +35,7 @@
 
 const { pool, decryptStudentName, truncateToThousands, logger } = require('./_utils');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
+const { remainingAmountSql } = require('../../utils/paymentAmountSql');
 
 module.exports = function(router) {
 
@@ -50,6 +51,7 @@ router.get('/:id', verifyToken, checkPermission('payments', 'view'), async (req,
         const [payments] = await pool.execute(
             `SELECT
                 p.*,
+                ${remainingAmountSql('p')} as remaining_amount,
                 s.name as student_name,
                 s.student_number,
                 s.phone,
@@ -162,6 +164,7 @@ router.post('/', verifyToken, checkPermission('payments', 'edit'), async (req, r
         const [payments] = await pool.execute(
             `SELECT
                 p.*,
+                ${remainingAmountSql('p')} as remaining_amount,
                 s.name as student_name,
                 s.student_number
             FROM student_payments p
@@ -318,6 +321,7 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
         const [updated] = await pool.execute(
             `SELECT
                 p.*,
+                ${remainingAmountSql('p')} as remaining_amount,
                 s.name as student_name,
                 s.student_number
             FROM student_payments p

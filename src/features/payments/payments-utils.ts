@@ -1,6 +1,7 @@
 import type { Payment, PaymentFilters } from '@/lib/types/payment';
 import { parseClassDays } from '@/lib/types/student';
 import type { ClassDaysResponse } from '@/lib/types/student';
+import { getPaidPaymentAmount, getRemainingPaymentAmount, isSeasonUpcoming } from '@/lib/utils/payment-helpers';
 import type { CreditStudentInfo, PaymentSummary } from './payments-types';
 
 export function getCurrentYearMonth(): { year: number; month: number; yearMonth: string } {
@@ -46,10 +47,10 @@ export function filterPayments(
   return payments.filter((payment) => {
     if (filters.payment_status && payment.payment_status !== filters.payment_status) return false;
     if (filters.payment_type && payment.payment_type !== filters.payment_type) return false;
-    if (viewOnly && payment.payment_status === 'paid') return false;
+    if (viewOnly && (payment.payment_status === 'paid' || isSeasonUpcoming(payment))) return false;
     if (query && !payment.student_name?.toLowerCase().includes(query)) return false;
     if (!todayUnpaidOnly) return true;
-    if (payment.payment_status === 'paid') return false;
+    if (payment.payment_status === 'paid' || isSeasonUpcoming(payment)) return false;
     const days = studentClassDaysMap.get(payment.student_id);
     return Boolean(days?.includes(todayDayOfWeek));
   });
@@ -59,18 +60,17 @@ export function calculatePaymentSummary(payments: Payment[], selectedYearMonth: 
   const currentMonthPayments = payments.filter((payment) => payment.year_month === selectedYearMonth);
   const previousUnpaidPayments = payments.filter((payment) => payment.year_month !== selectedYearMonth);
   const paidCount = currentMonthPayments.filter((payment) => payment.payment_status === 'paid').length;
-  const unpaidCount = currentMonthPayments.filter((payment) => payment.payment_status === 'pending').length;
+  const unpaidCount = currentMonthPayments.filter((payment) => payment.payment_status === 'pending' && !isSeasonUpcoming(payment)).length;
   const partialCount = currentMonthPayments.filter((payment) => payment.payment_status === 'partial').length;
   const totalAmount = Math.floor(currentMonthPayments.reduce((sum, payment) => sum + toAmount(payment.final_amount), 0));
   const paidAmount = Math.floor(
     currentMonthPayments
-      .filter((payment) => payment.payment_status === 'paid')
-      .reduce((sum, payment) => sum + toAmount(payment.final_amount), 0)
+      .reduce((sum, payment) => sum + getPaidPaymentAmount(payment), 0)
   );
   const unpaidAmount = Math.floor(
     currentMonthPayments
-      .filter((payment) => payment.payment_status !== 'paid')
-      .reduce((sum, payment) => sum + toAmount(payment.final_amount) - toAmount(payment.paid_amount || 0), 0)
+      .filter((payment) => payment.payment_status !== 'paid' && !isSeasonUpcoming(payment))
+      .reduce((sum, payment) => sum + getRemainingPaymentAmount(payment), 0)
   );
 
   return {

@@ -3,6 +3,7 @@ import {
   assertNoRawVisibleText,
   createAuthedContext,
   createDiagnostics,
+  isPacaApiRequest,
   jsonRoute,
   launchSmokeBrowser,
   nonServiceWorkerErrors,
@@ -50,7 +51,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = isPacaApiRequest(url);
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -165,6 +166,13 @@ async function runDesktopPrivacy(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openDashboard(page);
+  const movementAnalysisLink = page.getByRole('link', { name: '동작분석사이트' });
+  await movementAnalysisLink.waitFor();
+  const movementHref = await movementAnalysisLink.getAttribute('href');
+  const movementTarget = await movementAnalysisLink.getAttribute('target');
+  if (movementHref !== 'https://www.performetrics.co.kr/' || movementTarget !== '_blank') {
+    throw new Error(`movement analysis link mismatch: ${movementHref} / ${movementTarget}`);
+  }
   await assertAmountHidden(page, 'dashboard desktop');
   await page.screenshot({ path: '/Users/etlab/paca-dashboard-hidden-desktop.png', fullPage: true });
 

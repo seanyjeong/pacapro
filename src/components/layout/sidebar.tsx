@@ -49,6 +49,7 @@ import {
     getCurrentSubscription,
 } from '@/lib/api/push';
 import { SidebarNavigation } from './sidebar-navigation';
+import { MovementAnalysisShortcutButton } from './movement-analysis-shortcut-button';
 import { PeakShortcutButton } from './peak-shortcut-button';
 
 interface NavItem {
@@ -418,6 +419,7 @@ export function Sidebar() {
                 toggleCategory={toggleCategory}
             />
 
+            <MovementAnalysisShortcutButton collapsed={collapsed} />
             <PeakShortcutButton collapsed={collapsed} />
 
             {/* 접기/펼치기 토글 버튼 */}

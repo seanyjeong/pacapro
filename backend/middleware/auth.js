@@ -8,37 +8,39 @@ const db = require('../config/database');
 // 환경변수에서 시크릿 가져오기
 // 주의: 기본값 제거됨! env-validator.js에서 개발환경 기본값 설정됨
 const JWT_SECRET = process.env.JWT_SECRET;
-const N8N_API_KEY = process.env.N8N_API_KEY;
+const PACA_NOTIFICATION_API_KEY = process.env.PACA_NOTIFICATION_API_KEY;
 
 // 시크릿 미설정 경고
 if (!JWT_SECRET) {
     console.error('[AUTH] ⚠️ JWT_SECRET 미설정! 인증 기능이 작동하지 않습니다.');
 }
-if (!N8N_API_KEY) {
-    console.warn('[AUTH] ⚠️ N8N_API_KEY 미설정. N8N 연동이 작동하지 않습니다.');
+if (!PACA_NOTIFICATION_API_KEY) {
+    console.warn('[AUTH] ⚠️ PACA_NOTIFICATION_API_KEY 미설정. 내부 자동화 인증이 작동하지 않습니다.');
 }
 
 /**
- * Verify JWT Token or N8N API Key
+ * Verify JWT Token or PACA internal automation API key
  */
 const verifyToken = async (req, res, next) => {
     try {
-        // Check for N8N API Key first
+        // Check for PACA internal automation API key first
         const apiKey = req.headers['x-api-key'];
-        if (apiKey && apiKey === N8N_API_KEY) {
-            // N8N 서비스 계정으로 처리 (academy_id는 쿼리에서 받음)
-            const academyId = req.query.academy_id || req.body.academy_id || null;
+        if (apiKey && PACA_NOTIFICATION_API_KEY && apiKey === PACA_NOTIFICATION_API_KEY) {
+            const academyIdRaw = req.query.academy_id || req.body.academy_id || null;
+            const academyIdNumber = Number(academyIdRaw);
+            const academyId = academyIdRaw && Number.isFinite(academyIdNumber) ? academyIdNumber : academyIdRaw;
             req.user = {
                 id: 0,
                 userId: 0, // 호환성 위해 둘 다 설정
-                email: 'n8n@system',
-                name: 'N8N Service',
+                email: 'paca-automation@system',
+                name: 'PACA Automation',
                 role: 'admin',
                 academyId: academyId,
                 academy_id: academyId, // 호환성 위해 둘 다 설정
                 position: 'system',
                 permissions: {},
-                isServiceAccount: true
+                isServiceAccount: true,
+                isNotificationAutomation: true
             };
             return next();
         }

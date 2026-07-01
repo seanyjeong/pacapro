@@ -1,3 +1,4 @@
+import { DEFAULT_SEASON_MONTHLY_POLICY } from '@/lib/season-monthly-policy';
 import type { SeasonFormData, SeasonType } from '@/lib/types/season';
 
 export const SEASON_CREATE_SAVE_ERROR = '시즌을 등록하지 못했습니다. 잠시 후 다시 시도해주세요.';
@@ -13,6 +14,7 @@ export interface SeasonCreateRequest {
   non_season_end_date: string;
   operating_days: number[];
   season_end_date: string;
+  season_monthly_policy: SeasonFormData['season_monthly_policy'];
   season_name: string;
   season_start_date: string;
   season_type: SeasonType;
@@ -29,6 +31,7 @@ export function createInitialSeasonForm(currentYear = new Date().getFullYear()):
     operating_days: [1, 2, 3, 4, 5, 6],
     grade_time_slots: { '고3': ['evening'], 'N수': ['morning'] },
     season_fee: 0,
+    season_monthly_policy: DEFAULT_SEASON_MONTHLY_POLICY,
     continuous_discount_type: 'none',
     continuous_discount_rate: 0,
     status: 'draft',
@@ -56,6 +59,7 @@ export function buildSeasonCreatePayload(formData: SeasonFormData): SeasonCreate
     non_season_end_date: formData.non_season_end_date || getPreviousDate(formData.start_date),
     operating_days: formData.operating_days,
     season_end_date: formData.end_date,
+    season_monthly_policy: formData.season_monthly_policy || DEFAULT_SEASON_MONTHLY_POLICY,
     season_name: formData.season_name.trim(),
     season_start_date: formData.start_date,
     season_type: formData.season_type,

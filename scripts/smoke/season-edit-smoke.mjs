@@ -5,6 +5,7 @@ import {
   createDiagnostics,
   jsonRoute,
   launchSmokeBrowser,
+  isPacaApiRequest,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
 } from './paca-smoke-utils.mjs';
@@ -22,6 +23,7 @@ const season = {
   operating_days: '[1,3,5]',
   grade_time_slots: '{"고3":"evening","N수":["morning"]}',
   default_season_fee: '1500000',
+  season_monthly_policy: 'season_replaces_monthly',
   allows_continuous: false,
   continuous_to_season_type: null,
   continuous_discount_type: 'none',
@@ -40,7 +42,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = isPacaApiRequest(url, BASE_URL);
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -90,6 +92,7 @@ async function editForm(page) {
   await workspace.getByLabel('기본 시즌비 (원)').fill('1600000');
   await workspace.getByLabel('할인 타입').selectOption('rate');
   await workspace.getByLabel('할인율 (%)').fill('10');
+  await workspace.getByRole('radio', { name: /시즌비와 월납부 함께 청구/ }).click();
   await workspace.getByRole('button', { name: '화' }).click();
   await workspace.getByRole('button', { name: '금' }).click();
   await workspace.getByText('고3').locator('..').getByRole('button', { name: '오후' }).click();
@@ -112,6 +115,11 @@ async function runNormal(browser) {
   await summary.getByText('월, 수, 금').waitFor();
   await summary.getByText('고3 저녁').waitFor();
   await summary.getByText('N수 오전').waitFor();
+  await summary.getByText('시즌비만 청구').waitFor();
+  await page.getByText('월납부 처리').waitFor();
+  await page.getByText('시즌별', { exact: true }).waitFor();
+  await page.getByRole('radio', { name: /시즌비가 월납부를 대체/ }).waitFor();
+  await page.getByText('시즌 종료 다음 달부터 다시 생성합니다.').waitFor();
   await assertNoRawVisibleText(page, 'season edit desktop');
   await assertNoHorizontalOverflow(page, 'season edit desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-edit-desktop.png', fullPage: true });
@@ -134,6 +142,9 @@ async function runNormal(browser) {
   }
   if (!payload.grade_time_slots['고3'].includes('afternoon')) {
     throw new Error(`grade slot update failed: ${JSON.stringify(payload)}`);
+  }
+  if (payload.season_monthly_policy !== 'season_plus_monthly') {
+    throw new Error(`season policy update failed: ${JSON.stringify(payload)}`);
   }
 
   await context.close();

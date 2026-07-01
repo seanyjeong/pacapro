@@ -37,8 +37,12 @@ export function isEligibleSeasonStudent(student: SeasonEnrollStudent): boolean {
   return student.grade === '고3' || student.grade === 'N수' || student.grade_type === 'n_su';
 }
 
+export function isActiveEnrolledStudent(student: SeasonEnrollStudent): boolean {
+  return student.status === 'active' && student.is_trial !== true && student.is_trial !== 1;
+}
+
 export function filterEligibleStudents(students: SeasonEnrollStudent[]): SeasonEnrollStudent[] {
-  return students.filter(isEligibleSeasonStudent);
+  return students.filter((student) => isActiveEnrolledStudent(student) && isEligibleSeasonStudent(student));
 }
 
 export function filterStudents(students: SeasonEnrollStudent[], searchTerm: string): SeasonEnrollStudent[] {

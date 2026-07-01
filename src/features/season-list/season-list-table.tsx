@@ -25,16 +25,16 @@ export function SeasonListTable({ seasons, onDelete, onOpen }: SeasonListTablePr
         <h2 className="text-sm font-semibold text-foreground">시즌 목록 ({seasons.length}개)</h2>
       </div>
       <div className="hidden overflow-x-auto md:block">
-        <table className="w-full min-w-[880px]">
+        <table className="w-full min-w-[1260px] table-fixed">
           <thead className="bg-muted/40">
             <tr className="border-b border-border text-left text-xs font-medium text-muted-foreground">
-              <th className="px-4 py-3">시즌명</th>
-              <th className="px-4 py-3">타입</th>
-              <th className="px-4 py-3">기간</th>
-              <th className="px-4 py-3">운영요일</th>
-              <th className="px-4 py-3">시즌비</th>
-              <th className="px-4 py-3">상태</th>
-              <th className="px-4 py-3 text-right">관리</th>
+              <th className="w-[210px] px-4 py-3">시즌명</th>
+              <th className="w-[92px] px-4 py-3">타입</th>
+              <th className="w-[220px] px-4 py-3">기간</th>
+              <th className="w-[150px] px-4 py-3">운영요일</th>
+              <th className="w-[140px] px-4 py-3">시즌비</th>
+              <th className="w-[110px] px-4 py-3">상태</th>
+              <th className="w-[340px] px-4 py-3 text-right">관리</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -57,16 +57,16 @@ function SeasonListTableRow({ season, onDelete, onOpen }: SeasonRowProps) {
   const operatingDays = parseOperatingDays(season.operating_days);
   return (
     <tr className="cursor-pointer hover:bg-muted/40" data-testid="season-row" onClick={() => onOpen(season.id)}>
-      <td className="px-4 py-3">
+      <td className="w-[210px] px-4 py-3">
         <p className="font-medium text-foreground">{season.season_name}</p>
         <p className="mt-1 text-xs text-muted-foreground">{new Date(season.season_start_date).getFullYear()}년</p>
       </td>
-      <td className="px-4 py-3"><SeasonTypeBadge type={season.season_type} /></td>
-      <td className="px-4 py-3 text-sm text-muted-foreground">{formatDateRange(season.season_start_date, season.season_end_date)}</td>
-      <td className="px-4 py-3 text-sm text-muted-foreground">{formatOperatingDays(operatingDays)}</td>
-      <td className="px-4 py-3 text-sm font-medium text-foreground">{formatSeasonFee(season.default_season_fee)}</td>
-      <td className="px-4 py-3"><SeasonStatusBadge status={season.status} /></td>
-      <td className="px-4 py-3 text-right" onClick={(event) => event.stopPropagation()}>
+      <td className="w-[92px] whitespace-nowrap px-4 py-3"><SeasonTypeBadge type={season.season_type} /></td>
+      <td className="w-[220px] whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">{formatDateRange(season.season_start_date, season.season_end_date)}</td>
+      <td className="w-[150px] whitespace-nowrap px-4 py-3 text-sm text-muted-foreground">{formatOperatingDays(operatingDays)}</td>
+      <td className="w-[140px] whitespace-nowrap px-4 py-3 text-sm font-medium text-foreground">{formatSeasonFee(season.default_season_fee)}</td>
+      <td className="w-[110px] whitespace-nowrap px-4 py-3"><SeasonStatusBadge status={season.status} /></td>
+      <td className="w-[340px] whitespace-nowrap px-4 py-3 text-right" onClick={(event) => event.stopPropagation()}>
         <SeasonRowActions season={season} onDelete={onDelete} />
       </td>
     </tr>
@@ -97,9 +97,9 @@ function SeasonListMobileRow({ season, onDelete, onOpen }: SeasonRowProps) {
 
 function SeasonRowActions({ season, onDelete }: Pick<SeasonListTableProps, 'onDelete'> & { season: Season }) {
   return (
-    <div className="flex flex-wrap justify-end gap-2">
+    <div className="flex flex-wrap justify-end gap-2 md:flex-nowrap">
       <Link
-        className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-8 gap-1.5 px-2')}
+        className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-8 shrink-0 gap-1.5 whitespace-nowrap px-2')}
         href={`/seasons/${season.id}`}
         aria-label={`${season.season_name} 상세`}
       >
@@ -107,7 +107,7 @@ function SeasonRowActions({ season, onDelete }: Pick<SeasonListTableProps, 'onDe
         상세
       </Link>
       <Link
-        className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-8 gap-1.5 px-2')}
+        className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-8 shrink-0 gap-1.5 whitespace-nowrap px-2')}
         href={`/seasons/${season.id}/enroll`}
         aria-label={`${season.season_name} 학생 등록`}
       >
@@ -115,7 +115,7 @@ function SeasonRowActions({ season, onDelete }: Pick<SeasonListTableProps, 'onDe
         학생 등록
       </Link>
       <Link
-        className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'h-8 gap-1.5 px-2')}
+        className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'h-8 shrink-0 gap-1.5 whitespace-nowrap px-2')}
         href={`/seasons/${season.id}/edit`}
         aria-label={`${season.season_name} 수정`}
       >
@@ -124,7 +124,7 @@ function SeasonRowActions({ season, onDelete }: Pick<SeasonListTableProps, 'onDe
       </Link>
       <Button
         aria-label="삭제"
-        className="h-8 gap-1.5 px-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+        className="h-8 shrink-0 gap-1.5 whitespace-nowrap px-2 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
         variant="ghost"
         size="sm"
         onClick={() => onDelete(season.id, season.season_name)}

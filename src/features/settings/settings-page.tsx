@@ -6,7 +6,6 @@ import { AcademyBasicCard } from './academy-basic-card';
 import { ClassTimeCard } from './class-time-card';
 import { DangerResetCard } from './danger-reset-card';
 import { SalarySettingsCard } from './salary-settings-card';
-import { SeasonFeesCard } from './season-fees-card';
 import { SettingsHeader } from './settings-header';
 import { SettingsOperationPanel } from './settings-operation-panel';
 import { SettingsResetConfirmDialog } from './settings-reset-confirm-dialog';
@@ -42,7 +41,6 @@ export function SettingsPage() {
               updateTuition={state.updateTuition}
             />
           ))}
-          <SeasonFeesCard settings={state.settings} updateSeasonFee={state.updateSeasonFee} />
           <SalarySettingsCard settings={state.settings} updateSetting={state.updateSetting} />
           <div className="flex justify-end border-t border-border/70 pt-4">
             <Button

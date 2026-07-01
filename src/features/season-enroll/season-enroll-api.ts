@@ -9,7 +9,12 @@ export async function fetchSeasonForEnrollment(seasonId: number): Promise<Season
 }
 
 export async function fetchSeasonEligibleStudents(): Promise<SeasonEnrollStudent[]> {
-  const response = await apiClient.get<{ students: SeasonEnrollStudent[] }>('/students?grade_type=high', QUIET_REQUEST);
+  const query = new URLSearchParams({
+    grade_type: 'high',
+    status: 'active',
+    is_trial: 'false',
+  });
+  const response = await apiClient.get<{ students: SeasonEnrollStudent[] }>(`/students?${query}`, QUIET_REQUEST);
   return response.students ?? [];
 }
 

@@ -1,4 +1,4 @@
-import { Banknote, Search } from 'lucide-react';
+import { Banknote, RotateCcw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PAYMENT_STATUS_OPTIONS, PAYMENT_TYPE_OPTIONS } from '@/lib/types/payment';
 import type { PaymentFilters } from '@/lib/types/payment';
@@ -22,8 +22,8 @@ export function PaymentFilterBar({
   const selectedMonth = filters.year && filters.month ? `${filters.year}-${String(filters.month).padStart(2, '0')}` : '';
 
   return (
-    <section className="rounded-md border border-border bg-card p-4 shadow-none" aria-label="학원비 필터">
-      <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-[minmax(220px,1fr)_160px_160px_150px_auto_auto]">
+    <section className="rounded-md border border-border bg-card p-4 shadow-none" aria-label="학원비 필터" data-testid="payment-filter-bar">
+      <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_minmax(140px,0.55fr)_minmax(140px,0.55fr)_140px] 2xl:grid-cols-[minmax(200px,1fr)_140px_140px_132px_150px_88px]">
         <div className="relative min-w-0">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -40,7 +40,7 @@ export function PaymentFilterBar({
           aria-label="납부 상태"
           value={filters.payment_status || ''}
           onChange={(event) => onFilterChange({ payment_status: (event.target.value || undefined) as PaymentStatusFilter })}
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/25"
+          className="h-10 min-w-0 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/25"
         >
           <option value="">납부 상태 전체</option>
           {PAYMENT_STATUS_OPTIONS.map((option) => (
@@ -54,7 +54,7 @@ export function PaymentFilterBar({
           aria-label="청구 유형"
           value={filters.payment_type || ''}
           onChange={(event) => onFilterChange({ payment_type: (event.target.value || undefined) as PaymentTypeFilter })}
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/25"
+          className="h-10 min-w-0 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/25"
         >
           <option value="">청구 유형 전체</option>
           {PAYMENT_TYPE_OPTIONS.map((option) => (
@@ -72,16 +72,17 @@ export function PaymentFilterBar({
             const [year, month] = event.target.value.split('-');
             onFilterChange({ year: Number(year), month: Number(month) });
           }}
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/25"
+          className="h-10 min-w-0 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/25"
         />
 
-        <Button type="button" variant={todayUnpaidOnly ? 'default' : 'outline'} onClick={onTodayUnpaidToggle} className="w-full">
+        <Button type="button" variant={todayUnpaidOnly ? 'default' : 'outline'} onClick={onTodayUnpaidToggle} className="w-full min-w-0 px-3">
           <Banknote className="mr-1.5 h-4 w-4" />
-          오늘 수업 미납자
+          <span className="truncate">오늘 수업 미납</span>
         </Button>
 
-        <Button type="button" variant="outline" onClick={onReset} className="w-full">
-          필터 초기화
+        <Button type="button" variant="outline" onClick={onReset} className="w-full min-w-0 px-3" data-testid="payment-filter-reset">
+          <RotateCcw className="mr-1.5 h-4 w-4" />
+          <span className="truncate">초기화</span>
         </Button>
       </div>
     </section>

@@ -1,4 +1,5 @@
 import apiClient, { type APIRequestConfig } from './client';
+import { PACA_API_BASE_URL } from './base-url';
 import type {
   Consultation,
   ConsultationFormData,
@@ -17,7 +18,7 @@ import type {
 
 // 학원 상담 페이지 정보 조회
 export async function getConsultationPageInfo(slug: string): Promise<ConsultationPageInfo> {
-  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/consultation/${slug}`);
+  const response = await fetch(`${PACA_API_BASE_URL}/public/consultation/${slug}`);
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.error || '페이지 정보를 불러올 수 없습니다.');
@@ -28,7 +29,7 @@ export async function getConsultationPageInfo(slug: string): Promise<Consultatio
 // 특정 날짜의 가능한 슬롯 조회
 export async function getAvailableSlots(slug: string, date: string): Promise<SlotsResponse> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/public/consultation/${slug}/slots?date=${date}`
+    `${PACA_API_BASE_URL}/public/consultation/${slug}/slots?date=${date}`
   );
   if (!response.ok) {
     const error = await response.json();
@@ -43,7 +44,7 @@ export async function submitConsultation(
   data: ConsultationFormData
 ): Promise<{ message: string; consultationId: number }> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/public/consultation/${slug}/apply`,
+    `${PACA_API_BASE_URL}/public/consultation/${slug}/apply`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -62,7 +63,7 @@ export async function checkSlugAvailability(
   slug: string
 ): Promise<{ available: boolean; message?: string }> {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/public/check-slug/${slug}`
+    `${PACA_API_BASE_URL}/public/check-slug/${slug}`
   );
   return response.json();
 }

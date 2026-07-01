@@ -55,6 +55,7 @@ jest.mock('../../../../utils/logger', () => ({
 
 const express = require('express');
 const request = require('supertest');
+const auth = require('../../../../middleware/auth');
 const pool = require('../../../../config/database');
 const naverSens = require('../../../../utils/naverSens');
 const solapi = require('../../../../utils/solapi');
@@ -80,12 +81,27 @@ beforeEach(() => {
     });
     naverSens.isValidPhoneNumber.mockImplementation((phone) => /^010-\d{4}-\d{4}$/.test(phone || ''));
     solapi.sendAlimtalkSolapi.mockReset();
+    process.env.PACA_NOTIFICATION_API_KEY = 'internal-scheduler-key';
 });
 
 // =====================================================
 // POST /send-unpaid-today-auto
 // =====================================================
 describe('POST /send-unpaid-today-auto (verifyToken)', () => {
+    test('200 — 내부 scheduler X-API-Key 호출은 verifyToken 없이 통과', async () => {
+        pool.execute.mockResolvedValueOnce([[]]);
+
+        const app = buildApp();
+        const res = await request(app)
+            .post('/paca/notifications/send-unpaid-today-auto')
+            .set('x-api-key', 'internal-scheduler-key')
+            .send({});
+
+        expect(res.status).toBe(200);
+        expect(res.body.academies_processed).toBe(0);
+        expect(auth.verifyToken).not.toHaveBeenCalled();
+    });
+
     test('200 — 발송 학원 0건 시 단순 응답 표면 (ADR-013)', async () => {
         pool.execute.mockResolvedValueOnce([[]]); // academySettings 0건
 
@@ -170,6 +186,11 @@ describe('POST /send-unpaid-today-auto (verifyToken)', () => {
         // ADR-005: pool.execute only
         expect(pool.execute).toHaveBeenCalled();
         expect(pool.query).not.toHaveBeenCalled();
+
+        const unpaidQuery = pool.execute.mock.calls[1][0];
+        expect(unpaidQuery).toContain('GREATEST');
+        expect(unpaidQuery).toContain('p.paid_amount');
+        expect(unpaidQuery).toContain("NOT (p.payment_type = 'season' AND p.due_date > CURDATE())");
 
         // ADR-016: existingLogs SELECT 의 IN 절 자리표시자 명시 전개
         const existingLogsCall = pool.execute.mock.calls.find(c =>

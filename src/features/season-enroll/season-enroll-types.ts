@@ -7,6 +7,8 @@ export interface SeasonEnrollStudent {
   grade: string;
   grade_type: string;
   student_type?: string;
+  status?: string | null;
+  is_trial?: boolean | number | null;
   is_season_registered: boolean;
   current_season_id: number | null;
 }

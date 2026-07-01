@@ -60,7 +60,8 @@ function makeState(overrides = {}) {
         payment_type: 'season',
         base_amount: 600000,
         final_amount: 600000,
-        paid_amount: 200000,
+        paid_amount: 0,
+        remaining_amount: 400000,
         payment_status: 'partial',
         payment_method: 'account',
         description: '5월 시즌비',
@@ -74,7 +75,7 @@ async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) return route.continue();
 
@@ -138,6 +139,15 @@ async function runStudentFocused(browser) {
   await page.getByLabel('결제 요약').getByText('1건').first().waitFor();
   await page.getByRole('button', { name: '전체', exact: true }).click();
   await page.getByText('박서연').waitFor({ state: 'hidden' });
+  const partialRow = page.locator('tr:has-text("5월 시즌비")');
+  await partialRow.getByText('남은 금액').waitFor();
+  await partialRow.getByText(/400,000/).waitFor();
+  await partialRow.getByRole('button', { name: '계좌' }).click();
+  await page.getByRole('alertdialog').getByText(/400,000/).waitFor();
+  if (await page.getByRole('alertdialog').getByText(/600,000/).count()) {
+    throw new Error('tablet partial payment dialog showed full amount instead of remaining amount');
+  }
+  await page.getByRole('alertdialog').getByRole('button', { name: '취소' }).click();
 
   const paymentHit = state.hits.find((hit) => hit.startsWith('GET /payments'));
   if (!paymentHit?.includes('student_id=41')) {

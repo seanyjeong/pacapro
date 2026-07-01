@@ -1,3 +1,4 @@
+import { DEFAULT_SEASON_MONTHLY_POLICY, normalizeSeasonMonthlyPolicy } from '@/lib/season-monthly-policy';
 import type { GradeTimeSlots, Season, SeasonFormData, SeasonStatus, SeasonType } from '@/lib/types/season';
 import { parseOperatingDays } from '@/lib/types/season';
 
@@ -16,6 +17,7 @@ export interface SeasonEditRequest {
   non_season_end_date: string;
   operating_days: number[];
   season_end_date: string;
+  season_monthly_policy: SeasonFormData['season_monthly_policy'];
   season_name: string;
   season_start_date: string;
   season_type: SeasonType;
@@ -31,6 +33,7 @@ export function mapSeasonToEditForm(season: Season): SeasonFormData {
     non_season_end_date: season.non_season_end_date || '',
     operating_days: parseOperatingDays(season.operating_days),
     season_fee: Number.parseFloat(season.default_season_fee) || 0,
+    season_monthly_policy: normalizeSeasonMonthlyPolicy(season.season_monthly_policy),
     season_name: season.season_name,
     season_type: season.season_type,
     start_date: season.season_start_date,
@@ -60,6 +63,7 @@ export function buildSeasonEditPayload(formData: SeasonFormData): SeasonEditRequ
     non_season_end_date: formData.non_season_end_date || getPreviousDate(formData.start_date),
     operating_days: formData.operating_days,
     season_end_date: formData.end_date,
+    season_monthly_policy: formData.season_monthly_policy || DEFAULT_SEASON_MONTHLY_POLICY,
     season_name: formData.season_name.trim(),
     season_start_date: formData.start_date,
     season_type: formData.season_type,

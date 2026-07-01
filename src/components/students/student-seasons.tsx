@@ -58,7 +58,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
 
       const [enrollmentsData, seasonsData] = await Promise.all([
         seasonsApi.getStudentSeasonHistory(studentId),
-        seasonsApi.getActiveSeasons(),
+        seasonsApi.getRegisterableSeasons(),
       ]);
 
       setEnrollments(enrollmentsData);

@@ -110,7 +110,7 @@ export function useTabletPaymentsState({ studentIdParam, statusFromUrl }: UseTab
         notes: `태블릿 빠른 납부 처리 (${method})`,
       });
       toast.success(`${payment.student_name}님의 학원비가 납부 처리되었습니다.`);
-      void loadPayments();
+      await loadPayments();
     } catch {
       toast.error('납부 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {

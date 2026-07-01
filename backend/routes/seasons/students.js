@@ -37,6 +37,7 @@ const {
     calculateSeasonRefund,
     parseWeeklyDays
 } = require('./_utils');
+const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('./payment-summary');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 
 module.exports = function(router) {
@@ -53,9 +54,13 @@ router.get('/:id/students', verifyToken, async (req, res) => {
                 s.phone as student_phone,
                 s.parent_phone,
                 s.class_days,
-                s.grade as student_grade
+                s.grade as student_grade,
+                sp.payment_paid_amount,
+                sp.payment_final_amount,
+                sp.payment_record_status
             FROM student_seasons ss
             JOIN students s ON ss.student_id = s.id
+            ${SEASON_PAYMENT_SUMMARY_JOIN}
             WHERE ss.season_id = ?
             AND s.academy_id = ?
             ORDER BY ss.registration_date DESC`,
@@ -66,6 +71,7 @@ router.get('/:id/students', verifyToken, async (req, res) => {
             e.student_name = decrypt(e.student_name);
             e.student_phone = decrypt(e.student_phone);
             e.parent_phone = decrypt(e.parent_phone);
+            applySeasonPaymentSummary(e);
         });
 
         res.json({

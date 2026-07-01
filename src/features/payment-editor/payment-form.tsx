@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { MoneyInput } from '@/components/ui/money-input';
-import type { PaymentFormData } from '@/lib/types/payment';
+import type { Payment, PaymentFormData } from '@/lib/types/payment';
 import { PAYMENT_TYPE_OPTIONS } from '@/lib/types/payment';
 import { PaymentFormSummary } from './payment-form-summary';
 import type { PaymentFormMode, PaymentFormStudent, PaymentFormSubmit } from './payment-editor-types';
@@ -13,13 +13,14 @@ import { buildDefaultPaymentFormData, getFinalPaymentAmount, getStudentTuitionVa
 interface PaymentFormProps {
   mode: PaymentFormMode;
   initialData?: PaymentFormData;
+  editingPayment?: Payment;
   students: PaymentFormStudent[];
   onSubmit: PaymentFormSubmit;
   onCancel: () => void;
   loading?: boolean;
 }
 
-export function PaymentForm({ mode, initialData, students, onSubmit, onCancel, loading }: PaymentFormProps) {
+export function PaymentForm({ mode, initialData, editingPayment, students, onSubmit, onCancel, loading }: PaymentFormProps) {
   const [formData, setFormData] = useState<PaymentFormData>(initialData || buildDefaultPaymentFormData());
   const finalAmount = getFinalPaymentAmount(formData);
 
@@ -50,7 +51,7 @@ export function PaymentForm({ mode, initialData, students, onSubmit, onCancel, l
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <PaymentFormSummary finalAmount={finalAmount} formData={formData} students={students} />
+      <PaymentFormSummary finalAmount={finalAmount} formData={formData} students={students} paymentContext={editingPayment} />
 
       <section className="rounded-lg border border-border/70 bg-card">
         <SectionHeader title="청구 대상" />

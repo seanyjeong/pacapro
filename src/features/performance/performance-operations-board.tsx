@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { Award, CheckCircle2, Clock, GraduationCap, RefreshCw, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { PerformanceJungsiLinkButton } from './performance-jungsi-link-button';
 import type { JungsiStatus, PerformanceStudent, PerformanceStudentStatusFilter } from './performance-types';
 import { EXAM_TYPES, getBranchLabel } from './performance-utils';
 
@@ -63,6 +64,8 @@ export function PerformanceOperationsBoard({
           </div>
         </div>
       </div>
+
+      <PerformanceJungsiLinkButton status={status} onRefresh={onRefreshStatus} />
 
       <div className="grid grid-cols-2 gap-2">
         <Metric

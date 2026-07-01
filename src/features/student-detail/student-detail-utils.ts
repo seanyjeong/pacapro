@@ -21,6 +21,9 @@ export function getOutstandingAmount(payments: StudentPayment[]) {
   return payments
     .filter((payment) => payment.payment_status !== 'paid')
     .reduce((sum, payment) => {
+      if (payment.remaining_amount !== undefined && payment.remaining_amount !== null) {
+        return sum + Math.max(Number(payment.remaining_amount) || 0, 0);
+      }
       const finalAmount = Number.parseInt(payment.final_amount, 10) || 0;
       const paidAmount = Number.parseInt(payment.paid_amount || '0', 10) || 0;
       return sum + Math.max(finalAmount - paidAmount, 0);

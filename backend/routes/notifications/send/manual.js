@@ -30,6 +30,7 @@ const {
     ENCRYPTION_KEY,
     logger,
 } = require('./_utils');
+const { remainingAmountSql, dueUnpaidSql } = require('../../../utils/paymentAmountSql');
 
 module.exports = function(router) {
 
@@ -111,7 +112,8 @@ module.exports = function(router) {
             const [unpaidPaymentsRaw] = await pool.execute(
                 `SELECT
                     p.id AS payment_id,
-                    p.final_amount AS amount,
+                    ${remainingAmountSql('p')} AS amount,
+                    COALESCE(p.paid_amount, 0) AS paid_amount,
                     p.due_date,
                     s.id AS student_id,
                     s.name AS student_name,
@@ -122,7 +124,8 @@ module.exports = function(router) {
                 WHERE p.academy_id = ?
                     AND p.year_month = ?
                     AND p.payment_status IN ('pending', 'partial')
-                    AND p.final_amount > 0
+                    AND ${dueUnpaidSql('p')}
+                    AND ${remainingAmountSql('p')} > 0
                     AND s.status = 'active'
                     AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)
                     AND s.deleted_at IS NULL`,
@@ -309,7 +312,8 @@ module.exports = function(router) {
             const [paymentsRaw] = await pool.execute(
                 `SELECT
                     p.id AS payment_id,
-                    p.final_amount AS amount,
+                    ${remainingAmountSql('p')} AS amount,
+                    COALESCE(p.paid_amount, 0) AS paid_amount,
                     p.year_month,
                     p.due_date,
                     s.id AS student_id,

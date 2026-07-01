@@ -3,7 +3,8 @@ import { Loader2, Receipt, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Season, StudentSeason, TimeSlot } from '@/lib/types/season';
 import { formatSeasonFee } from '@/lib/types/season';
-import { getEnrollmentTimeSlots } from './season-detail-utils';
+import { getEnrollmentTimeSlots, getSeasonPaymentAmounts, hasPaidSeasonAmount } from './season-detail-utils';
+import { SeasonPaymentAmountSummary } from './season-payment-amount-summary';
 import { SeasonPaymentStatusBadge } from './season-payment-status-badge';
 import { SeasonTimeSlotToggleGroup } from './season-time-slot-toggle-group';
 
@@ -26,11 +27,13 @@ export function EnrolledStudentRow({
   onOpenRefund,
   onTimeSlotChange,
 }: EnrolledStudentRowProps) {
-  const seasonFee = Number(enrollment.season_fee) || 0;
+  const { finalAmount } = getSeasonPaymentAmounts(enrollment);
+  const seasonFee = finalAmount || Number(enrollment.season_fee) || 0;
   const discountAmount = Number(enrollment.discount_amount ?? 0) || 0;
   const originalFee = seasonFee + discountAmount;
   const timeSlots = getEnrollmentTimeSlots(season, enrollment);
   const isCancelled = enrollment.payment_status === 'cancelled';
+  const hasPaidAmount = hasPaidSeasonAmount(enrollment);
 
   return (
     <tr className="border-b border-border last:border-0 hover:bg-muted/40">
@@ -58,6 +61,7 @@ export function EnrolledStudentRow({
         ) : (
           <span className="text-sm text-foreground">{formatSeasonFee(enrollment.season_fee)}</span>
         )}
+        <SeasonPaymentAmountSummary enrollment={enrollment} />
       </td>
       <td className="px-4 py-3 text-sm text-muted-foreground">
         {enrollment.registration_date || enrollment.registered_at?.split('T')[0] || '-'}
@@ -77,7 +81,7 @@ export function EnrolledStudentRow({
       <td className="px-4 py-3 text-right">
         {!isCancelled ? (
           <div className="flex justify-end gap-1">
-            {enrollment.payment_status === 'paid' ? (
+            {hasPaidAmount ? (
               <Button className="text-orange-700 hover:text-orange-800" size="sm" type="button" variant="ghost" onClick={onOpenRefund}>
                 <Receipt className="mr-1 h-4 w-4" />
                 환불

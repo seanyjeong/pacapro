@@ -172,6 +172,8 @@ export interface StudentPayment {
   discount_amount: string;
   final_amount: string;
   paid_amount: string;
+  remaining_amount?: string | number;
+  payment_type?: 'monthly' | 'season' | 'material' | 'other';
   payment_status: 'unpaid' | 'partial' | 'paid' | 'overdue';
   payment_method?: 'account' | 'card' | 'cash' | 'other';
   paid_date?: string;

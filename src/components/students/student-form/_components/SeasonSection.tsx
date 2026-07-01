@@ -38,7 +38,7 @@ export function SeasonSection({
             시즌 정보 로딩 중...
           </div>
         ) : availableSeasons.length === 0 ? (
-          <div className="text-muted-foreground py-4">현재 진행중인 시즌이 없습니다.</div>
+          <div className="text-muted-foreground py-4">등록 가능한 시즌이 없습니다.</div>
         ) : (
           <>
             <div className="flex items-center gap-2">

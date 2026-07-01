@@ -65,7 +65,8 @@ function makePayment() {
     base_amount: '520000',
     discount_amount: '52000',
     final_amount: '468000',
-    paid_amount: '120000',
+    paid_amount: '0',
+    remaining_amount: '348000',
     payment_status: 'partial',
     payment_method: 'account',
     paid_date: '2026-06-10',
@@ -79,7 +80,7 @@ async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
     if (!isApi) return route.continue();
 
     const method = request.method();
@@ -151,6 +152,8 @@ async function runDesktop(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
   await assertWorkspace(page, 'student detail workspace desktop');
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '납부 내역' }).click();
+  if ((await page.getByRole('link', { name: '2026-06 납부 수정' }).getAttribute('href')) !== '/payments/501/edit') throw new Error('unexpected payment edit link');
   await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '출결 현황' }).click();
   await page.getByText('출결 기록이 없습니다.').waitFor();
   await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '상담 기록' }).click();

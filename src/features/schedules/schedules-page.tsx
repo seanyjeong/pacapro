@@ -51,7 +51,7 @@ export function SchedulesPage() {
 
   return (
     <div
-      className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 py-4 md:max-w-7xl md:py-8"
+      className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 py-4 md:max-w-[1680px] md:py-8"
       data-testid="schedules-workspace"
     >
       <SchedulesHeader
@@ -68,8 +68,8 @@ export function SchedulesPage() {
       ) : state.schedulesError ? (
         <SchedulesError message={state.schedulesError} onRetry={state.refreshScheduleSurface} />
       ) : (
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
-          <main className="order-2 min-w-0 xl:order-1">
+        <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_340px] 2xl:items-start">
+          <main className="order-1 min-w-0">
             <SchedulesWorkspace
               currentMonth={state.currentMonth}
               currentYear={state.currentYear}
@@ -90,7 +90,7 @@ export function SchedulesPage() {
               onPanelSave={state.loadInstructorStats}
             />
           </main>
-          <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
+          <div className="order-2 min-w-0 2xl:sticky 2xl:top-20">
             <SchedulesOperationsBoard
               canViewOvertimeApproval={state.canViewOvertimeApproval}
               consultations={state.consultations}

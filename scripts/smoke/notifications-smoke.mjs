@@ -80,7 +80,7 @@ function makeSettings() {
     solapi_reminder_auto_enabled: false,
     solapi_reminder_hours: 1,
     solapi_attendance_template_id: 'PACA_SOLAPI_ATTENDANCE',
-    solapi_attendance_template_content: '안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월}월 #{일}일 #{요일}요일 수업 #{출결상태}하였습니다.',
+    solapi_attendance_template_content: '안녕하세요. #{학원명} 입니다.\n#{이름} 학생이 #{월} #{일} #{요일} 요일 수업 #{출결상태} 하였습니다.',
     solapi_attendance_buttons: [],
     solapi_attendance_image_url: '',
     sens_attendance_template_code: 'PACA_SENS_ATTENDANCE',
@@ -128,7 +128,7 @@ async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) return route.continue();
 
@@ -365,6 +365,11 @@ async function runAttendanceDeepLink(browser) {
   await page.getByRole('heading', { name: '알림톡 및 SMS 설정' }).waitFor();
   await page.getByRole('heading', { name: '솔라피 API 설정' }).waitFor();
   await assertOperationsBoard(page, { service: '솔라피' });
+  const preview = page.getByTestId('alimtalk-preview-card');
+  await preview.getByText('홍길동 학생이 5월 18일 월요일 수업 출석 하였습니다.').waitFor();
+  if (await preview.getByText('5 18 월 요일').count()) {
+    throw new Error('attendance preview showed raw split date variables');
+  }
   await page.getByLabel('솔라피 출결 테스트 전화번호').fill('01099990000');
   await page.getByRole('button', { name: '출결 테스트' }).click();
   await page.getByText('출결관리 테스트 메시지가 발송되었습니다.').waitFor();

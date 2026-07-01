@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { DEFAULT_SEASON_MONTHLY_POLICY } from '@/lib/season-monthly-policy';
 import type { SeasonFormData, TimeSlot } from '@/lib/types/season';
 import { fetchSeasonForEdit, updateSeasonFromForm } from './season-edit-api';
 import { mapSeasonToEditForm, SEASON_EDIT_LOAD_ERROR, SEASON_EDIT_SAVE_ERROR, validateSeasonEditForm } from './season-edit-utils';
@@ -11,6 +12,7 @@ const initialFormData: SeasonFormData = {
   non_season_end_date: '',
   operating_days: [],
   season_fee: 0,
+  season_monthly_policy: DEFAULT_SEASON_MONTHLY_POLICY,
   season_name: '',
   season_type: 'early',
   start_date: '',

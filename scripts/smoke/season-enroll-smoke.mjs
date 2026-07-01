@@ -39,6 +39,8 @@ const students = [
     grade: '고3',
     grade_type: 'high',
     student_type: 'regular',
+    status: 'active',
+    is_trial: false,
     is_season_registered: false,
     current_season_id: null,
   },
@@ -49,6 +51,8 @@ const students = [
     grade: 'N수',
     grade_type: 'n_su',
     student_type: 'regular',
+    status: 'active',
+    is_trial: false,
     is_season_registered: false,
     current_season_id: null,
   },
@@ -59,6 +63,8 @@ const students = [
     grade: '고3',
     grade_type: 'high',
     student_type: 'regular',
+    status: 'active',
+    is_trial: false,
     is_season_registered: true,
     current_season_id: 88,
   },
@@ -69,6 +75,44 @@ const students = [
     grade: '고2',
     grade_type: 'middle',
     student_type: 'regular',
+    status: 'active',
+    is_trial: false,
+    is_season_registered: false,
+    current_season_id: null,
+  },
+  {
+    id: 14,
+    name: '휴원학생',
+    phone: '010-9999-0000',
+    grade: '고3',
+    grade_type: 'high',
+    student_type: 'regular',
+    status: 'paused',
+    is_trial: false,
+    is_season_registered: false,
+    current_season_id: null,
+  },
+  {
+    id: 15,
+    name: '체험학생',
+    phone: '010-1212-3434',
+    grade: '고3',
+    grade_type: 'high',
+    student_type: 'regular',
+    status: 'trial',
+    is_trial: true,
+    is_season_registered: false,
+    current_season_id: null,
+  },
+  {
+    id: 16,
+    name: '퇴원학생',
+    phone: '010-5656-7878',
+    grade: 'N수',
+    grade_type: 'n_su',
+    student_type: 'regular',
+    status: 'withdrawn',
+    is_trial: false,
     is_season_registered: false,
     current_season_id: null,
   },
@@ -83,7 +127,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -104,7 +148,13 @@ async function installRoutes(context, state) {
     if (state.failStudents && method === 'GET' && path === '/students') {
       return jsonRoute(route, { message: 'HTTP 500 stack trace' }, 500);
     }
-    if (method === 'GET' && path === '/students' && url.searchParams.get('grade_type') === 'high') {
+    if (
+      method === 'GET' &&
+      path === '/students' &&
+      url.searchParams.get('grade_type') === 'high' &&
+      url.searchParams.get('status') === 'active' &&
+      url.searchParams.get('is_trial') === 'false'
+    ) {
       return jsonRoute(route, { students });
     }
     if (state.failEnroll && method === 'POST' && path === '/seasons/88/enroll') {
@@ -154,6 +204,9 @@ async function runNormal(browser) {
   await page.getByRole('heading', { name: '학생 등록' }).waitFor();
   await page.getByText('김민서').waitFor();
   await page.getByText('이등록').waitFor();
+  await page.getByText('휴원학생').waitFor({ state: 'hidden' });
+  await page.getByText('체험학생').waitFor({ state: 'hidden' });
+  await page.getByText('퇴원학생').waitFor({ state: 'hidden' });
   const availableDetailLink = page.getByRole('link', { name: '김민서 학생 상세' }).first();
   await availableDetailLink.waitFor();
   const availableHref = await availableDetailLink.getAttribute('href');

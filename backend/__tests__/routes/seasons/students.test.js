@@ -98,6 +98,51 @@ describe('GET /paca/seasons/:id/students', () => {
         expect(pool.execute.mock.calls[0][1]).toEqual([5, 1]);
     });
 
+    test('season_id가 없는 과거 시즌 결제는 설명의 시즌명으로 연결한다', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[]]);
+
+        await request(makeApp()).get('/paca/seasons/5/students');
+
+        const sql = pool.execute.mock.calls[0][0];
+        expect(sql).toMatch(/COALESCE\(p\.season_id, payment_season\.id\)/);
+        expect(sql).toMatch(/p\.description LIKE CONCAT\('%', payment_season\.season_name, '%'\)/);
+    });
+
+    test('시즌 결제 레코드가 부분납부면 납부상태와 기납부/잔액을 보정한다', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[
+            {
+                id: 2,
+                student_id: 20,
+                season_id: 5,
+                season_fee: '3300000',
+                paid_amount: '0',
+                payment_status: 'pending',
+                payment_paid_amount: '1000000',
+                payment_final_amount: '3300000',
+                payment_record_status: 'partial',
+                student_name: 'enc_기아림',
+                student_phone: 'enc_010-3333',
+                parent_phone: 'enc_010-4444',
+                student_number: 'S2',
+                class_days: '월',
+                student_grade: '고3'
+            }
+        ]]);
+
+        const res = await request(makeApp()).get('/paca/seasons/5/students');
+
+        expect(res.status).toBe(200);
+        expect(res.body.enrolled_students[0]).toMatchObject({
+            student_name: '기아림',
+            paid_amount: 1000000,
+            final_fee: 3300000,
+            remaining_amount: 2300000,
+            payment_status: 'partial'
+        });
+    });
+
     test('5xx: 한국어 메시지', async () => {
         pool.execute.mockReset();
         pool.execute.mockRejectedValueOnce(new Error('DB'));

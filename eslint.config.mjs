@@ -14,9 +14,15 @@ const eslintConfig = defineConfig([
   globalIgnores([
       "node_modules/**",
       ".next/**",
+      ".vercel/**",
       "out/**",
       "build/**",
+      "coverage/**",
+      "test-results/**",
       "next-env.d.ts",
+      "public/sw.js",
+      "public/sw.js.map",
+      "public/workbox-*.js",
       "workspace/**",
   ]),
   {

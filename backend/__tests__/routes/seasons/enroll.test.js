@@ -64,11 +64,21 @@ const request = require('supertest');
 const pool = require('../../../config/database');
 const { calculateProRatedFee, calculateMidSeasonFee } = require('../../../utils/seasonCalculator');
 
+function getInsertColumnsAndValues(sql) {
+    const match = sql.match(/INSERT INTO student_payments\s*\(([\s\S]*?)\)\s*VALUES\s*\(([\s\S]*?)\)/i);
+    if (!match) return { columns: [], values: [] };
+    return {
+        columns: match[1].split(',').map(v => v.replace(/`/g, '').trim()),
+        values: match[2].split(',').map(v => v.trim()),
+    };
+}
+
 function makeApp() {
     const app = express();
     app.use(express.json());
     const router = express.Router();
     require('../../../routes/seasons/enroll')(router);
+    require('../../../routes/seasons/preview')(router);
     app.use('/paca/seasons', router);
     return app;
 }
@@ -109,16 +119,19 @@ describe('POST /paca/seasons/:id/enroll', () => {
         expect(res.body.message).toBe('Student not found');
     });
 
-    test('400: 이미 등록', async () => {
+    test('400: 이미 등록 + 시즌비 청구가 있으면 중복 차단', async () => {
         pool.execute.mockReset();
         pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'active', non_season_end_date: '2026-02-28', operating_days: '["월"]', season_start_date: '2026-03-01', season_end_date: '2026-08-31' }]]);
         pool.execute.mockResolvedValueOnce([[{ id: 10, name: 'enc_x', class_days: '월수', monthly_tuition: 100000, discount_rate: 0, grade: '고2', student_type: 'regular' }]]);
         pool.execute.mockResolvedValueOnce([[{ id: 1 }]]); // existing > 0
+        pool.execute.mockResolvedValueOnce([[{ id: 77 }]]); // existing season payment
         const res = await request(makeApp()).post('/paca/seasons/5/enroll').send({
             student_id: 10, season_fee: 100000
         });
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('Student already enrolled in this season');
+        const insertPaymentCall = pool.execute.mock.calls.find(c => c[0].includes('INSERT INTO student_payments'));
+        expect(insertPaymentCall).toBeUndefined();
     });
 
     test('400: invalid time_slots', async () => {
@@ -140,7 +153,8 @@ describe('POST /paca/seasons/:id/enroll', () => {
             id: 5, status: 'upcoming', non_season_end_date: '2026-02-28',
             operating_days: '["월"]', season_start_date: '2026-03-01',
             season_end_date: '2026-08-31', continuous_discount_type: 'none',
-            continuous_discount_rate: 0, season_name: '2026 봄'
+            continuous_discount_rate: 0, season_name: '2026 봄',
+            payment_due_date: '2026-02-25'
         }]]);
         // ❷ SELECT students
         pool.execute.mockResolvedValueOnce([[{
@@ -149,13 +163,17 @@ describe('POST /paca/seasons/:id/enroll', () => {
         }]]);
         // ❸ SELECT existing (not enrolled)
         pool.execute.mockResolvedValueOnce([[]]);
-        // ❹ INSERT student_seasons
+        // ❹ SELECT existing season payment
+        pool.execute.mockResolvedValueOnce([[]]);
+        // ❺ INSERT student_seasons
         pool.execute.mockResolvedValueOnce([{ insertId: 99 }]);
-        // ❺ UPDATE students
+        // ❻ UPDATE students
         pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
-        // ❻ INSERT student_payments
+        // ❼ INSERT student_payments
         pool.execute.mockResolvedValueOnce([{ insertId: 50 }]);
-        // ❼ SELECT enrollment 재조회
+        // ❽ DELETE replaced monthly payments
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+        // ❾ SELECT enrollment 재조회
         pool.execute.mockResolvedValueOnce([[{
             id: 99, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
         }]]);
@@ -177,6 +195,189 @@ describe('POST /paca/seasons/:id/enroll', () => {
         const insertPaymentsCall = pool.execute.mock.calls.find(c => c[0].includes('INSERT INTO student_payments'));
         expect(insertSeasonsCall).toBeDefined();
         expect(insertPaymentsCall).toBeDefined();
+        expect(insertPaymentsCall[0]).toContain('season_id');
+        const { columns, values } = getInsertColumnsAndValues(insertPaymentsCall[0]);
+        expect(values).toHaveLength(columns.length);
+        expect(values[columns.indexOf('due_date')]).toBe('?');
+        expect(values[columns.indexOf('payment_status')]).toBe("'pending'");
+        expect(insertPaymentsCall[1]).toContain(5);
+        expect(insertPaymentsCall[1][2]).toBe('2026-03');
+        expect(insertPaymentsCall[1]).toContain('2026-02-25');
+        const deleteMonthlyCall = pool.execute.mock.calls.find(c => c[0].includes('DELETE FROM student_payments') && c[0].includes("payment_type = 'monthly'"));
+        expect(deleteMonthlyCall).toBeDefined();
+        expect(deleteMonthlyCall[0]).toContain('payment_status IN (');
+        expect(deleteMonthlyCall[0]).toContain("'unpaid'");
+        expect(deleteMonthlyCall[0]).toContain("COALESCE(paid_amount, 0) = 0");
+        expect(deleteMonthlyCall[1]).toEqual([10, 1, '2026-03', '2026-08']);
+    });
+
+    test('201: 시즌비가 월납부를 대체하지 않는 시즌은 기존 월회비를 삭제하지 않는다', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{
+            id: 5, status: 'upcoming', non_season_end_date: '2026-02-28',
+            operating_days: '["월"]', season_start_date: '2026-03-01',
+            season_end_date: '2026-08-31', continuous_discount_type: 'none',
+            continuous_discount_rate: 0, season_name: '2026 봄',
+            season_monthly_policy: 'season_plus_monthly'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[{
+            id: 10, name: 'enc_홍길동', class_days: '월수', monthly_tuition: 100000,
+            discount_rate: 0, grade: '고2', student_type: 'regular'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[]]);
+        pool.execute.mockResolvedValueOnce([[]]);
+        pool.execute.mockResolvedValueOnce([{ insertId: 99 }]);
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+        pool.execute.mockResolvedValueOnce([{ insertId: 50 }]);
+        pool.execute.mockResolvedValueOnce([[{
+            id: 99, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
+        }]]);
+
+        const res = await request(makeApp()).post('/paca/seasons/5/enroll').send({
+            student_id: 10, season_fee: 100000, registration_date: '2026-02-15'
+        });
+
+        expect(res.status).toBe(201);
+        const deleteMonthlyCall = pool.execute.mock.calls.find(c => c[0].includes('DELETE FROM student_payments') && c[0].includes("payment_type = 'monthly'"));
+        expect(deleteMonthlyCall).toBeUndefined();
+    });
+
+    test('409: 같은 월 시즌비 청구가 이미 있으면 등록 전 차단', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{
+            id: 5, status: 'upcoming', non_season_end_date: '2026-02-28',
+            operating_days: '["월"]', season_start_date: '2026-03-01',
+            season_end_date: '2026-08-31', continuous_discount_type: 'none',
+            continuous_discount_rate: 0, season_name: '2026 봄'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[{
+            id: 10, name: 'enc_홍길동', class_days: '월수', monthly_tuition: 100000,
+            discount_rate: 0, grade: '고2', student_type: 'regular'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[]]); // same season not enrolled
+        pool.execute.mockResolvedValueOnce([[{ id: 77 }]]); // existing season payment for month
+
+        const res = await request(makeApp()).post('/paca/seasons/5/enroll').send({
+            student_id: 10, season_fee: 100000, registration_date: '2026-02-15'
+        });
+        expect(res.status).toBe(409);
+        expect(res.body.message).toContain('이미 존재합니다');
+
+        const insertCall = pool.execute.mock.calls.find(c => c[0].includes('INSERT INTO student_seasons'));
+        expect(insertCall).toBeUndefined();
+    });
+
+    test('201: 기존 등록만 있고 시즌비 청구가 빠진 학생은 시즌비와 월회비 정리를 복구', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{
+            id: 5, status: 'upcoming', non_season_end_date: '2026-02-28',
+            operating_days: '["월"]', season_start_date: '2026-03-01',
+            season_end_date: '2026-08-31', continuous_discount_type: 'none',
+            continuous_discount_rate: 0, season_name: '2026 봄',
+            payment_due_date: '2026-02-25'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[{
+            id: 10, name: 'enc_홍길동', class_days: '월수', monthly_tuition: 100000,
+            discount_rate: 0, grade: '고2', student_type: 'regular'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[{ id: 88 }]]); // existing enrollment from failed 500
+        pool.execute.mockResolvedValueOnce([[]]); // missing season payment
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]); // UPDATE students
+        pool.execute.mockResolvedValueOnce([{ insertId: 50 }]); // INSERT student_payments
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]); // DELETE replaced monthly payments
+        pool.execute.mockResolvedValueOnce([[{
+            id: 88, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
+        }]]);
+
+        const res = await request(makeApp()).post('/paca/seasons/5/enroll').send({
+            student_id: 10, season_fee: 100000, registration_date: '2026-02-15'
+        });
+
+        expect(res.status).toBe(201);
+        expect(res.body.enrollment.id).toBe(88);
+        const insertSeasonCall = pool.execute.mock.calls.find(c => c[0].includes('INSERT INTO student_seasons'));
+        const insertPaymentCall = pool.execute.mock.calls.find(c => c[0].includes('INSERT INTO student_payments'));
+        const deleteMonthlyCall = pool.execute.mock.calls.find(c => c[0].includes('DELETE FROM student_payments') && c[0].includes("payment_type = 'monthly'"));
+        expect(insertSeasonCall).toBeUndefined();
+        expect(insertPaymentCall).toBeDefined();
+        expect(deleteMonthlyCall).toBeDefined();
+        expect(pool.execute.mock.calls.at(-1)[1]).toEqual([88]);
+    });
+
+    test('201: student_payments.season_id 컬럼이 없는 DB에서는 fallback INSERT로 등록 성공', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{
+            id: 5, status: 'upcoming', non_season_end_date: '2026-02-28',
+            operating_days: '["월"]', season_start_date: '2026-03-01',
+            season_end_date: '2026-08-31', continuous_discount_type: 'none',
+            continuous_discount_rate: 0, season_name: '2026 봄',
+            payment_due_date: '2026-02-25'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[{
+            id: 10, name: 'enc_홍길동', class_days: '월수', monthly_tuition: 100000,
+            discount_rate: 0, grade: '고2', student_type: 'regular'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[]]); // same season not enrolled
+        pool.execute.mockResolvedValueOnce([[]]); // no existing season payment
+        pool.execute.mockResolvedValueOnce([{ insertId: 99 }]); // INSERT student_seasons
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]); // UPDATE students
+        const missingSeasonId = new Error("Unknown column 'season_id' in 'field list'");
+        missingSeasonId.code = 'ER_BAD_FIELD_ERROR';
+        missingSeasonId.errno = 1054;
+        pool.execute.mockRejectedValueOnce(missingSeasonId); // INSERT student_payments with season_id
+        pool.execute.mockResolvedValueOnce([{ insertId: 50 }]); // fallback INSERT without season_id
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]); // DELETE replaced monthly payments
+        pool.execute.mockResolvedValueOnce([[{
+            id: 99, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
+        }]]);
+
+        const res = await request(makeApp()).post('/paca/seasons/5/enroll').send({
+            student_id: 10, season_fee: 100000, registration_date: '2026-02-15'
+        });
+
+        expect(res.status).toBe(201);
+        expect(res.body.message).toBe('Student enrolled in season successfully');
+        const paymentInserts = pool.execute.mock.calls.filter(c => c[0].includes('INSERT INTO student_payments'));
+        expect(paymentInserts).toHaveLength(2);
+        expect(paymentInserts[0][0]).toContain('season_id');
+        expect(paymentInserts[1][0]).not.toContain('season_id');
+        expect(paymentInserts[1][1]).toContain('2026-02-25');
+    });
+
+    test('201: student_payments.season_id FK가 운영 스키마와 맞지 않아도 fallback INSERT로 등록 성공', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{
+            id: 5, status: 'upcoming', non_season_end_date: '2026-02-28',
+            operating_days: '["월"]', season_start_date: '2026-03-01',
+            season_end_date: '2026-08-31', continuous_discount_type: 'none',
+            continuous_discount_rate: 0, season_name: '2026 봄'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[{
+            id: 10, name: 'enc_홍길동', class_days: '월수', monthly_tuition: 100000,
+            discount_rate: 0, grade: '고2', student_type: 'regular'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[]]);
+        pool.execute.mockResolvedValueOnce([[]]);
+        pool.execute.mockResolvedValueOnce([{ insertId: 99 }]);
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+        const invalidSeasonIdReference = new Error('Cannot add or update a child row: CONSTRAINT `student_payments_ibfk_3` FOREIGN KEY (`season_id`)');
+        invalidSeasonIdReference.code = 'ER_NO_REFERENCED_ROW_2';
+        pool.execute.mockRejectedValueOnce(invalidSeasonIdReference);
+        pool.execute.mockResolvedValueOnce([{ insertId: 50 }]);
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+        pool.execute.mockResolvedValueOnce([[{
+            id: 99, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
+        }]]);
+
+        const res = await request(makeApp()).post('/paca/seasons/5/enroll').send({
+            student_id: 10, season_fee: 100000, registration_date: '2026-02-15'
+        });
+
+        expect(res.status).toBe(201);
+        const paymentInserts = pool.execute.mock.calls.filter(c => c[0].includes('INSERT INTO student_payments'));
+        expect(paymentInserts).toHaveLength(2);
+        expect(paymentInserts[0][0]).toContain('season_id');
+        expect(paymentInserts[1][0]).not.toContain('season_id');
     });
 
     test('5xx: 한국어 메시지 + e.message 누출 0건', async () => {

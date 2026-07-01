@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import type { PaymentRecordData } from '@/lib/types/payment';
+import { getPaidPaymentAmount } from '@/lib/utils/payment-helpers';
 import { isOwner, usePermissions } from '@/lib/utils/permissions';
 import { PaymentDetailAmountSection } from './payment-detail-amount-section';
 import { PaymentDetailError } from './payment-detail-error';
@@ -70,7 +71,7 @@ export function PaymentDetailPage() {
         onSubmit={submitRecordPayment}
         studentName={state.payment.student_name}
         finalAmount={state.payment.final_amount}
-        paidAmount={state.payment.paid_amount}
+        paidAmount={getPaidPaymentAmount(state.payment)}
       />
       <AlertDialog
         open={deleteDialogOpen}

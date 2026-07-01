@@ -14,6 +14,7 @@ const BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
 const students = [
   { id: 41, name: '박민수', student_number: 'S-2026-041', monthly_tuition: '560000', final_monthly_tuition: null, discount_rate: '10' },
   { id: 42, name: '이서연', student_number: 'S-2026-042', monthly_tuition: '520000', final_monthly_tuition: null, discount_rate: '0' },
+  { id: 43, name: '최유나', student_number: 'S-2026-043', monthly_tuition: '520000', final_monthly_tuition: '468000', discount_rate: '10' },
 ];
 
 function makePayment() {
@@ -28,10 +29,11 @@ function makePayment() {
     discount_amount: 40000,
     additional_amount: 0,
     final_amount: 520000,
-    paid_amount: 0,
+    paid_amount: 120000,
+    remaining_amount: 400000,
     paid_date: null,
     due_date: '2026-05-10',
-    payment_status: 'pending',
+    payment_status: 'partial',
     payment_method: null,
     description: '5월 수강료',
     notes: '수정 전 메모',
@@ -46,12 +48,16 @@ function emptyPaymentStats() {
   };
 }
 
+async function moneyInputDigits(locator) {
+  return (await locator.inputValue()).replace(/[^0-9]/g, '');
+}
+
 async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -99,6 +105,15 @@ async function runCreate(browser) {
 
   await page.goto('/payments/new', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 청구' }).waitFor();
+  await page.getByLabel('학생').selectOption('43');
+  await page.getByTestId('payment-form-summary').getByText('최유나').waitFor();
+  await page.getByTestId('payment-form-summary').getByText('468,000원').waitFor();
+  if ((await moneyInputDigits(page.getByLabel('기본 금액'))) !== '520000') {
+    throw new Error('custom final tuition should keep the original base amount');
+  }
+  if ((await moneyInputDigits(page.getByLabel('할인 금액'))) !== '52000') {
+    throw new Error('custom final tuition should derive one discount amount from base-final');
+  }
   await page.getByLabel('학생').selectOption('41');
   await page.getByLabel('청구 월').fill('2026-07');
   await page.getByLabel('납부 기한').fill('2026-07-10');
@@ -141,6 +156,12 @@ async function runEdit(browser) {
   await editSummary.getByText('2026-05', { exact: true }).waitFor();
   await editSummary.getByText('2026-05-10').waitFor();
   await editSummary.getByText('540,000원').waitFor();
+  await editSummary.getByText('이미 납부').waitFor();
+  await editSummary.getByText('120,000원').waitFor();
+  await editSummary.getByText('현재 남은 금액').waitFor();
+  await editSummary.getByText('400,000원').waitFor();
+  await editSummary.getByText('수정 후 남은 금액').waitFor();
+  await editSummary.getByText('420,000원').waitFor();
   await assertNoRawVisibleText(page, 'payment edit');
   await assertNoHorizontalOverflow(page, 'payment edit');
   await page.getByRole('heading', { name: '학원비 수정' }).scrollIntoViewIfNeeded();

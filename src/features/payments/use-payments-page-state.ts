@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import type { Payment, PaymentFilters } from '@/lib/types/payment';
 import { parseClassDays } from '@/lib/types/student';
+import { getRemainingPaymentAmount, isSeasonUpcoming } from '@/lib/utils/payment-helpers';
 import {
   getClassDaysForPaymentsPage,
   getPaymentsForPage,
@@ -112,7 +113,7 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
   };
 
   const sendUnpaid = async () => {
-    const unpaidList = filteredPayments.filter((payment) => payment.payment_status !== 'paid');
+    const unpaidList = filteredPayments.filter((payment) => payment.payment_status !== 'paid' && !isSeasonUpcoming(payment));
     if (unpaidList.length === 0) {
       toast.error('미납자가 없습니다.');
       return;
@@ -150,13 +151,13 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
     setMarkingPaymentId(payment.id);
     try {
       await recordQuickPayment(payment.id, {
-        paid_amount: toAmount(payment.final_amount) - toAmount(payment.paid_amount),
+        paid_amount: getRemainingPaymentAmount(payment),
         payment_method: method,
         payment_date: new Date().toISOString().split('T')[0],
         notes: `빠른 납부 처리 (${method})`,
       });
       toast.success(`${payment.student_name}님의 학원비가 납부 처리되었습니다.`);
-      void loadPayments();
+      await loadPayments();
     } catch {
       toast.error('납부 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {

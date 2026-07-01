@@ -74,7 +74,9 @@ describe('GET /paca/payments/:id', () => {
         expect(res.status).toBe(200);
         expect(res.body.payment.student_name).toBe('홍길동');
         expect(res.body.payment.id).toBe(1);
-        const [, params] = pool.execute.mock.calls[0];
+        const [sql, params] = pool.execute.mock.calls[0];
+        expect(sql).toContain('remaining_amount');
+        expect(sql).toContain('p.paid_amount');
         expect(params).toEqual([1, 5]);
     });
 

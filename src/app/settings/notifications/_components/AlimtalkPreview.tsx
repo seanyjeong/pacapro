@@ -77,8 +77,38 @@ export default function AlimtalkPreview({
 }
 
 function buildPreview(templateContent: string, replacements: Record<string, string>) {
-  return Object.entries(replacements).reduce((content, [key, value]) => {
+  const preview = Object.entries(replacements).reduce((content, [key, value]) => {
     const escapedKey = key.replace(/[{}#]/g, (character) => `\\${character}`);
     return content.replace(new RegExp(escapedKey, 'g'), value);
   }, templateContent);
+
+  return normalizeAttendanceDatePreview(preview, replacements);
+}
+
+function normalizeAttendanceDatePreview(content: string, replacements: Record<string, string>) {
+  const month = trimKoreanDateUnit(replacements['#{월}'], '월');
+  const day = trimKoreanDateUnit(replacements['#{일}'], '일');
+  const weekday = trimWeekdayUnit(replacements['#{요일}']);
+
+  if (!month || !day || !weekday) return content;
+
+  const fullDate = `${month}월 ${day}일 ${weekday}요일`;
+  const monthPattern = `${escapeRegExp(month)}(?:\\s*월)*`;
+  const dayPattern = `${escapeRegExp(day)}(?:\\s*일)*`;
+  const weekdayPattern = `${escapeRegExp(weekday)}(?:\\s*요일)*`;
+  const splitDatePattern = new RegExp(`${monthPattern}\\s*${dayPattern}\\s*${weekdayPattern}`, 'g');
+
+  return content.replace(splitDatePattern, fullDate);
+}
+
+function trimKoreanDateUnit(value: string | undefined, unit: '월' | '일') {
+  return (value || '').trim().replace(new RegExp(`(?:\\s*${unit})+$`), '').trim();
+}
+
+function trimWeekdayUnit(value: string | undefined) {
+  return (value || '').trim().replace(/(?:\s*요일)+$/, '').trim();
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

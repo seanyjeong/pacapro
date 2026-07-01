@@ -1,4 +1,5 @@
 import type { UnpaidPayment } from '@/lib/types/payment';
+import { getRemainingPaymentAmount } from '@/lib/utils/payment-helpers';
 import type { MobileUnpaidStats } from './mobile-unpaid-types';
 
 export function toLocalDateStr(date: Date) {
@@ -6,8 +7,7 @@ export function toLocalDateStr(date: Date) {
 }
 
 export function getUnpaidAmount(payment: UnpaidPayment) {
-  const amount = (payment.final_amount || 0) - (payment.paid_amount || 0);
-  return Number.isFinite(amount) ? Math.max(amount, 0) : 0;
+  return getRemainingPaymentAmount(payment);
 }
 
 export function formatAmount(amount: number | null | undefined) {

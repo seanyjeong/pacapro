@@ -5,6 +5,7 @@ import {
   createDiagnostics,
   jsonRoute,
   launchSmokeBrowser,
+  isPacaApiRequest,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
 } from './paca-smoke-utils.mjs';
@@ -20,7 +21,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = isPacaApiRequest(url, BASE_URL);
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
@@ -68,6 +69,7 @@ async function fillRequiredForm(page) {
   await page.getByLabel('기본 시즌비 (원)').fill('1500000');
   await page.getByLabel('할인 타입').selectOption('rate');
   await page.getByLabel('할인율 (%)').fill('20');
+  await page.getByRole('radio', { name: /시즌비와 월납부 함께 청구/ }).click();
 }
 
 async function runNormal(browser) {
@@ -85,6 +87,10 @@ async function runNormal(browser) {
   await summary.getByText('월, 화, 수, 목, 금, 토').waitFor();
   await summary.getByText('고3 저녁').waitFor();
   await summary.getByText('N수 오전').waitFor();
+  await summary.getByText('시즌비만 청구').waitFor();
+  await page.getByText('월납부 처리').waitFor();
+  await page.getByText('시즌별', { exact: true }).waitFor();
+  await page.getByRole('radio', { name: /시즌비가 월납부를 대체/ }).waitFor();
   await assertNoRawVisibleText(page, 'season create desktop');
   await assertNoHorizontalOverflow(page, 'season create desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-create-desktop.png', fullPage: true });
@@ -109,6 +115,9 @@ async function runNormal(browser) {
   if (payload.continuous_to_season_type !== 'regular') throw new Error(`unexpected continuous target: ${JSON.stringify(payload)}`);
   if (payload.continuous_discount_type !== 'rate') throw new Error(`unexpected discount type: ${JSON.stringify(payload)}`);
   if (payload.continuous_discount_rate !== 20) throw new Error(`unexpected discount rate: ${JSON.stringify(payload)}`);
+  if (payload.season_monthly_policy !== 'season_plus_monthly') {
+    throw new Error(`unexpected season policy: ${JSON.stringify(payload)}`);
+  }
   if (payload.operating_days.includes(2) || payload.operating_days.includes(6)) {
     throw new Error(`operating day toggles failed: ${JSON.stringify(payload)}`);
   }

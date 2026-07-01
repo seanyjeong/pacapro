@@ -1,3 +1,5 @@
+import type { SeasonMonthlyPolicy } from '@/lib/season-monthly-policy';
+
 export type SalaryMonthType = 'current' | 'next';
 
 export interface TuitionByWeeklyCount {
@@ -35,6 +37,8 @@ export interface AcademySettings {
   exam_tuition: TuitionByWeeklyCount;
   adult_tuition: TuitionByWeeklyCount;
   season_fees: SeasonFees;
+  /** Legacy compatibility only. New season monthly billing policy is configured per season. */
+  season_monthly_policy: SeasonMonthlyPolicy;
 }
 
 export type ClassTimeKey = 'morning_class_time' | 'afternoon_class_time' | 'evening_class_time';

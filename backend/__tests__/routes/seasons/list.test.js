@@ -4,6 +4,7 @@
  * 회귀 보호 범위:
  *   - GET /paca/seasons          → {message, seasons[]} + 종료일 지난 active 자동 ended UPDATE
  *   - GET /paca/seasons/active   → {message, seasons[]}
+ *   - GET /paca/seasons/registerable → {message, seasons[]} (active + upcoming)
  *   - GET /paca/seasons/:id      → {season} (root 키 season 만)
  *   - DB 호출: pool.execute (ADR-005, db.query 잔존 0건)
  *   - 5xx: 한국어 메시지 (ADR-003)
@@ -104,7 +105,7 @@ describe('GET /paca/seasons (list)', () => {
 });
 
 describe('GET /paca/seasons/active', () => {
-    test('응답 표면: {message, seasons} + 오늘 날짜 BETWEEN 검증', async () => {
+    test('응답 표면: {message, seasons} + 수동 active 시즌은 시작 전이어도 반환', async () => {
         pool.execute.mockReset();
         pool.execute.mockResolvedValueOnce([[{ id: 1, season_name: 'Active' }]]);
         const res = await request(makeApp()).get('/paca/seasons/active');
@@ -113,8 +114,9 @@ describe('GET /paca/seasons/active', () => {
         expect(res.body.seasons.length).toBe(1);
         const sql = pool.execute.mock.calls[0][0];
         expect(sql).toMatch(/status = 'active'/);
-        expect(sql).toMatch(/season_start_date <= \?/);
         expect(sql).toMatch(/season_end_date >= \?/);
+        expect(sql).not.toMatch(/season_start_date <= \?/);
+        expect(pool.execute.mock.calls[0][1]).toHaveLength(2);
     });
 
     test('5xx: 한국어 메시지', async () => {
@@ -123,6 +125,30 @@ describe('GET /paca/seasons/active', () => {
         const res = await request(makeApp()).get('/paca/seasons/active');
         expect(res.status).toBe(500);
         expect(res.body.message).toBe('활성 시즌을 불러오지 못했습니다.');
+    });
+});
+
+describe('GET /paca/seasons/registerable', () => {
+    test('응답 표면: {message, seasons} + active/upcoming만 등록 가능', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 0 }]);
+        pool.execute.mockResolvedValueOnce([[{ id: 1, status: 'active' }, { id: 2, status: 'upcoming' }]]);
+        const res = await request(makeApp()).get('/paca/seasons/registerable');
+        expect(res.status).toBe(200);
+        expect(res.body.message).toBe('Found 2 registerable season(s)');
+        expect(res.body.seasons).toHaveLength(2);
+        expect(pool.execute.mock.calls[0][0]).toMatch(/UPDATE seasons SET status = 'ended'/);
+        const sql = pool.execute.mock.calls[1][0];
+        expect(sql).toMatch(/status IN \('active', 'upcoming'\)/);
+        expect(pool.execute.mock.calls[1][1]).toEqual([1]);
+    });
+
+    test('5xx: 한국어 메시지', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockRejectedValueOnce(new Error('DB error'));
+        const res = await request(makeApp()).get('/paca/seasons/registerable');
+        expect(res.status).toBe(500);
+        expect(res.body.message).toBe('등록 가능한 시즌을 불러오지 못했습니다.');
     });
 });
 

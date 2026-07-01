@@ -13,7 +13,7 @@ interface StaffFormModalProps {
   staff: Staff | null;
   availableInstructors: AvailableInstructor[];
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: () => void | Promise<void>;
 }
 
 export function StaffFormModal({
@@ -86,7 +86,7 @@ export function StaffFormModal({
         toast.success('직원 계정이 생성되었습니다.');
       }
 
-      onSubmit();
+      await onSubmit();
     } catch {
       toast.error('직원 정보를 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도해주세요.');
     } finally {

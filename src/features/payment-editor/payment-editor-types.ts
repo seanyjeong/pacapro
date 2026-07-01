@@ -5,6 +5,7 @@ export interface PaymentFormStudent {
   name: string;
   student_number: string;
   monthly_tuition: number;
+  final_monthly_tuition: number | null;
   discount_rate: number;
 }
 

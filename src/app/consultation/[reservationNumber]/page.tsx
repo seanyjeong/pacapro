@@ -5,9 +5,10 @@ import { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, ArrowLeft, Calendar, CheckCircle2, Clock, Loader2, UserRound } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { PACA_API_BASE_URL } from '@/lib/api/base-url';
 import { cn } from '@/lib/utils/cn';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
+const API_URL = PACA_API_BASE_URL;
 
 interface ReservationInfo {
   academyName: string;

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { MoneyInput } from '@/components/ui/money-input';
 import { SeasonAlert } from '@/features/seasons/season-alert';
 import { SeasonFormSummary } from '@/features/seasons/season-form-summary';
+import { SeasonMonthlyPolicyControl } from '@/features/seasons/season-monthly-policy-control';
 import type { ContinuousDiscountType, SeasonFormData, SeasonType, TimeSlot } from '@/lib/types/season';
 import { OPERATING_DAY_OPTIONS, SEASON_TARGET_GRADES, TIME_SLOT_OPTIONS } from '@/lib/types/season';
 
@@ -189,6 +190,10 @@ export function SeasonCreateForm({
             </label>
           )}
         </div>
+        <SeasonMonthlyPolicyControl
+          value={formData.season_monthly_policy}
+          onChange={(value) => onChange('season_monthly_policy', value)}
+        />
       </section>
 
       <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">

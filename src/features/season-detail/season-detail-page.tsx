@@ -13,7 +13,7 @@ import { SeasonInfoPanel } from './season-info-panel';
 import { SeasonSummaryStrip } from './season-summary-strip';
 import { SeasonTimeSlotsPanel } from './season-time-slots-panel';
 import { useSeasonDetailState } from './use-season-detail-state';
-import { parseSeasonId } from './season-detail-utils';
+import { hasPaidSeasonAmount, parseSeasonId } from './season-detail-utils';
 
 export function SeasonDetailPage() {
   const router = useRouter();
@@ -46,7 +46,7 @@ export function SeasonDetailPage() {
   const handleCancelEnrollment = async (enrollmentId: number) => {
     const enrollment = state.enrolledStudents.find((student) => student.id === enrollmentId);
     if (!enrollment) return;
-    if (enrollment.payment_status !== 'paid') {
+    if (!hasPaidSeasonAmount(enrollment)) {
       setCancelTarget(enrollment);
       return;
     }

@@ -48,10 +48,25 @@ export function getPaymentStatusLabel(status: PaymentStatus): string {
   const labels: Record<PaymentStatus, string> = {
     pending: '미납',
     paid: '완납',
-    partial: '일부납부',
+    partial: '부분납부',
     cancelled: '취소됨',
   };
   return labels[status] ?? status;
+}
+
+export function getSeasonPaymentAmounts(enrollment: StudentSeason) {
+  const finalAmount = toPaymentAmount(enrollment.final_fee ?? enrollment.season_fee);
+  const paidAmount = toPaymentAmount(enrollment.paid_amount);
+  const fallbackRemaining = Math.max(finalAmount - paidAmount, 0);
+  const remainingAmount = enrollment.remaining_amount === null || enrollment.remaining_amount === undefined
+    ? fallbackRemaining
+    : toPaymentAmount(enrollment.remaining_amount);
+
+  return { finalAmount, paidAmount, remainingAmount };
+}
+
+export function hasPaidSeasonAmount(enrollment: StudentSeason): boolean {
+  return enrollment.payment_status === 'paid' || getSeasonPaymentAmounts(enrollment).paidAmount > 0;
 }
 
 export function normalizeTimeSlots(value: TimeSlot[] | string | undefined): TimeSlot[] {
@@ -71,4 +86,10 @@ function parseJsonArray(value: string): unknown[] {
 
 function isTimeSlot(value: unknown): value is TimeSlot {
   return DETAIL_TIME_SLOTS.includes(value as TimeSlot);
+}
+
+function toPaymentAmount(value: string | number | null | undefined): number {
+  if (value === null || value === undefined || value === '') return 0;
+  const amount = typeof value === 'string' ? Number(value) : value;
+  return Number.isFinite(amount) ? amount : 0;
 }

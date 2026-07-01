@@ -5,6 +5,7 @@ import {
   createDiagnostics,
   jsonRoute,
   launchSmokeBrowser,
+  isPacaApiRequest,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
 } from './paca-smoke-utils.mjs';
@@ -54,6 +55,7 @@ function academySettings() {
       exam_regular: 1500000,
       civil_service: 900000,
     },
+    season_monthly_policy: 'season_replaces_monthly',
   };
 }
 
@@ -61,7 +63,7 @@ async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = isPacaApiRequest(url);
 
     if (!isApi) return route.continue();
 
@@ -158,8 +160,11 @@ async function runDesktop(browser) {
   await operationNav.getByText('PACA 일산').waitFor();
   await page.getByText('저장됨').first().waitFor();
   await page.getByRole('link', { name: '학원비 바로가기' }).waitFor();
-  await page.getByRole('link', { name: '시즌비 바로가기' }).waitFor();
   await page.getByRole('link', { name: '급여 설정 바로가기' }).waitFor();
+  const seasonLinkCount = await page.getByRole('link', { name: '시즌비 바로가기' }).count();
+  if (seasonLinkCount !== 0) throw new Error('settings page should not expose season fee shortcut');
+  const seasonPolicyCount = await page.getByRole('radio', { name: /시즌비가 월납부를 대체/ }).count();
+  if (seasonPolicyCount !== 0) throw new Error('settings page should not expose season monthly policy radios');
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '앱 설치' }), 'topnav install guide');
   await page.getByText('브라우저 메뉴에서 앱 설치를 선택해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'settings desktop');
@@ -226,7 +231,9 @@ async function runSaveFlow(browser) {
   if (state.academyPayload.exam_tuition?.weekly_3 !== 450000) {
     throw new Error(`tuition payload mismatch: ${JSON.stringify(state.academyPayload.exam_tuition)}`);
   }
-
+  if ('season_fees' in state.academyPayload || 'season_monthly_policy' in state.academyPayload) {
+    throw new Error(`settings save should not send season fields: ${JSON.stringify(state.academyPayload)}`);
+  }
   await page.getByText('저장됨').first().waitFor();
   await assertNoRawVisibleText(page, 'settings save flow');
   await assertNoHorizontalOverflow(page, 'settings save flow');

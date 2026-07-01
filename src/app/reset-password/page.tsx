@@ -8,8 +8,9 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AuthPageShell } from '@/features/auth/auth-page-shell';
+import { PACA_API_BASE_URL } from '@/lib/api/base-url';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chejump.com/paca';
+const API_URL = PACA_API_BASE_URL;
 const RESET_PASSWORD_ERROR_MESSAGE = '비밀번호를 변경하지 못했습니다. 잠시 후 다시 시도해주세요.';
 
 function ResetLoadingState({ label }: { label: string }) {

@@ -7,11 +7,11 @@
  * Endpoint (3건 — 모두 정적 경로):
  *   - GET /              — 전체 결제 목록 (필터: student_id/payment_status/payment_type/year/month/include_previous_unpaid/paid_year/paid_month)
  *   - GET /unpaid        — 미납/연체 결제 목록 (학원 전체)
- *   - GET /unpaid-today  — 오늘 출석 예정 학생 중 미납자 (n8n service account 호환 — verifyToken 만)
+ *   - GET /unpaid-today  — 오늘 출석 예정 학생 중 미납자 (PACA 자동화 계정 호환 — verifyToken 만)
  *
  * 인증:
  *   - GET / + GET /unpaid: verifyToken + checkPermission('payments', 'view')
- *   - GET /unpaid-today: verifyToken 만 (n8n service account 호환)
+ *   - GET /unpaid-today: verifyToken 만 (PACA 자동화 계정 호환)
  *
  * 응답 표면 보존 (ADR-013):
  *   GET /             → { message, payments }
@@ -28,6 +28,7 @@
 
 const { pool, decryptPaymentArray, logger } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { remainingAmountSql, dueUnpaidSql } = require('../../utils/paymentAmountSql');
 
 module.exports = function(router) {
 
@@ -53,6 +54,8 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
                 p.discount_amount,
                 p.additional_amount,
                 p.final_amount,
+                COALESCE(p.paid_amount, 0) as paid_amount,
+                ${remainingAmountSql('p')} as remaining_amount,
                 p.paid_date,
                 p.due_date,
                 p.payment_status,
@@ -147,6 +150,8 @@ router.get('/unpaid', verifyToken, checkPermission('payments', 'view'), async (r
                 p.discount_amount,
                 p.additional_amount,
                 p.final_amount,
+                COALESCE(p.paid_amount, 0) as paid_amount,
+                ${remainingAmountSql('p')} as remaining_amount,
                 p.due_date,
                 p.payment_status,
                 DATEDIFF(CURDATE(), p.due_date) as days_overdue
@@ -154,6 +159,8 @@ router.get('/unpaid', verifyToken, checkPermission('payments', 'view'), async (r
             JOIN students s ON p.student_id = s.id
             WHERE p.academy_id = ?
             AND p.payment_status IN ('pending', 'partial')
+            AND ${dueUnpaidSql('p')}
+            AND ${remainingAmountSql('p')} > 0
             ORDER BY p.due_date ASC`,
             [req.user.academyId]
         );
@@ -175,7 +182,7 @@ router.get('/unpaid', verifyToken, checkPermission('payments', 'view'), async (r
  * GET /paca/payments/unpaid-today
  * Get unpaid payments for students who have class today
  * 오늘 수업이 있는 학생 중 미납자만 반환
- * Access: owner, admin, n8n service account (verifyToken 만)
+ * Access: owner, admin, PACA automation account (verifyToken 만)
  */
 router.get('/unpaid-today', verifyToken, async (req, res) => {
     try {
@@ -203,7 +210,8 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
                 p.discount_amount,
                 p.additional_amount,
                 p.final_amount,
-                p.paid_amount,
+                COALESCE(p.paid_amount, 0) as paid_amount,
+                ${remainingAmountSql('p')} as remaining_amount,
                 p.due_date,
                 p.payment_status,
                 DATEDIFF(CURDATE(), p.due_date) as days_overdue,
@@ -221,6 +229,8 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
             JOIN students s ON p.student_id = s.id
             WHERE p.academy_id = ?
             AND p.payment_status IN ('pending', 'partial')
+            AND ${dueUnpaidSql('p')}
+            AND ${remainingAmountSql('p')} > 0
             AND p.year_month <= ?
             AND s.status = 'active'
             AND s.deleted_at IS NULL

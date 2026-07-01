@@ -1,9 +1,11 @@
-import { Calculator, CreditCard } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Calculator, CreditCard, Pencil } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { StudentPayment } from '@/lib/types/student';
 import { PAYMENT_STATUS_LABELS } from '@/lib/types/student';
 import { PAYMENT_METHOD_LABELS } from '@/lib/types/payment';
+import { cn } from '@/lib/utils/cn';
 import { formatDate, formatCurrency, getPaymentStatusColor } from '@/lib/utils/student-helpers';
 
 interface StudentPaymentHistoryProps {
@@ -73,13 +75,17 @@ export function StudentPaymentHistory({
                   <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     상태
                   </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    관리
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-background divide-y divide-border">
                 {payments.map((payment) => {
                   const finalAmount = parseFloat(payment.final_amount) || 0;
                   const paidAmount = parseFloat(payment.paid_amount) || 0;
-                  const remaining = finalAmount - paidAmount;
+                  const remaining = getStudentPaymentRemaining(payment, finalAmount, paidAmount);
+                  const upcomingSeason = isStudentSeasonUpcoming(payment);
 
                   return (
                     <tr key={payment.id} className="hover:bg-muted/50">
@@ -95,9 +101,14 @@ export function StudentPaymentHistory({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-foreground">{formatCurrency(payment.paid_amount)}</div>
-                        {remaining > 0 && (
+                        {remaining > 0 && !upcomingSeason && (
                           <div className="text-xs text-red-500 dark:text-red-400">
                             미납: {formatCurrency(remaining)}
+                          </div>
+                        )}
+                        {remaining > 0 && upcomingSeason && (
+                          <div className="text-xs text-blue-600 dark:text-blue-300">
+                            예정: {formatCurrency(remaining)}
                           </div>
                         )}
                       </td>
@@ -114,7 +125,18 @@ export function StudentPaymentHistory({
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getPaymentStatusColor(payment.payment_status)}`}>
                           {PAYMENT_STATUS_LABELS[payment.payment_status] || payment.payment_status}
+                          {upcomingSeason ? ' · 납부예정' : ''}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-right whitespace-nowrap">
+                        <Link
+                          aria-label={`${payment.year_month} 납부 수정`}
+                          className={cn(buttonVariants({ variant: 'outline', size: 'sm' }), 'h-8 gap-1 px-2')}
+                          href={`/payments/${payment.id}/edit`}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          수정
+                        </Link>
                       </td>
                     </tr>
                   );
@@ -126,4 +148,21 @@ export function StudentPaymentHistory({
       </CardContent>
     </Card>
   );
+}
+
+function getStudentPaymentRemaining(payment: StudentPayment, finalAmount: number, paidAmount: number) {
+  if (payment.remaining_amount !== undefined && payment.remaining_amount !== null) {
+    return Math.max(parseFloat(String(payment.remaining_amount)) || 0, 0);
+  }
+  return Math.max(finalAmount - paidAmount, 0);
+}
+
+function isStudentSeasonUpcoming(payment: StudentPayment) {
+  if (payment.payment_status === 'paid') return false;
+  if (payment.payment_type !== 'season' || !payment.due_date) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDate = new Date(payment.due_date);
+  dueDate.setHours(0, 0, 0, 0);
+  return dueDate > today;
 }

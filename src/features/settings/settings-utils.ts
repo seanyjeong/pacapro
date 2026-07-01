@@ -1,3 +1,4 @@
+import { normalizeSeasonMonthlyPolicy } from '@/lib/season-monthly-policy';
 import { DEFAULT_ACADEMY_SETTINGS, WEEKLY_TUITION_FIELDS } from './settings-constants';
 import type {
   AcademySettings,
@@ -59,6 +60,7 @@ export function normalizeAcademySettings(
     exam_tuition: normalizeTuition(source.exam_tuition, base.exam_tuition),
     adult_tuition: normalizeTuition(source.adult_tuition, base.adult_tuition),
     season_fees: normalizeSeasonFees(source.season_fees, base.season_fees),
+    season_monthly_policy: normalizeSeasonMonthlyPolicy(source.season_monthly_policy, base.season_monthly_policy),
   };
 }
 

@@ -28,7 +28,8 @@ function makePayments() {
       discount_amount: 0,
       additional_amount: 0,
       final_amount: 600000,
-      paid_amount: 100000,
+      paid_amount: 0,
+      remaining_amount: 500000,
       due_date: '2026-06-10',
       payment_status: 'partial',
       phone: '010-1111-2222',
@@ -79,7 +80,7 @@ async function installRoutes(context, state) {
     const request = route.request();
     const url = new URL(request.url());
     const isLocal = url.origin === BASE_URL;
-    const isApi = url.hostname === 'chejump.com' || url.hostname === 'supermax.kr';
+    const isApi = url.hostname === 'supermax.kr';
 
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());

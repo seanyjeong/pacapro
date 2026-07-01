@@ -10,7 +10,7 @@ import { AuthPageShell } from '@/features/auth/auth-page-shell';
 import { authAPI } from '@/lib/api/auth';
 import { onboardingAPI } from '@/lib/api/onboarding';
 
-const LOGIN_ERROR_MESSAGE = '로그인 정보를 확인하지 못했습니다. 이메일과 비밀번호를 확인한 뒤 다시 시도해주세요.';
+const LOGIN_ERROR_MESSAGE = '이메일 또는 비밀번호가 맞지 않습니다.';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -54,8 +54,8 @@ export default function LoginPage() {
   return (
     <AuthPageShell
       icon={<LogIn className="h-6 w-6" />}
-      title="P-ACA 로그인"
-      description="운영 계정으로 접속해 오늘의 상담, 수납, 출결 업무를 이어갑니다."
+      title="로그인"
+      description="운영 계정으로 접속합니다."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">

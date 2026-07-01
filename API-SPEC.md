@@ -517,7 +517,7 @@ app.use('/paca', generalLimiter);               // 전체 제한
 - 에러: `{ error: "...", message: "..." }`
 
 ## CORS 허용 도메인
-- `https://chejump.com`
+- `https://supermax.kr`
 - `https://dev-paca.sean8320.dedyn.io`
 - `https://pacapro.vercel.app`
 - `http://localhost:3000` (개발)

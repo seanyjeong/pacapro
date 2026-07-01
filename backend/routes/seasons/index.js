@@ -8,8 +8,9 @@
  *                      POST /enrollments/:enrollment_id/refund-preview, POST /enrollments/:enrollment_id/cancel
  *   2. list         — GET /, GET /active, GET /:id  ← /active 가 /:id 보다 먼저
  *   3. crud         — POST /, PUT /:id, DELETE /:id
- *   4. enroll       — POST /:id/enroll, GET /:id/preview
- *   5. students     — GET /:id/students, DELETE /:id/students/:student_id
+ *   4. enroll       — POST /:id/enroll
+ *   5. preview      — GET /:id/preview
+ *   6. students     — GET /:id/students, DELETE /:id/students/:student_id
  *
  * 등록 순서 깨면 GET /paca/seasons/active 가 GET /:id 핸들러로 잘못 매칭 → NaN id 5xx 회귀.
  *
@@ -27,7 +28,8 @@ const router = express.Router();
 require('./enrollments')(router);   // 정적 /enrollments/* 4건 (와일드카드 충돌 회피)
 require('./list')(router);           // GET / + GET /active + GET /:id
 require('./crud')(router);           // POST / + PUT /:id + DELETE /:id
-require('./enroll')(router);         // POST /:id/enroll + GET /:id/preview
+require('./enroll')(router);         // POST /:id/enroll
+require('./preview')(router);        // GET /:id/preview
 require('./students')(router);       // GET /:id/students + DELETE /:id/students/:student_id
 
 module.exports = router;
