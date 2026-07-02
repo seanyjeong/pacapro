@@ -4,6 +4,7 @@
 
 const request = require('supertest');
 const express = require('express');
+const ExcelJS = require('exceljs');
 
 jest.mock('../../../config/database', () => ({
     execute: jest.fn(),
@@ -83,6 +84,35 @@ describe('GET /paca/exports/students', () => {
         expect(pool.execute.mock.calls[0][0]).toMatch(/FROM academies/);
         expect(pool.execute.mock.calls[1][0]).toMatch(/FROM students/);
         expect(pool.execute.mock.calls[1][1]).toEqual([1]);
+    });
+
+    test('학생이 없어도 Windows Excel에서 열 수 있는 등록 양식 시트를 생성한다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ name: '새학원' }]])
+            .mockResolvedValueOnce([[]]);
+
+        const res = await request(buildApp())
+            .get('/paca/exports/students')
+            .buffer(true)
+            .parse(binaryParser);
+
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(res.body);
+
+        expect(res.status).toBe(200);
+        expect(workbook.worksheets.length).toBeGreaterThan(0);
+        expect(workbook.worksheets[0].name).toBe('학생등록양식');
+        expect(workbook.worksheets[0].getRow(4).values).toEqual([
+            undefined,
+            '이름',
+            '연락처',
+            '학교',
+            '성별',
+            '학년',
+            '입시유형',
+            '학생구분',
+            '주 수업횟수'
+        ]);
     });
 
     test('상태 분류 정상 (trial → 체험생, pending → 미등록, withdrawn → 퇴원생)', async () => {

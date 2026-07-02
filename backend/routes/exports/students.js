@@ -91,6 +91,48 @@ module.exports = function(router) {
                 female: '여'
             };
 
+            if (decryptedStudents.length === 0) {
+                const sheet = workbook.addWorksheet('학생등록양식');
+                sheet.mergeCells('A1:I1');
+                const titleCell = sheet.getCell('A1');
+                titleCell.value = `${academyName} - 학생등록양식`;
+                titleCell.font = { bold: true, size: 18, color: { argb: 'FF1565C0' } };
+                titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                sheet.getRow(1).height = 35;
+
+                sheet.mergeCells('A2:I2');
+                const guideCell = sheet.getCell('A2');
+                guideCell.value = '학생이 아직 없어 기본 양식을 제공합니다. 각 열에 맞춰 학생 정보를 입력해주세요.';
+                guideCell.font = { size: 11, color: { argb: 'FF666666' } };
+                guideCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                sheet.getRow(2).height = 25;
+                sheet.getRow(3).height = 10;
+
+                const headers = ['이름', '연락처', '학교', '성별', '학년', '입시유형', '학생구분', '주 수업횟수'];
+                const headerRow = sheet.getRow(4);
+                headers.forEach((header, index) => {
+                    const cell = headerRow.getCell(index + 1);
+                    cell.value = header;
+                    cell.fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FF1565C0' }
+                    };
+                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                });
+                headerRow.height = 28;
+                [15, 16, 20, 10, 10, 12, 12, 12].forEach((width, index) => {
+                    sheet.getColumn(index + 1).width = width;
+                });
+            }
+
             // 각 상태별 시트 생성
             for (const [statusKey, group] of Object.entries(statusGroups)) {
                 if (group.students.length === 0) continue;

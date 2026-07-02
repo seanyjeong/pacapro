@@ -6,22 +6,7 @@ const {
     isSeasonMonthlyPolicy,
     parseSettings,
 } = require('../../utils/seasonMonthlyPolicy');
-
-const DEFAULT_TUITION = {
-    weekly_1: 0,
-    weekly_2: 0,
-    weekly_3: 0,
-    weekly_4: 0,
-    weekly_5: 0,
-    weekly_6: 0,
-    weekly_7: 0,
-};
-
-const DEFAULT_SEASON_FEES = {
-    exam_early: 0,
-    exam_regular: 0,
-    civil_service: 0,
-};
+const { normalizeTuitionSettings } = require('../../utils/tuitionSettings');
 
 module.exports = function registerAcademySettingsRoutes(router) {
     router.get('/academy', verifyToken, async (req, res) => {
@@ -30,19 +15,19 @@ module.exports = function registerAcademySettingsRoutes(router) {
             if (!settings) {
                 return res.status(404).json({
                     error: 'Not Found',
-                    message: 'Academy not found',
+                    message: '학원을 찾지 못했습니다.',
                 });
             }
 
             res.json({
-                message: 'Academy settings retrieved successfully',
+                message: '학원 설정을 불러왔습니다.',
                 settings,
             });
         } catch (error) {
             logger.error('Error fetching academy settings:', error);
             res.status(500).json({
                 error: 'Server Error',
-                message: 'Failed to fetch academy settings',
+                message: '학원 설정을 불러오지 못했습니다.',
             });
         }
     });
@@ -56,14 +41,14 @@ module.exports = function registerAcademySettingsRoutes(router) {
 
             const settings = await loadAcademySettings(req.user.academyId);
             res.json({
-                message: 'Academy settings saved successfully',
+                message: '학원 설정이 저장되었습니다.',
                 settings,
             });
         } catch (error) {
             logger.error('Error updating academy settings:', error);
             res.status(500).json({
                 error: 'Server Error',
-                message: 'Failed to update academy settings',
+                message: '학원 설정을 저장하지 못했습니다.',
             });
         }
     });
@@ -79,6 +64,7 @@ async function loadAcademySettings(academyId) {
 
 function buildAcademySettings(academy, settingsRow) {
     const parsed = parseSettings(settingsRow?.settings);
+    const tuitionSettings = normalizeTuitionSettings(parsed);
     return {
         academy_name: academy.name || '',
         phone: academy.phone || '',
@@ -88,9 +74,7 @@ function buildAcademySettings(academy, settingsRow) {
         morning_class_time: settingsRow?.morning_class_time || '09:30-12:00',
         afternoon_class_time: settingsRow?.afternoon_class_time || '14:00-18:00',
         evening_class_time: settingsRow?.evening_class_time || '18:30-21:00',
-        exam_tuition: parsed.exam_tuition || { ...DEFAULT_TUITION },
-        adult_tuition: parsed.adult_tuition || { ...DEFAULT_TUITION },
-        season_fees: parsed.season_fees || { ...DEFAULT_SEASON_FEES },
+        ...tuitionSettings,
         season_monthly_policy: isSeasonMonthlyPolicy(parsed.season_monthly_policy)
             ? parsed.season_monthly_policy
             : DEFAULT_SEASON_MONTHLY_POLICY,
@@ -166,8 +150,12 @@ function buildMergedTuitionSettings(rawSettings, body) {
     if (body.season_monthly_policy !== undefined) {
         merged.season_monthly_policy = body.season_monthly_policy;
     }
+    const tuitionSettings = normalizeTuitionSettings(merged);
     if (!isSeasonMonthlyPolicy(merged.season_monthly_policy)) {
         merged.season_monthly_policy = DEFAULT_SEASON_MONTHLY_POLICY;
     }
-    return merged;
+    return {
+        ...merged,
+        ...tuitionSettings,
+    };
 }
