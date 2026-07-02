@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>PACA 가입 승인</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: oklch(0.972 0.006 245);
+      --surface: oklch(0.994 0.004 245);
+      --surface-2: oklch(0.955 0.007 245);
+      --line: oklch(0.86 0.012 245);
+      --text: oklch(0.23 0.02 245);
+      --muted: oklch(0.48 0.018 245);
+      --accent: oklch(0.47 0.12 238);
+      --accent-strong: oklch(0.39 0.13 238);
+      --danger: oklch(0.49 0.14 25);
+      --danger-soft: oklch(0.96 0.025 25);
+      --ok-soft: oklch(0.95 0.035 155);
+      --shadow: 0 18px 45px oklch(0.24 0.02 245 / 0.1);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input { font: inherit; }
+
+    .shell {
+      width: min(100%, 440px);
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: max(18px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 2px 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+
+    .subcopy {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin-bottom: 13px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      min-height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: oklch(0.99 0.003 245);
+      color: var(--text);
+      padding: 0 13px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px oklch(0.72 0.08 238 / 0.25);
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+      margin-top: 16px;
+    }
+
+    .button {
+      min-height: 46px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: 0 14px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 800;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .primary {
+      flex: 1;
+      background: var(--accent);
+      color: oklch(0.99 0.004 245);
+    }
+
+    .primary:active { background: var(--accent-strong); }
+
+    .secondary {
+      background: var(--surface);
+      border-color: var(--line);
+      color: var(--text);
+    }
+
+    .danger {
+      background: var(--danger-soft);
+      border-color: oklch(0.78 0.07 25);
+      color: var(--danger);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 0 0 12px;
+    }
+
+    .count {
+      min-width: 42px;
+      border-radius: 999px;
+      background: var(--surface-2);
+      padding: 7px 10px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .notice {
+      display: none;
+      margin: 0 0 12px;
+      border-radius: 7px;
+      padding: 11px 12px;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .notice.show { display: block; }
+    .notice.error { background: var(--danger-soft); color: var(--danger); }
+    .notice.success { background: var(--ok-soft); color: oklch(0.34 0.08 155); }
+    .notice.info { background: var(--surface-2); color: var(--muted); }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .request {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 14px;
+    }
+
+    .request h2 {
+      margin: 0 0 7px;
+      font-size: 18px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      display: grid;
+      gap: 5px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .request .actions {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .empty {
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (min-width: 700px) {
+      body { background: linear-gradient(180deg, var(--bg), oklch(0.94 0.008 245)); }
+      .shell { padding-top: 42px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PACA Mobile Approval</p>
+        <h1>가입 승인</h1>
+        <p class="subcopy">원장 가입 신청만 확인하고 처리합니다.</p>
+      </div>
+      <button id="logoutButton" class="button secondary hidden" type="button">로그아웃</button>
+    </header>
+
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+
+    <section id="loginPanel" class="panel" aria-label="관리자 로그인">
+      <form id="loginForm" novalidate>
+        <div class="field">
+          <label for="email">관리자 이메일</label>
+          <input id="email" name="email" type="email" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">비밀번호</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="actions">
+          <button id="loginButton" class="button primary" type="submit">로그인</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="queuePanel" class="hidden" aria-label="가입 승인 대기 목록">
+      <div class="toolbar">
+        <div>
+          <p class="eyebrow">Pending owners</p>
+          <h1>승인 대기</h1>
+        </div>
+        <div id="pendingCount" class="count">0</div>
+      </div>
+      <button id="refreshButton" class="button secondary" type="button">새로고침</button>
+      <div id="requestList" class="list"></div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = 'https://supermax.kr/paca';
+    const TOKEN_KEY = 'pacaApprovalToken';
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      token: sessionStorage.getItem(TOKEN_KEY) || '',
+      busy: false,
+      users: []
+    };
+
+    function setNotice(message, type = 'info') {
+      const notice = $('notice');
+      notice.textContent = message;
+      notice.className = `notice show ${type}`;
+    }
+
+    function clearNotice() {
+      $('notice').className = 'notice';
+      $('notice').textContent = '';
+    }
+
+    function setBusy(isBusy) {
+      state.busy = isBusy;
+      document.querySelectorAll('button').forEach((button) => {
+        button.disabled = isBusy;
+      });
+    }
+
+    function setLoggedIn(isLoggedIn) {
+      $('loginPanel').classList.toggle('hidden', isLoggedIn);
+      $('queuePanel').classList.toggle('hidden', !isLoggedIn);
+      $('logoutButton').classList.toggle('hidden', !isLoggedIn);
+    }
+
+    function safeError(action, status) {
+      if (status === 401 || status === 403) {
+        return '승인 권한이 있는 관리자 계정으로 다시 로그인해주세요.';
+      }
+      if (action === 'login') {
+        return '이메일 또는 비밀번호를 확인해주세요.';
+      }
+      if (action === 'network') {
+        return '서버와 연결하지 못했습니다. 잠시 후 다시 시도해주세요.';
+      }
+      return '요청을 처리하지 못했습니다. 다시 시도해주세요.';
+    }
+
+    async function request(path, options = {}, action = 'request') {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
+      };
+      if (state.token) headers.Authorization = `Bearer ${state.token}`;
+
+      let response;
+      try {
+        response = await fetch(`${API_BASE}${path}`, {
+          ...options,
+          headers
+        });
+      } catch (_error) {
+        throw new Error(safeError('network'));
+      }
+
+      let body = {};
+      try {
+        body = await response.json();
+      } catch (_error) {
+        body = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(body.message && !String(body.message).match(/Internal|Server|Unauthorized|Forbidden|Error/i)
+          ? body.message
+          : safeError(action, response.status));
+      }
+      return body;
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      })[char]);
+    }
+
+    function formatDate(value) {
+      if (!value) return '신청일 확인 필요';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '신청일 확인 필요';
+      return new Intl.DateTimeFormat('ko-KR', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    }
+
+    function renderUsers() {
+      $('pendingCount').textContent = state.users.length;
+      if (!state.users.length) {
+        $('requestList').innerHTML = '<div class="empty">현재 승인할 가입 신청이 없습니다.</div>';
+        return;
+      }
+      $('requestList').innerHTML = state.users.map((user) => `
+        <article class="request">
+          <h2>${escapeHtml(user.academy_name || '학원명 확인 필요')}</h2>
+          <dl class="meta">
+            <div>신청자: ${escapeHtml(user.name)}</div>
+            <div>이메일: ${escapeHtml(user.email)}</div>
+            <div>연락처: ${escapeHtml(user.phone || '미입력')}</div>
+            <div>${escapeHtml(formatDate(user.created_at))}</div>
+          </dl>
+          <div class="actions">
+            <button class="button danger" type="button" data-action="reject" data-id="${user.id}">반려</button>
+            <button class="button primary" type="button" data-action="approve" data-id="${user.id}">승인</button>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    async function loadPending(showSuccess = false) {
+      clearNotice();
+      setBusy(true);
+      try {
+        const result = await request('/users/pending', {}, 'pending');
+        state.users = Array.isArray(result.users) ? result.users : [];
+        renderUsers();
+        if (showSuccess) setNotice('목록을 새로 불러왔습니다.', 'success');
+      } catch (error) {
+        if (String(error.message).includes('관리자 계정')) logout(false);
+        setNotice(error.message, 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function login(event) {
+      event.preventDefault();
+      clearNotice();
+      const email = $('email').value.trim();
+      const password = $('password').value;
+      if (!email || !password) {
+        setNotice('이메일과 비밀번호를 입력해주세요.', 'error');
+        return;
+      }
+      setBusy(true);
+      try {
+        const result = await request('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        }, 'login');
+        state.token = result.token;
+        sessionStorage.setItem(TOKEN_KEY, state.token);
+        setLoggedIn(true);
+        await loadPending();
+      } catch (error) {
+        setNotice(safeError('login'), 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function changeStatus(id, action) {
+      const label = action === 'approve' ? '승인' : '반려';
+      if (!window.confirm(`이 가입 신청을 ${label}할까요?`)) return;
+      clearNotice();
+      setBusy(true);
+      try {
+        await request(`/users/${action}/${id}`, { method: 'POST' }, action);
+        state.users = state.users.filter((user) => String(user.id) !== String(id));
+        renderUsers();
+        setNotice(`가입 신청을 ${label}했습니다.`, 'success');
+      } catch (error) {
+        setNotice(error.message, 'error');
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function logout(showMessage = true) {
+      state.token = '';
+      state.users = [];
+      sessionStorage.removeItem(TOKEN_KEY);
+      setLoggedIn(false);
+      renderUsers();
+      if (showMessage) setNotice('로그아웃했습니다.', 'info');
+    }
+
+    $('loginForm').addEventListener('submit', login);
+    $('refreshButton').addEventListener('click', () => loadPending(true));
+    $('logoutButton').addEventListener('click', () => logout());
+    $('requestList').addEventListener('click', (event) => {
+      const button = event.target.closest('button[data-action]');
+      if (!button || state.busy) return;
+      changeStatus(button.dataset.id, button.dataset.action);
+    });
+
+    setLoggedIn(Boolean(state.token));
+    if (state.token) loadPending();
+  </script>
+</body>
+</html>

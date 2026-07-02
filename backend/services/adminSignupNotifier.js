@@ -2,7 +2,7 @@ const axios = require('axios');
 const logger = require('../utils/logger');
 
 const TELEGRAM_API_BASE = 'https://api.telegram.org';
-const DEFAULT_APPROVAL_URL = 'https://pacapro.vercel.app/admin/users';
+const DEFAULT_APPROVAL_URL = 'https://paca-approval.etlab.kr';
 
 function getApprovalAdminUrl() {
     return process.env.PACA_APPROVAL_ADMIN_URL || DEFAULT_APPROVAL_URL;

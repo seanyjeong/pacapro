@@ -4,14 +4,16 @@
 Expose a mobile-friendly approval shortcut for PACA owner signup requests:
 
 ```text
-https://paca-approval.etlab.kr -> PACA admin approval page
+https://paca-approval.etlab.kr -> mobile-only signup approval page
 ```
 
-The page still uses normal PACA admin login. It must never expose pending users without a valid admin token.
+The subdomain must not proxy the full PACA app. It serves only the mobile
+approval page and calls the PACA API with a normal admin JWT. It must never
+expose pending users without a valid system-admin token.
 
 ## Runtime Pieces
-- Frontend page: `/admin/users`
-- Frontend alias: `/admin/approvals`
+- Static page source: `ops/paca-approval-mobile/index.html`
+- etserver document root: `/home/et/paca-approval-mobile`
 - Backend approval APIs:
   - `GET /paca/users/pending`
   - `POST /paca/users/approve/:id`
@@ -28,14 +30,10 @@ Add this on etserver Caddy after DNS points the subdomain to etserver:
 
 ```caddyfile
 paca-approval.etlab.kr {
-    @root path /
-    rewrite @root /admin/approvals
-
-    reverse_proxy https://pacapro.vercel.app {
-        header_up Host pacapro.vercel.app
-        header_up X-Forwarded-Host {host}
-        header_up X-Forwarded-Proto {scheme}
-    }
+    root * /home/et/paca-approval-mobile
+    encode zstd gzip
+    try_files {path} /index.html
+    file_server
 }
 ```
 
@@ -76,13 +74,15 @@ curl -s https://supermax.kr/paca-health
 
 Browser checks:
 - Open `https://paca-approval.etlab.kr` on mobile.
-- Confirm it asks for login when not authenticated.
+- Confirm it shows only the mobile approval login, not the full PACA app.
 - Log in with a system admin account.
 - Confirm pending users load without CORS or raw HTTP error text.
 - Submit a test signup and confirm Telegram alert arrives with the approval URL.
 
 ## Rollback
-1. Remove the `paca-approval.etlab.kr` Caddy block.
+1. Remove the `paca-approval.etlab.kr` Caddy block or restore the previous
+   `/etc/caddy/Caddyfile` backup.
 2. Validate and reload Caddy.
-3. Unset or ignore the Telegram env keys.
+3. Set `PACA_APPROVAL_ADMIN_URL` back to the normal PACA approval route if the
+   mobile page is unavailable.
 4. Keep `/admin/users` available through the normal PACA app.

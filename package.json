@@ -1,6 +1,6 @@
 {
   "name": "paca-frontend",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "lastUpdate": "2026-07-02",
   "private": true,
   "scripts": {
@@ -43,6 +43,7 @@
     "smoke:notifications": "node scripts/smoke/notifications-smoke.mjs",
     "smoke:staff": "node scripts/smoke/staff-smoke.mjs",
     "smoke:admin-users": "node scripts/smoke/admin-users-smoke.mjs",
+    "smoke:mobile-approval-page": "node scripts/smoke/mobile-approval-page-smoke.mjs",
     "smoke:onboarding": "node scripts/smoke/onboarding-smoke.mjs",
     "smoke:tablet-attendance": "node scripts/smoke/tablet-attendance-smoke.mjs",
     "smoke:tablet-students": "node scripts/smoke/tablet-students-smoke.mjs",
