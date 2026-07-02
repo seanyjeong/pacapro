@@ -177,7 +177,7 @@ async function runRejectMobile(browser) {
   const result = await createAdminUsersPage(browser, 'success', { width: 390, height: 844 });
   const { context, page, state } = result;
 
-  await page.goto('/admin/users', { waitUntil: 'domcontentloaded' });
+  await page.goto('/admin/approvals', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '사용자 승인 관리' }).waitFor();
   await page.getByTestId('admin-users-list').getByText('김대기').waitFor();
   await assertOperationsBoard(page, 2);

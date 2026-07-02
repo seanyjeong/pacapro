@@ -41,10 +41,12 @@ const isDev = process.env.NODE_ENV === 'development';
 const ALLOWED_ORIGINS = [
     'https://pacapro.vercel.app',
     'https://supermax.kr',
+    'https://paca-approval.etlab.kr',
     'https://paca-preview.etlab.kr',
     'https://dev.sean8320.dedyn.io',
     'http://localhost:3000',
     'http://localhost:3001',
+    process.env.PACA_APPROVAL_ORIGIN,
     process.env.CORS_ORIGIN // 추가 도메인 (환경변수)
 ].filter(Boolean);
 

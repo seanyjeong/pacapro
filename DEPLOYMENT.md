@@ -40,6 +40,9 @@ backend deployment, scheduler handoff, DB-primary changes, and bridge removal.
 - Browser API base: `https://supermax.kr/paca`.
 - Do not depend on public `NEXT_PUBLIC_API_URL`,
   `NEXT_PUBLIC_FALLBACK_API_URL`, or `NEXT_PUBLIC_SOCKET_URL` fallbacks.
+- Mobile signup approval shortcut: see
+  `docs/admin-approval-subdomain-runbook.md` before adding the etserver Caddy
+  subdomain or Telegram signup notification env keys.
 
 ## Backend
 - Source of truth: reviewed local backend files in this worktree.

@@ -8,136 +8,14 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const db = require('../config/database');
+const registerHandler = require('./auth/registerHandler');
 const { generateToken, verifyToken } = require('../middleware/auth');
 const { sendPasswordResetEmail } = require('../utils/emailSender');
-const { encrypt, decrypt, decryptFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
+const { decrypt, decryptFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
 const logger = require('../utils/logger');
 
-/**
- * POST /api/auth/register
- * Register new user
- */
-router.post('/register', async (req, res) => {
-    const connection = await db.getConnection();
-
-    try {
-        const {
-            email,
-            password,
-            name,
-            phone,
-            role: _requestedRole, // ignored - always forced to 'owner'
-            academyName // 원장이 가입할 때 학원명
-        } = req.body;
-
-        // Security: Force role to 'owner' regardless of request body (prevent mass assignment)
-        const role = 'owner';
-
-        // Validation
-        if (!email || !password || !name) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'Email, password, and name are required'
-            });
-        }
-
-        // Email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'Invalid email format'
-            });
-        }
-
-        // Password strength validation
-        if (password.length < 8) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'Password must be at least 8 characters'
-            });
-        }
-
-        await connection.beginTransaction();
-
-        // Check if email already exists
-        const [existingUsers] = await connection.query(
-            'SELECT id FROM users WHERE email = ?',
-            [email]
-        );
-
-        if (existingUsers.length > 0) {
-            await connection.rollback();
-            return res.status(409).json({
-                error: 'Conflict',
-                message: 'Email already registered'
-            });
-        }
-
-        // Hash password
-        const passwordHash = await bcrypt.hash(password, 10);
-
-        // 민감 필드 암호화
-        const encryptedName = encrypt(name);
-        const encryptedPhone = phone ? encrypt(phone) : null;
-
-        // Insert user (원장으로 등록, 승인 대기 상태)
-        const [userResult] = await connection.query(
-            `INSERT INTO users
-            (email, password_hash, name, phone, role, approval_status, is_active)
-            VALUES (?, ?, ?, ?, ?, 'pending', TRUE)`,
-            [email, passwordHash, encryptedName, encryptedPhone, role]
-        );
-
-        const userId = userResult.insertId;
-
-        // 원장인 경우 학원 정보도 생성
-        if (role === 'owner' && academyName) {
-            const [academyResult] = await connection.query(
-                'INSERT INTO academies (owner_user_id, name) VALUES (?, ?)',
-                [userId, academyName]
-            );
-
-            const academyId = academyResult.insertId;
-
-            // Update user's academy_id
-            await connection.query(
-                'UPDATE users SET academy_id = ? WHERE id = ?',
-                [academyId, userId]
-            );
-
-            // Create default academy settings
-            await connection.query(
-                'INSERT INTO academy_settings (academy_id) VALUES (?)',
-                [academyId]
-            );
-        }
-
-        await connection.commit();
-
-        res.status(201).json({
-            message: 'Registration successful. Please wait for administrator approval.',
-            user: {
-                id: userId,
-                email,
-                name,
-                role,
-                approvalStatus: 'pending'
-            }
-        });
-
-    } catch (error) {
-        await connection.rollback();
-        logger.error('Registration error:', error);
-        res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Registration failed',
-            details: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
-    } finally {
-        connection.release();
-    }
-});
+/** POST /api/auth/register */
+router.post('/register', registerHandler);
 
 /**
  * POST /api/auth/login
