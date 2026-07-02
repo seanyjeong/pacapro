@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import type { JungsiStatus, PerformanceStudent, StudentAllScores } from './performance-types';
 import { PerformanceErrorPanel } from './performance-error-panel';
 import { PerformanceStudentList } from './performance-student-list';
-import { getBranchLabel } from './performance-utils';
+import { getBranchLabel, isJungsiLinked, isJungsiReady } from './performance-utils';
 
 interface MockExamPanelProps {
   expandedStudentId: number | null;
@@ -39,11 +39,14 @@ export function MockExamPanel({
   onSearchChange,
   onStudentToggle,
 }: MockExamPanelProps) {
+  const linked = isJungsiLinked(jungsiStatus);
+  const ready = isJungsiReady(jungsiStatus, statusError);
+
   if (statusError) {
     return <PerformanceErrorPanel message={statusError} title="정시엔진 정보를 확인하지 못했습니다" onRetry={onRefreshStatus} />;
   }
 
-  if (!jungsiStatus?.isConfigured) {
+  if (!linked) {
     return (
       <PerformanceErrorPanel
         message="이 학원은 아직 정시엔진과 연동되지 않았습니다. 관리자에게 문의해주세요."
@@ -53,7 +56,7 @@ export function MockExamPanel({
     );
   }
 
-  if (!jungsiStatus.jungsiApi.healthy) {
+  if (!ready) {
     return (
       <PerformanceErrorPanel
         message="정시엔진과 연결할 수 없습니다. 잠시 후 다시 시도해주세요."
@@ -73,7 +76,7 @@ export function MockExamPanel({
               정시엔진 연결됨
             </span>
             <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
-              {getBranchLabel(jungsiStatus.branchName)}
+              {getBranchLabel(jungsiStatus?.branchName ?? null, linked)}
             </span>
           </div>
           <div className="flex flex-col gap-2 md:flex-row md:items-center">

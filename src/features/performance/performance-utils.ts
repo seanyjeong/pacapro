@@ -1,5 +1,6 @@
 import type {
   ExamType,
+  JungsiStatus,
   PerformanceStudent,
   PerformanceStudentStatusFilter,
   ScoreData,
@@ -37,8 +38,30 @@ export function getExamTitle(exam: ExamType): string {
   return exam === '수능' ? '수능' : `${exam} 모평`;
 }
 
-export function getBranchLabel(branchName: string | null): string {
-  return branchName ? `${branchName} 지점` : '지점 정보 없음';
+export function isJungsiLinked(status: JungsiStatus | null): boolean {
+  const branchName = status?.branchName?.trim();
+  return Boolean(status && (status.isConfigured || status.link?.required === false || branchName));
+}
+
+export function isJungsiReady(status: JungsiStatus | null, statusError: string | null): boolean {
+  return Boolean(isJungsiLinked(status) && status?.jungsiApi.healthy && !statusError);
+}
+
+export function getJungsiStatusLabel(
+  status: JungsiStatus | null,
+  statusError: string | null,
+  statusLoading: boolean
+): string {
+  if (statusLoading) return '연결 확인 중';
+  if (isJungsiReady(status, statusError)) return '연결됨';
+  if (isJungsiLinked(status)) return '연결 확인 필요';
+  return statusError ? '연결 확인 필요' : '연동 필요';
+}
+
+export function getBranchLabel(branchName: string | null, linked = false): string {
+  const trimmedBranchName = branchName?.trim();
+  if (trimmedBranchName) return `${trimmedBranchName} 지점`;
+  return linked ? '지점 정보 확인 중' : '지점 미연동';
 }
 
 export function getGrade(score?: SubjectScore | { 등급?: string } | null): string {

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { startJungsiLink } from './performance-api';
 import type { JungsiStatus } from './performance-types';
+import { isJungsiLinked, isJungsiReady } from './performance-utils';
 
 type JungsiLinkMessage = {
   source?: string;
@@ -45,8 +46,8 @@ const JUNGSI_LINK_POPUP_FEATURES = [
 ].join(',');
 
 function getButtonText(status: JungsiStatus | null) {
-  if (!status?.isConfigured) return '정시엔진 연동';
-  if (!status.jungsiApi.healthy) return '연동 다시 확인';
+  if (!isJungsiLinked(status)) return '정시엔진 연동';
+  if (!isJungsiReady(status, null)) return '연동 다시 확인';
   return '정시엔진 재연동';
 }
 

@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import type { JungsiStatus } from './performance-types';
+import { isJungsiLinked, isJungsiReady } from './performance-utils';
 
 interface PerformanceHeaderProps {
   status: JungsiStatus | null;
@@ -8,7 +9,8 @@ interface PerformanceHeaderProps {
 }
 
 export function PerformanceHeader({ status, statusError, statusLoading }: PerformanceHeaderProps) {
-  const healthy = status?.jungsiApi.healthy;
+  const ready = isJungsiReady(status, statusError);
+  const linked = isJungsiLinked(status);
 
   return (
     <header className="flex flex-col gap-3 border-b border-border/70 pb-4 md:flex-row md:items-end md:justify-between">
@@ -23,7 +25,7 @@ export function PerformanceHeader({ status, statusError, statusLoading }: Perfor
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             <span className="text-muted-foreground">연결 확인 중</span>
           </>
-        ) : healthy ? (
+        ) : ready ? (
           <>
             <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             <span className="font-medium text-emerald-700">정시엔진 연결됨</span>
@@ -31,7 +33,9 @@ export function PerformanceHeader({ status, statusError, statusLoading }: Perfor
         ) : (
           <>
             <AlertCircle className="h-4 w-4 text-amber-700" />
-            <span className="font-medium text-amber-800">{statusError ? '연결 확인 필요' : '정시엔진 연결 안됨'}</span>
+            <span className="font-medium text-amber-800">
+              {statusError || linked ? '정시엔진 연결 확인 필요' : '정시엔진 연동 필요'}
+            </span>
           </>
         )}
       </div>

@@ -19,6 +19,11 @@ Isolated private workspace for redesigning the P-ACA frontend without changing t
 - Avoid write/delete/payment/notification actions against production data while doing visual work.
 - Back-port only reviewed UI changes to the original product repo.
 
+## External Engine Shortcuts
+
+- Jungsi engine frontend: `NEXT_PUBLIC_JUNGSI_ENGINE_URL`, default `https://seanyjeong.github.io/maxjungsi222/`
+- Susi engine frontend: `NEXT_PUBLIC_SUSI_ENGINE_URL`, default `https://seanyjeong.github.io/26maxsusi/`
+
 ## Next Step
 
 Start with the shared product UI system, then pilot the refreshed UI on consultation and student-management workflows.

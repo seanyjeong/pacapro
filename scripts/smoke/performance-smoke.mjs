@@ -22,6 +22,12 @@ const healthyStatus = {
   defaultExam: '수능',
 };
 
+const healthOnlyStatus = {
+  ...healthyStatus,
+  branchName: null,
+  isConfigured: false,
+};
+
 const students = [
   { id: 10, name: '김민서', school: '일산고', grade: '고3', status: 'active' },
   { id: 11, name: '한서준', school: '백석고', grade: 'N수', status: 'paused' },
@@ -72,7 +78,7 @@ async function installRoutes(context, state) {
       return jsonRoute(route, { message: 'DB timeout 500 stack trace' }, 500);
     }
     if (method === 'GET' && path === '/jungsi/status') {
-      return jsonRoute(route, healthyStatus);
+      return jsonRoute(route, state.statusOverride || healthyStatus);
     }
     if (method === 'POST' && path === '/jungsi/link/start') {
       return jsonRoute(route, {
@@ -129,6 +135,7 @@ async function runNormal(browser) {
   await page.getByTestId('performance-workspace').waitFor();
   await page.getByRole('heading', { name: '성적관리' }).waitFor();
   await waitForConnectedStatus(page);
+  await assertSidebarEngineShortcuts(page);
   await assertOperationsBoard(page);
   await assertJungsiLinkFlow(page, state);
   await openMockExamTab(page);
@@ -181,6 +188,19 @@ async function assertOperationsBoard(page) {
   await board.getByRole('button', { name: '모의고사·수능 보기' }).waitFor();
 }
 
+async function assertSidebarEngineShortcuts(page) {
+  const jungsiLink = page.getByRole('link', { name: '정시엔진' });
+  const susiLink = page.getByRole('link', { name: '수시엔진' });
+  await jungsiLink.waitFor();
+  await susiLink.waitFor();
+  if ((await jungsiLink.getAttribute('href')) !== 'https://seanyjeong.github.io/maxjungsi222/') {
+    throw new Error('정시엔진 바로가기 URL이 다릅니다.');
+  }
+  if ((await susiLink.getAttribute('href')) !== 'https://seanyjeong.github.io/26maxsusi/') {
+    throw new Error('수시엔진 바로가기 URL이 다릅니다.');
+  }
+}
+
 async function assertJungsiLinkFlow(page, state) {
   const board = page.getByTestId('performance-operations-board');
   await board.getByRole('button', { name: '정시엔진 재연동' }).click();
@@ -192,8 +212,18 @@ async function assertJungsiLinkFlow(page, state) {
   await page.getByRole('button', { name: '정시엔진 로그인 열기' }).click();
   const popup = await popupPromise;
   await popup.waitForURL(/jungsi\.example\.test\/jungsilogin\.html/, { timeout: 10000 });
+  await page.getByText('정시엔진 로그인 창에서 로그인하면 자동으로 연동됩니다.').waitFor();
+  const linkState = new URL(popup.url()).searchParams.get('paca_link_state');
+  await popup.evaluate((state) => {
+    window.opener?.postMessage({
+      source: 'paca-jungsi-link',
+      status: 'success',
+      state,
+      message: '정시엔진이 정상적으로 연동되었습니다.',
+    }, '*');
+  }, linkState);
+  await page.getByText('정시엔진이 정상적으로 연동되었습니다.').waitFor();
   await popup.close();
-  await page.getByText('정시엔진 로그인 창을 열었습니다.').waitFor();
 
   if (!state.hits.some((hit) => hit === 'POST /jungsi/link/start')) {
     throw new Error(`missing jungsi link start request: ${state.hits.join(' | ')}`);
@@ -210,12 +240,36 @@ async function runStatusError(browser) {
   await page.goto('/performance', { waitUntil: 'domcontentloaded' });
   await page.getByTestId('performance-workspace').waitFor();
   await page.getByRole('heading', { name: '성적관리' }).waitFor();
-  await page.getByText('연결 확인 필요').waitFor();
+  await page.getByText('정시엔진 연결 확인 필요').waitFor();
+  await page.getByTestId('performance-operations-board').getByText('연결 확인 필요').waitFor();
   await openMockExamTab(page);
   await page.getByText('정시엔진 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'performance status error');
   await assertNoHorizontalOverflow(page, 'performance status error');
   await page.screenshot({ path: '/Users/etlab/paca-performance-error-mobile.png', fullPage: true });
+
+  await context.close();
+  return { state, diagnostics };
+}
+
+async function runHealthOnlyNotLinked(browser) {
+  const state = makeState({ statusOverride: healthOnlyStatus });
+  const context = await createAuthedContext(browser, { width: 1365, height: 900 });
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  const diagnostics = createDiagnostics(page);
+
+  await page.goto('/performance', { waitUntil: 'domcontentloaded' });
+  await page.getByTestId('performance-workspace').waitFor();
+  await page.getByRole('heading', { name: '성적관리' }).waitFor();
+  await page.getByText('정시엔진 연동 필요').waitFor();
+  const board = page.getByTestId('performance-operations-board');
+  await board.getByText('연동 필요').waitFor();
+  await board.getByText('지점 미연동').waitFor();
+  await openMockExamTab(page);
+  await page.getByText('정시엔진 연동이 필요합니다').waitFor();
+  await assertNoRawVisibleText(page, 'performance health-only unlinked');
+  await assertNoHorizontalOverflow(page, 'performance health-only unlinked');
 
   await context.close();
   return { state, diagnostics };
@@ -271,9 +325,10 @@ async function main() {
   try {
     const normal = await runNormal(browser);
     const statusError = await runStatusError(browser);
+    const healthOnlyNotLinked = await runHealthOnlyNotLinked(browser);
     const studentsError = await runStudentsError(browser);
     const scoresError = await runScoresError(browser);
-    [normal, statusError, studentsError, scoresError].forEach(assertDiagnostics);
+    [normal, statusError, healthOnlyNotLinked, studentsError, scoresError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
       normalConsoleErrors: normal.diagnostics.consoleErrors,

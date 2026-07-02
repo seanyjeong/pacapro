@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PerformanceJungsiLinkButton } from './performance-jungsi-link-button';
 import type { JungsiStatus, PerformanceStudent, PerformanceStudentStatusFilter } from './performance-types';
-import { EXAM_TYPES, getBranchLabel } from './performance-utils';
+import { EXAM_TYPES, getBranchLabel, getJungsiStatusLabel, isJungsiLinked } from './performance-utils';
 
 interface PerformanceOperationsBoardProps {
   status: JungsiStatus | null;
@@ -38,7 +38,8 @@ export function PerformanceOperationsBoard({
   const activeCount = students.filter((student) => student.status === 'active').length;
   const pausedCount = students.filter((student) => student.status === 'paused').length;
   const examCount = status?.examTypes?.length || EXAM_TYPES.length;
-  const connected = Boolean(status?.isConfigured && status.jungsiApi.healthy && !statusError);
+  const linked = isJungsiLinked(status);
+  const statusLabel = getJungsiStatusLabel(status, statusError, statusLoading);
 
   return (
     <aside
@@ -57,10 +58,8 @@ export function PerformanceOperationsBoard({
           <Server className="mt-0.5 h-4 w-4 text-slate-500" />
           <div className="min-w-0">
             <p className="text-xs font-medium text-slate-500">정시엔진</p>
-            <p className="mt-1 text-sm font-semibold text-slate-950">
-              {statusLoading ? '연결 확인 중' : connected ? '연결됨' : '확인 필요'}
-            </p>
-            <p className="mt-1 text-xs text-slate-600">{getBranchLabel(status?.branchName ?? null)}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-950">{statusLabel}</p>
+            <p className="mt-1 text-xs text-slate-600">{getBranchLabel(status?.branchName ?? null, linked)}</p>
           </div>
         </div>
       </div>
