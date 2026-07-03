@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { StudentAttendanceComponent } from '@/components/students/student-attendance';
 import { StudentCard } from '@/components/students/student-card';
 import { StudentConsultationsComponent } from '@/components/students/student-consultations';
+import { StudentPhotoField } from '@/components/students/student-form/_components/StudentPhotoField';
 import { StudentPaymentsComponent } from '@/components/students/student-payments';
 import { StudentPerformanceComponent } from '@/components/students/student-performance';
 import { StudentResumeModal } from '@/components/students/student-resume-modal';
@@ -26,8 +28,10 @@ export function StudentDetailPage() {
   const router = useRouter();
   const params = useParams();
   const studentId = Number.parseInt(params.id as string, 10);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<StudentDetailTab | null>(null);
   const [pendingAction, setPendingAction] = useState<StudentDetailAction | null>(null);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
   const [resumeModalOpen, setResumeModalOpen] = useState(false);
 
@@ -49,6 +53,13 @@ export function StudentDetailPage() {
 
   const handleSendSms = () => {
     router.push(`/sms?studentId=${studentId}&recipient=parent`);
+  };
+
+  const handlePhotoChanged = () => {
+    setPendingPhotoFile(null);
+    queryClient.invalidateQueries({ queryKey: ['students'] });
+    queryClient.invalidateQueries({ queryKey: ['students', studentId] });
+    reload();
   };
 
   const handleDelete = async () => {
@@ -136,7 +147,15 @@ export function StudentDetailPage() {
           </section>
         </main>
 
-        <div className="order-1 xl:sticky xl:top-20 xl:order-2">
+        <div className="order-1 space-y-5 xl:sticky xl:top-20 xl:order-2">
+          <StudentPhotoField
+            mode="edit"
+            pendingPhotoFile={pendingPhotoFile}
+            student={student}
+            onPendingPhotoFileChange={setPendingPhotoFile}
+            onPhotoChanged={handlePhotoChanged}
+          />
+
           <StudentDetailActions
             canGraduate={canGraduate}
             canResume={canResume}
