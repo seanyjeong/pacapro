@@ -64,7 +64,7 @@ module.exports = function(router) {
                 throw error;
             }
 
-            await deleteStudentPhotoKeys([student.profile_image_key, student.profile_thumb_key]);
+            await deleteStudentPhotoKeys(getReplacedPhotoKeys(student, saved));
 
             res.json({
                 message: '학생 사진이 저장되었습니다.',
@@ -141,6 +141,11 @@ module.exports = function(router) {
         }
     });
 };
+
+function getReplacedPhotoKeys(student, saved) {
+    const currentKeys = new Set([saved.originalKey, saved.thumbKey]);
+    return [student.profile_image_key, student.profile_thumb_key].filter((key) => key && !currentKeys.has(key));
+}
 
 function parseStudentId(rawId, res) {
     const studentId = Number.parseInt(rawId, 10);

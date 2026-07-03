@@ -24,6 +24,7 @@ jest.mock('../../../utils/logger', () => ({
 const pool = require('../../../config/database');
 const { resolveStudentPhotoPath, saveStudentPhotos } = require('../../../services/studentPhotoStorage');
 
+const JPEG_DATA_URL = 'data:image/jpeg;base64,/9j/AA==';
 const PNG_DATA_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
 
 function makeApp() {
@@ -76,6 +77,62 @@ describe('students photo routes', () => {
         });
         expect(pool.execute.mock.calls[0][0]).toMatch(/WHERE id = \?\s+AND academy_id = \?/);
         expect(pool.execute.mock.calls[0][1]).toEqual([7, 1]);
+        await expect(fs.stat(resolveStudentPhotoPath(res.body.photo.profile_thumb_key))).resolves.toBeTruthy();
+    });
+
+    test('POST /paca/students/:id/photo 는 같은 확장자로 변경해도 새 파일을 삭제하지 않는다', async () => {
+        const existing = await saveStudentPhotos({
+            academyId: 1,
+            studentId: 7,
+            originalDataUrl: PNG_DATA_URL,
+            thumbnailDataUrl: PNG_DATA_URL,
+        });
+        pool.execute
+            .mockResolvedValueOnce([[{
+                id: 7,
+                academy_id: 1,
+                profile_image_key: existing.originalKey,
+                profile_thumb_key: existing.thumbKey,
+            }]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/students/7/photo')
+            .send({ original_data_url: PNG_DATA_URL, thumbnail_data_url: PNG_DATA_URL });
+
+        expect(res.status).toBe(200);
+        expect(res.body.photo.profile_image_key).toBe(existing.originalKey);
+        expect(res.body.photo.profile_thumb_key).toBe(existing.thumbKey);
+        await expect(fs.stat(resolveStudentPhotoPath(existing.originalKey))).resolves.toBeTruthy();
+        await expect(fs.stat(resolveStudentPhotoPath(existing.thumbKey))).resolves.toBeTruthy();
+    });
+
+    test('POST /paca/students/:id/photo 는 새 경로와 다른 예전 파일을 삭제한다', async () => {
+        const existing = await saveStudentPhotos({
+            academyId: 1,
+            studentId: 7,
+            originalDataUrl: PNG_DATA_URL,
+            thumbnailDataUrl: PNG_DATA_URL,
+        });
+        pool.execute
+            .mockResolvedValueOnce([[{
+                id: 7,
+                academy_id: 1,
+                profile_image_key: existing.originalKey,
+                profile_thumb_key: existing.thumbKey,
+            }]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/students/7/photo')
+            .send({ original_data_url: JPEG_DATA_URL, thumbnail_data_url: JPEG_DATA_URL });
+
+        expect(res.status).toBe(200);
+        expect(res.body.photo.profile_image_key).toBe('academies/1/students/7/profile-original.jpg');
+        expect(res.body.photo.profile_thumb_key).toBe('academies/1/students/7/profile-thumb.jpg');
+        await expect(fs.stat(resolveStudentPhotoPath(existing.originalKey))).rejects.toThrow();
+        await expect(fs.stat(resolveStudentPhotoPath(existing.thumbKey))).rejects.toThrow();
+        await expect(fs.stat(resolveStudentPhotoPath(res.body.photo.profile_image_key))).resolves.toBeTruthy();
         await expect(fs.stat(resolveStudentPhotoPath(res.body.photo.profile_thumb_key))).resolves.toBeTruthy();
     });
 
