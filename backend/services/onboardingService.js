@@ -4,6 +4,7 @@
  */
 
 const db = require('../config/database');
+const { normalizeTuitionSettings } = require('../utils/tuitionSettings');
 
 /**
  * 온보딩 완료 여부 확인
@@ -92,7 +93,7 @@ async function complete(academyId, body) {
                 salary_payment_day || 10,
                 salary_month_type || 'next',
                 tuition_due_day || 5,
-                tuition_settings ? JSON.stringify(tuition_settings) : null,
+                tuition_settings ? JSON.stringify(normalizeTuitionSettings(tuition_settings)) : null,
                 academyId
             ]
         );
