@@ -117,10 +117,10 @@ export function StudentPhotoField({
           {hasPendingPhoto ? (
             <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt="" className="h-full w-full object-cover" src={previewUrl} />
+              <img alt="" className="h-full w-full object-contain" src={previewUrl} />
             </div>
           ) : (
-            <StudentAvatar forcePhoto={hasStoredPhoto} size="lg" student={displayStudent} />
+            <StudentAvatar forcePhoto={hasStoredPhoto} imageFit="contain" size="lg" student={displayStudent} />
           )}
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground">

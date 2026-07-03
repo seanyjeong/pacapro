@@ -6,11 +6,13 @@ import { studentsAPI } from '@/lib/api/students';
 import { cn } from '@/lib/utils/cn';
 
 type StudentAvatarSize = 'sm' | 'md' | 'lg' | 'xl';
+type StudentAvatarFit = 'cover' | 'contain';
 
 interface StudentAvatarProps {
   cacheKey?: string | null;
   className?: string;
   forcePhoto?: boolean;
+  imageFit?: StudentAvatarFit;
   size?: StudentAvatarSize;
   student: Pick<Student, 'id' | 'name' | 'profile_image_url' | 'profile_thumb_key' | 'profile_image_updated_at'>;
 }
@@ -22,7 +24,12 @@ const SIZE_CLASSES: Record<StudentAvatarSize, string> = {
   xl: 'h-36 w-36 text-5xl sm:h-40 sm:w-40',
 };
 
-export function StudentAvatar({ cacheKey, className, forcePhoto, size = 'sm', student }: StudentAvatarProps) {
+const IMAGE_FIT_CLASSES: Record<StudentAvatarFit, string> = {
+  contain: 'object-contain',
+  cover: 'object-cover',
+};
+
+export function StudentAvatar({ cacheKey, className, forcePhoto, imageFit = 'cover', size = 'sm', student }: StudentAvatarProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const hasPhoto = forcePhoto || Boolean(student.profile_thumb_key || student.profile_image_url);
   const resolvedCacheKey = cacheKey || student.profile_image_updated_at || student.profile_thumb_key || student.profile_image_url || '';
@@ -60,14 +67,15 @@ export function StudentAvatar({ cacheKey, className, forcePhoto, size = 'sm', st
     <div
       aria-label={`${student.name} 사진`}
       className={cn(
-        'flex shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-950 font-semibold text-slate-50',
+        'flex shrink-0 items-center justify-center overflow-hidden rounded-md font-semibold text-slate-50',
+        imageUrl && imageFit === 'contain' ? 'bg-muted' : 'bg-slate-950',
         SIZE_CLASSES[size],
         className
       )}
     >
       {imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img alt="" className="h-full w-full object-cover" src={imageUrl} />
+        <img alt="" className={cn('h-full w-full', IMAGE_FIT_CLASSES[imageFit])} src={imageUrl} />
       ) : (
         <span>{student.name.trim().charAt(0) || '?'}</span>
       )}

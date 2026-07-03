@@ -56,7 +56,7 @@ export function StudentCard({ student }: StudentCardProps) {
           </div>
           <div className="flex justify-start lg:justify-end">
             <div className="rounded-md border border-border bg-muted/30 p-3">
-              <StudentAvatar size="xl" student={student} />
+              <StudentAvatar imageFit="contain" size="xl" student={student} />
             </div>
           </div>
         </div>

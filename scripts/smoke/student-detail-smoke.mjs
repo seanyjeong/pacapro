@@ -314,7 +314,7 @@ async function runNormalDesktop(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor({ timeout: 15000 });
   await page.getByText('김진우').first().waitFor();
-  await page.waitForFunction(() => Array.from(document.images).some((image) => image.complete && image.naturalWidth > 0));
+  await page.locator('[aria-label="김진우 사진"]').first().locator('img.object-contain').waitFor();
   if (!state.hits.some((hit) => hit.startsWith('GET /students/41/photo/thumb'))) {
     throw new Error('student profile photo was not requested on detail page');
   }
