@@ -1,5 +1,6 @@
-import { Calendar, ChevronRight, Phone, School, UserRound } from 'lucide-react';
+import { Calendar, ChevronRight, Phone, School } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { StudentAvatar } from '@/components/students/student-avatar';
 import type { Student } from '@/lib/types/student';
 import { STATUS_LABELS } from '@/lib/types/student';
 import {
@@ -49,9 +50,7 @@ export function StudentsMobileList({
                     className="rounded-lg border border-border bg-card p-4 shadow-sm"
                 >
                     <div className="flex items-start gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                            <UserRound className="h-5 w-5" />
-                        </div>
+                        <StudentAvatar student={student} />
                         <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                                 <span className="text-base font-semibold text-foreground">{student.name}</span>

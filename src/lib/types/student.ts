@@ -56,6 +56,11 @@ export interface Student {
   address: string | null;
   admission_type: AdmissionType; // regular, early, civil_service
   profile_image_url: string | null;
+  profile_image_key?: string | null;
+  profile_thumb_key?: string | null;
+  profile_image_mime_type?: string | null;
+  profile_thumb_mime_type?: string | null;
+  profile_image_updated_at?: string | null;
   class_days: ClassDaysValue; // 숫자 배열 or ClassDaySlot 배열 or JSON string
   weekly_count: number;
   monthly_tuition: string; // decimal -> string

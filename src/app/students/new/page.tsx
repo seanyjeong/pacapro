@@ -10,6 +10,7 @@ import { StudentFormPageHeader } from '@/features/student-form/student-form-page
 import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
 import type { StudentFormData, Student, Gender, StudentType, Grade, StudentStatus } from '@/lib/types/student';
+import { prepareStudentPhotoPayload } from '@/lib/utils/student-photo-client';
 
 function NewStudentContent() {
   const router = useRouter();
@@ -40,9 +41,10 @@ function NewStudentContent() {
     } as Partial<Student>;
   }, [existingStudentId, searchParams]);
 
-  const handleSubmit = async (data: StudentFormData) => {
+  const handleSubmit = async (data: StudentFormData, pendingPhotoFile?: File | null) => {
     try {
       let student: Student;
+      let photoUploaded = false;
 
       // 미등록관리 또는 체험생에서 온 경우: 기존 학생 UPDATE (id 유지, 상담 기록 보존)
       if (existingStudentId) {
@@ -83,6 +85,21 @@ function NewStudentContent() {
         }
       } else {
         toast.success(`${student.name} 학생이 등록되었습니다!`);
+      }
+
+      if (pendingPhotoFile) {
+        try {
+          const payload = await prepareStudentPhotoPayload(pendingPhotoFile);
+          await studentsAPI.uploadStudentPhoto(student.id, payload, { suppressErrorToast: true });
+          photoUploaded = true;
+        } catch (photoError) {
+          console.warn('Student photo upload failed:', photoError);
+          toast.warning('학생은 등록되었지만 사진 저장에 실패했습니다. 수정 화면에서 다시 등록해주세요.');
+        }
+      }
+
+      if (photoUploaded) {
+        toast.success('학생 사진이 저장되었습니다.');
       }
 
       // 학생 목록으로 이동

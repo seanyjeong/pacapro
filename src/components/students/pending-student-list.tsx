@@ -13,7 +13,8 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Clock, Sparkles, FileText, Check, X, StickyNote } from 'lucide-react';
+import { Loader2, UserPlus, Trash2, Clock, Sparkles, FileText, Check, X, StickyNote } from 'lucide-react';
+import { StudentAvatar } from '@/components/students/student-avatar';
 import type { Student } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 import { PendingStudentActionDialog } from './pending-student-action-dialog';
@@ -265,9 +266,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                 <tr key={student.id} className="hover:bg-muted">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-                        <User className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                      </div>
+                      <StudentAvatar student={student} />
                       <div>
                         <span className="font-medium text-foreground">{student.name}</span>
                         {student.school && (

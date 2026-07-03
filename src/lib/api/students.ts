@@ -41,6 +41,22 @@ export interface StudentImportResponse {
   results: StudentImportResult[];
 }
 
+export interface StudentPhotoUploadPayload {
+  original_data_url: string;
+  thumbnail_data_url: string;
+}
+
+export interface StudentPhotoResponse {
+  message: string;
+  photo: {
+    profile_image_key: string;
+    profile_image_mime_type: string;
+    profile_image_url: string;
+    profile_thumb_key: string;
+    profile_thumb_mime_type: string;
+  };
+}
+
 export const studentsAPI = {
   /**
    * 학생 목록 조회 (필터링)
@@ -110,6 +126,26 @@ export const studentsAPI = {
    */
   deleteStudent: async (id: number, config?: APIRequestConfig): Promise<StudentDeleteResponse> => {
     return await apiClient.delete(`/students/${id}`, config);
+  },
+
+  uploadStudentPhoto: async (
+    id: number,
+    data: StudentPhotoUploadPayload,
+    config?: APIRequestConfig
+  ): Promise<StudentPhotoResponse> => {
+    return await apiClient.post(`/students/${id}/photo`, data, config);
+  },
+
+  getStudentPhotoBlob: async (
+    id: number,
+    variant: 'thumb' | 'original' = 'thumb',
+    config?: APIRequestConfig
+  ): Promise<Blob> => {
+    return await apiClient.getBlob(`/students/${id}/photo/${variant}`, config);
+  },
+
+  deleteStudentPhoto: async (id: number, config?: APIRequestConfig): Promise<{ message: string }> => {
+    return await apiClient.delete(`/students/${id}/photo`, config);
   },
 
   /**

@@ -9,6 +9,8 @@ import {
   normalizePacaApiPath,
 } from './paca-smoke-utils.mjs';
 
+const PHOTO_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+
 function makeStudent(overrides) {
   return {
     id: 1,
@@ -25,6 +27,9 @@ function makeStudent(overrides) {
     address: null,
     admission_type: 'regular',
     profile_image_url: null,
+    profile_image_key: null,
+    profile_thumb_key: null,
+    profile_image_updated_at: null,
     class_days: [{ day: 1, timeSlot: 'evening' }, { day: 3, timeSlot: 'evening' }],
     weekly_count: 2,
     monthly_tuition: '520000',
@@ -57,7 +62,16 @@ function makeStudent(overrides) {
 }
 
 const STUDENTS = [
-  makeStudent({ id: 41, name: '김진우', school: '일산고', status: 'active' }),
+  makeStudent({
+    id: 41,
+    name: '김진우',
+    school: '일산고',
+    status: 'active',
+    profile_image_url: '/students/41/photo/thumb',
+    profile_image_key: 'academies/1/students/41/profile-original.png',
+    profile_thumb_key: 'academies/1/students/41/profile-thumb.png',
+    profile_image_updated_at: '2026-07-03T10:00:00.000Z',
+  }),
   makeStudent({ id: 42, name: '박서연', gender: 'female', school: '강남고', status: 'active', student_number: '2026042' }),
   makeStudent({ id: 43, name: '이민수', school: '상담대기고', status: 'pending', student_number: '2026043' }),
   makeStudent({ id: 44, name: '최체험', gender: 'female', school: '체험고', status: 'trial', is_trial: true, trial_remaining: 1 }),
@@ -97,6 +111,15 @@ async function installRoutes(context, state) {
     const method = request.method();
     const path = normalizePacaApiPath(url);
     state.hits.push(`${method} ${path}${url.search}`);
+
+    if (method === 'GET' && path === '/students/41/photo/thumb') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'image/png',
+        headers: { 'access-control-allow-origin': '*' },
+        body: Buffer.from(PHOTO_PNG_BASE64, 'base64'),
+      });
+    }
 
     if (method === 'GET' && path === '/students') {
       if (state.mode === 'load-error') {
@@ -187,6 +210,10 @@ async function runDesktop(browser) {
   await page.locator('table').getByText('김진우').waitFor();
   await page.locator('table').getByText('박서연').waitFor();
   await page.locator('table').getByRole('button', { name: '김진우 상세 보기' }).waitFor();
+  await page.waitForFunction(() => Array.from(document.images).some((image) => image.complete && image.naturalWidth > 0));
+  if (!state.hits.some((hit) => hit.startsWith('GET /students/41/photo/thumb'))) {
+    throw new Error('student profile photo was not requested on desktop list');
+  }
   await assertNoRawVisibleText(page, 'students desktop');
   await assertNoHorizontalOverflow(page, 'students desktop');
   await page.screenshot({ path: '/Users/etlab/paca-students-desktop.png', fullPage: true });

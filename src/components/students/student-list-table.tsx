@@ -5,6 +5,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StudentAvatar } from '@/components/students/student-avatar';
 import { Calendar, ChevronRight, Loader2, Phone, Sparkles, Users } from 'lucide-react';
 import type { Student } from '@/lib/types/student';
 import {
@@ -114,11 +115,7 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     {/* 학생 정보 */}
                     <td className="whitespace-nowrap px-4 py-4">
                       <div className="flex items-center">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-900">
-                          <span className="text-white font-bold text-sm">
-                            {student.name.charAt(0)}
-                          </span>
-                        </div>
+                        <StudentAvatar student={student} />
                         <div className="ml-4">
                           <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                             {student.name}

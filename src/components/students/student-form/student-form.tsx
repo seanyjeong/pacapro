@@ -22,21 +22,39 @@ import { SeasonSection } from './_components/SeasonSection';
 import { TuitionSection } from './_components/TuitionSection';
 import { AdditionalInfoSection } from './_components/AdditionalInfoSection';
 import { SubmitConfirmDialog } from './_components/SubmitConfirmDialog';
+import { StudentPhotoField } from './_components/StudentPhotoField';
 
 interface StudentFormProps {
   mode: 'create' | 'edit';
   initialData?: Student;
   initialIsTrial?: boolean;
-  onSubmit: (data: StudentFormData) => Promise<void>;
+  onSubmit: (data: StudentFormData, pendingPhotoFile?: File | null) => Promise<void>;
   onCancel: () => void;
+  onPhotoChanged?: () => void;
   onRestSuccess?: () => void;
 }
 
-export function StudentForm({ mode, initialData, initialIsTrial = false, onSubmit, onCancel, onRestSuccess }: StudentFormProps) {
+export function StudentForm({
+  mode,
+  initialData,
+  initialIsTrial = false,
+  onSubmit,
+  onCancel,
+  onPhotoChanged,
+  onRestSuccess,
+}: StudentFormProps) {
   const hook = useStudentForm({ mode, initialData, initialIsTrial, onSubmit });
 
   return (
     <form onSubmit={hook.handleSubmit} className="space-y-5">
+      <StudentPhotoField
+        mode={mode}
+        pendingPhotoFile={hook.pendingPhotoFile}
+        student={initialData}
+        onPendingPhotoFileChange={hook.setPendingPhotoFile}
+        onPhotoChanged={onPhotoChanged}
+      />
+
       {/* 체험생 섹션 (create: 등록 옵션, edit: 일정 수정) */}
       <TrialSection
         mode={mode}

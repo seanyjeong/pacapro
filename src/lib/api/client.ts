@@ -112,6 +112,21 @@ class APIClient {
         }
     }
 
+    async getBlob(url: string, config?: APIRequestConfig): Promise<Blob> {
+        const requestConfig: APIRequestConfig = { ...config, responseType: 'blob' };
+        try {
+            const res: AxiosResponse<Blob> = await this.getClient().get(url, requestConfig);
+            return res.data;
+        } catch (error: any) {
+            if (!this.usingFallback && isNetworkError(error)) {
+                this.switchToFallback();
+                const res: AxiosResponse<Blob> = await this.fallback.get(url, requestConfig);
+                return res.data;
+            }
+            throw error;
+        }
+    }
+
     async post<T>(url: string, data?: any, config?: APIRequestConfig): Promise<T> {
         try {
             const res: AxiosResponse<T> = await this.getClient().post(url, data, config);

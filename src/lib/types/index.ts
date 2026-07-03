@@ -58,6 +58,11 @@ export interface Student {
   address: string | null;
   admission_type: AdmissionType;
   profile_image_url: string | null;
+  profile_image_key?: string | null;
+  profile_thumb_key?: string | null;
+  profile_image_mime_type?: string | null;
+  profile_thumb_mime_type?: string | null;
+  profile_image_updated_at?: string | null;
   class_days: number[] | string;
   weekly_count: number;
   monthly_tuition: string;

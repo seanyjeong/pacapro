@@ -123,6 +123,16 @@ describe('GET /paca/students (list)', () => {
         expect(params[0]).toBe(1);
     });
 
+    test('학생 사진 메타데이터를 목록 응답용 SELECT에 포함한다', async () => {
+        pool.execute.mockResolvedValueOnce([[]]);
+        await request(makeApp()).get('/paca/students');
+        const [sql] = pool.execute.mock.calls[0];
+        expect(sql).toMatch(/s\.profile_image_url/);
+        expect(sql).toMatch(/s\.profile_image_key/);
+        expect(sql).toMatch(/s\.profile_thumb_key/);
+        expect(sql).toMatch(/s\.profile_image_updated_at/);
+    });
+
     test('grade 필터 → AND s.grade = ?', async () => {
         pool.execute.mockResolvedValueOnce([[]]);
         await request(makeApp()).get('/paca/students?grade=' + encodeURIComponent('고3'));

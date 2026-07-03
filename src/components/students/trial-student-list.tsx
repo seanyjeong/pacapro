@@ -11,7 +11,8 @@ import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, User, UserPlus, Trash2, Calendar, Sparkles, Pencil, Clock, Check, FileText } from 'lucide-react';
+import { Loader2, UserPlus, Trash2, Calendar, Sparkles, Pencil, Clock, Check, FileText } from 'lucide-react';
+import { StudentAvatar } from '@/components/students/student-avatar';
 import type { Student, TrialDate } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 import { TrialStudentActionDialog, type TrialStudentAction } from './trial-student-action-dialog';
@@ -180,9 +181,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                 <tr key={student.id} className="hover:bg-muted">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                        <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                      </div>
+                      <StudentAvatar student={student} />
                       <span className="font-medium text-foreground">{student.name}</span>
                     </div>
                   </td>

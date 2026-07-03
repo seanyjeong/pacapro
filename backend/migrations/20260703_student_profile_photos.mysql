@@ -1,0 +1,76 @@
+-- PACA student profile photos
+-- Run after DB backup and before deploying backend code that reads these columns.
+
+SET @db_name = DATABASE();
+
+SET @sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN profile_image_url VARCHAR(500) NULL AFTER admission_type',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @db_name
+      AND TABLE_NAME = 'students'
+      AND COLUMN_NAME = 'profile_image_url'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN profile_image_key VARCHAR(500) NULL AFTER profile_image_url',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @db_name
+      AND TABLE_NAME = 'students'
+      AND COLUMN_NAME = 'profile_image_key'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN profile_thumb_key VARCHAR(500) NULL AFTER profile_image_key',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @db_name
+      AND TABLE_NAME = 'students'
+      AND COLUMN_NAME = 'profile_thumb_key'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN profile_image_mime_type VARCHAR(64) NULL AFTER profile_thumb_key',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @db_name
+      AND TABLE_NAME = 'students'
+      AND COLUMN_NAME = 'profile_image_mime_type'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN profile_thumb_mime_type VARCHAR(64) NULL AFTER profile_image_mime_type',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @db_name
+      AND TABLE_NAME = 'students'
+      AND COLUMN_NAME = 'profile_thumb_mime_type'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN profile_image_updated_at DATETIME NULL AFTER profile_thumb_mime_type',
+        'SELECT 1'
+    )
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @db_name
+      AND TABLE_NAME = 'students'
+      AND COLUMN_NAME = 'profile_image_updated_at'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

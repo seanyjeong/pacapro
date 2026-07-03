@@ -132,6 +132,11 @@ export default function EditStudentPage() {
         initialData={student}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        onPhotoChanged={() => {
+          queryClient.invalidateQueries({ queryKey: ['students', studentId] });
+          queryClient.invalidateQueries({ queryKey: ['students'] });
+          reload();
+        }}
       />
       <StudentFormCancelDialog
         mode="edit"

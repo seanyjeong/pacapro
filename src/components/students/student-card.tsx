@@ -1,5 +1,6 @@
 import { Calendar, MapPin, NotebookText, Phone, UserRound } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StudentAvatar } from '@/components/students/student-avatar';
 import type { StudentDetail } from '@/lib/types/student';
 import {
   ADMISSION_TYPE_LABELS,
@@ -40,9 +41,7 @@ export function StudentCard({ student }: StudentCardProps) {
       </CardHeader>
       <CardContent className="space-y-6 p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-slate-950 text-lg font-semibold text-slate-50">
-            {student.name.charAt(0)}
-          </div>
+          <StudentAvatar size="md" student={student} />
           <div className="min-w-0 flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl font-semibold text-foreground">{student.name}</h2>

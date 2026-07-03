@@ -14,7 +14,7 @@ interface StudentFormProps {
   mode: 'create' | 'edit';
   initialData?: Student;
   initialIsTrial?: boolean;
-  onSubmit: (data: StudentFormData) => Promise<void>;
+  onSubmit: (data: StudentFormData, pendingPhotoFile?: File | null) => Promise<void>;
 }
 
 export function useStudentForm({ mode, initialData, initialIsTrial = false, onSubmit }: StudentFormProps) {
@@ -22,6 +22,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmState, setConfirmState] = useState<StudentFormConfirmState | null>(null);
   const [restModalOpen, setRestModalOpen] = useState(false);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
 
   // 학원 설정
   const [academySettings, setAcademySettings] = useState<AcademySettings>({
@@ -340,7 +341,8 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     };
     try {
       setSubmitting(true);
-      await onSubmit(submitData);
+      await onSubmit(submitData, pendingPhotoFile);
+      setPendingPhotoFile(null);
     } catch (err: unknown) {
       console.warn('학생 정보 저장에 실패했습니다.');
       const sameNameCheck = isSameNameWarning(err);
@@ -379,6 +381,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     submitting, errors, setErrors,
     confirmState, setConfirmState,
     restModalOpen, setRestModalOpen,
+    pendingPhotoFile, setPendingPhotoFile,
     academySettings,
     availableSeasons, seasonsLoading,
     enrollInSeason, setEnrollInSeason,

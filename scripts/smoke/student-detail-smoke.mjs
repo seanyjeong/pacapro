@@ -9,6 +9,8 @@ import {
   normalizePacaApiPath,
 } from './paca-smoke-utils.mjs';
 
+const PHOTO_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+
 function makeStudent() {
   return {
     id: 41,
@@ -24,7 +26,10 @@ function makeStudent() {
     age: null,
     address: '경기 고양시 일산동구',
     admission_type: 'regular',
-    profile_image_url: null,
+    profile_image_url: '/students/41/photo/thumb',
+    profile_image_key: 'academies/1/students/41/profile-original.png',
+    profile_thumb_key: 'academies/1/students/41/profile-thumb.png',
+    profile_image_updated_at: '2026-07-03T10:00:00.000Z',
     class_days: [{ day: 1, timeSlot: 'evening' }, { day: 3, timeSlot: 'evening' }],
     weekly_count: 2,
     monthly_tuition: '520000',
@@ -145,6 +150,7 @@ async function installRoutes(context, state) {
     const method = request.method();
     const path = normalizePacaApiPath(url);
     state.hits.push(`${method} ${path}${url.search}`);
+    if (method === 'GET' && path === '/students/41/photo/thumb') return fulfillPhoto(route);
     if (method === 'GET' && path === '/students/41') {
       if (state.mode === 'load-error') {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
@@ -308,6 +314,10 @@ async function runNormalDesktop(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor({ timeout: 15000 });
   await page.getByText('김진우').first().waitFor();
+  await page.waitForFunction(() => Array.from(document.images).some((image) => image.complete && image.naturalWidth > 0));
+  if (!state.hits.some((hit) => hit.startsWith('GET /students/41/photo/thumb'))) {
+    throw new Error('student profile photo was not requested on detail page');
+  }
   await page.getByText('S-2026-041').waitFor();
   await page.locator('section').filter({ hasText: /^실납부\s*468,000원/ }).waitFor();
   await page.getByText('수업 및 학원비', { exact: true }).waitFor();
@@ -463,6 +473,7 @@ function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
 }
+const fulfillPhoto = (route) => route.fulfill({ status: 200, contentType: 'image/png', headers: { 'access-control-allow-origin': '*' }, body: Buffer.from(PHOTO_PNG_BASE64, 'base64') });
 async function main() {
   const browser = await launchSmokeBrowser();
   try {

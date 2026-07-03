@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { StudentAvatar } from '@/components/students/student-avatar';
 import {
   School, Users, ChevronLeft, UserCheck, Sparkles, Clock,
   Loader2
@@ -222,7 +223,10 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
                   onClick={() => onStudentClick(student.id)}
                 >
                   <td className="p-3">
-                    <span className="font-medium text-foreground">{student.name}</span>
+                    <div className="flex items-center gap-3">
+                      <StudentAvatar student={student} />
+                      <span className="font-medium text-foreground">{student.name}</span>
+                    </div>
                   </td>
                   <td className="p-3 text-muted-foreground">{student.grade || '-'}</td>
                   <td className="p-3">
