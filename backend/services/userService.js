@@ -61,10 +61,17 @@ async function changeApprovalStatus(userId, academyId, newStatus) {
         return { status: 400, error: 'Bad Request', message: `User is already ${user.approval_status}` };
     }
 
-    await db.query(
-        'UPDATE users SET approval_status = ?, updated_at = NOW() WHERE id = ?',
-        [newStatus, userId]
-    );
+    if (newStatus === 'rejected') {
+        await db.query(
+            'DELETE FROM users WHERE id = ? AND approval_status = ?',
+            [userId, 'pending']
+        );
+    } else {
+        await db.query(
+            'UPDATE users SET approval_status = ?, updated_at = NOW() WHERE id = ?',
+            [newStatus, userId]
+        );
+    }
 
     return {
         status: 200,

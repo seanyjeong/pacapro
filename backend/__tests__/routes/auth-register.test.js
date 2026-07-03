@@ -99,7 +99,7 @@ test('register creates pending owner academy and dispatches Telegram notificatio
 test('duplicate email rolls back and does not notify', async () => {
     const connection = makeConnection();
     db.getConnection.mockResolvedValue(connection);
-    connection.query.mockResolvedValueOnce([[{ id: 9 }]]);
+    connection.query.mockResolvedValueOnce([[{ id: 9, approval_status: 'approved' }]]);
 
     const res = await request(makeApp())
         .post('/paca/auth/register')
@@ -111,10 +111,43 @@ test('duplicate email rolls back and does not notify', async () => {
         });
 
     expect(res.status).toBe(409);
-    expect(res.body.message).toBe('Email already registered');
+    expect(res.body.message).toBe('이미 등록된 이메일입니다.');
     expect(connection.rollback).toHaveBeenCalledTimes(1);
     expect(connection.commit).not.toHaveBeenCalled();
     expect(notifySignupApprovalRequest).not.toHaveBeenCalled();
+});
+
+test('rejected email cleanup allows a fresh pending signup', async () => {
+    const connection = makeConnection();
+    db.getConnection.mockResolvedValue(connection);
+    connection.query
+        .mockResolvedValueOnce([[{ id: 9, approval_status: 'rejected' }]])
+        .mockResolvedValueOnce([{ affectedRows: 1 }])
+        .mockResolvedValueOnce([{ insertId: 91 }])
+        .mockResolvedValueOnce([{ insertId: 33 }])
+        .mockResolvedValueOnce([{}])
+        .mockResolvedValueOnce([{}]);
+
+    const res = await request(makeApp())
+        .post('/paca/auth/register')
+        .send({
+            academyName: 'PACA 재가입',
+            email: 'rejected@example.com',
+            name: '재가입',
+            password: 'password123',
+        });
+
+    expect(res.status).toBe(201);
+    expect(connection.query.mock.calls[0][0]).toContain('approval_status');
+    expect(connection.query.mock.calls[1][0]).toContain('DELETE FROM users');
+    expect(connection.query.mock.calls[1][1]).toEqual([[9], 'rejected']);
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+    expect(connection.rollback).not.toHaveBeenCalled();
+    expect(notifySignupApprovalRequest).toHaveBeenCalledWith(expect.objectContaining({
+        email: 'rejected@example.com',
+        userId: 91,
+        academyId: 33,
+    }));
 });
 
 test('Telegram failure does not fail completed signup', async () => {
@@ -156,8 +189,21 @@ test('missing academy name returns Korean validation error before DB access', as
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({
-        error: 'Validation Error',
+        error: '입력값 오류',
         message: '학원명을 입력해주세요.',
+    });
+    expect(db.getConnection).not.toHaveBeenCalled();
+});
+
+test('missing required account fields returns Korean validation copy before DB access', async () => {
+    const res = await request(makeApp())
+        .post('/paca/auth/register')
+        .send({ email: 'bad' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({
+        error: '입력값 오류',
+        message: '이메일, 비밀번호, 이름을 모두 입력해주세요.',
     });
     expect(db.getConnection).not.toHaveBeenCalled();
 });

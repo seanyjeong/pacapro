@@ -23,6 +23,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const { createCorsOptions } = require('./config/cors');
 
 const app = express();
 const PORT = process.env.PORT || 8320;
@@ -37,33 +38,7 @@ app.set('trust proxy', 1);
 // CORS Configuration (MUST be before helmet!)
 // 개발 환경: 모든 도메인 허용 / 프로덕션: 화이트리스트 적용
 const isDev = process.env.NODE_ENV === 'development';
-
-const ALLOWED_ORIGINS = [
-    'https://pacapro.vercel.app',
-    'https://supermax.kr',
-    'https://paca-approval.etlab.kr',
-    'https://paca-preview.etlab.kr',
-    'https://dev.sean8320.dedyn.io',
-    'http://localhost:3000',
-    'http://localhost:3001',
-    process.env.PACA_APPROVAL_ORIGIN,
-    process.env.CORS_ORIGIN // 추가 도메인 (환경변수)
-].filter(Boolean);
-
-const corsOptions = {
-    origin: isDev ? '*' : (origin, callback) => {
-        // 서버-서버 요청 (origin 없음) 또는 화이트리스트
-        if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-            callback(null, true);
-        } else {
-            logger.warn(`[CORS] 차단된 origin: ${origin}`);
-            callback(null, false); // 에러 대신 false 반환 (연결 거부)
-        }
-    },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    credentials: true,
-    optionsSuccessStatus: 200
-};
+const corsOptions = createCorsOptions({ logger });
 app.use(cors(corsOptions));
 // 프리플라이트 확실히 처리하고 싶으면 한 줄 더
 app.options('*', cors(corsOptions));
@@ -218,6 +193,10 @@ app.get('/paca', (req, res) => {
 const fs = require('fs');
 const routesDir = path.join(__dirname, 'routes');
 const ROUTE_EXCLUDE = ['classes.js']; // unused route files
+const { createAttendancePostEmitter } = require('./realtime/attendancePostEmitter');
+const { setupAttendanceRealtime } = require('./realtime/attendanceHub');
+
+app.use(createAttendancePostEmitter({ logger }));
 
 function toKebabCase(str) {
     return str.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
@@ -333,6 +312,8 @@ const server = app.listen(PORT, () => {
         logger.info(`[Scheduler] ${name} → ${fn.name}()`);
     });
 });
+
+setupAttendanceRealtime(server, { logger });
 
 // Graceful Shutdown
 let isShuttingDown = false;

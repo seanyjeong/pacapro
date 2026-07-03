@@ -19,8 +19,8 @@
  * - 본 모듈은 endpoint 정의 / 미들웨어 추가 / 응답 변경 0건. mount-only.
  *
  * ## 등록 순서 — ⚠️ 변경 금지
- * - `list` (GET /), `detail` (GET /:id), `create` (POST /), `update` (PUT /:id),
- *   `remove` (DELETE /:id), `search` (GET /search) 순.
+ * - `list` (GET /), `detail` (GET /:id), `import` (POST /import), `create` (POST /),
+ *   `update` (PUT /:id), `remove` (DELETE /:id), `search` (GET /search) 순.
  * - **원본 동작 보존 (ADR-013 핵심)**: GET /search 는 GET /:id 뒤에 등록되어 있어
  *   express 라우트 매칭 우선순위 상 `/search` 호출이 `:id="search"` 로 잡혀 NaN 처리됨.
  *   사실상 dead code 지만 원본 동작 100% 보존을 위해 동일 순서 유지.
@@ -36,6 +36,7 @@ module.exports = function(router) {
     // 등록 순서 = 원본 students/crud.js 와 동일. 변경 금지.
     require('./list')(router);     // GET /
     require('./detail')(router);   // GET /:id
+    require('./import')(router);   // POST /import
     require('./create')(router);   // POST /
     require('./update')(router);   // PUT /:id
     require('./remove')(router);   // DELETE /:id

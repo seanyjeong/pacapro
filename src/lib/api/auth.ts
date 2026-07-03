@@ -35,12 +35,8 @@ export interface RegisterResponse {
         email: string;
         name: string;
         role: string;
+        approvalStatus: string;
     };
-    academy: {
-        id: number;
-        name: string;
-    };
-    token: string;
 }
 
 export const authAPI = {

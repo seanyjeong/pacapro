@@ -1,7 +1,7 @@
 {
   "name": "paca-frontend",
-  "version": "4.0.3",
-  "lastUpdate": "2026-07-02",
+  "version": "4.0.7",
+  "lastUpdate": "2026-07-03",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",

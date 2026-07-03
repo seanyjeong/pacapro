@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { StudentFiltersComponent } from '@/components/students/student-filters';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
 import { useStudents } from '@/hooks/use-students';
 import { exportsApi } from '@/lib/api/exports';
+import { studentsAPI } from '@/lib/api/students';
 import {
     getActiveFilterLabels,
     getFiltersForTab,
@@ -41,6 +42,7 @@ const EMPTY_SUMMARY_STATS: StudentSummaryStats = {
 export function StudentsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const excelUploadInputRef = useRef<HTMLInputElement>(null);
     const tabParam = searchParams.get('tab');
     const initialTab: StudentTab = isStudentTab(tabParam) ? tabParam : 'active';
 
@@ -48,6 +50,7 @@ export function StudentsPageContent() {
     const [activeTab, setActiveTab] = useState<StudentTab>(initialTab);
     const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
     const [excelDownloading, setExcelDownloading] = useState(false);
+    const [excelUploading, setExcelUploading] = useState(false);
     const [summaryStats, setSummaryStats] = useState<StudentSummaryStats>(EMPTY_SUMMARY_STATS);
 
     const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents(getFiltersForTab(initialTab));
@@ -93,6 +96,36 @@ export function StudentsPageContent() {
         }
     };
 
+    const handleExcelUploadClick = () => {
+        excelUploadInputRef.current?.click();
+    };
+
+    const handleExcelUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+
+        if (!file.name.toLowerCase().endsWith('.xlsx')) {
+            toast.error('엑셀 파일은 .xlsx 형식으로 업로드해주세요.');
+            return;
+        }
+
+        setExcelUploading(true);
+        try {
+            const response = await studentsAPI.importStudents(file, { suppressErrorToast: true });
+            const { created, skipped, failed } = response.summary;
+            toast.success(`학생 엑셀 업로드 완료: 신규 ${created}명, 중복 ${skipped}명, 실패 ${failed}명`);
+            if (failed > 0) {
+                toast.warning('등록하지 못한 행이 있습니다. 이름과 연락처가 입력되어 있는지 확인해주세요.');
+            }
+            handleReload();
+        } catch {
+            toast.error('학생 엑셀 업로드를 완료하지 못했습니다. 학생명단 엑셀 양식인지 확인해주세요.');
+        } finally {
+            setExcelUploading(false);
+        }
+    };
+
     const filterLabels = getActiveFilterLabels(filters);
     const showFilters = shouldShowStudentFilters(activeTab);
     const showEmptyGuide = !loading && students.length === 0 && !searchQuery && !filters.grade && !filters.student_type;
@@ -103,9 +136,18 @@ export function StudentsPageContent() {
             <StudentsPageHeader
                 activeTab={activeTab}
                 excelDownloading={excelDownloading}
+                excelUploading={excelUploading}
                 onAddStudent={() => router.push('/students/new')}
                 onDownloadExcel={handleExcelDownload}
                 onReload={handleReload}
+                onUploadExcel={handleExcelUploadClick}
+            />
+            <input
+                ref={excelUploadInputRef}
+                type="file"
+                accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                className="hidden"
+                onChange={handleExcelUpload}
             />
 
             {error && !loading ? (

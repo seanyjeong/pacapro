@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import type { FormEvent } from 'react';
 import { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, ArrowLeft, Calendar, CheckCircle2, Clock, Loader2, UserRound } from 'lucide-react';
@@ -35,9 +36,11 @@ export default function ReservationChangePage({
 }) {
   const { reservationNumber } = use(params);
 
-  const [loading, setLoading] = useState(true);
   const [reservation, setReservation] = useState<ReservationInfo | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [phoneLast4, setPhoneLast4] = useState('');
+  const [verifiedPhoneLast4, setVerifiedPhoneLast4] = useState('');
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
@@ -47,35 +50,6 @@ export default function ReservationChangePage({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const availableDates = useMemo(createAvailableDates, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchReservation = async () => {
-      try {
-        const response = await fetch(`${API_URL}/public/reservation/${reservationNumber}`);
-        if (!response.ok) {
-          if (!cancelled) setError('예약 정보를 불러오지 못했습니다. 예약번호를 확인한 뒤 다시 시도해주세요.');
-          return;
-        }
-
-        const data = await response.json();
-        if (cancelled) return;
-        setReservation(data);
-        setSelectedDate(formatInputDate(data.preferredDate));
-        setSelectedTime(data.preferredTime);
-      } catch {
-        if (!cancelled) setError('예약 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    void fetchReservation();
-    return () => {
-      cancelled = true;
-    };
-  }, [reservationNumber]);
 
   useEffect(() => {
     if (!selectedDate || !reservation) return;
@@ -112,6 +86,36 @@ export default function ReservationChangePage({
     };
   }, [selectedDate, reservation]);
 
+  const handleVerify = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const digits = phoneLast4.replace(/[^0-9]/g, '');
+
+    if (digits.length !== 4) {
+      setVerificationError('연락처 끝 4자리를 입력해주세요.');
+      return;
+    }
+
+    setVerifying(true);
+    setVerificationError(null);
+    try {
+      const response = await fetch(`${API_URL}/public/reservation/${reservationNumber}?phoneLast4=${digits}`);
+      if (!response.ok) {
+        setVerificationError('예약번호 또는 연락처 끝 4자리가 맞지 않습니다.');
+        return;
+      }
+
+      const data = await response.json();
+      setReservation(data);
+      setVerifiedPhoneLast4(digits);
+      setSelectedDate(formatInputDate(data.preferredDate));
+      setSelectedTime(data.preferredTime);
+    } catch {
+      setVerificationError('예약 정보를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      setVerifying(false);
+    }
+  };
+
   const handleSubmit = async () => {
     setSubmitError(null);
 
@@ -122,8 +126,15 @@ export default function ReservationChangePage({
 
     setSubmitting(true);
     try {
-      const response = await fetch(`${API_URL}/public/reservation/${reservationNumber}`, {
-        body: JSON.stringify({ preferredDate: selectedDate, preferredTime: selectedTime }),
+      const reservationApiPath = reservation
+        ? `/public/consultation/${reservation.academySlug}/reservation/${reservationNumber}`
+        : `/public/reservation/${reservationNumber}`;
+      const response = await fetch(`${API_URL}${reservationApiPath}`, {
+        body: JSON.stringify({
+          phoneLast4: verifiedPhoneLast4,
+          preferredDate: selectedDate,
+          preferredTime: selectedTime
+        }),
         headers: { 'Content-Type': 'application/json' },
         method: 'PUT',
       });
@@ -141,9 +152,22 @@ export default function ReservationChangePage({
     }
   };
 
-  if (loading) return <LoadingState />;
-  if (error) return <ErrorState message={error} />;
   if (success && reservation) return <SuccessState reservation={reservation} selectedDate={selectedDate} selectedTime={selectedTime} />;
+  if (!reservation) {
+    return (
+      <VerificationState
+        phoneLast4={phoneLast4}
+        reservationNumber={reservationNumber}
+        verifying={verifying}
+        error={verificationError}
+        onSubmit={handleVerify}
+        onPhoneLast4Change={(value) => {
+          setPhoneLast4(value.replace(/[^0-9]/g, '').slice(0, 4));
+          setVerificationError(null);
+        }}
+      />
+    );
+  }
 
   return (
     <section className="space-y-4 text-slate-950" data-testid="reservation-change-workspace">
@@ -237,6 +261,68 @@ export default function ReservationChangePage({
   );
 }
 
+function VerificationState({
+  error,
+  onPhoneLast4Change,
+  onSubmit,
+  phoneLast4,
+  reservationNumber,
+  verifying,
+}: {
+  error: string | null;
+  onPhoneLast4Change: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  phoneLast4: string;
+  reservationNumber: string;
+  verifying: boolean;
+}) {
+  return (
+    <section className="space-y-4 text-slate-950" data-testid="reservation-verification-workspace">
+      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">예약자 확인</p>
+        <h1 className="mt-2 text-2xl font-semibold tracking-normal text-slate-950">상담 예약 변경</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          예약자 확인 후 상담 일정을 변경할 수 있습니다.
+        </p>
+      </section>
+
+      <form onSubmit={onSubmit} className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="space-y-2">
+          <label htmlFor="phone-last4" className="text-sm font-medium text-slate-700">
+            예약자 연락처 끝 4자리
+          </label>
+          <input
+            id="phone-last4"
+            type="tel"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={4}
+            value={phoneLast4}
+            onChange={(event) => onPhoneLast4Change(event.target.value)}
+            className="h-12 w-full rounded-md border border-slate-300 bg-white px-3 text-base font-medium tracking-normal text-slate-950 outline-none transition-colors focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+            placeholder="예: 1234"
+            autoComplete="tel-national"
+          />
+          <p className="text-xs leading-5 text-slate-500">
+            예약번호 {reservationNumber}에 등록된 연락처로 확인합니다.
+          </p>
+        </div>
+
+        {error ? <div className="mt-4"><SafeAlert tone="danger" message={error} /></div> : null}
+
+        <Button
+          type="submit"
+          disabled={verifying || phoneLast4.length !== 4}
+          className="mt-5 h-12 w-full gap-2"
+        >
+          {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          {verifying ? '확인 중...' : '예약 정보 확인'}
+        </Button>
+      </form>
+    </section>
+  );
+}
+
 function HeaderCard({ academyName }: { academyName?: string }) {
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -282,29 +368,6 @@ function SafeAlert({ message, tone }: { message: string; tone: 'danger' | 'warni
       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
       <p className="font-medium">{message}</p>
     </div>
-  );
-}
-
-function LoadingState() {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-8 text-center shadow-sm">
-      <Loader2 className="mx-auto h-8 w-8 animate-spin text-slate-500" />
-      <p className="mt-3 text-sm text-slate-600">예약 정보를 확인하고 있습니다.</p>
-    </section>
-  );
-}
-
-function ErrorState({ message }: { message: string }) {
-  return (
-    <section className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-      <AlertCircle className="mx-auto h-10 w-10 text-red-500" />
-      <h1 className="mt-4 text-xl font-semibold tracking-normal text-slate-950">예약 조회 실패</h1>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{message}</p>
-      <Link href="/" className={buttonVariants({ variant: 'outline', className: 'mt-5 w-full gap-2' })}>
-        <ArrowLeft className="h-4 w-4" />
-        홈으로 돌아가기
-      </Link>
-    </section>
   );
 }
 

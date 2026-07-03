@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { schedulesApi } from '@/lib/api/schedules';
 import { hapticForStatus } from '@/lib/attendance/haptics';
+import { useAttendanceRealtime } from '@/hooks/use-attendance-realtime';
 import type { AttendanceStatus, TimeSlot } from '@/lib/types/schedule';
 import { TABLET_ATTENDANCE_MESSAGES } from './tablet-attendance-constants';
 import type {
@@ -57,6 +58,13 @@ export function useTabletAttendanceState() {
   useEffect(() => {
     void loadSchedule();
   }, [loadSchedule]);
+
+  useAttendanceRealtime({
+    scheduleId: schedule?.id ?? null,
+    onAttendanceUpdated: () => {
+      void loadSchedule();
+    },
+  });
 
   const students = useMemo(() => schedule?.students || [], [schedule]);
   const filteredStudents = useMemo(() => filterTabletStudents(students, filters), [filters, students]);

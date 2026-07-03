@@ -16,6 +16,7 @@ import {
   useAttendance,
   useSubmitAttendance,
 } from '@/hooks/use-schedules';
+import { useAttendanceRealtime } from '@/hooks/use-attendance-realtime';
 import type { AttendanceSubmission } from '@/lib/types/schedule';
 import {
   formatDateKorean,
@@ -44,6 +45,14 @@ export default function AttendancePage() {
     refetch: refetchAttendance,
   } = useAttendance(scheduleId);
   const submitAttendance = useSubmitAttendance();
+
+  useAttendanceRealtime({
+    scheduleId,
+    onAttendanceUpdated: () => {
+      refetchSchedule();
+      refetchAttendance();
+    },
+  });
 
   const isLoading = scheduleLoading || attendanceLoading;
 

@@ -23,6 +23,24 @@ import type {
   StudentAttendanceResponse,
 } from '@/lib/types/student';
 
+export interface StudentImportSummary {
+  total: number;
+  created: number;
+  skipped: number;
+  failed: number;
+}
+
+export interface StudentImportResult {
+  status: 'created' | 'skipped' | 'failed';
+  message: string;
+}
+
+export interface StudentImportResponse {
+  message: string;
+  summary: StudentImportSummary;
+  results: StudentImportResult[];
+}
+
 export const studentsAPI = {
   /**
    * 학생 목록 조회 (필터링)
@@ -60,6 +78,21 @@ export const studentsAPI = {
   createStudent: async (data: StudentFormData, config?: APIRequestConfig): Promise<StudentCreateResponse> => {
     // class_days는 배열 그대로 전송 (백엔드에서 JSON.stringify 처리)
     return await apiClient.post('/students', data, config);
+  },
+
+  /**
+   * 학생 엑셀 업로드
+   * POST /paca/students/import
+   */
+  importStudents: async (file: File, config?: APIRequestConfig): Promise<StudentImportResponse> => {
+    const body = await file.arrayBuffer();
+    return await apiClient.post('/students/import', body, {
+      ...config,
+      headers: {
+        ...(config?.headers || {}),
+        'Content-Type': file.type || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    });
   },
 
   /**

@@ -8,19 +8,19 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validateRegisterRequest({ email, password, name, academyName }) {
     if (!email || !password || !name) {
-        return { status: 400, error: 'Validation Error', message: 'Email, password, and name are required' };
+        return { status: 400, error: '입력값 오류', message: '이메일, 비밀번호, 이름을 모두 입력해주세요.' };
     }
 
     if (!EMAIL_REGEX.test(email)) {
-        return { status: 400, error: 'Validation Error', message: 'Invalid email format' };
+        return { status: 400, error: '입력값 오류', message: '올바른 이메일 주소를 입력해주세요.' };
     }
 
     if (password.length < 8) {
-        return { status: 400, error: 'Validation Error', message: 'Password must be at least 8 characters' };
+        return { status: 400, error: '입력값 오류', message: '비밀번호는 8자 이상이어야 합니다.' };
     }
 
     if (!academyName || !String(academyName).trim()) {
-        return { status: 400, error: 'Validation Error', message: '학원명을 입력해주세요.' };
+        return { status: 400, error: '입력값 오류', message: '학원명을 입력해주세요.' };
     }
 
     return null;
@@ -30,6 +30,19 @@ function sendSignupNotification(payload) {
     notifySignupApprovalRequest(payload).catch(() => {
         logger.warn('[SignupApproval] Notification dispatch failed');
     });
+}
+
+async function clearRejectedSignupUsers(connection, existingUsers) {
+    const rejectedUserIds = existingUsers
+        .filter((user) => user.approval_status === 'rejected')
+        .map((user) => user.id);
+
+    if (rejectedUserIds.length === 0) return;
+
+    await connection.query(
+        "DELETE FROM users WHERE id IN (?) AND approval_status = ?",
+        [rejectedUserIds, 'rejected']
+    );
 }
 
 async function registerHandler(req, res) {
@@ -56,16 +69,21 @@ async function registerHandler(req, res) {
         await connection.beginTransaction();
 
         const [existingUsers] = await connection.query(
-            'SELECT id FROM users WHERE email = ?',
+            'SELECT id, approval_status FROM users WHERE email = ?',
             [email]
         );
 
         if (existingUsers.length > 0) {
-            await connection.rollback();
-            return res.status(409).json({
-                error: 'Conflict',
-                message: 'Email already registered',
-            });
+            const hasBlockingUser = existingUsers.some((user) => user.approval_status !== 'rejected');
+            if (hasBlockingUser) {
+                await connection.rollback();
+                return res.status(409).json({
+                    error: '중복 이메일',
+                    message: '이미 등록된 이메일입니다.',
+                });
+            }
+
+            await clearRejectedSignupUsers(connection, existingUsers);
         }
 
         const role = 'owner';
@@ -122,8 +140,8 @@ async function registerHandler(req, res) {
         if (connection) await connection.rollback();
         logger.error('Registration error:', error);
         return res.status(500).json({
-            error: 'Internal Server Error',
-            message: 'Registration failed',
+            error: '서버 오류',
+            message: '회원가입을 완료하지 못했습니다.',
             details: process.env.NODE_ENV === 'development' ? error.message : undefined,
         });
     } finally {

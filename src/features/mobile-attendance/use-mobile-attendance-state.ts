@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { schedulesApi } from '@/lib/api/schedules';
 import { hapticForStatus } from '@/lib/attendance/haptics';
+import { useAttendanceRealtime } from '@/hooks/use-attendance-realtime';
 import type { AttendanceStatus, TimeSlot } from '@/lib/types/schedule';
 import { canEdit } from '@/lib/utils/permissions';
 import { MOBILE_ATTENDANCE_MESSAGES } from './mobile-attendance-constants';
@@ -69,6 +70,14 @@ export function useMobileAttendanceState() {
   useEffect(() => {
     if (hasPermission) void loadSchedule();
   }, [hasPermission, loadSchedule]);
+
+  useAttendanceRealtime({
+    scheduleId,
+    enabled: hasPermission === true,
+    onAttendanceUpdated: () => {
+      void loadSchedule();
+    },
+  });
 
   const stats = useMemo(() => calculateStats(students, attendances), [attendances, students]);
   const formattedDate = useMemo(() => formatDateLabel(date), [date]);

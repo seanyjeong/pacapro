@@ -1,21 +1,25 @@
-import { Download, Loader2, Plus, RefreshCw } from 'lucide-react';
+import { Download, Loader2, Plus, RefreshCw, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { StudentTab } from './student-page-types';
 
 interface StudentsPageHeaderProps {
     activeTab: StudentTab;
     excelDownloading: boolean;
+    excelUploading: boolean;
     onAddStudent: () => void;
     onDownloadExcel: () => void;
     onReload: () => void;
+    onUploadExcel: () => void;
 }
 
 export function StudentsPageHeader({
     activeTab,
     excelDownloading,
+    excelUploading,
     onAddStudent,
     onDownloadExcel,
     onReload,
+    onUploadExcel,
 }: StudentsPageHeaderProps) {
     return (
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -32,6 +36,10 @@ export function StudentsPageHeader({
                 <Button variant="outline" className="gap-2" onClick={onDownloadExcel} disabled={excelDownloading}>
                     {excelDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                     {excelDownloading ? '다운로드 중' : '엑셀'}
+                </Button>
+                <Button variant="outline" className="gap-2" onClick={onUploadExcel} disabled={excelUploading}>
+                    {excelUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                    {excelUploading ? '업로드 중' : '업로드'}
                 </Button>
                 <Button className="gap-2" onClick={onAddStudent}>
                     <Plus className="h-4 w-4" />
