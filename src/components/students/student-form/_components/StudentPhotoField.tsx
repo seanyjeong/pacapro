@@ -126,7 +126,7 @@ export function StudentPhotoField({
             <p className="text-sm font-semibold text-foreground">
               {hasPendingPhoto ? pendingPhotoFile?.name : displayStudent.name}
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WebP · 8MB 이하</p>
+            <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WebP · 20MB 이하</p>
             {mode === 'create' && hasPendingPhoto ? (
               <p className="mt-1 text-xs text-muted-foreground">등록 저장 후 사진이 함께 반영됩니다.</p>
             ) : null}

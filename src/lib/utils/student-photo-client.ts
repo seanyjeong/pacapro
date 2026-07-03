@@ -1,24 +1,23 @@
 import type { StudentPhotoUploadPayload } from '@/lib/api/students';
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
+const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 const ORIGINAL_MAX_EDGE = 1600;
 const THUMBNAIL_MAX_EDGE = 180;
 
 export async function prepareStudentPhotoPayload(file: File): Promise<StudentPhotoUploadPayload> {
   validateStudentPhotoFile(file);
   const image = await loadImage(file);
-  const outputMimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
 
   return {
     original_data_url: resizeImageToDataUrl(image, {
       maxEdge: ORIGINAL_MAX_EDGE,
-      mimeType: outputMimeType,
+      mimeType: 'image/jpeg',
       quality: 0.86,
     }),
     thumbnail_data_url: resizeImageToDataUrl(image, {
       maxEdge: THUMBNAIL_MAX_EDGE,
-      mimeType: outputMimeType,
+      mimeType: 'image/jpeg',
       quality: 0.78,
     }),
   };
@@ -29,7 +28,7 @@ export function validateStudentPhotoFile(file: File) {
     throw new Error('JPG, PNG, WebP 이미지 파일만 등록할 수 있습니다.');
   }
   if (file.size > MAX_SOURCE_BYTES) {
-    throw new Error('사진 용량은 8MB 이하로 선택해주세요.');
+    throw new Error('사진 용량은 20MB 이하로 선택해주세요.');
   }
 }
 
@@ -66,6 +65,8 @@ function resizeImageToDataUrl(
     throw new Error('사진을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.');
   }
 
+  context.fillStyle = '#ffffff';
+  context.fillRect(0, 0, width, height);
   context.drawImage(image, 0, 0, width, height);
   return canvas.toDataURL(options.mimeType, options.quality);
 }

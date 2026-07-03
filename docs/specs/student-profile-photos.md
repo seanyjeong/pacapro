@@ -17,7 +17,7 @@
 - `POST /paca/students/:id/photo`
   - JSON body: `original_data_url`, `thumbnail_data_url`
   - 지원 형식: JPEG, PNG, WebP
-  - 원본 최대 5MB, 썸네일 최대 512KB
+- 선택 파일 최대 20MB, 서버 저장 원본 최대 5MB, 썸네일 최대 512KB
 - `GET /paca/students/:id/photo/thumb`
 - `GET /paca/students/:id/photo/original`
 - `DELETE /paca/students/:id/photo`
