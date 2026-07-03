@@ -40,9 +40,8 @@ export function StudentCard({ student }: StudentCardProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-6 p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <StudentAvatar size="md" student={student} />
-          <div className="min-w-0 flex-1 space-y-2">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_184px] lg:items-start">
+          <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl font-semibold text-foreground">{student.name}</h2>
               <span className="text-sm text-muted-foreground">학번: {displayValue(formatStudentNumber(student.student_number))}</span>
@@ -54,6 +53,11 @@ export function StudentCard({ student }: StudentCardProps) {
               <QuietBadge>{ADMISSION_TYPE_LABELS[student.admission_type]}</QuietBadge>
             </div>
             {student.school ? <p className="text-sm text-muted-foreground">학교: {student.school}</p> : null}
+          </div>
+          <div className="flex justify-start lg:justify-end">
+            <div className="rounded-md border border-border bg-muted/30 p-3">
+              <StudentAvatar size="xl" student={student} />
+            </div>
           </div>
         </div>
 

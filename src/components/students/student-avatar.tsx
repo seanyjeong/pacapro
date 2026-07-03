@@ -5,7 +5,7 @@ import type { Student } from '@/lib/types/student';
 import { studentsAPI } from '@/lib/api/students';
 import { cn } from '@/lib/utils/cn';
 
-type StudentAvatarSize = 'sm' | 'md' | 'lg';
+type StudentAvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface StudentAvatarProps {
   cacheKey?: string | null;
@@ -19,6 +19,7 @@ const SIZE_CLASSES: Record<StudentAvatarSize, string> = {
   sm: 'h-10 w-10 text-sm',
   md: 'h-14 w-14 text-lg',
   lg: 'h-20 w-20 text-2xl',
+  xl: 'h-36 w-36 text-5xl sm:h-40 sm:w-40',
 };
 
 export function StudentAvatar({ cacheKey, className, forcePhoto, size = 'sm', student }: StudentAvatarProps) {

@@ -370,7 +370,7 @@ async function runNormalDesktop(browser) {
   await page.getByText('취소됨').waitFor();
   if (!state.seasonCancelled) throw new Error('season cancellation API was not called');
 
-  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '삭제' }), 'delete action');
+  await clickWithoutNativeDialog(page, page.getByTestId('student-detail-operations-board').getByRole('button', { name: '삭제' }), 'delete action');
   await page.getByRole('alertdialog').getByRole('heading', { name: '학생 삭제' }).waitFor();
   await page.getByRole('button', { name: '취소' }).click();
 
