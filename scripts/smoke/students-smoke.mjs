@@ -276,6 +276,14 @@ async function runDesktop(browser) {
     throw new Error('student original profile photo was not requested for preview');
   }
   await page.screenshot({ path: '/Users/etlab/paca-student-photo-preview.png', fullPage: true });
+  await page.mouse.click(80, 80);
+  await page.getByTestId('student-photo-preview-dialog').waitFor({ state: 'hidden' });
+  await page.waitForTimeout(300);
+  if (!page.url().endsWith('/students')) {
+    throw new Error(`student photo backdrop click navigated away: ${page.url()}`);
+  }
+  await page.getByRole('button', { name: '김진우 사진 크게 보기' }).click();
+  await page.getByTestId('student-photo-preview-dialog').waitFor();
   await page.getByRole('button', { name: '닫기' }).click();
   await assertNoRawVisibleText(page, 'students desktop');
   await assertNoHorizontalOverflow(page, 'students desktop');
