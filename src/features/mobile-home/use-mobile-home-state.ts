@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import apiClient from '@/lib/api/client';
 import {
   getCurrentSubscription,
   isPushSupported,
@@ -30,6 +31,7 @@ export function useMobileHomeState() {
   const [pushExpanded, setPushExpanded] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
   const [settingsLoading, setSettingsLoading] = useState(false);
+  const [permissionRefreshing, setPermissionRefreshing] = useState(false);
 
   const refreshPushStatus = useCallback(async () => {
     const supported = isPushSupported();
@@ -48,11 +50,11 @@ export function useMobileHomeState() {
     }
   }, []);
 
-  useEffect(() => {
+  const applyStoredSession = useCallback(() => {
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');
-      return;
+      return false;
     }
 
     const user = parseMobileHomeUser();
@@ -62,13 +64,31 @@ export function useMobileHomeState() {
 
     const canAccess = canEdit('schedules') || canView('payments') || canView('consultations');
     setHasPermission(canAccess);
-    if (!canAccess) {
-      router.push('/login');
-      return;
-    }
+    if (!canAccess) return false;
 
     void refreshPushStatus();
+    return true;
   }, [refreshPushStatus, router]);
+
+  useEffect(() => {
+    applyStoredSession();
+  }, [applyStoredSession]);
+
+  const refreshPermissions = async () => {
+    setPermissionRefreshing(true);
+    try {
+      const response = await apiClient.get<{ user?: Record<string, unknown> }>('/auth/me', { suppressErrorToast: true });
+      if (response.user) {
+        localStorage.setItem('user', JSON.stringify(response.user));
+      }
+      const canAccess = applyStoredSession();
+      if (!canAccess) toast.error(MOBILE_HOME_MESSAGES.noPermissionUnchanged);
+    } catch {
+      toast.error(MOBILE_HOME_MESSAGES.noPermissionRefreshFailed);
+    } finally {
+      setPermissionRefreshing(false);
+    }
+  };
 
   const schedulesPermission = hasPermission ? canEdit('schedules') : false;
   const paymentsPermission = hasPermission ? canView('payments') : false;
@@ -132,6 +152,7 @@ export function useMobileHomeState() {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    document.cookie = 'paca_auth=; path=/; max-age=0';
     router.push('/login');
   };
 
@@ -143,11 +164,13 @@ export function useMobileHomeState() {
     logout,
     menuItems,
     notificationSettings,
+    permissionRefreshing,
     pushExpanded,
     pushLoading,
     pushSubscribed,
     pushSupported,
     router,
+    refreshPermissions,
     setPushExpanded,
     settingsLoading,
     todayLabels,

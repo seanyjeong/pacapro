@@ -18,6 +18,8 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 };
 
 export const MOBILE_HOME_MESSAGES = {
+  noPermissionRefreshFailed: '권한 상태를 다시 확인하지 못했습니다. 잠시 후 다시 시도해주세요.',
+  noPermissionUnchanged: '아직 부여된 모바일 권한이 없습니다. 원장님에게 필요한 권한 부여를 요청해주세요.',
   pushDenied: '브라우저 알림 권한이 꺼져 있습니다. 기기 설정에서 알림 권한을 허용해주세요.',
   pushEnableFailed: '푸시 알림을 켜지 못했습니다. 잠시 후 다시 시도해주세요.',
   pushDisableFailed: '푸시 알림을 끄지 못했습니다. 잠시 후 다시 시도해주세요.',

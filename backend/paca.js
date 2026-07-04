@@ -23,7 +23,6 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const { createCorsOptions } = require('./config/cors');
 
 const app = express();
 const PORT = process.env.PORT || 8320;
@@ -36,6 +35,51 @@ app.set('trust proxy', 1);
 // ==========================================
 
 // CORS Configuration (MUST be before helmet!)
+const ALLOWED_ORIGINS = [
+    'https://pacapro.vercel.app',
+    'https://supermax.kr',
+    'https://paca-approval.etlab.kr',
+    'https://paca-preview.etlab.kr',
+    'https://dev.sean8320.dedyn.io',
+    'https://seanyjeong.github.io',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3109',
+];
+
+function parseOriginList(value) {
+    if (!value) return [];
+    return value
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean);
+}
+
+function buildAllowedOrigins(env = process.env) {
+    return [
+        ...ALLOWED_ORIGINS,
+        ...parseOriginList(env.CORS_ORIGIN),
+        ...parseOriginList(env.CORS_ORIGINS),
+    ].filter((origin, index, origins) => origins.indexOf(origin) === index);
+}
+
+function createCorsOptions({ env = process.env, logger } = {}) {
+    const allowedOrigins = buildAllowedOrigins(env);
+    return {
+        origin: env.NODE_ENV === 'development' ? '*' : (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                callback(null, true);
+                return;
+            }
+            logger?.warn?.(`[CORS] 차단된 origin: ${origin}`);
+            callback(null, false);
+        },
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        credentials: true,
+        optionsSuccessStatus: 200,
+    };
+}
+
 // 개발 환경: 모든 도메인 허용 / 프로덕션: 화이트리스트 적용
 const isDev = process.env.NODE_ENV === 'development';
 const corsOptions = createCorsOptions({ logger });

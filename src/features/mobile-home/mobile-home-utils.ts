@@ -22,7 +22,7 @@ export function getMobileRoleLabel(role: string) {
     admin: '관리자 계정',
     instructor: '강사 계정',
     owner: '원장 계정',
-    staff: '데스크 계정',
+    staff: '강사 계정',
   };
 
   return labels[role] ?? '운영 계정';

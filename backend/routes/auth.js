@@ -142,6 +142,7 @@ router.get('/me', verifyToken, async (req, res) => {
     try {
         const [users] = await db.query(
             `SELECT u.id, u.email, u.name, u.phone, u.role, u.academy_id,
+             u.position, u.permissions,
              a.name as academy_name
              FROM users u
              LEFT JOIN academies a ON u.academy_id = a.id
@@ -158,6 +159,21 @@ router.get('/me', verifyToken, async (req, res) => {
 
         // 민감 필드 복호화
         const decryptedUser = decryptFields(users[0], ENCRYPTED_FIELDS.users);
+        let permissions = {};
+        if (decryptedUser.permissions) {
+            try {
+                permissions = typeof decryptedUser.permissions === 'string'
+                    ? JSON.parse(decryptedUser.permissions)
+                    : decryptedUser.permissions;
+            } catch (e) {
+                logger.error('Failed to parse permissions:', e);
+            }
+        }
+        decryptedUser.permissions = permissions;
+        decryptedUser.academyId = decryptedUser.academy_id;
+        decryptedUser.academy = decryptedUser.academy_id
+            ? { id: decryptedUser.academy_id, name: decryptedUser.academy_name }
+            : null;
 
         res.json({
             user: decryptedUser

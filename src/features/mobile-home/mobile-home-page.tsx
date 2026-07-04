@@ -5,6 +5,7 @@ import packageJson from '../../../package.json';
 import { MobileHomeFooter } from './mobile-home-footer';
 import { MobileHomeHeader } from './mobile-home-header';
 import { MobileHomeMenu } from './mobile-home-menu';
+import { MobileHomeNoPermission } from './mobile-home-no-permission';
 import { MobileHomeOperationsPanel } from './mobile-home-operations-panel';
 import { MobileHomePushPanel } from './mobile-home-push-panel';
 import { useMobileHomeState } from './use-mobile-home-state';
@@ -20,7 +21,18 @@ export function MobileHomePage() {
     );
   }
 
-  if (!state.hasPermission) return null;
+  if (!state.hasPermission) {
+    return (
+      <MobileHomeNoPermission
+        academyName={state.academyName}
+        loading={state.permissionRefreshing}
+        userName={state.userName}
+        userRoleLabel={state.userRoleLabel}
+        onLogout={state.logout}
+        onRefresh={state.refreshPermissions}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-zinc-100 px-4 py-4 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50" data-testid="mobile-home-workspace">
