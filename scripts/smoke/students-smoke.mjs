@@ -121,14 +121,8 @@ async function installRoutes(context, state) {
     const path = normalizePacaApiPath(url);
     state.hits.push(`${method} ${path}${url.search}`);
 
-    if (method === 'GET' && path === '/students/41/photo/thumb') {
-      return route.fulfill({
-        status: 200,
-        contentType: 'image/png',
-        headers: { 'access-control-allow-origin': '*' },
-        body: Buffer.from(PHOTO_PNG_BASE64, 'base64'),
-      });
-    }
+    if (method === 'GET' && path === '/students/41/photo/thumb') return fulfillPhoto(route);
+    if (method === 'GET' && path === '/students/41/photo/original') return fulfillPhoto(route);
 
     if (method === 'GET' && path === '/exports/students') {
       state.exportDownloaded = true;
@@ -275,6 +269,14 @@ async function runDesktop(browser) {
   if (!state.hits.some((hit) => hit.startsWith('GET /students/41/photo/thumb'))) {
     throw new Error('student profile photo was not requested on desktop list');
   }
+  await page.getByRole('button', { name: '김진우 사진 크게 보기' }).click();
+  await page.getByTestId('student-photo-preview-dialog').waitFor();
+  await page.getByRole('img', { name: '김진우 사진 확대' }).waitFor();
+  if (!state.hits.some((hit) => hit.startsWith('GET /students/41/photo/original'))) {
+    throw new Error('student original profile photo was not requested for preview');
+  }
+  await page.screenshot({ path: '/Users/etlab/paca-student-photo-preview.png', fullPage: true });
+  await page.getByRole('button', { name: '닫기' }).click();
   await assertNoRawVisibleText(page, 'students desktop');
   await assertNoHorizontalOverflow(page, 'students desktop');
   await page.screenshot({ path: '/Users/etlab/paca-students-desktop.png', fullPage: true });
@@ -346,6 +348,15 @@ async function runMobile(browser) {
 async function waitForStudentsShell(page) {
   await page.getByTestId('students-operations-workspace').waitFor();
   await page.getByTestId('students-work-queue').waitFor();
+}
+
+function fulfillPhoto(route) {
+  return route.fulfill({
+    status: 200,
+    contentType: 'image/png',
+    headers: { 'access-control-allow-origin': '*' },
+    body: Buffer.from(PHOTO_PNG_BASE64, 'base64'),
+  });
 }
 
 async function runLoadError(browser) {
