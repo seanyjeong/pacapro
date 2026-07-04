@@ -18,7 +18,14 @@ function makePermissions() {
 }
 
 function makeState(mode) {
-  return { deletedStaffId: null, hits: [], mode, permissionPayload: null, permissions: makePermissions() };
+  return {
+    createPayload: null,
+    deletedStaffId: null,
+    hits: [],
+    mode,
+    permissionPayload: null,
+    permissions: makePermissions(),
+  };
 }
 
 async function installRoutes(context, state) {
@@ -80,6 +87,11 @@ async function installRoutes(context, state) {
       state.permissionPayload = JSON.parse(request.postData() || '{}');
       state.permissions = state.permissionPayload.permissions;
       return jsonRoute(route, { message: 'updated' });
+    }
+
+    if (method === 'POST' && path === '/staff') {
+      state.createPayload = JSON.parse(request.postData() || '{}');
+      return jsonRoute(route, { message: '이미 사용 중인 이메일입니다. 다른 이메일을 입력해주세요.' }, 409);
     }
 
     if (method === 'DELETE' && path === '/staff/11') {
@@ -165,6 +177,19 @@ async function runDesktop(browser) {
   }
   await desktopList.getByText('보기: 19개, 수정: 1개').waitFor();
 
+  await page.getByRole('button', { name: '권한 부여', exact: true }).click();
+  await page.getByRole('heading', { name: '권한 부여' }).waitFor();
+  await page.getByLabel(/강사 선택/).selectOption('7');
+  await page.getByRole('textbox', { name: /이메일/ }).fill('manager@example.com');
+  await page.getByLabel('비밀번호 *').fill('password123');
+  await page.getByRole('button', { name: '생성' }).click();
+  await page.locator('#staff-email-error').getByText('이미 사용 중인 이메일입니다. 다른 이메일을 입력해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'staff duplicate email error');
+  if (state.createPayload?.email !== 'manager@example.com') {
+    throw new Error(`unexpected staff create payload: ${JSON.stringify(state.createPayload)}`);
+  }
+  await page.getByRole('button', { name: '직원 정보 닫기' }).click();
+
   await clickWithoutNativeDialog(page, desktopList.getByRole('button', { name: '김관리 삭제' }), 'staff delete');
   const deleteDialog = page.getByRole('alertdialog');
   await deleteDialog.getByRole('heading', { name: '직원 계정 삭제' }).waitFor();
@@ -246,6 +271,7 @@ async function main() {
     [desktop, mobile, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
+      duplicateCreatePayload: desktop.state.createPayload,
       deletedStaffId: desktop.state.deletedStaffId,
       errorConsoleErrors: loadError.diagnostics.consoleErrors,
       errorHits: loadError.state.hits,

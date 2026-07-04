@@ -8,6 +8,7 @@ import { staffApi } from '@/lib/api/staff';
 import type { AvailableInstructor, PermissionKey, Permissions, Staff } from '@/lib/types/staff';
 import { DEFAULT_PERMISSIONS, PERMISSION_CATEGORIES } from '@/lib/types/staff';
 import { toast } from 'sonner';
+import { getStaffFormError, type StaffFormErrorField } from './staff-form-errors';
 
 interface StaffFormModalProps {
   staff: Staff | null;
@@ -38,6 +39,16 @@ export function StaffFormModal({
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(
     Object.fromEntries(PERMISSION_CATEGORIES.map(cat => [cat.title, true]))
   );
+
+  const clearFieldError = (field: StaffFormErrorField) => {
+    setErrors((prev) => {
+      if (!prev[field] && !prev.submit) return prev;
+      const next = { ...prev };
+      delete next[field];
+      delete next.submit;
+      return next;
+    });
+  };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -87,8 +98,10 @@ export function StaffFormModal({
       }
 
       await onSubmit();
-    } catch {
-      toast.error('직원 정보를 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도해주세요.');
+    } catch (error) {
+      const formError = getStaffFormError(error);
+      setErrors((prev) => ({ ...prev, [formError.field]: formError.message }));
+      toast.error(formError.message);
     } finally {
       setLoading(false);
     }
@@ -187,12 +200,18 @@ export function StaffFormModal({
             {/* 강사 선택 (신규만) */}
             {!isEdit && (
               <div>
-                <label className="block text-sm font-medium text-foreground mb-1">
+                <label htmlFor="staff-instructor-select" className="block text-sm font-medium text-foreground mb-1">
                   강사 선택 <span className="text-red-500">*</span>
                 </label>
                 <select
+                  id="staff-instructor-select"
                   value={formData.instructor_id}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, instructor_id: e.target.value }))}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, instructor_id: e.target.value }));
+                    clearFieldError('instructor_id');
+                  }}
+                  aria-invalid={!!errors.instructor_id}
+                  aria-describedby={errors.instructor_id ? 'staff-instructor-error' : undefined}
                   className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">강사를 선택하세요</option>
@@ -203,44 +222,56 @@ export function StaffFormModal({
                   ))}
                 </select>
                 {errors.instructor_id && (
-                  <p className="mt-1 text-sm text-red-500">{errors.instructor_id}</p>
+                  <p id="staff-instructor-error" className="mt-1 text-sm text-red-500">{errors.instructor_id}</p>
                 )}
               </div>
             )}
 
             {/* 이메일 */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="staff-email" className="block text-sm font-medium text-foreground mb-1">
                 이메일 (로그인 ID) <span className="text-red-500">*</span>
               </label>
               <input
+                id="staff-email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, email: e.target.value }));
+                  clearFieldError('email');
+                }}
                 className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-muted"
                 placeholder="example@email.com"
                 disabled={isEdit}
                 autoComplete="off"
                 name="staff-email"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? 'staff-email-error' : undefined}
               />
-              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+              {errors.email && <p id="staff-email-error" className="mt-1 text-sm text-red-500">{errors.email}</p>}
             </div>
 
             {/* 비밀번호 */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
+              <label htmlFor="staff-password" className="block text-sm font-medium text-foreground mb-1">
                 비밀번호 {!isEdit && <span className="text-red-500">*</span>}
                 {isEdit && <span className="text-muted-foreground text-xs">(변경시에만 입력)</span>}
               </label>
               <div className="relative">
                 <input
+                  id="staff-password"
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, password: e.target.value }));
+                    clearFieldError('password');
+                  }}
                   className="w-full px-3 py-2 pr-10 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="8자 이상"
                   autoComplete="new-password"
                   name="staff-password"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? 'staff-password-error' : undefined}
                 />
                 <button
                   type="button"
@@ -251,13 +282,14 @@ export function StaffFormModal({
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+              {errors.password && <p id="staff-password-error" className="mt-1 text-sm text-red-500">{errors.password}</p>}
             </div>
 
             {/* 직급 */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-1">직급</label>
+              <label htmlFor="staff-position" className="block text-sm font-medium text-foreground mb-1">직급</label>
               <input
+                id="staff-position"
                 type="text"
                 value={formData.position}
                 onChange={(e) => setFormData((prev) => ({ ...prev, position: e.target.value }))}
@@ -402,6 +434,11 @@ export function StaffFormModal({
             </div>
 
             {/* 버튼 */}
+            {errors.submit && (
+              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200">
+                {errors.submit}
+              </p>
+            )}
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={onClose}>
                 취소
