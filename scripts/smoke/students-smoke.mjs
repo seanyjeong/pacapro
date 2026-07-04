@@ -8,8 +8,10 @@ import {
   nonServiceWorkerErrors,
   normalizePacaApiPath,
 } from './paca-smoke-utils.mjs';
+import fs from 'node:fs/promises';
 
 const PHOTO_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+const XLSX_MAGIC_BUFFER = Buffer.from([0x50, 0x4B, 0x03, 0x04, 0x14, 0x00]);
 
 function makeStudent(overrides) {
   return {
@@ -79,7 +81,14 @@ const STUDENTS = [
 ];
 
 function makeState(mode) {
-  return { hits: [], mode, pendingDeletedId: null, trialMovePayload: null };
+  return {
+    exportDownloaded: false,
+    hits: [],
+    importPayloadBytes: 0,
+    mode,
+    pendingDeletedId: null,
+    trialMovePayload: null,
+  };
 }
 
 function filterStudents(url) {
@@ -121,6 +130,20 @@ async function installRoutes(context, state) {
       });
     }
 
+    if (method === 'GET' && path === '/exports/students') {
+      state.exportDownloaded = true;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers: {
+          'access-control-allow-origin': '*',
+          'access-control-expose-headers': 'Content-Disposition',
+          'content-disposition': "attachment; filename=\"students_20260704.xlsx\"; filename*=UTF-8''%ED%95%99%EC%83%9D%EB%AA%85%EB%8B%A8_20260704.xlsx",
+        },
+        body: XLSX_MAGIC_BUFFER,
+      });
+    }
+
     if (method === 'GET' && path === '/students') {
       if (state.mode === 'load-error') {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
@@ -131,6 +154,15 @@ async function installRoutes(context, state) {
         message: 'ok',
         pagination: { total: students.length, page: 1, limit: 100, totalPages: 1 },
         students,
+      });
+    }
+
+    if (method === 'POST' && path === '/students/import') {
+      state.importPayloadBytes = request.postDataBuffer()?.length || 0;
+      return jsonRoute(route, {
+        message: '학생 엑셀 업로드가 완료되었습니다.',
+        summary: { total: 1, created: 1, skipped: 0, failed: 0 },
+        results: [{ status: 'created', message: '홍길동 학생을 등록했습니다.' }],
       });
     }
 
@@ -190,6 +222,35 @@ async function runDesktop(browser) {
   await board.getByText(/현재 목록\s*2명/).first().waitFor();
   await board.getByText(/체험\s*1명/).waitFor();
   await board.getByText(/미등록\s*1명/).waitFor();
+  const download = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: '엑셀' }).click(),
+  ]).then(([download]) => download);
+  const downloadPath = await download.path();
+  const downloadedBytes = await fs.readFile(downloadPath);
+  if (downloadedBytes[0] !== 0x50 || downloadedBytes[1] !== 0x4B) {
+    throw new Error('student excel download did not save an xlsx payload');
+  }
+  await page.getByText('학생 명단 엑셀을 다운로드했습니다.').waitFor();
+  if (!state.exportDownloaded) throw new Error('student export endpoint was not called');
+
+  const uploadPath = '/tmp/paca-student-import-smoke.xlsx';
+  await fs.writeFile(uploadPath, XLSX_MAGIC_BUFFER);
+  const fileChooserPromise = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: '업로드' }).click();
+  const fileChooser = await fileChooserPromise;
+  await Promise.all([
+    page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return response.request().method() === 'POST' && normalizePacaApiPath(url) === '/students/import';
+    }),
+    fileChooser.setFiles(uploadPath),
+  ]);
+  await page.getByText('학생 엑셀 업로드 완료: 신규 1명, 중복 0명, 실패 0명').waitFor();
+  if (state.importPayloadBytes < XLSX_MAGIC_BUFFER.length) {
+    throw new Error(`student import payload too small: ${state.importPayloadBytes}`);
+  }
+
   await board.getByRole('link', { name: '수업일 관리' }).waitFor();
   if ((await board.getByRole('link', { name: '수업일 관리' }).getAttribute('href')) !== '/students/class-days') {
     throw new Error('student class-days quick link mismatch');

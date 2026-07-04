@@ -25,9 +25,24 @@ function getToken(): string | null {
   return localStorage.getItem('token');
 }
 
-/**
- * 엑셀 파일 다운로드 공통 함수
- */
+function getFilenameFromContentDisposition(contentDisposition: string | undefined, fallback: string) {
+  if (!contentDisposition) return fallback;
+
+  const encodedMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (encodedMatch) return decodeURIComponent(encodedMatch[1]);
+
+  const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+  if (quotedMatch) return quotedMatch[1];
+
+  const basicMatch = contentDisposition.match(/filename=([^;]+)/i);
+  return basicMatch ? basicMatch[1].trim() : fallback;
+}
+
+function isXlsxArrayBuffer(data: ArrayBuffer) {
+  const bytes = new Uint8Array(data);
+  return bytes.length > 4 && bytes[0] === 0x50 && bytes[1] === 0x4B;
+}
+
 async function downloadExcel(endpoint: string, filters?: ExportFilters, defaultFilename?: string) {
   const params = new URLSearchParams();
 
@@ -45,33 +60,22 @@ async function downloadExcel(endpoint: string, filters?: ExportFilters, defaultF
 
   const token = getToken();
 
-  // axios로 blob 다운로드
-  const response = await axios.get(url, {
-    responseType: 'blob',
+  const response = await axios.get<ArrayBuffer>(url, {
+    responseType: 'arraybuffer',
     headers: {
+      Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       Authorization: token ? `Bearer ${token}` : '',
     },
   });
 
-  // 파일명 추출 (Content-Disposition 헤더에서)
-  const contentDisposition = response.headers?.['content-disposition'];
-  let filename = defaultFilename || 'download.xlsx';
-
-  if (contentDisposition) {
-    // filename*=UTF-8''인코딩된파일명 형식 처리
-    const filenameMatch = contentDisposition.match(/filename\*=UTF-8''(.+)/);
-    if (filenameMatch) {
-      filename = decodeURIComponent(filenameMatch[1]);
-    } else {
-      // filename="파일명" 형식 처리
-      const basicMatch = contentDisposition.match(/filename="?(.+)"?/);
-      if (basicMatch) {
-        filename = basicMatch[1];
-      }
-    }
+  if (!isXlsxArrayBuffer(response.data)) {
+    throw new Error('INVALID_EXCEL_RESPONSE');
   }
 
-  // Blob으로 다운로드
+  const filename = getFilenameFromContentDisposition(
+    response.headers?.['content-disposition'],
+    defaultFilename || 'download.xlsx',
+  );
   const blob = new Blob([response.data], {
     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   });

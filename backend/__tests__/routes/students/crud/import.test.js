@@ -158,6 +158,39 @@ describe('POST /paca/students/import', () => {
         expect(pool.execute.mock.calls.some(([sql]) => /INSERT INTO students/.test(sql))).toBe(false);
     });
 
+    test('학생등록양식의 상태 열로 체험생과 미등록 학생을 일괄 등록한다', async () => {
+        const workbook = new ExcelJS.Workbook();
+        const sheet = workbook.addWorksheet('학생등록양식');
+        sheet.addRow(['이름', '연락처', '학교', '성별', '학년', '등록일', '입시유형', '상태']);
+        sheet.addRow(['체험학생', '010-5555-1111', '체험고', '남', '고1', '2026-07-04', '정시', '체험생']);
+        sheet.addRow(['미등록학생', '010-5555-2222', '미등록고', '여', '고2', '2026-07-04', '수시', '미등록']);
+        const buffer = await workbook.xlsx.writeBuffer();
+
+        pool.execute
+            .mockResolvedValueOnce([[{ student_number: '2026007' }]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([{ insertId: 201 }])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([{ insertId: 202 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/students/import')
+            .set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            .send(Buffer.from(buffer));
+
+        expect(res.status).toBe(200);
+        expect(res.body.summary).toEqual({
+            total: 2,
+            created: 2,
+            skipped: 0,
+            failed: 0,
+        });
+
+        const insertCalls = pool.execute.mock.calls.filter(([sql]) => /INSERT INTO students/.test(sql));
+        expect(insertCalls[0][1]).toEqual(expect.arrayContaining(['trial', true, 2]));
+        expect(insertCalls[1][1]).toEqual(expect.arrayContaining(['pending', false]));
+    });
+
     test('깨진 파일은 한국어 오류만 반환하고 내부 오류를 노출하지 않는다', async () => {
         const res = await request(makeApp())
             .post('/paca/students/import')

@@ -69,8 +69,12 @@ describe('GET /paca/exports/students', () => {
         expect(res.headers['content-type']).toContain('spreadsheetml.sheet');
         // 학생명단 UTF-8 encode
         expect(res.headers['content-disposition']).toMatch(/%ED%95%99%EC%83%9D%EB%AA%85%EB%8B%A8/);
+        expect(res.headers['content-disposition']).toMatch(/filename="students_\d{8}\.xlsx"/);
+        expect(Number(res.headers['content-length'])).toBeGreaterThan(100);
         expect(Buffer.isBuffer(res.body)).toBe(true);
         expect(res.body.length).toBeGreaterThan(100);
+        expect(res.body[0]).toBe(0x50);
+        expect(res.body[1]).toBe(0x4B);
     });
 
     test('pool.execute 2건 (ADR-005, academies + students)', async () => {
@@ -102,17 +106,18 @@ describe('GET /paca/exports/students', () => {
         expect(res.status).toBe(200);
         expect(workbook.worksheets.length).toBeGreaterThan(0);
         expect(workbook.worksheets[0].name).toBe('학생등록양식');
-        expect(workbook.worksheets[0].getRow(4).values).toEqual([
+        expect(workbook.worksheets[0].getRow(1).values).toEqual([
             undefined,
             '이름',
             '연락처',
             '학교',
             '성별',
             '학년',
+            '등록일',
             '입시유형',
-            '학생구분',
-            '주 수업횟수'
+            '상태'
         ]);
+        expect(workbook.worksheets[0].model.merges).toEqual([]);
     });
 
     test('상태 분류 정상 (trial → 체험생, pending → 미등록, withdrawn → 퇴원생)', async () => {
@@ -132,7 +137,18 @@ describe('GET /paca/exports/students', () => {
             .parse(binaryParser);
 
         expect(res.status).toBe(200);
-        // 5개 시트 모두 생성됨 (각 분류별 1명) → buffer 크기로 간접 확인
+        // 학생등록양식 + 5개 상태 시트 모두 생성됨
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(res.body);
+
+        expect(workbook.worksheets.map(sheet => sheet.name)).toEqual([
+            '학생등록양식',
+            '재원생',
+            '휴원생',
+            '퇴원생',
+            '체험생',
+            '미등록',
+        ]);
         expect(Buffer.isBuffer(res.body)).toBe(true);
         expect(res.body.length).toBeGreaterThan(500);
     });

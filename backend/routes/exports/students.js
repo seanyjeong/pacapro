@@ -25,6 +25,37 @@ const {
     decryptArray
 } = require('./_utils');
 
+const TEMPLATE_HEADERS = ['이름', '연락처', '학교', '성별', '학년', '등록일', '입시유형', '상태'];
+
+function addStudentImportTemplateSheet(workbook) {
+    const sheet = workbook.addWorksheet('학생등록양식');
+    const headerRow = sheet.addRow(TEMPLATE_HEADERS);
+
+    headerRow.eachCell((cell) => {
+        cell.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF1565C0' }
+        };
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+        };
+    });
+
+    headerRow.height = 24;
+    [15, 16, 20, 10, 10, 14, 12, 12].forEach((width, index) => {
+        sheet.getColumn(index + 1).width = width;
+    });
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+    sheet.autoFilter = 'A1:H1';
+    return sheet;
+}
+
 module.exports = function(router) {
     router.get('/students', verifyToken, async (req, res) => {
         try {
@@ -73,8 +104,20 @@ module.exports = function(router) {
 
             // 엑셀 워크북 생성
             const workbook = new ExcelJS.Workbook();
-            workbook.creator = academyName;
+            workbook.creator = 'P-ACA';
+            workbook.company = academyName;
             workbook.created = new Date();
+            workbook.modified = new Date();
+            workbook.properties.date1904 = false;
+            workbook.views = [{
+                x: 0,
+                y: 0,
+                width: 10000,
+                height: 20000,
+                firstSheet: 0,
+                activeTab: 0,
+                visibility: 'visible'
+            }];
 
             // 입시유형 라벨
             const admissionLabels = {
@@ -91,50 +134,10 @@ module.exports = function(router) {
                 female: '여'
             };
 
-            if (decryptedStudents.length === 0) {
-                const sheet = workbook.addWorksheet('학생등록양식');
-                sheet.mergeCells('A1:I1');
-                const titleCell = sheet.getCell('A1');
-                titleCell.value = `${academyName} - 학생등록양식`;
-                titleCell.font = { bold: true, size: 18, color: { argb: 'FF1565C0' } };
-                titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-                sheet.getRow(1).height = 35;
-
-                sheet.mergeCells('A2:I2');
-                const guideCell = sheet.getCell('A2');
-                guideCell.value = '학생이 아직 없어 기본 양식을 제공합니다. 각 열에 맞춰 학생 정보를 입력해주세요.';
-                guideCell.font = { size: 11, color: { argb: 'FF666666' } };
-                guideCell.alignment = { horizontal: 'center', vertical: 'middle' };
-                sheet.getRow(2).height = 25;
-                sheet.getRow(3).height = 10;
-
-                const headers = ['이름', '연락처', '학교', '성별', '학년', '입시유형', '학생구분', '주 수업횟수'];
-                const headerRow = sheet.getRow(4);
-                headers.forEach((header, index) => {
-                    const cell = headerRow.getCell(index + 1);
-                    cell.value = header;
-                    cell.fill = {
-                        type: 'pattern',
-                        pattern: 'solid',
-                        fgColor: { argb: 'FF1565C0' }
-                    };
-                    cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
-                    cell.alignment = { horizontal: 'center', vertical: 'middle' };
-                    cell.border = {
-                        top: { style: 'thin' },
-                        left: { style: 'thin' },
-                        bottom: { style: 'thin' },
-                        right: { style: 'thin' }
-                    };
-                });
-                headerRow.height = 28;
-                [15, 16, 20, 10, 10, 12, 12, 12].forEach((width, index) => {
-                    sheet.getColumn(index + 1).width = width;
-                });
-            }
+            addStudentImportTemplateSheet(workbook);
 
             // 각 상태별 시트 생성
-            for (const [statusKey, group] of Object.entries(statusGroups)) {
+            for (const group of Object.values(statusGroups)) {
                 if (group.students.length === 0) continue;
 
                 const sheet = workbook.addWorksheet(group.name);
@@ -206,7 +209,7 @@ module.exports = function(router) {
                     row.getCell(8).value = admissionLabels[student.admission_type] || student.admission_type || '-';
 
                     // 스타일 적용
-                    row.eachCell((cell, colNumber) => {
+                    row.eachCell((cell) => {
                         cell.border = {
                             top: { style: 'thin', color: { argb: 'FFE0E0E0' } },
                             left: { style: 'thin', color: { argb: 'FFE0E0E0' } },
@@ -251,12 +254,21 @@ module.exports = function(router) {
             // 파일명 생성
             const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
             const filename = `학생명단_${today}.xlsx`;
+            const fallbackFilename = `students_${today}.xlsx`;
+            const workbookBuffer = await workbook.xlsx.writeBuffer();
+            const fileBuffer = Buffer.isBuffer(workbookBuffer)
+                ? workbookBuffer
+                : Buffer.from(workbookBuffer);
 
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+            res.setHeader(
+                'Content-Disposition',
+                `attachment; filename="${fallbackFilename}"; filename*=UTF-8''${encodeURIComponent(filename)}`
+            );
+            res.setHeader('Content-Length', String(fileBuffer.length));
+            res.setHeader('Cache-Control', 'no-store');
 
-            await workbook.xlsx.write(res);
-            res.end();
+            return res.send(fileBuffer);
 
         } catch (error) {
             logger.error('Error exporting students:', error);

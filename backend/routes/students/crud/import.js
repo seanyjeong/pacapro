@@ -17,6 +17,7 @@ const HEADER_ALIASES = {
     grade: ['학년'],
     enrollmentDate: ['등록일', '입학일'],
     admissionType: ['입시유형', '전형'],
+    status: ['상태', '등록상태'],
 };
 
 const STATUS_BY_SHEET_NAME = {
@@ -25,6 +26,23 @@ const STATUS_BY_SHEET_NAME = {
     퇴원생: 'withdrawn',
     체험생: 'trial',
     미등록: 'pending',
+};
+
+const STATUS_BY_LABEL = {
+    재원: 'active',
+    재원생: 'active',
+    active: 'active',
+    휴원: 'paused',
+    휴원생: 'paused',
+    paused: 'paused',
+    퇴원: 'withdrawn',
+    퇴원생: 'withdrawn',
+    withdrawn: 'withdrawn',
+    체험: 'trial',
+    체험생: 'trial',
+    trial: 'trial',
+    미등록: 'pending',
+    pending: 'pending',
 };
 
 const GENDER_BY_LABEL = {
@@ -89,6 +107,10 @@ function normalizeAdmission(value) {
     return ADMISSION_BY_LABEL[normalizeEmpty(value).toLowerCase()] || 'regular';
 }
 
+function normalizeStatus(value) {
+    return STATUS_BY_LABEL[normalizeEmpty(value).toLowerCase()] || null;
+}
+
 function normalizeGrade(value) {
     const grade = normalizeEmpty(value).toUpperCase() === 'N수' ? 'N수' : normalizeEmpty(value);
     return VALID_GRADES.has(grade) ? grade : null;
@@ -129,7 +151,7 @@ function extractWorkbookRows(workbook) {
         const header = findHeaderMap(sheet);
         if (!header) return;
 
-        const status = getSheetStatus(sheet.name);
+        const sheetStatus = getSheetStatus(sheet.name);
         for (let rowNumber = header.rowNumber + 1; rowNumber <= sheet.rowCount; rowNumber++) {
             const row = sheet.getRow(rowNumber);
             const name = normalizeEmpty(getMappedCellText(row, header.headerMap, 'name'));
@@ -137,6 +159,8 @@ function extractWorkbookRows(workbook) {
 
             if (!name && !phone) continue;
             if (/^총\s*\d+명?$/.test(name)) continue;
+
+            const status = normalizeStatus(getMappedCellText(row, header.headerMap, 'status')) || sheetStatus;
 
             rows.push({
                 rowNumber,
