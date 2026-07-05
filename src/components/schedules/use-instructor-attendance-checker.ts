@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useInstructorAttendanceRealtime } from '@/hooks/use-attendance-realtime';
 import { schedulesApi, type InstructorAttendanceRecord, type InstructorAttendanceSubmission } from '@/lib/api/schedules';
 import type { TimeSlot } from '@/lib/types/schedule';
 import {
@@ -111,6 +112,14 @@ export function useInstructorAttendanceChecker({ date, onSuccess }: Params) {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useInstructorAttendanceRealtime({
+    date,
+    enabled: true,
+    onInstructorAttendanceUpdated: () => {
+      void loadData();
+    },
+  });
 
   useEffect(() => {
     setEditedAttendances(createInitialEdits(existingRecords, selectedTimeSlot));

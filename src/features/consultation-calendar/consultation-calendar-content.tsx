@@ -36,7 +36,7 @@ export function ConsultationCalendarContent() {
             </div>
           </section>
         ) : null}
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
           <ConsultationCalendarMonthCard
             currentMonth={state.currentMonth}
             loading={state.loading}

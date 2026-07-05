@@ -149,7 +149,7 @@ export function NewInquiryPage() {
         })}
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
         <div className="min-w-0 space-y-5">
           <section className="rounded-md border border-border bg-card p-4" data-testid="new-inquiry-filter-bar">
             <div className="flex flex-col gap-3 xl:flex-row xl:items-center">

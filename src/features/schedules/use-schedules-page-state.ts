@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useInstructorAttendanceRealtime } from '@/hooks/use-attendance-realtime';
 import type { Consultation } from '@/lib/types/consultation';
 import type { ClassSchedule, ScheduleFilters, TimeSlot } from '@/lib/types/schedule';
 import type { DailyInstructorStats } from '@/lib/api/schedules';
@@ -93,6 +94,13 @@ export function useSchedulesPageState() {
     loadInstructorStats();
     loadConsultations();
   }, [loadConsultations, loadInstructorStats]);
+
+  useInstructorAttendanceRealtime({
+    enabled: true,
+    onInstructorAttendanceUpdated: () => {
+      void loadInstructorStats();
+    },
+  });
 
   const togglePanel = () => {
     setIsPanelExpanded((current) => {

@@ -97,6 +97,20 @@ async function waitForState(predicate, label) {
   }
 }
 
+function currentYearMonth() {
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+}
+
+function shiftYearMonth({ year, month }, offset) {
+  const date = new Date(year, month - 1 + offset, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
+
+function paymentsQuery({ year, month }) {
+  return `GET /payments?year=${year}&month=${month}`;
+}
+
 async function openReportsPage(page) {
   await page.goto('/reports', { waitUntil: 'domcontentloaded' });
   try {
@@ -139,10 +153,12 @@ async function runNormal(browser) {
   await page.screenshot({ path: '/Users/etlab/paca-reports-desktop.png', fullPage: true });
 
   const board = page.getByTestId('reports-operations-board');
+  const initialMonth = currentYearMonth();
+  const previousMonth = shiftYearMonth(initialMonth, -1);
   await board.getByRole('button', { name: '이전 달' }).click();
-  await waitForState(() => state.hits.includes('GET /payments?year=2026&month=5'), 'previous month query');
+  await waitForState(() => state.hits.includes(paymentsQuery(previousMonth)), 'previous month query');
   await board.getByRole('button', { name: '다음 달' }).click();
-  await waitForState(() => state.hits.filter((hit) => hit === 'GET /payments?year=2026&month=6').length >= 3, 'next month query');
+  await waitForState(() => state.hits.filter((hit) => hit === paymentsQuery(initialMonth)).length >= 3, 'next month query');
 
   await page.locator('#report-month').fill('2026-05');
   await page.locator('#report-month').dispatchEvent('change');

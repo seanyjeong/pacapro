@@ -83,7 +83,7 @@ export default function InstructorsPage() {
 
       <InstructorStatsCards instructors={instructors} />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
         <main className="order-2 min-w-0 space-y-5 xl:order-1">
           <section className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0 flex-1">

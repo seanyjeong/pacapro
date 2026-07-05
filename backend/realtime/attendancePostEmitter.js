@@ -1,10 +1,15 @@
-const { broadcastAttendanceUpdate } = require('./attendanceHub');
+const { broadcastAttendanceUpdate, broadcastInstructorAttendanceUpdate } = require('./attendanceHub');
 const axios = require('axios');
 
 const ATTENDANCE_POST_PATH = /^\/paca\/schedules\/\d+\/attendance\/?$/;
+const INSTRUCTOR_ATTENDANCE_POST_PATH = /^\/paca\/schedules\/(?:\d+|date\/\d{4}-\d{2}-\d{2})\/instructor-attendance\/?$/;
 
 function isAttendancePostRequest(req) {
     return req.method === 'POST' && ATTENDANCE_POST_PATH.test(req.path || '');
+}
+
+function isInstructorAttendancePostRequest(req) {
+    return req.method === 'POST' && INSTRUCTOR_ATTENDANCE_POST_PATH.test(req.path || '');
 }
 
 function buildAttendanceEvent({ academyId, responseBody }) {
@@ -28,6 +33,28 @@ function buildAttendanceEvent({ academyId, responseBody }) {
     };
 }
 
+function buildInstructorAttendanceEvent({ academyId, responseBody }) {
+    const classDate = responseBody?.class_date || responseBody?.date;
+    if (!academyId || !classDate) return null;
+
+    const records = Array.isArray(responseBody.attendance_records)
+        ? responseBody.attendance_records
+        : [];
+
+    return {
+        source: 'paca',
+        academy_id: Number(academyId),
+        class_date: classDate,
+        records: records.map((record) => ({
+            instructor_id: Number(record.instructor_id),
+            time_slot: record.time_slot,
+            attendance_status: record.attendance_status || null,
+            check_in_time: record.check_in_time || null,
+            check_out_time: record.check_out_time || null
+        }))
+    };
+}
+
 async function postPeakBridgeEvent(
     event,
     {
@@ -44,9 +71,15 @@ async function postPeakBridgeEvent(
     return { sent: true };
 }
 
-function createAttendancePostEmitter({ broadcast = broadcastAttendanceUpdate, logger = console } = {}) {
+function createAttendancePostEmitter({
+    broadcast = broadcastAttendanceUpdate,
+    broadcastInstructor = broadcastInstructorAttendanceUpdate,
+    logger = console
+} = {}) {
     return (req, res, next) => {
-        if (!isAttendancePostRequest(req)) return next();
+        const isStudentAttendance = isAttendancePostRequest(req);
+        const isInstructorAttendance = isInstructorAttendancePostRequest(req);
+        if (!isStudentAttendance && !isInstructorAttendance) return next();
 
         const originalJson = res.json.bind(res);
         let responseBody = null;
@@ -59,16 +92,22 @@ function createAttendancePostEmitter({ broadcast = broadcastAttendanceUpdate, lo
         res.on('finish', () => {
             if (res.statusCode < 200 || res.statusCode >= 300) return;
             const academyId = req.user?.academyId ?? req.user?.academy_id;
-            const event = buildAttendanceEvent({ academyId, responseBody });
+            const event = isStudentAttendance
+                ? buildAttendanceEvent({ academyId, responseBody })
+                : buildInstructorAttendanceEvent({ academyId, responseBody });
             if (!event) return;
 
-            const sent = broadcast(event);
-            postPeakBridgeEvent(event).catch((error) => {
-                logger.warn('[AttendanceRealtime] peak bridge failed', { error: error.message });
-            });
-            logger.info('[AttendanceRealtime] attendance event emitted', {
+            const sent = isStudentAttendance ? broadcast(event) : broadcastInstructor(event);
+            if (isStudentAttendance) {
+                postPeakBridgeEvent(event).catch((error) => {
+                    logger.warn('[AttendanceRealtime] peak bridge failed', { error: error.message });
+                });
+            }
+            logger.info('[AttendanceRealtime] event emitted', {
+                type: isStudentAttendance ? 'attendance-updated' : 'instructor-attendance-updated',
                 academyId: event.academy_id,
                 scheduleId: event.schedule_id,
+                classDate: event.class_date,
                 records: event.records.length,
                 clients: sent
             });
@@ -80,7 +119,9 @@ function createAttendancePostEmitter({ broadcast = broadcastAttendanceUpdate, lo
 
 module.exports = {
     buildAttendanceEvent,
+    buildInstructorAttendanceEvent,
     createAttendancePostEmitter,
+    isInstructorAttendancePostRequest,
     isAttendancePostRequest,
     postPeakBridgeEvent
 };

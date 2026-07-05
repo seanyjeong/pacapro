@@ -79,6 +79,42 @@ function makeState(overrides = {}) {
   return { salaries: makeSalaries(), hits: [], externalContinues: [], ...overrides };
 }
 
+async function waitForState(predicate, label) {
+  const started = Date.now();
+  while (!predicate()) {
+    if (Date.now() - started > 5000) throw new Error(`timed out waiting for ${label}`);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
+function defaultSalaryYearMonth() {
+  const now = new Date();
+  const target = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  return { year: target.getFullYear(), month: target.getMonth() + 1 };
+}
+
+function shiftYearMonth({ year, month }, offset) {
+  const date = new Date(year, month - 1 + offset, 1);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
+
+function yearMonthText({ year, month }) {
+  return `${year}년 ${month}월`;
+}
+
+function yearMonthValue({ year, month }) {
+  return `${year}-${String(month).padStart(2, '0')}`;
+}
+
+function hasSalaryHit(state, { year, month, status }) {
+  return state.hits.some((hit) =>
+    hit.includes('/salaries') &&
+    hit.includes(`year=${year}`) &&
+    hit.includes(`month=${month}`) &&
+    (status ? hit.includes(`payment_status=${status}`) : !hit.includes('payment_status='))
+  );
+}
+
 async function warmSalariesRoute() {
   const response = await fetch(`${BASE_URL}/salaries`);
   if (!response.ok) throw new Error(`salaries route warmup failed: ${response.status}`);
@@ -154,6 +190,8 @@ async function openSalariesPage(page) {
 
 async function runNormal(browser) {
   const state = makeState();
+  const defaultMonth = defaultSalaryYearMonth();
+  const previousMonth = shiftYearMonth(defaultMonth, -1);
   const context = await createAuthedContext(browser, { width: 1365, height: 900 });
   await installRoutes(context, state);
   const page = await context.newPage();
@@ -175,40 +213,30 @@ async function runNormal(browser) {
   await page.screenshot({ path: '/Users/etlab/paca-salaries-desktop.png', fullPage: true });
 
   const board = page.getByTestId('salaries-operations-board');
-  await Promise.all([
-    page.waitForResponse((response) => response.url().includes('/salaries') && response.url().includes('payment_status=pending')),
-    board.getByRole('button', { name: '지급 대기 2건' }).click(),
-  ]);
+  await board.getByRole('button', { name: '지급 대기 2건' }).click();
+  await waitForState(() => hasSalaryHit(state, { ...defaultMonth, status: 'pending' }), 'pending salary filter');
   await page.locator('article:has-text("김강사")').waitFor();
   await page.locator('article:has-text("이코치")').waitFor({ state: 'hidden' });
-  await Promise.all([
-    page.waitForResponse((response) => response.url().includes('/salaries') && !response.url().includes('payment_status=')),
-    board.getByRole('button', { name: '전체 2건' }).click(),
-  ]);
+  await board.getByRole('button', { name: '전체 2건' }).click();
+  await waitForState(() => hasSalaryHit(state, defaultMonth), 'all salary filter');
   await page.locator('article:has-text("이코치")').waitFor();
 
-  await Promise.all([
-    page.waitForResponse((response) => response.url().includes('/salaries') && response.url().includes('month=4')),
-    page.getByRole('button', { name: '이전 월' }).click(),
-  ]);
-  await page.getByLabel('조회 월').filter({ hasText: '2026년 4월' }).waitFor();
-  await Promise.all([
-    page.waitForResponse((response) => response.url().includes('/salaries') && response.url().includes('month=5')),
-    page.getByRole('button', { name: '다음 월' }).click(),
-  ]);
-  await page.getByLabel('조회 월').filter({ hasText: '2026년 5월' }).waitFor();
+  await page.getByRole('button', { name: '이전 월' }).click();
+  await waitForState(() => hasSalaryHit(state, previousMonth), 'previous salary month');
+  await page.getByLabel('조회 월').filter({ hasText: yearMonthText(previousMonth) }).waitFor();
+  await page.getByRole('button', { name: '다음 월' }).click();
+  await waitForState(() => hasSalaryHit(state, defaultMonth), 'next salary month');
+  await page.getByLabel('조회 월').filter({ hasText: yearMonthText(defaultMonth) }).waitFor();
 
   await page.getByTestId('salaries-operations-board').getByRole('button', { name: /모두 지급처리 \(2건\)/ }).click();
   await page.getByLabel('비밀번호').fill('owner-pass');
   await page.getByRole('button', { name: '확인' }).click();
   await page.getByText('급여 일괄 지급이 완료되었습니다.').waitFor();
   if (state.verifyPayload?.password !== 'owner-pass') throw new Error(`unexpected verify payload ${JSON.stringify(state.verifyPayload)}`);
-  if (state.bulkPayPayload?.year_month !== '2026-05') throw new Error(`unexpected bulk payload ${JSON.stringify(state.bulkPayPayload)}`);
+  if (state.bulkPayPayload?.year_month !== yearMonthValue(defaultMonth)) throw new Error(`unexpected bulk payload ${JSON.stringify(state.bulkPayPayload)}`);
 
-  await Promise.all([
-    page.waitForResponse((response) => response.url().includes('/salaries') && response.url().includes('payment_status=paid')),
-    page.getByLabel('지급 상태').selectOption('paid'),
-  ]);
+  await page.getByLabel('지급 상태').selectOption('paid');
+  await waitForState(() => hasSalaryHit(state, { ...defaultMonth, status: 'paid' }), 'paid salary filter');
   if (!state.hits.some((hit) => hit.includes('/salaries') && hit.includes('payment_status=paid'))) {
     throw new Error(`missing paid status request: ${state.hits.join(' | ')}`);
   }

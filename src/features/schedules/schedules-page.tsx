@@ -68,7 +68,7 @@ export function SchedulesPage() {
       ) : state.schedulesError ? (
         <SchedulesError message={state.schedulesError} onRetry={state.refreshScheduleSurface} />
       ) : (
-        <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_340px] 2xl:items-start">
+        <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_300px] 2xl:items-start">
           <main className="order-1 min-w-0">
             <SchedulesWorkspace
               currentMonth={state.currentMonth}

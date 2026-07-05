@@ -142,7 +142,7 @@ async function runMobile(browser) {
   const result = await createCalendarPage(browser, { width: 390, height: 844 });
   const { context, page } = result;
 
-  await page.goto('/consultations/calendar', { waitUntil: 'domcontentloaded' });
+  await page.goto(`/consultations/calendar?date=${TEST_DATE}`, { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '상담 달력' }).waitFor();
   await waitForCalendarShell(page);
   await page.getByText('김진우').first().waitFor();

@@ -5,6 +5,8 @@ const db = require('../config/database');
 const REALTIME_PATH = '/paca/realtime/attendance';
 const HEARTBEAT_MS = 30000;
 const VALID_STATUSES = new Set(['present', 'absent', 'late', 'excused', 'makeup']);
+const VALID_INSTRUCTOR_STATUSES = new Set(['present', 'absent', 'late', 'half_day']);
+const VALID_TIME_SLOTS = new Set(['morning', 'afternoon', 'evening']);
 const rooms = new Map();
 
 function sendJson(socket, payload) {
@@ -59,6 +61,11 @@ function normalizeStatus(status) {
     return VALID_STATUSES.has(status) ? status : null;
 }
 
+function normalizeInstructorStatus(status) {
+    if (!status || status === 'none') return null;
+    return VALID_INSTRUCTOR_STATUSES.has(status) ? status : null;
+}
+
 function normalizeAttendanceEvent(event) {
     const academyId = Number(event?.academy_id ?? event?.academyId);
     const scheduleId = Number(event?.schedule_id ?? event?.scheduleId);
@@ -82,8 +89,30 @@ function normalizeAttendanceEvent(event) {
     };
 }
 
-function broadcastAttendanceUpdate(event) {
-    const payload = normalizeAttendanceEvent(event);
+function normalizeInstructorAttendanceEvent(event) {
+    const academyId = Number(event?.academy_id ?? event?.academyId);
+    const classDate = event?.class_date || event?.date || null;
+    if (!academyId || !classDate) return null;
+
+    const records = Array.isArray(event.records) ? event.records : [];
+    return {
+        type: 'instructor-attendance-updated',
+        academy_id: academyId,
+        class_date: classDate,
+        source: event.source || 'paca',
+        records: records
+            .filter((record) => record?.instructor_id && VALID_TIME_SLOTS.has(record.time_slot))
+            .map((record) => ({
+                instructor_id: Number(record.instructor_id),
+                time_slot: record.time_slot,
+                attendance_status: normalizeInstructorStatus(record.attendance_status),
+                check_in_time: record.check_in_time || null,
+                check_out_time: record.check_out_time || null
+            }))
+    };
+}
+
+function broadcastToAcademy(payload) {
     if (!payload) return 0;
 
     const room = rooms.get(roomKey(payload.academy_id));
@@ -95,6 +124,14 @@ function broadcastAttendanceUpdate(event) {
         sent += 1;
     });
     return sent;
+}
+
+function broadcastAttendanceUpdate(event) {
+    return broadcastToAcademy(normalizeAttendanceEvent(event));
+}
+
+function broadcastInstructorAttendanceUpdate(event) {
+    return broadcastToAcademy(normalizeInstructorAttendanceEvent(event));
 }
 
 function setupAttendanceRealtime(server, { logger = console } = {}) {
@@ -155,6 +192,8 @@ function setupAttendanceRealtime(server, { logger = console } = {}) {
 module.exports = {
     REALTIME_PATH,
     broadcastAttendanceUpdate,
+    broadcastInstructorAttendanceUpdate,
     normalizeAttendanceEvent,
+    normalizeInstructorAttendanceEvent,
     setupAttendanceRealtime
 };

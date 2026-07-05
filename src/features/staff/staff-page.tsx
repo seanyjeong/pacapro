@@ -27,7 +27,7 @@ export function StaffPage() {
       ) : (
         <>
           <StaffSummaryStrip summary={state.summary} />
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
             <main className="min-w-0">
               {state.loading ? (
                 <StaffPageLoading />

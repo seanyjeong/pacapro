@@ -35,7 +35,7 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
     ? props.schedules.filter((schedule) => schedule.class_date === props.selectedDate).length
     : 0;
   const deskGridClass = props.isPanelExpanded
-    ? 'xl:grid-cols-[minmax(0,1fr)_320px]'
+    ? 'xl:grid-cols-[minmax(0,1fr)_300px]'
     : 'xl:grid-cols-[minmax(0,1fr)_48px]';
 
   const instructorPanel = props.isPanelExpanded ? (
@@ -114,7 +114,7 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
               onSlotClick={props.onSlotClick}
             />
           </div>
-          <div className={`hidden flex-col transition-all duration-200 xl:flex ${props.isPanelExpanded ? 'w-80' : 'w-12'}`}>
+          <div className={`hidden flex-col transition-all duration-200 xl:flex ${props.isPanelExpanded ? 'w-[300px]' : 'w-12'}`}>
             {instructorPanel}
           </div>
         </div>

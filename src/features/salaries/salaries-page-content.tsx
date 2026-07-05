@@ -31,7 +31,7 @@ export function SalariesPageContent() {
         onReload={state.reload}
       />
       <SalariesSummaryStrip summary={state.summary} />
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
         <main className="order-2 min-w-0 space-y-5 xl:order-1">
           <SalariesFilterBar
             filters={state.filters}

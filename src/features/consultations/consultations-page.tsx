@@ -97,7 +97,7 @@ export function ConsultationsPage() {
           onStatusFilter={h.setStatusFilter}
         />
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
           <section className="min-w-0 space-y-5">
             <Card className="rounded-md shadow-none" data-testid="consultations-filter-bar">
               <CardContent className="space-y-4 p-4">

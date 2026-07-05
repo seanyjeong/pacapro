@@ -39,7 +39,7 @@ export function ReportsPage() {
         onMonthChange={state.setSelectedMonth}
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
         <div className="order-1 min-w-0 xl:col-start-1 xl:row-start-1">
           <ReportSummaryStrip computed={state.computed} stats={state.stats} />
         </div>

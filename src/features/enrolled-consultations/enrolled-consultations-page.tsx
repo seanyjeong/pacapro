@@ -32,7 +32,7 @@ export default function EnrolledConsultationsPage() {
       ) : (
         <>
           <EnrolledConsultationsStats stats={state.stats} />
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
             <div className="order-2 min-w-0 space-y-5 xl:order-1">
               <EnrolledConsultationsFilters
                 search={state.search}

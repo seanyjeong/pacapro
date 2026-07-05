@@ -36,7 +36,7 @@ export function SMSPage() {
           </section>
         ) : null}
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
           <main className="min-w-0">
             <SmsComposeCard sms={sms} />
           </main>

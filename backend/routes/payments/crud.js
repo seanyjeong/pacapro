@@ -259,16 +259,21 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
 
         // Recalculate final_amount if any amount fields changed
         if (base_amount !== undefined || discount_amount !== undefined || additional_amount !== undefined) {
-            const [current] = await pool.execute('SELECT base_amount, discount_amount, additional_amount FROM student_payments WHERE id = ?', [paymentId]);
+            const [current] = await pool.execute(
+                'SELECT base_amount, discount_amount, additional_amount, carryover_amount FROM student_payments WHERE id = ?',
+                [paymentId]
+            );
             const currentData = current[0];
 
             const newBase = base_amount !== undefined ? base_amount : currentData.base_amount;
             const newDiscount = discount_amount !== undefined ? discount_amount : currentData.discount_amount;
             const newAdditional = additional_amount !== undefined ? additional_amount : currentData.additional_amount;
+            const currentCarryover = parseFloat(currentData.carryover_amount) || 0;
 
-            const finalAmount = truncateToThousands(
+            const chargeBeforeCredit = truncateToThousands(
                 parseFloat(newBase) - parseFloat(newDiscount) + parseFloat(newAdditional)
             );
+            const finalAmount = Math.max(chargeBeforeCredit - currentCarryover, 0);
             updates.push('final_amount = ?');
             params.push(finalAmount);
         }

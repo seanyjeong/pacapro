@@ -189,7 +189,7 @@ describe('PUT /paca/payments/:id', () => {
     test('200: dynamic update + final_amount 재계산', async () => {
         pool.execute
             .mockResolvedValueOnce([[{ id: 1, academy_id: 5 }]])                          // payment lookup
-            .mockResolvedValueOnce([[{ base_amount: 100000, discount_amount: 0, additional_amount: 0 }]]) // current
+            .mockResolvedValueOnce([[{ base_amount: 100000, discount_amount: 0, additional_amount: 0, carryover_amount: 0 }]]) // current
             .mockResolvedValueOnce([{ affectedRows: 1 }])                                   // UPDATE
             .mockResolvedValueOnce([[{ id: 1, student_name: 'enc_홍', final_amount: 80000 }]]); // SELECT updated
         const res = await request(makeApp())
@@ -204,6 +204,43 @@ describe('PUT /paca/payments/:id', () => {
         expect(updateCall[0]).toContain('final_amount = ?');
         // params 끝부분 = paymentId (마지막), 그 직전들이 dynamic update params
         expect(updateCall[1]).toContain(80000); // floor((100000 - 20000 + 0) / 1000) * 1000
+    });
+
+    test('200: 크레딧 적용 결제 금액 수정 시 carryover_amount 차감 보존', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 819, academy_id: 5 }]])
+            .mockResolvedValueOnce([[
+                { base_amount: '400000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: '99000.00' },
+            ]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[{ id: 819, student_name: 'enc_유', final_amount: 300000 }]]);
+
+        const res = await request(makeApp())
+            .put('/paca/payments/819')
+            .send({ discount_amount: 1000 });
+
+        expect(res.status).toBe(200);
+        const updateCall = pool.execute.mock.calls[2];
+        expect(updateCall[0]).toContain('final_amount = ?');
+        expect(updateCall[1]).toContain(300000);
+    });
+
+    test('200: 크레딧 차감액이 재계산 청구액보다 크면 final_amount 0으로 제한', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 819, academy_id: 5 }]])
+            .mockResolvedValueOnce([[
+                { base_amount: '50000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: '99000.00' },
+            ]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[{ id: 819, student_name: 'enc_유', final_amount: 0 }]]);
+
+        const res = await request(makeApp())
+            .put('/paca/payments/819')
+            .send({ discount_amount: 0 });
+
+        expect(res.status).toBe(200);
+        const updateCall = pool.execute.mock.calls[2];
+        expect(updateCall[1]).toContain(0);
     });
 
     test('200: 단일 필드만 변경 시 final_amount 재계산 X', async () => {

@@ -19,7 +19,7 @@ export function PerformancePage() {
         statusLoading={state.statusLoading}
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
         <main className="order-2 min-w-0 xl:order-1">
           <Tabs value={state.activeTab} onValueChange={(value) => state.setActiveTab(value as '내신' | '모의고사')}>
             <TabsList className="grid w-full max-w-md grid-cols-2 rounded-md border border-border bg-muted/40 p-1">

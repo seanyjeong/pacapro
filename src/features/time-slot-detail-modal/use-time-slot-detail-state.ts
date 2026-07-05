@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useAttendanceRealtime, useInstructorAttendanceRealtime } from '@/hooks/use-attendance-realtime';
 import type { TimeSlot } from '@/lib/types/schedule';
 import {
   addMakeupStudent,
@@ -100,6 +101,23 @@ export function useTimeSlotDetailState({
       setSearchResults([]);
     }
   }, [date, loadInstructorAttendance, loadSlotData, open, timeSlot]);
+
+  useAttendanceRealtime({
+    scheduleId,
+    enabled: open && Boolean(scheduleId),
+    onAttendanceUpdated: () => {
+      void loadSlotData();
+    },
+  });
+
+  useInstructorAttendanceRealtime({
+    date,
+    timeSlot,
+    enabled: open && Boolean(date && timeSlot),
+    onInstructorAttendanceUpdated: () => {
+      void loadInstructorAttendance();
+    },
+  });
 
   const persistInstructor = useCallback(async (
     instructorId: number,

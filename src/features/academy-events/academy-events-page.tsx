@@ -117,7 +117,7 @@ export function AcademyEventsPage() {
         <>
           <AcademyEventsSummary events={events} />
 
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
             <main className="order-2 min-w-0 xl:order-1">
               <EventCalendar
                 canEditEvents={canEditEvents}

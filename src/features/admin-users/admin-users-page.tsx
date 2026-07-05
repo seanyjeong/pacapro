@@ -119,7 +119,7 @@ export default function AdminUsersPage() {
     return (
         <div className="space-y-6">
             <AdminUsersHeader withRefresh onRefresh={loadPendingUsers} />
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
                 <div className="order-2 space-y-5 xl:order-1">
                     <AdminUsersSummary pendingCount={pendingUsers.length} />
                     <AdminUsersList
