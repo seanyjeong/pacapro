@@ -10,6 +10,10 @@ import { MOBILE_ATTENDANCE_MESSAGES } from './mobile-attendance-constants';
 import type { MarkableAttendanceStatus, MobileAttendanceSchedule, MobileAttendanceStudent, ReasonSheetState } from './mobile-attendance-types';
 import { calculateStats, formatDateLabel, isMarkableStatus, normalizeStudents, toLocalDateStr } from './mobile-attendance-utils';
 
+interface LoadScheduleOptions {
+  background?: boolean;
+}
+
 export function useMobileAttendanceState() {
   const router = useRouter();
   const [date, setDate] = useState(() => toLocalDateStr(new Date()));
@@ -24,9 +28,11 @@ export function useMobileAttendanceState() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [reasonSheet, setReasonSheet] = useState<ReasonSheetState | null>(null);
 
-  const loadSchedule = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
+  const loadSchedule = useCallback(async ({ background = false }: LoadScheduleOptions = {}) => {
+    if (!background) {
+      setLoading(true);
+      setLoadError(null);
+    }
     try {
       const response = await schedulesApi.getSlotData(date, timeSlot, { suppressErrorToast: true });
       const schedule = response.schedule as MobileAttendanceSchedule | null;
@@ -43,14 +49,17 @@ export function useMobileAttendanceState() {
       setStudents(nextStudents);
       setAttendances(statusMap);
       setAttendanceNotes(notesMap);
+      setLoadError(null);
     } catch {
-      setScheduleId(null);
-      setStudents([]);
-      setAttendances(new Map());
-      setAttendanceNotes(new Map());
-      setLoadError(MOBILE_ATTENDANCE_MESSAGES.load);
+      if (!background) {
+        setScheduleId(null);
+        setStudents([]);
+        setAttendances(new Map());
+        setAttendanceNotes(new Map());
+        setLoadError(MOBILE_ATTENDANCE_MESSAGES.load);
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [date, timeSlot]);
 
@@ -75,7 +84,7 @@ export function useMobileAttendanceState() {
     scheduleId,
     enabled: hasPermission === true,
     onAttendanceUpdated: () => {
-      void loadSchedule();
+      void loadSchedule({ background: true });
     },
   });
 

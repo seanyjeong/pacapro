@@ -3,6 +3,7 @@ import {
   assertNoRawVisibleText,
   createAuthedContext,
   createDiagnostics,
+  installFakeAttendanceSocket,
   jsonRoute,
   launchSmokeBrowser,
   nonServiceWorkerErrors,
@@ -16,6 +17,29 @@ function toLocalDateStr(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+function makeStudent(index, overrides = {}) {
+  return {
+    student_id: 100 + index,
+    student_name: `테스트학생${String(index).padStart(2, '0')}`,
+    grade: index % 3 === 0 ? '고3' : index % 3 === 1 ? '고2' : '고1',
+    attendance_status: null,
+    notes: null,
+    season_type: null,
+    is_trial: false,
+    trial_remaining: null,
+    is_makeup: false,
+    ...overrides,
+  };
+}
+
+const SLOT_STUDENTS = [
+  makeStudent(1, { student_id: 101, student_name: '김민서', grade: '고3', season_type: 'regular' }),
+  makeStudent(2, { student_id: 102, student_name: '박서윤', grade: '고2', attendance_status: 'late', is_trial: true, trial_remaining: 1 }),
+  makeStudent(3, { student_id: 103, student_name: '이도현', grade: 'N수', attendance_status: 'excused', notes: '질병', is_makeup: true }),
+  makeStudent(4, { student_id: 104, student_name: '최지훈', grade: '고1', attendance_status: 'present' }),
+  ...Array.from({ length: 32 }, (_, index) => makeStudent(index + 5)),
+];
+
 function makeSlotResponse(timeSlot = 'evening') {
   const today = toLocalDateStr(new Date());
   return {
@@ -23,12 +47,7 @@ function makeSlotResponse(timeSlot = 'evening') {
       id: 901,
       class_date: today,
       time_slot: timeSlot,
-      students: [
-        { student_id: 101, student_name: '김민서', grade: '고3', attendance_status: null, notes: null, season_type: 'regular', is_trial: false, trial_remaining: null, is_makeup: false },
-        { student_id: 102, student_name: '박서윤', grade: '고2', attendance_status: 'late', notes: null, season_type: null, is_trial: true, trial_remaining: 1, is_makeup: false },
-        { student_id: 103, student_name: '이도현', grade: 'N수', attendance_status: 'excused', notes: '질병', season_type: null, is_trial: false, trial_remaining: null, is_makeup: true },
-        { student_id: 104, student_name: '최지훈', grade: '고1', attendance_status: 'present', notes: null, season_type: null, is_trial: false, trial_remaining: null, is_makeup: false },
-      ],
+      students: SLOT_STUDENTS,
     },
     available_students: [],
   };
@@ -75,6 +94,7 @@ async function installRoutes(context, state) {
 
 async function createTabletPage(browser, state) {
   const context = await createAuthedContext(browser, { width: 1180, height: 820 });
+  await installFakeAttendanceSocket(context);
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
@@ -133,7 +153,7 @@ async function runNormal(browser) {
   if (second?.student_id !== 102 || second?.attendance_status !== 'absent' || second?.notes !== '개인사정') {
     throw new Error(`absent payload mismatch: ${JSON.stringify(state.submissions)}`);
   }
-  if (third.length !== 4 || third.some((record) => record.attendance_status !== 'present')) {
+  if (third.length !== SLOT_STUDENTS.length || third.some((record) => record.attendance_status !== 'present')) {
     throw new Error(`all present payload mismatch: ${JSON.stringify(state.submissions)}`);
   }
   if (!state.hits.some((hit) => hit.includes('/schedules/slot') && hit.includes('time_slot=afternoon'))) {
@@ -143,6 +163,36 @@ async function runNormal(browser) {
   await assertNoRawVisibleText(page, 'tablet attendance normal');
   await assertNoHorizontalOverflow(page, 'tablet attendance normal');
   await page.screenshot({ path: '/Users/etlab/paca-tablet-attendance.png', fullPage: true });
+  await context.close();
+  return { state, diagnostics };
+}
+
+async function runRealtimeScroll(browser) {
+  const state = makeState();
+  const { context, page, diagnostics } = await createTabletPage(browser, state);
+
+  await gotoWorkspace(page);
+  const lastCard = page.getByTestId('tablet-attendance-card').last();
+  await lastCard.scrollIntoViewIfNeeded();
+  const before = await page.evaluate(() => window.scrollY);
+  if (before < 200) throw new Error(`tablet attendance test did not scroll enough: ${before}`);
+
+  await lastCard.getByRole('button', { name: '출석' }).click();
+  await page.waitForTimeout(30);
+  await page.evaluate(() => window.__emitPacaAttendanceUpdate?.(901));
+  await page.waitForTimeout(250);
+
+  const after = await page.evaluate(() => window.scrollY);
+  if (after < before - 40) {
+    throw new Error(`tablet attendance realtime refresh moved scroll from ${before} to ${after}`);
+  }
+
+  const lastCardVisible = await lastCard.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return rect.top >= 0 && rect.bottom <= window.innerHeight;
+  });
+  if (!lastCardVisible) throw new Error('tablet attendance bottom card disappeared after realtime refresh');
+
   await context.close();
   return { state, diagnostics };
 }
@@ -183,13 +233,16 @@ async function main() {
   const browser = await launchSmokeBrowser();
   try {
     const normal = await runNormal(browser);
+    const realtimeScroll = await runRealtimeScroll(browser);
     const loadError = await runLoadError(browser);
     const saveError = await runSaveError(browser);
-    [normal, loadError, saveError].forEach(assertDiagnostics);
+    [normal, realtimeScroll, loadError, saveError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       hits: normal.state.hits,
       submissions: normal.state.submissions,
+      realtimeScrollHits: realtimeScroll.state.hits,
       normalConsoleErrors: normal.diagnostics.consoleErrors,
+      realtimeScrollConsoleErrors: realtimeScroll.diagnostics.consoleErrors,
       loadErrorConsoleErrors: loadError.diagnostics.consoleErrors,
       saveErrorConsoleErrors: saveError.diagnostics.consoleErrors,
     }, null, 2));

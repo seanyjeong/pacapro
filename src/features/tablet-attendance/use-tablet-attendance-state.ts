@@ -23,6 +23,10 @@ import {
 
 const DEFAULT_FILTERS: TabletAttendanceFilters = { query: '', status: 'all', studentType: 'all' };
 
+interface LoadScheduleOptions {
+  background?: boolean;
+}
+
 export function useTabletAttendanceState() {
   const [date, setDate] = useState(() => toLocalDateStr(new Date()));
   const [timeSlot, setTimeSlot] = useState<TimeSlot>('evening');
@@ -33,9 +37,11 @@ export function useTabletAttendanceState() {
   const [filters, setFilters] = useState<TabletAttendanceFilters>(DEFAULT_FILTERS);
   const [reasonState, setReasonState] = useState<TabletReasonState | null>(null);
 
-  const loadSchedule = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
+  const loadSchedule = useCallback(async ({ background = false }: LoadScheduleOptions = {}) => {
+    if (!background) {
+      setLoading(true);
+      setLoadError(null);
+    }
     try {
       const response = await schedulesApi.getSlotData(date, timeSlot, { suppressErrorToast: true });
       const nextSchedule = response.schedule as TabletAttendanceSchedule | null;
@@ -47,11 +53,14 @@ export function useTabletAttendanceState() {
           notes: student.notes ?? null,
         })),
       } : null);
+      setLoadError(null);
     } catch {
-      setSchedule(null);
-      setLoadError(TABLET_ATTENDANCE_MESSAGES.load);
+      if (!background) {
+        setSchedule(null);
+        setLoadError(TABLET_ATTENDANCE_MESSAGES.load);
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [date, timeSlot]);
 
@@ -62,7 +71,7 @@ export function useTabletAttendanceState() {
   useAttendanceRealtime({
     scheduleId: schedule?.id ?? null,
     onAttendanceUpdated: () => {
-      void loadSchedule();
+      void loadSchedule({ background: true });
     },
   });
 

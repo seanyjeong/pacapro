@@ -52,6 +52,45 @@ export async function createAuthedContext(browser, viewport, baseURL = DEFAULT_B
   return context;
 }
 
+export async function installFakeAttendanceSocket(context) {
+  await context.addInitScript(() => {
+    const sockets = [];
+
+    class SmokeWebSocket extends EventTarget {
+      static CONNECTING = 0;
+      static OPEN = 1;
+      static CLOSING = 2;
+      static CLOSED = 3;
+
+      constructor(url) {
+        super();
+        this.url = url;
+        this.readyState = SmokeWebSocket.OPEN;
+        sockets.push(this);
+        setTimeout(() => this.dispatchEvent(new Event('open')), 0);
+      }
+
+      send(data) {
+        this.lastSent = data;
+      }
+
+      close() {
+        this.readyState = SmokeWebSocket.CLOSED;
+        this.dispatchEvent(new CloseEvent('close'));
+      }
+    }
+
+    window.WebSocket = SmokeWebSocket;
+    window.__emitPacaAttendanceUpdate = (scheduleId) => {
+      sockets.forEach((socket) => {
+        socket.dispatchEvent(new MessageEvent('message', {
+          data: JSON.stringify({ type: 'attendance-updated', schedule_id: scheduleId }),
+        }));
+      });
+    };
+  });
+}
+
 export function isPacaApiRequest(url, baseURL = DEFAULT_BASE_URL) {
   const baseOrigin = new URL(baseURL).origin;
   return url.hostname === 'supermax.kr' || (
