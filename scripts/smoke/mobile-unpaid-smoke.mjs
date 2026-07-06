@@ -118,6 +118,25 @@ async function createMobilePage(browser, state) {
   return { context, page, diagnostics };
 }
 
+async function createStaffMobilePage(browser, state) {
+  const context = await createAuthedContext(browser, { width: 390, height: 844 });
+  await context.addInitScript(() => {
+    window.localStorage.setItem('user', JSON.stringify({
+      id: 21,
+      email: 'coach@example.com',
+      name: '김코치',
+      role: 'staff',
+      academy_id: 1,
+      academy: { id: 1, name: 'PACA 일산' },
+      permissions: { payments: { view: true, edit: false } },
+    }));
+  });
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  const diagnostics = createDiagnostics(page);
+  return { context, page, diagnostics };
+}
+
 async function gotoWorkspace(page) {
   for (let attempt = 1; attempt <= 2; attempt += 1) {
     await page.goto('/m/unpaid', { waitUntil: 'domcontentloaded' });
@@ -162,6 +181,7 @@ async function runNormal(browser) {
   await assertNoRawVisibleText(page, 'mobile unpaid normal');
   await assertNoHorizontalOverflow(page, 'mobile unpaid normal');
   await page.screenshot({ path: '/Users/etlab/paca-mobile-unpaid.png', fullPage: true });
+  assertDiagnostics('normal', diagnostics);
   await context.close();
   return { state, diagnostics };
 }
@@ -175,6 +195,7 @@ async function runLoadError(browser) {
   await assertNoRawVisibleText(page, 'mobile unpaid load error');
   await assertNoHorizontalOverflow(page, 'mobile unpaid load error');
   await page.screenshot({ path: '/Users/etlab/paca-mobile-unpaid-load-error.png', fullPage: true });
+  assertDiagnostics('load error', diagnostics);
   await context.close();
   return { state, diagnostics };
 }
@@ -190,13 +211,31 @@ async function runPayError(browser) {
   await page.getByText('납부 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'mobile unpaid pay error');
   await assertNoHorizontalOverflow(page, 'mobile unpaid pay error');
+  assertDiagnostics('pay error', diagnostics);
   await context.close();
   return { state, diagnostics };
 }
 
-function assertDiagnostics(result) {
-  const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
-  if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
+async function runStaffViewer(browser) {
+  const state = makeState();
+  const { context, page, diagnostics } = await createStaffMobilePage(browser, state);
+
+  await gotoWorkspace(page);
+  const workspace = page.getByTestId('mobile-unpaid-workspace');
+  const firstCard = workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '김민서' });
+  await firstCard.getByText('500,000원').waitFor();
+  await firstCard.getByText('010-3333-4444').waitFor();
+  await workspace.getByText('금액 숨김').waitFor({ state: 'detached' });
+  await assertNoRawVisibleText(page, 'mobile unpaid staff viewer');
+  await assertNoHorizontalOverflow(page, 'mobile unpaid staff viewer');
+  assertDiagnostics('staff viewer', diagnostics);
+  await context.close();
+  return { state, diagnostics };
+}
+
+function assertDiagnostics(label, diagnostics) {
+  const pageErrors = nonServiceWorkerErrors(diagnostics.pageErrors);
+  if (pageErrors.length > 0) throw new Error(`${label} unexpected page errors: ${pageErrors.join(' | ')}`);
 }
 
 async function main() {
@@ -205,13 +244,14 @@ async function main() {
     const normal = await runNormal(browser);
     const loadError = await runLoadError(browser);
     const payError = await runPayError(browser);
-    [normal, loadError, payError].forEach(assertDiagnostics);
+    const staffViewer = await runStaffViewer(browser);
     console.log(JSON.stringify({
       hits: normal.state.hits,
       payPayloads: normal.state.payPayloads,
       normalConsoleErrors: normal.diagnostics.consoleErrors,
       loadErrorConsoleErrors: loadError.diagnostics.consoleErrors,
       payErrorConsoleErrors: payError.diagnostics.consoleErrors,
+      staffViewerConsoleErrors: staffViewer.diagnostics.consoleErrors,
     }, null, 2));
   } finally {
     await browser.close();

@@ -64,7 +64,7 @@ export function MobileUnpaidCard({
             className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-sm font-medium text-zinc-700 transition active:scale-[0.98] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
           >
             <Phone className="mr-1.5 h-4 w-4" />
-            전화
+            <span className="truncate">{contactPhone}</span>
           </a>
         ) : (
           <Button type="button" variant="outline" className="h-11" onClick={() => onCall(payment)}>

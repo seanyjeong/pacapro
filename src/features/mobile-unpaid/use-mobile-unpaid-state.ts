@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { paymentsAPI } from '@/lib/api/payments';
 import type { UnpaidPayment } from '@/lib/types/payment';
-import { canEdit, canView, isOwner } from '@/lib/utils/permissions';
+import { canEdit, canView } from '@/lib/utils/permissions';
 import { MOBILE_UNPAID_MESSAGES } from './mobile-unpaid-constants';
 import type { MobileUnpaidPaymentMethod, MobileUnpaidPaySheetState } from './mobile-unpaid-types';
 import {
@@ -54,7 +54,7 @@ export function useMobileUnpaidState() {
       return;
     }
     setHasPermission(true);
-    setCanViewAmount(isOwner());
+    setCanViewAmount(canView('payments'));
     setCanMarkPaid(canEdit('payments'));
   }, [router]);
 

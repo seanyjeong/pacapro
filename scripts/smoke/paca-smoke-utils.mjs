@@ -1,8 +1,13 @@
 import { chromium } from 'playwright';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const packageJson = require('../../package.json');
 
 export const DEFAULT_BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
 export const DEFAULT_CHROME_PATH = process.env.PACA_SMOKE_CHROME ||
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const DEFAULT_APP_VERSION = process.env.PACA_SMOKE_APP_VERSION || packageJson.version;
 
 const RAW_VISIBLE_PATTERN = /(Failed to load|CORS|Axios|stack trace|DB timeout|HTTP\s*(400|401|403|404|500)|status\s*(400|401|403|404|500))/i;
 
@@ -37,8 +42,10 @@ export async function createAuthedContext(browser, viewport, baseURL = DEFAULT_B
   const context = await browser.newContext({ viewport, baseURL, serviceWorkers: 'block' });
   const authCookieUrl = new URL('/', baseURL).origin;
   await context.addCookies([{ name: 'paca_auth', value: '1', url: authCookieUrl }]);
-  await context.addInitScript(() => {
+  await context.addInitScript((appVersion) => {
     window.localStorage.setItem('token', 'smoke-token');
+    window.localStorage.setItem('app_version', appVersion);
+    window.sessionStorage.setItem('version_reload_attempt', appVersion);
     window.localStorage.setItem('user', JSON.stringify({
       id: 1,
       email: 'owner@example.com',
@@ -48,7 +55,7 @@ export async function createAuthedContext(browser, viewport, baseURL = DEFAULT_B
       academy: { id: 1, name: 'PACA 일산' },
       permissions: {},
     }));
-  });
+  }, DEFAULT_APP_VERSION);
   return context;
 }
 
