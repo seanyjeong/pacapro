@@ -1,7 +1,7 @@
 {
   "name": "paca-frontend",
-  "version": "4.0.20",
-  "lastUpdate": "2026-07-05",
+  "version": "4.0.21",
+  "lastUpdate": "2026-07-06",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
@@ -21,6 +21,7 @@
     "smoke:performance": "node scripts/smoke/performance-smoke.mjs",
     "smoke:reports": "node scripts/smoke/reports-smoke.mjs",
     "smoke:schedules": "node scripts/smoke/schedules-smoke.mjs",
+    "smoke:schedule-slot-scroll": "node scripts/smoke/schedule-slot-scroll-smoke.mjs",
     "smoke:schedules-layout": "node scripts/smoke/schedules-layout-smoke.mjs",
     "smoke:schedule-workspace": "node scripts/smoke/schedule-workspace-smoke.mjs",
     "smoke:attendance-checker": "node scripts/smoke/attendance-checker-smoke.mjs",

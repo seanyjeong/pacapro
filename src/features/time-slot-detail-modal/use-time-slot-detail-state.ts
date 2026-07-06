@@ -34,6 +34,10 @@ interface UseTimeSlotDetailStateOptions {
   onStudentMoved?: () => void;
 }
 
+interface LoadSlotDataOptions {
+  background?: boolean;
+}
+
 export function useTimeSlotDetailState({
   open,
   date,
@@ -56,21 +60,23 @@ export function useTimeSlotDetailState({
   const [isSearching, setIsSearching] = useState(false);
   const [isAddingStudent, setIsAddingStudent] = useState(false);
 
-  const loadSlotData = useCallback(async () => {
+  const loadSlotData = useCallback(async ({ background = false }: LoadSlotDataOptions = {}) => {
     if (!date || !timeSlot) return;
 
     try {
-      setLoading(true);
+      if (!background) setLoading(true);
       const response = await getSlotData(date, timeSlot);
       const studentList = response.schedule?.students || [];
       setStudents(studentList);
       setScheduleId(response.schedule?.id || null);
       setStudentAttendances(buildStudentAttendanceMap(studentList));
     } catch {
-      console.error('Failed to load slot data');
-      toast.error('시간대 학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      if (!background) {
+        console.error('Failed to load slot data');
+        toast.error('시간대 학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [date, timeSlot]);
 
@@ -106,7 +112,7 @@ export function useTimeSlotDetailState({
     scheduleId,
     enabled: open && Boolean(scheduleId),
     onAttendanceUpdated: () => {
-      void loadSlotData();
+      void loadSlotData({ background: true });
     },
   });
 
