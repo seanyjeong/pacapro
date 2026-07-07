@@ -14,7 +14,20 @@ function normalizeSchoolName(name) {
     .trim();
 }
 
+function normalizeStudentId(id) {
+  if (id === null || id === undefined) return '';
+  return String(id).trim();
+}
+
 function matchStudents(pacaStudent, jungsiStudents) {
+  const linkedStudentId = normalizeStudentId(pacaStudent.jungsiStudentId || pacaStudent.jungsi_student_id);
+  if (linkedStudentId) {
+    const linkedMatch = jungsiStudents.find((student) => (
+      normalizeStudentId(student.student_id || student.id) === linkedStudentId
+    ));
+    if (linkedMatch) return { match: linkedMatch, confidence: 'high', method: 'linked-id' };
+  }
+
   const pacaSchool = normalizeSchoolName(pacaStudent.school);
   const nameMatches = jungsiStudents.filter((student) => student.student_name === pacaStudent.name);
 
@@ -62,4 +75,5 @@ module.exports = {
   formatScores,
   matchStudents,
   normalizeSchoolName,
+  normalizeStudentId,
 };

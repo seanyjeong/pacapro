@@ -7,6 +7,7 @@ import apiClient, { type APIRequestConfig } from './client';
 import type {
   PaymentFormData,
   PaymentRecordData,
+  PaymentCancelData,
   BulkMonthlyChargeData,
   PaymentsResponse,
   PaymentDetailResponse,
@@ -97,6 +98,18 @@ export const paymentsAPI = {
     config?: APIRequestConfig
   ): Promise<PaymentUpdateResponse> => {
     return await apiClient.post<PaymentUpdateResponse>(`/payments/${id}/pay`, data, config);
+  },
+
+  /**
+   * 결제 취소
+   * POST /paca/payments/:id/cancel
+   */
+  cancelPayment: async (
+    id: number,
+    data: PaymentCancelData,
+    config?: APIRequestConfig
+  ): Promise<PaymentUpdateResponse> => {
+    return await apiClient.post<PaymentUpdateResponse>(`/payments/${id}/cancel`, data, config);
   },
 
   /**

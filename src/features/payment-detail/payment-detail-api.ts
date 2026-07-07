@@ -1,5 +1,12 @@
 import apiClient, { type APIRequestConfig } from '@/lib/api/client';
-import type { Payment, PaymentDetailResponse, PaymentRecordData, PaymentUpdateResponse, PaymentDeleteResponse } from '@/lib/types/payment';
+import type {
+  Payment,
+  PaymentCancelData,
+  PaymentDeleteResponse,
+  PaymentDetailResponse,
+  PaymentRecordData,
+  PaymentUpdateResponse,
+} from '@/lib/types/payment';
 
 const SILENT_CONFIG: APIRequestConfig = { suppressErrorToast: true };
 
@@ -11,6 +18,10 @@ export function getPaymentForDetail(id: number): Promise<PaymentDetailResponse> 
 
 export function recordPaymentForDetail(id: number, data: PaymentRecordData): Promise<PaymentUpdateResponse> {
   return apiClient.post<PaymentUpdateResponse>(`/payments/${id}/pay`, data, SILENT_CONFIG);
+}
+
+export function cancelPaymentForDetail(id: number, data: PaymentCancelData): Promise<PaymentUpdateResponse> {
+  return apiClient.post<PaymentUpdateResponse>(`/payments/${id}/cancel`, data, SILENT_CONFIG);
 }
 
 export function updatePaymentPaidDate(id: number, data: PaymentPaidDatePatch): Promise<PaymentUpdateResponse> {

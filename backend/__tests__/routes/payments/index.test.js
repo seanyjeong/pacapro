@@ -2,9 +2,9 @@
  * routes/payments/index.js 테스트 (Phase 3 #6, mount-only 진입점, ADR-017 자율 진행).
  *
  * 회귀 보호 범위 (lesson #186 / #200 / #205 패턴):
- *   - sub-라우터 7건 (bulk / prepaid / credits / stats / list / pay / crud) require 호출
+ *   - sub-라우터 8건 (bulk / prepaid / credits / stats / list / pay / cancel / crud) require 호출
  *   - 등록 순서 = 정적 → /:id 와일드카드 (express 라우트 매칭 의존)
- *       bulk → prepaid → credits → stats → list → pay → crud
+ *       bulk → prepaid → credits → stats → list → pay → cancel → crud
  *     credits / stats/summary / unpaid / unpaid-today 가 crud (/:id) 보다 먼저여야 함.
  *   - 동일 router 인스턴스 전달
  *   - app.use 마운트 호환
@@ -15,7 +15,7 @@
  */
 
 describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
-    let bulkMock, prepaidMock, creditsMock, statsMock, listMock, payMock, crudMock;
+    let bulkMock, prepaidMock, creditsMock, statsMock, listMock, payMock, cancelMock, crudMock;
     let mountModule;
 
     beforeEach(() => {
@@ -26,6 +26,7 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
             statsMock = jest.fn();
             listMock = jest.fn();
             payMock = jest.fn();
+            cancelMock = jest.fn();
             crudMock = jest.fn();
 
             jest.doMock('../../../routes/payments/bulk', () => bulkMock);
@@ -34,6 +35,7 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
             jest.doMock('../../../routes/payments/stats', () => statsMock);
             jest.doMock('../../../routes/payments/list', () => listMock);
             jest.doMock('../../../routes/payments/pay', () => payMock);
+            jest.doMock('../../../routes/payments/cancel', () => cancelMock);
             jest.doMock('../../../routes/payments/crud', () => crudMock);
 
             // _utils 모듈 로드 시 logger 등 회피
@@ -55,13 +57,14 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
         });
     });
 
-    test('sub-라우터 7건 모두 호출됨 + 동일 router 인스턴스 전달', () => {
+    test('sub-라우터 8건 모두 호출됨 + 동일 router 인스턴스 전달', () => {
         expect(bulkMock).toHaveBeenCalledTimes(1);
         expect(prepaidMock).toHaveBeenCalledTimes(1);
         expect(creditsMock).toHaveBeenCalledTimes(1);
         expect(statsMock).toHaveBeenCalledTimes(1);
         expect(listMock).toHaveBeenCalledTimes(1);
         expect(payMock).toHaveBeenCalledTimes(1);
+        expect(cancelMock).toHaveBeenCalledTimes(1);
         expect(crudMock).toHaveBeenCalledTimes(1);
 
         // 동일 router 인스턴스
@@ -71,6 +74,7 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
         expect(statsMock.mock.calls[0][0]).toBe(router);
         expect(listMock.mock.calls[0][0]).toBe(router);
         expect(payMock.mock.calls[0][0]).toBe(router);
+        expect(cancelMock.mock.calls[0][0]).toBe(router);
         expect(crudMock.mock.calls[0][0]).toBe(router);
     });
 
@@ -108,6 +112,7 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
         const idxStats = joined.indexOf("require('./stats')");
         const idxList = joined.indexOf("require('./list')");
         const idxPay = joined.indexOf("require('./pay')");
+        const idxCancel = joined.indexOf("require('./cancel')");
         const idxCrud = joined.indexOf("require('./crud')");
 
         // 모두 존재
@@ -117,15 +122,17 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
         expect(idxStats).toBeGreaterThan(-1);
         expect(idxList).toBeGreaterThan(-1);
         expect(idxPay).toBeGreaterThan(-1);
+        expect(idxCancel).toBeGreaterThan(-1);
         expect(idxCrud).toBeGreaterThan(-1);
 
-        // 등록 순서: bulk → prepaid → credits → stats → list → pay → crud
+        // 등록 순서: bulk → prepaid → credits → stats → list → pay → cancel → crud
         expect(idxBulk).toBeLessThan(idxPrepaid);
         expect(idxPrepaid).toBeLessThan(idxCredits);
         expect(idxCredits).toBeLessThan(idxStats);
         expect(idxStats).toBeLessThan(idxList);
         expect(idxList).toBeLessThan(idxPay);
-        expect(idxPay).toBeLessThan(idxCrud);
+        expect(idxPay).toBeLessThan(idxCancel);
+        expect(idxCancel).toBeLessThan(idxCrud);
 
         // 핵심: credits / stats / list 가 crud 보다 먼저
         // (credits / stats/summary / unpaid / unpaid-today 가 GET /:id 매칭으로 빠지면 안됨)

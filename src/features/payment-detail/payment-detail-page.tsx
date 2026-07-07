@@ -17,6 +17,7 @@ import type { PaymentRecordData } from '@/lib/types/payment';
 import { getPaidPaymentAmount } from '@/lib/utils/payment-helpers';
 import { isOwner, usePermissions } from '@/lib/utils/permissions';
 import { PaymentDetailAmountSection } from './payment-detail-amount-section';
+import { PaymentCancelModal } from './payment-cancel-modal';
 import { PaymentDetailError } from './payment-detail-error';
 import { PaymentDetailHeader } from './payment-detail-header';
 import { PaymentDetailLoading } from './payment-detail-loading';
@@ -30,6 +31,7 @@ export function PaymentDetailPage() {
   const router = useRouter();
   const paymentId = Number(params.id);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const state = usePaymentDetailState(paymentId);
   const { canEdit } = usePermissions();
   const canEditPayments = canEdit('payments');
@@ -49,15 +51,21 @@ export function PaymentDetailPage() {
     });
   };
 
+  const paidAmount = getPaidPaymentAmount(state.payment);
+  const canCancelPayment = canEditPayments && paidAmount > 0;
+
   return (
     <div className="mx-auto max-w-4xl space-y-4">
       <PaymentDetailHeader
         payment={state.payment}
         canEdit={canEditPayments}
         canDelete={canDeletePayments}
+        canCancel={canCancelPayment}
         deleting={state.deleting}
+        canceling={state.canceling}
         onBack={() => router.back()}
         onRecordPayment={() => state.setShowRecordModal(true)}
+        onCancelPayment={() => setCancelDialogOpen(true)}
         onEdit={() => router.push(`/payments/${paymentId}/edit`)}
         onDelete={() => setDeleteDialogOpen(true)}
       />
@@ -71,7 +79,15 @@ export function PaymentDetailPage() {
         onSubmit={submitRecordPayment}
         studentName={state.payment.student_name}
         finalAmount={state.payment.final_amount}
-        paidAmount={getPaidPaymentAmount(state.payment)}
+        paidAmount={paidAmount}
+      />
+      <PaymentCancelModal
+        isOpen={cancelDialogOpen}
+        onClose={() => setCancelDialogOpen(false)}
+        onSubmit={state.cancelPayment}
+        studentName={state.payment.student_name}
+        paidAmount={paidAmount}
+        canceling={state.canceling}
       />
       <AlertDialog
         open={deleteDialogOpen}

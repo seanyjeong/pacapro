@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import type { Payment, PaymentRecordData } from '@/lib/types/payment';
+import type { Payment, PaymentCancelData, PaymentRecordData } from '@/lib/types/payment';
 import {
+  cancelPaymentForDetail,
   deletePaymentForDetail,
   getPaymentForDetail,
   getPaymentFromResponse,
@@ -19,6 +20,7 @@ export function usePaymentDetailState(paymentId: number) {
   const [error, setError] = useState<string | null>(null);
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [canceling, setCanceling] = useState(false);
 
   const loadPayment = useCallback(async () => {
     if (!Number.isFinite(paymentId) || paymentId <= 0) {
@@ -65,6 +67,20 @@ export function usePaymentDetailState(paymentId: number) {
     }
   };
 
+  const cancelPayment = async (data: PaymentCancelData) => {
+    setCanceling(true);
+    try {
+      await cancelPaymentForDetail(paymentId, data);
+      toast.success('결제 취소가 기록되었습니다.');
+      await loadPayment();
+    } catch {
+      toast.error('결제 취소를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      throw new Error('payment cancel failed');
+    } finally {
+      setCanceling(false);
+    }
+  };
+
   const deletePayment = async (onDeleted: () => void) => {
     setDeleting(true);
     try {
@@ -84,9 +100,11 @@ export function usePaymentDetailState(paymentId: number) {
     error,
     showRecordModal,
     deleting,
+    canceling,
     setShowRecordModal,
     reload: loadPayment,
     recordPayment,
+    cancelPayment,
     updatePaidDate,
     deletePayment,
   };

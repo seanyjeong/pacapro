@@ -7,6 +7,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
 import { convertToTrialStudent, convertToPendingStudent } from '@/lib/api/consultations';
+import {
+  fetchJungsiLearningMockScores,
+  hasAnyLearningMockScore,
+  mergeMissingLearningMockScores,
+  parseLearningMockScores,
+  type LearningMockScores,
+} from '@/lib/api/jungsi-learning-scores';
+import { DEFAULT_CONSULTATION_CHECKLIST } from '@/lib/consultations/default-checklist';
 import type { Consultation, ChecklistItem, ChecklistTemplate } from '@/lib/types/consultation';
 import type {
   TrialDate,
@@ -18,24 +26,6 @@ import type {
 } from '../_types';
 
 const SILENT_CONFIG = { suppressErrorToast: true };
-
-// 기본 체크리스트 템플릿 (체대입시 특화)
-export const DEFAULT_CHECKLIST_TEMPLATE: ChecklistTemplate[] = [
-  { id: 1, category: '학생 배경', text: '타학원 경험 확인', input: { type: 'text', label: '학원명' } },
-  { id: 2, category: '학생 배경', text: '운동 경력 확인', inputs: [
-    { type: 'radio', label: '과거 선수 경험', options: ['있음', '없음'] },
-    { type: 'text', label: '종목' },
-  ]},
-  { id: 3, category: '학생 배경', text: '제멀 기록 확인 (학교 기록)', input: { type: 'text', label: '기록' } },
-  { id: 4, category: '체력 및 성향', text: '현재 체력 수준', input: { type: 'radio', label: '체력', options: ['상', '중', '하'] } },
-  { id: 5, category: '체력 및 성향', text: '성격/성향 파악', input: { type: 'radio', label: '성향', options: ['외향적', '내향적'] } },
-  { id: 6, category: '체력 및 성향', text: '기타 운동 종목', input: { type: 'text', label: '종목' } },
-  { id: 7, category: '안내 완료', text: '수시/정시 입시 설명' },
-  { id: 8, category: '안내 완료', text: '학원 커리큘럼 안내' },
-  { id: 9, category: '안내 완료', text: '수업료 안내' },
-  { id: 10, category: '안내 완료', text: '체험 수업 일정 협의' },
-  { id: 11, category: '안내 완료', text: '질의응답 완료' },
-];
 
 const INITIAL_LEARNING_FORM: LearningForm = {
   admissionType: 'early',
@@ -127,19 +117,28 @@ export function useTabletConduct(consultationId: string) {
             setLinkedStudent(null);
           }
 
+          let existing: PreviousTabletConsultation | undefined;
+          let savedMockScores: LearningMockScores | null = null;
           try {
             const prevData = await apiClient.get<{ consultations: PreviousTabletConsultation[] }>(`/student-consultations/${data.linked_student_id}`, SILENT_CONFIG);
-            const existing = (prevData.consultations || []).find(item => item.consultation_id === data.id);
+            existing = (prevData.consultations || []).find(item => item.consultation_id === data.id);
             if (existing) {
               setExistingStudentConsultationId(existing.id);
-              const mockScores = existing.mock_test_scores
-                ? (typeof existing.mock_test_scores === 'string' ? JSON.parse(existing.mock_test_scores) : existing.mock_test_scores)
-                : null;
-              setLearningForm(prev => ({
+              savedMockScores = parseLearningMockScores(existing.mock_test_scores);
+            }
+          } catch {
+            setExistingStudentConsultationId(null);
+          }
+
+          const jungsiMockScores = hasAnyLearningMockScore(savedMockScores)
+            ? null
+            : await fetchJungsiLearningMockScores(data.linked_student_id);
+          if (existing || jungsiMockScores) {
+            setLearningForm(prev => {
+              const next = existing ? {
                 ...prev,
                 admissionType: existing.admission_type || 'early',
                 schoolGradeAvg: existing.school_grade_avg ? String(existing.school_grade_avg) : '',
-                mockTestScores: mockScores || prev.mockTestScores,
                 academicMemo: existing.academic_memo || '',
                 physicalRecordType: existing.physical_record_type || 'latest',
                 physicalMemo: existing.physical_memo || '',
@@ -147,10 +146,18 @@ export function useTabletConduct(consultationId: string) {
                 targetUniversity2: existing.target_university_2 || '',
                 targetMemo: existing.target_memo || '',
                 generalMemo: existing.general_memo || '',
-              }));
-            }
-          } catch {
-            setExistingStudentConsultationId(null);
+              } : prev;
+              if (savedMockScores && hasAnyLearningMockScore(savedMockScores)) {
+                return { ...next, mockTestScores: savedMockScores };
+              }
+              if (jungsiMockScores) {
+                return {
+                  ...next,
+                  mockTestScores: mergeMissingLearningMockScores(next.mockTestScores, jungsiMockScores),
+                };
+              }
+              return next;
+            });
           }
 
           loadPeakRecords(data.linked_student_id);
@@ -162,7 +169,7 @@ export function useTabletConduct(consultationId: string) {
           } else {
             try {
               const settingsResponse = await apiClient.get<{ settings: { checklist_template?: ChecklistTemplate[] } }>('/consultations/settings/info', SILENT_CONFIG);
-              const template = settingsResponse.settings?.checklist_template || DEFAULT_CHECKLIST_TEMPLATE;
+              const template = settingsResponse.settings?.checklist_template || DEFAULT_CONSULTATION_CHECKLIST;
               setChecklist(template.map(item => ({
                 ...item,
                 checked: false,
@@ -170,7 +177,7 @@ export function useTabletConduct(consultationId: string) {
                 inputs: item.inputs?.map(inp => ({ ...inp, value: inp.value || '' })),
               })));
             } catch {
-              setChecklist(DEFAULT_CHECKLIST_TEMPLATE.map(item => ({
+              setChecklist(DEFAULT_CONSULTATION_CHECKLIST.map(item => ({
                 ...item,
                 checked: false,
                 input: item.input ? { ...item.input, value: '' } : undefined,

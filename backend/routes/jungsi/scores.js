@@ -28,7 +28,7 @@ module.exports = function registerScoresRoutes(router) {
       const { year = '2027' } = req.query;
       const exam = req.query.exam || getDefaultExam();
       const [students] = await db.query(
-        `SELECT id, name, school, grade, academy_id
+        `SELECT id, name, school, grade, academy_id, jungsi_student_id
          FROM students
          WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
         [studentId, academyId]
@@ -50,7 +50,12 @@ module.exports = function registerScoresRoutes(router) {
         });
       }
 
-      const pacaStudent = { name: decryptedName, school: student.school, grade: student.grade };
+      const pacaStudent = {
+        name: decryptedName,
+        school: student.school,
+        grade: student.grade,
+        jungsiStudentId: student.jungsi_student_id,
+      };
       const { match, confidence, method } = matchStudents(pacaStudent, jungsiStudents);
       if (!match) {
         return res.json({

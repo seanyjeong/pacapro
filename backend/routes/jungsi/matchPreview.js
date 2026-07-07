@@ -23,7 +23,7 @@ module.exports = function registerMatchPreviewRoutes(router) {
       const { year = '2027' } = req.query;
       const exam = req.query.exam || getDefaultExam();
       const [pacaStudents] = await db.query(
-        `SELECT id, name, school, grade
+        `SELECT id, name, school, grade, jungsi_student_id
          FROM students
          WHERE academy_id = ?
            AND status IN ('active', 'paused')
@@ -35,7 +35,12 @@ module.exports = function registerMatchPreviewRoutes(router) {
 
       const results = pacaStudents.map((student) => {
         const decryptedName = decrypt(student.name) || student.name;
-        const pacaStudent = { name: decryptedName, school: student.school, grade: student.grade };
+        const pacaStudent = {
+          name: decryptedName,
+          school: student.school,
+          grade: student.grade,
+          jungsiStudentId: student.jungsi_student_id,
+        };
         const { match, confidence, method } = matchStudents(pacaStudent, jungsiStudents);
         return {
           paca: { id: student.id, name: decryptedName, school: student.school, grade: student.grade },

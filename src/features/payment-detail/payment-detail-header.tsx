@@ -1,4 +1,4 @@
-import { ArrowLeft, CreditCard, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, CreditCard, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Payment } from '@/lib/types/payment';
 
@@ -6,14 +6,29 @@ interface PaymentDetailHeaderProps {
   payment: Payment;
   canEdit: boolean;
   canDelete: boolean;
+  canCancel: boolean;
   deleting: boolean;
+  canceling: boolean;
   onBack: () => void;
   onRecordPayment: () => void;
+  onCancelPayment: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export function PaymentDetailHeader({ payment, canEdit, canDelete, deleting, onBack, onRecordPayment, onEdit, onDelete }: PaymentDetailHeaderProps) {
+export function PaymentDetailHeader({
+  payment,
+  canEdit,
+  canDelete,
+  canCancel,
+  deleting,
+  canceling,
+  onBack,
+  onRecordPayment,
+  onCancelPayment,
+  onEdit,
+  onDelete,
+}: PaymentDetailHeaderProps) {
   return (
     <header className="flex flex-col gap-3 border-b border-border/70 pb-4 md:flex-row md:items-end md:justify-between">
       <div className="flex items-center gap-3">
@@ -30,6 +45,12 @@ export function PaymentDetailHeader({ payment, canEdit, canDelete, deleting, onB
           <Button type="button" onClick={onRecordPayment}>
             <CreditCard className="mr-2 h-4 w-4" />
             납부 기록
+          </Button>
+        ) : null}
+        {canCancel ? (
+          <Button type="button" variant="outline" onClick={onCancelPayment} disabled={canceling}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            {canceling ? '취소 처리 중' : '결제 취소'}
           </Button>
         ) : null}
         {canEdit ? (

@@ -57,6 +57,13 @@ export interface PaymentRecordData {
   discount_amount?: number; // 추가 할인 금액
 }
 
+// 결제 취소 DTO
+export interface PaymentCancelData {
+  cancel_amount: number;
+  cancel_reason: string;
+  cancel_date?: string; // 기본값은 오늘
+}
+
 // 일괄 청구 DTO
 export interface BulkMonthlyChargeData {
   year: number;

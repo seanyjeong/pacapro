@@ -100,4 +100,54 @@ describe('GET /paca/jungsi/scores/:studentId', () => {
     expect(jwt.verify(token, 'test-jungsi-secret').branch).toBe('일산');
     expect(callConfig.params).toEqual({ year: '2027', exam: '6월' });
   });
+
+  test('저장된 정시엔진 학생 ID가 있으면 이름 매칭보다 우선해 성적을 조회한다', async () => {
+    db.query
+      .mockResolvedValueOnce([[{
+        settings: JSON.stringify({ jungsiLink: { branchName: '일산', linkedAt: '2026-06-23T00:00:00.000Z' } }),
+      }]])
+      .mockResolvedValueOnce([[{
+        id: 7,
+        name: 'enc_김진우',
+        school: '일산고',
+        grade: '고3',
+        academy_id: 2,
+        jungsi_student_id: 88,
+      }]]);
+
+    axios.get.mockResolvedValueOnce({
+      data: {
+        success: true,
+        students: [
+          {
+            student_id: 77,
+            student_name: '김진우',
+            school_name: '일산고',
+            grade: '고3',
+            scores: { 국어_등급: '5' },
+          },
+          {
+            student_id: 88,
+            student_name: '정시엔진표기명',
+            school_name: '다른고',
+            grade: '고3',
+            scores: {
+              국어_등급: '1',
+              수학_등급: '2',
+              영어_등급: '3',
+            },
+          },
+        ],
+      },
+    });
+
+    const res = await request(makeApp()).get('/paca/jungsi/scores/7?exam=6%EC%9B%94');
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.matched).toBe(true);
+    expect(res.body.matchMethod).toBe('linked-id');
+    expect(res.body.student.jungsi.student_id).toBe(88);
+    expect(res.body.scores.국어.등급).toBe('1');
+  });
 });

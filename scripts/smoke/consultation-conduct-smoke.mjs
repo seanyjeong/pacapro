@@ -53,6 +53,27 @@ function makeChecklistTemplate() {
   ];
 }
 
+function makeJungsiScores(exam) {
+  const grades = {
+    '3월': ['2', '1', '1', '3', '4'],
+    '6월': ['3', '2', '1', '2', '3'],
+    '9월': ['1', '1', '2', '2', '2'],
+  }[exam] || ['-', '-', '-', '-', '-'];
+  return {
+    success: true,
+    matched: true,
+    scores: {
+      year: '2027',
+      exam,
+      국어: { 등급: grades[0] },
+      수학: { 등급: grades[1] },
+      영어: { 등급: grades[2] },
+      탐구1: { 등급: grades[3] },
+      탐구2: { 등급: grades[4] },
+    },
+  };
+}
+
 async function installRoutes(context, state) {
   await context.route('**/*', async (route) => {
     const request = route.request();
@@ -137,6 +158,10 @@ async function installRoutes(context, state) {
       });
     }
 
+    if (method === 'GET' && path.startsWith('/jungsi/scores/41')) {
+      return jsonRoute(route, makeJungsiScores(url.searchParams.get('exam') || '3월'));
+    }
+
     if (method === 'PUT' && path === '/consultations/510') {
       state.savePayload = JSON.parse(request.postData() || '{}');
       return jsonRoute(route, { message: 'saved' });
@@ -164,6 +189,22 @@ async function createConductPage(browser, mode = 'success', viewport = { width: 
   page.setDefaultTimeout(15000);
   const diagnostics = createDiagnostics(page);
   return { context, diagnostics, page, state };
+}
+
+async function waitForHit(state, expected) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if (state.hits.some((hit) => hit.includes(expected))) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`missing API hit containing ${expected}: ${state.hits.join(' | ')}`);
+}
+
+async function waitForInputValue(input, expected) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    if ((await input.inputValue()) === expected) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`input value mismatch: expected ${expected}, got ${await input.inputValue()}`);
 }
 
 async function runNewInquiry(browser) {
@@ -198,6 +239,12 @@ async function runLearning(browser) {
 
   await page.goto('/consultations/520/conduct', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: /재원생 상담/ }).waitFor();
+  await waitForHit(state, `/jungsi/scores/41?exam=${encodeURIComponent('3월')}`);
+  await waitForHit(state, `/jungsi/scores/41?exam=${encodeURIComponent('6월')}`);
+  await waitForHit(state, `/jungsi/scores/41?exam=${encodeURIComponent('9월')}`);
+  const marchInputs = page.locator('tr', { hasText: '3월' }).locator('input');
+  await waitForInputValue(marchInputs.nth(0), '2');
+  await waitForInputValue(marchInputs.nth(1), '1');
   await page.getByRole('button', { name: '실기 (P-EAK)' }).waitFor();
   await page.getByPlaceholder('학업 관련 메모...').fill('9월 모평 후 정시 전략 재점검');
   await page.getByRole('button', { name: '상담 기록 저장' }).click();
@@ -244,6 +291,7 @@ async function main() {
     [newInquiry, learning, loadError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       errorHits: loadError.state.hits,
+      learningHits: learning.state.hits,
       learningPayload: learning.state.studentConsultationPayload,
       newInquiryPayload: newInquiry.state.savePayload,
       newInquiryHits: newInquiry.state.hits,

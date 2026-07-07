@@ -87,6 +87,18 @@ async function installRoutes(context, state) {
       state.payment.payment_status = state.payment.paid_amount >= state.payment.final_amount ? 'paid' : 'partial';
       return jsonRoute(route, { message: 'paid', payment: state.payment });
     }
+    if (method === 'POST' && path === '/payments/301/cancel') {
+      const payload = request.postDataJSON();
+      state.cancelPayload = payload;
+      state.payment.paid_amount = Math.max(0, state.payment.paid_amount - payload.cancel_amount);
+      state.payment.payment_status = state.payment.paid_amount === 0 ? 'pending' : 'partial';
+      if (state.payment.paid_amount === 0) {
+        state.payment.paid_date = null;
+        state.payment.payment_method = null;
+      }
+      state.payment.notes = `${state.payment.notes}\n[납부취소] ${payload.cancel_date} ${payload.cancel_amount}원 취소 - ${payload.cancel_reason}`;
+      return jsonRoute(route, { message: '결제 취소가 기록되었습니다.', payment: state.payment });
+    }
     if (method === 'DELETE' && path === '/payments/301') {
       state.deleted = true;
       return jsonRoute(route, { message: 'deleted', payment: { id: 301, student_name: '박민수' } });
@@ -131,10 +143,27 @@ async function runNormal(browser) {
   await page.getByText('납부일이 수정되었습니다.').waitFor();
   if (state.putPayload?.paid_date !== '2026-06-20') throw new Error(`unexpected paid date payload ${JSON.stringify(state.putPayload)}`);
 
+  await page.getByRole('button', { name: '결제 취소' }).first().click();
+  await page.getByRole('dialog').getByRole('heading', { name: '결제 취소' }).waitFor();
+  const cancelAmountInput = page.getByLabel('취소 금액');
+  await cancelAmountInput.waitFor();
+  if ((await cancelAmountInput.inputValue()) !== '120,000') {
+    throw new Error(`initial cancel amount did not use paid amount: ${await cancelAmountInput.inputValue()}`);
+  }
+  await cancelAmountInput.fill('50000');
+  await page.getByLabel('취소일').fill('2026-07-07');
+  await page.getByLabel('취소 사유').fill('카드 승인 취소');
+  await page.getByRole('dialog').getByRole('button', { name: '결제 취소하기' }).click();
+  await page.getByText('결제 취소가 기록되었습니다.').waitFor();
+  if (state.cancelPayload?.cancel_amount !== 50000) throw new Error(`unexpected cancel payload ${JSON.stringify(state.cancelPayload)}`);
+  if (state.cancelPayload?.cancel_reason !== '카드 승인 취소') throw new Error(`unexpected cancel reason ${JSON.stringify(state.cancelPayload)}`);
+  await page.getByText('450,000원').first().waitFor();
+  await page.getByText('카드 승인 취소').waitFor();
+
   await page.getByRole('button', { name: '납부 기록' }).first().click();
   const paymentAmountInput = page.getByLabel('납부 금액');
   await paymentAmountInput.waitFor();
-  if ((await paymentAmountInput.inputValue()) !== '400,000') {
+  if ((await paymentAmountInput.inputValue()) !== '450,000') {
     throw new Error(`initial payment amount did not use remaining amount: ${await paymentAmountInput.inputValue()}`);
   }
   await paymentAmountInput.fill('100000');
@@ -142,10 +171,10 @@ async function runNormal(browser) {
   await page.getByText('납부가 기록되었습니다.').waitFor();
   if (state.payPayload?.paid_amount !== 100000) throw new Error(`unexpected payment payload ${JSON.stringify(state.payPayload)}`);
   if (state.payPayload?.payment_method !== 'account') throw new Error(`unexpected payment method ${JSON.stringify(state.payPayload)}`);
-  await page.getByText('300,000원').first().waitFor();
+  await page.getByText('350,000원').first().waitFor();
   await page.getByRole('button', { name: '납부 기록' }).first().click();
   await paymentAmountInput.waitFor();
-  if ((await paymentAmountInput.inputValue()) !== '300,000') {
+  if ((await paymentAmountInput.inputValue()) !== '350,000') {
     throw new Error(`reopened payment amount did not reset to remaining amount: ${await paymentAmountInput.inputValue()}`);
   }
   await page.getByRole('button', { name: '납부 기록 닫기' }).click();
@@ -203,6 +232,7 @@ async function main() {
     console.log(JSON.stringify({
       normalHits: normal.state.hits,
       putPayload: normal.state.putPayload,
+      cancelPayload: normal.state.cancelPayload,
       payPayload: normal.state.payPayload,
       deleted: normal.state.deleted,
       normalConsoleErrors: normal.diagnostics.consoleErrors,
