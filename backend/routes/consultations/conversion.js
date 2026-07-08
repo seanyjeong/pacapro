@@ -30,6 +30,18 @@
 
 const { pool, verifyToken, encrypt, logger, createPendingStudentFromConsultation } = require('./_utils');
 
+function parseTrialDates(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        logger.warn('체험 일정 파싱 실패:', error.message);
+        return [];
+    }
+}
+
 module.exports = function (router) {
     // ============================================
     // POST /paca/consultations/:id/convert-to-trial — 체험 학생 등록
@@ -59,6 +71,19 @@ module.exports = function (router) {
 
             // 이미 체험 학생으로 연결되어 있는지 확인
             if (consultation.linked_student_id) {
+                const [linkedStudents] = await pool.execute(
+                    `SELECT id, is_trial, trial_dates FROM students
+                     WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
+                    [consultation.linked_student_id, academyId]
+                );
+                const linkedStudent = linkedStudents[0];
+                if (linkedStudent && linkedStudent.is_trial) {
+                    return res.json({
+                        message: '이미 체험 학생으로 등록되어 있습니다.',
+                        studentId: linkedStudent.id,
+                        trialDates: parseTrialDates(linkedStudent.trial_dates)
+                    });
+                }
                 return res.status(400).json({ error: '이미 학생으로 등록되어 있습니다.' });
             }
 

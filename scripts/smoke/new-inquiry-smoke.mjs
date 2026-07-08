@@ -16,10 +16,11 @@ function makeState(mode) {
     directPayload: null,
     hits: [],
     mode,
+    trialPayload: null,
   };
 }
 
-function mockConsultation() {
+function mockConsultation(mode) {
   return {
     id: 11,
     academy_id: 1,
@@ -31,9 +32,10 @@ function mockConsultation() {
     student_grade: '고2',
     student_school: '일산고',
     gender: 'male',
-    preferred_date: TEST_DATE,
+    preferred_date: mode === 'trial-error' ? '2026-07-08' : TEST_DATE,
     preferred_time: '09:30',
-    status: 'pending',
+    status: mode === 'trial-error' ? 'completed' : 'pending',
+    matched_student_status: mode === 'trial-error' ? 'no_trial' : undefined,
     created_at: '2026-06-22T09:00:00.000Z',
     updated_at: '2026-06-22T09:00:00.000Z',
   };
@@ -81,9 +83,15 @@ async function installRoutes(context, state) {
       }
 
       return jsonRoute(route, {
-        consultations: [mockConsultation()],
+        consultations: [mockConsultation(state.mode)],
         pagination: { total: 1, page: 1, limit: 20, totalPages: 1 },
-        stats: { pending: 1, confirmed: 0, completed: 0, cancelled: 0, no_show: 0 },
+        stats: {
+          pending: state.mode === 'trial-error' ? 0 : 1,
+          confirmed: 0,
+          completed: state.mode === 'trial-error' ? 1 : 0,
+          cancelled: 0,
+          no_show: 0,
+        },
       });
     }
 
@@ -93,6 +101,11 @@ async function installRoutes(context, state) {
         return jsonRoute(route, { message: 'DB timeout' }, 500);
       }
       return jsonRoute(route, { message: 'created', id: 77 });
+    }
+
+    if (method === 'POST' && path === '/consultations/11/convert-to-trial') {
+      state.trialPayload = JSON.parse(request.postData() || '{}');
+      return jsonRoute(route, { error: '이미 학생으로 등록되어 있습니다.' }, 400);
     }
 
     return jsonRoute(route, { message: 'mocked' });
@@ -256,6 +269,32 @@ async function runCreateSaveError(browser) {
   return result;
 }
 
+async function runTrialRegisterError(browser) {
+  const result = await createNewInquiryPage(browser, 'trial-error');
+  const { context, page, state } = result;
+
+  await openNewInquiryPage(page);
+  await page.getByText('김진우').first().waitFor();
+  await page.getByText('김진우').first().locator('xpath=ancestor::div[contains(@class, "cursor-pointer")]').locator('button').last().click();
+  await page.getByText('체험등록', { exact: true }).click();
+  await page.getByRole('heading', { name: '체험 수업 일정 선택' }).waitFor();
+  await page.locator('input[type="date"]').last().fill('2026-06-25');
+  await page.getByText('시간대').click();
+  await page.getByText('오후', { exact: true }).click();
+  await page.getByRole('button', { name: '체험 등록' }).click();
+  await page.getByText('이미 학생으로 등록되어 있습니다.').waitFor({ timeout: 15000 });
+
+  if (!state.trialPayload) throw new Error('trial registration payload was not sent before error');
+  if (state.trialPayload.trialDates?.[0]?.timeSlot !== 'afternoon') {
+    throw new Error(`trial timeSlot mismatch: ${JSON.stringify(state.trialPayload)}`);
+  }
+
+  await assertNoRawVisibleText(page, 'new inquiry trial error');
+  await assertNoHorizontalOverflow(page, 'new inquiry trial error');
+  await context.close();
+  return result;
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -268,13 +307,16 @@ async function main() {
     const missingHours = await runMissingHours(browser);
     const createHappyPath = await runCreateHappyPath(browser);
     const createSaveError = await runCreateSaveError(browser);
-    [listError, missingHours, createHappyPath, createSaveError].forEach(assertDiagnostics);
+    const trialRegisterError = await runTrialRegisterError(browser);
+    [listError, missingHours, createHappyPath, createSaveError, trialRegisterError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       listErrorHits: listError.state.hits,
       missingHoursHits: missingHours.state.hits,
       createHits: createHappyPath.state.hits,
       saveErrorHits: createSaveError.state.hits,
+      trialErrorHits: trialRegisterError.state.hits,
       directPayload: createHappyPath.state.directPayload,
+      trialPayload: trialRegisterError.state.trialPayload,
     }, null, 2));
   } finally {
     await browser.close();

@@ -72,15 +72,39 @@ describe('POST /paca/consultations/:id/convert-to-trial', () => {
         expect(res.body.error).toBe('상담 신청을 찾을 수 없습니다.');
     });
 
-    test('이미 학생 연결됨 → 400', async () => {
-        pool.execute.mockResolvedValueOnce([[{
+    test('이미 일반 학생 연결됨 → 400', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{
             id: 5, linked_student_id: 100, student_name: 'enc:홍길동', preferred_date: '2026-05-10',
-        }]]);
+            }]])
+            .mockResolvedValueOnce([[{ id: 100, is_trial: 0, trial_dates: null }]]);
         const res = await request(makeApp())
             .post('/paca/consultations/5/convert-to-trial')
             .send({ trialDates: [{ date: '2026-05-10', timeSlot: '오전' }] });
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('이미 학생으로 등록되어 있습니다.');
+    });
+
+    test('이미 체험 학생 연결됨 → 재시도 성공 응답', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{
+                id: 5, linked_student_id: 101, student_name: 'enc:홍길동', preferred_date: '2026-05-10',
+            }]])
+            .mockResolvedValueOnce([[{
+                id: 101,
+                is_trial: 1,
+                trial_dates: '[{"date":"2026-05-10","time_slot":"morning","attended":false}]',
+            }]]);
+        const res = await request(makeApp())
+            .post('/paca/consultations/5/convert-to-trial')
+            .send({ trialDates: [{ date: '2026-05-10', timeSlot: '오전' }] });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({
+            message: '이미 체험 학생으로 등록되어 있습니다.',
+            studentId: 101,
+            trialDates: [{ date: '2026-05-10', time_slot: 'morning', attended: false }],
+        });
     });
 
     test('정상 → 201 학생 + 스케줄 자동 배정 + UPDATE consultation, 응답 { message, studentId, trialDates }', async () => {

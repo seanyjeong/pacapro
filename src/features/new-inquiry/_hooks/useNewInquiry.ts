@@ -10,13 +10,12 @@ import {
   createDirectConsultation, convertToTrialStudent, getBookedTimes,
   getConsultationSettings
 } from '@/lib/api/consultations';
+import { getConsultationErrorText, SILENT_CONFIG as QUIET_API } from '@/features/consultations/_hooks/consultation-error-utils';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 import type { WeeklyHour } from '@/lib/types/consultation';
 
 import type { TagFilter, CreateForm, EditStudentForm, CompletedStats, GroupedMonth } from '../_types';
 import { INITIAL_CREATE_FORM } from '../_types';
-
-const QUIET_API = { suppressErrorToast: true };
 
 export function useNewInquiry() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -275,7 +274,7 @@ export function useNewInquiry() {
       loadData();
     } catch (error) {
       console.error('체험 등록 오류:', error);
-      toast.error('체험생 등록에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error(getConsultationErrorText(error, '체험생 등록에 실패했습니다. 잠시 후 다시 시도해주세요.'));
     } finally {
       setConvertingToTrial(false);
     }
