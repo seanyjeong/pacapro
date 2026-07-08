@@ -10,6 +10,7 @@ import {
   calculateUnpaidStats,
   filterUnpaidPayments,
   getContactPhone,
+  getDisplayStudentName,
   getUnpaidAmount,
   toLocalDateStr,
 } from './mobile-unpaid-utils';
@@ -98,7 +99,7 @@ export function useMobileUnpaidState() {
         },
         { suppressErrorToast: true }
       );
-      toast.success(`${payment.student_name} 완납 처리되었습니다.`);
+      toast.success(`${getDisplayStudentName(payment)} 완납 처리되었습니다.`);
       setPaySheet(null);
       await loadPayments();
     } catch {

@@ -1,7 +1,7 @@
 import { Calendar, Phone, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { UnpaidPayment } from '@/lib/types/payment';
-import { formatAmount, getContactPhone, getOverdueTone, getUnpaidAmount } from './mobile-unpaid-utils';
+import { formatAmount, getContactPhone, getDisplayStudentName, getOverdueTone, getUnpaidAmount } from './mobile-unpaid-utils';
 
 interface MobileUnpaidCardProps {
   canMarkPaid: boolean;
@@ -21,6 +21,7 @@ export function MobileUnpaidCard({
   onPay,
 }: MobileUnpaidCardProps) {
   const contactPhone = getContactPhone(payment);
+  const studentName = getDisplayStudentName(payment);
   const daysOverdue = payment.days_overdue || 0;
   const overdueLabel = daysOverdue > 0 ? `${daysOverdue}일 연체` : '미납';
 
@@ -35,7 +36,7 @@ export function MobileUnpaidCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center justify-between gap-2">
-            <h2 className="truncate text-base font-semibold text-zinc-950 dark:text-zinc-50">{payment.student_name}</h2>
+            <h2 className="truncate text-base font-semibold text-zinc-950 dark:text-zinc-50">{studentName}</h2>
             {canViewAmount && (
               <span className="shrink-0 font-mono text-sm font-semibold text-rose-700 dark:text-rose-300">
                 {formatAmount(getUnpaidAmount(payment))}원
@@ -59,7 +60,7 @@ export function MobileUnpaidCard({
         {contactPhone ? (
           <a
             href={`tel:${contactPhone}`}
-            aria-label={`${payment.student_name} 보호자 전화`}
+            aria-label={`${studentName} 보호자 전화`}
             onClick={() => onCall(payment)}
             className="inline-flex h-11 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-50 text-sm font-medium text-zinc-700 transition active:scale-[0.98] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200"
           >

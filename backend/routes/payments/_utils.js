@@ -9,7 +9,7 @@
  *   - logger (utils/logger)
  *   - seasonCalculator 헬퍼 3종 (truncateToThousands / calculateProRatedFee / parseWeeklyDays)
  *   - calculateDueDate (utils/dueDateCalculator)
- *   - decryptStudentName / decryptPaymentArray — 학생 이름 복호화 헬퍼
+ *   - decryptPaymentIdentity / decryptPaymentArray — 학생 식별/연락처 복호화 헬퍼
  *   - calculateNonSeasonEndProrated — 비시즌 종강 일할 계산 헬퍼 (bulk + crud sub-라우터 공유)
  *
  * 보안 영역 (ADR-007) — 자동 변경 금지 영역:
@@ -33,30 +33,33 @@ const logger = require('../../utils/logger');
 const db = pool;
 
 // ============================================
-// 학생 이름 복호화 헬퍼 (ADR-007 — decrypt 호출만)
+// 학생 식별/연락처 복호화 헬퍼 (ADR-007 — decrypt 호출만)
 // ============================================
 
 /**
- * 결제 객체의 학생 이름 필드 (student_name / name) 를 복호화.
+ * 결제 객체의 학생 이름/연락처 필드를 복호화.
  * mutation 이 아니라 obj 자체를 변형 — 호출자가 spread/copy 책임.
  * @param {object|null} obj - 결제/학생 객체
  * @returns {object|null} 동일 obj (편의를 위해 반환)
  */
-function decryptStudentName(obj) {
+function decryptPaymentIdentity(obj) {
     if (!obj) return obj;
     if (obj.student_name) obj.student_name = decrypt(obj.student_name);
     if (obj.name) obj.name = decrypt(obj.name);
+    if (obj.phone) obj.phone = decrypt(obj.phone);
+    if (obj.parent_phone) obj.parent_phone = decrypt(obj.parent_phone);
+    if (obj.student_phone) obj.student_phone = decrypt(obj.student_phone);
     return obj;
 }
 
 /**
- * 결제 배열의 학생 이름 필드를 복호화.
+ * 결제 배열의 학생 이름/연락처 필드를 복호화.
  * spread copy 후 변형 — 원본 배열/항목 mutation 없음.
  * @param {Array<object>} arr - 결제 배열
  * @returns {Array<object>} 새 배열
  */
 function decryptPaymentArray(arr) {
-    return arr.map(item => decryptStudentName({ ...item }));
+    return arr.map(item => decryptPaymentIdentity({ ...item }));
 }
 
 // ============================================
@@ -177,7 +180,8 @@ module.exports = {
     parseWeeklyDays,
     calculateDueDate,
     logger,
-    decryptStudentName,
+    decryptPaymentIdentity,
+    decryptStudentName: decryptPaymentIdentity,
     decryptPaymentArray,
     calculateNonSeasonEndProrated,
 };

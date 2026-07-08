@@ -116,14 +116,23 @@ describe('GET /paca/payments', () => {
 });
 
 describe('GET /paca/payments/unpaid', () => {
-    test('200: { message, payments } + days_overdue 컬럼 SQL 포함', async () => {
+    test('200: { message, payments } + 학생 이름/연락처 복호화 + days_overdue 컬럼 SQL 포함', async () => {
         pool.execute.mockResolvedValueOnce([[
-            { id: 3, student_name: 'enc_박미납', days_overdue: 5, payment_status: 'pending' },
+            {
+                id: 3,
+                student_name: 'enc_박미납',
+                phone: 'enc_010-1111-2222',
+                parent_phone: 'enc_010-3333-4444',
+                days_overdue: 5,
+                payment_status: 'pending'
+            },
         ]]);
         const res = await request(makeApp()).get('/paca/payments/unpaid');
         expect(res.status).toBe(200);
         expect(res.body.message).toBe('Found 1 unpaid payments');
         expect(res.body.payments[0].student_name).toBe('박미납');
+        expect(res.body.payments[0].phone).toBe('010-1111-2222');
+        expect(res.body.payments[0].parent_phone).toBe('010-3333-4444');
         expect(res.body.payments[0].days_overdue).toBe(5);
 
         const [sql, params] = pool.execute.mock.calls[0];
@@ -146,14 +155,23 @@ describe('GET /paca/payments/unpaid', () => {
 });
 
 describe('GET /paca/payments/unpaid-today', () => {
-    test('200: { message, date, day_of_week, day_name, count, payments }', async () => {
+    test('200: { message, date, day_of_week, day_name, count, payments } + 학생 이름/연락처 복호화', async () => {
         pool.execute.mockResolvedValueOnce([[
-            { id: 4, student_name: 'enc_이학생', payment_status: 'pending', days_overdue: 2 },
+            {
+                id: 4,
+                student_name: 'enc_이학생',
+                phone: 'enc_010-2222-3333',
+                parent_phone: 'enc_010-4444-5555',
+                payment_status: 'pending',
+                days_overdue: 2
+            },
         ]]);
         const res = await request(makeApp()).get('/paca/payments/unpaid-today');
         expect(res.status).toBe(200);
         expect(res.body.count).toBe(1);
         expect(res.body.payments[0].student_name).toBe('이학생');
+        expect(res.body.payments[0].phone).toBe('010-2222-3333');
+        expect(res.body.payments[0].parent_phone).toBe('010-4444-5555');
         expect(['일', '월', '화', '수', '목', '금', '토']).toContain(res.body.day_name);
         expect(typeof res.body.date).toBe('string');
         expect(res.body.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);

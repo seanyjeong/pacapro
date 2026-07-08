@@ -40,8 +40,18 @@ export function getOverdueTone(daysOverdue: number) {
   return 'border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300';
 }
 
+export function isEncryptedValue(value: unknown) {
+  return typeof value === 'string' && /^ENC:/i.test(value.trim());
+}
+
+export function getDisplayStudentName(payment: UnpaidPayment) {
+  return isEncryptedValue(payment.student_name) || !payment.student_name ? '학생 정보 확인 필요' : payment.student_name;
+}
+
 export function getContactPhone(payment: UnpaidPayment) {
-  return payment.parent_phone || payment.phone || null;
+  if (payment.parent_phone && !isEncryptedValue(payment.parent_phone)) return payment.parent_phone;
+  if (payment.phone && !isEncryptedValue(payment.phone)) return payment.phone;
+  return null;
 }
 
 export function filterUnpaidPayments(payments: UnpaidPayment[], query: string) {
@@ -49,11 +59,10 @@ export function filterUnpaidPayments(payments: UnpaidPayment[], query: string) {
   if (!keyword) return payments;
   return payments.filter((payment) => {
     const haystack = [
-      payment.student_name,
+      getDisplayStudentName(payment),
       payment.student_number,
       payment.year_month,
-      payment.phone,
-      payment.parent_phone,
+      getContactPhone(payment),
     ]
       .filter(Boolean)
       .join(' ')

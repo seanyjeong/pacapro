@@ -2,7 +2,7 @@ import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MOBILE_UNPAID_PAYMENT_METHODS } from './mobile-unpaid-constants';
 import type { MobileUnpaidPaymentMethod, MobileUnpaidPaySheetState } from './mobile-unpaid-types';
-import { formatAmount, getUnpaidAmount } from './mobile-unpaid-utils';
+import { formatAmount, getDisplayStudentName, getUnpaidAmount } from './mobile-unpaid-utils';
 
 interface MobileUnpaidPaySheetProps {
   canViewAmount: boolean;
@@ -25,6 +25,7 @@ export function MobileUnpaidPaySheet({
 
   const { payment, method } = paySheet;
   const unpaidAmount = getUnpaidAmount(payment);
+  const studentName = getDisplayStudentName(payment);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end bg-zinc-950/45 px-3 pb-3" role="dialog" aria-modal="true" data-testid="mobile-unpaid-pay-sheet">
@@ -36,7 +37,7 @@ export function MobileUnpaidPaySheet({
           <div className="min-w-0 flex-1">
             <h2 className="text-base font-semibold text-zinc-950 dark:text-zinc-50">완납 처리</h2>
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-              {payment.student_name} · {payment.year_month}
+              {studentName} · {payment.year_month}
             </p>
           </div>
           {canViewAmount && (

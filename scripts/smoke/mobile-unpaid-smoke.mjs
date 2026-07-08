@@ -56,6 +56,26 @@ function makePayments() {
       days_overdue: 31,
       created_at: '2026-05-01T00:00:00Z',
     },
+    {
+      id: 703,
+      student_id: 103,
+      student_name: 'ENC:encrypted-name',
+      student_number: 'S-103',
+      year_month: '2026-07',
+      payment_type: 'monthly',
+      base_amount: 300000,
+      discount_amount: 0,
+      additional_amount: 0,
+      final_amount: 300000,
+      paid_amount: 0,
+      remaining_amount: 300000,
+      due_date: '2026-07-01',
+      payment_status: 'pending',
+      phone: 'ENC:encrypted-phone',
+      parent_phone: 'ENC:encrypted-parent-phone',
+      days_overdue: 1,
+      created_at: '2026-07-01T00:00:00Z',
+    },
   ];
 }
 
@@ -166,6 +186,8 @@ async function runNormal(browser) {
   await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '김민서' }).waitFor({ state: 'detached' });
   await workspace.getByLabel('미납 학생 검색').fill('');
   await workspace.getByRole('link', { name: '김민서 보호자 전화' }).waitFor();
+  await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '학생 정보 확인 필요' }).waitFor();
+  await page.getByText('ENC:').waitFor({ state: 'detached' });
   await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '김민서' }).getByRole('button', { name: '완납 처리' }).click();
   await page.getByTestId('mobile-unpaid-pay-sheet').waitFor();
   await page.getByRole('button', { name: '계좌' }).click();
