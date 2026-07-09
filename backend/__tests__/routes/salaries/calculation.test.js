@@ -32,6 +32,7 @@ jest.mock('../../../utils/encryption', () => ({
 }));
 jest.mock('../../../utils/salaryCalculator', () => ({
   calculateInstructorSalary: jest.fn(),
+  calculate4Insurance: jest.fn(),
 }));
 jest.mock('../../../utils/logger', () => ({
   info: jest.fn(),
@@ -43,7 +44,7 @@ const express = require('express');
 const request = require('supertest');
 const pool = require('../../../config/database');
 const { decrypt } = require('../../../utils/encryption');
-const { calculateInstructorSalary } = require('../../../utils/salaryCalculator');
+const { calculateInstructorSalary, calculate4Insurance } = require('../../../utils/salaryCalculator');
 
 function makeApp() {
   const app = express();
@@ -59,6 +60,7 @@ function resetMocks() {
   pool.query.mockReset();
   decrypt.mockClear();
   calculateInstructorSalary.mockReset();
+  calculate4Insurance.mockReset();
 }
 
 describe('POST /paca/salaries/calculate', () => {
@@ -105,7 +107,7 @@ describe('POST /paca/salaries/calculate', () => {
 
     // 시그니처 보존: (instructor, work_data, incentive, deduction)
     expect(calculateInstructorSalary).toHaveBeenCalledWith(
-      instructor, { days_worked: 22 }, 100000, 50000
+      instructor, { days_worked: 22, yearMonth: '2026-04' }, 100000, 50000
     );
   });
 
@@ -272,6 +274,48 @@ describe('POST /paca/salaries/:id/recalculate', () => {
     expect(updateCall[1][0]).toBe(110000); // base_amount
     expect(updateCall[1][1]).toBe('3.3%'); // tax_type
     expect(updateCall[1][2]).toBe(3630); // tax_amount
+    expect(updateCall[1][3]).toBeNull(); // insurance_details
+  });
+
+  test('insurance 정상 재계산 → 2026 계산 상세 저장', async () => {
+    const salaryRow = {
+      id: 11, instructor_id: 7, year_month: '2026-07', payment_status: 'pending',
+      base_amount: 0, incentive_amount: 100000, total_deduction: 0, tax_amount: 0,
+      salary_type: 'monthly',
+      hourly_rate: '0',
+      base_salary: '3000000',
+      instructor_tax_type: 'insurance',
+      morning_class_rate: '0', afternoon_class_rate: '0', evening_class_rate: '0',
+      academy_id: 1
+    };
+    const insuranceDetails = {
+      nationalPension: 147250,
+      healthInsurance: 111445,
+      longTermCare: 14640,
+      employmentInsurance: 27900,
+      totalDeduction: 301235,
+      netAmount: 2798760
+    };
+    pool.execute
+      .mockResolvedValueOnce([[salaryRow]])
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    calculate4Insurance.mockReturnValueOnce(insuranceDetails);
+
+    const res = await request(makeApp()).post('/paca/salaries/11/recalculate').send({});
+
+    expect(res.status).toBe(200);
+    expect(calculate4Insurance).toHaveBeenCalledWith(3100000, '2026-07');
+    expect(res.body.salary.tax_amount).toBe(301235);
+    expect(res.body.salary.net_salary).toBe(2798760);
+
+    const updateCall = pool.execute.mock.calls[2];
+    expect(updateCall[0]).toMatch(/insurance_details = \?/);
+    expect(updateCall[1][0]).toBe(3000000);
+    expect(updateCall[1][1]).toBe('insurance');
+    expect(updateCall[1][2]).toBe(301235);
+    expect(JSON.parse(updateCall[1][3])).toEqual(insuranceDetails);
+    expect(updateCall[1][4]).toBe(2798760);
   });
 
   test('5xx 에러 → 한국어 + e.message 누출 0건', async () => {

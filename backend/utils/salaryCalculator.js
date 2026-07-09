@@ -14,42 +14,7 @@
  * - none: 세금 없음
  */
 
-/**
- * 4대보험 요율 (2026년 기준)
- */
-const INSURANCE_RATES = {
-    // 국민연금: 4.75% (본인 부담) - 2026년 인상
-    nationalPension: {
-        employee: 0.0475,
-        employer: 0.0475,
-        total: 0.095
-    },
-
-    // 건강보험: 7.19% (본인 부담: 3.595%) - 2026년 인상
-    healthInsurance: {
-        employee: 0.03595,
-        employer: 0.03595,
-        total: 0.0719
-    },
-
-    // 장기요양보험: 건강보험료의 13.14% (2026년 기준)
-    // 계산식: 건강보험료 * (0.009448 / 0.0719), 원단위 절삭
-    longTermCare: {
-        rate: 0.009448 / 0.0719  // 건강보험료에 곱함
-    },
-
-    // 고용보험: 0.9% (본인 부담) - 동결
-    employmentInsurance: {
-        employee: 0.009,
-        employer: 0.009,
-        total: 0.018
-    },
-
-    // 산재보험: 업종별 상이 (학원업 평균 0.7%, 사업주 전액 부담)
-    industrialAccident: {
-        employer: 0.007
-    }
-};
+const { INSURANCE_RATES, calculate4Insurance } = require('./socialInsuranceCalculator');
 
 /**
  * 3.3% 세금 계산 (프리랜서)
@@ -67,77 +32,16 @@ function calculateTax33(grossAmount) {
 }
 
 /**
- * 4대보험 계산 (i-max 로직 정확히 적용)
- * @param {number} grossAmount - 총 지급액 (세전)
- * @returns {object} 4대보험 상세 내역
- */
-function calculate4Insurance(grossAmount) {
-    // 1. 국민연금 (본인 부담 4.5%)
-    const nationalPension = Math.floor(grossAmount * INSURANCE_RATES.nationalPension.employee);
-
-    // 2. 건강보험 (전체 7.09%, 본인 50%)
-    const totalHealthInsurance = grossAmount * INSURANCE_RATES.healthInsurance.total;
-    const healthInsurance = Math.floor(totalHealthInsurance * 0.5);
-
-    // 3. 장기요양보험 (건강보험료 기준, 원단위 절삭)
-    const longTermCareTotal = Math.floor(totalHealthInsurance * INSURANCE_RATES.longTermCare.rate / 10) * 10;
-    const longTermCare = Math.floor(longTermCareTotal * 0.5);
-
-    // 4. 고용보험 - 실업급여 (본인 부담 0.9%)
-    const employmentInsurance = Math.floor(grossAmount * INSURANCE_RATES.employmentInsurance.employee);
-
-    // 총 공제액 (근로자 부담)
-    const totalDeduction = nationalPension + healthInsurance + longTermCare + employmentInsurance;
-
-    // 실수령액 (10원 단위 이하 버림)
-    const netAmount = Math.floor((grossAmount - totalDeduction) / 10) * 10;
-
-    // 사업주 부담액 계산 (참고용)
-    const employerBurden = {
-        nationalPension: Math.floor(grossAmount * INSURANCE_RATES.nationalPension.employer),
-        healthInsurance: Math.floor(totalHealthInsurance * 0.5),
-        longTermCare: Math.floor(longTermCareTotal * 0.5),
-        employmentInsurance: Math.floor(grossAmount * INSURANCE_RATES.employmentInsurance.employer),
-        stability: Math.floor(grossAmount * 0.0025), // 고용안정/직업능력개발 0.25%
-        industrialAccident: Math.floor(grossAmount * INSURANCE_RATES.industrialAccident.employer)
-    };
-
-    const totalEmployerBurden =
-        employerBurden.nationalPension +
-        employerBurden.healthInsurance +
-        employerBurden.longTermCare +
-        employerBurden.employmentInsurance +
-        employerBurden.stability +
-        employerBurden.industrialAccident;
-
-    return {
-        nationalPension,
-        healthInsurance,
-        longTermCare,
-        employmentInsurance,
-        totalDeduction,
-        netAmount,
-        employerBurden,
-        totalEmployerBurden,
-        details: {
-            nationalPensionRate: INSURANCE_RATES.nationalPension.employee,
-            healthInsuranceRate: INSURANCE_RATES.healthInsurance.employee,
-            longTermCareRate: INSURANCE_RATES.longTermCare.rate,
-            employmentInsuranceRate: INSURANCE_RATES.employmentInsurance.employee
-        }
-    };
-}
-
-/**
  * 시급제 급여 계산
  * @param {number} hourlyRate - 시급
  * @param {number} totalHours - 총 근무 시간
  * @param {string} taxType - 세금 형태 (3.3%, insurance, none)
  * @param {number} bonus - 상여금 (선택)
  * @param {number} deduction - 공제액 (선택)
+ * @param {string} yearMonth - 급여월 (YYYY-MM)
  * @returns {object} 급여 상세 내역
  */
-function calculateHourlySalary(hourlyRate, totalHours, taxType, bonus = 0, deduction = 0) {
+function calculateHourlySalary(hourlyRate, totalHours, taxType, bonus = 0, deduction = 0, yearMonth) {
     const baseAmount = hourlyRate * totalHours;
     const grossAmount = baseAmount + bonus - deduction;
 
@@ -151,7 +55,7 @@ function calculateHourlySalary(hourlyRate, totalHours, taxType, bonus = 0, deduc
         taxAmount = result.tax;
         netAmount = result.netAmount;
     } else if (taxType === 'insurance') {
-        const result = calculate4Insurance(grossAmount);
+        const result = calculate4Insurance(grossAmount, yearMonth);
         insuranceAmount = result.totalDeduction;
         netAmount = result.netAmount;
         insuranceDetails = result;
@@ -182,9 +86,10 @@ function calculateHourlySalary(hourlyRate, totalHours, taxType, bonus = 0, deduc
  * @param {string} taxType - 세금 형태
  * @param {number} bonus - 상여금 (선택)
  * @param {number} deduction - 공제액 (선택)
+ * @param {string} yearMonth - 급여월 (YYYY-MM)
  * @returns {object} 급여 상세 내역
  */
-function calculatePerClassSalary(perClassRate, totalClasses, taxType, bonus = 0, deduction = 0) {
+function calculatePerClassSalary(perClassRate, totalClasses, taxType, bonus = 0, deduction = 0, yearMonth) {
     const baseAmount = perClassRate * totalClasses;
     const grossAmount = baseAmount + bonus - deduction;
 
@@ -198,7 +103,7 @@ function calculatePerClassSalary(perClassRate, totalClasses, taxType, bonus = 0,
         taxAmount = result.tax;
         netAmount = result.netAmount;
     } else if (taxType === 'insurance') {
-        const result = calculate4Insurance(grossAmount);
+        const result = calculate4Insurance(grossAmount, yearMonth);
         insuranceAmount = result.totalDeduction;
         netAmount = result.netAmount;
         insuranceDetails = result;
@@ -228,9 +133,10 @@ function calculatePerClassSalary(perClassRate, totalClasses, taxType, bonus = 0,
  * @param {string} taxType - 세금 형태
  * @param {number} bonus - 상여금 (선택)
  * @param {number} deduction - 공제액 (선택)
+ * @param {string} yearMonth - 급여월 (YYYY-MM)
  * @returns {object} 급여 상세 내역
  */
-function calculateMonthlySalary(monthlySalary, taxType, bonus = 0, deduction = 0) {
+function calculateMonthlySalary(monthlySalary, taxType, bonus = 0, deduction = 0, yearMonth) {
     const baseAmount = monthlySalary;
     const grossAmount = baseAmount + bonus - deduction;
 
@@ -244,7 +150,7 @@ function calculateMonthlySalary(monthlySalary, taxType, bonus = 0, deduction = 0
         taxAmount = result.tax;
         netAmount = result.netAmount;
     } else if (taxType === 'insurance') {
-        const result = calculate4Insurance(grossAmount);
+        const result = calculate4Insurance(grossAmount, yearMonth);
         insuranceAmount = result.totalDeduction;
         netAmount = result.netAmount;
         insuranceDetails = result;
@@ -277,24 +183,28 @@ function calculateMonthlySalary(monthlySalary, taxType, bonus = 0, deduction = 0
  */
 function calculateInstructorSalary(instructor, workData, bonus = 0, deduction = 0) {
     const { salary_type, hourly_rate, base_salary, tax_type } = instructor;
+    const calculationData = workData || {};
+    const yearMonth = calculationData.yearMonth || calculationData.year_month;
 
     switch (salary_type) {
         case 'hourly':
             return calculateHourlySalary(
                 hourly_rate || 0,
-                workData.totalHours || 0,
+                calculationData.totalHours || 0,
                 tax_type,
                 bonus,
-                deduction
+                deduction,
+                yearMonth
             );
 
         case 'per_class':
             return calculatePerClassSalary(
                 hourly_rate || 0,  // per_class도 hourly_rate 필드 사용
-                workData.totalClasses || 0,
+                calculationData.totalClasses || 0,
                 tax_type,
                 bonus,
-                deduction
+                deduction,
+                yearMonth
             );
 
         case 'monthly':
@@ -302,7 +212,8 @@ function calculateInstructorSalary(instructor, workData, bonus = 0, deduction = 
                 base_salary || 0,
                 tax_type,
                 bonus,
-                deduction
+                deduction,
+                yearMonth
             );
 
         default:
@@ -416,7 +327,7 @@ async function updateSalaryFromAttendance(db, instructorId, academyId, workDate,
         if (instructor.tax_type === '3.3%') {
             taxAmount = Math.round(baseAmount * 0.033);
         } else if (instructor.tax_type === 'insurance') {
-            const insurance = calculate4Insurance(baseAmount);
+            const insurance = calculate4Insurance(baseAmount, yearMonth);
             taxAmount = insurance.totalDeduction;
             insuranceDetails = insurance;
         }

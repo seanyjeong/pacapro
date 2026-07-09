@@ -23,7 +23,7 @@
  */
 const db = require('../../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
-const { calculateInstructorSalary } = require('../../utils/salaryCalculator');
+const { calculateInstructorSalary, calculate4Insurance } = require('../../utils/salaryCalculator');
 const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
 
@@ -52,6 +52,7 @@ module.exports = {
     requireRole,
     checkPermission,
     calculateInstructorSalary,
+    calculate4Insurance,
     decrypt,
     logger,
     decryptInstructorName,

@@ -77,7 +77,7 @@ describe('POST /paca/consultations/:id/convert-to-trial', () => {
             .mockResolvedValueOnce([[{
             id: 5, linked_student_id: 100, student_name: 'enc:홍길동', preferred_date: '2026-05-10',
             }]])
-            .mockResolvedValueOnce([[{ id: 100, is_trial: 0, trial_dates: null }]]);
+            .mockResolvedValueOnce([[{ id: 100, status: 'active', is_trial: 0, trial_dates: null }]]);
         const res = await request(makeApp())
             .post('/paca/consultations/5/convert-to-trial')
             .send({ trialDates: [{ date: '2026-05-10', timeSlot: '오전' }] });
@@ -105,6 +105,42 @@ describe('POST /paca/consultations/:id/convert-to-trial', () => {
             studentId: 101,
             trialDates: [{ date: '2026-05-10', time_slot: 'morning', attended: false }],
         });
+    });
+
+    test('자동 생성된 pending 학생 연결됨 → 기존 학생을 체험생으로 전환', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{
+                id: 5,
+                linked_student_id: 100,
+                student_name: 'enc:홍길동',
+                preferred_date: '2026-05-10',
+            }]])
+            .mockResolvedValueOnce([[{ id: 100, status: 'pending', is_trial: 0, trial_dates: null }]])
+            .mockResolvedValueOnce([{}]) // UPDATE existing pending student
+            .mockResolvedValueOnce([[]]) // SELECT class_schedules
+            .mockResolvedValueOnce([{ insertId: 300 }]) // INSERT class_schedules
+            .mockResolvedValueOnce([{}]) // INSERT attendance
+            .mockResolvedValueOnce([{}]); // UPDATE consultations
+
+        const res = await request(makeApp())
+            .post('/paca/consultations/5/convert-to-trial')
+            .send({ trialDates: [{ date: '2026-05-10', timeSlot: '오전' }] });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({
+            message: '체험 학생으로 등록되었습니다.',
+            studentId: 100,
+            trialDates: [{ date: '2026-05-10', time_slot: 'morning', attended: false }],
+        });
+        expect(pool.execute.mock.calls[2][0]).toContain('UPDATE students');
+        expect(pool.execute.mock.calls[2][1]).toEqual([
+            1,
+            1,
+            JSON.stringify([{ date: '2026-05-10', time_slot: 'morning', attended: false }]),
+            100,
+            1,
+        ]);
+        expect(pool.query).not.toHaveBeenCalled();
     });
 
     test('정상 → 201 학생 + 스케줄 자동 배정 + UPDATE consultation, 응답 { message, studentId, trialDates }', async () => {

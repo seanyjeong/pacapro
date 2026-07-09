@@ -45,6 +45,13 @@ interface AttendanceSummary {
   daily_breakdown: Record<string, DailyBreakdown>;
 }
 
+interface InsuranceDetails {
+  nationalPension?: number;
+  healthInsurance?: number;
+  longTermCare?: number;
+  employmentInsurance?: number;
+}
+
 export interface SalaryWithAttendance {
   salary: ExtendedSalary;
   attendance_summary?: AttendanceSummary | null;
@@ -65,7 +72,7 @@ function createSalaryTemplate(data: SalaryWithAttendance, academyName: string = 
   const eveningRate = parseFloat(String(salary.evening_class_rate)) || 0;
 
   // 4대보험 상세 내역 파싱
-  let insuranceDetails: any = null;
+  let insuranceDetails: InsuranceDetails | null = null;
   if ((salary.tax_type === 'insurance' || salary.tax_type === 'freelancer') && salary.insurance_details) {
     try {
       insuranceDetails = typeof salary.insurance_details === 'string'
@@ -146,15 +153,15 @@ function createSalaryTemplate(data: SalaryWithAttendance, academyName: string = 
         </div>
         <div style="padding-left: 16px; background-color: #FEF2F2; border-radius: 4px; padding: 8px;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-            <span style="color: #6B7280; font-size: 12px;">국민연금 (4.5%)</span>
+            <span style="color: #6B7280; font-size: 12px;">국민연금 (4.75%)</span>
             <span style="color: #DC2626; font-size: 12px;">${formatCurrency(insuranceDetails.nationalPension || 0)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-            <span style="color: #6B7280; font-size: 12px;">건강보험 (3.545%)</span>
+            <span style="color: #6B7280; font-size: 12px;">건강보험 (3.595%)</span>
             <span style="color: #DC2626; font-size: 12px;">${formatCurrency(insuranceDetails.healthInsurance || 0)}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-            <span style="color: #6B7280; font-size: 12px;">장기요양보험</span>
+            <span style="color: #6B7280; font-size: 12px;">장기요양보험 (건보료의 13.14%)</span>
             <span style="color: #DC2626; font-size: 12px;">${formatCurrency(insuranceDetails.longTermCare || 0)}</span>
           </div>
           <div style="display: flex; justify-content: space-between;">

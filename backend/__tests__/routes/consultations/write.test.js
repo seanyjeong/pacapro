@@ -143,7 +143,7 @@ describe('PUT /paca/consultations/:id', () => {
         expect(pool.execute).toHaveBeenCalledTimes(2);
     });
 
-    test('completed 전환 + 학생 미연결 신규상담 → 미등록관리(pending) 학생 자동 생성', async () => {
+    test('completed 전환 + 학생 미연결 신규상담 → 상담 상태만 저장하고 학생 자동 생성 X', async () => {
         pool.execute
             .mockResolvedValueOnce([[{
                 id: 5, academy_id: 1, status: 'confirmed', linked_student_id: null,
@@ -153,21 +153,15 @@ describe('PUT /paca/consultations/:id', () => {
                 student_grade: 'high3', student_school: '행신고', gender: 'male',
                 inquiry_content: '문의내용', consultation_memo: null,
             }]]) // SELECT existing
-            .mockResolvedValueOnce([{}]) // UPDATE consultations (status)
-            .mockResolvedValueOnce([{ insertId: 77 }]) // INSERT students (pending)
-            .mockResolvedValueOnce([{}]); // UPDATE consultations (completed + link)
+            .mockResolvedValueOnce([{}]); // UPDATE consultations (status)
 
         const res = await request(makeApp())
             .put('/paca/consultations/5')
             .send({ status: 'completed' });
 
         expect(res.status).toBe(200);
-        expect(pool.execute).toHaveBeenCalledTimes(4);
-        const insertCall = pool.execute.mock.calls[2];
-        expect(insertCall[0]).toContain('INSERT INTO students');
-        expect(insertCall[0]).toContain("'pending'");
-        const linkCall = pool.execute.mock.calls[3];
-        expect(linkCall[1]).toEqual([77, 5]);
+        expect(pool.execute).toHaveBeenCalledTimes(2);
+        expect(pool.execute.mock.calls.some((call) => call[0].includes('INSERT INTO students'))).toBe(false);
     });
 
     test('completed 전환이지만 이미 학생 연결됨 → 자동 생성 X', async () => {

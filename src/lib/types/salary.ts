@@ -67,6 +67,7 @@ export interface SalaryCalculationResult {
   tax_type: TaxType;
   tax_amount: number;
   insurance_amount: number;
+  insurance_details?: object;
   total_deduction: number;
   net_salary: number; // 실수령액
   breakdown: {
@@ -160,10 +161,10 @@ export const PAYMENT_STATUS_OPTIONS = [
 ];
 
 // 세율 상수 (2026년 기준)
-// 4대보험 근로자 부담: 국민연금 4.75% + 건강보험 3.595% + 장기요양 0.47% + 고용보험 0.9% ≈ 9.72%
+// 4대보험 단순 표시용 근사치입니다. 실제 계산은 salary-helpers의 항목별 계산기를 사용합니다.
 export const TAX_RATES: Record<string, number> = {
   '3.3%': 0.033,
-  'insurance': 0.0972, // 2026년 4대보험 근로자 부담 합계
+  'insurance': 0.0972,
   'none': 0,
   // 레거시 호환
   resident: 0.033,

@@ -42,6 +42,36 @@ function parseTrialDates(value) {
     }
 }
 
+async function assignTrialSchedules(studentId, academyId, trialDatesJson) {
+    for (const trialDate of trialDatesJson) {
+        const { date, time_slot } = trialDate;
+        if (!date || !time_slot) continue;
+
+        const [schedules] = await pool.execute(
+            `SELECT id FROM class_schedules WHERE academy_id = ? AND class_date = ? AND time_slot = ?`,
+            [academyId, date, time_slot]
+        );
+
+        let scheduleId;
+        if (schedules.length === 0) {
+            const [createResult] = await pool.execute(
+                `INSERT INTO class_schedules (academy_id, class_date, time_slot) VALUES (?, ?, ?)`,
+                [academyId, date, time_slot]
+            );
+            scheduleId = createResult.insertId;
+        } else {
+            scheduleId = schedules[0].id;
+        }
+
+        await pool.execute(
+            `INSERT INTO attendance (class_schedule_id, student_id, attendance_status)
+             VALUES (?, ?, NULL)
+             ON DUPLICATE KEY UPDATE attendance_status = attendance_status`,
+            [scheduleId, studentId]
+        );
+    }
+}
+
 module.exports = function (router) {
     // ============================================
     // POST /paca/consultations/:id/convert-to-trial — 체험 학생 등록
@@ -69,10 +99,20 @@ module.exports = function (router) {
 
             const consultation = consultations[0];
 
+            // 시간대 한글 → 영어 변환
+            const timeSlotMap = { '오전': 'morning', '오후': 'afternoon', '저녁': 'evening' };
+
+            // trial_dates JSON 구조 (time_slot 키 사용 - students.js 와 통일)
+            const trialDatesJson = trialDates.map((d) => ({
+                date: d.date,
+                time_slot: timeSlotMap[d.timeSlot] || d.timeSlot,
+                attended: false
+            }));
+
             // 이미 체험 학생으로 연결되어 있는지 확인
             if (consultation.linked_student_id) {
                 const [linkedStudents] = await pool.execute(
-                    `SELECT id, is_trial, trial_dates FROM students
+                    `SELECT id, status, is_trial, trial_dates FROM students
                      WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
                     [consultation.linked_student_id, academyId]
                 );
@@ -84,18 +124,37 @@ module.exports = function (router) {
                         trialDates: parseTrialDates(linkedStudent.trial_dates)
                     });
                 }
+                if (linkedStudent && linkedStudent.status === 'pending') {
+                    await pool.execute(
+                        `UPDATE students
+                            SET status = 'trial',
+                                is_trial = ?,
+                                trial_remaining = ?,
+                                trial_dates = ?,
+                                class_days = '[]',
+                                monthly_tuition = 0
+                          WHERE id = ? AND academy_id = ?`,
+                        [
+                            1,
+                            trialDatesJson.length,
+                            JSON.stringify(trialDatesJson),
+                            linkedStudent.id,
+                            academyId
+                        ]
+                    );
+                    await assignTrialSchedules(linkedStudent.id, academyId, trialDatesJson);
+                    await pool.execute(
+                        `UPDATE consultations SET status = 'confirmed', linked_student_id = ? WHERE id = ?`,
+                        [linkedStudent.id, id]
+                    );
+                    return res.json({
+                        message: '체험 학생으로 등록되었습니다.',
+                        studentId: linkedStudent.id,
+                        trialDates: trialDatesJson
+                    });
+                }
                 return res.status(400).json({ error: '이미 학생으로 등록되어 있습니다.' });
             }
-
-            // 시간대 한글 → 영어 변환
-            const timeSlotMap = { '오전': 'morning', '오후': 'afternoon', '저녁': 'evening' };
-
-            // trial_dates JSON 구조 (time_slot 키 사용 - students.js 와 통일)
-            const trialDatesJson = trialDates.map((d) => ({
-                date: d.date,
-                time_slot: timeSlotMap[d.timeSlot] || d.timeSlot,
-                attended: false
-            }));
 
             // 체험 학생 등록 (학생 전화번호 우선, 없으면 학부모 전화번호)
             const phone = studentPhone || consultation.parent_phone;
@@ -136,36 +195,7 @@ module.exports = function (router) {
             const studentId = studentResult.insertId;
 
             // 체험 일정을 스케줄에 자동 배정
-            for (const trialDate of trialDatesJson) {
-                const { date, time_slot } = trialDate;
-                if (!date || !time_slot) continue;
-
-                // 해당 날짜의 스케줄 찾기 또는 생성
-                const [schedules] = await pool.execute(
-                    `SELECT id FROM class_schedules WHERE academy_id = ? AND class_date = ? AND time_slot = ?`,
-                    [academyId, date, time_slot]
-                );
-
-                let scheduleId;
-                if (schedules.length === 0) {
-                    // 스케줄 없으면 생성
-                    const [createResult] = await pool.execute(
-                        `INSERT INTO class_schedules (academy_id, class_date, time_slot) VALUES (?, ?, ?)`,
-                        [academyId, date, time_slot]
-                    );
-                    scheduleId = createResult.insertId;
-                } else {
-                    scheduleId = schedules[0].id;
-                }
-
-                // 출석 레코드 생성
-                await pool.execute(
-                    `INSERT INTO attendance (class_schedule_id, student_id, attendance_status)
-                     VALUES (?, ?, NULL)
-                     ON DUPLICATE KEY UPDATE attendance_status = attendance_status`,
-                    [scheduleId, studentId]
-                );
-            }
+            await assignTrialSchedules(studentId, academyId, trialDatesJson);
 
             // 상담 상태 업데이트 (확정 상태 유지 + 학생 연결)
             // NOTE: 체험 등록 시 completed로 변경하면 다시 confirmed로 바꿀 때 알림톡 중복 발송됨

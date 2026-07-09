@@ -32,6 +32,7 @@ const {
     verifyToken,
     checkPermission,
     calculateInstructorSalary,
+    calculate4Insurance,
     decrypt,
     logger,
     timeSlotLabels,
@@ -69,7 +70,7 @@ module.exports = function(router) {
 
             const salaryData = calculateInstructorSalary(
                 instructor,
-                work_data || {},
+                { ...(work_data || {}), yearMonth: `${year}-${String(month).padStart(2, '0')}` },
                 incentive_amount || 0,
                 total_deduction || 0
             );
@@ -301,26 +302,35 @@ module.exports = function(router) {
 
             // 6. 세금 계산
             const taxType = salary.instructor_tax_type || 'none';
+            const incentiveAmount = parseFloat(salary.incentive_amount) || 0;
+            const totalDeduction = parseFloat(salary.total_deduction) || 0;
+            const taxableAmount = baseAmount + incentiveAmount - totalDeduction;
             let taxAmount = 0;
+            let insuranceDetails = null;
 
             if (taxType === '3.3%') {
                 taxAmount = Math.floor(baseAmount * 0.033);
             } else if (taxType === 'insurance') {
-                // 4대보험 (2026년): 9.72%
-                taxAmount = Math.floor(baseAmount * 0.0972);
+                insuranceDetails = calculate4Insurance(taxableAmount, salary.year_month);
+                taxAmount = insuranceDetails.totalDeduction;
             }
 
             // 7. 실수령액 계산 (10원 단위 이하 버림)
-            const incentiveAmount = parseFloat(salary.incentive_amount) || 0;
-            const totalDeduction = parseFloat(salary.total_deduction) || 0;
             const netSalary = Math.floor((baseAmount + incentiveAmount - totalDeduction - taxAmount) / 10) * 10;
 
             // 8. 급여 업데이트
             await pool.execute(
                 `UPDATE salary_records
-                 SET base_amount = ?, tax_type = ?, tax_amount = ?, net_salary = ?, updated_at = NOW()
+                 SET base_amount = ?, tax_type = ?, tax_amount = ?, insurance_details = ?, net_salary = ?, updated_at = NOW()
                  WHERE id = ?`,
-                [baseAmount, taxType, taxAmount, netSalary, salaryId]
+                [
+                    baseAmount,
+                    taxType,
+                    taxAmount,
+                    insuranceDetails ? JSON.stringify(insuranceDetails) : null,
+                    netSalary,
+                    salaryId
+                ]
             );
 
             const totalClasses = morningClasses + afternoonClasses + eveningClasses;

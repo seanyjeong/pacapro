@@ -40,13 +40,40 @@ describe('calculate4Insurance (4대보험)', () => {
         const result = calculate4Insurance(3000000);
 
         // 국민연금 4.75%
-        expect(result.nationalPension).toBe(Math.floor(3000000 * 0.0475));
+        expect(result.nationalPension).toBe(142500);
+        // 건강보험 3.595%
+        expect(result.healthInsurance).toBe(107850);
+        // 장기요양보험: 건강보험료 기준 2026년 비율 적용
+        expect(result.longTermCare).toBe(14170);
         // 고용보험 0.9%
-        expect(result.employmentInsurance).toBe(Math.floor(3000000 * 0.009));
+        expect(result.employmentInsurance).toBe(27000);
+        expect(result.totalDeduction).toBe(291520);
+        expect(result.netAmount).toBe(2708480);
         // 총 공제액 > 0
         expect(result.totalDeduction).toBeGreaterThan(0);
         // 실수령액 < 총액
         expect(result.netAmount).toBeLessThan(3000000);
+    });
+
+    test('2026년 7월부터 국민연금 기준소득월액 상한 659만원 적용', () => {
+        const result = calculate4Insurance(8000000, '2026-07');
+
+        expect(result.details.nationalPensionBase).toBe(6590000);
+        expect(result.nationalPension).toBe(313025);
+    });
+
+    test('2026년 6월까지 국민연금 기준소득월액 상한 637만원 적용', () => {
+        const result = calculate4Insurance(8000000, '2026-06');
+
+        expect(result.details.nationalPensionBase).toBe(6370000);
+        expect(result.nationalPension).toBe(302575);
+    });
+
+    test('2026년 7월부터 국민연금 기준소득월액 하한 41만원 적용', () => {
+        const result = calculate4Insurance(300000, '2026-07');
+
+        expect(result.details.nationalPensionBase).toBe(410000);
+        expect(result.nationalPension).toBe(19475);
     });
 
     test('공제 항목 합산 일치', () => {
@@ -70,6 +97,8 @@ describe('calculate4Insurance (4대보험)', () => {
     test('요율 정보 포함', () => {
         const result = calculate4Insurance(3000000);
         expect(result.details.nationalPensionRate).toBe(INSURANCE_RATES.nationalPension.employee);
+        expect(result.details.healthInsuranceRate).toBe(INSURANCE_RATES.healthInsurance.employee);
+        expect(result.details.employmentInsuranceRate).toBe(INSURANCE_RATES.employmentInsurance.employee);
     });
 });
 

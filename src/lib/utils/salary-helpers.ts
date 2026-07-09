@@ -6,6 +6,78 @@
 import type { Salary, SalaryCalculationResult } from '@/lib/types/salary';
 import { TAX_RATES } from '@/lib/types/salary';
 
+const NATIONAL_PENSION_LIMITS = [
+  { fromYearMonth: '2026-07', minimumMonthlyIncome: 410000, maximumMonthlyIncome: 6590000 },
+  { fromYearMonth: '2026-01', minimumMonthlyIncome: 400000, maximumMonthlyIncome: 6370000 },
+];
+
+export const SOCIAL_INSURANCE_RATES = {
+  nationalPension: { employee: 0.0475, employeeNumerator: 475, denominator: 10000 },
+  healthInsurance: { employee: 0.03595, total: 0.0719, totalNumerator: 719, denominator: 10000 },
+  longTermCare: {
+    premiumRate: 0.009448,
+    premiumNumerator: 9448,
+    premiumDenominator: 1000000,
+    healthPremiumRatio: 0.009448 / 0.0719,
+  },
+  employmentInsurance: { employee: 0.009, employeeNumerator: 9, denominator: 1000 },
+} as const;
+
+function normalizeYearMonth(yearMonth?: string): string {
+  return typeof yearMonth === 'string' && /^\d{4}-\d{2}$/.test(yearMonth)
+    ? yearMonth
+    : new Date().toISOString().slice(0, 7);
+}
+
+function getNationalPensionLimits(yearMonth?: string) {
+  const normalizedYearMonth = normalizeYearMonth(yearMonth);
+  return NATIONAL_PENSION_LIMITS.find((limits) => normalizedYearMonth >= limits.fromYearMonth)
+    || NATIONAL_PENSION_LIMITS[NATIONAL_PENSION_LIMITS.length - 1];
+}
+
+function clampNationalPensionBase(grossSalary: number, yearMonth?: string): number {
+  if (grossSalary <= 0) return 0;
+  const limits = getNationalPensionLimits(yearMonth);
+  return Math.min(Math.max(grossSalary, limits.minimumMonthlyIncome), limits.maximumMonthlyIncome);
+}
+
+export function calculateInsuranceDetails(grossSalary: number, yearMonth?: string) {
+  const amount = Number.isFinite(grossSalary) && grossSalary > 0 ? grossSalary : 0;
+  const nationalPensionBase = clampNationalPensionBase(amount, yearMonth);
+  const healthInsuranceTotal = Math.floor(
+    (amount * SOCIAL_INSURANCE_RATES.healthInsurance.totalNumerator)
+    / SOCIAL_INSURANCE_RATES.healthInsurance.denominator
+  );
+  const longTermCareTotal = Math.floor(
+    (amount * SOCIAL_INSURANCE_RATES.longTermCare.premiumNumerator)
+    / (SOCIAL_INSURANCE_RATES.longTermCare.premiumDenominator * 10)
+  ) * 10;
+  const nationalPension = Math.floor(
+    (nationalPensionBase * SOCIAL_INSURANCE_RATES.nationalPension.employeeNumerator)
+    / SOCIAL_INSURANCE_RATES.nationalPension.denominator
+  );
+  const healthInsurance = Math.floor(healthInsuranceTotal * 0.5);
+  const longTermCare = Math.floor(longTermCareTotal * 0.5);
+  const employmentInsurance = Math.floor(
+    (amount * SOCIAL_INSURANCE_RATES.employmentInsurance.employeeNumerator)
+    / SOCIAL_INSURANCE_RATES.employmentInsurance.denominator
+  );
+  const totalDeduction = nationalPension + healthInsurance + longTermCare + employmentInsurance;
+
+  return {
+    nationalPension,
+    healthInsurance,
+    longTermCare,
+    employmentInsurance,
+    totalDeduction,
+    details: {
+      nationalPensionBase,
+      nationalPensionMinimumBase: getNationalPensionLimits(yearMonth).minimumMonthlyIncome,
+      nationalPensionMaximumBase: getNationalPensionLimits(yearMonth).maximumMonthlyIncome,
+    },
+  };
+}
+
 /**
  * 금액을 천원 단위로 절삭 (백원 단위 버림)
  */
@@ -48,8 +120,13 @@ export function formatDate(dateString: string): string {
  */
 export function calculateTax(
   amount: number,
-  taxType: string
+  taxType: string,
+  yearMonth?: string
 ): number {
+  if (taxType === 'insurance' || taxType === 'freelancer') {
+    return calculateInsuranceDetails(amount, yearMonth).totalDeduction;
+  }
+
   const rate = TAX_RATES[taxType] || 0;
   return Math.floor(amount * rate);
 }
@@ -211,13 +288,7 @@ export function calculateDeductions(
 ): number {
   if (!includeInsurance) return 0;
 
-  // 2026년 4대보험 근로자 부담률
-  const nationalPension = grossSalary * 0.0475; // 국민연금 4.75% (2026년 인상)
-  const healthInsurance = grossSalary * 0.03595; // 건강보험 3.595%
-  const longTermCare = healthInsurance * 0.1314; // 장기요양보험 (건보료의 13.14%)
-  const employmentInsurance = grossSalary * 0.009; // 고용보험 0.9%
-
-  return Math.floor(nationalPension + healthInsurance + longTermCare + employmentInsurance);
+  return calculateInsuranceDetails(grossSalary).totalDeduction;
 }
 
 /**

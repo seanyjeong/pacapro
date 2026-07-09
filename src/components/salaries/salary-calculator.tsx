@@ -3,20 +3,26 @@
  * 급여 계산기 컴포넌트 - 출근 기록 기반 자동 계산
  */
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { salariesAPI, WorkSummaryResponse } from '@/lib/api/salaries';
 import type { SalaryCalculationResult, TaxType } from '@/lib/types/salary';
 import { TAX_TYPE_LABELS, SALARY_TYPE_LABELS } from '@/lib/types/instructor';
-import { formatSalaryAmount, calculateTax } from '@/lib/utils/salary-helpers';
+import { formatSalaryAmount, calculateInsuranceDetails, calculateTax } from '@/lib/utils/salary-helpers';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { MoneyInput } from '@/components/ui/money-input';
 
 interface SalaryCalculatorProps {
   instructors: Array<{ id: number; name: string; salary_type: string; hourly_rate?: string | number; base_salary?: string | number; tax_type?: string }>;
   onCalculated?: (result: SalaryCalculationResult, instructorId: number, yearMonth: string) => void;
+}
+
+function getApiErrorMessage(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object' || !('response' in error)) return undefined;
+  const response = (error as { response?: { data?: { message?: string } } }).response;
+  return response?.data?.message;
 }
 
 export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculatorProps) {
@@ -30,6 +36,23 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
   const [workSummary, setWorkSummary] = useState<WorkSummaryResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchWorkSummary = useCallback(async () => {
+    if (!instructorId || !yearMonth) return;
+
+    try {
+      setLoadingWorkData(true);
+      setError(null);
+      const data = await salariesAPI.getWorkSummary(instructorId, yearMonth);
+      setWorkSummary(data);
+    } catch (err: unknown) {
+      console.error('Failed to fetch work summary:', err);
+      setError(getApiErrorMessage(err) || '근무 기록을 불러오는데 실패했습니다.');
+      setWorkSummary(null);
+    } finally {
+      setLoadingWorkData(false);
+    }
+  }, [instructorId, yearMonth]);
+
   // 강사와 월이 선택되면 근무 기록 자동 조회
   useEffect(() => {
     if (instructorId && yearMonth) {
@@ -38,24 +61,7 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
       setWorkSummary(null);
       setResult(null);
     }
-  }, [instructorId, yearMonth]);
-
-  const fetchWorkSummary = async () => {
-    if (!instructorId || !yearMonth) return;
-
-    try {
-      setLoadingWorkData(true);
-      setError(null);
-      const data = await salariesAPI.getWorkSummary(instructorId, yearMonth);
-      setWorkSummary(data);
-    } catch (err: any) {
-      console.error('Failed to fetch work summary:', err);
-      setError(err.response?.data?.message || '근무 기록을 불러오는데 실패했습니다.');
-      setWorkSummary(null);
-    } finally {
-      setLoadingWorkData(false);
-    }
-  };
+  }, [fetchWorkSummary, instructorId, yearMonth]);
 
   const handleCalculate = async () => {
     if (!instructorId || !yearMonth) {
@@ -128,7 +134,10 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
 
       // 강사의 세금 타입으로 계산 (DB: '3.3%', 'insurance', 'none')
       const taxType = (instructor.tax_type || 'none') as TaxType;
-      const taxAmount = calculateTax(grossSalary, taxType);
+      const insuranceDetails = taxType === 'insurance' || taxType === 'freelancer'
+        ? calculateInsuranceDetails(grossSalary, yearMonth)
+        : null;
+      const taxAmount = insuranceDetails?.totalDeduction ?? calculateTax(grossSalary, taxType, yearMonth);
       const netSalary = grossSalary - taxAmount - deduction;
 
       const calculationResult: SalaryCalculationResult = {
@@ -137,7 +146,8 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
         gross_salary: Math.round(grossSalary),
         tax_type: taxType,
         tax_amount: Math.round(taxAmount),
-        insurance_amount: 0,
+        insurance_amount: insuranceDetails?.totalDeduction ?? 0,
+        insurance_details: insuranceDetails ?? undefined,
         total_deduction: deduction,
         net_salary: Math.round(netSalary),
         breakdown: {
@@ -164,8 +174,6 @@ export function SalaryCalculator({ instructors, onCalculated }: SalaryCalculator
       onCalculated(result, instructorId, yearMonth);
     }
   };
-
-  const selectedInstructor = instructors.find((i) => i.id === instructorId);
 
   return (
     <Card>

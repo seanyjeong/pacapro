@@ -10,12 +10,12 @@ const CLASS_RATE_FIELDS = [
   { label: '저녁', rateKey: 'evening_class_rate', countKey: 'evening_classes' },
 ] as const;
 
-const INSURANCE_LABELS: Record<string, string> = {
-  nationalPension: '국민연금',
-  healthInsurance: '건강보험',
-  longTermCare: '장기요양보험',
-  employmentInsurance: '고용보험',
-};
+const INSURANCE_FIELDS = [
+  { key: 'nationalPension', label: '국민연금' },
+  { key: 'healthInsurance', label: '건강보험' },
+  { key: 'longTermCare', label: '장기요양보험' },
+  { key: 'employmentInsurance', label: '고용보험' },
+] as const;
 
 interface SalaryCalculationSectionProps {
   salary: SalaryDetailWithRates;
@@ -162,10 +162,10 @@ function InsuranceDetails({ details, total }: { details: Record<string, number>;
         <span className="font-medium text-red-600">-{formatCurrency(total)}</span>
       </div>
       <div className="space-y-1 rounded-md bg-red-50 p-2 text-sm">
-        {Object.entries(details).map(([key, value]) => (
+        {INSURANCE_FIELDS.map(({ key, label }) => (
           <div key={key} className="flex justify-between">
-            <span className="text-muted-foreground">{INSURANCE_LABELS[key] || key}</span>
-            <span className="text-red-600">{formatCurrency(value)}</span>
+            <span className="text-muted-foreground">{label}</span>
+            <span className="text-red-600">{formatCurrency(details[key])}</span>
           </div>
         ))}
       </div>
