@@ -160,6 +160,17 @@ async function installRoutes(context, state) {
     if (method === 'GET' && path === '/salaries') {
       return jsonRoute(route, { message: 'ok', salaries: filterSalaries(state.salaries, url.searchParams) });
     }
+    if (method === 'GET' && path === '/exports/salaries') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers: {
+          'access-control-allow-origin': '*',
+          'content-disposition': "attachment; filename*=UTF-8''salary.xlsx",
+        },
+        body: Buffer.from([0x50, 0x4B, 0x03, 0x04, 0x00]),
+      });
+    }
     if (method === 'POST' && path === '/auth/verify-password') {
       state.verifyPayload = request.postDataJSON();
       return jsonRoute(route, { message: 'verified', verified: true });
@@ -220,6 +231,16 @@ async function runNormal(browser) {
   await board.getByRole('button', { name: '전체 2건' }).click();
   await waitForState(() => hasSalaryHit(state, defaultMonth), 'all salary filter');
   await page.locator('article:has-text("이코치")').waitFor();
+  await page.locator('header').getByRole('button', { name: '엑셀' }).click();
+  await waitForState(
+    () => state.hits.some((hit) =>
+      hit.includes('/exports/salaries') &&
+      hit.includes(`year=${defaultMonth.year}`) &&
+      hit.includes(`month=${defaultMonth.month}`) &&
+      !hit.includes('payment_status=')
+    ),
+    'all salary export'
+  );
 
   await page.getByRole('button', { name: '이전 월' }).click();
   await waitForState(() => hasSalaryHit(state, previousMonth), 'previous salary month');
@@ -240,6 +261,16 @@ async function runNormal(browser) {
   if (!state.hits.some((hit) => hit.includes('/salaries') && hit.includes('payment_status=paid'))) {
     throw new Error(`missing paid status request: ${state.hits.join(' | ')}`);
   }
+  await page.locator('header').getByRole('button', { name: '엑셀' }).click();
+  await waitForState(
+    () => state.hits.some((hit) =>
+      hit.includes('/exports/salaries') &&
+      hit.includes(`year=${defaultMonth.year}`) &&
+      hit.includes(`month=${defaultMonth.month}`) &&
+      hit.includes('payment_status=paid')
+    ),
+    'paid salary export'
+  );
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });

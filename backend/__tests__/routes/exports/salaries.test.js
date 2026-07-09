@@ -93,7 +93,30 @@ describe('GET /paca/exports/salaries', () => {
 
         await request(buildApp()).get('/paca/exports/salaries?payment_status=paid');
 
-        expect(pool.execute.mock.calls[1][0]).toMatch(/s\.payment_status = 'paid'/);
+        expect(pool.execute.mock.calls[1][0]).toMatch(/s\.payment_status = \?/);
+        expect(pool.execute.mock.calls[1][1]).toContain('paid');
+    });
+
+    test('payment_status=pending → statusFilter 적용', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ name: 'P-ACA', phone: '', address: '' }]])
+            .mockResolvedValueOnce([[]]);
+
+        await request(buildApp()).get('/paca/exports/salaries?payment_status=pending');
+
+        expect(pool.execute.mock.calls[1][0]).toMatch(/s\.payment_status = \?/);
+        expect(pool.execute.mock.calls[1][1]).toContain('pending');
+    });
+
+    test('payment_status 없으면 전체 급여를 내보낸다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ name: 'P-ACA', phone: '', address: '' }]])
+            .mockResolvedValueOnce([[]]);
+
+        await request(buildApp()).get('/paca/exports/salaries?year=2026&month=6');
+
+        expect(pool.execute.mock.calls[1][0]).not.toMatch(/s\.payment_status = \?/);
+        expect(pool.execute.mock.calls[1][1]).toEqual([1, '2026-06']);
     });
 
     test('5xx + 한국어 메시지 + e.message 누출 0건', async () => {

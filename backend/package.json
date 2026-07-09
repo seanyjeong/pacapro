@@ -1,6 +1,6 @@
 {
   "name": "p-aca-backend",
-  "version": "4.0.15",
+  "version": "4.0.16",
   "description": "P-ACA 체대입시 학원관리시스템 Backend API",
   "main": "paca.js",
   "scripts": {

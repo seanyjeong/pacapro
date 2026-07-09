@@ -44,8 +44,9 @@ module.exports = function(router) {
             }
 
             let statusFilter = '';
-            if (payment_status === 'paid') {
-                statusFilter = "AND s.payment_status = 'paid'";
+            if (payment_status === 'paid' || payment_status === 'pending') {
+                statusFilter = 'AND s.payment_status = ?';
+                params.push(payment_status);
             }
 
             // 학원 정보 조회

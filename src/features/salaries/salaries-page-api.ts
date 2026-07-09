@@ -42,7 +42,7 @@ export function downloadSalariesExcel(filters: SalaryFilters) {
   return exportsApi.downloadSalaries({
     year: filters.year,
     month: filters.month,
-    payment_status: 'paid',
+    payment_status: filters.payment_status,
   });
 }
 
