@@ -45,6 +45,15 @@ async function fetchJungsiStudents(branchName, year, exam) {
   return response.data?.success ? response.data.students || [] : [];
 }
 
+async function fetchJungsiBranches() {
+  const response = await axios.get(`${getJungsiApiBase()}/jungsi/admin/student-branches`, {
+    timeout: 5000,
+  });
+  return response.data?.success && Array.isArray(response.data.branches)
+    ? response.data.branches
+    : [];
+}
+
 async function checkJungsiHealth() {
   try {
     const response = await axios.get(`${getJungsiApiBase()}/jungsi/public/schools/2027`, {
@@ -59,6 +68,7 @@ async function checkJungsiHealth() {
 module.exports = {
   checkJungsiHealth,
   createServiceToken,
+  fetchJungsiBranches,
   fetchJungsiStudents,
   verifyJungsiLoginToken,
 };

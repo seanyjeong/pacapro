@@ -49,6 +49,9 @@ backend deployment, scheduler handoff, DB-primary changes, and bridge removal.
 - Target: Vultr PACA service directory after backup.
 - Preserve remote `.env*` files; do not copy env values into this repo or the
   map workspace.
+- MAX LINK family reads require a dedicated `MAXLINK_READ_API_KEY`. The same
+  value is configured as `PACA_SOURCE_API_KEY` only in the MAX LINK API. It is
+  accepted solely for the allowlisted academy-scoped GET routes.
 - Restart only the approved PACA systemd service after file parity proof.
 
 ## Scheduler

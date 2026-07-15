@@ -4,6 +4,7 @@ const router = express.Router();
 require('./academyLink')(router);
 require('./status')(router);
 require('./scores')(router);
+require('./familyScores')(router);
 require('./matchPreview')(router);
 require('./studentLink')(router);
 

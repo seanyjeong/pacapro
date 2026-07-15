@@ -4,6 +4,7 @@
 
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
+const { authenticateSourceReadRequest } = require('./sourceReadAuth');
 
 // 환경변수에서 시크릿 가져오기
 // 주의: 기본값 제거됨! env-validator.js에서 개발환경 기본값 설정됨
@@ -23,6 +24,12 @@ if (!PACA_NOTIFICATION_API_KEY) {
  */
 const verifyToken = async (req, res, next) => {
     try {
+        const sourceReadAccount = authenticateSourceReadRequest(req);
+        if (sourceReadAccount) {
+            req.user = sourceReadAccount;
+            return next();
+        }
+
         // Check for PACA internal automation API key first
         const apiKey = req.headers['x-api-key'];
         if (apiKey && PACA_NOTIFICATION_API_KEY && apiKey === PACA_NOTIFICATION_API_KEY) {
@@ -240,6 +247,10 @@ const checkPermission = (page, action) => {
                 error: 'Unauthorized',
                 message: '로그인이 필요합니다.'
             });
+        }
+
+        if (req.user.isSourceReadService && action === 'view') {
+            return next();
         }
 
         // owner는 모든 권한

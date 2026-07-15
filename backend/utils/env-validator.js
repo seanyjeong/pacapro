@@ -13,7 +13,10 @@ const REQUIRED_ENV = {
     JWT_SECRET: 'JWT 서명 키',
 
     // 내부 자동화
-    PACA_NOTIFICATION_API_KEY: 'PACA 내부 자동화 API 키'
+    PACA_NOTIFICATION_API_KEY: 'PACA 내부 자동화 API 키',
+
+    // 읽기 전용 서비스
+    MAXLINK_READ_API_KEY: 'MAX LINK 전용 읽기 키 (32자 이상)'
 };
 
 // 선택적 환경변수 (기본값 있음)
@@ -31,7 +34,8 @@ const DEV_DEFAULTS = {
     DB_PASSWORD: 'replace-with-local-db-password',
     DATA_ENCRYPTION_KEY: 'replace-with-local-32-byte-key',
     JWT_SECRET: 'replace-with-local-jwt-secret',
-    PACA_NOTIFICATION_API_KEY: 'replace-with-local-paca-notification-api-key'
+    PACA_NOTIFICATION_API_KEY: 'replace-with-local-paca-notification-api-key',
+    MAXLINK_READ_API_KEY: 'replace-with-local-maxlink-read-api-key'
 };
 
 /**
@@ -60,6 +64,11 @@ function validateEnv() {
                 missing.push(`${key}: ${desc}`);
             }
         }
+    }
+
+    if (process.env.MAXLINK_READ_API_KEY
+        && Buffer.byteLength(process.env.MAXLINK_READ_API_KEY, 'utf8') < 32) {
+        missing.push('MAXLINK_READ_API_KEY: MAX LINK 전용 읽기 키는 32자 이상이어야 합니다.');
     }
 
     // 선택적 환경변수 기본값 설정
