@@ -148,7 +148,8 @@ describe('POST /paca/notifications/test-sens-consultation', () => {
         const res = await request(buildApp()).post('/paca/notifications/test-sens-consultation').send({ phone: '010-1234-5678' });
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Send Failed');
-        expect(res.body.message).toContain('SENS_FAIL_AUTH');
+        expect(res.body.message).toContain('알림톡 연동 설정을 확인한 뒤 다시 시도해주세요');
+        expect(res.body.message).not.toContain('SENS_FAIL_AUTH');
         // 원본: SENS 분기는 details 미포함 (솔라피 분기와 다름)
         expect(res.body).not.toHaveProperty('details');
     });
@@ -298,14 +299,15 @@ describe('POST /paca/notifications/test-sens-reminder (응답 표면 다름)', (
 
         naverSens.sendAlimtalk.mockResolvedValueOnce({
             success: false,
-            message: 'SENS 리마인드 실패',
+            error: '허용되지 않은 IP(192.0.2.1)로 접근하고 있습니다.',
             details: { code: 'YYY' },
         });
 
         const res = await request(buildApp()).post('/paca/notifications/test-sens-reminder').send({ phone: '010-1234-5678' });
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Send Error');
-        expect(res.body.message).toBe('SENS 리마인드 실패');
+        expect(res.body.message).toContain('현재 서버가 허용되지 않았습니다');
+        expect(res.body.message).not.toContain('192.0.2.1');
         expect(res.body.details).toEqual({ code: 'YYY' });
     });
 });

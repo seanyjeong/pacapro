@@ -38,6 +38,7 @@ const {
     replaceTemplateVars,
     parseButtons,
     logSent,
+    getSendFailureMessage,
     respondSendFailed,
     respondServerError,
 } = require('./_utils');
@@ -333,7 +334,7 @@ module.exports = function (router) {
             } else {
                 res.status(400).json({
                     error: 'Send Error',
-                    message: result.message || '알림톡 발송에 실패했습니다.',
+                    message: getSendFailureMessage(result),
                     details: result.details,
                 });
             }

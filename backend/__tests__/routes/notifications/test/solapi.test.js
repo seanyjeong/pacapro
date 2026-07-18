@@ -157,7 +157,8 @@ describe('POST /paca/notifications/test-consultation (솔라피 상담확정)', 
         const res = await request(buildApp()).post('/paca/notifications/test-consultation').send({ phone: '010-1234-5678' });
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Send Failed');
-        expect(res.body.message).toContain('SOLAPI_FAIL');
+        expect(res.body.message).toContain('알림톡 연동 설정을 확인한 뒤 다시 시도해주세요');
+        expect(res.body.message).not.toContain('SOLAPI_FAIL');
         expect(res.body).toHaveProperty('details');
     });
 
@@ -320,14 +321,15 @@ describe('POST /paca/notifications/test-reminder (솔라피 리마인드 — 응
 
         solapi.sendAlimtalkSolapi.mockResolvedValueOnce({
             success: false,
-            message: '리마인드 API 실패',
+            error: '허용되지 않은 IP(192.0.2.1)로 접근하고 있습니다.',
             details: { code: 'XXX' },
         });
 
         const res = await request(buildApp()).post('/paca/notifications/test-reminder').send({ phone: '010-1234-5678' });
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Send Error'); // 원본: 'Send Error' (다른 endpoint 는 'Send Failed')
-        expect(res.body.message).toBe('리마인드 API 실패');
+        expect(res.body.message).toContain('현재 서버가 허용되지 않았습니다');
+        expect(res.body.message).not.toContain('192.0.2.1');
         expect(res.body.details).toEqual({ code: 'XXX' });
     });
 });

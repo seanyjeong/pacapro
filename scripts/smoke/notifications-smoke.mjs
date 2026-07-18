@@ -120,6 +120,7 @@ function makeState(mode = 'success') {
     mode,
     sensAttendancePayload: null,
     solapiAttendancePayload: null,
+    testErrorAuthHeader: null,
     unpaidPayload: null,
   };
 }
@@ -194,6 +195,13 @@ async function installRoutes(context, state) {
 
     if (method === 'POST' && path === '/notifications/test-sens-attendance') {
       state.sensAttendancePayload = JSON.parse(request.postData() || '{}');
+      if (state.mode === 'test-send-error') {
+        state.testErrorAuthHeader = request.headers().authorization;
+        return jsonRoute(route, {
+          error: 'Send Failed',
+          details: { errorMessage: '허용되지 않은 IP(192.0.2.1)로 접근하고 있습니다.' },
+        }, 400);
+      }
       return jsonRoute(route, { message: 'ok', success: true, requestId: 'sens-attendance-test-1' });
     }
 
@@ -415,6 +423,33 @@ async function runLoadError(browser) {
   return result;
 }
 
+async function runTestSendError(browser) {
+  const result = await createNotificationsPage(browser, { width: 390, height: 844 }, 'test-send-error');
+  const { context, page } = result;
+
+  await page.goto('/settings/notifications?service=sens&template=attendance', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: '출결관리 설정됨' }).click();
+  await page.getByLabel('SENS 출결 테스트 전화번호').fill('01055556666');
+  await page.getByRole('button', { name: '출결 테스트' }).click();
+  const errorMessage = page.getByText(
+    'SENS 출결관리 테스트 발송에 실패했습니다. 사유: 발송 서비스의 보안 설정에서 현재 서버가 허용되지 않았습니다. 알림톡 연동 서비스의 접속 허용 설정을 확인해주세요.'
+  );
+  await errorMessage.waitFor();
+  await errorMessage.scrollIntoViewIfNeeded();
+  if (result.state.testErrorAuthHeader !== 'Bearer smoke-token') {
+    throw new Error('notification test request did not include the auth header');
+  }
+  if (await page.getByText(/Send Failed|192\.0\.2\.1/).count()) {
+    throw new Error('notification test error exposed a raw provider status or server address');
+  }
+  await assertNoRawVisibleText(page, 'notifications test send error');
+  await assertNoHorizontalOverflow(page, 'notifications test send error');
+  await page.screenshot({ path: '/Users/etlab/paca-notifications-test-error-mobile.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -427,7 +462,8 @@ async function main() {
     const mobile = await runMobile(browser);
     const attendanceDeepLink = await runAttendanceDeepLink(browser);
     const loadError = await runLoadError(browser);
-    [desktop, mobile, attendanceDeepLink, loadError].forEach(assertDiagnostics);
+    const testSendError = await runTestSendError(browser);
+    [desktop, mobile, attendanceDeepLink, loadError, testSendError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       attendanceDeepLinkPayload: attendanceDeepLink.state.solapiAttendancePayload,
       desktopHits: desktop.state.hits,

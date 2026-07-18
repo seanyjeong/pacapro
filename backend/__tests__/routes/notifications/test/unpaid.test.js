@@ -225,8 +225,9 @@ describe('POST /paca/notifications/test (발송 실패 + 5xx)', () => {
 
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Send Failed');
-        expect(res.body.message).toContain('메시지 발송에 실패했습니다');
-        expect(res.body.message).toContain('NAVER_AUTH_FAIL');
+        expect(res.body.message).toContain('테스트 발송에 실패했습니다');
+        expect(res.body.message).toContain('알림톡 연동 설정을 확인한 뒤 다시 시도해주세요');
+        expect(res.body.message).not.toContain('NAVER_AUTH_FAIL');
         expect(res.body).toHaveProperty('details');
     });
 

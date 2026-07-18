@@ -300,9 +300,67 @@ async function logSent({ academyId, recipientName, recipientPhone, templateCode,
     );
 }
 
+const GENERIC_SEND_FAILURE_PATTERN =
+    /^(fail(?:ed|ure)?|send\s*(fail(?:ed|ure)?|error)|발송에 실패했습니다[.:]?|알림톡 발송에 실패했습니다[.:]?|메시지 발송에 실패했습니다[.:]?)$/i;
+const TECHNICAL_SEND_FAILURE_PATTERN =
+    /(Failed to load|CORS|Axios|stack trace|HTTP\s*\d{3}|status\s*\d{3}|\b(400|401|403|404|429|500)\b|ECONN|ETIMEDOUT|^[A-Z0-9]+(?:_[A-Z0-9]+)+$)/i;
+const FAILURE_DETAIL_KEYS = ['errorMessage', 'reason', 'message', 'details', 'error', 'description'];
+
+function collectFailureTexts(value, depth = 0) {
+    if (depth > 3 || value === null || value === undefined) return [];
+    if (typeof value === 'string') return [value.trim()].filter(Boolean);
+    if (typeof value !== 'object') return [];
+
+    const texts = [];
+    for (const key of FAILURE_DETAIL_KEYS) {
+        if (Object.prototype.hasOwnProperty.call(value, key)) {
+            texts.push(...collectFailureTexts(value[key], depth + 1));
+        }
+    }
+    return texts;
+}
+
+function normalizeFailureReason(text) {
+    if (!text || GENERIC_SEND_FAILURE_PATTERN.test(text)) return null;
+
+    if (/허용되지 않은\s*IP|forbidden/i.test(text)) {
+        return '발송 서비스의 보안 설정에서 현재 서버가 허용되지 않았습니다. 알림톡 연동 서비스의 접속 허용 설정을 확인해주세요.';
+    }
+    if (/[가-힣]/.test(text) && !TECHNICAL_SEND_FAILURE_PATTERN.test(text)) return text;
+    if (/template|템플릿/i.test(text)) {
+        return '알림톡 템플릿 설정이 올바르지 않습니다. 승인된 템플릿과 입력한 내용을 확인해주세요.';
+    }
+    if (/unauthori[sz]ed|authentication|api\s*key|secret|인증/i.test(text)) {
+        return '발송 서비스 인증 정보가 올바르지 않습니다. 알림톡 연동 설정을 다시 확인해주세요.';
+    }
+    if (/recipient|phone|수신|전화번호/i.test(text)) {
+        return '받는 전화번호가 올바르지 않습니다. 전화번호를 확인해주세요.';
+    }
+    if (/insufficient|balance|잔액/i.test(text)) {
+        return '발송 서비스 잔액이 부족합니다. 충전 상태를 확인해주세요.';
+    }
+    if (/timeout|network|연결/i.test(text)) {
+        return '발송 서비스에 일시적으로 연결하지 못했습니다. 잠시 후 다시 시도해주세요.';
+    }
+    return null;
+}
+
+function getSendFailureReason(result) {
+    const texts = collectFailureTexts(result);
+    for (const text of texts) {
+        const reason = normalizeFailureReason(text);
+        if (reason) return reason;
+    }
+    return '발송 서비스에서 요청을 처리하지 못했습니다. 알림톡 연동 설정을 확인한 뒤 다시 시도해주세요.';
+}
+
+function getSendFailureMessage(result) {
+    return `테스트 발송에 실패했습니다. 사유: ${getSendFailureReason(result)}`;
+}
+
 /**
  * 발송 실패 시 표준 400 응답 (원본 SENS sub-라우터 패턴).
- *  - 사용자 노출 메시지는 result.error 또는 한국어 fallback.
+ *  - 제공사 상세 사유를 안전한 한국어 안내로 변환한다.
  *  - details 필드는 SENS 테스트 분기에서는 없음, 솔라피 분기에서는 result 자체.
  *
  * @param {import('express').Response} res
@@ -313,11 +371,7 @@ async function logSent({ academyId, recipientName, recipientPhone, templateCode,
 function respondSendFailed(res, result, { includeDetails = false } = {}) {
     const body = {
         error: 'Send Failed',
-        message: result && result.error
-            ? '메시지 발송에 실패했습니다: ' + result.error
-            : (includeDetails
-                ? '메시지 발송에 실패했습니다: 알 수 없는 오류'
-                : '발송에 실패했습니다.'),
+        message: getSendFailureMessage(result),
     };
     if (includeDetails) body.details = result;
     res.status(400).json(body);
@@ -349,6 +403,8 @@ module.exports = {
     replaceTemplateVars,
     parseButtons,
     logSent,
+    getSendFailureReason,
+    getSendFailureMessage,
     respondSendFailed,
     respondServerError,
 };

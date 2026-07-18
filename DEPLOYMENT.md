@@ -17,9 +17,42 @@ https://supermax.kr/paca-health
 `chejump.com` is a legacy compatibility bridge only. Do not use it as a new
 frontend, backend, smoke, or env default.
 
-## Approval Gates
-Do not deploy or restart production paths until the approval-gated cutover
-command pack passes. The minimum local proof set is:
+## Scoped Hotfix Gate
+A PACA-only hotfix may use this gate instead of the full cutover gate when all
+of the following are true:
+
+- the diff changes PACA application code, tests, smoke scripts, or this runbook only;
+- no environment, dependency, auth middleware, scheduler, migration, database,
+  Caddy, domain/API base, Vercel, Next.js, or GitHub workflow file changes;
+- backend tests, lint, type checks, production build, and the relevant browser
+  smoke pass;
+- a Git rollback tag and a checksum-verified backup of every changed Vultr
+  runtime file exist before deployment;
+- `ET_ALLOW_PRODUCTION=1` has explicit approval in the active conversation.
+
+Run the executable scope gate and its tests before committing:
+
+```bash
+node --test scripts/release/hotfix-scope.test.mjs
+node scripts/release/hotfix-preflight.mjs
+cd backend && npm run test:ci
+cd .. && npm run lint && npm run build
+```
+
+The hotfix gate must score `100/100`. After committing, rerun it with the
+rollback tag as `--base`. Deploy only the changed backend runtime files, prove
+local/remote checksum parity, restart only `paca-failover.service`, and verify
+the public health and CORS paths. Push `main` only after the backend is healthy;
+then wait for the matching Vercel Production deployment and run the relevant
+browser smoke.
+
+If any excluded surface changes, or the hotfix changes data ownership, routing,
+credentials, scheduler ownership, or DB state, stop and use the full cutover
+gate below.
+
+## Full Cutover Gate
+Do not deploy or restart full production cutover paths until the
+approval-gated cutover command pack passes. The minimum local proof set is:
 
 ```bash
 cd /Users/etlab/projects/paca-peak-platform-map
