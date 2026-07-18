@@ -199,6 +199,7 @@ async function installRoutes(context, state) {
         state.testErrorAuthHeader = request.headers().authorization;
         return jsonRoute(route, {
           error: 'Send Failed',
+          message: '테스트 발송에 실패했습니다.',
           details: { errorMessage: '허용되지 않은 IP(192.0.2.1)로 접근하고 있습니다.' },
         }, 400);
       }
@@ -234,6 +235,12 @@ async function clickWithoutNativeDialog(page, locator, label) {
   if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
 }
 
+async function waitForToast(page, type, text) {
+  const toast = page.locator(`[data-sonner-toast][data-type="${type}"]`).filter({ hasText: text }).first();
+  await toast.waitFor();
+  return toast;
+}
+
 async function runDesktop(browser) {
   const result = await createNotificationsPage(browser);
   const { context, page, state } = result;
@@ -258,7 +265,7 @@ async function runDesktop(browser) {
   await page.getByRole('button', { name: '출결관리 설정됨' }).click();
   await page.getByLabel('SENS 출결 테스트 전화번호').fill('01055556666');
   await page.getByRole('button', { name: '출결 테스트' }).click();
-  await page.getByText('SENS 출결관리 테스트 메시지가 발송되었습니다.').waitFor();
+  await waitForToast(page, 'success', 'SENS 출결관리 테스트 메시지가 발송되었습니다.');
   if (state.sensAttendancePayload?.phone !== '01055556666') {
     throw new Error(`sens attendance payload mismatch: ${JSON.stringify(state.sensAttendancePayload)}`);
   }
@@ -332,7 +339,7 @@ async function runDesktop(browser) {
   await page.getByRole('button', { name: '출결관리 알림톡' }).click();
   await page.getByLabel('솔라피 출결 테스트 전화번호').fill('01077778888');
   await page.getByRole('button', { name: '출결 테스트' }).click();
-  await page.getByText('출결관리 테스트 메시지가 발송되었습니다.').waitFor();
+  await waitForToast(page, 'success', '출결관리 테스트 메시지가 발송되었습니다.');
   if (state.solapiAttendancePayload?.phone !== '01077778888') {
     throw new Error(`solapi attendance payload mismatch: ${JSON.stringify(state.solapiAttendancePayload)}`);
   }
@@ -380,7 +387,7 @@ async function runAttendanceDeepLink(browser) {
   }
   await page.getByLabel('솔라피 출결 테스트 전화번호').fill('01099990000');
   await page.getByRole('button', { name: '출결 테스트' }).click();
-  await page.getByText('출결관리 테스트 메시지가 발송되었습니다.').waitFor();
+  await waitForToast(page, 'success', '출결관리 테스트 메시지가 발송되었습니다.');
   if (state.solapiAttendancePayload?.phone !== '01099990000') {
     throw new Error(`attendance deep link payload mismatch: ${JSON.stringify(state.solapiAttendancePayload)}`);
   }
@@ -431,10 +438,9 @@ async function runTestSendError(browser) {
   await page.getByRole('button', { name: '출결관리 설정됨' }).click();
   await page.getByLabel('SENS 출결 테스트 전화번호').fill('01055556666');
   await page.getByRole('button', { name: '출결 테스트' }).click();
-  const errorMessage = page.getByText(
+  const errorMessage = await waitForToast(page, 'error',
     'SENS 출결관리 테스트 발송에 실패했습니다. 사유: 발송 서비스의 보안 설정에서 현재 서버가 허용되지 않았습니다. 알림톡 연동 서비스의 접속 허용 설정을 확인해주세요.'
   );
-  await errorMessage.waitFor();
   await errorMessage.scrollIntoViewIfNeeded();
   if (result.state.testErrorAuthHeader !== 'Bearer smoke-token') {
     throw new Error('notification test request did not include the auth header');

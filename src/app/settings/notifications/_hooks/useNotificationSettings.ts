@@ -23,6 +23,7 @@ import {
   type NotificationLoadErrors,
   SILENT_CONFIG,
 } from './notification-error-utils';
+import { createNotificationTestRunner } from './notification-test-runner';
 
 export type NotificationPendingConfirmation =
   | { kind: 'sender-delete'; senderId: number; phone: string }
@@ -241,29 +242,10 @@ export function useNotificationSettings() {
     }
   };
 
-  const runNotificationTest = async (
-    phone: string,
-    setTestingState: (value: boolean) => void,
-    send: () => Promise<unknown>,
-    successText: string,
-    fallbackErrorText: string
-  ) => {
-    if (!phone) {
-      setMessage({ type: 'error', text: '테스트 전화번호를 입력해주세요.' });
-      return;
-    }
-    setTestingState(true);
-    setMessage(null);
-    try {
-      await send();
-      setMessage({ type: 'success', text: successText });
-      loadLogs();
-    } catch (error: unknown) {
-      setMessage({ type: 'error', text: getNotificationErrorText(error, fallbackErrorText) });
-    } finally {
-      setTestingState(false);
-    }
-  };
+  const runNotificationTest = createNotificationTestRunner({
+    clearMessage: () => setMessage(null),
+    refreshLogs: loadLogs,
+  });
 
   const handleTest = () => runNotificationTest(
     testPhone,

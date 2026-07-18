@@ -15,7 +15,7 @@ export const NOTIFICATION_LOAD_ERROR_MESSAGES: Record<NotificationLoadErrorKey, 
 const RAW_TECHNICAL_ERROR_PATTERN =
   /(Failed to load|CORS|Axios|stack trace|DB timeout|HTTP\s*(400|401|403|404|429|500)|status\s*(400|401|403|404|429|500)|\b(400|401|403|404|429|500)\b|허용되지 않은\s*IP|forbidden|\b(?:\d{1,3}\.){3}\d{1,3}\b|ECONN|ETIMEDOUT|^[A-Z0-9]+(?:_[A-Z0-9]+)+$)/i;
 const GENERIC_SEND_FAILURE_PATTERN =
-  /^(fail(?:ed|ure)?|send\s*(fail(?:ed|ure)?|error)|발송에 실패했습니다[.:]?|알림톡 발송에 실패했습니다[.:]?|메시지 발송에 실패했습니다[.:]?)$/i;
+  /^(fail(?:ed|ure)?|send\s*(fail(?:ed|ure)?|error)|발송에 실패했습니다[.:]?|알림톡 발송에 실패했습니다[.:]?|메시지 발송에 실패했습니다[.:]?|(?:[가-힣A-Za-z0-9]+\s+)*테스트(?:\s+메시지)?\s*발송에 실패했습니다[.:]?)$/i;
 const FAILURE_DETAIL_KEYS = ['message', 'errorMessage', 'reason', 'details', 'error', 'description'] as const;
 
 function collectFailureTexts(value: unknown, depth = 0): string[] {

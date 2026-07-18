@@ -284,24 +284,30 @@ function parseButtons(buttonsJson, linkVars = null) {
  * @returns {Promise<void>}
  */
 async function logSent({ academyId, recipientName, recipientPhone, templateCode, messageContent, requestId }) {
-    await pool.execute(
-        `INSERT INTO notification_logs
-        (academy_id, recipient_name, recipient_phone, message_type, template_code,
-         message_content, status, request_id, sent_at)
-        VALUES (?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
-        [
-            academyId,
-            recipientName,
-            recipientPhone,
-            templateCode,
-            messageContent,
-            requestId,
-        ]
-    );
+    try {
+        await pool.execute(
+            `INSERT INTO notification_logs
+            (academy_id, recipient_name, recipient_phone, message_type, template_code,
+             message_content, status, request_id, sent_at)
+            VALUES (?, ?, ?, 'alimtalk', ?, ?, 'sent', ?, NOW())`,
+            [
+                academyId,
+                recipientName ?? null,
+                recipientPhone,
+                templateCode ?? null,
+                messageContent ?? null,
+                requestId ?? null,
+            ]
+        );
+        return true;
+    } catch (error) {
+        logger.error('테스트 발송 이력 기록 오류:', error);
+        return false;
+    }
 }
 
 const GENERIC_SEND_FAILURE_PATTERN =
-    /^(fail(?:ed|ure)?|send\s*(fail(?:ed|ure)?|error)|발송에 실패했습니다[.:]?|알림톡 발송에 실패했습니다[.:]?|메시지 발송에 실패했습니다[.:]?)$/i;
+    /^(fail(?:ed|ure)?|send\s*(fail(?:ed|ure)?|error)|발송에 실패했습니다[.:]?|알림톡 발송에 실패했습니다[.:]?|메시지 발송에 실패했습니다[.:]?|(?:[가-힣A-Za-z0-9]+\s+)*테스트(?:\s+메시지)?\s*발송에 실패했습니다[.:]?)$/i;
 const TECHNICAL_SEND_FAILURE_PATTERN =
     /(Failed to load|CORS|Axios|stack trace|HTTP\s*\d{3}|status\s*\d{3}|\b(400|401|403|404|429|500)\b|ECONN|ETIMEDOUT|^[A-Z0-9]+(?:_[A-Z0-9]+)+$)/i;
 const FAILURE_DETAIL_KEYS = ['errorMessage', 'reason', 'message', 'details', 'error', 'description'];

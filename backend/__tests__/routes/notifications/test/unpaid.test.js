@@ -164,6 +164,58 @@ describe('POST /paca/notifications/test (솔라피 분기)', () => {
         expect(naverSens.decryptApiKey.mock.calls[0][0]).toBe('ss');
         expect(naverSens.decryptApiKey.mock.calls[0]).toHaveLength(2); // (cipher, ENCRYPTION_KEY)
     });
+
+    test('발송 ID가 없어도 이력에는 NULL을 기록하고 성공 응답을 유지한다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[
+                {
+                    service_type: 'solapi',
+                    solapi_api_key: 'kk',
+                    solapi_api_secret: 'ss',
+                    solapi_pfid: 'pp',
+                    solapi_sender_phone: '02-1',
+                    solapi_template_id: 'TID-001',
+                    solapi_template_content: 'tpl-solapi',
+                },
+            ]])
+            .mockResolvedValueOnce([[{ name: 'A학원', phone: '02-1', tuition_due_day: 7 }]])
+            .mockImplementationOnce(async (_sql, params) => {
+                if (params.includes(undefined)) throw new Error('undefined bind parameter');
+                return [{ insertId: 2 }];
+            });
+        solapi.sendAlimtalkSolapi.mockResolvedValueOnce({ success: true });
+
+        const res = await request(buildApp()).post('/paca/notifications/test').send({ phone: '010-1234-5678' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(pool.execute.mock.calls[2][1][5]).toBeNull();
+    });
+
+    test('발송 후 이력 저장이 실패해도 이미 성공한 발송 응답은 성공으로 유지한다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[
+                {
+                    service_type: 'solapi',
+                    solapi_api_key: 'kk',
+                    solapi_api_secret: 'ss',
+                    solapi_pfid: 'pp',
+                    solapi_sender_phone: '02-1',
+                    solapi_template_id: 'TID-001',
+                    solapi_template_content: 'tpl-solapi',
+                },
+            ]])
+            .mockResolvedValueOnce([[{ name: 'A학원', phone: '02-1', tuition_due_day: 7 }]])
+            .mockRejectedValueOnce(new Error('notification log unavailable'));
+        solapi.sendAlimtalkSolapi.mockResolvedValueOnce({ success: true, groupId: 'GROUP-SENT' });
+
+        const res = await request(buildApp()).post('/paca/notifications/test').send({ phone: '010-1234-5678' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.requestId).toBe('GROUP-SENT');
+        expect(logger.error).toHaveBeenCalledWith('테스트 발송 이력 기록 오류:', expect.any(Error));
+    });
 });
 
 describe('POST /paca/notifications/test (SENS 분기 — 기본)', () => {
