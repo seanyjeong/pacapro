@@ -79,8 +79,34 @@ function makePayments() {
   ];
 }
 
+function makeAllUnpaidPayments() {
+  return [
+    ...makePayments(),
+    {
+      id: 704,
+      student_id: 104,
+      student_name: '이전체',
+      student_number: 'S-104',
+      year_month: '2026-06',
+      payment_type: 'monthly',
+      base_amount: 480000,
+      discount_amount: 0,
+      additional_amount: 0,
+      final_amount: 480000,
+      paid_amount: 0,
+      remaining_amount: 480000,
+      due_date: '2026-06-10',
+      payment_status: 'pending',
+      phone: '010-7777-8888',
+      parent_phone: '010-9999-0000',
+      days_overdue: 20,
+      created_at: '2026-06-01T00:00:00Z',
+    },
+  ];
+}
+
 function makeState(overrides = {}) {
-  return { externalContinues: [], hits: [], paidIds: new Set(), payPayloads: [], ...overrides };
+  return { authHeaders: [], externalContinues: [], hits: [], paidIds: new Set(), payPayloads: [], ...overrides };
 }
 
 function unpaidTodayResponse(state) {
@@ -110,12 +136,22 @@ async function installRoutes(context, state) {
     const method = request.method();
     const path = normalizePacaApiPath(url);
     state.hits.push(`${method} ${path}${url.search}`);
+    state.authHeaders.push(request.headers().authorization || '');
 
     if (state.failLoad && method === 'GET' && path === '/payments/unpaid-today') {
       return jsonRoute(route, { message: 'HTTP 500 DB stack trace' }, 500);
     }
     if (method === 'GET' && path === '/payments/unpaid-today') {
       return jsonRoute(route, unpaidTodayResponse(state));
+    }
+    if (state.failMonthLoad && method === 'GET' && path === '/payments/unpaid') {
+      return jsonRoute(route, { message: 'HTTP 500 DB stack trace' }, 500);
+    }
+    if (method === 'GET' && path === '/payments/unpaid') {
+      return jsonRoute(route, {
+        message: 'all unpaid',
+        payments: makeAllUnpaidPayments().filter((payment) => !state.paidIds.has(payment.id)),
+      });
     }
     if (state.failPay && method === 'POST' && path === '/payments/701/pay') {
       return jsonRoute(route, { message: 'HTTP 500 DB stack trace' }, 500);
@@ -130,8 +166,8 @@ async function installRoutes(context, state) {
   });
 }
 
-async function createMobilePage(browser, state) {
-  const context = await createAuthedContext(browser, { width: 390, height: 844 });
+async function createMobilePage(browser, state, viewport = { width: 390, height: 844 }) {
+  const context = await createAuthedContext(browser, viewport);
   await installRoutes(context, state);
   const page = await context.newPage();
   const diagnostics = createDiagnostics(page);
@@ -185,6 +221,14 @@ async function runNormal(browser) {
   await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '박서윤' }).waitFor();
   await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '김민서' }).waitFor({ state: 'detached' });
   await workspace.getByLabel('미납 학생 검색').fill('');
+  await workspace.getByRole('button', { name: '해당 월 전체 미납자' }).click();
+  await workspace.getByLabel('조회할 미납 월').fill('2026-06');
+  await workspace.getByRole('heading', { name: '2026년 6월 전체 미납자' }).waitFor();
+  await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '이전체' }).waitFor();
+  await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '김민서' }).waitFor();
+  await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '박서윤' }).waitFor({ state: 'detached' });
+  await page.screenshot({ path: '/Users/etlab/paca-mobile-unpaid-month.png', fullPage: true });
+  await workspace.getByRole('button', { name: '오늘 출석 미납자' }).click();
   await workspace.getByRole('link', { name: '김민서 보호자 전화' }).waitFor();
   await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '학생 정보 확인 필요' }).waitFor();
   await page.getByText('ENC:').waitFor({ state: 'detached' });
@@ -199,6 +243,9 @@ async function runNormal(browser) {
   if (payload?.paid_amount !== 500000) throw new Error(`paid amount mismatch: ${JSON.stringify(payload)}`);
   if (payload?.payment_method !== 'account') throw new Error(`payment method mismatch: ${JSON.stringify(payload)}`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(payload?.payment_date || '')) throw new Error(`payment date mismatch: ${JSON.stringify(payload)}`);
+  if (!state.authHeaders.every((header) => header === 'Bearer smoke-token')) {
+    throw new Error(`authorization header mismatch: ${JSON.stringify(state.authHeaders)}`);
+  }
 
   await assertNoRawVisibleText(page, 'mobile unpaid normal');
   await assertNoHorizontalOverflow(page, 'mobile unpaid normal');
@@ -238,6 +285,38 @@ async function runPayError(browser) {
   return { state, diagnostics };
 }
 
+async function runMonthLoadError(browser) {
+  const state = makeState({ failMonthLoad: true });
+  const { context, page, diagnostics } = await createMobilePage(browser, state);
+
+  await gotoWorkspace(page);
+  const workspace = page.getByTestId('mobile-unpaid-workspace');
+  await workspace.getByRole('button', { name: '해당 월 전체 미납자' }).click();
+  await page.getByText('해당 월 미납 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await assertNoRawVisibleText(page, 'mobile unpaid month load error');
+  await assertNoHorizontalOverflow(page, 'mobile unpaid month load error');
+  assertDiagnostics('month load error', diagnostics);
+  await context.close();
+  return { state, diagnostics };
+}
+
+async function runDesktopViewport(browser) {
+  const state = makeState();
+  const { context, page, diagnostics } = await createMobilePage(browser, state, { width: 1280, height: 900 });
+
+  await gotoWorkspace(page);
+  const workspace = page.getByTestId('mobile-unpaid-workspace');
+  await workspace.getByRole('button', { name: '해당 월 전체 미납자' }).click();
+  await workspace.getByLabel('조회할 미납 월').fill('2026-06');
+  await workspace.getByTestId('mobile-unpaid-card').filter({ hasText: '이전체' }).waitFor();
+  await assertNoRawVisibleText(page, 'mobile unpaid desktop viewport');
+  await assertNoHorizontalOverflow(page, 'mobile unpaid desktop viewport');
+  await page.screenshot({ path: '/Users/etlab/paca-mobile-unpaid-desktop.png', fullPage: true });
+  assertDiagnostics('desktop viewport', diagnostics);
+  await context.close();
+  return { state, diagnostics };
+}
+
 async function runStaffViewer(browser) {
   const state = makeState();
   const { context, page, diagnostics } = await createStaffMobilePage(browser, state);
@@ -266,6 +345,8 @@ async function main() {
     const normal = await runNormal(browser);
     const loadError = await runLoadError(browser);
     const payError = await runPayError(browser);
+    const monthLoadError = await runMonthLoadError(browser);
+    const desktopViewport = await runDesktopViewport(browser);
     const staffViewer = await runStaffViewer(browser);
     console.log(JSON.stringify({
       hits: normal.state.hits,
@@ -273,6 +354,8 @@ async function main() {
       normalConsoleErrors: normal.diagnostics.consoleErrors,
       loadErrorConsoleErrors: loadError.diagnostics.consoleErrors,
       payErrorConsoleErrors: payError.diagnostics.consoleErrors,
+      monthLoadErrorConsoleErrors: monthLoadError.diagnostics.consoleErrors,
+      desktopConsoleErrors: desktopViewport.diagnostics.consoleErrors,
       staffViewerConsoleErrors: staffViewer.diagnostics.consoleErrors,
     }, null, 2));
   } finally {

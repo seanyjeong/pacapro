@@ -1,11 +1,19 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { paymentsAPI } from '@/lib/api/payments';
 import type { UnpaidPayment } from '@/lib/types/payment';
 import { canEdit, canView } from '@/lib/utils/permissions';
 import { MOBILE_UNPAID_MESSAGES } from './mobile-unpaid-constants';
-import type { MobileUnpaidPaymentMethod, MobileUnpaidPaySheetState } from './mobile-unpaid-types';
+import {
+  filterUnpaidPaymentsByMonth,
+  getCurrentYearMonth,
+} from './mobile-unpaid-month.mjs';
+import type {
+  MobileUnpaidPaymentMethod,
+  MobileUnpaidPaySheetState,
+  MobileUnpaidScope,
+} from './mobile-unpaid-types';
 import {
   calculateUnpaidStats,
   filterUnpaidPayments,
@@ -20,6 +28,8 @@ export function useMobileUnpaidState() {
   const [payments, setPayments] = useState<UnpaidPayment[]>([]);
   const [dayName, setDayName] = useState('');
   const [query, setQuery] = useState('');
+  const [scope, setScope] = useState<MobileUnpaidScope>('today');
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentYearMonth);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -27,22 +37,34 @@ export function useMobileUnpaidState() {
   const [canMarkPaid, setCanMarkPaid] = useState(false);
   const [paySheet, setPaySheet] = useState<MobileUnpaidPaySheetState | null>(null);
   const [processing, setProcessing] = useState(false);
+  const loadRequestId = useRef(0);
 
   const loadPayments = useCallback(async () => {
+    const requestId = loadRequestId.current + 1;
+    loadRequestId.current = requestId;
     setLoading(true);
     setLoadError(null);
     try {
-      const response = await paymentsAPI.getUnpaidTodayPayments({ suppressErrorToast: true });
-      setPayments(response.payments || []);
-      setDayName(response.day_name || '');
+      if (scope === 'month') {
+        const response = await paymentsAPI.getUnpaidPayments({ suppressErrorToast: true });
+        if (requestId !== loadRequestId.current) return;
+        setPayments(response.payments || []);
+        setDayName('');
+      } else {
+        const response = await paymentsAPI.getUnpaidTodayPayments({ suppressErrorToast: true });
+        if (requestId !== loadRequestId.current) return;
+        setPayments(response.payments || []);
+        setDayName(response.day_name || '');
+      }
     } catch {
+      if (requestId !== loadRequestId.current) return;
       setPayments([]);
       setDayName('');
-      setLoadError(MOBILE_UNPAID_MESSAGES.load);
+      setLoadError(scope === 'month' ? MOBILE_UNPAID_MESSAGES.monthLoad : MOBILE_UNPAID_MESSAGES.load);
     } finally {
-      setLoading(false);
+      if (requestId === loadRequestId.current) setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -63,8 +85,18 @@ export function useMobileUnpaidState() {
     if (hasPermission) void loadPayments();
   }, [hasPermission, loadPayments]);
 
-  const stats = useMemo(() => calculateUnpaidStats(payments), [payments]);
-  const filteredPayments = useMemo(() => filterUnpaidPayments(payments, query), [payments, query]);
+  const scopedPayments = useMemo(
+    () => (scope === 'month' ? filterUnpaidPaymentsByMonth(payments, selectedMonth) : payments),
+    [payments, scope, selectedMonth]
+  );
+  const stats = useMemo(() => calculateUnpaidStats(scopedPayments), [scopedPayments]);
+  const filteredPayments = useMemo(() => filterUnpaidPayments(scopedPayments, query), [scopedPayments, query]);
+
+  const changeScope = (nextScope: MobileUnpaidScope) => {
+    if (nextScope === scope) return;
+    setLoading(true);
+    setScope(nextScope);
+  };
 
   const openPaySheet = (payment: UnpaidPayment) => {
     if (!canMarkPaid || processing) return;
@@ -125,9 +157,13 @@ export function useMobileUnpaidState() {
     query,
     reload: loadPayments,
     router,
+    scope,
+    selectedMonth,
     setPaySheet,
     setPaymentMethod,
     setQuery,
+    setScope: changeScope,
+    setSelectedMonth,
     stats,
   };
 }

@@ -1,13 +1,14 @@
 {
   "name": "paca-frontend",
-  "version": "4.0.29",
-  "lastUpdate": "2026-07-18",
+  "version": "4.0.30",
+  "lastUpdate": "2026-07-19",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:mobile-unpaid-month": "node --test test/mobile-unpaid-month.test.mjs",
     "smoke:dashboard": "node scripts/smoke/dashboard-smoke.mjs",
     "smoke:auth-errors": "node scripts/smoke/auth-errors-smoke.mjs",
     "smoke:salaries": "node scripts/smoke/salaries-smoke.mjs",

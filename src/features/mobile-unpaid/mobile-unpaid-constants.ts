@@ -3,6 +3,7 @@ import type { MobileUnpaidPaymentMethod } from './mobile-unpaid-types';
 
 export const MOBILE_UNPAID_MESSAGES = {
   load: '오늘 미납 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+  monthLoad: '해당 월 미납 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
   pay: '납부 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.',
   noPhone: '연락처가 등록되어 있지 않습니다.',
 };

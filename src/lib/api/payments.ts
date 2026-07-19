@@ -52,8 +52,8 @@ export const paymentsAPI = {
    * 미납/연체 학원비 조회
    * GET /paca/payments/unpaid
    */
-  getUnpaidPayments: async (): Promise<UnpaidPaymentsResponse> => {
-    return await apiClient.get<UnpaidPaymentsResponse>('/payments/unpaid');
+  getUnpaidPayments: async (config?: APIRequestConfig): Promise<UnpaidPaymentsResponse> => {
+    return await apiClient.get<UnpaidPaymentsResponse>('/payments/unpaid', config);
   },
 
   /**

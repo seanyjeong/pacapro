@@ -1,6 +1,7 @@
 import type { UnpaidPayment } from '@/lib/types/payment';
 
 export type MobileUnpaidPaymentMethod = 'card' | 'account' | 'cash';
+export type MobileUnpaidScope = 'today' | 'month';
 
 export interface MobileUnpaidStats {
   count: number;

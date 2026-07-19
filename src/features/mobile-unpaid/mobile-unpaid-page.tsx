@@ -1,5 +1,6 @@
 'use client';
 
+import { MobileUnpaidFilters } from './mobile-unpaid-filters';
 import { MobileUnpaidHeader } from './mobile-unpaid-header';
 import { MobileUnpaidList } from './mobile-unpaid-list';
 import { MobileUnpaidPaySheet } from './mobile-unpaid-pay-sheet';
@@ -23,12 +24,20 @@ export function MobileUnpaidPage() {
         dayName={state.dayName}
         loading={state.loading}
         query={state.query}
+        scope={state.scope}
+        selectedMonth={state.selectedMonth}
         onBack={() => state.router.push('/m')}
         onQueryChange={state.setQuery}
         onRefresh={state.reload}
       />
 
       <main className="mx-auto w-full max-w-md space-y-4 px-4 py-4 pb-10">
+        <MobileUnpaidFilters
+          scope={state.scope}
+          selectedMonth={state.selectedMonth}
+          onMonthChange={state.setSelectedMonth}
+          onScopeChange={state.setScope}
+        />
         {!state.loading && !state.loadError && (
           <MobileUnpaidSummary canViewAmount={state.canViewAmount} stats={state.stats} />
         )}
@@ -41,6 +50,8 @@ export function MobileUnpaidPage() {
           payments={state.filteredPayments}
           processing={state.processing}
           query={state.query}
+          scope={state.scope}
+          selectedMonth={state.selectedMonth}
           totalCount={state.stats.count}
           onCall={state.callPaymentContact}
           onPay={state.openPaySheet}

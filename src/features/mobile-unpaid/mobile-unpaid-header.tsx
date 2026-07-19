@@ -1,10 +1,14 @@
 import { ArrowLeft, RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { formatYearMonthLabel } from './mobile-unpaid-month.mjs';
+import type { MobileUnpaidScope } from './mobile-unpaid-types';
 
 interface MobileUnpaidHeaderProps {
   dayName: string;
   loading: boolean;
   query: string;
+  scope: MobileUnpaidScope;
+  selectedMonth: string;
   onBack: () => void;
   onQueryChange: (query: string) => void;
   onRefresh: () => void;
@@ -14,10 +18,15 @@ export function MobileUnpaidHeader({
   dayName,
   loading,
   query,
+  scope,
+  selectedMonth,
   onBack,
   onQueryChange,
   onRefresh,
 }: MobileUnpaidHeaderProps) {
+  const isMonthlyScope = scope === 'month';
+  const monthLabel = formatYearMonthLabel(selectedMonth);
+
   return (
     <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95">
       <div className="flex items-center gap-2">
@@ -25,9 +34,15 @@ export function MobileUnpaidHeader({
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-semibold tracking-normal text-zinc-950 dark:text-zinc-50">오늘 출석 미납자</h1>
+          <h1 className="truncate text-lg font-semibold tracking-normal text-zinc-950 dark:text-zinc-50" aria-live="polite">
+            {isMonthlyScope ? `${monthLabel} 전체 미납자` : '오늘 출석 미납자'}
+          </h1>
           <p className="truncate text-sm text-zinc-500 dark:text-zinc-400">
-            {dayName ? `${dayName}요일 수업 학생 중` : '오늘 수업 학생 중'}
+            {isMonthlyScope
+              ? '학원 전체 학생의 청구 기준'
+              : dayName
+                ? `${dayName}요일 수업 학생 중`
+                : '오늘 수업 학생 중'}
           </p>
         </div>
         <Button variant="outline" size="icon" onClick={onRefresh} aria-label="미납 목록 새로고침" disabled={loading}>
@@ -40,7 +55,7 @@ export function MobileUnpaidHeader({
         <input
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
-          className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-9 pr-3 text-sm text-zinc-950 outline-none focus:ring-2 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-200"
+          className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-9 pr-3 text-sm text-zinc-950 focus:ring-2 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-200"
           placeholder="학생명, 연락처, 월 검색"
           aria-label="미납 학생 검색"
         />

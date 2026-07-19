@@ -2,6 +2,8 @@ import { CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { UnpaidPayment } from '@/lib/types/payment';
 import { MobileUnpaidCard } from './mobile-unpaid-card';
+import { formatYearMonthLabel } from './mobile-unpaid-month.mjs';
+import type { MobileUnpaidScope } from './mobile-unpaid-types';
 
 interface MobileUnpaidListProps {
   canMarkPaid: boolean;
@@ -12,6 +14,8 @@ interface MobileUnpaidListProps {
   payments: UnpaidPayment[];
   processing: boolean;
   query: string;
+  scope: MobileUnpaidScope;
+  selectedMonth: string;
   totalCount: number;
   onCall: (payment: UnpaidPayment) => void;
   onPay: (payment: UnpaidPayment) => void;
@@ -27,6 +31,8 @@ export function MobileUnpaidList({
   payments,
   processing,
   query,
+  scope,
+  selectedMonth,
   totalCount,
   onCall,
   onPay,
@@ -54,11 +60,17 @@ export function MobileUnpaidList({
   }
 
   if (totalCount === 0) {
+    const emptyMessage = scope === 'month'
+      ? `${formatYearMonthLabel(selectedMonth)} 전체 미납자가 없습니다.`
+      : dayName
+        ? `오늘(${dayName}요일) 수업 학생 중 미납자가 없습니다.`
+        : '오늘 수업 미납자가 없습니다.';
+
     return (
       <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-4 py-12 text-center dark:border-zinc-700 dark:bg-zinc-950">
         <CreditCard className="mx-auto h-10 w-10 text-zinc-400" />
         <p className="mt-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-          {dayName ? `오늘(${dayName}요일) 수업 학생 중 미납자가 없습니다.` : '오늘 수업 미납자가 없습니다.'}
+          {emptyMessage}
         </p>
       </div>
     );
