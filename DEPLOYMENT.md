@@ -103,6 +103,34 @@ Do not treat Vultr as write-primary until DB-primary preflight proof exists:
 - rollback from pre-change dumps;
 - n100-to-Vultr sync disabled or redesigned.
 
+## Production Database Backups
+
+PACA and Peak production backups run on Vultr because the active databases are
+local to that host. The legacy n100 dump job must stay disabled after the
+handoff; otherwise Google Drive can contain fresh-looking files made from stale
+databases.
+
+- Script: `/usr/local/sbin/et-db-drive-backup`
+- Service: `et-db-drive-backup.service`
+- Timer: daily at `03:00 Asia/Seoul`, with missed-run persistence
+- Local staging: `/root/backups/google-drive-db/{paca,peak}`
+- Remote: the existing `gdrive:server-backups/{paca,peak}` rclone target
+- Retention: 30 days locally and remotely
+- Integrity: gzip validation plus a SHA-256 sidecar before upload
+
+Before enabling the timer, run the service once and restore the Drive copy into
+a uniquely named isolated database. Compare critical row counts with production
+while reporting normal writes that occurred after the snapshot separately. Drop
+only the isolated verification database. Never test a restore directly against
+`paca` or `peak`.
+
+Rollback:
+
+1. Disable `et-db-drive-backup.timer` on Vultr.
+2. Restore the timestamped Vultr systemd/script/config backup.
+3. Restore the timestamped n100 crontab only if Vultr backup execution cannot be
+   repaired immediately; label any resulting n100 files as legacy data.
+
 ## Smoke
 ```bash
 curl -s https://supermax.kr/paca-health

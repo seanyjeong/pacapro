@@ -1,0 +1,29 @@
+[Unit]
+Description=ET production MySQL backups to Google Drive
+After=mysql.service network-online.target
+Requires=mysql.service
+Wants=network-online.target
+ConditionPathExists=/root/.config/rclone/rclone.conf
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+Environment=RCLONE_CONFIG=/root/.config/rclone/rclone.conf
+ExecStart=/usr/local/sbin/et-db-drive-backup
+TimeoutStartSec=1h
+UMask=0077
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/root/backups/google-drive-db /root/.config/rclone /run/lock
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true
+MemoryDenyWriteExecute=true

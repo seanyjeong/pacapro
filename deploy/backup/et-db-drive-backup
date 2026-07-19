@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+umask 077
+
+BACKUP_TIMEZONE="${BACKUP_TIMEZONE:-Asia/Seoul}"
+export TZ="$BACKUP_TIMEZONE"
+
+BACKUP_ROOT="${BACKUP_ROOT:-/root/backups/google-drive-db}"
+BACKUP_LOCK_FILE="${BACKUP_LOCK_FILE:-/run/lock/et-db-drive-backup.lock}"
+BACKUP_DATABASES="${BACKUP_DATABASES:-paca peak}"
+BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-30}"
+BACKUP_RUN_ID="${BACKUP_RUN_ID:-$(date +%Y%m%d_%H%M%S)}"
+RCLONE_REMOTE="${RCLONE_REMOTE:-gdrive:server-backups}"
+
+MYSQLDUMP_BIN="${MYSQLDUMP_BIN:-/usr/bin/mysqldump}"
+RCLONE_BIN="${RCLONE_BIN:-/usr/bin/rclone}"
+GZIP_BIN="${GZIP_BIN:-/usr/bin/gzip}"
+SHA256SUM_BIN="${SHA256SUM_BIN:-/usr/bin/sha256sum}"
+FLOCK_BIN="${FLOCK_BIN:-/usr/bin/flock}"
+
+log() {
+  printf '%s %s\n' "$(date '+%Y-%m-%dT%H:%M:%S%z')" "$*"
+}
+
+require_executable() {
+  local executable="$1"
+  if [[ ! -x "$executable" ]]; then
+    log "필수 백업 도구를 실행할 수 없습니다: $executable" >&2
+    return 1
+  fi
+}
+
+cleanup_partials() {
+  if [[ -d "$BACKUP_ROOT" ]]; then
+    find "$BACKUP_ROOT" -type f -name '*.partial' -delete
+  fi
+}
+
+backup_database() {
+  local database="$1"
+  if [[ ! "$database" =~ ^[a-zA-Z0-9_]+$ ]]; then
+    log "허용되지 않은 데이터베이스 이름입니다: $database" >&2
+    return 1
+  fi
+
+  local database_dir="$BACKUP_ROOT/$database"
+  local artifact_name="${database}_${BACKUP_RUN_ID}.sql.gz"
+  local artifact_path="$database_dir/$artifact_name"
+  local partial_path="${artifact_path}.partial"
+  local checksum_path="${artifact_path}.sha256"
+  local checksum_partial="${checksum_path}.partial"
+
+  mkdir -p "$database_dir"
+  log "$database 백업을 시작합니다."
+
+  if ! "$MYSQLDUMP_BIN" \
+    --single-transaction \
+    --quick \
+    --routines \
+    --triggers \
+    --events \
+    --hex-blob \
+    --no-tablespaces \
+    "$database" | "$GZIP_BIN" -c > "$partial_path"; then
+    log "$database 덤프를 만들지 못했습니다." >&2
+    return 1
+  fi
+
+  if [[ ! -s "$partial_path" ]] || ! "$GZIP_BIN" -t "$partial_path"; then
+    log "$database 백업 압축파일 검증에 실패했습니다." >&2
+    return 1
+  fi
+
+  mv "$partial_path" "$artifact_path"
+  (
+    cd "$database_dir"
+    "$SHA256SUM_BIN" "$artifact_name" > "$checksum_partial"
+  )
+  mv "$checksum_partial" "$checksum_path"
+
+  "$RCLONE_BIN" copyto \
+    "$artifact_path" \
+    "$RCLONE_REMOTE/$database/$artifact_name" \
+    --retries 3 \
+    --low-level-retries 10
+  "$RCLONE_BIN" copyto \
+    "$checksum_path" \
+    "$RCLONE_REMOTE/$database/${artifact_name}.sha256" \
+    --retries 3 \
+    --low-level-retries 10
+
+  find "$database_dir" -type f -mtime "+$BACKUP_RETENTION_DAYS" -delete
+  "$RCLONE_BIN" delete \
+    "$RCLONE_REMOTE/$database" \
+    --min-age "${BACKUP_RETENTION_DAYS}d" \
+    --retries 3 \
+    --low-level-retries 10
+
+  log "$database 백업과 Google Drive 업로드를 완료했습니다: $artifact_name"
+}
+
+main() {
+  require_executable "$MYSQLDUMP_BIN"
+  require_executable "$RCLONE_BIN"
+  require_executable "$GZIP_BIN"
+  require_executable "$SHA256SUM_BIN"
+  require_executable "$FLOCK_BIN"
+
+  mkdir -p "$BACKUP_ROOT" "$(dirname "$BACKUP_LOCK_FILE")"
+  exec 9>"$BACKUP_LOCK_FILE"
+  if ! "$FLOCK_BIN" -n 9; then
+    log "다른 백업 작업이 실행 중이어서 이번 실행을 중단합니다." >&2
+    return 75
+  fi
+
+  trap cleanup_partials EXIT
+
+  local status=0
+  local database
+  for database in $BACKUP_DATABASES; do
+    if ! backup_database "$database"; then
+      status=1
+    fi
+  done
+
+  return "$status"
+}
+
+main "$@"
