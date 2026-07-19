@@ -35,6 +35,19 @@ test('allows a scoped PACA notification hotfix with complete checks', () => {
   assert.deepEqual(result.blockers, []);
 });
 
+test('allows constants and repository files required by strict backend layering', () => {
+  const files = [
+    ...CURRENT_HOTFIX_FILES,
+    'backend/constants/database-reset.js',
+    'backend/repositories/databaseResetRepository.js',
+  ];
+  const result = evaluateHotfixScope(files, lineCounts(files));
+
+  assert.equal(result.ready, true);
+  assert.equal(result.score, 100);
+  assert.deepEqual(result.blockers, []);
+});
+
 test('rejects production control, auth, scheduler, database, and env paths', () => {
   const sensitiveFiles = [
     '.env.production',

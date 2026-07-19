@@ -16,6 +16,7 @@ function makeState(mode = 'success') {
     hits: [],
     mode,
     operationPayload: null,
+    resetAuthorization: null,
     resetPayload: null,
   };
 }
@@ -116,7 +117,11 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'POST' && path === '/settings/reset-database') {
+      state.resetAuthorization = request.headers().authorization || null;
       state.resetPayload = JSON.parse(request.postData() || '{}');
+      if (state.mode === 'reset-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
       return jsonRoute(route, { message: 'reset' });
     }
 
@@ -186,12 +191,12 @@ async function runResetFlow(browser) {
   await page.getByPlaceholder('초기화').fill('초기화');
   await clickWithoutNativeDialog(
     page,
-    page.getByRole('button', { name: '전체 데이터 초기화' }),
+    page.getByRole('button', { name: '현재 아카데미 데이터 초기화' }),
     'settings reset'
   );
   const dialog = page.getByRole('alertdialog');
-  await dialog.getByRole('heading', { name: '전체 데이터 초기화 확인' }).waitFor();
-  await dialog.getByText('학생, 강사, 수납, 급여, 스케줄, 시즌 정보를 모두 삭제합니다.').waitFor();
+  await dialog.getByRole('heading', { name: '현재 아카데미 데이터 초기화 확인' }).waitFor();
+  await dialog.getByText(/다른 아카데미 데이터와 원장 계정은 유지됩니다/).waitFor();
   const resetResponse = page.waitForResponse((response) => {
     const url = new URL(response.url());
     return response.request().method() === 'POST' && normalizePacaApiPath(url) === '/settings/reset-database';
@@ -201,6 +206,32 @@ async function runResetFlow(browser) {
   if (state.resetPayload?.confirmation !== '초기화') {
     throw new Error(`reset payload mismatch: ${JSON.stringify(state.resetPayload)}`);
   }
+  if (!state.resetAuthorization?.startsWith('Bearer ')) {
+    throw new Error('reset request must include the authenticated user token');
+  }
+
+  await context.close();
+  return result;
+}
+
+async function runResetError(browser) {
+  const result = await createSettingsPage(browser, 'reset-error', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/settings', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '설정', exact: true }).waitFor();
+  await page.getByPlaceholder('초기화').fill('초기화');
+  await clickWithoutNativeDialog(
+    page,
+    page.getByRole('button', { name: '현재 아카데미 데이터 초기화' }),
+    'settings reset error'
+  );
+  const dialog = page.getByRole('alertdialog');
+  await dialog.getByRole('button', { name: '초기화' }).click();
+  await page.getByText('현재 아카데미 데이터를 초기화하지 못했습니다. 기존 데이터는 그대로 유지됩니다.').waitFor();
+  await assertNoRawVisibleText(page, 'settings reset error');
+  await assertNoHorizontalOverflow(page, 'settings reset error');
+  await page.screenshot({ path: '/Users/etlab/paca-settings-reset-error-mobile.png', fullPage: true });
 
   await context.close();
   return result;
@@ -292,11 +323,14 @@ async function main() {
     const saveFlow = await runSaveFlow(browser);
     const saveError = await runSaveError(browser);
     const resetFlow = await runResetFlow(browser);
-    [desktop, mobile, saveFlow, saveError, resetFlow].forEach(assertDiagnostics);
+    const resetError = await runResetError(browser);
+    [desktop, mobile, saveFlow, saveError, resetFlow, resetError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       mobileHits: mobile.state.hits,
       resetPayload: resetFlow.state.resetPayload,
+      resetAuthorization: resetFlow.state.resetAuthorization ? 'present' : 'missing',
+      resetErrorHits: resetError.state.hits,
       savePayload: saveFlow.state.academyPayload,
       operationPayload: saveFlow.state.operationPayload,
       saveErrorHits: saveError.state.hits,

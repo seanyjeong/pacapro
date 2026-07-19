@@ -3,9 +3,11 @@ import type {
   AcademySettings,
   AcademySettingsResponse,
   AuthMeResponse,
+  DatabaseResetResponse,
   OperationSettingsResponse,
   SettingsUser,
 } from './settings-types';
+import { SETTINGS_RESET_COPY } from './settings-reset-copy';
 
 const SILENT_CONFIG: APIRequestConfig = { suppressErrorToast: true };
 
@@ -42,8 +44,12 @@ export function saveOperationSettings(settings: AcademySettings): Promise<unknow
   );
 }
 
-export function resetAllData(): Promise<unknown> {
-  return apiClient.post<unknown>('/settings/reset-database', { confirmation: '초기화' }, SILENT_CONFIG);
+export function resetAllData(): Promise<DatabaseResetResponse> {
+  return apiClient.post<DatabaseResetResponse>(
+    '/settings/reset-database',
+    { confirmation: SETTINGS_RESET_COPY.confirmation },
+    SILENT_CONFIG
+  );
 }
 
 function toAcademySettingsSavePayload(settings: AcademySettings): AcademySettingsSavePayload {

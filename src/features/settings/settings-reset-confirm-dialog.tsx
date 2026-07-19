@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { SETTINGS_RESET_COPY, SETTINGS_RESET_TARGETS } from './settings-reset-copy';
 
 interface SettingsResetConfirmDialogProps {
   isResetting: boolean;
@@ -16,8 +17,6 @@ interface SettingsResetConfirmDialogProps {
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
 }
-
-const RESET_TARGETS = ['학생 정보', '강사 정보', '학원비 내역', '급여 내역', '스케줄', '시즌 정보'];
 
 export function SettingsResetConfirmDialog({
   isResetting,
@@ -30,16 +29,16 @@ export function SettingsResetConfirmDialog({
       {open ? (
         <AlertDialogContent className="rounded-md sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>전체 데이터 초기화 확인</AlertDialogTitle>
+            <AlertDialogTitle>{SETTINGS_RESET_COPY.dialogTitle}</AlertDialogTitle>
             <AlertDialogDescription>
-              학생, 강사, 수납, 급여, 스케줄, 시즌 정보를 모두 삭제합니다. 이 작업은 되돌릴 수 없습니다.
+              {SETTINGS_RESET_COPY.dialogDescription}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-900">
             <p className="font-semibold">삭제되는 정보</p>
             <ul className="mt-2 space-y-1">
-              {RESET_TARGETS.map((target) => (
+              {SETTINGS_RESET_TARGETS.map((target) => (
                 <li key={target}>- {target}</li>
               ))}
             </ul>

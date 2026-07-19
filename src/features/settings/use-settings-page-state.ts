@@ -11,6 +11,7 @@ import {
   saveAcademySettings,
   saveOperationSettings,
 } from './settings-api';
+import { SETTINGS_RESET_COPY } from './settings-reset-copy';
 import type {
   AcademySettings,
   ClassTimeKey,
@@ -116,22 +117,22 @@ export function useSettingsPageState() {
   };
 
   const handleResetAllData = () => {
-    if (resetConfirmation !== '초기화') return;
+    if (resetConfirmation !== SETTINGS_RESET_COPY.confirmation) return;
     setResetDialogOpen(true);
   };
 
   const confirmResetAllData = async () => {
-    if (resetConfirmation !== '초기화') return;
+    if (resetConfirmation !== SETTINGS_RESET_COPY.confirmation) return;
     setIsResetting(true);
     try {
       await resetAllData();
-      toast.success('전체 데이터가 초기화되었습니다.');
+      toast.success(SETTINGS_RESET_COPY.success);
       setResetConfirmation('');
       setResetDialogOpen(false);
       window.location.reload();
     } catch {
       console.error('Settings reset failed');
-      toast.error('전체 데이터 초기화에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error(SETTINGS_RESET_COPY.failure);
     } finally {
       setIsResetting(false);
     }

@@ -81,6 +81,12 @@ export interface OperationSettingsResponse {
   settings?: OperationSettingsPatch | null;
 }
 
+export interface DatabaseResetResponse {
+  message: string;
+  deletedRows: number;
+  tables: Record<string, number>;
+}
+
 export interface SettingsSelectOption<T extends string | number> {
   value: T;
   label: string;
