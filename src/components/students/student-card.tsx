@@ -1,6 +1,7 @@
 import { Calendar, MapPin, NotebookText, Phone, UserRound } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StudentAvatar } from '@/components/students/student-avatar';
+import { StudentMemoDetail } from '@/components/students/student-memo-detail';
 import type { StudentDetail } from '@/lib/types/student';
 import {
   ADMISSION_TYPE_LABELS,
@@ -96,8 +97,9 @@ export function StudentCard({ student }: StudentCardProps) {
             <DetailRow icon={MapPin} label="주소" value={displayValue(student.address)} />
             <DetailRow icon={Calendar} label="등록일" value={displayValue(formatDate(student.enrollment_date))} />
             {student.notes ? (
-              <DetailRow className="md:col-span-2" label="메모" value={student.notes} />
+              <DetailRow className="md:col-span-2" label="비고" value={student.notes} />
             ) : null}
+            <StudentMemoDetail memo={student.memo} />
           </div>
         </section>
       </CardContent>

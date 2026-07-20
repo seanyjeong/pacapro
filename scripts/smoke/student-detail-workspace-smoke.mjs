@@ -9,7 +9,9 @@ import {
   normalizePacaApiPath,
 } from './paca-smoke-utils.mjs';
 
-function makeStudent() {
+const STUDENT_MEMO = '기존 엑셀 이관 학생\n최초 등록일은 과거 이력 기준이며 이관 전 납부 내역은 별도 확인';
+
+function makeStudent(memo = STUDENT_MEMO) {
   return {
     id: 41,
     academy_id: 1,
@@ -45,7 +47,7 @@ function makeStudent() {
     trial_remaining: null,
     trial_dates: null,
     time_slot: 'evening',
-    memo: null,
+    memo,
     class_days_next: null,
     class_days_effective_from: null,
     consultation_date: '2026-02-20',
@@ -88,11 +90,12 @@ async function installRoutes(context, state) {
     state.hits.push(`${method} ${path}${url.search}`);
 
     if (method === 'GET' && path === '/students/41') {
+      state.studentDetailAuthHeader = request.headers().authorization || null;
       return jsonRoute(route, {
         message: 'ok',
         payments: [makePayment()],
         performances: [],
-        student: makeStudent(),
+        student: makeStudent(state.memo),
       });
     }
 
@@ -121,8 +124,8 @@ async function installRoutes(context, state) {
   });
 }
 
-async function createPage(browser, viewport) {
-  const state = { hits: [] };
+async function createPage(browser, viewport, memo = STUDENT_MEMO) {
+  const state = { hits: [], memo, studentDetailAuthHeader: null };
   const context = await createAuthedContext(browser, viewport);
   await installRoutes(context, state);
   const page = await context.newPage();
@@ -142,6 +145,10 @@ async function assertWorkspace(page, label) {
   await board.getByRole('button', { name: '납부 내역' }).waitFor();
   await board.getByRole('button', { name: '출결 현황' }).waitFor();
   await board.getByRole('button', { name: '상담 기록' }).waitFor();
+  const studentMemo = page.getByTestId('student-detail-memo');
+  await studentMemo.getByText('학생 메모', { exact: true }).waitFor();
+  const memoText = await studentMemo.locator('p').innerText();
+  if (memoText !== STUDENT_MEMO) throw new Error(`student memo formatting mismatch: ${memoText}`);
   await assertNoRawVisibleText(page, label);
   await assertNoHorizontalOverflow(page, label);
 }
@@ -152,6 +159,7 @@ async function runDesktop(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
   await assertWorkspace(page, 'student detail workspace desktop');
+  if (state.studentDetailAuthHeader !== 'Bearer smoke-token') throw new Error('student detail auth header missing');
   await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '납부 내역' }).click();
   if ((await page.getByRole('link', { name: '2026-06 납부 수정' }).getAttribute('href')) !== '/payments/501/edit') throw new Error('unexpected payment edit link');
   await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '출결 현황' }).click();
@@ -169,9 +177,22 @@ async function runMobile(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
   await assertWorkspace(page, 'student detail workspace mobile');
+  await page.getByTestId('student-detail-memo').scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-workspace-mobile.png', fullPage: true });
   await context.close();
   return { diagnostics: result.diagnostics, state };
+}
+
+async function runEmptyMemo(browser) {
+  const result = await createPage(browser, { width: 390, height: 844 }, null);
+  const { context, page } = result;
+  await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 상세' }).waitFor();
+  await page.getByTestId('student-detail-memo').getByText('등록된 학생 메모가 없습니다.').waitFor();
+  await assertNoRawVisibleText(page, 'student detail empty memo');
+  await assertNoHorizontalOverflow(page, 'student detail empty memo');
+  await context.close();
+  return result;
 }
 
 function assertDiagnostics(result) {
@@ -184,7 +205,8 @@ async function main() {
   try {
     const desktop = await runDesktop(browser);
     const mobile = await runMobile(browser);
-    [desktop, mobile].forEach(assertDiagnostics);
+    const emptyMemo = await runEmptyMemo(browser);
+    [desktop, mobile, emptyMemo].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       mobileHits: mobile.state.hits,

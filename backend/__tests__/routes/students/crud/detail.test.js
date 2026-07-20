@@ -84,7 +84,7 @@ describe('GET /paca/students/:id (detail)', () => {
 
     test('정상 → {student, performances, payments} 응답 표면 보존 (message root 없음)', async () => {
         pool.execute
-            .mockResolvedValueOnce([[{ id: 5, name: 'enc_홍길동', academy_id: 1 }]])  // students
+            .mockResolvedValueOnce([[{ id: 5, name: 'enc_홍길동', academy_id: 1, memo: '이관 학생 메모' }]])  // students
             .mockResolvedValueOnce([[{ id: 1, record_date: '2026-01-01' }]])           // performances
             .mockResolvedValueOnce([[{ id: 10, year_month: '2026-01', final_amount: 300000 }]]);  // payments
         const res = await request(makeApp()).get('/paca/students/5');
@@ -94,6 +94,7 @@ describe('GET /paca/students/:id (detail)', () => {
         expect(res.body).toHaveProperty('payments');
         expect(res.body).not.toHaveProperty('message'); // 원본 응답 표면 (message root 없음)
         expect(res.body.student.name).toBe('복호화_홍길동');
+        expect(res.body.student.memo).toBe('이관 학생 메모');
         expect(res.body.performances).toHaveLength(1);
         expect(res.body.payments).toHaveLength(1);
     });
