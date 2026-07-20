@@ -7,7 +7,7 @@ const releaseInfo = require('../../src/constants/release.json');
 export const DEFAULT_BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
 export const DEFAULT_CHROME_PATH = process.env.PACA_SMOKE_CHROME ||
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const DEFAULT_APP_VERSION = process.env.PACA_SMOKE_APP_VERSION || releaseInfo.version;
+export const DEFAULT_APP_VERSION = process.env.PACA_SMOKE_APP_VERSION || releaseInfo.version;
 
 const RAW_VISIBLE_PATTERN = /(ENC:|Failed to load|CORS|Axios|stack trace|DB timeout|HTTP\s*(400|401|403|404|500)|status\s*(400|401|403|404|500))/i;
 

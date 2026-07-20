@@ -7,9 +7,10 @@ import type { AcademySettings, ClassTimeKey, TimeRangePart } from './settings-ty
 interface ClassTimeCardProps {
   settings: AcademySettings;
   updateClassTime: (key: ClassTimeKey, part: TimeRangePart, value: string) => void;
+  updateClassAvailability: (key: ClassTimeKey, isNoClass: boolean) => void;
 }
 
-export function ClassTimeCard({ settings, updateClassTime }: ClassTimeCardProps) {
+export function ClassTimeCard({ settings, updateClassTime, updateClassAvailability }: ClassTimeCardProps) {
   return (
     <SettingsSectionCard id="class-times" title="수업 시간대" description="반별 기본 시작/종료 시간" icon={Clock}>
       <div className="grid gap-3 md:grid-cols-3">
@@ -20,6 +21,7 @@ export function ClassTimeCard({ settings, updateClassTime }: ClassTimeCardProps)
             value={settings[field.key]}
             tone={field.tone}
             onChange={(part, value) => updateClassTime(field.key, part, value)}
+            onNoClassChange={(isNoClass) => updateClassAvailability(field.key, isNoClass)}
           />
         ))}
       </div>

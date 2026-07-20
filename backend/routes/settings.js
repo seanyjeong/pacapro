@@ -3,6 +3,10 @@ const router = express.Router();
 const db = require('../config/database');
 const { verifyToken, checkPermission } = require('../middleware/auth');
 const logger = require('../utils/logger');
+const {
+    getClassTimeValidationMessage,
+    isValidClassTimeSetting,
+} = require('../utils/classTimeSetting');
 
 /**
  * GET /paca/settings
@@ -123,25 +127,18 @@ router.put('/', verifyToken, checkPermission('settings', 'edit'), async (req, re
             });
         }
 
-        // Time format validation (HH:MM-HH:MM)
-        const timeRegex = /^\d{2}:\d{2}-\d{2}:\d{2}$/;
-        if (morning_class_time && !timeRegex.test(morning_class_time)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'morning_class_time must be in HH:MM-HH:MM format'
-            });
-        }
-        if (afternoon_class_time && !timeRegex.test(afternoon_class_time)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'afternoon_class_time must be in HH:MM-HH:MM format'
-            });
-        }
-        if (evening_class_time && !timeRegex.test(evening_class_time)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'evening_class_time must be in HH:MM-HH:MM format'
-            });
+        const classTimeFields = {
+            morning_class_time,
+            afternoon_class_time,
+            evening_class_time,
+        };
+        for (const [field, value] of Object.entries(classTimeFields)) {
+            if (value && !isValidClassTimeSetting(value)) {
+                return res.status(400).json({
+                    error: 'Validation Error',
+                    message: getClassTimeValidationMessage(field),
+                });
+            }
         }
 
         // Check if settings exist

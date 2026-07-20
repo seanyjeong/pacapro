@@ -30,7 +30,11 @@ export function SettingsPage() {
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
         <main className="min-w-0 space-y-5">
           <AcademyBasicCard settings={state.settings} updateSetting={state.updateSetting} />
-          <ClassTimeCard settings={state.settings} updateClassTime={state.updateClassTime} />
+          <ClassTimeCard
+            settings={state.settings}
+            updateClassTime={state.updateClassTime}
+            updateClassAvailability={state.updateClassAvailability}
+          />
           {TUITION_SECTIONS.map((section) => (
             <TuitionSectionCard
               key={section.kind}

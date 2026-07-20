@@ -3,6 +3,7 @@ import {
   assertNoRawVisibleText,
   createAuthedContext,
   createDiagnostics,
+  DEFAULT_APP_VERSION,
   jsonRoute,
   launchSmokeBrowser,
   isPacaApiRequest,
@@ -12,9 +13,11 @@ import {
 
 function makeState(mode = 'success') {
   return {
+    academyAuthorization: null,
     academyPayload: null,
     hits: [],
     mode,
+    operationAuthorization: null,
     operationPayload: null,
     resetAuthorization: null,
     resetPayload: null,
@@ -31,7 +34,7 @@ function academySettings() {
     salary_payment_day: 10,
     salary_month_type: 'next',
     morning_class_time: '09:30-12:00',
-    afternoon_class_time: '14:00-18:00',
+    afternoon_class_time: '-',
     evening_class_time: '18:30-21:00',
     exam_tuition: {
       weekly_1: 210000,
@@ -95,7 +98,7 @@ async function installRoutes(context, state) {
       return jsonRoute(route, {
         settings: {
           morning_class_time: '09:30-12:00',
-          afternoon_class_time: '14:00-18:00',
+          afternoon_class_time: '-',
           evening_class_time: '18:30-21:00',
           salary_payment_day: 10,
           salary_month_type: 'next',
@@ -104,15 +107,19 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'PUT' && path === '/settings/academy') {
+      state.academyAuthorization = request.headers().authorization || null;
       state.academyPayload = JSON.parse(request.postData() || '{}');
-      if (state.mode === 'save-error') {
-        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
-      }
       return jsonRoute(route, { message: 'saved' });
     }
 
     if (method === 'PUT' && path === '/settings') {
+      state.operationAuthorization = request.headers().authorization || null;
       state.operationPayload = JSON.parse(request.postData() || '{}');
+      if (state.mode === 'save-error') {
+        return jsonRoute(route, {
+          message: '오전 수업시간을 다시 선택해주세요. 수업이 없으면 "수업 없음"을 선택할 수 있습니다.',
+        }, 400);
+      }
       return jsonRoute(route, { message: 'saved' });
     }
 
@@ -160,7 +167,7 @@ async function runDesktop(browser) {
 
   await page.goto('/settings', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '설정', exact: true }).waitFor();
-  await page.getByText('v4.0.31', { exact: true }).waitFor();
+  await page.getByText(`v${DEFAULT_APP_VERSION}`, { exact: true }).waitFor();
   await page.getByText('2026-07-20', { exact: true }).waitFor();
   const operationNav = page.getByRole('navigation', { name: '운영 설정 바로가기' });
   await operationNav.waitFor();
@@ -168,6 +175,9 @@ async function runDesktop(browser) {
   await page.getByText('저장됨').first().waitFor();
   await page.getByRole('link', { name: '학원비 바로가기' }).waitFor();
   await page.getByRole('link', { name: '급여 설정 바로가기' }).waitFor();
+  const noAfternoonClass = page.getByRole('checkbox', { name: '오후반 수업 없음' });
+  await noAfternoonClass.waitFor();
+  if (!(await noAfternoonClass.isChecked())) throw new Error('오후반 수업 없음 설정이 표시되지 않음');
   const seasonLinkCount = await page.getByRole('link', { name: '시즌비 바로가기' }).count();
   if (seasonLinkCount !== 0) throw new Error('settings page should not expose season fee shortcut');
   const seasonPolicyCount = await page.getByRole('radio', { name: /시즌비가 월납부를 대체/ }).count();
@@ -247,6 +257,10 @@ async function runSaveFlow(browser) {
   await page.getByRole('heading', { name: '설정', exact: true }).waitFor();
   await page.getByRole('navigation', { name: '운영 설정 바로가기' }).getByText('PACA 일산').waitFor();
   await page.getByText('저장됨').first().waitFor();
+  const noAfternoonClass = page.getByRole('checkbox', { name: '오후반 수업 없음' });
+  await noAfternoonClass.uncheck();
+  await page.getByLabel('오후반 시작 시간').waitFor();
+  await noAfternoonClass.check();
   await page.getByLabel('오전반 시작 시간').selectOption('08:00');
   await page.getByLabel('입시반 주3회 학원비').fill('450000');
   await page.getByText('변경 사항 있음').first().waitFor();
@@ -255,11 +269,20 @@ async function runSaveFlow(browser) {
 
   if (!state.academyPayload) throw new Error('academy settings payload was not sent');
   if (!state.operationPayload) throw new Error('operation settings payload was not sent');
+  if (!state.academyAuthorization?.startsWith('Bearer ')) {
+    throw new Error('academy settings request must include the authenticated user token');
+  }
+  if (!state.operationAuthorization?.startsWith('Bearer ')) {
+    throw new Error('operation settings request must include the authenticated user token');
+  }
   if (state.academyPayload.morning_class_time !== '08:00-12:00') {
     throw new Error(`morning_class_time mismatch: ${JSON.stringify(state.academyPayload)}`);
   }
   if (state.operationPayload.morning_class_time !== '08:00-12:00') {
     throw new Error(`operation payload mismatch: ${JSON.stringify(state.operationPayload)}`);
+  }
+  if (state.operationPayload.afternoon_class_time !== '-') {
+    throw new Error(`no-class setting was not preserved: ${JSON.stringify(state.operationPayload)}`);
   }
   if (state.academyPayload.exam_tuition?.weekly_3 !== 450000) {
     throw new Error(`tuition payload mismatch: ${JSON.stringify(state.academyPayload.exam_tuition)}`);
@@ -285,7 +308,8 @@ async function runSaveError(browser) {
   await page.getByRole('navigation', { name: '운영 설정 바로가기' }).getByText('PACA 일산').waitFor();
   await page.getByLabel('학원명').fill('PACA 강남');
   await page.getByRole('button', { name: /저장/ }).first().click();
-  await page.getByText('설정을 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도해주세요.').waitFor();
+  await page.getByText('오전 수업시간을 다시 선택해주세요. 수업이 없으면 "수업 없음"을 선택할 수 있습니다.').waitFor();
+  await page.waitForTimeout(300);
   await assertNoRawVisibleText(page, 'settings save error');
   await assertNoHorizontalOverflow(page, 'settings save error');
   await page.screenshot({ path: '/Users/etlab/paca-settings-save-error-mobile.png', fullPage: true });
@@ -334,6 +358,10 @@ async function main() {
       resetAuthorization: resetFlow.state.resetAuthorization ? 'present' : 'missing',
       resetErrorHits: resetError.state.hits,
       savePayload: saveFlow.state.academyPayload,
+      saveAuthorization: {
+        academy: saveFlow.state.academyAuthorization ? 'present' : 'missing',
+        operation: saveFlow.state.operationAuthorization ? 'present' : 'missing',
+      },
       operationPayload: saveFlow.state.operationPayload,
       saveErrorHits: saveError.state.hits,
     }, null, 2));

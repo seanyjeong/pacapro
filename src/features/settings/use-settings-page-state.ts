@@ -12,6 +12,7 @@ import {
   saveOperationSettings,
 } from './settings-api';
 import { SETTINGS_RESET_COPY } from './settings-reset-copy';
+import { getSettingsSaveErrorMessage } from './settings-error-message';
 import type {
   AcademySettings,
   ClassTimeKey,
@@ -86,6 +87,13 @@ export function useSettingsPageState() {
     });
   };
 
+  const updateClassAvailability = (key: ClassTimeKey, isNoClass: boolean) => {
+    setSettings((prev) => ({
+      ...prev,
+      [key]: isNoClass ? '-' : DEFAULT_ACADEMY_SETTINGS[key],
+    }));
+  };
+
   const updateTuition = (kind: TuitionKind, weeklyKey: WeeklyTuitionKey, value: number) => {
     setSettings((prev) => ({
       ...prev,
@@ -108,9 +116,9 @@ export function useSettingsPageState() {
       await saveOperationSettings(settings);
       setSavedSettings(settings);
       toast.success('학원 설정이 저장되었습니다.');
-    } catch {
+    } catch (error) {
       console.error('Settings save failed');
-      toast.error('설정을 저장하지 못했습니다. 입력값을 확인한 뒤 다시 시도해주세요.');
+      toast.error(getSettingsSaveErrorMessage(error));
     } finally {
       setIsSaving(false);
     }
@@ -154,6 +162,7 @@ export function useSettingsPageState() {
     hasUnsavedChanges,
     updateSetting,
     updateClassTime,
+    updateClassAvailability,
     updateTuition,
     saveSettings,
     setResetConfirmation,
