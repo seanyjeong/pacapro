@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils/cn';
-import packageJson from '../../../package.json';
+import releaseInfo from '../../constants/release.json';
 import {
     LayoutDashboard,
     Users,
@@ -449,8 +449,8 @@ export function Sidebar() {
             {!collapsed && (
                 <div className="p-4 border-t border-border">
                     <div className="text-xs text-muted-foreground text-center space-y-1">
-                        <div>P-ACA v{packageJson.version}</div>
-                        <div className="text-[10px] text-muted-foreground/70">Last updated: {packageJson.lastUpdate}</div>
+                        <div>P-ACA v{releaseInfo.version}</div>
+                        <div className="text-[10px] text-muted-foreground/70">Last updated: {releaseInfo.lastUpdate}</div>
                         <div>문의: 010-2144-6755</div>
                     </div>
                 </div>

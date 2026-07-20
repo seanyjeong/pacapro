@@ -1,4 +1,4 @@
-import packageJson from '../../../package.json';
+import releaseInfo from '@/constants/release.json';
 import type { NotificationSettings } from '@/lib/api/notificationSettings';
 
 export const DEFAULT_TABLET_NOTIFICATION_SETTINGS: NotificationSettings = {
@@ -8,7 +8,7 @@ export const DEFAULT_TABLET_NOTIFICATION_SETTINGS: NotificationSettings = {
   pause_ending: true,
 };
 
-export const TABLET_APP_VERSION = `v${packageJson.version}`;
+export const TABLET_APP_VERSION = `v${releaseInfo.version}`;
 
 export function getTabletRoleLabel(role?: string): string {
   const labels: Record<string, string> = {

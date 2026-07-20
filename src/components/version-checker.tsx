@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import releaseInfo from '@/constants/release.json';
 
-// package.json의 버전과 동일하게 유지
-import packageJson from '../../package.json';
-const APP_VERSION = packageJson.version;
+const APP_VERSION = releaseInfo.version;
 
 export function VersionChecker() {
     useEffect(() => {

@@ -1,7 +1,7 @@
 'use client';
 
 import PWAInstallPrompt from '@/components/pwa-install-prompt';
-import packageJson from '../../../package.json';
+import releaseInfo from '@/constants/release.json';
 import { MobileHomeFooter } from './mobile-home-footer';
 import { MobileHomeHeader } from './mobile-home-header';
 import { MobileHomeMenu } from './mobile-home-menu';
@@ -63,7 +63,7 @@ export function MobileHomePage() {
           onToggleExpanded={() => state.setPushExpanded(!state.pushExpanded)}
         />
 
-        <MobileHomeFooter version={packageJson.version} onLogout={state.logout} />
+        <MobileHomeFooter version={releaseInfo.version} onLogout={state.logout} />
       </div>
 
       <PWAInstallPrompt />

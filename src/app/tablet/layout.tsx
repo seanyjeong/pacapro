@@ -20,10 +20,10 @@ import {
   Send,
   Monitor
 } from 'lucide-react';
-import packageJson from '../../../package.json';
+import releaseInfo from '@/constants/release.json';
 import { openPeakSso } from '@/lib/peak-sso';
 
-const APP_VERSION = `v${packageJson.version}`;
+const APP_VERSION = `v${releaseInfo.version}`;
 
 // Navigation items (대시보드 제거)
 const navigation = [
