@@ -54,6 +54,17 @@ beforeEach(() => {
     pool.execute.mockResolvedValue([[]]);
 });
 
+test.each(['/', '/unpaid', '/unpaid-today'])(
+    'GET %s 학생 JOIN은 결제 지점과 학생 지점을 함께 검증한다',
+    async (path) => {
+        await request(makeApp()).get(`/paca/payments${path}`);
+        const [sql] = pool.execute.mock.calls[0];
+        expect(sql).toMatch(
+            /JOIN students s ON p\.student_id = s\.id\s+AND s\.academy_id = p\.academy_id/
+        );
+    }
+);
+
 describe('GET /paca/payments', () => {
     test('200: { message, payments } + 학생 이름 복호화', async () => {
         pool.execute.mockResolvedValueOnce([[

@@ -73,6 +73,7 @@ router.get('/', verifyToken, checkPermission('payments', 'view'), async (req, re
                 ), 0) as credit_balance
             FROM student_payments p
             JOIN students s ON p.student_id = s.id
+            AND s.academy_id = p.academy_id
             WHERE p.academy_id = ?
         `;
 
@@ -157,6 +158,7 @@ router.get('/unpaid', verifyToken, checkPermission('payments', 'view'), async (r
                 DATEDIFF(CURDATE(), p.due_date) as days_overdue
             FROM student_payments p
             JOIN students s ON p.student_id = s.id
+            AND s.academy_id = p.academy_id
             WHERE p.academy_id = ?
             AND p.payment_status IN ('pending', 'partial')
             AND ${dueUnpaidSql('p')}
@@ -227,6 +229,7 @@ router.get('/unpaid-today', verifyToken, async (req, res) => {
                 ) as today_attendance
             FROM student_payments p
             JOIN students s ON p.student_id = s.id
+            AND s.academy_id = p.academy_id
             WHERE p.academy_id = ?
             AND p.payment_status IN ('pending', 'partial')
             AND ${dueUnpaidSql('p')}

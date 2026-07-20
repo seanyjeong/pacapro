@@ -154,10 +154,11 @@ router.get('/slot', verifyToken, async (req, res) => {
                          LIMIT 1) as season_type
                  FROM attendance a
                  JOIN students s ON a.student_id = s.id
+                 AND s.academy_id = ?
                  WHERE a.class_schedule_id = ?
                  AND s.deleted_at IS NULL
                  ORDER BY season_type IS NOT NULL DESC, s.name`,
-                [date, schedule.id]
+                [date, req.user.academyId, schedule.id]
             );
             // 복호화
             students = attendanceRecords.map(s => ({
@@ -326,6 +327,15 @@ router.delete('/slot/student', verifyToken, checkPermission('schedules', 'edit')
             });
         }
 
+        const validation = await validateAttendance(student_id, schedules[0].id);
+        if (!validation.valid) {
+            logger.error(`[SECURITY] Blocked slot removal: ${validation.error}`);
+            return res.status(403).json({
+                error: 'Forbidden',
+                message: '해당 학생은 이 학원 소속이 아닙니다.'
+            });
+        }
+
         // 출석 기록 삭제
         await db.query(
             `DELETE FROM attendance
@@ -369,6 +379,15 @@ router.post('/slot/move', verifyToken, checkPermission('schedules', 'edit'), asy
             return res.status(404).json({
                 error: 'Not Found',
                 message: '출발 수업을 찾을 수 없습니다.'
+            });
+        }
+
+        const validation = await validateAttendance(student_id, fromSchedules[0].id);
+        if (!validation.valid) {
+            logger.error(`[SECURITY] Blocked slot move: ${validation.error}`);
+            return res.status(403).json({
+                error: 'Forbidden',
+                message: '해당 학생은 이 학원 소속이 아닙니다.'
             });
         }
 

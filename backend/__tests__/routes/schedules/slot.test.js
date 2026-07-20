@@ -79,6 +79,24 @@ describe('GET /paca/schedules/slot', () => {
         expect(res.body).toEqual({ schedule: null, students: [] });
     });
 
+    test('출석 학생 조회는 현재 학원 소속 학생만 JOIN 한다', async () => {
+        pool.query.mockReset();
+        pool.query
+            .mockResolvedValueOnce([[{ id: 77, class_date: '2026-01-01', time_slot: 'morning' }]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]]);
+
+        const res = await request(makeApp())
+            .get('/paca/schedules/slot?date=2026-01-01&time_slot=morning');
+
+        expect(res.status).toBe(200);
+        const [sql, params] = pool.query.mock.calls[3];
+        expect(sql).toMatch(/JOIN students s ON a\.student_id = s\.id\s+AND s\.academy_id = \?/);
+        expect(params).toEqual(['2026-01-01', 1, 77]);
+    });
+
     test('5xx 한국어 메시지', async () => {
         pool.query.mockReset();
         pool.query.mockRejectedValueOnce(new Error('boom'));
@@ -158,9 +176,23 @@ describe('DELETE /paca/schedules/slot/student', () => {
         expect(res.body.message).toBe('해당 수업을 찾을 수 없습니다.');
     });
 
+    test('다른 학원 학생 제거 시도 → 403 한국어', async () => {
+        pool.query.mockReset();
+        pool.query.mockResolvedValueOnce([[{ id: 50 }]]);
+        validateAttendance.mockResolvedValueOnce({ valid: false, error: 'wrong academy' });
+
+        const res = await request(makeApp())
+            .delete('/paca/schedules/slot/student?date=2026-01-01&time_slot=morning&student_id=5');
+
+        expect(res.status).toBe(403);
+        expect(res.body.message).toBe('해당 학생은 이 학원 소속이 아닙니다.');
+        expect(pool.query).toHaveBeenCalledTimes(1);
+    });
+
     test('정상 → message', async () => {
         pool.query.mockReset();
         pool.query.mockResolvedValueOnce([[{ id: 50 }]]);
+        validateAttendance.mockResolvedValueOnce({ valid: true });
         pool.query.mockResolvedValueOnce([{ affectedRows: 1 }]);
         const res = await request(makeApp())
             .delete('/paca/schedules/slot/student?date=2026-01-01&time_slot=morning&student_id=5');
@@ -185,9 +217,24 @@ describe('POST /paca/schedules/slot/move', () => {
         expect(res.body.message).toBe('출발 수업을 찾을 수 없습니다.');
     });
 
+    test('다른 학원 학생 이동 시도 → 403, 도착 수업 생성 안 함', async () => {
+        pool.query.mockReset();
+        pool.query.mockResolvedValueOnce([[{ id: 50 }]]);
+        validateAttendance.mockResolvedValueOnce({ valid: false, error: 'wrong academy' });
+
+        const res = await request(makeApp())
+            .post('/paca/schedules/slot/move')
+            .send({ date: '2026-01-01', from_slot: 'morning', to_slot: 'evening', student_id: 5 });
+
+        expect(res.status).toBe(403);
+        expect(res.body.message).toBe('해당 학생은 이 학원 소속이 아닙니다.');
+        expect(pool.query).toHaveBeenCalledTimes(1);
+    });
+
     test('정상 (도착 슬롯 자동 생성)', async () => {
         pool.query.mockReset();
         pool.query.mockResolvedValueOnce([[{ id: 50 }]]); // from
+        validateAttendance.mockResolvedValueOnce({ valid: true });
         pool.query.mockResolvedValueOnce([[]]); // to empty
         pool.query.mockResolvedValueOnce([{ insertId: 60 }]); // INSERT to
         pool.query.mockResolvedValueOnce([{ affectedRows: 1 }]); // UPDATE attendance

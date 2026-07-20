@@ -147,6 +147,47 @@ async function runOwnerHome(browser) {
   return { state, diagnostics };
 }
 
+async function runStaleAcademyRefresh(browser) {
+  const staleUser = {
+    id: 1,
+    email: 'owner@example.com',
+    name: '원장',
+    role: 'owner',
+    academy_id: 2,
+    academy: { id: 2, name: '일산 맥스체대입시' },
+    permissions: {},
+  };
+  const state = makeState({
+    authMeUser: {
+      ...staleUser,
+      academy_id: 4,
+      academyId: 4,
+      academy_name: '대전맥스',
+      academy: { id: 4, name: '대전맥스' },
+    },
+  });
+  const { context, page, diagnostics } = await createMobilePage(browser, state, staleUser);
+
+  await gotoWorkspace(page);
+  await page.getByRole('heading', { name: '대전맥스' }).waitFor();
+  if (await page.getByRole('heading', { name: '일산 맥스체대입시' }).count()) {
+    throw new Error('mobile home rendered a stale academy name');
+  }
+  const storedAcademy = await page.evaluate(() => {
+    const user = JSON.parse(window.localStorage.getItem('user') || '{}');
+    return user.academy;
+  });
+  if (storedAcademy?.id !== 4 || storedAcademy?.name !== '대전맥스') {
+    throw new Error(`mobile home did not refresh the academy session: ${JSON.stringify(storedAcademy)}`);
+  }
+  if (!state.hits.includes('GET /auth/me')) throw new Error('mobile home did not validate the current session');
+
+  await assertNoRawVisibleText(page, 'mobile home stale academy refresh');
+  await assertNoHorizontalOverflow(page, 'mobile home stale academy refresh');
+  await context.close();
+  return { state, diagnostics };
+}
+
 async function runNoPermission(browser) {
   const state = makeState();
   const user = {
@@ -162,6 +203,7 @@ async function runNoPermission(browser) {
       consultations: { view: false, edit: false },
     },
   };
+  state.authMeUser = user;
   const { context, page, diagnostics } = await createMobilePage(browser, state, user);
 
   await gotoNoPermission(page);
@@ -218,6 +260,7 @@ async function runPermissionFilter(browser) {
       consultations: { view: false, edit: false },
     },
   };
+  state.authMeUser = user;
   const { context, page, diagnostics } = await createMobilePage(browser, state, user);
 
   await gotoWorkspace(page);
@@ -246,11 +289,13 @@ async function main() {
   const browser = await launchSmokeBrowser();
   try {
     const owner = await runOwnerHome(browser);
+    const staleAcademy = await runStaleAcademyRefresh(browser);
     const noPermission = await runNoPermission(browser);
     const filtered = await runPermissionFilter(browser);
-    [owner, noPermission, filtered].forEach(assertDiagnostics);
+    [owner, staleAcademy, noPermission, filtered].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       ownerHits: owner.state.hits,
+      staleAcademyHits: staleAcademy.state.hits,
       noPermissionHits: noPermission.state.hits,
       filteredHits: filtered.state.hits,
       ownerConsoleErrors: owner.diagnostics.consoleErrors,

@@ -70,9 +70,32 @@ export function useMobileHomeState() {
     return true;
   }, [refreshPushStatus, router]);
 
+  const refreshCurrentSession = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const response = await apiClient.get<{ user?: Record<string, unknown> }>('/auth/me', {
+        suppressErrorToast: true,
+      });
+      if (!response.user) throw new Error('Current user is missing');
+      localStorage.setItem('user', JSON.stringify(response.user));
+      applyStoredSession();
+    } catch {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      document.cookie = 'paca_auth=; path=/; max-age=0';
+      toast.error(MOBILE_HOME_MESSAGES.sessionRefreshFailed);
+      router.push('/login');
+    }
+  }, [applyStoredSession, router]);
+
   useEffect(() => {
-    applyStoredSession();
-  }, [applyStoredSession]);
+    void refreshCurrentSession();
+  }, [refreshCurrentSession]);
 
   const refreshPermissions = async () => {
     setPermissionRefreshing(true);
