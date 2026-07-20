@@ -160,6 +160,8 @@ async function runDesktop(browser) {
 
   await page.goto('/settings', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '설정', exact: true }).waitFor();
+  await page.getByText('v4.0.31', { exact: true }).waitFor();
+  await page.getByText('2026-07-20', { exact: true }).waitFor();
   const operationNav = page.getByRole('navigation', { name: '운영 설정 바로가기' });
   await operationNav.waitFor();
   await operationNav.getByText('PACA 일산').waitFor();
