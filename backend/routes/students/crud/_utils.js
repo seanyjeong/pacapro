@@ -36,10 +36,8 @@
  *   StudentCreateResponse / StudentUpdateResponse / StudentDeleteResponse) 가 root 키 직접 소비.
  * - `{data, meta}` / `{error: {code, message}}` RULES 표준 이전은 응답 통일 트랙 (프론트 동시 변경) 으로 분리.
  *
- * ## 분리 미루기 (ADR-015)
- * - `create.js` (POST /, ~430줄) + `update.js` (PUT /:id, ~855줄) 는 26 컬럼 INSERT +
- *   18+ 필드 dynamic update + 일할계산 + 학원비 자동 생성 + 트랜잭션 분기 + 스케줄 재배정 강결합.
- *   sub-모듈 추가 분리 보류 — 응답 표면 + 동작 1:1 보존이 최우선. JSDoc 에 명시.
+ * ## 모듈 경계
+ * - 학생 수정의 결제·스케줄 후처리는 `crud/update/` 아래에서 분리 관리한다.
  */
 
 const db = require('../../../config/database');
@@ -54,7 +52,6 @@ const {
     decryptArrayFields,
     ENCRYPTED_FIELDS
 } = require('../../../utils/encryption');
-const { calculateDueDate } = require('../../../utils/dueDateCalculator');
 const { logAudit, getAuditInfoFromReq } = require('../../../utils/auditLogger');
 const logger = require('../../../utils/logger');
 
@@ -79,7 +76,6 @@ module.exports = {
     decryptFields,
     decryptArrayFields,
     ENCRYPTED_FIELDS,
-    calculateDueDate,
     logAudit,
     getAuditInfoFromReq,
     logger,

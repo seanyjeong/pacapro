@@ -224,7 +224,6 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
             .mockResolvedValueOnce([{ affectedRows: 1 }])                               // UPDATE students
             .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000, enrollment_date: '2026-01-15' })]]) // 갱신 SELECT
             .mockResolvedValueOnce([[{ id: 77, payment_status: 'pending' }]])           // 일할계산 학원비 SELECT
-            .mockResolvedValueOnce([[{ tuition_due_day: 5 }]])                          // academy_settings SELECT
             .mockResolvedValueOnce([{ affectedRows: 1 }]);                              // UPDATE student_payments
 
         const res = await request(makeApp()).put('/paca/students/5').send({ enrollment_date: '2026-01-15' });
@@ -238,6 +237,8 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
         expect(paymentUpdateCall).toBeDefined();
         expect(paymentUpdateCall[1]).toContain('2026-01');      // year_month
         expect(paymentUpdateCall[1]).toContain(164000);          // proRatedAmount
+        expect(paymentUpdateCall[1]).toContain('2026-01-15');    // 변경한 등록일 = 납부기한
+        expect(paymentUpdateCall[1]).not.toContain('2026-01-22');
         expect(paymentUpdateCall[1]).toContain(77);              // 대상 payment id
     });
 
@@ -285,5 +286,40 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
         expect(res.status).toBe(200);
         expect(res.body.enrollmentDateRecalc).toBeNull();
         expect(pool.execute.mock.calls.find(c => /student_payments/.test(c[0]))).toBeUndefined();
+    });
+});
+
+describe('PUT /paca/students/:id — pending/trial → active 첫 달 학원비', () => {
+    test('재원 전환으로 생성한 일할 청구의 납부기한은 등록일이다', async () => {
+        const pendingStudent = existingStudent({
+            status: 'pending',
+            enrollment_date: '2026-07-20',
+            monthly_tuition: 300000,
+            payment_due_day: 1,
+        });
+        const activeStudent = { ...pendingStudent, status: 'active' };
+
+        pool.execute.mockResolvedValue([[]]);
+        pool.execute
+            .mockResolvedValueOnce([[pendingStudent]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[activeStudent]])
+            .mockResolvedValueOnce([{ affectedRows: 0 }])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([{ insertId: 90 }]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({
+            status: 'active',
+            enrollment_date: '2026-07-20',
+            monthly_tuition: 300000,
+            payment_due_day: 1,
+        });
+
+        expect(res.status).toBe(200);
+        const paymentInsert = pool.execute.mock.calls.find(([sql]) => /INSERT INTO student_payments/.test(sql));
+        expect(paymentInsert).toBeDefined();
+        const dueDate = paymentInsert[1][10];
+        const dueDateText = dueDate instanceof Date ? dueDate.toISOString().slice(0, 10) : dueDate;
+        expect(dueDateText).toBe('2026-07-20');
     });
 });

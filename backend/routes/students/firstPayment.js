@@ -15,6 +15,7 @@
  * - 등록월의 미납(pending) 월 학원비 중 일할계산 건(is_prorated=1 OR description LIKE '%일할계산%')만 대상.
  * - 납부완료 건은 거부 (결제 내역에서 직접 수정 안내).
  * - 등록월에 일할계산 건이 없으면 404 (다른 월로 옮겨간 건 자동으로 끌어오지 않음 — 복귀 일할 오인 방지).
+ * - 재계산된 일할 청구의 납부기한은 등록일로 통일.
  *
  * ## 응답
  * - 200: {message, payment: {id, year_month, base_amount, discount_amount, final_amount, due_date}}
@@ -25,7 +26,7 @@
 const pool = require('../../config/database');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const logger = require('../../utils/logger');
-const { calculateDueDate } = require('../../utils/dueDateCalculator');
+const { resolveProratedPaymentDueDate } = require('../../utils/proratedPaymentDueDate');
 const { parseClassDaysWithSlots, extractDayNumbers, truncateToThousands } = require('./_utils');
 
 module.exports = function(router) {
@@ -40,8 +41,7 @@ router.post('/:id/recalculate-first-payment', verifyToken, checkPermission('stud
 
     try {
         const [students] = await pool.execute(
-            `SELECT id, enrollment_date, monthly_tuition, discount_rate, class_days,
-                    time_slot, payment_due_day
+            `SELECT id, enrollment_date, monthly_tuition, discount_rate, class_days, time_slot
              FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
             [studentId, req.user.academyId]
         );
@@ -120,19 +120,7 @@ router.post('/:id/recalculate-first-payment', verifyToken, checkPermission('stud
         const discountAmount = truncateToThousands(proRatedAmount * discountRateNum / 100);
         const finalAmount = proRatedAmount - discountAmount;
 
-        const [academySettings] = await pool.execute(
-            'SELECT tuition_due_day FROM academy_settings WHERE academy_id = ?',
-            [req.user.academyId]
-        );
-        const academyDueDay = academySettings.length > 0 ? academySettings[0].tuition_due_day : 5;
-        const studentDueDay = student.payment_due_day || academyDueDay;
-
-        let dueDateStr = calculateDueDate(year, month, studentDueDay, parsedClassDays);
-        if (new Date(dueDateStr) < enrollDate) {
-            const grace = new Date(enrollDate);
-            grace.setDate(grace.getDate() + 7);
-            dueDateStr = grace.toISOString().split('T')[0];
-        }
+        const dueDateStr = resolveProratedPaymentDueDate(String(student.enrollment_date));
 
         await pool.execute(
             `UPDATE student_payments

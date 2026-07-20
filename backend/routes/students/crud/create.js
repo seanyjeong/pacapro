@@ -11,7 +11,7 @@
  *
  * ## DB 패턴 (ADR-005)
  * - `pool.execute(sql, params)` 통일 (총 13건: 학생번호 중복 / 동일학생 / 동명학생 / 학번 자동발급 /
- *   INSERT students / SELECT inserted / SELECT academy_settings / INSERT student_payments /
+ *   INSERT students / SELECT inserted / INSERT student_payments /
  *   SELECT inserted payment / 체험생 trial 스케줄 4건).
  * - 자동 스케줄 배정 헬퍼 (`autoAssignStudentToSchedules`) 첫 인자도 `pool` 로 정렬.
  *
@@ -31,10 +31,8 @@
  * - `encrypt(value)` 시그니처 무변경 (name / phone / parent_phone / address 4건 암호화).
  * - `decryptFields(student, ENCRYPTED_FIELDS.students)` 시그니처 무변경 (응답 시 복호화).
  *
- * ## 분리 미루기 (ADR-015)
- * - 본 endpoint 는 (1) 26 컬럼 INSERT + (2) 학원번호 자동발급 + (3) 일할계산 (수업요일 ↔ 천원 단위 절삭 ↔ 할인) +
- *   (4) 학원비 INSERT + (5) 체험생/정식 분기 자동 배정 + (6) 응답 직렬화 강결합. 추가 sub-모듈 분리 보류 —
- *   응답 표면 + 동작 1:1 보존이 최우선. 단일 파일 임계 (~430줄) 초과 허용.
+ * ## 첫 달 납부기한
+ * - 신규생 일할 청구는 등록과 동시에 수납 대상이므로 등록일을 납부기한으로 사용한다.
  */
 
 const {
@@ -44,13 +42,16 @@ const {
     encrypt,
     decryptFields,
     ENCRYPTED_FIELDS,
-    calculateDueDate,
     parseClassDaysWithSlots,
     extractDayNumbers,
     autoAssignStudentToSchedules,
     truncateToThousands,
     logger
 } = require('./_utils');
+const {
+    getKoreaDateText,
+    resolveProratedPaymentDueDate,
+} = require('../../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -292,17 +293,10 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
         // 첫 달 학원비 자동 생성 (일할계산) - 체험생은 제외
         let firstPayment = null;
         if (!is_trial && monthly_tuition && monthly_tuition > 0) {
-            const enrollDate = new Date(enrollment_date || new Date().toISOString().split('T')[0]);
+            const enrollmentDateText = enrollment_date || getKoreaDateText();
+            const enrollDate = new Date(`${enrollmentDateText}T00:00:00`);
             const year = enrollDate.getFullYear();
             const month = enrollDate.getMonth() + 1;
-
-            // 학원 납부일 조회 (기본값 5일)
-            const [academySettings] = await pool.execute(
-                'SELECT tuition_due_day FROM academy_settings WHERE academy_id = ?',
-                [req.user.academyId]
-            );
-            const academyDueDay = academySettings.length > 0 ? academySettings[0].tuition_due_day : 5;
-            const studentDueDay = payment_due_day || academyDueDay;
 
             // 일할계산: 등록일부터 말일까지
             const lastDayOfMonth = new Date(year, month, 0).getDate();
@@ -347,15 +341,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             const discountAmount = truncateToThousands(proRatedAmount * discountRateNum / 100);
             const finalAmount = proRatedAmount - discountAmount;
 
-            // 납부일 계산: 등록일이 학원 납부일 이후면 등록일+7일
-            let dueDateStr = calculateDueDate(year, month, studentDueDay, parsedClassDays);
-            let dueDateObj = new Date(dueDateStr);
-
-            if (dueDateObj < enrollDate) {
-                const grace = new Date(enrollDate);
-                grace.setDate(grace.getDate() + 7);
-                dueDateStr = grace.toISOString().split('T')[0];
-            }
+            const dueDateStr = resolveProratedPaymentDueDate(enrollmentDateText);
 
             // 학원비 레코드 생성
             const yearMonth = `${year}-${String(month).padStart(2, '0')}`;

@@ -371,8 +371,6 @@ describe('POST /paca/students/:id/resume', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({
-      // resumeDateStr 은 toISOString().split('T')[0] 사용 — 서버 timezone 에 따라 5/14 또는 5/15 가능.
-      // 응답 표면 (키 존재 + 메시지 포맷) 만 검증.
       message: expect.stringMatching(/202\d-\d{2}-\d{2} 복귀 처리가 완료되었습니다\./),
       student: { id: 1, status: 'active' },
       scheduleAssigned: null,
@@ -424,11 +422,12 @@ describe('POST /paca/students/:id/resume', () => {
     expect(autoAssignStudentToSchedules.mock.calls[0][1]).toBe(1); // studentId
     expect(autoAssignStudentToSchedules.mock.calls[0][2]).toBe(1); // academyId
 
-    // INSERT student_payments 호출 확인
     const insertCall = pool.execute.mock.calls.find(c =>
       typeof c[0] === 'string' && c[0].includes('INSERT INTO student_payments')
     );
     expect(insertCall).toBeDefined();
+    expect(insertCall[1]).toContain('2026-05-15');
+    expect(insertCall[1]).not.toContain('2026-05-22');
   });
 
   test('autoAssignStudentToSchedules 실패해도 응답은 200 (logger.error 호출, 부분 진행 허용)', async () => {

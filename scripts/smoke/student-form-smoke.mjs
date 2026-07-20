@@ -218,7 +218,7 @@ async function readRequiredStudentFields(page) {
 }
 
 async function submitStudentForm(page, label) {
-  await page.getByRole('button', { name: label }).click();
+  await page.locator('button[type="submit"]').filter({ hasText: label }).click();
 }
 
 async function clickWithoutNativeDialog(page, locator, label) {
@@ -289,7 +289,7 @@ async function runCreateSameNameWarning(browser) {
   await page.goto('/students/new', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 등록' }).waitFor();
   await fillRequiredStudentFields(page);
-  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '등록' }), 'same name save');
+  await clickWithoutNativeDialog(page, page.locator('button[type="submit"]').filter({ hasText: '등록' }), 'same name save');
   await page.getByRole('alertdialog').getByRole('heading', { name: '같은 이름 학생 확인' }).waitFor();
   await page.getByText('010-9999-0000').waitFor();
   await page.screenshot({ path: '/Users/etlab/paca-student-form-same-name-dialog.png', fullPage: true });

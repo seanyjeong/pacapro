@@ -163,6 +163,31 @@ describe('POST /paca/students (create)', () => {
         );
     });
 
+    test('신규생 첫 달 일할 청구의 납부기한은 등록일이다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([{ insertId: 555 }])
+            .mockResolvedValueOnce([[{ id: 555, name: 'enc_신규생', phone: 'enc_010-1' }]])
+            .mockResolvedValueOnce([{ insertId: 901 }])
+            .mockResolvedValueOnce([[{ id: 901, due_date: '2026-07-20' }]]);
+
+        const res = await request(makeApp()).post('/paca/students').send({
+            name: '신규생',
+            phone: '010-1',
+            enrollment_date: '2026-07-20',
+            monthly_tuition: 300000,
+            class_days: [],
+        });
+
+        expect(res.status).toBe(201);
+        const paymentInsert = pool.execute.mock.calls.find(([sql]) => /INSERT INTO student_payments/.test(sql));
+        expect(paymentInsert).toBeDefined();
+        expect(paymentInsert[1]).toContain('2026-07-20');
+        expect(paymentInsert[1]).not.toContain('2026-07-27');
+    });
+
     test('체험생 (is_trial=true) → message="Trial student created successfully"', async () => {
         pool.execute
             .mockResolvedValueOnce([[]])  // duplicate
