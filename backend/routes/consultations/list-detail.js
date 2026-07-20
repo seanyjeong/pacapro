@@ -101,6 +101,7 @@ module.exports = function (router) {
                 `SELECT c.*, s.name as linked_student_name, s.is_trial as linked_student_is_trial
                  FROM consultations c
                  LEFT JOIN students s ON c.linked_student_id = s.id
+                 AND s.academy_id = c.academy_id
                  ${whereClause}
                  ORDER BY c.preferred_date DESC, c.preferred_time DESC
                  LIMIT ${safeLimit} OFFSET ${safeOffset}`,
@@ -261,6 +262,7 @@ module.exports = function (router) {
                 `SELECT c.*, s.name as linked_student_name, s.grade as linked_student_grade, s.is_trial as linked_student_is_trial
                  FROM consultations c
                  LEFT JOIN students s ON c.linked_student_id = s.id
+                 AND s.academy_id = c.academy_id
                  WHERE c.id = ? AND c.academy_id = ?`,
                 [id, academyId]
             );

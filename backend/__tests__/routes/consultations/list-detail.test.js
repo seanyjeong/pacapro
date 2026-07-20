@@ -72,6 +72,11 @@ describe('GET /paca/consultations', () => {
         expect(res.body.stats).toEqual({ pending: 5 });
         expect(pool.execute).toHaveBeenCalledTimes(3);
         expect(pool.query).not.toHaveBeenCalled();
+
+        const [selectSql] = pool.execute.mock.calls[1];
+        expect(selectSql).toMatch(
+            /LEFT JOIN students s ON c\.linked_student_id = s\.id\s+AND s\.academy_id = c\.academy_id/
+        );
     });
 
     test('search 필터 → WHERE 추가, params 에 LIKE term 3개 push', async () => {
@@ -159,6 +164,11 @@ describe('GET /paca/consultations/:id', () => {
         expect(res.body.academicScores).toEqual({ schoolGradeAvg: 3.5 });
         expect(res.body.referralSources).toEqual(['블로그']);
         expect(res.body.checklist).toEqual([{ id: 1, text: 'a', checked: false }]);
+
+        const [detailSql] = pool.execute.mock.calls[0];
+        expect(detailSql).toMatch(
+            /LEFT JOIN students s ON c\.linked_student_id = s\.id\s+AND s\.academy_id = c\.academy_id/
+        );
     });
 });
 

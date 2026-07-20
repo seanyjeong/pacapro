@@ -5,7 +5,9 @@
 |---|---|---|
 | Backend primary | Vultr systemd | PACA backend behind `https://supermax.kr/paca/*` |
 | Frontend primary | Vercel | `pacapro` production project from the reviewed refactor source |
-| Legacy reference | n100 | Rollback/data-reference only after cutover approval |
+
+PACA 운영 서버, 운영 DB, 스케줄러, Google Drive 백업의 기준 호스트는
+Vultr 하나뿐이다. 폐기된 N100은 배포, 검증, 롤백, 데이터 비교 대상으로 사용하지 않는다.
 
 Canonical backend:
 
@@ -88,27 +90,18 @@ backend deployment, scheduler handoff, DB-primary changes, and bridge removal.
 - Restart only the approved PACA systemd service after file parity proof.
 
 ## Scheduler
-PACA notification scheduling moves to the internal scheduler on Vultr only
-after `scripts/scheduler_handoff_evidence_writer.py` proves:
-
-- the six PACA n8n notification workflows are inactive;
-- the Vultr PACA internal scheduler is enabled;
-- the n100 PACA internal scheduler is disabled.
+PACA 알림 스케줄러는 Vultr에서만 실행한다. 배포 전후로 Vultr의 내부
+스케줄러 상태와 중복 실행 여부를 확인한다.
 
 ## Database
-Do not treat Vultr as write-primary until DB-primary preflight proof exists:
-
-- fresh n100 and Vultr `paca` dumps;
-- checksums and row-count parity for critical tables;
-- rollback from pre-change dumps;
-- n100-to-Vultr sync disabled or redesigned.
+Vultr의 `paca` 데이터베이스가 유일한 운영 쓰기 원본이다. 데이터 변경 전에는
+Vultr에서 대상 행을 별도 백업하고, 트랜잭션 범위와 변경 행 수를 검증한다.
 
 ## Production Database Backups
 
 PACA and Peak production backups run on Vultr because the active databases are
-local to that host. The legacy n100 dump job must stay disabled after the
-handoff; otherwise Google Drive can contain fresh-looking files made from stale
-databases.
+local to that host. Google Drive backup evidence must come from the Vultr timer
+and its local staging files.
 
 - Script: `/usr/local/sbin/et-db-drive-backup`
 - Service: `et-db-drive-backup.service`
@@ -128,8 +121,7 @@ Rollback:
 
 1. Disable `et-db-drive-backup.timer` on Vultr.
 2. Restore the timestamped Vultr systemd/script/config backup.
-3. Restore the timestamped n100 crontab only if Vultr backup execution cannot be
-   repaired immediately; label any resulting n100 files as legacy data.
+3. Repair and verify the Vultr backup service before re-enabling its timer.
 
 ## Smoke
 ```bash
@@ -146,6 +138,5 @@ python3 scripts/cors_preflight_evidence_audit.py
 ```
 
 ## Rollback
-Rollback must use the phase-specific runbook. Do not re-enable n100 as primary
-unless the rollback decision includes DB direction, scheduler ownership, and
-consumer-route proof.
+Rollback must use the phase-specific Vultr runbook and timestamped Vultr backups.
+Do not introduce another PACA primary host as part of an application rollback.

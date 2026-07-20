@@ -75,6 +75,11 @@ describe('GET /paca/consultations/calendar/events', () => {
         expect(res.body.events['2026-05-10'][0].student_name).toBe('홍길동');
         expect(res.body.events['2026-05-11']).toHaveLength(1);
         expect(pool.query).not.toHaveBeenCalled();
+
+        const [eventsSql] = pool.execute.mock.calls[0];
+        expect(eventsSql).toMatch(
+            /LEFT JOIN students s ON c\.linked_student_id = s\.id\s+AND s\.academy_id = c\.academy_id/
+        );
     });
 
     test('5xx → { error: 한국어 }', async () => {

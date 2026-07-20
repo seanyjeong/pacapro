@@ -146,6 +146,7 @@ router.get('/slot', verifyToken, async (req, res) => {
                         (SELECT se2.season_type
                          FROM student_seasons ss2
                          JOIN seasons se2 ON ss2.season_id = se2.id
+                         AND se2.academy_id = s.academy_id
                          WHERE ss2.student_id = s.id
                          AND ss2.is_cancelled = 0
                          AND ss2.payment_status != 'cancelled'

@@ -45,6 +45,7 @@ module.exports = function (router) {
                         s.name as linked_student_name
                  FROM consultations c
                  LEFT JOIN students s ON c.linked_student_id = s.id
+                 AND s.academy_id = c.academy_id
                  WHERE c.academy_id = ? AND c.preferred_date >= ? AND c.preferred_date <= ?
                  ORDER BY c.preferred_date, c.preferred_time`,
                 [academyId, startDate, endDate]

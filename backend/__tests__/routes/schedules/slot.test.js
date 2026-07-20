@@ -94,6 +94,7 @@ describe('GET /paca/schedules/slot', () => {
         expect(res.status).toBe(200);
         const [sql, params] = pool.query.mock.calls[3];
         expect(sql).toMatch(/JOIN students s ON a\.student_id = s\.id\s+AND s\.academy_id = \?/);
+        expect(sql).toMatch(/JOIN seasons se2 ON ss2\.season_id = se2\.id\s+AND se2\.academy_id = s\.academy_id/);
         expect(params).toEqual(['2026-01-01', 1, 77]);
     });
 
