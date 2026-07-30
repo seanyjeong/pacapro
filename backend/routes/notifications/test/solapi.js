@@ -2,7 +2,7 @@
  * routes/notifications/test/solapi.js
  *
  * 솔라피 (Solapi) 채널 테스트 발송 sub-라우터 (Phase 3 #1).
- *  - 4 endpoint: 상담확정 / 체험수업 / 미납자 / 리마인드.
+ *  - 5 endpoint: 상담확정 / 체험수업 / 미납자 / 리마인드 / 출결관리.
  *  - 모두 솔라피 단일 채널 (sendAlimtalkSolapi).
  *  - 상담확정 / 체험수업 / 미납자: 발송 성공 시 notification_logs 'sent' 1건 INSERT.
  *  - 리마인드: 로그 INSERT 없음 (원본 동작 보존).
@@ -341,6 +341,77 @@ module.exports = function (router) {
         } catch (error) {
             logger.error('리마인드 테스트 발송 오류:', error);
             respondServerError(res, '테스트 발송에 실패했습니다.');
+        }
+    });
+
+    /**
+     * POST /paca/notifications/test-attendance
+     * 솔라피 — 출결관리 알림톡 테스트 발송.
+     *  변수: #{학원명}/#{이름}/#{월}/#{일}/#{요일}/#{출결상태}
+     */
+    router.post('/test-attendance', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
+        try {
+            const phone = requirePhone(req, res);
+            if (!phone) return;
+
+            const setting = await loadSettings(req, res);
+            if (!setting) return;
+
+            if (!ensureSolapiConfigured(setting, res)) return;
+            if (!ensureTemplateId(setting.solapi_attendance_template_id, res, '출결관리 템플릿 ID')) return;
+
+            const decryptedSecret = decryptSolapiSecretOrFail(setting, res);
+            if (!decryptedSecret) return;
+
+            const academy = await fetchAcademy(req.user.academyId);
+            const academyName = academy.name || '학원';
+            const now = new Date();
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+            const vars = {
+                '학원명': academyName,
+                '이름': '테스트학생',
+                '월': String(now.getMonth() + 1),
+                '일': String(now.getDate()),
+                '요일': dayNames[now.getDay()],
+                '출결상태': '출석',
+            };
+            const content = replaceTemplateVars(setting.solapi_attendance_template_content || '', vars);
+            const buttons = parseButtons(setting.solapi_attendance_buttons, vars);
+            const imageUrl = setting.solapi_attendance_image_url || null;
+
+            const result = await sendAlimtalkSolapi(
+                {
+                    solapi_api_key: setting.solapi_api_key,
+                    solapi_api_secret: decryptedSecret,
+                    solapi_pfid: setting.solapi_pfid,
+                    solapi_sender_phone: setting.solapi_sender_phone,
+                },
+                setting.solapi_attendance_template_id,
+                [{ phone, content, buttons, imageUrl }]
+            );
+
+            if (result.success) {
+                await logSent({
+                    academyId: req.user.academyId,
+                    recipientName: '테스트(출결관리)',
+                    recipientPhone: phone,
+                    templateCode: setting.solapi_attendance_template_id,
+                    messageContent: content,
+                    requestId: result.groupId || null,
+                });
+
+                res.json({
+                    message: '출결관리 테스트 메시지가 발송되었습니다.',
+                    success: true,
+                    groupId: result.groupId,
+                });
+            } else {
+                respondSendFailed(res, result, { includeDetails: true });
+            }
+        } catch (error) {
+            logger.error('출결관리 테스트 발송 오류:', error);
+            respondServerError(res, '출결관리 테스트 발송에 실패했습니다.');
         }
     });
 };

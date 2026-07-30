@@ -8,8 +8,8 @@
  *
  * 등록 순서 (중요):
  *  1. unpaid    — POST `/test`                    (단일 endpoint, 솔라피/SENS 듀얼 분기)
- *  2. solapi    — POST `/test-consultation` 외 4건 (모두 고정 경로, 솔라피 채널)
- *  3. sens      — POST `/test-sens-consultation` 외 4건 (모두 고정 경로, SENS 채널)
+ *  2. solapi    — POST `/test-consultation` 외 5건 (모두 고정 경로, 솔라피 채널)
+ *  3. sens      — POST `/test-sens-consultation` 외 5건 (모두 고정 경로, SENS 채널)
  *
  *  - 모든 경로가 고정 prefix (와일드카드 X) 라 등록 순서에 따른 라우트 매칭 충돌 X.
  *    그러나 가독성을 위해 "기본 (unpaid) → solapi → sens" 순으로 묶어 둔다.
@@ -34,6 +34,6 @@
 // 부모 router 를 그대로 전달해 endpoint 를 직접 등록한다.
 module.exports = function (router) {
     require('./unpaid')(router); // POST /test
-    require('./solapi')(router); // POST /test-consultation, /test-trial, /test-overdue, /test-reminder
-    require('./sens')(router);   // POST /test-sens-consultation, /test-sens-trial, /test-sens-overdue, /test-sens-reminder
+    require('./solapi')(router); // POST /test-consultation, /test-trial, /test-overdue, /test-reminder, /test-attendance
+    require('./sens')(router);   // POST /test-sens-consultation, /test-sens-trial, /test-sens-overdue, /test-sens-reminder, /test-sens-attendance
 };

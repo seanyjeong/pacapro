@@ -300,4 +300,73 @@ module.exports = function (router) {
             respondServerError(res, '테스트 발송에 실패했습니다.');
         }
     });
+
+    /**
+     * POST /paca/notifications/test-sens-attendance
+     * SENS — 출결관리 알림톡 테스트 발송.
+     */
+    router.post('/test-sens-attendance', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
+        try {
+            const phone = requirePhone(req, res);
+            if (!phone) return;
+
+            const setting = await loadSettings(req, res);
+            if (!setting) return;
+
+            if (!ensureSensConfigured(setting, res)) return;
+            if (!ensureTemplateCode(setting.sens_attendance_template_code, res, '출결관리 템플릿 코드')) return;
+
+            const decryptedSecret = decryptSensSecretOrFail(setting, res, { sensLabel: true });
+            if (!decryptedSecret) return;
+
+            const academy = await fetchAcademy(req.user.academyId);
+            const academyName = academy.name || '학원';
+            const now = new Date();
+            const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+            const vars = {
+                '학원명': academyName,
+                '이름': '테스트학생',
+                '월': String(now.getMonth() + 1),
+                '일': String(now.getDate()),
+                '요일': dayNames[now.getDay()],
+                '출결상태': '출석',
+            };
+            const content = replaceTemplateVars(setting.sens_attendance_template_content || '', vars);
+            const buttons = parseButtons(setting.sens_attendance_buttons);
+            const imageUrl = setting.sens_attendance_image_url || null;
+
+            const result = await sendAlimtalk(
+                {
+                    naver_access_key: setting.naver_access_key,
+                    naver_secret_key: decryptedSecret,
+                    naver_service_id: setting.naver_service_id,
+                    kakao_channel_id: setting.kakao_channel_id,
+                },
+                setting.sens_attendance_template_code,
+                [{
+                    phone,
+                    content,
+                    buttons,
+                    imageUrl,
+                }]
+            );
+
+            if (result.success) {
+                res.json({
+                    success: true,
+                    message: 'SENS 출결관리 테스트 메시지가 발송되었습니다.',
+                });
+            } else {
+                res.status(400).json({
+                    error: 'Send Error',
+                    message: getSendFailureMessage(result),
+                    details: result.details,
+                });
+            }
+        } catch (error) {
+            logger.error('SENS 출결관리 테스트 발송 오류:', error);
+            respondServerError(res, 'SENS 출결관리 테스트 발송에 실패했습니다.');
+        }
+    });
 };
