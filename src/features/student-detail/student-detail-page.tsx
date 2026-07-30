@@ -134,6 +134,7 @@ export function StudentDetailPage() {
                   classDays={student.class_days}
                   loading={false}
                   monthlyTuition={Number.parseFloat(student.monthly_tuition) || 0}
+                  discountRate={Number.parseFloat(student.discount_rate) || 0}
                   payments={payments}
                   studentId={studentId}
                   studentName={student.name}

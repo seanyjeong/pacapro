@@ -3,10 +3,23 @@
  * 학생 목록 테이블 컴포넌트 - DB 스키마와 일치
  */
 
+'use client';
+
+import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StudentAvatar } from '@/components/students/student-avatar';
-import { Calendar, ChevronRight, Loader2, Phone, Sparkles, Users } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Calendar,
+  ChevronRight,
+  Loader2,
+  Phone,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import type { Student } from '@/lib/types/student';
 import {
   formatStudentNumber,
@@ -31,7 +44,122 @@ interface StudentListTableProps {
   hideMonthlyTuition?: boolean;
 }
 
+type SortKey =
+  | 'name'
+  | 'gender'
+  | 'type'
+  | 'admission'
+  | 'classDays'
+  | 'tuition'
+  | 'status'
+  | 'enrollment';
+
+type SortDir = 'asc' | 'desc';
+
+function compareText(a: string, b: string): number {
+  return (a || '').localeCompare(b || '', 'ko', { sensitivity: 'base', numeric: true });
+}
+
+function compareNumber(a: number, b: number): number {
+  return a - b;
+}
+
+function compareDate(a?: string | null, b?: string | null): number {
+  const ta = a ? Date.parse(a) : 0;
+  const tb = b ? Date.parse(b) : 0;
+  return (Number.isFinite(ta) ? ta : 0) - (Number.isFinite(tb) ? tb : 0);
+}
+
+function SortHeader({
+  label,
+  column,
+  sortKey,
+  sortDir,
+  onSort,
+  className = '',
+}: {
+  label: string;
+  column: SortKey;
+  sortKey: SortKey | null;
+  sortDir: SortDir;
+  onSort: (key: SortKey) => void;
+  className?: string;
+}) {
+  const active = sortKey === column;
+  const ariaSort = active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+  const Icon = !active ? ArrowUpDown : sortDir === 'asc' ? ArrowUp : ArrowDown;
+
+  return (
+    <th
+      className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground ${className}`}
+      aria-sort={ariaSort}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className="inline-flex items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+      >
+        {label}
+        <Icon className={`h-3.5 w-3.5 ${active ? 'text-foreground' : 'text-muted-foreground/70'}`} />
+      </button>
+    </th>
+  );
+}
+
 export function StudentListTable({ students, loading, onStudentClick, hideMonthlyTuition }: StudentListTableProps) {
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedStudents = useMemo(() => {
+    if (!sortKey) return students;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...students].sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case 'name':
+          cmp = compareText(a.name || '', b.name || '');
+          break;
+        case 'gender':
+          cmp = compareText(a.gender || '', b.gender || '');
+          break;
+        case 'type':
+          cmp = compareText(
+            `${a.student_type || ''}-${getStudentDisplayInfo(a)}`,
+            `${b.student_type || ''}-${getStudentDisplayInfo(b)}`
+          );
+          break;
+        case 'admission':
+          cmp = compareText(a.admission_type || '', b.admission_type || '');
+          break;
+        case 'classDays':
+          cmp = compareNumber(Number(a.weekly_count) || 0, Number(b.weekly_count) || 0)
+            || compareText(formatClassDays(a.class_days), formatClassDays(b.class_days));
+          break;
+        case 'tuition':
+          cmp = compareNumber(Number(a.monthly_tuition) || 0, Number(b.monthly_tuition) || 0);
+          break;
+        case 'status':
+          cmp = compareText(a.status || '', b.status || '');
+          break;
+        case 'enrollment':
+          cmp = compareDate(a.enrollment_date, b.enrollment_date);
+          break;
+        default:
+          cmp = 0;
+      }
+      return cmp * dir;
+    });
+  }, [students, sortKey, sortDir]);
+
   if (loading) {
     return (
       <Card className="rounded-md shadow-none">
@@ -70,40 +198,23 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
           <table className="w-full">
             <thead className="border-b border-border bg-muted/60">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-                  학생 정보
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-                  성별
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-                  유형
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-                  입시유형
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-                  수업일
-                </th>
+                <SortHeader label="학생 정보" column="name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortHeader label="성별" column="gender" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortHeader label="유형" column="type" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortHeader label="입시유형" column="admission" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortHeader label="수업일" column="classDays" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 {!hideMonthlyTuition && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-                    월 학원비
-                  </th>
+                  <SortHeader label="월 학원비" column="tuition" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 )}
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-                  상태
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-                  등록일
-                </th>
+                <SortHeader label="상태" column="status" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <SortHeader label="등록일" column="enrollment" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                   관리
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border bg-card">
-              {students.map((student) => {
-                // discount_rate는 string이므로 parseFloat
+              {sortedStudents.map((student) => {
                 const discountRate = Number.parseFloat(student.discount_rate) || 0;
 
                 return (
@@ -112,7 +223,6 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     onClick={() => onStudentClick(student.id)}
                     className="cursor-pointer transition-colors hover:bg-muted/45"
                   >
-                    {/* 학생 정보 */}
                     <td className="whitespace-nowrap px-4 py-4">
                       <div className="flex items-center">
                         <StudentAvatar student={student} />
@@ -142,7 +252,6 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                       </div>
                     </td>
 
-                    {/* 성별 */}
                     <td className="whitespace-nowrap px-4 py-4">
                       {student.gender ? (
                         <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
@@ -157,7 +266,6 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                       )}
                     </td>
 
-                    {/* 학생 유형/학년 */}
                     <td className="whitespace-nowrap px-4 py-4">
                       <div className="text-sm text-foreground">
                         <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
@@ -169,7 +277,6 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                       </div>
                     </td>
 
-                    {/* 입시유형 */}
                     <td className="whitespace-nowrap px-4 py-4">
                       <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
                         student.admission_type === 'regular'
@@ -182,7 +289,6 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                       </span>
                     </td>
 
-                    {/* 수업일 */}
                     <td className="whitespace-nowrap px-4 py-4">
                       <div className="text-sm text-foreground">
                         {formatClassDays(student.class_days)}
@@ -192,7 +298,6 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                       </div>
                     </td>
 
-                    {/* 월 학원비 */}
                     {!hideMonthlyTuition && (
                       <td className="whitespace-nowrap px-4 py-4">
                         <div className="text-sm font-medium text-foreground">
@@ -206,7 +311,6 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                       </td>
                     )}
 
-                    {/* 상태 */}
                     <td className="whitespace-nowrap px-4 py-4">
                       <div>
                         <span
@@ -216,7 +320,6 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                         >
                           {STATUS_LABELS[student.status] || student.status}
                         </span>
-                        {/* 휴원생 휴식기간 표시 */}
                         {student.status === 'paused' && student.rest_start_date && (
                           <div className="text-xs text-muted-foreground mt-1">
                             {formatDate(student.rest_start_date)}
@@ -228,7 +331,6 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                       </div>
                     </td>
 
-                    {/* 등록일 */}
                     <td className="whitespace-nowrap px-4 py-4">
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Calendar className="mr-1 h-4 w-4" />

@@ -23,6 +23,8 @@ import type {
   PrepaidPreviewResponse,
   PrepaidPayRequest,
   PrepaidPayResponse,
+  EarlyPayRequest,
+  EarlyPayResponse,
   CreditsResponse,
   CreditsSummaryResponse,
 } from '@/lib/types/payment';
@@ -149,6 +151,11 @@ export const paymentsAPI = {
 
   prepaidPay: async (data: PrepaidPayRequest, config?: APIRequestConfig): Promise<PrepaidPayResponse> => {
     return await apiClient.post<PrepaidPayResponse>('/payments/prepaid-pay', data, config);
+  },
+
+  /** 단월 미리 납부 (청구 생성 + 완납) */
+  earlyPay: async (data: EarlyPayRequest, config?: APIRequestConfig): Promise<EarlyPayResponse> => {
+    return await apiClient.post<EarlyPayResponse>('/payments/early-pay', data, config);
   },
 
   // ===== 크레딧 관리 =====

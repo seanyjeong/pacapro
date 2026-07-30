@@ -2,9 +2,9 @@
  * routes/payments/index.js 테스트 (Phase 3 #6, mount-only 진입점, ADR-017 자율 진행).
  *
  * 회귀 보호 범위 (lesson #186 / #200 / #205 패턴):
- *   - sub-라우터 8건 (bulk / prepaid / credits / stats / list / pay / cancel / crud) require 호출
+ *   - sub-라우터 9건 (bulk / prepaid / early-pay / credits / stats / list / pay / cancel / crud) require 호출
  *   - 등록 순서 = 정적 → /:id 와일드카드 (express 라우트 매칭 의존)
- *       bulk → prepaid → credits → stats → list → pay → cancel → crud
+ *       bulk → prepaid → early-pay → credits → stats → list → pay → cancel → crud
  *     credits / stats/summary / unpaid / unpaid-today 가 crud (/:id) 보다 먼저여야 함.
  *   - 동일 router 인스턴스 전달
  *   - app.use 마운트 호환
@@ -15,13 +15,14 @@
  */
 
 describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
-    let bulkMock, prepaidMock, creditsMock, statsMock, listMock, payMock, cancelMock, crudMock;
+    let bulkMock, prepaidMock, earlyPayMock, creditsMock, statsMock, listMock, payMock, cancelMock, crudMock;
     let mountModule;
 
     beforeEach(() => {
         jest.isolateModules(() => {
             bulkMock = jest.fn();
             prepaidMock = jest.fn();
+            earlyPayMock = jest.fn();
             creditsMock = jest.fn();
             statsMock = jest.fn();
             listMock = jest.fn();
@@ -31,6 +32,7 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
 
             jest.doMock('../../../routes/payments/bulk', () => bulkMock);
             jest.doMock('../../../routes/payments/prepaid', () => prepaidMock);
+            jest.doMock('../../../routes/payments/early-pay', () => earlyPayMock);
             jest.doMock('../../../routes/payments/credits', () => creditsMock);
             jest.doMock('../../../routes/payments/stats', () => statsMock);
             jest.doMock('../../../routes/payments/list', () => listMock);
@@ -57,9 +59,10 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
         });
     });
 
-    test('sub-라우터 8건 모두 호출됨 + 동일 router 인스턴스 전달', () => {
+    test('sub-라우터 9건 모두 호출됨 + 동일 router 인스턴스 전달', () => {
         expect(bulkMock).toHaveBeenCalledTimes(1);
         expect(prepaidMock).toHaveBeenCalledTimes(1);
+        expect(earlyPayMock).toHaveBeenCalledTimes(1);
         expect(creditsMock).toHaveBeenCalledTimes(1);
         expect(statsMock).toHaveBeenCalledTimes(1);
         expect(listMock).toHaveBeenCalledTimes(1);
@@ -70,6 +73,7 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
         // 동일 router 인스턴스
         const router = bulkMock.mock.calls[0][0];
         expect(prepaidMock.mock.calls[0][0]).toBe(router);
+        expect(earlyPayMock.mock.calls[0][0]).toBe(router);
         expect(creditsMock.mock.calls[0][0]).toBe(router);
         expect(statsMock.mock.calls[0][0]).toBe(router);
         expect(listMock.mock.calls[0][0]).toBe(router);
@@ -108,6 +112,7 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
 
         const idxBulk = joined.indexOf("require('./bulk')");
         const idxPrepaid = joined.indexOf("require('./prepaid')");
+        const idxEarlyPay = joined.indexOf("require('./early-pay')");
         const idxCredits = joined.indexOf("require('./credits')");
         const idxStats = joined.indexOf("require('./stats')");
         const idxList = joined.indexOf("require('./list')");
@@ -118,6 +123,7 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
         // 모두 존재
         expect(idxBulk).toBeGreaterThan(-1);
         expect(idxPrepaid).toBeGreaterThan(-1);
+        expect(idxEarlyPay).toBeGreaterThan(-1);
         expect(idxCredits).toBeGreaterThan(-1);
         expect(idxStats).toBeGreaterThan(-1);
         expect(idxList).toBeGreaterThan(-1);
@@ -125,9 +131,10 @@ describe('routes/payments/index.js (mount-only 진입점, Phase 3 #6)', () => {
         expect(idxCancel).toBeGreaterThan(-1);
         expect(idxCrud).toBeGreaterThan(-1);
 
-        // 등록 순서: bulk → prepaid → credits → stats → list → pay → cancel → crud
+        // 등록 순서: bulk → prepaid → early-pay → credits → stats → list → pay → cancel → crud
         expect(idxBulk).toBeLessThan(idxPrepaid);
-        expect(idxPrepaid).toBeLessThan(idxCredits);
+        expect(idxPrepaid).toBeLessThan(idxEarlyPay);
+        expect(idxEarlyPay).toBeLessThan(idxCredits);
         expect(idxCredits).toBeLessThan(idxStats);
         expect(idxStats).toBeLessThan(idxList);
         expect(idxList).toBeLessThan(idxPay);

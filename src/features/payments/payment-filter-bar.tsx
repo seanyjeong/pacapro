@@ -80,6 +80,22 @@ export function PaymentFilterBar({
           <span className="truncate">오늘 수업 미납</span>
         </Button>
 
+        <Button
+          type="button"
+          variant={filters.early_paid_only ? 'default' : 'outline'}
+          onClick={() =>
+            onFilterChange({
+              early_paid_only: filters.early_paid_only ? undefined : true,
+              payment_status: filters.early_paid_only ? undefined : 'paid',
+            })
+          }
+          className="w-full min-w-0 px-3"
+          data-testid="payment-filter-early-paid"
+        >
+          <Banknote className="mr-1.5 h-4 w-4" />
+          <span className="truncate">미리 납부</span>
+        </Button>
+
         <Button type="button" variant="outline" onClick={onReset} className="w-full min-w-0 px-3" data-testid="payment-filter-reset">
           <RotateCcw className="mr-1.5 h-4 w-4" />
           <span className="truncate">초기화</span>

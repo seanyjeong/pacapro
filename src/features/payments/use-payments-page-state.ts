@@ -39,16 +39,29 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
   const [creditModalOpen, setCreditModalOpen] = useState(false);
   const [creditStudentInfo, setCreditStudentInfo] = useState<CreditStudentInfo | null>(null);
 
-  const remoteFilters = useMemo(
-    () => ({
+  const remoteFilters = useMemo(() => {
+    // 미리 납부 필터: 월 제한 없이 불러온 뒤 클라이언트에서 미래월 완납만 표시
+    if (filters.early_paid_only) {
+      return {
+        payment_status: 'paid' as const,
+        payment_type: filters.payment_type,
+      };
+    }
+    return {
       year: filters.year,
       month: filters.month,
       payment_status: filters.payment_status,
       payment_type: filters.payment_type,
       include_previous_unpaid: filters.include_previous_unpaid,
-    }),
-    [filters.year, filters.month, filters.payment_status, filters.payment_type, filters.include_previous_unpaid]
-  );
+    };
+  }, [
+    filters.year,
+    filters.month,
+    filters.payment_status,
+    filters.payment_type,
+    filters.include_previous_unpaid,
+    filters.early_paid_only,
+  ]);
 
   const updateFilters = useCallback((newFilters: Partial<PaymentFilters>) => {
     setFilters((prev) => {

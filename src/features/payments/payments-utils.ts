@@ -34,6 +34,14 @@ export function createClassDaysMap(response: ClassDaysResponse): Map<number, num
   return map;
 }
 
+export function isEarlyPaidPayment(payment: Payment, currentYearMonth?: string): boolean {
+  const current = currentYearMonth || getCurrentYearMonth().yearMonth;
+  if (payment.payment_status !== 'paid') return false;
+  if (payment.year_month > current) return true;
+  const notes = payment.notes || '';
+  return notes.includes('[미리납') || notes.includes('[선납');
+}
+
 export function filterPayments(
   payments: Payment[],
   filters: PaymentFilters,
@@ -43,8 +51,14 @@ export function filterPayments(
 ): Payment[] {
   const query = filters.search?.trim().toLowerCase();
   const todayDayOfWeek = new Date().getDay();
+  const currentYearMonth = getCurrentYearMonth().yearMonth;
 
   return payments.filter((payment) => {
+    if (filters.early_paid_only) {
+      if (!isEarlyPaidPayment(payment, currentYearMonth)) return false;
+      if (query && !payment.student_name?.toLowerCase().includes(query)) return false;
+      return true;
+    }
     if (filters.payment_status && payment.payment_status !== filters.payment_status) return false;
     if (filters.payment_type && payment.payment_type !== filters.payment_type) return false;
     if (viewOnly && (payment.payment_status === 'paid' || isSeasonUpcoming(payment))) return false;

@@ -6,12 +6,13 @@
  * Sub-라우터 (8건) — 등록 순서 = **정적 → /:id 와일드카드** (express 라우트 매칭 의존):
  *   1. bulk      — 정적 POST /bulk-monthly + /generate-prorated + /generate-monthly-for-student
  *   2. prepaid   — 정적 POST /prepaid-preview + /prepaid-pay (트랜잭션)
- *   3. credits   — 정적 GET /credits + /credits/summary
- *   4. stats     — 정적 GET /stats/summary
- *   5. list      — 정적 GET / + /unpaid + /unpaid-today
- *   6. pay       — POST /:id/pay (와일드카드, 정적 + /pay)
- *   7. cancel    — POST /:id/cancel (와일드카드, 정적 + /cancel)
- *   8. crud      — GET /:id + POST / + PUT /:id + DELETE /:id
+ *   3. early-pay — 정적 POST /early-pay (단월 미리납 트랜잭션)
+ *   4. credits   — 정적 GET /credits + /credits/summary
+ *   5. stats     — 정적 GET /stats/summary
+ *   6. list      — 정적 GET / + /unpaid + /unpaid-today
+ *   7. pay       — POST /:id/pay (와일드카드, 정적 + /pay)
+ *   8. cancel    — POST /:id/cancel (와일드카드, 정적 + /cancel)
+ *   9. crud      — GET /:id + POST / + PUT /:id + DELETE /:id
  *
  * ⚠️ 등록 순서 뒤바뀌면:
  *   - credits 가 crud 뒤로 가면 → GET /credits 호출이 GET /:id (id='credits') 로 매칭되어 NaN 5xx
@@ -57,6 +58,7 @@ const router = express.Router();
 
 require('./bulk')(router);     // 정적 POST /bulk-monthly + /generate-prorated + /generate-monthly-for-student
 require('./prepaid')(router);  // 정적 POST /prepaid-preview + /prepaid-pay
+require('./early-pay')(router); // 정적 POST /early-pay
 require('./credits')(router);  // 정적 GET /credits + /credits/summary
 require('./stats')(router);    // 정적 GET /stats/summary
 require('./list')(router);     // 정적 GET / + /unpaid + /unpaid-today

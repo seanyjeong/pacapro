@@ -79,6 +79,8 @@ export interface PaymentFilters {
   month?: number;
   search?: string;
   include_previous_unpaid?: boolean; // 이전 달 미납자 포함
+  /** 미래 월 미리 납부(완납)만 보기 — 클라이언트 필터, API year/month 생략 */
+  early_paid_only?: boolean;
 }
 
 // 학원비 통계
@@ -236,6 +238,22 @@ export interface PrepaidPayResponse {
   total_discount: number;
   months_processed: string[];
   months_skipped: string[];
+}
+
+/** 단월 미리 납부 */
+export interface EarlyPayRequest {
+  student_id: number;
+  year_month: string;
+  payment_method: 'account' | 'card' | 'cash' | 'other';
+  payment_date?: string;
+}
+
+export interface EarlyPayResponse {
+  message: string;
+  payment_id: number;
+  year_month: string;
+  final_amount: number;
+  student_name: string;
 }
 
 // ===== 크레딧 관련 타입 =====

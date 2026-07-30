@@ -19,6 +19,7 @@ import { REST_CREDIT_TYPE_LABELS, REST_CREDIT_STATUS_LABELS, parseClassDays } fr
 import { studentsAPI } from '@/lib/api/students';
 import { ManualCreditModal } from './manual-credit-modal';
 import { PrepaidPaymentModal } from '@/components/payments/prepaid-payment-modal';
+import { EarlyPayModal } from '@/components/payments/early-pay-modal';
 import { StudentPaymentHistory } from './student-payment-history';
 import { StudentPaymentRecalculateDialog } from './student-payment-recalculate-dialog';
 
@@ -29,6 +30,7 @@ interface StudentPaymentsProps {
   studentId?: number;
   studentName?: string;
   monthlyTuition?: number;
+  discountRate?: number;
   weeklyCount?: number;
   classDays?: number[] | string | import('@/lib/types/student').ClassDaySlot[];
   onChanged?: () => void | Promise<void>;
@@ -74,6 +76,7 @@ export function StudentPaymentsComponent({
   studentId,
   studentName,
   monthlyTuition,
+  discountRate = 0,
   weeklyCount,
   classDays,
   onChanged,
@@ -84,6 +87,7 @@ export function StudentPaymentsComponent({
   const [pendingTotal, setPendingTotal] = useState(0);
   const [creditModalOpen, setCreditModalOpen] = useState(false);
   const [prepaidModalOpen, setPrepaidModalOpen] = useState(false);
+  const [earlyPayModalOpen, setEarlyPayModalOpen] = useState(false);
 
   // 크레딧 적용 모달 상태
   const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -204,7 +208,16 @@ export function StudentPaymentsComponent({
                 미사용 크레딧은 다음 달 수강료 생성 시 자동 차감됩니다.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setEarlyPayModalOpen(true)}
+                className="border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-950"
+              >
+                <Banknote className="w-4 h-4 mr-1" />
+                다음 달 미리 받기
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
@@ -318,6 +331,19 @@ export function StudentPaymentsComponent({
           studentId={studentId}
           studentName={studentName}
           monthlyTuition={monthlyTuition}
+          onSuccess={refreshPaymentSurface}
+        />
+      )}
+
+      {/* 단월 미리 납부 모달 */}
+      {canUseCredit && (
+        <EarlyPayModal
+          open={earlyPayModalOpen}
+          onClose={() => setEarlyPayModalOpen(false)}
+          studentId={studentId as number}
+          studentName={studentName || ''}
+          monthlyTuition={monthlyTuition || 0}
+          discountRate={discountRate}
           onSuccess={refreshPaymentSurface}
         />
       )}

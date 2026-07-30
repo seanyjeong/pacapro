@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +18,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Coins, Check, Loader2, CreditCard, Banknote, Wallet } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  Coins,
+  Check,
+  Loader2,
+  CreditCard,
+  Banknote,
+  Wallet,
+} from 'lucide-react';
 import type { Payment } from '@/lib/types/payment';
 import { cn } from '@/lib/utils/cn';
 import {
@@ -37,6 +47,45 @@ import {
   PAYMENT_STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
 } from '@/lib/types/payment';
+
+type PaymentSortKey = 'student' | 'billing' | 'amount' | 'due' | 'status';
+type SortDir = 'asc' | 'desc';
+
+function PaymentSortHeader({
+  label,
+  column,
+  sortKey,
+  sortDir,
+  onSort,
+  className = '',
+}: {
+  label: string;
+  column: PaymentSortKey;
+  sortKey: PaymentSortKey | null;
+  sortDir: SortDir;
+  onSort: (key: PaymentSortKey) => void;
+  className?: string;
+}) {
+  const active = sortKey === column;
+  const ariaSort = active ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none';
+  const Icon = !active ? ArrowUpDown : sortDir === 'asc' ? ArrowUp : ArrowDown;
+
+  return (
+    <th
+      className={cn('px-5 py-3 text-left font-medium text-muted-foreground', className)}
+      aria-sort={ariaSort}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className="inline-flex items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+      >
+        {label}
+        <Icon className={cn('h-3.5 w-3.5', active ? 'text-foreground' : 'text-muted-foreground/70')} />
+      </button>
+    </th>
+  );
+}
 
 type MarkMethod = 'account' | 'card' | 'cash';
 
@@ -109,6 +158,46 @@ export function PaymentList({
     payment: Payment;
     method: MarkMethod;
   } | null>(null);
+  const [sortKey, setSortKey] = useState<PaymentSortKey | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+
+  const handleSort = (key: PaymentSortKey) => {
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedPayments = useMemo(() => {
+    if (!sortKey) return payments;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    return [...payments].sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case 'student':
+          cmp = (a.student_name || '').localeCompare(b.student_name || '', 'ko');
+          break;
+        case 'billing':
+          cmp = (a.year_month || '').localeCompare(b.year_month || '')
+            || (a.payment_type || '').localeCompare(b.payment_type || '');
+          break;
+        case 'amount':
+          cmp = (Number(a.final_amount) || 0) - (Number(b.final_amount) || 0);
+          break;
+        case 'due':
+          cmp = (a.due_date || '').localeCompare(b.due_date || '');
+          break;
+        case 'status':
+          cmp = (a.payment_status || '').localeCompare(b.payment_status || '');
+          break;
+        default:
+          cmp = 0;
+      }
+      return cmp * dir;
+    });
+  }, [payments, sortKey, sortDir]);
 
   const methodLabels = {
     account: '계좌이체',
@@ -230,7 +319,7 @@ export function PaymentList({
     <Card className="rounded-md border-border shadow-none">
       <CardContent className="p-0">
         <div className="space-y-3 p-3 lg:hidden">
-          {payments.map((payment) => {
+          {sortedPayments.map((payment) => {
             const overdue = isOverdue(payment);
             const upcomingSeason = isSeasonUpcoming(payment);
             const paidAmount = getPaidPaymentAmount(payment);
@@ -298,23 +387,48 @@ export function PaymentList({
           <table className={cn('w-full text-sm', showPaymentMarkButton ? 'min-w-[1300px]' : 'min-w-[1080px]')}>
             <thead className="border-b border-border bg-muted/40">
               <tr>
-                <th className="w-[160px] px-5 py-3 text-left font-medium text-muted-foreground">
-                  학생 정보
-                </th>
-                <th className="min-w-[250px] px-5 py-3 text-left font-medium text-muted-foreground">
-                  청구 내역
-                </th>
-                <th className="w-[210px] px-5 py-3 text-left font-medium text-muted-foreground">
-                  금액
-                </th>
+                <PaymentSortHeader
+                  label="학생 정보"
+                  column="student"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                  className="w-[160px]"
+                />
+                <PaymentSortHeader
+                  label="청구 내역"
+                  column="billing"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                  className="min-w-[250px]"
+                />
+                <PaymentSortHeader
+                  label="금액"
+                  column="amount"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                  className="w-[210px]"
+                />
                 {!hideDueDate && (
-                  <th className="w-[150px] px-5 py-3 text-left font-medium text-muted-foreground">
-                    납부 기한
-                  </th>
+                  <PaymentSortHeader
+                    label="납부 기한"
+                    column="due"
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSort={handleSort}
+                    className="w-[150px]"
+                  />
                 )}
-                <th className="w-[120px] px-5 py-3 text-left font-medium text-muted-foreground">
-                  상태
-                </th>
+                <PaymentSortHeader
+                  label="상태"
+                  column="status"
+                  sortKey={sortKey}
+                  sortDir={sortDir}
+                  onSort={handleSort}
+                  className="w-[120px]"
+                />
                 {showCreditButton && (
                   <th className="w-[130px] px-5 py-3 text-left font-medium text-muted-foreground">
                     크레딧
@@ -328,7 +442,7 @@ export function PaymentList({
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {payments.map((payment) => {
+              {sortedPayments.map((payment) => {
                 const overdue = isOverdue(payment);
                 const upcomingSeason = isSeasonUpcoming(payment);
                 const paidAmount = getPaidPaymentAmount(payment);
