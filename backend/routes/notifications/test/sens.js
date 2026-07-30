@@ -327,8 +327,8 @@ module.exports = function (router) {
             const vars = {
                 '학원명': academyName,
                 '이름': '테스트학생',
-                '월': String(now.getMonth() + 1),
-                '일': String(now.getDate()),
+                '월': `${now.getMonth() + 1}월`,
+                '일': `${now.getDate()}일`,
                 '요일': dayNames[now.getDay()],
                 '출결상태': '출석',
             };

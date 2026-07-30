@@ -462,18 +462,19 @@ export default function SolapiTemplates({
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용 · 솔라피 승인본과 동일하게)</label>
               <textarea value={settings.solapi_attendance_template_content} onChange={e => setSettings(prev => ({ ...prev, solapi_attendance_template_content: e.target.value }))}
                 rows={6} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-mono text-sm"
-                placeholder={`안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월}월 #{일}일 #{요일}요일 수업 #{출결상태}하였습니다.`} />
+                placeholder={`안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월} #{일} #{요일}요일 수업 #{출결상태}하였습니다.`} />
+              <p className="mt-1 text-xs text-muted-foreground">#{`{월}`}→7월, #{`{일}`}→30일 (단위 포함). 템플릿에 &quot;월/일&quot;을 또 붙이지 마세요.</p>
             </div>
             <div className="md:col-span-2 p-3 bg-teal-50 dark:bg-teal-950 rounded-lg border border-teal-200 dark:border-teal-800">
               <p className="text-sm font-medium text-teal-800 dark:text-teal-200 mb-2">사용 가능한 변수</p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                {[['#{학원명}','학원 이름'],['#{이름}','학생명'],['#{월}','월'],['#{일}','일'],['#{요일}','요일'],['#{출결상태}','출석/지각/결석']].map(([code, label]) => (
+                {[['#{학원명}','학원 이름'],['#{이름}','학생명'],['#{월}','7월'],['#{일}','30일'],['#{요일}','목'],['#{출결상태}','출석/지각/결석']].map(([code, label]) => (
                   <div key={code} className="flex items-center gap-2"><code className="bg-card px-2 py-1 rounded border border-border text-teal-700 dark:text-teal-300">{code}</code><span className="text-muted-foreground">{label}</span></div>
                 ))}
               </div>
             </div>
             <AlimtalkPreview academyName={academyName} templateContent={settings.solapi_attendance_template_content} imageUrl="" buttons={[]}
-              replacements={{'#{학원명}':academyName,'#{이름}':'홍길동','#{월}':'5','#{일}':'18','#{요일}':'월','#{출결상태}':'출석'}} />
+              replacements={{'#{학원명}':academyName,'#{이름}':'홍길동','#{월}':'5월','#{일}':'18일','#{요일}':'월','#{출결상태}':'출석'}} />
             <AttendanceTestPanel
               enabled={settings.solapi_enabled && Boolean(settings.solapi_attendance_template_id)}
               phone={testPhoneAttendance}

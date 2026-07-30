@@ -470,8 +470,8 @@ export default function SensTemplates({
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 본문 (미리보기용 · SENS 승인본과 동일하게)</label>
-              <textarea value={settings.sens_attendance_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_attendance_template_content: e.target.value }))} rows={6} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-mono text-sm" placeholder={`안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월}월 #{일}일 #{요일}요일 수업 #{출결상태}하였습니다.`} />
-              <p className="text-xs text-muted-foreground mt-1">사용 가능 변수: #{`{학원명}`}, #{`{이름}`}, #{`{월}`}, #{`{일}`}, #{`{요일}`}, #{`{출결상태}`}(출석/지각/결석)</p>
+              <textarea value={settings.sens_attendance_template_content} onChange={e => setSettings(prev => ({ ...prev, sens_attendance_template_content: e.target.value }))} rows={6} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-mono text-sm" placeholder={`안녕하세요. #{학원명}입니다.\n#{이름} 학생이 #{월} #{일} #{요일}요일 수업 #{출결상태}하였습니다.`} />
+              <p className="text-xs text-muted-foreground mt-1">사용 가능 변수: #{`{학원명}`}, #{`{이름}`}, #{`{월}`}(7월), #{`{일}`}(30일), #{`{요일}`}(목), #{`{출결상태}`}(출석/지각/결석). 월/일 단위는 변수에 포함됩니다.</p>
             </div>
             <AttendanceTestPanel
               enabled={settings.is_enabled && Boolean(settings.sens_attendance_template_code)}
