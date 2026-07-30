@@ -116,7 +116,9 @@ router.get('/settings', verifyToken, checkPermission('notifications', 'view'), a
                     sens_attendance_template_content: '',
                     sens_attendance_buttons: [],
                     sens_attendance_image_url: '',
-                    attendance_alimtalk_enabled: false
+                    attendance_alimtalk_enabled: false,
+                    attendance_send_mode: 'immediate',
+                    attendance_delay_minutes: 15,
                 }
             });
         }
@@ -215,7 +217,11 @@ router.get('/settings', verifyToken, checkPermission('notifications', 'view'), a
                 sens_attendance_template_content: setting.sens_attendance_template_content || '',
                 sens_attendance_buttons: setting.sens_attendance_buttons ? JSON.parse(setting.sens_attendance_buttons) : [],
                 sens_attendance_image_url: setting.sens_attendance_image_url || '',
-                attendance_alimtalk_enabled: setting.attendance_alimtalk_enabled || false
+                attendance_alimtalk_enabled: setting.attendance_alimtalk_enabled || false,
+                attendance_send_mode: setting.attendance_send_mode === 'after_class_start' ? 'after_class_start' : 'immediate',
+                attendance_delay_minutes: [10, 15, 20, 30].includes(Number(setting.attendance_delay_minutes))
+                    ? Number(setting.attendance_delay_minutes)
+                    : 15,
             }
         });
     } catch (error) {
@@ -334,8 +340,17 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
             sens_attendance_template_content,
             sens_attendance_buttons,
             sens_attendance_image_url,
-            attendance_alimtalk_enabled
+            attendance_alimtalk_enabled,
+            attendance_send_mode,
+            attendance_delay_minutes,
         } = req.body;
+
+        const normalizedAttendanceSendMode = attendance_send_mode === 'after_class_start'
+            ? 'after_class_start'
+            : 'immediate';
+        const normalizedAttendanceDelayMinutes = [10, 15, 20, 30].includes(Number(attendance_delay_minutes))
+            ? Number(attendance_delay_minutes)
+            : 15;
 
         // 기존 설정 확인
         const [existing] = await pool.execute(
@@ -385,8 +400,8 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
                  sens_reminder_auto_enabled, sens_reminder_hours,
                  solapi_attendance_template_id, solapi_attendance_template_content, solapi_attendance_buttons, solapi_attendance_image_url,
                  sens_attendance_template_code, sens_attendance_template_content, sens_attendance_buttons, sens_attendance_image_url,
-                 attendance_alimtalk_enabled)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                 attendance_alimtalk_enabled, attendance_send_mode, attendance_delay_minutes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 [
                     req.user.academyId,
                     service_type || 'sens',
@@ -468,7 +483,9 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
                     sens_attendance_template_content || null,
                     sens_attendance_buttons ? JSON.stringify(sens_attendance_buttons) : null,
                     sens_attendance_image_url || null,
-                    attendance_alimtalk_enabled || false
+                    attendance_alimtalk_enabled || false,
+                    normalizedAttendanceSendMode,
+                    normalizedAttendanceDelayMinutes,
                 ]
             );
         } else {
@@ -551,7 +568,9 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
                     sens_attendance_template_content = ?,
                     sens_attendance_buttons = ?,
                     sens_attendance_image_url = ?,
-                    attendance_alimtalk_enabled = ?
+                    attendance_alimtalk_enabled = ?,
+                    attendance_send_mode = ?,
+                    attendance_delay_minutes = ?
                 WHERE academy_id = ?`,
                 [
                     service_type || 'sens',
@@ -634,6 +653,8 @@ router.put('/settings', verifyToken, checkPermission('notifications', 'edit'), a
                     sens_attendance_buttons ? JSON.stringify(sens_attendance_buttons) : null,
                     sens_attendance_image_url || null,
                     attendance_alimtalk_enabled || false,
+                    normalizedAttendanceSendMode,
+                    normalizedAttendanceDelayMinutes,
                     req.user.academyId
                 ]
             );

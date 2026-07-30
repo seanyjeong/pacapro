@@ -464,6 +464,42 @@ export default function SensTemplates({
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${settings.attendance_alimtalk_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
+            <div className="md:col-span-2 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">발송 시점</label>
+                <select
+                  value={settings.attendance_send_mode || 'immediate'}
+                  onChange={(e) => setSettings((prev) => ({
+                    ...prev,
+                    attendance_send_mode: e.target.value as 'immediate' | 'after_class_start',
+                  }))}
+                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground"
+                >
+                  <option value="immediate">즉시 발송 (출석 체크 시)</option>
+                  <option value="after_class_start">수업 시작 후 일괄 발송</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">수업 시작 후 대기</label>
+                <select
+                  value={settings.attendance_delay_minutes ?? 15}
+                  onChange={(e) => setSettings((prev) => ({
+                    ...prev,
+                    attendance_delay_minutes: Number(e.target.value),
+                  }))}
+                  disabled={(settings.attendance_send_mode || 'immediate') !== 'after_class_start'}
+                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground disabled:opacity-50"
+                >
+                  <option value={10}>10분 후</option>
+                  <option value={15}>15분 후</option>
+                  <option value={20}>20분 후</option>
+                  <option value={30}>30분 후</option>
+                </select>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  학원 설정 오전/오후/저녁 시작 시각 기준. 최종 출결 상태로 일괄 발송합니다.
+                </p>
+              </div>
+            </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-foreground mb-1">템플릿 코드</label>
               <input type="text" value={settings.sens_attendance_template_code} onChange={e => setSettings(prev => ({ ...prev, sens_attendance_template_code: e.target.value }))} className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500" placeholder="템플릿 코드 (SENS 콘솔에서 확인)" />

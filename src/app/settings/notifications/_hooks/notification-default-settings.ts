@@ -79,5 +79,7 @@ export function createDefaultNotificationSettings(): NotificationSettings {
     is_enabled: false,
     solapi_enabled: false,
     attendance_alimtalk_enabled: false,
+    attendance_send_mode: 'immediate',
+    attendance_delay_minutes: 15,
   };
 }

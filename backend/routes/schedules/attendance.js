@@ -435,6 +435,17 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                     `UPDATE attendance SET attendance_status = NULL, notes = NULL WHERE class_schedule_id = ? AND student_id = ?`,
                     [scheduleId, student_id]
                 );
+                // 지연 발송 큐에 있으면 취소
+                try {
+                    await require('../../utils/attendanceNotify').cancelQueuedAttendanceNotify({
+                        pool: connection,
+                        academyId: req.user.academyId,
+                        scheduleId,
+                        studentIds: [student_id],
+                    });
+                } catch (e) {
+                    logger.error('[Attendance] queue cancel failed:', e);
+                }
                 processedRecords.push({
                     student_id,
                     attendance_status: null,
@@ -605,7 +616,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
             attendance_records: processedRecords
         });
 
-        // 출결 알림톡 비동기 발송 (fire-and-forget — 발송 실패가 출결 응답을 깨지 않음)
+        // 출결 알림톡 비동기 발송/큐잉 (fire-and-forget — 발송 실패가 출결 응답을 깨지 않음)
         if (notifyTargets.length > 0) {
             setImmediate(() =>
                 require('../../utils/attendanceNotify').notifyAttendance({
@@ -614,6 +625,7 @@ router.post('/:id/attendance', verifyToken, async (req, res) => {
                     academyId: req.user.academyId,
                     scheduleId,
                     classDate: schedule.class_date,
+                    timeSlot: schedule.time_slot,
                     targets: notifyTargets
                 }).catch(e => logger.error('[AttendanceNotify]', e))
             );

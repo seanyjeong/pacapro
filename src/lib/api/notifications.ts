@@ -117,6 +117,10 @@ export interface NotificationSettings {
   sens_attendance_buttons: ConsultationButton[];
   sens_attendance_image_url: string;
   attendance_alimtalk_enabled: boolean;
+  /** immediate: 출석 즉시 발송 / after_class_start: 수업시작+N분 후 일괄 */
+  attendance_send_mode: 'immediate' | 'after_class_start';
+  /** after_class_start 모드 지연(분): 10 | 15 | 20 | 30 */
+  attendance_delay_minutes: number;
 
   // ===== 공통 설정 =====
   is_enabled: boolean;        // SENS 활성화

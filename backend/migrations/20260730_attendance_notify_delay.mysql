@@ -1,0 +1,33 @@
+-- 출결 알림톡 발송 시점 설정 + 일괄 발송 큐
+-- 모든 학원 공통. 기본값은 immediate (기존 동작 유지)
+
+ALTER TABLE notification_settings
+  ADD COLUMN IF NOT EXISTS attendance_send_mode ENUM('immediate', 'after_class_start') NOT NULL DEFAULT 'immediate'
+    COMMENT '출결 알림 발송 모드: 즉시 / 수업시작 후 지연 일괄' AFTER attendance_alimtalk_enabled,
+  ADD COLUMN IF NOT EXISTS attendance_delay_minutes INT NOT NULL DEFAULT 15
+    COMMENT 'after_class_start 모드에서 수업 시작 후 대기 분' AFTER attendance_send_mode;
+
+-- MySQL 8 이전 호환: IF NOT EXISTS 미지원 시 아래 개별 실행
+-- ALTER TABLE notification_settings ADD COLUMN attendance_send_mode ENUM('immediate','after_class_start') NOT NULL DEFAULT 'immediate' AFTER attendance_alimtalk_enabled;
+-- ALTER TABLE notification_settings ADD COLUMN attendance_delay_minutes INT NOT NULL DEFAULT 15 AFTER attendance_send_mode;
+
+CREATE TABLE IF NOT EXISTS attendance_notification_queue (
+  id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  academy_id INT NOT NULL,
+  student_id INT NOT NULL,
+  class_schedule_id INT NOT NULL,
+  class_date DATE NOT NULL,
+  time_slot ENUM('morning','afternoon','evening') NOT NULL,
+  attendance_status VARCHAR(20) NOT NULL,
+  notes VARCHAR(100) NULL,
+  scheduled_send_at DATETIME NOT NULL,
+  status ENUM('pending','sent','cancelled','failed') NOT NULL DEFAULT 'pending',
+  sent_at DATETIME NULL,
+  error_message VARCHAR(500) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_attendance_notify_pending (academy_id, student_id, class_schedule_id),
+  KEY idx_anq_due (status, scheduled_send_at),
+  KEY idx_anq_academy (academy_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  COMMENT='출결 알림톡 지연/일괄 발송 큐';
