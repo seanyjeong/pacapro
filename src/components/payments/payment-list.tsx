@@ -251,18 +251,18 @@ export function PaymentList({
     if (!showPaymentMarkButton || !onPaymentMark) return null;
     if (payment.payment_status === 'paid') {
       return (
-        <span className="inline-flex h-8 min-w-[72px] items-center justify-center whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
-          <Check className="mr-1 h-4 w-4" />
-          완납
+        <span className="inline-flex h-8 min-w-[88px] items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-3.5 text-sm font-medium leading-none text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+          <span className="tracking-wide">완납</span>
         </span>
       );
     }
 
     if (markingPaymentId === payment.id) {
       return (
-        <span className="inline-flex h-8 min-w-[88px] items-center justify-center whitespace-nowrap rounded-md border border-border bg-muted px-3 text-sm font-medium text-muted-foreground">
-          <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-          처리중...
+        <span className="inline-flex h-8 min-w-[96px] items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border bg-muted px-3.5 text-sm font-medium leading-none text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+          <span>처리중...</span>
         </span>
       );
     }
@@ -523,10 +523,10 @@ export function PaymentList({
                         )}
                       </td>
                     )}
-                    <td className="w-[120px] whitespace-nowrap px-6 py-4">
-                      <div className="flex flex-col gap-1">
+                    <td className="w-[130px] whitespace-nowrap px-5 py-4">
+                      <div className="flex flex-col items-start gap-1.5">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentStatusColor(
+                          className={`inline-flex items-center rounded-full border border-transparent px-2.5 py-1 text-xs font-medium leading-none tracking-wide ${getPaymentStatusColor(
                             payment.payment_status
                           )}`}
                         >
@@ -534,17 +534,17 @@ export function PaymentList({
                           {upcomingSeason ? ' · 납부예정' : ''}
                         </span>
                         {payment.payment_method && payment.payment_status === 'paid' && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="pl-0.5 text-xs text-muted-foreground">
                             {PAYMENT_METHOD_LABELS[payment.payment_method]}
                           </span>
                         )}
                       </div>
                     </td>
                     {showCreditButton && onCreditClick && (
-                      <td className="w-[130px] whitespace-nowrap px-4 py-4">{renderCreditAction(payment)}</td>
+                      <td className="w-[140px] whitespace-nowrap px-4 py-4">{renderCreditAction(payment)}</td>
                     )}
                     {showPaymentMarkButton && onPaymentMark && (
-                      <td className="w-[210px] whitespace-nowrap px-3 py-4">{renderPaymentActions(payment)}</td>
+                      <td className="w-[220px] whitespace-nowrap px-4 py-4">{renderPaymentActions(payment)}</td>
                     )}
                   </tr>
                 );
