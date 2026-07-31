@@ -48,10 +48,10 @@ export function usePaymentDetailState(paymentId: number) {
   const recordPayment = async (data: PaymentRecordData) => {
     try {
       await recordPaymentForDetail(paymentId, data);
-      toast.success('납부가 기록되었습니다.');
+      toast.success('납부가 완료되었습니다.');
       await loadPayment();
     } catch {
-      toast.error('납부 기록을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error('납부를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
       throw new Error('payment record failed');
     }
   };
