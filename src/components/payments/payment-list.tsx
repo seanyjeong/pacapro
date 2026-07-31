@@ -224,8 +224,10 @@ export function PaymentList({
 
   const renderCreditAction = (payment: Payment) => {
     if (!showCreditButton || !onCreditClick) return null;
+    const creditAmount = Math.floor(Number(payment.credit_balance) || 0);
+    const creditLabel = creditAmount > 0 ? `${creditAmount.toLocaleString()}원` : null;
     return (
-      <div className="inline-flex max-w-full flex-nowrap items-center gap-2 whitespace-nowrap">
+      <div className="flex min-w-0 flex-col items-start gap-1.5">
         <Button
           variant="outline"
           size="sm"
@@ -233,14 +235,17 @@ export function PaymentList({
             event.stopPropagation();
             onCreditClick(payment);
           }}
-          className="shrink-0 border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
+          className="h-7 shrink-0 border-blue-200 bg-blue-50 px-2 text-xs text-blue-700 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
         >
-          <Coins className="mr-1 h-4 w-4" />
+          <Coins className="mr-1 h-3.5 w-3.5" />
           크레딧
         </Button>
-        {payment.credit_balance && payment.credit_balance > 0 ? (
-          <span className="inline-flex shrink-0 items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
-            {Math.floor(payment.credit_balance).toLocaleString()}원
+        {creditLabel ? (
+          <span
+            className="inline-flex max-w-full items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold tabular-nums leading-tight text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+            title={`잔여 크레딧 ${creditLabel}`}
+          >
+            {creditLabel}
           </span>
         ) : null}
       </div>
@@ -384,15 +389,15 @@ export function PaymentList({
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
-          <table className={cn('w-full table-fixed text-sm', showPaymentMarkButton ? 'min-w-[980px]' : 'min-w-[760px]')}>
+          <table className={cn('w-full table-fixed text-sm', showPaymentMarkButton ? 'min-w-[1040px]' : 'min-w-[820px]')}>
             <colgroup>
-              <col className="w-[15%]" />
-              <col className="w-[14%]" />
-              <col className="w-[13%]" />
-              {!hideDueDate ? <col className="w-[12%]" /> : null}
-              <col className="w-[11%]" />
-              {showCreditButton ? <col className="w-[12%]" /> : null}
-              {showPaymentMarkButton ? <col className="w-[23%]" /> : null}
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '12%' }} />
+              {!hideDueDate ? <col style={{ width: '11%' }} /> : null}
+              <col style={{ width: '10%' }} />
+              {showCreditButton ? <col style={{ width: '14%' }} /> : null}
+              {showPaymentMarkButton ? <col style={{ width: '23%' }} /> : null}
             </colgroup>
             <thead className="border-b border-border bg-muted/40">
               <tr>
@@ -481,13 +486,24 @@ export function PaymentList({
                           >
                             {PAYMENT_TYPE_LABELS[payment.payment_type]}
                           </span>
-                          <span className="truncate text-xs text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {formatYearMonth(payment.year_month)}
                           </span>
                         </div>
                         {payment.description ? (
-                          <div className="mt-0.5 truncate text-xs text-muted-foreground" title={payment.description}>
+                          <div
+                            className="mt-0.5 line-clamp-2 text-xs leading-snug text-muted-foreground"
+                            title={payment.description}
+                          >
                             {payment.description}
+                          </div>
+                        ) : null}
+                        {payment.notes && payment.notes !== payment.description ? (
+                          <div
+                            className="mt-0.5 line-clamp-1 text-[11px] leading-snug text-muted-foreground/80"
+                            title={payment.notes}
+                          >
+                            {payment.notes}
                           </div>
                         ) : null}
                       </div>
@@ -495,17 +511,20 @@ export function PaymentList({
                     <td className="px-3 py-3 align-middle">
                       <div className="min-w-0">
                         <div className="text-[11px] text-muted-foreground">{amountView.label}</div>
-                        <div className={`truncate text-sm font-semibold tabular-nums ${amountView.tone}`}>
+                        <div
+                          className={`text-sm font-semibold tabular-nums ${amountView.tone}`}
+                          title={formatPaymentAmount(amountView.amount)}
+                        >
                           {formatPaymentAmount(amountView.amount)}
                         </div>
                         {amountView.detail ? (
-                          <div className="truncate text-[11px] text-muted-foreground" title={amountView.detail}>
+                          <div className="line-clamp-2 text-[11px] leading-snug text-muted-foreground" title={amountView.detail}>
                             {amountView.detail}
                           </div>
                         ) : null}
                         {(payment.discount_amount > 0 || payment.additional_amount > 0) && payment.base_amount !== payment.final_amount ? (
                           <div
-                            className="mt-0.5 truncate text-[11px] text-muted-foreground"
+                            className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground"
                             title={[
                               `기본 ${formatPaymentAmount(payment.base_amount)}`,
                               payment.discount_amount > 0 ? `할인 -${formatPaymentAmount(payment.discount_amount)}` : '',
