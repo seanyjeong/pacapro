@@ -1,6 +1,6 @@
 /**
  * Payment Record Modal
- * 납부 기록 모달 컴포넌트
+ * 납부하기 모달 컴포넌트
  */
 
 import { useEffect, useState } from 'react';
@@ -109,10 +109,10 @@ export function PaymentRecordModal({
       <Card className="w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">납부 기록</CardTitle>
+            <CardTitle className="text-xl">납부하기</CardTitle>
             <button
               onClick={onClose}
-              aria-label="납부 기록 닫기"
+              aria-label="납부하기 닫기"
               className="p-1 hover:bg-muted rounded-full transition-colors"
             >
               <X className="w-5 h-5 text-muted-foreground" />
@@ -264,7 +264,7 @@ export function PaymentRecordModal({
                 취소
               </Button>
               <Button type="submit" className="flex-1" disabled={submitting}>
-                {submitting ? '처리 중...' : '납부 기록'}
+                {submitting ? '처리 중...' : '납부하기'}
               </Button>
             </div>
           </form>

@@ -205,7 +205,7 @@ export function PaymentCard({ payment, onRecordPayment, onEdit, onDelete, onUpda
         <div className="flex gap-2 pt-4 border-t">
           {payment.payment_status !== 'paid' && onRecordPayment && (
             <Button onClick={onRecordPayment} className="flex-1">
-              납부 기록
+              납부하기
             </Button>
           )}
           {onEdit && (

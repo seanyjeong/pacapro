@@ -52,13 +52,13 @@ export function PaymentsPageContent() {
         payment_method: data.payment_method as PaymentRecordData['payment_method'],
         payment_date: data.payment_date,
         discount_amount: data.discount_amount,
-        notes: '상세 납부 기록',
+        notes: '상세 납부',
       });
-      toast.success(`${recordPayment.student_name}님의 납부 기록이 저장되었습니다.`);
+      toast.success(`${recordPayment.student_name}님 납부가 완료되었습니다.`);
       setRecordPayment(null);
       await state.reload();
     } catch {
-      toast.error('납부 기록을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error('납부를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
       throw new Error('record failed');
     }
   };

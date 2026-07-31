@@ -44,7 +44,7 @@ export function PaymentDetailHeader({
         {canEdit && payment.payment_status !== 'paid' ? (
           <Button type="button" onClick={onRecordPayment}>
             <CreditCard className="mr-2 h-4 w-4" />
-            납부 기록
+            납부하기
           </Button>
         ) : null}
         {canCancel ? (

@@ -135,7 +135,7 @@ interface PaymentListProps {
   onCreditClick?: (payment: Payment) => void;
   showCreditButton?: boolean;
   onPaymentMark?: (payment: Payment, method: MarkMethod) => Promise<void>;
-  /** 상세 납부 기록 모달 (금액/할인/일자 입력) */
+  /** 상세 납부하기 모달 (금액/할인/일자 입력) */
   onDetailedPay?: (payment: Payment) => void;
   showPaymentMarkButton?: boolean;
   markingPaymentId?: number | null;
@@ -314,7 +314,7 @@ export function PaymentList({
               onDetailedPay(payment);
             }}
             className="h-7 w-full justify-center gap-1 border-slate-300 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-none hover:bg-slate-50"
-            title="금액·할인·납부일 입력 (납부 기록)"
+            title="금액·할인·납부일 입력"
           >
             <FilePenLine className="h-3 w-3 shrink-0" />
             상세납부
