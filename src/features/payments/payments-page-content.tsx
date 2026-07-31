@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { ManualCreditModal } from '@/components/students/manual-credit-modal';
 import { PaymentList } from '@/components/payments/payment-list';
+import { PaymentRecordModal } from '@/components/payments/payment-record-modal';
 import { ProrationCalculatorModal } from '@/components/payments/proration-calculator-modal';
 import {
   AlertDialog,
@@ -15,7 +17,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import type { Payment, PaymentRecordData } from '@/lib/types/payment';
+import { getPaidPaymentAmount } from '@/lib/utils/payment-helpers';
 import { usePermissions } from '@/lib/utils/permissions';
+import { recordQuickPayment } from './payments-page-api';
 import { PaymentFilterBar } from './payment-filter-bar';
 import { PaymentPageError } from './payment-page-error';
 import { PaymentsHeader } from './payments-header';
@@ -27,11 +32,36 @@ export function PaymentsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [unpaidDialogOpen, setUnpaidDialogOpen] = useState(false);
+  const [recordPayment, setRecordPayment] = useState<Payment | null>(null);
   const { canEdit, canView, isOwner } = usePermissions();
   const canEditPayments = canEdit('payments');
   const canViewPayments = canView('payments');
   const viewOnly = canViewPayments && !canEditPayments;
   const state = usePaymentsPageState({ statusFromUrl: searchParams.get('status'), viewOnly });
+
+  const submitDetailedPayment = async (data: {
+    paid_amount: number;
+    payment_method: string;
+    payment_date: string;
+    discount_amount?: number;
+  }) => {
+    if (!recordPayment) return;
+    try {
+      await recordQuickPayment(recordPayment.id, {
+        paid_amount: data.paid_amount,
+        payment_method: data.payment_method as PaymentRecordData['payment_method'],
+        payment_date: data.payment_date,
+        discount_amount: data.discount_amount,
+        notes: '상세 납부 기록',
+      });
+      toast.success(`${recordPayment.student_name}님의 납부 기록이 저장되었습니다.`);
+      setRecordPayment(null);
+      await state.reload();
+    } catch {
+      toast.error('납부 기록을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      throw new Error('record failed');
+    }
+  };
 
   if (state.error && !state.loading) {
     return <PaymentPageError viewOnly={viewOnly} message={state.error} onRetry={state.reload} />;
@@ -69,6 +99,7 @@ export function PaymentsPageContent() {
             onCreditClick={canEditPayments ? state.openCreditModal : undefined}
             showCreditButton={canEditPayments}
             onPaymentMark={canEditPayments ? state.markPayment : undefined}
+            onDetailedPay={canEditPayments ? (payment) => setRecordPayment(payment) : undefined}
             showPaymentMarkButton={canEditPayments}
             markingPaymentId={state.markingPaymentId}
             confirmBeforePayment
@@ -128,6 +159,17 @@ export function PaymentsPageContent() {
           weeklyCount={state.creditStudentInfo.weeklyCount}
           classDays={state.creditStudentInfo.classDays}
           onSuccess={state.reload}
+        />
+      ) : null}
+
+      {recordPayment ? (
+        <PaymentRecordModal
+          isOpen={Boolean(recordPayment)}
+          onClose={() => setRecordPayment(null)}
+          onSubmit={submitDetailedPayment}
+          studentName={recordPayment.student_name}
+          finalAmount={Number(recordPayment.final_amount) || 0}
+          paidAmount={getPaidPaymentAmount(recordPayment)}
         />
       ) : null}
     </div>

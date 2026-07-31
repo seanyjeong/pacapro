@@ -28,6 +28,7 @@ import {
   CreditCard,
   Banknote,
   Wallet,
+  FilePenLine,
 } from 'lucide-react';
 import type { Payment } from '@/lib/types/payment';
 import { cn } from '@/lib/utils/cn';
@@ -134,6 +135,8 @@ interface PaymentListProps {
   onCreditClick?: (payment: Payment) => void;
   showCreditButton?: boolean;
   onPaymentMark?: (payment: Payment, method: MarkMethod) => Promise<void>;
+  /** 상세 납부 기록 모달 (금액/할인/일자 입력) */
+  onDetailedPay?: (payment: Payment) => void;
   showPaymentMarkButton?: boolean;
   markingPaymentId?: number | null;
   hideDueDate?: boolean;
@@ -147,6 +150,7 @@ export function PaymentList({
   onCreditClick,
   showCreditButton = false,
   onPaymentMark,
+  onDetailedPay,
   showPaymentMarkButton = false,
   markingPaymentId = null,
   hideDueDate = false,
@@ -253,7 +257,7 @@ export function PaymentList({
   };
 
   const renderPaymentActions = (payment: Payment) => {
-    if (!showPaymentMarkButton || !onPaymentMark) return null;
+    if (!showPaymentMarkButton || (!onPaymentMark && !onDetailedPay)) return null;
     if (payment.payment_status === 'paid') {
       return (
         <span className="inline-flex h-8 min-w-[88px] items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-emerald-200 bg-emerald-50 px-3.5 text-sm font-medium leading-none text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
@@ -273,23 +277,49 @@ export function PaymentList({
     }
 
     return (
-      <div className="inline-flex flex-nowrap items-center gap-1.5 whitespace-nowrap">
-        {PAYMENT_ACTIONS.map(({ method, label, Icon, className }) => (
+      <div className="flex min-w-0 flex-col items-stretch gap-1.5">
+        {onPaymentMark ? (
+          <div className="min-w-0">
+            <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">빠른납부</p>
+            <div className="inline-flex flex-wrap items-center gap-1">
+              {PAYMENT_ACTIONS.map(({ method, label, Icon, className }) => (
+                <Button
+                  key={method}
+                  variant="outline"
+                  size="sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handlePaymentMarkClick(payment, method);
+                  }}
+                  className={cn(
+                    'h-7 min-w-[48px] shrink-0 gap-0.5 border px-2 text-[11px] font-semibold shadow-none active:scale-95',
+                    className
+                  )}
+                  title={`${methodLabels[method]}로 전액 빠른 납부`}
+                >
+                  <Icon className="h-3 w-3 shrink-0" />
+                  <span className="shrink-0">{label}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {onDetailedPay ? (
           <Button
-            key={method}
+            type="button"
             variant="outline"
             size="sm"
             onClick={(event) => {
               event.stopPropagation();
-              handlePaymentMarkClick(payment, method);
+              onDetailedPay(payment);
             }}
-            className={cn('h-8 min-w-[54px] shrink-0 gap-1 border px-2.5 text-xs font-semibold shadow-none active:scale-95', className)}
-            title={`${methodLabels[method]}로 납부 처리`}
+            className="h-7 w-full justify-center gap-1 border-slate-300 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-none hover:bg-slate-50"
+            title="금액·할인·납부일 입력 (납부 기록)"
           >
-            <Icon className="h-3.5 w-3.5 shrink-0" />
-            <span className="shrink-0">{label}</span>
+            <FilePenLine className="h-3 w-3 shrink-0" />
+            상세납부
           </Button>
-        ))}
+        ) : null}
       </div>
     );
   };
