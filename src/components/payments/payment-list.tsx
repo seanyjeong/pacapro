@@ -72,7 +72,7 @@ function PaymentSortHeader({
 
   return (
     <th
-      className={cn('px-5 py-3 text-left font-medium text-muted-foreground', className)}
+      className={cn('px-3 py-3 text-left font-medium text-muted-foreground', className)}
       aria-sort={ariaSort}
     >
       <button
@@ -384,7 +384,16 @@ export function PaymentList({
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
-          <table className={cn('w-full text-sm', showPaymentMarkButton ? 'min-w-[1300px]' : 'min-w-[1080px]')}>
+          <table className={cn('w-full table-fixed text-sm', showPaymentMarkButton ? 'min-w-[980px]' : 'min-w-[760px]')}>
+            <colgroup>
+              <col className="w-[15%]" />
+              <col className="w-[14%]" />
+              <col className="w-[13%]" />
+              {!hideDueDate ? <col className="w-[12%]" /> : null}
+              <col className="w-[11%]" />
+              {showCreditButton ? <col className="w-[12%]" /> : null}
+              {showPaymentMarkButton ? <col className="w-[23%]" /> : null}
+            </colgroup>
             <thead className="border-b border-border bg-muted/40">
               <tr>
                 <PaymentSortHeader
@@ -393,7 +402,7 @@ export function PaymentList({
                   sortKey={sortKey}
                   sortDir={sortDir}
                   onSort={handleSort}
-                  className="w-[160px]"
+                  className="px-3"
                 />
                 <PaymentSortHeader
                   label="청구 내역"
@@ -401,7 +410,7 @@ export function PaymentList({
                   sortKey={sortKey}
                   sortDir={sortDir}
                   onSort={handleSort}
-                  className="min-w-[250px]"
+                  className="px-3"
                 />
                 <PaymentSortHeader
                   label="금액"
@@ -409,7 +418,7 @@ export function PaymentList({
                   sortKey={sortKey}
                   sortDir={sortDir}
                   onSort={handleSort}
-                  className="w-[210px]"
+                  className="px-3"
                 />
                 {!hideDueDate && (
                   <PaymentSortHeader
@@ -418,7 +427,7 @@ export function PaymentList({
                     sortKey={sortKey}
                     sortDir={sortDir}
                     onSort={handleSort}
-                    className="w-[150px]"
+                    className="px-3"
                   />
                 )}
                 <PaymentSortHeader
@@ -427,15 +436,15 @@ export function PaymentList({
                   sortKey={sortKey}
                   sortDir={sortDir}
                   onSort={handleSort}
-                  className="w-[120px]"
+                  className="px-3"
                 />
                 {showCreditButton && (
-                  <th className="w-[130px] px-5 py-3 text-left font-medium text-muted-foreground">
+                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">
                     크레딧
                   </th>
                 )}
                 {showPaymentMarkButton && (
-                  <th className="w-[210px] px-4 py-3 text-left font-medium text-muted-foreground">
+                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">
                     납부처리
                   </th>
                 )}
@@ -456,96 +465,108 @@ export function PaymentList({
                       overdue ? 'bg-red-50 dark:bg-red-950' : ''
                     }`}
                   >
-                    <td className="w-[160px] whitespace-nowrap px-6 py-4">
-                      <div>
-                        <div className="font-medium text-foreground">{payment.student_name}</div>
-                        <div className="text-sm text-muted-foreground">{payment.student_number}</div>
+                    <td className="px-3 py-3 align-middle">
+                      <div className="min-w-0">
+                        <div className="truncate font-medium text-foreground">{payment.student_name}</div>
+                        <div className="truncate text-xs text-muted-foreground">{payment.student_number}</div>
                       </div>
                     </td>
-                    <td className="min-w-[250px] whitespace-nowrap px-6 py-4">
-                      <div>
-                        <div className="flex items-center gap-2">
+                    <td className="px-3 py-3 align-middle">
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                           <span
-                            className={`px-2 py-1 text-xs font-medium rounded ${getPaymentTypeColor(
+                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${getPaymentTypeColor(
                               payment.payment_type
                             )}`}
                           >
                             {PAYMENT_TYPE_LABELS[payment.payment_type]}
                           </span>
-                          <span className="text-sm text-muted-foreground">
+                          <span className="truncate text-xs text-muted-foreground">
                             {formatYearMonth(payment.year_month)}
                           </span>
                         </div>
-                        {payment.description && (
-                          <div className="text-sm text-muted-foreground mt-1">
+                        {payment.description ? (
+                          <div className="mt-0.5 truncate text-xs text-muted-foreground" title={payment.description}>
                             {payment.description}
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </td>
-                    <td className="w-[210px] whitespace-nowrap px-6 py-4">
-                      <div>
-                        <div className="text-xs text-muted-foreground">{amountView.label}</div>
-                        <div className={`font-semibold ${amountView.tone}`}>{formatPaymentAmount(amountView.amount)}</div>
-                        {amountView.detail ? <div className="text-xs text-muted-foreground">{amountView.detail}</div> : null}
-                        {(payment.discount_amount > 0 || payment.additional_amount > 0) && (
-                          <div className="text-xs text-muted-foreground">
-                            {payment.base_amount !== payment.final_amount && (
-                              <>
-                                기본: {formatPaymentAmount(payment.base_amount)}
-                                {payment.discount_amount > 0 && (
-                                  <> | 할인: -{formatPaymentAmount(payment.discount_amount)}</>
-                                )}
-                                {payment.additional_amount > 0 && (
-                                  <> | {payment.notes?.includes('비시즌 종강 일할') ? '비시즌 일할' : '추가'}: +{formatPaymentAmount(payment.additional_amount)}</>
-                                )}
-                              </>
-                            )}
+                    <td className="px-3 py-3 align-middle">
+                      <div className="min-w-0">
+                        <div className="text-[11px] text-muted-foreground">{amountView.label}</div>
+                        <div className={`truncate text-sm font-semibold tabular-nums ${amountView.tone}`}>
+                          {formatPaymentAmount(amountView.amount)}
+                        </div>
+                        {amountView.detail ? (
+                          <div className="truncate text-[11px] text-muted-foreground" title={amountView.detail}>
+                            {amountView.detail}
                           </div>
-                        )}
+                        ) : null}
+                        {(payment.discount_amount > 0 || payment.additional_amount > 0) && payment.base_amount !== payment.final_amount ? (
+                          <div
+                            className="mt-0.5 truncate text-[11px] text-muted-foreground"
+                            title={[
+                              `기본 ${formatPaymentAmount(payment.base_amount)}`,
+                              payment.discount_amount > 0 ? `할인 -${formatPaymentAmount(payment.discount_amount)}` : '',
+                              payment.additional_amount > 0
+                                ? `${payment.notes?.includes('비시즌 종강 일할') ? '비시즌 일할' : '추가'} +${formatPaymentAmount(payment.additional_amount)}`
+                                : '',
+                            ].filter(Boolean).join(' · ')}
+                          >
+                            {payment.discount_amount > 0 ? `할인 -${formatPaymentAmount(payment.discount_amount)}` : null}
+                            {payment.discount_amount > 0 && payment.additional_amount > 0 ? ' · ' : null}
+                            {payment.additional_amount > 0
+                              ? `${payment.notes?.includes('비시즌 종강 일할') ? '일할' : '추가'} +${formatPaymentAmount(payment.additional_amount)}`
+                              : null}
+                          </div>
+                        ) : null}
                       </div>
                     </td>
                     {!hideDueDate && (
-                      <td className="w-[150px] whitespace-nowrap px-6 py-4">
-                        <div className={overdue ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-foreground'}>
+                      <td className="px-3 py-3 align-middle">
+                        <div className={cn('text-sm tabular-nums', overdue ? 'font-semibold text-red-600 dark:text-red-400' : 'text-foreground')}>
                           {formatDate(payment.due_date)}
                         </div>
-                        {payment.paid_date && (
-                          <div className="text-sm text-green-600 dark:text-green-400">
-                            납부: {formatDate(payment.paid_date)}
+                        {payment.paid_date ? (
+                          <div className="text-[11px] text-green-600 dark:text-green-400">
+                            납부 {formatDate(payment.paid_date)}
                           </div>
-                        )}
-                        {overdue && (
-                          <div className="text-xs text-red-600 dark:text-red-400 font-medium mt-1">연체</div>
-                        )}
-                        {upcomingSeason && (
-                          <div className="mt-1 text-xs font-medium text-blue-600 dark:text-blue-300">납부예정</div>
-                        )}
+                        ) : null}
+                        {overdue ? (
+                          <div className="mt-0.5 text-[11px] font-medium text-red-600 dark:text-red-400">연체</div>
+                        ) : null}
+                        {upcomingSeason ? (
+                          <div className="mt-0.5 text-[11px] font-medium text-blue-600 dark:text-blue-300">납부예정</div>
+                        ) : null}
                       </td>
                     )}
-                    <td className="w-[130px] whitespace-nowrap px-5 py-4">
-                      <div className="flex flex-col items-start gap-1.5">
+                    <td className="px-3 py-3 align-middle">
+                      <div className="flex min-w-0 flex-col items-start gap-1">
                         <span
-                          className={`inline-flex items-center rounded-full border border-transparent px-2.5 py-1 text-xs font-medium leading-none tracking-wide ${getPaymentStatusColor(
-                            payment.payment_status
-                          )}`}
+                          className={cn(
+                            'inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-medium leading-none tracking-wide',
+                            getPaymentStatusColor(payment.payment_status)
+                          )}
                         >
-                          {PAYMENT_STATUS_LABELS[payment.payment_status]}
-                          {upcomingSeason ? ' · 납부예정' : ''}
+                          <span className="truncate">
+                            {PAYMENT_STATUS_LABELS[payment.payment_status]}
+                            {upcomingSeason ? ' · 예정' : ''}
+                          </span>
                         </span>
-                        {payment.payment_method && payment.payment_status === 'paid' && (
-                          <span className="pl-0.5 text-xs text-muted-foreground">
+                        {payment.payment_method && payment.payment_status === 'paid' ? (
+                          <span className="truncate text-[11px] text-muted-foreground">
                             {PAYMENT_METHOD_LABELS[payment.payment_method]}
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </td>
-                    {showCreditButton && onCreditClick && (
-                      <td className="w-[140px] whitespace-nowrap px-4 py-4">{renderCreditAction(payment)}</td>
-                    )}
-                    {showPaymentMarkButton && onPaymentMark && (
-                      <td className="w-[220px] whitespace-nowrap px-4 py-4">{renderPaymentActions(payment)}</td>
-                    )}
+                    {showCreditButton && onCreditClick ? (
+                      <td className="px-3 py-3 align-middle">{renderCreditAction(payment)}</td>
+                    ) : null}
+                    {showPaymentMarkButton && onPaymentMark ? (
+                      <td className="px-3 py-3 align-middle">{renderPaymentActions(payment)}</td>
+                    ) : null}
                   </tr>
                 );
               })}
