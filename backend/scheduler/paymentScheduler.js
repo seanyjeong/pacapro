@@ -79,6 +79,11 @@ async function generateMonthlyPayments() {
                 AND s.status = 'active'
                 AND s.deleted_at IS NULL
                 AND s.monthly_tuition > 0
+                -- 등록월 이전 청구 금지 (등록 8월 학생에게 7월 청구 생성 방지)
+                AND (
+                    s.enrollment_date IS NULL
+                    OR DATE_FORMAT(s.enrollment_date, '%Y-%m') <= ?
+                )
                 AND NOT EXISTS (
                     SELECT 1
                     FROM student_seasons ss
@@ -92,7 +97,7 @@ async function generateMonthlyPayments() {
                     AND se.season_end_date >= STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')
                     AND COALESCE(se.season_monthly_policy, 'season_replaces_monthly') = 'season_replaces_monthly'
                 )
-            `, [academy.default_due_day, academy.academy_id, yearMonth, yearMonth]);
+            `, [academy.default_due_day, academy.academy_id, yearMonth, yearMonth, yearMonth]);
 
             for (const student of students) {
                 // 각 학생별로 트랜잭션 처리
