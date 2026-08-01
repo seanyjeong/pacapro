@@ -18,17 +18,37 @@ function truncateToThousands(amount) {
 }
 
 /**
+ * 서버가 UTC여도 학원비 year_month 는 항상 KST 기준.
+ * (cron timezone=Asia/Seoul 로 00:01 KST 실행 시 UTC 날짜는 아직 전날일 수 있음)
+ */
+function getKoreaDateParts(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(date);
+    const get = (type) => parts.find((p) => p.type === type)?.value;
+    const year = Number(get('year'));
+    const month = Number(get('month'));
+    const day = Number(get('day'));
+    return {
+        year,
+        month,
+        day,
+        yearMonth: `${year}-${String(month).padStart(2, '0')}`,
+    };
+}
+
+/**
  * 학원비 자동 생성 로직
  * 매월 1일에 실행되어 모든 active 학생의 학원비를 생성
  */
 async function generateMonthlyPayments() {
     console.log('[PaymentScheduler] Starting automatic payment generation...');
 
-    const today = new Date();
-    const currentDay = today.getDate();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
-    const yearMonth = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+    const { year: currentYear, month: currentMonth, day: currentDay, yearMonth } = getKoreaDateParts();
+    console.log(`[PaymentScheduler] KST target month=${yearMonth} (server now=${new Date().toISOString()})`);
 
     try {
         // 모든 학원 설정 조회
