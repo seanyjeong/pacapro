@@ -13,10 +13,25 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Calendar, User, Clock, AlertTriangle, CheckCircle2, Banknote, CalendarDays } from 'lucide-react';
 import { studentsAPI } from '@/lib/api/students';
+import { getSafeApiToastMessage } from '@/lib/api/error-message';
 import { toast } from 'sonner';
+import axios from 'axios';
 import { truncateToThousands } from '@/lib/utils/payment-helpers';
 
 const RESUME_ERROR_MESSAGE = '복귀 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
+const CREDIT_CONFLICT_ERROR = 'REST_CREDIT_RECALCULATION_CONFLICT';
+
+function getResumeErrorMessage(error: unknown): string {
+  if (!axios.isAxiosError<{ error?: unknown; message?: unknown }>(error)) {
+    return RESUME_ERROR_MESSAGE;
+  }
+
+  if (error.response?.data?.error !== CREDIT_CONFLICT_ERROR) {
+    return RESUME_ERROR_MESSAGE;
+  }
+
+  return getSafeApiToastMessage(error.response.data.message);
+}
 
 // 휴원 학생 타입 (무기한 휴원 지원)
 export interface RestEndedStudent {
@@ -179,7 +194,7 @@ export function StudentResumeModal({
       handleClose();
     } catch (err: unknown) {
       console.warn('학생 복귀 처리에 실패했습니다.', err);
-      setError(RESUME_ERROR_MESSAGE);
+      setError(getResumeErrorMessage(err));
     } finally {
       setProcessing(false);
     }
@@ -284,6 +299,10 @@ export function StudentResumeModal({
                       월 {formatCurrency(preview.discountedTuition)} × {preview.remainingDays}회/{preview.monthlyTotal}회
                     </div>
                   </div>
+                </div>
+
+                <div className="text-xs text-emerald-600 dark:text-emerald-500">
+                  휴식 크레딧은 복귀 전날까지의 실제 휴식일수로 자동 재계산됩니다.
                 </div>
               </div>
             )}

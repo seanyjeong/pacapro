@@ -1,0 +1,7 @@
+const CREDIT_ROUNDING_UNIT = 1000;
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
+module.exports = {
+    CREDIT_ROUNDING_UNIT,
+    MILLISECONDS_PER_DAY,
+};

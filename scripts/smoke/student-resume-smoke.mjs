@@ -42,7 +42,13 @@ function makePausedStudent() {
 }
 
 function makeState(overrides = {}) {
-  return { hits: [], resumePayloads: [], ...overrides };
+  return {
+    hits: [],
+    resumeAuthHeaders: [],
+    resumeMode: 'technical',
+    resumePayloads: [],
+    ...overrides,
+  };
 }
 
 async function installRoutes(context, state) {
@@ -71,7 +77,36 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'POST' && path === '/students/42/resume') {
+      state.resumeAuthHeaders.push(request.headers().authorization);
       state.resumePayloads.push(request.postDataJSON());
+      if (state.resumeMode === 'conflict') {
+        return jsonRoute(route, {
+          error: 'REST_CREDIT_RECALCULATION_CONFLICT',
+          message: '이미 사용한 휴식 크레딧이 정상 금액보다 큽니다. 크레딧 사용 내역을 먼저 확인해주세요.',
+        }, 409);
+      }
+      if (state.resumeMode === 'success') {
+        return jsonRoute(route, {
+          message: '2026-06-23 복귀 처리가 완료되었습니다. 휴식 크레딧이 520,000원에서 351,000원으로 재계산되었습니다.',
+          student: { ...makePausedStudent(), status: 'active' },
+          scheduleAssigned: { assigned: 4, created: 4 },
+          paymentCreated: null,
+          creditRecalculation: {
+            adjusted: true,
+            creditId: 12,
+            creditType: 'carryover',
+            previousAmount: 520000,
+            creditAmount: 351000,
+            remainingAmount: 351000,
+            usedAmount: 0,
+            restStartDate: '2026-06-01',
+            restEndDate: '2026-06-22',
+            restDays: 22,
+            status: 'pending',
+          },
+          resumeDate: '2026-06-23',
+        });
+      }
       return jsonRoute(route, { message: 'HTTP 500 DB stack trace' }, 500);
     }
 
@@ -107,7 +142,54 @@ async function runResumeError(browser) {
   if (!state.resumePayloads.at(-1)?.resume_date) {
     throw new Error(`resume payload missing date: ${JSON.stringify(state.resumePayloads)}`);
   }
+  if (state.resumeAuthHeaders.at(-1) !== 'Bearer smoke-token') {
+    throw new Error(`resume auth header missing: ${JSON.stringify(state.resumeAuthHeaders)}`);
+  }
 
+  await context.close();
+  return { diagnostics, state };
+}
+
+async function runResumeConflict(browser) {
+  const state = makeState({ resumeMode: 'conflict' });
+  const context = await createAuthedContext(browser, { width: 390, height: 844 });
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  const diagnostics = createDiagnostics(page);
+
+  await page.goto('/students/42', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 상세' }).waitFor();
+  await page.getByRole('button', { name: '복귀 처리' }).click();
+  await page.getByText('휴식 크레딧은 복귀 전날까지의 실제 휴식일수로 자동 재계산됩니다.').waitFor();
+  const resumeResponse = page.waitForResponse((response) => response.url().includes('/students/42/resume'));
+  await page.getByRole('button', { name: '복귀 처리' }).last().click();
+  await resumeResponse;
+  await page.getByRole('alert').getByText(
+    '이미 사용한 휴식 크레딧이 정상 금액보다 큽니다. 크레딧 사용 내역을 먼저 확인해주세요.'
+  ).waitFor();
+  await assertNoRawVisibleText(page, 'student resume credit conflict');
+  await assertNoHorizontalOverflow(page, 'student resume credit conflict');
+  await context.close();
+  return { diagnostics, state };
+}
+
+async function runResumeSuccess(browser) {
+  const state = makeState({ resumeMode: 'success' });
+  const context = await createAuthedContext(browser, { width: 1365, height: 900 });
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  page.setDefaultTimeout(15000);
+  const diagnostics = createDiagnostics(page);
+
+  await page.goto('/students/42', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 상세' }).waitFor();
+  await page.getByRole('button', { name: '복귀 처리' }).click();
+  await page.getByRole('button', { name: '복귀 처리' }).last().click();
+  await page.getByText('복귀 처리 완료', { exact: true }).waitFor();
+  await page.getByText(/휴식 크레딧이 520,000원에서 351,000원으로 재계산되었습니다/).waitFor();
+  await assertNoRawVisibleText(page, 'student resume credit success');
+  await assertNoHorizontalOverflow(page, 'student resume credit success');
   await context.close();
   return { diagnostics, state };
 }
@@ -121,11 +203,18 @@ async function main() {
   const browser = await launchSmokeBrowser();
   try {
     const resumeError = await runResumeError(browser);
+    const resumeConflict = await runResumeConflict(browser);
+    const resumeSuccess = await runResumeSuccess(browser);
     assertDiagnostics(resumeError);
+    assertDiagnostics(resumeConflict);
+    assertDiagnostics(resumeSuccess);
     console.log(JSON.stringify({
       hits: resumeError.state.hits,
       resumePayload: resumeError.state.resumePayloads.at(-1),
+      resumeAuthHeaderVerified: resumeError.state.resumeAuthHeaders.at(-1) === 'Bearer smoke-token',
       consoleErrors: resumeError.diagnostics.consoleErrors,
+      conflictMessageVerified: true,
+      successMessageVerified: true,
     }, null, 2));
   } finally {
     await browser.close();
