@@ -22,7 +22,12 @@
 
 ## 배포와 롤백
 
-1. 운영 DB 백업과 `students.admission_type` 정의를 확인한다.
+1. 운영 DB 백업과 `students.admission_type` 정의를 확인한다. 현재 운영 실측값은 nullable, 기본값 `regular`, collation `utf8mb4_0900_ai_ci`이며 `students` 테이블 기본값도 `DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci`다. 값이 다르면 배포를 중단한다.
 2. `20260826_add_advance_student_admission_type.mysql`을 먼저 적용한다.
-3. 백엔드와 프론트엔드를 순서대로 배포한다.
-4. 롤백 시 코드를 먼저 되돌리고, 스키마 축소가 꼭 필요할 때만 `advance` 행을 `regular`로 치환한 뒤 ENUM을 축소한다.
+3. 적용 직후 `SHOW CREATE TABLE students`와 `SELECT admission_type, COUNT(*) FROM students GROUP BY admission_type` 결과를 릴리스 기록에 남긴다.
+4. 백엔드와 프론트엔드를 순서대로 배포한다.
+5. 롤백 시 코드를 먼저 되돌리고, 스키마 축소가 꼭 필요할 때만 `advance` 행을 `regular`로 치환한 뒤 ENUM을 축소한다.
+
+애플리케이션의 모든 쓰기 경로는 고3·N수 학생에게 `advance`를 저장하지 못하게 막는다. DB에 직접 `고3 또는 N수 + advance`를 만들면 편집 화면에서 입시유형 선택지가 비고 저장이 거부되므로, 직접 DB 수정도 같은 검증 규칙을 따라야 한다.
+
+기존 자동 진급 스케줄러는 전 학원을 한 번에 처리하며 수동 자동진급과 상호 실행 잠금이 없다. 선행반 전환 자체는 학년 변경과 같은 UPDATE에서 원자적으로 처리되지만, 두 진급 엔진의 중복 실행 방지는 별도 운영 개선 과제로 관리한다.
