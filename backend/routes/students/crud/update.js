@@ -48,6 +48,10 @@ const {
     getAuditInfoFromReq
 } = require('./_utils');
 const { applyStudentUpdateEffects } = require('./update/effects');
+const {
+    prepareStudentTrialUpdate,
+    TrialStatusValidationError,
+} = require('../../../services/trialStatusService');
 
 module.exports = function(router) {
 
@@ -125,6 +129,13 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             // 예약 적용 (YYYY-MM-DD)
             effective_from
         } = req.body;
+        const trialUpdate = prepareStudentTrialUpdate({
+            currentStudent: students[0],
+            isTrial: is_trial,
+            status,
+            trialDates: trial_dates,
+            trialRemaining: trial_remaining,
+        });
 
         // Validate student_type
         if (student_type && !['exam', 'adult'].includes(student_type)) {
@@ -178,7 +189,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
 
         // pending/trial → active 전환 시 학번 자동 생성
         let autoStudentNumber = student_number;
-        if (status === 'active' && (oldStatus === 'pending' || oldStatus === 'trial') && !student_number && !students[0].student_number) {
+        if (trialUpdate.status === 'active' && (oldStatus === 'pending' || oldStatus === 'trial') && !student_number && !students[0].student_number) {
             const year = new Date().getFullYear();
             const [lastStudent] = await pool.execute(
                 `SELECT student_number FROM students
@@ -306,12 +317,12 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             updates.push('memo = ?');
             params.push(memo);
         }
-        if (status !== undefined) {
+        if (trialUpdate.status !== undefined) {
             updates.push('status = ?');
-            params.push(status);
+            params.push(trialUpdate.status);
 
             // 상태가 paused가 아니면 휴식 관련 필드 초기화
-            if (status !== 'paused') {
+            if (trialUpdate.status !== 'paused') {
                 updates.push('rest_start_date = NULL');
                 updates.push('rest_end_date = NULL');
                 updates.push('rest_reason = NULL');
@@ -330,17 +341,17 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             params.push(rest_reason || null);
         }
         // 체험생 관련 필드
-        if (is_trial !== undefined) {
+        if (trialUpdate.isTrial !== undefined) {
             updates.push('is_trial = ?');
-            params.push(is_trial);
+            params.push(trialUpdate.isTrial);
         }
-        if (trial_remaining !== undefined) {
+        if (trialUpdate.trialRemaining !== undefined) {
             updates.push('trial_remaining = ?');
-            params.push(trial_remaining);
+            params.push(trialUpdate.trialRemaining);
         }
-        if (trial_dates !== undefined) {
+        if (trialUpdate.trialDates !== undefined) {
             updates.push('trial_dates = ?');
-            params.push(JSON.stringify(trial_dates));
+            params.push(JSON.stringify(trialUpdate.trialDates));
         }
         // 시간대
         if (time_slot !== undefined) {
@@ -371,9 +382,10 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             student_number: autoStudentNumber, name, gender, student_type, phone, parent_phone,
             school, grade, age, admission_type, weekly_count, monthly_tuition,
             discount_rate, discount_reason, payment_due_day, enrollment_date,
-            address, notes, memo, status, time_slot,
+            address, notes, memo, status: trialUpdate.status, time_slot,
             rest_start_date, rest_end_date, rest_reason,
-            is_trial, trial_remaining
+            is_trial: trialUpdate.isTrial,
+            trial_remaining: trialUpdate.trialRemaining,
         };
         // 암호화 필드 복호화 비교
         const encryptedKeys = ['name', 'phone', 'parent_phone', 'address'];
@@ -395,12 +407,12 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             newValues.class_days = class_days;
         }
         // trial_dates 별도 비교 (JSON)
-        if (trial_dates !== undefined) {
+        if (trialUpdate.trialDates !== undefined) {
             const oldTrialDates = oldStudent.trial_dates
                 ? (typeof oldStudent.trial_dates === 'string' ? JSON.parse(oldStudent.trial_dates) : oldStudent.trial_dates)
                 : null;
             oldValues.trial_dates = oldTrialDates;
-            newValues.trial_dates = trial_dates;
+            newValues.trial_dates = trialUpdate.trialDates;
         }
         if (Object.keys(newValues).length > 0) {
             const auditInfo = getAuditInfoFromReq(req);
@@ -444,9 +456,10 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             discountRate: discount_rate,
             enrollmentDate: enrollment_date,
             oldStudent,
-            isTrial: is_trial,
-            trialDates: trial_dates,
-            status,
+            isTrial: trialUpdate.isTrial,
+            trialDates: trialUpdate.trialDates,
+            trialScheduleDates: trialUpdate.trialScheduleDates,
+            status: trialUpdate.status,
             oldStatus,
         });
         // 민감 필드 복호화 후 응답
@@ -465,6 +478,12 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             pendingInfo
         });
     } catch (error) {
+        if (error instanceof TrialStatusValidationError) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: error.message,
+            });
+        }
         logger.error('Error updating student:', error);
         res.status(500).json({
             error: 'Server Error',

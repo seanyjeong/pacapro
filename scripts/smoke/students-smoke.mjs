@@ -294,6 +294,16 @@ async function runDesktop(browser) {
   await page.getByPlaceholder('이름, 학번, 전화번호로 검색...').fill('이민수');
   const pendingRow = page.locator('tr:has-text("이민수")');
   await pendingRow.waitFor();
+  await pendingRow.getByRole('button', { name: '이민수 새 체험 일정 등록' }).click();
+  await page.waitForURL('**/students/43/edit?activate_trial=true');
+  if (state.hits.some((hit) => hit === 'PUT /students/43')) {
+    throw new Error('pending trial activation must not update before a new date is entered');
+  }
+  await page.goBack({ waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
+  await page.getByRole('button', { name: /미등록관리/ }).click();
+  await page.getByPlaceholder('이름, 학번, 전화번호로 검색...').fill('이민수');
+  await pendingRow.waitFor();
   await clickWithoutNativeDialog(page, pendingRow.locator('button').last(), 'pending student delete');
   await page.getByRole('alertdialog').getByRole('heading', { name: '미등록 학생 삭제' }).waitFor();
   await page.screenshot({ path: '/Users/etlab/paca-students-pending-delete-dialog.png', fullPage: true });

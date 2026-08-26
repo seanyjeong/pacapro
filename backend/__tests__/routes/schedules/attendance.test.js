@@ -51,6 +51,11 @@ jest.mock('../../../utils/logger', () => ({
     error: jest.fn(),
 }));
 
+jest.mock('../../../utils/attendanceNotify', () => ({
+    cancelQueuedAttendanceNotify: jest.fn().mockResolvedValue(),
+    notifyAttendance: jest.fn().mockResolvedValue(),
+}));
+
 const express = require('express');
 const request = require('supertest');
 const pool = require('../../../config/database');
@@ -61,6 +66,7 @@ function makeApp() {
     app.use(express.json());
     const router = express.Router();
     require('../../../routes/schedules/attendance')(router);
+    require('../../../routes/schedules/attendance-submit')(router);
     app.use('/paca/schedules', router);
     return app;
 }
@@ -161,6 +167,44 @@ describe('POST /paca/schedules/:id/attendance', () => {
         expect(res.body.attendance_records.length).toBe(1);
     });
 
+    test('지난 마지막 체험 출석 취소 → 체험 상태로 되살리지 않고 미등록 유지', async () => {
+        fakeConn.query.mockReset();
+        fakeConn.query
+            .mockResolvedValueOnce([[
+                { id: 1, class_date: '2026-08-24', time_slot: 'evening' },
+            ]])
+            .mockResolvedValueOnce([[
+                {
+                    id: 5,
+                    academy_id: 1,
+                    name: 'enc-s',
+                    is_trial: 0,
+                    trial_remaining: 0,
+                    status: 'pending',
+                    trial_dates: JSON.stringify([
+                        { date: '2026-08-24', time_slot: 'evening', attended: true },
+                    ]),
+                },
+            ]])
+            .mockResolvedValueOnce([[{ attendance_status: 'present' }]])
+            .mockResolvedValue([{ affectedRows: 1 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/schedules/1/attendance')
+            .send({ attendance_records: [{ student_id: 5, attendance_status: 'none' }] });
+
+        expect(res.status).toBe(200);
+        const restoredToTrial = fakeConn.query.mock.calls.some((call) =>
+            /trial_remaining = trial_remaining \+ 1/.test(call[0])
+            || (call[0].includes('UPDATE students SET status = ?') && call[1]?.[0] === 'trial')
+        );
+        expect(restoredToTrial).toBe(false);
+        const reconciledUpdate = fakeConn.query.mock.calls.find((call) =>
+            /UPDATE students/.test(call[0]) && /trial_remaining = \?/.test(call[0])
+        );
+        expect(reconciledUpdate?.[1]?.slice(0, 3)).toEqual(['pending', 0, 0]);
+    });
+
     test('잘못된 status → 400 + rollback', async () => {
         fakeConn.query.mockReset();
         fakeConn.query.mockResolvedValueOnce([[{ id: 1, class_date: '2026-01-15', time_slot: 'evening' }]]);
@@ -168,7 +212,7 @@ describe('POST /paca/schedules/:id/attendance', () => {
             .post('/paca/schedules/1/attendance')
             .send({ attendance_records: [{ student_id: 5, attendance_status: 'invalid' }] });
         expect(res.status).toBe(400);
-        expect(res.body.message).toMatch(/유효하지 않은 출석 상태/);
+        expect(res.body.message).toBe('출석 상태를 다시 선택해주세요.');
         expect(fakeConn.rollback).toHaveBeenCalled();
         expect(fakeConn.release).toHaveBeenCalled();
     });

@@ -3,7 +3,7 @@
  *
  * paca.js 자동 라우트 등록 (W-6) → app.use('/paca/schedules', router) 호출.
  *
- * Sub-라우터 (7건) — 등록 순서 = 정적 경로 우선, /:id 와일드카드 마지막
+ * Sub-라우터 (8건) — 등록 순서 = 정적 경로 우선, /:id 와일드카드 마지막
  * (express 매칭 순서 의존, lesson #205 source 정적 검증으로 회귀 보호):
  *
  *   1. slot                  — GET /slot, POST /slot/student, DELETE /slot/student, POST /slot/move
@@ -16,8 +16,9 @@
  *                               (혼합: 정적 /date/* 2건 + /:id/instructor-attendance 2건)
  *   4. fix-all               — POST /fix-all (owner only, 정적 /fix-all)
  *   5. list                  — GET /, GET /instructor/:instructor_id (목록)
- *   6. attendance            — GET /:id/attendance, POST /:id/attendance (학생 출결)
- *   7. crud                  — GET /:id, POST /, PUT /:id/assign-instructor, PUT /:id, DELETE /:id
+ *   6. attendance            — GET /:id/attendance (학생 출결 조회)
+ *   7. attendance-submit     — POST /:id/attendance (학생 출결 제출 + 체험 상태 재계산)
+ *   8. crud                  — GET /:id, POST /, PUT /:id/assign-instructor, PUT /:id, DELETE /:id
  *                               (/:id 와일드카드 마지막)
  *
  * 등록 순서 깨면 GET /paca/schedules/slot 같은 정적 경로가 GET /:id 핸들러로
@@ -40,7 +41,8 @@ require('./instructor-schedules')(router);    // 정적 /date/*/instructor-sched
 require('./instructor-attendance')(router);   // 혼합: 정적 /date/* + /:id/instructor-attendance
 require('./fix-all')(router);                 // 정적 /fix-all
 require('./list')(router);                    // GET / + GET /instructor/:instructor_id
-require('./attendance')(router);              // GET /:id/attendance + POST /:id/attendance
+require('./attendance')(router);              // GET /:id/attendance
+require('./attendance-submit')(router);       // POST /:id/attendance
 require('./crud')(router);                    // GET /:id + POST / + PUT /:id/* + DELETE /:id (/:id 마지막)
 
 module.exports = router;

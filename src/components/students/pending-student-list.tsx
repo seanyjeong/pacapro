@@ -144,30 +144,9 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
     router.push(`/students/new?${params.toString()}`);
   };
 
-  // 체험 등록 처리 (trial 상태로 변경)
-  const handleTrialRegister = async (student: Student) => {
-    try {
-      // 기존 체험 일정에서 남은 횟수 계산
-      const trialDates = parseTrialDates(student.trial_dates);
-      const remainingCount = trialDates.length > 0
-        ? trialDates.filter(t => !t.attended).length
-        : 2; // 체험 일정이 없으면 기본 2회
-
-      await apiClient.put(
-        `/students/${student.id}`,
-        {
-          status: 'trial',
-          is_trial: true,
-          trial_remaining: remainingCount,
-        },
-        { suppressErrorToast: true },
-      );
-      toast.success(`${student.name} 학생을 체험생으로 등록했습니다.`);
-      onReload();
-    } catch (error: unknown) {
-      console.warn('Pending student trial registration failed', error);
-      toast.error('체험생 등록을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
-    }
+  // 새 일정을 입력한 뒤 체험생으로 다시 등록한다.
+  const handleTrialRegister = (student: Student) => {
+    router.push(`/students/${student.id}/edit?activate_trial=true`);
   };
 
   // 삭제 처리
@@ -353,12 +332,12 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
                         size="sm"
                         variant="outline"
                         onClick={() => handleTrialRegister(student)}
-                        title="체험생으로 등록"
-                        aria-label={`${student.name} 체험생으로 등록`}
+                        title="새 체험 일정 등록"
+                        aria-label={`${student.name} 새 체험 일정 등록`}
                         className="min-h-[40px] px-3"
                       >
                         <Sparkles className="w-4 h-4 mr-1" />
-                        체험 등록
+                        새 체험 등록
                       </Button>
                       <Button
                         size="default"

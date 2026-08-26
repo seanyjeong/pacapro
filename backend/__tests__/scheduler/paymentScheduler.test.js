@@ -36,7 +36,7 @@ describe('payment scheduler season monthly policy', () => {
         expect(studentSql).toContain('student_seasons');
         expect(studentSql).toContain('seasons');
         expect(studentSql).toContain("COALESCE(se.season_monthly_policy, 'season_replaces_monthly')");
-        expect(studentParams).toEqual([5, 5, '2026-06', '2026-06']);
+        expect(studentParams).toEqual([5, 5, '2026-06', '2026-06', '2026-06']);
         expect(db.getConnection).not.toHaveBeenCalled();
     });
 
@@ -53,6 +53,6 @@ describe('payment scheduler season monthly policy', () => {
         const [studentSql, studentParams] = db.query.mock.calls[1];
         expect(studentSql).not.toContain("? = 'season_plus_monthly'");
         expect(studentSql).toContain("= 'season_replaces_monthly'");
-        expect(studentParams).toEqual([10, 7, '2026-06', '2026-06']);
+        expect(studentParams).toEqual([10, 7, '2026-06', '2026-06', '2026-06']);
     });
 });

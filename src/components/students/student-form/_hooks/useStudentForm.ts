@@ -17,6 +17,17 @@ interface StudentFormProps {
   onSubmit: (data: StudentFormData, pendingPhotoFile?: File | null) => Promise<void>;
 }
 
+function getKoreaDateText(): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 export function useStudentForm({ mode, initialData, initialIsTrial = false, onSubmit }: StudentFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -44,7 +55,10 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
       const dates = typeof initialData.trial_dates === 'string'
         ? JSON.parse(initialData.trial_dates)
         : initialData.trial_dates;
-      return Array.isArray(dates) ? dates : [];
+      if (!Array.isArray(dates)) return [];
+      return initialIsTrial && !initialData.is_trial
+        ? dates.filter((trialDate) => trialDate.attended)
+        : dates;
     }
     return [];
   });
@@ -71,7 +85,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     address: initialData?.address || '',
     notes: initialData?.notes || '',
     memo: initialData?.memo || '',
-    status: (initialData?.status || 'active') as StudentStatus,
+    status: (initialIsTrial && !initialData?.is_trial ? 'trial' : initialData?.status || 'active') as StudentStatus,
     rest_start_date: initialData?.rest_start_date || '',
     rest_end_date: initialData?.rest_end_date || '',
     rest_reason: initialData?.rest_reason || '',
@@ -118,7 +132,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
   useEffect(() => { loadAcademySettings(); }, []);
   useEffect(() => {
     if (mode === 'create' && initialIsTrial && trialDates.length === 0) {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getKoreaDateText();
       setTrialDates([{ date: today, time_slot: 'afternoon' }]);
     }
   }, [initialIsTrial]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -280,6 +294,9 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     if ((formData.discount_rate || 0) > 0 && !formData.discount_reason?.trim()) {
       newErrors.discount_reason = '할인 사유를 입력해주세요.';
     }
+    if (isTrial && !trialDates.some((trialDate) => !trialDate.attended && trialDate.date >= getKoreaDateText())) {
+      newErrors.trial_dates = '오늘 또는 이후의 새 체험 일정을 1개 이상 선택해주세요.';
+    }
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
       const firstErrorField = Object.keys(newErrors)[0];
@@ -292,7 +309,17 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     return Object.keys(newErrors).length === 0;
   };
 
-  const extractErrorMessage = (): string => {
+  const extractErrorMessage = (err: unknown): string => {
+    if (err && typeof err === 'object') {
+      const responseMessage = (err as { response?: { data?: { message?: unknown } } }).response?.data?.message;
+      if (
+        typeof responseMessage === 'string'
+        && /[가-힣]/.test(responseMessage)
+        && !/(cors|stack|axios|sql|http|\b\d{3}\b)/i.test(responseMessage)
+      ) {
+        return responseMessage;
+      }
+    }
     return '학생 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
   };
 
@@ -307,7 +334,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
   };
 
   const addTrialDate = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getKoreaDateText();
     setTrialDates([...trialDates, { date: today, time_slot: 'afternoon' }]);
   };
 
@@ -327,7 +354,8 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
       setConfirmState({ type: 'immediate_class_days' });
       return;
     }
-    const trialRemaining = trialDates.filter(td => !td.attended).length || trialDates.length || 2;
+    const today = getKoreaDateText();
+    const trialRemaining = trialDates.filter(td => !td.attended && td.date >= today).length;
     const submitData = {
       ...formData,
       enroll_in_season: enrollInSeason && !!selectedSeasonId,
@@ -350,7 +378,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
         setConfirmState({ type: 'same_name', existingStudent: sameNameCheck.existingStudent });
         return;
       }
-      const errorMessage = extractErrorMessage();
+      const errorMessage = extractErrorMessage(err);
       setErrors({ submit: errorMessage });
       setTimeout(() => {
         const errorElement = document.querySelector('[data-testid="student-form-submit-error"]');
@@ -398,6 +426,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     finalTuition,
     timeSlotLabels,
     admissionOptions,
+    minimumTrialDate: getKoreaDateText(),
     // handlers
     handleChange,
     handleClassDayToggle,

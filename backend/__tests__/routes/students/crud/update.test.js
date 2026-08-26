@@ -138,6 +138,73 @@ describe('PUT /paca/students/:id (update)', () => {
         expect(res.body.message).toMatch(/time_slot/);
     });
 
+    test('미등록 학생을 지난 일정으로 체험 재등록 → 400 한국어 + 상태 변경 없음', async () => {
+        pool.execute.mockResolvedValueOnce([[existingStudent({ status: 'pending', is_trial: 0 })]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({
+            status: 'trial',
+            is_trial: true,
+            trial_remaining: 1,
+            trial_dates: [{ date: '2020-01-01', time_slot: 'evening', attended: false }],
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('오늘 또는 이후의 새 체험 일정을 1개 이상 선택해주세요.');
+        expect(pool.execute).toHaveBeenCalledTimes(1);
+    });
+
+    test('미등록 학생을 status만 trial로 바꾸는 요청도 새 일정 없이는 차단', async () => {
+        pool.execute.mockResolvedValueOnce([[existingStudent({ status: 'pending', is_trial: 0 })]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ status: 'trial' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('오늘 또는 이후의 새 체험 일정을 1개 이상 선택해주세요.');
+        expect(pool.execute).toHaveBeenCalledTimes(1);
+    });
+
+    test('미등록 학생 체험 재등록 → 일정 기준 남은 횟수로 저장', async () => {
+        pool.execute.mockResolvedValue([[]]);
+        pool.execute.mockResolvedValueOnce([[existingStudent({ status: 'pending', is_trial: 0 })]]);
+
+        await request(makeApp()).put('/paca/students/5').send({
+            status: 'trial',
+            is_trial: true,
+            trial_remaining: 99,
+            trial_dates: [
+                { date: '2020-01-01', time_slot: 'evening', attended: false },
+                { date: '2099-01-01', time_slot: 'afternoon', attended: false },
+            ],
+        });
+
+        const updateCall = pool.execute.mock.calls.find((call) => /UPDATE students SET/.test(call[0]));
+        expect(updateCall).toBeDefined();
+        expect(updateCall[1]).not.toContain(99);
+        expect(updateCall[1]).toContain(1);
+        expect(pool.execute.mock.calls.some((call) =>
+            /SELECT id FROM class_schedules/.test(call[0]) && call[1]?.includes('2020-01-01')
+        )).toBe(false);
+    });
+
+    test('체험생 미등록 전환은 남은 횟수도 0으로 함께 저장', async () => {
+        pool.execute.mockResolvedValue([[]]);
+        pool.execute.mockResolvedValueOnce([[existingStudent({
+            status: 'trial',
+            is_trial: 1,
+            trial_remaining: 2,
+            trial_dates: JSON.stringify([{ date: '2099-01-01', time_slot: 'evening' }]),
+        })]]);
+
+        await request(makeApp()).put('/paca/students/5').send({
+            status: 'pending',
+            is_trial: false,
+        });
+
+        const updateCall = pool.execute.mock.calls.find((call) => /UPDATE students SET/.test(call[0]));
+        expect(updateCall[0]).toContain('trial_remaining = ?');
+        expect(updateCall[1]).toContain(0);
+    });
+
     test('변경 필드 0개 → 400 No fields to update (응답 표면 보존)', async () => {
         pool.execute.mockResolvedValueOnce([[existingStudent()]]);
         const res = await request(makeApp()).put('/paca/students/5').send({});

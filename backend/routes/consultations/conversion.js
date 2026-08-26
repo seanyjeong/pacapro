@@ -29,6 +29,10 @@
  */
 
 const { pool, verifyToken, encrypt, logger, createPendingStudentFromConsultation } = require('./_utils');
+const {
+    prepareTrialActivation,
+    TrialStatusValidationError,
+} = require('../../services/trialStatusService');
 
 function parseTrialDates(value) {
     if (!value) return [];
@@ -87,6 +91,14 @@ module.exports = function (router) {
                 return res.status(400).json({ error: '최소 1개의 체험 일정을 선택해주세요.' });
             }
 
+            const timeSlotMap = { '오전': 'morning', '오후': 'afternoon', '저녁': 'evening' };
+            const trialActivation = prepareTrialActivation(trialDates.map((item) => ({
+                date: item.date,
+                time_slot: timeSlotMap[item.timeSlot] || item.timeSlot,
+                attended: false,
+            })));
+            const trialDatesJson = trialActivation.trialDates;
+
             // 상담 정보 조회
             const [consultations] = await pool.execute(
                 'SELECT * FROM consultations WHERE id = ? AND academy_id = ?',
@@ -98,16 +110,6 @@ module.exports = function (router) {
             }
 
             const consultation = consultations[0];
-
-            // 시간대 한글 → 영어 변환
-            const timeSlotMap = { '오전': 'morning', '오후': 'afternoon', '저녁': 'evening' };
-
-            // trial_dates JSON 구조 (time_slot 키 사용 - students.js 와 통일)
-            const trialDatesJson = trialDates.map((d) => ({
-                date: d.date,
-                time_slot: timeSlotMap[d.timeSlot] || d.timeSlot,
-                attended: false
-            }));
 
             // 이미 체험 학생으로 연결되어 있는지 확인
             if (consultation.linked_student_id) {
@@ -136,13 +138,13 @@ module.exports = function (router) {
                           WHERE id = ? AND academy_id = ?`,
                         [
                             1,
-                            trialDatesJson.length,
+                            trialActivation.trialRemaining,
                             JSON.stringify(trialDatesJson),
                             linkedStudent.id,
                             academyId
                         ]
                     );
-                    await assignTrialSchedules(linkedStudent.id, academyId, trialDatesJson);
+                    await assignTrialSchedules(linkedStudent.id, academyId, trialActivation.scheduleDates);
                     await pool.execute(
                         `UPDATE consultations SET status = 'confirmed', linked_student_id = ? WHERE id = ?`,
                         [linkedStudent.id, id]
@@ -186,7 +188,7 @@ module.exports = function (router) {
                     consultation.gender || null,
                     encryptedPhone,
                     encryptedParentPhone,
-                    trialDates.length,
+                    trialActivation.trialRemaining,
                     JSON.stringify(trialDatesJson),
                     consultation.preferred_date
                 ]
@@ -195,7 +197,7 @@ module.exports = function (router) {
             const studentId = studentResult.insertId;
 
             // 체험 일정을 스케줄에 자동 배정
-            await assignTrialSchedules(studentId, academyId, trialDatesJson);
+            await assignTrialSchedules(studentId, academyId, trialActivation.scheduleDates);
 
             // 상담 상태 업데이트 (확정 상태 유지 + 학생 연결)
             // NOTE: 체험 등록 시 completed로 변경하면 다시 confirmed로 바꿀 때 알림톡 중복 발송됨
@@ -210,6 +212,9 @@ module.exports = function (router) {
                 trialDates: trialDatesJson
             });
         } catch (error) {
+            if (error instanceof TrialStatusValidationError) {
+                return res.status(400).json({ error: error.message });
+            }
             logger.error('체험 학생 등록 오류:', error);
             res.status(500).json({ error: '서버 오류가 발생했습니다.' });
         }

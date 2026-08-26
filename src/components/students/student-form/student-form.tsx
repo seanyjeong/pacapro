@@ -62,6 +62,8 @@ export function StudentForm({
         setIsTrial={hook.setIsTrial}
         trialDates={hook.trialDates}
         timeSlotLabels={hook.timeSlotLabels}
+        minimumDate={hook.minimumTrialDate}
+        error={hook.errors.trial_dates}
         addTrialDate={hook.addTrialDate}
         removeTrialDate={hook.removeTrialDate}
         updateTrialDate={hook.updateTrialDate}

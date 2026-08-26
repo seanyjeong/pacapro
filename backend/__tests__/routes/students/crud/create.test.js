@@ -93,6 +93,19 @@ describe('POST /paca/students (create)', () => {
         expect(res.body.message).toMatch(/grade/);
     });
 
+    test('체험생 등록인데 오늘 이후 일정 없음 → 400 한국어', async () => {
+        const res = await request(makeApp()).post('/paca/students').send({
+            name: '홍',
+            phone: '010-1234-5678',
+            is_trial: true,
+            trial_dates: [{ date: '2020-01-01', time_slot: 'evening' }],
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('오늘 또는 이후의 새 체험 일정을 1개 이상 선택해주세요.');
+        expect(pool.execute).not.toHaveBeenCalled();
+    });
+
     test('학번 중복 → 400', async () => {
         // student_number 중복 SELECT → 1건 반환
         pool.execute.mockResolvedValueOnce([[{ id: 99 }]]);
@@ -197,7 +210,12 @@ describe('POST /paca/students (create)', () => {
             .mockResolvedValueOnce([[{ id: 777, name: 'enc_체험', is_trial: 1, status: 'trial' }]]);  // SELECT
 
         const res = await request(makeApp()).post('/paca/students')
-            .send({ name: '체험', phone: '010-2', is_trial: true });
+            .send({
+                name: '체험',
+                phone: '010-2',
+                is_trial: true,
+                trial_dates: [{ date: '2099-01-01', time_slot: 'afternoon' }],
+            });
 
         expect(res.status).toBe(201);
         expect(res.body.message).toBe('Trial student created successfully');

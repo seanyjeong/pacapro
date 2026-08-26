@@ -52,6 +52,10 @@ const {
     getKoreaDateText,
     resolveProratedPaymentDueDate,
 } = require('../../../utils/proratedPaymentDueDate');
+const {
+    prepareTrialActivation,
+    TrialStatusValidationError,
+} = require('../../../services/trialStatusService');
 
 module.exports = function(router) {
 
@@ -84,7 +88,6 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             notes,
             // 체험생 관련 필드
             is_trial,
-            trial_remaining,
             trial_dates,
             // 시간대
             time_slot,
@@ -135,6 +138,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 message: 'time_slot must be morning, afternoon, or evening'
             });
         }
+        const trialActivation = is_trial ? prepareTrialActivation(trial_dates) : null;
 
         // Check if student_number already exists
         if (student_number) {
@@ -275,8 +279,8 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 notes || null,
                 is_trial ? 'trial' : 'active',
                 is_trial ? true : false,
-                is_trial ? (trial_remaining || 2) : null,
-                is_trial ? JSON.stringify(trial_dates || []) : null,
+                trialActivation ? trialActivation.trialRemaining : null,
+                trialActivation ? JSON.stringify(trialActivation.trialDates) : null,
                 time_slot || 'evening',
                 memo || null
             ]
@@ -383,14 +387,15 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
         // 자동 스케줄 배정
         let autoAssignResult = null;
 
-        logger.info('[Student Create] is_trial:', is_trial, 'trial_dates:', trial_dates);
+        const effectiveTrialDates = trialActivation?.scheduleDates || [];
+        logger.info('[Student Create] is_trial:', is_trial, 'trial_dates:', effectiveTrialDates);
 
-        if (is_trial && trial_dates && trial_dates.length > 0) {
+        if (is_trial && effectiveTrialDates.length > 0) {
             // 체험생: trial_dates에 지정된 날짜들에 배정
-            logger.info('[Trial] Starting schedule assignment for', trial_dates.length, 'dates');
+            logger.info('[Trial] Starting schedule assignment for', effectiveTrialDates.length, 'dates');
             try {
                 let trialAssigned = 0;
-                for (const trialDate of trial_dates) {
+                for (const trialDate of effectiveTrialDates) {
                     const { date, time_slot } = trialDate;
                     if (!date || !time_slot) continue;
 
@@ -459,6 +464,12 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             autoAssigned: autoAssignResult
         });
     } catch (error) {
+        if (error instanceof TrialStatusValidationError) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: error.message,
+            });
+        }
         logger.error('Error creating student:', error);
         res.status(500).json({
             error: 'Server Error',

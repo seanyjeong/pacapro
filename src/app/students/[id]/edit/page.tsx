@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, RefreshCw } from 'lucide-react';
@@ -16,6 +16,7 @@ import type { StudentFormData } from '@/lib/types/student';
 export default function EditStudentPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const studentId = parseInt(params.id as string);
   const queryClient = useQueryClient();
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -116,13 +117,17 @@ export default function EditStudentPage() {
     );
   }
 
+  const isTrialActivation = searchParams.get('activate_trial') === 'true' && !student.is_trial;
+
   return (
     <div className="mx-auto w-full max-w-7xl space-y-5">
       <StudentFormPageHeader
         backLabel="돌아가기"
-        description={`${student.name} 학생의 정보, 수업 요일, 학원비 기준을 수정합니다.`}
-        eyebrow="Student Profile"
-        title="학생 정보 수정"
+        description={isTrialActivation
+          ? `${student.name} 학생의 오늘 이후 새 체험 일정을 입력해주세요.`
+          : `${student.name} 학생의 정보, 수업 요일, 학원비 기준을 수정합니다.`}
+        eyebrow={isTrialActivation ? 'Trial Schedule' : 'Student Profile'}
+        title={isTrialActivation ? '새 체험 일정 등록' : '학생 정보 수정'}
         onBack={handleCancel}
       />
 
@@ -130,6 +135,7 @@ export default function EditStudentPage() {
       <StudentForm
         mode="edit"
         initialData={student}
+        initialIsTrial={isTrialActivation}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         onPhotoChanged={() => {

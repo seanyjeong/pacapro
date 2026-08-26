@@ -11,18 +11,20 @@ interface TrialSectionProps {
   setIsTrial: (v: boolean) => void;
   trialDates: TrialDate[];
   timeSlotLabels: Record<string, string>;
+  minimumDate: string;
+  error?: string;
   addTrialDate: () => void;
   removeTrialDate: (index: number) => void;
   updateTrialDate: (index: number, field: keyof TrialDate, value: string) => void;
 }
 
 export function TrialSection({
-  mode, isTrial, setIsTrial, trialDates, timeSlotLabels,
+  mode, isTrial, setIsTrial, trialDates, timeSlotLabels, minimumDate, error,
   addTrialDate, removeTrialDate, updateTrialDate,
 }: TrialSectionProps) {
   if (mode === 'create') {
     return (
-      <Card className={isTrial ? 'rounded-md border-purple-300 bg-purple-50 shadow-none dark:border-purple-700 dark:bg-purple-950' : 'rounded-md shadow-none'}>
+      <Card data-testid="trial-section" className={isTrial ? 'rounded-md border-purple-300 bg-purple-50 shadow-none dark:border-purple-700 dark:bg-purple-950' : 'rounded-md shadow-none'}>
         <CardHeader>
           <CardTitle className="flex items-center">
             <Sparkles className={`w-5 h-5 mr-2 ${isTrial ? 'text-purple-600' : 'text-gray-400'}`} />
@@ -47,7 +49,7 @@ export function TrialSection({
           </div>
 
           {isTrial && (
-            <div className="ml-6 space-y-3">
+            <div id="field-trial_dates" className="ml-6 space-y-3" tabIndex={-1}>
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-foreground">체험 일정</label>
                 <Button type="button" variant="outline" size="sm" onClick={addTrialDate}
@@ -58,7 +60,7 @@ export function TrialSection({
 
               {trialDates.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-2">
-                  체험 일정을 추가하세요. 일정은 나중에 추가할 수도 있습니다.
+                  오늘 또는 이후의 체험 일정을 추가해주세요.
                 </p>
               ) : (
                 <div className="space-y-2">
@@ -67,6 +69,7 @@ export function TrialSection({
                       <Calendar className="w-4 h-4 text-purple-500" />
                       <span className="text-sm font-medium text-purple-700">{idx + 1}회차</span>
                       <input type="date" value={td.date}
+                        min={td.date && td.date < minimumDate ? undefined : minimumDate}
                         onChange={(e) => updateTrialDate(idx, 'date', e.target.value)}
                         className="flex-1 px-3 py-1.5 border border-border bg-background text-foreground rounded-md text-sm focus:ring-purple-500 focus:border-purple-500" />
                       <select value={td.time_slot}
@@ -84,6 +87,8 @@ export function TrialSection({
                   ))}
                 </div>
               )}
+
+              {error && <p className="text-sm font-medium text-red-600 dark:text-red-400" role="alert">{error}</p>}
 
               <div className="bg-purple-100 dark:bg-purple-900 border border-purple-200 dark:border-purple-700 rounded-md p-3 text-sm text-purple-800 dark:text-purple-200">
                 <p className="font-medium">체험생 안내</p>
@@ -104,14 +109,14 @@ export function TrialSection({
   if (!isTrial) return null;
 
   return (
-    <Card className="rounded-md border-purple-300 bg-purple-50 shadow-none dark:border-purple-700 dark:bg-purple-950">
+    <Card data-testid="trial-section" className="rounded-md border-purple-300 bg-purple-50 shadow-none dark:border-purple-700 dark:bg-purple-950">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Sparkles className="w-5 h-5 mr-2 text-purple-600" />
           체험 일정 수정
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent id="field-trial_dates" className="space-y-4" tabIndex={-1}>
         <div className="flex items-center justify-between">
           <label className="block text-sm font-medium text-foreground">체험 일정</label>
           <Button type="button" variant="outline" size="sm" onClick={addTrialDate}
@@ -137,6 +142,7 @@ export function TrialSection({
                     {idx + 1}회차{isAttended && ' (출석완료)'}
                   </span>
                   <input type="date" value={td.date}
+                    min={td.date && td.date < minimumDate ? undefined : minimumDate}
                     onChange={(e) => updateTrialDate(idx, 'date', e.target.value)}
                     disabled={isAttended}
                     className={`flex-1 px-3 py-1.5 border border-border rounded-md text-sm focus:ring-purple-500 focus:border-purple-500 ${
@@ -163,6 +169,8 @@ export function TrialSection({
             })}
           </div>
         )}
+
+        {error && <p className="text-sm font-medium text-red-600 dark:text-red-400" role="alert">{error}</p>}
 
         <div className="text-xs text-purple-600 dark:text-purple-400">
           * 일정 수정 시 기존 미출석 스케줄은 삭제되고 새 일정으로 재배정됩니다.

@@ -83,8 +83,9 @@ async function reassignClassSchedules(context) {
 }
 
 async function reassignTrialSchedules(context) {
-    const { pool, studentId, academyId, isTrial, trialDates } = context;
-    if (!isTrial || trialDates === undefined || trialDates.length === 0) return null;
+    const { pool, studentId, academyId, isTrial, trialDates, trialScheduleDates } = context;
+    const datesToSchedule = trialScheduleDates ?? trialDates;
+    if (!isTrial || datesToSchedule === undefined || datesToSchedule.length === 0) return null;
 
     try {
         await pool.execute(
@@ -97,7 +98,7 @@ async function reassignTrialSchedules(context) {
         );
 
         let assigned = 0;
-        for (const trialDate of trialDates) {
+        for (const trialDate of datesToSchedule) {
             const { date, time_slot: trialTimeSlot, attended } = trialDate;
             if (!date || !trialTimeSlot || attended) continue;
 
