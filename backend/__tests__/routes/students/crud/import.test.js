@@ -90,7 +90,7 @@ describe('POST /paca/students/import', () => {
                 phone: '010-3333-4444',
                 school: '부산고',
                 gender: '여',
-                grade: '고2',
+                grade: '중2',
                 enrollmentDate: '2026-07-03',
                 admissionType: '수시',
             },
@@ -155,6 +155,48 @@ describe('POST /paca/students/import', () => {
             skipped: 1,
             failed: 0,
         });
+        expect(pool.execute.mock.calls.some(([sql]) => /INSERT INTO students/.test(sql))).toBe(false);
+    });
+
+    test('선행반 한글값을 advance 입시유형으로 등록한다', async () => {
+        const buffer = await buildStudentWorkbook([
+            {
+                name: '선행생',
+                phone: '010-5555-6666',
+                grade: '중2',
+                admissionType: '선행반',
+            },
+        ]);
+        pool.execute
+            .mockResolvedValueOnce([[{ student_number: '2026007' }]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([{ insertId: 103 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/students/import')
+            .set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            .send(Buffer.from(buffer));
+
+        expect(res.status).toBe(200);
+        const insertCall = pool.execute.mock.calls.find(([sql]) => /INSERT INTO students/.test(sql));
+        expect(insertCall[1]).toContain('advance');
+        expect(insertCall[1]).toContain('중2');
+    });
+
+    test('고3 선행반 행은 저장하지 않고 한국어 실패 사유를 반환한다', async () => {
+        const buffer = await buildStudentWorkbook([
+            { name: '고3생', phone: '010-7777-8888', grade: '고3', admissionType: '선행반' },
+        ]);
+        pool.execute.mockResolvedValueOnce([[{ student_number: '2026007' }]]);
+
+        const res = await request(makeApp())
+            .post('/paca/students/import')
+            .set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            .send(Buffer.from(buffer));
+
+        expect(res.status).toBe(200);
+        expect(res.body.summary.failed).toBe(1);
+        expect(res.body.results[0].message).toContain('선행반은 중1부터 고2까지의 입시생만 선택할 수 있습니다.');
         expect(pool.execute.mock.calls.some(([sql]) => /INSERT INTO students/.test(sql))).toBe(false);
     });
 

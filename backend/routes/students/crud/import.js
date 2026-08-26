@@ -6,6 +6,10 @@ const {
     encrypt,
     logger
 } = require('./_utils');
+const {
+    ADVANCE_ADMISSION_VALIDATION_MESSAGE,
+    isAdvanceAdmissionAllowed,
+} = require('../../../constants/studentAdmissionTypes');
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
@@ -59,6 +63,8 @@ const ADMISSION_BY_LABEL = {
     regular: 'regular',
     수시: 'early',
     early: 'early',
+    선행반: 'advance',
+    advance: 'advance',
     공무원: 'civil_service',
     civil_service: 'civil_service',
     군사관: 'military_academy',
@@ -68,7 +74,7 @@ const ADMISSION_BY_LABEL = {
     police_university: 'police_university',
 };
 
-const VALID_GRADES = new Set(['고1', '고2', '고3', 'N수']);
+const VALID_GRADES = new Set(['중1', '중2', '중3', '고1', '고2', '고3', 'N수']);
 
 function getCellText(cell) {
     if (!cell || cell.value === null || cell.value === undefined) return '';
@@ -229,6 +235,17 @@ async function insertImportedStudent(row, academyId, nextStudentNumber) {
         return {
             status: 'failed',
             message: `${row.sheetName} ${row.rowNumber}행: 이름과 연락처를 모두 입력해주세요.`,
+        };
+    }
+
+    if (!isAdvanceAdmissionAllowed({
+        admissionType: row.admissionType,
+        grade: row.grade,
+        studentType: 'exam',
+    })) {
+        return {
+            status: 'failed',
+            message: `${row.sheetName} ${row.rowNumber}행: ${ADVANCE_ADMISSION_VALIDATION_MESSAGE}`,
         };
     }
 

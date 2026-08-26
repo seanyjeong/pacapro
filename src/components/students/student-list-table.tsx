@@ -283,6 +283,8 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                           ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
                           : student.admission_type === 'early'
                           ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                          : student.admission_type === 'advance'
+                          ? 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200'
                           : 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
                       }`}>
                         {ADMISSION_TYPE_LABELS[student.admission_type] || student.admission_type}

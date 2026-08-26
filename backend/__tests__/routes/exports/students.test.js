@@ -90,6 +90,35 @@ describe('GET /paca/exports/students', () => {
         expect(pool.execute.mock.calls[1][1]).toEqual([1]);
     });
 
+    test('선행반 학생은 엑셀에도 코드값이 아닌 한글로 표시한다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ name: '테스트학원' }]])
+            .mockResolvedValueOnce([[
+                {
+                    id: 1,
+                    name: '선행생',
+                    phone: '010-1',
+                    school: '일산고',
+                    gender: 'male',
+                    grade: '고2',
+                    enrollment_date: '2026-08-26',
+                    admission_type: 'advance',
+                    student_type: 'exam',
+                    status: 'active',
+                    is_trial: 0,
+                },
+            ]]);
+
+        const res = await request(buildApp())
+            .get('/paca/exports/students')
+            .buffer(true)
+            .parse(binaryParser);
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(res.body);
+
+        expect(workbook.getWorksheet('재원생').getCell('H5').value).toBe('선행반');
+    });
+
     test('학생이 없어도 Windows Excel에서 열 수 있는 등록 양식 시트를 생성한다', async () => {
         pool.execute
             .mockResolvedValueOnce([[{ name: '새학원' }]])

@@ -1,0 +1,19 @@
+-- 학생 입시유형에 선행반(advance)을 추가한다.
+-- 배포 순서: DB 백업 → 이 마이그레이션 → 백엔드 → 프론트엔드.
+-- 실행 전에는 information_schema.COLUMNS에서 students.admission_type 정의를 확인한다.
+-- 기존 ENUM 순서를 유지하고 advance를 끝에 추가해 운영 테이블 변경 비용을 최소화한다.
+
+ALTER TABLE students
+  ALGORITHM=INSTANT,
+  MODIFY COLUMN admission_type
+  ENUM('regular','early','civil_service','military_academy','police_university','advance')
+  NULL DEFAULT 'regular';
+
+-- 롤백 순서:
+-- 1. advance 저장을 중단한 백엔드/프론트엔드로 먼저 되돌린다.
+-- 2. UPDATE students SET admission_type = 'regular' WHERE admission_type = 'advance';
+-- 3. 아래 DDL로 enum을 축소한다.
+-- ALTER TABLE students
+--   MODIFY COLUMN admission_type
+--   ENUM('regular','early','civil_service','military_academy','police_university')
+--   NULL DEFAULT 'regular';

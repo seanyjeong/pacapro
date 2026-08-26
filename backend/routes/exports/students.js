@@ -24,6 +24,7 @@ const {
     ExcelJS,
     decryptArray
 } = require('./_utils');
+const { STUDENT_ADMISSION_LABELS } = require('../../constants/studentAdmissionTypes');
 
 const TEMPLATE_HEADERS = ['이름', '연락처', '학교', '성별', '학년', '등록일', '입시유형', '상태'];
 
@@ -120,14 +121,6 @@ module.exports = function(router) {
             }];
 
             // 입시유형 라벨
-            const admissionLabels = {
-                regular: '정시',
-                early: '수시',
-                transfer: '편입',
-                civil_service: '공무원',
-                adult: '성인'
-            };
-
             // 성별 라벨
             const genderLabels = {
                 male: '남',
@@ -206,7 +199,9 @@ module.exports = function(router) {
                     row.getCell(7).value = student.enrollment_date
                         ? student.enrollment_date.split('T')[0]
                         : '-';
-                    row.getCell(8).value = admissionLabels[student.admission_type] || student.admission_type || '-';
+                    row.getCell(8).value = STUDENT_ADMISSION_LABELS[student.admission_type]
+                        || student.admission_type
+                        || '-';
 
                     // 스타일 적용
                     row.eachCell((cell) => {

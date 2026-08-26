@@ -141,6 +141,14 @@ describe('GET /paca/students (list)', () => {
         expect(params).toContain('고3');
     });
 
+    test('선행반 필터 → admission_type=advance 조건을 전달한다', async () => {
+        pool.execute.mockResolvedValueOnce([[]]);
+        await request(makeApp()).get('/paca/students?admission_type=advance');
+        const [sql, params] = pool.execute.mock.calls[0];
+        expect(sql).toMatch(/AND\s+s\.admission_type\s*=\s*\?/);
+        expect(params).toContain('advance');
+    });
+
     test('is_trial=true → s.is_trial = TRUE 분기', async () => {
         pool.execute.mockResolvedValueOnce([[]]);
         await request(makeApp()).get('/paca/students?is_trial=true');

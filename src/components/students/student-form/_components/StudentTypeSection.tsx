@@ -22,7 +22,7 @@ export function StudentTypeSection({ formData, errors, admissionOptions, handleC
             <label className="block text-sm font-medium text-foreground mb-2">
               학생 유형 <span className="text-red-500">*</span>
             </label>
-            <select value={formData.student_type}
+            <select id="field-student-type" value={formData.student_type}
               onChange={(e) => handleChange('student_type', e.target.value as StudentType)}
               className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
               {STUDENT_TYPE_OPTIONS.map((option) => (
@@ -72,7 +72,7 @@ export function StudentTypeSection({ formData, errors, admissionOptions, handleC
             <label className="block text-sm font-medium text-foreground mb-2">
               {formData.student_type === 'exam' ? '입시유형' : '목표'}
             </label>
-            <select value={formData.admission_type}
+            <select id="field-admission-type" value={formData.admission_type}
               onChange={(e) => handleChange('admission_type', e.target.value as AdmissionType)}
               className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
               {admissionOptions.map((option) => (

@@ -52,6 +52,7 @@ const {
     prepareStudentTrialUpdate,
     TrialStatusValidationError,
 } = require('../../../services/trialStatusService');
+const { validateStudentProfileFields } = require('../../../services/studentProfileValidationService');
 
 module.exports = function(router) {
 
@@ -137,40 +138,20 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             trialRemaining: trial_remaining,
         });
 
-        // Validate student_type
-        if (student_type && !['exam', 'adult'].includes(student_type)) {
+        const profileValidation = validateStudentProfileFields({
+            admissionType: admission_type,
+            currentStudent: students[0],
+            grade,
+            studentType: student_type,
+            timeSlot: time_slot,
+        });
+        if (profileValidation.error) {
             return res.status(400).json({
                 error: 'Validation Error',
-                message: 'student_type must be exam or adult'
+                message: profileValidation.error
             });
         }
-
-        // Validate grade
-        const validGrades = ['고1', '고2', '고3', 'N수'];
-        if (grade && !validGrades.includes(grade)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'grade must be one of: 고1, 고2, 고3, N수'
-            });
-        }
-
-        // Validate admission_type
-        const validAdmissionTypes = ['regular', 'early', 'civil_service', 'military_academy', 'police_university'];
-        if (admission_type && !validAdmissionTypes.includes(admission_type)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'admission_type must be regular, early, civil_service, military_academy, or police_university'
-            });
-        }
-
-        // Validate time_slot
-        const validTimeSlots = ['morning', 'afternoon', 'evening'];
-        if (time_slot && !validTimeSlots.includes(time_slot)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'time_slot must be morning, afternoon, or evening'
-            });
-        }
+        const { admissionTypeAfterGradeChange } = profileValidation;
 
         // Check if new student_number already exists (if changed)
         if (student_number) {
@@ -251,6 +232,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         if (admission_type !== undefined) {
             updates.push('admission_type = ?');
             params.push(admission_type);
+        } else if (admissionTypeAfterGradeChange !== students[0].admission_type) {
+            updates.push('admission_type = ?');
+            params.push(admissionTypeAfterGradeChange);
         }
         // effective_from이 미래 달이면 예약 모드, 아니면 즉시 적용
         let isScheduledClassDays = false;

@@ -83,14 +83,63 @@ describe('POST /paca/students (create)', () => {
         const res = await request(makeApp()).post('/paca/students')
             .send({ name: '홍', phone: '010-1', student_type: 'INVALID' });
         expect(res.status).toBe(400);
-        expect(res.body.message).toMatch(/student_type/);
+        expect(res.body.message).toBe('학생 유형을 다시 선택해주세요.');
     });
 
     test('잘못된 grade → 400', async () => {
         const res = await request(makeApp()).post('/paca/students')
-            .send({ name: '홍', phone: '010-1', grade: '중3' });
+            .send({ name: '홍', phone: '010-1', grade: '대1' });
         expect(res.status).toBe(400);
-        expect(res.body.message).toMatch(/grade/);
+        expect(res.body.message).toBe('학년을 다시 선택해주세요.');
+    });
+
+    test('선행반 입시유형으로 학생을 등록한다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([{ insertId: 556 }])
+            .mockResolvedValueOnce([[
+                { id: 556, name: 'enc_선행생', phone: 'enc_010-3', admission_type: 'advance' },
+            ]]);
+
+        const res = await request(makeApp()).post('/paca/students').send({
+            name: '선행생',
+            phone: '010-3',
+            student_type: 'exam',
+            grade: '중3',
+            admission_type: 'advance',
+        });
+
+        expect(res.status).toBe(201);
+        const insertCall = pool.execute.mock.calls.find(([sql]) => /INSERT INTO students/.test(sql));
+        expect(insertCall).toBeDefined();
+        expect(insertCall[1]).toContain('advance');
+        expect(insertCall[1]).toContain('중3');
+    });
+
+    test('고3 학생에게 선행반을 지정하면 한국어로 안내한다', async () => {
+        const res = await request(makeApp()).post('/paca/students').send({
+            name: '고3생',
+            phone: '010-4',
+            student_type: 'exam',
+            grade: '고3',
+            admission_type: 'advance',
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('선행반은 중1부터 고2까지의 입시생만 선택할 수 있습니다.');
+    });
+
+    test('알 수 없는 입시유형은 한국어로 안내한다', async () => {
+        const res = await request(makeApp()).post('/paca/students').send({
+            name: '홍',
+            phone: '010-1',
+            admission_type: 'WRONG',
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('입시유형을 다시 선택해주세요.');
     });
 
     test('체험생 등록인데 오늘 이후 일정 없음 → 400 한국어', async () => {

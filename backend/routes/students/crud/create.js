@@ -56,6 +56,7 @@ const {
     prepareTrialActivation,
     TrialStatusValidationError,
 } = require('../../../services/trialStatusService');
+const { validateStudentProfileFields } = require('../../../services/studentProfileValidationService');
 
 module.exports = function(router) {
 
@@ -103,39 +104,16 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             });
         }
 
-        // Validate student_type
-        const validStudentTypes = ['exam', 'adult'];
-        if (student_type && !validStudentTypes.includes(student_type)) {
+        const profileValidation = validateStudentProfileFields({
+            admissionType: admission_type,
+            grade,
+            studentType: student_type,
+            timeSlot: time_slot,
+        });
+        if (profileValidation.error) {
             return res.status(400).json({
                 error: 'Validation Error',
-                message: 'student_type must be exam or adult'
-            });
-        }
-
-        // Validate grade (for exam students)
-        const validGrades = ['고1', '고2', '고3', 'N수'];
-        if (grade && !validGrades.includes(grade)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'grade must be one of: 고1, 고2, 고3, N수'
-            });
-        }
-
-        // Validate admission_type
-        const validAdmissionTypes = ['regular', 'early', 'civil_service', 'military_academy', 'police_university'];
-        if (admission_type && !validAdmissionTypes.includes(admission_type)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'admission_type must be regular, early, civil_service, military_academy, or police_university'
-            });
-        }
-
-        // Validate time_slot
-        const validTimeSlots = ['morning', 'afternoon', 'evening'];
-        if (time_slot && !validTimeSlots.includes(time_slot)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'time_slot must be morning, afternoon, or evening'
+                message: profileValidation.error
             });
         }
         const trialActivation = is_trial ? prepareTrialActivation(trial_dates) : null;

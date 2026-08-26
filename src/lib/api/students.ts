@@ -22,6 +22,7 @@ import type {
   ClassDaysUpdateRequest,
   ClassDaysBulkUpdateRequest,
   StudentAttendanceResponse,
+  AdmissionType,
 } from '@/lib/types/student';
 
 export interface StudentImportSummary {
@@ -204,6 +205,8 @@ export const studentsAPI = {
       from: string;
       to: string;
       action: 'promoted' | 'graduated';
+      admissionTypeFrom?: AdmissionType;
+      admissionTypeTo?: AdmissionType;
     }>;
   }> => {
     return await apiClient.post('/students/auto-promote', {

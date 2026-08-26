@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import apiClient from '@/lib/api/client';
 import { seasonsApi } from '@/lib/api/seasons';
 import type { Student, StudentFormData, StudentType, Grade, AdmissionType, StudentStatus, TrialDate } from '@/lib/types/student';
 import type { Season } from '@/lib/types/season';
-import { EXAM_ADMISSION_OPTIONS, ADULT_ADMISSION_OPTIONS } from '@/lib/types/student';
+import { EXAM_ADMISSION_OPTIONS, ADULT_ADMISSION_OPTIONS, isAdvanceAdmissionGrade } from '@/lib/types/student';
 import type { ClassDaySlot } from '@/lib/types/student';
 import { parseClassDaysWithSlots, extractDayNumbers } from '@/lib/utils/student-helpers';
 import { AcademySettings, TuitionByWeeklyCount, DEFAULT_TUITION, type StudentFormConfirmState } from '../_types';
@@ -34,6 +34,14 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
   const [confirmState, setConfirmState] = useState<StudentFormConfirmState | null>(null);
   const [restModalOpen, setRestModalOpen] = useState(false);
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+  const examAdmissionTypeRef = useRef<AdmissionType>(
+    initialData?.student_type !== 'adult' && initialData?.admission_type !== 'civil_service'
+      ? initialData?.admission_type || 'regular'
+      : 'regular',
+  );
+  const examGradeRef = useRef<Grade | undefined>(
+    initialData?.student_type !== 'adult' ? initialData?.grade as Grade | undefined : undefined,
+  );
 
   // 학원 설정
   const [academySettings, setAcademySettings] = useState<AcademySettings>({
@@ -204,7 +212,9 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     evening: `저녁 (${formatTimeLabel(academySettings.evening_class_time, '18:00-21:00')})`,
   };
 
-  const admissionOptions = formData.student_type === 'exam' ? EXAM_ADMISSION_OPTIONS : ADULT_ADMISSION_OPTIONS;
+  const admissionOptions = formData.student_type === 'exam'
+    ? EXAM_ADMISSION_OPTIONS.filter((option) => option.value !== 'advance' || isAdvanceAdmissionGrade(formData.grade))
+    : ADULT_ADMISSION_OPTIONS;
 
   const formatCurrency = (amount: number) => new Intl.NumberFormat('ko-KR').format(amount) + '원';
 
@@ -212,17 +222,32 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
   const handleChange = (field: keyof StudentFormData, value: unknown) => {
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
+      if (field === 'admission_type' && prev.student_type === 'exam' && value !== 'civil_service') {
+        examAdmissionTypeRef.current = value as AdmissionType;
+      }
       if (field === 'student_type') {
         if (value === 'adult') {
+          if (prev.student_type === 'exam' && prev.admission_type !== 'civil_service') {
+            examAdmissionTypeRef.current = prev.admission_type;
+            examGradeRef.current = prev.grade;
+          }
           newData.grade = undefined;
           newData.admission_type = 'civil_service';
         } else {
           newData.age = undefined;
-          newData.admission_type = 'regular';
+          newData.grade = examGradeRef.current;
+          newData.admission_type = examAdmissionTypeRef.current;
         }
         if (settingsLoaded && newData.weekly_count > 0) {
           newData.monthly_tuition = getTuitionByWeeklyCount(value as StudentType, newData.weekly_count);
         }
+      }
+      if (field === 'grade' && prev.student_type === 'exam') {
+        examGradeRef.current = value as Grade | undefined;
+      }
+      if (field === 'grade' && newData.admission_type === 'advance' && !isAdvanceAdmissionGrade(value as string)) {
+        newData.admission_type = 'regular';
+        examAdmissionTypeRef.current = 'regular';
       }
       return newData;
     });

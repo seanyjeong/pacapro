@@ -254,7 +254,25 @@ describe('POST /paca/students/grade-upgrade', () => {
       .post('/paca/students/grade-upgrade')
       .send({ upgrades: [{ new_grade: '고1' }] });
     expect(res.status).toBe(400);
-    expect(res.body.message).toBe('학생 ID가 누락된 항목이 있습니다.');
+    expect(res.body.message).toBe('학생 ID가 누락되었거나 올바르지 않은 항목이 있습니다.');
+  });
+
+  test('문자열 학생 ID도 숫자로 정규화해 진급한다', async () => {
+    pool.execute.mockResolvedValueOnce([[
+      { id: 1, grade: '고2', admission_type: 'advance' },
+    ]]);
+    pool.__conn.execute.mockResolvedValue([{ affectedRows: 1 }]);
+
+    const res = await request(buildApp())
+      .post('/paca/students/grade-upgrade')
+      .send({ upgrades: [{ student_id: '1', new_grade: '고3' }] });
+
+    expect(res.status).toBe(200);
+    expect(pool.execute.mock.calls[0][1]).toEqual([1, 1]);
+    expect(pool.__conn.execute).toHaveBeenCalledWith(
+      expect.stringMatching(/grade = \?, admission_type = \?/),
+      ['고3', 'regular', 1],
+    );
   });
 
   test('400 invalid grade → 한국어', async () => {
@@ -294,6 +312,23 @@ describe('POST /paca/students/grade-upgrade', () => {
     expect(sql).toMatch(/IN \(\?,\?,\?\)/);
     // params: [1, 2, 3, academyId]
     expect(params).toEqual([1, 2, 3, 1]);
+  });
+
+  test('수동 진급으로 고3 이상이 되면 선행반을 정시로 함께 전환한다', async () => {
+    pool.execute.mockResolvedValueOnce([[
+      { id: 1, grade: '고2', admission_type: 'advance' },
+    ]]);
+    pool.__conn.execute.mockResolvedValue([{ affectedRows: 1 }]);
+
+    const res = await request(buildApp())
+      .post('/paca/students/grade-upgrade')
+      .send({ upgrades: [{ student_id: 1, new_grade: 'N수' }] });
+
+    expect(res.status).toBe(200);
+    expect(pool.__conn.execute).toHaveBeenCalledWith(
+      expect.stringMatching(/grade = \?, admission_type = \?/),
+      ['N수', 'regular', 1],
+    );
   });
 
   test('트랜잭션 에러 → rollback + release + 500 한국어', async () => {
@@ -357,6 +392,49 @@ describe('POST /paca/students/auto-promote', () => {
     expect(pool.__conn.release).toHaveBeenCalledTimes(1);
     // dry_run 이므로 conn.execute 0회 (조회만 pool.execute)
     expect(pool.__conn.execute).not.toHaveBeenCalled();
+  });
+
+  test('고2 선행반은 고3 승급과 함께 정시로 전환한다', async () => {
+    pool.execute.mockResolvedValueOnce([[
+      { id: 12, name: '선행생', grade: '고2', status: 'active', admission_type: 'advance' },
+    ]]);
+    pool.__conn.execute.mockResolvedValue([{ affectedRows: 1 }]);
+
+    const res = await request(buildApp())
+      .post('/paca/students/auto-promote')
+      .send({ dry_run: false });
+
+    expect(res.status).toBe(200);
+    expect(res.body.details[0]).toEqual(expect.objectContaining({
+      from: '고2',
+      to: '고3',
+      admissionTypeFrom: 'advance',
+      admissionTypeTo: 'regular',
+    }));
+    expect(pool.__conn.execute).toHaveBeenCalledWith(
+      expect.stringMatching(/admission_type\s*=\s*\?/),
+      ['고3', 'regular', 12],
+    );
+  });
+
+  test('고2 수시 학생의 입시유형은 승급 때 유지한다', async () => {
+    pool.execute.mockResolvedValueOnce([[
+      { id: 13, name: '수시생', grade: '고2', status: 'active', admission_type: 'early' },
+    ]]);
+    pool.__conn.execute.mockResolvedValue([{ affectedRows: 1 }]);
+
+    const res = await request(buildApp())
+      .post('/paca/students/auto-promote')
+      .send({ dry_run: false });
+
+    expect(res.status).toBe(200);
+    expect(res.body.details[0]).toEqual(expect.not.objectContaining({
+      admissionTypeTo: 'regular',
+    }));
+    expect(pool.__conn.execute).toHaveBeenCalledWith(
+      expect.not.stringMatching(/admission_type\s*=\s*\?/),
+      ['고3', 13],
+    );
   });
 
   test('진급 대상 0명 → early return + 트랜잭션 시작 X', async () => {

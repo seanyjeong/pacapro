@@ -14,16 +14,10 @@
 
 const cron = require('node-cron');
 const db = require('../config/database');
-
-// 높은 학년부터 처리 (순서 중요! 낮은 학년부터 하면 중복 진급됨)
-const GRADE_PROMOTION_ORDER = [
-    { from: '고3', to: 'N수' },
-    { from: '고2', to: '고3' },
-    { from: '고1', to: '고2' },
-    { from: '중3', to: '고1' },
-    { from: '중2', to: '중3' },
-    { from: '중1', to: '중2' },
-];
+const {
+    GRADE_PROMOTION_ORDER,
+    getAdmissionTypeAfterGradeChange,
+} = require('../services/studentGradePromotionService');
 
 /**
  * 학년 진급 처리 로직
@@ -49,8 +43,18 @@ async function promoteStudentGrades(isDryRun = false) {
             if (count === 0) continue;
 
             if (!isDryRun) {
+                const finishesAdvanceClass = getAdmissionTypeAfterGradeChange({
+                    fromGrade: from,
+                    toGrade: to,
+                    admissionType: 'advance',
+                }) === 'regular';
+                const admissionTypeUpdate = finishesAdvanceClass
+                    ? "admission_type = CASE WHEN admission_type = 'advance' THEN 'regular' ELSE admission_type END,"
+                    : '';
                 await db.query(
-                    `UPDATE students SET grade = ?, updated_at = NOW() WHERE deleted_at IS NULL AND grade = ?`,
+                    `UPDATE students
+                     SET grade = ?, ${admissionTypeUpdate} updated_at = NOW()
+                     WHERE deleted_at IS NULL AND grade = ?`,
                     [to, from]
                 );
 

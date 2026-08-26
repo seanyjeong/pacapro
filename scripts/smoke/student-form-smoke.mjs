@@ -209,7 +209,12 @@ async function fillRequiredStudentFields(page) {
   await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   await page.locator('#field-name').fill('김신규');
   await page.locator('#field-phone').fill('010-2222-3333');
-  await page.locator('#field-grade').selectOption('고2');
+  await page.locator('#field-grade').selectOption('중3');
+  await page.locator('#field-admission-type').selectOption('advance');
+  await page.locator('#field-student-type').selectOption('adult');
+  await page.locator('#field-student-type').selectOption('exam');
+  if (await page.locator('#field-grade').inputValue() !== '중3') throw new Error('학생 유형 전환 후 학년이 사라졌습니다.');
+  if (await page.locator('#field-admission-type').inputValue() !== 'advance') throw new Error('학생 유형 전환 후 선행반 값이 사라졌습니다.');
 }
 
 async function readRequiredStudentFields(page) {
@@ -254,7 +259,10 @@ async function runCreateSuccess(browser) {
   if (!state.studentPayload) throw new Error('student create payload was not sent');
   if (state.studentPayload.name !== '김신규') throw new Error(`name mismatch: ${state.studentPayload.name}`);
   if (state.studentPayload.phone !== '010-2222-3333') throw new Error(`phone mismatch: ${state.studentPayload.phone}`);
-  if (state.studentPayload.grade !== '고2') throw new Error(`grade mismatch: ${state.studentPayload.grade}`);
+  if (state.studentPayload.grade !== '중3') throw new Error(`grade mismatch: ${state.studentPayload.grade}`);
+  if (state.studentPayload.student_type !== 'exam' || state.studentPayload.admission_type !== 'advance') {
+    throw new Error(`advance admission payload mismatch: ${JSON.stringify(state.studentPayload)}`);
+  }
 
   await assertNoRawVisibleText(page, 'student form create success');
   await assertNoHorizontalOverflow(page, 'student form create success');

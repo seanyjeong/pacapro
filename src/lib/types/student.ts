@@ -3,16 +3,23 @@
  * 학생 관련 타입 정의 - DB 스키마와 일치
  */
 
+import type { AdmissionType } from './student-admission';
+export type { AdmissionType } from './student-admission';
+export {
+  ADMISSION_TYPE_LABELS,
+  ADMISSION_TYPE_OPTIONS,
+  ADULT_ADMISSION_OPTIONS,
+  EXAM_ADMISSION_OPTIONS,
+  isAdvanceAdmissionGrade,
+} from './student-admission';
+
 // ===== 기본 타입 정의 =====
 
 // 학생 유형 (student_type) - 입시생/성인
 export type StudentType = 'exam' | 'adult';
 
 // 학년 (grade) - 입시생용
-export type Grade = '고1' | '고2' | '고3' | 'N수';
-
-// 입시 유형 (admission_type)
-export type AdmissionType = 'regular' | 'early' | 'civil_service' | 'military_academy' | 'police_university';
+export type Grade = '중1' | '중2' | '중3' | '고1' | '고2' | '고3' | 'N수';
 
 // 학생 상태 (status) - DB enum
 export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn' | 'trial' | 'pending';
@@ -51,10 +58,10 @@ export interface Student {
   phone: string | null;
   parent_phone: string | null;
   school: string | null;
-  grade: Grade | null; // 학년 (고1, 고2, 고3, N수) - 입시생용
+  grade: Grade | null; // 학년 (중1~중3, 고1~고3, N수) - 입시생용
   age: number | null; // 나이 - 성인용
   address: string | null;
-  admission_type: AdmissionType; // regular, early, civil_service
+  admission_type: AdmissionType;
   profile_image_url: string | null;
   profile_image_key?: string | null;
   profile_thumb_key?: string | null;
@@ -207,18 +214,13 @@ export const STUDENT_TYPE_LABELS: Record<StudentType, string> = {
 };
 
 export const GRADE_LABELS: Record<Grade, string> = {
+  '중1': '중1',
+  '중2': '중2',
+  '중3': '중3',
   '고1': '고1',
   '고2': '고2',
   '고3': '고3',
   'N수': 'N수',
-};
-
-export const ADMISSION_TYPE_LABELS: Record<AdmissionType, string> = {
-  regular: '정시',
-  early: '수시',
-  civil_service: '공무원',
-  military_academy: '사관학교',
-  police_university: '경찰대',
 };
 
 export const STATUS_LABELS: Record<StudentStatus, string> = {
@@ -270,32 +272,13 @@ export const GENDER_OPTIONS = [
 
 // 학년 옵션 (입시생용)
 export const GRADE_OPTIONS = [
+  { value: '중1' as Grade, label: '중1' },
+  { value: '중2' as Grade, label: '중2' },
+  { value: '중3' as Grade, label: '중3' },
   { value: '고1' as Grade, label: '고1' },
   { value: '고2' as Grade, label: '고2' },
   { value: '고3' as Grade, label: '고3' },
   { value: 'N수' as Grade, label: 'N수' },
-];
-
-// 입시 유형 옵션 (입시생용)
-export const EXAM_ADMISSION_OPTIONS = [
-  { value: 'regular' as AdmissionType, label: '정시' },
-  { value: 'early' as AdmissionType, label: '수시' },
-  { value: 'military_academy' as AdmissionType, label: '사관학교' },
-  { value: 'police_university' as AdmissionType, label: '경찰대' },
-];
-
-// 입시 유형 옵션 (성인용)
-export const ADULT_ADMISSION_OPTIONS = [
-  { value: 'civil_service' as AdmissionType, label: '공무원' },
-];
-
-// 전체 입시 유형 옵션
-export const ADMISSION_TYPE_OPTIONS = [
-  { value: 'regular' as AdmissionType, label: '정시' },
-  { value: 'early' as AdmissionType, label: '수시' },
-  { value: 'military_academy' as AdmissionType, label: '사관학교' },
-  { value: 'police_university' as AdmissionType, label: '경찰대' },
-  { value: 'civil_service' as AdmissionType, label: '공무원' },
 ];
 
 // 상태 옵션

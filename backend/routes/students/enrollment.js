@@ -31,8 +31,7 @@
  *
  * 보안 (ADR-007): decrypt(value) 시그니처 무변경. auth/JWT/암호화/결제 영역 X (학사 데이터만).
  *
- * 분리 결정 (ADR-006): 472→해당 파일 줄. 500줄 임계 부근이라 본 phase 분리 X.
- *   향후 신규 endpoint 로 임계 초과 시 도메인별 sub-모듈 (rest-ended/withdraw/promotion/seasons) 분리 고려.
+ * 분리 결정 (ADR-006): 자동 진급은 enrollment/autoPromote.js로 분리해 500줄 제한을 지킨다.
  *
  * 회귀 테스트: __tests__/routes/students/enrollment.test.js (supertest mini-app + 외부 의존성 모킹)
  */
@@ -41,6 +40,9 @@ const pool = require('../../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
 const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
+const {
+    getAdmissionTypeAfterGradeChange,
+} = require('../../services/studentGradePromotionService');
 
 module.exports = function(router) {
 
@@ -186,21 +188,22 @@ router.post('/grade-upgrade', verifyToken, checkPermission('students', 'edit'), 
             });
         }
 
-        const validGrades = ['고1', '고2', '고3', 'N수', null];
+        const validGrades = ['중1', '중2', '중3', '고1', '고2', '고3', 'N수', null];
         const validStatuses = ['active', 'inactive', 'graduated'];
 
         for (const upgrade of upgrades) {
-            if (!upgrade.student_id) {
+            const studentId = Number(upgrade.student_id);
+            if (!Number.isInteger(studentId) || studentId <= 0) {
                 return res.status(400).json({
                     error: 'Validation Error',
-                    message: '학생 ID가 누락된 항목이 있습니다.'
+                    message: '학생 ID가 누락되었거나 올바르지 않은 항목이 있습니다.'
                 });
             }
 
             if (upgrade.new_grade !== null && upgrade.new_grade !== undefined && !validGrades.includes(upgrade.new_grade)) {
                 return res.status(400).json({
                     error: 'Validation Error',
-                    message: `유효하지 않은 학년입니다: ${upgrade.new_grade}. 허용: 고1, 고2, 고3, N수`
+                    message: `유효하지 않은 학년입니다: ${upgrade.new_grade}. 허용: 중1, 중2, 중3, 고1, 고2, 고3, N수`
                 });
             }
 
@@ -215,10 +218,10 @@ router.post('/grade-upgrade', verifyToken, checkPermission('students', 'edit'), 
         // 학원 소속 검증.
         // 주의: pool.execute (prepared statement) 는 자리표시자 1:1 매핑 → IN 절은 N개 ? 로 명시 전개 필요.
         // (mysql2 의 pool.query 만 IN (?) + 배열 1개 자동 펼침 지원)
-        const studentIds = upgrades.map(u => u.student_id);
+        const studentIds = upgrades.map(u => Number(u.student_id));
         const placeholders = studentIds.map(() => '?').join(',');
         const [existingStudents] = await pool.execute(
-            `SELECT id FROM students
+            `SELECT id, grade, admission_type FROM students
              WHERE id IN (${placeholders})
              AND academy_id = ?
              AND deleted_at IS NULL`,
@@ -244,10 +247,22 @@ router.post('/grade-upgrade', verifyToken, checkPermission('students', 'edit'), 
             for (const upgrade of upgrades) {
                 const updates = [];
                 const params = [];
+                const studentId = Number(upgrade.student_id);
+                const currentStudent = existingStudents.find((student) => Number(student.id) === studentId);
 
                 if (upgrade.new_grade !== undefined) {
                     updates.push('grade = ?');
                     params.push(upgrade.new_grade);
+
+                    const nextAdmissionType = getAdmissionTypeAfterGradeChange({
+                        fromGrade: currentStudent.grade,
+                        toGrade: upgrade.new_grade,
+                        admissionType: currentStudent.admission_type,
+                    });
+                    if (nextAdmissionType !== currentStudent.admission_type) {
+                        updates.push('admission_type = ?');
+                        params.push(nextAdmissionType);
+                    }
                 }
 
                 if (upgrade.new_status) {
@@ -257,7 +272,7 @@ router.post('/grade-upgrade', verifyToken, checkPermission('students', 'edit'), 
 
                 if (updates.length > 0) {
                     updates.push('updated_at = NOW()');
-                    params.push(upgrade.student_id);
+                    params.push(studentId);
 
                     await connection.execute(
                         `UPDATE students SET ${updates.join(', ')} WHERE id = ?`,
@@ -288,143 +303,8 @@ router.post('/grade-upgrade', verifyToken, checkPermission('students', 'edit'), 
     }
 });
 
-/**
- * POST /paca/students/auto-promote — 학년 자동 진급 (3월 신학기). 트랜잭션 + dry_run 지원.
- * 진급 규칙: 중1→중2→중3→고1→고2→고3→N수 (N수 유지).
- * Body (선택): { dry_run, graduate_student_ids } — 고3 중 graduate_student_ids 는 'graduated'.
- * Access: owner only. 응답: { message, dry_run, promoted, graduated, summary, details } (ADR-013 보존).
- */
-router.post('/auto-promote', verifyToken, requireRole('owner'), async (req, res) => {
-    try {
-        const { dry_run = false, graduate_student_ids = [] } = req.body;
-        const academyId = req.user.academyId;
-
-        const GRADE_PROMOTION_MAP = {
-            '중1': '중2',
-            '중2': '중3',
-            '중3': '고1',
-            '고1': '고2',
-            '고2': '고3',
-            '고3': 'N수',
-            'N수': 'N수'
-        };
-
-        const [students] = await pool.execute(`
-            SELECT id, name, grade, status
-            FROM students
-            WHERE academy_id = ?
-              AND deleted_at IS NULL
-              AND status IN ('active', 'paused')
-              AND grade IS NOT NULL
-            ORDER BY grade
-        `, [academyId]);
-
-        if (students.length === 0) {
-            return res.json({
-                message: '진급 대상 학생이 없습니다',
-                promoted: 0,
-                graduated: 0,
-                details: []
-            });
-        }
-
-        const promotionDetails = [];
-        let promotedCount = 0;
-        let graduatedCount = 0;
-
-        const connection = await pool.getConnection();
-        await connection.beginTransaction();
-
-        try {
-            for (const student of students) {
-                const currentGrade = student.grade;
-                const newGrade = GRADE_PROMOTION_MAP[currentGrade];
-
-                const shouldGraduate = currentGrade === '고3' &&
-                    graduate_student_ids.includes(student.id);
-
-                if (shouldGraduate) {
-                    if (!dry_run) {
-                        await connection.execute(
-                            `UPDATE students SET status = 'graduated', updated_at = NOW() WHERE id = ?`,
-                            [student.id]
-                        );
-
-                        // 졸업생 미래 스케줄 삭제
-                        const today = new Date().toISOString().split('T')[0];
-                        await connection.execute(
-                            `DELETE a FROM attendance a
-                             JOIN class_schedules cs ON a.class_schedule_id = cs.id
-                             WHERE a.student_id = ?
-                             AND cs.academy_id = ?
-                             AND cs.class_date >= ?
-                             AND (a.attendance_status IS NULL OR a.attendance_status = 'absent')`,
-                            [student.id, academyId, today]
-                        );
-                    }
-                    promotionDetails.push({
-                        studentId: student.id,
-                        name: student.name,
-                        from: currentGrade,
-                        to: '졸업',
-                        action: 'graduated'
-                    });
-                    graduatedCount++;
-                } else if (newGrade && currentGrade !== newGrade) {
-                    if (!dry_run) {
-                        await connection.execute(
-                            `UPDATE students SET grade = ?, updated_at = NOW() WHERE id = ?`,
-                            [newGrade, student.id]
-                        );
-                    }
-                    promotionDetails.push({
-                        studentId: student.id,
-                        name: student.name,
-                        from: currentGrade,
-                        to: newGrade,
-                        action: 'promoted'
-                    });
-                    promotedCount++;
-                }
-            }
-
-            if (!dry_run) {
-                await connection.commit();
-            } else {
-                await connection.rollback();
-            }
-        } catch (err) {
-            await connection.rollback();
-            throw err;
-        } finally {
-            connection.release();
-        }
-
-        const summary = {};
-        promotionDetails.forEach(d => {
-            const key = `${d.from} → ${d.to}`;
-            summary[key] = (summary[key] || 0) + 1;
-        });
-
-        res.json({
-            message: dry_run
-                ? `진급 미리보기: ${promotedCount}명 진급, ${graduatedCount}명 졸업 예정`
-                : `진급 완료: ${promotedCount}명 진급, ${graduatedCount}명 졸업 처리`,
-            dry_run,
-            promoted: promotedCount,
-            graduated: graduatedCount,
-            summary,
-            details: promotionDetails
-        });
-
-    } catch (error) {
-        logger.error('Auto-promote error:', error);
-        res.status(500).json({
-            error: 'Server Error',
-            message: '학년 자동 진급 처리에 실패했습니다. 잠시 후 다시 시도해주세요.'
-        });
-    }
-});
+// 500줄 제한을 지키고 승급 규칙을 독립 검증하기 위해 별도 라우트로 분리한다.
+require('./enrollment/autoPromote')(router);
 
 /**
  * GET /paca/students/:id/seasons — 학생의 시즌 등록 이력 (student_seasons + seasons join).

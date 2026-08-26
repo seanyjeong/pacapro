@@ -114,28 +114,71 @@ describe('PUT /paca/students/:id (update)', () => {
         const res = await request(makeApp()).put('/paca/students/5').send({ student_type: 'INVALID' });
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Validation Error');
-        expect(res.body.message).toMatch(/student_type/);
+        expect(res.body.message).toBe('학생 유형을 다시 선택해주세요.');
     });
 
     test('잘못된 grade → 400', async () => {
         pool.execute.mockResolvedValueOnce([[existingStudent()]]);
-        const res = await request(makeApp()).put('/paca/students/5').send({ grade: '중3' });
+        const res = await request(makeApp()).put('/paca/students/5').send({ grade: '대1' });
         expect(res.status).toBe(400);
-        expect(res.body.message).toMatch(/grade/);
+        expect(res.body.message).toBe('학년을 다시 선택해주세요.');
     });
 
     test('잘못된 admission_type → 400', async () => {
         pool.execute.mockResolvedValueOnce([[existingStudent()]]);
         const res = await request(makeApp()).put('/paca/students/5').send({ admission_type: 'WRONG' });
         expect(res.status).toBe(400);
-        expect(res.body.message).toMatch(/admission_type/);
+        expect(res.body.message).toBe('입시유형을 다시 선택해주세요.');
+    });
+
+    test('입시유형을 선행반으로 수정한다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[existingStudent({ grade: '중1' })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ grade: '중1', admission_type: 'advance' })]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({
+            admission_type: 'advance',
+        });
+
+        expect(res.status).toBe(200);
+        const updateCall = pool.execute.mock.calls.find(([sql]) => /UPDATE students SET/.test(sql));
+        expect(updateCall).toBeDefined();
+        expect(updateCall[0]).toMatch(/admission_type\s*=\s*\?/);
+        expect(updateCall[1]).toContain('advance');
+    });
+
+    test('선행반 학생을 고3으로 수정하면 정시로 함께 전환한다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[existingStudent({ grade: '고2', admission_type: 'advance' })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ grade: '고3', admission_type: 'regular' })]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ grade: '고3' });
+
+        expect(res.status).toBe(200);
+        const updateCall = pool.execute.mock.calls.find(([sql]) => /UPDATE students SET/.test(sql));
+        expect(updateCall[0]).toMatch(/grade\s*=\s*\?, admission_type\s*=\s*\?/);
+        expect(updateCall[1]).toEqual(expect.arrayContaining(['고3', 'regular']));
+    });
+
+    test('선행반 학생을 입시유형 변경 없이 성인으로 바꾸는 요청은 차단한다', async () => {
+        pool.execute.mockResolvedValueOnce([[
+            existingStudent({ grade: '고2', admission_type: 'advance' }),
+        ]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ student_type: 'adult' });
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('선행반은 중1부터 고2까지의 입시생만 선택할 수 있습니다.');
+        expect(pool.execute).toHaveBeenCalledTimes(1);
     });
 
     test('잘못된 time_slot → 400', async () => {
         pool.execute.mockResolvedValueOnce([[existingStudent()]]);
         const res = await request(makeApp()).put('/paca/students/5').send({ time_slot: 'midnight' });
         expect(res.status).toBe(400);
-        expect(res.body.message).toMatch(/time_slot/);
+        expect(res.body.message).toBe('수업 시간대를 다시 선택해주세요.');
     });
 
     test('미등록 학생을 지난 일정으로 체험 재등록 → 400 한국어 + 상태 변경 없음', async () => {

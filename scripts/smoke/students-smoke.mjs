@@ -74,7 +74,7 @@ const STUDENTS = [
     profile_thumb_key: 'academies/1/students/41/profile-thumb.png',
     profile_image_updated_at: '2026-07-03T10:00:00.000Z',
   }),
-  makeStudent({ id: 42, name: '박서연', gender: 'female', school: '강남고', status: 'active', student_number: '2026042' }),
+  makeStudent({ id: 42, name: '박서연', gender: 'female', school: '강남고', status: 'active', student_number: '2026042', admission_type: 'advance' }),
   makeStudent({ id: 43, name: '이민수', school: '상담대기고', status: 'pending', student_number: '2026043' }),
   makeStudent({ id: 44, name: '최체험', gender: 'female', school: '체험고', status: 'trial', is_trial: true, trial_remaining: 1 }),
   makeStudent({ id: 45, name: '한휴원', school: '휴원고', status: 'paused', rest_start_date: '2026-06-01' }),
@@ -93,6 +93,7 @@ function makeState(mode) {
 
 function filterStudents(url) {
   const status = url.searchParams.get('status');
+  const admissionType = url.searchParams.get('admission_type');
   const isTrial = url.searchParams.get('is_trial');
   const search = url.searchParams.get('search')?.trim();
 
@@ -100,6 +101,7 @@ function filterStudents(url) {
   if (isTrial === 'true') students = students.filter((student) => student.is_trial);
   if (isTrial === 'false') students = students.filter((student) => !student.is_trial);
   if (status) students = students.filter((student) => student.status === status);
+  if (admissionType) students = students.filter((student) => student.admission_type === admissionType);
   if (search) {
     students = students.filter((student) =>
       [student.name, student.phone, student.student_number, student.school].some((value) => value?.includes(search)),
@@ -264,6 +266,15 @@ async function runDesktop(browser) {
   await board.getByRole('button', { name: '재원 학생 보기' }).click();
   await page.locator('table').getByText('김진우').waitFor();
   await page.locator('table').getByText('박서연').waitFor();
+  const advanceBadge = page.locator('tr:has-text("박서연")').getByText('선행반');
+  await advanceBadge.waitFor();
+  if (!(await advanceBadge.getAttribute('class'))?.includes('violet')) throw new Error('선행반 배지 색상이 구분되지 않습니다.');
+  const admissionFilter = page.locator('label:has-text("입시유형")').locator('..').locator('select');
+  await admissionFilter.selectOption('advance');
+  await page.locator('table').getByText('김진우').waitFor({ state: 'hidden' });
+  if (!state.hits.some((hit) => hit.includes('admission_type=advance'))) throw new Error('선행반 필터 API 요청이 없습니다.');
+  await admissionFilter.selectOption('');
+  await page.locator('table').getByText('김진우').waitFor();
   await page.locator('table').getByRole('button', { name: '김진우 상세 보기' }).waitFor();
   await page.waitForFunction(() => Array.from(document.images).some((image) => image.complete && image.naturalWidth > 0));
   if (!state.hits.some((hit) => hit.startsWith('GET /students/41/photo/thumb'))) {

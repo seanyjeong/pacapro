@@ -7,6 +7,9 @@
  * - @/lib/types/instructor
  */
 
+import type { AdmissionType } from './student-admission';
+export type { AdmissionType } from './student-admission';
+
 // ===== Common Types =====
 
 export interface APIResponse<T> {
@@ -19,9 +22,7 @@ export interface APIResponse<T> {
 
 export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn' | 'trial' | 'pending';
 export type StudentType = 'exam' | 'adult';
-export type Grade = '고1' | '고2' | '고3' | 'N수';
-export type AdmissionType = 'regular' | 'early' | 'civil_service';
-
+export type Grade = '중1' | '중2' | '중3' | '고1' | '고2' | '고3' | 'N수';
 // ===== Instructor Types (DB 스키마 기반) =====
 
 export type SalaryType = 'hourly' | 'per_class' | 'monthly' | 'mixed';
