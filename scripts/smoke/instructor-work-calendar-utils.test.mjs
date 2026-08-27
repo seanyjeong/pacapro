@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildInstructorWorkCalendarDays,
   groupInstructorSchedulesByDate,
-} from '../src/features/instructors/instructor-work-calendar-utils.ts';
+} from '../../src/features/instructors/instructor-work-calendar-utils.ts';
 
 test('월 달력은 6주 42일을 일요일부터 생성한다', () => {
   const days = buildInstructorWorkCalendarDays(2026, 5);
