@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import Link from 'next/link';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
+import { getConsultationAdmissionTypeLabel } from '@/lib/consultations/admission-type';
 import { CONSULTATION_TYPE_LABELS, CONSULTATION_STATUS_LABELS, CONSULTATION_STATUS_COLORS } from '@/lib/types/consultation';
 
 interface Props {
@@ -40,8 +41,7 @@ function AcademicScoresSection({ scores }: { scores: Consultation['academicScore
   const hasAdmissionType = scores.admissionType;
   if (!hasMockGrades && !hasSchoolGradeAvg && !hasAdmissionType) return null;
 
-  const admissionTypeLabel = scores.admissionType === 'early' ? '수시' :
-    scores.admissionType === 'regular' ? '정시' : scores.admissionType;
+  const admissionTypeLabel = getConsultationAdmissionTypeLabel(scores.admissionType);
   const gradeDisplay = (value: number | undefined | null) => {
     if (value === null || value === undefined) return '-';
     if (value === -1) return '미응시';

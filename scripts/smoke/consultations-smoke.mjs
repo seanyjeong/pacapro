@@ -24,6 +24,7 @@ function makeConsultation(overrides = {}) {
     preferred_date: '2026-06-24',
     preferred_time: '10:30',
     status: 'pending',
+    academicScores: { admissionType: 'both' },
     admin_notes: '첫 방문 상담',
     inquiry_content: '정시 체대 상담 희망',
     created_at: '2026-06-22T09:00:00.000Z',
@@ -158,6 +159,7 @@ async function runDesktop(browser) {
 
   await page.getByText('010-1111-2222').click();
   await page.getByText('상담 신청 상세').waitFor();
+  await page.getByText('수시+정시', { exact: true }).waitFor();
   await page.getByText('정시 체대 상담 희망').waitFor();
   await page.screenshot({ path: '/Users/etlab/paca-consultations-detail-desktop.png', fullPage: true });
   await page.getByRole('button', { name: '체험 등록' }).click();
@@ -187,6 +189,7 @@ async function runMobile(browser) {
 
   await page.getByText('김진우').first().click();
   await page.getByText('상담 신청 상세').waitFor();
+  await page.getByText('수시+정시', { exact: true }).waitFor();
   await page.getByRole('button', { name: '상담 진행' }).waitFor();
   await page.getByRole('button', { name: '체험 등록' }).waitFor();
   await assertNoRawVisibleText(page, 'consultations detail mobile');

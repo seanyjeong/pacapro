@@ -11,6 +11,7 @@ import {
     Target,
 } from 'lucide-react';
 import type { StudentConsultation } from './student-consultation-types';
+import { getConsultationAdmissionTypeLabel } from '@/lib/consultations/admission-type';
 import {
     CONSULTATION_TYPE_LABELS,
     MOCK_SCORE_SUBJECTS,
@@ -50,7 +51,7 @@ export function StudentConsultationCard({
                         </Badge>
                         {consultation.admission_type && (
                             <Badge variant="outline">
-                                {consultation.admission_type === 'early' ? '수시' : '정시'}
+                                {getConsultationAdmissionTypeLabel(consultation.admission_type)}
                             </Badge>
                         )}
                     </div>

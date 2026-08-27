@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import type { Consultation } from '@/lib/types/consultation';
+import { getConsultationAdmissionTypeLabel } from '@/lib/consultations/admission-type';
 import {
   CONSULTATION_TYPE_LABELS,
   LEARNING_TYPE_LABELS,
@@ -45,11 +46,7 @@ export function ConsultationCalendarDetailDialog({
     scores?.schoolGradeAvg !== undefined &&
     scores?.schoolGradeAvg !== -1;
   const hasAdmissionType = Boolean(scores?.admissionType);
-  const admissionTypeLabel = scores?.admissionType === 'early'
-    ? '수시'
-    : scores?.admissionType === 'regular'
-      ? '정시'
-      : scores?.admissionType;
+  const admissionTypeLabel = getConsultationAdmissionTypeLabel(scores?.admissionType);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

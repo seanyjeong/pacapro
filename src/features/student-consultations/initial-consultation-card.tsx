@@ -12,6 +12,7 @@ import {
     Target,
 } from 'lucide-react';
 import type { InitialConsultation } from './student-consultation-types';
+import { getConsultationAdmissionTypeLabel } from '@/lib/consultations/admission-type';
 import {
     INITIAL_GRADE_SUBJECTS,
     INITIAL_STATUS_LABELS,
@@ -128,7 +129,7 @@ function InitialAcademicSection({ academicScores }: { academicScores: Record<str
             <div className="pl-6 space-y-2">
                 <div className="flex flex-wrap gap-2">
                     {typeof academicScores.admissionType === 'string' && (
-                        <Badge variant="outline">{getAdmissionTypeLabel(academicScores.admissionType)}</Badge>
+                        <Badge variant="outline">{getConsultationAdmissionTypeLabel(academicScores.admissionType)}</Badge>
                     )}
                     {academicScores.schoolGradeAvg !== null && academicScores.schoolGradeAvg !== undefined && (
                         <p className="text-sm">
@@ -208,12 +209,6 @@ function ApplicantSection({ consultation }: { consultation: InitialConsultation 
             </div>
         </section>
     );
-}
-
-function getAdmissionTypeLabel(admissionType: string): string {
-    if (admissionType === 'early') return '수시';
-    if (admissionType === 'regular') return '정시';
-    return admissionType;
 }
 
 function formatGradeValue(value: unknown): string {

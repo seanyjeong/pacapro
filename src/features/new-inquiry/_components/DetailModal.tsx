@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import Link from 'next/link';
 import type { Consultation } from '@/lib/types/consultation';
+import { getConsultationAdmissionTypeLabel } from '@/lib/consultations/admission-type';
 import {
   CONSULTATION_STATUS_LABELS,
   CONSULTATION_STATUS_COLORS
@@ -152,7 +153,7 @@ export function DetailModal({ open, onOpenChange, consultation, onEditStudent }:
                         {scores?.admissionType && (
                           <div>
                             <Label className="text-xs text-muted-foreground">입시 유형</Label>
-                            <p className="font-medium">{scores.admissionType === 'early' ? '수시' : '정시'}</p>
+                            <p className="font-medium">{getConsultationAdmissionTypeLabel(scores.admissionType)}</p>
                           </div>
                         )}
                       </>

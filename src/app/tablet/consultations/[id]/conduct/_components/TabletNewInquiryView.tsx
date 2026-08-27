@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Consultation, ChecklistItem } from '@/lib/types/consultation';
+import { getConsultationAdmissionTypeLabel } from '@/lib/consultations/admission-type';
 
 interface TabletNewInquiryViewProps {
   consultation: Consultation;
@@ -123,8 +124,7 @@ export function TabletNewInquiryView({
 
           if (!hasMockGrades && !hasSchoolGradeAvg && !hasAdmissionType) return null;
 
-          const admissionTypeLabel = scores.admissionType === 'early' ? '수시' :
-            scores.admissionType === 'regular' ? '정시' : scores.admissionType;
+          const admissionTypeLabel = getConsultationAdmissionTypeLabel(scores.admissionType);
 
           return (
             <Card className="rounded-md shadow-none">

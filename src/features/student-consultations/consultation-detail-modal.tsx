@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { StudentConsultation } from './student-consultation-types';
+import { getConsultationAdmissionTypeLabel } from '@/lib/consultations/admission-type';
 import { consultationDetailPdfStyles as pdfStyles } from './consultation-detail-pdf-styles';
 import { CONSULTATION_TYPE_LABELS, isRecord, parseJsonRecord } from './student-consultation-utils';
 
@@ -213,7 +214,7 @@ function ConsultationInfoBox({
         </div>
         <div style={pdfStyles.infoRow}>
           <span style={pdfStyles.infoLabel}>입시전형</span>
-          <span style={pdfStyles.infoValueSmall}>{getAdmissionTypeLabel(consultation.admission_type)}</span>
+          <span style={pdfStyles.infoValueSmall}>{getConsultationAdmissionTypeLabel(consultation.admission_type)}</span>
         </div>
       </div>
     </div>
@@ -426,13 +427,6 @@ function ConsultationFooter({
       </p>
     </div>
   );
-}
-
-function getAdmissionTypeLabel(admissionType: string) {
-  if (admissionType === 'early') return '수시';
-  if (admissionType === 'regular') return '정시';
-  if (admissionType === 'both') return '수시/정시';
-  return '-';
 }
 
 function getMonthScores(mockTestScores: Record<string, unknown>, month: string) {

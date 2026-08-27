@@ -35,6 +35,7 @@ function mockConsultation(mode) {
     preferred_date: mode === 'trial-error' ? '2026-07-08' : TEST_DATE,
     preferred_time: '09:30',
     status: mode === 'trial-error' ? 'completed' : 'pending',
+    academicScores: { admissionType: 'both' },
     matched_student_status: mode === 'trial-error' ? 'no_trial' : undefined,
     created_at: '2026-06-22T09:00:00.000Z',
     updated_at: '2026-06-22T09:00:00.000Z',
@@ -200,6 +201,11 @@ async function runCreateHappyPath(browser) {
   const { context, page, state } = result;
 
   await openNewInquiryPage(page);
+  await page.getByText('2026년 6월', { exact: true }).click();
+  await page.getByText('김진우', { exact: true }).click();
+  await page.getByRole('heading', { name: '상담 상세정보' }).waitFor();
+  await page.getByText('수시+정시', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '닫기' }).click();
   const workQueue = page.getByTestId('new-inquiry-work-queue');
   const pendingFilter = workQueue.getByRole('button', { name: '확인 대기 보기' });
   await pendingFilter.click();
@@ -274,6 +280,7 @@ async function runTrialRegisterError(browser) {
   const { context, page, state } = result;
 
   await openNewInquiryPage(page);
+  await page.getByText('2026년 7월', { exact: true }).click();
   await page.getByText('김진우').first().waitFor();
   await page.getByText('김진우').first().locator('xpath=ancestor::div[contains(@class, "cursor-pointer")]').locator('button').last().click();
   await page.getByText('체험등록', { exact: true }).click();

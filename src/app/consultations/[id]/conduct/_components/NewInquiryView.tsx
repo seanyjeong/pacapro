@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import type { Consultation, ChecklistItem } from '@/lib/types/consultation';
+import { getConsultationAdmissionTypeLabel } from '@/lib/consultations/admission-type';
 
 interface NewInquiryViewProps {
   consultation: Consultation;
@@ -109,8 +110,7 @@ export function NewInquiryView({
 
           if (!hasMockGrades && !hasSchoolGradeAvg && !hasAdmissionType) return null;
 
-          const admissionTypeLabel = scores.admissionType === 'early' ? '수시' :
-            scores.admissionType === 'regular' ? '정시' : scores.admissionType;
+          const admissionTypeLabel = getConsultationAdmissionTypeLabel(scores.admissionType);
 
           return (
             <Card className="rounded-md shadow-none">
