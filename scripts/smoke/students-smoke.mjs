@@ -3,6 +3,7 @@ import {
   assertNoRawVisibleText,
   createAuthedContext,
   createDiagnostics,
+  DEFAULT_APP_VERSION,
   jsonRoute,
   launchSmokeBrowser,
   nonServiceWorkerErrors,
@@ -212,6 +213,7 @@ async function runDesktop(browser) {
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
   await waitForStudentsShell(page);
+  await page.getByText(`P-ACA v${DEFAULT_APP_VERSION}`, { exact: true }).waitFor();
   await page.getByRole('button', { name: /재원생/ }).click();
   const board = page.getByTestId('students-work-queue');
   await board.getByText('학생 운영 보드').waitFor();
