@@ -19,6 +19,7 @@ import { InstructorCard } from '@/components/instructors/instructor-card';
 import { InstructorAttendanceComponent } from '@/components/instructors/instructor-attendance';
 import { InstructorSalaries } from '@/components/instructors/instructor-salaries';
 import { InstructorPageHeader } from '@/features/instructors/instructor-page-header';
+import { InstructorWorkCalendar } from '@/features/instructors/instructor-work-calendar';
 import { InstructorErrorPanel, InstructorLoadingPanel } from '@/features/instructors/instructor-page-states';
 import { useInstructor } from '@/hooks/use-instructors';
 import { instructorsAPI } from '@/lib/api/instructors';
@@ -102,7 +103,7 @@ export default function InstructorDetailPage() {
           </Button>
           </>
         }
-        description={`${instructor.name} 강사의 기본 정보, 출퇴근 기록, 급여 기록을 확인합니다.`}
+        description={`${instructor.name} 강사의 기본 정보, 출근 예정, 출퇴근 기록, 급여 기록을 확인합니다.`}
         eyebrow="Instructor Profile"
         onBack={() => router.push('/instructors')}
         title="강사 상세"
@@ -128,6 +129,8 @@ export default function InstructorDetailPage() {
       </section>
 
       <InstructorCard instructor={instructor} />
+
+      <InstructorWorkCalendar instructorId={instructorId} />
 
       <InstructorAttendanceComponent attendances={attendances} loading={false} />
 

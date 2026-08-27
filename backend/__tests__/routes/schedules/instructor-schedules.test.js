@@ -181,3 +181,57 @@ describe('GET /paca/schedules/instructor-schedules/month', () => {
         expect(res.body.message).toBe('월별 강사 일정을 불러오지 못했습니다.');
     });
 });
+
+describe('GET /paca/schedules/instructor-schedules/instructors/:id/month', () => {
+    test('정상 → 강사별 월간 출근 예정 일정', async () => {
+        pool.query.mockReset();
+        pool.query.mockResolvedValueOnce([[{ id: 31 }]]);
+        pool.query.mockResolvedValueOnce([[
+            {
+                id: 701,
+                work_date: '2026-06-03',
+                time_slot: 'morning',
+                scheduled_start_time: '09:00:00',
+                scheduled_end_time: '12:00:00',
+            },
+        ]]);
+
+        const res = await request(makeApp())
+            .get('/paca/schedules/instructor-schedules/instructors/31/month?year=2026&month=6');
+
+        expect(res.status).toBe(200);
+        expect(res.body.year_month).toBe('2026-06');
+        expect(res.body.schedules).toHaveLength(1);
+        expect(res.body.schedules[0].work_date).toBe('2026-06-03');
+    });
+
+    test('잘못된 월 → 400 한국어', async () => {
+        const res = await request(makeApp())
+            .get('/paca/schedules/instructor-schedules/instructors/31/month?year=2026&month=13');
+
+        expect(res.status).toBe(400);
+        expect(res.body.message).toBe('조회할 연도와 월을 확인해주세요.');
+    });
+
+    test('다른 학원 강사 → 404 한국어', async () => {
+        pool.query.mockReset();
+        pool.query.mockResolvedValueOnce([[]]);
+
+        const res = await request(makeApp())
+            .get('/paca/schedules/instructor-schedules/instructors/999/month?year=2026&month=6');
+
+        expect(res.status).toBe(404);
+        expect(res.body.message).toBe('강사를 찾을 수 없습니다.');
+    });
+
+    test('조회 실패 → 500 한국어', async () => {
+        pool.query.mockReset();
+        pool.query.mockRejectedValueOnce(new Error('boom'));
+
+        const res = await request(makeApp())
+            .get('/paca/schedules/instructor-schedules/instructors/31/month?year=2026&month=6');
+
+        expect(res.status).toBe(500);
+        expect(res.body.message).toBe('월별 출근 예정 일정을 불러오지 못했습니다.');
+    });
+});

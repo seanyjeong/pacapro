@@ -4,10 +4,11 @@
  * 마운트: paca.js → routes/schedules/index.js → require('./instructor-schedules')(router)
  *         mount path: '/paca/schedules'
  *
- * Endpoint (3건):
+ * Endpoint (4건):
  *   - GET  /date/:date/instructor-schedules — 특정 날짜 강사 근무 일정 + 전체 강사 + 슬롯별 그룹화
  *   - POST /date/:date/instructor-schedules — 특정 날짜 강사 근무 일정 저장 (전체 교체 트랜잭션)
  *   - GET  /instructor-schedules/month      — 월별 강사 일정 통계 (캘린더용, 배정/출근 인원)
+ *   - GET  /instructor-schedules/instructors/:id/month — 강사별 월간 출근 예정 일정
  *
  * 인증:
  *   - GET /date/:date/instructor-schedules  = verifyToken + checkPermission('schedules', 'view')
@@ -36,8 +37,41 @@
 
 const { db, decrypt, logger } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { getInstructorMonthlySchedule } = require('../../services/instructorMonthlyScheduleService');
 
 module.exports = function(router) {
+
+router.get(
+    '/instructor-schedules/instructors/:instructorId/month',
+    verifyToken,
+    checkPermission('schedules', 'view'),
+    async (req, res) => {
+        try {
+            const result = await getInstructorMonthlySchedule({
+                academyId: req.user.academyId,
+                instructorId: req.params.instructorId,
+                year: req.query.year,
+                month: req.query.month,
+            });
+            return res.json({
+                message: '월별 출근 예정 일정을 불러왔습니다.',
+                ...result,
+            });
+        } catch (error) {
+            if (error.code === 'INVALID_PERIOD') {
+                return res.status(400).json({ error: 'Validation Error', message: error.message });
+            }
+            if (error.code === 'INSTRUCTOR_NOT_FOUND') {
+                return res.status(404).json({ error: 'Not Found', message: error.message });
+            }
+            logger.error('Error fetching instructor monthly schedules:', error);
+            return res.status(500).json({
+                error: 'Server Error',
+                message: '월별 출근 예정 일정을 불러오지 못했습니다.',
+            });
+        }
+    }
+);
 
 /**
  * GET /paca/schedules/date/:date/instructor-schedules

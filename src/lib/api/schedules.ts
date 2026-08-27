@@ -173,6 +173,18 @@ export const schedulesApi = {
   ): Promise<MonthlyInstructorStatsResponse> => {
     return apiClient.get(`${BASE_PATH}/instructor-schedules/month?year=${year}&month=${month + 1}`, config);
   },
+
+  getMonthlyInstructorWorkSchedule: async (
+    instructorId: number,
+    year: number,
+    month: number,
+    config?: APIRequestConfig
+  ): Promise<MonthlyInstructorWorkScheduleResponse> => {
+    return apiClient.get(
+      `${BASE_PATH}/instructor-schedules/instructors/${instructorId}/month?year=${year}&month=${month}`,
+      config
+    );
+  },
 };
 
 // 강사 출근 기록 타입
@@ -212,4 +224,19 @@ export interface MonthlyInstructorStatsResponse {
   message: string;
   year_month: string;
   schedules: Record<string, DailyInstructorStats>;  // { '2025-01-15': { morning: {...}, ... } }
+}
+
+export interface InstructorWorkSchedule {
+  id: number;
+  work_date: string;
+  time_slot: 'morning' | 'afternoon' | 'evening';
+  scheduled_start_time?: string | null;
+  scheduled_end_time?: string | null;
+}
+
+export interface MonthlyInstructorWorkScheduleResponse {
+  message: string;
+  instructor_id: number;
+  year_month: string;
+  schedules: InstructorWorkSchedule[];
 }

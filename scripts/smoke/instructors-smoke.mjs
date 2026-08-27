@@ -8,6 +8,7 @@ import {
   nonServiceWorkerErrors,
   normalizePacaApiPath,
 } from './paca-smoke-utils.mjs';
+import { makeMonthlyWorkSchedules } from './instructor-work-calendar-fixture.mjs';
 
 function makeInstructor(overrides = {}) {
   return {
@@ -141,6 +142,13 @@ async function installRoutes(context, state) {
         attendances: [makeAttendance()],
         salaries: [makeSalary()],
       });
+    }
+
+    if (method === 'GET' && path === '/schedules/instructor-schedules/instructors/31/month') {
+      if (state.mode === 'work-calendar-error') {
+        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
+      }
+      return jsonRoute(route, makeMonthlyWorkSchedules(url));
     }
 
     if (method === 'POST' && path === '/instructors') {
@@ -302,6 +310,21 @@ async function runDetailDesktop(browser) {
   await page.goto('/instructors/31', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '강사 상세' }).waitFor();
   await page.getByText('최강사').first().waitFor();
+  const workCalendar = page.getByTestId('instructor-work-calendar');
+  await workCalendar.getByRole('heading', { name: '월별 출근 예정' }).waitFor();
+  await workCalendar.getByText('예정일 2일').waitFor();
+  await workCalendar.getByRole('gridcell', { name: /3일 출근 예정 2건/ }).waitFor();
+  await workCalendar.getByText('오전 09:00~12:00').waitFor();
+  await workCalendar.getByText('오후 13:00~17:00').waitFor();
+  const previousMonth = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
+  const previousMonthLabel = `${previousMonth.getFullYear()}년 ${previousMonth.getMonth() + 1}월`;
+  await workCalendar.getByRole('button', { name: '이전 달' }).click();
+  await workCalendar.getByRole('button', { name: previousMonthLabel }).waitFor();
+  await workCalendar.getByRole('button', { name: previousMonthLabel }).click();
+  await workCalendar.getByRole('button', { name: `${new Date().getFullYear()}년 ${new Date().getMonth() + 1}월` }).waitFor();
+  await workCalendar.screenshot({ path: '/Users/etlab/paca-instructor-work-calendar-desktop.png' });
+  await workCalendar.getByRole('button', { name: '월별 출근 예정 접기' }).click();
+  await workCalendar.getByRole('button', { name: '월별 출근 예정 펼치기' }).waitFor();
   await page.getByRole('heading', { name: '출퇴근 기록' }).waitFor();
   await page.getByRole('heading', { name: '급여 기록' }).waitFor();
   await assertNoRawVisibleText(page, 'instructors detail desktop');
@@ -327,6 +350,37 @@ async function runDetailError(browser) {
   await assertNoRawVisibleText(page, 'instructors detail error');
   await assertNoHorizontalOverflow(page, 'instructors detail error');
   await page.screenshot({ path: '/Users/etlab/paca-instructor-detail-error-mobile.png', fullPage: true });
+
+  await context.close();
+  return result;
+}
+
+async function runDetailMobile(browser) {
+  const result = await createInstructorPage(browser, 'success', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/instructors/31', { waitUntil: 'domcontentloaded' });
+  const workCalendar = page.getByTestId('instructor-work-calendar');
+  await workCalendar.getByRole('heading', { name: '월별 출근 예정' }).waitFor();
+  await workCalendar.getByRole('gridcell', { name: /3일 출근 예정 2건/ }).waitFor();
+  await workCalendar.getByText('오전', { exact: true }).waitFor();
+  await assertNoRawVisibleText(page, 'instructor work calendar mobile');
+  await assertNoHorizontalOverflow(page, 'instructor work calendar mobile');
+  await workCalendar.screenshot({ path: '/Users/etlab/paca-instructor-work-calendar-mobile.png' });
+
+  await context.close();
+  return result;
+}
+
+async function runWorkCalendarError(browser) {
+  const result = await createInstructorPage(browser, 'work-calendar-error', { width: 390, height: 844 });
+  const { context, page } = result;
+
+  await page.goto('/instructors/31', { waitUntil: 'domcontentloaded' });
+  const workCalendar = page.getByTestId('instructor-work-calendar');
+  await workCalendar.getByText('출근 예정 일정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  await workCalendar.getByRole('button', { name: '다시 불러오기' }).waitFor();
+  await assertNoRawVisibleText(page, 'instructor work calendar error');
 
   await context.close();
   return result;
@@ -408,11 +462,13 @@ async function main() {
     const listMobile = await runListMobile(browser);
     const listError = await runListError(browser);
     const detailDesktop = await runDetailDesktop(browser);
+    const detailMobile = await runDetailMobile(browser);
     const detailError = await runDetailError(browser);
+    const workCalendarError = await runWorkCalendarError(browser);
     const createError = await runCreateError(browser);
     const editLoadError = await runEditLoadError(browser);
     const editError = await runEditError(browser);
-    [listDesktop, listMobile, listError, detailDesktop, detailError, createError, editLoadError, editError].forEach(assertDiagnostics);
+    [listDesktop, listMobile, listError, detailDesktop, detailMobile, detailError, workCalendarError, createError, editLoadError, editError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       createPayload: createError.state.createPayload,
       detailHits: detailDesktop.state.hits,

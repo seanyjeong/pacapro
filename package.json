@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test:mobile-unpaid-month": "node --test test/mobile-unpaid-month.test.mjs",
+    "test:instructor-work-calendar": "node --test test/instructor-work-calendar.test.mjs",
     "smoke:dashboard": "node scripts/smoke/dashboard-smoke.mjs",
     "smoke:auth-errors": "node scripts/smoke/auth-errors-smoke.mjs",
     "smoke:salaries": "node scripts/smoke/salaries-smoke.mjs",
