@@ -30,6 +30,7 @@
  */
 
 const { pool, verifyToken, encrypt, decrypt, logger } = require('./_utils');
+const { STUDENT_GRADE_REQUIRED } = require('../../constants/learningConsultation');
 
 module.exports = function (router) {
     router.post('/learning', verifyToken, async (req, res) => {
@@ -61,6 +62,10 @@ module.exports = function (router) {
             }
 
             const student = students[0];
+            // 학생정보는 학년 생략이 가능하지만 상담 저장에는 학년이 필요하다.
+            if (typeof student.grade !== 'string' || !student.grade.trim()) {
+                return res.status(400).json(STUDENT_GRADE_REQUIRED);
+            }
             const studentName = decrypt(student.name) || student.name;
             const studentGrade = student.grade;  // 학생의 실제 학년 정보
 

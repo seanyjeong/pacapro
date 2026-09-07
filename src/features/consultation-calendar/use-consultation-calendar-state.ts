@@ -3,6 +3,7 @@ import { addMonths, format, isSameDay, parseISO, subMonths } from 'date-fns';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
+import { getLearningConsultationErrorText } from '@/lib/api/learning-consultation-error';
 import { getConsultations } from '@/lib/api/consultations';
 import type { Consultation, LearningType } from '@/lib/types/consultation';
 import { createDefaultLearningForm } from './consultation-calendar-constants';
@@ -153,8 +154,8 @@ export function useConsultationCalendarState() {
       toast.success('재원생 상담이 등록되었습니다.');
       setLearningModalOpen(false);
       loadData();
-    } catch {
-      toast.error('재원생 상담 등록에 실패했습니다. 입력값을 확인한 뒤 다시 시도해주세요.');
+    } catch (error: unknown) {
+      toast.error(getLearningConsultationErrorText(error));
     } finally {
       setSubmitting(false);
     }

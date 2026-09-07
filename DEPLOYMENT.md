@@ -26,6 +26,10 @@ of the following are true:
 - the diff changes PACA application code, tests, smoke scripts, or this runbook only;
 - no environment, dependency, auth middleware, scheduler, migration, database,
   Caddy, domain/API base, Vercel, Next.js, or GitHub workflow file changes;
+- frontend patch releases update `package.json`, `package-lock.json`, and
+  `src/constants/release.json` together. Only the app version and release date
+  may change; the preflight compares complete JSON content against the base and
+  rejects dependency, script, lock resolution, or unrelated metadata changes;
 - backend tests, lint, type checks, production build, and the relevant browser
   smoke pass;
 - a Git rollback tag and a checksum-verified backup of every changed Vultr
@@ -36,6 +40,7 @@ Run the executable scope gate and its tests before committing:
 
 ```bash
 node --test scripts/release/hotfix-scope.test.mjs
+node --test scripts/release/hotfix-release-metadata.test.mjs
 node scripts/release/hotfix-preflight.mjs
 cd backend && npm run test:ci
 cd .. && npm run lint && npm run build

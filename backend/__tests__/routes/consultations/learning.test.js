@@ -84,6 +84,30 @@ describe('POST /paca/consultations/learning', () => {
         expect(res.body.error).toBe('학생을 찾을 수 없습니다.');
     });
 
+    test.each([null, undefined, '', '   '])('학년 누락(%p) → 해결 안내, 저장과 알림 없음', async (grade) => {
+        pool.execute.mockResolvedValueOnce([[{ id: 5, name: 'enc:홍길동', grade }]]);
+
+        const res = await request(makeApp())
+            .post('/paca/consultations/learning')
+            .send({
+                studentId: 5, preferredDate: '2026-09-08', preferredTime: '14:00',
+                learningType: 'regular', adminNotes: '상담 메모',
+                mockExamScores: { '9월': { 국어: '2' } },
+            });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toEqual({
+            code: 'STUDENT_GRADE_REQUIRED',
+            error: '학생의 학년 정보가 없어 상담을 등록할 수 없습니다. 학생정보에서 학년을 입력한 뒤 다시 시도해 주세요.',
+        });
+        expect(pool.execute).toHaveBeenCalledTimes(1);
+        expect(pool.execute).toHaveBeenCalledWith(
+            expect.stringContaining('WHERE id = ? AND academy_id = ?'), [5, 1],
+        );
+        expect(encrypt).not.toHaveBeenCalled();
+        expect(pushService.sendPushToAcademyAdmins).not.toHaveBeenCalled();
+    });
+
     test('정상 → 201 + { message, consultationId, studentConsultationId } + pushService 호출', async () => {
         pool.execute
             .mockResolvedValueOnce([[{ id: 5, name: 'enc:홍길동', phone: 'enc:010', grade: 'middle3' }]]) // SELECT students

@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict';
+import learningErrors from '../../backend/constants/learningConsultation.js';
 import {
   assertNoHorizontalOverflow,
   assertNoRawVisibleText,
@@ -100,6 +102,11 @@ async function installRoutes(context, state) {
       });
     }
 
+    if (method === 'POST' && path === '/consultations/learning') {
+      assert.equal(request.headers().authorization, 'Bearer smoke-token');
+      return jsonRoute(route, learningErrors.STUDENT_GRADE_REQUIRED, 400);
+    }
+
     return jsonRoute(route, { message: 'mocked' });
   });
 }
@@ -171,6 +178,33 @@ async function runLoadError(browser) {
   return result;
 }
 
+async function runMissingGrade(browser) {
+  const result = await createCalendarPage(browser);
+  const { context, page } = result;
+  await page.goto('/consultations/calendar?date=2026-06-25', { waitUntil: 'domcontentloaded' });
+  await waitForCalendarShell(page);
+  await page.getByRole('button', { name: '재원생 상담 등록' }).first().click();
+  await page.getByRole('heading', { name: '재원생 상담 등록' }).waitFor();
+  await page.getByText('학생을 선택하세요', { exact: true }).click();
+  await page.getByText('김진우 (고2)', { exact: true }).click();
+  await page.getByPlaceholder('상담 메모를 입력하세요').fill('달력 상담 메모 유지');
+  await page.getByRole('button', { name: '등록', exact: true }).click();
+  await page.getByText(learningErrors.STUDENT_GRADE_REQUIRED.error, { exact: true }).waitFor();
+  assert.equal(await page.getByPlaceholder('상담 메모를 입력하세요').inputValue(), '달력 상담 메모 유지');
+  assert.equal(await page.getByRole('button', { name: '등록', exact: true }).isEnabled(), true);
+  await assertNoRawVisibleText(page, 'calendar missing grade');
+  await page.waitForFunction((text) => {
+    const toast = [...document.querySelectorAll('[data-sonner-toast]')].find((node) => node.textContent.includes(text));
+    if (!toast) return false;
+    const rect = toast.getBoundingClientRect();
+    return Number(getComputedStyle(toast).opacity) > 0.99 && rect.top >= 0 && rect.bottom <= innerHeight &&
+      toast.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+  }, learningErrors.STUDENT_GRADE_REQUIRED.error);
+  await page.screenshot({ path: '/Users/etlab/paca-calendar-missing-grade.png', fullPage: true });
+  await context.close();
+  return result;
+}
+
 async function waitForCalendarShell(page) {
   await page.getByTestId('consultation-calendar-operations-workspace').waitFor();
   await page.getByTestId('consultation-calendar-month-card').waitFor();
@@ -201,7 +235,8 @@ async function main() {
     const desktop = await runDesktop(browser);
     const mobile = await runMobile(browser);
     const loadError = await runLoadError(browser);
-    [desktop, mobile, loadError].forEach(assertDiagnostics);
+    const missingGrade = await runMissingGrade(browser);
+    [desktop, mobile, loadError, missingGrade].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       errorHits: loadError.state.hits,

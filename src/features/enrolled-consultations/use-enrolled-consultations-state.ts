@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import apiClient from '@/lib/api/client';
+import { getLearningConsultationErrorText } from '@/lib/api/learning-consultation-error';
 import {
   deleteConsultation,
   getBookedTimes,
@@ -301,7 +302,7 @@ export function useEnrolledConsultationsState() {
       loadData();
     } catch (error) {
       console.error('상담 등록 오류:', error);
-      toast.error('재원생 상담 등록에 실패했습니다.');
+      toast.error(getLearningConsultationErrorText(error));
     } finally {
       setCreating(false);
     }

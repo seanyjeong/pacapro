@@ -13,6 +13,7 @@ import {
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 import type { LearningType, WeeklyHour } from '@/lib/types/consultation';
 import apiClient from '@/lib/api/client';
+import { getLearningConsultationErrorText } from '@/lib/api/learning-consultation-error';
 import type { EditForm, DirectForm, LearningForm, TrialDate } from '../_types';
 import { getConsultationErrorText, SILENT_CONFIG } from './consultation-error-utils';
 
@@ -400,7 +401,7 @@ export function useConsultations() {
       setLearningForm(DEFAULT_LEARNING_FORM);
       loadData();
     } catch (error: unknown) {
-      toast.error(getConsultationErrorText(error, '상담 등록에 실패했습니다. 입력값을 확인한 뒤 다시 시도해주세요.'));
+      toast.error(getLearningConsultationErrorText(error));
     } finally {
       setSubmittingLearning(false);
     }

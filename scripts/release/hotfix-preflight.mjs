@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 import { evaluateHotfixScope } from './hotfix-scope.mjs';
+import { RELEASE_METADATA_FILES } from './hotfix-release-metadata.mjs';
 
 const IGNORED_PREFIXES = ['.next/', 'graphify-out/'];
 
@@ -40,7 +41,13 @@ try {
   const base = parseBase(process.argv.slice(2));
   const files = changedFiles(base);
   const counts = Object.fromEntries(files.map((file) => [file, countLines(file)]));
-  const result = evaluateHotfixScope(files, counts);
+  const metadataContents = files.some((file) => RELEASE_METADATA_FILES.includes(file))
+    ? Object.fromEntries(RELEASE_METADATA_FILES.map((file) => [file, {
+      before: execFileSync('git', ['show', `${base}:${file}`], { encoding: 'utf8' }),
+      after: readFileSync(file, 'utf8'),
+    }]))
+    : {};
+  const result = evaluateHotfixScope(files, counts, metadataContents);
   console.log(JSON.stringify({ base, ...result }, null, 2));
   process.exitCode = result.ready ? 0 : 1;
 } catch (error) {

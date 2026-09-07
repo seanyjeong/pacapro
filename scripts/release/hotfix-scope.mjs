@@ -1,3 +1,5 @@
+import { RELEASE_METADATA_FILES, validateReleaseMetadata } from './hotfix-release-metadata.mjs';
+
 const MAX_CHANGED_FILE_LINES = 500;
 
 const ALLOWED_EXACT_PATHS = new Set([
@@ -108,18 +110,21 @@ function buildCheck(name, passed) {
   };
 }
 
-export function evaluateHotfixScope(files, lineCounts = {}) {
+export function evaluateHotfixScope(files, lineCounts = {}, metadataContents = {}) {
   const changedFiles = uniquePaths(files);
-  const sensitiveFiles = changedFiles.filter(isSensitivePath);
-  const disallowedFiles = changedFiles.filter((file) => !isAllowedPath(file));
+  const changesRelease = changedFiles.some((file) => RELEASE_METADATA_FILES.includes(file));
+  const releaseMetadataValid = !changesRelease || validateReleaseMetadata(metadataContents);
+  const isVerifiedMetadata = (file) => changesRelease && releaseMetadataValid && RELEASE_METADATA_FILES.includes(file);
+  const sensitiveFiles = changedFiles.filter((file) => isSensitivePath(file) && !isVerifiedMetadata(file));
+  const disallowedFiles = changedFiles.filter((file) => !isAllowedPath(file) && !isVerifiedMetadata(file));
   const oversizedFiles = changedFiles.filter(
-    (file) => Number(lineCounts[file] ?? 0) > MAX_CHANGED_FILE_LINES,
+    (file) => !isVerifiedMetadata(file) && Number(lineCounts[file] ?? 0) > MAX_CHANGED_FILE_LINES,
   );
   const hasRuntimeChange = changedFiles.some(isRuntimePath);
   const checks = [
     buildCheck('changed_files', changedFiles.length > 0),
     buildCheck('runtime_change', hasRuntimeChange),
-    buildCheck('sensitive_paths', sensitiveFiles.length === 0),
+    buildCheck('sensitive_paths', sensitiveFiles.length === 0 && releaseMetadataValid),
     buildCheck('allowed_paths', disallowedFiles.length === 0),
     buildCheck('file_size_limit', oversizedFiles.length === 0),
   ];
@@ -138,5 +143,6 @@ export function evaluateHotfixScope(files, lineCounts = {}) {
     sensitiveFiles,
     disallowedFiles,
     oversizedFiles,
+    releaseMetadataValid,
   };
 }

@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict';
+import learningErrors from '../../backend/constants/learningConsultation.js';
 import {
   assertNoHorizontalOverflow,
   assertNoRawVisibleText,
@@ -10,6 +12,8 @@ import {
 } from './paca-smoke-utils.mjs';
 
 const TEST_DATE = '2026-06-24';
+const MISSING_GRADE_MESSAGE = '학생의 학년 정보가 없어 상담을 등록할 수 없습니다. 학생정보에서 학년을 입력한 뒤 다시 시도해 주세요.';
+const RETRY_MESSAGE = '재원생 상담을 등록하지 못했습니다. 잠시 후 다시 시도해 주세요.';
 
 function makeConsultation(overrides = {}) {
   return {
@@ -127,6 +131,13 @@ async function installRoutes(context, state) {
 
     if (method === 'POST' && path === '/consultations/learning') {
       state.createPayload = JSON.parse(request.postData() || '{}');
+      assert.equal(request.headers().authorization, 'Bearer smoke-token');
+      if (state.mode === 'missing-grade') {
+        return jsonRoute(route, learningErrors.STUDENT_GRADE_REQUIRED, 400);
+      }
+      if (state.mode === 'create-error') {
+        return jsonRoute(route, { error: "Column 'student_grade' cannot be null; SQLSTATE 23000; stack trace" }, 500);
+      }
       return jsonRoute(route, { message: 'created', id: 300 });
     }
 
@@ -268,6 +279,41 @@ async function runMissingHours(browser) {
   return result;
 }
 
+async function runCreateError(browser, mode, viewport) {
+  const result = await createEnrolledPage(browser, mode, viewport);
+  const { context, page, state } = result;
+  await openCreateDialog(page);
+  await page.getByLabel('학생 선택').fill('김진우');
+  await page.getByRole('button', { name: '김진우 (고2)', exact: true }).click();
+  await page.getByLabel('상담일').fill(TEST_DATE);
+  await selectOption(page, '시간', '09:30');
+  await page.getByLabel('메모', { exact: true }).fill('입력한 상담 메모 유지');
+  await page.getByRole('button', { name: '등록', exact: true }).last().click();
+
+  const message = mode === 'missing-grade' ? MISSING_GRADE_MESSAGE : RETRY_MESSAGE;
+  await page.getByText(message, { exact: true }).waitFor();
+  assert.equal(await page.getByText(message, { exact: true }).count(), 1);
+  await page.getByText('✓ 김진우', { exact: true }).waitFor();
+  assert.equal(await page.getByLabel('상담일').inputValue(), TEST_DATE);
+  assert.equal(await page.getByLabel('메모', { exact: true }).inputValue(), '입력한 상담 메모 유지');
+  assert.equal(state.createPayload.preferredTime, '09:30');
+  assert.equal(state.hits.filter((hit) => hit === 'POST /consultations/learning').length, 1);
+  assert.equal(await page.getByRole('button', { name: '등록', exact: true }).last().isEnabled(), true);
+  await assertNoRawVisibleText(page, `enrolled consultations ${mode}`);
+  await assertNoHorizontalOverflow(page, `enrolled consultations ${mode}`);
+  await page.waitForFunction((text) => {
+    const toast = [...document.querySelectorAll('[data-sonner-toast]')].find((node) => node.textContent.includes(text));
+    if (!toast) return false;
+    const rect = toast.getBoundingClientRect();
+    return Number(getComputedStyle(toast).opacity) > 0.99 && rect.top >= 0 && rect.bottom <= innerHeight &&
+      toast.contains(document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2));
+  }, message);
+  await page.screenshot({ path: `/Users/etlab/paca-enrolled-${mode}-${viewport.width}.png`, fullPage: true });
+
+  await context.close();
+  return result;
+}
+
 async function runLoadError(browser) {
   const result = await createEnrolledPage(browser, 'list-error', { width: 390, height: 844 });
   const { context, page } = result;
@@ -313,7 +359,10 @@ async function main() {
     const createHappyPath = await runCreateHappyPath(browser);
     const missingHours = await runMissingHours(browser);
     const loadError = await runLoadError(browser);
-    [desktop, mobile, createHappyPath, missingHours, loadError].forEach(assertDiagnostics);
+    const missingGradeDesktop = await runCreateError(browser, 'missing-grade', { width: 1365, height: 900 });
+    const missingGradeMobile = await runCreateError(browser, 'missing-grade', { width: 390, height: 844 });
+    const createError = await runCreateError(browser, 'create-error', { width: 1365, height: 900 });
+    [desktop, mobile, createHappyPath, missingHours, loadError, missingGradeDesktop, missingGradeMobile, createError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       createPayload: createHappyPath.state.createPayload,
       desktopHits: desktop.state.hits,
