@@ -5,6 +5,7 @@
 const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 const { authenticateSourceReadRequest } = require('./sourceReadAuth');
+const { continueWithExpectedAcademy } = require('./expectedAcademy');
 
 // 환경변수에서 시크릿 가져오기
 // 주의: 기본값 제거됨! env-validator.js에서 개발환경 기본값 설정됨
@@ -27,7 +28,7 @@ const verifyToken = async (req, res, next) => {
         const sourceReadAccount = authenticateSourceReadRequest(req);
         if (sourceReadAccount) {
             req.user = sourceReadAccount;
-            return next();
+            return continueWithExpectedAcademy(req, res, next);
         }
 
         // Check for PACA internal automation API key first
@@ -49,7 +50,7 @@ const verifyToken = async (req, res, next) => {
                 isServiceAccount: true,
                 isNotificationAutomation: true
             };
-            return next();
+            return continueWithExpectedAcademy(req, res, next);
         }
 
         // Get token from header
@@ -124,7 +125,7 @@ const verifyToken = async (req, res, next) => {
             instructorId: user.instructor_id
         };
 
-        next();
+        return continueWithExpectedAcademy(req, res, next);
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({

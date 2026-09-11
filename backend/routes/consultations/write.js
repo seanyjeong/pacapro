@@ -43,6 +43,7 @@ const {
 } = require('./_utils');
 
 module.exports = function (router) {
+    require('./bridge').registerConsultationBridge(router, { pool, verifyToken, decryptConsultationNames });
     // ============================================
     // PUT /paca/consultations/:id — 상담 수정 (상태/메모/체크리스트/학생정보)
     // ============================================
