@@ -11,6 +11,7 @@ export interface AcademyEvent {
     end_time?: string; // HH:mm:ss
     is_all_day: boolean;
     is_holiday: boolean;
+    block_consultation: boolean;
     color: string;
     created_by?: number;
     created_by_name?: string;
@@ -27,6 +28,7 @@ export interface AcademyEventFormData {
     end_time?: string;
     is_all_day: boolean;
     is_holiday: boolean;
+    block_consultation: boolean;
     color?: string;
 }
 

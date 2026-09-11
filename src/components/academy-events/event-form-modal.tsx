@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { X, AlertCircle } from 'lucide-react';
 import type { AcademyEvent, AcademyEventFormData, AcademyEventType } from '@/lib/types/academyEvent';
 import { EVENT_TYPE_LABELS, EVENT_TYPE_COLORS } from '@/lib/types/academyEvent';
@@ -25,6 +26,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
         end_time: '',
         is_all_day: true,
         is_holiday: false,
+        block_consultation: false,
         color: EVENT_TYPE_COLORS.academy,
     });
     const [loading, setLoading] = useState(false);
@@ -37,10 +39,11 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                 description: event.description || '',
                 event_type: event.event_type,
                 event_date: event.event_date,
-                start_time: event.start_time || '',
-                end_time: event.end_time || '',
+                start_time: event.start_time?.slice(0, 5) || '',
+                end_time: event.end_time?.slice(0, 5) || '',
                 is_all_day: Boolean(event.is_all_day),
                 is_holiday: Boolean(event.is_holiday),
+                block_consultation: Boolean(event.block_consultation),
                 color: event.color,
             });
         } else {
@@ -53,6 +56,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                 end_time: '',
                 is_all_day: true,
                 is_holiday: false,
+                block_consultation: false,
                 color: EVENT_TYPE_COLORS.academy,
             });
         }
@@ -70,6 +74,12 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (formData.block_consultation && !formData.is_all_day && !formData.is_holiday && (
+            !formData.start_time || !formData.end_time || formData.start_time.slice(0, 5) >= formData.end_time.slice(0, 5)
+        )) {
+            setSubmitError('상담을 차단할 시작 시간과 종료 시간을 확인해주세요.');
+            return;
+        }
         setLoading(true);
         setSubmitError(null);
         try {
@@ -89,7 +99,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
             <div
                 aria-labelledby="academy-event-form-title"
                 aria-modal="true"
-                className="mx-4 w-full max-w-md rounded-md border border-border bg-background shadow-xl"
+                className="mx-4 max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-md border border-border bg-background"
                 role="dialog"
             >
                 <div className="flex items-center justify-between p-4 border-b border-border">
@@ -262,9 +272,32 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                         {Boolean(formData.is_holiday) && (
                             <div className="flex items-start gap-2 text-xs text-red-600 dark:text-red-400">
                                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                                <span>휴일로 지정하면 해당 날짜의 상담 예약이 차단되고, 수업이 휴강 처리됩니다.</span>
+                                <span>해당 날짜의 수업이 휴강 처리됩니다. 상담 예약도 막으려면 상담 차단을 켜주세요.</span>
                             </div>
                         )}
+                    </div>
+
+                    <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
+                        <div className="space-y-1">
+                            <label htmlFor="block_consultation" className="cursor-pointer text-sm font-medium">
+                                상담 차단
+                            </label>
+                            <p id="block-consultation-help" className="text-xs text-muted-foreground">
+                                {!formData.block_consultation
+                                    ? '일정만 등록하고 상담 예약은 그대로 받습니다.'
+                                    : formData.is_all_day || formData.is_holiday
+                                      ? '해당 날짜의 상담 예약을 하루 동안 막습니다.'
+                                      : '일정이 포함된 오전·오후·저녁 시간대의 상담 예약을 막습니다.'}
+                            </p>
+                        </div>
+                        <Switch
+                            id="block_consultation"
+                            checked={formData.block_consultation}
+                            onCheckedChange={checked => setFormData(prev => ({ ...prev, block_consultation: checked }))}
+                            aria-describedby="block-consultation-help"
+                            disabled={loading}
+                            className="shrink-0"
+                        />
                     </div>
 
                     {submitError && (

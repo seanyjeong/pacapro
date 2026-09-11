@@ -16,7 +16,7 @@ router.get('/', verifyToken, async (req, res) => {
         res.json(result);
     } catch (error) {
         logger.error('Error fetching academy events:', error);
-        res.status(500).json({ message: '학원 일정 조회 실패', error: error.message });
+        res.status(500).json({ message: '학원 일정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' });
     }
 });
 
@@ -30,7 +30,7 @@ router.get('/:id', verifyToken, async (req, res) => {
         res.json({ event });
     } catch (error) {
         logger.error('Error fetching academy event:', error);
-        res.status(500).json({ message: '학원 일정 조회 실패', error: error.message });
+        res.status(500).json({ message: '학원 일정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' });
     }
 });
 
@@ -44,7 +44,7 @@ router.post('/', verifyToken, checkPermission('schedules', 'edit'), async (req, 
         res.status(201).json({ message: result.message, event: result.event });
     } catch (error) {
         logger.error('Error creating academy event:', error);
-        res.status(500).json({ message: '학원 일정 등록 실패', error: error.message });
+        res.status(500).json({ message: '학원 일정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.' });
     }
 });
 
@@ -58,7 +58,7 @@ router.put('/:id', verifyToken, checkPermission('schedules', 'edit'), async (req
         res.json({ message: result.message, event: result.event });
     } catch (error) {
         logger.error('Error updating academy event:', error);
-        res.status(500).json({ message: '학원 일정 수정 실패', error: error.message });
+        res.status(500).json({ message: '학원 일정을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.' });
     }
 });
 
@@ -72,7 +72,7 @@ router.delete('/:id', verifyToken, checkPermission('schedules', 'edit'), async (
         res.json({ message: result.message });
     } catch (error) {
         logger.error('Error deleting academy event:', error);
-        res.status(500).json({ message: '학원 일정 삭제 실패', error: error.message });
+        res.status(500).json({ message: '학원 일정을 삭제하지 못했습니다. 잠시 후 다시 시도해주세요.' });
     }
 });
 
