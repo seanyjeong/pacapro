@@ -7,7 +7,7 @@
  * Endpoint (1건 — :id 와일드카드):
  *   - POST /:id/pay — 납부 기록 (full or partial). 추가 할인 적용 시 final_amount 감소.
  *                     0원 청구 건은 0원 납부 처리 허용 (100% 할인 등).
- *                     revenues 테이블 INSERT (선택 — table not exist 시 skip).
+ *                     수납 행과 revenues 장부를 같은 트랜잭션에서 저장.
  *
  * 인증: verifyToken + checkPermission('payments', 'edit')
  *
@@ -17,7 +17,7 @@
  *   5xx           → { error:'Server Error', message:'납부 기록에 실패했습니다.', details? }
  *                    details 는 NODE_ENV=development 일 때만 (운영 환경 0건).
  *
- * DB 호출 (ADR-005): pool.execute (4건). db.query 잔존 0건.
+ * DB 호출 (ADR-005): connection.execute. 수납 행 잠금 후 장부와 함께 커밋.
  * ADR-007: decrypt 시그니처 무변경 (decryptStudentName 헬퍼).
  *
  * **결제 데이터 영속 변경 X (사장님 결정 2026-05-02)**:
@@ -43,6 +43,8 @@ module.exports = function(router) {
 router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
     const paymentId = parseInt(req.params.id);
 
+    let connection;
+    let committed = false;
     try {
         const { paid_amount, payment_method, payment_date, notes, discount_amount } = req.body;
 
@@ -54,10 +56,12 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
         }
 
         // Get payment record
-        const [payments] = await pool.execute(
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const [payments] = await connection.execute(
             `SELECT p.*
             FROM student_payments p
-            WHERE p.id = ? AND p.academy_id = ?`,
+            WHERE p.id = ? AND p.academy_id = ? FOR UPDATE`,
             [paymentId, req.user.academyId]
         );
 
@@ -124,7 +128,7 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
             paymentNote = `납부: ${paid_amount}원 (할인 ${additionalDiscount}원 적용)`;
         }
 
-        await pool.execute(
+        await connection.execute(
             `UPDATE student_payments
             SET
                 paid_amount = ?,
@@ -148,40 +152,36 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
             ]
         );
 
-        // Record in revenues table (optional - table may not exist)
+        // 장부 누락 상태로 수납 성공을 반환하지 않도록 같은 트랜잭션에 기록한다.
         // payment_type에 따라 적절한 카테고리와 설명 사용
         const revenueCategory = payment.payment_type === 'season' ? 'season' : 'tuition';
         const revenueDescription = payment.payment_type === 'season'
             ? `시즌비 납부 (${payment.description || ''})`.trim()
             : `수강료 납부 (결제ID: ${paymentId})`;
 
-        try {
-            await pool.execute(
-                `INSERT INTO revenues (
-                    academy_id,
-                    category,
-                    amount,
-                    revenue_date,
-                    payment_method,
-                    student_id,
-                    description
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    payment.academy_id,
-                    revenueCategory,
-                    paid_amount,
-                    payment_date || new Date().toISOString().split('T')[0],
-                    payment_method,
-                    payment.student_id,
-                    revenueDescription
-                ]
-            );
-        } catch (revenueError) {
-            logger.info('Revenue table insert skipped:', revenueError.message);
-        }
+        await connection.execute(
+            `INSERT INTO revenues (
+                academy_id,
+                category,
+                amount,
+                revenue_date,
+                payment_method,
+                student_id,
+                description
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+                payment.academy_id,
+                revenueCategory,
+                paid_amount,
+                payment_date || new Date().toISOString().split('T')[0],
+                payment_method,
+                payment.student_id,
+                revenueDescription
+            ]
+        );
 
         // Fetch updated payment
-        const [updated] = await pool.execute(
+        const [updated] = await connection.execute(
             `SELECT
                 p.*,
                 ${remainingAmountSql('p')} as remaining_amount,
@@ -193,9 +193,12 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
             [paymentId]
         );
 
+        const responsePayment = decryptStudentName(updated[0]);
+        await connection.commit();
+        committed = true;
         res.json({
             message: '납부가 기록되었습니다.',
-            payment: decryptStudentName(updated[0])
+            payment: responsePayment
         });
     } catch (error) {
         logger.error('=== Error recording payment ===');
@@ -210,6 +213,14 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
             message: '납부 기록에 실패했습니다.',
             details: process.env.NODE_ENV === 'development' ? error.toString() : undefined
         });
+    } finally {
+        if (connection) {
+            if (!committed) {
+                try { await connection.rollback(); }
+                catch (error) { logger.error('Payment rollback failed:', error); }
+            }
+            connection.release();
+        }
     }
 });
 

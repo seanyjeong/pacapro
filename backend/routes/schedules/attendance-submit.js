@@ -17,6 +17,11 @@ module.exports = function registerAttendanceSubmit(router) {
 
         try {
             const { attendance_records: attendanceRecords } = req.body;
+            const individual = req.body.mode === 'individual';
+            if (req.body.mode !== undefined && !individual) {
+                connection.release();
+                return res.status(400).json({ error: 'Validation Error', message: '출석 저장 방식을 확인해주세요.' });
+            }
             logger.info(`[Attendance] Schedule ${scheduleId}, received:`, JSON.stringify(attendanceRecords));
 
             if (!Array.isArray(attendanceRecords) || attendanceRecords.length === 0) {
@@ -58,10 +63,13 @@ module.exports = function registerAttendanceSubmit(router) {
                 if (result.notifyTarget) notifyTargets.push(result.notifyTarget);
             }
 
-            await connection.query(
-                'UPDATE class_schedules SET attendance_taken = true WHERE id = ?',
-                [scheduleId]
-            );
+            // 개별 정정은 전체 출석 제출과 달리 반 전체를 마감하거나 알림을 보내지 않는다.
+            if (!individual) {
+                await connection.query(
+                    'UPDATE class_schedules SET attendance_taken = true WHERE id = ?',
+                    [scheduleId]
+                );
+            }
             await connection.commit();
             connection.release();
 
@@ -71,7 +79,7 @@ module.exports = function registerAttendanceSubmit(router) {
                 class_date: schedule.class_date,
                 attendance_records: processedRecords,
             });
-            queueAttendanceNotifications({
+            if (!individual) queueAttendanceNotifications({
                 academyId: req.user.academyId,
                 notifyTargets,
                 schedule,
@@ -180,7 +188,7 @@ function validateAttendanceStatus(status, makeupDate) {
 
 async function clearAttendance({ connection, scheduleId, studentId }) {
     await connection.query(
-        'UPDATE attendance SET attendance_status = NULL, notes = NULL WHERE class_schedule_id = ? AND student_id = ?',
+        'UPDATE attendance SET attendance_status = NULL, notes = NULL, makeup_date = NULL WHERE class_schedule_id = ? AND student_id = ?',
         [scheduleId, studentId]
     );
 }

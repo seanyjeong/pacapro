@@ -42,6 +42,8 @@ module.exports = function(router) {
 router.post('/:id/cancel', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
     const paymentId = Number.parseInt(req.params.id, 10);
 
+    let connection;
+    let committed = false;
     try {
         const body = req.body || {};
         const cancelAmount = parsePositiveAmount(body.cancel_amount);
@@ -69,10 +71,12 @@ router.post('/:id/cancel', verifyToken, checkPermission('payments', 'edit'), asy
             });
         }
 
-        const [payments] = await pool.execute(
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const [payments] = await connection.execute(
             `SELECT p.*
             FROM student_payments p
-            WHERE p.id = ? AND p.academy_id = ?`,
+            WHERE p.id = ? AND p.academy_id = ? FOR UPDATE`,
             [paymentId, req.user.academyId]
         );
 
@@ -110,7 +114,7 @@ router.post('/:id/cancel', verifyToken, checkPermission('payments', 'edit'), asy
         const nextPaymentMethod = newPaidAmount <= 0 ? null : payment.payment_method;
         const cancelNote = getCancelNote(cancelDate, cancelAmount, cancelReason);
 
-        await pool.execute(
+        await connection.execute(
             `UPDATE student_payments
             SET
                 paid_amount = ?,
@@ -128,32 +132,28 @@ router.post('/:id/cancel', verifyToken, checkPermission('payments', 'edit'), asy
             ? `시즌비 결제 취소 (${payment.description || ''})`.trim()
             : `수강료 결제 취소 (결제ID: ${paymentId})`;
 
-        try {
-            await pool.execute(
-                `INSERT INTO revenues (
-                    academy_id,
-                    category,
-                    amount,
-                    revenue_date,
-                    payment_method,
-                    student_id,
-                    description
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    payment.academy_id,
-                    revenueCategory,
-                    -cancelAmount,
-                    cancelDate,
-                    payment.payment_method || 'other',
-                    payment.student_id,
-                    revenueDescription
-                ]
-            );
-        } catch (revenueError) {
-            logger.info('Revenue cancellation insert skipped:', revenueError.message);
-        }
+        await connection.execute(
+            `INSERT INTO revenues (
+                academy_id,
+                category,
+                amount,
+                revenue_date,
+                payment_method,
+                student_id,
+                description
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [
+                payment.academy_id,
+                revenueCategory,
+                -cancelAmount,
+                cancelDate,
+                payment.payment_method || 'other',
+                payment.student_id,
+                revenueDescription
+            ]
+        );
 
-        const [updated] = await pool.execute(
+        const [updated] = await connection.execute(
             `SELECT
                 p.*,
                 ${remainingAmountSql('p')} as remaining_amount,
@@ -165,9 +165,12 @@ router.post('/:id/cancel', verifyToken, checkPermission('payments', 'edit'), asy
             [paymentId]
         );
 
+        const responsePayment = decryptStudentName(updated[0]);
+        await connection.commit();
+        committed = true;
         return res.json({
             message: '결제 취소가 기록되었습니다.',
-            payment: decryptStudentName(updated[0])
+            payment: responsePayment
         });
     } catch (error) {
         logger.error('=== Error canceling payment ===');
@@ -177,6 +180,14 @@ router.post('/:id/cancel', verifyToken, checkPermission('payments', 'edit'), asy
             error: 'Server Error',
             message: '결제 취소에 실패했습니다.'
         });
+    } finally {
+        if (connection) {
+            if (!committed) {
+                try { await connection.rollback(); }
+                catch (error) { logger.error('Payment rollback failed:', error); }
+            }
+            connection.release();
+        }
     }
 });
 

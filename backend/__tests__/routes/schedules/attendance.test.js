@@ -229,3 +229,29 @@ describe('POST /paca/schedules/:id/attendance', () => {
         expect(fakeConn.release).toHaveBeenCalled();
     });
 });
+
+
+describe('개별 출결 정정', () => {
+    test.each(['present', 'none'])('%s: 반 마감과 발송 없이 한 학생만 저장한다', async (status) => {
+        const notifications = require('../../../utils/attendanceNotify');
+        notifications.notifyAttendance.mockClear();
+        fakeConn.query.mockResolvedValueOnce([[{ id: 1, class_date: '2026-09-12', time_slot: 'morning' }]])
+            .mockResolvedValueOnce([[{ id: 5, name: '학생', is_trial: 0, trial_remaining: 0, trial_dates: null }]])
+            .mockResolvedValueOnce([[{ attendance_status: 'absent' }]])
+            .mockResolvedValue([{ affectedRows: 1 }]);
+        const res = await request(makeApp()).post('/paca/schedules/1/attendance')
+            .send({ mode: 'individual', attendance_records: [{ student_id: 5, attendance_status: status }] });
+        await new Promise(setImmediate);
+        expect(res.status).toBe(200);
+        expect(fakeConn.commit).toHaveBeenCalledTimes(1);
+        expect(fakeConn.query.mock.calls.some(([sql]) => sql.includes('UPDATE class_schedules'))).toBe(false);
+        expect(notifications.notifyAttendance).not.toHaveBeenCalled();
+        if (status === 'none') expect(fakeConn.query.mock.calls.some(([sql]) => sql.includes('makeup_date = NULL'))).toBe(true);
+    });
+    test('알 수 없는 저장 방식은 변경 전에 거절한다', async () => {
+        const res = await request(makeApp()).post('/paca/schedules/1/attendance')
+            .send({ mode: 'silent-ish', attendance_records: [{ student_id: 5, attendance_status: 'present' }] });
+        expect(res.status).toBe(400);
+        expect(fakeConn.query).not.toHaveBeenCalled();
+    });
+});

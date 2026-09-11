@@ -216,7 +216,7 @@ async function runNormal(browser) {
   await partialPaymentRow.getByText('남은 금액').waitFor();
   await partialPaymentRow.getByText(/2,300,000/).waitFor();
   await partialPaymentRow.getByText(/총 청구.*3,300,000/).waitFor();
-  await partialPaymentRow.getByText(/납부.*1,000,000/).waitFor();
+  await partialPaymentRow.getByText(/^총 청구 .*납부.*1,000,000/).waitFor();
 
   await page.locator('tr:has-text("박민수")').getByRole('button', { name: '계좌' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: '납부 처리' }).click();
@@ -269,7 +269,8 @@ async function assertPaymentDesktopLayout(page) {
     const resetRect = reset?.getBoundingClientRect();
     const boardRect = board?.getBoundingClientRect();
     const actionButtonLineCounts = actionCells.map((cell) => {
-      const buttons = [...cell.querySelectorAll('button')];
+      // 상세납부는 별도 줄이므로 빠른납부 세 버튼 사이의 줄바꿈만 검사한다.
+      const buttons = [...cell.querySelectorAll('button[title$="로 전액 빠른 납부"]')];
       return new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top))).size;
     });
     const actionCellWidths = actionCells.map((cell) => cell.getBoundingClientRect().width);

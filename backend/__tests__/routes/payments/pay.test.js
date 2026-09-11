@@ -5,7 +5,7 @@
  *   - POST /paca/payments/:id/pay → { message, payment }
  *   - 0원 청구 + 0원 납부 허용 (100% 할인)
  *   - 추가 할인 적용 시 final_amount 감소 + notes 기록
- *   - revenues INSERT 실패 시 무시 (logger.info)
+ *   - revenues INSERT 실패 시 수납 변경까지 롤백
  *   - DB 호출: pool.execute (ADR-005, db.query 잔존 0건)
  *   - 5xx: 한국어 메시지 (ADR-003) + e.message 누출 0건 (details 는 dev 전용)
  *   - 응답 표면 보존 (ADR-013)
@@ -40,6 +40,7 @@ const express = require('express');
 const request = require('supertest');
 const pool = require('../../../config/database');
 const logger = require('../../../utils/logger');
+const connection = { execute: pool.execute, beginTransaction: jest.fn(), commit: jest.fn(), rollback: jest.fn(), release: jest.fn() };
 
 function makeApp() {
     const app = express();
@@ -51,6 +52,8 @@ function makeApp() {
 }
 
 beforeEach(() => {
+    pool.getConnection.mockResolvedValue(connection);
+    for (const key of ['beginTransaction', 'commit', 'rollback', 'release']) connection[key].mockReset().mockResolvedValue();
     pool.execute.mockReset();
     pool.execute.mockResolvedValue([[]]);
     logger.info.mockClear();
@@ -203,7 +206,7 @@ describe('POST /paca/payments/:id/pay', () => {
         expect(updateCall[1][6]).toContain('5000');
     });
 
-    test('revenues INSERT 실패 → logger.info skip + 정상 응답', async () => {
+    test('revenues INSERT 실패 → 오류 응답 + 수납 변경 롤백', async () => {
         pool.execute
             .mockResolvedValueOnce([[
                 { id: 1, payment_type: 'season', payment_status: 'pending', final_amount: 100000, paid_amount: 0, discount_amount: 0, academy_id: 5, student_id: 7, description: '시즌비' },
@@ -214,8 +217,10 @@ describe('POST /paca/payments/:id/pay', () => {
         const res = await request(makeApp())
             .post('/paca/payments/1/pay')
             .send({ paid_amount: 100000, payment_method: 'cash' });
-        expect(res.status).toBe(200);
-        expect(logger.info).toHaveBeenCalledWith('Revenue table insert skipped:', expect.stringContaining('revenues'));
+        expect(res.status).toBe(500);
+        expect(connection.rollback).toHaveBeenCalledTimes(1);
+        expect(connection.commit).not.toHaveBeenCalled();
+        expect(pool.execute).toHaveBeenCalledTimes(3);
 
         // payment_type === 'season' 분기 검증
         const revenueCall = pool.execute.mock.calls[2];

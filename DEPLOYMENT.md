@@ -145,3 +145,22 @@ python3 scripts/cors_preflight_evidence_audit.py
 ## Rollback
 Rollback must use the phase-specific Vultr runbook and timestamped Vultr backups.
 Do not introduce another PACA primary host as part of an application rollback.
+
+
+## MAX AI 개별 출결·수납 계약 수정 (2026-09-12)
+
+Backend-only 후속 후보는 `GET /schedules/:id/attendance-state`로 실제 저장 출결과
+적격학생을 저장 없이 반환한다. `POST /:id/attendance`의 `mode=individual`은 반 전체
+마감·신규 알림을 생략하고 대상 학생만 정정한다. 기존 화면은 mode를 보내지 않으므로
+기존 전체 제출을 유지한다. 출결 해제 시 보충일도 비운다.
+
+단건 수납·취소는 수납 행을 `FOR UPDATE`로 잠그고 매출 장부와 같은 트랜잭션에 저장한다.
+장부 오류를 무시하지 않으며 수납 변경도 롤백한다. 금액 계산·인증·결제업체 연동은 유지한다.
+DB migration, 새 환경 변수, 프론트 배포는 없다. 이 원본을 먼저 활성화한 뒤 Academy
+Operations를 반영해야 한다. 롤백은 Operations의 출결 변경을 먼저 중단한 후 PACA의
+체크섬 백업을 복구한다. 이미 기록된 수납을 자동 취소하거나 기존 DB를 복원하지 않는다.
+
+검증: backend Jest 1,104건, 임시 네이티브 MySQL 4건(동시 수납·수납/취소 장부 실패·
+조회 무변경), 프론트 lint 오류 0건·빌드 통과. MySQL은 독립된 소켓 전용 임시 DB이며
+운영 자료를 사용하지 않는다. 실행기는 MaxAIwithhermes의
+`scripts/test-academy-operations-native-mysql.py --paca`다.

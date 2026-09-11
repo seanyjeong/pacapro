@@ -25,6 +25,7 @@ const express = require('express');
 const request = require('supertest');
 const pool = require('../../../config/database');
 const logger = require('../../../utils/logger');
+const connection = { execute: pool.execute, beginTransaction: jest.fn(), commit: jest.fn(), rollback: jest.fn(), release: jest.fn() };
 
 function makeApp() {
     const app = express();
@@ -36,6 +37,8 @@ function makeApp() {
 }
 
 beforeEach(() => {
+    pool.getConnection.mockResolvedValue(connection);
+    for (const key of ['beginTransaction', 'commit', 'rollback', 'release']) connection[key].mockReset().mockResolvedValue();
     pool.execute.mockReset();
     pool.execute.mockResolvedValue([[]]);
     logger.info.mockClear();
@@ -142,7 +145,7 @@ describe('POST /paca/payments/:id/cancel', () => {
                 },
             ]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
-            .mockRejectedValueOnce(new Error('revenues missing'))
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[{ id: 1, student_name: 'enc_홍길동', paid_amount: 0, payment_status: 'pending' }]]);
 
         const res = await request(makeApp())
@@ -155,6 +158,23 @@ describe('POST /paca/payments/:id/cancel', () => {
         expect(updateCall[1][1]).toBe('pending');
         expect(updateCall[1][2]).toBeNull();
         expect(updateCall[1][3]).toBeNull();
-        expect(logger.info).toHaveBeenCalledWith('Revenue cancellation insert skipped:', expect.stringContaining('revenues'));
+        expect(connection.commit).toHaveBeenCalledTimes(1);
+        expect(connection.rollback).not.toHaveBeenCalled();
+        expect(pool.execute.mock.calls[0][0]).toContain('FOR UPDATE');
     });
+});
+
+
+test('매출 취소 기록 실패는 수납 변경도 롤백한다', async () => {
+    pool.execute.mockResolvedValueOnce([[{ id: 1, academy_id: 5, student_id: 7,
+        paid_amount: 100000, final_amount: 100000, payment_status: 'paid', payment_method: 'cash' }]])
+        .mockResolvedValueOnce([{ affectedRows: 1 }])
+        .mockRejectedValueOnce(new Error('ledger unavailable'));
+    const response = await request(makeApp()).post('/paca/payments/1/cancel')
+        .send({ cancel_amount: 50000, cancel_reason: '중복 수납' });
+    expect(response.status).toBe(500);
+    expect(connection.rollback).toHaveBeenCalledTimes(1);
+    expect(connection.commit).not.toHaveBeenCalled();
+    expect(connection.release).toHaveBeenCalledTimes(1);
+    expect(pool.execute).toHaveBeenCalledTimes(3);
 });
