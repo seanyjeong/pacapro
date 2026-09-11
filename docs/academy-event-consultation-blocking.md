@@ -16,4 +16,6 @@
 - `cd backend && npm run test:ci -- --runInBand __tests__/services/academyEventService.test.js __tests__/routes/academyEvents.test.js`
 - `npm run smoke:academy-events` (로컬 프론트엔드 `3109` 포트 또는 `PACA_SMOKE_BASE_URL` 필요)
 
+운영 빌드에서도 실행해 자동 미리 불러오기 요청을 확인한다. 일정 작업 보드의 상담 시간 설정은 `/consultations/settings`로 연결되며, 스모크에서 링크와 실제 페이지 응답을 함께 검사한다.
+
 API 통합 테스트는 실제 JWT 인증·라우트·서비스·저장소와 공개 상담 가능 시간 조회를 격리된 SQLite 메모리 DB에서 실행한다. Node.js의 `node:sqlite`를 지원하는 테스트 런타임이 필요하다. MySQL 전용 `FOR UPDATE` 구문은 어댑터에서 제거하므로 운영 DB의 잠금·동시성 검증을 대체하지 않는다. 브라우저 테스트는 API 응답을 모의하며 PC·모바일 선택 상태, 저장 요청의 인증 헤더와 boolean, 재조회, 입력 오류와 저장 실패의 한국어 안내를 검증한다.

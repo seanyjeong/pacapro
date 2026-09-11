@@ -138,7 +138,7 @@ export function AcademyEventsOperationsBoard({
         </Link>
         <Link
           className={buttonVariants({ variant: 'ghost', className: 'w-full justify-start gap-2' })}
-          href="/settings/consultation"
+          href="/consultations/settings"
         >
           <Settings className="h-4 w-4" />
           상담 시간 설정

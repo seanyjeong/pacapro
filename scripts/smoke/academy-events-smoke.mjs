@@ -122,6 +122,11 @@ async function assertOperationsBoard(page) {
   await board.getByTestId('academy-events-metric-holiday').getByText('0건').waitFor();
   await board.getByTestId('academy-events-metric-work').getByText('1건').waitFor();
   await board.getByRole('button', { name: '새 일정 등록' }).waitFor();
+  const settingsHref = await board.getByRole('link', { name: '상담 시간 설정' }).getAttribute('href');
+  assert.equal(settingsHref, '/consultations/settings');
+  const settingsResponse = await page.request.get(settingsHref);
+  assert.equal(settingsResponse.status(), 200, 'consultation settings link must resolve');
+  assert.equal(new URL(settingsResponse.url()).pathname, settingsHref);
 }
 
 async function runDesktop(browser) {
