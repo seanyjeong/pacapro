@@ -3,11 +3,12 @@
  *
  * paca.js 자동 라우트 등록 (W-6) → app.use('/paca/schedules', router) 호출.
  *
- * Sub-라우터 (9건) — 등록 순서 = 정적 경로 우선, /:id 와일드카드 마지막
+ * Sub-라우터 — 등록 순서 = 정적 경로 우선, /:id 와일드카드 마지막
  * (express 매칭 순서 의존, lesson #205 source 정적 검증으로 회귀 보호):
  *
  *   1. slot                  — GET /slot, POST /slot/student, DELETE /slot/student, POST /slot/move
  *                               (정적 /slot/* 4건 — /:id 보다 먼저 필수)
+ *      instructor-calendar   — GET /instructor-schedules/calendar (로그인 사용자 월간 조회)
  *   2. instructor-schedules  — GET /date/:date/instructor-schedules, POST /date/:date/instructor-schedules,
  *                               GET /instructor-schedules/month
  *                               (정적 /date/* + /instructor-schedules/* — /:id 보다 먼저 필수)
@@ -38,6 +39,7 @@ const express = require('express');
 const router = express.Router();
 
 require('./slot')(router);                    // 정적 /slot/* 4건 (와일드카드 충돌 회피)
+require('./instructor-calendar')(router);
 require('./instructor-schedules')(router);    // 정적 /date/*/instructor-schedules + /instructor-schedules/month
 require('./instructor-attendance')(router);   // 혼합: 정적 /date/* + /:id/instructor-attendance
 require('./fix-all')(router);                 // 정적 /fix-all

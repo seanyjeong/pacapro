@@ -24,6 +24,24 @@ const slots = (day = date) => request(app).get(`/paca/public/consultation/test-a
 beforeEach(() => db.reset());
 afterAll(() => db.close());
 
+test.each(['staff', 'instructor'])('%s 계정은 별도 권한 없이 같은 학원 일정만 조회한다', async role => {
+    const created = await create({ title: '학원 행사' });
+    const id = created.body.event.id;
+    await db.query('UPDATE users SET role = ?, permissions = ? WHERE id = 20', [role, '{}']);
+    expect((await request(app).get(path)).status).toBe(401);
+    const list = await request(app).get(path).set('Authorization', auth(20));
+    expect(list.status).toBe(200);
+    expect(list.body.events.map(event => event.id)).toEqual([id]);
+    expect((await request(app).get(`${path}/${id}`).set('Authorization', auth(20))).status).toBe(200);
+    for (const method of ['post', 'put', 'delete']) {
+        const target = method === 'post' ? path : `${path}/${id}`;
+        expect((await request(app)[method](target).set('Authorization', auth(20)).send({})).status).toBe(403);
+    }
+    await db.query('UPDATE users SET academy_id = 2 WHERE id = 20');
+    expect((await request(app).get(path).set('Authorization', auth(20))).body.events).toEqual([]);
+    expect((await request(app).get(`${path}/${id}`).set('Authorization', auth(20))).status).toBe(404);
+});
+
 test('기본 등록은 차단하지 않으며 공개 상담 예약이 유지된다', async () => {
     const result = await create({});
     expect(result.status).toBe(201);

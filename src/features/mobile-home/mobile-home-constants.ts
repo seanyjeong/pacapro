@@ -1,5 +1,6 @@
 import {
   CalendarClock,
+  CalendarDays,
   CreditCard,
   MessageSquare,
   MessageSquarePlus,
@@ -20,7 +21,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 export const MOBILE_HOME_MESSAGES = {
   sessionRefreshFailed: '현재 계정 정보를 확인하지 못했습니다. 다시 로그인해주세요.',
   noPermissionRefreshFailed: '권한 상태를 다시 확인하지 못했습니다. 잠시 후 다시 시도해주세요.',
-  noPermissionUnchanged: '아직 부여된 모바일 권한이 없습니다. 원장님에게 필요한 권한 부여를 요청해주세요.',
+  noPermissionUnchanged: '학원 일정과 강사 달력은 바로 볼 수 있습니다. 추가된 업무 권한은 아직 없습니다.',
   pushDenied: '브라우저 알림 권한이 꺼져 있습니다. 기기 설정에서 알림 권한을 허용해주세요.',
   pushEnableFailed: '푸시 알림을 켜지 못했습니다. 잠시 후 다시 시도해주세요.',
   pushDisableFailed: '푸시 알림을 끄지 못했습니다. 잠시 후 다시 시도해주세요.',
@@ -33,6 +34,22 @@ export function makeMobileHomeMenu(permissions: {
   consultations: boolean;
 }): MobileHomeMenuItem[] {
   return [
+    {
+      href: '/m/academy-events',
+      icon: CalendarDays,
+      label: '학원일정',
+      description: '행사와 휴일을 월간 달력으로 확인',
+      tone: 'blue',
+      permission: true,
+    },
+    {
+      href: '/m/instructor-calendar',
+      icon: CalendarClock,
+      label: '강사 근무달력',
+      description: '날짜별 출근 예정 강사 확인',
+      tone: 'violet',
+      permission: true,
+    },
     {
       href: '/m/attendance',
       icon: UserCheck,

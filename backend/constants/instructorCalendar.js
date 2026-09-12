@@ -1,0 +1,5 @@
+module.exports = {
+    MIN_CALENDAR_YEAR: 2000,
+    MAX_CALENDAR_YEAR: 2100,
+    MONTHS_PER_YEAR: 12,
+};

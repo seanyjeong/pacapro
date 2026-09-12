@@ -92,23 +92,6 @@ async function gotoWorkspace(page) {
   }
 }
 
-async function gotoNoPermission(page) {
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    await page.goto('/m', { waitUntil: 'domcontentloaded' });
-    try {
-      await page.getByTestId('mobile-home-no-permission').waitFor({ timeout: 20000 });
-      await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-      return;
-    } catch (error) {
-      if (attempt === 2) {
-        const body = await page.locator('body').innerText().catch(() => '');
-        throw new Error(`mobile home no-permission screen did not render at ${page.url()}: ${body.slice(0, 500)}\n${error.message}`);
-      }
-      await page.waitForTimeout(500);
-    }
-  }
-}
-
 async function runOwnerHome(browser) {
   const state = makeState();
   const { context, page, diagnostics } = await createMobilePage(browser, state);
@@ -118,10 +101,12 @@ async function runOwnerHome(browser) {
   await page.getByText('원장님 안녕하세요').waitFor();
   const operationsPanel = page.getByTestId('mobile-home-operations-panel');
   await operationsPanel.getByRole('heading', { name: '오늘 작업' }).waitFor();
-  await operationsPanel.getByText('4개 업무').waitFor();
+  await operationsPanel.getByText('6개 업무').waitFor();
   await operationsPanel.getByText('원장 계정').waitFor();
 
   const expectedLinks = [
+    ['학원일정', '/m/academy-events'],
+    ['강사 근무달력', '/m/instructor-calendar'],
     ['학생 출석체크', '/m/attendance'],
     ['강사 출근체크', '/m/instructor'],
     ['미납자 확인', '/m/unpaid'],
@@ -206,14 +191,18 @@ async function runNoPermission(browser) {
   state.authMeUser = user;
   const { context, page, diagnostics } = await createMobilePage(browser, state, user);
 
-  await gotoNoPermission(page);
+  await gotoWorkspace(page);
   if (new URL(page.url()).pathname === '/login') {
     throw new Error('no-permission staff should not be redirected to login after successful login');
   }
 
-  await page.getByRole('heading', { name: '아직 사용할 수 있는 메뉴 권한이 없습니다' }).waitFor();
-  await page.getByText('원장님에게 필요한 권한 부여를 요청해주세요.').waitFor();
-  await page.getByRole('button', { name: '다시 확인' }).waitFor();
+  await page.getByRole('link', { name: /학원일정/ }).waitFor();
+  await page.getByRole('link', { name: /강사 근무달력/ }).waitFor();
+  await page.getByTestId('mobile-home-operations-panel').getByText('2개 업무').waitFor();
+  if (await page.getByRole('link', { name: /학생 출석체크|강사 출근체크|미납자 확인|오늘 상담/ }).count()) {
+    throw new Error('restricted work menus must remain hidden');
+  }
+  await page.getByRole('button', { name: '업무 권한 다시 확인' }).waitFor();
   await page.getByRole('button', { name: '로그아웃' }).waitFor();
 
   const token = await page.evaluate(() => window.localStorage.getItem('token'));
@@ -233,7 +222,7 @@ async function runNoPermission(browser) {
       consultations: { view: false, edit: false },
     },
   };
-  await page.getByRole('button', { name: '다시 확인' }).click();
+  await page.getByRole('button', { name: '업무 권한 다시 확인' }).click();
   await page.getByTestId('mobile-home-workspace').waitFor();
   await page.getByRole('link', { name: /학생 출석체크/ }).waitFor();
   if (!state.hits.includes('GET /auth/me')) throw new Error('refresh permission did not call auth/me');
@@ -266,7 +255,7 @@ async function runPermissionFilter(browser) {
   await gotoWorkspace(page);
   await page.getByRole('link', { name: /학생 출석체크/ }).waitFor();
   await page.getByRole('link', { name: /강사 출근체크/ }).waitFor();
-  await page.getByTestId('mobile-home-operations-panel').getByText('2개 업무').waitFor();
+  await page.getByTestId('mobile-home-operations-panel').getByText('4개 업무').waitFor();
   if (await page.getByRole('link', { name: /미납자 확인/ }).count()) {
     throw new Error('payments menu should be hidden for staff without payments.view');
   }

@@ -16,6 +16,7 @@
 describe('routes/schedules/index.js (mount-only 진입점, Phase 3 #7)', () => {
   let slotMock;
   let instructorSchedulesMock;
+  let instructorCalendarMock;
   let instructorAttendanceMock;
   let fixAllMock;
   let listMock;
@@ -29,6 +30,7 @@ describe('routes/schedules/index.js (mount-only 진입점, Phase 3 #7)', () => {
     jest.isolateModules(() => {
       slotMock = jest.fn();
       instructorSchedulesMock = jest.fn();
+      instructorCalendarMock = jest.fn();
       instructorAttendanceMock = jest.fn();
       fixAllMock = jest.fn();
       listMock = jest.fn();
@@ -38,6 +40,7 @@ describe('routes/schedules/index.js (mount-only 진입점, Phase 3 #7)', () => {
       crudMock = jest.fn();
 
       jest.doMock('../../../routes/schedules/slot', () => slotMock);
+      jest.doMock('../../../routes/schedules/instructor-calendar', () => instructorCalendarMock);
       jest.doMock('../../../routes/schedules/instructor-schedules', () => instructorSchedulesMock);
       jest.doMock('../../../routes/schedules/instructor-attendance', () => instructorAttendanceMock);
       jest.doMock('../../../routes/schedules/fix-all', () => fixAllMock);
@@ -60,6 +63,7 @@ describe('routes/schedules/index.js (mount-only 진입점, Phase 3 #7)', () => {
 
   test('sub-라우터 9건 모두 호출 + 동일 router 인스턴스 전달', () => {
     expect(slotMock).toHaveBeenCalledTimes(1);
+    expect(instructorCalendarMock).toHaveBeenCalledWith(mountModule);
     expect(instructorSchedulesMock).toHaveBeenCalledTimes(1);
     expect(instructorAttendanceMock).toHaveBeenCalledTimes(1);
     expect(fixAllMock).toHaveBeenCalledTimes(1);
@@ -76,13 +80,13 @@ describe('routes/schedules/index.js (mount-only 진입점, Phase 3 #7)', () => {
   test('등록 순서: slot → instructor-schedules → instructor-attendance → fix-all → list → attendance → attendance-submit → crud', () => {
     const fs = require('fs');
     const src = fs.readFileSync(require.resolve('../../../routes/schedules/index'), 'utf-8');
-    const names = ['slot', 'instructor-schedules', 'instructor-attendance', 'fix-all', 'list', 'attendance', 'attendance-state', 'attendance-submit', 'crud'];
+    const names = ['slot', 'instructor-calendar', 'instructor-schedules', 'instructor-attendance', 'fix-all', 'list', 'attendance', 'attendance-state', 'attendance-submit', 'crud'];
     const order = names
       .map(n => ({ n, idx: src.indexOf("require('./" + n + "')") }))
       .filter(x => x.idx >= 0)
       .sort((a, b) => a.idx - b.idx)
       .map(x => x.n);
-    expect(order).toEqual(['slot', 'instructor-schedules', 'instructor-attendance', 'fix-all', 'list', 'attendance', 'attendance-state', 'attendance-submit', 'crud']);
+    expect(order).toEqual(['slot', 'instructor-calendar', 'instructor-schedules', 'instructor-attendance', 'fix-all', 'list', 'attendance', 'attendance-state', 'attendance-submit', 'crud']);
   });
 
   test('app.use 마운트 호환', () => {
