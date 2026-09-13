@@ -124,6 +124,9 @@ describe('POST /paca/payments/:id/cancel', () => {
 
         const revenueCall = pool.execute.mock.calls[2];
         expect(revenueCall[0]).toContain('INSERT INTO revenues');
+        expect(revenueCall[0]).toContain('payment_id');
+        expect(revenueCall[0]).not.toContain('payment_method');
+        expect(revenueCall[1][4]).toBe(1);
         expect(revenueCall[1][2]).toBe(-50000);
         expect(revenueCall[1][6]).toContain('결제 취소');
     });

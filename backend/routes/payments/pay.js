@@ -22,7 +22,7 @@
  *
  * **결제 데이터 영속 변경 X (사장님 결정 2026-05-02)**:
  *   - student_payments UPDATE 컬럼/순서/값 1:1 보존
- *   - revenues INSERT 컬럼/값 1:1 보존
+ *   - revenues 는 payment_id 로 연결하고 결제 방법은 student_payments 에 저장
  *   - notes CONCAT 패턴 보존 ('\n' 구분자)
  *   - paid_date 기본값 = today (`new Date().toISOString().split('T')[0]`) 보존
  *
@@ -159,13 +159,14 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
             ? `시즌비 납부 (${payment.description || ''})`.trim()
             : `수강료 납부 (결제ID: ${paymentId})`;
 
+        // 운영 장부에는 payment_method 컬럼이 없으므로 수납 원본 ID로 연결한다.
         await connection.execute(
             `INSERT INTO revenues (
                 academy_id,
                 category,
                 amount,
                 revenue_date,
-                payment_method,
+                payment_id,
                 student_id,
                 description
             ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -174,7 +175,7 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
                 revenueCategory,
                 paid_amount,
                 payment_date || new Date().toISOString().split('T')[0],
-                payment_method,
+                paymentId,
                 payment.student_id,
                 revenueDescription
             ]

@@ -142,6 +142,12 @@ describe('POST /paca/payments/:id/pay', () => {
         expect(updateCall[1][3]).toBe('paid'); // paymentStatus index
         expect(updateCall[1][4]).toBe('card'); // payment_method
         expect(updateCall[1][5]).toBe('2026-05-02'); // paid_date
+        const revenueCall = pool.execute.mock.calls[2];
+        expect(revenueCall[0]).toContain('payment_id');
+        expect(revenueCall[0]).not.toContain('payment_method');
+        expect(revenueCall[1]).toEqual([5, 'tuition', 100000, '2026-05-02', 1, 7, '수강료 납부 (결제ID: 1)']);
+        expect(connection.commit).toHaveBeenCalledTimes(1);
+        expect(connection.rollback).not.toHaveBeenCalled();
     });
 
     test('200: partial 납부 → payment_status = partial', async () => {

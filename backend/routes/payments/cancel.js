@@ -132,13 +132,14 @@ router.post('/:id/cancel', verifyToken, checkPermission('payments', 'edit'), asy
             ? `시즌비 결제 취소 (${payment.description || ''})`.trim()
             : `수강료 결제 취소 (결제ID: ${paymentId})`;
 
+        // 납부와 취소 장부는 같은 수납 원본 ID를 참조한다.
         await connection.execute(
             `INSERT INTO revenues (
                 academy_id,
                 category,
                 amount,
                 revenue_date,
-                payment_method,
+                payment_id,
                 student_id,
                 description
             ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -147,7 +148,7 @@ router.post('/:id/cancel', verifyToken, checkPermission('payments', 'edit'), asy
                 revenueCategory,
                 -cancelAmount,
                 cancelDate,
-                payment.payment_method || 'other',
+                paymentId,
                 payment.student_id,
                 revenueDescription
             ]

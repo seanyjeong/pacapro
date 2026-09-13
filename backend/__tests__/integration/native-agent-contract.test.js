@@ -35,8 +35,11 @@ suite('native MySQL payment atomicity and attendance read contracts', () => {
             payment_status VARCHAR(20), payment_method VARCHAR(20), paid_date DATE NULL,
             notes TEXT, description TEXT, updated_at DATETIME NULL)`);
         await mockPool.query(`CREATE TABLE revenues (
-            id INT AUTO_INCREMENT PRIMARY KEY, academy_id INT, category VARCHAR(20), amount DECIMAL(12,2),
-            revenue_date DATE, payment_method VARCHAR(20), student_id INT, description TEXT)`);
+            id INT AUTO_INCREMENT PRIMARY KEY, academy_id INT NOT NULL,
+            revenue_date DATE NOT NULL, category VARCHAR(100) NOT NULL, amount DECIMAL(10,2) NOT NULL,
+            payment_id INT NULL, student_id INT NULL, description TEXT, notes TEXT,
+            recorded_by INT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`);
         await mockPool.query(`CREATE TABLE class_schedules (
             id INT PRIMARY KEY, academy_id INT, class_date DATE, time_slot VARCHAR(20), attendance_taken INT)`);
         await mockPool.query(`CREATE TABLE attendance (
@@ -60,6 +63,25 @@ suite('native MySQL payment atomicity and attendance read contracts', () => {
             VALUES (901,7,101,'monthly',200000,0,0,'pending','기존 메모')`);
     });
     afterAll(async () => { if (mockPool) await mockPool.end(); });
+
+    test.each(['card', 'account', 'cash'])('%s payment and cancellation use the production ledger schema', async (method) => {
+        const paid = await request(app).post('/paca/payments/901/pay')
+            .send({ paid_amount: 200000, payment_method: method, payment_date: '2026-09-13' });
+        expect(paid.status).toBe(200);
+        expect(paid.body.payment.payment_status).toBe('paid');
+        expect(paid.body.payment.payment_method).toBe(method);
+        const cancelled = await request(app).post('/paca/payments/901/cancel')
+            .send({ cancel_amount: 200000, cancel_reason: '검증 취소', cancel_date: '2026-09-13' });
+        expect(cancelled.status).toBe(200);
+        expect(cancelled.body.payment.payment_status).toBe('pending');
+        expect(Number(cancelled.body.payment.paid_amount)).toBe(0);
+        const [ledger] = await mockPool.query(
+            'SELECT academy_id, payment_id, student_id, amount, revenue_date FROM revenues ORDER BY id');
+        expect(ledger.map(row => ({ ...row, amount: Number(row.amount) }))).toEqual([
+            { academy_id: 7, payment_id: 901, student_id: 101, amount: 200000, revenue_date: '2026-09-13' },
+            { academy_id: 7, payment_id: 901, student_id: 101, amount: -200000, revenue_date: '2026-09-13' },
+        ]);
+    });
 
     test('concurrent payments lock the row and preserve both ledger entries', async () => {
         const results = await Promise.all([1, 2].map(() => request(app).post('/paca/payments/901/pay')
