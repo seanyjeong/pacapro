@@ -15,6 +15,7 @@ interface PaymentListTableProps {
   handleSort: (key: PaymentSortKey) => void;
   hideDueDate: boolean;
   showCreditButton: boolean;
+  showParentNames: boolean;
   showPaymentMarkButton: boolean;
   onCreditClick: boolean;
   onPaymentMark: boolean;
@@ -22,7 +23,7 @@ interface PaymentListTableProps {
   renderPaymentActions: (payment: Payment) => ReactNode;
 }
 
-export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sortDir, handleSort, hideDueDate, showCreditButton, showPaymentMarkButton, onCreditClick, onPaymentMark, renderCreditAction, renderPaymentActions }: PaymentListTableProps) {
+export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sortDir, handleSort, hideDueDate, showCreditButton, showParentNames, showPaymentMarkButton, onCreditClick, onPaymentMark, renderCreditAction, renderPaymentActions }: PaymentListTableProps) {
   return (
         <div className="hidden overflow-x-auto lg:block">
           <table className={cn('w-full table-fixed text-sm', showPaymentMarkButton ? 'min-w-[1040px]' : 'min-w-[820px]')}>
@@ -110,7 +111,7 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
                       <div className="min-w-0">
                         <div className="truncate font-medium text-foreground">{payment.student_name}</div>
                         <div className="truncate text-xs text-muted-foreground">{payment.student_number}</div>
-                        <StudentParentNames student={payment} />
+                        {showParentNames && <StudentParentNames student={payment} />}
                       </div>
                     </td>
                     <td className="px-3 py-3 align-middle">

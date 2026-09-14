@@ -64,7 +64,7 @@ try {
     assert.equal(state.writes[0].body.mother_name, '');
   });
 
-  for (const [url, width] of [['/students', 1280], ['/students', 390], ['/tablet/students', 390]]) {
+  for (const [url, width] of [['/students', 1280], ['/students', 390]]) {
     await scenario(width, async (page) => {
       await page.goto(url, { waitUntil: 'networkidle' });
       await page.getByPlaceholder('학생·부모님 이름, 학번, 연락처').fill('김아버지');
@@ -75,7 +75,7 @@ try {
     });
   }
 
-  for (const [url, width] of [['/payments', 1280], ['/tablet/payments', 390]]) {
+  for (const [url, width] of [['/payments', 1280]]) {
     await scenario(width, async (page, state) => {
       await page.goto(url, { waitUntil: 'networkidle' });
       await page.getByLabel('학생·부모님 이름 검색').fill(' 김 아버지 ');
@@ -96,16 +96,44 @@ try {
     });
   }
 
+  for (const width of [390, 1280]) await scenario(width, async (page, state) => {
+    await page.goto('/tablet/payments', { waitUntil: 'networkidle' });
+    const rows = page.locator(width >= 1024 ? 'tbody tr:visible' : 'article:visible');
+    await rows.filter({ hasText: '김첫째' }).waitFor();
+    assert.equal(await page.getByText('아버지 김아버지', { exact: true }).count(), 0);
+    const search = page.getByLabel('학생 이름 검색');
+    await search.fill('김아버지');
+    await page.getByText('학원비 내역이 없습니다', { exact: true }).waitFor();
+    await search.fill('김둘째');
+    await rows.getByRole('button', { name: '계좌', exact: true }).click();
+    const dialog = page.getByRole('alertdialog');
+    assert.equal(await dialog.getByText('아버지 김아버지', { exact: true }).count(), 0);
+    await dialog.getByRole('button', { name: '납부 처리', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('[role="alertdialog"]'));
+    assert.equal(state.writes.at(-1).path, '/payments/502/pay');
+    assert.equal(state.writes.at(-1).body.paid_amount, 250000);
+  });
+
+  await scenario(390, async (page) => {
+    await page.goto('/tablet/students', { waitUntil: 'networkidle' });
+    await page.getByRole('heading', { name: '김첫째', exact: true }).waitFor();
+    assert.equal(await page.getByText('아버지 김아버지', { exact: true }).count(), 0);
+    await page.goto('/tablet/students/77', { waitUntil: 'networkidle' });
+    await page.getByRole('heading', { name: '김첫째', exact: true }).waitFor();
+    assert.equal(await page.getByText('아버지 김아버지', { exact: true }).count(), 0);
+  });
+
   await scenario(320, async (page, state) => {
-    state.payments[0].mother_name = '가'.repeat(100);
     await page.goto('/m/unpaid', { waitUntil: 'networkidle' });
-    await page.getByLabel('미납 학생 검색').fill('김아버지');
     const cards = page.getByTestId('mobile-unpaid-card');
     await cards.first().waitFor();
-    assert.equal(await cards.count(), 2);
-    await assertNoHorizontalOverflow(page, 'long parent name at 320px');
-    await page.screenshot({ path: `${artifacts}/mobile-long-name.png`, fullPage: true });
-    await cards.filter({ hasText: '김둘째' }).getByRole('button', { name: '완납 처리' }).click();
+    assert.equal(await page.getByText('아버지 김아버지', { exact: true }).count(), 0);
+    await page.getByLabel('미납 학생 검색').fill('김아버지');
+    await page.waitForFunction(() => !document.querySelector('[data-testid="mobile-unpaid-card"]'));
+    await page.getByLabel('미납 학생 검색').fill('김둘째');
+    await cards.getByRole('button', { name: '완납 처리' }).click();
+    const sheet = page.getByTestId('mobile-unpaid-pay-sheet');
+    assert.equal(await sheet.getByText('아버지 김아버지', { exact: true }).count(), 0);
     await page.getByRole('button', { name: '완납 저장' }).click();
     await page.waitForFunction(() => !document.body.innerText.includes('완납 저장'));
     assert.equal(state.writes.at(-1).path, '/payments/502/pay');

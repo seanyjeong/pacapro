@@ -93,6 +93,7 @@ export function PaymentsPageContent() {
           />
 
           <PaymentList
+            showParentNames
             payments={state.filteredPayments}
             loading={state.loading}
             onPaymentClick={(id) => router.push(`/payments/${id}`)}

@@ -1,6 +1,4 @@
-import type { StudentParentNames } from '@/lib/types/student-parent-names';
-
-export interface TabletStudentDetail extends StudentParentNames {
+export interface TabletStudentDetail {
   address: string | null;
   class_days: unknown;
   discount_rate: number | string;

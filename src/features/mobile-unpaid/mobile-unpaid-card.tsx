@@ -1,4 +1,3 @@
-import { StudentParentNames } from '@/components/students/student-parent-names';
 import { Calendar, Phone, UserRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { UnpaidPayment } from '@/lib/types/payment';
@@ -44,7 +43,6 @@ export function MobileUnpaidCard({
               </span>
             )}
           </div>
-          <StudentParentNames student={payment} />
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
             <Calendar className="h-3.5 w-3.5" />
             <span>{payment.year_month}</span>

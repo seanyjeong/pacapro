@@ -1,4 +1,3 @@
-import { StudentParentNames } from '@/components/students/student-parent-names';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MOBILE_UNPAID_PAYMENT_METHODS } from './mobile-unpaid-constants';
@@ -40,7 +39,6 @@ export function MobileUnpaidPaySheet({
             <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
               {studentName} · {payment.year_month}
             </p>
-            <StudentParentNames student={payment} />
           </div>
           {canViewAmount && (
             <p className="shrink-0 font-mono text-base font-semibold text-emerald-700 dark:text-emerald-300">

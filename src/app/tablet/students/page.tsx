@@ -150,7 +150,7 @@ function TabletStudentsPageContent() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="학생·부모님 이름, 학번, 연락처"
+                placeholder="학생 이름, 학교로 검색..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="w-full pl-10 pr-10 py-2 border border-border rounded-lg text-sm bg-card text-foreground"

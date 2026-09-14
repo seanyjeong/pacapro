@@ -62,6 +62,7 @@ interface PaymentListProps {
   onPaymentClick: (id: number) => void;
   onCreditClick?: (payment: Payment) => void;
   showCreditButton?: boolean;
+  showParentNames?: boolean;
   onPaymentMark?: (payment: Payment, method: MarkMethod) => Promise<void>;
   /** 상세 납부하기 모달 (금액/할인/일자 입력) */
   onDetailedPay?: (payment: Payment) => void;
@@ -77,6 +78,7 @@ export function PaymentList({
   onPaymentClick,
   onCreditClick,
   showCreditButton = false,
+  showParentNames = false,
   onPaymentMark,
   onDetailedPay,
   showPaymentMarkButton = false,
@@ -301,7 +303,7 @@ export function PaymentList({
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-foreground">{payment.student_name}</p>
                       <p className="mt-1 text-xs text-muted-foreground">{payment.student_number}</p>
-                      <StudentParentNames student={payment} />
+                      {showParentNames && <StudentParentNames student={payment} />}
                     </div>
                     <span
                       className={`inline-flex shrink-0 items-center rounded-md px-2.5 py-1 text-xs font-medium ${getPaymentStatusColor(
@@ -351,6 +353,7 @@ export function PaymentList({
           sortedPayments={sortedPayments} onPaymentClick={onPaymentClick}
           sortKey={sortKey} sortDir={sortDir} handleSort={handleSort}
           hideDueDate={hideDueDate} showCreditButton={showCreditButton}
+          showParentNames={showParentNames}
           showPaymentMarkButton={showPaymentMarkButton}
           onCreditClick={Boolean(onCreditClick)} onPaymentMark={Boolean(onPaymentMark)}
           renderCreditAction={renderCreditAction} renderPaymentActions={renderPaymentActions}
@@ -372,7 +375,7 @@ export function PaymentList({
                 </>
               )}
             </AlertDialogDescription>
-            {pendingPayment && <StudentParentNames student={pendingPayment.payment} />}
+            {showParentNames && pendingPayment && <StudentParentNames student={pendingPayment.payment} />}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>취소</AlertDialogCancel>
