@@ -5,6 +5,7 @@
 
 'use client';
 
+import { StudentParentNames } from '@/components/students/student-parent-names';
 import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -239,6 +240,7 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                               </Badge>
                             )}
                           </div>
+                          <StudentParentNames student={student} className="max-w-64" />
                           {student.student_number && student.student_number !== '0' && student.student_number !== '00' && (
                             <div className="text-sm text-muted-foreground">
                               {formatStudentNumber(student.student_number)}

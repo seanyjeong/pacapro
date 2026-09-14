@@ -1,3 +1,4 @@
+const { omitStudentParentNames } = require('../../../services/studentParentNameService');
 const pool = require('../../../config/database');
 const { verifyToken, checkPermission } = require('../../../middleware/auth');
 const logger = require('../../../utils/logger');
@@ -233,7 +234,7 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
 
         res.json({
             message: '휴식 처리가 완료되었습니다.',
-            student: updatedStudents[0],
+            student: omitStudentParentNames(updatedStudents[0]),
             restCredit,
             unpaidAdjustment
         });

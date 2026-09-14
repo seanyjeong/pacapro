@@ -1,3 +1,5 @@
+import type { StudentParentNames } from '@/lib/types/student-parent-names';
+
 /**
  * Student Type Definitions
  * 학생 관련 타입 정의 - DB 스키마와 일치
@@ -48,7 +50,7 @@ export interface TrialDate {
 }
 
 // 기본 학생 인터페이스 - DB 스키마 매칭
-export interface Student {
+export interface Student extends StudentParentNames {
   id: number;
   academy_id: number;
   student_number: string | null;
@@ -103,7 +105,7 @@ export interface Student {
 }
 
 // 학생 등록/수정용 DTO
-export interface StudentFormData {
+export interface StudentFormData extends StudentParentNames {
   student_number?: string;
   name: string;
   gender?: Gender;

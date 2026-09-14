@@ -1,3 +1,4 @@
+import { matchesStudentIdentity } from '@/lib/utils/student-parent-names';
 import type { Payment, PaymentFilters } from '@/lib/types/payment';
 import { parseClassDays } from '@/lib/types/student';
 import type { ClassDaysResponse } from '@/lib/types/student';
@@ -56,13 +57,13 @@ export function filterPayments(
   return payments.filter((payment) => {
     if (filters.early_paid_only) {
       if (!isEarlyPaidPayment(payment, currentYearMonth)) return false;
-      if (query && !payment.student_name?.toLowerCase().includes(query)) return false;
+      if (query && !matchesStudentIdentity(payment, query)) return false;
       return true;
     }
     if (filters.payment_status && payment.payment_status !== filters.payment_status) return false;
     if (filters.payment_type && payment.payment_type !== filters.payment_type) return false;
     if (viewOnly && (payment.payment_status === 'paid' || isSeasonUpcoming(payment))) return false;
-    if (query && !payment.student_name?.toLowerCase().includes(query)) return false;
+    if (query && !matchesStudentIdentity(payment, query)) return false;
     if (!todayUnpaidOnly) return true;
     if (payment.payment_status === 'paid' || isSeasonUpcoming(payment)) return false;
     const days = studentClassDaysMap.get(payment.student_id);

@@ -31,6 +31,7 @@ const {
     normalizeStudentClassDays,
     logger
 } = require('./_utils');
+const { decryptStudentParentNames } = require('../../../services/studentParentNameService');
 
 module.exports = function(router) {
 
@@ -59,7 +60,7 @@ router.get('/:id', verifyToken, async (req, res) => {
         }
 
         // 민감 필드 복호화
-        const student = normalizeStudentClassDays(decryptFields(students[0], ENCRYPTED_FIELDS.students));
+        const student = normalizeStudentClassDays(decryptStudentParentNames(decryptFields(students[0], ENCRYPTED_FIELDS.students)));
 
         // Get performance records
         const [performances] = await pool.execute(

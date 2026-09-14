@@ -1,10 +1,12 @@
+import type { StudentParentNames } from '@/lib/types/student-parent-names';
+
 /**
  * Payment Type Definitions
  * 학원비 관련 타입 정의
  */
 
 // 기본 학원비 납부 인터페이스
-export interface Payment {
+export interface Payment extends StudentParentNames {
   id: number;
   student_id: number;
   student_name: string;

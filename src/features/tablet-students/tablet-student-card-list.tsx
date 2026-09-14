@@ -1,3 +1,4 @@
+import { StudentParentNames } from '@/components/students/student-parent-names';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { CreditCard, MessageSquare, Phone, School, UserRound } from 'lucide-react';
@@ -53,6 +54,7 @@ export function TabletStudentCardList({ loading, students }: TabletStudentCardLi
                 {getStudentDisplayInfo(student)}
                 {student.school ? ` · ${student.school}` : ''}
               </p>
+              <StudentParentNames student={student} />
             </div>
           </div>
 

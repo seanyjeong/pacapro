@@ -1,3 +1,4 @@
+import { StudentParentNames } from '@/components/students/student-parent-names';
 import type { Payment } from '@/lib/types/payment';
 import { PAYMENT_TYPE_LABELS } from '@/lib/types/payment';
 import { formatDate, formatYearMonth } from '@/lib/utils/payment-helpers';
@@ -15,7 +16,7 @@ export function PaymentDetailSummary({ payment }: { payment: Payment }) {
   return (
     <section className="overflow-hidden rounded-md border border-border/70 bg-card">
       <div className="flex flex-col gap-4 border-b border-border/70 p-4 md:flex-row md:items-start md:justify-between">
-        <div>
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-semibold text-foreground">{payment.student_name}</h2>
             <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${getStatusTone(payment.payment_status)}`}>
@@ -23,6 +24,7 @@ export function PaymentDetailSummary({ payment }: { payment: Payment }) {
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{payment.student_number}</p>
+          <StudentParentNames student={payment} />
         </div>
         <div className="text-left md:text-right">
           <p className="text-xs text-muted-foreground">{focusLabel}</p>

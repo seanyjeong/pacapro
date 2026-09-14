@@ -1,3 +1,4 @@
+import { StudentParentNames } from '@/components/students/student-parent-names';
 import { Phone } from 'lucide-react';
 import { formatTabletPhone } from '@/features/tablet-students/tablet-student-utils';
 import type { TabletStudentDetail } from './tablet-student-detail-types';
@@ -14,6 +15,7 @@ export function TabletStudentContactCard({ student }: TabletStudentContactCardPr
         <ContactItem label="학생" value={formatTabletPhone(student.phone)} />
         <ContactItem label="학부모" value={formatTabletPhone(student.parent_phone)} />
       </div>
+      <StudentParentNames student={student} className="mt-4 text-sm" />
     </section>
   );
 }

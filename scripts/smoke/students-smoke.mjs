@@ -304,7 +304,7 @@ async function runDesktop(browser) {
 
   await page.getByRole('button', { name: /미등록관리/ }).click();
   await page.locator('table').getByText('이민수').waitFor();
-  await page.getByPlaceholder('이름, 학번, 전화번호로 검색...').fill('이민수');
+  await page.getByPlaceholder('학생·부모님 이름, 학번, 연락처').fill('이민수');
   const pendingRow = page.locator('tr:has-text("이민수")');
   await pendingRow.waitFor();
   await pendingRow.getByRole('button', { name: '이민수 새 체험 일정 등록' }).click();
@@ -315,7 +315,7 @@ async function runDesktop(browser) {
   await page.goBack({ waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
   await page.getByRole('button', { name: /미등록관리/ }).click();
-  await page.getByPlaceholder('이름, 학번, 전화번호로 검색...').fill('이민수');
+  await page.getByPlaceholder('학생·부모님 이름, 학번, 연락처').fill('이민수');
   await pendingRow.waitFor();
   await clickWithoutNativeDialog(page, pendingRow.locator('button').last(), 'pending student delete');
   await page.getByRole('alertdialog').getByRole('heading', { name: '미등록 학생 삭제' }).waitFor();
@@ -331,7 +331,7 @@ async function runDesktop(browser) {
     throw new Error(`pending delete id mismatch: ${state.pendingDeletedId}`);
   }
 
-  await page.getByPlaceholder('이름, 학번, 전화번호로 검색...').fill('');
+  await page.getByPlaceholder('학생·부모님 이름, 학번, 연락처').fill('');
   await page.getByRole('button', { name: '체험생 등록 전환' }).click();
   const trialRow = page.locator('tr:has-text("최체험")');
   await trialRow.waitFor();

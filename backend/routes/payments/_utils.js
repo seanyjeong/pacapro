@@ -24,6 +24,7 @@
  */
 
 const pool = require('../../config/database');
+const { decryptStudentParentNames } = require('../../services/studentParentNameService');
 const { decrypt } = require('../../utils/encryption');
 const { truncateToThousands, calculateProRatedFee, parseWeeklyDays } = require('../../utils/seasonCalculator');
 const { calculateDueDate } = require('../../utils/dueDateCalculator');
@@ -49,7 +50,7 @@ function decryptPaymentIdentity(obj) {
     if (obj.phone) obj.phone = decrypt(obj.phone);
     if (obj.parent_phone) obj.parent_phone = decrypt(obj.parent_phone);
     if (obj.student_phone) obj.student_phone = decrypt(obj.student_phone);
-    return obj;
+    return Object.assign(obj, decryptStudentParentNames(obj));
 }
 
 /**

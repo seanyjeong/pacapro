@@ -57,6 +57,7 @@ const {
     TrialStatusValidationError,
 } = require('../../../services/trialStatusService');
 const { validateStudentProfileFields } = require('../../../services/studentProfileValidationService');
+const { prepareStudentParentNames, decryptStudentParentNames, StudentParentNameValidationError } = require('../../../services/studentParentNameService');
 
 module.exports = function(router) {
 
@@ -104,6 +105,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             });
         }
 
+        const parentNames = prepareStudentParentNames(req.body);
         const profileValidation = validateStudentProfileFields({
             admissionType: admission_type,
             grade,
@@ -232,8 +234,8 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 trial_remaining,
                 trial_dates,
                 time_slot,
-                memo
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                memo, father_name, mother_name
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 req.user.academyId,
                 finalStudentNumber,
@@ -260,7 +262,9 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 trialActivation ? trialActivation.trialRemaining : null,
                 trialActivation ? JSON.stringify(trialActivation.trialDates) : null,
                 time_slot || 'evening',
-                memo || null
+                memo || null,
+                parentNames.encrypted.father_name ?? null,
+                parentNames.encrypted.mother_name ?? null
             ]
         );
 
@@ -433,7 +437,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
         }
 
         // 민감 필드 복호화
-        const decryptedStudent = decryptFields(createdStudent, ENCRYPTED_FIELDS.students);
+        const decryptedStudent = decryptStudentParentNames(decryptFields(createdStudent, ENCRYPTED_FIELDS.students));
 
         res.status(201).json({
             message: is_trial ? 'Trial student created successfully' : 'Student created successfully',
@@ -442,7 +446,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             autoAssigned: autoAssignResult
         });
     } catch (error) {
-        if (error instanceof TrialStatusValidationError) {
+        if (error instanceof TrialStatusValidationError || error instanceof StudentParentNameValidationError) {
             return res.status(400).json({
                 error: 'Validation Error',
                 message: error.message,

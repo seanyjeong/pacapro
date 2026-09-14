@@ -74,21 +74,6 @@ export function BasicInfoSection({ mode, formData, errors, handleChange, formatP
             {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
           </div>
 
-          {/* 학부모 전화번호 - 입시생일 때만 */}
-          {formData.student_type === 'exam' && (
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">학부모 전화번호</label>
-              <input type="tel" value={formData.parent_phone || ''}
-                onChange={(e) => handleChange('parent_phone', formatPhoneNumber(e.target.value))}
-                placeholder="010-9876-5432" maxLength={13}
-                className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-                  errors.parent_phone ? 'border-red-500' : 'border-border'
-                }`} />
-              <p className="text-xs text-muted-foreground mt-1">하이픈(-) 포함 형식으로 입력하세요</p>
-              {errors.parent_phone && <p className="text-red-500 text-sm mt-1">{errors.parent_phone}</p>}
-            </div>
-          )}
-
           {/* 학교 - 입시생일 때만 */}
           {formData.student_type === 'exam' && (
             <div className="md:col-span-2">

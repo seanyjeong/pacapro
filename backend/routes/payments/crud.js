@@ -53,6 +53,7 @@ router.get('/:id', verifyToken, checkPermission('payments', 'view'), async (req,
                 p.*,
                 ${remainingAmountSql('p')} as remaining_amount,
                 s.name as student_name,
+                s.father_name, s.mother_name,
                 s.student_number,
                 s.phone,
                 s.parent_phone
@@ -166,6 +167,7 @@ router.post('/', verifyToken, checkPermission('payments', 'edit'), async (req, r
                 p.*,
                 ${remainingAmountSql('p')} as remaining_amount,
                 s.name as student_name,
+                s.father_name, s.mother_name,
                 s.student_number
             FROM student_payments p
             JOIN students s ON p.student_id = s.id
@@ -328,6 +330,7 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
                 p.*,
                 ${remainingAmountSql('p')} as remaining_amount,
                 s.name as student_name,
+                s.father_name, s.mother_name,
                 s.student_number
             FROM student_payments p
             JOIN students s ON p.student_id = s.id

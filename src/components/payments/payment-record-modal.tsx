@@ -3,6 +3,8 @@
  * 납부하기 모달 컴포넌트
  */
 
+import { StudentParentNames } from '@/components/students/student-parent-names';
+import type { StudentParentNames as ParentNames } from '@/lib/types/student-parent-names';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -16,6 +18,7 @@ interface PaymentRecordModalProps {
   onClose: () => void;
   onSubmit: (data: { paid_amount: number; payment_method: string; payment_date: string; discount_amount?: number }) => Promise<void>;
   studentName: string;
+  parentNames?: ParentNames;
   finalAmount: number;
   paidAmount?: number;
   baseAmount?: number; // 기본 청구 금액 (할인 전)
@@ -38,6 +41,7 @@ export function PaymentRecordModal({
   onClose,
   onSubmit,
   studentName,
+  parentNames,
   finalAmount,
   paidAmount = 0,
 }: PaymentRecordModalProps) {
@@ -125,6 +129,7 @@ export function PaymentRecordModal({
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-sm text-muted-foreground">학생</p>
               <p className="text-lg font-semibold text-foreground">{studentName}</p>
+              {parentNames && <StudentParentNames student={parentNames} />}
               <div className="mt-2 flex justify-between text-sm">
                 <span className="text-muted-foreground">청구 금액</span>
                 <span className="font-medium">{finalAmountInt.toLocaleString()}원</span>

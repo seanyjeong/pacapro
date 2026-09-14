@@ -182,7 +182,7 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'payments desktop');
   await page.screenshot({ path: '/Users/etlab/paca-payments-desktop.png', fullPage: true });
 
-  await page.getByLabel('학생 이름 검색').fill('이서연');
+  await page.getByLabel('학생·부모님 이름 검색').fill('이서연');
   await page.locator('tr:has-text("이서연")').waitFor();
   await page.locator('tr:has-text("박민수")').waitFor({ state: 'hidden' });
   await page.getByRole('button', { name: '초기화' }).click();

@@ -1,3 +1,4 @@
+import { matchesStudentIdentity } from '@/lib/utils/student-parent-names';
 import type { UnpaidPayment } from '@/lib/types/payment';
 import { getRemainingPaymentAmount } from '@/lib/utils/payment-helpers';
 import type { MobileUnpaidStats } from './mobile-unpaid-types';
@@ -67,6 +68,6 @@ export function filterUnpaidPayments(payments: UnpaidPayment[], query: string) {
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
-    return haystack.includes(keyword);
+    return haystack.includes(keyword) || matchesStudentIdentity(payment, keyword);
   });
 }

@@ -1,3 +1,4 @@
+import { matchesStudentIdentity } from '@/lib/utils/student-parent-names';
 import type { Payment, PaymentFilters } from '@/lib/types/payment';
 import { createInitialPaymentFilters, getSelectedYearMonth } from '@/features/payments/payments-utils';
 import { getRemainingPaymentAmount } from '@/lib/utils/payment-helpers';
@@ -24,7 +25,7 @@ export function getStudentPaymentTitle(studentId: number | undefined, studentNam
 export function filterTabletPayments(payments: Payment[], filters: PaymentFilters): Payment[] {
   const query = filters.search?.trim().toLowerCase();
   if (!query) return payments;
-  return payments.filter((payment) => payment.student_name?.toLowerCase().includes(query));
+  return payments.filter((payment) => matchesStudentIdentity(payment, query));
 }
 
 export function getRemainingAmount(payment: Payment): number {

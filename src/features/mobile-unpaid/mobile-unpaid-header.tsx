@@ -56,7 +56,7 @@ export function MobileUnpaidHeader({
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
           className="w-full rounded-lg border border-zinc-300 bg-white py-2.5 pl-9 pr-3 text-sm text-zinc-950 focus:ring-2 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:ring-zinc-200"
-          placeholder="학생명, 연락처, 월 검색"
+          placeholder="학생·부모님 이름, 연락처, 월"
           aria-label="미납 학생 검색"
         />
       </div>

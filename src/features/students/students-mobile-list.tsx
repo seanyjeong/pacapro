@@ -1,3 +1,4 @@
+import { StudentParentNames } from '@/components/students/student-parent-names';
 import { Calendar, ChevronRight, Phone, School } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { StudentAvatar } from '@/components/students/student-avatar';
@@ -62,6 +63,7 @@ export function StudentsMobileList({
                                 {getStudentDisplayInfo(student)}
                                 {student.school ? ` · ${student.school}` : ''}
                             </p>
+                            <StudentParentNames student={student} />
                         </div>
                     </div>
 

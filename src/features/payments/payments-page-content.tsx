@@ -164,6 +164,7 @@ export function PaymentsPageContent() {
 
       {recordPayment ? (
         <PaymentRecordModal
+          parentNames={recordPayment}
           isOpen={Boolean(recordPayment)}
           onClose={() => setRecordPayment(null)}
           onSubmit={submitDetailedPayment}

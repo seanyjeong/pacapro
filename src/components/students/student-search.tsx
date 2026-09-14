@@ -11,7 +11,7 @@ interface StudentSearchProps {
   placeholder?: string;
 }
 
-export function StudentSearch({ value, onChange, placeholder = '이름, 학번, 전화번호로 검색...' }: StudentSearchProps) {
+export function StudentSearch({ value, onChange, placeholder = '학생·부모님 이름, 학번, 연락처' }: StudentSearchProps) {
   return (
     <div className="relative">
       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

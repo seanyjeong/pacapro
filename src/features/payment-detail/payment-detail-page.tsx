@@ -74,6 +74,7 @@ export function PaymentDetailPage() {
       <PaymentDetailMetaSection payment={state.payment} canEditPaidDate={canEditPayments && Boolean(state.payment.paid_date)} onUpdatePaidDate={state.updatePaidDate} />
       <PaymentDetailNotes payment={state.payment} />
       <PaymentRecordModal
+        parentNames={state.payment}
         isOpen={state.showRecordModal}
         onClose={() => state.setShowRecordModal(false)}
         onSubmit={submitRecordPayment}

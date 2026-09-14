@@ -79,6 +79,8 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     student_type: (initialData?.student_type || 'exam') as StudentType,
     phone: initialData?.phone || '',
     parent_phone: initialData?.parent_phone || '',
+    father_name: initialData?.father_name || '',
+    mother_name: initialData?.mother_name || '',
     school: initialData?.school || '',
     grade: initialData?.grade as Grade | undefined,
     age: initialData?.age || undefined,

@@ -15,6 +15,7 @@ import { StudentRestModal } from '../student-rest-modal';
 import type { Student, StudentFormData } from '@/lib/types/student';
 import { useStudentForm } from './_hooks/useStudentForm';
 import { TrialSection } from './_components/TrialSection';
+import { ParentInfoSection } from './_components/ParentInfoSection';
 import { BasicInfoSection } from './_components/BasicInfoSection';
 import { StudentTypeSection } from './_components/StudentTypeSection';
 import { ClassInfoSection } from './_components/ClassInfoSection';
@@ -72,6 +73,13 @@ export function StudentForm({
       {/* 기본 정보 */}
       <BasicInfoSection
         mode={mode}
+        formData={hook.formData}
+        errors={hook.errors}
+        handleChange={hook.handleChange}
+        formatPhoneNumber={hook.formatPhoneNumber}
+      />
+
+      <ParentInfoSection
         formData={hook.formData}
         errors={hook.errors}
         handleChange={hook.handleChange}

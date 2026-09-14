@@ -28,8 +28,8 @@ export function PaymentFilterBar({
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            aria-label="학생 이름 검색"
-            placeholder="학생 이름 검색"
+            aria-label="학생·부모님 이름 검색"
+            placeholder="학생·부모님 이름 검색"
             value={filters.search || ''}
             onChange={(event) => onFilterChange({ search: event.target.value || undefined })}
             className="h-10 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/25"

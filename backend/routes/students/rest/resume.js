@@ -1,3 +1,4 @@
+const { omitStudentParentNames } = require('../../../services/studentParentNameService');
 const pool = require('../../../config/database');
 const { verifyToken, checkPermission } = require('../../../middleware/auth');
 const logger = require('../../../utils/logger');
@@ -277,7 +278,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
 
         res.json({
             message: messageParts.join(' '),
-            student: updatedStudents[0],
+            student: omitStudentParentNames(updatedStudents[0]),
             scheduleAssigned: reassignResult,
             paymentCreated,
             creditRecalculation,

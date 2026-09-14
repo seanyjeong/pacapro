@@ -1,0 +1,4 @@
+-- Optional schema cleanup ONLY after restoring the old application and backing up parent names.
+-- Ordinary application rollback keeps both nullable columns to preserve entered names.
+-- This explicitly requested cleanup removes those two fields; never run automatically.
+ALTER TABLE students DROP COLUMN father_name, DROP COLUMN mother_name;

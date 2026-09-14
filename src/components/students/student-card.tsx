@@ -1,3 +1,4 @@
+import { StudentParentNames } from '@/components/students/student-parent-names';
 import { Calendar, MapPin, NotebookText, Phone, UserRound } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StudentAvatar } from '@/components/students/student-avatar';
@@ -68,6 +69,7 @@ export function StudentCard({ student }: StudentCardProps) {
             <DetailRow label="학생 연락처" value={displayValue(formatPhoneNumber(student.phone))} />
             <DetailRow label="학부모 연락처" value={displayValue(formatPhoneNumber(student.parent_phone))} />
           </div>
+          <StudentParentNames student={student} className="mt-4 text-sm" />
         </section>
 
         <section className="rounded-md border border-border bg-muted/30 p-4">

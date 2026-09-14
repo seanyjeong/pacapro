@@ -1,0 +1,24 @@
+-- Backup first. Apply before deploying code that selects these optional encrypted fields.
+-- Add at the end so MySQL 8 can use INSTANT without rebuilding existing student rows.
+SET @parent_names_schema = DATABASE();
+SET @parent_names_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN father_name VARCHAR(512) NULL DEFAULT NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @parent_names_schema AND TABLE_NAME = 'students' AND COLUMN_NAME = 'father_name'
+);
+PREPARE parent_names_stmt FROM @parent_names_sql;
+EXECUTE parent_names_stmt;
+DEALLOCATE PREPARE parent_names_stmt;
+
+SET @parent_names_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN mother_name VARCHAR(512) NULL DEFAULT NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @parent_names_schema AND TABLE_NAME = 'students' AND COLUMN_NAME = 'mother_name'
+);
+PREPARE parent_names_stmt FROM @parent_names_sql;
+EXECUTE parent_names_stmt;
+DEALLOCATE PREPARE parent_names_stmt;
