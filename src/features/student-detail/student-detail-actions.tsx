@@ -60,7 +60,7 @@ export function StudentDetailActions({
   const hasOutstanding = outstandingAmount > 0;
   const primaryActions: ActionButton[] = [
     {
-      description: '기본 정보와 연락처를 수정합니다.',
+      description: '기본 정보, 보호자 성함과 연락처를 수정합니다.',
       icon: Pencil,
       label: '정보 수정',
       onClick: onEdit,

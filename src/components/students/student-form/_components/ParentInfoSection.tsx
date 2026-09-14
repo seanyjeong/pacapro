@@ -1,8 +1,9 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { StudentFormData } from '@/lib/types/student';
-import { STUDENT_PARENT_NAME_FIELDS, STUDENT_PARENT_NAME_MAX_LENGTH } from '@/constants/student-parent-names';
+import { STUDENT_PARENT_INFO_SECTION_ID, STUDENT_PARENT_NAME_FIELDS, STUDENT_PARENT_NAME_MAX_LENGTH } from '@/constants/student-parent-names';
 
 interface ParentInfoSectionProps {
   formData: StudentFormData;
@@ -12,8 +13,17 @@ interface ParentInfoSectionProps {
 }
 
 export function ParentInfoSection({ formData, errors, handleChange, formatPhoneNumber }: ParentInfoSectionProps) {
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Student data loads after navigation, so the hash target may not exist during the initial scroll.
+    if (window.location.hash === `#${STUDENT_PARENT_INFO_SECTION_ID}`) {
+      sectionRef.current?.scrollIntoView({ block: 'start' });
+    }
+  }, []);
+
   return (
-    <Card className="rounded-md shadow-none">
+    <Card ref={sectionRef} id={STUDENT_PARENT_INFO_SECTION_ID} className="scroll-mt-24 rounded-md shadow-none">
       <CardHeader className="space-y-2">
         <CardTitle>보호자 정보</CardTitle>
         <p id="parent-info-help" className="text-sm leading-relaxed text-muted-foreground">

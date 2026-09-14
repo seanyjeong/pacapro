@@ -27,6 +27,37 @@ async function scenario(width, run) {
 
 try {
   for (const width of [390, 1280]) await scenario(width, async (page, state) => {
+    state.students[0].father_name = null;
+    state.students[0].mother_name = null;
+    await page.goto('/students', { waitUntil: 'networkidle' });
+    if (width >= 768) {
+      await page.locator('tbody tr').filter({ hasText: '김첫째' }).first().click();
+    } else {
+      await page.getByRole('button', { name: '김첫째 상세 보기' }).click();
+    }
+    await page.waitForURL('**/students/77');
+    const details = page.getByTestId('student-parent-details');
+    await details.getByText('아버지 성함', { exact: true }).waitFor();
+    await details.getByText('어머니 성함', { exact: true }).waitFor();
+    assert.equal(await details.getByText('미입력', { exact: true }).count(), 2);
+    await details.getByRole('link', { name: '보호자 정보 입력' }).click();
+    await page.waitForURL('**/students/77/edit#parent-info');
+    const father = page.getByLabel('아버지 성함');
+    const mother = page.getByLabel('어머니 성함');
+    await father.waitFor();
+    assert.equal(await father.inputValue(), '');
+    assert.equal(await mother.inputValue(), '');
+    await page.waitForFunction(() => {
+      const field = document.getElementById('field-father_name');
+      if (!field) return false;
+      const box = field.getBoundingClientRect();
+      return box.top >= 64 && box.bottom <= window.innerHeight;
+    });
+    assert.equal(state.writes.length, 0);
+    await page.screenshot({ path: `${artifacts}/parent-entry-${width}.png` });
+  });
+
+  for (const width of [390, 1280]) await scenario(width, async (page, state) => {
     await page.goto('/students/77/edit', { waitUntil: 'networkidle' });
     const father = page.getByLabel('아버지 성함');
     const mother = page.getByLabel('어머니 성함');
@@ -49,7 +80,7 @@ try {
     await page.waitForURL('**/students/77');
     assert.equal(state.writes.at(-1).body.father_name, '김수정');
     assert.equal(state.writes.at(-1).body.mother_name, '');
-    await page.getByText('아버지 김수정', { exact: true }).waitFor();
+    await page.getByTestId('student-parent-details').getByText('김수정', { exact: true }).waitFor();
   });
 
   await scenario(390, async (page, state) => {
