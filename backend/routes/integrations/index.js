@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const service = require('../../services/maxEngineService');
 
 const router = express.Router();
+router.use('/max-engine/full', require('./full'));
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10,
   standardHeaders: 'draft-7', legacyHeaders: false,
   message: { error: { code: 'RATE_LIMITED', message: '로그인 시도가 많습니다. 잠시 뒤 다시 시도해 주세요.', details: {} } } });

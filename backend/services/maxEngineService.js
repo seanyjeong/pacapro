@@ -5,13 +5,7 @@ const repo = require('../repositories/maxEngineRepository');
 const { decrypt } = require('../utils/encryption');
 const { signingKey, TOKEN_SECONDS, PAGE_SIZE, ISSUER, AUDIENCE } = require('../config/maxEngine');
 
-class LinkError extends Error {
-  constructor(status, code, message) {
-    super(message);
-    this.status = status;
-    this.code = code;
-  }
-}
+const { LinkError } = require('../models/maxEngineError');
 
 function key() {
   const value = signingKey();
