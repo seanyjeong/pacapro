@@ -44,3 +44,15 @@ RUN_MAX_ENGINE_MYSQL=1 TEST_MYSQL_PORT=<isolated-port> MAXAI_NATIVE_MYSQL_SOCKET
 ```
 
 max-engine 저장소의 `docs/analysis/paca-peak-full/IMPLEMENTATION.md`, `ROUTES.md`, `ops/deploy/mcp/VERIFY.md`에 세 저장소 전체 검증·배포 인계를 기록한다.
+
+## 2026-09-27 업무 조회 효율화 증분
+
+`read_resource` 원본 조회에 JSON 배열 `ids`(1~200개), `expand`(catalog의 표시용 관계, 최대 5개)를 추가했다. 교육원·삭제·현재 PACA 소속 검사를 유지하며 관련 학생 id/이름/학년/학교, 수업·강사·종목 표시 필드만 일괄 결합한다. PEAK의 paca_* 별칭도 실제 PACA 관계를 사용한다.
+
+`GET /{provider}/workflows/{workflow}?params=<JSON>`는 PACA 9개(수업 명단, 출결 요약, 학생 요약/검색, 미납/수납, 상담 일정, 체험 학생, 오늘 현황)와 PEAK 3개(최근 기록, 순위, 학생 향상도)를 제공한다. 기간·학생 조건을 원본 서버에서 적용하고 결과를 결합한다. 이름·전화는 교육원 범위 안에서 복호화 검색한다. 정확한 이름의 동명이인은 후보 id를 반환한다. PEAK 업무 표시 필드·상태·성별은 현재 PACA 기준, 학생 id는 PEAK 원본을 유지한다. 순위는 기존 PEAK의 재원생 최신 기록·higher/lower·순번 기준이다.
+
+집계 상한은 10,000행(초과 오류), 상세 최대 200건은 total/truncated로 명시한다. 수업은 출결 배정표 기준이며 명단 미생성은 학생 0명, 시간 범위는 교육원 설정과 겹치는 수업이다. 돈은 센트 단위 BigInt로 합산하고 소수 문자열로 반환한다. 쓰기 계약과 preview→confirm은 그대로다.
+
+이번 증분에서는 **paca.js 변경·복사 금지**: 운영에만 있는 bridgePacaReadAdapter 3줄을 보존한다. 신규 서비스·상수와 full 라우트/읽기 서비스/읽기 저장소만 검토한다. 새 DB migration·환경 키는 없다. 기존 위의 paca.js 배포 설명은 최초 D-117 구축 당시의 기록이다.
+
+최종 143 suites / 1,202 tests passed, skip 0. 신규 단위·실제 MySQL 업무 통합 10건, 조회 변경 코드 statements 92.81%·branches 81.93%. 실제 OAuth MCP 10개 질문 전후 결과 일치와 상세 증분 목록은 max-engine `docs/analysis/mcp-efficient/`, `ops/deploy/mcp/VERIFY.md`에 기록한다. 이번 작업에서 운영 쓰기·배포·push·main 병합은 수행하지 않았다.

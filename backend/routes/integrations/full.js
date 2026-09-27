@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const auth = require('../../services/maxEngineFullAuth');
 const reads = require('../../services/maxEngineFullRead');
+const workflows = require('../../services/maxEngineWorkflows');
 const commands = require('../../services/maxEngineFullCommands');
 const { LinkError } = require('../../services/maxEngineService');
 const { fail } = require('../../services/maxEngineFullSecurity');
@@ -46,8 +47,9 @@ router.param('provider', (req, res, next, provider) => {
   next();
 });
 router.get('/:provider/catalog', route('catalog', async req => ({ academy_id: req.actor.academy_id,
-  resources: reads.resources(req.params.provider), commands: commands.catalog(req.params.provider) })));
+  resources: reads.resources(req.params.provider), workflows: workflows.catalog(req.params.provider), commands: commands.catalog(req.params.provider) })));
 router.get('/:provider/resources/:resource', route('read', req => reads.read(req.actor, req.params.provider, req.params.resource, req.query)));
+router.get('/:provider/workflows/:workflow', route('workflow', req => workflows.read(req.actor, req.params.provider, req.params.workflow, req.query)));
 router.post('/:provider/preview', route('preview', req => commands.preview(req.actor, req.params.provider, req.body)));
 router.post('/:provider/confirm', route('confirm', req => commands.confirm(req.actor, req.params.provider, req.body)));
 router.use((_req, res) => res.status(404).json({ error: { code: 'NOT_FOUND', message: '허용된 연동 경로를 확인해 주세요.', details: {} } }));
