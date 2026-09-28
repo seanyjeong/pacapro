@@ -2,9 +2,16 @@ jest.mock('node-cron', () => ({ schedule: jest.fn() }));
 jest.mock('../../config/database', () => ({ query: jest.fn() }));
 
 const db = require('../../config/database');
-const { promoteStudentGrades } = require('../../scheduler/gradePromotionScheduler');
+const cron = require('node-cron');
+const { initGradePromotionScheduler, promoteStudentGrades } = require('../../scheduler/gradePromotionScheduler');
 
 describe('gradePromotionScheduler', () => {
+    test('정기 진급은 매년 2월 1일 01:00 한국 시간에 예약된다', () => {
+        initGradePromotionScheduler();
+        expect(cron.schedule).toHaveBeenCalledWith('0 1 1 2 *', expect.any(Function),
+            expect.objectContaining({ scheduled: true, timezone: 'Asia/Seoul' }));
+    });
+
     beforeEach(() => {
         db.query.mockReset();
     });

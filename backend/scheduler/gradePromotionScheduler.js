@@ -1,6 +1,6 @@
 /**
  * 학년 자동 진급 스케줄러
- * 매년 1월 1일에 실행되어 학생 학년을 자동으로 진급 처리
+ * 매년 2월 1일에 실행되어 학생 학년을 자동으로 진급 처리 (2026-09-28 원장 결정: 1월 1일 → 2월 1일)
  *
  * 진급 규칙 (높은 학년부터 일괄 처리):
  * - 고3 → N수
@@ -115,11 +115,11 @@ async function graduateStudents(studentIds) {
 
 /**
  * 스케줄러 초기화
- * 매년 1월 1일 오전 1시에 실행 (한국 시간)
+ * 매년 2월 1일 오전 1시에 실행 (한국 시간)
  */
 function initGradePromotionScheduler() {
-    // 매년 1월 1일 01:00에 실행 (0 1 1 1 *)
-    cron.schedule('0 1 1 1 *', async () => {
+    // 매년 2월 1일 01:00에 실행 (0 1 1 2 *)
+    cron.schedule('0 1 1 2 *', async () => {
         console.log('[GradePromotionScheduler] Annual grade promotion starting...');
         await promoteStudentGrades(false);
     }, {
@@ -127,7 +127,7 @@ function initGradePromotionScheduler() {
         timezone: 'Asia/Seoul'
     });
 
-    console.log('🎓 학년 자동 진급 스케줄러 초기화 완료 (매년 1월 1일 01:00 실행)');
+    console.log('🎓 학년 자동 진급 스케줄러 초기화 완료 (매년 2월 1일 01:00 실행)');
 }
 
 module.exports = {
