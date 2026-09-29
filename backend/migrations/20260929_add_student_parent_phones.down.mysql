@@ -1,0 +1,3 @@
+-- Manual destructive rollback only, after separately backing up both new columns.
+-- Normal application rollback retains these columns to preserve entered contacts.
+ALTER TABLE students DROP COLUMN father_phone, DROP COLUMN mother_phone;

@@ -150,7 +150,7 @@ function decryptArrayFields(arr, fields) {
 
 // 암호화 대상 필드 정의
 const ENCRYPTED_FIELDS = {
-    students: ['name', 'phone', 'parent_phone', 'address'],
+    students: ['name', 'phone', 'parent_phone', 'address', 'father_phone', 'mother_phone'],
     instructors: ['name', 'phone', 'address', 'resident_number', 'account_number', 'account_holder'],
     consultations: ['student_name', 'student_phone', 'parent_name', 'parent_phone', 'notes'],
     users: ['name', 'phone']

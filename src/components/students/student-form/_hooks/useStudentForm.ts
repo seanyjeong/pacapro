@@ -8,6 +8,7 @@ import type { Season } from '@/lib/types/season';
 import { EXAM_ADMISSION_OPTIONS, ADULT_ADMISSION_OPTIONS, isAdvanceAdmissionGrade } from '@/lib/types/student';
 import type { ClassDaySlot } from '@/lib/types/student';
 import { parseClassDaysWithSlots, extractDayNumbers } from '@/lib/utils/student-helpers';
+import { STUDENT_PARENT_PHONE_FIELDS } from '@/constants/student-parent-phones';
 import { AcademySettings, TuitionByWeeklyCount, DEFAULT_TUITION, type StudentFormConfirmState } from '../_types';
 
 interface StudentFormProps {
@@ -81,6 +82,8 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     parent_phone: initialData?.parent_phone || '',
     father_name: initialData?.father_name || '',
     mother_name: initialData?.mother_name || '',
+    father_phone: initialData?.father_phone || '',
+    mother_phone: initialData?.mother_phone || '',
     school: initialData?.school || '',
     grade: initialData?.grade as Grade | undefined,
     age: initialData?.age || undefined,
@@ -312,6 +315,12 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     }
     if (formData.parent_phone?.trim() && !isValidPhoneNumber(formData.parent_phone)) {
       newErrors.parent_phone = '올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)';
+    }
+    for (const { field, label } of STUDENT_PARENT_PHONE_FIELDS) {
+      const value = formData[field];
+      if (value?.trim() && !isValidPhoneNumber(value)) {
+        newErrors[field] = `${label}를 올바르게 입력해주세요. (예: 010-1234-5678)`;
+      }
     }
     if (formData.student_type === 'exam') {
       if (!formData.grade) newErrors.grade = '학년을 선택해주세요.';

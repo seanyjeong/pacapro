@@ -23,6 +23,7 @@ const db = require('../../config/database');
 const pool = db; // ADR-005 alias (ADR-011 신규 alias 추가 패턴)
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { decrypt, encrypt } = require('../../utils/encryption');
+const { decryptStudentParentContacts } = require('../../services/studentParentContactService');
 const { sendAlimtalkSolapi } = require('../../utils/solapi');
 const { decryptApiKey, sendAlimtalk: sendAlimtalkSens } = require('../../utils/naverSens');
 const logger = require('../../utils/logger');
@@ -62,7 +63,7 @@ function decryptStudentInfo(student) {
     if (student.name) student.name = decrypt(student.name);
     if (student.phone) student.phone = decrypt(student.phone);
     if (student.parent_phone) student.parent_phone = decrypt(student.parent_phone);
-    return student;
+    return Object.assign(student, decryptStudentParentContacts(student));
 }
 
 /**

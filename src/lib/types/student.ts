@@ -1,4 +1,5 @@
 import type { StudentParentNames } from '@/lib/types/student-parent-names';
+import type { StudentParentPhones } from '@/lib/types/student-parent-phones';
 
 /**
  * Student Type Definitions
@@ -50,7 +51,7 @@ export interface TrialDate {
 }
 
 // 기본 학생 인터페이스 - DB 스키마 매칭
-export interface Student extends StudentParentNames {
+export interface Student extends StudentParentNames, StudentParentPhones {
   id: number;
   academy_id: number;
   student_number: string | null;
@@ -105,7 +106,7 @@ export interface Student extends StudentParentNames {
 }
 
 // 학생 등록/수정용 DTO
-export interface StudentFormData extends StudentParentNames {
+export interface StudentFormData extends StudentParentNames, StudentParentPhones {
   student_number?: string;
   name: string;
   gender?: Gender;

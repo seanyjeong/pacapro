@@ -39,7 +39,7 @@ try {
     const details = page.getByTestId('student-parent-details');
     await details.getByText('아버지 성함', { exact: true }).waitFor();
     await details.getByText('어머니 성함', { exact: true }).waitFor();
-    assert.equal(await details.getByText('미입력', { exact: true }).count(), 2);
+    assert.equal(await details.getByText('미입력', { exact: true }).count(), 4);
     await details.getByRole('link', { name: '보호자 정보 입력' }).click();
     await page.waitForURL('**/students/77/edit#parent-info');
     const father = page.getByLabel('아버지 성함');

@@ -1,0 +1,23 @@
+-- Apply before the backend and frontend release. Keep existing parent_phone unchanged.
+SET @parent_phones_schema = DATABASE();
+SET @parent_phones_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN father_phone VARCHAR(512) NULL DEFAULT NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @parent_phones_schema AND TABLE_NAME = 'students' AND COLUMN_NAME = 'father_phone'
+);
+PREPARE parent_phones_stmt FROM @parent_phones_sql;
+EXECUTE parent_phones_stmt;
+DEALLOCATE PREPARE parent_phones_stmt;
+
+SET @parent_phones_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN mother_phone VARCHAR(512) NULL DEFAULT NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @parent_phones_schema AND TABLE_NAME = 'students' AND COLUMN_NAME = 'mother_phone'
+);
+PREPARE parent_phones_stmt FROM @parent_phones_sql;
+EXECUTE parent_phones_stmt;
+DEALLOCATE PREPARE parent_phones_stmt;

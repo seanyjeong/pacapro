@@ -8,6 +8,7 @@
  */
 
 import type { AdmissionType } from './student-admission';
+import type { StudentParentPhones } from './student-parent-phones';
 export type { AdmissionType } from './student-admission';
 
 // ===== Common Types =====
@@ -45,7 +46,7 @@ export type RecordType = 'mock_exam' | 'physical' | 'competition';
 
 // ===== Student =====
 
-export interface Student {
+export interface Student extends StudentParentPhones {
   id: number;
   academy_id: number;
   student_number: string | null;
@@ -80,7 +81,7 @@ export interface Student {
   deleted_at: string | null;
 }
 
-export interface CreateStudentInput {
+export interface CreateStudentInput extends StudentParentPhones {
   name: string;
   student_type: StudentType;
   phone: string;

@@ -1,4 +1,5 @@
 const { encrypt, decrypt } = require('../utils/encryption');
+const { STUDENT_PARENT_PHONE_FIELDS } = require('../constants/studentParentPhones');
 const {
     STUDENT_PARENT_NAME_FIELDS, STUDENT_PARENT_NAME_MAX_LENGTH, STUDENT_PARENT_NAME_LABELS,
 } = require('../constants/studentParentNames');
@@ -50,7 +51,7 @@ function matchesStudentParentName(student, query) {
 function omitStudentParentNames(record) {
     // Legacy action responses return SELECT * rows; identity is reloaded through student detail.
     const result = { ...record };
-    for (const field of STUDENT_PARENT_NAME_FIELDS) delete result[field];
+    for (const field of [...STUDENT_PARENT_NAME_FIELDS, ...STUDENT_PARENT_PHONE_FIELDS]) delete result[field];
     return result;
 }
 

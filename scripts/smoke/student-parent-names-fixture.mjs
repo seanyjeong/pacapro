@@ -65,6 +65,8 @@ export function makeStudent(overrides = {}) {
     parent_phone: '',
     father_name: '김아버지',
     mother_name: '박어머니',
+    father_phone: null,
+    mother_phone: null,
     school: '일산고',
     grade: '고2',
     age: null,

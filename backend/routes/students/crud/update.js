@@ -53,7 +53,7 @@ const {
     TrialStatusValidationError,
 } = require('../../../services/trialStatusService');
 const { validateStudentProfileFields } = require('../../../services/studentProfileValidationService');
-const { prepareStudentParentNames, decryptStudentParentNames, StudentParentNameValidationError } = require('../../../services/studentParentNameService');
+const { prepareStudentParentContacts, decryptStudentParentContacts, StudentParentContactValidationError } = require('../../../services/studentParentContactService');
 
 module.exports = function(router) {
 
@@ -68,7 +68,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
     try {
         // Check if student exists and get current values for audit logging
         const [students] = await pool.execute(
-            `SELECT id, student_number, name, gender, student_type, phone, parent_phone, father_name, mother_name,
+            `SELECT id, student_number, name, gender, student_type, phone, parent_phone, father_name, mother_name, father_phone, mother_phone,
                     school, grade, age, admission_type, class_days, weekly_count,
                     monthly_tuition, discount_rate, discount_reason, payment_due_day,
                     enrollment_date, address, notes, memo, status, time_slot,
@@ -139,8 +139,8 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             trialRemaining: trial_remaining,
         });
 
-        const parentNames = prepareStudentParentNames(req.body);
-        const previousParents = decryptStudentParentNames(students[0]);
+        const parentContacts = prepareStudentParentContacts(req.body);
+        const previousParents = decryptStudentParentContacts(students[0]);
         const profileValidation = validateStudentProfileFields({
             admissionType: admission_type,
             currentStudent: students[0],
@@ -195,7 +195,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         // Build update query dynamically
         const updates = [];
         const params = [];
-        for (const [field, value] of Object.entries(parentNames.encrypted)) {
+        for (const [field, value] of Object.entries(parentContacts.encrypted)) {
             updates.push(`${field} = ?`);
             params.push(value);
         }
@@ -388,15 +388,15 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             }
             // 타입 맞춰서 비교
             if (String(oldVal ?? '') !== String(newVal ?? '')) {
-                oldValues[field] = oldVal;
-                newValues[field] = newVal;
+                oldValues[field] = field === 'parent_phone' ? (oldVal ? '등록됨' : '미등록') : oldVal;
+                newValues[field] = field === 'parent_phone' ? (newVal ? '연락처 변경' : '미등록') : newVal;
             }
         }
-        // Audit whether names changed without copying personal names into the audit JSON.
-        for (const [field, value] of Object.entries(parentNames.values)) {
+        // Record changes without copying parent names or phone numbers into audit JSON.
+        for (const [field, value] of Object.entries(parentContacts.values)) {
             if ((previousParents[field] || null) === value) continue;
             oldValues[field] = previousParents[field] ? '등록됨' : '미등록';
-            newValues[field] = value ? '성함 변경' : '미등록';
+            newValues[field] = value ? (field.endsWith('_phone') ? '연락처 변경' : '성함 변경') : '미등록';
         }
         // class_days 별도 비교 (JSON)
         if (class_days !== undefined) {
@@ -460,7 +460,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             oldStatus,
         });
         // 민감 필드 복호화 후 응답
-        const decryptedStudent = normalizeStudentClassDays(decryptStudentParentNames(decryptFields(updatedStudents[0], ENCRYPTED_FIELDS.students)));
+        const decryptedStudent = normalizeStudentClassDays(decryptStudentParentContacts(decryptFields(updatedStudents[0], ENCRYPTED_FIELDS.students)));
 
         res.json({
             message: 'Student updated successfully',
@@ -475,7 +475,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             pendingInfo
         });
     } catch (error) {
-        if (error instanceof TrialStatusValidationError || error instanceof StudentParentNameValidationError) {
+        if (error instanceof TrialStatusValidationError || error instanceof StudentParentContactValidationError) {
             return res.status(400).json({
                 error: 'Validation Error',
                 message: error.message,

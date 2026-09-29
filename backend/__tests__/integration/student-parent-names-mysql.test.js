@@ -23,11 +23,12 @@ const { createParentNamesFixture } = require('./student-parent-names-fixture');
 const { logAudit } = require('../../utils/auditLogger');
 const suite = mockPool ? describe : describe.skip;
 
-suite('student parent names: real MySQL migration and HTTP contracts', () => {
+suite('student parent contacts: real MySQL migration and HTTP contracts', () => {
     let app;
     let firstId;
     const api = (method, url, academy = 1) => request(app)[method](url).set('x-fixture-academy', String(academy));
-    const migration = fs.readFileSync(path.join(__dirname, '../../migrations/20260914_add_student_parent_names.mysql'), 'utf8');
+    const migration = ['20260914_add_student_parent_names.mysql', '20260929_add_student_parent_phones.mysql']
+        .map(file => fs.readFileSync(path.join(__dirname, '../../migrations', file), 'utf8')).join('\n');
     const migrate = async () => {
         const connection = await mockPool.getConnection();
         try {
@@ -51,7 +52,14 @@ suite('student parent names: real MySQL migration and HTTP contracts', () => {
         const [[before]] = await mockPool.query('SELECT * FROM students WHERE id=99');
         await migrate(); await migrate();
         const [[after]] = await mockPool.query('SELECT * FROM students WHERE id=99');
-        expect(after).toEqual({ ...before, father_name: null, mother_name: null });
+        expect(after).toEqual({ ...before, father_name: null, mother_name: null, father_phone: null, mother_phone: null });
+        const [columns] = await mockPool.query(`SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+            FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE()
+            AND TABLE_NAME='students' AND COLUMN_NAME IN ('father_phone','mother_phone')`);
+        expect(columns).toHaveLength(2);
+        for (const column of columns) {
+            expect(column).toMatchObject({ COLUMN_TYPE: 'varchar(512)', IS_NULLABLE: 'YES', COLUMN_DEFAULT: null });
+        }
     });
 
     test('create encrypts both names; list and detail decrypt them', async () => {
@@ -93,6 +101,7 @@ suite('student parent names: real MySQL migration and HTTP contracts', () => {
     test('partial updates preserve omitted parents; blanks and null clear only supplied parent', async () => {
         const [[paymentBefore]] = await mockPool.query('SELECT * FROM student_payments WHERE id=501');
         let result = await api('put', `/students/${firstId}`).send({ memo: '연락 예정' });
+        expect(result.body).toMatchObject({ message: 'Student updated successfully' });
         expect(result.status).toBe(200);
         expect(result.body.student.father_name).toBe('김아버지');
         result = await api('put', `/students/${firstId}`).send({ father_name: ' 김새성함 ' });
@@ -121,6 +130,58 @@ suite('student parent names: real MySQL migration and HTTP contracts', () => {
         expect((await api('get', `/students/${firstId}`, 2)).status).toBe(404);
         expect((await request(app).get('/students')).status).toBe(401);
         expect((await api('put', `/students/${firstId}`).set('x-fixture-readonly', 'true').send({ father_name: '금지' })).status).toBe(403);
+        const [[after]] = await mockPool.query('SELECT * FROM students WHERE id=?', [firstId]);
+        expect(after).toEqual(before);
+    });
+
+    test('two parent phones survive create, list, detail, partial edits and individual clearing', async () => {
+        const result = await api('post', '/students').send({ name: '연락처검증학생', phone: '010-2222-5555',
+            class_days: [], monthly_tuition: 0, parent_phone: '010-7777-8888',
+            father_phone: '01011112222', mother_phone: '010-3333-4444' });
+        expect(result.status).toBe(201);
+        const id = result.body.student.id;
+        const [[stored]] = await mockPool.query('SELECT * FROM students WHERE id=?', [id]);
+        expect(stored.father_phone).toMatch(/^ENC:/);
+        expect(stored.mother_phone).toMatch(/^ENC:/);
+        for (const student of [result.body.student, (await api('get', `/students/${id}`)).body.student,
+            (await api('get', '/students')).body.students.find(s => s.id === id)]) {
+            expect(student.father_phone).toBe('010-1111-2222');
+            expect(student.mother_phone).toBe('010-3333-4444');
+            expect(student.parent_phone).toBe('010-7777-8888');
+        }
+        expect((await api('put', `/students/${id}`).send({ memo: '번호 보존' })).status).toBe(200);
+        const [[unchanged]] = await mockPool.query('SELECT father_phone,mother_phone FROM students WHERE id=?', [id]);
+        expect(unchanged).toEqual({ father_phone: stored.father_phone, mother_phone: stored.mother_phone });
+        let update = await api('put', `/students/${id}`).send({ father_phone: '010-9999-0000' });
+        expect(update.status).toBe(200);
+        expect(update.body.student.father_phone).toBe('010-9999-0000');
+        expect(update.body.student.mother_phone).toBe('010-3333-4444');
+        expect(update.body.student.parent_phone).toBe('010-7777-8888');
+        update = await api('put', `/students/${id}`).send({ parent_phone: '010-3333-4444' });
+        expect(update.status).toBe(200);
+        expect(update.body.student.parent_phone).toBe('010-3333-4444');
+        expect(update.body.student.father_phone).toBe('010-9999-0000');
+        const audit = JSON.stringify(logAudit.mock.calls);
+        for (const phone of ['010-1111-2222', '010-9999-0000', '010-3333-4444', '010-7777-8888']) expect(audit).not.toContain(phone);
+        update = await api('put', `/students/${id}`).send({ father_phone: '' });
+        expect(update.body.student.father_phone).toBeNull();
+        expect(update.body.student.mother_phone).toBe('010-3333-4444');
+        update = await api('put', `/students/${id}`).send({ mother_phone: null });
+        expect(update.body.student.mother_phone).toBeNull();
+        const legacy = await api('get', '/students/99');
+        expect(legacy.body.student.father_phone).toBeNull();
+        expect(legacy.body.student.mother_phone).toBeNull();
+    });
+
+    test('invalid phones, academy scope and write permissions prevent contact mutations', async () => {
+        const [[before]] = await mockPool.query('SELECT * FROM students WHERE id=?', [firstId]);
+        for (const mother_phone of [123, '010-123', 'ENC:forged']) {
+            expect((await api('put', `/students/${firstId}`).send({ mother_phone })).status).toBe(400);
+            expect((await api('post', '/students').send({ name: '잘못된번호', phone: '010-2222-6666', mother_phone })).status).toBe(400);
+        }
+        expect((await api('put', `/students/${firstId}`, 2).send({ father_phone: '010-8888-0000' })).status).toBe(404);
+        expect((await api('put', `/students/${firstId}`).set('x-fixture-readonly', 'true')
+            .send({ father_phone: '010-8888-0000' })).status).toBe(403);
         const [[after]] = await mockPool.query('SELECT * FROM students WHERE id=?', [firstId]);
         expect(after).toEqual(before);
     });

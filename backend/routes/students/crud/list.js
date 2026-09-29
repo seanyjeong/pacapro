@@ -30,7 +30,8 @@ const {
     normalizeStudentClassDays,
     logger
 } = require('./_utils');
-const { decryptStudentParentNames, matchesStudentParentName } = require('../../../services/studentParentNameService');
+const { decryptStudentParentContacts } = require('../../../services/studentParentContactService');
+const { matchesStudentParentName } = require('../../../services/studentParentNameService');
 
 module.exports = function(router) {
 
@@ -49,6 +50,8 @@ router.get('/', verifyToken, async (req, res) => {
                 s.parent_phone,
                 s.father_name,
                 s.mother_name,
+                s.father_phone,
+                s.mother_phone,
                 s.school,
                 s.grade,
                 s.age,
@@ -135,7 +138,7 @@ router.get('/', verifyToken, async (req, res) => {
 
         // 민감 필드 복호화
         let decryptedStudents = decryptArrayFields(students, ENCRYPTED_FIELDS.students)
-            .map(decryptStudentParentNames).map(normalizeStudentClassDays);
+            .map(decryptStudentParentContacts).map(normalizeStudentClassDays);
 
         // search 파라미터가 있으면 복호화된 데이터에서 필터링
         if (search) {

@@ -1,4 +1,6 @@
-export interface TabletStudentDetail {
+import type { StudentParentPhones } from '@/lib/types/student-parent-phones';
+
+export interface TabletStudentDetail extends StudentParentPhones {
   address: string | null;
   class_days: unknown;
   discount_rate: number | string;

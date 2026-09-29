@@ -9,6 +9,10 @@
 PACA 운영 서버, 운영 DB, 스케줄러, Google Drive 백업의 기준 호스트는
 Vultr 하나뿐이다. 폐기된 N100은 배포, 검증, 롤백, 데이터 비교 대상으로 사용하지 않는다.
 
+배포 전 Vultr에서 `n100-to-Vultr sync disabled or redesigned` 조건을 확인한다.
+폐기된 호스트에서 운영 코드나 DB를 덮어쓰는 동기화 작업이 남아 있지 않아야 한다.
+이 확인을 위해 폐기된 N100에 접속하거나 해당 호스트를 다시 운영 대상으로 삼지 않는다.
+
 Canonical backend:
 
 ```text
@@ -54,8 +58,43 @@ then wait for the matching Vercel Production deployment and run the relevant
 browser smoke.
 
 If any excluded surface changes, or the hotfix changes data ownership, routing,
-credentials, scheduler ownership, or DB state, stop and use the full cutover
-gate below.
+credentials, scheduler ownership, or DB state, use the full cutover gate below.
+The explicitly approved parent-phone additive release may use its scoped gate
+below; it is not a hotfix-gate pass or a full-cutover completion claim.
+
+## Parent Phone Additive Release Gate (4.0.53)
+
+The owner approved production DB changes, backend deployment, and the versioned
+frontend push for `20260929_add_student_parent_phones.mysql` on 2026-09-29.
+This gate covers that release only, on the existing Vultr `paca` primary.
+
+- Add only nullable `father_phone` and `mother_phone` columns with INSTANT DDL.
+  Preserve existing columns and values; reject incompatible existing definitions.
+- Require backend tests, a fresh isolated native-MySQL migration/HTTP regression,
+  lint, type checking, production build, and the relevant browser smoke.
+- Verify the source/frontend/backend contracts and operator runbook audits.
+  Record legacy full-cutover audit failures without treating them as passing.
+  Their cross-project migration and evidence-refresh work is outside this release.
+- Confirm live Git/Vercel binding, the local Vultr DB target, runtime baseline
+  checksums, and absence of active incoming legacy sync jobs on Vultr.
+- Before DDL, create a restricted server-side student-table backup, verify gzip
+  integrity and SHA-256, and restore it into a uniquely named disposable database
+  to compare row counts and the existing representative-phone digest. Remove
+  only that disposable verification database after the comparison.
+- Back up each changed runtime file with its checksum and create the Git rollback
+  tag before runtime deployment. Deploy only the reviewed runtime manifest.
+- Verify new-column definitions, row counts, representative-phone preservation,
+  local/remote file parity, service health, scheduler startup, and public CORS.
+- Push the frontend only after backend verification, then verify the exact pushed
+  SHA in a READY Vercel Production deployment and its rendered 4.0.53 UI.
+
+App rollback restores runtime files and the previous frontend. Keep the additive
+columns and newly saved phone data; do not run the down migration or restore the
+production database as an ordinary app rollback.
+
+See [the feature release record](docs/student-parent-phones-release.md). Any change
+to hosts, DB-primary ownership, routing, credentials, or scheduler ownership still
+requires the full cutover gate.
 
 ## Full Cutover Gate
 Do not deploy or restart full production cutover paths until the

@@ -57,7 +57,7 @@ const {
     TrialStatusValidationError,
 } = require('../../../services/trialStatusService');
 const { validateStudentProfileFields } = require('../../../services/studentProfileValidationService');
-const { prepareStudentParentNames, decryptStudentParentNames, StudentParentNameValidationError } = require('../../../services/studentParentNameService');
+const { prepareStudentParentContacts, decryptStudentParentContacts, StudentParentContactValidationError } = require('../../../services/studentParentContactService');
 
 module.exports = function(router) {
 
@@ -105,7 +105,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             });
         }
 
-        const parentNames = prepareStudentParentNames(req.body);
+        const parentContacts = prepareStudentParentContacts(req.body);
         const profileValidation = validateStudentProfileFields({
             admissionType: admission_type,
             grade,
@@ -234,8 +234,8 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 trial_remaining,
                 trial_dates,
                 time_slot,
-                memo, father_name, mother_name
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                memo, father_name, mother_name, father_phone, mother_phone
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 req.user.academyId,
                 finalStudentNumber,
@@ -263,8 +263,10 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 trialActivation ? JSON.stringify(trialActivation.trialDates) : null,
                 time_slot || 'evening',
                 memo || null,
-                parentNames.encrypted.father_name ?? null,
-                parentNames.encrypted.mother_name ?? null
+                parentContacts.encrypted.father_name ?? null,
+                parentContacts.encrypted.mother_name ?? null,
+                parentContacts.encrypted.father_phone ?? null,
+                parentContacts.encrypted.mother_phone ?? null
             ]
         );
 
@@ -437,7 +439,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
         }
 
         // 민감 필드 복호화
-        const decryptedStudent = decryptStudentParentNames(decryptFields(createdStudent, ENCRYPTED_FIELDS.students));
+        const decryptedStudent = decryptStudentParentContacts(decryptFields(createdStudent, ENCRYPTED_FIELDS.students));
 
         res.status(201).json({
             message: is_trial ? 'Trial student created successfully' : 'Student created successfully',
@@ -446,7 +448,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
             autoAssigned: autoAssignResult
         });
     } catch (error) {
-        if (error instanceof TrialStatusValidationError || error instanceof StudentParentNameValidationError) {
+        if (error instanceof TrialStatusValidationError || error instanceof StudentParentContactValidationError) {
             return res.status(400).json({
                 error: 'Validation Error',
                 message: error.message,

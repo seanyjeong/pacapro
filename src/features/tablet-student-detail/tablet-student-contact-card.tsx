@@ -12,7 +12,9 @@ export function TabletStudentContactCard({ student }: TabletStudentContactCardPr
       <h2 className="mb-4 font-semibold text-foreground">연락처</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <ContactItem label="학생" value={formatTabletPhone(student.phone)} />
-        <ContactItem label="학부모" value={formatTabletPhone(student.parent_phone)} />
+        <ContactItem label="대표 학부모" value={formatTabletPhone(student.parent_phone)} />
+        <ContactItem label="아버지" value={formatTabletPhone(student.father_phone || null)} />
+        <ContactItem label="어머니" value={formatTabletPhone(student.mother_phone || null)} />
       </div>
     </section>
   );
