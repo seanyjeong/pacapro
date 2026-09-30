@@ -71,31 +71,35 @@ async function createEvent(academyId, userId, body) {
 }
 
 async function updateEvent(eventId, academyId, body) {
-    return repository.withTransaction(async connection => {
-        const oldEvent = await repository.findEvent(eventId, academyId, connection, true);
-        if (!oldEvent) return { status: 404, message: '일정을 찾을 수 없습니다.' };
-        const { event, error } = normalizeEvent(body, oldEvent);
-        if (error) return { status: 400, message: error };
+    return repository.withTransaction(connection => updateEventInTransaction(connection, eventId, academyId, body));
+}
 
-        await repository.updateEvent(connection, eventId, academyId, event);
-        const blockChanged = ['block_consultation', 'event_date', 'title', 'start_time', 'end_time']
-            .some(field => event[field] !== oldEvent[field]) ||
-            ['is_all_day', 'is_holiday'].some(field => event[field] !== Boolean(oldEvent[field]));
-        if (blockChanged) {
-            await repository.removeConsultationBlocks(connection, eventId, academyId);
-            await addConsultationBlocks(connection, eventId, academyId, event);
-        }
-        const holidayChanged = Boolean(oldEvent.is_holiday) !== event.is_holiday ||
-            oldEvent.event_date !== event.event_date || oldEvent.title !== event.title;
-        if (holidayChanged) {
-            if (oldEvent.is_holiday) await repository.reopenClasses(connection, eventId, academyId);
-            if (event.is_holiday) await repository.closeClasses(connection, eventId, academyId, event);
-        }
-        return {
-            status: 200, message: '학원 일정이 수정되었습니다.',
-            event: await repository.findEvent(eventId, academyId, connection)
-        };
-    });
+// MCP confirmation must commit event changes, linked schedules and its receipt together.
+async function updateEventInTransaction(connection, eventId, academyId, body, { patchOnly = false } = {}) {
+    const oldEvent = await repository.findEvent(eventId, academyId, connection, true);
+    if (!oldEvent) return { status: 404, message: '일정을 찾을 수 없습니다.' };
+    const { event, error } = normalizeEvent(body, oldEvent);
+    if (error) return { status: 400, message: error };
+
+    if (patchOnly) await repository.patchEvent(connection, eventId, academyId, body);
+    else await repository.updateEvent(connection, eventId, academyId, event);
+    const blockChanged = ['block_consultation', 'event_date', 'title', 'start_time', 'end_time']
+        .some(field => event[field] !== oldEvent[field]) ||
+        ['is_all_day', 'is_holiday'].some(field => event[field] !== Boolean(oldEvent[field]));
+    if (blockChanged) {
+        await repository.removeConsultationBlocks(connection, eventId, academyId);
+        await addConsultationBlocks(connection, eventId, academyId, event);
+    }
+    const holidayChanged = Boolean(oldEvent.is_holiday) !== event.is_holiday ||
+        oldEvent.event_date !== event.event_date || oldEvent.title !== event.title;
+    if (holidayChanged) {
+        if (oldEvent.is_holiday) await repository.reopenClasses(connection, eventId, academyId);
+        if (event.is_holiday) await repository.closeClasses(connection, eventId, academyId, event);
+    }
+    return {
+        status: 200, message: '학원 일정이 수정되었습니다.',
+        event: await repository.findEvent(eventId, academyId, connection)
+    };
 }
 
 async function deleteEvent(eventId, academyId) {
@@ -109,4 +113,5 @@ async function deleteEvent(eventId, academyId) {
     });
 }
 
-module.exports = { getEvents, getEventById, createEvent, updateEvent, deleteEvent, consultationSlots };
+module.exports = { getEvents, getEventById, createEvent, updateEvent, updateEventInTransaction,
+    deleteEvent, consultationSlots, normalizeEvent };

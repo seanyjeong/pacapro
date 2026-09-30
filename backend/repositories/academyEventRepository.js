@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { EVENT_FIELDS } = require('../constants/academyEvents');
 
 // 연결된 차단 기록을 사용하므로 기존 일정의 실제 차단 상태를 그대로 유지한다.
 const EVENT_SELECT = `SELECT ae.*, EXISTS (
@@ -69,6 +70,15 @@ async function updateEvent(connection, eventId, academyId, event) {
     );
 }
 
+async function patchEvent(connection, eventId, academyId, changes) {
+    const fields = EVENT_FIELDS.filter(field => Object.hasOwn(changes, field));
+    if (!fields.length) return; // block_consultation is derived from its linked rows.
+    await connection.execute(
+        `UPDATE academy_events SET ${fields.map(field => `\`${field}\` = ?`).join(', ')} WHERE id = ? AND academy_id = ?`,
+        [...fields.map(field => changes[field]), eventId, academyId]
+    );
+}
+
 async function deleteEvent(connection, eventId, academyId) {
     await connection.execute('DELETE FROM academy_events WHERE id = ? AND academy_id = ?', [eventId, academyId]);
 }
@@ -107,6 +117,6 @@ async function closeClasses(connection, eventId, academyId, event) {
 }
 
 module.exports = {
-    withTransaction, findEvents, findEvent, insertEvent, updateEvent, deleteEvent,
+    withTransaction, findEvents, findEvent, insertEvent, updateEvent, patchEvent, deleteEvent,
     removeConsultationBlocks, addConsultationBlock, reopenClasses, closeClasses
 };

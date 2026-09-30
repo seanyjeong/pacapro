@@ -114,9 +114,9 @@ app.use(compression());
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
+    app.use(morgan('dev', { skip: require('./middleware/maxEnginePrivacy').isIntegration }));
 } else {
-    app.use(morgan('combined'));
+    app.use(morgan('combined', { skip: require('./middleware/maxEnginePrivacy').isIntegration }));
 }
 
 // Rate Limiting - 공개 API에만 적용 (내부 API는 제외)
@@ -239,6 +239,7 @@ const routesDir = path.join(__dirname, 'routes');
 const ROUTE_EXCLUDE = ['classes.js']; // unused route files
 const { createAttendancePostEmitter } = require('./realtime/attendancePostEmitter');
 const { setupAttendanceRealtime } = require('./realtime/attendanceHub');
+const { startPacaBridgeReadAdapter } = require('./services/bridgePacaReadAdapter');
 
 app.use(createAttendancePostEmitter({ logger }));
 
@@ -281,6 +282,8 @@ app.use((req, res, next) => {
     logger.warn('Route not found', { method: req.method, path: req.path });
     res.status(404).json({ error: 'Not Found' });
 });
+
+app.use(require('./middleware/maxEnginePrivacy').errorHandler);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
@@ -358,6 +361,7 @@ const server = app.listen(PORT, () => {
 });
 
 setupAttendanceRealtime(server, { logger });
+const pacaBridgeReadServer = startPacaBridgeReadAdapter({ db, logger });
 
 // Graceful Shutdown
 let isShuttingDown = false;
@@ -381,6 +385,7 @@ async function gracefulShutdown(signal) {
 
     try {
         // DB 연결 풀 종료
+        await new Promise((resolve) => pacaBridgeReadServer.close(resolve));
         await db.end();
         logger.info('[SHUTDOWN] DB 연결 풀 종료 완료');
 

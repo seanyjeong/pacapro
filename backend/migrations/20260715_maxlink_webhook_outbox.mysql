@@ -1,0 +1,61 @@
+CREATE TABLE IF NOT EXISTS maxlink_webhook_outbox (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    event_id CHAR(36) NOT NULL,
+    academy_id BIGINT NOT NULL,
+    source_student_id VARCHAR(128) NOT NULL,
+    status VARCHAR(16) NOT NULL,
+    occurred_at DATETIME(6) NOT NULL,
+    attempt_count INT UNSIGNED NOT NULL DEFAULT 0,
+    next_attempt_at DATETIME(6) NOT NULL,
+    processed_at DATETIME(6) NULL,
+    last_error VARCHAR(64) NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_maxlink_webhook_outbox_event_id (event_id),
+    KEY ix_maxlink_webhook_outbox_pending (processed_at, next_attempt_at, id),
+    CONSTRAINT ck_maxlink_webhook_outbox_status
+        CHECK (status IN ('withdrawn', 'deleted'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+DROP TRIGGER IF EXISTS trg_students_maxlink_withdrawn;
+CREATE TRIGGER trg_students_maxlink_withdrawn
+AFTER UPDATE ON students
+FOR EACH ROW
+INSERT INTO maxlink_webhook_outbox (
+    event_id,
+    academy_id,
+    source_student_id,
+    status,
+    occurred_at,
+    next_attempt_at
+)
+SELECT
+    UUID(),
+    NEW.academy_id,
+    CAST(NEW.id AS CHAR),
+    'withdrawn',
+    UTC_TIMESTAMP(6),
+    UTC_TIMESTAMP(6)
+WHERE NEW.status = 'withdrawn'
+  AND COALESCE(OLD.status, '') <> 'withdrawn';
+
+DROP TRIGGER IF EXISTS trg_students_maxlink_deleted;
+CREATE TRIGGER trg_students_maxlink_deleted
+BEFORE DELETE ON students
+FOR EACH ROW
+INSERT INTO maxlink_webhook_outbox (
+    event_id,
+    academy_id,
+    source_student_id,
+    status,
+    occurred_at,
+    next_attempt_at
+)
+VALUES (
+    UUID(),
+    OLD.academy_id,
+    CAST(OLD.id AS CHAR),
+    'deleted',
+    UTC_TIMESTAMP(6),
+    UTC_TIMESTAMP(6)
+);
