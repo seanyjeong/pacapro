@@ -18,6 +18,7 @@ const record = {
   target_memo: text(10000), general_memo: text(10000),
 };
 const commands = {
+  ...require('./maxEngineScheduleCommands').commands,
   student_create: { resource: 'students', provider: 'paca', label: '학생 기본정보 등록',
     schema: Joi.object({ ...profile, name: profile.name.required(), phone: profile.phone.required(),
       enrollment_date: date.required() }).unknown(false),

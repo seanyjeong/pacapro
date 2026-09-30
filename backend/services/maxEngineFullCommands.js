@@ -8,6 +8,7 @@ const consultations = require('./maxEngineFullConsultations');
 const attendance = require('./maxEngineFullAttendance');
 const payments = require('./maxEngineFullPayments');
 const consultationRecords = require('./maxEngineFullConsultationRecords');
+const schedules = require('./maxEngineScheduleCommands');
 
 function catalog(provider) {
   return Object.entries(commands).map(([operation, c]) => ({ operation, resource: provider === 'peak' ? 'paca_' + c.resource : c.resource,
@@ -26,6 +27,7 @@ function validate(body) {
   return { operation: body.operation, resource_id: body.resource_id ?? null, changes: parsed.value };
 }
 async function state(conn, actor, command, lock = false) {
+  if (schedules.supports(command.operation)) return schedules.state(conn, actor, command, lock);
   if (command.operation.startsWith('consultation_record_')) return consultationRecords.state(conn, actor, command, lock);
   if (command.operation === 'student_create') return repo.roster(conn, actor.academy_id, lock);
   if (command.operation === 'consultation_create') return repo.row(conn, 'students', command.changes.student_id, actor.academy_id, lock);
@@ -35,6 +37,7 @@ async function state(conn, actor, command, lock = false) {
   return before;
 }
 function display(command, before) {
+  if (schedules.supports(command.operation)) return schedules.display(command, before);
   const old = command.operation === 'attendance_set' ? before.attendance : before.record || before;
   const previous = command.operation.endsWith('_create') ? null : Object.fromEntries(
     Object.keys(command.changes).map(k => [k, decrypt(old[k] ?? null)]));
@@ -54,6 +57,7 @@ async function preview(actor, provider, body) {
     ...view, preview_token: seal(payload), idempotency_key: idempotencyKey, expires_at: expiresAt, requires_confirmation: true };
 }
 async function apply(conn, actor, command, before) {
+  if (schedules.supports(command.operation)) return schedules.apply(conn, actor, command);
   const { operation, resource_id: id, changes } = command;
   switch (operation) {
     case 'student_create': return students.create(conn, actor, changes, before);

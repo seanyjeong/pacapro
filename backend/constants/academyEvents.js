@@ -8,5 +8,6 @@ const DEFAULT_COLORS = {
 const TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 const MORNING_END_HOUR = 12;
 const AFTERNOON_END_HOUR = 18;
+const EVENT_FIELDS = ['title', 'description', 'event_type', 'event_date', 'start_time', 'end_time', 'is_all_day', 'is_holiday', 'color'];
 
-module.exports = { DEFAULT_COLORS, TIME_SLOTS, MORNING_END_HOUR, AFTERNOON_END_HOUR };
+module.exports = { DEFAULT_COLORS, TIME_SLOTS, MORNING_END_HOUR, AFTERNOON_END_HOUR, EVENT_FIELDS };
