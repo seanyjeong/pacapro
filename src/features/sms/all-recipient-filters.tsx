@@ -80,10 +80,12 @@ export function AllRecipientFilters({
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2 rounded-md bg-muted px-3 py-2 text-center text-xs">
+      <div className="mt-4 grid grid-cols-2 gap-2 rounded-md bg-muted px-3 py-2 text-center text-xs sm:grid-cols-3 xl:grid-cols-5">
         <span>전체 {recipientsCount.all}명</span>
         <span>학생 {recipientsCount.students}명</span>
-        <span>학부모 {recipientsCount.parents}명</span>
+        <span>아버님 {recipientsCount.fathers}명</span>
+        <span>어머님 {recipientsCount.mothers}명</span>
+        <span>대표번호 {recipientsCount.parents}명</span>
       </div>
       {errorMessage ? (
         <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/45 dark:text-amber-100">

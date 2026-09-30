@@ -29,7 +29,7 @@ export function IndividualStudentPicker({
           <div>
             <h3 className="text-sm font-semibold text-sky-950">{selectedStudent.name}</h3>
             <p className="mt-1 text-xs text-sky-800">
-              학생 {selectedStudent.phone || '미등록'} · 학부모 {selectedStudent.parent_phone || '미등록'}
+              학생 {selectedStudent.phone || '미등록'} · 아버님 {selectedStudent.father_phone || '미등록'} · 어머님 {selectedStudent.mother_phone || '미등록'} · 대표번호 {selectedStudent.parent_phone || '미등록'}
             </p>
           </div>
           <Button type="button" variant="ghost" size="icon-sm" onClick={onClearStudent} aria-label="선택 해제">
@@ -72,7 +72,7 @@ export function IndividualStudentPicker({
               >
                 <span className="block text-sm font-medium text-foreground">{student.name}</span>
                 <span className="block text-xs text-muted-foreground">
-                  학생 {student.phone || '미등록'} · 학부모 {student.parent_phone || '미등록'}
+                  학생 {student.phone || '미등록'} · 아버님 {student.father_phone || '미등록'} · 어머님 {student.mother_phone || '미등록'} · 대표번호 {student.parent_phone || '미등록'}
                 </span>
               </button>
             ))

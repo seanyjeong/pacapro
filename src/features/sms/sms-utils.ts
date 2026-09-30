@@ -26,7 +26,10 @@ export function getRecipientCount(
 ): number {
   if (sendMode === 'custom') return customPhones.filter((phone) => phone.trim()).length;
   if (sendMode === 'individual') return getIndividualTargetPhone(selectedStudent || null, recipientType) ? 1 : 0;
-  return recipientType === 'student' ? recipientsCount.students : recipientsCount.parents;
+  const countField = {
+    student: 'students', father: 'fathers', mother: 'mothers', parent: 'parents',
+  } as const;
+  return recipientsCount[countField[recipientType]];
 }
 
 export function getIndividualTargetPhone(
@@ -34,7 +37,10 @@ export function getIndividualTargetPhone(
   recipientType: RecipientType
 ): string | null {
   if (!student) return null;
-  return recipientType === 'student' ? student.phone : student.parent_phone;
+  const phoneField = {
+    student: 'phone', father: 'father_phone', mother: 'mother_phone', parent: 'parent_phone',
+  } as const;
+  return student[phoneField[recipientType]] || null;
 }
 
 export function buildSmsPayload(params: {
@@ -75,7 +81,9 @@ export function buildSmsPayload(params: {
   }
 
   return {
-    target: params.recipientType === 'student' ? 'students' : 'parents',
+    target: ({
+      student: 'students', father: 'fathers', mother: 'mothers', parent: 'parents',
+    } as const satisfies Record<RecipientType, SendSMSParams['target']>)[params.recipientType],
     content: params.content,
     images: imageData,
     statusFilter: params.statusFilter,

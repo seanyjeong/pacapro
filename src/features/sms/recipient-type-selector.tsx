@@ -1,4 +1,5 @@
 import { RecipientButton } from './recipient-button';
+import { getIndividualTargetPhone } from './sms-utils';
 import type { RecipientType, SendMode, SmsRecipientsCount, SmsStudent } from './sms-types';
 
 interface RecipientTypeSelectorProps {
@@ -18,25 +19,26 @@ export function RecipientTypeSelector({
 }: RecipientTypeSelectorProps) {
   if (sendMode === 'custom' || (sendMode === 'individual' && !selectedStudent)) return null;
 
-  const studentDetail = sendMode === 'all' ? `${recipientsCount.students}명` : selectedStudent?.phone || '전화번호 미등록';
-  const parentDetail = sendMode === 'all' ? `${recipientsCount.parents}명` : selectedStudent?.parent_phone || '전화번호 미등록';
+  const options: { type: RecipientType; label: string; count: number }[] = [
+    { type: 'student', label: '학생에게', count: recipientsCount.students },
+    { type: 'father', label: '아버님께', count: recipientsCount.fathers },
+    { type: 'mother', label: '어머님께', count: recipientsCount.mothers },
+    { type: 'parent', label: '학부모 대표번호로', count: recipientsCount.parents },
+  ];
 
   return (
     <section className="space-y-2">
       <h3 className="text-sm font-semibold text-foreground">수신자 선택</h3>
       <div className="grid grid-cols-2 gap-2">
-        <RecipientButton
-          label="학생에게"
-          detail={studentDetail}
-          selected={recipientType === 'student'}
-          onClick={() => onRecipientTypeChange('student')}
-        />
-        <RecipientButton
-          label="학부모에게"
-          detail={parentDetail}
-          selected={recipientType === 'parent'}
-          onClick={() => onRecipientTypeChange('parent')}
-        />
+        {options.map(({ type, label, count }) => (
+          <RecipientButton
+            key={type}
+            label={label}
+            detail={sendMode === 'all' ? `${count}명` : getIndividualTargetPhone(selectedStudent, type) || '전화번호 미등록'}
+            selected={recipientType === type}
+            onClick={() => onRecipientTypeChange(type)}
+          />
+        ))}
       </div>
     </section>
   );

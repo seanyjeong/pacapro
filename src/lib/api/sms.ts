@@ -15,6 +15,8 @@ export interface RecipientsCountResponse {
   all: number;
   students: number;
   parents: number;
+  fathers: number;
+  mothers: number;
 }
 
 export interface SMSLog {
@@ -56,7 +58,7 @@ export interface SenderNumbersResponse {
 }
 
 export interface SendSMSParams {
-  target: 'all' | 'students' | 'parents' | 'custom';
+  target: 'all' | 'students' | 'parents' | 'fathers' | 'mothers' | 'custom';
   content: string;
   customPhones?: string[];
   images?: { name: string; data: string }[];

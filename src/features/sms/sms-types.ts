@@ -1,7 +1,13 @@
 import type { RecipientsCountResponse, SenderNumber, SMSLog } from '@/lib/api/sms';
 
 export type SendMode = 'all' | 'individual' | 'custom';
-export type RecipientType = 'student' | 'parent';
+export type RecipientType = 'student' | 'father' | 'mother' | 'parent';
+export const RECIPIENT_LABELS: Record<RecipientType, string> = {
+  student: '학생',
+  father: '아버님',
+  mother: '어머님',
+  parent: '학부모 대표번호',
+};
 export type StatusFilter = 'active' | 'pending';
 export type GradeFilter = 'all' | 'junior' | 'senior';
 export type MessageType = 'SMS' | 'LMS' | 'MMS';
@@ -11,6 +17,8 @@ export interface SmsStudent {
   name: string;
   phone: string | null;
   parent_phone: string | null;
+  father_phone?: string | null;
+  mother_phone?: string | null;
 }
 
 export interface SmsImageFile {

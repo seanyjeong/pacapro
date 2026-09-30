@@ -37,7 +37,7 @@ export function SmsSendConfirmDialog({
             <AlertDialogHeader>
               <AlertDialogTitle>문자 발송 확인</AlertDialogTitle>
               <AlertDialogDescription>
-                {confirmation.recipientCount}명에게 {confirmation.messageType}를 발송합니다. 발송 후에는 되돌릴 수
+                {confirmation.recipientLabel} {confirmation.recipientCount}명에게 {confirmation.messageType}를 발송합니다. 발송 후에는 되돌릴 수
                 없습니다.
               </AlertDialogDescription>
             </AlertDialogHeader>

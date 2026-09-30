@@ -1,6 +1,6 @@
 const { verifyToken, checkPermission } = require('../../middleware/auth');
-const { isValidPhoneNumber } = require('../../utils/naverSens');
 const { decryptArrayFields } = require('../../utils/encryption');
+const { countSmsRecipients } = require('../../services/smsRecipientService');
 const logger = require('../../utils/logger');
 
 function registerSmsAuxiliaryRoutes(router, db) {
@@ -11,7 +11,8 @@ function registerSmsAuxiliaryRoutes(router, db) {
                 return res.status(400).json({ error: 'Validation Error', message: '문자 대상 학생 상태를 확인해주세요.' });
             }
             let query = `
-                SELECT s.phone AS student_phone, s.parent_phone, s.grade
+                SELECT s.phone AS student_phone, s.parent_phone,
+                       s.father_phone, s.mother_phone, s.grade
                 FROM students s
                 WHERE s.academy_id = ?
                   AND s.status = ?
@@ -26,32 +27,9 @@ function registerSmsAuxiliaryRoutes(router, db) {
             }
 
             let [students] = await db.query(query, queryParams);
-            students = decryptArrayFields(students, ['student_phone', 'parent_phone']);
-
-            const studentPhones = new Set();
-            const parentPhones = new Set();
-            const allPhones = new Set();
-
-            students.forEach(student => {
-                if (isValidPhoneNumber(student.student_phone)) {
-                    studentPhones.add(student.student_phone.replace(/-/g, ''));
-                }
-                if (isValidPhoneNumber(student.parent_phone)) {
-                    parentPhones.add(student.parent_phone.replace(/-/g, ''));
-                }
-                const effectivePhone = isValidPhoneNumber(student.parent_phone)
-                    ? student.parent_phone
-                    : isValidPhoneNumber(student.student_phone)
-                        ? student.student_phone
-                        : null;
-                if (effectivePhone) allPhones.add(effectivePhone.replace(/-/g, ''));
-            });
-
-            res.json({
-                all: allPhones.size,
-                students: studentPhones.size,
-                parents: parentPhones.size
-            });
+            students = decryptArrayFields(students,
+                ['student_phone', 'parent_phone', 'father_phone', 'mother_phone']);
+            res.json(countSmsRecipients(students));
         } catch (error) {
             logger.error('수신자 수 조회 오류:', error);
             res.status(500).json({ error: 'Server Error', message: '수신자 수 조회에 실패했습니다.' });

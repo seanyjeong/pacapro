@@ -20,6 +20,7 @@ const {
 const { decryptArrayFields } = require('../utils/encryption');
 const logger = require('../utils/logger');
 const registerSmsAuxiliaryRoutes = require('./sms/auxiliary');
+const { selectSmsRecipients } = require('../services/smsRecipientService');
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 if (!ENCRYPTION_KEY) {
@@ -30,7 +31,7 @@ if (!ENCRYPTION_KEY) {
  * POST /paca/sms/send
  * SMS/MMS 발송
  * body: {
- *   target: 'all' | 'students' | 'parents' | 'custom',
+ *   target: 'all' | 'students' | 'parents' | 'fathers' | 'mothers' | 'custom',
  *   content,
  *   customPhones?: [],
  *   images?: [{name, data}],
@@ -183,6 +184,8 @@ router.post('/send', verifyToken, checkPermission('sms', 'edit'), async (req, re
                     s.name,
                     s.phone AS student_phone,
                     s.parent_phone,
+                    s.father_phone,
+                    s.mother_phone,
                     s.grade
                 FROM students s
                 WHERE s.academy_id = ?
@@ -202,29 +205,9 @@ router.post('/send', verifyToken, checkPermission('sms', 'edit'), async (req, re
 
             let [students] = await db.query(query, queryParams);
 
-            // 암호화된 필드 복호화 (phone, parent_phone)
-            students = decryptArrayFields(students, ['student_phone', 'parent_phone', 'name']);
-
-            if (target === 'all') {
-                // 모두: 학부모 전화 우선, 없으면 학생 전화
-                recipients = students
-                    .map(s => {
-                        const phone = isValidPhoneNumber(s.parent_phone) ? s.parent_phone :
-                                     isValidPhoneNumber(s.student_phone) ? s.student_phone : null;
-                        return phone ? { phone, name: s.name, studentId: s.id } : null;
-                    })
-                    .filter(Boolean);
-            } else if (target === 'students') {
-                // 학생에게만
-                recipients = students
-                    .filter(s => isValidPhoneNumber(s.student_phone))
-                    .map(s => ({ phone: s.student_phone, name: s.name, studentId: s.id }));
-            } else if (target === 'parents') {
-                // 학부모에게만
-                recipients = students
-                    .filter(s => isValidPhoneNumber(s.parent_phone))
-                    .map(s => ({ phone: s.parent_phone, name: s.name, studentId: s.id }));
-            }
+            students = decryptArrayFields(students,
+                ['student_phone', 'parent_phone', 'father_phone', 'mother_phone', 'name']);
+            recipients = selectSmsRecipients(students, target);
         }
 
         // 중복 제거

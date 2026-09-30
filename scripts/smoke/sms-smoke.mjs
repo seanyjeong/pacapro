@@ -77,7 +77,7 @@ async function installRoutes(context, state) {
       if (state.mode === 'load-error') {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
       }
-      return jsonRoute(route, { all: 8, students: 5, parents: 7 });
+      return jsonRoute(route, { all: 8, students: 5, parents: 7, fathers: 3, mothers: 4 });
     }
 
     if (method === 'GET' && path === '/sms/logs') {
@@ -93,14 +93,20 @@ async function installRoutes(context, state) {
     if (method === 'GET' && path === '/students') {
       return jsonRoute(route, {
         students: [
-          { id: 41, name: '김진우', phone: '010-1111-2222', parent_phone: '010-3333-4444', grade: '고2' },
+          { id: 41, name: '김진우', phone: '010-1111-2222', parent_phone: '010-3333-4444', father_phone: '010-2222-3333', mother_phone: '010-5555-6666', grade: '고2' },
         ],
       });
     }
 
     if (method === 'GET' && path === '/students/41') {
       return jsonRoute(route, {
-        student: { id: 41, name: '김진우', phone: '010-1111-2222', parent_phone: '010-3333-4444' },
+        student: { id: 41, name: '김진우', phone: '010-1111-2222', parent_phone: '010-3333-4444', father_phone: '010-2222-3333', mother_phone: '010-5555-6666' },
+      });
+    }
+
+    if (method === 'GET' && path === '/students/42') {
+      return jsonRoute(route, {
+        student: { id: 42, name: '기존학생', phone: '010-1111-0000', parent_phone: '010-9999-8888', father_phone: null, mother_phone: null },
       });
     }
 
@@ -153,7 +159,7 @@ async function runDesktopSend(browser) {
     throw new Error('missing student detail link in SMS log');
   }
   await page.getByLabel('발신번호').selectOption('7');
-  await page.getByRole('button', { name: /학부모에게 7명/ }).waitFor();
+  await page.getByRole('button', { name: /학부모 대표번호로 7명/ }).waitFor();
   await page.getByPlaceholder(/내용을 입력해주세요/).fill('오늘 수업은 정상 진행됩니다.');
   await clickWithoutNativeDialog(
     page,
@@ -173,6 +179,23 @@ async function runDesktopSend(browser) {
     throw new Error(`senderNumberId mismatch: ${state.sendPayload.senderNumberId}`);
   }
 
+  for (const [label, count, target] of [
+    ['아버님께', 3, 'fathers'],
+    ['어머님께', 4, 'mothers'],
+  ]) {
+    await page.getByRole('button', { name: `${label} ${count}명` }).click();
+    await clickWithoutNativeDialog(
+      page,
+      page.getByTestId('sms-operations-board').getByRole('button', { name: 'SMS 발송' }),
+      `sms ${target} send`
+    );
+    const roleDialog = page.getByRole('alertdialog');
+    await roleDialog.getByText(`${label.slice(0, -1)} ${count}명에게 SMS를 발송합니다.`, { exact: false }).waitFor();
+    await roleDialog.getByRole('button', { name: '발송' }).click();
+    await roleDialog.waitFor({ state: 'hidden' });
+    if (state.sendPayload?.target !== target) throw new Error(`${target} payload mismatch`);
+  }
+
   await assertNoRawVisibleText(page, 'sms desktop send');
   await assertNoHorizontalOverflow(page, 'sms desktop send');
   await page.screenshot({ path: '/Users/etlab/paca-sms-desktop.png', fullPage: true });
@@ -188,8 +211,8 @@ async function runPrefilledStudent(browser) {
   await page.goto('/sms?studentId=41&recipient=parent', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
   await page.getByRole('heading', { name: '김진우' }).waitFor();
-  await page.getByText('학생 010-1111-2222 · 학부모 010-3333-4444').waitFor();
-  await page.getByRole('button', { name: /학부모에게/ }).waitFor();
+  await page.getByText('학생 010-1111-2222 · 아버님 010-2222-3333 · 어머님 010-5555-6666 · 대표번호 010-3333-4444').waitFor();
+  await page.getByRole('button', { name: /학부모 대표번호로/ }).waitFor();
   await page.getByLabel('발신번호').selectOption('7');
   await page.getByPlaceholder(/내용을 입력해주세요/).fill('오늘 상담 후속 안내입니다.');
   await clickWithoutNativeDialog(
@@ -229,12 +252,31 @@ async function runMobile(browser) {
   await assertOperationsBoard(page);
   await page.getByTestId('sms-operations-board').scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/Users/etlab/paca-sms-mobile-board.png', fullPage: false });
-  await page.getByRole('button', { name: /학부모에게 7명/ }).waitFor();
+  await page.getByRole('button', { name: /학부모 대표번호로 7명/ }).waitFor();
+  await page.getByRole('button', { name: /아버님께 3명/ }).waitFor();
+  await page.getByRole('button', { name: /어머님께 4명/ }).waitFor();
   await page.getByRole('link', { name: '김진우 학부모 학생 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'sms mobile');
   await assertNoHorizontalOverflow(page, 'sms mobile');
   await page.screenshot({ path: '/Users/etlab/paca-sms-mobile.png', fullPage: true });
 
+  await context.close();
+  return result;
+}
+
+async function runLegacyOnlyFather(browser) {
+  const result = await createSmsPage(browser, 'success', { width: 390, height: 844 });
+  const { context, page, state } = result;
+  await page.goto('/sms?studentId=42&recipient=father', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '기존학생' }).waitFor();
+  await page.getByRole('button', { name: /아버님께 전화번호 미등록/ }).waitFor();
+  await page.getByRole('button', { name: /학부모 대표번호로 010-9999-8888/ }).waitFor();
+  await page.getByLabel('발신번호').selectOption('7');
+  await page.getByPlaceholder(/내용을 입력해주세요/).fill('부모 번호를 추측하지 않습니다.');
+  await clickWithoutNativeDialog(page, page.getByTestId('sms-operations-board').getByRole('button', { name: 'SMS 발송' }), 'legacy father');
+  await page.getByText('아버님 전화번호가 등록되어 있지 않습니다.').waitFor();
+  if (state.sendPayload) throw new Error('legacy representative phone was treated as father phone');
+  await assertNoHorizontalOverflow(page, 'sms legacy-only mobile');
   await context.close();
   return result;
 }
@@ -317,9 +359,10 @@ async function main() {
     const desktop = await runDesktopSend(browser);
     const prefilled = await runPrefilledStudent(browser);
     const mobile = await runMobile(browser);
+    const legacyOnlyFather = await runLegacyOnlyFather(browser);
     const loadError = await runLoadError(browser);
     const missingSender = await runMissingSenderPreventsSend(browser);
-    [desktop, prefilled, mobile, loadError, missingSender].forEach(assertDiagnostics);
+    [desktop, prefilled, mobile, legacyOnlyFather, loadError, missingSender].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       desktopHits: desktop.state.hits,
       errorConsoleErrors: loadError.diagnostics.consoleErrors,

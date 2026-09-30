@@ -15,6 +15,7 @@ import type {
   SmsStudent,
   StatusFilter,
 } from './sms-types';
+import { RECIPIENT_LABELS } from './sms-types';
 import {
   buildSmsPayload,
   formatPhoneNumber,
@@ -31,6 +32,7 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 
 export interface SmsSendConfirmation {
   recipientCount: number;
+  recipientLabel: string;
   messageType: MessageType;
   imageCount: number;
 }
@@ -38,7 +40,9 @@ export interface SmsSendConfirmation {
 export function useSmsPageState() {
   const searchParams = useSearchParams();
   const prefillStudentId = searchParams.get('studentId');
-  const prefillRecipient = searchParams.get('recipient') === 'student' ? 'student' : 'parent';
+  const queryRecipient = searchParams.get('recipient');
+  const prefillRecipient: RecipientType = queryRecipient === 'student' || queryRecipient === 'father' || queryRecipient === 'mother'
+    ? queryRecipient : 'parent';
   const prefilledStudentRef = useRef<string | null>(null);
   const [sendMode, setSendMode] = useState<SendMode>('all');
   const [recipientType, setRecipientType] = useState<RecipientType>('parent');
@@ -47,7 +51,7 @@ export function useSmsPageState() {
   const [content, setContent] = useState('');
   const [customPhones, setCustomPhones] = useState<string[]>(['']);
   const [sending, setSending] = useState(false);
-  const [recipientsCount, setRecipientsCount] = useState<SmsRecipientsCount>({ all: 0, students: 0, parents: 0 });
+  const [recipientsCount, setRecipientsCount] = useState<SmsRecipientsCount>({ all: 0, students: 0, parents: 0, fathers: 0, mothers: 0 });
   const [logs, setLogs] = useState<SmsLog[]>([]);
   const [logsError, setLogsError] = useState<string | null>(null);
   const [logsLoading, setLogsLoading] = useState(false);
@@ -103,7 +107,7 @@ export function useSmsPageState() {
       const data = await smsAPI.getRecipientsCount(statusFilter, gradeFilter, SILENT_CONFIG);
       setRecipientsCount(data);
     } catch {
-      setRecipientsCount({ all: 0, students: 0, parents: 0 });
+      setRecipientsCount({ all: 0, students: 0, parents: 0, fathers: 0, mothers: 0 });
       setRecipientsError('문자 수신자 수를 불러오지 못했습니다. 필터를 확인한 뒤 다시 시도해주세요.');
       toast.error('문자 수신자 수를 불러오지 못했습니다.');
     }
@@ -162,6 +166,8 @@ export function useSmsPageState() {
           id: student.id,
           name: student.name,
           parent_phone: student.parent_phone || null,
+          father_phone: student.father_phone || null,
+          mother_phone: student.mother_phone || null,
           phone: student.phone || null,
         });
       })
@@ -284,7 +290,7 @@ export function useSmsPageState() {
       }
       const targetPhone = getIndividualTargetPhone(selectedStudent, recipientType);
       if (!targetPhone) {
-        toast.error(`${recipientType === 'student' ? '학생' : '학부모'} 전화번호가 등록되어 있지 않습니다.`);
+        toast.error(`${RECIPIENT_LABELS[recipientType]} 전화번호가 등록되어 있지 않습니다.`);
         return null;
       }
     }
@@ -306,6 +312,7 @@ export function useSmsPageState() {
 
     setSendConfirmation({
       recipientCount,
+      recipientLabel: sendMode === 'custom' ? '직접 입력' : RECIPIENT_LABELS[recipientType],
       messageType,
       imageCount: images.length,
     });

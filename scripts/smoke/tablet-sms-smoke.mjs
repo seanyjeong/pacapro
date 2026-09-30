@@ -61,7 +61,7 @@ async function installRoutes(context, state) {
       if (state.mode === 'load-error') {
         return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
       }
-      return jsonRoute(route, { all: 8, students: 5, parents: 7 });
+      return jsonRoute(route, { all: 8, students: 5, parents: 7, fathers: 3, mothers: 4 });
     }
 
     if (method === 'GET' && path === '/sms/logs') {
@@ -76,7 +76,7 @@ async function installRoutes(context, state) {
 
     if (method === 'GET' && path === '/students/41') {
       return jsonRoute(route, {
-        student: { id: 41, name: '김진우', phone: '010-1111-2222', parent_phone: '010-3333-4444' },
+        student: { id: 41, name: '김진우', phone: '010-1111-2222', parent_phone: '010-3333-4444', father_phone: '010-2222-3333', mother_phone: '010-5555-6666' },
       });
     }
 
@@ -118,7 +118,7 @@ async function runPrefilledStudent(browser) {
   const result = await createTabletSmsPage(browser, 'success', { width: 1180, height: 820 });
   const { context, page, state } = result;
 
-  await page.goto('/tablet/sms?studentId=41&recipient=parent', { waitUntil: 'domcontentloaded' });
+  await page.goto('/tablet/sms?studentId=41&recipient=mother', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '김진우 문자 보내기' }).waitFor();
   const detailLink = page.getByRole('link', { name: '김진우 학생 상세' });
   await detailLink.waitFor();
@@ -126,8 +126,8 @@ async function runPrefilledStudent(browser) {
     throw new Error(`student detail href mismatch: ${await detailLink.getAttribute('href')}`);
   }
   await page.getByRole('heading', { name: '김진우', exact: true }).waitFor();
-  await page.getByText('학생 010-1111-2222 · 학부모 010-3333-4444').waitFor();
-  await page.getByRole('button', { name: /학부모에게/ }).waitFor();
+  await page.getByText('학생 010-1111-2222 · 아버님 010-2222-3333 · 어머님 010-5555-6666 · 대표번호 010-3333-4444').waitFor();
+  await page.getByRole('button', { name: /어머님께/ }).waitFor();
   await page.getByLabel('발신번호').selectOption('7');
   await page.getByPlaceholder(/내용을 입력해주세요/).fill('오늘 상담 후속 안내입니다.');
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: 'SMS 발송' }), 'tablet sms send');
@@ -141,7 +141,7 @@ async function runPrefilledStudent(browser) {
   if (state.sendPayload?.target !== 'custom') {
     throw new Error(`tablet SMS target mismatch: ${JSON.stringify(state.sendPayload)}`);
   }
-  if (state.sendPayload?.customPhones?.[0] !== '010-3333-4444') {
+  if (state.sendPayload?.customPhones?.[0] !== '010-5555-6666') {
     throw new Error(`tablet SMS phone mismatch: ${JSON.stringify(state.sendPayload)}`);
   }
   if (state.sendPayload?.senderNumberId !== 7) {
@@ -163,7 +163,9 @@ async function runPortrait(browser) {
   await page.goto('/tablet/sms', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
   await page.getByRole('button', { name: /전체 발송/ }).waitFor();
-  await page.getByRole('button', { name: /학부모에게 7명/ }).waitFor();
+  await page.getByRole('button', { name: /학부모 대표번호로 7명/ }).waitFor();
+  await page.getByRole('button', { name: /아버님께 3명/ }).waitFor();
+  await page.getByRole('button', { name: /어머님께 4명/ }).waitFor();
   await page.getByLabel('발신번호').waitFor();
   await page.getByText('김진우 학부모').waitFor();
   await page.getByText('최근 발송 내역').waitFor();
