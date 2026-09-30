@@ -114,9 +114,9 @@ app.use(compression());
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
+    app.use(morgan('dev', { skip: require('./middleware/maxEnginePrivacy').isIntegration }));
 } else {
-    app.use(morgan('combined'));
+    app.use(morgan('combined', { skip: require('./middleware/maxEnginePrivacy').isIntegration }));
 }
 
 // Rate Limiting - 공개 API에만 적용 (내부 API는 제외)
@@ -281,6 +281,8 @@ app.use((req, res, next) => {
     logger.warn('Route not found', { method: req.method, path: req.path });
     res.status(404).json({ error: 'Not Found' });
 });
+
+app.use(require('./middleware/maxEnginePrivacy').errorHandler);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
