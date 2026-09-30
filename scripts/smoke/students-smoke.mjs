@@ -376,6 +376,10 @@ async function runMobile(browser) {
   await page.getByRole('button', { name: /예비생/ }).click();
   await page.getByText('정예비').first().waitFor();
   await page.locator('article:has-text("정예비")').getByText('예비생', { exact: true }).waitFor();
+  const shell = await page.locator('div.flex.h-screen').first().evaluate((element) => ({
+    scrollLeft: element.scrollLeft, overflow: element.scrollWidth - element.clientWidth,
+  }));
+  if (shell.scrollLeft !== 0 || shell.overflow > 2) throw new Error(`mobile shell shifted horizontally: ${JSON.stringify(shell)}`);
   await assertNoRawVisibleText(page, 'students mobile');
   await assertNoHorizontalOverflow(page, 'students mobile');
   await page.screenshot({ path: '/Users/etlab/paca-students-mobile.png', fullPage: true });

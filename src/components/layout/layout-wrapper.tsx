@@ -86,7 +86,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         <div className="flex h-screen overflow-hidden overflow-x-hidden">
             <Sidebar />
             <div className={cn(
-                "flex-1 flex flex-col transition-all duration-300 ease-in-out",
+                "min-w-0 flex-1 flex flex-col transition-all duration-300 ease-in-out",
                 mounted ? (sidebarCollapsed ? "md:ml-[68px]" : "md:ml-64") : "md:ml-64"
             )}>
                 <TopNav />
