@@ -30,4 +30,6 @@ PACA와 PEAK의 기존 공통 위임 catalog에 함께 노출하되 원본은 PA
 - 운영 반영 파일: `constants/academyEvents.js`, `constants/maxEngineCommands.js`, `constants/maxEngineScheduleCommands.js`, `repositories/academyEventRepository.js`, `repositories/maxEngineScheduleRepository.js`, `services/academyEventService.js`, `services/maxEngineFullCommands.js`, `services/maxEngineScheduleCommands.js`, `services/maxEngineScheduleValidation.js`, `services/maxEngineEventCommand.js`(모두 `backend/` 아래).
 - MCP 측은 MAX Engine 저장소의 `mcp/shared/tools.js`, `mcp/shared/client.js`, `mcp/shared/constants/commands.js`가 짝이다. 원본 PACA를 먼저 반영한 뒤 MCP를 반영한다.
 - DB 변경·migration·환경변수·의존성 변경 없음. 현재 운영 로그인은 이 체크아웃보다 새 위임 기간을 지원하므로 `routes/integrations/full.js`, 인증 서비스, `paca.js`, `.env`를 덮어쓰지 않는다.
-- 운영 반영은 아직 실행하지 않았다. `DEPLOYMENT.md`의 명시적 운영 승인, 변경 파일 백업·체크섬, rollback tag, 서비스별 health 검증 절차를 따른다.
+- 2026-09-30 사용자 명시 승인 후 운영 반영 완료: 이 문서의 native 10파일과 MCP 3파일만 적용했다. `paca-failover`, `paca-mcp`, `peak-mcp` 재시작 후 public health 200, CORS, OAuth PKCE S256, 무인증 MCP 401, 연결 계정의 새 일정 작업 4개 노출을 확인했다. PACA 프로세스 1개, 변경 파일 체크섬 13/13 일치.
+- 백업 `/root/backups/paca-mcp-schedule-20260930-909ff643`, 소스 태그 `rollback/paca-mcp-schedule-20260930`, MCP 이전 릴리스 `13727bfd` 보존. 새 MCP 릴리스 `schedule-20260930-909ff643`.
+- 실제 일정 데이터 변경·DB migration·환경변수·로그인 파일 변경 없음. 별도 MAX Engine API/프론트엔드는 이번 배포 대상에 포함하지 않았다.
