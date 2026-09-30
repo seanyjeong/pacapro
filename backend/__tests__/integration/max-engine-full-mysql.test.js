@@ -37,6 +37,7 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     paca = mysql.createPool({ ...opts, database: prefix + 'paca' });
     peak = mysql.createPool({ ...opts, database: prefix + 'peak' });
     global.__fullPaca = paca; global.__fullPeak = peak;
+    await paca.query(fs.readFileSync(require.resolve('../../migrations/20260930_add_student_prospect_status.mysql'), 'utf8'));
     await paca.query('DROP TABLE IF EXISTS max_engine_commands');
     await paca.query(fs.readFileSync(require.resolve('../../migrations/20260927_max_engine_commands.sql'), 'utf8'));
     process.env.MAX_ENGINE_LINK_SECRET = secret;
@@ -121,6 +122,20 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     const [details]=await paca.query('SELECT consultation_id,student_id FROM student_consultations');
     expect(details).toEqual([{consultation_id:cc.body.resource_id,student_id:c.body.resource_id}]);
   });
+  test('engine import creates prospect with source memo, no charge or attendance, and rejects missing phone', async () => {
+    const missing=await preview({operation:'student_create',changes:{name:'합성예비생',enrollment_date:'2026-09-30',registration_source:'max_engine'}});
+    expect(missing.status).toBe(422); expect(missing.body.error.message).toContain('전화번호');
+    const p=await preview({operation:'student_create',changes:{name:'합성예비생',phone:'01099998888',enrollment_date:'2026-09-30',memo:'기존 엔진 메모',registration_source:'max_engine'}});
+    expect(p.status).toBe(200);
+    expect((await paca.query("SELECT COUNT(*) n FROM students WHERE status='prospect'"))[0][0].n).toBe(0);
+    const created=await confirm(p.body); expect(created.status).toBe(200);
+    const id=created.body.resource_id;
+    const [[row]]=await paca.query('SELECT status,memo,monthly_tuition,weekly_count FROM students WHERE id=?',[id]);
+    expect(row).toMatchObject({status:'prospect',memo:'엔진등록\n기존 엔진 메모',monthly_tuition:'0.00',weekly_count:0});
+    expect((await paca.query('SELECT COUNT(*) n FROM student_payments WHERE student_id=?',[id]))[0][0].n).toBe(0);
+    expect((await paca.query('SELECT COUNT(*) n FROM attendance WHERE student_id=?',[id]))[0][0].n).toBe(0);
+    expect((await preview({operation:'student_create',changes:{name:'합성예비생',phone:'01099998888',enrollment_date:'2026-09-30',registration_source:'max_engine'}})).status).toBe(409);
+  });
   test('detailed counseling records preserve omitted scores and enforce student scope', async () => {
     const p=await preview({operation:'consultation_record_create',changes:{student_id:1,consultation_date:'2026-09-27',consultation_type:'regular',school_grade_avg:3.5,physical_records:{standing_jump:250},general_memo:'original'}});
     expect(p.status).toBe(200);const created=await confirm(p.body);expect(created.status).toBe(200);
@@ -160,7 +175,7 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     await paca.query('INSERT INTO students(id,academy_id,name,class_days,weekly_count,monthly_tuition) VALUES ?',[values]);
     const first=await get('/paca/resources/students');expect(first.body.items.length).toBe(100);expect(first.body.next_cursor).not.toBeNull();
     const second=await get('/paca/resources/students?cursor='+first.body.next_cursor);expect(second.body.next_cursor).toBeNull();
-    const ids=[...first.body.items,...second.body.items].map(r=>r.id);expect(ids.length).toBe(103);expect(new Set(ids).size).toBe(103);expect(ids).not.toContain(2);
+    const ids=[...first.body.items,...second.body.items].map(r=>r.id);expect(ids.length).toBe(104);expect(new Set(ids).size).toBe(104);expect(ids).not.toContain(2);
     const filtered=await get('/paca/resources/students?filters='+encodeURIComponent(JSON.stringify({id:2})));expect(filtered.body.items).toEqual([]);
   });
   test('account move, revoke, role downgrade and password change invalidate delegation immediately', async () => {

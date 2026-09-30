@@ -36,6 +36,7 @@ async function applyScheduledClassDaysChanges() {
             `SELECT id, name, class_days, class_days_next, class_days_effective_from, student_type, time_slot
              FROM students
              WHERE class_days_next IS NOT NULL
+               AND (status IS NULL OR status <> 'prospect')
                AND class_days_effective_from IS NOT NULL
                AND class_days_effective_from <= ?
                AND deleted_at IS NULL`,

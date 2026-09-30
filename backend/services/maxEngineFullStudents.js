@@ -13,12 +13,15 @@ function validateCreate(changes, roster) {
 }
 async function create(conn, actor, changes, before) {
   validateCreate(changes, before);
+  const { registration_source: registrationSource, ...profile } = changes;
+  const isProspect = registrationSource === 'max_engine';
+  const memo = isProspect ? ['엔진등록', profile.memo].filter(Boolean).join('\n') : profile.memo;
   const year = new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Asia/Seoul' }).format(new Date());
   const numbers = before.map(s => String(s.student_number || '')).filter(n => new RegExp(`^${year}\\d+$`).test(n));
   const next = Math.max(0, ...numbers.map(n => Number(n.slice(4)))) + 1;
-  return repo.insert(conn, 'students', { ...encrypted(changes), academy_id: actor.academy_id,
+  return repo.insert(conn, 'students', { ...encrypted(profile), ...(memo !== undefined ? { memo } : {}), academy_id: actor.academy_id,
     student_number: year + String(next).padStart(3, '0'), student_type: 'exam', admission_type: 'regular',
-    status: 'active', class_days: '[]', weekly_count: 0, monthly_tuition: 0, is_trial: 0 });
+    status: isProspect ? 'prospect' : 'active', class_days: '[]', weekly_count: 0, monthly_tuition: 0, is_trial: 0 });
 }
 async function update(conn, id, changes) { await repo.update(conn, 'students', id, encrypted(changes)); return id; }
 module.exports = { create, update, validateCreate };

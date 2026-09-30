@@ -221,7 +221,7 @@ router.get('/students', verifyToken, checkPermission('reports', 'view'), async (
                 SUM(CASE WHEN status = 'graduated' THEN 1 ELSE 0 END) as graduated,
                 SUM(CASE WHEN status = 'withdrawn' THEN 1 ELSE 0 END) as withdrawn
             FROM students
-            WHERE academy_id = ? AND deleted_at IS NULL`,
+            WHERE academy_id = ? AND deleted_at IS NULL AND (status IS NULL OR status <> 'prospect')`,
             [academyId]
         );
 

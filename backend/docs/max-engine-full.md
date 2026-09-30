@@ -21,7 +21,7 @@ PACA 38·PEAK 33 원본 resource + PEAK의 PACA id 검색용 8개 별칭을 제�
 
 쓰기 명령은 `constants/maxEngineCommands.js`의 8개만 허용한다.
 
-- 학생 기본 등록/수정: 이름·전화·학교·학년·부모·주소·메모. 등록은 정식 재원생, 정시, 수강료 0, 요일 없음. 학번은 현재 KST 연도 기준이며 삭제 학생 번호를 재사용하지 않는다. 체험 전환·학적 상태·요일·수강료 수정·청구 생성은 제공하지 않는다.
+- 학생 기본 등록/수정: 이름·전화·학교·학년·부모·주소·메모. 기본 등록은 정식 재원생, 정시, 수강료 0, 요일 없음이며, 2026-09-30부터 최초 연동용 `registration_source=max_engine`은 예비생이다. 학번은 현재 KST 연도 기준이며 삭제 학생 번호를 재사용하지 않는다. 체험 전환·학적 상태·요일·수강료 수정·청구 생성은 제공하지 않는다.
 - 재원생 상담 생성/메모 수정, 성적·실기·목표 대학 상담 기록 생성/부분 수정. 연결 상담 완료는 같은 트랜잭션이다.
 - 기존 attendance 행 출결 정정: 기존 체험 잔여횟수/상태 서비스 사용. 문자 발송 없음.
 - 기존 청구 납부: 누적 수납·부분납/완납·수입 장부를 같은 트랜잭션으로 기록. 환불·할인·취소·급여 지급·외부 결제는 제공하지 않는다.
@@ -44,6 +44,16 @@ RUN_MAX_ENGINE_MYSQL=1 TEST_MYSQL_PORT=<isolated-port> MAXAI_NATIVE_MYSQL_SOCKET
 ```
 
 max-engine 저장소의 `docs/analysis/paca-peak-full/IMPLEMENTATION.md`, `ROUTES.md`, `ops/deploy/mcp/VERIFY.md`에 세 저장소 전체 검증·배포 인계를 기록한다.
+
+## 2026-09-30 예비생 최초 연동 증분
+
+교육원이 엔진을 처음 연결할 때 엔진에만 있는 학생을 PACA에 등록하려면 `student_create`의 `changes`에 `registration_source: "max_engine"`를 보낸다. 이 값은 학생 행에 저장하지 않고 `status=prospect`, `memo` 첫 줄 `엔진등록`으로 고정한다. 제공한 메모는 다음 줄에 보존한다. 이름+전화번호 중복 확인과 미리보기→확정 절차는 동일하다. 전화번호가 없으면 422이며 엔진에서 입력받은 뒤 재시도해야 한다. 옵션을 생략한 기존 등록은 `active`다.
+
+```json
+{"operation":"student_create","changes":{"name":"홍예비","phone":"01012345678","enrollment_date":"2026-09-30","registration_source":"max_engine","memo":"첫 연동"}}
+```
+
+예비생은 학생 목록의 별도 탭과 배지로 표시된다. 원장은 학생 수정 화면에서 `active`로 전환하고 수업 요일·수강료를 설정할 수 있다. 예비생 상태에서는 재원 총원·출결·청구 생성·2월 자동 진급·학생 대상 문자/알림을 제외한다. 엔진 읽기 명단에는 포함해 PACA 원본으로 계속 동기화한다. 운영 반영 전에는 `migrations/20260930_add_student_prospect_status.mysql`을 검증된 백업 후 적용해야 한다. 앱 롤백은 예비생 값을 포함하는 ENUM을 유지하며, 값 제거는 예비생 행을 별도로 보존·재분류한 다음 수동으로 수행한다.
 
 ## 2026-09-27 업무 조회 효율화 증분
 

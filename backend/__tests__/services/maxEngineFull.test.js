@@ -25,6 +25,13 @@ test('partial updates preserve null and reject foreign scope, unknown fields and
   {operation:'student_update',resource_id:1,changes:{name:'ENC:forged',status:'active'}},
  ])expect(()=>validate(body)).toThrow();
 });
+test('engine-only source is allowed for create and missing phone has a specific 422 message',()=>{
+ const command=validate({operation:'student_create',changes:{name:'합성',phone:'01012345678',enrollment_date:'2026-09-30',registration_source:'max_engine'}});
+ expect(command.changes.registration_source).toBe('max_engine');
+ expect(()=>validate({operation:'student_create',changes:{name:'합성',enrollment_date:'2026-09-30',registration_source:'max_engine'}})).toThrow('학생 전화번호가 없습니다');
+ expect(()=>validate({operation:'student_create',changes:{name:'합성',phone:'---',enrollment_date:'2026-09-30',registration_source:'max_engine'}})).toThrow('학생 전화번호가 없습니다');
+ expect(()=>validate({operation:'student_create',changes:{name:'합성',phone:'01012345678',enrollment_date:'2026-09-30',registration_source:'other'}})).toThrow();
+});
 test('payment uses exact decimal arithmetic and preserves prior notes',()=>{
  const before={paid_amount:'0.10',final_amount:'0.30',payment_status:'partial',notes:'prior'};
  const result=payments.result({paid_amount:'0.20',payment_date:'2026-09-27',payment_method:'cash'},before);

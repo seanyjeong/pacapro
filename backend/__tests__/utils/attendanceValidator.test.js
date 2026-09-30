@@ -21,6 +21,7 @@ describe('validateAttendance', () => {
         expect(result.valid).toBe(true);
         expect(result.studentAcademyId).toBe(1);
         expect(result.scheduleAcademyId).toBe(1);
+        expect(db.query.mock.calls[0][0]).toContain("status <> 'prospect'");
     });
 
     test('다른 academy_id면 invalid', async () => {
@@ -74,6 +75,14 @@ describe('validateAttendance', () => {
 });
 
 describe('validateBatchAttendance', () => {
+    test('예비생처럼 조회 대상에서 빠진 학생은 일괄 출결 대상이 아니다', async () => {
+        db.query
+            .mockResolvedValueOnce([[{ academy_id: 1 }]])
+            .mockResolvedValueOnce([[{ id: 1, academy_id: 1 }]]);
+        const result = await validateBatchAttendance([1, 2], 200);
+        expect(result).toMatchObject({ valid: false, invalidStudents: [2] });
+        expect(db.query.mock.calls[1][0]).toContain("status <> 'prospect'");
+    });
     test('모든 학생이 같은 academy면 valid', async () => {
         db.query
             .mockResolvedValueOnce([[{ academy_id: 1 }]]) // schedule

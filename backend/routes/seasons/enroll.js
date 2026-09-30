@@ -184,6 +184,9 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
         }
 
         const student = students[0];
+        if (student.status === 'prospect') {
+            return res.status(400).json({ error: 'Validation Error', message: '예비생은 재원으로 전환한 뒤 시즌에 등록할 수 있습니다.' });
+        }
 
         const [existing] = await pool.execute(
             `SELECT id FROM student_seasons

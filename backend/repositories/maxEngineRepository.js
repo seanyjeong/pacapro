@@ -27,7 +27,7 @@ async function students(academyId, afterId) {
   const [rows] = await db.execute(
     `SELECT id, name, gender, grade, school, phone, parent_phone, status, updated_at
      FROM students WHERE academy_id = ? AND deleted_at IS NULL AND id > ?
-       AND status IN ('active', 'paused', 'pending', 'trial')
+       AND status IN ('active', 'paused', 'pending', 'trial', 'prospect')
      ORDER BY id LIMIT ${PAGE_SIZE + 1}`, [academyId, afterId]);
   return rows;
 }

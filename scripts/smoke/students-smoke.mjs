@@ -79,6 +79,7 @@ const STUDENTS = [
   makeStudent({ id: 43, name: '이민수', school: '상담대기고', status: 'pending', student_number: '2026043' }),
   makeStudent({ id: 44, name: '최체험', gender: 'female', school: '체험고', status: 'trial', is_trial: true, trial_remaining: 1 }),
   makeStudent({ id: 45, name: '한휴원', school: '휴원고', status: 'paused', rest_start_date: '2026-06-01' }),
+  makeStudent({ id: 46, name: '정예비', school: '연동고', status: 'prospect', memo: '엔진등록', class_days: [], weekly_count: 0, monthly_tuition: '0' }),
 ];
 
 function makeState(mode) {
@@ -268,6 +269,11 @@ async function runDesktop(browser) {
   await board.getByRole('button', { name: '재원 학생 보기' }).click();
   await page.locator('table').getByText('김진우').waitFor();
   await page.locator('table').getByText('박서연').waitFor();
+  await page.getByRole('button', { name: /예비생/ }).click();
+  await page.locator('table').getByText('정예비').waitFor();
+  await page.locator('table').getByText('김진우').waitFor({ state: 'hidden' });
+  await page.locator('tr:has-text("정예비")').getByText('예비생').waitFor();
+  await page.getByRole('button', { name: /재원생/ }).click();
   const advanceBadge = page.locator('tr:has-text("박서연")').getByText('선행반');
   await advanceBadge.waitFor();
   if (!(await advanceBadge.getAttribute('class'))?.includes('violet')) throw new Error('선행반 배지 색상이 구분되지 않습니다.');
@@ -367,9 +373,13 @@ async function runMobile(browser) {
   await page.getByText('김진우').first().waitFor();
   await page.getByText('010-1111-2222').first().waitFor();
   await page.getByText('월 학원비').first().waitFor();
+  await page.getByRole('button', { name: /예비생/ }).click();
+  await page.getByText('정예비').first().waitFor();
+  await page.locator('article:has-text("정예비")').getByText('예비생', { exact: true }).waitFor();
   await assertNoRawVisibleText(page, 'students mobile');
   await assertNoHorizontalOverflow(page, 'students mobile');
   await page.screenshot({ path: '/Users/etlab/paca-students-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: /재원생/ }).click();
   await detailButton.scrollIntoViewIfNeeded();
 
   await context.close();

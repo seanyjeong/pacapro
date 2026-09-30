@@ -19,7 +19,7 @@ async function validateAttendance(studentId, scheduleId, connection = null) {
     try {
         // 학생의 academy_id 조회
         const [students] = await dbConn.query(
-            'SELECT academy_id FROM students WHERE id = ? AND deleted_at IS NULL',
+            "SELECT academy_id FROM students WHERE id = ? AND (status IS NULL OR status <> 'prospect') AND deleted_at IS NULL",
             [studentId]
         );
 
@@ -82,13 +82,14 @@ async function validateBatchAttendance(studentIds, scheduleId, connection = null
 
         // 학생들의 academy_id 일괄 조회
         const [students] = await dbConn.query(
-            'SELECT id, academy_id FROM students WHERE id IN (?) AND deleted_at IS NULL',
+            "SELECT id, academy_id FROM students WHERE id IN (?) AND (status IS NULL OR status <> 'prospect') AND deleted_at IS NULL",
             [studentIds]
         );
 
-        const invalidStudents = students
+        const foundIds = new Set(students.map(s => Number(s.id)));
+        const invalidStudents = studentIds.filter(id => !foundIds.has(Number(id))).concat(students
             .filter(s => s.academy_id !== scheduleAcademyId)
-            .map(s => s.id);
+            .map(s => s.id));
 
         if (invalidStudents.length > 0) {
             console.error(`[SECURITY] Academy mismatch in batch! Schedule ${scheduleId} (academy: ${scheduleAcademyId}), invalid students: ${invalidStudents.join(', ')}`);

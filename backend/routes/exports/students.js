@@ -88,6 +88,7 @@ module.exports = function(router) {
                 paused: { name: '휴원생', color: 'FFFFA000', students: [] },
                 withdrawn: { name: '퇴원생', color: 'FFC62828', students: [] },
                 trial: { name: '체험생', color: 'FF1565C0', students: [] },
+                prospect: { name: '예비생', color: 'FF0284C7', students: [] },
                 pending: { name: '미등록', color: 'FF757575', students: [] }
             };
 

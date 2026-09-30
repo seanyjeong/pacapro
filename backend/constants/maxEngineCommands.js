@@ -20,8 +20,8 @@ const record = {
 const commands = {
   student_create: { resource: 'students', provider: 'paca', label: '학생 기본정보 등록',
     schema: Joi.object({ ...profile, name: profile.name.required(), phone: profile.phone.required(),
-      enrollment_date: date.required() }).unknown(false),
-    notice: '정식 학생 기본정보만 등록합니다. 수업 요일·수강료는 0으로 시작하며 청구·문자 발송은 하지 않습니다.' },
+      enrollment_date: date.required(), registration_source: Joi.string().valid('max_engine') }).unknown(false),
+    notice: 'registration_source=max_engine이면 예비생으로 등록하고 메모에 엔진등록을 남깁니다. 수업 요일·수강료는 0으로 시작합니다.' },
   student_update: { resource: 'students', provider: 'paca', label: '학생 기본정보 부분 수정',
     schema: Joi.object(profile).min(1).unknown(false) },
   consultation_create: { resource: 'consultations', provider: 'paca', label: '재원생 상담 기록 등록',

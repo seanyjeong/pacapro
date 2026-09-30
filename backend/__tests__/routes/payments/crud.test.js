@@ -116,6 +116,7 @@ describe('POST /paca/payments', () => {
             });
         expect(res.status).toBe(404);
         expect(res.body.message).toBe('학생을 찾을 수 없습니다.');
+        expect(pool.execute.mock.calls[0][0]).toContain("status <> 'prospect'");
     });
 
     test('201: { message, payment } + truncateToThousands(base - discount + additional)', async () => {

@@ -62,6 +62,7 @@ describe('GET /paca/reports/dashboard', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.unpaid_payments.amount).toBe(200000);
+        expect(db.query.mock.calls[0][0]).toContain("status <> 'prospect'");
 
         const unpaidCall = db.query.mock.calls.find(([sql]) => sql.includes('unpaid_count'));
         expect(unpaidCall).toBeDefined();
@@ -70,6 +71,15 @@ describe('GET /paca/reports/dashboard', () => {
         expect(unpaidCall[0]).toContain("NOT (p.payment_type = 'season' AND p.due_date > CURDATE())");
         expect(unpaidCall[0]).not.toContain('SUM(final_amount)');
     });
+});
+
+test('학생 보고서 총원도 예비생을 제외하고 학년·전형 분포는 기존 재원·휴원 범위를 유지한다', async () => {
+    db.query.mockResolvedValueOnce([[{ total_students: 2, active: 1, paused: 1, graduated: 0, withdrawn: 0 }]])
+        .mockResolvedValueOnce([[]]).mockResolvedValueOnce([[]]);
+    const res = await request(makeApp()).get('/paca/reports/students');
+    expect(res.status).toBe(200);
+    expect(db.query.mock.calls[0][0]).toContain("status <> 'prospect'");
+    expect(db.query.mock.calls[1][0]).toContain("status IN ('active', 'paused')");
 });
 
 describe('GET /paca/reports/payments/unpaid', () => {
