@@ -1,9 +1,11 @@
 const repo = require('../repositories/maxEngineFullCommandRepository');
 const { applyTrialAttendanceChange } = require('./trialStatusService');
+const { fail } = require('../models/maxEngineError');
 
 async function state(conn, actor, id, lock) {
   const attendance = await repo.row(conn, 'attendance', id, actor.academy_id, lock);
   const student = await repo.row(conn, 'students', attendance.student_id, actor.academy_id, lock);
+  if (student.status === 'prospect') fail(409, 'STUDENT_NOT_ENROLLED', '예비생은 출결 대상이 아닙니다. 재원으로 전환해 주세요.');
   const schedule = await repo.row(conn, 'class_schedules', attendance.class_schedule_id, actor.academy_id, lock);
   return { attendance, student, schedule };
 }

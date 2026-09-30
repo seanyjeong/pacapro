@@ -7,6 +7,9 @@ function registerSmsAuxiliaryRoutes(router, db) {
     router.get('/recipients-count', verifyToken, async (req, res) => {
         try {
             const { statusFilter = 'active', gradeFilter = 'all' } = req.query;
+            if (!['active', 'pending'].includes(statusFilter)) {
+                return res.status(400).json({ error: 'Validation Error', message: '문자 대상 학생 상태를 확인해주세요.' });
+            }
             let query = `
                 SELECT s.phone AS student_phone, s.parent_phone, s.grade
                 FROM students s

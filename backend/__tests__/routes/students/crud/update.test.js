@@ -102,6 +102,26 @@ beforeEach(() => {
 });
 
 describe('PUT /paca/students/:id (update)', () => {
+    test('예비생은 원장이 재원으로 바꿀 수 있고, 일반 재원생을 예비생으로 지정할 수 없다', async () => {
+        pool.execute.mockResolvedValueOnce([[existingStudent({ status: 'active' })]]);
+        const blocked = await request(makeApp()).put('/paca/students/5').send({ status: 'prospect' });
+        expect(blocked.status).toBe(400);
+        expect(pool.execute).toHaveBeenCalledTimes(1);
+
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValue([[]]);
+        pool.execute
+            .mockResolvedValueOnce([[existingStudent({ status: 'prospect', student_number: null })]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ status: 'active', student_number: '2026001' })]]);
+        const converted = await request(makeApp()).put('/paca/students/5').send({ status: 'active', monthly_tuition: 0 });
+        expect(converted.status).toBe(200);
+        const updateCall = pool.execute.mock.calls.find(([sql]) => /UPDATE students SET/.test(sql));
+        expect(updateCall[0]).toContain('status = ?');
+        expect(updateCall[1]).toContain('active');
+    });
+
     test('학생 미존재 → 404 한국어 (ADR-003)', async () => {
         pool.execute.mockResolvedValueOnce([[]]); // 학생 SELECT 빈 배열
         const res = await request(makeApp()).put('/paca/students/999').send({ name: '변경' });

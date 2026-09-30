@@ -322,7 +322,7 @@ module.exports = function(router) {
                     s.phone AS student_phone
                 FROM student_payments p
                 JOIN students s ON p.student_id = s.id
-                WHERE p.id = ? AND p.academy_id = ?`,
+                WHERE p.id = ? AND p.academy_id = ? AND s.status = 'active'`,
                 [payment_id, req.user.academyId]
             );
 

@@ -14,7 +14,7 @@ async function findRecordedStudents(academyId, scheduleId) {
         `SELECT a.student_id, s.name AS student_name, s.grade, a.attendance_status,
                 a.notes, a.makeup_date, a.is_makeup, s.is_trial, s.trial_remaining
          FROM attendance a JOIN students s ON s.id = a.student_id AND s.academy_id = ?
-         WHERE a.class_schedule_id = ? AND s.deleted_at IS NULL
+         WHERE a.class_schedule_id = ? AND (s.status IS NULL OR s.status <> 'prospect') AND s.deleted_at IS NULL
          ORDER BY a.student_id`,
         [academyId, scheduleId]
     );

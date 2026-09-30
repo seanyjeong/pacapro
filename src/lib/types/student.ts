@@ -25,7 +25,7 @@ export type StudentType = 'exam' | 'adult';
 export type Grade = '중1' | '중2' | '중3' | '고1' | '고2' | '고3' | 'N수';
 
 // 학생 상태 (status) - DB enum
-export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn' | 'trial' | 'pending';
+export type StudentStatus = 'active' | 'paused' | 'graduated' | 'withdrawn' | 'trial' | 'pending' | 'prospect';
 
 // 성별 (gender)
 export type Gender = 'male' | 'female';
@@ -233,6 +233,7 @@ export const STATUS_LABELS: Record<StudentStatus, string> = {
   withdrawn: '퇴원',
   trial: '체험',
   pending: '미등록관리',
+  prospect: '예비생',
 };
 
 export const GENDER_LABELS: Record<Gender, string> = {
@@ -292,6 +293,7 @@ export const STATUS_OPTIONS = [
   { value: 'withdrawn' as StudentStatus, label: '퇴원' },
   { value: 'trial' as StudentStatus, label: '체험' },
   { value: 'pending' as StudentStatus, label: '미등록관리' },
+  { value: 'prospect' as StudentStatus, label: '예비생' },
 ];
 
 // 요일 옵션 (체크박스용)

@@ -1,0 +1,10 @@
+-- Apply after a verified backup and before deploying code that writes prospect.
+-- Verified production precondition on 2026-09-30: nullable status with default active.
+-- Preserve existing ENUM order; append prospect so stored ordinal values do not change.
+ALTER TABLE students
+  MODIFY COLUMN status
+  ENUM('active','paused','graduated','withdrawn','trial','pending','prospect')
+  NULL DEFAULT 'active';
+
+-- Rollback is deliberately manual: first stop new prospect writes, decide how to
+-- preserve or reclassify every prospect row, then remove the final ENUM member.

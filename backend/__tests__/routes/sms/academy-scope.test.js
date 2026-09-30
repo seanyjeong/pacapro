@@ -50,6 +50,12 @@ beforeEach(() => {
 });
 
 describe('SMS sender numbers academy isolation', () => {
+    test('예비생 상태는 문자 수신자 검색과 발송에서 거부한다', async () => {
+        const app = buildApp();
+        expect((await request(app).get('/paca/sms/recipients-count?statusFilter=prospect')).status).toBe(400);
+        expect((await request(app).post('/paca/sms/send').send({ target: 'all', content: '합성 문자', statusFilter: 'prospect' })).status).toBe(400);
+        expect(db.query).not.toHaveBeenCalled();
+    });
     test('PUT /sender-numbers/:id scopes ownership check and final update by academy_id', async () => {
         db.query
             .mockResolvedValueOnce([[{ id: 55, service_type: 'sens', academy_id: 7 }]])

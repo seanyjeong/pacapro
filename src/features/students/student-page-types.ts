@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
-export type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending' | 'graduated' | 'bySchool';
+export type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending' | 'prospect' | 'graduated' | 'bySchool';
 
 export interface StudentTabOption {
     id: StudentTab;

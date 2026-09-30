@@ -21,6 +21,7 @@ async function reassignClassSchedules(context) {
     } = context;
 
     let reassignResult = null;
+    if (updatedStudent?.status === 'prospect') return reassignResult;
     if (classDays !== undefined && !isScheduledClassDays) {
         const newClassDays = classDays || [];
         const newSlots = parseClassDaysWithSlots(newClassDays, currentTimeSlot);

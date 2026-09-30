@@ -41,6 +41,9 @@ if (!ENCRYPTION_KEY) {
 router.post('/send', verifyToken, checkPermission('sms', 'edit'), async (req, res) => {
     try {
         const { target, content, customPhones, images, statusFilter = 'active', gradeFilter = 'all', senderNumberId } = req.body;
+        if (!['active', 'pending'].includes(statusFilter)) {
+            return res.status(400).json({ error: 'Validation Error', message: '문자 대상 학생 상태를 확인해주세요.' });
+        }
 
         if (!content || content.trim().length === 0) {
             return res.status(400).json({

@@ -240,6 +240,7 @@ export function getStatusColor(status: StudentStatus): string {
     withdrawn: 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700',
     trial: 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-700',
     pending: 'bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 border-orange-200 dark:border-orange-700',
+    prospect: 'bg-sky-100 dark:bg-sky-900 text-sky-800 dark:text-sky-200 border-sky-200 dark:border-sky-700',
   };
   return colors[status] || 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700';
 }

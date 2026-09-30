@@ -32,6 +32,9 @@ describe('gradePromotionScheduler', () => {
         const studentUpdate = db.query.mock.calls.find(([sql]) => /UPDATE students\s+SET/.test(sql));
         expect(studentUpdate).toBeDefined();
         expect(studentUpdate[0]).toMatch(/admission_type\s*=\s*CASE/);
+        expect(studentUpdate[0]).toContain("status <> 'prospect'");
+        expect(db.query.mock.calls.find(([sql]) => /SELECT COUNT\(\*\) as cnt FROM students/.test(sql))[0]).toContain("status <> 'prospect'");
+        expect(db.query.mock.calls.find(([sql]) => /UPDATE consultations/.test(sql))[0]).toContain("s.status <> 'prospect'");
         expect(studentUpdate[0]).toMatch(/admission_type\s*=\s*'advance'/);
         expect(studentUpdate[1]).toEqual(['고3', '고2']);
         expect(result).toEqual({

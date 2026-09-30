@@ -87,6 +87,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
 
         // 기존 class_days, status, time_slot 파싱
         const oldStatus = students[0].status;
+        if (req.body.status === 'prospect' && oldStatus !== 'prospect') {
+            return res.status(400).json({ error: 'Validation Error', message: '예비생 등록은 엔진 최초 연동에서만 가능합니다.' });
+        }
         const oldTimeSlot = students[0].time_slot || 'evening';
         const oldClassDaysRaw = students[0].class_days
             ? (typeof students[0].class_days === 'string'
@@ -173,7 +176,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
 
         // pending/trial → active 전환 시 학번 자동 생성
         let autoStudentNumber = student_number;
-        if (trialUpdate.status === 'active' && (oldStatus === 'pending' || oldStatus === 'trial') && !student_number && !students[0].student_number) {
+        if (trialUpdate.status === 'active' && ['pending', 'trial', 'prospect'].includes(oldStatus) && !student_number && !students[0].student_number) {
             const year = new Date().getFullYear();
             const [lastStudent] = await pool.execute(
                 `SELECT student_number FROM students

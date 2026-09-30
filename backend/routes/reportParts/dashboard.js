@@ -16,7 +16,7 @@ function registerDashboardReport(router) {
                     SUM(CASE WHEN status = 'paused' THEN 1 ELSE 0 END) as paused_students,
                     SUM(CASE WHEN status = 'withdrawn' THEN 1 ELSE 0 END) as withdrawn_students
                 FROM students
-                WHERE academy_id = ? AND deleted_at IS NULL AND (is_trial = 0 OR is_trial IS NULL)`,
+                WHERE academy_id = ? AND deleted_at IS NULL AND (status IS NULL OR status <> 'prospect') AND (is_trial = 0 OR is_trial IS NULL)`,
                 [academyId]
             );
 

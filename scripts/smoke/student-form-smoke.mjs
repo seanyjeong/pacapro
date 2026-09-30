@@ -138,7 +138,9 @@ async function installRoutes(context, state) {
         message: 'ok',
         payments: [],
         performances: [],
-        student: state.mode === 'trial-reactivation'
+        student: state.mode === 'prospect-edit'
+          ? makeStudent({ id: 77, name: '정예비', phone: '010-7777-8888', status: 'prospect', memo: '엔진등록' })
+          : state.mode === 'trial-reactivation'
           ? makeStudent({
               id: 77,
               name: '김체험',
@@ -368,6 +370,27 @@ async function runEditSuccess(browser) {
   return result;
 }
 
+async function runProspectEdit(browser) {
+  const result = await createStudentFormPage(browser, 'prospect-edit', { width: 390, height: 844 });
+  const { context, page, state } = result;
+  await page.goto('/students/77/edit', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '학생 정보 수정' }).waitFor();
+  const status = page.locator('select').last();
+  await status.waitFor();
+  if (await status.inputValue() !== 'prospect') throw new Error('예비생 상태가 수정 화면에 표시되지 않습니다.');
+  const choices = await status.locator('option').evaluateAll((options) => options.map((item) => item.value));
+  if (JSON.stringify(choices) !== JSON.stringify(['active', 'prospect'])) {
+    throw new Error(`예비생 상태 변경 선택지가 잘못됐습니다: ${choices.join(',')}`);
+  }
+  await status.selectOption('active');
+  await submitStudentForm(page, '수정');
+  await waitForStudentFormUrl(page, '**/students/77', state, 'prospect activation');
+  if (state.editPayload?.status !== 'active') throw new Error('예비생 재원 전환 값이 저장 요청에 없습니다.');
+  await assertNoHorizontalOverflow(page, 'prospect activation');
+  await context.close();
+  return result;
+}
+
 async function runEditCancelDialog(browser) {
   const result = await createStudentFormPage(browser, 'success');
   const { context, page } = result;
@@ -452,6 +475,7 @@ async function main() {
     const createSameName = await runCreateSameNameWarning(browser);
     const createCancel = await runCreateCancelDialog(browser);
     const editSuccess = await runEditSuccess(browser);
+    const prospectEdit = await runProspectEdit(browser);
     const editCancel = await runEditCancelDialog(browser);
     const editError = await runEditError(browser);
     const trialReactivation = await runTrialReactivationSmoke(browser, createStudentFormPage);
@@ -463,6 +487,7 @@ async function main() {
       createSameName,
       createCancel,
       editSuccess,
+      prospectEdit,
       editCancel,
       editError,
       trialReactivation,

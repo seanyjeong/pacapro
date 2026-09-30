@@ -35,7 +35,7 @@ async function promoteStudentGrades(isDryRun = false) {
         for (const { from, to } of GRADE_PROMOTION_ORDER) {
             // 먼저 대상 인원 조회
             const [targets] = await db.query(
-                `SELECT COUNT(*) as cnt FROM students WHERE deleted_at IS NULL AND grade = ?`,
+                `SELECT COUNT(*) as cnt FROM students WHERE deleted_at IS NULL AND (status IS NULL OR status <> 'prospect') AND grade = ?`,
                 [from]
             );
             const count = targets[0].cnt;
@@ -54,7 +54,7 @@ async function promoteStudentGrades(isDryRun = false) {
                 await db.query(
                     `UPDATE students
                      SET grade = ?, ${admissionTypeUpdate} updated_at = NOW()
-                     WHERE deleted_at IS NULL AND grade = ?`,
+                     WHERE deleted_at IS NULL AND (status IS NULL OR status <> 'prospect') AND grade = ?`,
                     [to, from]
                 );
 
@@ -63,7 +63,7 @@ async function promoteStudentGrades(isDryRun = false) {
                     `UPDATE consultations c
                      INNER JOIN students s ON c.linked_student_id = s.id
                      SET c.student_grade = ?
-                     WHERE s.deleted_at IS NULL AND c.student_grade = ? AND c.linked_student_id IS NOT NULL`,
+                     WHERE s.deleted_at IS NULL AND (s.status IS NULL OR s.status <> 'prospect') AND c.student_grade = ? AND c.linked_student_id IS NOT NULL`,
                     [to, from]
                 );
             }

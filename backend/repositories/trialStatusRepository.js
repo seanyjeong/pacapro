@@ -6,7 +6,7 @@ async function findAttendanceContextForUpdate(connection, {
     const [students] = await connection.query(
         `SELECT id, academy_id, name, status, is_trial, trial_remaining, trial_dates
            FROM students
-          WHERE id = ? AND academy_id = ? AND deleted_at IS NULL
+          WHERE id = ? AND academy_id = ? AND (status IS NULL OR status <> 'prospect') AND deleted_at IS NULL
           FOR UPDATE`,
         [studentId, academyId]
     );

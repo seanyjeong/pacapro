@@ -112,7 +112,7 @@ router.post('/', verifyToken, checkPermission('payments', 'edit'), async (req, r
 
         // Verify student exists and belongs to this academy
         const [students] = await pool.execute(
-            'SELECT id, academy_id FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            "SELECT id, academy_id FROM students WHERE id = ? AND academy_id = ? AND (status IS NULL OR status <> 'prospect') AND deleted_at IS NULL",
             [student_id, req.user.academyId]
         );
 

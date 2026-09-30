@@ -192,7 +192,7 @@ async function createActivationPayment(context) {
     } = context;
     if (
         status !== 'active'
-        || !['pending', 'trial'].includes(oldStatus)
+        || !['pending', 'trial', 'prospect'].includes(oldStatus)
         || !monthlyTuition
         || monthlyTuition <= 0
     ) {

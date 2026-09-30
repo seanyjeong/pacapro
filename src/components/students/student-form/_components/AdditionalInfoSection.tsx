@@ -72,7 +72,9 @@ export function AdditionalInfoSection({
                 }
               }}
               className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
-              {STATUS_OPTIONS.map((option) => (
+              {STATUS_OPTIONS.filter((option) => initialData?.status === 'prospect'
+                ? ['prospect', 'active'].includes(option.value)
+                : option.value !== 'prospect').map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>

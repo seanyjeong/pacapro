@@ -15,6 +15,7 @@ export const STUDENT_TABS: StudentTabOption[] = [
     { id: 'graduated', label: '졸업생', description: '졸업 이력', icon: GraduationCap, toneClass: 'text-indigo-700 dark:text-indigo-300' },
     { id: 'trial', label: '체험생', description: '등록 전환', icon: Sparkles, toneClass: 'text-fuchsia-700 dark:text-fuchsia-300' },
     { id: 'pending', label: '미등록관리', description: '상담 후속', icon: Clock, toneClass: 'text-orange-700 dark:text-orange-300' },
+    { id: 'prospect', label: '예비생', description: '엔진 등록', icon: Users, toneClass: 'text-sky-700 dark:text-sky-300' },
     { id: 'bySchool', label: '학교별', description: '학교 기준', icon: School, toneClass: 'text-sky-700 dark:text-sky-300' },
 ];
 
