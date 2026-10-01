@@ -6,7 +6,7 @@
 
 기본 경로 `/paca/integrations/max-engine/full`:
 
-- `POST /token`: email/password로 승인된 활성 원장·관리자의 1시간 위임 발급.
+- `POST /token`: email/password로 승인된 활성 원장·관리자의 30일(2,592,000초) 위임 발급. `purpose=mcp`도 기존과 같은 30일이다.
 - `GET /identity`: 현재 계정·교육원 재검증.
 - `GET /{paca|peak}/catalog`: 원본 resource·필드·필터·쓰기 스키마.
 - `GET /{paca|peak}/resources/{resource}?cursor=0&filters={"id":1}`: 내 교육원 원본 JSON 100개씩. `next_cursor`가 null까지 반복.
@@ -14,6 +14,8 @@
 - `POST /{paca|peak}/confirm`: preview_token/idempotency_key/confirm=true. 잠금·변경 전 값 확인 후 원자적 반영.
 
 전용 `MAX_ENGINE_LINK_SECRET`만 사용한다. 기존 서비스 키·JWT_SECRET와 같으면 비활성화된다. 기존 read audience 토큰의 범위를 올리지 않는다. 매 요청에 사용자 승인/활성/역할/교육원/비밀번호 fingerprint를 검사한다. `nc_*`는 접근하지 않는다.
+
+2026-10-01부터 일반 업무 위임도 30일이다. 이미 발급된 토큰의 만료 시각은 바뀌지 않으며, 재발급부터 적용된다. 계정 비활성·승인 취소·권한/교육원 변경·비밀번호 변경은 기존과 같이 다음 요청부터 무효화된다. 이 API에는 개별 토큰 폐기/로그아웃/연결 해제 경로와 폐기 원장이 없다. 클라이언트에서 연결만 해제해도 복사된 토큰은 만료 또는 위 계정 변경 전까지 유효할 수 있다. 기간 연장에 따른 이 위험을 운영 결과에 명시한다. 미리보기 10분·확인·멱등 원장·감사 로그는 그대로다.
 
 ## 데이터와 쓰기
 

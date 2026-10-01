@@ -49,13 +49,29 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     await paca.query("INSERT INTO students(id,academy_id,name,phone,grade,class_days,weekly_count,monthly_tuition,status) VALUES (1,1,?,?,'고3','[]',0,0,'active'),(2,2,?,?,'고3','[]',0,0,'active')", [encrypt('합성가'),encrypt('000111'),encrypt('합성나'),encrypt('000222')]);
     app = express(); app.use(express.json()); app.use(base, require('../../routes/integrations/full'));
     const login = await request(app).post(base + '/token').send({ email: 'a@example.invalid', password });
-    expect(login.status).toBe(200); token = login.body.access_token;
+    expect(login.status).toBe(200); expect(login.body.expires_in).toBe(2592000); token = login.body.access_token;
   });
   afterAll(async () => { await paca?.end(); await peak?.end(); await admin?.end(); });
   const get = path => request(app).get(base + path).auth(token, { type: 'bearer' });
   const post = (path, body) => request(app).post(base + path).auth(token, { type: 'bearer' }).send(body);
   const preview = command => post('/paca/preview', command);
   const confirm = p => post('/paca/confirm', { preview_token: p.preview_token, idempotency_key: p.idempotency_key, confirm: true });
+
+  test('30-day delegation remains valid after one hour and expires at its boundary', async () => {
+    const jwt = require('jsonwebtoken');
+    const claims = jwt.decode(token);
+    expect(claims.exp - claims.iat).toBe(2592000);
+    expect(claims.scope).toBe('business:read business:confirmed-write');
+    const now = Math.floor(Date.now() / 1000);
+    const identity = { ...claims };
+    delete identity.iat; delete identity.exp;
+    const aged = days => jwt.sign({ ...identity, iat: now - days * 86400 }, secret,
+      { algorithm: 'HS256', expiresIn: 2592000 });
+    for (const days of [2, 29]) {
+      expect((await request(app).get(base + '/identity').auth(aged(days), { type: 'bearer' })).status).toBe(200);
+    }
+    expect((await request(app).get(base + '/identity').auth(aged(30), { type: 'bearer' })).status).toBe(401);
+  });
 
   test('all allowlisted read resources execute; private columns never appear; other academy blocked', async () => {
     for (const key of Object.keys(catalog)) {
@@ -179,7 +195,7 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     const filtered=await get('/paca/resources/students?filters='+encodeURIComponent(JSON.stringify({id:2})));expect(filtered.body.items).toEqual([]);
   });
   test('account move, revoke, role downgrade and password change invalidate delegation immediately', async () => {
-    for(const [column,value] of [['academy_id',2],['is_active',0],['role','teacher'],['password_hash','changed']]){
+    for(const [column,value] of [['academy_id',2],['is_active',0],['approval_status','pending'],['role','teacher'],['password_hash','changed']]){
       const [[before]]=await paca.query(`SELECT \`${column}\` v FROM users WHERE id=1`);
       await paca.query(`UPDATE users SET \`${column}\`=? WHERE id=1`,[value]);
       expect([401,403]).toContain((await get('/identity')).status);
