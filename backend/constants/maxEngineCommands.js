@@ -5,6 +5,7 @@ const date = Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).custom((v, h) =>
 const profile = {
   name: Joi.string().min(1).max(60), phone: Joi.string().pattern(/^[0-9+() -]{3,30}$/),
   gender: Joi.string().valid('male', 'female').allow(null), parent_phone: text(30),
+  father_phone: text(30), mother_phone: text(30),
   school: text(200), grade: text(20), address: text(400), father_name: text(60), mother_name: text(60),
   memo: text(4000), notes: text(4000),
 };

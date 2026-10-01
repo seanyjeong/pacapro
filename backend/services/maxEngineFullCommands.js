@@ -25,7 +25,10 @@ function validate(body) {
       (body.changes.registration_source === 'max_engine' && String(body.changes.phone).replace(/\D/g, '').length < 9))) {
     fail(422, 'INVALID_INPUT', '학생 전화번호가 없습니다. 엔진에서 전화번호를 입력한 뒤 다시 보내 주세요.');
   }
-  const parsed = spec.schema.validate(body.changes, { convert: false });
+  // Use the same parent-contact rules as ordinary registration before preview and confirmation.
+  const changes = ['student_create', 'student_update'].includes(body.operation)
+    ? students.normalizeParentPhones(body.changes) : body.changes;
+  const parsed = spec.schema.validate(changes, { convert: false });
   if (parsed.error || !parsed.value) fail(422, 'INVALID_INPUT', '작업별 필수 입력·형식·허용 필드를 확인해 주세요.');
   if (JSON.stringify(parsed.value).length > 30000) fail(422, 'INVALID_INPUT', '입력 길이를 줄여 주세요.');
   return { operation: body.operation, resource_id: body.resource_id ?? null, changes: parsed.value };

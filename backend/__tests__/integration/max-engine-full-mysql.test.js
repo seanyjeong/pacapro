@@ -38,6 +38,8 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     peak = mysql.createPool({ ...opts, database: prefix + 'peak' });
     global.__fullPaca = paca; global.__fullPeak = peak;
     await paca.query(fs.readFileSync(require.resolve('../../migrations/20260930_add_student_prospect_status.mysql'), 'utf8'));
+    // Production already has these nullable encrypted contact columns; no production DDL is needed.
+    await paca.query('ALTER TABLE students ADD father_phone VARCHAR(512) NULL, ADD mother_phone VARCHAR(512) NULL');
     await paca.query('DROP TABLE IF EXISTS max_engine_commands');
     await paca.query(fs.readFileSync(require.resolve('../../migrations/20260927_max_engine_commands.sql'), 'utf8'));
     process.env.MAX_ENGINE_LINK_SECRET = secret;
@@ -193,6 +195,61 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     const second=await get('/paca/resources/students?cursor='+first.body.next_cursor);expect(second.body.next_cursor).toBeNull();
     const ids=[...first.body.items,...second.body.items].map(r=>r.id);expect(ids.length).toBe(104);expect(new Set(ids).size).toBe(104);expect(ids).not.toContain(2);
     const filtered=await get('/paca/resources/students?filters='+encodeURIComponent(JSON.stringify({id:2})));expect(filtered.body.items).toEqual([]);
+  });
+  test.each([
+    ['both', { father_phone:'01012345678',mother_phone:' 010-8765-4321 ' }, '010-1234-5678','010-8765-4321'],
+    ['father', { father_phone:'01012345678' }, '010-1234-5678',null],
+    ['mother', { mother_phone:'01087654321' }, null,'010-8765-4321'],
+    ['blank', { father_phone:'',mother_phone:' ' }, null,null],
+    ['null', { father_phone:null,mother_phone:null }, null,null],
+    ['legacy', {}, null,null],
+  ])('engine parent phones %s: preview is read-only and confirmation stores encrypted optional fields', async (name, contacts, father, mother) => {
+    const [[before]] = await paca.query('SELECT COUNT(*) n FROM students');
+    const p = await preview({operation:'student_create',changes:{name:'합성부모'+name,
+      phone:'01099998877',enrollment_date:'2026-10-02',registration_source:'max_engine',
+      parent_phone:'010-2222-3333',...contacts}});
+    expect(p.status).toBe(200);
+    expect((await paca.query('SELECT COUNT(*) n FROM students'))[0][0].n).toBe(before.n);
+    const created = await confirm(p.body); expect(created.status).toBe(200);
+    expect((await confirm(p.body)).body).toEqual(created.body);
+    const [[row]] = await paca.query('SELECT status,parent_phone,father_phone,mother_phone FROM students WHERE id=?',[created.body.resource_id]);
+    expect(row.status).toBe('prospect');
+    const {decryptStudentParentContacts}=require('../../services/studentParentContactService');
+    expect(decryptStudentParentContacts(row)).toMatchObject({father_phone:father,mother_phone:mother});
+    expect(require('../../services/maxEngineFullSecurity').decrypt(row.parent_phone)).toBe('010-2222-3333');
+    for (const field of ['father_phone','mother_phone']) if(row[field]!==null) expect(row[field]).toMatch(/^ENC:/);
+  });
+  test('engine phone edit preserves omitted fields and representative phone; blanks clear only supplied fields', async () => {
+    const create = await preview({operation:'student_create',changes:{name:'합성부분수정',phone:'01088887777',
+      enrollment_date:'2026-10-02',registration_source:'max_engine',parent_phone:'010-2222-3333',
+      father_phone:'01012345678',mother_phone:'01087654321'}});
+    const created=await confirm(create.body); expect(created.status).toBe(200);
+    const id=created.body.resource_id;
+    const [[before]]=await paca.query('SELECT father_phone,mother_phone,parent_phone FROM students WHERE id=?',[id]);
+    const p=await preview({operation:'student_update',resource_id:id,changes:{father_phone:''}});
+    expect(p.status).toBe(200); expect(p.body.before.father_phone).toBe('010-1234-5678');
+    expect(p.body.after.father_phone).toBeNull();
+    expect((await paca.query('SELECT father_phone FROM students WHERE id=?',[id]))[0][0].father_phone).toBe(before.father_phone);
+    expect((await confirm(p.body)).status).toBe(200);
+    const [[after]]=await paca.query('SELECT father_phone,mother_phone,parent_phone FROM students WHERE id=?',[id]);
+    expect(after).toEqual({...before,father_phone:null});
+    const legacy=await preview({operation:'student_update',resource_id:id,changes:{school:'합성고'}});
+    expect((await confirm(legacy.body)).status).toBe(200);
+    expect((await paca.query('SELECT father_phone,mother_phone,parent_phone FROM students WHERE id=?',[id]))[0][0]).toEqual(after);
+    const clear=await preview({operation:'student_update',resource_id:id,changes:{mother_phone:null}});
+    expect((await confirm(clear.body)).status).toBe(200);
+    expect((await paca.query('SELECT mother_phone FROM students WHERE id=?',[id]))[0][0].mother_phone).toBeNull();
+  });
+  test.each(['father_phone','mother_phone'])('malformed %s registration and editing fail before a write', async field => {
+    const [[before]]=await paca.query('SELECT COUNT(*) n FROM students');
+    for (const command of [
+      {operation:'student_create',changes:{name:'합성오류',phone:'01022223333',enrollment_date:'2026-10-02',[field]:'invalid'}},
+      {operation:'student_update',resource_id:1,changes:{[field]:'invalid'}},
+    ]) {
+      const p=await preview(command); expect(p.status).toBe(422);
+      expect(p.body.error.message).toContain(field==='father_phone'?'아버지 전화번호':'어머니 전화번호');
+    }
+    expect((await paca.query('SELECT COUNT(*) n FROM students'))[0][0].n).toBe(before.n);
   });
   test('account move, revoke, role downgrade and password change invalidate delegation immediately', async () => {
     for(const [column,value] of [['academy_id',2],['is_active',0],['approval_status','pending'],['role','teacher'],['password_hash','changed']]){

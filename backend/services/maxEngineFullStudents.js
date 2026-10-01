@@ -1,9 +1,28 @@
 const repo = require('../repositories/maxEngineFullCommandRepository');
 const { encryptedFields } = require('../constants/maxEngineCommands');
 const { encrypt, decrypt, fail } = require('./maxEngineFullSecurity');
+const { STUDENT_PARENT_PHONE_FIELDS } = require('../constants/studentParentPhones');
+const { prepareStudentParentContacts, StudentParentContactValidationError } = require('./studentParentContactService');
+
+function parentPhones(changes) {
+  const input = Object.fromEntries(STUDENT_PARENT_PHONE_FIELDS
+    .filter(field => changes[field] !== undefined).map(field => [field, changes[field]]));
+  try { return prepareStudentParentContacts(input); }
+  catch (error) {
+    if (error instanceof StudentParentContactValidationError) fail(422, 'INVALID_INPUT', error.message);
+    throw error;
+  }
+}
+function normalizeParentPhones(changes) {
+  if (!changes || typeof changes !== 'object' || Array.isArray(changes)) return changes;
+  return { ...changes, ...parentPhones(changes).values };
+}
 
 function encrypted(changes) {
-  return Object.fromEntries(Object.entries(changes).map(([k, v]) => [k, encryptedFields.includes(k) ? encrypt(v) : v]));
+  const contacts = parentPhones(changes);
+  const profile = Object.entries(changes).filter(([field]) => !STUDENT_PARENT_PHONE_FIELDS.includes(field));
+  return { ...Object.fromEntries(profile.map(([k, v]) => [k, encryptedFields.includes(k) ? encrypt(v) : v])),
+    ...contacts.encrypted };
 }
 function validateCreate(changes, roster) {
   const phone = changes.phone.replace(/\D/g, '');
@@ -24,4 +43,4 @@ async function create(conn, actor, changes, before) {
     status: isProspect ? 'prospect' : 'active', class_days: '[]', weekly_count: 0, monthly_tuition: 0, is_trial: 0 });
 }
 async function update(conn, id, changes) { await repo.update(conn, 'students', id, encrypted(changes)); return id; }
-module.exports = { create, update, validateCreate };
+module.exports = { create, update, validateCreate, normalizeParentPhones };
