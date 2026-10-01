@@ -13,6 +13,7 @@ export type SeasonStatus = 'draft' | 'upcoming' | 'active' | 'completed' | 'ende
 
 // 연속등록 할인 타입
 export type ContinuousDiscountType = 'none' | 'free' | 'rate';
+export type SeasonPostFreeAction = 'graduate' | 'regular';
 
 // 시간대 타입
 export type TimeSlot = 'morning' | 'afternoon' | 'evening';
@@ -37,6 +38,8 @@ export interface Season {
   season_type: SeasonType;
   season_start_date: string;  // 백엔드 필드명
   season_end_date: string;    // 백엔드 필드명
+  free_lesson_end_date?: string | null;
+  post_free_action?: SeasonPostFreeAction | null;
   non_season_end_date: string | null; // 비시즌 종강일 (일할계산용)
   operating_days: number[] | string; // JSON string 또는 배열
   grade_time_slots: GradeTimeSlots | string | null; // 학년별 시간대 설정
@@ -59,6 +62,8 @@ export interface SeasonFormData {
   year: number;
   start_date: string;
   end_date: string;
+  free_lesson_end_date?: string;
+  post_free_action?: SeasonPostFreeAction | '';
   non_season_end_date?: string;
   operating_days: number[];
   grade_time_slots?: GradeTimeSlots; // 학년별 시간대 설정
@@ -103,6 +108,7 @@ export interface StudentSeason {
   remaining_amount?: string | number | null;
   status: StudentSeasonStatus;
   payment_status: PaymentStatus;  // 납부 상태
+  aftercare_applied_at?: string | null;
   registered_at: string;
   notes: string | null;
   time_slots?: TimeSlot[] | string; // 시간대 (JSON 또는 배열)

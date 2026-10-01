@@ -11,6 +11,7 @@ const {
     RestCreditRecalculationValidationError,
     recalculateRestCreditsOnResume,
 } = require('../../../services/restCreditRecalculationService');
+const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../../repositories/seasonMonthlyExclusion');
 const { autoAssignStudentToSchedules } = require('../_utils');
 
 module.exports = function registerResumeRoute(router) {
@@ -169,7 +170,17 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
                 [studentId, req.user.academyId, yearMonth]
             );
 
+            let canBill = false;
             if (existingPayment.length === 0 && student.monthly_tuition > 0) {
+                const [eligibility] = await pool.execute(
+                    `SELECT ${seasonMonthlyExclusionSql('s')} AS allowed
+                     FROM students s WHERE s.id = ? AND s.academy_id = ?`,
+                    [...seasonMonthlyExclusionParams(yearMonth), studentId, req.user.academyId]
+                );
+                canBill = Boolean(eligibility[0]?.allowed);
+            }
+
+            if (canBill) {
                 // 일할계산: 복귀일부터 말일까지
                 const lastDayOfMonth = new Date(year, month, 0).getDate();
 

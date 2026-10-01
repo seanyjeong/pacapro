@@ -91,6 +91,28 @@ describe('POST /paca/seasons', () => {
         expect(res.body.message).toBe('월납부 처리 방식을 확인해주세요.');
     });
 
+    test('400: 무료 수업 종료일보다 시즌 종료일이 늦으면 생성 거부', async () => {
+        const res = await request(makeApp()).post('/paca/seasons').send({
+            season_name: '수시', season_type: 'early',
+            season_start_date: '2026-07-01', season_end_date: '2026-09-30',
+            free_lesson_end_date: '2026-09-29', post_free_action: 'graduate',
+            non_season_end_date: '2026-06-30', operating_days: [1],
+        });
+        expect(res.status).toBe(400);
+        expect(pool.execute).not.toHaveBeenCalled();
+    });
+
+    test('400: 신규 시즌은 종료 후 처리 설정이 필수', async () => {
+        const res = await request(makeApp()).post('/paca/seasons').send({
+            season_name: '수시', season_type: 'early',
+            season_start_date: '2026-07-01', season_end_date: '2026-09-30',
+            non_season_end_date: '2026-06-30', operating_days: [1],
+        });
+        expect(res.status).toBe(400);
+        expect(res.body.message).toContain('무료 수업 종료일');
+        expect(pool.execute).not.toHaveBeenCalled();
+    });
+
     test('400: non_season_end_date >= season_start_date', async () => {
         const res = await request(makeApp()).post('/paca/seasons').send({
             season_name: 'X', season_type: 'regular',
@@ -109,6 +131,7 @@ describe('POST /paca/seasons', () => {
             season_name: 'X', season_type: 'regular',
             season_start_date: '2026-03-01', season_end_date: '2026-08-31',
             non_season_end_date: '2026-02-28', operating_days: ['월'],
+            free_lesson_end_date: '2026-08-31', post_free_action: 'regular',
             season_monthly_policy: 'season_plus_monthly'
         });
         expect(res.status).toBe(201);
@@ -116,9 +139,25 @@ describe('POST /paca/seasons', () => {
         expect(res.body.season.id).toBe(42);
         expect(pool.execute.mock.calls[0][0]).toMatch(/INSERT INTO seasons/);
         expect(pool.execute.mock.calls[0][0]).toContain('season_monthly_policy');
+        expect(pool.execute.mock.calls[0][0]).toContain('free_lesson_end_date');
         expect(pool.execute.mock.calls[0][1]).toContain('season_plus_monthly');
         const placeholderCount = (pool.execute.mock.calls[0][0].match(/\?/g) || []).length;
         expect(placeholderCount).toBe(pool.execute.mock.calls[0][1].length);
+    });
+
+    test('201: 수시 무료 기간과 자동 졸업을 함께 저장한다', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([{ insertId: 43 }]);
+        pool.execute.mockResolvedValueOnce([[{ id: 43 }]]);
+        const res = await request(makeApp()).post('/paca/seasons').send({
+            season_name: '수시', season_type: 'early',
+            season_start_date: '2026-07-01', season_end_date: '2026-09-30',
+            free_lesson_end_date: '2026-11-30', post_free_action: 'graduate',
+            non_season_end_date: '2026-06-30', operating_days: [1],
+        });
+        expect(res.status).toBe(201);
+        expect(pool.execute.mock.calls[0][1]).toContain('2026-11-30');
+        expect(pool.execute.mock.calls[0][1]).toContain('graduate');
     });
 
     test('5xx: 한국어 메시지 + e.message 누출 0건', async () => {
@@ -127,7 +166,8 @@ describe('POST /paca/seasons', () => {
         const res = await request(makeApp()).post('/paca/seasons').send({
             season_name: 'X', season_type: 'regular',
             season_start_date: '2026-03-01', season_end_date: '2026-08-31',
-            non_season_end_date: '2026-02-28', operating_days: ['월']
+            non_season_end_date: '2026-02-28', operating_days: ['월'],
+            free_lesson_end_date: '2026-08-31', post_free_action: 'regular',
         });
         expect(res.status).toBe(500);
         expect(res.body.message).toBe('시즌 생성에 실패했습니다.');
@@ -159,6 +199,19 @@ describe('PUT /paca/seasons/:id', () => {
         });
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('월납부 처리 방식을 확인해주세요.');
+    });
+
+    test('200: 무료 수업 종료일과 자동 졸업 설정 저장', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'active', season_end_date: '2026-09-30', free_lesson_end_date: null, post_free_action: null }]]);
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+        pool.execute.mockResolvedValueOnce([[{ id: 5, free_lesson_end_date: '2026-11-30', post_free_action: 'graduate' }]]);
+        const res = await request(makeApp()).put('/paca/seasons/5').send({
+            free_lesson_end_date: '2026-11-30', post_free_action: 'graduate',
+        });
+        expect(res.status).toBe(200);
+        expect(pool.execute.mock.calls[1][0]).toContain('free_lesson_end_date = ?');
+        expect(pool.execute.mock.calls[1][1]).toContain('graduate');
     });
 
     test('200: 정상 update + scheduleAssignment=null (status 미변경)', async () => {

@@ -40,6 +40,7 @@ const {
     DEFAULT_SEASON_MONTHLY_POLICY,
     isSeasonMonthlyPolicy,
 } = require('../../utils/seasonMonthlyPolicy');
+const { validateSeasonAftercare } = require('../../services/seasonAftercarePolicy');
 
 module.exports = function(router) {
 
@@ -50,6 +51,8 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
             season_type,
             season_start_date,
             season_end_date,
+            free_lesson_end_date,
+            post_free_action,
             non_season_end_date,
             operating_days,
             grade_time_slots,
@@ -103,6 +106,15 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
             });
         }
 
+        const aftercareError = validateSeasonAftercare({
+            seasonEndDate: season_end_date,
+            freeLessonEndDate: free_lesson_end_date || null,
+            postFreeAction: post_free_action || null,
+        }, { required: true });
+        if (aftercareError) {
+            return res.status(400).json({ error: 'Validation Error', message: aftercareError });
+        }
+
         const [result] = await pool.execute(
             `INSERT INTO seasons (
                 academy_id,
@@ -110,6 +122,8 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
                 season_type,
                 season_start_date,
                 season_end_date,
+                free_lesson_end_date,
+                post_free_action,
                 non_season_end_date,
                 operating_days,
                 grade_time_slots,
@@ -121,13 +135,15 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
                 continuous_discount_type,
                 continuous_discount_rate,
                 status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
             [
                 req.user.academyId,
                 season_name,
                 season_type,
                 season_start_date,
                 season_end_date,
+                free_lesson_end_date || null,
+                post_free_action || null,
                 non_season_end_date,
                 JSON.stringify(operating_days),
                 grade_time_slots ? JSON.stringify(grade_time_slots) : null,
@@ -180,6 +196,8 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
             season_type,
             season_start_date,
             season_end_date,
+            free_lesson_end_date,
+            post_free_action,
             non_season_end_date,
             operating_days,
             grade_time_slots,
@@ -196,6 +214,19 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
         const updates = [];
         const params = [];
 
+        if (season_end_date !== undefined || free_lesson_end_date !== undefined || post_free_action !== undefined) {
+            const aftercareError = validateSeasonAftercare({
+                seasonEndDate: season_end_date ?? String(seasons[0].season_end_date).slice(0, 10),
+                freeLessonEndDate: free_lesson_end_date === undefined
+                    ? (seasons[0].free_lesson_end_date ? String(seasons[0].free_lesson_end_date).slice(0, 10) : null)
+                    : free_lesson_end_date || null,
+                postFreeAction: post_free_action === undefined ? seasons[0].post_free_action || null : post_free_action || null,
+            });
+            if (aftercareError) {
+                return res.status(400).json({ error: 'Validation Error', message: aftercareError });
+            }
+        }
+
         if (season_name !== undefined) {
             updates.push('season_name = ?');
             params.push(season_name);
@@ -211,6 +242,14 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
         if (season_end_date !== undefined) {
             updates.push('season_end_date = ?');
             params.push(season_end_date);
+        }
+        if (free_lesson_end_date !== undefined) {
+            updates.push('free_lesson_end_date = ?');
+            params.push(free_lesson_end_date || null);
+        }
+        if (post_free_action !== undefined) {
+            updates.push('post_free_action = ?');
+            params.push(post_free_action || null);
         }
         if (non_season_end_date !== undefined) {
             updates.push('non_season_end_date = ?');

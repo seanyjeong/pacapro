@@ -9,6 +9,8 @@
 const cron = require('node-cron');
 const db = require('../config/database');
 const { calculateDueDate } = require('../utils/dueDateCalculator');
+const { graduateDueSeasonStudents } = require('../services/seasonGraduationService');
+const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../repositories/seasonMonthlyExclusion');
 
 /**
  * 천원 단위 절삭
@@ -51,6 +53,7 @@ async function generateMonthlyPayments() {
     console.log(`[PaymentScheduler] KST target month=${yearMonth} (server now=${new Date().toISOString()})`);
 
     try {
+        await graduateDueSeasonStudents(`${yearMonth}-01`);
         // 모든 학원 설정 조회
         const [academies] = await db.query(`
             SELECT
@@ -84,20 +87,8 @@ async function generateMonthlyPayments() {
                     s.enrollment_date IS NULL
                     OR DATE_FORMAT(s.enrollment_date, '%Y-%m') <= ?
                 )
-                AND NOT EXISTS (
-                    SELECT 1
-                    FROM student_seasons ss
-                    JOIN seasons se ON ss.season_id = se.id
-                    WHERE ss.student_id = s.id
-                    AND se.academy_id = s.academy_id
-                    AND COALESCE(ss.is_cancelled, 0) = 0
-                    AND ss.payment_status != 'cancelled'
-                    AND se.status IN ('upcoming', 'active')
-                    AND se.season_start_date <= LAST_DAY(STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d'))
-                    AND se.season_end_date >= STR_TO_DATE(CONCAT(?, '-01'), '%Y-%m-%d')
-                    AND COALESCE(se.season_monthly_policy, 'season_replaces_monthly') = 'season_replaces_monthly'
-                )
-            `, [academy.default_due_day, academy.academy_id, yearMonth, yearMonth, yearMonth]);
+                AND ${seasonMonthlyExclusionSql('s')}
+            `, [academy.default_due_day, academy.academy_id, yearMonth, ...seasonMonthlyExclusionParams(yearMonth)]);
 
             for (const student of students) {
                 // 각 학생별로 트랜잭션 처리

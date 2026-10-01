@@ -211,6 +211,7 @@ describe('POST /paca/payments/generate-monthly-for-student', () => {
             .mockResolvedValueOnce([[
                 { id: 7, name: 'enc_홍', monthly_tuition: 100000, discount_rate: 0, payment_due_day: 5, tuition_due_day: 5 },
             ]])
+            .mockResolvedValueOnce([[{ allowed: 1 }]])
             .mockResolvedValueOnce([[{ id: 1 }]]);
         const res = await request(makeApp())
             .post('/paca/payments/generate-monthly-for-student')
@@ -224,6 +225,7 @@ describe('POST /paca/payments/generate-monthly-for-student', () => {
             .mockResolvedValueOnce([[
                 { id: 7, name: 'enc_홍', monthly_tuition: 100000, discount_rate: 10, payment_due_day: 5, tuition_due_day: 5 },
             ]])
+            .mockResolvedValueOnce([[{ allowed: 1 }]])
             .mockResolvedValueOnce([[]])                  // existing
             .mockResolvedValueOnce([[]])                  // calculateNonSeasonEndProrated SELECT (반환 0건 → null)
             .mockResolvedValueOnce([{ insertId: 50 }])
@@ -237,6 +239,17 @@ describe('POST /paca/payments/generate-monthly-for-student', () => {
         expect(res.body.message).toBe('월 납부건이 생성되었습니다.');
         expect(res.body.payment.id).toBe(50);
         expect(res.body.nonSeasonProrated).toBeNull();
+    });
+
+    test('409: 무료 수업 기간에는 개별 월 청구를 만들지 않는다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 7, monthly_tuition: 100000 }]])
+            .mockResolvedValueOnce([[{ allowed: 0 }]]);
+        const res = await request(makeApp())
+            .post('/paca/payments/generate-monthly-for-student')
+            .send({ student_id: 7, year: 2026, month: 11 });
+        expect(res.status).toBe(409);
+        expect(pool.execute).toHaveBeenCalledTimes(2);
     });
 
     test('500: 한국어 메시지', async () => {

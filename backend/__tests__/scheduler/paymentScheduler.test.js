@@ -7,13 +7,19 @@ jest.mock('../../config/database', () => ({
     getConnection: jest.fn(),
 }));
 
+jest.mock('../../services/seasonGraduationService', () => ({
+    graduateDueSeasonStudents: jest.fn().mockResolvedValue(0),
+}));
+
 const db = require('../../config/database');
+const { graduateDueSeasonStudents } = require('../../services/seasonGraduationService');
 const { generateMonthlyPayments } = require('../../scheduler/paymentScheduler');
 
 beforeEach(() => {
     jest.useFakeTimers().setSystemTime(new Date('2026-06-25T09:00:00+09:00'));
     db.query.mockReset();
     db.getConnection.mockReset();
+    graduateDueSeasonStudents.mockReset().mockResolvedValue(0);
 });
 
 afterEach(() => {
@@ -36,7 +42,10 @@ describe('payment scheduler season monthly policy', () => {
         expect(studentSql).toContain('student_seasons');
         expect(studentSql).toContain('seasons');
         expect(studentSql).toContain("COALESCE(se.season_monthly_policy, 'season_replaces_monthly')");
-        expect(studentParams).toEqual([5, 5, '2026-06', '2026-06', '2026-06']);
+        expect(studentSql).toContain('se.free_lesson_end_date');
+        expect(studentSql).toContain("se.post_free_action = 'graduate'");
+        expect(studentParams).toEqual([5, 5, '2026-06', ...Array(7).fill('2026-06')]);
+        expect(graduateDueSeasonStudents).toHaveBeenCalledWith('2026-06-01');
         expect(db.getConnection).not.toHaveBeenCalled();
     });
 
@@ -53,6 +62,12 @@ describe('payment scheduler season monthly policy', () => {
         const [studentSql, studentParams] = db.query.mock.calls[1];
         expect(studentSql).not.toContain("? = 'season_plus_monthly'");
         expect(studentSql).toContain("= 'season_replaces_monthly'");
-        expect(studentParams).toEqual([10, 7, '2026-06', '2026-06', '2026-06']);
+        expect(studentParams).toEqual([10, 7, '2026-06', ...Array(7).fill('2026-06')]);
+    });
+
+    test('졸업 처리 실패 시 월 청구를 시작하지 않는다', async () => {
+        graduateDueSeasonStudents.mockRejectedValueOnce(new Error('DB unavailable'));
+        await expect(generateMonthlyPayments()).rejects.toThrow('DB unavailable');
+        expect(db.query).not.toHaveBeenCalled();
     });
 });

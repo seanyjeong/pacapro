@@ -32,6 +32,7 @@ export function SeasonFormSummary({ formData }: SeasonFormSummaryProps) {
     { icon: Clock3, label: '시간대', value: timeSlotSummary.join(' / '), subValue: '학년별 기본값' },
     { icon: WalletCards, label: '시즌비', value: formatSeasonFee(formData.season_fee), subValue: `연속등록 ${discount}` },
     { icon: ReceiptText, label: '월납부', value: monthlyPolicy?.summary || '시즌비만 청구', subValue: '시즌별 기준' },
+    { icon: CalendarDays, label: '시즌 후', value: formData.free_lesson_end_date ? `무료 ~ ${formData.free_lesson_end_date}` : '설정 없음', subValue: formData.post_free_action === 'graduate' ? '다음 날 자동 졸업' : formData.post_free_action === 'regular' ? '재원 유지' : '후속 처리 미정' },
     { icon: Repeat2, label: '운영일', value: operatingDays, subValue: `${formData.operating_days.length}일 선택` },
   ];
 
@@ -40,7 +41,7 @@ export function SeasonFormSummary({ formData }: SeasonFormSummaryProps) {
       <div className="border-b border-border bg-muted/20 px-4 py-3">
         <h2 className="text-sm font-semibold text-foreground">운영 요약</h2>
       </div>
-      <div className="grid gap-px bg-border md:grid-cols-5">
+      <div className="grid gap-px bg-border md:grid-cols-3 xl:grid-cols-6">
         {items.map((item) => {
           const Icon = item.icon;
           return (

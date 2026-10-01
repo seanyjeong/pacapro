@@ -14,6 +14,8 @@ export interface SeasonCreateRequest {
   non_season_end_date: string;
   operating_days: number[];
   season_end_date: string;
+  free_lesson_end_date: string | null;
+  post_free_action: SeasonFormData['post_free_action'] | null;
   season_monthly_policy: SeasonFormData['season_monthly_policy'];
   season_name: string;
   season_start_date: string;
@@ -27,6 +29,8 @@ export function createInitialSeasonForm(currentYear = new Date().getFullYear()):
     year: currentYear,
     start_date: '',
     end_date: '',
+    free_lesson_end_date: '',
+    post_free_action: '',
     non_season_end_date: '',
     operating_days: [1, 2, 3, 4, 5, 6],
     grade_time_slots: { '고3': ['evening'], 'N수': ['morning'] },
@@ -44,6 +48,10 @@ export function validateSeasonCreateForm(formData: SeasonFormData): string | nul
   if (!formData.end_date) return '시즌 종료일을 입력해주세요.';
   if (formData.operating_days.length === 0) return '운영 요일을 하나 이상 선택해주세요.';
   if (formData.start_date >= formData.end_date) return '시즌 종료일은 시작일보다 뒤여야 합니다.';
+  if (!formData.free_lesson_end_date) return '무료 수업 종료일을 입력해주세요.';
+  if (formData.free_lesson_end_date && formData.free_lesson_end_date < formData.end_date) return '무료 수업 종료일은 시즌 종료일보다 빠를 수 없습니다.';
+  if (formData.free_lesson_end_date && !formData.post_free_action) return '무료 수업 종료 후 처리를 선택해주세요.';
+  if (!formData.free_lesson_end_date && formData.post_free_action) return '무료 수업 종료일을 입력해주세요.';
   return null;
 }
 
@@ -59,6 +67,8 @@ export function buildSeasonCreatePayload(formData: SeasonFormData): SeasonCreate
     non_season_end_date: formData.non_season_end_date || getPreviousDate(formData.start_date),
     operating_days: formData.operating_days,
     season_end_date: formData.end_date,
+    free_lesson_end_date: formData.free_lesson_end_date || null,
+    post_free_action: formData.post_free_action || null,
     season_monthly_policy: formData.season_monthly_policy || DEFAULT_SEASON_MONTHLY_POLICY,
     season_name: formData.season_name.trim(),
     season_start_date: formData.start_date,

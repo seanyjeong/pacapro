@@ -11,13 +11,13 @@ export const SEASON_MONTHLY_POLICY_OPTIONS: Array<{
   {
     value: 'season_replaces_monthly',
     label: '시즌비가 월납부를 대체',
-    detail: '시즌 기간에는 월 학원비 자동 청구를 막고, 시즌 종료 다음 달부터 다시 생성합니다.',
+    detail: '시즌 기간에는 월 학원비 자동 청구를 막습니다. 무료 수업 기간을 설정하면 그 기간도 청구하지 않습니다.',
     summary: '시즌비만 청구',
   },
   {
     value: 'season_plus_monthly',
     label: '시즌비와 월납부 함께 청구',
-    detail: '시즌 특강비와 기존 월 학원비를 둘 다 청구합니다.',
+    detail: '시즌 기간에는 시즌 특강비와 기존 월 학원비를 둘 다 청구합니다.',
     summary: '함께 청구',
   },
 ];

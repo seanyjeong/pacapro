@@ -1,5 +1,6 @@
 const { pool, truncateToThousands, calculateNonSeasonEndProrated, logger } = require('../_utils');
 const { verifyToken, checkPermission } = require('../../../middleware/auth');
+const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../../repositories/seasonMonthlyExclusion');
 
 module.exports = function registerMonthlyForStudent(router) {
 /**
@@ -41,6 +42,17 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
         const student = students[0];
         const dueDay = student.payment_due_day || student.tuition_due_day || 5;
         const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
+        const [eligibility] = await pool.execute(
+            `SELECT ${seasonMonthlyExclusionSql('s')} AS allowed
+             FROM students s WHERE s.id = ? AND s.academy_id = ?`,
+            [...seasonMonthlyExclusionParams(yearMonth), student_id, req.user.academyId]
+        );
+        if (!eligibility[0]?.allowed) {
+            return res.status(409).json({
+                error: 'Season Aftercare',
+                message: '시즌 무료 수업 또는 자동 졸업 대상 기간에는 월 납부건을 생성할 수 없습니다.'
+            });
+        }
 
         // Check existing
         const [existing] = await pool.execute(

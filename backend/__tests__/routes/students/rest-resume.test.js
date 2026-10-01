@@ -240,6 +240,7 @@ describe('POST /paca/students/:id/resume', () => {
   test('수업 요일이 있으면 스케줄과 없는 월 학원비를 기존 방식대로 생성한다', async () => {
     mockCriticalResume(makePausedStudent({ class_days: '[1, 5]', monthly_tuition: 300000 }));
     pool.execute.mockResolvedValueOnce([[], []]);
+    pool.execute.mockResolvedValueOnce([[{ allowed: 1 }], []]);
     pool.execute.mockResolvedValueOnce([{ insertId: 99 }, []]);
     pool.execute.mockResolvedValueOnce([[{ id: 1, status: 'active' }], []]);
     autoAssignStudentToSchedules.mockResolvedValueOnce({ assigned: 5, created: 5 });
@@ -254,6 +255,22 @@ describe('POST /paca/students/:id/resume', () => {
     expect(autoAssignStudentToSchedules).toHaveBeenCalledWith(pool, 1, 1, [1, 5], '2026-08-20', 'evening');
     const insertCall = pool.execute.mock.calls.find(([sql]) => sql.includes('INSERT INTO student_payments'));
     expect(insertCall[1]).toContain('2026-08-20');
+  });
+
+  test('무료 수업 중 복귀해도 월 청구는 생성하지 않는다', async () => {
+    mockCriticalResume(makePausedStudent({ monthly_tuition: 300000 }));
+    pool.execute.mockResolvedValueOnce([[], []]);
+    pool.execute.mockResolvedValueOnce([[{ allowed: 0 }], []]);
+    pool.execute.mockResolvedValueOnce([[{ id: 1, status: 'active' }], []]);
+
+    const res = await request(makeApp())
+      .post('/paca/students/1/resume')
+      .send({ resume_date: '2026-11-20' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.paymentCreated).toBeNull();
+    expect(pool.execute.mock.calls.some(([sql]) => sql.includes('INSERT INTO student_payments'))).toBe(false);
+    expect(pool.execute.mock.calls[1][1]).toContain('2026-11');
   });
 
   test('스케줄 자동 배정 실패는 기록하고 기존처럼 복귀를 완료한다', async () => {

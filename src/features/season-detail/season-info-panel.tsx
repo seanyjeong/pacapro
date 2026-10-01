@@ -7,6 +7,8 @@ interface SeasonInfoPanelProps {
 export function SeasonInfoPanel({ season }: SeasonInfoPanelProps) {
   const rows = [
     { label: '비시즌 종강일', value: season.non_season_end_date || '-' },
+    { label: '무료 수업 종료일', value: season.free_lesson_end_date || '설정 없음' },
+    { label: '무료 수업 종료 후', value: season.post_free_action === 'graduate' ? '다음 날 자동 졸업' : season.post_free_action === 'regular' ? '재원 유지 · 월 수강료 청구' : '설정 없음' },
     { label: '연속등록 허용', value: season.allows_continuous ? '허용' : '불허' },
     { label: '연속등록 할인', value: getContinuousDiscountLabel(season) },
     { label: '연속등록 대상 시즌', value: getContinuousTargetLabel(season) },

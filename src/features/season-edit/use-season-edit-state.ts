@@ -8,6 +8,8 @@ const initialFormData: SeasonFormData = {
   continuous_discount_rate: 0,
   continuous_discount_type: 'none',
   end_date: '',
+  free_lesson_end_date: '',
+  post_free_action: '',
   grade_time_slots: {},
   non_season_end_date: '',
   operating_days: [],

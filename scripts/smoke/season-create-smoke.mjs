@@ -66,6 +66,8 @@ async function fillRequiredForm(page) {
   await page.getByLabel('비시즌 종강일').fill('2027-06-30');
   await page.getByLabel('시즌 시작일 *').fill('2027-07-01');
   await page.getByLabel('시즌 종료일 *').fill('2027-12-15');
+  await page.getByLabel('무료 수업 종료일').fill('2028-01-31');
+  await page.getByLabel('무료 수업 종료 후').selectOption('regular');
   await page.getByLabel('기본 시즌비 (원)').fill('1500000');
   await page.getByLabel('할인 타입').selectOption('rate');
   await page.getByLabel('할인율 (%)').fill('20');
@@ -96,6 +98,7 @@ async function runNormal(browser) {
   await page.screenshot({ path: '/Users/etlab/paca-season-create-desktop.png', fullPage: true });
 
   await fillRequiredForm(page);
+  await summary.getByText('무료 ~ 2028-01-31').waitFor();
   await page.getByRole('button', { name: '화' }).click();
   await page.getByRole('button', { name: '토' }).click();
   await page.getByText('고3').locator('..').getByRole('button', { name: '오후' }).click();
@@ -109,6 +112,9 @@ async function runNormal(browser) {
   if (payload.season_type !== 'regular') throw new Error(`unexpected type: ${JSON.stringify(payload)}`);
   if (payload.season_start_date !== '2027-07-01') throw new Error(`unexpected start: ${JSON.stringify(payload)}`);
   if (payload.season_end_date !== '2027-12-15') throw new Error(`unexpected end: ${JSON.stringify(payload)}`);
+  if (payload.free_lesson_end_date !== '2028-01-31' || payload.post_free_action !== 'regular') {
+    throw new Error(`unexpected aftercare: ${JSON.stringify(payload)}`);
+  }
   if (payload.non_season_end_date !== '2027-06-30') throw new Error(`unexpected non season: ${JSON.stringify(payload)}`);
   if (payload.default_season_fee !== 1500000) throw new Error(`unexpected fee: ${JSON.stringify(payload)}`);
   if (payload.allows_continuous !== true) throw new Error(`unexpected continuous flag: ${JSON.stringify(payload)}`);

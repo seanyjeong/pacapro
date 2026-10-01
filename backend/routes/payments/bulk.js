@@ -43,6 +43,7 @@ const {
     logger,
 } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../repositories/seasonMonthlyExclusion');
 
 module.exports = function(router) {
 
@@ -68,22 +69,24 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
             [req.user.academyId]
         );
         const defaultDueDay = academySettings[0]?.tuition_due_day || 1;
+        const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
 
         // Get all active students
         const [students] = await pool.execute(
             `SELECT
-                id,
-                name,
-                student_number,
-                monthly_tuition,
-                discount_rate,
-                class_days,
-                payment_due_day
-            FROM students
-            WHERE academy_id = ?
-            AND status = 'active'
-            AND deleted_at IS NULL`,
-            [req.user.academyId]
+                s.id,
+                s.name,
+                s.student_number,
+                s.monthly_tuition,
+                s.discount_rate,
+                s.class_days,
+                s.payment_due_day
+            FROM students s
+            WHERE s.academy_id = ?
+            AND s.status = 'active'
+            AND s.deleted_at IS NULL
+            AND ${seasonMonthlyExclusionSql('s')}`,
+            [req.user.academyId, ...seasonMonthlyExclusionParams(yearMonth)]
         );
 
         if (students.length === 0) {
@@ -100,7 +103,6 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
         let skipped = 0;
         let withNonSeasonProrated = 0;
         let withCarryover = 0;
-        const yearMonth = `${year}-${String(month).padStart(2, '0')}`;
 
         for (const student of students) {
             // 학생별 납부기한 계산 (스케줄러와 동일한 로직)

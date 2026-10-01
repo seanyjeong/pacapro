@@ -1,0 +1,12 @@
+-- Apply after a verified seasons backup and before deploying aftercare-aware code.
+-- Existing seasons keep their current billing and student-status behavior.
+ALTER TABLE seasons
+  ADD COLUMN free_lesson_end_date DATE NULL DEFAULT NULL AFTER season_end_date,
+  ADD COLUMN post_free_action ENUM('graduate', 'regular') NULL DEFAULT NULL AFTER free_lesson_end_date,
+  ALGORITHM=INSTANT;
+
+ALTER TABLE student_seasons
+  ADD COLUMN aftercare_applied_at DATETIME NULL DEFAULT NULL,
+  ALGORITHM=INSTANT;
+
+-- No automatic backfill: each existing season needs an explicit owner decision.

@@ -88,8 +88,10 @@ async function installRoutes(context, state) {
 async function editForm(page) {
   const workspace = page.getByTestId('season-edit-workspace');
   await workspace.getByLabel('시즌명 *').fill('2027 정시 집중반 수정');
-  await workspace.getByLabel('상태').selectOption('active');
+  await workspace.getByRole('combobox', { name: '시즌 상태' }).selectOption('active');
   await workspace.getByLabel('기본 시즌비 (원)').fill('1600000');
+  await workspace.getByLabel('무료 수업 종료일').fill('2028-01-31');
+  await workspace.getByLabel('무료 수업 종료 후').selectOption('graduate');
   await workspace.getByLabel('할인 타입').selectOption('rate');
   await workspace.getByLabel('할인율 (%)').fill('10');
   await workspace.getByRole('radio', { name: /시즌비와 월납부 함께 청구/ }).click();
@@ -119,7 +121,7 @@ async function runNormal(browser) {
   await page.getByText('월납부 처리').waitFor();
   await page.getByText('시즌별', { exact: true }).waitFor();
   await page.getByRole('radio', { name: /시즌비가 월납부를 대체/ }).waitFor();
-  await page.getByText('시즌 종료 다음 달부터 다시 생성합니다.').waitFor();
+  await page.getByText(/무료 수업 기간을 설정하면 그 기간도 청구하지 않습니다/).waitFor();
   await assertNoRawVisibleText(page, 'season edit desktop');
   await assertNoHorizontalOverflow(page, 'season edit desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-edit-desktop.png', fullPage: true });
@@ -133,6 +135,9 @@ async function runNormal(browser) {
   if (payload.season_name !== '2027 정시 집중반 수정') throw new Error(`unexpected name: ${JSON.stringify(payload)}`);
   if (payload.status !== 'active') throw new Error(`unexpected status: ${JSON.stringify(payload)}`);
   if (payload.default_season_fee !== 1600000) throw new Error(`unexpected fee: ${JSON.stringify(payload)}`);
+  if (payload.free_lesson_end_date !== '2028-01-31' || payload.post_free_action !== 'graduate') {
+    throw new Error(`unexpected aftercare: ${JSON.stringify(payload)}`);
+  }
   if (payload.allows_continuous !== true) throw new Error(`unexpected continuous flag: ${JSON.stringify(payload)}`);
   if (payload.continuous_to_season_type !== 'regular') throw new Error(`unexpected continuous target: ${JSON.stringify(payload)}`);
   if (payload.continuous_discount_type !== 'rate') throw new Error(`unexpected discount type: ${JSON.stringify(payload)}`);

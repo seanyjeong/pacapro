@@ -5,6 +5,7 @@ import { MoneyInput } from '@/components/ui/money-input';
 import { SeasonAlert } from '@/features/seasons/season-alert';
 import { SeasonFormSummary } from '@/features/seasons/season-form-summary';
 import { SeasonMonthlyPolicyControl } from '@/features/seasons/season-monthly-policy-control';
+import { SeasonAftercareControl } from '@/features/seasons/season-aftercare-control';
 import type { ContinuousDiscountType, SeasonFormData, SeasonType, TimeSlot } from '@/lib/types/season';
 import { OPERATING_DAY_OPTIONS, SEASON_TARGET_GRADES, TIME_SLOT_OPTIONS } from '@/lib/types/season';
 
@@ -102,6 +103,8 @@ export function SeasonCreateForm({
           </label>
         </div>
       </section>
+
+      <SeasonAftercareControl formData={formData} onChange={onChange} required />
 
       <section className="rounded-md border border-border bg-card">
         <SectionHeader title="운영 설정" />

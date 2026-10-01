@@ -5,6 +5,7 @@ import { MoneyInput } from '@/components/ui/money-input';
 import { SeasonAlert } from '@/features/seasons/season-alert';
 import { SeasonFormSummary } from '@/features/seasons/season-form-summary';
 import { SeasonMonthlyPolicyControl } from '@/features/seasons/season-monthly-policy-control';
+import { SeasonAftercareControl } from '@/features/seasons/season-aftercare-control';
 import type { ContinuousDiscountType, SeasonFormData, SeasonStatus, SeasonType, TimeSlot } from '@/lib/types/season';
 import { OPERATING_DAY_OPTIONS, SEASON_TARGET_GRADES, TIME_SLOT_OPTIONS } from '@/lib/types/season';
 
@@ -69,7 +70,7 @@ export function SeasonEditForm({
           </label>
           <label className="grid gap-1 text-sm font-medium text-foreground">
             상태
-            <select className={inputClass} value={formData.status} onChange={(event) => onChange('status', event.target.value as SeasonStatus)}>
+            <select aria-label="시즌 상태" className={inputClass} value={formData.status} onChange={(event) => onChange('status', event.target.value as SeasonStatus)}>
               {statusOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
@@ -95,6 +96,8 @@ export function SeasonEditForm({
           </label>
         </div>
       </section>
+
+      <SeasonAftercareControl formData={formData} onChange={onChange} />
 
       <section className="rounded-md border border-border bg-card">
         <SectionHeader title="운영 설정" />

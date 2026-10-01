@@ -81,6 +81,8 @@ export const seasonsApi = {
       season_type: data.season_type,
       season_start_date: data.start_date,
       season_end_date: data.end_date,
+      free_lesson_end_date: data.free_lesson_end_date || null,
+      post_free_action: data.post_free_action || null,
       non_season_end_date: nonSeasonEndDate,
       operating_days: data.operating_days,
       grade_time_slots: data.grade_time_slots,
@@ -105,6 +107,8 @@ export const seasonsApi = {
     if (data.season_type !== undefined) apiData.season_type = data.season_type;
     if (data.start_date !== undefined) apiData.season_start_date = data.start_date;
     if (data.end_date !== undefined) apiData.season_end_date = data.end_date;
+    if (data.free_lesson_end_date !== undefined) apiData.free_lesson_end_date = data.free_lesson_end_date || null;
+    if (data.post_free_action !== undefined) apiData.post_free_action = data.post_free_action || null;
     if (data.non_season_end_date !== undefined) apiData.non_season_end_date = data.non_season_end_date;
     if (data.operating_days !== undefined) apiData.operating_days = data.operating_days;
     if (data.grade_time_slots !== undefined) apiData.grade_time_slots = data.grade_time_slots;

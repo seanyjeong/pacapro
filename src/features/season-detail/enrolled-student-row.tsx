@@ -48,6 +48,7 @@ export function EnrolledStudentRow({
         <p className="mt-1 text-xs text-muted-foreground">
           {[enrollment.student_grade, enrollment.student_number].filter(Boolean).join(' · ') || '학생 정보'}
         </p>
+        {enrollment.aftercare_applied_at && <p className="mt-1 text-xs font-medium text-blue-700">자동 졸업 완료</p>}
       </td>
       <td className="px-4 py-3">
         {discountAmount > 0 ? (
