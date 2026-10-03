@@ -13,10 +13,14 @@ function summary(invoice) {
   return { payment_id: invoice.id, year_month: invoice.year_month, payment_type: invoice.payment_type,
     payment_status: invoice.payment_status, final_amount: money(billed), paid_amount: money(paid),
     outstanding: invoice.payment_status === 'cancelled' ? '0.00' : money(Math.max(0, billed - paid)),
-    refundable_paid: money(paid), season_id: invoice.season_id };
+    refundable_paid: money(paid), season_id: invoice.season_id,
+    gateway_refund_requires_original_screen: Boolean(invoice.has_gateway_payment) };
 }
 function plan(change, invoice) {
   if (invoice.payment_status === 'cancelled') fail(409, 'SETTLEMENT_CLOSED', '이미 취소한 청구입니다.');
+  if (change.action === 'refund' && invoice.has_gateway_payment) {
+    fail(422, 'SETTLEMENT_UNSUPPORTED', '토스 연결 청구는 카드 취소가 납부액을 자동 갱신하므로 MCP에서 환불을 재기록할 수 없습니다. 원본 카드 취소 화면에서 처리한 뒤 남은 청구액만 조정해 주세요.');
+  }
   if (!['monthly', 'season'].includes(invoice.payment_type) || invoice.rest_credit_id || invoice.prepaid_group_id) {
     fail(422, 'SETTLEMENT_UNSUPPORTED', '일반 월·시즌 학원비만 정산합니다. 상품·기타 청구 또는 휴원 크레딧·선납 묶음은 원본 정산 화면에서 확인해 주세요.');
   }

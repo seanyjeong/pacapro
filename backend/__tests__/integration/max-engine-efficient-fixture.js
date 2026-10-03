@@ -20,6 +20,8 @@ async function fixture() {
     pools[provider] = mysql.createPool({ ...opts, database });
   }
   await admin.end();
+  await pools.paca.query('CREATE TABLE IF NOT EXISTS toss_payment_history (id INT PRIMARY KEY, academy_id INT, payment_id INT) ENGINE=InnoDB');
+  await pools.paca.query('DELETE FROM toss_payment_history');
   process.env.MAX_ENGINE_LINK_SECRET = crypto.randomBytes(48).toString('hex');
   process.env.DATA_ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
   const { encrypt } = require('../../services/maxEngineFullSecurity');

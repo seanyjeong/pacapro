@@ -4,7 +4,7 @@
   "backend": {
     "node": "18.19.1",
     "mysql": "8.4.11_loopback_13320",
-    "tests": 51,
+    "tests": 53,
     "suites": 4,
     "skipped": 0
   },
@@ -27,5 +27,6 @@
     "resources": 72,
     "commands": 25
   },
-  "business_data_changes": 0
+  "business_data_changes": 0,
+  "gateway_double_refund_regression": "passed"
 }

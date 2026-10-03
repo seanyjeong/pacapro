@@ -10,7 +10,7 @@ const settlement = Joi.object({
     .when('action', { is: 'refund', then: Joi.required(), otherwise: Joi.forbidden() }),
 }).unknown(false);
 const settlements = Joi.array().items(settlement).min(1).max(100).unique('payment_id');
-const notice = '청구를 삭제하지 않고 선택한 청구만 취소·감액·환불 정산합니다. 납부·정산 이력을 보존합니다. 환불은 실제 카드 취소·송금 완료를 확인한 뒤 지출 장부에 기록하며 이 도구가 송금하거나 카드 취소하지 않습니다. 금액은 원장이 확인한 금액이며 자동 법정 환불 계산이 아닙니다.';
+const notice = '청구를 삭제하지 않고 선택한 청구만 취소·감액·환불 정산합니다. 납부·정산 이력을 보존합니다. 환불은 실제 카드 취소·송금 완료를 확인한 뒤 지출 장부에 기록하며 이 도구가 송금하거나 카드 취소하지 않습니다. 토스 연결 환불은 자동 납부액 갱신과 중복되지 않도록 원본 카드 취소 화면에서 처리하고 남은 청구액만 조정합니다. 금액은 원장이 확인한 금액이며 자동 법정 환불 계산이 아닙니다.';
 const commands = {
   student_settle: { resource: 'students', provider: 'paca', label: '퇴원·졸업 학생 남은 학원비 정산',
     schema: Joi.object({ settlement_date: date.required(), settlements: settlements.required() }).unknown(false), notice },

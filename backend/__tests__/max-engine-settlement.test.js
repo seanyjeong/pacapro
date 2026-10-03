@@ -32,3 +32,7 @@ test('schema requires real refund completion, refuses duplicate invoices and con
   expect(schema.validate({ ...changes, settlements: [...changes.settlements, ...changes.settlements] }).error).toBeDefined();
   expect(commands.student_withdraw.schema.validate({ withdrawal_date: '2026-10-03', billing_decision: 'preserve', settlements: changes.settlements }).error).toBeDefined();
 });
+test('automatic gateway refunds cannot be manually deducted again', () => {
+  expect(() => plan({ action: 'refund', final_amount: '100000', refund_amount: '100000' },
+    { ...invoice, paid_amount: '200000', has_gateway_payment: 1 })).toThrow();
+});

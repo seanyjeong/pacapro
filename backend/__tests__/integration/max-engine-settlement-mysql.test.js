@@ -127,4 +127,14 @@ run('MCP withdrawal financial settlement', () => {
     expect((await settle(103, [{ ...refund(103, '1', '99999'), refund_completed: false }])).status).toBe(422);
     expect((await preview({ operation: 'student_settle', resource_id: 103, changes: { settlement_date: '2999-01-01', settlements: [refund(103, '1', '99999')] } })).status).toBe(422);
   });
+  test('gateway-linked partial refunds cannot be deducted twice; remaining invoice can still be adjusted', async () => {
+    await student(108); await bill(108, 108, '200000', '300000');
+    await f.paca.query('INSERT INTO toss_payment_history(id,academy_id,payment_id) VALUES(108,1,108)');
+    const denied = await settle(108, [refund(108, '100000', '100000')]);
+    expect(denied.status).toBe(422); expect(denied.body.error.code).toBe('SETTLEMENT_UNSUPPORTED');
+    const p = await settle(108, [{ payment_id: 108, action: 'adjust', final_amount: '200000', reason: '카드 취소 자동 반영 후 청구액 조정' }]);
+    expect(p.status).toBe(200); expect(p.body.after.related.invoices[0].gateway_refund_requires_original_screen).toBe(true);
+    expect((await confirm(p.body)).status).toBe(200);
+    expect((await f.paca.query('SELECT paid_amount,final_amount FROM student_payments WHERE id=108'))[0][0]).toEqual({ paid_amount: '200000.00', final_amount: '200000.00' });
+  });
 });

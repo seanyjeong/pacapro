@@ -2,8 +2,10 @@ const { scanLimit } = require('../constants/maxEngineReadOptions');
 const { fail } = require('../models/maxEngineError');
 const repo = require('./maxEngineFullCommandRepository');
 async function invoices(conn, actor, studentId, lock) {
-  const [rows] = await conn.execute(`SELECT * FROM student_payments
-    WHERE academy_id = ? AND student_id = ? ORDER BY id LIMIT ${scanLimit + 1} ${lock ? 'FOR UPDATE' : ''}`,
+  const [rows] = await conn.execute(`SELECT p.*, EXISTS(SELECT 1 FROM toss_payment_history h
+    WHERE h.payment_id = p.id AND h.academy_id = p.academy_id) AS has_gateway_payment
+    FROM student_payments p WHERE p.academy_id = ? AND p.student_id = ?
+    ORDER BY p.id LIMIT ${scanLimit + 1} ${lock ? 'FOR UPDATE' : ''}`,
   [actor.academy_id, studentId]);
   if (rows.length > scanLimit) fail(422, 'QUERY_TOO_BROAD', '학생 청구가 10,000건을 넘습니다. 원본 청구를 먼저 확인해 주세요.');
   return rows;
