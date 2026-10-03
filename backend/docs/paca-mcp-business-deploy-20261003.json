@@ -1,0 +1,309 @@
+{
+  "status": "deployed",
+  "verified_at": "2026-10-03T23:06:09.448911+09:00",
+  "version": "mcp-0.2.0",
+  "frontend_version": "4.0.56_unchanged",
+  "paca_commit": "fec5c7121b6e65467113445e1a9a169c4bcc004f",
+  "mcp_commit": "5f68a83ea2df56c4ee8ab1dc661cb6dba1f43d86",
+  "owner_approval": "current user message: mcp 운영배포를 해줘",
+  "fresh_preflight": {
+    "mcp_release": "/opt/max-business-mcp/releases/schedule-20260930-909ff643",
+    "all_match": true,
+    "files": [
+      {
+        "repository": "paca",
+        "file": "backend/config/maxEnginePeak.js",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/constants/maxEngineCommands.js",
+        "actual_sha256": "a554b61246d22c45f6966ba078c0ea28ce13c8df950130e3830c8d021a189b1f",
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/constants/maxEngineInput.js",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/constants/maxEngineLifecycleCommands.js",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/constants/maxEnginePeakCommands.js",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/constants/maxEngineReadCatalog.json",
+        "actual_sha256": "792381cee089bcbaebcf109112443ca15534c13a77b6dcff771d6945f7cceec6",
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/constants/maxEngineWorkflows.js",
+        "actual_sha256": "861cf3f7b2fa0eb32708d8012905f924a86ac77484083c4dec1717a9d3718a41",
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/repositories/maxEngineFullCommandRepository.js",
+        "actual_sha256": "3ca2ef588b284674235b63999af610cce378cc89a3a8cc5e760f86d181e0e589",
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/repositories/maxEngineLifecycleRepository.js",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/repositories/maxEnginePeakCommandRepository.js",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/services/maxEngineFullCommands.js",
+        "actual_sha256": "9ddf8aa56eb0d39d7a704eb57dad343fa97069e6e57325c58ce490e998cfe776",
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/services/maxEngineLifecycleCommands.js",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/services/maxEnginePeakCommands.js",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/services/maxEnginePeakPlanExercises.js",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/services/maxEngineWorkflows.js",
+        "actual_sha256": "867b840595f4373d6bb44b7b5b347993ebe10c55030853ca8a61699e7ccfa8f4",
+        "matches": true
+      },
+      {
+        "repository": "paca",
+        "file": "backend/migrations/20261003_peak_max_engine_commands.sql",
+        "actual_sha256": null,
+        "matches": true
+      },
+      {
+        "repository": "max-engine",
+        "file": "mcp/package-lock.json",
+        "actual_sha256": "b66c3ac825e39e33a22707d98a016a7f26e81f251020b8a55ae41887ce814532",
+        "matches": true
+      },
+      {
+        "repository": "max-engine",
+        "file": "mcp/package.json",
+        "actual_sha256": "37f8ccc228424f89e9e7153776a2dd3896f144aed434b88b551b88050f85854c",
+        "matches": true
+      },
+      {
+        "repository": "max-engine",
+        "file": "mcp/shared/constants/commands.js",
+        "actual_sha256": "0f6a63e3486db51a6a90b8061c39c898bd35fc8ff39eb8e35f602ffb8d800924",
+        "matches": true
+      },
+      {
+        "repository": "max-engine",
+        "file": "mcp/shared/server.js",
+        "actual_sha256": "19cbad3ef03ad4c530ab0c4cdac49ff161d7b0a72945d9b032e031ffa42ca35f",
+        "matches": true
+      },
+      {
+        "repository": "max-engine",
+        "file": "mcp/shared/tools.js",
+        "actual_sha256": "3af3a9978423b997ab303e0281abe14510588888b570b5bb155a527571bc5e6d",
+        "matches": true
+      },
+      {
+        "repository": "max-engine",
+        "file": "mcp/shared/workflows.js",
+        "actual_sha256": "93bfb97c316921ebeee5ec2411133cb4b3b5a1e1c809746c34545ccdec805255",
+        "matches": true
+      }
+    ]
+  },
+  "backup": {
+    "path": "/root/backups/paca-mcp-business-20261003T135828Z",
+    "verified_archives": true,
+    "oauth_integrity": "ok",
+    "previous_release": "/opt/max-business-mcp/releases/schedule-20260930-909ff643"
+  },
+  "authenticated_smoke": {
+    "status": "passed",
+    "business_confirm_calls": 0,
+    "providers": [
+      {
+        "provider": "paca",
+        "endpoint": "https://paca-mcp.supermax.kr/",
+        "server_version": "0.2.0",
+        "tools": [
+          "list_capabilities",
+          "classes_with_students",
+          "attendance_summary",
+          "student_overview",
+          "student_search",
+          "unpaid_list",
+          "payment_status",
+          "consultation_schedule",
+          "trial_students",
+          "today_brief",
+          "peak_recent_records",
+          "peak_event_ranking",
+          "peak_student_progress",
+          "read_resource",
+          "preview_change",
+          "preview_student_withdraw",
+          "preview_student_reactivate",
+          "confirm_change"
+        ],
+        "tool_count": 18,
+        "resources": 71,
+        "commands": 24,
+        "authenticated": true,
+        "existing_delegation_valid": true,
+        "synthetic_preview": true,
+        "nonexistent_student_safely_rejected": true,
+        "confirm_calls": 0
+      },
+      {
+        "provider": "peak",
+        "endpoint": "https://peak-mcp.supermax.kr/",
+        "server_version": "0.2.0",
+        "tools": [
+          "list_capabilities",
+          "recent_records",
+          "event_ranking",
+          "student_progress",
+          "read_resource",
+          "preview_change",
+          "preview_student_withdraw",
+          "preview_student_reactivate",
+          "confirm_change"
+        ],
+        "tool_count": 9,
+        "resources": 71,
+        "commands": 24,
+        "authenticated": true,
+        "existing_delegation_valid": true,
+        "synthetic_preview": true,
+        "nonexistent_student_safely_rejected": true,
+        "confirm_calls": 0
+      }
+    ]
+  },
+  "post_verification": {
+    "status": "passed",
+    "release": "/opt/max-business-mcp/releases/business-20261003-5f68a83e",
+    "runtime": {
+      "paca": {
+        "changed": [
+          "config/maxEnginePeak.js",
+          "constants/maxEngineCommands.js",
+          "constants/maxEngineInput.js",
+          "constants/maxEngineLifecycleCommands.js",
+          "constants/maxEnginePeakCommands.js",
+          "constants/maxEngineReadCatalog.json",
+          "constants/maxEngineWorkflows.js",
+          "migrations/20261003_peak_max_engine_commands.sql",
+          "repositories/maxEngineFullCommandRepository.js",
+          "repositories/maxEngineLifecycleRepository.js",
+          "repositories/maxEnginePeakCommandRepository.js",
+          "services/maxEngineFullCommands.js",
+          "services/maxEngineLifecycleCommands.js",
+          "services/maxEnginePeakCommands.js",
+          "services/maxEnginePeakPlanExercises.js",
+          "services/maxEngineWorkflows.js"
+        ],
+        "before_files": 425,
+        "after_files": 435,
+        "only_candidate_changes": true
+      },
+      "peak": {
+        "changed": [],
+        "before_files": 104,
+        "after_files": 104,
+        "only_candidate_changes": true
+      },
+      "mcp": {
+        "changed": [
+          "package-lock.json",
+          "package.json",
+          "shared/constants/commands.js",
+          "shared/server.js",
+          "shared/tools.js",
+          "shared/workflows.js"
+        ],
+        "before_files": 37,
+        "after_files": 37,
+        "only_candidate_changes": true
+      },
+      "paca_oauth": {
+        "unexpired_original_entries": 9,
+        "preserved": true,
+        "integrity": "ok",
+        "environment_unchanged": true
+      },
+      "peak_oauth": {
+        "unexpired_original_entries": 4,
+        "preserved": true,
+        "integrity": "ok",
+        "environment_unchanged": true
+      }
+    },
+    "backup_checksums_verified": true,
+    "public_health": {
+      "paca": 200,
+      "peak": 200,
+      "paca_mcp": 200,
+      "peak_mcp": 200
+    },
+    "services": [
+      "active",
+      "active",
+      "active",
+      "active"
+    ],
+    "new_peak_ledger_rows": 0,
+    "new_peak_lock_rows": 0
+  },
+  "gpt_connector": {
+    "plugin": "학원관리",
+    "link_name": "파카",
+    "is_error": false,
+    "resources": 71,
+    "commands": 24,
+    "student_withdraw": true,
+    "student_reactivate": true
+  },
+  "first_attempt": {
+    "status": "health_check_failed_runtime_rolled_back",
+    "cause": "internal health path was /health; deployment script incorrectly requested /paca-health",
+    "resolution": "corrected health check only; rechecked original source hashes and retained migration schema before retry"
+  },
+  "business_confirm_calls": 0,
+  "temporary_oauth_smoke_access_and_preview_removed": true,
+  "main_merge": false,
+  "frontend_deployment": false
+}
