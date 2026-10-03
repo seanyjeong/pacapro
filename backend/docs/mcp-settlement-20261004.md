@@ -19,6 +19,6 @@
 
 ## 검증과 적용
 
-합성 데이터만 사용한 격리 MySQL 실라우트 테스트와 단위 테스트 53건(Node18), loopback OAuth/MCP 15건(Node22), lint·구문·diff 검사 통과. 납부/수입 보존, 교육원 격리, 실제 완료 환불 입력 강제, 동일 확인 재시도, 원본 변경 거부, 정산 및 출결 실패의 전체 롤백을 검증했다. 핵심 3파일 coverage statements96.19%, branches90.72%, functions/lines100%. 근거 `mcp-settlement-20261004/verification.json`.
+합성 데이터만 사용한 격리 MySQL 실라우트 테스트와 단위 테스트 53건(Node18), loopback OAuth/MCP 15건(Node22), lint·구문·diff 검사 통과. 납부/수입 보존, 교육원 격리, 실제 완료 환불 입력 강제, 동일 확인 재시도, 원본 변경 거부, 정산 및 출결 실패의 전체 롤백을 검증했다. 핵심 3파일 coverage statements96.26%, branches91.08%, functions/lines100%. 근거 `mcp-settlement-20261004/verification.json`.
 
 배포 후보 19개 파일 기준 운영 해시 일치·신규 경로 부재를 확인했다. 배포 직전 다시 비교해 다르면 중단한다. PACA 코드·DB와 MCP 현재 릴리스/포인터·OAuth를 서버에서 백업하고 검증한 뒤 additive 정산 audit DDL을 적용한다. PACA 후보만 교체하고 현재 MCP 릴리스를 복사해 후보만 덮어쓴다. PACA 및 두 MCP를 재시작한 후 health·인증된 실제 도구 목록·새 명령 미리보기를 검증한다. 실학생 confirm은 호출하지 않는다. 롤백은 후보 파일·포인터 복원이며 이미 존재하는 청구·정산 기록·OAuth를 덤프로 덮어쓰지 않는다. audit table은 운영 롤백에서도 보존한다. PACA 웹 4.0.56은 변경이 없어 별도 프론트 배포하지 않는다.

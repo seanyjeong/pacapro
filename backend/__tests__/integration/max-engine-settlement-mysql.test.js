@@ -129,7 +129,7 @@ run('MCP withdrawal financial settlement', () => {
   });
   test('gateway-linked partial refunds cannot be deducted twice; remaining invoice can still be adjusted', async () => {
     await student(108); await bill(108, 108, '200000', '300000');
-    await f.paca.query('INSERT INTO toss_payment_history(id,academy_id,payment_id) VALUES(108,1,108)');
+    await f.insert('paca', 'toss_payment_history', { id: 108, academy_id: 1, payment_id: 108 });
     const denied = await settle(108, [refund(108, '100000', '100000')]);
     expect(denied.status).toBe(422); expect(denied.body.error.code).toBe('SETTLEMENT_UNSUPPORTED');
     const p = await settle(108, [{ payment_id: 108, action: 'adjust', final_amount: '200000', reason: '카드 취소 자동 반영 후 청구액 조정' }]);

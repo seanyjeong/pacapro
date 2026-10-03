@@ -38,8 +38,6 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     paca = mysql.createPool({ ...opts, database: prefix + 'paca' });
     peak = mysql.createPool({ ...opts, database: prefix + 'peak' });
     global.__fullPaca = paca; global.__fullPeak = peak;
-    await paca.query('CREATE TABLE IF NOT EXISTS toss_payment_history (id INT PRIMARY KEY, academy_id INT, payment_id INT) ENGINE=InnoDB');
-    await paca.query('DELETE FROM toss_payment_history');
     await paca.query(fs.readFileSync(require.resolve('../../migrations/20260930_add_student_prospect_status.mysql'), 'utf8'));
     // Production already has these nullable encrypted contact columns; no production DDL is needed.
     await paca.query('ALTER TABLE students ADD father_phone VARCHAR(512) NULL, ADD mother_phone VARCHAR(512) NULL');

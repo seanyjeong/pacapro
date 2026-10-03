@@ -16,8 +16,8 @@
     "peak_tools": 10
   },
   "coverage": {
-    "statements": 96.19,
-    "branches": 90.72,
+    "statements": 96.26,
+    "branches": 91.08,
     "functions": 100,
     "lines": 100
   },
