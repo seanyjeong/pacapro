@@ -1,0 +1,158 @@
+{
+  "release": "/opt/max-business-mcp/releases/business-20261003-5f68a83e",
+  "all_match": true,
+  "files": [
+    {
+      "repo": "paca",
+      "path": "backend/constants/maxEngineCommands.js",
+      "before": "3ff5e934bdecab9396fbd98bc84b9967ba02844847f934ac4f134b8c07114db1",
+      "after": "727617902764db099d82c87c4699414bcbf411433a6b8a12c4196934f0eec169",
+      "actual": "3ff5e934bdecab9396fbd98bc84b9967ba02844847f934ac4f134b8c07114db1",
+      "matches": true
+    },
+    {
+      "repo": "paca",
+      "path": "backend/constants/maxEngineLifecycleCommands.js",
+      "before": "9fcaa56a6ba58ce8b19d539043b6cb1f03b0179f8c13dc3e3d17f7245dbcc97f",
+      "after": "f43274a559de25088e2b1d09d732594d3e0bf9cda51e1da89adf9f5ff41b5dec",
+      "actual": "9fcaa56a6ba58ce8b19d539043b6cb1f03b0179f8c13dc3e3d17f7245dbcc97f",
+      "matches": true
+    },
+    {
+      "repo": "paca",
+      "path": "backend/constants/maxEngineReadCatalog.json",
+      "before": "57d5081836d4676d2e77d6fa62a27972c61a3b96b2066c826304aa40d5aae118",
+      "after": "afc851b85dc49487c5f5fb5ac6cbf7d6e31fb2cb391f977e496e48de65c4c178",
+      "actual": "57d5081836d4676d2e77d6fa62a27972c61a3b96b2066c826304aa40d5aae118",
+      "matches": true
+    },
+    {
+      "repo": "paca",
+      "path": "backend/constants/maxEngineSettlementCommands.js",
+      "before": null,
+      "after": "93051a4e0d7b268c29cf20702aa71dff62503df6385e158d6ffc5bbb12263dc3",
+      "actual": null,
+      "matches": true
+    },
+    {
+      "repo": "paca",
+      "path": "backend/migrations/20261004_max_engine_payment_settlements.sql",
+      "before": null,
+      "after": "aa29844a7529dba529e11bd33286ee20c3b7b69d10a726f3fed4240c03e11de5",
+      "actual": null,
+      "matches": true
+    },
+    {
+      "repo": "paca",
+      "path": "backend/models/maxEngineSettlement.js",
+      "before": null,
+      "after": "a8495891b8c622d877a483cfa8286172e26c57be0b6bfba3aa697d4b51d24abf",
+      "actual": null,
+      "matches": true
+    },
+    {
+      "repo": "paca",
+      "path": "backend/repositories/maxEngineSettlementRepository.js",
+      "before": null,
+      "after": "53aed971b5fe0615c5e653ff2e5d5645649e00fa19f499fff8044ba7f0622948",
+      "actual": null,
+      "matches": true
+    },
+    {
+      "repo": "paca",
+      "path": "backend/services/maxEngineFullCommands.js",
+      "before": "a4fc86eda29d5ae8b5173b554ed297911c5e8024f3d7f694f5c7e5866beac402",
+      "after": "bd474db0de636a5ef7640b06304275757ee3e22cbd1da104429edbb1c314c875",
+      "actual": "a4fc86eda29d5ae8b5173b554ed297911c5e8024f3d7f694f5c7e5866beac402",
+      "matches": true
+    },
+    {
+      "repo": "paca",
+      "path": "backend/services/maxEngineLifecycleCommands.js",
+      "before": "e1878128a64ae56b377d939e82cf6ca15a238ffd4e01352251f627442183548c",
+      "after": "080485c69caacfb5d060e242f5ebd97ab7db58e9c35cba90a0ad32a0db76e12a",
+      "actual": "e1878128a64ae56b377d939e82cf6ca15a238ffd4e01352251f627442183548c",
+      "matches": true
+    },
+    {
+      "repo": "paca",
+      "path": "backend/services/maxEngineSettlementCommands.js",
+      "before": null,
+      "after": "b4de67cbeab8b621766290683d8a59428e3135baed731b49fc8be9333495282e",
+      "actual": null,
+      "matches": true
+    },
+    {
+      "repo": "mcp",
+      "path": "mcp/paca/package.json",
+      "before": "1a95c1af579c901fcc9177f2ff39769464d3394b9878b543685765fe094de1f8",
+      "after": "ddc37dd36e8f7c55dc039a0c9bcb649265b4cdff6a79cfcc3ef17bda85bb33bf",
+      "actual": "1a95c1af579c901fcc9177f2ff39769464d3394b9878b543685765fe094de1f8",
+      "matches": true
+    },
+    {
+      "repo": "mcp",
+      "path": "mcp/package-lock.json",
+      "before": "4f6803670d6ea0258b5e9dde2cc62811c9d66fdba5af55cd9e09e231ebb9e323",
+      "after": "20db2dbe6da8de976be31dfe4c4b2108a8a83e6ff29ef82328866bd39aa32c9a",
+      "actual": "4f6803670d6ea0258b5e9dde2cc62811c9d66fdba5af55cd9e09e231ebb9e323",
+      "matches": true
+    },
+    {
+      "repo": "mcp",
+      "path": "mcp/package.json",
+      "before": "d0594fc9d5b91e306805ea3bb5c98e36d06edaa473bdadd7e53d7f8e6d7e42e7",
+      "after": "ed94feeac0d40e64cc84debc08437707da894529167125b20f5d4007bdcbe9bb",
+      "actual": "d0594fc9d5b91e306805ea3bb5c98e36d06edaa473bdadd7e53d7f8e6d7e42e7",
+      "matches": true
+    },
+    {
+      "repo": "mcp",
+      "path": "mcp/peak/package.json",
+      "before": "017ac88ec02e8715d9473a557384a69b54d7848b58b23196bc18cb74bf182187",
+      "after": "0a3f403e42d4f156f6d69bba105a6730a0b007f42371884df25fde212ce6bef8",
+      "actual": "017ac88ec02e8715d9473a557384a69b54d7848b58b23196bc18cb74bf182187",
+      "matches": true
+    },
+    {
+      "repo": "mcp",
+      "path": "mcp/shared/constants/commands.js",
+      "before": "614e353d7b5f1c652fe753b353942beb2834f317647b235fd61815fe3521791c",
+      "after": "74500eb422f2fee5fb9fce75d2ae950e03dcfef431c1c0ad97ab469468b216a1",
+      "actual": "614e353d7b5f1c652fe753b353942beb2834f317647b235fd61815fe3521791c",
+      "matches": true
+    },
+    {
+      "repo": "mcp",
+      "path": "mcp/shared/constants/settlements.js",
+      "before": null,
+      "after": "1ee4c837e7089464c102c18a1c5c633c75ff22ead68cada3798ebdab4568761d",
+      "actual": null,
+      "matches": true
+    },
+    {
+      "repo": "mcp",
+      "path": "mcp/shared/server.js",
+      "before": "6490f0924f371235313cf98c657dc0bc96bc9f9a58b97590d1c10551cc41c287",
+      "after": "65be07f635ae8cba5fadae9d1f5cb3dd77990665ce334bab6030e3936885cbc7",
+      "actual": "6490f0924f371235313cf98c657dc0bc96bc9f9a58b97590d1c10551cc41c287",
+      "matches": true
+    },
+    {
+      "repo": "mcp",
+      "path": "mcp/shared/settlement-tools.js",
+      "before": null,
+      "after": "378a79f04140d9dfb7bf233f3b3c95f0d5c71b8ca177e9e6ac17224e6176aba7",
+      "actual": null,
+      "matches": true
+    },
+    {
+      "repo": "mcp",
+      "path": "mcp/shared/tools.js",
+      "before": "1b9b0cfd04ae4ad7d49645bd6b29a8d65ebec18c3038d24689796e2f1eb1eeac",
+      "after": "6429d859e43e7eff96a62c5a05fda26f8fd5d24c142fb8287b5849920ceafb39",
+      "actual": "1b9b0cfd04ae4ad7d49645bd6b29a8d65ebec18c3038d24689796e2f1eb1eeac",
+      "matches": true
+    }
+  ]
+}

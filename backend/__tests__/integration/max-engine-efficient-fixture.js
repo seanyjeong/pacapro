@@ -11,7 +11,7 @@ async function fixture() {
   for (const provider of ['paca', 'peak']) {
     const database = 'max_engine_eff_test_' + provider;
     await admin.query(`CREATE DATABASE IF NOT EXISTS ${database} CHARACTER SET utf8mb4`);
-    for (const [key, columns] of Object.entries(schema).filter(([k]) => k.startsWith(provider + '.') && catalog[k])) {
+    for (const [key, columns] of Object.entries(schema).filter(([k]) => k.startsWith(provider + '.') && Object.values(catalog).some(s => s.provider === provider && s.table === k.split('.')[1]))) {
       const name = key.split('.')[1];
       await admin.query(`DROP TABLE IF EXISTS ${database}.\`${name}\``);
       const defs = columns.map(([col, type, nullable, index]) => `\`${col}\` ${type} ${col === 'id' ? 'NOT NULL AUTO_INCREMENT PRIMARY KEY' : index === 'PRI' ? 'NOT NULL PRIMARY KEY' : nullable === 'NO' ? 'NOT NULL' : 'NULL'}`);

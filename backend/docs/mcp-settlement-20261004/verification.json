@@ -1,0 +1,31 @@
+{
+  "status": "verified_local",
+  "version": "mcp-0.3.0",
+  "backend": {
+    "node": "18.19.1",
+    "mysql": "8.4.11_loopback_13320",
+    "tests": 51,
+    "suites": 4,
+    "skipped": 0
+  },
+  "mcp": {
+    "node": "22.20.0",
+    "tests": 15,
+    "skipped": 0,
+    "paca_tools": 19,
+    "peak_tools": 10
+  },
+  "coverage": {
+    "statements": 96.19,
+    "branches": 90.72,
+    "functions": 100,
+    "lines": 100
+  },
+  "lint": "passed",
+  "production_source_match": true,
+  "catalog": {
+    "resources": 72,
+    "commands": 25
+  },
+  "business_data_changes": 0
+}

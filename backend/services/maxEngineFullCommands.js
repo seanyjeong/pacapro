@@ -3,6 +3,7 @@ const peakPool = require('../config/peak-database');
 const peakRepo = require('../repositories/maxEnginePeakCommandRepository');
 const peak = require('./maxEnginePeakCommands');
 const lifecycle = require('./maxEngineLifecycleCommands');
+const settlement = require('./maxEngineSettlementCommands');
 const { commands } = require('../constants/maxEngineCommands');
 const { previewSeconds } = require('../config/maxEngineFull');
 const repo = require('../repositories/maxEngineFullCommandRepository');
@@ -40,6 +41,7 @@ function validate(body) {
 async function state(conn, actor, command, lock = false) {
   if (peak.supports(command.operation)) return peak.state(conn, actor, command, lock);
   if (lifecycle.supports(command.operation)) return lifecycle.state(conn, actor, command, lock);
+  if (settlement.supports(command.operation)) return settlement.state(conn, actor, command, lock);
   if (schedules.supports(command.operation)) return schedules.state(conn, actor, command, lock);
   if (command.operation.startsWith('consultation_record_')) return consultationRecords.state(conn, actor, command, lock);
   if (command.operation === 'student_create') return repo.roster(conn, actor.academy_id, lock);
@@ -52,6 +54,7 @@ async function state(conn, actor, command, lock = false) {
 function display(command, before) {
   if (peak.supports(command.operation)) return { ...peak.display(command, before), notice: commands[command.operation].notice };
   if (lifecycle.supports(command.operation)) return { ...lifecycle.display(command, before), notice: commands[command.operation].notice };
+  if (settlement.supports(command.operation)) return settlement.display(command, before);
   if (schedules.supports(command.operation)) return schedules.display(command, before);
   const old = command.operation === 'attendance_set' ? before.attendance : before.record || before;
   const previous = command.operation.endsWith('_create') ? null : Object.fromEntries(
@@ -74,6 +77,7 @@ async function preview(actor, provider, body) {
 async function apply(conn, actor, command, before) {
   if (peak.supports(command.operation)) return peak.apply(conn, actor, command, before);
   if (lifecycle.supports(command.operation)) return lifecycle.apply(conn, actor, command, before);
+  if (settlement.supports(command.operation)) return settlement.apply(conn, actor, command, before);
   if (schedules.supports(command.operation)) return schedules.apply(conn, actor, command);
   const { operation, resource_id: id, changes } = command;
   switch (operation) {

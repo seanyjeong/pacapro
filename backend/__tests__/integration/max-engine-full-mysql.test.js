@@ -27,7 +27,7 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     for (const provider of ['paca', 'peak']) {
       await admin.query(`CREATE DATABASE IF NOT EXISTS ${prefix + provider} CHARACTER SET utf8mb4`);
       for (const [key, columns] of Object.entries(schema).filter(([k]) => k.startsWith(provider + '.'))) {
-        if (!catalog[key]) continue;
+        if (!Object.values(catalog).some(s => s.provider === provider && s.table === key.split('.')[1])) continue;
         const name = key.split('.')[1];
         await admin.query(`DROP TABLE IF EXISTS ${prefix + provider}.\`${name}\``);
         const defs = columns.map(([col, type, nullable, index]) => `\`${col}\` ${type} ${col === 'id' ? 'NOT NULL AUTO_INCREMENT PRIMARY KEY' :
@@ -276,7 +276,7 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     await paca.query("INSERT INTO class_schedules(id,academy_id,class_date,time_slot) VALUES(600,1,?,'morning'),(601,1,?,'morning'),(602,1,?,'morning')", [day, future.toISOString().slice(0,10), past.toISOString().slice(0,10)]);
     await paca.query("INSERT INTO attendance(id,student_id,class_schedule_id,attendance_status) VALUES(600,600,600,'present'),(601,600,601,NULL),(602,600,601,'present'),(603,600,602,'present')");
     await paca.query("INSERT INTO student_payments(id,academy_id,student_id,`year_month`,base_amount,final_amount,payment_status,due_date) VALUES(600,1,600,'2026-10',100,100,'pending','2026-10-03')");
-    const p = await preview({operation:'student_withdraw',resource_id:600,changes:{withdrawal_date:day,reason:'이사'}});
+    const p = await preview({operation:'student_withdraw',resource_id:600,changes:{withdrawal_date:day,reason:'이사',billing_decision:'preserve'}});
     expect(p.status).toBe(200); expect(p.body.after.related.attendance_to_remove.map(r=>r.id)).toEqual([600,601]);
     expect((await paca.query('SELECT status FROM students WHERE id=600'))[0][0].status).toBe('active');
     await paca.query("CREATE TRIGGER block_withdrawal BEFORE DELETE ON attendance FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic attendance failure'");

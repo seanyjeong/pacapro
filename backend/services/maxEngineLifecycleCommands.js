@@ -1,5 +1,6 @@
 const repo = require('../repositories/maxEngineFullCommandRepository');
 const lifecycle = require('../repositories/maxEngineLifecycleRepository');
+const settlement = require('./maxEngineSettlementCommands');
 const { decrypt, fail } = require('./maxEngineFullSecurity');
 const { prepareStudentTrialUpdate } = require('./trialStatusService');
 const supports = operation => ['student_withdraw', 'student_reactivate'].includes(operation);
@@ -10,7 +11,8 @@ async function state(conn, actor, command, lock) {
   const day = today();
   const reservations = command.operation === 'student_withdraw'
     ? await lifecycle.reservations(conn, actor.academy_id, student.id, day, lock) : [];
-  return { student, today: day, reservations };
+  return { student, today: day, reservations,
+    ...(command.operation === 'student_withdraw' ? await settlement.billingState(conn, actor, student.id, lock) : {}) };
 }
 function reactivationValues(student) {
   const trial = prepareStudentTrialUpdate({ currentStudent: student, status: 'active' });
@@ -39,10 +41,14 @@ function display(command, before) {
   after.related = { attendance_to_remove: reservations.map(r => ({ id: r.id, class_date: r.class_date,
     attendance_status: r.attendance_status })), payment_changes: [],
     future_monthly_billing: after.status === 'active', attendance_restored: 0 };
+  if (command.operation === 'student_withdraw') Object.assign(after.related, settlement.view(command, before));
   return { before: old, after };
 }
 async function apply(conn, actor, command, before) {
-  if (command.operation === 'student_withdraw') return lifecycle.withdraw(conn, actor, command, before);
+  if (command.operation === 'student_withdraw') {
+    await settlement.apply(conn, actor, command, before);
+    return lifecycle.withdraw(conn, actor, command, before);
+  }
   await repo.update(conn, 'students', command.resource_id, reactivationValues(before.student));
   return command.resource_id;
 }
