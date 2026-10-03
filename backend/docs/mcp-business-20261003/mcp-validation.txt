@@ -1,0 +1,262 @@
+TAP version 13
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# Subtest: paca lifecycle and PEAK commands are discoverable, preview-only, account-bound and idempotent
+ok 1 - paca lifecycle and PEAK commands are discoverable, preview-only, account-bound and idempotent
+  ---
+  duration_ms: 147.433042
+  type: 'test'
+  ...
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# Subtest: peak lifecycle and PEAK commands are discoverable, preview-only, account-bound and idempotent
+ok 2 - peak lifecycle and PEAK commands are discoverable, preview-only, account-bound and idempotent
+  ---
+  duration_ms: 56.331375
+  type: 'test'
+  ...
+# [mcp] POST /mcp 401
+# [oauth] POST /register 400 invalid_client_metadata: 허용되지 않은 redirect_uri ua=node
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 400 invalid_grant: code_verifier does not match the challenge ua=node
+# [oauth] POST /token 200 ua=node
+# [oauth] POST /token 400 invalid_grant: 유효하지 않은 인증 코드 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [oauth] POST /token 200 ua=node
+# [oauth] POST /token 400 invalid_grant: 유효하지 않은 refresh token ua=node
+# [mcp] POST /mcp 400
+# Subtest: paca: OAuth PKCE, tenant isolation, confirmation and revocation
+ok 3 - paca: OAuth PKCE, tenant isolation, confirmation and revocation
+  ---
+  duration_ms: 135.694375
+  type: 'test'
+  ...
+# [mcp] POST /mcp 401
+# [oauth] POST /register 400 invalid_client_metadata: 허용되지 않은 redirect_uri ua=node
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 400 invalid_grant: code_verifier does not match the challenge ua=node
+# [oauth] POST /token 200 ua=node
+# [oauth] POST /token 400 invalid_grant: 유효하지 않은 인증 코드 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [oauth] POST /token 200 ua=node
+# [oauth] POST /token 400 invalid_grant: 유효하지 않은 refresh token ua=node
+# [mcp] POST /mcp 400
+# Subtest: peak: OAuth PKCE, tenant isolation, confirmation and revocation
+ok 4 - peak: OAuth PKCE, tenant isolation, confirmation and revocation
+  ---
+  duration_ms: 56.928958
+  type: 'test'
+  ...
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 302 ua=node
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [oauth] POST /login 403 ua=node
+# Subtest: resource binding, read-only scope, and login CSRF
+# [login] 거부 foreign=false cookie=none origin=none site=none
+ok 5 - resource binding, read-only scope, and login CSRF
+  ---
+  duration_ms: 16.921958
+  type: 'test'
+  ...
+# Subtest: login form may redirect to the ChatGPT callback (CSP form-action)
+ok 6 - login form may redirect to the ChatGPT callback (CSP form-action)
+  ---
+  duration_ms: 1.859167
+  type: 'test'
+  ...
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# Subtest: MCP login asks PACA for a 30-day delegation and refresh outlives the old 1-hour limit
+ok 7 - MCP login asks PACA for a 30-day delegation and refresh outlives the old 1-hour limit
+  ---
+  duration_ms: 11.175334
+  type: 'test'
+  ...
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# Subtest: paca exposes schedule operations with confirmation required
+ok 8 - paca exposes schedule operations with confirmation required
+  ---
+  duration_ms: 122.764084
+  type: 'test'
+  ...
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# Subtest: peak exposes schedule operations with confirmation required
+ok 9 - peak exposes schedule operations with confirmation required
+  ---
+  duration_ms: 40.824833
+  type: 'test'
+  ...
+# Subtest: schedule conflicts retain safe source reasons while raw database errors remain hidden
+ok 10 - schedule conflicts retain safe source reasons while raw database errors remain hidden
+  ---
+  duration_ms: 3.429
+  type: 'test'
+  ...
+# Subtest: OAuth source credentials and preview content are encrypted on disk; code consumption is once only
+ok 11 - OAuth source credentials and preview content are encrypted on disk; code consumption is once only
+  ---
+  duration_ms: 6.700917
+  type: 'test'
+  ...
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# Subtest: paca typed read-only workflows use one scoped source request
+ok 12 - paca typed read-only workflows use one scoped source request
+  ---
+  duration_ms: 126.062917
+  type: 'test'
+  ...
+# [oauth] POST /register 201 ua=node
+# [oauth] GET /authorize 200 ua=node
+# [oauth] POST /login 302 ua=node
+# [oauth] POST /token 200 ua=node
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 202
+# [mcp] GET /mcp 405
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# [mcp] POST /mcp 200
+# Subtest: peak typed read-only workflows use one scoped source request
+ok 13 - peak typed read-only workflows use one scoped source request
+  ---
+  duration_ms: 42.759834
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 369.1705

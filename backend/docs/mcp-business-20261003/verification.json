@@ -1,0 +1,68 @@
+{
+  "status": "verified_local_not_deployed",
+  "version": "mcp-0.2.0",
+  "endpoint": "https://paca-mcp.supermax.kr/mcp",
+  "production_writes": 0,
+  "paca_base": "5175913f92cfe47ce269197b0ac94f404058559a",
+  "backend": {
+    "runtime": "18.19.1",
+    "suites": 8,
+    "tests": 70,
+    "skipped": 0,
+    "legacy_separate_suites": 2,
+    "legacy_separate_tests": 37
+  },
+  "mcp": {
+    "runtime": "22.20.0",
+    "tests": 13,
+    "skipped": 0,
+    "paca_tools": 18,
+    "peak_tools": 9
+  },
+  "coverage_core_service_repository_files": 5,
+  "coverage": {
+    "s": {
+      "covered": 177,
+      "total": 184,
+      "percent": 96.2
+    },
+    "f": {
+      "covered": 30,
+      "total": 30,
+      "percent": 100.0
+    },
+    "b": {
+      "covered": 143,
+      "total": 162,
+      "percent": 88.27
+    }
+  },
+  "lint": "passed",
+  "typescript": "not_applicable_no_typescript_changes",
+  "catalog": {
+    "paca_resources_before": 38,
+    "paca_resources_after": 71,
+    "peak_resources_before": 41,
+    "peak_resources_after": 71,
+    "command_operations_before": 12,
+    "command_operations_after": 24
+  },
+  "mysql": "8.4.11_loopback_13320_synthetic_only",
+  "deployment_requires": [
+    "owner_production_approval",
+    "peak_additive_ledger_migration",
+    "fresh_source_manifest_recheck",
+    "backups",
+    "PACA_service_restart",
+    "MCP_release_pointer_restart_and_smoke"
+  ],
+  "unsupported_writes": [
+    "paused_student_resume",
+    "season_enrollment_and_billing",
+    "refund_cancel_invoice",
+    "sms_send",
+    "payroll",
+    "peak_assignment_attendance",
+    "peak_monthly_test_record_entry"
+  ]
+}

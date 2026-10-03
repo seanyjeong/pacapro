@@ -6,15 +6,16 @@ const request = require('supertest');
 const { fixture } = require('./max-engine-efficient-fixture');
 const run = process.env.RUN_MAX_ENGINE_MYSQL === '1' ? describe : describe.skip;
 run('efficient read workflows: isolated MySQL and authenticated HTTP', () => {
-  let f, app, token;
+  let f, app, server, token;
   beforeAll(async () => {
     f = await fixture(); global.__efficient = f;
     app = express(); app.use(express.json()); app.use('/full', require('../../routes/integrations/full'));
-    const login = await request(app).post('/full/token').send({ email: 'a@example.invalid', password: 'synthetic' });
+    await new Promise(resolve => { server = app.listen(0, '127.0.0.1', resolve); });
+    const login = await request(server).post('/full/token').send({ email: 'a@example.invalid', password: 'synthetic' });
     expect(login.status).toBe(200); token = login.body.access_token;
   });
-  afterAll(async () => { await f?.close(); });
-  const get = (path, query = {}) => request(app).get('/full' + path).auth(token, { type: 'bearer' }).query(query);
+  afterAll(async () => { if (server) await new Promise(resolve => server.close(resolve)); await f?.close(); });
+  const get = (path, query = {}) => request(server).get('/full' + path).auth(token, { type: 'bearer' }).query(query);
   const workflow = async (name, params = {}, provider = 'paca') => {
     const r = await get(`/${provider}/workflows/${name}`, { params: JSON.stringify(params) });
     expect({ name, error: r.body.error, status: r.status }).toEqual({ name, error: undefined, status: 200 });
@@ -84,7 +85,7 @@ run('efficient read workflows: isolated MySQL and authenticated HTTP', () => {
     ]) expect((await get('/paca/workflows/' + name, { params: JSON.stringify(params) })).status).toBe(422);
     expect((await get('/paca/workflows/event_ranking')).status).toBe(404);
     expect((await get('/paca/workflows/today_brief', { academy_id: 2 })).status).toBe(422);
-    expect((await request(app).get('/full/paca/workflows/today_brief')).status).toBe(401);
+    expect((await request(server).get('/full/paca/workflows/today_brief')).status).toBe(401);
     await f.paca.query('UPDATE users SET is_active=0 WHERE id=1'); expect((await get('/paca/workflows/today_brief')).status).toBe(403);
     await f.paca.query('UPDATE users SET is_active=1 WHERE id=1');
   });
@@ -98,4 +99,14 @@ run('efficient read workflows: isolated MySQL and authenticated HTTP', () => {
     const all = await workflow('payment_status', { month: f.month });
     expect(all.total).toBe(209); expect(all.items).toHaveLength(200); expect(all.truncated).toBe(true); expect(all.unpaid).toBe('780.80');
   });
+  test('PACA MCP exposes PEAK one-call workflows with the exact same scoped results', async () => {
+    for (const [name, params] of [['recent_records', {date:f.date}], ['event_ranking', {event:'제자리멀리뛰기',date:f.date}], ['student_progress', {student_id:1,event:'제자리멀리뛰기',date:f.date}]]) {
+      const direct = await workflow(name, params, 'peak');
+      const alias = await workflow('peak_' + name, params, 'paca');
+      expect({...alias,workflow:name}).toEqual(direct);
+    }
+    const catalog = await get('/paca/catalog');
+    expect(catalog.body.workflows.map(w=>w.name)).toEqual(expect.arrayContaining(['peak_recent_records','peak_event_ranking','peak_student_progress']));
+  });
+
 });

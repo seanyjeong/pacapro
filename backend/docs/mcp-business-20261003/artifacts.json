@@ -1,0 +1,38 @@
+[
+  {
+    "repository": "paca",
+    "archive": "/tmp/paca-mcp-business-20261003/paca-candidate.tgz",
+    "sha256": "59ff869aff5255cd208bb56a0cca232462646ac79c2c729433250163dcac81e1",
+    "files": [
+      "backend/config/maxEnginePeak.js",
+      "backend/constants/maxEngineCommands.js",
+      "backend/constants/maxEngineInput.js",
+      "backend/constants/maxEngineLifecycleCommands.js",
+      "backend/constants/maxEnginePeakCommands.js",
+      "backend/constants/maxEngineReadCatalog.json",
+      "backend/constants/maxEngineWorkflows.js",
+      "backend/repositories/maxEngineFullCommandRepository.js",
+      "backend/repositories/maxEngineLifecycleRepository.js",
+      "backend/repositories/maxEnginePeakCommandRepository.js",
+      "backend/services/maxEngineFullCommands.js",
+      "backend/services/maxEngineLifecycleCommands.js",
+      "backend/services/maxEnginePeakCommands.js",
+      "backend/services/maxEnginePeakPlanExercises.js",
+      "backend/services/maxEngineWorkflows.js",
+      "backend/migrations/20261003_peak_max_engine_commands.sql"
+    ]
+  },
+  {
+    "repository": "max-engine",
+    "archive": "/tmp/paca-mcp-business-20261003/max-engine-candidate.tgz",
+    "sha256": "89c5946f2cf899e1eae2a6442dd0c8ec3ff06d028f0619f72495c18d3eeff71e",
+    "files": [
+      "mcp/package-lock.json",
+      "mcp/package.json",
+      "mcp/shared/constants/commands.js",
+      "mcp/shared/server.js",
+      "mcp/shared/tools.js",
+      "mcp/shared/workflows.js"
+    ]
+  }
+]

@@ -1,4 +1,4 @@
-const { workflows } = require('../constants/maxEngineWorkflows');
+const { workflows, workflowAliases } = require('../constants/maxEngineWorkflows');
 const { validate, today, table } = require('./maxEngineWorkflowInput');
 const students = require('./maxEngineWorkflowStudents');
 const { classes, attendance } = require('./maxEngineWorkflowClasses');
@@ -8,9 +8,15 @@ const { schedule } = require('./maxEngineWorkflowConsultations');
 const { records } = require('./maxEngineWorkflowRecords');
 const { fail } = require('./maxEngineFullSecurity');
 function catalog(provider) {
-  return Object.entries(workflows[provider]).map(([name, parameters]) => ({ name, parameters, read_only: true }));
+  return Object.entries({ ...workflows[provider], ...Object.fromEntries(Object.entries(workflowAliases[provider] || {})
+    .map(([name, target]) => [name, workflows[target.provider][target.workflow]])) }).map(([name, parameters]) => ({ name, parameters, read_only: true }));
 }
 async function read(actor, provider, workflow, query) {
+  const aliases = workflowAliases[provider];
+  if (aliases && Object.hasOwn(aliases, workflow)) {
+    const target = aliases[workflow];
+    return { ...await read(actor, target.provider, target.workflow, query), workflow };
+  }
   if (Object.keys(query).some(k => k !== 'params')) fail(422, 'INVALID_QUERY', 'params만 지정해 주세요.');
   let input = {};
   try {

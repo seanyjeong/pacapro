@@ -13,7 +13,8 @@ const schema = require('./max-engine-schema.json');
 const catalog = require('../../constants/maxEngineReadCatalog.json');
 
 run('D-117 isolated MySQL transactions and delegation', () => {
-  let paca, peak, admin, app, token, encrypt;
+  let paca, peak, admin, app, server, token, encrypt;
+  const originalDbName = process.env.DB_NAME;
   const prefix = 'max_engine_full_test_';
   const base = '/full';
   const secret = crypto.randomBytes(48).toString('hex');
@@ -42,6 +43,10 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     await paca.query('ALTER TABLE students ADD father_phone VARCHAR(512) NULL, ADD mother_phone VARCHAR(512) NULL');
     await paca.query('DROP TABLE IF EXISTS max_engine_commands');
     await paca.query(fs.readFileSync(require.resolve('../../migrations/20260927_max_engine_commands.sql'), 'utf8'));
+    await peak.query('DROP TABLE IF EXISTS max_engine_commands');
+    await peak.query('DROP TABLE IF EXISTS max_engine_academy_locks');
+    for (const sql of fs.readFileSync(require.resolve('../../migrations/20261003_peak_max_engine_commands.sql'), 'utf8').replace(/^--.*$/gm, '').split(';').filter(s => s.trim())) await peak.query(sql);
+    process.env.DB_NAME = prefix + 'paca';
     process.env.MAX_ENGINE_LINK_SECRET = secret;
     process.env.DATA_ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
     ({ encrypt } = require('../../services/maxEngineFullSecurity'));
@@ -50,12 +55,16 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     await paca.query("INSERT INTO users(id,name,email,password_hash,role,academy_id,is_active,approval_status) VALUES (1,'Synthetic A','a@example.invalid',?,'owner',1,1,'approved'),(2,'Synthetic B','b@example.invalid',?,'owner',2,1,'approved')", [hash, hash]);
     await paca.query("INSERT INTO students(id,academy_id,name,phone,grade,class_days,weekly_count,monthly_tuition,status) VALUES (1,1,?,?,'고3','[]',0,0,'active'),(2,2,?,?,'고3','[]',0,0,'active')", [encrypt('합성가'),encrypt('000111'),encrypt('합성나'),encrypt('000222')]);
     app = express(); app.use(express.json()); app.use(base, require('../../routes/integrations/full'));
-    const login = await request(app).post(base + '/token').send({ email: 'a@example.invalid', password });
+    await new Promise(resolve => { server = app.listen(0, '127.0.0.1', resolve); });
+    const login = await request(server).post(base + '/token').send({ email: 'a@example.invalid', password });
     expect(login.status).toBe(200); expect(login.body.expires_in).toBe(2592000); token = login.body.access_token;
   });
-  afterAll(async () => { await paca?.end(); await peak?.end(); await admin?.end(); });
-  const get = path => request(app).get(base + path).auth(token, { type: 'bearer' });
-  const post = (path, body) => request(app).post(base + path).auth(token, { type: 'bearer' }).send(body);
+  afterAll(async () => {
+    if (server) await new Promise(resolve => server.close(resolve));
+    if (originalDbName === undefined) delete process.env.DB_NAME; else process.env.DB_NAME = originalDbName;
+    await paca?.end(); await peak?.end(); await admin?.end(); });
+  const get = path => request(server).get(base + path).auth(token, { type: 'bearer' });
+  const post = (path, body) => request(server).post(base + path).auth(token, { type: 'bearer' }).send(body);
   const preview = command => post('/paca/preview', command);
   const confirm = p => post('/paca/confirm', { preview_token: p.preview_token, idempotency_key: p.idempotency_key, confirm: true });
 
@@ -70,9 +79,9 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     const aged = days => jwt.sign({ ...identity, iat: now - days * 86400 }, secret,
       { algorithm: 'HS256', expiresIn: 2592000 });
     for (const days of [2, 29]) {
-      expect((await request(app).get(base + '/identity').auth(aged(days), { type: 'bearer' })).status).toBe(200);
+      expect((await request(server).get(base + '/identity').auth(aged(days), { type: 'bearer' })).status).toBe(200);
     }
-    expect((await request(app).get(base + '/identity').auth(aged(30), { type: 'bearer' })).status).toBe(401);
+    expect((await request(server).get(base + '/identity').auth(aged(30), { type: 'bearer' })).status).toBe(401);
   });
 
   test('all allowlisted read resources execute; private columns never appear; other academy blocked', async () => {
@@ -99,9 +108,9 @@ run('D-117 isolated MySQL transactions and delegation', () => {
   test('unknown writes, service key, ordinary JWT and prior read audience are rejected', async () => {
     expect((await post('/paca/preview', { operation: 'salary_pay', resource_id: 1, changes: {} })).status).toBe(403);
     expect((await post('/paca/preview', { operation: 'sms_send', changes: {} })).status).toBe(403);
-    expect((await request(app).get('/full/identity').set('x-api-key', secret)).status).toBe(401);
+    expect((await request(server).get('/full/identity').set('x-api-key', secret)).status).toBe(401);
     const old = require('jsonwebtoken').sign({ academy_id: 1, scope: 'students:read records:read' }, secret, { issuer: 'paca-max-engine', audience: 'max-engine-read', subject: '1' });
-    expect((await request(app).get('/full/identity').auth(old,{type:'bearer'})).status).toBe(401);
+    expect((await request(server).get('/full/identity').auth(old,{type:'bearer'})).status).toBe(401);
   });
   test('preview does not mutate; partial update preserves omitted fields; concurrent confirm applies once', async () => {
     const p = await preview({ operation: 'student_update', resource_id: 1, changes: { school: '합성고' } });
@@ -259,4 +268,108 @@ run('D-117 isolated MySQL transactions and delegation', () => {
       await paca.query(`UPDATE users SET \`${column}\`=? WHERE id=1`,[before.v]);
     }
   });
+  test('withdrawal is preview-only then atomic; preserves invoices, past and checked future attendance; return is idempotent', async () => {
+    await paca.query("INSERT INTO students(id,academy_id,name,class_days,weekly_count,monthly_tuition,status) VALUES(600,1,'Synthetic lifecycle','[]',0,0,'active')");
+    const day = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0,10);
+    const future = new Date(day + 'T00:00:00Z'); future.setUTCDate(future.getUTCDate() + 1);
+    const past = new Date(day + 'T00:00:00Z'); past.setUTCDate(past.getUTCDate() - 1);
+    await paca.query("INSERT INTO class_schedules(id,academy_id,class_date,time_slot) VALUES(600,1,?,'morning'),(601,1,?,'morning'),(602,1,?,'morning')", [day, future.toISOString().slice(0,10), past.toISOString().slice(0,10)]);
+    await paca.query("INSERT INTO attendance(id,student_id,class_schedule_id,attendance_status) VALUES(600,600,600,'present'),(601,600,601,NULL),(602,600,601,'present'),(603,600,602,'present')");
+    await paca.query("INSERT INTO student_payments(id,academy_id,student_id,`year_month`,base_amount,final_amount,payment_status,due_date) VALUES(600,1,600,'2026-10',100,100,'pending','2026-10-03')");
+    const p = await preview({operation:'student_withdraw',resource_id:600,changes:{withdrawal_date:day,reason:'이사'}});
+    expect(p.status).toBe(200); expect(p.body.after.related.attendance_to_remove.map(r=>r.id)).toEqual([600,601]);
+    expect((await paca.query('SELECT status FROM students WHERE id=600'))[0][0].status).toBe('active');
+    await paca.query("CREATE TRIGGER block_withdrawal BEFORE DELETE ON attendance FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic attendance failure'");
+    try { expect((await confirm(p.body)).status).toBe(503);
+      expect((await paca.query('SELECT status FROM students WHERE id=600'))[0][0].status).toBe('active');
+      expect((await paca.query('SELECT COUNT(*) n FROM attendance WHERE student_id=600'))[0][0].n).toBe(4);
+    } finally { await paca.query('DROP TRIGGER block_withdrawal'); }
+    const results = await Promise.all([confirm(p.body), confirm(p.body)]); expect(results.map(r=>r.status)).toEqual([200,200]);
+    const c = results[0]; expect(results[1].body).toEqual(c.body);
+    expect((await paca.query('SELECT id FROM attendance WHERE student_id=600 ORDER BY id'))[0].map(r=>r.id)).toEqual([602,603]);
+    expect((await paca.query('SELECT payment_status FROM student_payments WHERE id=600'))[0][0].payment_status).toBe('pending');
+    const ret = await preview({operation:'student_reactivate',resource_id:600,changes:{}}); expect(ret.status).toBe(200);
+    expect((await confirm(ret.body)).status).toBe(200);
+    expect((await paca.query('SELECT status,withdrawal_reason FROM students WHERE id=600'))[0][0]).toMatchObject({status:'active',withdrawal_reason:'이사'});
+    expect((await paca.query('SELECT COUNT(*) n FROM student_payments WHERE student_id=600'))[0][0].n).toBe(1);
+  });
+  test('withdrawal refuses a stale preview after another attendance editor changes a related reservation', async () => {
+    const day = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0,10);
+    await paca.query("INSERT INTO attendance(id,student_id,class_schedule_id) VALUES(604,600,601)");
+    const p = await preview({operation:'student_withdraw',resource_id:600,changes:{withdrawal_date:day}}); expect(p.status).toBe(200);
+    await paca.query("UPDATE attendance SET attendance_status='present' WHERE id=604");
+    expect((await confirm(p.body)).body.error.code).toBe('SOURCE_CHANGED');
+    expect((await paca.query('SELECT status FROM students WHERE id=600'))[0][0].status).toBe('active');
+  });
+  test('PACA connection reads PEAK resources with the same current-student academy checks', async () => {
+    const own = await get('/paca/resources/peak_students'); expect(own.status).toBe(200);
+    expect(own.body.items.map(s=>s.id)).toEqual([1]);
+    expect((await get('/peak/resources/paca_student_payments')).status).toBe(200);
+    expect((await get('/paca/catalog')).body.commands).toEqual(expect.arrayContaining([expect.objectContaining({operation:'peak_record_create',source:'peak'})]));
+  });
+  test('PEAK record create/update/delete uses PEAK ledger and blocks foreign, stale-linked and out-of-range rows', async () => {
+    await peak.query("INSERT INTO record_types(id,academy_id,name,unit,direction,is_active,min_value,max_value) VALUES(600,1,'제멀','cm','higher',1,1,400),(601,2,'외부','cm','higher',1,1,400)");
+    const command = {operation:'peak_record_create',changes:{student_id:1,record_type_id:600,measured_at:'2026-10-03',value:'250.00',notes:'keep'}};
+    for(const changes of [{student_id:2},{record_type_id:601},{value:'400.01'}]) expect([404,422]).toContain((await preview({...command,changes:{...command.changes,...changes}})).status);
+    const p=await preview(command);expect(p.status).toBe(200);
+    expect((await peak.query('SELECT COUNT(*) n FROM student_records WHERE record_type_id=600'))[0][0].n).toBe(0);
+    const results=await Promise.all([confirm(p.body),confirm(p.body)]);expect(results.map(r=>r.status)).toEqual([200,200]);expect(results[0].body).toEqual(results[1].body);
+    const id=results[0].body.resource_id;
+    expect((await peak.query("SELECT COUNT(*) n FROM max_engine_commands WHERE operation='peak_record_create'"))[0][0].n).toBe(1);
+    expect((await paca.query("SELECT COUNT(*) n FROM max_engine_commands WHERE operation='peak_record_create'"))[0][0].n).toBe(0);
+    expect((await preview(command)).body.error.code).toBe('PEAK_DUPLICATE');
+    const edit=await preview({operation:'peak_record_update',resource_id:id,changes:{notes:null}});expect(edit.status).toBe(200);
+    expect((await Promise.all([confirm(edit.body), confirm(edit.body)])).map(r=>r.status)).toEqual([200,200]);
+    expect((await peak.query('SELECT value,notes FROM student_records WHERE id=?',[id]))[0][0]).toEqual({value:'250.00',notes:null});
+    const stale=await preview({operation:'peak_record_update',resource_id:id,changes:{value:'260'}});expect(stale.status).toBe(200);
+    await paca.query('UPDATE students SET academy_id=2 WHERE id=1');
+    expect((await confirm(stale.body)).status).toBe(404);
+    await paca.query('UPDATE students SET academy_id=1 WHERE id=1');
+    const del=await preview({operation:'peak_record_delete',resource_id:id,changes:{reason:'오입력'}});expect(del.status).toBe(200);
+    expect((await confirm(del.body)).status).toBe(200);expect((await confirm(del.body)).status).toBe(200);
+    expect((await peak.query('SELECT * FROM student_records WHERE id=?',[id]))[0]).toEqual([]);
+  });
+  test('PEAK business write and idempotency ledger roll back together; exact same receipt can retry', async () => {
+    const p=await preview({operation:'peak_record_create',changes:{student_id:1,record_type_id:600,measured_at:'2026-10-04',value:'255'}});expect(p.status).toBe(200);
+    await peak.query("CREATE TRIGGER block_ledger BEFORE INSERT ON max_engine_commands FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic ledger failure'");
+    try { expect((await confirm(p.body)).status).toBe(503);
+      expect((await peak.query("SELECT COUNT(*) n FROM student_records WHERE measured_at='2026-10-04'"))[0][0].n).toBe(0);
+    } finally { await peak.query('DROP TRIGGER block_ledger'); }
+    expect((await confirm(p.body)).status).toBe(200);
+  });
+  test('PEAK plans support incremental exercises, explicit completion and synthetic training logs', async () => {
+    const created=await preview({operation:'peak_plan_create',changes:{date:'2026-10-03',time_slot:'evening',instructor_id:-1,description:'plan'}});expect(created.status).toBe(200);
+    const confirmed=await confirm(created.body);expect(confirmed.status).toBe(200);const id=confirmed.body.resource_id;
+    expect((await preview({operation:'peak_plan_create',changes:{date:'2026-10-03',time_slot:'evening',instructor_id:-1}})).status).toBe(409);
+    expect((await preview({operation:'peak_plan_create',changes:{date:'2026-10-03',time_slot:'evening',instructor_id:-2}})).status).toBe(404);
+    await peak.query("INSERT INTO exercises(id,academy_id,name,tags) VALUES(600,1,'스쿼트','[]'),(601,2,'외부운동','[]')");
+    expect((await preview({operation:'peak_plan_exercise_add',resource_id:id,changes:{exercise_id:601}})).status).toBe(404);
+    for (const command of [
+      {operation:'peak_plan_exercise_add',changes:{exercise_id:600,sets:3,reps:10}},
+      {operation:'peak_plan_exercise_complete',changes:{exercise_id:600,completed:true}},
+      {operation:'peak_plan_update',changes:{description:'edited'}},
+    ]) { const p=await preview({...command,resource_id:id});expect(p.status).toBe(200);expect((await confirm(p.body)).status).toBe(200);expect((await confirm(p.body)).status).toBe(200); }
+    const [[plan]]=await peak.query('SELECT * FROM daily_plans WHERE id=?',[id]);expect(typeof plan.completed_exercises === 'string' ? JSON.parse(plan.completed_exercises) : plan.completed_exercises).toEqual([600]);expect(plan.description).toBe('edited');
+    const log=await preview({operation:'peak_training_create',changes:{date:'2026-10-03',student_id:1,trainer_id:-1,plan_id:id,condition_score:4,temperature:0,humidity:0,notes:'preserve'}});expect(log.status).toBe(200);
+    const lc=await confirm(log.body);expect(lc.status).toBe(200);
+    const edit=await preview({operation:'peak_training_update',resource_id:lc.body.resource_id,changes:{condition_score:5}});expect(edit.status).toBe(200);expect((await confirm(edit.body)).status).toBe(200);
+    expect((await peak.query('SELECT condition_score,notes,temperature,humidity FROM training_logs WHERE id=?',[lc.body.resource_id]))[0][0]).toEqual({condition_score:5,notes:'preserve',temperature:'0.0',humidity:0});
+    const remove=await preview({operation:'peak_plan_exercise_remove',resource_id:id,changes:{exercise_id:600}});expect(remove.status).toBe(200);expect((await confirm(remove.body)).status).toBe(200);
+    const [[after]]=await peak.query('SELECT exercises,completed_exercises FROM daily_plans WHERE id=?',[id]);expect(typeof after.exercises === 'string' ? JSON.parse(after.exercises) : after.exercises).toEqual([]);expect(typeof after.completed_exercises === 'string' ? JSON.parse(after.completed_exercises) : after.completed_exercises).toEqual([]);
+  });
+
+  test('PEAK reads PACA instructor scope, rejects mismatched training plans, and binds receipts to the connection provider', async () => {
+    await paca.query("INSERT INTO instructors(id,academy_id,name,salary_type,status) VALUES(600,1,'Synthetic teacher','hourly','active'),(601,2,'Synthetic foreign','hourly','active')");
+    const changes={date:'2026-10-05',time_slot:'morning',instructor_id:600};
+    expect((await post('/peak/preview',{operation:'peak_plan_create',changes:{...changes,instructor_id:601}})).status).toBe(404);
+    const p=await post('/peak/preview',{operation:'peak_plan_create',changes});expect(p.status).toBe(200);
+    expect((await confirm(p.body)).body.error.code).toBe('PREVIEW_MISMATCH');
+    const c=await post('/peak/confirm',{preview_token:p.body.preview_token,idempotency_key:p.body.idempotency_key,confirm:true});expect(c.status).toBe(200);
+    const log=await preview({operation:'peak_training_create',changes:{date:'2026-10-06',student_id:1,trainer_id:600,plan_id:c.body.resource_id}});
+    expect(log.body.error.code).toBe('PEAK_PLAN_MISMATCH');
+    const record=await preview({operation:'peak_record_update',resource_id:(await peak.query("SELECT id FROM student_records WHERE measured_at='2026-10-04'"))[0][0].id,changes:{value:'265'}});
+    expect(record.status).toBe(200);await peak.query('UPDATE record_types SET max_value=260 WHERE id=600');
+    expect((await confirm(record.body)).body.error.code).toBe('SOURCE_CHANGED');
+  });
+
 });

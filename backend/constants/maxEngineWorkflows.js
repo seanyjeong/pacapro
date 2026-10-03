@@ -24,4 +24,6 @@ const workflows = {
     student_progress: ['student_id', 'name', 'event', 'date', 'start_date', 'end_date'],
   },
 };
-module.exports = { fields, workflows };
+const workflowAliases = { paca: Object.fromEntries(Object.keys(workflows.peak).map(name =>
+  ['peak_' + name, { provider: 'peak', workflow: name }])) };
+module.exports = { fields, workflows, workflowAliases };

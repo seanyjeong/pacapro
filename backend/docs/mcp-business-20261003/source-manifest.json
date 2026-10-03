@@ -1,0 +1,192 @@
+{
+  "at": "2026-10-03",
+  "production_writes": 0,
+  "files": [
+    {
+      "repository": "paca",
+      "file": "backend/config/maxEnginePeak.js",
+      "candidate_sha256": "cc489f12faf78e072bad550d8c487783329d68a83231079bf9189906fc423cc3",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/constants/maxEngineCommands.js",
+      "candidate_sha256": "3ff5e934bdecab9396fbd98bc84b9967ba02844847f934ac4f134b8c07114db1",
+      "baseline_sha256": "a554b61246d22c45f6966ba078c0ea28ce13c8df950130e3830c8d021a189b1f",
+      "production_sha256": "a554b61246d22c45f6966ba078c0ea28ce13c8df950130e3830c8d021a189b1f",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/constants/maxEngineInput.js",
+      "candidate_sha256": "410b567dcda10df4c4fb6ba71ff1146f9ac85d62cb4f82040f49b3d26dcae244",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/constants/maxEngineLifecycleCommands.js",
+      "candidate_sha256": "9fcaa56a6ba58ce8b19d539043b6cb1f03b0179f8c13dc3e3d17f7245dbcc97f",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/constants/maxEnginePeakCommands.js",
+      "candidate_sha256": "f9be2a4ce5c2dfd5f1ac0822d62ad9874024f45785a74ead8f54e2c709862383",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/constants/maxEngineReadCatalog.json",
+      "candidate_sha256": "57d5081836d4676d2e77d6fa62a27972c61a3b96b2066c826304aa40d5aae118",
+      "baseline_sha256": "792381cee089bcbaebcf109112443ca15534c13a77b6dcff771d6945f7cceec6",
+      "production_sha256": "792381cee089bcbaebcf109112443ca15534c13a77b6dcff771d6945f7cceec6",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/constants/maxEngineWorkflows.js",
+      "candidate_sha256": "9c239573c7c0f4221939099c36db3b8a547d372be43573486ff7ba9ddc42853a",
+      "baseline_sha256": "861cf3f7b2fa0eb32708d8012905f924a86ac77484083c4dec1717a9d3718a41",
+      "production_sha256": "861cf3f7b2fa0eb32708d8012905f924a86ac77484083c4dec1717a9d3718a41",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/repositories/maxEngineFullCommandRepository.js",
+      "candidate_sha256": "6fee181f0fc328e2bc42fbed6c941c5eb88ffd05d223a8a7f566ea60a66ab878",
+      "baseline_sha256": "3ca2ef588b284674235b63999af610cce378cc89a3a8cc5e760f86d181e0e589",
+      "production_sha256": "3ca2ef588b284674235b63999af610cce378cc89a3a8cc5e760f86d181e0e589",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/repositories/maxEngineLifecycleRepository.js",
+      "candidate_sha256": "5ec828786de2d0e7db15452ea52bb173ff54ae8413ad8ac5ab8f4ce585acd308",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/repositories/maxEnginePeakCommandRepository.js",
+      "candidate_sha256": "a7188da4285c1ed0ac0afce3087910fee0adebe8e2b73c8dfafdd27792c082f3",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/services/maxEngineFullCommands.js",
+      "candidate_sha256": "a4fc86eda29d5ae8b5173b554ed297911c5e8024f3d7f694f5c7e5866beac402",
+      "baseline_sha256": "9ddf8aa56eb0d39d7a704eb57dad343fa97069e6e57325c58ce490e998cfe776",
+      "production_sha256": "9ddf8aa56eb0d39d7a704eb57dad343fa97069e6e57325c58ce490e998cfe776",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/services/maxEngineLifecycleCommands.js",
+      "candidate_sha256": "e1878128a64ae56b377d939e82cf6ca15a238ffd4e01352251f627442183548c",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/services/maxEnginePeakCommands.js",
+      "candidate_sha256": "5e087b57b97480abb7a0bcdcb250bf3abb0e3fc3ada80bbc33f451d5454c3f72",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/services/maxEnginePeakPlanExercises.js",
+      "candidate_sha256": "2bafe0ce84f7d02a894ab3eae559564b2276d8e2248881019aa18fe6d6b1674b",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/services/maxEngineWorkflows.js",
+      "candidate_sha256": "c2ac7ea0262d95390b2f248c113085eacb897eea6e559145aef20aa0d46ddb8b",
+      "baseline_sha256": "867b840595f4373d6bb44b7b5b347993ebe10c55030853ca8a61699e7ccfa8f4",
+      "production_sha256": "867b840595f4373d6bb44b7b5b347993ebe10c55030853ca8a61699e7ccfa8f4",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "paca",
+      "file": "backend/migrations/20261003_peak_max_engine_commands.sql",
+      "candidate_sha256": "90a2f47f4fc083cb0887d75d67a37d1837a16ae3db1a0d63996fbae77a766004",
+      "baseline_sha256": null,
+      "production_sha256": null,
+      "baseline_matches_production": null,
+      "new_path_absent_in_production": true
+    },
+    {
+      "repository": "max-engine",
+      "file": "mcp/package-lock.json",
+      "candidate_sha256": "4f6803670d6ea0258b5e9dde2cc62811c9d66fdba5af55cd9e09e231ebb9e323",
+      "baseline_sha256": "b66c3ac825e39e33a22707d98a016a7f26e81f251020b8a55ae41887ce814532",
+      "production_sha256": "b66c3ac825e39e33a22707d98a016a7f26e81f251020b8a55ae41887ce814532",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "max-engine",
+      "file": "mcp/package.json",
+      "candidate_sha256": "d0594fc9d5b91e306805ea3bb5c98e36d06edaa473bdadd7e53d7f8e6d7e42e7",
+      "baseline_sha256": "37f8ccc228424f89e9e7153776a2dd3896f144aed434b88b551b88050f85854c",
+      "production_sha256": "37f8ccc228424f89e9e7153776a2dd3896f144aed434b88b551b88050f85854c",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "max-engine",
+      "file": "mcp/shared/constants/commands.js",
+      "candidate_sha256": "614e353d7b5f1c652fe753b353942beb2834f317647b235fd61815fe3521791c",
+      "baseline_sha256": "0f6a63e3486db51a6a90b8061c39c898bd35fc8ff39eb8e35f602ffb8d800924",
+      "production_sha256": "0f6a63e3486db51a6a90b8061c39c898bd35fc8ff39eb8e35f602ffb8d800924",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "max-engine",
+      "file": "mcp/shared/server.js",
+      "candidate_sha256": "6490f0924f371235313cf98c657dc0bc96bc9f9a58b97590d1c10551cc41c287",
+      "baseline_sha256": "19cbad3ef03ad4c530ab0c4cdac49ff161d7b0a72945d9b032e031ffa42ca35f",
+      "production_sha256": "19cbad3ef03ad4c530ab0c4cdac49ff161d7b0a72945d9b032e031ffa42ca35f",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "max-engine",
+      "file": "mcp/shared/tools.js",
+      "candidate_sha256": "1b9b0cfd04ae4ad7d49645bd6b29a8d65ebec18c3038d24689796e2f1eb1eeac",
+      "baseline_sha256": "3af3a9978423b997ab303e0281abe14510588888b570b5bb155a527571bc5e6d",
+      "production_sha256": "3af3a9978423b997ab303e0281abe14510588888b570b5bb155a527571bc5e6d",
+      "baseline_matches_production": true
+    },
+    {
+      "repository": "max-engine",
+      "file": "mcp/shared/workflows.js",
+      "candidate_sha256": "2e5d702bce29543edb5a503270f7f1b0f5768fee4e138937eecb0b90a4a0612e",
+      "baseline_sha256": "93bfb97c316921ebeee5ec2411133cb4b3b5a1e1c809746c34545ccdec805255",
+      "production_sha256": "93bfb97c316921ebeee5ec2411133cb4b3b5a1e1c809746c34545ccdec805255",
+      "baseline_matches_production": true
+    }
+  ]
+}

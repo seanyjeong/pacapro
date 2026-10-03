@@ -1,4 +1,8 @@
 const crypto = require('crypto');
+const peakPool = require('../config/peak-database');
+const peakRepo = require('../repositories/maxEnginePeakCommandRepository');
+const peak = require('./maxEnginePeakCommands');
+const lifecycle = require('./maxEngineLifecycleCommands');
 const { commands } = require('../constants/maxEngineCommands');
 const { previewSeconds } = require('../config/maxEngineFull');
 const repo = require('../repositories/maxEngineFullCommandRepository');
@@ -11,14 +15,14 @@ const consultationRecords = require('./maxEngineFullConsultationRecords');
 const schedules = require('./maxEngineScheduleCommands');
 
 function catalog(provider) {
-  return Object.entries(commands).map(([operation, c]) => ({ operation, resource: provider === 'peak' ? 'paca_' + c.resource : c.resource,
+  return Object.entries(commands).map(([operation, c]) => ({ operation, resource: c.provider === provider ? c.resource : c.provider + '_' + c.resource,
     source: c.provider, label: c.label, notice: c.notice || null,
     fields: c.schema.describe().keys, requires_id: !operation.endsWith('_create') }));
 }
 function validate(body) {
   if (!body || typeof body.operation !== 'string' || Object.keys(body).some(k => !['operation', 'resource_id', 'changes'].includes(k))) fail(422, 'INVALID_INPUT', 'operation·resource_id·changes만 보내 주세요.');
   const spec = Object.hasOwn(commands, body.operation) ? commands[body.operation] : null;
-  if (!spec) fail(403, 'WRITE_FORBIDDEN', '허용되지 않은 쓰기입니다. 급여·문자 발송은 조회만 가능합니다.');
+  if (!spec) fail(403, 'WRITE_FORBIDDEN', '허용되지 않은 쓰기입니다. list_capabilities에서 지원 작업을 확인해 주세요.');
   const create = body.operation.endsWith('_create');
   if ((create && body.resource_id != null) || (!create && (!Number.isSafeInteger(body.resource_id) || body.resource_id < 1))) fail(422, 'INVALID_INPUT', '대상 id를 확인해 주세요.');
   if (body.operation === 'student_create' && (!body.changes || !body.changes.phone ||
@@ -34,6 +38,8 @@ function validate(body) {
   return { operation: body.operation, resource_id: body.resource_id ?? null, changes: parsed.value };
 }
 async function state(conn, actor, command, lock = false) {
+  if (peak.supports(command.operation)) return peak.state(conn, actor, command, lock);
+  if (lifecycle.supports(command.operation)) return lifecycle.state(conn, actor, command, lock);
   if (schedules.supports(command.operation)) return schedules.state(conn, actor, command, lock);
   if (command.operation.startsWith('consultation_record_')) return consultationRecords.state(conn, actor, command, lock);
   if (command.operation === 'student_create') return repo.roster(conn, actor.academy_id, lock);
@@ -44,6 +50,8 @@ async function state(conn, actor, command, lock = false) {
   return before;
 }
 function display(command, before) {
+  if (peak.supports(command.operation)) return { ...peak.display(command, before), notice: commands[command.operation].notice };
+  if (lifecycle.supports(command.operation)) return { ...lifecycle.display(command, before), notice: commands[command.operation].notice };
   if (schedules.supports(command.operation)) return schedules.display(command, before);
   const old = command.operation === 'attendance_set' ? before.attendance : before.record || before;
   const previous = command.operation.endsWith('_create') ? null : Object.fromEntries(
@@ -55,7 +63,7 @@ function display(command, before) {
 }
 async function preview(actor, provider, body) {
   const command = validate(body);
-  const before = await repo.transaction(conn => state(conn, actor, command));
+  const before = await repo.transaction(conn => state(conn, actor, command), peak.supports(command.operation) ? peakPool : undefined);
   const view = display(command, before);
   const expiresAt = Math.min(actor.expires_at, Math.floor(Date.now() / 1000) + previewSeconds);
   const idempotencyKey = crypto.randomUUID();
@@ -64,6 +72,8 @@ async function preview(actor, provider, body) {
     ...view, preview_token: seal(payload), idempotency_key: idempotencyKey, expires_at: expiresAt, requires_confirmation: true };
 }
 async function apply(conn, actor, command, before) {
+  if (peak.supports(command.operation)) return peak.apply(conn, actor, command, before);
+  if (lifecycle.supports(command.operation)) return lifecycle.apply(conn, actor, command, before);
   if (schedules.supports(command.operation)) return schedules.apply(conn, actor, command);
   const { operation, resource_id: id, changes } = command;
   switch (operation) {
@@ -87,7 +97,7 @@ async function confirm(actor, provider, body) {
   const command = validate(payload.command);
   const requestHash = digest(payload), idempotencyHash = digest(body.idempotency_key);
   return repo.transaction(async conn => {
-    await repo.lockAcademy(conn, actor.academy_id);
+    await (peak.supports(command.operation) ? peakRepo : repo).lockAcademy(conn, actor.academy_id);
     const previous = await repo.previous(conn, actor, idempotencyHash);
     if (previous) {
       if (previous.request_hash !== requestHash) fail(409, 'IDEMPOTENCY_CONFLICT', '확인 키가 다른 작업에 사용되었습니다.');
@@ -101,6 +111,6 @@ async function confirm(actor, provider, body) {
     const result = { academy_id: actor.academy_id, operation: command.operation, resource_id: id, applied: true };
     await repo.completed(conn, actor, idempotencyHash, requestHash, command.operation, result);
     return result;
-  });
+  }, peak.supports(command.operation) ? peakPool : undefined);
 }
 module.exports = { catalog, preview, confirm, validate };

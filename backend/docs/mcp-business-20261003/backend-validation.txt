@@ -1,0 +1,64 @@
+PASS __tests__/integration/max-engine-full-mysql.test.js
+PASS __tests__/integration/max-engine-efficient-mysql.test.js
+PASS __tests__/services/maxEngineBusiness.test.js
+  ● Console
+
+    console.error
+      [ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.
+
+      12 | // 프로덕션 환경에서 키 없으면 경고 (서버는 시작하지만 암호화 실패할 것)
+      13 | if (!ENCRYPTION_KEY && process.env.NODE_ENV !== 'development') {
+    > 14 |     console.error('[ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.');
+         |             ^
+      15 | }
+      16 |
+      17 | // 암호화 키를 32바이트로 맞추기
+
+      at Object.error (utils/encryption.js:14:13)
+      at Object.require (services/studentParentContactService.js:1:30)
+      at Object.require (services/maxEngineFullStudents.js:5:79)
+      at Object.require (services/maxEngineFullCommands.js:10:18)
+      at Object.require (__tests__/services/maxEngineBusiness.test.js:3:31)
+
+PASS __tests__/services/maxEngineFull.test.js
+  ● Console
+
+    console.error
+      [ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.
+
+      12 | // 프로덕션 환경에서 키 없으면 경고 (서버는 시작하지만 암호화 실패할 것)
+      13 | if (!ENCRYPTION_KEY && process.env.NODE_ENV !== 'development') {
+    > 14 |     console.error('[ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.');
+         |             ^
+      15 | }
+      16 |
+      17 | // 암호화 키를 32바이트로 맞추기
+
+      at Object.error (utils/encryption.js:14:13)
+      at Object.require (services/studentParentContactService.js:1:30)
+      at Object.require (services/maxEngineFullStudents.js:5:79)
+      at Object.require (services/maxEngineFullCommands.js:10:18)
+      at Object.require (__tests__/services/maxEngineFull.test.js:5:26)
+
+PASS __tests__/services/maxEngineParentPhones.test.js
+PASS __tests__/routes/maxEnginePrivacy.test.js
+PASS __tests__/services/maxEngineFullAuth.test.js
+PASS __tests__/services/maxEngineEfficient.test.js
+------------------------------------|---------|----------|---------|---------|-------------------
+File                                | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+------------------------------------|---------|----------|---------|---------|-------------------
+All files                           |   96.19 |    88.27 |     100 |     100 |
+ repositories                       |      88 |    78.57 |     100 |     100 |
+  maxEngineLifecycleRepository.js   |   92.85 |     62.5 |     100 |     100 | 10-17
+  maxEnginePeakCommandRepository.js |   86.11 |    82.35 |     100 |     100 | 4-5,30,41-49
+ services                           |   99.25 |    91.66 |     100 |     100 |
+  maxEngineLifecycleCommands.js     |     100 |    96.15 |     100 |     100 | 18
+  maxEnginePeakCommands.js          |     100 |    96.92 |     100 |     100 | 36
+  maxEnginePeakPlanExercises.js     |   96.87 |    75.86 |     100 |     100 | 2-3,8,11,18
+------------------------------------|---------|----------|---------|---------|-------------------
+
+Test Suites: 8 passed, 8 total
+Tests:       70 passed, 70 total
+Snapshots:   0 total
+Time:        2.202 s
+Ran all test suites matching /__tests__\/integration\/max-engine-full-mysql.test.js|__tests__\/integration\/max-engine-efficient-mysql.test.js|__tests__\/services\/maxEngineBusiness.test.js|__tests__\/services\/maxEngineFull.test.js|__tests__\/services\/maxEngineFullAuth.test.js|__tests__\/services\/maxEngineParentPhones.test.js|__tests__\/services\/maxEngineEfficient.test.js|__tests__\/routes\/maxEnginePrivacy.test.js/i.

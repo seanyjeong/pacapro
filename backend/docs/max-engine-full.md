@@ -68,3 +68,7 @@ max-engine 저장소의 `docs/analysis/paca-peak-full/IMPLEMENTATION.md`, `ROUTE
 이번 증분에서는 **paca.js 변경·복사 금지**: 운영에만 있는 bridgePacaReadAdapter 3줄을 보존한다. 신규 서비스·상수와 full 라우트/읽기 서비스/읽기 저장소만 검토한다. 새 DB migration·환경 키는 없다. 기존 위의 paca.js 배포 설명은 최초 D-117 구축 당시의 기록이다.
 
 최종 143 suites / 1,202 tests passed, skip 0. 신규 단위·실제 MySQL 업무 통합 10건, 조회 변경 코드 statements 92.81%·branches 81.93%. 실제 OAuth MCP 10개 질문 전후 결과 일치와 상세 증분 목록은 max-engine `docs/analysis/mcp-efficient/`, `ops/deploy/mcp/VERIFY.md`에 기록한다. 이번 작업에서 운영 쓰기·배포·push·main 병합은 수행하지 않았다.
+
+## 2026-10-03 GPT MCP 업무 확장
+
+최신 후보 계약은 [mcp-business-20261003.md](mcp-business-20261003.md)를 따른다. 양쪽 71종 조회와 24종 확인 쓰기, PACA 퇴원/재원 복귀·PEAK 기록/훈련/계획을 추가했다. PEAK의 별도 멱등 ledger migration이 필요하다. 로컬 검증 완료이며 운영 미배포다. 이전 절의 리소스 수와 쓰기 제한은 각 날짜의 역사적 결과다.

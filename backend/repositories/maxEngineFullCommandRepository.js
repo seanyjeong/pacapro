@@ -1,8 +1,8 @@
 const db = require('../config/database');
 const { fail } = require('../models/maxEngineError');
 
-async function transaction(work) {
-  const conn = await db.getConnection();
+async function transaction(work, pool = db) {
+  const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
     const result = await work(conn);
