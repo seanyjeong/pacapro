@@ -1,0 +1,320 @@
+{
+  "status": "deployed_verified",
+  "verified_at": "2026-10-04T00:35:20.695967+09:00",
+  "mcp_version": "0.3.0",
+  "gpt_plugin_version": "1.0.2",
+  "web_version_unchanged": "4.0.56",
+  "paca_candidate": "bea012be9d6cb2968d41aadcff463cf933dd2bed",
+  "mcp_candidate": "e4c2adf588bba11e3b5089b01877445ab5cb9b4e",
+  "deployment": {
+    "status": "applied_pending_authenticated_smoke",
+    "backup": "/root/backups/paca-mcp-settlement-20261003T151818Z",
+    "old_release": "/opt/max-business-mcp/releases/business-20261003-5f68a83e",
+    "release": "/opt/max-business-mcp/releases/settlement-20261004-e4c2adf5",
+    "file_count": 19,
+    "new_table": "paca.max_engine_payment_settlements",
+    "business_confirm_calls": 0
+  },
+  "gateway_guard": {
+    "status": "passed",
+    "backup": "/root/backups/paca-mcp-settlement-gateway-20261003T152832Z",
+    "files": [
+      {
+        "path": "backend/constants/maxEngineSettlementCommands.js",
+        "before": "93051a4e0d7b268c29cf20702aa71dff62503df6385e158d6ffc5bbb12263dc3",
+        "after": "225afb44e942b66e3dad8a504ee827202748c1b739f1f64d56a36660fab9649c"
+      },
+      {
+        "path": "backend/models/maxEngineSettlement.js",
+        "before": "a8495891b8c622d877a483cfa8286172e26c57be0b6bfba3aa697d4b51d24abf",
+        "after": "2e22335fb8891c06ef39da0ba77b3c01d0175a90891616ad6eed76de5a68420c"
+      },
+      {
+        "path": "backend/repositories/maxEngineSettlementRepository.js",
+        "before": "53aed971b5fe0615c5e653ff2e5d5645649e00fa19f499fff8044ba7f0622948",
+        "after": "20d4b68a25f61a170170dc62f1bb57fc783df2d0b27e066c8c2d34b63137367c"
+      }
+    ],
+    "gateway_duplicate_refund_guard": true,
+    "business_confirm_calls": 0
+  },
+  "smoke": {
+    "status": "passed",
+    "business_confirm_calls": 0,
+    "providers": [
+      {
+        "provider": "paca",
+        "endpoint": "https://paca-mcp.supermax.kr/",
+        "server_version": "0.3.0",
+        "tools": [
+          "list_capabilities",
+          "classes_with_students",
+          "attendance_summary",
+          "student_overview",
+          "student_search",
+          "unpaid_list",
+          "payment_status",
+          "consultation_schedule",
+          "trial_students",
+          "today_brief",
+          "peak_recent_records",
+          "peak_event_ranking",
+          "peak_student_progress",
+          "read_resource",
+          "preview_change",
+          "preview_student_withdraw",
+          "preview_student_settlement",
+          "preview_student_reactivate",
+          "confirm_change"
+        ],
+        "tool_count": 19,
+        "resources": 72,
+        "commands": 25,
+        "financial_preview_without_confirm": true,
+        "authenticated": true,
+        "existing_delegation_valid": true,
+        "synthetic_preview": true,
+        "nonexistent_student_safely_rejected": true,
+        "confirm_calls": 0
+      },
+      {
+        "provider": "peak",
+        "endpoint": "https://peak-mcp.supermax.kr/",
+        "server_version": "0.3.0",
+        "tools": [
+          "list_capabilities",
+          "recent_records",
+          "event_ranking",
+          "student_progress",
+          "read_resource",
+          "preview_change",
+          "preview_student_withdraw",
+          "preview_student_settlement",
+          "preview_student_reactivate",
+          "confirm_change"
+        ],
+        "tool_count": 10,
+        "resources": 72,
+        "commands": 25,
+        "financial_preview_without_confirm": false,
+        "authenticated": true,
+        "existing_delegation_valid": true,
+        "synthetic_preview": true,
+        "nonexistent_student_safely_rejected": true,
+        "confirm_calls": 0
+      }
+    ]
+  },
+  "post_verification": {
+    "status": "passed",
+    "release": "/opt/max-business-mcp/releases/settlement-20261004-e4c2adf5",
+    "runtime": {
+      "paca": {
+        "changed": [
+          "constants/maxEngineCommands.js",
+          "constants/maxEngineLifecycleCommands.js",
+          "constants/maxEngineReadCatalog.json",
+          "constants/maxEngineSettlementCommands.js",
+          "migrations/20261004_max_engine_payment_settlements.sql",
+          "models/maxEngineSettlement.js",
+          "repositories/maxEngineSettlementRepository.js",
+          "services/maxEngineFullCommands.js",
+          "services/maxEngineLifecycleCommands.js",
+          "services/maxEngineSettlementCommands.js"
+        ],
+        "before_files": 435,
+        "after_files": 440,
+        "only_candidate_changes": true
+      },
+      "peak": {
+        "changed": [],
+        "before_files": 104,
+        "after_files": 104,
+        "only_candidate_changes": true
+      },
+      "mcp": {
+        "changed": [
+          "paca/package.json",
+          "package-lock.json",
+          "package.json",
+          "peak/package.json",
+          "shared/constants/commands.js",
+          "shared/constants/settlements.js",
+          "shared/server.js",
+          "shared/settlement-tools.js",
+          "shared/tools.js"
+        ],
+        "before_files": 37,
+        "after_files": 39,
+        "only_candidate_changes": true
+      },
+      "paca_oauth": {
+        "unexpired_original_entries": 10,
+        "preserved": true,
+        "integrity": "ok",
+        "environment_unchanged": true,
+        "rotation_verification": {
+          "original_entries_unchanged": 8,
+          "refresh_tokens_rotated": 2,
+          "rotated_payload_identity_scopes_expiry_equal": true,
+          "rotated_source_identities_validated": 2,
+          "integrity": "ok"
+        }
+      },
+      "peak_oauth": {
+        "unexpired_original_entries": 4,
+        "preserved": true,
+        "integrity": "ok",
+        "environment_unchanged": true,
+        "rotation_verification": {
+          "original_entries_unchanged": 3,
+          "refresh_tokens_rotated": 1,
+          "rotated_payload_identity_scopes_expiry_equal": true,
+          "rotated_source_identities_validated": 1,
+          "integrity": "ok"
+        }
+      }
+    },
+    "backup_checksums_verified": true,
+    "public_health": {
+      "paca": 200,
+      "peak": 200,
+      "paca_mcp": 200,
+      "peak_mcp": 200
+    },
+    "services": [
+      "active",
+      "active",
+      "active",
+      "active"
+    ],
+    "new_payment_settlement_rows": 0
+  },
+  "local_tests": {
+    "backend_node18": 53,
+    "mcp_node22": 15,
+    "skipped": 0,
+    "lint": "passed"
+  },
+  "actual_gpt_connector": {
+    "resources": 72,
+    "commands": 25,
+    "student_settle": true
+  },
+  "plugin": {
+    "status": "passed",
+    "verifiedAt": "2026-10-03T15:23:38.789Z",
+    "pluginId": "plugin_asdk_app_6ab8e29a8578819182ade74b038fa002",
+    "url": "https://chatgpt.com/plugins/plugin_asdk_app_6ab8e29a8578819182ade74b038fa002",
+    "candidateZip": "paca-gpt-plugin-1.0.2.zip",
+    "redownloadZip": "paca-gpt-plugin-1.0.2-redownload.zip",
+    "preUpload": {
+      "refreshed": true,
+      "displayedVersion": "1.0.1",
+      "versionPreconditionPassed": true,
+      "connections": [
+        "Primary",
+        "파카"
+      ],
+      "appJsonUnchanged": true,
+      "changedFields": [
+        "description",
+        "interface.longDescription",
+        "interface.shortDescription",
+        "version"
+      ],
+      "onlyAllowedFieldsChanged": true,
+      "preserved": {
+        "appId": true,
+        "name": true,
+        "author": true,
+        "category": true,
+        "defaultPrompt": true
+      }
+    },
+    "upload": {
+      "method": "추가 작업 → 새 버전 업로드",
+      "acceptedStatus": "새 버전이 업로드되었습니다"
+    },
+    "postUpload": {
+      "refreshed": true,
+      "displayedVersion": "1.0.2",
+      "checks": {
+        "targetUrlCorrect": true,
+        "version102": true,
+        "shortDescriptionMatches": true,
+        "longDescriptionMatches": true,
+        "primaryConnected": true,
+        "pacaConnected": true
+      },
+      "connections": [
+        "Primary",
+        "파카"
+      ],
+      "shortDescription": "MCP 0.3.0 · 퇴원 학원비 정산 지원",
+      "longDescription": "학생·상담·출결·수납·일정 및 PEAK 실기·훈련·계획 조회/변경을 지원합니다. 퇴원 시 청구별 취소·감액·실제 완료된 환불 기록과 청구 유지 여부를 미리 확인하여 함께 적용합니다. 이미 퇴원·졸업한 학생도 남은 금액을 별도로 정산할 수 있습니다. 청구·납부·정산 이력을 보존합니다. 환불은 완료된 카드 취소·송금을 확인한 뒤 장부에 기록하며 자동 송금·카드 취소·법정 환불 계산을 실행하지 않습니다. 휴원 크레딧·선납 묶음·불명확한 시즌 연결은 원본 정산 화면에서 처리합니다. 문자 발송·급여·PEAK 배정·월말시험 입력은 아직 지원하지 않습니다. 모든 변경은 미리보기와 원장 확인이 필요합니다."
+    },
+    "packageComparison": {
+      "method": "decompressed file byte-for-byte comparison using cmp and Buffer.equals",
+      "archiveIntegrity": "passed",
+      "files": {
+        ".app.json": {
+          "candidateBytes": 127,
+          "downloadedBytes": 127,
+          "exactByteMatch": true
+        },
+        ".codex-plugin/plugin.json": {
+          "candidateBytes": 1324,
+          "downloadedBytes": 1324,
+          "exactByteMatch": true
+        }
+      },
+      "allFilesExactMatch": true
+    },
+    "downloadedJson": {
+      ".app.json": {
+        "apps": {
+          "dev-6ab8e29a8578819182ade74b038fa002": {
+            "id": "asdk_app_6ab8e29a8578819182ade74b038fa002"
+          }
+        }
+      },
+      ".codex-plugin/plugin.json": {
+        "apps": "./.app.json",
+        "author": {
+          "name": "App developer"
+        },
+        "description": "PACA·PEAK 학원관리 · MCP 0.3.0 · 조회 72종 · 확인 변경 25종",
+        "interface": {
+          "capabilities": [],
+          "category": "Other",
+          "defaultPrompt": null,
+          "developerName": "App developer",
+          "displayName": "학원관리",
+          "longDescription": "학생·상담·출결·수납·일정 및 PEAK 실기·훈련·계획 조회/변경을 지원합니다. 퇴원 시 청구별 취소·감액·실제 완료된 환불 기록과 청구 유지 여부를 미리 확인하여 함께 적용합니다. 이미 퇴원·졸업한 학생도 남은 금액을 별도로 정산할 수 있습니다. 청구·납부·정산 이력을 보존합니다. 환불은 완료된 카드 취소·송금을 확인한 뒤 장부에 기록하며 자동 송금·카드 취소·법정 환불 계산을 실행하지 않습니다. 휴원 크레딧·선납 묶음·불명확한 시즌 연결은 원본 정산 화면에서 처리합니다. 문자 발송·급여·PEAK 배정·월말시험 입력은 아직 지원하지 않습니다. 모든 변경은 미리보기와 원장 확인이 필요합니다.",
+          "shortDescription": "MCP 0.3.0 · 퇴원 학원비 정산 지원"
+        },
+        "name": "dev-6ab8e29a8578819182ade74b038fa002",
+        "version": "1.0.2"
+      }
+    },
+    "evidence": [
+      "paca-gpt-plugin-1.0.2-screen.png",
+      "paca-gpt-plugin-1.0.2-version-connections.png"
+    ],
+    "scope": {
+      "otherAppsModified": false,
+      "accountConnectionsModified": false,
+      "messagesSent": false,
+      "runtimeToolValidationRepeated": false
+    }
+  },
+  "operational_business_confirm_calls": 0,
+  "rollback_tag": "rollback/paca-mcp-settlement-20261004",
+  "limitations": [
+    "no_bank_transfer_or_gateway_cancellation",
+    "no_automatic_statutory_refund_calculation",
+    "gateway_refund_uses_original_screen_to_prevent_double_deduction",
+    "rest_credit_prepaid_bundle_ambiguous_season_original_screen"
+  ]
+}
