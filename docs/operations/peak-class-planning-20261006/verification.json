@@ -1,0 +1,56 @@
+{
+  "status": "local_verified_ready_for_deployment",
+  "mcp_version": "0.4.0",
+  "backend_all": {
+    "passed": 1273,
+    "opt_in_skipped": 78,
+    "http_fixture_keepalive": false
+  },
+  "native_mysql": {
+    "node": "18.19.1",
+    "mysql": "8.4",
+    "passed": 69,
+    "skipped": 0
+  },
+  "mcp_protocol": {
+    "node": "22.20.0",
+    "passed": 18,
+    "skipped": 0
+  },
+  "peak_gateway": {
+    "passed": 7,
+    "skipped": 0
+  },
+  "coverage": {
+    "statements": 92.59,
+    "branches": 81.96,
+    "lines": 98.84
+  },
+  "lint": {
+    "errors": 0,
+    "existing_warnings": 86
+  },
+  "full_stack_synthetic": {
+    "status": "passed",
+    "chain": "OAuth/MCP -> actual PEAK gateway -> actual PACA HTTP -> isolated MySQL",
+    "mcp_version": "0.4.0",
+    "tools": 18,
+    "synthetic_confirmed_commands": 6,
+    "operational_business_writes": 0,
+    "registered_work_schedule": true,
+    "exercise_catalog_entries": 2,
+    "class_assigned": true,
+    "ordered_plan_exercises": 2,
+    "dated_measurement_saved": true,
+    "retry_applied_once": true
+  },
+  "operational_business_writes": 0,
+  "schema_migrations": 0,
+  "public_tools": {
+    "paca": 27,
+    "peak": 18
+  },
+  "commands": 30,
+  "frontend_changes": false,
+  "notes": "Existing HTTP fixture transient failures disappeared with test-process keepalive disabled. Initial synthetic fixture omitted active flags; corrected. Combined E2E fixture retained old ledgers; reset only disposable test ledgers and all checks passed."
+}

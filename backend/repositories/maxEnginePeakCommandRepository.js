@@ -27,7 +27,7 @@ async function instructor(conn, actor, id, lock) {
   return rows[0];
 }
 async function matching(conn, table, fields, lock) {
-  if (!['student_records', 'daily_plans'].includes(table)) throw new Error('Unknown matching table');
+  if (!['student_records', 'daily_plans', 'exercises'].includes(table)) throw new Error('Unknown matching table');
   const [rows] = await conn.execute(`SELECT * FROM \`${table}\`
     WHERE ${Object.keys(fields).map(f => '\`' + f + '\` = ?').join(' AND ')} ORDER BY id ${lock ? 'FOR UPDATE' : ''}`, Object.values(fields));
   return rows;

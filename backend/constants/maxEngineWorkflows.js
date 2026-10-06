@@ -19,6 +19,7 @@ const workflows = {
     trial_students: ['status'], today_brief: [],
   },
   peak: {
+    teaching_context: ['date', 'time_slot'],
     recent_records: ['student_id', 'name', 'date', 'start_date', 'end_date'],
     event_ranking: ['event', 'gender', 'date', 'start_date', 'end_date'],
     student_progress: ['student_id', 'name', 'event', 'date', 'start_date', 'end_date'],

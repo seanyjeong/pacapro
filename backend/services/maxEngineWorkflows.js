@@ -6,6 +6,7 @@ const { overview } = require('./maxEngineWorkflowOverview');
 const { payments } = require('./maxEngineWorkflowPayments');
 const { schedule } = require('./maxEngineWorkflowConsultations');
 const { records } = require('./maxEngineWorkflowRecords');
+const teaching = require('./maxEngineTeachingContext');
 const { fail } = require('./maxEngineFullSecurity');
 function catalog(provider) {
   return Object.entries({ ...workflows[provider], ...Object.fromEntries(Object.entries(workflowAliases[provider] || {})
@@ -27,7 +28,7 @@ async function read(actor, provider, workflow, query) {
   } catch { fail(422, 'INVALID_QUERY', 'params는 JSON 객체여야 합니다.'); }
   const p = validate(provider, workflow, input);
   let result;
-  if (provider === 'peak') result = await records(actor, p, workflow);
+  if (provider === 'peak') result = workflow === 'teaching_context' ? await teaching.read(actor, p) : await records(actor, p, workflow);
   else switch (workflow) {
     case 'classes_with_students': result = await classes(actor, p); break;
     case 'attendance_summary': result = await attendance(actor, p); break;

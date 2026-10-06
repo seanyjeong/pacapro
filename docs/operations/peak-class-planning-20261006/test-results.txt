@@ -1,0 +1,97 @@
+backend-all-http-isolated.log
+PASS __tests__/scheduler/notificationScheduler.test.js
+PASS __tests__/repositories/maxlinkWebhookOutbox.test.js
+PASS __tests__/migrations/studentAdmissionTypeMigration.test.js
+PASS __tests__/services/studentGradePromotionService.test.js
+PASS __tests__/services/instructorMonthlyScheduleService.test.js
+PASS __tests__/services/academyEventService.test.js
+
+Test Suites: 8 skipped, 158 passed, 158 of 166 total
+Tests:       78 skipped, 1273 passed, 1351 total
+Snapshots:   0 total
+Time:        6.17 s, estimated 11 s
+Ran all test suites.
+
+native-final.log
+PASS __tests__/integration/max-engine-teaching-mysql.test.js
+PASS __tests__/integration/max-engine-full-mysql.test.js
+PASS __tests__/integration/max-engine-sync-mysql.test.js
+PASS __tests__/integration/max-engine-settlement-mysql.test.js
+PASS __tests__/integration/max-engine-efficient-mysql.test.js
+PASS __tests__/models/maxEngineTeaching.test.js
+
+Test Suites: 6 passed, 6 total
+Tests:       69 passed, 69 total
+Snapshots:   0 total
+Time:        4.548 s, estimated 6 s
+Ran all test suites matching /__tests__\/models\/maxEngineTeaching.test.js|__tests__\/integration\/max-engine-teaching-mysql.test.js|__tests__\/integration\/max-engine-full-mysql.test.js|__tests__\/integration\/max-engine-efficient-mysql.test.js|__tests__\/integration\/max-engine-settlement-mysql.test.js|__tests__\/integration\/max-engine-sync-mysql.test.js/i.
+
+mcp-final.log
+  duration_ms: 126.824584
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1014.855916
+
+peak-gateway.log
+  duration_ms: 1.276667
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 213.803375
+
+teaching-coverage.log
+  maxEngineTeachingRepository.js       |   96.66 |     87.5 |     100 |     100 | 57-62                     
+ services                              |   91.75 |    66.66 |   83.33 |   97.29 |                           
+  maxEngineInstructorScheduleCreate.js |     100 |      100 |     100 |     100 |                           
+  maxEngineTeachingCommands.js         |   94.11 |    63.88 |   93.75 |     100 | 14,20-32,36-40,46-50      
+  maxEngineTeachingContext.js          |   83.33 |       50 |   66.66 |   91.66 | 18-19                     
+---------------------------------------|---------|----------|---------|---------|---------------------------
+
+Test Suites: 2 passed, 2 total
+Tests:       15 passed, 15 total
+Snapshots:   0 total
+Time:        1.761 s
+Ran all test suites matching /__tests__\/models\/maxEngineTeaching.test.js|__tests__\/integration\/max-engine-teaching-mysql.test.js/i.
+
+full-stack-final.log
+[2026-10-06 20:18:09] [32minfo[39m: max_engine_integration
+[mcp] POST /mcp 200
+[2026-10-06 20:18:09] [32minfo[39m: max_engine_integration
+[2026-10-06 20:18:09] [32minfo[39m: max_engine_integration
+[mcp] POST /mcp 200
+[2026-10-06 20:18:09] [32minfo[39m: max_engine_integration
+[2026-10-06 20:18:09] [32minfo[39m: max_engine_integration
+[mcp] POST /mcp 200
+[2026-10-06 20:18:09] [32minfo[39m: max_engine_integration
+[2026-10-06 20:18:09] [32minfo[39m: max_engine_integration
+[mcp] POST /mcp 200
+{"status":"passed","chain":"OAuth/MCP -> actual PEAK gateway -> actual PACA HTTP -> isolated MySQL","mcp_version":"0.4.0","tools":18,"synthetic_confirmed_commands":6,"operational_business_writes":0,"registered_work_schedule":true,"exercise_catalog_entries":2,"class_assigned":true,"ordered_plan_exercises":2,"dated_measurement_saved":true,"retry_applied_once":true}
+
+lint-final.log
+   1:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   1:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/etlab/worktrees/pacapro-peak-class-planning/src/lib/utils/schedule-helpers.ts
+  152:31  warning  'date' is defined but never used              @typescript-eslint/no-unused-vars
+  228:9   warning  'lastDay' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 86 problems (0 errors, 86 warnings)
+  0 errors and 4 warnings potentially fixable with the `--fix` option.
+

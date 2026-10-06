@@ -26,6 +26,7 @@ function validate(provider, workflow, input) {
   if (p.month && !/^\d{4}-(0[1-9]|1[0-2])$/.test(p.month)) invalid('월은 YYYY-MM 형식이어야 합니다.');
   if (['unpaid_list', 'payment_status'].includes(workflow) && !p.month) invalid('조회할 month를 지정해 주세요.');
   if (workflow === 'classes_with_students' && !p.date) invalid('수업 날짜를 지정해 주세요.');
+  if (workflow === 'teaching_context' && (!p.date || !p.time_slot)) invalid('수업 준비는 날짜와 time_slot을 함께 지정해 주세요.');
   if (['attendance_summary', 'consultation_schedule'].includes(workflow) && !p.date && !p.start_date) invalid('날짜 또는 기간을 지정해 주세요.');
   if (p.time_slot && !['morning', 'afternoon', 'evening'].includes(p.time_slot)) invalid('시간대는 morning·afternoon·evening 중 하나입니다.');
   for (const k of ['start_time', 'end_time']) if (p[k] && !/^([01]\d|2[0-3]):[0-5]\d$/.test(p[k])) invalid('시간은 HH:MM 형식이어야 합니다.');

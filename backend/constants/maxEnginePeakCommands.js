@@ -1,4 +1,5 @@
 const { Joi, text, date, id } = require('./maxEngineInput');
+const { planFields } = require('./maxEngineTeachingCommands');
 const value = Joi.string().pattern(/^-?(0|[1-9]\d{0,7})(\.\d{1,2})?$/);
 const environment = { temperature: Joi.number().min(-50).max(80).precision(1).allow(null),
   humidity: Joi.number().integer().min(0).max(100).allow(null) };
@@ -21,7 +22,7 @@ const commands = {
     '한 일지의 컨디션·메모·온습도만 수정합니다.'),
   peak_plan_create: spec('daily_plans', 'PEAK 훈련 계획 등록', {
     date: date.required(), time_slot: Joi.string().valid('morning', 'afternoon', 'evening').required(),
-    instructor_id: Joi.number().integer().invalid(0).required(), ...plan }, '같은 날짜·시간대·강사 계획이 있으면 기존 id를 사용하세요. 운동 목록은 빈 목록으로 시작합니다.'),
+    instructor_id: Joi.number().integer().invalid(0).required(), ...plan, ...planFields }, '같은 날짜·시간대·강사 계획이 있으면 기존 id를 사용하세요. exercises를 보내면 실제 운동 항목·세트·횟수·순서까지 저장하며 생략하면 빈 계획을 만듭니다.'),
   peak_plan_exercise_add: spec('daily_plans', 'PEAK 계획에 운동 한 건 추가', {
     exercise_id: id.required(), sets: Joi.number().integer().min(1).max(100),
     reps: Joi.number().integer().min(1).max(10000), note: text(4000) }, '공유 또는 내 교육원 운동만 추가할 수 있습니다. 운동 이름은 원본 운동에서 가져옵니다.'),

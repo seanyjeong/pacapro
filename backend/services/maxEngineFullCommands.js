@@ -14,6 +14,7 @@ const attendance = require('./maxEngineFullAttendance');
 const payments = require('./maxEngineFullPayments');
 const consultationRecords = require('./maxEngineFullConsultationRecords');
 const schedules = require('./maxEngineScheduleCommands');
+const instructorSchedule = require('./maxEngineInstructorScheduleCreate');
 
 function catalog(provider) {
   return Object.entries(commands).map(([operation, c]) => ({ operation, resource: c.provider === provider ? c.resource : c.provider + '_' + c.resource,
@@ -39,6 +40,7 @@ function validate(body) {
   return { operation: body.operation, resource_id: body.resource_id ?? null, changes: parsed.value };
 }
 async function state(conn, actor, command, lock = false) {
+  if (instructorSchedule.supports(command.operation)) return instructorSchedule.state(conn, actor, command, lock);
   if (peak.supports(command.operation)) return peak.state(conn, actor, command, lock);
   if (lifecycle.supports(command.operation)) return lifecycle.state(conn, actor, command, lock);
   if (settlement.supports(command.operation)) return settlement.state(conn, actor, command, lock);
@@ -52,6 +54,7 @@ async function state(conn, actor, command, lock = false) {
   return before;
 }
 function display(command, before) {
+  if (instructorSchedule.supports(command.operation)) return { ...instructorSchedule.display(command, before), notice: commands[command.operation].notice };
   if (peak.supports(command.operation)) return { ...peak.display(command, before), notice: commands[command.operation].notice };
   if (lifecycle.supports(command.operation)) return { ...lifecycle.display(command, before), notice: commands[command.operation].notice };
   if (settlement.supports(command.operation)) return settlement.display(command, before);
@@ -76,6 +79,7 @@ async function preview(actor, provider, body) {
     ...view, preview_token: seal(payload), idempotency_key: idempotencyKey, expires_at: expiresAt, requires_confirmation: true };
 }
 async function apply(conn, actor, command, before) {
+  if (instructorSchedule.supports(command.operation)) return instructorSchedule.apply(conn, actor, command, before);
   if (peak.supports(command.operation)) return peak.apply(conn, actor, command, before);
   if (lifecycle.supports(command.operation)) return lifecycle.apply(conn, actor, command, before);
   if (settlement.supports(command.operation)) return settlement.apply(conn, actor, command, before);
