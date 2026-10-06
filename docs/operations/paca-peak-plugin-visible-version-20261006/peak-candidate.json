@@ -1,0 +1,18 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "App developer"
+  },
+  "description": "PEAK 실기관리 · MCP 0.4.1 · 수업계획·운동팩·실기 기록 입력",
+  "interface": {
+    "capabilities": [],
+    "category": "Other",
+    "defaultPrompt": null,
+    "developerName": "App developer",
+    "displayName": "실기관리 · MCP 0.4.1",
+    "longDescription": "운영 MCP 0.4.1. 선생님 근무 등록·반 배정, 운동을 순서대로 넣는 수업계획, 해당 날짜 학생 실기 기록 입력, 운동 라이브러리 종목 추가, 운동팩 생성·저장을 지원합니다. 팩 저장은 기존 운동 라이브러리를 보존합니다. 출석·반 배치·수업계획·실기 기록도 조회할 수 있습니다. 모든 변경은 미리보기와 원장 확인이 필요합니다.",
+    "shortDescription": "MCP 0.4.1 · 운동팩 생성·저장 · 수업계획·실기 기록 입력"
+  },
+  "name": "dev-6ab8efce268081918768079c633fb74d",
+  "version": "1.0.3"
+}

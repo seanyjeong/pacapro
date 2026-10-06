@@ -1,0 +1,18 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "App developer"
+  },
+  "description": "MCP 0.4.1 · 운동팩 생성·저장 · 선생님 배정·수업계획·실기 기록 입력",
+  "interface": {
+    "capabilities": [],
+    "category": "Other",
+    "defaultPrompt": null,
+    "developerName": "App developer",
+    "displayName": "실기관리 · MCP 0.4.1",
+    "longDescription": "MCP 0.4.1 · 운동팩 생성·저장 · 선생님 배정·수업계획·실기 기록 입력",
+    "shortDescription": "MCP 0.4.1 · 운동팩 생성·저장 · 선생님 배정·수업계획·실기 기록 입력"
+  },
+  "name": "dev-6ab8efce268081918768079c633fb74d",
+  "version": "1.0.0"
+}

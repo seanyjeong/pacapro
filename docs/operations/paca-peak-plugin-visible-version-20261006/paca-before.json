@@ -1,0 +1,18 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "App developer"
+  },
+  "description": "학원관리",
+  "interface": {
+    "capabilities": [],
+    "category": "Other",
+    "defaultPrompt": null,
+    "developerName": "App developer",
+    "displayName": "학원관리",
+    "longDescription": "학원관리",
+    "shortDescription": "학원관리"
+  },
+  "name": "dev-6ab8e29a8578819182ade74b038fa002",
+  "version": "1.0.0"
+}

@@ -1,0 +1,68 @@
+# note: interactive (clickable / focusable) elements only.
+- title: "학원관리 | ChatGPT 플러그인" [url=https://chatgpt.com/plugins/plugin_asdk_app_6ab8e29a8578819182ade74b038fa002]
+- link "콘텐츠로 바로 가기" [ref=e119]
+- complementary:
+  - navigation "앱 탐색" [ref=e120]:
+    - button "홈" [ref=e121]
+    - button "스페이스" [ref=e122]
+    - button "예약" [ref=e123]
+    - button "플러그인" [ref=e124]
+    - button "탐색" [ref=e125]
+    - button "사이트" [ref=e126]
+    - button "프로필 메뉴 열기" [ref=e127]
+  - navigation "맞춤 설정" [ref=e128]:
+    - heading "맞춤 설정" [level=1]
+    - button "설치된 플러그인 검색" [ref=e129]
+    - button "사이드바 표시/숨기기" [ref=e130]
+    - link "플러그인" [ref=e131]
+    - link "스킬" [ref=e132]
+    - text: "설치됨"
+    - link "Notion" [ref=e134]
+    - link "Codex Security Cloud" [ref=e136]
+    - link "학원관리" [ref=e138]
+    - link "Google Contacts" [ref=e140]
+    - link "Google Calendar" [ref=e142]
+    - link "Gmail" [ref=e144]
+    - link "Google Drive" [ref=e146]
+    - link "실기관리" [ref=e148]
+    - link "GitHub" [ref=e150]
+    - link "정시엔진" [ref=e152]
+    - link "수시엔진" [ref=e154]
+    - link "Plugin Creator" [ref=e156]
+    - link "Higgsfield" [ref=e158]
+  - separator
+- main:
+  - banner:
+    - navigation "이동 경로" [ref=e159]:
+      - link "플러그인" [ref=e160]
+      - text: "학원관리"
+  - generic [ref=e161] [scrollable]:
+    - banner:
+      - text: "학원관리"
+      - heading [level=1]:
+        - text: "학원관리"
+        - button "내 클라우드 플러그인" [ref=e162]:
+          - img "내 클라우드 플러그인"
+      - text: "MCP 0.4.1 · 운동팩 생성·저장 · 수업계획·실기 기록 입력"
+      - button "추가 작업" [ref=e163]
+      - button "채팅에서 사용해 보기" [ref=e164]
+    - text: "운영 MCP 0.4.1. 학생·상담·출결·수납·일정과 퇴원 학원비 정산을 지원합니다. PEAK에서 선생님 근무 등록·반 배정, 운동을 순서대로 넣는 수업계획, 해당 날짜 학생 실기 기록 입력, 운동 라이브러리 종목 추가, 운동팩 생성·저장을 지원합니다. 팩 저장은 기존 운동 라이브러리를 보존합니다. 모든 변경은 미리보기와 원장 확인이 필요합니다. 환불은 실제 완료된 환불을 장부에 기록하며 송금·카드 취소를 자동 실행하지 않습니다. 문자 발송·급여는 조회만 지원합니다."
+    - region:
+      - heading "앱" [level=2]: "앱 1"
+      - button "학원관리 MCP 0.4.1 · 운동팩 생성·저장 · 선생님 배정·수업계획·실기 기록 입력 · 조회 72종/확인 변경 31종" [ref=e165]
+    - region:
+      - heading "연결된 계정" [level=2]
+      - button "Primary" [ref=e166]: "으뜸 정 님의 학원관리 계정 Primary"
+      - button "Primary" [ref=e167]
+      - button "파카" [ref=e168]: "으뜸 정 님의 학원관리 계정 파카"
+      - button "파카" [ref=e169]
+      - button "다른 계정 연결" [ref=e170]
+    - region:
+      - heading "정보" [level=2]
+      - text: "개발자 App developer 카테고리 Other 버전 1.0.3 웹사이트 사용할 수 없음"
+    - text: "학원관리에 연결하면 ChatGPT가 요청에 필요한 맥락을 제공하기 위해 관련 채팅 및 메모리를 이 앱과 공유할 수 있습니다. 학원관리의 이 데이터 사용에는 해당  이용약관  및  개인정보 보호정책 이 적용됩니다."
+    - link "메모리" [ref=e171]
+    - text: "를 사용 설정한 경우, 앱의 데이터가 유용한 정보나 제안을 선제적으로 제공하는 데 사용될 수 있습니다. ChatGPT는 연결된 앱의 데이터를 포함해 항상 학습 데이터 기본 설정을 존중합니다. 앱 사용에는"
+    - link "높아진 위험" [ref=e172]
+    - text: "이 따를 수 있습니다. 설정에서 언제든지 기본 설정을 관리하거나 앱 연결을 해제할 수 있습니다."
+    - link "자세히 알아보기" [ref=e173]

@@ -1,0 +1,18 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "App developer"
+  },
+  "description": "PACA·PEAK 학원관리 · MCP 0.4.1 · 조회 72종 · 확인 변경 31종",
+  "interface": {
+    "capabilities": [],
+    "category": "Other",
+    "defaultPrompt": null,
+    "developerName": "App developer",
+    "displayName": "학원관리",
+    "longDescription": "운영 MCP 0.4.1. 학생·상담·출결·수납·일정과 퇴원 학원비 정산을 지원합니다. PEAK에서 선생님 근무 등록·반 배정, 운동을 순서대로 넣는 수업계획, 해당 날짜 학생 실기 기록 입력, 운동 라이브러리 종목 추가, 운동팩 생성·저장을 지원합니다. 팩 저장은 기존 운동 라이브러리를 보존합니다. 모든 변경은 미리보기와 원장 확인이 필요합니다. 환불은 실제 완료된 환불을 장부에 기록하며 송금·카드 취소를 자동 실행하지 않습니다. 문자 발송·급여는 조회만 지원합니다.",
+    "shortDescription": "MCP 0.4.1 · 운동팩 생성·저장 · 수업계획·실기 기록 입력"
+  },
+  "name": "dev-6ab8e29a8578819182ade74b038fa002",
+  "version": "1.0.3"
+}

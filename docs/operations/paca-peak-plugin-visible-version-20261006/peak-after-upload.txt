@@ -1,0 +1,66 @@
+# note: interactive (clickable / focusable) elements only.
+- title: "실기관리 · MCP 0.4.1 | ChatGPT 플러그인" [url=https://chatgpt.com/plugins/plugin_asdk_app_6ab8efce268081918768079c633fb74d]
+- link "콘텐츠로 바로 가기" [ref=e280]
+- complementary:
+  - navigation "앱 탐색" [ref=e281]:
+    - button "홈" [ref=e282]
+    - button "스페이스" [ref=e283]
+    - button "예약" [ref=e284]
+    - button "플러그인" [ref=e285]
+    - button "탐색" [ref=e286]
+    - button "사이트" [ref=e287]
+    - button "프로필 메뉴 열기" [ref=e288]
+  - navigation "맞춤 설정" [ref=e289]:
+    - heading "맞춤 설정" [level=1]
+    - button "설치된 플러그인 검색" [ref=e290]
+    - button "사이드바 표시/숨기기" [ref=e291]
+    - link "플러그인" [ref=e292]
+    - link "스킬" [ref=e293]
+    - text: "설치됨"
+    - link "Notion" [ref=e295]
+    - link "Codex Security Cloud" [ref=e297]
+    - link "학원관리" [ref=e299]
+    - link "Google Contacts" [ref=e301]
+    - link "Google Calendar" [ref=e303]
+    - link "Gmail" [ref=e305]
+    - link "Google Drive" [ref=e307]
+    - link "실기관리 · MCP 0.4.1" [ref=e309]
+    - link "GitHub" [ref=e311]
+    - link "정시엔진" [ref=e313]
+    - link "수시엔진" [ref=e315]
+    - link "Plugin Creator" [ref=e317]
+    - link "Higgsfield" [ref=e319]
+  - separator
+- main:
+  - banner:
+    - navigation "이동 경로" [ref=e320]:
+      - link "플러그인" [ref=e321]
+      - text: "실기관리 · MCP 0.4.1"
+  - generic [ref=e322] [scrollable]:
+    - banner:
+      - text: "실기관리 · MCP 0.4.1"
+      - heading [level=1]:
+        - text: "실기관리 · MCP 0.4.1"
+        - button "내 클라우드 플러그인" [ref=e323]:
+          - img "내 클라우드 플러그인"
+      - text: "MCP 0.4.1 · 운동팩 생성·저장 · 수업계획·실기 기록 입력"
+      - button "추가 작업" [ref=e324]
+      - button "채팅에서 사용해 보기" [ref=e325]
+    - text: "운영 MCP 0.4.1. 선생님 근무 등록·반 배정, 운동을 순서대로 넣는 수업계획, 해당 날짜 학생 실기 기록 입력, 운동 라이브러리 종목 추가, 운동팩 생성·저장을 지원합니다. 팩 저장은 기존 운동 라이브러리를 보존합니다. 출석·반 배치·수업계획·실기 기록도 조회할 수 있습니다. 모든 변경은 미리보기와 원장 확인이 필요합니다."
+    - region:
+      - heading "앱" [level=2]: "앱 1"
+      - button "실기관리 · MCP 0.4.1 MCP 0.4.1 · 운동팩 생성·저장 · 선생님 배정·수업계획·실기 기록 입력" [ref=e326]
+    - region:
+      - heading "연결된 계정" [level=2]
+      - group "Primary": "으뜸 정 님의 실기관리 · MCP 0.4.1 계정 Primary"
+      - button "Primary" [ref=e327]
+      - button "다른 계정 연결" [ref=e328]
+    - region:
+      - heading "정보" [level=2]
+      - text: "개발자 App developer 카테고리 Other 버전 1.0.3 웹사이트 사용할 수 없음"
+    - text: "실기관리 · MCP 0.4.1에 연결하면 ChatGPT가 요청에 필요한 맥락을 제공하기 위해 관련 채팅 및 메모리를 이 앱과 공유할 수 있습니다. 실기관리 · MCP 0.4.1의 이 데이터 사용에는 해당  이용약관  및  개인정보 보호정책 이 적용됩니다."
+    - link "메모리" [ref=e329]
+    - text: "를 사용 설정한 경우, 앱의 데이터가 유용한 정보나 제안을 선제적으로 제공하는 데 사용될 수 있습니다. ChatGPT는 연결된 앱의 데이터를 포함해 항상 학습 데이터 기본 설정을 존중합니다. 앱 사용에는"
+    - link "높아진 위험" [ref=e330]
+    - text: "이 따를 수 있습니다. 설정에서 언제든지 기본 설정을 관리하거나 앱 연결을 해제할 수 있습니다."
+    - link "자세히 알아보기" [ref=e331]

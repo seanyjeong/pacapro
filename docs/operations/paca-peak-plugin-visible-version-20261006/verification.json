@@ -1,0 +1,47 @@
+{
+  "status": "verified",
+  "at": "2026-10-06T12:28:06.891981+00:00",
+  "scope": "ChatGPT dev app display metadata only",
+  "mcp_server_version": "0.4.1",
+  "mcp_runtime_changed": false,
+  "production_db_changed": false,
+  "operational_business_confirm_calls": 0,
+  "runtime_tests_repeated": 0,
+  "new_version_query_tool_added": false,
+  "apps": [
+    {
+      "provider": "paca",
+      "app_id": "asdk_app_6ab8e29a8578819182ade74b038fa002",
+      "final_display_name": "학원관리 · MCP 0.4.1",
+      "mcp_version_label": "0.4.1",
+      "package_version_after_refresh": "1.0.0",
+      "app_config_sha256": "b6afa446e8d5580216db2cb854f23e96a8657d3a896f540375fc228df32e77db",
+      "app_config_bytes_unchanged": true,
+      "package_identity_preserved": true,
+      "connected_account_labels_preserved": true,
+      "ui_after_tools_refresh_verified": true,
+      "candidate_package_version": "1.0.3",
+      "candidate_upload_accepted": true,
+      "refresh_regenerated_package_default": true
+    },
+    {
+      "provider": "peak",
+      "app_id": "asdk_app_6ab8efce268081918768079c633fb74d",
+      "final_display_name": "실기관리 · MCP 0.4.1",
+      "mcp_version_label": "0.4.1",
+      "package_version_after_refresh": "1.0.0",
+      "app_config_sha256": "924a9e2fa19ba57206f0ece286065fb37dfdec927d5ac914ddea4a1ef8a780e4",
+      "app_config_bytes_unchanged": true,
+      "package_identity_preserved": true,
+      "connected_account_labels_preserved": true,
+      "ui_after_tools_refresh_verified": true,
+      "candidate_package_version": "1.0.3",
+      "candidate_upload_accepted": true,
+      "refresh_regenerated_package_default": true
+    }
+  ],
+  "official_sources": [
+    "https://developers.openai.com/plugins/deploy/connect-chatgpt#refresh-metadata",
+    "https://developers.openai.com/plugins/deploy/submission#update-your-published-plugin"
+  ]
+}

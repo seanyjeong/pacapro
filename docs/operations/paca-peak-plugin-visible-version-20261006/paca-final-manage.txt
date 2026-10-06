@@ -1,0 +1,71 @@
+# note: interactive (clickable / focusable) elements only.
+- title: "학원관리 · MCP 0.4.1" [url=https://chatgpt.com/settings/plugins-settings/plugin_asdk_app_6ab8e29a8578819182ade74b038fa002]
+- link "콘텐츠로 바로 가기" [ref=e1]
+- complementary:
+  - navigation "앱 탐색" [ref=e2]:
+    - button "홈" [ref=e3]
+    - button "스페이스" [ref=e4]
+    - button "예약" [ref=e5]
+    - button "플러그인" [ref=e6]
+    - button "탐색" [ref=e7]
+    - button "사이트" [ref=e8]
+    - button "프로필 메뉴 열기" [ref=e9]
+  - navigation "설정" [ref=e10]:
+    - heading "설정" [level=1]
+    - text: "설정 검색"
+    - searchbox "설정 검색" [ref=e11] [placeholder="검색"]
+    - generic [ref=e12] [scrollable]:
+      - text: "개인"
+      - button "일반" [ref=e13]
+      - button "모양" [ref=e14]
+      - button "알림" [ref=e15]
+      - button "프로필" [ref=e16]
+      - button "보안 및 로그인" [ref=e17]
+      - button "계정" [ref=e18]
+      - button "Archived chats" [ref=e19]
+      - button "자녀 보호" [ref=e20]
+      - button "신뢰할 수 있는 연락처" [ref=e21]
+      - button "음성 스타일" [ref=e22]
+      - button "저장 공간" [ref=e23]
+      - button "개인 맞춤 설정" [ref=e24]
+      - button "펫" [ref=e25]
+      - button "키보드" [ref=e26]
+      - button "사용량" [ref=e27]
+      - button "결제" [ref=e28]
+      - button "데이터 관리" [ref=e29]
+      - text: "통합"
+      - button "플러그인" [ref=e30]
+      - button "비밀번호" [ref=e31]
+      - button "클라우드 컴퓨터" [ref=e32]
+      - text: "코딩"
+      - button "Codex 클라우드" [ref=e33]
+      - button "레거시 Codex 클라우드" [ref=e34]
+      - button "코드 리뷰" [ref=e35]
+  - separator
+- main:
+  - banner
+  - navigation "이동 경로" [ref=e36]:
+    - link "플러그인" [ref=e37]
+    - text: "학원관리 · MCP 0.4.1"
+  - generic [ref=e38] [scrollable]:
+    - banner:
+      - heading "학원관리 · MCP 0.4.1" [level=1]
+      - link "세부 정보 보기" [ref=e39]
+      - button "제거" [ref=e40]
+    - region:
+      - text: "연결된 계정"
+      - button "으뜸 정 님의 학원관리 · MCP 0.4.1 계정, Primary 설정" [ref=e54]
+      - button "Primary" [ref=e45]
+      - button "으뜸 정 님의 학원관리 · MCP 0.4.1 계정, 파카 설정" [ref=e55]
+      - button "파카" [ref=e47]
+      - button "다른 계정 연결" [ref=e48]
+    - region: "정보 연결 날짜 2026. 9. 29.개발자 App developer 버전 dev mode URL https://paca-mcp.supermax.kr/mcp 지원되는 인증 방식 OAuth 사용된 인증 방식 OAuth 버전 ID asdk_app_v_6ab8e29a85848191b592771d850cc6b3 앱 ID asdk_app_6ab8e29a8578819182ade74b038fa002 검토 상태 DEVELOPMENT"
+    - region:
+      - text: "앱 관리 앱 이름"
+      - button "편집" [ref=e41]
+      - text: "앱 설명"
+      - button "편집" [ref=e42]
+      - text: "도구 새로 고침"
+      - button "도구 새로 고침" [ref=e49]
+      - text: "앱 삭제"
+      - button "앱 삭제" [ref=e43]
