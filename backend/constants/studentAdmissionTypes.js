@@ -5,11 +5,13 @@ const STUDENT_ADMISSION_TYPES = Object.freeze([
     'civil_service',
     'military_academy',
     'police_university',
+    'both',
 ]);
 
 const STUDENT_ADMISSION_LABELS = Object.freeze({
     regular: '정시',
     early: '수시',
+    both: '수시+정시',
     advance: '선행반',
     civil_service: '공무원',
     military_academy: '사관학교',

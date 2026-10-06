@@ -7,7 +7,7 @@ const plan = require('../../services/maxEnginePeakPlanExercises');
 const student = { id: 1, name: '합성학생', status: 'active', class_days: '[]', monthly_tuition: '100.00' };
 test('withdrawal preview shows concrete attendance removals and preserved billing', () => {
   const command = validate({ operation: 'student_withdraw', resource_id: 1, changes: { withdrawal_date: '2026-10-03', reason: '이사' } });
-  const view = lifecycle.display(command, { student, today: '2026-10-03', reservations: [{ id: 8, class_date: '2026-10-03', attendance_status: 'present' }] });
+  const view = lifecycle.display(command, { student, today: '2026-10-03', invoices: [], seasons: [], reservations: [{ id: 8, class_date: '2026-10-03', attendance_status: 'present' }] });
   expect(view.after.status).toBe('withdrawn');
   expect(view.after.related).toMatchObject({ attendance_to_remove: [{ id: 8 }], payment_changes: [], future_monthly_billing: false });
 });
@@ -60,7 +60,7 @@ test('both providers advertise both source families and lifecycle commands', () 
 test('withdrawal uses the KST calendar date across the UTC midnight boundary', async () => {
   jest.useFakeTimers().setSystemTime(new Date('2026-10-02T15:05:00Z'));
   try {
-    const conn = { execute: jest.fn().mockResolvedValueOnce([[student]]).mockResolvedValueOnce([[]]) };
+    const conn = { execute: jest.fn().mockResolvedValue([[]]).mockResolvedValueOnce([[student]]) };
     const state = await lifecycle.state(conn, {academy_id:1}, {operation:'student_withdraw',resource_id:1,changes:{withdrawal_date:'2026-10-03'}}, false);
     expect(state.today).toBe('2026-10-03');
     expect(conn.execute.mock.calls[1][1]).toEqual([1,1,'2026-10-03','2026-10-03']);

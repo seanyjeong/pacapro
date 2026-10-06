@@ -60,6 +60,7 @@ function display(command, before) {
   const previous = command.operation.endsWith('_create') ? null : Object.fromEntries(
     Object.keys(command.changes).map(k => [k, decrypt(old[k] ?? null)]));
   if (command.operation === 'student_create') students.validateCreate(command.changes, before);
+  if (command.operation === 'student_update') students.validateAdmission(command.changes, before);
   if (command.operation === 'consultation_create') consultations.validate(before);
   return { before: previous, after: command.operation === 'payment_pay' ? payments.result(command.changes, before) : command.changes,
     notice: commands[command.operation].notice || null };

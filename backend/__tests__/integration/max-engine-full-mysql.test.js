@@ -39,6 +39,7 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     peak = mysql.createPool({ ...opts, database: prefix + 'peak' });
     global.__fullPaca = paca; global.__fullPeak = peak;
     await paca.query(fs.readFileSync(require.resolve('../../migrations/20260930_add_student_prospect_status.mysql'), 'utf8'));
+    await paca.query(fs.readFileSync(require.resolve('../../migrations/20261006_add_both_student_admission_type.mysql'), 'utf8'));
     // Production already has these nullable encrypted contact columns; no production DDL is needed.
     await paca.query('ALTER TABLE students ADD father_phone VARCHAR(512) NULL, ADD mother_phone VARCHAR(512) NULL');
     await paca.query('DROP TABLE IF EXISTS max_engine_commands');
@@ -370,6 +371,23 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     const record=await preview({operation:'peak_record_update',resource_id:(await peak.query("SELECT id FROM student_records WHERE measured_at='2026-10-04'"))[0][0].id,changes:{value:'265'}});
     expect(record.status).toBe(200);await peak.query('UPDATE record_types SET max_value=260 WHERE id=600');
     expect((await confirm(record.body)).body.error.code).toBe('SOURCE_CHANGED');
+  });
+
+  test('both saves through the real preview/confirm API and round-trips without changing existing types', async () => {
+    const [[original]] = await paca.query('SELECT admission_type,admission_type+0 ordinal FROM students WHERE id=1');
+    expect(original.admission_type).toBe('regular'); expect(original.ordinal).toBe(1);
+    const p = await preview({ operation: 'student_create', changes: { name: '합성수시정시', phone: '000333444',
+      admission_type: 'both', enrollment_date: '2026-10-06' } });
+    expect(p.status).toBe(200); const result = await confirm(p.body); expect(result.status).toBe(200);
+    const id = result.body.resource_id;
+    expect((await paca.query('SELECT admission_type,admission_type+0 ordinal FROM students WHERE id=?', [id]))[0][0]).toEqual({ admission_type: 'both', ordinal: 7 });
+    const update = await preview({ operation: 'student_update', resource_id: id, changes: { admission_type: 'early' } });
+    expect(update.status).toBe(200); expect((await confirm(update.body)).status).toBe(200);
+    const again = await preview({ operation: 'student_update', resource_id: id, changes: { admission_type: 'both' } });
+    expect(again.status).toBe(200); expect((await confirm(again.body)).status).toBe(200);
+    const response = await get('/paca/resources/students?ids=' + JSON.stringify([id]));
+    expect(response.body.items[0].admission_type).toBe('both');
+    expect((await paca.query('SELECT admission_type,admission_type+0 ordinal FROM students WHERE id=1'))[0][0]).toEqual(original);
   });
 
 });

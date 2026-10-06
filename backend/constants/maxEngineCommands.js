@@ -1,8 +1,10 @@
 const Joi = require('joi');
+const { STUDENT_ADMISSION_TYPES } = require('./studentAdmissionTypes');
 const text = max => Joi.string().max(max).allow('', null);
 const date = Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).custom((v, h) =>
   !Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v ? v : h.error('any.invalid'));
 const profile = {
+  admission_type: Joi.string().valid(...STUDENT_ADMISSION_TYPES).allow(null),
   name: Joi.string().min(1).max(60), phone: Joi.string().pattern(/^[0-9+() -]{3,30}$/),
   gender: Joi.string().valid('male', 'female').allow(null), parent_phone: text(30),
   father_phone: text(30), mother_phone: text(30),

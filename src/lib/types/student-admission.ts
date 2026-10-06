@@ -1,6 +1,7 @@
 export type AdmissionType =
   | 'regular'
   | 'early'
+  | 'both'
   | 'advance'
   | 'civil_service'
   | 'military_academy'
@@ -9,6 +10,7 @@ export type AdmissionType =
 export const ADMISSION_TYPE_LABELS: Record<AdmissionType, string> = {
   regular: '정시',
   early: '수시',
+  both: '수시+정시',
   advance: '선행반',
   civil_service: '공무원',
   military_academy: '사관학교',
@@ -18,6 +20,7 @@ export const ADMISSION_TYPE_LABELS: Record<AdmissionType, string> = {
 export const EXAM_ADMISSION_OPTIONS: Array<{ value: AdmissionType; label: string }> = [
   { value: 'regular', label: '정시' },
   { value: 'early', label: '수시' },
+  { value: 'both', label: '수시+정시' },
   { value: 'advance', label: '선행반' },
   { value: 'military_academy', label: '사관학교' },
   { value: 'police_university', label: '경찰대' },

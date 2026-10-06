@@ -1,0 +1,6 @@
+-- Preserve every existing ENUM ordinal and append both without rewriting student values.
+ALTER TABLE students
+    MODIFY COLUMN admission_type
+    ENUM('regular','early','civil_service','military_academy','police_university','advance','both')
+    NULL DEFAULT 'regular',
+    ALGORITHM=INSTANT;

@@ -63,6 +63,8 @@ const ADMISSION_BY_LABEL = {
     regular: 'regular',
     수시: 'early',
     early: 'early',
+    '수시+정시': 'both',
+    both: 'both',
     선행반: 'advance',
     advance: 'advance',
     공무원: 'civil_service',
