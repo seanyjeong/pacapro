@@ -1,0 +1,45 @@
+sync-backend-all-final.log
+PASS __tests__/utils/peakSso.test.js
+PASS __tests__/scheduler/seasonLifecycleScheduler.test.js
+PASS __tests__/repositories/maxlinkWebhookOutbox.test.js
+PASS __tests__/middleware/expectedAcademy.test.js
+PASS __tests__/routes/jungsi/autoDiscovery.test.js
+PASS __tests__/services/studentContextService.test.js
+PASS __tests__/services/studentAdmissionBoth.test.js
+PASS __tests__/routes/student-consultations-academy-scope.test.js
+
+Test Suites: 7 skipped, 157 passed, 157 of 164 total
+Tests:       69 skipped, 1267 passed, 1336 total
+Snapshots:   0 total
+Time:        5.188 s, estimated 10 s
+Ran all test suites.
+
+sync-native-final.log
+PASS __tests__/integration/max-engine-sync-mysql.test.js
+PASS __tests__/integration/max-engine-full-mysql.test.js
+PASS __tests__/integration/max-engine-settlement-mysql.test.js
+PASS __tests__/integration/max-engine-efficient-mysql.test.js
+PASS __tests__/services/maxEngineSync.test.js
+PASS __tests__/models/maxEngineSyncPage.test.js
+
+Test Suites: 6 passed, 6 total
+Tests:       59 passed, 59 total
+Snapshots:   0 total
+Time:        4.946 s, estimated 5 s
+Ran all test suites matching /__tests__\/integration\/max-engine-full-mysql.test.js|__tests__\/integration\/max-engine-efficient-mysql.test.js|__tests__\/integration\/max-engine-settlement-mysql.test.js|__tests__\/integration\/max-engine-sync-mysql.test.js|__tests__\/models\/maxEngineSyncPage.test.js|__tests__\/services\/maxEngineSync.test.js/i.
+
+sync-lint.log
+
+/Users/etlab/worktrees/pacapro-admission-both-sync/src/lib/attendance/debounce.ts
+   1:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   1:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:56  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/etlab/worktrees/pacapro-admission-both-sync/src/lib/utils/schedule-helpers.ts
+  152:31  warning  'date' is defined but never used              @typescript-eslint/no-unused-vars
+  228:9   warning  'lastDay' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 86 problems (0 errors, 86 warnings)
+  0 errors and 4 warnings potentially fixable with the `--fix` option.
+

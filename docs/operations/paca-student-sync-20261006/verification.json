@@ -1,0 +1,11 @@
+{
+  "status": "local_verified_ready_to_deploy",
+  "frontend_version": "4.0.57",
+  "backend_all": {"node": "22.20.0", "suites_passed": 157, "tests_passed": 1267, "opt_in_skipped": 69},
+  "native_mysql": {"node": "18.19.1", "mysql": "8.4", "port": 13324, "suites_passed": 6, "tests_passed": 59},
+  "lint": {"errors": 0, "existing_warnings": 86},
+  "runtime_files": 6,
+  "production_env_written": false,
+  "operational_student_writes": 0,
+  "notes": "Initial full-suite runs had transient existing HTTP failures; unchanged complete rerun passed. New native HTTP tests all passed. Prior frontend type/build/browser evidence remains valid because no frontend source or dependencies changed."
+}

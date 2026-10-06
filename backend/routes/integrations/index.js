@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const service = require('../../services/maxEngineService');
 
 const router = express.Router();
+router.use('/max-engine/sync', require('./sync'));
 router.use('/max-engine/full', require('./full'));
 const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10,
   standardHeaders: 'draft-7', legacyHeaders: false,
