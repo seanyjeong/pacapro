@@ -1,0 +1,80 @@
+[
+  {
+    "provider": "paca",
+    "path": "backend/constants/maxEngineCommands.js",
+    "before": "4018ce8be9ef6d2f8ebba81c6723289eb4189204b662fe3af8401d1f1116370b",
+    "after": "15b62bde25e168b557d63cfa957d19150711b43caa7236294c93f30f4b9b2c8f"
+  },
+  {
+    "provider": "paca",
+    "path": "backend/services/maxEnginePeakCommands.js",
+    "before": "5ef4af5eff5e243f19be4090b7e667eeeaf130f2eee213647b572b293e6c4378",
+    "after": "22d72cd5fcd26d4a23bc9d1944b784a5311ed44bd660f85dfd9a1dc3e9c233fb"
+  },
+  {
+    "provider": "paca",
+    "path": "backend/constants/maxEnginePackCommands.js",
+    "before": null,
+    "after": "047379d329ddcaba881a127e17051d91e6fde8f31e90a056d2940b4cdd8a1ce3"
+  },
+  {
+    "provider": "paca",
+    "path": "backend/models/maxEngineExercisePack.js",
+    "before": null,
+    "after": "98adfd4a606d881858616ed3c7063978375d9563a2e3677c2eec62922f47b3fa"
+  },
+  {
+    "provider": "paca",
+    "path": "backend/repositories/maxEnginePackRepository.js",
+    "before": null,
+    "after": "16066a84494b03e93082042f140e65bae78e5ec12095077b7ce2c1d1217cb0b7"
+  },
+  {
+    "provider": "paca",
+    "path": "backend/services/maxEnginePackCommands.js",
+    "before": null,
+    "after": "85e905c887336cccf94551ff53d6f8e0b83c8d48168f0e817666d1cb096f7da6"
+  },
+  {
+    "provider": "mcp",
+    "path": "mcp/package.json",
+    "before": "023221f0b72b9b8754664878f41060f9ef68b57a0954ac7f71334aeb15a5cc03",
+    "after": "6ee5595a6d465f933b2566ebf2de1f7a8f7698b9975d6eb2fd44bcf418c96ca8"
+  },
+  {
+    "provider": "mcp",
+    "path": "mcp/package-lock.json",
+    "before": "5e5d6121cb71c065521e7b301a03c09271bc08185690598c1bdfd7c2ff964ac1",
+    "after": "a70cc858131b1f5404579855a35a1cbf72e899c710d6729fdb2df5e5c3e599bb"
+  },
+  {
+    "provider": "mcp",
+    "path": "mcp/paca/package.json",
+    "before": "ea22563444d2018fce47540f4d29933baa7e9201245e2a0105113279897af3a9",
+    "after": "4abf7f5a17f1844d9f58f4490de614d40fc39431f0c213a0a3e52d4a3f58efb9"
+  },
+  {
+    "provider": "mcp",
+    "path": "mcp/peak/package.json",
+    "before": "ddb305a0761821437f12f30a97e8b4fd4ce22134c225a040e7a802899b69b7e3",
+    "after": "f6c7cd989d4e761350a418a37183bdce9b1b3442977fe5dcffc0df4b4d7115ee"
+  },
+  {
+    "provider": "mcp",
+    "path": "mcp/shared/constants/commands.js",
+    "before": "22ae4ae0f0723c20e49d36afa7b4c100b7e9ed7b6cc3442cc2f5b7b017799048",
+    "after": "79993d867a075a66933631903c90a70462840db53d1ccd185a6eac286fc5ec01"
+  },
+  {
+    "provider": "mcp",
+    "path": "mcp/shared/tools.js",
+    "before": "4c9dbc2fcb59fe4bb0c2953623c703467b2a280d714736d952e878bdae0cd93e",
+    "after": "bb1923b112a6c344133c607f98103a81d48965bd8a9482f1b872001c495cdf6e"
+  },
+  {
+    "provider": "mcp",
+    "path": "mcp/shared/pack-tools.js",
+    "before": null,
+    "after": "50fcf73a0475de83c5288787ea90c2649ab53b5cea982c2f18391ed8cdbc5536"
+  }
+]

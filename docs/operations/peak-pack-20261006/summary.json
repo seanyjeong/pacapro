@@ -1,0 +1,30 @@
+{
+  "node": "v22.20.0",
+  "max_concurrency": 4,
+  "files": 168,
+  "initial_elapsed_seconds": 15.48,
+  "suites": {
+    "passed": 159,
+    "failed": 0,
+    "skipped": 9
+  },
+  "tests": {
+    "passed": 1279,
+    "failed": 0,
+    "skipped": 88
+  },
+  "fixture_retry": {
+    "file": "__tests__/routes/students/crud/import.test.js",
+    "reason": "Port 22000 was already bound by syncthing (PID 1604); explicit EADDRINUSE",
+    "initial_port": 22000,
+    "retry_port": 55000,
+    "initial_failed_tests": 2,
+    "retry_passed_tests": 6,
+    "initial_log": "/tmp/peak-pack-20261006/isolated-files/10.log",
+    "retry_log": "/tmp/peak-pack-20261006/isolated-files/10-retry.log"
+  },
+  "isolation": "New Node22 process per file, maximum four concurrent, dedicated port ranges, MySQL disabled",
+  "root_cause_evidence": "/tmp/peak-pack-20261006/ipv4-ipv6-reproduction.log",
+  "results_log": "/tmp/peak-pack-20261006/paca-full-isolated-files.log",
+  "initial_results": "/tmp/peak-pack-20261006/summary.initial.json"
+}

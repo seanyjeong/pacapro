@@ -26,6 +26,7 @@ const commands = {
   ...require('./maxEngineSettlementCommands').commands,
   ...require('./maxEnginePeakCommands').commands,
   ...require('./maxEngineTeachingCommands').commands,
+  ...require('./maxEnginePackCommands').commands,
   ...require('./maxEngineInstructorScheduleCreate').commands,
   student_create: { resource: 'students', provider: 'paca', label: '학생 기본정보 등록',
     schema: Joi.object({ ...profile, name: profile.name.required(), phone: profile.phone.required(),

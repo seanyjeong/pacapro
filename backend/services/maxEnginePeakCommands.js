@@ -1,15 +1,18 @@
 const commands = { ...require('../constants/maxEnginePeakCommands').commands,
-  ...require('../constants/maxEngineTeachingCommands').commands };
+  ...require('../constants/maxEngineTeachingCommands').commands,
+  ...require('../constants/maxEnginePackCommands').commands };
 const repo = require('../repositories/maxEnginePeakCommandRepository');
 const common = require('../repositories/maxEngineFullCommandRepository');
 const { fail } = require('./maxEngineFullSecurity');
 const planExercises = require('./maxEnginePeakPlanExercises');
 const teaching = require('./maxEngineTeachingCommands');
+const packs = require('./maxEnginePackCommands');
 const teachingRepo = require('../repositories/maxEngineTeachingRepository');
 const { planValues } = require('../models/maxEngineTeaching');
 const { applySteps } = require('../models/maxEnginePlanExerciseEdits');
 const supports = operation => Object.hasOwn(commands, operation);
 async function state(conn, actor, command, lock) {
+  if (packs.supports(command.operation)) return packs.state(conn, actor, command, lock);
   if (teaching.supports(command.operation)) return teaching.state(conn, actor, command, lock);
   const { operation, resource_id: id, changes } = command;
   const spec = commands[operation], create = operation.endsWith('_create');
@@ -39,6 +42,7 @@ async function state(conn, actor, command, lock) {
   return before;
 }
 function display(command, before) {
+  if (packs.supports(command.operation)) return packs.display(command, before);
   if (teaching.supports(command.operation)) return teaching.display(command, before);
   const { operation, changes } = command;
   const source = { ...before.record, ...changes };
@@ -68,6 +72,7 @@ function display(command, before) {
       : { ...source, ...(operation === 'peak_plan_create' ? planValues(changes, before.exerciseRows) : {}), related } };
 }
 async function apply(conn, actor, command, before) {
+  if (packs.supports(command.operation)) return packs.apply(conn, actor, command, before);
   if (teaching.supports(command.operation)) return teaching.apply(conn, actor, command, before);
   const { operation, resource_id: id, changes } = command, spec = commands[operation];
   if (operation === 'peak_plan_exercises_update') {
