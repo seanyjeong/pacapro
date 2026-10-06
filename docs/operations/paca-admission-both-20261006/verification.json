@@ -1,0 +1,26 @@
+{
+  "status": "partial_local_verified_not_deployed",
+  "version_candidate": "4.0.57",
+  "production_writes": 0,
+  "sync_key_created": false,
+  "both_storage_native_mysql": "passed",
+  "backend_all": {
+    "runtime": "22.20.0",
+    "suites_passed": 156,
+    "tests_passed": 1265,
+    "integration_tests_skipped": 63
+  },
+  "native_affected": {
+    "runtime": "18.19.1",
+    "mysql": "8.4.11_loopback_13324",
+    "tests_passed": 35
+  },
+  "frontend": {
+    "typecheck": "passed",
+    "build": "passed",
+    "lint_errors": 0,
+    "existing_lint_warnings": 86,
+    "desktop_mobile_smoke": "passed_synthetic_readonly_API_responses"
+  },
+  "pending": "sync academy consent lookup; real endpoint routing/authorization and integration coverage not implemented; no production deployment"
+}

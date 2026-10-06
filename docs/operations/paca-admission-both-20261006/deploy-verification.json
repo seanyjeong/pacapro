@@ -1,0 +1,79 @@
+{
+  "status": "both_deployed_verified_sync_pending",
+  "version": "4.0.57",
+  "commit": "7cd8d7d1ad2125b63702861525a0c800b18958f0",
+  "verified_at": "2026-10-06T18:00:29.281378+09:00",
+  "backend": {
+    "status": "backend_both_deployed_verified",
+    "at": "2026-10-06T08:43:18.637159+00:00",
+    "backup": "/root/backups/paca-admission-both-20261006T084311Z",
+    "before": {
+      "rows": 2072,
+      "sha256": "018280d3ec9fb2d8196134f1dfc89a8543fe621932a5678df09f896d98c03309"
+    },
+    "after": {
+      "rows": 2072,
+      "sha256": "018280d3ec9fb2d8196134f1dfc89a8543fe621932a5678df09f896d98c03309"
+    },
+    "original_values_preserved": true,
+    "dump_restore_verified": true,
+    "candidate_files": 6,
+    "enum_after": "enum('regular','early','civil_service','military_academy','police_university','advance','both')",
+    "sync_key_created": false,
+    "sync_endpoint_deployed": false,
+    "frontend": "pending"
+  },
+  "frontend": {
+    "url": "https://pacapro-fje13lqbl-seanys-projects-4437e034.vercel.app",
+    "alias": "https://pacapro.vercel.app",
+    "state": "READY",
+    "target": "production",
+    "git_sha": "7cd8d7d1ad2125b63702861525a0c800b18958f0"
+  },
+  "browser": {
+    "status": "passed",
+    "mode": "production_assets_with_synthetic_read_responses",
+    "results": [
+      {
+        "viewport": {
+          "width": 1365,
+          "height": 900
+        },
+        "create_option": true,
+        "edit_preserved": true,
+        "filter_sent": true,
+        "business_writes": 0
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "create_option": true,
+        "edit_preserved": true,
+        "filter_sent": true,
+        "business_writes": 0
+      }
+    ]
+  },
+  "tests": {
+    "backend_all_node22": 1265,
+    "native_mysql_node18": 48,
+    "frontend_node": 29,
+    "sync_primitive_models": 3,
+    "lint_errors": 0,
+    "existing_lint_warnings": 86,
+    "typecheck": "passed",
+    "production_build": "passed"
+  },
+  "rollback_tag": "rollback/paca-admission-both-20261006",
+  "operator_student_edits": 0,
+  "sync": {
+    "status": "blocked_missing_academy_consent_lookup",
+    "route_implemented": false,
+    "key_created": false,
+    "deployed": false,
+    "question_pending": true,
+    "existing_permission_records": "max-engine branch_external_links/business_delegations; no equivalent PACA records"
+  }
+}

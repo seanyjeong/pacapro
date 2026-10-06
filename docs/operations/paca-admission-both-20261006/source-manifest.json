@@ -1,0 +1,27 @@
+[
+  {
+    "file": "backend/constants/studentAdmissionTypes.js",
+    "production_sha256": "9bb76c8e50beecc09122fcb5e61b41f2fe06dc3a4bc5fc4f3aaf1e04f18e1b3e",
+    "candidate_sha256": "d050c0f8b53c1256680e09d4bc6d354ed1c68b2daab42c78b1ed88a9e627e80d"
+  },
+  {
+    "file": "backend/constants/maxEngineCommands.js",
+    "production_sha256": "727617902764db099d82c87c4699414bcbf411433a6b8a12c4196934f0eec169",
+    "candidate_sha256": "1632209058b78615a3d61c905d354e23cd26dc5be00cec545ee70506d70bccf7"
+  },
+  {
+    "file": "backend/services/maxEngineFullStudents.js",
+    "production_sha256": "6a71c71cb73750c4075fa312c69449daa15e50b03aa5729c3065d7e1c91c26f3",
+    "candidate_sha256": "c01a3bf9a1ebdac9bd36111fd7ebd574d5d816ceb0aec95896c892864ebe084c"
+  },
+  {
+    "file": "backend/services/maxEngineFullCommands.js",
+    "production_sha256": "bd474db0de636a5ef7640b06304275757ee3e22cbd1da104429edbb1c314c875",
+    "candidate_sha256": "6fa8b7f5df0d75d5d01997524857187ab42b5da5e5879bcc448546b94064ced1"
+  },
+  {
+    "file": "backend/routes/students/crud/import.js",
+    "production_sha256": "13919509fced5294de127d4ab99aceab8af5eb78b2f6bdcae5457930ae11208d",
+    "candidate_sha256": "2c634de23d714d374bbe18b66e26947ca4dddcfe2fc5cd867bc840231d7475d0"
+  }
+]
