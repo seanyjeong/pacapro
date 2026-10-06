@@ -1,0 +1,549 @@
+(node:57433) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS __tests__/routes/academyEvents.test.js
+  ● Console
+
+    console.warn
+      [AUTH] ⚠️ PACA_NOTIFICATION_API_KEY 미설정. 내부 자동화 인증이 작동하지 않습니다.
+
+      18 | }
+      19 | if (!PACA_NOTIFICATION_API_KEY) {
+    > 20 |     console.warn('[AUTH] ⚠️ PACA_NOTIFICATION_API_KEY 미설정. 내부 자동화 인증이 작동하지 않습니다.');
+         |             ^
+      21 | }
+      22 |
+      23 | /**
+
+      at Object.warn (middleware/auth.js:20:13)
+      at Object.require (routes/academyEvents.js:8:42)
+      at Object.require (__tests__/routes/academyEvents.test.js:12:33)
+
+    console.error
+      [ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.
+
+      12 | // 프로덕션 환경에서 키 없으면 경고 (서버는 시작하지만 암호화 실패할 것)
+      13 | if (!ENCRYPTION_KEY && process.env.NODE_ENV !== 'development') {
+    > 14 |     console.error('[ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.');
+         |             ^
+      15 | }
+      16 |
+      17 | // 암호화 키를 32바이트로 맞추기
+
+      at Object.error (utils/encryption.js:14:13)
+      at Object.require (routes/public/reservation.js:6:21)
+      at Object.require (routes/public.js:468:12)
+      at Object.require (__tests__/routes/academyEvents.test.js:13:25)
+
+PASS __tests__/routes/maxEngine.test.js
+PASS __tests__/routes/students/crud/import.test.js
+PASS __tests__/routes/exports/students.test.js
+PASS __tests__/routes/exports/payments.test.js
+PASS __tests__/routes/exports/salaries.test.js
+PASS __tests__/services/maxEngineBusiness.test.js
+  ● Console
+
+    console.error
+      [ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.
+
+      12 | // 프로덕션 환경에서 키 없으면 경고 (서버는 시작하지만 암호화 실패할 것)
+      13 | if (!ENCRYPTION_KEY && process.env.NODE_ENV !== 'development') {
+    > 14 |     console.error('[ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.');
+         |             ^
+      15 | }
+      16 |
+      17 | // 암호화 키를 32바이트로 맞추기
+
+      at Object.error (utils/encryption.js:14:13)
+      at Object.require (services/studentParentContactService.js:1:30)
+      at Object.require (services/maxEngineFullStudents.js:5:79)
+      at Object.require (services/maxEngineFullCommands.js:11:18)
+      at Object.require (__tests__/services/maxEngineBusiness.test.js:3:31)
+
+PASS __tests__/routes/exports/revenue.test.js
+PASS __tests__/routes/notifications/test/solapi.test.js
+PASS __tests__/routes/exports/financial.test.js
+PASS __tests__/routes/schedules/index.test.js
+PASS __tests__/routes/exports/expenses.test.js
+PASS __tests__/routes/schedules/instructor-calendar.test.js
+  ● Console
+
+    console.warn
+      [AUTH] ⚠️ PACA_NOTIFICATION_API_KEY 미설정. 내부 자동화 인증이 작동하지 않습니다.
+
+      18 | }
+      19 | if (!PACA_NOTIFICATION_API_KEY) {
+    > 20 |     console.warn('[AUTH] ⚠️ PACA_NOTIFICATION_API_KEY 미설정. 내부 자동화 인증이 작동하지 않습니다.');
+         |             ^
+      21 | }
+      22 |
+      23 | /**
+
+      at Object.warn (middleware/auth.js:20:13)
+      at Object.require (routes/schedules/slot.js:38:42)
+      at Object.require (routes/schedules/index.js:41:1)
+      at Object.require (__tests__/routes/schedules/instructor-calendar.test.js:14:28)
+
+PASS __tests__/routes/students/enrollment.test.js
+PASS __tests__/routes/students/credits.test.js
+PASS __tests__/routes/notifications/index.test.js
+PASS __tests__/routes/exports/index.test.js
+PASS __tests__/routes/consultations/settings.test.js
+  ● Console
+
+    console.error
+      [ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.
+
+      12 | // 프로덕션 환경에서 키 없으면 경고 (서버는 시작하지만 암호화 실패할 것)
+      13 | if (!ENCRYPTION_KEY && process.env.NODE_ENV !== 'development') {
+    > 14 |     console.error('[ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.');
+         |             ^
+      15 | }
+      16 |
+      17 | // 암호화 키를 32바이트로 맞추기
+
+      at Object.error (utils/encryption.js:14:13)
+      at Object.require (routes/consultations/_utils.js:25:30)
+      at Object.require (routes/consultations/settings.js:26:39)
+      at require (__tests__/routes/consultations/settings.test.js:42:5)
+      at Object.makeApp (__tests__/routes/consultations/settings.test.js:69:35)
+
+PASS __tests__/models/maxEngineTeaching.test.js
+PASS __tests__/routes/students/crud/update.test.js
+PASS __tests__/routes/salaries/index.test.js
+PASS __tests__/routes/salaries/crud.test.js
+PASS __tests__/services/maxEngineFull.test.js
+  ● Console
+
+    console.error
+      [ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.
+
+      12 | // 프로덕션 환경에서 키 없으면 경고 (서버는 시작하지만 암호화 실패할 것)
+      13 | if (!ENCRYPTION_KEY && process.env.NODE_ENV !== 'development') {
+    > 14 |     console.error('[ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.');
+         |             ^
+      15 | }
+      16 |
+      17 | // 암호화 키를 32바이트로 맞추기
+
+      at Object.error (utils/encryption.js:14:13)
+      at Object.require (services/studentParentContactService.js:1:30)
+      at Object.require (services/maxEngineFullStudents.js:5:79)
+      at Object.require (services/maxEngineFullCommands.js:11:18)
+      at Object.require (__tests__/services/maxEngineFull.test.js:5:26)
+
+PASS __tests__/routes/payments/index.test.js
+PASS __tests__/routes/notifications/send/webhooks.test.js
+PASS __tests__/routes/consultations/index.test.js
+PASS __tests__/routes/instructors/crud.test.js
+PASS __tests__/routes/seasons/index.test.js
+PASS __tests__/routes/toss/admin.test.js
+PASS __tests__/routes/seasons/enroll.test.js
+PASS __tests__/routes/instructors/index.test.js
+PASS __tests__/routes/toss/index.test.js
+PASS __tests__/routes/students/photo.test.js
+PASS __tests__/routes/payments/crud.test.js
+PASS __tests__/routes/consultations/write.test.js
+PASS __tests__/routes/students/rest-resume.test.js
+  ● Console
+
+    console.error
+      [ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.
+
+      12 | // 프로덕션 환경에서 키 없으면 경고 (서버는 시작하지만 암호화 실패할 것)
+      13 | if (!ENCRYPTION_KEY && process.env.NODE_ENV !== 'development') {
+    > 14 |     console.error('[ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.');
+         |             ^
+      15 | }
+      16 |
+      17 | // 암호화 키를 32바이트로 맞추기
+
+      at Object.error (utils/encryption.js:14:13)
+      at Object.require (services/studentParentNameService.js:1:30)
+      at Object.require (routes/students/rest/processRest.js:1:36)
+      at Object.require (routes/students/rest.js:7:34)
+      at require (__tests__/routes/students/rest-resume.test.js:51:3)
+      at Object.makeApp (__tests__/routes/students/rest-resume.test.js:117:31)
+
+PASS __tests__/routes/instructors/overtime.test.js
+PASS __tests__/routes/notifications/test/sens.test.js
+PASS __tests__/routes/consultations/conversion.test.js
+PASS __tests__/routes/schedules/slot.test.js
+PASS __tests__/routes/schedules/instructor-schedules.test.js
+FAIL __tests__/routes/seasons/enrollments.test.js
+  ● PUT /paca/seasons/enrollments/:id › 200: dynamic update + 응답 표면 {message, enrollment}
+
+    read ECONNRESET
+
+
+
+PASS __tests__/routes/seasons/crud.test.js
+PASS __tests__/routes/payments/bulk.test.js
+PASS __tests__/routes/students/crud/create.test.js
+PASS __tests__/routes/schedules/crud.test.js
+PASS __tests__/routes/payments/pay.test.js
+PASS __tests__/routes/jungsi/familyScores.test.js
+PASS __tests__/routes/notifications/test/unpaid.test.js
+PASS __tests__/routes/students/rest.test.js
+  ● Console
+
+    console.error
+      [ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.
+
+      12 | // 프로덕션 환경에서 키 없으면 경고 (서버는 시작하지만 암호화 실패할 것)
+      13 | if (!ENCRYPTION_KEY && process.env.NODE_ENV !== 'development') {
+    > 14 |     console.error('[ENCRYPTION] ⚠️ DATA_ENCRYPTION_KEY 미설정! 암호화 기능이 작동하지 않습니다.');
+         |             ^
+      15 | }
+      16 |
+      17 | // 암호화 키를 32바이트로 맞추기
+
+      at Object.error (utils/encryption.js:14:13)
+      at Object.require (services/studentParentNameService.js:1:30)
+      at Object.require (routes/students/rest/processRest.js:1:36)
+      at Object.require (routes/students/rest.js:7:34)
+      at require (__tests__/routes/students/rest.test.js:62:3)
+      at Object.makeApp (__tests__/routes/students/rest.test.js:90:17)
+
+PASS __tests__/routes/schedules/instructor-attendance.test.js
+PASS __tests__/routes/salaries/calculation.test.js
+PASS __tests__/routes/payments/list.test.js
+PASS __tests__/routes/notifications/send/manual.test.js
+PASS __tests__/routes/notifications/send/auto.test.js
+PASS __tests__/routes/payments/prepaid.test.js
+PASS __tests__/routes/notifications/settings.test.js
+PASS __tests__/routes/notifications/logs.test.js
+PASS __tests__/routes/students/crud/list.test.js
+PASS __tests__/routes/toss/callbacks.test.js
+PASS __tests__/routes/seasons/list.test.js
+PASS __tests__/routes/consultations/learning.test.js
+PASS __tests__/routes/schedules/attendance.test.js
+PASS __tests__/routes/payments/cancel.test.js
+PASS __tests__/services/maxEngineParentPhones.test.js
+PASS __tests__/routes/students/crud/remove.test.js
+PASS __tests__/routes/schedules/list.test.js
+PASS __tests__/routes/jungsi/status-link.test.js
+PASS __tests__/services/maxEngineFullAuth.test.js
+PASS __tests__/models/maxEngineExercisePack.test.js
+PASS __tests__/routes/toss/settings.test.js
+PASS __tests__/routes/toss/plugin.test.js
+PASS __tests__/routes/sms/parent-targets.test.js
+PASS __tests__/routes/settings/academy.test.js
+PASS __tests__/routes/seasons/students.test.js
+PASS __tests__/routes/salaries/payment.test.js
+PASS __tests__/routes/jungsi/scores.test.js
+PASS __tests__/routes/instructors/attendance.test.js
+PASS __tests__/routes/studentContext.test.js
+PASS __tests__/routes/consultationCandidates.test.js
+PASS __tests__/routes/auth-register.test.js
+PASS __tests__/routes/schedules/fix-all.test.js
+PASS __tests__/routes/settings-academy.test.js
+PASS __tests__/max-engine-settlement.test.js
+PASS __tests__/routes/consultations/list-detail.test.js
+PASS __tests__/routes/consultations/calendar.test.js
+PASS __tests__/routes/students/crud/detail.test.js
+PASS __tests__/routes/students/classDays.test.js
+PASS __tests__/routes/payments/stats.test.js
+PASS __tests__/routes/payments/credits.test.js
+PASS __tests__/routes/instructors/auth.test.js
+PASS __tests__/routes/public-reservation-api.test.js
+PASS __tests__/routes/settings/database-reset.test.js
+PASS __tests__/routes/settings.test.js
+PASS __tests__/routes/students/crud/search.test.js
+PASS __tests__/services/bridgePacaReadAdapter.test.js
+PASS __tests__/routes/staff.test.js
+PASS __tests__/routes/reports.test.js
+PASS __tests__/routes/sms/academy-scope.test.js
+PASS __tests__/routes/peakSso.test.js
+PASS __tests__/routes/auth-me.test.js
+PASS __tests__/routes/schedules/attendance-state.test.js
+PASS __tests__/routes/maxEnginePrivacy.test.js
+PASS __tests__/routes/students/firstPayment.test.js
+PASS __tests__/realtime/attendanceRealtime.test.js
+PASS __tests__/routes/students/crud/index.test.js
+PASS __tests__/utils/salaryCalculator.test.js
+PASS __tests__/routes/notifications/send/index.test.js
+PASS __tests__/services/maxEngineEfficient.test.js
+PASS __tests__/routes/notifications/test/index.test.js
+PASS __tests__/routes/notifications/_utils.test.js
+PASS __tests__/services/studentParentContactService.test.js
+PASS __tests__/services/trialStatusService.test.js
+PASS __tests__/services/restCreditRecalculationService.test.js
+PASS __tests__/scheduler/paymentScheduler.test.js
+  ● Console
+
+    console.log
+      [PaymentScheduler] Starting automatic payment generation...
+
+      at log (scheduler/paymentScheduler.js:50:13)
+
+    console.log
+      [PaymentScheduler] KST target month=2026-06 (server now=2026-06-25T00:00:00.000Z)
+
+      at log (scheduler/paymentScheduler.js:53:13)
+
+    console.log
+      [PaymentScheduler] Completed. Generated 0 payments (0 with carryover). Errors: 0
+
+      at log (scheduler/paymentScheduler.js:259:17)
+
+    console.log
+      [PaymentScheduler] Starting automatic payment generation...
+
+      at log (scheduler/paymentScheduler.js:50:13)
+
+    console.log
+      [PaymentScheduler] KST target month=2026-06 (server now=2026-06-25T00:00:00.000Z)
+
+      at log (scheduler/paymentScheduler.js:53:13)
+
+    console.log
+      [PaymentScheduler] Completed. Generated 0 payments (0 with carryover). Errors: 0
+
+      at log (scheduler/paymentScheduler.js:259:17)
+
+    console.log
+      [PaymentScheduler] Starting automatic payment generation...
+
+      at log (scheduler/paymentScheduler.js:50:13)
+
+    console.log
+      [PaymentScheduler] KST target month=2026-06 (server now=2026-06-25T00:00:00.000Z)
+
+      at log (scheduler/paymentScheduler.js:53:13)
+
+    console.error
+      [PaymentScheduler] Error: Error: DB unavailable
+          at Object.<anonymous> (/Users/etlab/worktrees/pacapro-peak-class-planning/backend/__tests__/scheduler/paymentScheduler.test.js:69:57)
+          at Promise.then.completed (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-runner/build/runTest.js:444:34)
+
+      261 |
+      262 |     } catch (error) {
+    > 263 |         console.error('[PaymentScheduler] Error:', error);
+          |                 ^
+      264 |         throw error;
+      265 |     }
+      266 | }
+
+      at error (scheduler/paymentScheduler.js:263:17)
+      at Object.<anonymous> (__tests__/scheduler/paymentScheduler.test.js:70:9)
+
+PASS __tests__/middleware/auth.test.js
+PASS __tests__/services/maxlinkWebhookClient.test.js
+PASS __tests__/utils/attendanceValidator.test.js
+  ● Console
+
+    console.error
+      [SECURITY] Academy mismatch! Student 100 (academy: 1) -> Schedule 200 (academy: 2)
+
+      42 |
+      43 |         if (studentAcademyId !== scheduleAcademyId) {
+    > 44 |             console.error(`[SECURITY] Academy mismatch! Student ${studentId} (academy: ${studentAcademyId}) -> Schedule ${scheduleId} (academy: ${scheduleAcademyId})`);
+         |                     ^
+      45 |             return {
+      46 |                 valid: false,
+      47 |                 error: `Academy mismatch: student belongs to academy ${studentAcademyId}, schedule belongs to academy ${scheduleAcademyId}`,
+
+      at error (utils/attendanceValidator.js:44:21)
+      at Object.<anonymous> (__tests__/utils/attendanceValidator.test.js:32:24)
+
+    console.error
+      [SECURITY] Error validating attendance: Error: DB connection failed
+          at Object.<anonymous> (/Users/etlab/worktrees/pacapro-peak-class-planning/backend/__tests__/utils/attendanceValidator.test.js:56:40)
+          at Promise.then.completed (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-runner/build/runTest.js:444:34)
+
+      53 |         return { valid: true, studentAcademyId, scheduleAcademyId };
+      54 |     } catch (error) {
+    > 55 |         console.error('[SECURITY] Error validating attendance:', error);
+         |                 ^
+      56 |         return { valid: false, error: error.message };
+      57 |     }
+      58 | }
+
+      at error (utils/attendanceValidator.js:55:17)
+      at Object.<anonymous> (__tests__/utils/attendanceValidator.test.js:58:24)
+
+    console.error
+      [SECURITY] Academy mismatch in batch! Schedule 200 (academy: 1), invalid students: 2
+
+      93 |
+      94 |         if (invalidStudents.length > 0) {
+    > 95 |             console.error(`[SECURITY] Academy mismatch in batch! Schedule ${scheduleId} (academy: ${scheduleAcademyId}), invalid students: ${invalidStudents.join(', ')}`);
+         |                     ^
+      96 |             return {
+      97 |                 valid: false,
+      98 |                 error: `Academy mismatch for students: ${invalidStudents.join(', ')}`,
+
+      at error (utils/attendanceValidator.js:95:21)
+      at Object.<anonymous> (__tests__/utils/attendanceValidator.test.js:82:24)
+
+    console.error
+      [SECURITY] Academy mismatch in batch! Schedule 200 (academy: 1), invalid students: 2
+
+      93 |
+      94 |         if (invalidStudents.length > 0) {
+    > 95 |             console.error(`[SECURITY] Academy mismatch in batch! Schedule ${scheduleId} (academy: ${scheduleAcademyId}), invalid students: ${invalidStudents.join(', ')}`);
+         |                     ^
+      96 |             return {
+      97 |                 valid: false,
+      98 |                 error: `Academy mismatch for students: ${invalidStudents.join(', ')}`,
+
+      at error (utils/attendanceValidator.js:95:21)
+      at Object.<anonymous> (__tests__/utils/attendanceValidator.test.js:108:24)
+
+    console.error
+      [SECURITY] Error validating batch attendance: Error: timeout
+          at Object.<anonymous> (/Users/etlab/worktrees/pacapro-peak-class-planning/backend/__tests__/utils/attendanceValidator.test.js:122:40)
+          at Promise.then.completed (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:316:40)
+          at _runTest (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:121:9)
+          at run (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/Users/etlab/projects/pacapro-vultr-work/backend/node_modules/jest-runner/build/runTest.js:444:34)
+
+      103 |         return { valid: true };
+      104 |     } catch (error) {
+    > 105 |         console.error('[SECURITY] Error validating batch attendance:', error);
+          |                 ^
+      106 |         return { valid: false, error: error.message };
+      107 |     }
+      108 | }
+
+      at error (utils/attendanceValidator.js:105:17)
+      at Object.<anonymous> (__tests__/utils/attendanceValidator.test.js:124:24)
+
+PASS __tests__/services/studentPhotoStorage.test.js
+PASS __tests__/services/studentParentNameService.test.js
+PASS __tests__/services/consultationBridgeService.test.js
+PASS __tests__/services/adminSignupNotifier.test.js
+PASS __tests__/utils/errorHandler.test.js
+PASS __tests__/scheduler/gradePromotionScheduler.test.js
+  ● Console
+
+    console.log
+      🎓 학년 자동 진급 스케줄러 초기화 완료 (매년 2월 1일 01:00 실행)
+
+      at log (scheduler/gradePromotionScheduler.js:130:13)
+
+    console.log
+      [GradePromotionScheduler] Starting grade promotion... (2026-10-06T11:44:11.803Z)
+
+      at log (scheduler/gradePromotionScheduler.js:28:13)
+
+    console.log
+        고2 → 고3: 2명
+
+      at log (scheduler/gradePromotionScheduler.js:73:21)
+
+    console.log
+      [GradePromotionScheduler] Completed - Total promoted: 2명
+
+      at log (scheduler/gradePromotionScheduler.js:76:17)
+
+    console.log
+      [GradePromotionScheduler] Starting grade promotion... (2026-10-06T11:44:11.804Z)
+
+      at log (scheduler/gradePromotionScheduler.js:28:13)
+
+    console.log
+        고2 → 고3: 1명
+
+      at log (scheduler/gradePromotionScheduler.js:73:21)
+
+    console.log
+      [GradePromotionScheduler] Completed - Total promoted: 1명
+
+      at log (scheduler/gradePromotionScheduler.js:76:17)
+
+    console.log
+      [GradePromotionScheduler] Starting grade promotion... (2026-10-06T11:44:11.804Z)
+
+      at log (scheduler/gradePromotionScheduler.js:28:13)
+
+    console.log
+        고3 → N수: 1명
+
+      at log (scheduler/gradePromotionScheduler.js:73:21)
+
+    console.log
+      [GradePromotionScheduler] Completed - Total promoted: 1명
+
+      at log (scheduler/gradePromotionScheduler.js:76:17)
+
+PASS __tests__/repositories/seasonGraduationRepository.test.js
+PASS __tests__/models/maxEngineSyncPage.test.js
+PASS __tests__/routes/student-consultations-academy-scope.test.js
+PASS __tests__/utils/dueDateCalculator.test.js
+PASS __tests__/repositories/databaseResetRepository.test.js
+PASS __tests__/services/consultationCandidateService.test.js
+PASS __tests__/utils/studentNumberGenerator.test.js
+PASS __tests__/scheduler/notificationScheduler.test.js
+PASS __tests__/repositories/restCreditRepository.test.js
+PASS __tests__/repositories/trialStatusRepository.test.js
+PASS __tests__/services/userService.test.js
+PASS __tests__/services/studentContextService.test.js
+PASS __tests__/services/seasonGraduationService.test.js
+PASS __tests__/services/onboardingService.test.js
+PASS __tests__/services/maxEngineSync.test.js
+PASS __tests__/utils/respond.test.js
+PASS __tests__/scheduler/seasonLifecycleScheduler.test.js
+PASS __tests__/middleware/expectedAcademy.test.js
+PASS __tests__/config/maxlinkWebhook.test.js
+PASS __tests__/routes/notifications/test/utils.test.js
+PASS __tests__/routes/jungsi/autoDiscovery.test.js
+PASS __tests__/services/studentGradePromotionService.test.js
+PASS __tests__/services/seasonAftercarePolicy.test.js
+PASS __tests__/services/maxlinkWebhookDispatcher.test.js
+PASS __tests__/services/academyEventService.test.js
+PASS __tests__/routes/public-reservation-scope.test.js
+PASS __tests__/utils/peakSso.test.js
+PASS __tests__/utils/proratedPaymentDueDate.test.js
+PASS __tests__/utils/env-validator.test.js
+PASS __tests__/repositories/maxlinkWebhookOutbox.test.js
+PASS __tests__/routes/notifications/send/utils.test.js
+PASS __tests__/services/studentAdmissionBoth.test.js
+PASS __tests__/services/instructorMonthlyScheduleService.test.js
+PASS __tests__/services/instructorCalendarService.test.js
+PASS __tests__/migrations/studentAdmissionTypeMigration.test.js
+
+Summary of all failing tests
+FAIL __tests__/routes/seasons/enrollments.test.js
+  ● PUT /paca/seasons/enrollments/:id › 200: dynamic update + 응답 표면 {message, enrollment}
+
+    read ECONNRESET
+
+
+
+
+Test Suites: 1 failed, 9 skipped, 158 passed, 159 of 168 total
+Tests:       1 failed, 88 skipped, 1275 passed, 1364 total
+Snapshots:   0 total
+Time:        5.595 s, estimated 12 s
+Ran all test suites.

@@ -1,0 +1,13 @@
+PASS __tests__/models/maxEngineExercisePack.test.js
+  ✓ standard snapshot follows requested IDs, independent of query order, and excludes database identities (1 ms)
+  ✓ missing source fails rather than exporting another or a guessed exercise (3 ms)
+  ✓ missing exercise tags normalize to an empty list without erasing zero defaults
+  ✓ invalid exercise tags "[invalid JSON" reject the snapshot with PEAK_PACK_INVALID (1 ms)
+  ✓ invalid exercise tags {"warmup": true} reject the snapshot with PEAK_PACK_INVALID
+  ✓ invalid exercise tags [123] reject the snapshot with PEAK_PACK_INVALID
+
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        0.125 s, estimated 1 s
+Ran all test suites matching /__tests__\/models\/maxEngineExercisePack.test.js/i.

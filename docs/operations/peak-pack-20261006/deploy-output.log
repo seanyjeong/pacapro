@@ -1,0 +1,72 @@
+{
+  "status": "deployed_verified",
+  "at": "2026-10-06T11:53:51.621073+00:00",
+  "version": "0.4.1",
+  "backup": "/root/backups/peak-mcp-pack-20261006T115346Z",
+  "previous_release": "/opt/max-business-mcp/releases/teaching-20261006-6e73b9fe",
+  "release": "/opt/max-business-mcp/releases/pack-20261006-a6d8b461",
+  "candidate_files": 13,
+  "services": [
+    "paca-failover.service",
+    "paca-mcp.service",
+    "peak-mcp.service"
+  ],
+  "env_unchanged": true,
+  "schema_migrations": 0,
+  "operational_business_confirm_calls": 0,
+  "candidate_commits": {
+    "paca": "9217fda1e7903acf6971fb810c552637fe87e7d0",
+    "mcp": "a6d8b46145b7d3e5a71d4ed95e320f832f7cd9c4"
+  },
+  "health": {
+    "paca": {
+      "status": "OK",
+      "timestamp": "2026-10-06T11:53:51.524Z",
+      "uptime": 2.105395876,
+      "environment": "production"
+    },
+    "peak": {
+      "status": "OK",
+      "service": "P-EAK",
+      "timestamp": "2026-10-06T11:53:51.532Z",
+      "uptime": 1723.169500432
+    },
+    "paca_mcp": {
+      "ok": true,
+      "provider": "paca",
+      "version": "0.4.1"
+    },
+    "peak_mcp": {
+      "ok": true,
+      "provider": "peak",
+      "version": "0.4.1"
+    }
+  },
+  "public_health": {
+    "paca": {
+      "status": "OK",
+      "timestamp": "2026-10-06T11:53:51.581Z",
+      "uptime": 2.162845926,
+      "environment": "production"
+    },
+    "peak": {
+      "status": "OK",
+      "service": "P-EAK",
+      "timestamp": "2026-10-06T11:53:51.595Z",
+      "uptime": 1723.232499613
+    },
+    "paca_mcp": {
+      "ok": true,
+      "provider": "paca",
+      "version": "0.4.1"
+    },
+    "peak_mcp": {
+      "ok": true,
+      "provider": "peak",
+      "version": "0.4.1"
+    }
+  },
+  "source_hashes_matched": true,
+  "backup_integrity_verified": true,
+  "authenticated_catalog": "pending"
+}

@@ -1,0 +1,25 @@
+PASS __tests__/routes/seasons/enrollments.test.js
+  POST /paca/seasons/enrollments/:id/pay
+    ✓ 404: 미존재 enrollment (17 ms)
+    ✓ 403: 다른 학원 enrollment (2 ms)
+    ✓ 400: 이미 paid (1 ms)
+    ✓ 200: 정상 — UPDATE + revenues INSERT + decrypt 호출 + 응답 표면 (2 ms)
+    ✓ 5xx: 한국어 메시지 (1 ms)
+  PUT /paca/seasons/enrollments/:id
+    ✓ 400: updates 0건 (1 ms)
+    ✓ 200: dynamic update + 응답 표면 {message, enrollment} (1 ms)
+    ✓ 5xx: 한국어 메시지 (1 ms)
+  POST /paca/seasons/enrollments/:id/refund-preview
+    ✓ 200: refund 계산 + {enrollment, cancellation_date, refund, academy} 표면 (2 ms)
+    ✓ 부분납부 결제 레코드가 있으면 실제 기납부액으로 refund를 계산한다 (2 ms)
+    ✓ 5xx: 한국어 메시지 (1 ms)
+  POST /paca/seasons/enrollments/:id/cancel
+    ✓ 400: 이미 cancelled
+    ✓ 200: refund expense INSERT + DELETE student_seasons + 응답 {message, refundCalculation} (1 ms)
+    ✓ 5xx: 한국어 메시지 (2 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       14 passed, 14 total
+Snapshots:   0 total
+Time:        0.204 s, estimated 1 s
+Ran all test suites matching /__tests__\/routes\/seasons\/enrollments.test.js/i.

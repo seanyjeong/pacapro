@@ -1,0 +1,47 @@
+PASS __tests__/routes/students/credits.test.js
+  GET /paca/students/:id/rest-credits
+    ✓ 학생 미존재 → 404 + 한국어 메시지 (16 ms)
+    ✓ 정상: { message, student, credits, pendingTotal } 표면 + pendingTotal 합산 (2 ms)
+    ✓ ADR-005: pool.execute 만 사용 (pool.query / db.query 호출 0건) (1 ms)
+    ✓ 5xx 한국어 + detail 누출 0건 (1 ms)
+  POST /paca/students/:id/manual-credit
+    ✓ reason 누락 → 400 한국어 (6 ms)
+    ✓ 입력 모드 셋 다 없음 → 400 한국어 (1 ms)
+    ✓ class_count 범위 초과 → 400 한국어 (1 ms)
+    ✓ direct_amount 범위 외 → 400 한국어
+    ✓ 학생 미존재 → 404 한국어 (3 ms)
+    ✓ direct_amount 모드 정상: 입력 금액 그대로 INSERT + 응답 표면 보존 (23 ms)
+    ✓ 회차 모드 정상: monthly_tuition / weekly_count 로 계산 + 1,000원 절사 (1 ms)
+    ✓ 날짜 모드: countClassDaysInPeriod 호출 + 0건 시 400 한국어 (1 ms)
+    ✓ 월 수강료 0 + 회차 모드 → 400 한국어 (1 ms)
+    ✓ 5xx + e.message 누출 0건 (1 ms)
+  GET /paca/students/:id/credits
+    ✓ 정상: { credits } 표면 보존 (1 ms)
+    ✓ ADR-005: pool.execute 만 + 학원/학생 격리 params (1 ms)
+  PUT /paca/students/:id/credits/:creditId
+    ✓ 크레딧 미존재 → 404 한국어 (1 ms)
+    ✓ status='applied' 직접 변경 → 400 한국어
+    ✓ used 상태 + 금액 변경 시도 → 400 한국어 (2 ms)
+    ✓ 업데이트 필드 0개 → 400 한국어
+    ✓ 정상: credit_amount 수정 → remaining_amount 동시 업데이트 + { message } 표면 (1 ms)
+    ✓ ADR-005: pool.execute 만 사용 (1 ms)
+  DELETE /paca/students/:id/credits/:creditId
+    ✓ 크레딧 미존재 → 404 한국어
+    ✓ used 상태 → 400 한국어 (회계 정합성) (1 ms)
+    ✓ 정상: { message } 표면 + ADR-005 (1 ms)
+  POST /paca/students/:id/credits/:creditId/apply
+    ✓ year_month 누락 / 형식 불일치 → 400 한국어 (1 ms)
+    ✓ 크레딧 미존재 → 404 한국어
+    ✓ 이미 applied → 400 한국어 (1 ms)
+    ✓ 학원비 미존재 → 404 한국어 (year_month 메시지)
+    ✓ 학원비 paid → 400 한국어 (1 ms)
+    ✓ 정상 (전액 적용): student_payments + rest_credits 둘 다 UPDATE + 응답 표면 보존 (1 ms)
+    ✓ 정상 (부분 적용): 크레딧 잔액 > 학원비 → status="partial"
+    ✓ ADR-005: pool.execute 만 + payments / toss 미접촉 보장 (1 ms)
+    ✓ 5xx + e.message 누출 0건 (1 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       34 passed, 34 total
+Snapshots:   0 total
+Time:        0.281 s, estimated 1 s
+Ran all test suites matching /__tests__\/routes\/students\/credits.test.js/i.

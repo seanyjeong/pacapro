@@ -1,0 +1,9 @@
+{
+  "previous_release": "/opt/max-business-mcp/releases/teaching-20261006-6e73b9fe",
+  "release": "/opt/max-business-mcp/releases/pack-20261006-a6d8b461",
+  "commits": {
+    "paca": "9217fda1e7903acf6971fb810c552637fe87e7d0",
+    "mcp": "a6d8b46145b7d3e5a71d4ed95e320f832f7cd9c4"
+  },
+  "version": "0.4.1"
+}

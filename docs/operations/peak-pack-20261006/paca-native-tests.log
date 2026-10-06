@@ -1,0 +1,14 @@
+PASS __tests__/integration/max-engine-pack-mysql.test.js
+PASS __tests__/models/maxEngineExercisePack.test.js
+PASS __tests__/integration/max-engine-sync-mysql.test.js
+PASS __tests__/integration/max-engine-full-mysql.test.js
+PASS __tests__/integration/max-engine-teaching-mysql.test.js
+PASS __tests__/integration/max-engine-efficient-mysql.test.js
+PASS __tests__/integration/max-engine-settlement-mysql.test.js
+PASS __tests__/models/maxEngineTeaching.test.js
+
+Test Suites: 8 passed, 8 total
+Tests:       82 passed, 82 total
+Snapshots:   0 total
+Time:        6.102 s
+Ran all test suites matching /__tests__\/models\/maxEngineExercisePack.test.js|__tests__\/models\/maxEngineTeaching.test.js|__tests__\/integration\/max-engine-pack-mysql.test.js|__tests__\/integration\/max-engine-teaching-mysql.test.js|__tests__\/integration\/max-engine-full-mysql.test.js|__tests__\/integration\/max-engine-efficient-mysql.test.js|__tests__\/integration\/max-engine-settlement-mysql.test.js|__tests__\/integration\/max-engine-sync-mysql.test.js/i.
