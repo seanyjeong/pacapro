@@ -1,0 +1,32 @@
+[
+  {
+    "path": "backend/config/maxEngineSync.js",
+    "before": null,
+    "after": "143cae14fc5ad423ba1791181d2cc23ffacdd6258dcb316cd7abcfcfa70d3a3e"
+  },
+  {
+    "path": "backend/models/maxEngineSyncPage.js",
+    "before": null,
+    "after": "c6b187beffcec69a1f0a4a48ab274b9ac742778caba3c05036b52570933c1e09"
+  },
+  {
+    "path": "backend/repositories/maxEngineSyncRepository.js",
+    "before": null,
+    "after": "4280ac9ad8e147ec813252c9e7267cd91e57f3d681c56196b31cdd61c56968ad"
+  },
+  {
+    "path": "backend/services/maxEngineSyncService.js",
+    "before": null,
+    "after": "430b9ee568f658a05ba6962ce42ab393816a5a718dcecfcbb03b4ad7b23c8f73"
+  },
+  {
+    "path": "backend/routes/integrations/sync.js",
+    "before": null,
+    "after": "66eb331cb400244dfa983d85b25121e649bc69c203907553897ad76ac6ad98d9"
+  },
+  {
+    "path": "backend/routes/integrations/index.js",
+    "before": "400534e210f09d4865cea0ddc3219fd68d04bc1b7b92a2bc3b8df9f722e7d235",
+    "after": "798ab37025a8b5271bc359e628b2786e68106b3b2a3ba901bc6128807a3930db"
+  }
+]

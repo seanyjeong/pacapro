@@ -1,11 +1,63 @@
 {
-  "status": "local_verified_ready_to_deploy",
+  "status": "deployed_verified",
   "frontend_version": "4.0.57",
-  "backend_all": {"node": "22.20.0", "suites_passed": 157, "tests_passed": 1267, "opt_in_skipped": 69},
-  "native_mysql": {"node": "18.19.1", "mysql": "8.4", "port": 13324, "suites_passed": 6, "tests_passed": 59},
-  "lint": {"errors": 0, "existing_warnings": 86},
+  "backend_all": {
+    "node": "22.20.0",
+    "suites_passed": 157,
+    "tests_passed": 1267,
+    "opt_in_skipped": 69
+  },
+  "native_mysql": {
+    "node": "18.19.1",
+    "mysql": "8.4",
+    "port": 13324,
+    "suites_passed": 6,
+    "tests_passed": 59
+  },
+  "lint": {
+    "errors": 0,
+    "existing_warnings": 86
+  },
   "runtime_files": 6,
   "production_env_written": false,
   "operational_student_writes": 0,
-  "notes": "Initial full-suite runs had transient existing HTTP failures; unchanged complete rerun passed. New native HTTP tests all passed. Prior frontend type/build/browser evidence remains valid because no frontend source or dependencies changed."
+  "notes": "Initial full-suite runs had transient existing HTTP failures; unchanged complete rerun passed. New native HTTP tests all passed. Prior frontend type/build/browser evidence remains valid because no frontend source or dependencies changed.",
+  "production": {
+    "status": "deployed_verified",
+    "at": "2026-10-06T10:18:23.217727+00:00",
+    "backup": "/root/backups/paca-student-sync-20261006T101815Z",
+    "candidate_files": 6,
+    "source_guard_passed": true,
+    "backup_integrity_verified": true,
+    "migration_applied": false,
+    "before": {
+      "rows": 2072,
+      "sha256": "018280d3ec9fb2d8196134f1dfc89a8543fe621932a5678df09f896d98c03309"
+    },
+    "after": {
+      "rows": 2072,
+      "sha256": "018280d3ec9fb2d8196134f1dfc89a8543fe621932a5678df09f896d98c03309"
+    },
+    "student_values_preserved": true,
+    "env_unchanged": true,
+    "env_written": false,
+    "sync_key_created": false,
+    "internal_no_key_http": 503,
+    "public_no_key_http": 503,
+    "public_health_http": 200,
+    "frontend_version": "4.0.57",
+    "candidate_commit": "14ef6d99e204531f6b10b99caa5b4ee5f694aa97",
+    "rollback_tag": "rollback/paca-student-sync-20261006",
+    "paca_service": "active",
+    "peak_health_http": 200,
+    "mcp_health": {
+      "ok": true,
+      "provider": "paca",
+      "version": "0.3.0"
+    },
+    "cors_origin": "https://pacapro.vercel.app",
+    "all_candidate_hashes_rechecked": true,
+    "key_and_allowlist_configured": false,
+    "live_authenticated_sync_exercised": false
+  }
 }

@@ -1,0 +1,1 @@
+both 운영4.0.57과 sync 읽기 경로 운영 반영·검증 완료. 허용 교육원은 오케스트레이터 결정대로 MAX_ENGINE_SYNC_ACADEMY_IDS로 확인합니다. 공유 키·목록 미설정 상태503을 운영 확인했고 env를 수정하지 않았습니다. 결과는 paca-admission-both-deploy-20261006.md 및 CODEX-PACA-ADMISSION-BOTH-RESULT.md에 있습니다.
