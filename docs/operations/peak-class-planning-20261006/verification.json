@@ -1,5 +1,5 @@
 {
-  "status": "local_verified_ready_for_deployment",
+  "status": "deployed_verified",
   "mcp_version": "0.4.0",
   "backend_all": {
     "passed": 1273,
@@ -52,5 +52,69 @@
   },
   "commands": 30,
   "frontend_changes": false,
-  "notes": "Existing HTTP fixture transient failures disappeared with test-process keepalive disabled. Initial synthetic fixture omitted active flags; corrected. Combined E2E fixture retained old ledgers; reset only disposable test ledgers and all checks passed."
+  "notes": "Existing HTTP fixture transient failures disappeared with test-process keepalive disabled. Initial synthetic fixture omitted active flags; corrected. Combined E2E fixture retained old ledgers; reset only disposable test ledgers and all checks passed.",
+  "production": {
+    "status": "deployed_verified",
+    "at": "2026-10-06T11:25:10.598589+00:00",
+    "version": "0.4.0",
+    "backup": "/root/backups/peak-mcp-class-planning-20261006T112456Z",
+    "previous_release": "/opt/max-business-mcp/releases/settlement-20261004-e4c2adf5",
+    "release": "/opt/max-business-mcp/releases/teaching-20261006-6e73b9fe",
+    "candidate_files": 26,
+    "services": [
+      "paca-failover.service",
+      "peak-failover.service",
+      "paca-mcp.service",
+      "peak-mcp.service"
+    ],
+    "env_unchanged": true,
+    "schema_migrations": 0,
+    "operational_business_confirm_calls": 0,
+    "candidate_commits": {
+      "paca": "90b878e",
+      "peak": "3bfd719",
+      "mcp": "6e73b9fe"
+    },
+    "health": {
+      "paca": {
+        "status": "OK",
+        "timestamp": "2026-10-06T11:25:10.452Z",
+        "uptime": 2.136185745,
+        "environment": "production"
+      },
+      "peak": {
+        "status": "OK",
+        "service": "P-EAK",
+        "timestamp": "2026-10-06T11:25:10.472Z",
+        "uptime": 2.109458215
+      },
+      "paca_mcp": {
+        "ok": true,
+        "provider": "paca",
+        "version": "0.4.0"
+      },
+      "peak_mcp": {
+        "ok": true,
+        "provider": "peak",
+        "version": "0.4.0"
+      }
+    },
+    "source_hashes_matched": true,
+    "backup_integrity_verified": true,
+    "authenticated_catalog": {
+      "peak_connection": {
+        "passed": true,
+        "resources": 72,
+        "commands": 30,
+        "teaching_context": true,
+        "new_commands_present": true,
+        "confirm_calls": 0
+      },
+      "paca_connection": {
+        "tested": false,
+        "reason": "Connector requires link_id; PEAK authenticated catalog validates the shared backend catalog."
+      }
+    },
+    "rollback_tag": "rollback/peak-mcp-class-planning-20261006"
+  }
 }

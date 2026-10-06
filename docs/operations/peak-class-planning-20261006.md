@@ -15,3 +15,11 @@ MCP 후보0.4.0: PEAK18/PACA27 도구, 조회72종·확인 변경30종. `teachin
 운영 반영 절차: 현재 26개 대상 원본 해시/신규 파일 부재 확인 → 제한 권한 서버 백업(양 backend, paca/peak consistent dump, MCP 릴리스/포인터, OAuth online backup, env) → 교체 직전 동일 해시 재확인 → PACA17파일·PEAK1파일 교체 → 기존 MCP 릴리스/의존성을 복사한 새0.4.0 릴리스에 MCP8파일만 적용 → PACA·PEAK backend와 양 MCP 재시작 → 공개 health/인증 catalog/도구 목록 확인. 스키마 migration, env/key/의존성 변경 또는 실학생 confirm은 없다.
 
 되돌리기 기준은 각 저장소의 `rollback/peak-mcp-class-planning-20261006` 태그와 서버 backup manifest다. 후보 runtime 파일만 복원하고 신규 경로는 제거하며 이전 MCP 포인터로 되돌려 네 서비스만 재시작한다. 실제 업무·OAuth 자료를 덤프로 덮어쓰지 않는다. 실제 운영 결과는 검증 JSON과 이 문서에 추가한다.
+
+## 실제 운영 반영
+
+2026-10-06 **20:25:10 KST** MCP0.4.0 운영 반영·검증 완료. PACA17/PEAK1/MCP8파일만 적용, 네 서비스 재시작 및 공개 health200 확인. 백업 `/root/backups/peak-mcp-class-planning-20261006T112456Z`, 새 릴리스 `/opt/max-business-mcp/releases/teaching-20261006-6e73b9fe`, 이전 릴리스 `settlement-20261004-e4c2adf5`. 세 저장소 브랜치와 rollback 태그 푸시 완료. env·키·의존성 그대로, schema migration0, 운영 실학생/선생 confirm0회.
+
+기존 GPT 실기관리 연결에서 실제 인증 catalog72/30 및 teaching_context/신규 작업5종 응답을 확인했다. 학원관리 연결은 connector의 link_id 인자 요구 때문에 별도 검증하지 않았으며 성공으로 보고하지 않는다. 양 MCP 서버 health0.4.0과 합성 OAuth/프로토콜 시험은 통과했다. 사진의 실제 원장 계획/학생/선생 배정은 이번 배포에서 변경하지 않았다. GPT 도구 목록이 예전 상태이면 연결의 도구 목록을 갱신해야 신규 전용 도구가 보인다.
+
+현재 원본26개 해시와 신규 경로 부재를 백업 전·교체 직전 두 번 확인했고 최종 설치26개 해시도 후보와 일치한다. backup tar/gzip/SHA-256 및 양 OAuth online snapshot integrity 검증 통과. 반영 후보: PACA90b878e, PEAK3bfd719, MCP6e73b9fe. 프론트 소스는 바꾸지 않아 PACA4.0.57/PEAK5.9.6을 별도 재배포하지 않았다.
