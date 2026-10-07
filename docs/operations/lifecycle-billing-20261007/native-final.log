@@ -1,0 +1,39 @@
+  console.warn
+    [AUTH] ⚠️ PACA_NOTIFICATION_API_KEY 미설정. 내부 자동화 인증이 작동하지 않습니다.
+
+      18 | }
+      19 | if (!PACA_NOTIFICATION_API_KEY) {
+    > 20 |     console.warn('[AUTH] ⚠️ PACA_NOTIFICATION_API_KEY 미설정. 내부 자동화 인증이 작동하지 않습니다.');
+         |             ^
+      21 | }
+      22 |
+      23 | /**
+
+      at Object.warn (middleware/auth.js:20:13)
+      at Object.require (routes/students/enrollment.js:40:55)
+      at Object.require (__tests__/integration/student-lifecycle-billing-mysql.test.js:25:5)
+
+PASS __tests__/integration/student-lifecycle-billing-mysql.test.js
+  native withdrawal and both pause routes preserve financial history atomically
+    ✓ withdraw withdrawal cancels unpaid bills, closes only outstanding balances and ends only owned seasons (31 ms)
+    ✓ update withdrawal cancels unpaid bills, closes only outstanding balances and ends only owned seasons (16 ms)
+    ✓ update first-day pause cancels every unpaid monthly invoice while preserving paid balances and other scopes (12 ms)
+    ✓ process-rest first-day pause cancels every unpaid monthly invoice while preserving paid balances and other scopes (9 ms)
+    ✓ update midmonth pause prorates all monthly invoices and never lowers a bill below the amount already paid (8 ms)
+    ✓ process-rest midmonth pause prorates all monthly invoices and never lowers a bill below the amount already paid (8 ms)
+    ✓ retrying the same pause preserves MySQL-normalized proration, billing audit and the original rest credit (11 ms)
+    ✓ withdrawal failure after one invoice and audit were changed rolls back bills, student status and every audit row (9 ms)
+    ✓ update pause failure restores active status, prior invoices and audit rows (10 ms)
+    ✓ process-rest pause failure restores active status, prior invoices and audit rows (11 ms)
+    ✓ withdraw forbids another academy student without mutating status or bills (5 ms)
+    ✓ update forbids another academy student without mutating status or bills (5 ms)
+    ✓ process-rest forbids another academy student without mutating status or bills (5 ms)
+    ✓ update impossible pause date cannot persist a student state transition (3 ms)
+    ✓ process-rest impossible pause date cannot persist a student state transition (4 ms)
+    ✓ normal native JWT authentication is required before withdrawal can touch a student (2 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       16 passed, 16 total
+Snapshots:   0 total
+Time:        0.923 s, estimated 1 s
+Ran all test suites matching /__tests__\/integration\/student-lifecycle-billing-mysql.test.js/i.

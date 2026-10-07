@@ -54,12 +54,14 @@ jest.mock('../../../utils/logger', () => ({
   warn: jest.fn(),
   error: jest.fn(),
 }));
+jest.mock('../../../services/studentLifecycleBillingService', () => ({ withdraw: jest.fn() }));
 
 const express = require('express');
 const request = require('supertest');
 const pool = require('../../../config/database');
 const { decrypt } = require('../../../utils/encryption');
 const registerEnrollmentRoutes = require('../../../routes/students/enrollment');
+const lifecycleBilling = require('../../../services/studentLifecycleBillingService');
 
 function buildApp() {
   const app = express();
@@ -81,6 +83,8 @@ beforeEach(() => {
   pool.__conn.rollback.mockClear();
   pool.__conn.release.mockClear();
   decrypt.mockClear();
+  lifecycleBilling.withdraw.mockReset().mockResolvedValue({ cancelledPayments: 0, adjustedPayments: 0,
+    waivedAmount: 0, paymentIds: [], cancelledSeasons: [] });
 });
 
 // ==================== GET /rest-ended ====================
@@ -158,7 +162,7 @@ describe('GET /paca/students/rest-ended', () => {
 // ==================== POST /:id/withdraw ====================
 describe('POST /paca/students/:id/withdraw', () => {
   test('200 응답 표면: { message, student } + UPDATE + 미래 attendance DELETE (ADR-013)', async () => {
-    pool.execute
+    pool.__conn.execute
       .mockResolvedValueOnce([[{ id: 5, name: 'enc-name', status: 'active' }]]) // SELECT
       .mockResolvedValueOnce([{ affectedRows: 1 }]) // UPDATE students
       .mockResolvedValueOnce([{ affectedRows: 3 }]); // DELETE attendance
@@ -176,17 +180,19 @@ describe('POST /paca/students/:id/withdraw', () => {
       withdrawal_reason: '이사',
     });
     // 3번 호출: SELECT + UPDATE + DELETE
-    expect(pool.execute).toHaveBeenCalledTimes(3);
+    expect(pool.__conn.execute).toHaveBeenCalledTimes(3);
     expect(pool.query).not.toHaveBeenCalled();
-    const updateCall = pool.execute.mock.calls[1];
+    const updateCall = pool.__conn.execute.mock.calls[1];
     expect(updateCall[0]).toMatch(/UPDATE students/);
-    expect(updateCall[0]).toMatch(/status = 'withdrawn'/);
-    const deleteCall = pool.execute.mock.calls[2];
+    expect(updateCall[0]).toMatch(/status\s*=\s*'withdrawn'/);
+    const deleteCall = pool.__conn.execute.mock.calls[2];
     expect(deleteCall[0]).toMatch(/DELETE a FROM attendance/);
+    expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
+    expect(pool.__conn.release).toHaveBeenCalledTimes(1);
   });
 
   test('404 학생 없음 → 한국어 메시지', async () => {
-    pool.execute.mockResolvedValueOnce([[]]);
+    pool.__conn.execute.mockResolvedValueOnce([[]]);
     const app = buildApp();
     const res = await request(app)
       .post('/paca/students/999/withdraw')
@@ -197,7 +203,7 @@ describe('POST /paca/students/:id/withdraw', () => {
   });
 
   test('400 이미 퇴원 → 한국어 메시지', async () => {
-    pool.execute.mockResolvedValueOnce([[{ id: 5, name: 'n', status: 'withdrawn' }]]);
+    pool.__conn.execute.mockResolvedValueOnce([[{ id: 5, name: 'n', status: 'withdrawn' }]]);
     const app = buildApp();
     const res = await request(app).post('/paca/students/5/withdraw').send({});
     expect(res.status).toBe(400);
@@ -206,12 +212,23 @@ describe('POST /paca/students/:id/withdraw', () => {
   });
 
   test('500 에러 한국어 메시지 (ADR-003)', async () => {
-    pool.execute.mockRejectedValueOnce(new Error('db down'));
+    pool.__conn.execute.mockRejectedValueOnce(new Error('db down'));
     const app = buildApp();
     const res = await request(app).post('/paca/students/5/withdraw').send({});
     expect(res.status).toBe(500);
     expect(res.body.error).toBe('Server Error');
     expect(res.body.message).toMatch(/퇴원 처리에 실패/);
+  });
+  test('billing failure rolls back the withdrawal and never commits an incomplete student transition', async () => {
+    pool.__conn.execute.mockResolvedValueOnce([[{ id: 5, name: 'n', status: 'active' }]])
+      .mockResolvedValue([{ affectedRows: 1 }]);
+    lifecycleBilling.withdraw.mockRejectedValueOnce(new Error('private billing failure'));
+    const res = await request(buildApp()).post('/paca/students/5/withdraw').send({ withdrawal_date: '2026-04-30' });
+    expect(res.status).toBe(500);
+    expect(pool.__conn.rollback).toHaveBeenCalledTimes(1);
+    expect(pool.__conn.commit).not.toHaveBeenCalled();
+    expect(pool.__conn.release).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(res.body)).not.toContain('private billing failure');
   });
 });
 

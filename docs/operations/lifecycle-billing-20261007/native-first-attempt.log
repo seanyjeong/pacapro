@@ -1,0 +1,111 @@
+PASS __tests__/integration/max-engine-full-mysql.test.js
+FAIL __tests__/integration/student-lifecycle-billing-mysql.test.js
+  ● Console
+
+    console.warn
+      [AUTH] ⚠️ PACA_NOTIFICATION_API_KEY 미설정. 내부 자동화 인증이 작동하지 않습니다.
+
+      18 | }
+      19 | if (!PACA_NOTIFICATION_API_KEY) {
+    > 20 |     console.warn('[AUTH] ⚠️ PACA_NOTIFICATION_API_KEY 미설정. 내부 자동화 인증이 작동하지 않습니다.');
+         |             ^
+      21 | }
+      22 |
+      23 | /**
+
+      at Object.warn (middleware/auth.js:20:13)
+      at Object.require (routes/students/enrollment.js:40:55)
+      at Object.require (__tests__/integration/student-lifecycle-billing-mysql.test.js:25:5)
+
+  ● native withdrawal and both pause routes preserve financial history atomically › update first-day pause cancels every unpaid monthly invoice while preserving paid balances and other scopes
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      102 |     await pauseBills();
+      103 |     const before = await rows('student_payments'), history = await financialHistory();
+    > 104 |     const response = await pause(route, '2026-05-01'); expect(response.status).toBe(200);
+          |                                                                                ^
+      105 |     expect((await getStudent(101)).status).toBe('paused');
+      106 |     const after = await rows('student_payments'); expect(after).toHaveLength(before.length);
+      107 |     for (const id of [101, 103]) expect(after.find(row => row.id === id)).toMatchObject({ final_amount: '0.00', paid_amount: '0.00', payment_status: 'cancelled' });
+
+      at toBe (__tests__/integration/student-lifecycle-billing-mysql.test.js:104:80)
+
+  ● native withdrawal and both pause routes preserve financial history atomically › process-rest first-day pause cancels every unpaid monthly invoice while preserving paid balances and other scopes
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      102 |     await pauseBills();
+      103 |     const before = await rows('student_payments'), history = await financialHistory();
+    > 104 |     const response = await pause(route, '2026-05-01'); expect(response.status).toBe(200);
+          |                                                                                ^
+      105 |     expect((await getStudent(101)).status).toBe('paused');
+      106 |     const after = await rows('student_payments'); expect(after).toHaveLength(before.length);
+      107 |     for (const id of [101, 103]) expect(after.find(row => row.id === id)).toMatchObject({ final_amount: '0.00', paid_amount: '0.00', payment_status: 'cancelled' });
+
+      at toBe (__tests__/integration/student-lifecycle-billing-mysql.test.js:104:80)
+
+  ● native withdrawal and both pause routes preserve financial history atomically › update midmonth pause prorates all monthly invoices and never lowers a bill below the amount already paid
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      115 |     await pauseBills('200000');
+      116 |     const before = await rows('student_payments'), history = await financialHistory();
+    > 117 |     const response = await pause(route, '2026-05-15'); expect(response.status).toBe(200);
+          |                                                                                ^
+      118 |     const after = await rows('student_payments'); expect(after).toHaveLength(before.length);
+      119 |     expect(after.find(row => row.id === 101)).toMatchObject({ final_amount: '135000.00', paid_amount: '0.00', payment_status: 'pending' });
+      120 |     expect(after.find(row => row.id === 102)).toMatchObject({ final_amount: '200000.00', paid_amount: '200000.00', payment_status: 'paid' });
+
+      at toBe (__tests__/integration/student-lifecycle-billing-mysql.test.js:117:80)
+
+  ● native withdrawal and both pause routes preserve financial history atomically › process-rest midmonth pause prorates all monthly invoices and never lowers a bill below the amount already paid
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      115 |     await pauseBills('200000');
+      116 |     const before = await rows('student_payments'), history = await financialHistory();
+    > 117 |     const response = await pause(route, '2026-05-15'); expect(response.status).toBe(200);
+          |                                                                                ^
+      118 |     const after = await rows('student_payments'); expect(after).toHaveLength(before.length);
+      119 |     expect(after.find(row => row.id === 101)).toMatchObject({ final_amount: '135000.00', paid_amount: '0.00', payment_status: 'pending' });
+      120 |     expect(after.find(row => row.id === 102)).toMatchObject({ final_amount: '200000.00', paid_amount: '200000.00', payment_status: 'paid' });
+
+      at toBe (__tests__/integration/student-lifecycle-billing-mysql.test.js:117:80)
+
+  ● native withdrawal and both pause routes preserve financial history atomically › retrying the same pause preserves MySQL-normalized proration, billing audit and the original rest credit
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 500
+
+      130 |       credit_type: 'carryover', source_payment_id: 104 };
+      131 |     const submit = () => request(server).post('/paca/students/101/process-rest').auth(token, { type: 'bearer' }).send(body);
+    > 132 |     const first = await submit(); expect(first.status).toBe(200);
+          |                                                        ^
+      133 |     const bills = await rows('student_payments'), audit = await rows('max_engine_payment_settlements'), credits = await rows('rest_credits');
+      134 |     expect(bills.find(row => row.id === 101)).toMatchObject({ final_amount: '135000.00', is_prorated: 1 });
+      135 |     expect(audit).toHaveLength(3); expect(credits).toHaveLength(1);
+
+      at Object.toBe (__tests__/integration/student-lifecycle-billing-mysql.test.js:132:56)
+
+PASS __tests__/integration/max-engine-settlement-mysql.test.js
+
+Test Suites: 1 failed, 2 passed, 3 total
+Tests:       5 failed, 51 passed, 56 total
+Snapshots:   0 total
+Time:        2.622 s
+Ran all test suites matching /__tests__\/integration\/student-lifecycle-billing-mysql.test.js|__tests__\/integration\/max-engine-settlement-mysql.test.js|__tests__\/integration\/max-engine-full-mysql.test.js/i.

@@ -6,7 +6,7 @@
  *
  * Endpoint (5건, fixed paths 우선 등록):
  *   - GET  /rest-ended       — 휴원 종료일 경과 학생 목록 (복귀 대기, days_overdue 포함)
- *   - POST /:id/withdraw     — 학생 퇴원 처리 + 미래 출결 예약 정리
+ *   - POST /:id/withdraw     — 학생 퇴원 처리 + 미납 정산 + 출결 예약 정리
  *   - POST /grade-upgrade    — 일괄 학년/상태 진급 (트랜잭션)
  *   - POST /auto-promote     — 신학기 자동 진급 + 졸업 처리 (트랜잭션, dry_run 지원)
  *   - GET  /:id/seasons      — 학생 시즌 등록 이력
@@ -29,7 +29,7 @@
  *   - 트랜잭션: pool.getConnection() → conn.execute → conn.commit/rollback/release
  *   - db.query / connection.query 잔존 0건 (mysql2 promise pool prepared statement 강제).
  *
- * 보안 (ADR-007): decrypt(value) 시그니처 무변경. auth/JWT/암호화/결제 영역 X (학사 데이터만).
+ * 보안 (ADR-007): decrypt(value) 시그니처 무변경. auth/JWT/암호화는 보존. 퇴원 청구 정산은 별도 service/repo에서 수행.
  *
  * 분리 결정 (ADR-006): 자동 진급은 enrollment/autoPromote.js로 분리해 500줄 제한을 지킨다.
  *
@@ -97,81 +97,8 @@ router.get('/rest-ended', verifyToken, requireRole('owner', 'admin', 'staff'), a
     }
 });
 
-/**
- * POST /paca/students/:id/withdraw — 퇴원 처리 (status='withdrawn' + 미래 미체크 출결 삭제).
- * 결제(payments) 미변경 (학사 데이터만). Access: students.edit 권한.
- * 응답: { message, student } (ADR-013 보존).
- */
-router.post('/:id/withdraw', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
-    const studentId = parseInt(req.params.id);
-    const { reason, withdrawal_date } = req.body;
-
-    try {
-        const [students] = await pool.execute(
-            'SELECT id, name, status FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
-            [studentId, req.user.academyId]
-        );
-
-        if (students.length === 0) {
-            return res.status(404).json({
-                error: 'Not Found',
-                message: '학생 정보를 찾을 수 없습니다.'
-            });
-        }
-
-        if (students[0].status === 'withdrawn') {
-            return res.status(400).json({
-                error: 'Bad Request',
-                message: '이미 퇴원 처리된 학생입니다.'
-            });
-        }
-
-        const finalWithdrawalDate = withdrawal_date || new Date().toISOString().split('T')[0];
-
-        await pool.execute(
-            `UPDATE students
-             SET status = 'withdrawn',
-                 withdrawal_date = ?,
-                 withdrawal_reason = ?,
-                 updated_at = NOW()
-             WHERE id = ?`,
-            [finalWithdrawalDate, reason || null, studentId]
-        );
-
-        // 출결 정리 정책 (사장님 확정 2026-05-04):
-        //  - 과거 (< today): 출석 이력 보존 (삭제 X)
-        //  - 당일 (= today): 무조건 삭제 (체크된 것도 — 퇴원했으니 그날 깨끗하게)
-        //  - 미래 (> today): 미체크 (NULL) 만 삭제 (이미 출석 처리된 것은 보존)
-        const today = new Date().toISOString().split('T')[0];
-        await pool.execute(
-            `DELETE a FROM attendance a
-             JOIN class_schedules cs ON a.class_schedule_id = cs.id
-             WHERE a.student_id = ?
-               AND (
-                 cs.class_date = ?
-                 OR (cs.class_date > ? AND a.attendance_status IS NULL)
-               )`,
-            [studentId, today, today]
-        );
-
-        res.json({
-            message: '퇴원 처리되었습니다',
-            student: {
-                id: studentId,
-                name: students[0].name,
-                status: 'withdrawn',
-                withdrawal_date: finalWithdrawalDate,
-                withdrawal_reason: reason
-            }
-        });
-    } catch (error) {
-        logger.error('Error withdrawing student:', error);
-        res.status(500).json({
-            error: 'Server Error',
-            message: '퇴원 처리에 실패했습니다. 잠시 후 다시 시도해주세요.'
-        });
-    }
-});
+// Withdrawal includes invoice settlement in one transaction.
+require('./enrollment/withdraw')(router);
 
 /**
  * POST /paca/students/grade-upgrade — bulk 진급 (트랜잭션). Access: students.edit 권한.

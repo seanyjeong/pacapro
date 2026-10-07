@@ -9,16 +9,20 @@
  *   - 정상 수정 → 200 + {message, student} 응답 표면 보존
  *   - 보안 헬퍼 ADR-007: encrypt + decryptFields 시그니처 보존
  *   - 5xx 한국어 + e.message 누출 0건
- *   - DB 호출 ADR-005: pool.execute 만
+ *   - DB 호출 ADR-005: conn.execute 로 학생 갱신과 후처리를 함께 저장한다.
  */
 
-jest.mock('../../../../config/database', () => ({
-    execute: jest.fn(), query: jest.fn(), getConnection: jest.fn(),
-}));
+jest.mock('../../../../config/database', () => {
+    const conn = { execute: jest.fn(), query: jest.fn(), beginTransaction: jest.fn().mockResolvedValue(),
+        commit: jest.fn().mockResolvedValue(), rollback: jest.fn().mockResolvedValue(), release: jest.fn() };
+    return { execute: jest.fn(), query: jest.fn(), getConnection: jest.fn().mockResolvedValue(conn), __conn: conn };
+});
+jest.mock('../../../../services/studentLifecycleBillingService', () => ({ pause: jest.fn(), withdraw: jest.fn(),
+    validateContext: jest.requireActual('../../../../models/studentLifecycleBilling').validateContext }));
 
 jest.mock('../../../../middleware/auth', () => ({
     verifyToken: jest.fn((req, res, next) => {
-        req.user = { academyId: 1, userId: 100, role: 'owner' };
+        req.user = { academyId: 1, id: 100, userId: 100, role: 'owner' };
         next();
     }),
     requireRole: jest.fn(() => (req, res, next) => next()),
@@ -49,6 +53,7 @@ const express = require('express');
 const request = require('supertest');
 const pool = require('../../../../config/database');
 const { encrypt, decryptFields } = require('../../../../utils/encryption');
+const lifecycleBilling = require('../../../../services/studentLifecycleBillingService');
 
 function makeApp() {
     const app = express();
@@ -96,41 +101,55 @@ function existingStudent(overrides = {}) {
 }
 
 beforeEach(() => {
-    pool.execute.mockReset();
+    pool.__conn.execute.mockReset();
+    pool.__conn.beginTransaction.mockClear(); pool.__conn.commit.mockClear();
+    pool.__conn.rollback.mockClear(); pool.__conn.release.mockClear();
+    lifecycleBilling.pause.mockReset(); lifecycleBilling.withdraw.mockReset();
     encrypt.mockClear();
     decryptFields.mockClear();
 });
 
 describe('PUT /paca/students/:id (update)', () => {
+    test('financial failure aborts an active-to-paused update and releases its transaction', async () => {
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent()]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: '2026-05-15' })]]);
+        lifecycleBilling.pause.mockRejectedValueOnce(new Error('private billing failure'));
+        const res = await request(makeApp()).put('/paca/students/5')
+            .send({ status: 'paused', rest_start_date: '2026-05-15' });
+        expect(res.status).toBe(500); expect(pool.__conn.rollback).toHaveBeenCalledTimes(1);
+        expect(pool.__conn.commit).not.toHaveBeenCalled(); expect(pool.__conn.release).toHaveBeenCalledTimes(1);
+        expect(JSON.stringify(res.body)).not.toContain('private billing failure');
+    });
     test('예비생은 원장이 재원으로 바꿀 수 있고, 일반 재원생을 예비생으로 지정할 수 없다', async () => {
-        pool.execute.mockResolvedValueOnce([[existingStudent({ status: 'active' })]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'active' })]]);
         const blocked = await request(makeApp()).put('/paca/students/5').send({ status: 'prospect' });
         expect(blocked.status).toBe(400);
-        expect(pool.execute).toHaveBeenCalledTimes(1);
+        expect(pool.__conn.execute).toHaveBeenCalledTimes(1);
 
-        pool.execute.mockReset();
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute
+        pool.__conn.execute.mockReset();
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
             .mockResolvedValueOnce([[existingStudent({ status: 'prospect', student_number: null })]])
             .mockResolvedValueOnce([[]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[existingStudent({ status: 'active', student_number: '2026001' })]]);
         const converted = await request(makeApp()).put('/paca/students/5').send({ status: 'active', monthly_tuition: 0 });
         expect(converted.status).toBe(200);
-        const updateCall = pool.execute.mock.calls.find(([sql]) => /UPDATE students SET/.test(sql));
+        const updateCall = pool.__conn.execute.mock.calls.find(([sql]) => /UPDATE students SET/.test(sql));
         expect(updateCall[0]).toContain('status = ?');
         expect(updateCall[1]).toContain('active');
     });
 
     test('학생 미존재 → 404 한국어 (ADR-003)', async () => {
-        pool.execute.mockResolvedValueOnce([[]]); // 학생 SELECT 빈 배열
+        pool.__conn.execute.mockResolvedValueOnce([[]]); // 학생 SELECT 빈 배열
         const res = await request(makeApp()).put('/paca/students/999').send({ name: '변경' });
         expect(res.status).toBe(404);
         expect(res.body).toEqual({ error: 'Not Found', message: '학생 정보를 찾을 수 없습니다.' });
     });
 
     test('잘못된 student_type → 400 (응답 표면 보존)', async () => {
-        pool.execute.mockResolvedValueOnce([[existingStudent()]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent()]]);
         const res = await request(makeApp()).put('/paca/students/5').send({ student_type: 'INVALID' });
         expect(res.status).toBe(400);
         expect(res.body.error).toBe('Validation Error');
@@ -138,21 +157,21 @@ describe('PUT /paca/students/:id (update)', () => {
     });
 
     test('잘못된 grade → 400', async () => {
-        pool.execute.mockResolvedValueOnce([[existingStudent()]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent()]]);
         const res = await request(makeApp()).put('/paca/students/5').send({ grade: '대1' });
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('학년을 다시 선택해주세요.');
     });
 
     test('잘못된 admission_type → 400', async () => {
-        pool.execute.mockResolvedValueOnce([[existingStudent()]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent()]]);
         const res = await request(makeApp()).put('/paca/students/5').send({ admission_type: 'WRONG' });
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('입시유형을 다시 선택해주세요.');
     });
 
     test('입시유형을 선행반으로 수정한다', async () => {
-        pool.execute
+        pool.__conn.execute
             .mockResolvedValueOnce([[existingStudent({ grade: '중1' })]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[existingStudent({ grade: '중1', admission_type: 'advance' })]]);
@@ -162,14 +181,14 @@ describe('PUT /paca/students/:id (update)', () => {
         });
 
         expect(res.status).toBe(200);
-        const updateCall = pool.execute.mock.calls.find(([sql]) => /UPDATE students SET/.test(sql));
+        const updateCall = pool.__conn.execute.mock.calls.find(([sql]) => /UPDATE students SET/.test(sql));
         expect(updateCall).toBeDefined();
         expect(updateCall[0]).toMatch(/admission_type\s*=\s*\?/);
         expect(updateCall[1]).toContain('advance');
     });
 
     test('선행반 학생을 고3으로 수정하면 정시로 함께 전환한다', async () => {
-        pool.execute
+        pool.__conn.execute
             .mockResolvedValueOnce([[existingStudent({ grade: '고2', admission_type: 'advance' })]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[existingStudent({ grade: '고3', admission_type: 'regular' })]]);
@@ -177,13 +196,13 @@ describe('PUT /paca/students/:id (update)', () => {
         const res = await request(makeApp()).put('/paca/students/5').send({ grade: '고3' });
 
         expect(res.status).toBe(200);
-        const updateCall = pool.execute.mock.calls.find(([sql]) => /UPDATE students SET/.test(sql));
+        const updateCall = pool.__conn.execute.mock.calls.find(([sql]) => /UPDATE students SET/.test(sql));
         expect(updateCall[0]).toMatch(/grade\s*=\s*\?, admission_type\s*=\s*\?/);
         expect(updateCall[1]).toEqual(expect.arrayContaining(['고3', 'regular']));
     });
 
     test('선행반 학생을 입시유형 변경 없이 성인으로 바꾸는 요청은 차단한다', async () => {
-        pool.execute.mockResolvedValueOnce([[
+        pool.__conn.execute.mockResolvedValueOnce([[
             existingStudent({ grade: '고2', admission_type: 'advance' }),
         ]]);
 
@@ -191,18 +210,18 @@ describe('PUT /paca/students/:id (update)', () => {
 
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('선행반은 중1부터 고2까지의 입시생만 선택할 수 있습니다.');
-        expect(pool.execute).toHaveBeenCalledTimes(1);
+        expect(pool.__conn.execute).toHaveBeenCalledTimes(1);
     });
 
     test('잘못된 time_slot → 400', async () => {
-        pool.execute.mockResolvedValueOnce([[existingStudent()]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent()]]);
         const res = await request(makeApp()).put('/paca/students/5').send({ time_slot: 'midnight' });
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('수업 시간대를 다시 선택해주세요.');
     });
 
     test('미등록 학생을 지난 일정으로 체험 재등록 → 400 한국어 + 상태 변경 없음', async () => {
-        pool.execute.mockResolvedValueOnce([[existingStudent({ status: 'pending', is_trial: 0 })]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'pending', is_trial: 0 })]]);
 
         const res = await request(makeApp()).put('/paca/students/5').send({
             status: 'trial',
@@ -213,22 +232,22 @@ describe('PUT /paca/students/:id (update)', () => {
 
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('오늘 또는 이후의 새 체험 일정을 1개 이상 선택해주세요.');
-        expect(pool.execute).toHaveBeenCalledTimes(1);
+        expect(pool.__conn.execute).toHaveBeenCalledTimes(1);
     });
 
     test('미등록 학생을 status만 trial로 바꾸는 요청도 새 일정 없이는 차단', async () => {
-        pool.execute.mockResolvedValueOnce([[existingStudent({ status: 'pending', is_trial: 0 })]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'pending', is_trial: 0 })]]);
 
         const res = await request(makeApp()).put('/paca/students/5').send({ status: 'trial' });
 
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('오늘 또는 이후의 새 체험 일정을 1개 이상 선택해주세요.');
-        expect(pool.execute).toHaveBeenCalledTimes(1);
+        expect(pool.__conn.execute).toHaveBeenCalledTimes(1);
     });
 
     test('미등록 학생 체험 재등록 → 일정 기준 남은 횟수로 저장', async () => {
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute.mockResolvedValueOnce([[existingStudent({ status: 'pending', is_trial: 0 })]]);
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'pending', is_trial: 0 })]]);
 
         await request(makeApp()).put('/paca/students/5').send({
             status: 'trial',
@@ -240,18 +259,18 @@ describe('PUT /paca/students/:id (update)', () => {
             ],
         });
 
-        const updateCall = pool.execute.mock.calls.find((call) => /UPDATE students SET/.test(call[0]));
+        const updateCall = pool.__conn.execute.mock.calls.find((call) => /UPDATE students SET/.test(call[0]));
         expect(updateCall).toBeDefined();
         expect(updateCall[1]).not.toContain(99);
         expect(updateCall[1]).toContain(1);
-        expect(pool.execute.mock.calls.some((call) =>
+        expect(pool.__conn.execute.mock.calls.some((call) =>
             /SELECT id FROM class_schedules/.test(call[0]) && call[1]?.includes('2020-01-01')
         )).toBe(false);
     });
 
     test('체험생 미등록 전환은 남은 횟수도 0으로 함께 저장', async () => {
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute.mockResolvedValueOnce([[existingStudent({
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({
             status: 'trial',
             is_trial: 1,
             trial_remaining: 2,
@@ -263,43 +282,43 @@ describe('PUT /paca/students/:id (update)', () => {
             is_trial: false,
         });
 
-        const updateCall = pool.execute.mock.calls.find((call) => /UPDATE students SET/.test(call[0]));
+        const updateCall = pool.__conn.execute.mock.calls.find((call) => /UPDATE students SET/.test(call[0]));
         expect(updateCall[0]).toContain('trial_remaining = ?');
         expect(updateCall[1]).toContain(0);
     });
 
     test('변경 필드 0개 → 400 No fields to update (응답 표면 보존)', async () => {
-        pool.execute.mockResolvedValueOnce([[existingStudent()]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent()]]);
         const res = await request(makeApp()).put('/paca/students/5').send({});
         expect(res.status).toBe(400);
         expect(res.body).toEqual({ error: 'Validation Error', message: 'No fields to update' });
     });
 
     test('정상 수정 (name 변경) → encrypt 호출 (ADR-007) + 응답 표면 message root key 보존', async () => {
-        // PUT /:id 거대 endpoint (911줄, 25+ pool.execute). 정상 흐름은 schedule/payment 부수
+        // PUT /:id 거대 endpoint (911줄, 25+ pool.__conn.execute). 정상 흐름은 schedule/payment 부수
         // 처리까지 호출하므로 default mock 으로 폴백, 핵심 호출만 검증.
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute.mockResolvedValueOnce([[existingStudent()]]);  // 첫 SELECT
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent()]]);  // 첫 SELECT
         await request(makeApp()).put('/paca/students/5').send({ name: '새이름' });
         // encrypt 호출 시그니처 보존 (ADR-007)
         expect(encrypt).toHaveBeenCalledWith('새이름');
         // UPDATE SQL 호출 (ADR-013 응답 표면 보존을 위한 본체 동작 검증)
-        const updateCall = pool.execute.mock.calls.find(c => /UPDATE students SET/.test(c[0]));
+        const updateCall = pool.__conn.execute.mock.calls.find(c => /UPDATE students SET/.test(c[0]));
         expect(updateCall).toBeDefined();
     });
 
     test('phone 변경 → encrypt(phone) + UPDATE SQL 에 phone = ? 포함', async () => {
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute.mockResolvedValueOnce([[existingStudent()]]);
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent()]]);
         await request(makeApp()).put('/paca/students/5').send({ phone: '010-9999' });
         expect(encrypt).toHaveBeenCalledWith('010-9999');
-        const updateCall = pool.execute.mock.calls.find(c => /UPDATE students SET/.test(c[0]));
+        const updateCall = pool.__conn.execute.mock.calls.find(c => /UPDATE students SET/.test(c[0]));
         expect(updateCall).toBeDefined();
         expect(updateCall[0]).toMatch(/phone\s*=\s*\?/);
     });
 
     test('5xx 한국어 + e.message 누출 0건 + detail root key 제거', async () => {
-        pool.execute.mockRejectedValueOnce(new Error('SECRET DB DOWN'));
+        pool.__conn.execute.mockRejectedValueOnce(new Error('SECRET DB DOWN'));
         const res = await request(makeApp()).put('/paca/students/5').send({ name: '변경' });
         expect(res.status).toBe(500);
         expect(res.body).toEqual({
@@ -310,19 +329,19 @@ describe('PUT /paca/students/:id (update)', () => {
         expect(JSON.stringify(res.body)).not.toContain('SECRET DB DOWN');
     });
 
-    test('ADR-005 — pool.execute 만 사용 (db.query / pool.query 잔존 0건)', async () => {
-        pool.execute
+    test('ADR-005 — pool.__conn.execute 만 사용 (db.query / pool.query 잔존 0건)', async () => {
+        pool.__conn.execute
             .mockResolvedValueOnce([[existingStudent()]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[existingStudent()]]);
         await request(makeApp()).put('/paca/students/5').send({ name: '변경' });
-        expect(pool.execute.mock.calls.length).toBeGreaterThan(0);
+        expect(pool.__conn.execute.mock.calls.length).toBeGreaterThan(0);
         expect(pool.query).not.toHaveBeenCalled();
     });
 
     test('active → pending 전환 시 오늘 이후 미체크 스케줄 삭제', async () => {
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
             .mockResolvedValueOnce([[existingStudent({ status: 'active' })]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[existingStudent({ status: 'pending' })]])
@@ -336,7 +355,7 @@ describe('PUT /paca/students/:id (update)', () => {
             message: '미등록 전환으로 미래 스케줄 3건 삭제됨',
         });
 
-        const pendingDeleteCall = pool.execute.mock.calls.find(c =>
+        const pendingDeleteCall = pool.__conn.execute.mock.calls.find(c =>
             /DELETE a FROM attendance a/.test(c[0])
             && /cs\.class_date >= \?/.test(c[0])
             && /a\.attendance_status IS NULL/.test(c[0])
@@ -348,8 +367,8 @@ describe('PUT /paca/students/:id (update)', () => {
 
 describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 학원비 재계산', () => {
     test('등록일 변경 + 미납 일할계산 학원비 존재 → 재계산 UPDATE + enrollmentDateRecalc recalculated', async () => {
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
             .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000 })]])   // 학생 SELECT
             .mockResolvedValueOnce([{ affectedRows: 1 }])                               // UPDATE students
             .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000, enrollment_date: '2026-01-15' })]]) // 갱신 SELECT
@@ -363,7 +382,7 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
         // 수업요일 미설정(mock []) → 일수 기준: floor(300000 * 17/31 / 1000) * 1000 = 164000
         expect(res.body.enrollmentDateRecalc.finalAmount).toBe(164000);
 
-        const paymentUpdateCall = pool.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]));
+        const paymentUpdateCall = pool.__conn.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]));
         expect(paymentUpdateCall).toBeDefined();
         expect(paymentUpdateCall[1]).toContain('2026-01');      // year_month
         expect(paymentUpdateCall[1]).toContain(164000);          // proRatedAmount
@@ -373,8 +392,8 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
     });
 
     test('첫 달 학원비가 이미 paid → 재계산 스킵 + enrollmentDateRecalc skipped', async () => {
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
             .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000 })]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000, enrollment_date: '2026-01-15' })]])
@@ -384,12 +403,12 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
 
         expect(res.status).toBe(200);
         expect(res.body.enrollmentDateRecalc.type).toBe('skipped');
-        expect(pool.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]))).toBeUndefined();
+        expect(pool.__conn.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]))).toBeUndefined();
     });
 
     test('등록월 변경인데 새 달에 월 학원비 이미 존재 → 중복 방지 스킵', async () => {
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
             .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000 })]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000, enrollment_date: '2026-02-10' })]])
@@ -401,12 +420,12 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
         expect(res.status).toBe(200);
         expect(res.body.enrollmentDateRecalc.type).toBe('skipped');
         expect(res.body.enrollmentDateRecalc.message).toContain('2월');
-        expect(pool.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]))).toBeUndefined();
+        expect(pool.__conn.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]))).toBeUndefined();
     });
 
     test('등록일 동일하면 재계산 블록 미진입 (enrollmentDateRecalc null)', async () => {
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
             .mockResolvedValueOnce([[existingStudent()]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[existingStudent()]]);
@@ -415,7 +434,7 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
 
         expect(res.status).toBe(200);
         expect(res.body.enrollmentDateRecalc).toBeNull();
-        expect(pool.execute.mock.calls.find(c => /student_payments/.test(c[0]))).toBeUndefined();
+        expect(pool.__conn.execute.mock.calls.find(c => /student_payments/.test(c[0]))).toBeUndefined();
     });
 });
 
@@ -429,8 +448,8 @@ describe('PUT /paca/students/:id — pending/trial → active 첫 달 학원비'
         });
         const activeStudent = { ...pendingStudent, status: 'active' };
 
-        pool.execute.mockResolvedValue([[]]);
-        pool.execute
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
             .mockResolvedValueOnce([[pendingStudent]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[activeStudent]])
@@ -446,7 +465,7 @@ describe('PUT /paca/students/:id — pending/trial → active 첫 달 학원비'
         });
 
         expect(res.status).toBe(200);
-        const paymentInsert = pool.execute.mock.calls.find(([sql]) => /INSERT INTO student_payments/.test(sql));
+        const paymentInsert = pool.__conn.execute.mock.calls.find(([sql]) => /INSERT INTO student_payments/.test(sql));
         expect(paymentInsert).toBeDefined();
         const dueDate = paymentInsert[1][10];
         const dueDateText = dueDate instanceof Date ? dueDate.toISOString().slice(0, 10) : dueDate;

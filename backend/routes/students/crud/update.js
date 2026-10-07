@@ -11,8 +11,8 @@
  * - verifyToken + checkPermission('students', 'edit') — owner / admin.
  *
  * ## DB 패턴 (ADR-005)
- * - `pool.execute(sql, params)` 통일 (총 25건 + 트랜잭션 X).
- * - 자동 스케줄 재배정 헬퍼 (`reassignStudentSchedules`) 첫 인자도 `pool` 로 정렬.
+ * - 학생 행 잠금·갱신과 결제/스케줄 후처리를 하나의 connection 트랜잭션에서 처리한다.
+ * - 검증 실패와 재무 처리 오류는 rollback 후 connection을 반환한다.
  *
  * ## 응답 표면 (ADR-013) — 보존 의무
  * - 200: `{message: 'Student updated successfully', student}` (기본) +
@@ -44,10 +44,12 @@ const {
     extractDayNumbers,
     normalizeStudentClassDays,
     logger,
-    logAudit,
-    getAuditInfoFromReq
 } = require('./_utils');
 const { applyStudentUpdateEffects } = require('./update/effects');
+const { logStudentUpdateAudit } = require('./update/audit');
+const { LinkError } = require('../../../models/maxEngineError');
+const lifecycleBilling = require('../../../services/studentLifecycleBillingService');
+const { getKoreaDateText } = require('../../../utils/proratedPaymentDueDate');
 const {
     prepareStudentTrialUpdate,
     TrialStatusValidationError,
@@ -64,17 +66,22 @@ module.exports = function(router) {
  */
 router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req, res) => {
     const studentId = parseInt(req.params.id);
+    let conn;
+    let transactionOpen = false;
 
     try {
+        conn = await pool.getConnection();
+        await conn.beginTransaction();
+        transactionOpen = true;
         // Check if student exists and get current values for audit logging
-        const [students] = await pool.execute(
+        const [students] = await conn.execute(
             `SELECT id, student_number, name, gender, student_type, phone, parent_phone, father_name, mother_name, father_phone, mother_phone,
                     school, grade, age, admission_type, class_days, weekly_count,
                     monthly_tuition, discount_rate, discount_reason, payment_due_day,
                     enrollment_date, address, notes, memo, status, time_slot,
                     rest_start_date, rest_end_date, rest_reason,
                     is_trial, trial_remaining, trial_dates
-             FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
+             FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL FOR UPDATE`,
             [studentId, req.user.academyId]
         );
 
@@ -141,6 +148,15 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             trialDates: trial_dates,
             trialRemaining: trial_remaining,
         });
+        const pauseBillingContext = trialUpdate.status === 'paused' && oldStatus === 'active'
+            ? lifecycleBilling.validateContext({
+                studentId,
+                academyId: req.user.academyId,
+                userId: req.user.id,
+                date: (rest_start_date !== undefined ? rest_start_date : students[0].rest_start_date) || getKoreaDateText(),
+                reason: (rest_reason !== undefined ? rest_reason : students[0].rest_reason) || null,
+            })
+            : null;
 
         const parentContacts = prepareStudentParentContacts(req.body);
         const previousParents = decryptStudentParentContacts(students[0]);
@@ -161,7 +177,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
 
         // Check if new student_number already exists (if changed)
         if (student_number) {
-            const [existing] = await pool.execute(
+            const [existing] = await conn.execute(
                 'SELECT id FROM students WHERE student_number = ? AND academy_id = ? AND id != ? AND deleted_at IS NULL',
                 [student_number, req.user.academyId, studentId]
             );
@@ -178,7 +194,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         let autoStudentNumber = student_number;
         if (trialUpdate.status === 'active' && ['pending', 'trial', 'prospect'].includes(oldStatus) && !student_number && !students[0].student_number) {
             const year = new Date().getFullYear();
-            const [lastStudent] = await pool.execute(
+            const [lastStudent] = await conn.execute(
                 `SELECT student_number FROM students
                 WHERE academy_id = ?
                 AND student_number LIKE '${year}%'
@@ -361,73 +377,17 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         }
 
         updates.push('updated_at = NOW()');
-        params.push(studentId);
+        params.push(studentId, req.user.academyId);
 
-        await pool.execute(
-            `UPDATE students SET ${updates.join(', ')} WHERE id = ?`,
+        await conn.execute(
+            `UPDATE students SET ${updates.join(', ')} WHERE id = ? AND academy_id = ?`,
             params
         );
 
-        // Audit logging: 변경 전/후 값 기록
         const oldStudent = students[0];
-        const oldValues = {};
-        const newValues = {};
-        const auditFields = {
-            student_number: autoStudentNumber, name, gender, student_type, phone, parent_phone,
-            school, grade, age, admission_type, weekly_count, monthly_tuition,
-            discount_rate, discount_reason, payment_due_day, enrollment_date,
-            address, notes, memo, status: trialUpdate.status, time_slot,
-            rest_start_date, rest_end_date, rest_reason,
-            is_trial: trialUpdate.isTrial,
-            trial_remaining: trialUpdate.trialRemaining,
-        };
-        // 암호화 필드 복호화 비교
-        const encryptedKeys = ['name', 'phone', 'parent_phone', 'address'];
-        for (const [field, newVal] of Object.entries(auditFields)) {
-            if (newVal === undefined) continue;
-            let oldVal = oldStudent[field];
-            if (encryptedKeys.includes(field) && oldVal) {
-                try { oldVal = decrypt(oldVal); } catch { /* keep raw */ }
-            }
-            // 타입 맞춰서 비교
-            if (String(oldVal ?? '') !== String(newVal ?? '')) {
-                oldValues[field] = field === 'parent_phone' ? (oldVal ? '등록됨' : '미등록') : oldVal;
-                newValues[field] = field === 'parent_phone' ? (newVal ? '연락처 변경' : '미등록') : newVal;
-            }
-        }
-        // Record changes without copying parent names or phone numbers into audit JSON.
-        for (const [field, value] of Object.entries(parentContacts.values)) {
-            if ((previousParents[field] || null) === value) continue;
-            oldValues[field] = previousParents[field] ? '등록됨' : '미등록';
-            newValues[field] = value ? (field.endsWith('_phone') ? '연락처 변경' : '성함 변경') : '미등록';
-        }
-        // class_days 별도 비교 (JSON)
-        if (class_days !== undefined) {
-            oldValues.class_days = oldClassDaysRaw;
-            newValues.class_days = class_days;
-        }
-        // trial_dates 별도 비교 (JSON)
-        if (trialUpdate.trialDates !== undefined) {
-            const oldTrialDates = oldStudent.trial_dates
-                ? (typeof oldStudent.trial_dates === 'string' ? JSON.parse(oldStudent.trial_dates) : oldStudent.trial_dates)
-                : null;
-            oldValues.trial_dates = oldTrialDates;
-            newValues.trial_dates = trialUpdate.trialDates;
-        }
-        if (Object.keys(newValues).length > 0) {
-            const auditInfo = getAuditInfoFromReq(req);
-            logAudit({
-                ...auditInfo,
-                action: isScheduledClassDays ? 'schedule' : 'update',
-                tableName: 'students',
-                recordId: studentId,
-                oldValues,
-                newValues
-            });
-        }
 
         // Fetch updated student
-        const [updatedStudents] = await pool.execute(
+        const [updatedStudents] = await conn.execute(
             'SELECT * FROM students WHERE id = ?',
             [studentId]
         );
@@ -442,7 +402,9 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             trialCancelInfo,
             pendingInfo,
         } = await applyStudentUpdateEffects({
-            pool,
+            pool: conn,
+            userId: req.user.id,
+            pauseBillingContext,
             studentId,
             academyId: req.user.academyId,
             classDays: class_days,
@@ -462,6 +424,12 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             status: trialUpdate.status,
             oldStatus,
         });
+        await conn.commit();
+        transactionOpen = false;
+        logStudentUpdateAudit(req, {
+            studentId, oldStudent, parentContacts, previousParents, oldClassDaysRaw,
+            trialUpdate, autoStudentNumber, isScheduledClassDays,
+        });
         // 민감 필드 복호화 후 응답
         const decryptedStudent = normalizeStudentClassDays(decryptStudentParentContacts(decryptFields(updatedStudents[0], ENCRYPTED_FIELDS.students)));
 
@@ -478,6 +446,13 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             pendingInfo
         });
     } catch (error) {
+        if (transactionOpen) {
+            await conn.rollback();
+            transactionOpen = false;
+        }
+        if (error instanceof LinkError) {
+            return res.status(error.status).json({ error: error.code, message: error.message });
+        }
         if (error instanceof TrialStatusValidationError || error instanceof StudentParentContactValidationError) {
             return res.status(400).json({
                 error: 'Validation Error',
@@ -489,6 +464,12 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             error: 'Server Error',
             message: '학생 정보 수정에 실패했습니다.'
         });
+    } finally {
+        try {
+            if (transactionOpen) await conn.rollback();
+        } finally {
+            conn?.release();
+        }
     }
 });
 

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "backend/models/studentLifecycleBilling.js",
+    "before": null,
+    "after": "0e371758f5104c59197a3798268153585f296e6325d637b10671284764fecbdc"
+  },
+  {
+    "path": "backend/repositories/studentLifecycleBillingRepository.js",
+    "before": null,
+    "after": "a52264311442621d13965c19ea60d9f65123c46e3d879ae031a0ee6f1b4d7144"
+  },
+  {
+    "path": "backend/services/studentLifecycleBillingService.js",
+    "before": null,
+    "after": "aa56da81a562ff8c190a9948d2709131516a3ab6f978b71a150313b737475149"
+  },
+  {
+    "path": "backend/routes/students/enrollment.js",
+    "before": "8b3dff3fcbcf9bab121dc0c991120d0e5b5589bf757dedea16fa184c68e83cca",
+    "after": "942da532797352fa8721692124f2d05f0e82461535ea862c6640123a948ebf7d"
+  },
+  {
+    "path": "backend/routes/students/enrollment/withdraw.js",
+    "before": null,
+    "after": "89b484c891516a69d2a85ca87e4444482c7c5bf5ea85554d3e9c5c92cc11b63f"
+  },
+  {
+    "path": "backend/routes/students/crud/update.js",
+    "before": "1f81e0e20d3f3393e67538266b5945bfb47c250d8b5ddb7f27719005af194c72",
+    "after": "36c6862bc2a838ee6d9d7286b2149cc205a0b761615a95e07d47bc349da7bc42"
+  },
+  {
+    "path": "backend/routes/students/crud/update/paymentEffects.js",
+    "before": "ce1057b3ad0d57424f288c2939d6b23c5e1b5a1601593e94afdb33f6e5d0fc7d",
+    "after": "ef6c06c89672ecbf7213686762fa6cf59309f590d588c59d65fd5a5bc211dcd6"
+  },
+  {
+    "path": "backend/routes/students/crud/update/audit.js",
+    "before": null,
+    "after": "985c87bebdd55712c69d405e6c52759af83fa2d47dec5c9aef458c7b84fc364f"
+  },
+  {
+    "path": "backend/routes/students/rest/processRest.js",
+    "before": "7e96c4db20c91edc1be05e4fd2ac533da1a12ea1423915b91a3f60ad57ff98a4",
+    "after": "52e7940bc9d50802b7a2acc9067239be2870abe5aeb1836098504644e2ae635a"
+  },
+  {
+    "path": "backend/package.json",
+    "before": "db4923e55add664a62971101a7c7c6a85d143af4c771b0c3f7b43dae1fba94c2",
+    "after": "952f7e5a24385bfe77ad06067b4abf4c2340306b573d4302a94ba423bfc9b270"
+  },
+  {
+    "path": "backend/package-lock.json",
+    "before": "c69b5e31d3abb18e8db90b737f17603b8e5799f639b5128d6ec86f5896ffca73",
+    "after": "dfc161b7fe5ab0d91fcfa17cfb171f34698b966ffec7952a4ffd4b815aa60e2f"
+  }
+]

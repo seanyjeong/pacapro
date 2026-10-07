@@ -1,0 +1,32 @@
+{
+  "backend_version": "4.0.22",
+  "focused_tests": {
+    "unit": 20,
+    "native_http": 16,
+    "legacy_http": 61,
+    "mcp_native_regression": 40
+  },
+  "total_tests": 137,
+  "total_suites": 8,
+  "failures": 0,
+  "skips": 0,
+  "native_node": "18.19.1",
+  "legacy_node": "22.20.0",
+  "isolated_mysql_port": 13324,
+  "synthetic_data_only": true,
+  "eslint_passed": true,
+  "node_syntax_passed": true,
+  "diff_check_passed": true,
+  "runtime_lines": {
+    "backend/models/studentLifecycleBilling.js": 69,
+    "backend/repositories/studentLifecycleBillingRepository.js": 46,
+    "backend/services/studentLifecycleBillingService.js": 35,
+    "backend/routes/students/enrollment.js": 308,
+    "backend/routes/students/enrollment/withdraw.js": 51,
+    "backend/routes/students/crud/update.js": 476,
+    "backend/routes/students/crud/update/paymentEffects.js": 311,
+    "backend/routes/students/crud/update/audit.js": 65,
+    "backend/routes/students/rest/processRest.js": 211
+  },
+  "production_business_actions": 0
+}

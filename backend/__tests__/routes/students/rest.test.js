@@ -32,6 +32,7 @@ jest.mock('../../../config/database', () => {
 jest.mock('../../../middleware/auth', () => ({
   verifyToken: jest.fn((req, res, next) => {
     req.user = { academyId: 1, userId: 100, role: 'owner' };
+    req.user.id = 100;
     next();
   }),
   checkPermission: jest.fn(() => (req, res, next) => next()),
@@ -48,11 +49,14 @@ jest.mock('../../../utils/logger', () => ({
 jest.mock('../../../routes/students/_utils', () => ({
   autoAssignStudentToSchedules: jest.fn(),
 }));
+jest.mock('../../../services/studentLifecycleBillingService', () => ({ pause: jest.fn(),
+  validateContext: jest.requireActual('../../../models/studentLifecycleBilling').validateContext }));
 
 const express = require('express');
 const request = require('supertest');
 const pool = require('../../../config/database');
 const { autoAssignStudentToSchedules } = require('../../../routes/students/_utils');
+const lifecycleBilling = require('../../../services/studentLifecycleBillingService');
 
 // --- 라우터 mount (sub-라우터 패턴: module.exports = function(router) {...}) ---
 function makeApp() {
@@ -76,6 +80,8 @@ function resetMocks() {
   pool.__conn.rollback.mockClear();
   pool.__conn.release.mockClear();
   autoAssignStudentToSchedules.mockReset();
+  lifecycleBilling.pause.mockReset().mockResolvedValue({ action: 'unchanged', originalAmount: 0,
+    adjustedAmount: 0, paymentIds: [], message: '변경할 미납 청구 없음' });
 }
 
 // =====================================================================
@@ -131,8 +137,6 @@ describe('POST /paca/students/:id/process-rest', () => {
     ]);
     // 3. 학생 status update
     pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
-    // 3-1. 미납 학원비 조회 (없음)
-    pool.__conn.execute.mockResolvedValueOnce([[], []]);
     // 5. 미래 미출석 스케줄 삭제
     pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 0 }, []]);
     // 트랜잭션 외부: updated 학생 조회
@@ -155,7 +159,7 @@ describe('POST /paca/students/:id/process-rest', () => {
       message: '휴식 처리가 완료되었습니다.',
       student: { id: 1, status: 'paused' },
       restCredit: null,
-      unpaidAdjustment: null,
+      unpaidAdjustment: { action: 'unchanged', originalAmount: 0, adjustedAmount: 0, paymentIds: [] },
     });
     expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
     expect(pool.__conn.rollback).not.toHaveBeenCalled();
@@ -170,7 +174,7 @@ describe('POST /paca/students/:id/process-rest', () => {
     ]);
     // 3. 학생 status update
     pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
-    // 3-1. 미납 학원비 조회 (없음)
+    // 기존 유효한 휴원 크레딧 조회 (없음)
     pool.__conn.execute.mockResolvedValueOnce([[], []]);
     // 4. INSERT rest_credits
     pool.__conn.execute.mockResolvedValueOnce([{ insertId: 77 }, []]);
@@ -210,7 +214,7 @@ describe('POST /paca/students/:id/process-rest', () => {
     expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
   });
 
-  test('1일자 휴원 + 미납 학원비 → DELETE student_payments + unpaidAdjustment.action=deleted', async () => {
+  test('1일자 휴원은 공통 청구 정산 결과를 반환하며 납부 이력이 있는 청구를 삭제하지 않는다', async () => {
     // 학생 조회
     pool.__conn.execute.mockResolvedValueOnce([
       [{ id: 1, name: 'X', monthly_tuition: 300000, discount_rate: 0, status: 'active', academy_id: 1 }],
@@ -218,20 +222,8 @@ describe('POST /paca/students/:id/process-rest', () => {
     ]);
     // status update
     pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
-    // 미납 학원비 (있음)
-    pool.__conn.execute.mockResolvedValueOnce([
-      [{
-        id: 50,
-        base_amount: 300000,
-        discount_amount: 0,
-        final_amount: 300000,
-        paid_amount: 0,
-        payment_status: 'pending',
-      }],
-      [],
-    ]);
-    // DELETE student_payments
-    pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+    lifecycleBilling.pause.mockResolvedValueOnce({ action: 'cancelled', originalAmount: 300000,
+      adjustedAmount: 0, paymentIds: [50] });
     // DELETE attendance
     pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 0 }, []]);
     // 외부 학생 조회
@@ -247,16 +239,13 @@ describe('POST /paca/students/:id/process-rest', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.unpaidAdjustment).toMatchObject({
-      action: 'deleted',
+      action: 'cancelled',
       originalAmount: 300000,
       adjustedAmount: 0,
     });
-    // DELETE student_payments 호출 확인
-    const deleteCall = pool.__conn.execute.mock.calls.find(c =>
-      typeof c[0] === 'string' && c[0].includes('DELETE FROM student_payments')
-    );
-    expect(deleteCall).toBeDefined();
-    expect(deleteCall[1]).toEqual([50]);
+    expect(lifecycleBilling.pause).toHaveBeenCalledWith(pool.__conn,
+      { academyId: 1, studentId: 1, userId: 100, date: '2026-05-01', reason: null });
+    expect(pool.__conn.execute.mock.calls.some(([sql]) => sql.includes('DELETE FROM student_payments'))).toBe(false);
   });
 
   test('트랜잭션 중간 에러 → rollback + release + 5xx 한국어 (ADR-003)', async () => {
@@ -295,7 +284,6 @@ describe('POST /paca/students/:id/process-rest', () => {
       [],
     ]);
     pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
-    pool.__conn.execute.mockResolvedValueOnce([[], []]);
     pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 0 }, []]);
     pool.execute.mockResolvedValueOnce([[{ id: 1, status: 'paused' }], []]);
 
@@ -308,5 +296,27 @@ describe('POST /paca/students/:id/process-rest', () => {
     expect(pool.query).not.toHaveBeenCalled();
     expect(pool.__conn.execute.mock.calls.length).toBeGreaterThan(0);
     expect(pool.execute.mock.calls.length).toBeGreaterThan(0);
+  });
+  test('billing failure rolls back status and never commits a partial pause', async () => {
+    pool.__conn.execute.mockResolvedValueOnce([[{ id: 1, academy_id: 1, status: 'active' }]])
+      .mockResolvedValue([{ affectedRows: 1 }]);
+    lifecycleBilling.pause.mockRejectedValueOnce(new Error('private billing failure'));
+    const res = await request(makeApp()).post('/paca/students/1/process-rest')
+      .send({ rest_start_date: '2026-05-15', credit_type: 'none' });
+    expect(res.status).toBe(500); expect(pool.__conn.rollback).toHaveBeenCalledTimes(1);
+    expect(pool.__conn.commit).not.toHaveBeenCalled(); expect(pool.__conn.release).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(res.body)).not.toContain('private billing failure');
+  });
+  test('retry keeps the existing valid rest credit and creates no second credit', async () => {
+    const credit = { id: 77, credit_amount: 150000, credit_type: 'carryover', status: 'pending' };
+    pool.__conn.execute.mockResolvedValueOnce([[{ id: 1, academy_id: 1, status: 'paused', monthly_tuition: 300000 }]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]).mockResolvedValueOnce([[credit]])
+      .mockResolvedValueOnce([{ affectedRows: 0 }]);
+    pool.execute.mockResolvedValueOnce([[{ id: 1, status: 'paused' }]]);
+    const res = await request(makeApp()).post('/paca/students/1/process-rest')
+      .send({ rest_start_date: '2026-05-15', rest_end_date: '2026-05-31', credit_type: 'carryover' });
+    expect(res.status).toBe(200); expect(res.body.restCredit).toEqual(credit);
+    expect(pool.__conn.execute.mock.calls.some(([sql]) => sql.includes('INSERT INTO rest_credits'))).toBe(false);
+    expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
   });
 });
