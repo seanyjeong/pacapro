@@ -1,0 +1,7 @@
+{
+  "version": "4.0.22",
+  "previous_version": "4.0.21",
+  "commit": "fc9b56646ee63085d302151dc30ddd4d716f48e9",
+  "rollback_tag": "rollback/paca-lifecycle-billing-20261007",
+  "base_commit": "e154cf593f430ac094f59b2b8860534e09587d2e"
+}

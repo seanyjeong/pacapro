@@ -1,0 +1,35 @@
+{
+  "status": "deployed_verified",
+  "at": "2026-10-07T07:43:44.578288+00:00",
+  "version": "4.0.22",
+  "commit": "fc9b56646ee63085d302151dc30ddd4d716f48e9",
+  "backup": "/root/backups/paca-lifecycle-billing-20261007T074337Z",
+  "rollback_tag": "rollback/paca-lifecycle-billing-20261007",
+  "candidate_files": 11,
+  "services": [
+    "paca-failover.service"
+  ],
+  "env_unchanged": true,
+  "unrelated_services_unchanged": true,
+  "schema_migrations": 0,
+  "production_business_actions": 0,
+  "source_hashes_matched": true,
+  "backup_integrity_verified": true,
+  "internal_health": {
+    "status": "OK",
+    "timestamp": "2026-10-07T07:43:44.457Z",
+    "uptime": 1.986898667,
+    "environment": "production"
+  },
+  "public_health": {
+    "status": "OK",
+    "timestamp": "2026-10-07T07:43:44.512Z",
+    "uptime": 2.041297405,
+    "environment": "production"
+  },
+  "route_smoke": {
+    "POST /paca/students/0/withdraw": 401,
+    "PUT /paca/students/0": 401,
+    "POST /paca/students/0/process-rest": 401
+  }
+}
