@@ -1,0 +1,30 @@
+{
+  "status": "verified",
+  "backend_related_tests": 149,
+  "frontend_tests": 8,
+  "native_mysql_tests": 31,
+  "native_mysql_failed": 0,
+  "native_mysql_skipped": 0,
+  "native_mysql_log": "native-final.log",
+  "reused_checks": {
+    "unchanged_application_tests": "149 backend + 8 frontend; candidate file hashes matched except expanded native fixture",
+    "typescript": "passed; frontend sources unchanged",
+    "next_production_build": "passed; frontend sources unchanged"
+  },
+  "changed_fixture_and_operator_eslint": "passed",
+  "runtime_node": "18.19.1",
+  "database": "isolated local MySQL 8.4; no production test writes",
+  "production_browser": {
+    "frontend_version": "4.0.58",
+    "current_19000": true,
+    "date_preview_38000": true,
+    "legacy_current_77000": true,
+    "legacy_date_preview_116000": true,
+    "withdraw_preview_paid_history_preserved": true,
+    "qa_dates_saved": false,
+    "qa_withdrawal_saved": false,
+    "temporary_auth_removed": true
+  },
+  "financial_verification": "financial-verification.json",
+  "installed_source_verification": "installed-source-verification.json"
+}

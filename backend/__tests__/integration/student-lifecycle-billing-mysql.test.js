@@ -76,6 +76,26 @@ run('native withdrawal and both pause routes preserve financial history atomical
       season_fee: '99999', paid_amount: '0', payment_status: 'pending', is_cancelled: 0 });
   }
   const financialHistory = async () => ({ revenues: await rows('revenues'), expenses: await rows('expenses') });
+  test('verified legacy metadata preserves its amount and enables a later native date correction from the original basis', async () => {
+    await f.paca.execute("UPDATE students SET status='paused',rest_start_date='2026-05-07',monthly_tuition=400000,discount_rate=0 WHERE id=101");
+    await bill(101, { base_amount: '400000', final_amount: '77000', discount_amount: '0', additional_amount: '0', notes: null });
+    const { normalize } = require('../../../docs/operations/lifecycle-billing-deploy-20261009/normalize-legacy-pause.cjs');
+    const context = {academyId: 1, studentId: 101, userId: 1, paymentId: 101,
+      date: '2026-05-07', originalAmount: 400000, currentAmount: 77000};
+    const history = await financialHistory();
+    const preview = await normalize(f.paca, context);
+    expect(preview).toMatchObject({before: 77000, after: 77000, metadata_only: true});
+    const conn = await f.paca.getConnection();
+    try { await conn.beginTransaction(); await normalize(conn, context, preview.source_hash); await conn.commit(); }
+    catch (error) { await conn.rollback(); throw error; } finally { conn.release(); }
+    expect((await rows('student_payments'))[0].final_amount).toBe('77000.00');
+    expect((await rows('max_engine_payment_settlements'))[0]).toMatchObject({before_final_amount: '77000.00', after_final_amount: '77000.00', waived_amount: '0.00'});
+    const response = await request(server).put('/paca/students/101').auth(token, {type:'bearer'})
+      .send({rest_start_date: '2026-05-10'});
+    expect(response.status).toBe(200);
+    expect((await rows('student_payments'))[0].final_amount).toBe('116000.00');
+    expect(await financialHistory()).toEqual(history);
+  });
   test.each(['withdraw', 'update'])('%s withdrawal uses the saved pause cutoff, preserves older and nonmonthly history and cancels future unpaid monthly bills', async route => {
     await f.paca.execute("UPDATE students SET status='paused',rest_start_date='2026-05-15' WHERE id=101");
     await bill(101); await bill(102, { paid_amount: '100000', payment_status: 'partial' });

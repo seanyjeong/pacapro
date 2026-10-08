@@ -1,0 +1,39 @@
+{
+  "version": "4.0.23",
+  "frontend_target_version": "4.0.58",
+  "frontend_deployed": false,
+  "commit": "0a8512bc5f781547794a55f8396e3592a2523e20",
+  "rollback_tag": "rollback/paca-lifecycle-billing-display-20261009",
+  "backup": "/root/backups/paca-lifecycle-billing-display-20261008T152342792438Z",
+  "runtime_files": 17,
+  "services": [
+    "paca-failover.service"
+  ],
+  "schema_migrations": 0,
+  "authenticated_student_actions": 0,
+  "database_restore_executed": false,
+  "status": "deployed_verified",
+  "source_hashes_matched": true,
+  "env_unchanged": true,
+  "unrelated_services_unchanged": true,
+  "backup_integrity_verified": true,
+  "internal_health": {
+    "status": "OK",
+    "timestamp": "2026-10-08T15:23:46.608Z",
+    "uptime": 2.001723989,
+    "environment": "production"
+  },
+  "public_health": {
+    "status": "OK",
+    "timestamp": "2026-10-08T15:23:46.656Z",
+    "uptime": 2.049215221,
+    "environment": "production"
+  },
+  "route_smoke": {
+    "POST /paca/students/0/lifecycle-billing-preview": 401,
+    "POST /paca/students/0/withdraw": 401,
+    "PUT /paca/students/0": 401,
+    "POST /paca/students/0/process-rest": 401
+  },
+  "at": "2026-10-08T15:23:46.749946+00:00"
+}

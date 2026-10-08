@@ -1,0 +1,87 @@
+[
+  {
+    "path": "backend/models/studentLifecycleBilling.js",
+    "before": "0e371758f5104c59197a3798268153585f296e6325d637b10671284764fecbdc",
+    "after": "3692fbe96a94da82cef89d54ab9a114c3ba678d0e069723dcc448512914e0b22"
+  },
+  {
+    "path": "backend/models/studentLifecycleBillingQuote.js",
+    "before": null,
+    "after": "d465dc560172c9d7f310ac51c7d0056d006102eba41f12b7d2f2903af77530f0"
+  },
+  {
+    "path": "backend/package-lock.json",
+    "before": "dfc161b7fe5ab0d91fcfa17cfb171f34698b966ffec7952a4ffd4b815aa60e2f",
+    "after": "a35a0d7648dd2873880b036b7338646df18209a560b9b23da3a68e1c6663b59c"
+  },
+  {
+    "path": "backend/package.json",
+    "before": "952f7e5a24385bfe77ad06067b4abf4c2340306b573d4302a94ba423bfc9b270",
+    "after": "1f92c9b0bf77a5f51504df3eafa76d65688675ea5ee03f0bd53184b2bd4a825e"
+  },
+  {
+    "path": "backend/repositories/studentLifecycleBillingRepository.js",
+    "before": "a52264311442621d13965c19ea60d9f65123c46e3d879ae031a0ee6f1b4d7144",
+    "after": "9c5782d6343e67cfb15c40836a9770d3ab860936ca5117e761274ff21540d0cb"
+  },
+  {
+    "path": "backend/repositories/studentLifecycleCreditRepository.js",
+    "before": null,
+    "after": "491c005be26cda3a8ab2570c720ab337de3c27ad0d5cce4d3dd3ef2c8ed183ed"
+  },
+  {
+    "path": "backend/repositories/studentPausedBillingRepairRepository.js",
+    "before": null,
+    "after": "1045f4cc54170525bc7674d7c4dc2f2adb6f37b50a956f46dcbf1ecf9b983e45"
+  },
+  {
+    "path": "backend/routes/students/crud/update.js",
+    "before": "36c6862bc2a838ee6d9d7286b2149cc205a0b761615a95e07d47bc349da7bc42",
+    "after": "2f9cc0da21f928c91e1db65529b02f6173d4549f0b63a3ea0381a78b9cd54b37"
+  },
+  {
+    "path": "backend/routes/students/crud/update/paymentEffects.js",
+    "before": "ef6c06c89672ecbf7213686762fa6cf59309f590d588c59d65fd5a5bc211dcd6",
+    "after": "d284f8c828d7c3878cc5200e3d5645dd6d2e6fa5ff4f9cbb63b54e9421d9b6a7"
+  },
+  {
+    "path": "backend/routes/students/enrollment/withdraw.js",
+    "before": "89b484c891516a69d2a85ca87e4444482c7c5bf5ea85554d3e9c5c92cc11b63f",
+    "after": "1b893b464f861028f4dbb5b4283e44bfb027fcd7f5454518345fdb4ee8271a9d"
+  },
+  {
+    "path": "backend/routes/students/index.js",
+    "before": "f95e31904f7d7c6059f27a190fe48cfde994b9aa722c8071136b5652af6184be",
+    "after": "5a56c2d57858fc336225fd8a1dfdabf92016410a635255164b9127b172072534"
+  },
+  {
+    "path": "backend/routes/students/lifecycleBillingPreview.js",
+    "before": null,
+    "after": "2dc0d48955eafe246ffd02d7cfea4482b435de4409df1f6af11d67fa1c131217"
+  },
+  {
+    "path": "backend/routes/students/rest/processRest.js",
+    "before": "52e7940bc9d50802b7a2acc9067239be2870abe5aeb1836098504644e2ae635a",
+    "after": "c0e88c6a6b48795ac50828f3cca0ac01ac4dbb77ceaebc225ac6f604907ff5fe"
+  },
+  {
+    "path": "backend/scripts/repairPausedTuition.js",
+    "before": null,
+    "after": "ee63722b34443764975a0148c797531729d58aacfef5cd1f72c991d16a5ed935"
+  },
+  {
+    "path": "backend/services/studentLifecycleBillingService.js",
+    "before": "aa56da81a562ff8c190a9948d2709131516a3ab6f978b71a150313b737475149",
+    "after": "4b6f94b1fa8d8afd8fc2abe5ce457558292be2c5ab02925a87ce2b87cf64301b"
+  },
+  {
+    "path": "backend/services/studentLifecycleCreditService.js",
+    "before": null,
+    "after": "4d527af28df6d92425ef7ff1b63d5a516cce65c1c73729244de28b016f86bfda"
+  },
+  {
+    "path": "backend/services/studentPausedBillingRepairService.js",
+    "before": null,
+    "after": "e49b0cb0c7e3a0ac8e47029080178adfee1b2c796c1e563d6d4bc3117c382602"
+  }
+]

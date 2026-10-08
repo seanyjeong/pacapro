@@ -1,0 +1,17 @@
+{
+  "source_hash": "1f55c53294d68fb06b341209f46a2b1121c9d71a6b906f1eff487a97e4e793e0",
+  "payment_id": 5086,
+  "original_amount": 400000,
+  "before": 77000,
+  "after": 77000,
+  "paid": 0,
+  "metadata_only": true,
+  "external_refunds": 0,
+  "source": "Stored invoice base, zero adjustments, student tuition and exact calendar proration agree",
+  "verified_readonly_date_preview": {
+    "date": "2026-10-10",
+    "original_amount": 400000,
+    "adjusted_amount": 116000,
+    "date_change_saved": false
+  }
+}

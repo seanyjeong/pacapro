@@ -1,0 +1,41 @@
+{
+  "status": "verified",
+  "changes": [
+    {
+      "student_id": 56,
+      "payment_id": 5079,
+      "before": 300000,
+      "after": 19000,
+      "paid": 0,
+      "fields": [
+        "final_amount",
+        "is_prorated",
+        "proration_details",
+        "updated_at"
+      ]
+    },
+    {
+      "student_id": 9146,
+      "payment_id": 5086,
+      "before": 77000,
+      "after": 77000,
+      "paid": 0,
+      "fields": [
+        "is_prorated",
+        "proration_details",
+        "updated_at"
+      ]
+    }
+  ],
+  "unchanged": {
+    "students": true,
+    "rest_credits": true,
+    "revenues": true,
+    "expenses": true
+  },
+  "other_payments_unchanged": true,
+  "existing_settlements_unchanged": true,
+  "settlements_added": 2,
+  "external_refunds": 0,
+  "deleted_bills_recreated": 0
+}

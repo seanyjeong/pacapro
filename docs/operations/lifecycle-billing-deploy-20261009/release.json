@@ -1,0 +1,23 @@
+{
+  "status": "deployed_verified",
+  "version": "4.0.23",
+  "frontend_version": "4.0.58",
+  "previous_version": "4.0.22",
+  "previous_frontend_version": "4.0.57",
+  "base_commit": "069930c40ec41c31fa72f2da347789c2268c5b12",
+  "commit": "0a8512bc5f781547794a55f8396e3592a2523e20",
+  "rollback_tag": "rollback/paca-lifecycle-billing-display-20261009",
+  "runtime_files": 17,
+  "source_files": 49,
+  "native_mysql_verified": true,
+  "git_release_verified": true,
+  "production_source_refreshed": true,
+  "production_ilsan_data_verified": true,
+  "production_deployed": true,
+  "production_ilsan_corrections": 1,
+  "production_business_actions": 2,
+  "schema_migrations": 0,
+  "candidate_sha256": "3bcd1283095b60b579e20b99e21aed3145affac39c9c701c1ff90e071740510b",
+  "frontend_deployed": true,
+  "production_ilsan_metadata_repairs": 1
+}
