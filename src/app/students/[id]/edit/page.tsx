@@ -10,6 +10,7 @@ import { StudentForm } from '@/components/students/student-form';
 import { StudentFormCancelDialog } from '@/features/student-form/student-form-cancel-dialog';
 import { StudentFormPageHeader } from '@/features/student-form/student-form-page-header';
 import { useStudent } from '@/hooks/use-students';
+import { describePauseBillingResult, describeWithdrawalBillingResult } from '@/lib/utils/lifecycle-billing';
 import { studentsAPI } from '@/lib/api/students';
 import type { StudentFormData } from '@/lib/types/student';
 
@@ -31,9 +32,13 @@ export default function EditStudentPage() {
       // React Query 캐시 무효화 (상세 페이지 + 학생 목록 최신화)
       await queryClient.invalidateQueries({ queryKey: ['students', studentId] });
       await queryClient.invalidateQueries({ queryKey: ['students'] });
+      await queryClient.invalidateQueries({ queryKey: ['payments'] });
 
       // 성공 알림
       toast.success(`${response.student.name} 학생 정보가 수정되었습니다!`);
+
+      if (response.paymentAdjustment) toast.info(describePauseBillingResult(response.paymentAdjustment));
+      if (response.withdrawalInfo) toast.info(describeWithdrawalBillingResult(response.withdrawalInfo));
 
       // 등록일 변경에 따른 첫 달 학원비 재계산 결과 알림
       if (response.enrollmentDateRecalc) {

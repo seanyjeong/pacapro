@@ -9,6 +9,7 @@ require('./classDays')(router);    // GET /class-days, PUT /class-days/bulk (fix
 require('./crud')(router);         // GET /, GET /:id, POST /, PUT /:id, DELETE /:id, GET /search
 require('./photo')(router);        // POST/GET/DELETE /:id/photo (academy-isolated profile photos)
 require('./rest')(router);         // POST /:id/process-rest, POST /:id/resume
+require('./lifecycleBillingPreview')(router); // Read-only financial plan before status/date changes
 require('./credits')(router);      // GET /:id/rest-credits, POST /:id/manual-credit, GET /:id/credits, ...
 require('./attendance')(router);   // GET /:id/attendance
 require('./firstPayment')(router); // POST /:id/recalculate-first-payment

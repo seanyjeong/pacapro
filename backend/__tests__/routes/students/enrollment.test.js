@@ -57,11 +57,12 @@ jest.mock('../../../utils/logger', () => ({
 jest.mock('../../../services/studentLifecycleBillingService', () => ({ withdraw: jest.fn() }));
 
 const express = require('express');
-const request = require('supertest');
+const { requestWithoutSocket: request } = require('../../helpers/requestWithoutSocket');
 const pool = require('../../../config/database');
 const { decrypt } = require('../../../utils/encryption');
 const registerEnrollmentRoutes = require('../../../routes/students/enrollment');
 const lifecycleBilling = require('../../../services/studentLifecycleBillingService');
+const { LinkError } = require('../../../models/maxEngineError');
 
 function buildApp() {
   const app = express();
@@ -229,6 +230,16 @@ describe('POST /paca/students/:id/withdraw', () => {
     expect(pool.__conn.commit).not.toHaveBeenCalled();
     expect(pool.__conn.release).toHaveBeenCalledTimes(1);
     expect(JSON.stringify(res.body)).not.toContain('private billing failure');
+  });
+  test('a stale approved billing hash is forwarded and rejected as 409 before committing withdrawal', async () => {
+    pool.__conn.execute.mockResolvedValueOnce([[{ id: 5, name: 'n', status: 'active' }]]);
+    lifecycleBilling.withdraw.mockRejectedValueOnce(new LinkError(409, 'SOURCE_CHANGED', '학원비가 변경되었습니다.'));
+    const res = await request(buildApp()).post('/paca/students/5/withdraw')
+      .send({ withdrawal_date: '2026-04-30', billing_preview_hash: 'synthetic-source-hash' });
+    expect(res.status).toBe(409); expect(res.body.error).toBe('SOURCE_CHANGED');
+    expect(lifecycleBilling.withdraw).toHaveBeenCalledWith(pool.__conn, expect.objectContaining({ expectedPreviewHash: 'synthetic-source-hash' }));
+    expect(pool.__conn.rollback).toHaveBeenCalledTimes(1); expect(pool.__conn.commit).not.toHaveBeenCalled();
+    expect(pool.__conn.release).toHaveBeenCalledTimes(1);
   });
 });
 

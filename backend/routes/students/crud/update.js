@@ -148,13 +148,22 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
             trialDates: trial_dates,
             trialRemaining: trial_remaining,
         });
-        const pauseBillingContext = trialUpdate.status === 'paused' && oldStatus === 'active'
+        const effectiveStatus = trialUpdate.status ?? oldStatus;
+        const shouldAdjustPause = effectiveStatus === 'paused' && (
+            (oldStatus === 'active' && trialUpdate.status === 'paused')
+            || (oldStatus === 'paused' && rest_start_date !== undefined)
+        );
+        const pauseBillingContext = shouldAdjustPause
             ? lifecycleBilling.validateContext({
                 studentId,
                 academyId: req.user.academyId,
                 userId: req.user.id,
-                date: (rest_start_date !== undefined ? rest_start_date : students[0].rest_start_date) || getKoreaDateText(),
+                date: oldStatus === 'paused' ? rest_start_date
+                    : (rest_start_date !== undefined ? rest_start_date : students[0].rest_start_date) || getKoreaDateText(),
+                previousDate: oldStatus === 'paused' ? students[0].rest_start_date : null,
                 reason: (rest_reason !== undefined ? rest_reason : students[0].rest_reason) || null,
+                student: students[0],
+                expectedPreviewHash: req.body.billing_preview_hash,
             })
             : null;
 
@@ -330,6 +339,10 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         if (trialUpdate.status !== undefined) {
             updates.push('status = ?');
             params.push(trialUpdate.status);
+            if (trialUpdate.status === 'withdrawn' && oldStatus !== 'withdrawn') {
+                updates.push('withdrawal_date = ?');
+                params.push(getKoreaDateText());
+            }
 
             // 상태가 paused가 아니면 휴식 관련 필드 초기화
             if (trialUpdate.status !== 'paused') {
@@ -404,6 +417,7 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
         } = await applyStudentUpdateEffects({
             pool: conn,
             userId: req.user.id,
+            expectedPreviewHash: req.body.billing_preview_hash,
             pauseBillingContext,
             studentId,
             academyId: req.user.academyId,

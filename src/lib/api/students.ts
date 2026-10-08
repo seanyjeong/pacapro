@@ -4,6 +4,7 @@
  */
 
 import apiClient, { type APIRequestConfig } from './client';
+import type { LifecycleBillingAction, LifecycleBillingPreview, LifecycleCreditType, PauseBillingResult, WithdrawalBillingResult } from '@/lib/types/lifecycle-billing';
 import type { StudentResumeResponse } from '@/lib/types/student-resume';
 import type {
   Student,
@@ -162,26 +163,21 @@ export const studentsAPI = {
    * 퇴원 처리
    * POST /paca/students/:id/withdraw
    */
-  withdrawStudent: async (id: number, reason?: string, withdrawalDate?: string, config?: APIRequestConfig): Promise<{
+  previewLifecycleBilling: async (id: number, data: { action: LifecycleBillingAction; date: string; rest_end_date?: string | null; credit_type?: LifecycleCreditType }, config?: APIRequestConfig): Promise<LifecycleBillingPreview> => {
+    return apiClient.post(`/students/${id}/lifecycle-billing-preview`, data, config);
+  },
+
+  withdrawStudent: async (id: number, reason?: string, withdrawalDate?: string, config?: APIRequestConfig, previewHash?: string): Promise<{
     message: string;
-    student: {
-      id: number;
-      name: string;
-      status: string;
-      withdrawal_date: string;
-      withdrawal_reason: string | null;
-    };
-    withdrawalInfo?: {
-      deletedPayments: number;
-      totalUnpaidAmount: number;
-      message: string;
-    };
+    student: { id: number; name: string; status: string; withdrawal_date: string; withdrawal_reason: string | null };
+    billing: WithdrawalBillingResult;
   }> => {
     return await apiClient.post(
       `/students/${id}/withdraw`,
       {
         reason,
-        withdrawal_date: withdrawalDate
+        withdrawal_date: withdrawalDate,
+        billing_preview_hash: previewHash,
       },
       config
     );
@@ -346,9 +342,11 @@ export const studentsAPI = {
     rest_reason?: string;
     credit_type: 'carryover' | 'refund' | 'none';
     source_payment_id?: number;
+    billing_preview_hash?: string;
   }, config?: APIRequestConfig): Promise<{
     message: string;
     student: Student;
+    unpaidAdjustment: PauseBillingResult;
     restCredit?: {
       id: number;
       credit_amount: number;

@@ -107,6 +107,7 @@ export interface Student extends StudentParentNames, StudentParentPhones {
 
 // 학생 등록/수정용 DTO
 export interface StudentFormData extends StudentParentNames, StudentParentPhones {
+  billing_preview_hash?: string;
   student_number?: string;
   name: string;
   gender?: Gender;

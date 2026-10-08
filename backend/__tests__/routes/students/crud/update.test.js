@@ -50,10 +50,12 @@ jest.mock('../../../../routes/students/_utils', () => ({
 }));
 
 const express = require('express');
-const request = require('supertest');
+const { requestWithoutSocket: request } = require('../../../helpers/requestWithoutSocket');
 const pool = require('../../../../config/database');
 const { encrypt, decryptFields } = require('../../../../utils/encryption');
 const lifecycleBilling = require('../../../../services/studentLifecycleBillingService');
+const { LinkError } = require('../../../../models/maxEngineError');
+const { sendJson } = require('../../../helpers/requestWithoutSocket');
 
 function makeApp() {
     const app = express();
@@ -62,6 +64,11 @@ function makeApp() {
     require('../../../../routes/students/crud/update')(router);
     app.use('/paca/students', router);
     return app;
+}
+
+// Preserve Express routing, middleware and JSON while avoiding a local listener.
+async function updateWithoutSocket(body) {
+    return sendJson(makeApp(), 'PUT', '/paca/students/5', body);
 }
 
 // 학생 기본 row (existing SELECT) — 모든 테스트에서 공유
@@ -107,6 +114,71 @@ beforeEach(() => {
     lifecycleBilling.pause.mockReset(); lifecycleBilling.withdraw.mockReset();
     encrypt.mockClear();
     decryptFields.mockClear();
+});
+
+describe('paused date corrections without local network sockets', () => {
+    test.each([{ rest_start_date: '2026-05-15' }, { status: 'paused', rest_start_date: '2026-05-15' }])
+    ('existing paused student date correction %p invokes common billing with the saved previous date', async body => {
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: '2026-05-01' })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: '2026-05-15' })]]);
+        lifecycleBilling.pause.mockResolvedValueOnce({ action: 'adjusted', originalAmount: 300000,
+            adjustedAmount: 135000, paymentIds: [77] });
+        const res = await updateWithoutSocket(body);
+        expect(res.statusCode).toBe(200);
+        expect(lifecycleBilling.pause).toHaveBeenCalledTimes(1);
+        expect(lifecycleBilling.pause).toHaveBeenCalledWith(pool.__conn, expect.objectContaining({
+            academyId: 1, studentId: 5, userId: 100, date: '2026-05-15', previousDate: '2026-05-01' }));
+        expect(res.body.paymentAdjustment).toMatchObject({ action: 'adjusted', adjustedAmount: 135000 });
+        expect(pool.__conn.commit).toHaveBeenCalledTimes(1); expect(pool.__conn.rollback).not.toHaveBeenCalled();
+    });
+    test.each([{ name: '변경' }, { status: 'paused' }])('unrelated paused profile update %p does not settle billing', async body => {
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: '2026-05-15' })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: '2026-05-15' })]]);
+        const res = await updateWithoutSocket(body);
+        expect(res.statusCode).toBe(200); expect(lifecycleBilling.pause).not.toHaveBeenCalled();
+        expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
+    });
+    test.each([null, '', '2026-02-30'])('paused date correction %p fails before persisting a student update', async date => {
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: '2026-05-15' })]]);
+        const res = await updateWithoutSocket({ rest_start_date: date });
+        expect(res.statusCode).toBe(422); expect(pool.__conn.execute).toHaveBeenCalledTimes(1);
+        expect(lifecycleBilling.pause).not.toHaveBeenCalled(); expect(pool.__conn.commit).not.toHaveBeenCalled();
+        expect(pool.__conn.rollback).toHaveBeenCalledTimes(1); expect(pool.__conn.release).toHaveBeenCalledTimes(1);
+    });
+    test('an explicitly repeated saved pause date reaches the idempotent common billing path', async () => {
+        const student = existingStudent({ status: 'paused', rest_start_date: '2026-05-15' });
+        pool.__conn.execute.mockResolvedValueOnce([[student]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }]).mockResolvedValueOnce([[student]]);
+        lifecycleBilling.pause.mockResolvedValueOnce({ action: 'unchanged', paymentIds: [] });
+        const res = await updateWithoutSocket({ rest_start_date: '2026-05-15' });
+        expect(res.statusCode).toBe(200);
+        expect(lifecycleBilling.pause).toHaveBeenCalledWith(pool.__conn, expect.objectContaining({
+            date: '2026-05-15', previousDate: '2026-05-15' }));
+        expect(res.body.paymentAdjustment).toMatchObject({ action: 'unchanged', paymentIds: [] });
+        expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
+    });
+    test.each(['2026-04-15', '2026-06-15'])('missing an existing invoice for the target month %s rolls back the proposed date correction', async date => {
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: '2026-05-15', monthly_tuition: 300000 })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: date, monthly_tuition: 300000 })]]);
+        lifecycleBilling.pause.mockRejectedValueOnce(new LinkError(409, 'BILLING_MONTH_MISSING', '변경할 월의 실제 청구를 확인해 주세요.'));
+        const res = await updateWithoutSocket({ rest_start_date: date });
+        expect(res.statusCode).toBe(409); expect(res.body.error).toBe('BILLING_MONTH_MISSING');
+        expect(lifecycleBilling.pause).toHaveBeenCalledWith(pool.__conn, expect.objectContaining({ date, previousDate: '2026-05-15' }));
+        expect(pool.__conn.rollback).toHaveBeenCalledTimes(1); expect(pool.__conn.commit).not.toHaveBeenCalled();
+    });
+    test('billing failure on an existing paused date correction rolls back the edited date', async () => {
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: '2026-05-01' })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ status: 'paused', rest_start_date: '2026-05-15' })]]);
+        lifecycleBilling.pause.mockRejectedValueOnce(new Error('private billing failure'));
+        const res = await updateWithoutSocket({ rest_start_date: '2026-05-15' });
+        expect(res.statusCode).toBe(500); expect(pool.__conn.rollback).toHaveBeenCalledTimes(1);
+        expect(pool.__conn.commit).not.toHaveBeenCalled(); expect(pool.__conn.release).toHaveBeenCalledTimes(1);
+        expect(JSON.stringify(res.body)).not.toContain('private billing failure');
+    });
 });
 
 describe('PUT /paca/students/:id (update)', () => {

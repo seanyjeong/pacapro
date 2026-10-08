@@ -266,7 +266,7 @@ async function createActivationPayment(context) {
 
 async function adjustPausedPayment(context) {
     const { pool, studentId, academyId, userId, status, oldStatus, updatedStudent } = context;
-    if (status !== 'paused' || oldStatus !== 'active') return null;
+    if (!context.pauseBillingContext && (status !== 'paused' || oldStatus !== 'active')) return null;
     const billingContext = context.pauseBillingContext || lifecycleBilling.validateContext({
         academyId,
         studentId,
@@ -284,6 +284,10 @@ async function cleanupWithdrawal(context) {
     const today = getKoreaDateText();
     const withdrawalInfo = await lifecycleBilling.withdraw(pool, {
         academyId, studentId, userId, date: today, reason: null,
+        student: context.oldStudent,
+        previousDate: context.oldStudent?.status === 'paused' ? context.oldStudent.rest_start_date : null,
+        expectedPreviewHash: context.expectedPreviewHash,
+        legacyGraduation: status === 'graduated',
     });
     // Keep the existing future-attendance cleanup; billing rows and income history stay intact.
     const [scheduleDeleteResult] = await pool.execute(

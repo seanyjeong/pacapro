@@ -4,6 +4,7 @@ const { verifyToken, checkPermission } = require('../../../middleware/auth');
 const logger = require('../../../utils/logger');
 const lifecycleBilling = require('../../../services/studentLifecycleBillingService');
 const { LinkError } = require('../../../models/maxEngineError');
+const lifecycleCredit = require('../../../services/studentLifecycleCreditService');
 
 module.exports = function registerProcessRestRoute(router) {
 /**
@@ -29,7 +30,7 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
 
         // 1. 학생 존재 확인 및 현재 정보 조회
         const [students] = await conn.execute(
-            `SELECT id, name, monthly_tuition, discount_rate, status, academy_id
+            `SELECT id, name, monthly_tuition, discount_rate, status, academy_id, rest_start_date
              FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL FOR UPDATE`,
             [studentId, req.user.academyId]
         );
@@ -65,7 +66,10 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
             studentId,
             userId: req.user.id,
             date: rest_start_date,
+            previousDate: student.status === 'paused' ? student.rest_start_date : null,
             reason: rest_reason || null,
+            student, creditType: credit_type || 'none', restEndDate: rest_end_date || null,
+            sourcePaymentId: source_payment_id ?? null, expectedPreviewHash: req.body.billing_preview_hash,
         });
 
         // 3. 학생 상태를 paused로 변경하고 휴식 정보 저장
@@ -82,86 +86,7 @@ router.post('/:id/process-rest', verifyToken, checkPermission('students', 'edit'
 
         const unpaidAdjustment = await lifecycleBilling.pause(conn, billingContext);
 
-        let restCredit = null;
-
-        // 4. 이월/환불 크레딧 처리
-        if (credit_type && credit_type !== 'none') {
-            // Reuse an existing valid credit when a committed request is retried.
-            const [existingCredits] = await conn.execute(
-                `SELECT * FROM rest_credits
-                 WHERE student_id = ? AND academy_id = ? AND rest_start_date = ?
-                   AND credit_type IN ('carryover', 'refund')
-                   AND COALESCE(status, 'pending') <> 'cancelled'
-                 ORDER BY id LIMIT 1 FOR UPDATE`,
-                [studentId, req.user.academyId, rest_start_date]
-            );
-            restCredit = existingCredits[0] || null;
-            if (!restCredit) {
-                // 휴식 기간 계산
-                const startDate = new Date(rest_start_date);
-                let endDate;
-
-                if (rest_end_date) {
-                    endDate = new Date(rest_end_date);
-                } else {
-                    // 무기한인 경우 해당 월 말일까지로 계산
-                    endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
-                }
-
-                // 해당 월 내 휴식 일수 계산
-                const year = startDate.getFullYear();
-                const month = startDate.getMonth();
-                const monthStart = new Date(year, month, 1);
-                const monthEnd = new Date(year, month + 1, 0);
-                const daysInMonth = monthEnd.getDate();
-
-                const effectiveStart = startDate > monthStart ? startDate : monthStart;
-                const effectiveEnd = endDate < monthEnd ? endDate : monthEnd;
-                const restDays = Math.ceil((effectiveEnd - effectiveStart) / (1000 * 60 * 60 * 24)) + 1;
-
-                // 일할 금액 계산
-                const monthlyTuition = parseFloat(student.monthly_tuition) || 0;
-                const dailyRate = monthlyTuition / daysInMonth;
-                const creditAmount = Math.floor((dailyRate * restDays) / 1000) * 1000;  // 천원 단위 절삭
-
-                if (creditAmount > 0) {
-                    // 휴식 크레딧 생성
-                    const [creditResult] = await conn.execute(
-                        `INSERT INTO rest_credits (
-                            student_id,
-                            academy_id,
-                            source_payment_id,
-                            rest_start_date,
-                            rest_end_date,
-                            rest_days,
-                            credit_amount,
-                            remaining_amount,
-                            credit_type,
-                            status,
-                            notes
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`,
-                        [
-                            studentId,
-                            req.user.academyId,
-                            source_payment_id || null,
-                            rest_start_date,
-                            rest_end_date || effectiveEnd.toISOString().split('T')[0],
-                            restDays,
-                            creditAmount,
-                            creditAmount,  // remaining_amount = credit_amount 초기값
-                            credit_type,
-                            `휴식 기간: ${rest_start_date} ~ ${rest_end_date || '무기한'}, 사유: ${rest_reason || '없음'}`
-                        ]
-                    );
-
-                    const [credits] = await conn.execute(
-                        'SELECT * FROM rest_credits WHERE id = ?',
-                        [creditResult.insertId]
-                    );
-                    restCredit = credits[0];
-                }
-            }
-        }
+        const restCredit = await lifecycleCredit.persist(conn, billingContext, unpaidAdjustment?.credit);
 
         // 5. 출결 정리 정책 (사장님 확정 2026-05-04, 퇴원과 동일):
         //  - 휴원 시작일 이전: 보존 (이력)

@@ -1,3 +1,4 @@
+import type { PauseBillingResult, WithdrawalBillingResult } from './lifecycle-billing';
 import type { Student, StudentDetail, StudentPayment, StudentPerformance } from './student';
 
 export interface StudentAttendanceRecord {
@@ -43,6 +44,8 @@ export interface StudentCreateResponse {
 }
 
 export interface StudentUpdateResponse {
+  paymentAdjustment?: PauseBillingResult | null;
+  withdrawalInfo?: WithdrawalBillingResult | null;
   message: string;
   student: Student;
   pendingInfo?: {

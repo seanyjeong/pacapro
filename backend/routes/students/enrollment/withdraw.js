@@ -2,6 +2,7 @@ const pool = require('../../../config/database');
 const { verifyToken, checkPermission } = require('../../../middleware/auth');
 const logger = require('../../../utils/logger');
 const billingService = require('../../../services/studentLifecycleBillingService');
+const { LinkError } = require('../../../models/maxEngineError');
 const { getKoreaDateText, resolveProratedPaymentDueDate } = require('../../../utils/proratedPaymentDueDate');
 
 module.exports = function registerWithdrawal(router) {
@@ -19,7 +20,7 @@ module.exports = function registerWithdrawal(router) {
     try {
       conn = await pool.getConnection();
       await conn.beginTransaction();
-      const [students] = await conn.execute(`SELECT id,name,status FROM students
+      const [students] = await conn.execute(`SELECT id,name,status,rest_start_date,monthly_tuition,discount_rate FROM students
         WHERE id=? AND academy_id=? AND deleted_at IS NULL FOR UPDATE`, [studentId, academyId]);
       if (!students.length) {
         await conn.rollback();
@@ -30,7 +31,9 @@ module.exports = function registerWithdrawal(router) {
         return res.status(400).json({ error: 'Bad Request', message: '이미 퇴원 처리된 학생입니다.' });
       }
       const billing = await billingService.withdraw(conn, { studentId, academyId,
-        userId: req.user.id ?? req.user.userId, date, reason: reason || '퇴원 처리' });
+        userId: req.user.id ?? req.user.userId, date, reason: reason || '퇴원 처리',
+        student: students[0], previousDate: students[0].status === 'paused' ? students[0].rest_start_date : null,
+        expectedPreviewHash: req.body.billing_preview_hash });
       await conn.execute(`UPDATE students SET status='withdrawn',withdrawal_date=?,withdrawal_reason=?,updated_at=NOW()
         WHERE id=? AND academy_id=?`, [date, reason || null, studentId, academyId]);
       // Same attendance policy as before; the academy join prevents cross-academy deletion.
@@ -44,6 +47,7 @@ module.exports = function registerWithdrawal(router) {
           withdrawal_date: date, withdrawal_reason: reason } });
     } catch (error) {
       if (conn) await conn.rollback();
+      if (error instanceof LinkError) return res.status(error.status).json({ error: error.code, message: error.message });
       logger.error('Error withdrawing student:', error);
       return res.status(500).json({ error: 'Server Error', message: '퇴원 처리에 실패했습니다. 잠시 후 다시 시도해주세요.' });
     } finally { if (conn) conn.release(); }

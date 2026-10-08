@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import apiClient from '@/lib/api/client';
+import { useLifecycleBillingPreview } from '@/hooks/use-lifecycle-billing-preview';
+import { getKoreaDateText, getLifecycleErrorMessage, needsPauseBillingPreview, omitUnchangedPauseStartDate } from '@/lib/utils/lifecycle-billing';
 import { seasonsApi } from '@/lib/api/seasons';
 import type { Student, StudentFormData, StudentType, Grade, AdmissionType, StudentStatus, TrialDate } from '@/lib/types/student';
 import type { Season } from '@/lib/types/season';
@@ -18,16 +20,6 @@ interface StudentFormProps {
   onSubmit: (data: StudentFormData, pendingPhotoFile?: File | null) => Promise<void>;
 }
 
-function getKoreaDateText(): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date());
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  return `${values.year}-${values.month}-${values.day}`;
-}
 
 export function useStudentForm({ mode, initialData, initialIsTrial = false, onSubmit }: StudentFormProps) {
   const [submitting, setSubmitting] = useState(false);
@@ -104,6 +96,16 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     rest_reason: initialData?.rest_reason || '',
     time_slot: (initialData?.time_slot || 'evening') as 'morning' | 'afternoon' | 'evening',
   });
+
+  const pausePreviewRequired = mode === 'edit' && needsPauseBillingPreview(initialData, formData);
+  const withdrawalPreviewRequired = mode === 'edit' && formData.status === 'withdrawn' && initialData?.status !== 'withdrawn';
+  const billingPreviewRequired = pausePreviewRequired || withdrawalPreviewRequired;
+  const showBillingPreview = billingPreviewRequired || (mode === 'edit' && initialData?.status === 'paused' && formData.status === 'paused');
+  const billingPreview = useLifecycleBillingPreview({
+    studentId: initialData?.id, action: withdrawalPreviewRequired ? 'withdraw' : 'pause',
+    date: withdrawalPreviewRequired ? getKoreaDateText() : formData.rest_start_date || '', enabled: showBillingPreview,
+  });
+  const billingSaveBlocked = billingPreviewRequired && !billingPreview.ready;
 
   const [isIndefiniteRest, setIsIndefiniteRest] = useState(!initialData?.rest_end_date && initialData?.status === 'paused');
 
@@ -345,20 +347,6 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     return Object.keys(newErrors).length === 0;
   };
 
-  const extractErrorMessage = (err: unknown): string => {
-    if (err && typeof err === 'object') {
-      const responseMessage = (err as { response?: { data?: { message?: unknown } } }).response?.data?.message;
-      if (
-        typeof responseMessage === 'string'
-        && /[가-힣]/.test(responseMessage)
-        && !/(cors|stack|axios|sql|http|\b\d{3}\b)/i.test(responseMessage)
-      ) {
-        return responseMessage;
-      }
-    }
-    return '학생 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.';
-  };
-
   const isSameNameWarning = (err: unknown): { isWarning: boolean; existingStudent?: { name: string; phone: string; gender?: string } } => {
     if (err && typeof err === 'object') {
       const axiosError = err as { response?: { data?: { code?: string; existingStudent?: { name: string; phone: string; gender?: string } } } };
@@ -386,6 +374,10 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
 
   const submitCurrentForm = async (forceSubmit = false, skipImmediateConfirm = false) => {
     if (!validate()) return;
+    if (billingSaveBlocked) {
+      setErrors({ submit: billingPreview.error || '학원비 미리보기를 확인한 뒤 저장해주세요.' });
+      return;
+    }
     if (mode === 'edit' && classDaysChanged && effectiveFrom === 'immediate' && !skipImmediateConfirm) {
       setConfirmState({ type: 'immediate_class_days' });
       return;
@@ -393,7 +385,8 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     const today = getKoreaDateText();
     const trialRemaining = trialDates.filter(td => !td.attended && td.date >= today).length;
     const submitData = {
-      ...formData,
+      ...omitUnchangedPauseStartDate(initialData, formData),
+      billing_preview_hash: billingPreviewRequired ? billingPreview.data?.preview_hash : undefined,
       enroll_in_season: enrollInSeason && !!selectedSeasonId,
       selected_season_id: enrollInSeason ? selectedSeasonId ?? undefined : undefined,
       confirm_force: forceSubmit,
@@ -409,12 +402,13 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
       setPendingPhotoFile(null);
     } catch (err: unknown) {
       console.warn('학생 정보 저장에 실패했습니다.');
+      if (billingPreviewRequired) billingPreview.retry();
       const sameNameCheck = isSameNameWarning(err);
       if (sameNameCheck.isWarning && sameNameCheck.existingStudent) {
         setConfirmState({ type: 'same_name', existingStudent: sameNameCheck.existingStudent });
         return;
       }
-      const errorMessage = extractErrorMessage(err);
+      const errorMessage = getLifecycleErrorMessage(err, '학생 정보를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
       setErrors({ submit: errorMessage });
       setTimeout(() => {
         const errorElement = document.querySelector('[data-testid="student-form-submit-error"]');
@@ -443,6 +437,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
   return {
     // state
     submitting, errors, setErrors,
+    pausePreviewRequired, showBillingPreview, withdrawalPreviewRequired, billingPreview, billingSaveBlocked,
     confirmState, setConfirmState,
     restModalOpen, setRestModalOpen,
     pendingPhotoFile, setPendingPhotoFile,

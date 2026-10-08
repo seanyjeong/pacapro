@@ -53,7 +53,7 @@ jest.mock('../../../services/studentLifecycleBillingService', () => ({ pause: je
   validateContext: jest.requireActual('../../../models/studentLifecycleBilling').validateContext }));
 
 const express = require('express');
-const request = require('supertest');
+const { requestWithoutSocket: request } = require('../../helpers/requestWithoutSocket');
 const pool = require('../../../config/database');
 const { autoAssignStudentToSchedules } = require('../../../routes/students/_utils');
 const lifecycleBilling = require('../../../services/studentLifecycleBillingService');
@@ -81,7 +81,7 @@ function resetMocks() {
   pool.__conn.release.mockClear();
   autoAssignStudentToSchedules.mockReset();
   lifecycleBilling.pause.mockReset().mockResolvedValue({ action: 'unchanged', originalAmount: 0,
-    adjustedAmount: 0, paymentIds: [], message: '변경할 미납 청구 없음' });
+    adjustedAmount: 0, paymentIds: [], message: '변경할 미납 청구 없음', credit: null });
 }
 
 // =====================================================================
@@ -174,8 +174,9 @@ describe('POST /paca/students/:id/process-rest', () => {
     ]);
     // 3. 학생 status update
     pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
-    // 기존 유효한 휴원 크레딧 조회 (없음)
-    pool.__conn.execute.mockResolvedValueOnce([[], []]);
+    lifecycleBilling.pause.mockResolvedValueOnce({ action: 'unchanged', paymentIds: [], credit: {
+      existing: false, credit_amount: 150000, remaining_amount: 150000, credit_type: 'carryover',
+      rest_start_date: '2026-05-15', rest_end_date: '2026-05-31', rest_days: 17, source_payment_id: null } });
     // 4. INSERT rest_credits
     pool.__conn.execute.mockResolvedValueOnce([{ insertId: 77 }, []]);
     // 4. SELECT rest_credits
@@ -244,7 +245,7 @@ describe('POST /paca/students/:id/process-rest', () => {
       adjustedAmount: 0,
     });
     expect(lifecycleBilling.pause).toHaveBeenCalledWith(pool.__conn,
-      { academyId: 1, studentId: 1, userId: 100, date: '2026-05-01', reason: null });
+      expect.objectContaining({ academyId: 1, studentId: 1, userId: 100, date: '2026-05-01', reason: null, previousDate: null }));
     expect(pool.__conn.execute.mock.calls.some(([sql]) => sql.includes('DELETE FROM student_payments'))).toBe(false);
   });
 
@@ -309,6 +310,7 @@ describe('POST /paca/students/:id/process-rest', () => {
   });
   test('retry keeps the existing valid rest credit and creates no second credit', async () => {
     const credit = { id: 77, credit_amount: 150000, credit_type: 'carryover', status: 'pending' };
+    lifecycleBilling.pause.mockResolvedValueOnce({ action: 'unchanged', paymentIds: [], credit: { ...credit, existing: true } });
     pool.__conn.execute.mockResolvedValueOnce([[{ id: 1, academy_id: 1, status: 'paused', monthly_tuition: 300000 }]])
       .mockResolvedValueOnce([{ affectedRows: 1 }]).mockResolvedValueOnce([[credit]])
       .mockResolvedValueOnce([{ affectedRows: 0 }]);
@@ -318,5 +320,29 @@ describe('POST /paca/students/:id/process-rest', () => {
     expect(res.status).toBe(200); expect(res.body.restCredit).toEqual(credit);
     expect(pool.__conn.execute.mock.calls.some(([sql]) => sql.includes('INSERT INTO rest_credits'))).toBe(false);
     expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
+  });
+  test('existing paused date correction passes its stored prior date through the dedicated route', async () => {
+    pool.__conn.execute.mockResolvedValueOnce([[{ id: 1, academy_id: 1, status: 'paused', rest_start_date: '2026-05-01' }]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]).mockResolvedValueOnce([{ affectedRows: 0 }]);
+    pool.execute.mockResolvedValueOnce([[{ id: 1, status: 'paused', rest_start_date: '2026-05-15' }]]);
+    lifecycleBilling.pause.mockResolvedValueOnce({ action: 'adjusted', originalAmount: 300000,
+      adjustedAmount: 135000, paymentIds: [50] });
+    const res = await request(makeApp()).post('/paca/students/1/process-rest')
+      .send({ rest_start_date: '2026-05-15', credit_type: 'none' });
+    expect(res.status).toBe(200);
+    expect(lifecycleBilling.pause).toHaveBeenCalledWith(pool.__conn, expect.objectContaining({
+      academyId: 1, studentId: 1, userId: 100, date: '2026-05-15', previousDate: '2026-05-01' }));
+    expect(res.body.unpaidAdjustment).toMatchObject({ action: 'adjusted', adjustedAmount: 135000 });
+    expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
+  });
+  test('dedicated paused date correction rolls back when common billing rejects the change', async () => {
+    pool.__conn.execute.mockResolvedValueOnce([[{ id: 1, academy_id: 1, status: 'paused', rest_start_date: '2026-05-01' }]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    lifecycleBilling.pause.mockRejectedValueOnce(new Error('private date correction failure'));
+    const res = await request(makeApp()).post('/paca/students/1/process-rest')
+      .send({ rest_start_date: '2026-05-15', credit_type: 'none' });
+    expect(res.status).toBe(500); expect(pool.__conn.rollback).toHaveBeenCalledTimes(1);
+    expect(pool.__conn.commit).not.toHaveBeenCalled(); expect(pool.__conn.release).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(res.body)).not.toContain('private date correction failure');
   });
 });

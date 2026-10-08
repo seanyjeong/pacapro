@@ -14,7 +14,10 @@ import { StudentResumeModal } from '@/components/students/student-resume-modal';
 import { StudentSeasonsComponent } from '@/components/students/student-seasons';
 import { useStudent } from '@/hooks/use-students';
 import { studentsAPI } from '@/lib/api/students';
+import type { WithdrawalBillingResult } from '@/lib/types/lifecycle-billing';
+import { describeWithdrawalBillingResult, getLifecycleErrorMessage } from '@/lib/utils/lifecycle-billing';
 import { STATUS_LABELS } from '@/lib/types/student';
+import { LifecycleBillingResultPanel } from '@/components/students/lifecycle-billing-preview';
 import { StudentDetailActionDialog } from './student-detail-action-dialog';
 import { StudentDetailActions } from './student-detail-actions';
 import { StudentDetailError, StudentDetailLoading } from './student-detail-states';
@@ -33,12 +36,13 @@ export function StudentDetailPage() {
   const [pendingAction, setPendingAction] = useState<StudentDetailAction | null>(null);
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [actionBusy, setActionBusy] = useState(false);
+  const [billingResult, setBillingResult] = useState<WithdrawalBillingResult | null>(null);
   const [resumeModalOpen, setResumeModalOpen] = useState(false);
 
   const { error, loading, payments, performances, reload, student } = useStudent(studentId);
   const tabs = useMemo(() => (student ? buildStudentTabs(student, payments.length) : []), [payments.length, student]);
   const outstandingAmount = getOutstandingAmount(payments);
-  const unpaidPaymentCount = payments.filter((payment) => payment.payment_status !== 'paid').length;
+  const unpaidPaymentCount = payments.filter((payment) => !['paid', 'cancelled'].includes(payment.payment_status)).length;
   const resolvedActiveTab = activeTab ?? (unpaidPaymentCount > 0 ? 'payments' : 'performance');
 
   const goBack = () => router.push('/students');
@@ -76,23 +80,27 @@ export function StudentDetailPage() {
     reload();
   };
 
-  const handleWithdraw = async (reason?: string) => {
+  const handleWithdraw = async (reason?: string, date?: string, previewHash?: string) => {
     if (!student) return;
-    await studentsAPI.withdrawStudent(studentId, reason, undefined, { suppressErrorToast: true });
-    toast.success(`${student.name} 학생이 퇴원 처리되었습니다.`);
+    const response = await studentsAPI.withdrawStudent(studentId, reason, date, { suppressErrorToast: true }, previewHash);
+    setBillingResult(response.billing);
+    await queryClient.invalidateQueries({ queryKey: ['payments'] });
+    await queryClient.invalidateQueries({ queryKey: ['students'] });
+    toast.success(`${student.name} 학생이 퇴원 처리되었습니다.`, { description: describeWithdrawalBillingResult(response.billing) });
     reload();
   };
 
-  const handleConfirmAction = async (action: StudentDetailAction, data: { reason?: string }) => {
+  const handleConfirmAction = async (action: StudentDetailAction, data: { reason?: string; date?: string; previewHash?: string }) => {
     setActionBusy(true);
     try {
       if (action === 'delete') await handleDelete();
       if (action === 'graduate') await handleGraduate();
-      if (action === 'withdraw') await handleWithdraw(data.reason);
+      if (action === 'withdraw') await handleWithdraw(data.reason, data.date, data.previewHash);
       setPendingAction(null);
     } catch (err) {
       console.warn('학생 상태 변경에 실패했습니다.', err);
-      toast.error('학생 상태를 변경하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      toast.error(getLifecycleErrorMessage(err, '학생 상태를 변경하지 못했습니다. 변경 내역을 확인해주세요.'));
+      throw err;
     } finally {
       setActionBusy(false);
     }
@@ -113,6 +121,7 @@ export function StudentDetailPage() {
       />
 
       <StudentDetailSummary payments={payments} student={student} />
+      {billingResult ? <LifecycleBillingResultPanel title="퇴원 학원비 처리 결과" result={billingResult} /> : null}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
         <main className="order-2 min-w-0 space-y-5 xl:order-1">
@@ -205,6 +214,7 @@ export function StudentDetailPage() {
         action={pendingAction}
         busy={actionBusy}
         open={pendingAction !== null}
+        studentId={student.id}
         studentName={student.name}
         unpaidPaymentCount={unpaidPaymentCount}
         onConfirm={handleConfirmAction}

@@ -12,6 +12,7 @@
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudentRestModal } from '../student-rest-modal';
+import { LifecycleBillingPreviewPanel } from '../lifecycle-billing-preview';
 import type { Student, StudentFormData } from '@/lib/types/student';
 import { useStudentForm } from './_hooks/useStudentForm';
 import { TrialSection } from './_components/TrialSection';
@@ -143,6 +144,11 @@ export function StudentForm({
         onOpenRestModal={() => hook.setRestModalOpen(true)}
       />
 
+      {hook.showBillingPreview ? (
+        <LifecycleBillingPreviewPanel preview={hook.billingPreview} title={hook.withdrawalPreviewRequired ? '퇴원 학원비 처리 미리보기'
+          : hook.pausePreviewRequired ? '휴원 시작일 변경 후 학원비' : '현재 휴원 학원비'} />
+      ) : null}
+
       {/* 에러 메시지 */}
       {hook.errors.submit && (
         <section
@@ -165,7 +171,7 @@ export function StudentForm({
         <Button type="button" variant="outline" onClick={onCancel} disabled={hook.submitting}>
           취소
         </Button>
-        <Button type="submit" disabled={hook.submitting}>
+        <Button type="submit" disabled={hook.submitting || hook.billingSaveBlocked}>
           {hook.submitting ? '저장 중...' : mode === 'create' ? '등록' : '수정'}
         </Button>
       </div>

@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useLifecycleBillingPreview } from '@/hooks/use-lifecycle-billing-preview';
+import { LifecycleBillingPreviewPanel } from '@/components/students/lifecycle-billing-preview';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -16,9 +19,10 @@ interface StudentDetailActionDialogProps {
   action: StudentDetailAction | null;
   busy: boolean;
   open: boolean;
+  studentId: number;
   studentName: string;
   unpaidPaymentCount: number;
-  onConfirm: (action: StudentDetailAction, data: { reason?: string }) => Promise<void>;
+  onConfirm: (action: StudentDetailAction, data: { reason?: string; date?: string; previewHash?: string }) => Promise<void>;
   onOpenChange: (open: boolean) => void;
 }
 
@@ -44,6 +48,7 @@ export function StudentDetailActionDialog({
   action,
   busy,
   open,
+  studentId,
   studentName,
   unpaidPaymentCount,
   onConfirm,
@@ -51,27 +56,34 @@ export function StudentDetailActionDialog({
 }: StudentDetailActionDialogProps) {
   const [deleteConfirm, setDeleteConfirm] = useState('');
   const [withdrawReason, setWithdrawReason] = useState('');
+  const [withdrawDate, setWithdrawDate] = useState(getKoreaDateText);
+  const preview = useLifecycleBillingPreview({ studentId, action: 'withdraw', date: withdrawDate, enabled: open && action === 'withdraw' });
   const copy = useMemo(() => (action ? ACTION_COPY[action] : null), [action]);
 
   useEffect(() => {
     if (!open) {
       setDeleteConfirm('');
       setWithdrawReason('');
+      setWithdrawDate(getKoreaDateText());
     }
   }, [open]);
 
   if (!action || !copy) return null;
 
   const deleteReady = action !== 'delete' || deleteConfirm.trim() === '삭제';
-  const confirmDisabled = busy || !deleteReady;
+  const confirmDisabled = busy || !deleteReady || (action === 'withdraw' && !preview.ready);
 
   const handleConfirm = async () => {
-    await onConfirm(action, { reason: withdrawReason.trim() || undefined });
+    if (confirmDisabled) return;
+    try {
+      await onConfirm(action, { reason: withdrawReason.trim() || undefined,
+        date: action === 'withdraw' ? withdrawDate : undefined, previewHash: action === 'withdraw' ? preview.data?.preview_hash : undefined });
+    } catch { if (action === 'withdraw') preview.retry(); }
   };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="max-w-md rounded-md">
+      <AlertDialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-md">
         <AlertDialogHeader>
           <AlertDialogTitle>{copy.title}</AlertDialogTitle>
           <AlertDialogDescription>
@@ -87,12 +99,26 @@ export function StudentDetailActionDialog({
           ) : null}
 
           {action === 'withdraw' ? (
+            <>
+              <label className="block space-y-1">
+                <span className="text-sm font-medium">퇴원일</span>
+                <input aria-label="퇴원일" type="date" value={withdrawDate} max={getKoreaDateText()} disabled={busy}
+                  onChange={event => setWithdrawDate(event.target.value)}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+              </label>
+              <LifecycleBillingPreviewPanel preview={preview} title="퇴원 학원비 처리 미리보기" />
+            </>
+          ) : null}
+
+          {action === 'withdraw' ? (
             <label className="block space-y-1">
               <span className="text-xs font-medium text-muted-foreground">퇴원 사유</span>
               <textarea
                 aria-label="퇴원 사유"
                 className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
                 placeholder="예: 타 학원 이동, 개인 사정"
+                maxLength={255}
+                disabled={busy}
                 value={withdrawReason}
                 onChange={(event) => setWithdrawReason(event.target.value)}
               />
