@@ -40,6 +40,21 @@ test('existing MCP schedule commands remain available with prospect registration
  expect(validate({operation:'class_schedule_update',resource_id:7,changes:{time_slot:'morning'}}))
   .toEqual({operation:'class_schedule_update',resource_id:7,changes:{time_slot:'morning'}});
 });
+test('consultation block create needs a date and reason without id, delete needs an id and no fields',()=>{
+ const entries=Object.fromEntries(catalog('paca').map(entry=>[entry.operation,entry]));
+ expect(entries.consultation_block_create).toMatchObject({resource:'consultation_blocked_slots',requires_id:false});
+ expect(entries.consultation_block_delete).toMatchObject({resource:'consultation_blocked_slots',requires_id:true});
+ expect(validate({operation:'consultation_block_create',changes:{blocked_date:'2030-10-14',start_time:'11:30',end_time:'12:30',reason:'외부 일정'}}).resource_id).toBeNull();
+ for(const body of [
+  {operation:'consultation_block_create',resource_id:1,changes:{blocked_date:'2030-10-14',is_all_day:true,reason:'x'}},
+  {operation:'consultation_block_create',changes:{blocked_date:'2030-10-14',is_all_day:true,reason:' '}},
+  {operation:'consultation_block_create',changes:{blocked_date:'2030-10-14',start_time:'11:30:00',end_time:'12:30',reason:'x'}},
+  {operation:'consultation_block_create',changes:{blocked_date:'2030-10-14',is_all_day:true,reason:'x',academy_event_id:1}},
+  {operation:'consultation_block_delete',changes:{}},
+  {operation:'consultation_block_delete',resource_id:1,changes:{reason:'x'}},
+ ])expect(()=>validate(body)).toThrow();
+ expect(validate({operation:'consultation_block_delete',resource_id:1,changes:{}})).toEqual({operation:'consultation_block_delete',resource_id:1,changes:{}});
+});
 test('payment uses exact decimal arithmetic and preserves prior notes',()=>{
  const before={paid_amount:'0.10',final_amount:'0.30',payment_status:'partial',notes:'prior'};
  const result=payments.result({paid_amount:'0.20',payment_date:'2026-09-27',payment_method:'cash'},before);

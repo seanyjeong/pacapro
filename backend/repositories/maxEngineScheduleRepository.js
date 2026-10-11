@@ -59,4 +59,18 @@ async function eventState(conn, actor, command, lock) {
     reservations: await rows(conn, `SELECT id, preferred_date, preferred_time FROM consultations
       WHERE academy_id = ? AND preferred_date = ? AND status IN ('pending', 'confirmed') ORDER BY id`, [academy, date], lock) };
 }
-module.exports = { classState, instructorState, consultationState, eventState };
+async function blockState(conn, actor, command, lock) {
+  const academy = actor.academy_id;
+  const record = command.operation === 'consultation_block_delete'
+    ? await commandRepo.row(conn, 'consultation_blocked_slots', command.resource_id, academy, lock) : null;
+  const date = record ? record.blocked_date : command.changes.blocked_date;
+  return { record,
+    blocks: await rows(conn, 'SELECT * FROM consultation_blocked_slots WHERE academy_id = ? AND blocked_date = ? ORDER BY id', [academy, date], lock),
+    reservations: await rows(conn, `SELECT id, preferred_date, preferred_time FROM consultations
+      WHERE academy_id = ? AND preferred_date = ? AND status IN ('pending', 'confirmed') ORDER BY id`, [academy, date], lock) };
+}
+async function removeBlock(conn, id, academyId) {
+  const [result] = await conn.execute('DELETE FROM consultation_blocked_slots WHERE id = ? AND academy_id = ? AND academy_event_id IS NULL', [id, academyId]);
+  if (result.affectedRows !== 1) fail(409, 'SOURCE_CHANGED', '대상이 변경되었습니다. 다시 미리보기해 주세요.');
+}
+module.exports = { classState, instructorState, consultationState, eventState, blockState, removeBlock };

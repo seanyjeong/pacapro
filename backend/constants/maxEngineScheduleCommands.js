@@ -24,5 +24,12 @@ const commands = {
   consultation_reschedule: { resource: 'consultations', provider: 'paca', label: '상담 예약 날짜·시간 수정',
     schema: schema({ preferred_date: date, preferred_time: time }),
     notice: '대기·확정 상담 예약의 날짜/시간만 수정합니다. 상담 기록의 작성일·상태·메모·알림 발송 상태는 보존하며 문자 발송은 하지 않습니다.' },
+  consultation_block_create: { resource: 'consultation_blocked_slots', provider: 'paca', label: '상담 예약 시간 차단',
+    schema: Joi.object({ blocked_date: date.required(), is_all_day: Joi.boolean(), start_time: time, end_time: time,
+      reason: Joi.string().max(200).pattern(/\S/).required() }).unknown(false),
+    notice: '공개 상담 예약에서 해당 날짜·시간을 새로 예약할 수 없게 합니다. 이미 잡힌 예약은 이동·취소하지 않으며(related에 표시) 문자 발송은 하지 않습니다.' },
+  consultation_block_delete: { resource: 'consultation_blocked_slots', provider: 'paca', label: '상담 예약 차단 해제',
+    schema: Joi.object({}).unknown(false),
+    notice: '직접 등록한 상담 차단 한 건만 해제합니다. 학원 행사에 연결된 차단은 해당 행사의 상담 차단(academy_event_update block_consultation)을 꺼 주세요. 문자 발송은 하지 않습니다.' },
 };
 module.exports = { commands };

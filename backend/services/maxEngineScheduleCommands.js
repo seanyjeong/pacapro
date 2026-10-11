@@ -2,6 +2,7 @@ const { commands } = require('../constants/maxEngineScheduleCommands');
 const repo = require('../repositories/maxEngineScheduleRepository');
 const commandRepo = require('../repositories/maxEngineFullCommandRepository');
 const events = require('./maxEngineEventCommand');
+const blocks = require('./maxEngineConsultationBlocks');
 const { clock, blocksTime, timeRange, conflict } = require('./maxEngineScheduleValidation');
 
 function supports(operation) { return Object.hasOwn(commands, operation); }
@@ -11,6 +12,8 @@ async function state(conn, actor, command, lock) {
     case 'instructor_schedule_update': return repo.instructorState(conn, actor, command, lock);
     case 'consultation_reschedule': return repo.consultationState(conn, actor, command, lock);
     case 'academy_event_update': return repo.eventState(conn, actor, command, lock);
+    case 'consultation_block_create':
+    case 'consultation_block_delete': return repo.blockState(conn, actor, command, lock);
   }
 }
 function validateClass(before, after) {
@@ -31,6 +34,7 @@ function validateClass(before, after) {
 function display(command, before) {
   const notice = commands[command.operation].notice;
   if (command.operation === 'academy_event_update') return { ...events.display(command, before), notice };
+  if (command.operation.startsWith('consultation_block_')) return { ...blocks.display(command, before), notice };
   const old = before.record, after = { ...old, ...command.changes };
   let identity;
   if (command.operation === 'class_schedule_update') {
@@ -55,6 +59,7 @@ function display(command, before) {
 }
 async function apply(conn, actor, command) {
   if (command.operation === 'academy_event_update') return events.apply(conn, actor, command);
+  if (command.operation.startsWith('consultation_block_')) return blocks.apply(conn, actor, command);
   await commandRepo.update(conn, commands[command.operation].resource, command.resource_id, command.changes);
   return command.resource_id;
 }
