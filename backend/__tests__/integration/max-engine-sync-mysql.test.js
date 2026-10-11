@@ -22,7 +22,7 @@ run('academy allowlist student sync HTTP with native MySQL', () => {
     await admin.query(`CREATE TABLE ${database}.students (
       id INT PRIMARY KEY, academy_id INT NOT NULL, name VARCHAR(512), gender VARCHAR(10),
       school VARCHAR(100), grade VARCHAR(20), phone VARCHAR(512), parent_phone VARCHAR(512),
-      admission_type VARCHAR(30), status VARCHAR(30), deleted_at TIMESTAMP NULL,
+      father_phone VARCHAR(512), mother_phone VARCHAR(512), admission_type VARCHAR(30), status VARCHAR(30), deleted_at TIMESTAMP NULL,
       updated_at TIMESTAMP NOT NULL, birth_date DATE, notes TEXT) ENGINE=InnoDB`);
     pool = mysql.createPool({ ...options, database });
     pool.on('connection', connection => connection.query("SET time_zone = '+09:00'"));
@@ -32,9 +32,9 @@ run('academy allowlist student sync HTTP with native MySQL', () => {
     process.env.DATA_ENCRYPTION_KEY = crypto.randomBytes(32).toString('hex');
     ({ encrypt } = require('../../services/maxEngineFullSecurity'));
     const rows = Array.from({ length: 405 }, (_, i) => [i + 1, 1, encrypt('합성학생' + (i + 1)), 'female',
-      '합성학교', '고3', encrypt('000111'), encrypt('000222'), 'both', i === 0 ? 'prospect' : 'active',
+      '합성학교', '고3', encrypt('000111'), encrypt('000222'), encrypt('000333'), null, 'both', i === 0 ? 'prospect' : 'active',
       i === 1 ? '2026-10-01 09:00:00' : null, '2026-10-01 09:00:00', '2000-01-01', 'private']);
-    rows.push([999, 2, encrypt('다른교육원'), null, null, null, null, null, 'early', 'active', null,
+    rows.push([999, 2, encrypt('다른교육원'), null, null, null, null, null, null, null, 'early', 'active', null,
       '2026-10-01 09:00:00', null, 'private']);
     await pool.query('INSERT INTO students VALUES ?', [rows]);
     baseline = (await pool.query('SELECT * FROM students ORDER BY id'))[0];
@@ -77,9 +77,10 @@ run('academy allowlist student sync HTTP with native MySQL', () => {
       expect(response.headers['cache-control']).toBe('no-store');
       sizes.push(response.body.items.length); times.push(response.body.server_time);
       if (!cursor) {
-        expect(response.body.items[0]).toMatchObject({ name: '합성학생1', phone: '000111', parent_phone: '000222', status: 'prospect', admission_type: 'both' });
+        expect(response.body.items[0]).toMatchObject({ name: '합성학생1', phone: '000111', parent_phone: '000222',
+          father_phone: '000333', mother_phone: null, status: 'prospect', admission_type: 'both' });
         expect(response.body.items[1].deleted_at).toBe('2026-10-01T00:00:00.000Z');
-        expect(Object.keys(response.body.items[0]).sort()).toEqual(['paca_student_id','academy_id','name','gender','school_name','grade','phone','parent_phone','admission_type','status','deleted_at','updated_at'].sort());
+        expect(Object.keys(response.body.items[0]).sort()).toEqual(['paca_student_id','academy_id','name','gender','school_name','grade','phone','parent_phone','father_phone','mother_phone','admission_type','status','deleted_at','updated_at'].sort());
       }
       ids.push(...response.body.items.map(s => s.paca_student_id)); cursor = response.body.next_cursor;
     } while (cursor);

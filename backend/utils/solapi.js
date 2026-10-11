@@ -171,6 +171,9 @@ async function sendSMSSolapi(settings, recipients, content, type = 'SMS') {
         return {
             success: true,
             groupId: response.data.groupId,
+            // send-many/detail answers 200 even when Solapi rejects a message; callers that need it check failedCount.
+            messageId: response.data.messageList?.[0]?.messageId,
+            failedCount: response.data.failedMessageList?.length || 0,
             messageType: messageType
         };
     } catch (error) {

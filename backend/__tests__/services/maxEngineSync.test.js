@@ -31,12 +31,14 @@ test('only complete positive id allowlists enable reading, and unauthorized acad
 test('read exports only the contract fields and decrypts required contacts; damaged ciphertext fails closed', async () => {
   repository.serverTime.mockResolvedValue('2026-10-06T00:00:00.000Z');
   const row = { id: 3, academy_id: 1, name: encrypt('합성학생'), gender: 'female', school: null,
-    grade: '고3', phone: encrypt('000111'), parent_phone: null, admission_type: 'both', status: 'prospect',
+    grade: '고3', phone: encrypt('000111'), parent_phone: null, father_phone: encrypt('000333'), mother_phone: null,
+    admission_type: 'both', status: 'prospect',
     deleted_at: '2026-10-05 09:00:00', updated_at: '2026-10-06 09:00:00', birth_date: '2000-01-01', notes: 'private' };
   repository.students.mockResolvedValue([row]);
   const result = await read(1);
   expect(result).toEqual({ items: [{ paca_student_id: 3, academy_id: 1, name: '합성학생', gender: 'female',
-    school_name: null, grade: '고3', phone: '000111', parent_phone: null, admission_type: 'both', status: 'prospect',
+    school_name: null, grade: '고3', phone: '000111', parent_phone: null, father_phone: '000333', mother_phone: null,
+    admission_type: 'both', status: 'prospect',
     deleted_at: '2026-10-05T00:00:00.000Z', updated_at: '2026-10-06T00:00:00.000Z' }],
     next_cursor: null, server_time: '2026-10-06T00:00:00.000Z' });
   repository.students.mockResolvedValue([{ ...row, name: 'ENC:broken' }]);

@@ -17,7 +17,7 @@ async function students(page) {
   }
   // No status/deleted filter: tombstones and prospect students are required for safe reconciliation.
   const [rows] = await db.execute(`SELECT id, academy_id, name, gender, school, grade,
-    phone, parent_phone, admission_type, status, deleted_at, updated_at
+    phone, parent_phone, father_phone, mother_phone, admission_type, status, deleted_at, updated_at
     FROM students WHERE ${where.join(' AND ')} ORDER BY updated_at, id LIMIT ${pageSize + 1}`, params);
   return rows;
 }

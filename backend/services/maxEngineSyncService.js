@@ -22,6 +22,7 @@ async function students(input, header, socketAddress, headers) {
     paca_student_id: row.id, academy_id: row.academy_id,
     name: decrypt(row.name), gender: row.gender, school_name: row.school,
     grade: row.grade, phone: decrypt(row.phone), parent_phone: decrypt(row.parent_phone),
+    father_phone: decrypt(row.father_phone), mother_phone: decrypt(row.mother_phone),
     admission_type: row.admission_type, status: row.status,
     deleted_at: mysqlToIso(row.deleted_at), updated_at: mysqlToIso(row.updated_at),
   }));
