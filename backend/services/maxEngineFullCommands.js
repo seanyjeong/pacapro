@@ -51,6 +51,7 @@ async function state(conn, actor, command, lock = false) {
   if (command.operation === 'attendance_set') return attendance.state(conn, actor, command.resource_id, lock);
   const before = await repo.row(conn, commands[command.operation].resource, command.resource_id, actor.academy_id, lock);
   if (command.operation === 'payment_pay') await repo.row(conn, 'students', before.student_id, actor.academy_id, lock);
+  if (command.operation === 'payment_update') return { ...before, student_status: (await repo.row(conn, 'students', before.student_id, actor.academy_id, lock)).status };
   return before;
 }
 function display(command, before) {
@@ -59,6 +60,7 @@ function display(command, before) {
   if (lifecycle.supports(command.operation)) return { ...lifecycle.display(command, before), notice: commands[command.operation].notice };
   if (settlement.supports(command.operation)) return settlement.display(command, before);
   if (schedules.supports(command.operation)) return schedules.display(command, before);
+  if (command.operation === 'payment_update') return { ...payments.updateView(command.changes, before), notice: commands[command.operation].notice };
   const old = command.operation === 'attendance_set' ? before.attendance : before.record || before;
   const previous = command.operation.endsWith('_create') ? null : Object.fromEntries(
     Object.keys(command.changes).map(k => [k, decrypt(old[k] ?? null)]));
@@ -94,6 +96,7 @@ async function apply(conn, actor, command, before) {
     case 'consultation_record_update': return consultationRecords.update(conn, id, changes);
     case 'attendance_set': return attendance.apply(conn, actor, id, changes, before);
     case 'payment_pay': return payments.apply(conn, actor, id, changes, before);
+    case 'payment_update': return payments.update(conn, id, changes, before);
     default: fail(403, 'WRITE_FORBIDDEN', '허용된 작업이 아닙니다.');
   }
 }

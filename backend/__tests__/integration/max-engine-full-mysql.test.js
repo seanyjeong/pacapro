@@ -198,6 +198,31 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     expect((await confirm(retry.body)).status).toBe(200);
     expect((await paca.query('SELECT paid_amount FROM student_payments WHERE id=1'))[0][0].paid_amount).toBe('3100.50');
   });
+  test('payment_update recalculates the bill once, keeps revenues, and rejects below-paid or withdrawn bills', async () => {
+    await paca.query("INSERT INTO student_payments(id,student_id,academy_id,`year_month`,payment_type,base_amount,discount_amount,additional_amount,carryover_amount,final_amount,paid_amount,due_date,payment_status,notes) VALUES(700,1,1,'2026-10','monthly',300000,0,0,0,300000,100000,'2026-10-05','partial','prior')");
+    const revenues = async () => (await paca.query('SELECT COUNT(*) n FROM revenues'))[0][0].n;
+    const ledger = await revenues();
+    const p = await preview({operation:'payment_update',resource_id:700,changes:{discount_amount:'50000',notes:'형제 할인'}});
+    expect(p.status).toBe(200);expect(p.body.before.final_amount).toBe('300000.00');
+    expect(p.body.after).toMatchObject({final_amount:'250000.00',payment_status:'partial'});
+    expect((await confirm(p.body)).status).toBe(200);expect((await confirm(p.body)).status).toBe(200);
+    expect((await paca.query('SELECT discount_amount,final_amount,payment_status,notes FROM student_payments WHERE id=700'))[0][0])
+      .toEqual({discount_amount:'50000.00',final_amount:'250000.00',payment_status:'partial',notes:'prior\n청구액 수정: 300000.00 → 250000.00 (형제 할인)'});
+    expect(await revenues()).toBe(ledger);
+    const below = await preview({operation:'payment_update',resource_id:700,changes:{base_amount:'140000',notes:'감액'}});
+    expect(below.status).toBe(422);expect(below.body.error.code).toBe('PAYMENT_BELOW_PAID');
+    const equal = await preview({operation:'payment_update',resource_id:700,changes:{base_amount:'150000',notes:'감액'}});
+    expect(equal.status).toBe(200);expect((await confirm(equal.body)).status).toBe(200);
+    expect((await paca.query('SELECT final_amount,payment_status FROM student_payments WHERE id=700'))[0][0]).toEqual({final_amount:'100000.00',payment_status:'paid'});
+    const closed = await preview({operation:'payment_update',resource_id:700,changes:{base_amount:'200000',notes:'증액'}});
+    expect(closed.status).toBe(409);expect(closed.body.error.code).toBe('PAYMENT_CLOSED');
+    await paca.query("INSERT INTO students(id,academy_id,name,phone,grade,class_days,weekly_count,monthly_tuition,status) VALUES (700,1,?,?,'고3','[]',0,0,'withdrawn')", [encrypt('합성퇴원'), encrypt('01000000000')]);
+    await paca.query("INSERT INTO student_payments(id,student_id,academy_id,`year_month`,payment_type,base_amount,final_amount,paid_amount,due_date,payment_status) VALUES(701,700,1,'2026-10','monthly',300000,300000,0,'2026-10-05','pending')");
+    const withdrawn = await preview({operation:'payment_update',resource_id:701,changes:{base_amount:'1000',notes:'감액'}});
+    expect(withdrawn.status).toBe(409);expect(withdrawn.body.error.code).toBe('STUDENT_STATUS_CONFLICT');
+    expect((await preview({operation:'payment_update',resource_id:700,changes:{base_amount:'1000'}})).status).toBe(422);
+    await paca.query('DELETE FROM student_payments WHERE id IN (700,701)');await paca.query('DELETE FROM students WHERE id=700');
+  });
   test('cursor pagination covers every row once and filters cannot escape academy scope', async () => {
     const values=Array.from({length:101},(_,i)=>[1000+i,1,encrypt('synthetic '+i),'[]',0,0]);
     await paca.query('INSERT INTO students(id,academy_id,name,class_days,weekly_count,monthly_tuition) VALUES ?',[values]);

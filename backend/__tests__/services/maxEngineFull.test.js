@@ -49,3 +49,22 @@ test('payment uses exact decimal arithmetic and preserves prior notes',()=>{
  expect(()=>payments.result({paid_amount:'1'},{...before,payment_status:'cancelled'})).toThrow();
  expect(payments.result({paid_amount:'0'}, {...before,final_amount:'0',paid_amount:'0'}).payment_status).toBe('paid');
 });
+test('payment_update recalculates final amount like the payment screen and guards closed, withdrawn and below-paid bills',()=>{
+ const before={base_amount:'300000.00',discount_amount:'0.00',additional_amount:'0.00',carryover_amount:10000,final_amount:'290000.00',paid_amount:'0.00',payment_status:'pending',notes:'prior',student_status:'active'};
+ const cut=payments.updated({discount_amount:'50500',notes:'형제 할인'},before);
+ expect(cut).toMatchObject({base_amount:'300000.00',discount_amount:'50500.00',final_amount:'239000.00',payment_status:'pending'});
+ expect(cut.notes).toBe('prior\n청구액 수정: 290000.00 → 239000.00 (형제 할인)');
+ expect(payments.updated({base_amount:'5000',notes:'x'},{...before,carryover_amount:20000}).final_amount).toBe('0.00');
+ const partial={...before,paid_amount:'100000.00',payment_status:'partial'};
+ expect(payments.updated({base_amount:'200000',notes:'x'},partial).payment_status).toBe('partial');
+ expect(payments.updated({base_amount:'110000',notes:'x'},partial)).toMatchObject({final_amount:'100000.00',payment_status:'paid'});
+ const code=(changes,b)=>{try{payments.updated(changes,b);}catch(e){return e.code||e.error?.code||e.message;}};
+ expect(String(code({base_amount:'100000',notes:'x'},partial))).toContain('PAYMENT_BELOW_PAID');
+ for(const status of ['paid','cancelled'])expect(String(code({base_amount:'1',notes:'x'},{...before,payment_status:status}))).toContain('PAYMENT_CLOSED');
+ for(const status of ['withdrawn','graduated'])expect(String(code({base_amount:'1',notes:'x'},{...before,student_status:status}))).toContain('STUDENT_STATUS_CONFLICT');
+ expect(()=>validate({operation:'payment_update',resource_id:1,changes:{base_amount:'1000'}})).toThrow();
+ expect(()=>validate({operation:'payment_update',resource_id:1,changes:{base_amount:'1000',notes:'  '}})).toThrow();
+ expect(()=>validate({operation:'payment_update',resource_id:1,changes:{notes:'사유만'}})).toThrow();
+ expect(()=>validate({operation:'payment_update',resource_id:1,changes:{final_amount:'1000',notes:'x'}})).toThrow();
+ expect(catalog('paca').find(c=>c.operation==='payment_update')).toMatchObject({resource:'student_payments',source:'paca'});
+});

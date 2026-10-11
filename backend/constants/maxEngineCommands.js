@@ -3,6 +3,7 @@ const { STUDENT_ADMISSION_TYPES } = require('./studentAdmissionTypes');
 const text = max => Joi.string().max(max).allow('', null);
 const date = Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).custom((v, h) =>
   !Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v ? v : h.error('any.invalid'));
+const money = Joi.string().pattern(/^(0|[1-9]\d{0,7})(\.\d{1,2})?$/);
 const profile = {
   admission_type: Joi.string().valid(...STUDENT_ADMISSION_TYPES).allow(null),
   name: Joi.string().min(1).max(60), phone: Joi.string().pattern(/^[0-9+() -]{3,30}$/),
@@ -54,6 +55,10 @@ const commands = {
     schema: Joi.object({ paid_amount: Joi.string().pattern(/^(0|[1-9]\d{0,7})(\.\d{1,2})?$/).required(),
       payment_date: date.required(), payment_method: Joi.string().valid('account', 'card', 'cash', 'other').required(),
       notes: text(4000) }).unknown(false), notice: '납부금액을 기존 수납액에 더하고 같은 트랜잭션에서 수입 장부를 기록합니다.' },
+  payment_update: { resource: 'student_payments', provider: 'paca', label: '청구 금액 수정',
+    schema: Joi.object({ base_amount: money, discount_amount: money, additional_amount: money,
+      notes: Joi.string().max(4000).pattern(/\S/).required() }).or('base_amount', 'discount_amount', 'additional_amount').unknown(false),
+    notice: '기본·할인·추가 금액으로 최종 청구액을 다시 계산합니다(천원 단위 버림, 이월액 차감). 완납·취소 청구, 퇴원·졸업 학생, 이미 낸 금액보다 낮추는 변경은 거부하고 같으면 완납으로 바꿉니다. notes에 수정 사유가 필요합니다. 수입 장부는 바꾸지 않습니다.' },
 };
 const encryptedFields = ['name', 'phone', 'parent_phone', 'address', 'father_name', 'mother_name'];
 module.exports = { commands, encryptedFields };
