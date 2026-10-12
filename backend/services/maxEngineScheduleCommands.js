@@ -12,6 +12,7 @@ async function state(conn, actor, command, lock) {
     case 'instructor_schedule_update': return repo.instructorState(conn, actor, command, lock);
     case 'consultation_reschedule': return repo.consultationState(conn, actor, command, lock);
     case 'academy_event_update': return repo.eventState(conn, actor, command, lock);
+    case 'academy_event_create': return repo.eventCreateState(conn, actor, command, lock);
     case 'consultation_block_create':
     case 'consultation_block_delete': return repo.blockState(conn, actor, command, lock);
   }
@@ -34,6 +35,7 @@ function validateClass(before, after) {
 function display(command, before) {
   const notice = commands[command.operation].notice;
   if (command.operation === 'academy_event_update') return { ...events.display(command, before), notice };
+  if (command.operation === 'academy_event_create') return { ...events.createDisplay(command, before), notice };
   if (command.operation.startsWith('consultation_block_')) return { ...blocks.display(command, before), notice };
   const old = before.record, after = { ...old, ...command.changes };
   let identity;
@@ -57,8 +59,9 @@ function display(command, before) {
   const pick = row => Object.fromEntries([...keys].map(key => [key, row[key] ?? null]));
   return { before: pick(old), after: pick(after), notice };
 }
-async function apply(conn, actor, command) {
+async function apply(conn, actor, command, before) {
   if (command.operation === 'academy_event_update') return events.apply(conn, actor, command);
+  if (command.operation === 'academy_event_create') return events.create(conn, actor, command, before);
   if (command.operation.startsWith('consultation_block_')) return blocks.apply(conn, actor, command);
   await commandRepo.update(conn, commands[command.operation].resource, command.resource_id, command.changes);
   return command.resource_id;

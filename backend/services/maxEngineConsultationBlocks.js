@@ -16,6 +16,10 @@ function range(block) {
   if (block.is_all_day) return ['00:00', '24:00'];
   return block.start_time && block.end_time ? [clock(block.start_time), clock(block.end_time)] : null;
 }
+function overlaps(block, start, end) {
+  const taken = range(block);
+  return Boolean(taken && taken[0] < end && taken[1] > start);
+}
 function plan(changes) {
   if (changes.blocked_date < today()) fail(422, 'SCHEDULE_TIME_RANGE', '오늘 이전 날짜는 차단할 수 없습니다.');
   if (changes.is_all_day && (changes.start_time || changes.end_time)) fail(422, 'SCHEDULE_TIME_RANGE', '종일 차단에는 시작·종료 시간을 넣지 않습니다.');
@@ -32,7 +36,7 @@ function display(command, state) {
   }
   const block = plan(command.changes);
   const [start, end] = range(block);
-  if (state.blocks.some(row => { const taken = range(row); return taken && taken[0] < end && taken[1] > start; })) {
+  if (state.blocks.some(row => overlaps(row, start, end))) {
     conflict('같은 날짜의 기존 상담 차단과 시간이 겹칩니다. 기존 차단을 먼저 확인해 주세요.');
   }
   const reservations = state.reservations.filter(row => start <= clock(row.preferred_time) && clock(row.preferred_time) < end);
@@ -48,4 +52,4 @@ async function apply(conn, actor, command) {
     is_all_day: block.is_all_day, start_time: block.start_time && block.start_time + ':00', end_time: block.end_time && block.end_time + ':00',
     reason: block.reason, created_by: actor.user_id });
 }
-module.exports = { display, apply };
+module.exports = { display, apply, range, overlaps };

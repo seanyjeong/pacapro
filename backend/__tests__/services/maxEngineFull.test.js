@@ -55,6 +55,13 @@ test('consultation block create needs a date and reason without id, delete needs
  ])expect(()=>validate(body)).toThrow();
  expect(validate({operation:'consultation_block_delete',resource_id:1,changes:{}})).toEqual({operation:'consultation_block_delete',resource_id:1,changes:{}});
 });
+test('academy event create needs a title and date without id and rejects unknown fields',()=>{
+ expect(catalog('paca').find(entry=>entry.operation==='academy_event_create')).toMatchObject({resource:'academy_events',requires_id:false});
+ expect(validate({operation:'academy_event_create',changes:{title:'강남대 실기 인솔',event_date:'2030-10-17',start_time:'15:20',event_type:'work'}}).resource_id).toBeNull();
+ for(const changes of [{event_date:'2030-10-17'},{title:' ',event_date:'2030-10-17'},{title:'x'},{title:'x',event_date:'2030-10-17',event_type:'trip'},
+  {title:'x',event_date:'2030-10-17',start_time:'15:20:00'},{title:'x',event_date:'2030-10-17',academy_id:2}])expect(()=>validate({operation:'academy_event_create',changes})).toThrow();
+ expect(()=>validate({operation:'academy_event_create',resource_id:1,changes:{title:'x',event_date:'2030-10-17'}})).toThrow();
+});
 test('payment uses exact decimal arithmetic and preserves prior notes',()=>{
  const before={paid_amount:'0.10',final_amount:'0.30',payment_status:'partial',notes:'prior'};
  const result=payments.result({paid_amount:'0.20',payment_date:'2026-09-27',payment_method:'cash'},before);

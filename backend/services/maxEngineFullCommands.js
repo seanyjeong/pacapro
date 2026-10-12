@@ -85,7 +85,7 @@ async function apply(conn, actor, command, before) {
   if (peak.supports(command.operation)) return peak.apply(conn, actor, command, before);
   if (lifecycle.supports(command.operation)) return lifecycle.apply(conn, actor, command, before);
   if (settlement.supports(command.operation)) return settlement.apply(conn, actor, command, before);
-  if (schedules.supports(command.operation)) return schedules.apply(conn, actor, command);
+  if (schedules.supports(command.operation)) return schedules.apply(conn, actor, command, before);
   const { operation, resource_id: id, changes } = command;
   switch (operation) {
     case 'student_create': return students.create(conn, actor, changes, before);

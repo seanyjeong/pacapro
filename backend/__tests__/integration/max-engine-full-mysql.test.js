@@ -257,6 +257,42 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     expect((await paca.query('SELECT COUNT(*) n FROM consultation_blocked_slots WHERE id=703'))[0][0].n).toBe(1);
     await paca.query("DELETE FROM consultation_blocked_slots WHERE blocked_date='2030-10-14'");await paca.query('DELETE FROM consultations WHERE id IN (700,701)');
   });
+  test('academy_event_create registers like the event screen once, closes classes for holidays and blocks consultation slots', async () => {
+    const events = async date => (await paca.query('SELECT id,title,event_type,start_time,end_time,is_all_day,is_holiday,color,created_by FROM academy_events WHERE academy_id=1 AND event_date=? ORDER BY id', [date]))[0];
+    const create = changes => preview({operation:'academy_event_create',changes});
+    const p = await create({title:'강남대 실기 인솔',event_date:'2030-10-19',start_time:'15:20',event_type:'work'});
+    expect(p.status).toBe(200);expect(p.body.before).toBeNull();
+    expect(p.body.after).toMatchObject({title:'강남대 실기 인솔',event_type:'work',start_time:'15:20',end_time:null,is_all_day:false,is_holiday:false,block_consultation:false,color:'#f59e0b',
+      related:{classes_to_close:[],consultation_blocks:[],unchanged_reservations_in_blocked_slots:[]}});
+    expect(await events('2030-10-19')).toEqual([]);
+    const done = await confirm(p.body);expect(done.status).toBe(200);expect((await confirm(p.body)).status).toBe(200);
+    expect(await events('2030-10-19')).toEqual([{id:done.body.resource_id,title:'강남대 실기 인솔',event_type:'work',start_time:'15:20:00',end_time:null,is_all_day:0,is_holiday:0,color:'#f59e0b',created_by:1}]);
+    expect((await create({title:'설명회',event_date:'2030-10-19'})).body.after).toMatchObject({event_type:'academy',is_all_day:true,start_time:null});
+    for (const changes of [{event_date:'2020-01-01',start_time:'10:00'},{is_all_day:true,start_time:'10:00'},{is_all_day:false},{start_time:'15:00',end_time:'14:00'},
+      {end_time:'14:00'},{start_time:'11:00',block_consultation:true}]) {
+      expect((await create({title:'x',event_date:'2030-10-19',...changes})).body.error.code).toBe('SCHEDULE_TIME_RANGE');
+    }
+    expect((await create({event_date:'2030-10-19'})).status).toBe(422);
+    await paca.query("INSERT INTO class_schedules(id,academy_id,class_date,time_slot) VALUES(710,1,'2030-10-20','morning'),(711,1,'2030-10-20','evening')");
+    const holiday = await create({title:'체육대회',event_date:'2030-10-20',is_holiday:true});
+    expect(holiday.body.after.related.classes_to_close.map(c => c.id)).toEqual([710,711]);
+    const closed = await confirm(holiday.body);expect(closed.status).toBe(200);
+    expect((await paca.query('SELECT is_closed,close_reason,academy_event_id FROM class_schedules WHERE id IN (710,711) ORDER BY id'))[0])
+      .toEqual([1,2].map(() => ({is_closed:1,close_reason:'휴일: 체육대회',academy_event_id:closed.body.resource_id})));
+    expect((await create({title:'중복 휴일',event_date:'2030-10-20',is_holiday:true})).body.error.code).toBe('SCHEDULE_CONFLICT');
+    await paca.query("INSERT INTO consultations(id,academy_id,consultation_type,student_grade,preferred_date,preferred_time,status) VALUES(710,1,'new_registration','고3','2030-10-21','11:30:00','pending')");
+    const blocking = await create({title:'외부 미팅',event_date:'2030-10-21',start_time:'11:00',end_time:'13:00',block_consultation:true});
+    expect(blocking.body.after.related.consultation_blocks.map(b => b.time_slot)).toEqual(['morning','afternoon']);
+    expect(blocking.body.after.related.unchanged_reservations_in_blocked_slots.map(r => r.id)).toEqual([710]);
+    const blocked = await confirm(blocking.body);expect(blocked.status).toBe(200);
+    expect((await paca.query("SELECT time_slot,academy_event_id FROM consultation_blocked_slots WHERE blocked_date='2030-10-21' ORDER BY id"))[0])
+      .toEqual([{time_slot:'morning',academy_event_id:blocked.body.resource_id},{time_slot:'afternoon',academy_event_id:blocked.body.resource_id}]);
+    expect((await paca.query('SELECT status FROM consultations WHERE id=710'))[0][0].status).toBe('pending');
+    expect((await create({title:'저녁',event_date:'2030-10-21',start_time:'12:30',end_time:'14:00',block_consultation:true})).body.error.code).toBe('SCHEDULE_CONFLICT');
+    expect((await create({title:'저녁',event_date:'2030-10-21',start_time:'18:00',end_time:'19:00',block_consultation:true})).status).toBe(200);
+    await paca.query("DELETE FROM consultation_blocked_slots WHERE blocked_date='2030-10-21'");await paca.query('DELETE FROM consultations WHERE id=710');
+    await paca.query('DELETE FROM class_schedules WHERE id IN (710,711)');await paca.query("DELETE FROM academy_events WHERE event_date BETWEEN '2030-10-19' AND '2030-10-21'");
+  });
   test('cursor pagination covers every row once and filters cannot escape academy scope', async () => {
     const values=Array.from({length:101},(_,i)=>[1000+i,1,encrypt('synthetic '+i),'[]',0,0]);
     await paca.query('INSERT INTO students(id,academy_id,name,class_days,weekly_count,monthly_tuition) VALUES ?',[values]);
