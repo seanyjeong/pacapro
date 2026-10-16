@@ -49,7 +49,7 @@ export function AdmissionReviewDetail({admissions}:{admissions:ReturnType<typeof
     <AdmissionReviewExisting admissions={admissions}/>
     {selected.completion_kind==='fill_missing' && <Banner tone="ok">기존 학생의 빈 정보를 보완했습니다. 재원 상태·학원비·수업 배정은 유지했습니다.</Banner>}
     {editable && admissions.mode==='new' && draft && <AdmissionReviewTerms draft={draft} today={today} busy={busy} onChange={changeTerms} onCalculate={()=>void calculate()}/>}
-    {admissions.mode==='new' && (preview ? <AdmissionReviewQuote title="계산 결과" quote={preview.quote} today={today} duplicates={preview.duplicate_student_ids} busy={busy} canConfirm={canConfirm} onConfirm={()=>void confirm()}/>
+    {(!editable || admissions.mode==='new') && (preview ? <AdmissionReviewQuote title="계산 결과" quote={preview.quote} today={today} duplicates={preview.duplicate_student_ids} busy={busy} canConfirm={canConfirm} onConfirm={()=>void confirm()}/>
       : selected.quote ? <AdmissionReviewQuote title={selected.status==='enrolled'?'등록한 조건':'확정한 조건'} quote={selected.quote} today={today}/>
       : editable && <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">수업 요일과 월 학원비를 입력하고 <b className="font-medium text-foreground">일할 금액 확인</b>을 눌러 주세요.</p>)}
     {editable && <div className="flex justify-end"><Button type="button" variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={busy} onClick={()=>setCancelOpen(true)}>{selected.status==='scheduled'?'등록 예약 취소':'원서 취소'}</Button></div>}
