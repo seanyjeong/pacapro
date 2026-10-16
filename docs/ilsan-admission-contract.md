@@ -1,7 +1,7 @@
 # 일산 입학원서 — 화면 연결 계약
 
 작업 위치: `/Users/etlab/worktrees/pacapro-ilsan-admission`, 브랜치 `codex/ilsan-admission`.
-기준 커밋: `30f0ffb`. 운영 적용 전 구현/검증 단계. 이 작업에서 운영 배포·DB 변경은 하지 않았다.
+기준 커밋: `30f0ffb`. 2026-10-16 사용자 요청에 따라 운영 반영 진행. 실제 적용 및 검증 근거는 `docs/operations/ilsan-admission-deploy-20261016/` 참조.
 
 ## 담당 범위
 

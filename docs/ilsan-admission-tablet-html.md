@@ -15,11 +15,11 @@
 
 ## 운영 상태
 
-2026-10-16 현재 점검에서 `GET https://supermax.kr/paca/ilsan-admissions`가 404였다. **이 파일을 만드는 작업에서는 운영 반영하지 않았다. 따라서 지금 운영 접수에 사용할 수는 없다.**
+2026-10-16 backend **4.0.24**, frontend **4.0.59** 운영 반영 완료. 접수 준비 확인 `/availability`는 200, 파일 제출 preflight는 204이며 인증 없는 담당자 조회/승인은 401이다. 서버 백업 및 새 원서 테이블 migration을 완료했다. 기존 학생·청구 데이터 보정은 수행하지 않았다.
 
-필요한 서버 변경은 이미 로컬 구현했다: 기존 입학원서 migration/API/scheduler와 함께 접수 준비 확인 `/availability`, 로컬 HTML `Origin:null`에 대한 익명 `/availability`·`/submit`만의 CORS 예외. 인증·조회·승인 경로에는 로컬 파일 예외를 적용하지 않는다. 해당 middleware는 `backend/paca.js`의 전역 CORS 및 OPTIONS보다 앞에서 동작한다. CORS 설정만 바꿔서 전체 PACA API를 로컬 파일에 공개하면 안 된다.
+`Origin:null` 예외는 익명 `/availability`·`/submit` 두 경로에만 적용한다. 인증·조회·승인 경로에는 적용하지 않는다. 태블릿 HTML을 직접 열어 운영 readiness를 읽고 제출 버튼이 활성화되는 것을 확인했다. 운영 합성 원서는 제출하지 않았으며 실제 저장·승인·예약 등록은 격리 MySQL HTTP 통합 시험으로 확인했다.
 
-실제 사용에는 이 서버 변경과 입학원서 테이블, 담당자 프론트 화면을 운영 반영해야 한다. 기존 학생/청구를 변경하는 데이터 보정은 포함하지 않는다. 배포할 때 현재 운영 소스/버전을 다시 비교하고 버전업한다.
+맥 도우미는 해당 HTML 파일을 사장님 텔레그램에 문서 첨부로 전송했다고 보고했다(message_id 42). 수신자가 열어 본 여부는 확인하지 않았다. 프론트 4.0.59 운영 배포 상태와 복구 지점은 `docs/operations/ilsan-admission-deploy-20261016/`의 결과를 확인한다.
 
 ## 재생성 / 검증
 
