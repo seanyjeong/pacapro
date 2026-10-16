@@ -23,6 +23,7 @@ const id = value => {
   if (!Number.isSafeInteger(n) || n < 1) throw new AdmissionError(422, 'INVALID_ID', '원서를 다시 선택해 주세요.');
   return n;
 };
+router.get('/availability', handle(() => service.availability()));
 router.post('/submit', rateLimit({windowMs:60*60*1000,max:PUBLIC_LIMIT_PER_HOUR,standardHeaders:true,legacyHeaders:false,
   message:{message:'접수 요청이 많습니다. 잠시 후 다시 시도해 주세요.'}}),
 handle(req => service.submit(req.body, req.get('Idempotency-Key'))));

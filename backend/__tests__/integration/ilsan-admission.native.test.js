@@ -12,6 +12,7 @@ const {createFixture}=require('./ilsan-admission-fixture');
 const {createAdmissionService}=require('../../services/ilsanAdmissionService');
 const {open}=require('../../services/ilsanAdmissionCodec');
 const router=require('../../routes/ilsanAdmissions');
+const {ilsanAdmissionFileCors}=require('../../middleware/ilsanAdmissionFileCors');
 const run=process.env.RUN_ILSAN_MYSQL==='1'?describe:describe.skip;
 
 run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
@@ -24,7 +25,7 @@ run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
   async function add(name) {const response=await submit(form(name));expect(response.status).toBe(200);const list=await http('get','/');return list.body.applications[0];}
   async function approve(id,value=terms()) {const preview=await http('post',`/${id}/preview`,value);expect(preview.status).toBe(200);return http('post',`/${id}/confirm`,{...value,preview_hash:preview.body.preview_hash});}
   async function counts(){const [[row]]=await mockPool.query('SELECT (SELECT COUNT(*) FROM students) students,(SELECT COUNT(*) FROM student_payments) payments,(SELECT COUNT(*) FROM attendance) attendance');return row;}
-  beforeAll(async()=>{fixture=await createFixture();mockPool=fixture.pool;service=createAdmissionService(mockPool,()=>mockToday);app=express();app.use(express.json());app.use('/paca/ilsan-admissions',router);},30000);
+  beforeAll(async()=>{fixture=await createFixture();mockPool=fixture.pool;service=createAdmissionService(mockPool,()=>mockToday);app=express();app.set('trust proxy',1);app.use(ilsanAdmissionFileCors,express.json());app.use('/paca/ilsan-admissions',router);},30000);
   afterAll(async()=>{await fixture?.close();});
   beforeEach(async()=>{mockToday='2026-10-16';for(const table of ['ilsan_admission_applications','attendance','class_schedules','student_payments','students'])await mockPool.query(`DELETE FROM ${table}`);});
 
@@ -48,9 +49,13 @@ run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
     expect((await http('get','/')).headers['cache-control']).toBe('no-store');
   });
   test('validates birth digits, consent, dates and staff identity without any write',async()=>{
+    const ready=await request(app).get('/paca/ilsan-admissions/availability').set('Origin','null');
+    expect(ready.body).toEqual({available:true,academy_name:'일산 맥스체대입시'});
+    expect(ready.headers['access-control-allow-origin']).toBe('null');
     for(const change of [{birth_six:'0802291234567'},{consent:false},{enrollment_date:'2026-02-30'},{father_phone:'',mother_phone:''}])expect((await submit({...form(),...change})).status).toBe(422);
     await mockPool.query("UPDATE academies SET name='다른 교육원' WHERE id=2");
     expect((await submit()).status).toBe(503);
+    expect((await request(app).get('/paca/ilsan-admissions/availability')).status).toBe(503);
     await mockPool.query("UPDATE academies SET name='일산 맥스체대입시' WHERE id=2");
     expect(await counts()).toEqual({students:0,payments:0,attendance:0});
   });
@@ -109,4 +114,55 @@ run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
     mockToday='2026-11-01';expect(await service.activateDue()).toEqual({enrolled:0,review:1});
     const [[row]]=await mockPool.query('SELECT review_code FROM ilsan_admission_applications WHERE id=?',[overdue.id]);expect(row.review_code).toBe('ENROLLMENT_OVERDUE');
   });
+  test('downloaded tablet HTML submits to the real isolated API and safely retries a lost response',async()=>{
+    const {chromium}=require('playwright'),path=require('path'),{pathToFileURL}=require('url');
+    const server=await new Promise(resolve=>{const listener=app.listen(0,'127.0.0.1',()=>resolve(listener));});
+    let browser;
+    try {
+      browser=await chromium.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true});
+      const context=await browser.newContext({viewport:{width:800,height:1100},serviceWorkers:'block'});
+      let ready=false,lost=false;const keys=[];
+      await context.route('**/*',async route=>{
+        const url=new URL(route.request().url());
+        if(url.protocol==='file:'||url.protocol==='data:')return route.continue();
+        if(url.origin!=='https://supermax.kr'||!url.pathname.startsWith('/paca/ilsan-admissions/'))return route.abort();
+        // All configured production URLs terminate at this disposable loopback server.
+        if(!ready)return route.fulfill({status:503,headers:{'access-control-allow-origin':'null'},json:{message:'합성 서버 준비 중'}});
+        const response=await route.fetch({url:`http://127.0.0.1:${server.address().port}${url.pathname}`,
+          headers:{...route.request().headers(),origin:'null','x-forwarded-for':'192.0.2.200'}});
+        if(url.pathname.endsWith('/submit')&&route.request().method()==='POST'){
+          keys.push(route.request().headers()['idempotency-key']);
+          if(!lost){lost=true;expect(response.status()).toBe(200);return route.abort('failed');}
+        }
+        return route.fulfill({response});
+      });
+      const page=await context.newPage();
+      await page.clock.install({time:new Date('2026-10-16T03:00:00Z')});
+      await page.goto(pathToFileURL(path.resolve(__dirname,'../../../public/admissions/일산맥스_입학원서_접수용.html')).href);
+      await page.getByRole('status').filter({hasText:'현재는 원서가 저장되지 않습니다.'}).waitFor();
+      expect(await page.getByRole('button',{name:'입학원서 제출',exact:true}).isDisabled()).toBe(true);
+      ready=true;await page.getByRole('button',{name:'연결 다시 확인',exact:true}).click();
+      await page.getByRole('status').filter({hasText:'일산 교육원 접수 연결됨'}).waitFor();
+      await page.locator('#admission-name').fill('합성 태블릿학생');await page.locator('#admission-school').fill('합성고');
+      await page.getByLabel('학년',{exact:true}).selectOption('고2');await page.getByLabel('성별',{exact:true}).selectOption('female');
+      await page.locator('#admission-birth').fill('080229');await page.locator('#admission-phone').fill('01012345678');
+      await page.locator('#admission-mother-name').fill('합성 보호자');await page.locator('#admission-mother-phone').fill('01033334444');
+      await page.locator('#admission-date').fill('2026-10-20');await page.locator('input[type="checkbox"]').check();
+      await page.getByRole('button',{name:'입학원서 제출',exact:true}).click();
+      await page.getByRole('alert').filter({hasText:'접수 여부가 확정되지 않습니다.'}).waitFor();
+      expect(await page.locator('#admission-success').isVisible()).toBe(false);
+      expect(await page.locator('#admission-name').inputValue()).toBe('합성 태블릿학생');
+      await page.getByRole('button',{name:'입학원서 제출',exact:true}).click();
+      await page.getByRole('heading',{name:'입학원서를 접수했습니다',exact:true}).waitFor();
+      expect(keys).toHaveLength(2);expect(keys[0]).toBe(keys[1]);
+      const [[row]]=await mockPool.query('SELECT COUNT(*) count FROM ilsan_admission_applications');expect(row.count).toBe(1);
+      expect(await counts()).toEqual({students:0,payments:0,attendance:0});
+      expect(await page.locator('#admission-name').inputValue()).toBe('');
+      expect(await page.evaluate(()=>localStorage.length)).toBe(0);
+      await page.getByRole('button',{name:'다음 학생 원서 작성',exact:true}).click();
+      expect(await page.locator('#admission-name').inputValue()).toBe('');
+      await page.getByRole('status').filter({hasText:'일산 교육원 접수 연결됨'}).waitFor();
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+    } finally {await browser?.close();await new Promise(resolve=>server.close(resolve));}
+  },30000);
 });

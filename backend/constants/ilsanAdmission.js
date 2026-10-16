@@ -5,4 +5,5 @@ module.exports = Object.freeze({
   TIME_SLOTS: ['morning', 'afternoon', 'evening'],
   MAX_MONTHLY_TUITION: 10000000,
   PUBLIC_LIMIT_PER_HOUR: 20,
+  FILE_PUBLIC_PATHS: ['/paca/ilsan-admissions/availability', '/paca/ilsan-admissions/submit'],
 });

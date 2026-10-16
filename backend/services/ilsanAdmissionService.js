@@ -30,6 +30,13 @@ function createAdmissionService(pool, today = getKoreaDateText) {
       preview_hash: model.fingerprint({ id: record.id, revision: record.revision, terms, quote, duplicates }) };
   }
   return {
+    async availability() {
+      return repo.transaction(pool, async conn => {
+        await scope(conn); await repo.ready(conn);
+        codec.seal('admission-readiness');
+        return { available:true, academy_name:ACADEMY_NAME };
+      });
+    },
     async submit(input, submissionKey) {
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(submissionKey || '')) {
         model.fail(422, 'INVALID_REQUEST', '페이지를 새로 열고 다시 제출해 주세요.');

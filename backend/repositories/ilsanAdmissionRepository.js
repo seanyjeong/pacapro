@@ -11,6 +11,9 @@ async function academy(conn, lock = false) {
 async function bySubmission(conn, key) {
   return (await conn.execute('SELECT * FROM ilsan_admission_applications WHERE academy_id=? AND submission_key=?', [ACADEMY_ID, key]))[0][0];
 }
+async function ready(conn) {
+  await conn.execute('SELECT id FROM ilsan_admission_applications WHERE academy_id=? LIMIT 0', [ACADEMY_ID]);
+}
 async function insert(conn, key, hash, profile) {
   const [result] = await conn.execute(`INSERT INTO ilsan_admission_applications
     (academy_id,submission_key,payload_hash,profile_encrypted) VALUES (?,?,?,?)`, [ACADEMY_ID, key, hash, profile]);
@@ -44,4 +47,4 @@ async function review(conn, id, revision, code) {
     WHERE id=? AND academy_id=? AND status='scheduled' AND revision=?`, [code, id, ACADEMY_ID, revision]);
   return result.affectedRows;
 }
-module.exports = { transaction, academy, bySubmission, insert, get, list, approve, enrolled, cancel, due, review };
+module.exports = { transaction, academy, ready, bySubmission, insert, get, list, approve, enrolled, cancel, due, review };
