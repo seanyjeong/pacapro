@@ -53,7 +53,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                        pathname === '/forgot-password' ||
                        pathname === '/reset-password';
 
-    if (isAuthPage) {
+    if (isAuthPage || pathname === '/admissions/ilsan') {
         return <>{children}</>;
     }
 
