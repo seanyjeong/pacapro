@@ -1,0 +1,24 @@
+{
+  "status": "preflight_verified",
+  "readonly": true,
+  "version": "4.0.25",
+  "frontend_target_version": "4.0.60",
+  "runtime_files": 9,
+  "node": "v18.19.1",
+  "source_hashes_matched": true,
+  "schema_ready": true,
+  "candidate_archive_sha256": "cd911bebd0cc64633d13adb25ce7b00b0f19c92cfc3e87294bd639c5d5bd0bec",
+  "internal_health": {
+    "status": "OK",
+    "timestamp": "2026-10-16T13:01:38.253Z",
+    "uptime": 21891.723196344,
+    "environment": "production"
+  },
+  "apply_gates": {
+    "native_mysql_verified": true,
+    "git_release_verified": true,
+    "production_source_refreshed": true,
+    "commit_format_valid": true,
+    "rollback_tag_present": true
+  }
+}

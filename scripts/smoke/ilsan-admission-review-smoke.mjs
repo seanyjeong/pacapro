@@ -20,7 +20,7 @@ try {
     // All external traffic is intercepted. No synthetic submission reaches production.
     if(url.hostname!=='supermax.kr')return route.abort();
     const path=url.pathname.replace(/^\/paca/,'');
-    if(path==='/ilsan-admissions/1/existing-students')return jsonRoute(route,{students:[]});
+    if(path==='/ilsan-admissions/1/existing-students')return jsonRoute(route,{students:record.status==='enrolled'?[{id:55,name:record.profile.name,phone:record.profile.phone,school:record.profile.school,grade:record.profile.grade,exact_phone:true}]:[]});
     if(path==='/ilsan-admissions')return jsonRoute(route,{applications:[record],next_cursor:null});
     if(path==='/ilsan-admissions/1/preview'){
       const terms=req.postDataJSON();calls.push({action:'preview',terms});
@@ -63,6 +63,10 @@ try {
   await page.getByRole('status').filter({hasText:'등록 예약을 취소했습니다.'}).waitFor();
   assert.equal(await page.getByRole('button',{name:'일할 금액 확인',exact:true}).count(),0);
   assert.equal(calls.filter(call=>call.action==='cancel').length,1);
+  Object.assign(record,{status:'enrolled',student_id:55});
+  await page.getByRole('button',{name:'새로고침',exact:true}).click();
+  await page.getByRole('button',{name:/합성 접수학생/}).click();
+  await page.getByText('등록한 조건',{exact:true}).waitFor();
   // Production PWA expects a service worker; this isolated harness intentionally blocks it.
   assert.deepEqual(nonServiceWorkerErrors(diagnostics.pageErrors),[]);
   console.log(JSON.stringify({passed:true,scenario:'staff preview → date edit → recalculate → schedule → cancel',calls: calls.map(call=>call.action),external_network:'intercepted; no production writes',service_worker_blocked_errors:diagnostics.pageErrors}));
