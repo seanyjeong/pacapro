@@ -15,7 +15,17 @@ export interface AdmissionPreview {
   terms: AdmissionTerms; quote: AdmissionQuote; preview_hash: string; duplicate_student_ids: number[];
 }
 export interface AdmissionApplication {
+  completion_kind?: 'fill_missing' | null; filled_fields?: string[];
   id: number; status: 'submitted' | 'scheduled' | 'enrolled' | 'cancelled' | 'review'; revision: number;
   profile: AdmissionProfile; enrollment_date: string | null; terms: AdmissionTerms | null;
   quote: AdmissionQuote | null; student_id: number | null; review_code: string | null; created_at: string;
+}
+
+export interface AdmissionExistingStudent {
+  id:number; name:string; student_number:string|null; status:string; phone:string; school:string; grade:string; exact_phone:boolean;
+}
+export interface AdmissionExistingPreview {
+  student:AdmissionExistingStudent;
+  fields:{field:string;label:string;current:string;incoming:string;action:'fill'|'keep'}[];
+  preview_hash:string;
 }

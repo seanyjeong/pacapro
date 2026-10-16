@@ -29,6 +29,9 @@ router.post('/submit', rateLimit({windowMs:60*60*1000,max:PUBLIC_LIMIT_PER_HOUR,
 handle(req => service.submit(req.body, req.get('Idempotency-Key'))));
 router.use(verifyToken, checkPermission('students', 'edit'));
 router.get('/', handle(req => service.list(req.user, req.query.before ? id(req.query.before) : undefined)));
+router.get('/:id/existing-students', handle(req => service.existingStudents(req.user, id(req.params.id))));
+router.post('/:id/existing-preview', handle(req => service.existingPreview(req.user, id(req.params.id), req.body)));
+router.post('/:id/existing-confirm', handle(req => service.existingConfirm(req.user, id(req.params.id), req.body)));
 router.post('/:id/preview', handle(req => service.preview(req.user, id(req.params.id), req.body)));
 router.post('/:id/confirm', handle(req => service.confirm(req.user, id(req.params.id), req.body)));
 router.post('/:id/cancel', handle(req => service.cancel(req.user, id(req.params.id), req.body.revision)));

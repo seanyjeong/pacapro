@@ -10,24 +10,24 @@ jest.mock('../../utils/logger',()=>({error:jest.fn(),warn:jest.fn(),info:jest.fn
 const express=require('express'),request=require('supertest'),jwt=require('jsonwebtoken');
 const {createFixture}=require('./ilsan-admission-fixture');
 const {createAdmissionService}=require('../../services/ilsanAdmissionService');
-const {open}=require('../../services/ilsanAdmissionCodec');
+const {open,seal}=require('../../services/ilsanAdmissionCodec');
 const router=require('../../routes/ilsanAdmissions');
 const {ilsanAdmissionFileCors}=require('../../middleware/ilsanAdmissionFileCors');
 const run=process.env.RUN_ILSAN_MYSQL==='1'?describe:describe.skip;
 
 run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
-  let fixture,app,service;
+  let fixture,app,service,caseIp=0;
   const token=id=>`Bearer ${jwt.sign({userId:id},process.env.JWT_SECRET)}`;
   const form=(name='합성 신규학생')=>({name,school:'합성고',grade:'고2',gender:'female',birth_six:'080229',phone:'01012345678',father_name:'합성아버지',father_phone:'01011112222',mother_name:'합성어머니',mother_phone:'01033334444',primary_parent:'mother',enrollment_date:'2026-10-20',consent:true});
   const terms=(date='2026-10-20')=>({enrollment_date:date,monthly_tuition:300000,discount_rate:10,class_days:[2,4],time_slot:'evening'});
   const http=(method,url,body,user=2)=>request(app)[method](`/paca/ilsan-admissions${url}`).set('Authorization',token(user)).send(body);
-  const submit=(profile=form(),key=crypto.randomUUID())=>request(app).post('/paca/ilsan-admissions/submit').set('Idempotency-Key',key).send(profile);
+  const submit=(profile=form(),key=crypto.randomUUID())=>request(app).post('/paca/ilsan-admissions/submit').set('X-Forwarded-For',`192.0.2.${caseIp}`).set('Idempotency-Key',key).send(profile);
   async function add(name) {const response=await submit(form(name));expect(response.status).toBe(200);const list=await http('get','/');return list.body.applications[0];}
   async function approve(id,value=terms()) {const preview=await http('post',`/${id}/preview`,value);expect(preview.status).toBe(200);return http('post',`/${id}/confirm`,{...value,preview_hash:preview.body.preview_hash});}
   async function counts(){const [[row]]=await mockPool.query('SELECT (SELECT COUNT(*) FROM students) students,(SELECT COUNT(*) FROM student_payments) payments,(SELECT COUNT(*) FROM attendance) attendance');return row;}
   beforeAll(async()=>{fixture=await createFixture();mockPool=fixture.pool;service=createAdmissionService(mockPool,()=>mockToday);app=express();app.set('trust proxy',1);app.use(ilsanAdmissionFileCors,express.json());app.use('/paca/ilsan-admissions',router);},30000);
   afterAll(async()=>{await fixture?.close();});
-  beforeEach(async()=>{mockToday='2026-10-16';for(const table of ['ilsan_admission_applications','attendance','class_schedules','student_payments','students'])await mockPool.query(`DELETE FROM ${table}`);});
+  beforeEach(async()=>{caseIp++;mockToday='2026-10-16';for(const table of ['ilsan_admission_applications','attendance','class_schedules','student_payments','students'])await mockPool.query(`DELETE FROM ${table}`);});
 
   test('public intake is encrypted, academy-fixed and idempotent; staff reads are authorized',async()=>{
     const key=crypto.randomUUID(),profile={...form(),academy_id:1,status:'active',monthly_tuition:1};
@@ -113,6 +113,71 @@ run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
     mockToday='2026-10-16';const overdue=await add('지연 학생');await approve(overdue.id);
     mockToday='2026-11-01';expect(await service.activateDue()).toEqual({enrolled:0,review:1});
     const [[row]]=await mockPool.query('SELECT review_code FROM ilsan_admission_applications WHERE id=?',[overdue.id]);expect(row.review_code).toBe('ENROLLMENT_OVERDUE');
+  });
+  test('existing enrollment only fills blanks, preserves all other columns and supports later intake',async()=>{
+    const original=await add('기존 학생');const registered=await approve(original.id,terms(mockToday));const studentId=registered.body.student_id;
+    await mockPool.execute('UPDATE students SET father_name=NULL,father_phone=?,mother_name=?,school=NULL WHERE id=?',[seal('  '),seal('기존 어머니'),studentId]);
+    const [[before]]=await mockPool.query('SELECT * FROM students WHERE id=?',[studentId]);const beforeCounts=await counts();
+    const application=await add('기존 학생');
+    const matches=await http('get',`/${application.id}/existing-students`);expect(matches.body.students).toHaveLength(1);expect(matches.body.students[0].exact_phone).toBe(true);
+    const preview=await http('post',`/${application.id}/existing-preview`,{student_id:studentId});expect(preview.status).toBe(200);
+    expect(preview.body.fields.filter(f=>f.action==='fill').map(f=>f.field).sort()).toEqual(['father_name','father_phone','school']);
+    const body={student_id:studentId,preview_hash:preview.body.preview_hash};
+    const result=await http('post',`/${application.id}/existing-confirm`,body);expect(result.status).toBe(200);expect(result.body.completion_kind).toBe('fill_missing');expect(result.body.student_id).toBe(studentId);
+    const [[after]]=await mockPool.query('SELECT * FROM students WHERE id=?',[studentId]);
+    expect(open(after.father_name)).toBe('합성아버지');expect(open(after.father_phone)).toBe('010-1111-2222');expect(after.school).toBe('합성고');
+    for(const key of Object.keys(before).filter(k=>!['father_name','father_phone','school','updated_at'].includes(k)))expect(after[key]).toEqual(before[key]);
+    expect(await counts()).toEqual(beforeCounts);expect((await http('post',`/${application.id}/existing-confirm`,body)).status).toBe(409);
+    const later=await add('기존 학생'),next=await http('post',`/${later.id}/existing-preview`,{student_id:studentId});
+    expect(next.body.fields.every(f=>f.action==='keep')).toBe(true);
+    const completed=await http('post',`/${later.id}/existing-confirm`,{student_id:studentId,preview_hash:next.body.preview_hash});expect(completed.status).toBe(200);expect(completed.body.filled_fields).toEqual([]);
+    expect(await counts()).toEqual(beforeCounts);
+  });
+  test('concurrent manual edits invalidate existing-student preview and never overwrite them',async()=>{
+    const original=await add('변경 학생'),registered=await approve(original.id,terms(mockToday)),studentId=registered.body.student_id;
+    await mockPool.execute('UPDATE students SET mother_phone=NULL WHERE id=?',[studentId]);
+    const record=await add('변경 학생'),preview=await http('post',`/${record.id}/existing-preview`,{student_id:studentId});
+    await mockPool.execute('UPDATE students SET mother_phone=? WHERE id=?',[seal('010-7777-8888'),studentId]);
+    expect((await http('post',`/${record.id}/existing-confirm`,{student_id:studentId,preview_hash:preview.body.preview_hash})).status).toBe(409);
+    const [[student]]=await mockPool.query('SELECT mother_phone FROM students WHERE id=?',[studentId]);expect(open(student.mother_phone)).toBe('010-7777-8888');
+    const [[row]]=await mockPool.query('SELECT status FROM ilsan_admission_applications WHERE id=?',[record.id]);expect(row.status).toBe('submitted');
+  });
+  test('existing enrichment blocks foreign academies, deleted students, names and insufficient permissions',async()=>{
+    const record=await add('범위 학생');
+    const [other]=await fixture.insert('students',{academy_id:1,name:seal('범위 학생'),phone:seal('01012345678'),status:'active'});
+    const [wrong]=await fixture.insert('students',{academy_id:2,name:seal('다른 이름'),phone:seal('01012345678'),status:'active'});
+    const [deleted]=await fixture.insert('students',{academy_id:2,name:seal('범위 학생'),phone:seal('01012345678'),deleted_at:'2026-10-01',status:'active'});
+    expect((await http('get',`/${record.id}/existing-students`)).body.students).toEqual([]);
+    for(const [student_id,status] of [[other.insertId,404],[wrong.insertId,409],[deleted.insertId,404]])expect((await http('post',`/${record.id}/existing-preview`,{student_id})).status).toBe(status);
+    for(const user of [1,3]){
+      expect((await http('get',`/${record.id}/existing-students`,undefined,user)).status).toBe(403);
+      expect((await http('post',`/${record.id}/existing-confirm`,{student_id:wrong.insertId,preview_hash:'x'},user)).status).toBe(403);
+    }
+    expect((await request(app).post(`/paca/ilsan-admissions/${record.id}/existing-confirm`).send({})).status).toBe(401);
+  });
+  test.each(['paused','withdrawn'])('missing-phone %s student can be selected explicitly without re-enrollment',async status=>{
+    const [created]=await fixture.insert('students',{academy_id:2,name:seal('상태 학생'),phone:null,parent_phone:null,father_name:null,mother_name:null,father_phone:null,mother_phone:null,status,monthly_tuition:450000,class_days:'[1,3]'});
+    const record=await add('상태 학생'),studentId=created.insertId;
+    const candidates=await http('get',`/${record.id}/existing-students`);expect(candidates.body.students[0].exact_phone).toBe(false);
+    const preview=await http('post',`/${record.id}/existing-preview`,{student_id:studentId});
+    expect((await http('post',`/${record.id}/existing-confirm`,{student_id:studentId,preview_hash:preview.body.preview_hash})).status).toBe(200);
+    const [[student]]=await mockPool.query('SELECT * FROM students WHERE id=?',[studentId]);expect(student.status).toBe(status);expect(Number(student.monthly_tuition)).toBe(450000);expect(typeof student.class_days==='string'?JSON.parse(student.class_days):student.class_days).toEqual([1,3]);expect(open(student.phone)).toBe('010-1234-5678');expect(open(student.parent_phone)).toBe('010-3333-4444');
+    expect(await counts()).toEqual({students:1,payments:0,attendance:0});
+  });
+  test('enriching a previously scheduled application stops its future new enrollment',async()=>{
+    const record=await add('예약 보완학생');expect((await approve(record.id)).status).toBe(200);
+    const [created]=await fixture.insert('students',{academy_id:2,name:seal('예약 보완학생'),phone:null,status:'active'});
+    const studentId=created.insertId,preview=await http('post',`/${record.id}/existing-preview`,{student_id:studentId});
+    expect((await http('post',`/${record.id}/existing-confirm`,{student_id:studentId,preview_hash:preview.body.preview_hash})).status).toBe(200);
+    mockToday='2026-10-20';expect(await service.activateDue()).toEqual({enrolled:0,review:0});
+    expect(await counts()).toEqual({students:1,payments:0,attendance:0});
+  });
+  test('failed completion rolls back the existing-student changes too',async()=>{
+    const [created]=await fixture.insert('students',{academy_id:2,name:seal('원복 학생'),phone:null,status:'active'});
+    const record=await add('원복 학생'),studentId=created.insertId,preview=await http('post',`/${record.id}/existing-preview`,{student_id:studentId});
+    await mockPool.query("CREATE TRIGGER reject_admission_completion BEFORE UPDATE ON ilsan_admission_applications FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='synthetic failure'");
+    try{expect((await http('post',`/${record.id}/existing-confirm`,{student_id:studentId,preview_hash:preview.body.preview_hash})).status).toBe(500);const [[student]]=await mockPool.query('SELECT phone FROM students WHERE id=?',[studentId]);expect(student.phone).toBeNull();}
+    finally{await mockPool.query('DROP TRIGGER reject_admission_completion');}
   });
   test('downloaded tablet HTML submits to the real isolated API and safely retries a lost response',async()=>{
     const {chromium}=require('playwright'),path=require('path'),{pathToFileURL}=require('url');

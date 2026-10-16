@@ -1,6 +1,6 @@
 import apiClient from './client';
 import { PACA_API_BASE_URL } from './base-url';
-import type { AdmissionApplication, AdmissionPreview, AdmissionProfile, AdmissionTerms } from '@/lib/types/ilsan-admission';
+import type { AdmissionApplication, AdmissionExistingStudent, AdmissionExistingPreview, AdmissionPreview, AdmissionProfile, AdmissionTerms } from '@/lib/types/ilsan-admission';
 
 export async function submitAdmission(profile: AdmissionProfile, key: string): Promise<{receipt:string;message:string}> {
   let response:Response;
@@ -14,6 +14,9 @@ export async function submitAdmission(profile: AdmissionProfile, key: string): P
   return result;
 }
 export const admissionsAPI = {
+  existingStudents:(id:number)=>apiClient.get<{students:AdmissionExistingStudent[]}>(`/ilsan-admissions/${id}/existing-students`),
+  existingPreview:(id:number,studentId:number)=>apiClient.post<AdmissionExistingPreview>(`/ilsan-admissions/${id}/existing-preview`,{student_id:studentId},{suppressErrorToast:true}),
+  existingConfirm:(id:number,studentId:number,hash:string)=>apiClient.post<AdmissionApplication>(`/ilsan-admissions/${id}/existing-confirm`,{student_id:studentId,preview_hash:hash},{suppressErrorToast:true}),
   list: (before?:number) => apiClient.get<{applications:AdmissionApplication[];next_cursor:number|null}>(`/ilsan-admissions${before ? `?before=${before}` : ''}`),
   preview: (id:number, terms:AdmissionTerms) => apiClient.post<AdmissionPreview>(`/ilsan-admissions/${id}/preview`,terms,{suppressErrorToast:true}),
   confirm: (id:number, terms:AdmissionTerms, hash:string) => apiClient.post<AdmissionApplication>(`/ilsan-admissions/${id}/confirm`,{...terms,preview_hash:hash},{suppressErrorToast:true}),

@@ -6,8 +6,8 @@ import type { AdmissionApplication } from '@/lib/types/ilsan-admission';
 import { cn } from '@/lib/utils/cn';
 
 const STATUS_VARIANTS = {submitted:'info',review:'warning',scheduled:'soft',enrolled:'success',cancelled:'secondary'} as const;
-export function AdmissionStatusBadge({status}:{status:AdmissionApplication['status']}) {
-  return <Badge variant={STATUS_VARIANTS[status]} className="shrink-0 whitespace-nowrap">{ADMISSION_STATUSES[status]}</Badge>;
+export function AdmissionStatusBadge({status,completionKind}:{status:AdmissionApplication['status'];completionKind?:AdmissionApplication['completion_kind']}) {
+  return <Badge variant={STATUS_VARIANTS[status]} className="shrink-0 whitespace-nowrap">{completionKind==='fill_missing'?'정보 보완 완료':ADMISSION_STATUSES[status]}</Badge>;
 }
 
 interface Props {applications:AdmissionApplication[];selectedId?:number;loading:boolean;hasMore:boolean;disabled:boolean;onSelect:(application:AdmissionApplication)=>void;onLoadMore:()=>void}
@@ -27,7 +27,7 @@ export function AdmissionReviewList({applications,selectedId,loading,hasMore,dis
             <span className="mt-0.5 block truncate text-sm text-muted-foreground">{profile.school}</span>
             <span className="mt-1.5 block text-xs text-muted-foreground">{application.status==='scheduled'&&application.enrollment_date ? `등록 예정 ${application.enrollment_date}` : `희망 ${profile.enrollment_date}`} · 접수 {application.created_at.slice(0,16)}</span>
           </span>
-          <AdmissionStatusBadge status={application.status}/>
+          <AdmissionStatusBadge status={application.status} completionKind={application.completion_kind}/>
         </button>
       </li>;})}
     </ul>}

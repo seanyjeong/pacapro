@@ -11,8 +11,10 @@ function open(value) {
 }
 const json = value => typeof value === 'string' ? JSON.parse(value) : value;
 function view(row) {
+  const saved=json(row.terms_json), existing=saved?.operation==='fill_missing' ? saved : null;
   return { id: row.id, status: row.status, revision: row.revision, profile: JSON.parse(open(row.profile_encrypted)),
-    enrollment_date: row.enrollment_date, terms: json(row.terms_json), quote: json(row.quote_json),
-    student_id: row.student_id, review_code: row.review_code, created_at: row.created_at };
+    enrollment_date: row.enrollment_date, terms: existing ? null : saved, quote: json(row.quote_json),
+    student_id: existing ? existing.target_student_id : row.student_id,
+    completion_kind: existing ? 'fill_missing' : null, filled_fields:existing?.filled_fields || [], review_code: row.review_code, created_at: row.created_at };
 }
 module.exports = { seal, open, json, view };

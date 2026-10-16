@@ -30,6 +30,7 @@ function createAdmissionService(pool, today = getKoreaDateText) {
       preview_hash: model.fingerprint({ id: record.id, revision: record.revision, terms, quote, duplicates }) };
   }
   return {
+    ...require('./ilsanAdmissionExistingService').createExistingService(pool,{actor,scope,row}),
     async availability() {
       return repo.transaction(pool, async conn => {
         await scope(conn); await repo.ready(conn);

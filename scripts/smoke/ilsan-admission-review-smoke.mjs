@@ -20,6 +20,7 @@ try {
     // All external traffic is intercepted. No synthetic submission reaches production.
     if(url.hostname!=='supermax.kr')return route.abort();
     const path=url.pathname.replace(/^\/paca/,'');
+    if(path==='/ilsan-admissions/1/existing-students')return jsonRoute(route,{students:[]});
     if(path==='/ilsan-admissions')return jsonRoute(route,{applications:[record],next_cursor:null});
     if(path==='/ilsan-admissions/1/preview'){
       const terms=req.postDataJSON();calls.push({action:'preview',terms});

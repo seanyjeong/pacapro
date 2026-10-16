@@ -6,6 +6,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import type { useIlsanAdmissions } from '@/hooks/use-ilsan-admissions';
 import { AdmissionReviewQuote, withWeekday } from './admission-review-quote';
 import { AdmissionReviewTerms } from './admission-review-terms';
+import { AdmissionReviewExisting } from './admission-review-existing';
 import { AdmissionStatusBadge } from './admission-review-list';
 
 const REVIEW_REASONS: Record<string,string> = {
@@ -26,7 +27,7 @@ export function AdmissionReviewDetail({admissions}:{admissions:ReturnType<typeof
       <div className="flex items-start gap-3 border-b border-border px-4 py-4 sm:px-5">
         <Button type="button" variant="ghost" size="icon-sm" className="-ml-1 mt-0.5 shrink-0 lg:hidden" aria-label="원서 목록으로" disabled={busy} onClick={()=>void refresh()}><ArrowLeft className="h-4 w-4"/></Button>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-semibold tracking-tight">{profile.name}</h2><AdmissionStatusBadge status={selected.status}/></div>
+          <div className="flex flex-wrap items-center gap-2"><h2 className="text-xl font-semibold tracking-tight">{profile.name}</h2><AdmissionStatusBadge status={selected.status} completionKind={selected.completion_kind}/></div>
           <p className="mt-1 text-sm text-muted-foreground">{[profile.grade,profile.school,GENDERS[profile.gender]].filter(Boolean).join(' · ')}</p>
         </div>
         {selected.student_id && <Link href={`/students/${selected.student_id}`} className={buttonVariants({variant:'outline',size:'sm',className:'shrink-0 gap-1.5'})}><UserRound className="h-4 w-4"/>학생 보기</Link>}
@@ -45,10 +46,12 @@ export function AdmissionReviewDetail({admissions}:{admissions:ReturnType<typeof
         </dl>
       </div>
     </section>
-    {editable && draft && <AdmissionReviewTerms draft={draft} today={today} busy={busy} onChange={changeTerms} onCalculate={()=>void calculate()}/>}
-    {preview ? <AdmissionReviewQuote title="계산 결과" quote={preview.quote} today={today} duplicates={preview.duplicate_student_ids} busy={busy} canConfirm={canConfirm} onConfirm={()=>void confirm()}/>
+    <AdmissionReviewExisting admissions={admissions}/>
+    {selected.completion_kind==='fill_missing' && <Banner tone="ok">기존 학생의 빈 정보를 보완했습니다. 재원 상태·학원비·수업 배정은 유지했습니다.</Banner>}
+    {editable && admissions.mode==='new' && draft && <AdmissionReviewTerms draft={draft} today={today} busy={busy} onChange={changeTerms} onCalculate={()=>void calculate()}/>}
+    {admissions.mode==='new' && (preview ? <AdmissionReviewQuote title="계산 결과" quote={preview.quote} today={today} duplicates={preview.duplicate_student_ids} busy={busy} canConfirm={canConfirm} onConfirm={()=>void confirm()}/>
       : selected.quote ? <AdmissionReviewQuote title={selected.status==='enrolled'?'등록한 조건':'확정한 조건'} quote={selected.quote} today={today}/>
-      : editable && <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">수업 요일과 월 학원비를 입력하고 <b className="font-medium text-foreground">일할 금액 확인</b>을 눌러 주세요.</p>}
+      : editable && <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">수업 요일과 월 학원비를 입력하고 <b className="font-medium text-foreground">일할 금액 확인</b>을 눌러 주세요.</p>)}
     {editable && <div className="flex justify-end"><Button type="button" variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive" disabled={busy} onClick={()=>setCancelOpen(true)}>{selected.status==='scheduled'?'등록 예약 취소':'원서 취소'}</Button></div>}
     {cancelOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="dialog" aria-modal="true" aria-labelledby="admission-cancel-title">
       <div className="mx-4 w-full max-w-sm rounded-md border border-border bg-background p-6 shadow-xl">
