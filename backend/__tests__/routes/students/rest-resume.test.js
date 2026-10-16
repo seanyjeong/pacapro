@@ -100,12 +100,12 @@ function resetMocks() {
 
 function mockCriticalResume(student = makePausedStudent()) {
   pool.__conn.execute.mockResolvedValueOnce([[student], []]);
-  pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
 }
 
 function mockPostResume(student = { id: 1, status: 'active' }, existingPayment = []) {
-  pool.execute.mockResolvedValueOnce([existingPayment, []]);
-  pool.execute.mockResolvedValueOnce([[student], []]);
+  pool.__conn.execute.mockResolvedValueOnce([existingPayment, []]);
+  pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+  pool.__conn.execute.mockResolvedValueOnce([[student], []]);
 }
 
 describe('POST /paca/students/:id/resume', () => {
@@ -163,7 +163,7 @@ describe('POST /paca/students/:id/resume', () => {
   test('복귀 시 미사용 크레딧을 실제 8일분으로 재계산해 응답한다', async () => {
     repository.findCurrentRestCreditsForUpdate.mockResolvedValue([makeRestCredit()]);
     mockCriticalResume();
-    mockPostResume({ id: 1, status: 'active' }, [{ id: 2464 }]);
+    mockPostResume({ id: 1, status: 'active' }, [{ id: 2464, base_amount: 400000, final_amount: 400000, paid_amount: 400000 }]);
 
     const res = await request(makeApp())
       .post('/paca/students/1/resume')
@@ -239,10 +239,11 @@ describe('POST /paca/students/:id/resume', () => {
 
   test('수업 요일이 있으면 스케줄과 없는 월 학원비를 기존 방식대로 생성한다', async () => {
     mockCriticalResume(makePausedStudent({ class_days: '[1, 5]', monthly_tuition: 300000 }));
-    pool.execute.mockResolvedValueOnce([[], []]);
-    pool.execute.mockResolvedValueOnce([[{ allowed: 1 }], []]);
-    pool.execute.mockResolvedValueOnce([{ insertId: 99 }, []]);
-    pool.execute.mockResolvedValueOnce([[{ id: 1, status: 'active' }], []]);
+    pool.__conn.execute.mockResolvedValueOnce([[], []]);
+    pool.__conn.execute.mockResolvedValueOnce([[{ allowed: 1 }], []]);
+    pool.__conn.execute.mockResolvedValueOnce([{ insertId: 99 }, []]);
+    pool.__conn.execute.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+    pool.__conn.execute.mockResolvedValueOnce([[{ id: 1, status: 'active' }], []]);
     autoAssignStudentToSchedules.mockResolvedValueOnce({ assigned: 5, created: 5 });
 
     const res = await request(makeApp())
@@ -252,28 +253,12 @@ describe('POST /paca/students/:id/resume', () => {
     expect(res.status).toBe(200);
     expect(res.body.scheduleAssigned).toEqual({ assigned: 5, created: 5 });
     expect(res.body.paymentCreated).toMatchObject({ id: 99, yearMonth: '2026-08' });
-    expect(autoAssignStudentToSchedules).toHaveBeenCalledWith(pool, 1, 1, [1, 5], '2026-08-20', 'evening');
-    const insertCall = pool.execute.mock.calls.find(([sql]) => sql.includes('INSERT INTO student_payments'));
+    expect(autoAssignStudentToSchedules).toHaveBeenCalledWith(pool.__conn, 1, 1, [1, 5], '2026-08-20', 'evening', { includeFutureMonth: true });
+    const insertCall = pool.__conn.execute.mock.calls.find(([sql]) => sql.includes('INSERT INTO student_payments'));
     expect(insertCall[1]).toContain('2026-08-20');
   });
 
-  test('무료 수업 중 복귀해도 월 청구는 생성하지 않는다', async () => {
-    mockCriticalResume(makePausedStudent({ monthly_tuition: 300000 }));
-    pool.execute.mockResolvedValueOnce([[], []]);
-    pool.execute.mockResolvedValueOnce([[{ allowed: 0 }], []]);
-    pool.execute.mockResolvedValueOnce([[{ id: 1, status: 'active' }], []]);
-
-    const res = await request(makeApp())
-      .post('/paca/students/1/resume')
-      .send({ resume_date: '2026-11-20' });
-
-    expect(res.status).toBe(200);
-    expect(res.body.paymentCreated).toBeNull();
-    expect(pool.execute.mock.calls.some(([sql]) => sql.includes('INSERT INTO student_payments'))).toBe(false);
-    expect(pool.execute.mock.calls[1][1]).toContain('2026-11');
-  });
-
-  test('스케줄 자동 배정 실패는 기록하고 기존처럼 복귀를 완료한다', async () => {
+  test('스케줄 자동 배정 실패 시 상태와 크레딧 및 청구까지 되돌린다', async () => {
     mockCriticalResume(makePausedStudent({ class_days: '[1, 5]', monthly_tuition: 0 }));
     mockPostResume();
     autoAssignStudentToSchedules.mockRejectedValueOnce(new Error('schedule conflict'));
@@ -282,9 +267,44 @@ describe('POST /paca/students/:id/resume', () => {
       .post('/paca/students/1/resume')
       .send({ resume_date: '2026-08-20' });
 
+    expect(res.status).toBe(500);
+    expect(pool.__conn.commit).not.toHaveBeenCalled();
+    expect(pool.__conn.rollback).toHaveBeenCalledTimes(1);
+  });
+
+  test('같은 달 축소된 청구를 복원하고 상태와 함께 커밋한다', async () => {
+    mockCriticalResume(makePausedStudent({ rest_start_date: '2026-10-11', monthly_tuition: 310000 }));
+    pool.__conn.execute
+      .mockResolvedValueOnce([[{ id: 7, base_amount: 310000, final_amount: 100000, paid_amount: 0 }]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([[{ id: 1, status: 'active' }]]);
+    const res = await request(makeApp()).post('/paca/students/1/resume').send({ resume_date: '2026-10-21' });
     expect(res.status).toBe(200);
-    expect(res.body.scheduleAssigned).toBeNull();
-    expect(res.body.student).toMatchObject({ id: 1, status: 'active' });
+    expect(res.body.paymentCreated).toBeNull();
+    expect(res.body.paymentAdjusted).toMatchObject({ id: 7, finalAmount: 210000 });
+    expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
+    expect(pool.execute).not.toHaveBeenCalled();
+  });
+
+  test('같은 달 별도 조정 청구는 409로 전체 복귀를 취소한다', async () => {
+    mockCriticalResume(makePausedStudent({ rest_start_date: '2026-10-11', monthly_tuition: 310000 }));
+    pool.__conn.execute.mockResolvedValueOnce([[{ id: 7, base_amount: 310000, final_amount: 90000 }]]);
+    const res = await request(makeApp()).post('/paca/students/1/resume').send({ resume_date: '2026-10-21' });
+    expect(res.status).toBe(409);
+    expect(res.body.message).toContain('정산 내역');
+    expect(pool.__conn.commit).not.toHaveBeenCalled();
+    expect(pool.__conn.rollback).toHaveBeenCalledTimes(1);
+  });
+
+  test('복귀월 청구 생성 실패는 상태까지 롤백하고 재시도 가능하게 남긴다', async () => {
+    mockCriticalResume();
+    pool.__conn.execute.mockResolvedValueOnce([[]]).mockRejectedValueOnce(new Error('write failure'));
+    const res = await request(makeApp()).post('/paca/students/1/resume').send({ resume_date: '2026-09-01' });
+    expect(res.status).toBe(500);
+    expect(pool.__conn.commit).not.toHaveBeenCalled();
+    expect(pool.__conn.rollback).toHaveBeenCalledTimes(1);
+    expect(autoAssignStudentToSchedules).not.toHaveBeenCalled();
   });
 
   test('학생 조회 실패는 트랜잭션을 되돌리고 내부 오류를 노출하지 않는다', async () => {
@@ -316,4 +336,19 @@ describe('POST /paca/students/:id/resume', () => {
     expect(pool.__conn.query).not.toHaveBeenCalled();
     expect(pool.__conn.execute.mock.calls.length).toBeGreaterThan(0);
   });
+});
+
+test('시즌 무료 수업 중 복귀는 상태만 복귀하고 월청구를 생성하지 않는다', async () => {
+  resetMocks();
+  mockCriticalResume(makePausedStudent());
+  pool.__conn.execute.mockResolvedValueOnce([[]])
+    .mockResolvedValueOnce([[{ allowed: 0 }]])
+    .mockResolvedValueOnce([{ affectedRows: 1 }])
+    .mockResolvedValueOnce([[{ id: 1, status: 'active' }]]);
+  const res = await request(makeApp()).post('/paca/students/1/resume').send({ resume_date: '2026-11-20' });
+  expect(res.status).toBe(200);
+  expect(res.body.paymentCreated).toBeNull();
+  expect(pool.__conn.execute.mock.calls.some(([sql]) => sql.includes('INSERT INTO student_payments'))).toBe(false);
+  expect(pool.__conn.execute.mock.calls[2][1]).toEqual([...Array(7).fill('2026-11'), 1, 1]);
+  expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
 });

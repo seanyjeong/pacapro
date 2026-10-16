@@ -71,7 +71,7 @@ function normalizeStudentClassDays(student) {
  * @param {string} enrollmentDate - 등록일 (YYYY-MM-DD)
  * @param {string} defaultTimeSlot - 기본 시간대 (숫자 배열일 때 사용)
  */
-async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classDays, enrollmentDate, defaultTimeSlot = 'evening') {
+async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classDays, enrollmentDate, defaultTimeSlot = 'evening', options = {}) {
     try {
         // 하위호환: 어떤 포맷이든 ClassDaySlot 배열로 변환
         const slots = parseClassDaysWithSlots(classDays, defaultTimeSlot);
@@ -87,8 +87,8 @@ async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classD
         const currentMonth = now.getMonth();
 
         // 등록일이 미래 월이면 스케줄 생성 생략 (해당 월에 크론이 자동 생성)
-        if (enrollDate.getFullYear() > currentYear ||
-            (enrollDate.getFullYear() === currentYear && enrollDate.getMonth() > currentMonth)) {
+        if (!options.includeFutureMonth && (enrollDate.getFullYear() > currentYear ||
+            (enrollDate.getFullYear() === currentYear && enrollDate.getMonth() > currentMonth))) {
             logger.info(`Student ${studentId}: enrollment_date ${enrollmentDate} is future month, skipping auto-assign (cron will handle)`);
             return { assigned: 0, created: 0 };
         }
