@@ -1,4 +1,5 @@
 const logger = require('../utils/logger');
+const repository = require('../repositories/studentScheduleAssignmentRepository');
 // ===== 요일별 시간대 유틸리티 (하위호환) =====
 
 /**
@@ -97,44 +98,9 @@ async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classD
         let assignedCount = 0;
         let createdCount = 0;
         for (const target of resumeScheduleTargets(classDays, enrollmentDate, defaultTimeSlot)) {
-                const dateStr = target.date;
-                const timeSlot = target.time_slot;
-                // 해당 날짜+시간대의 스케줄 조회 또는 생성
-                let [schedules] = await dbConn.query(
-                    `SELECT id FROM class_schedules
-                     WHERE academy_id = ? AND class_date = ? AND time_slot = ? ORDER BY id`,
-                    [academyId, dateStr, timeSlot]
-                );
-
-                let scheduleId;
-                if (schedules.length === 0) {
-                    // 스케줄 생성
-                    const [result] = await dbConn.query(
-                        `INSERT INTO class_schedules (academy_id, class_date, time_slot, attendance_taken)
-                         VALUES (?, ?, ?, false)`,
-                        [academyId, dateStr, timeSlot]
-                    );
-                    scheduleId = result.insertId;
-                    createdCount++;
-                } else {
-                    scheduleId = schedules[0].id;
-                }
-
-                // 이미 배정되어 있는지 확인
-                const [existing] = await dbConn.query(
-                    `SELECT id FROM attendance WHERE class_schedule_id = ? AND student_id = ?`,
-                    [scheduleId, studentId]
-                );
-
-                if (existing.length === 0) {
-                    // 출석 기록 생성 (배정)
-                    await dbConn.query(
-                        `INSERT INTO attendance (class_schedule_id, student_id, attendance_status)
-                         VALUES (?, ?, NULL)`,
-                        [scheduleId, studentId]
-                    );
-                    assignedCount++;
-                }
+            const result = await repository.assign(dbConn, academyId, studentId, target);
+            createdCount += result.created;
+            assignedCount += result.assigned;
         }
 
         logger.info(`Auto-assigned student ${studentId}: ${assignedCount} schedules (${createdCount} new)`);
