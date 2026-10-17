@@ -6,18 +6,20 @@ import { useIlsanAdmissions } from '@/hooks/use-ilsan-admissions';
 import { cn } from '@/lib/utils/cn';
 import { AdmissionReviewDetail } from './admission-review-detail';
 import { AdmissionReviewList } from './admission-review-list';
+import { AdmissionCopyLinkButton } from './admission-copy-link-button';
 
 export function AdmissionReviewPage() {
   const admissions=useIlsanAdmissions();
   const {applications,selected,nextCursor,loading,busy,error,select,refresh,loadMore}=admissions;
   return <div className="mx-auto w-full max-w-7xl space-y-5 break-keep py-4 md:py-8">
-    <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <header className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
       <div>
         <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">Ilsan Admissions</div>
         <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">일산 입학원서</h1>
         <p className="mt-1 text-sm text-muted-foreground">접수된 원서의 등록일·수업 요일·첫 달 학원비를 확인하고 재원 등록을 승인합니다.</p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-start gap-2">
+        <AdmissionCopyLinkButton />
         <Link href="/admissions/ilsan" target="_blank" rel="noopener noreferrer" className={buttonVariants({variant:'outline',className:'flex-1 gap-2 md:flex-none'})}><ExternalLink className="h-4 w-4"/>원서 페이지</Link>
         <Button type="button" variant="outline" className="flex-1 gap-2 md:flex-none" disabled={busy||loading} onClick={()=>void refresh()}><RefreshCw className={cn('h-4 w-4',loading&&'animate-spin')}/>새로고침</Button>
       </div>

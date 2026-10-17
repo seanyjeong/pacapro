@@ -28,6 +28,7 @@ router.post('/submit', rateLimit({windowMs:60*60*1000,max:PUBLIC_LIMIT_PER_HOUR,
   message:{message:'접수 요청이 많습니다. 잠시 후 다시 시도해 주세요.'}}),
 handle(req => service.submit(req.body, req.get('Idempotency-Key'))));
 router.use(verifyToken, checkPermission('students', 'edit'));
+router.get('/share-link', handle(req => service.shareLink(req.user)));
 router.get('/', handle(req => service.list(req.user, req.query.before ? id(req.query.before) : undefined)));
 router.get('/:id/existing-students', handle(req => service.existingStudents(req.user, id(req.params.id))));
 router.post('/:id/existing-preview', handle(req => service.existingPreview(req.user, id(req.params.id), req.body)));

@@ -16,18 +16,45 @@ const {ilsanAdmissionFileCors}=require('../../middleware/ilsanAdmissionFileCors'
 const run=process.env.RUN_ILSAN_MYSQL==='1'?describe:describe.skip;
 
 run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
-  let fixture,app,service,caseIp=0;
+  let fixture,app,server,service,caseIp=0;
   const token=id=>`Bearer ${jwt.sign({userId:id},process.env.JWT_SECRET)}`;
   const form=(name='합성 신규학생')=>({name,school:'합성고',grade:'고2',gender:'female',birth_six:'080229',phone:'01012345678',father_name:'합성아버지',father_phone:'01011112222',mother_name:'합성어머니',mother_phone:'01033334444',primary_parent:'mother',enrollment_date:'2026-10-20',consent:true});
   const terms=(date='2026-10-20')=>({enrollment_date:date,monthly_tuition:300000,discount_rate:10,class_days:[2,4],time_slot:'evening'});
-  const http=(method,url,body,user=2)=>request(app)[method](`/paca/ilsan-admissions${url}`).set('Authorization',token(user)).send(body);
-  const submit=(profile=form(),key=crypto.randomUUID())=>request(app).post('/paca/ilsan-admissions/submit').set('X-Forwarded-For',`192.0.2.${caseIp}`).set('Idempotency-Key',key).send(profile);
+  const http=async(method,url,body,user=2)=>{
+    const result=await request(server)[method](`/paca/ilsan-admissions${url}`).set('Authorization',token(user)).send(body);
+    if(result.status===401)throw new Error(`Synthetic authenticated request ${method} ${url}: ${result.body.message}`);
+    return result;
+  };
+  const submit=(profile=form(),key=crypto.randomUUID())=>request(server).post('/paca/ilsan-admissions/submit').set('X-Forwarded-For',`192.0.2.${caseIp}`).set('Idempotency-Key',key).send(profile);
   async function add(name) {const response=await submit(form(name));expect(response.status).toBe(200);const list=await http('get','/');return list.body.applications[0];}
   async function approve(id,value=terms()) {const preview=await http('post',`/${id}/preview`,value);expect(preview.status).toBe(200);return http('post',`/${id}/confirm`,{...value,preview_hash:preview.body.preview_hash});}
   async function counts(){const [[row]]=await mockPool.query('SELECT (SELECT COUNT(*) FROM students) students,(SELECT COUNT(*) FROM student_payments) payments,(SELECT COUNT(*) FROM attendance) attendance');return row;}
-  beforeAll(async()=>{fixture=await createFixture();mockPool=fixture.pool;service=createAdmissionService(mockPool,()=>mockToday);app=express();app.set('trust proxy',1);app.use(ilsanAdmissionFileCors,express.json());app.use('/paca/ilsan-admissions',router);},30000);
-  afterAll(async()=>{await fixture?.close();});
+  beforeAll(async()=>{fixture=await createFixture();mockPool=fixture.pool;service=createAdmissionService(mockPool,()=>mockToday);app=express();app.set('trust proxy',1);app.use(ilsanAdmissionFileCors,express.json());app.use('/paca/ilsan-admissions',router);
+    // One loopback listener avoids ephemeral-port reuse across fast Supertest requests.
+    server=await new Promise(resolve=>{const listener=app.listen(0,'127.0.0.1',()=>resolve(listener));});
+  },30000);
+  afterAll(async()=>{if(server)await new Promise(resolve=>server.close(resolve));await fixture?.close();});
   beforeEach(async()=>{caseIp++;mockToday='2026-10-16';for(const table of ['ilsan_admission_applications','attendance','class_schedules','student_payments','students'])await mockPool.query(`DELETE FROM ${table}`);});
+
+  test('share link requires current Ilsan membership and student-edit permission',async()=>{
+    const {PUBLIC_FORM_PATH}=require('../../constants/ilsanAdmission');
+    const allowed=await http('get','/share-link');
+    expect(allowed.status).toBe(200);expect(allowed.body).toEqual({path:PUBLIC_FORM_PATH});
+    expect(allowed.headers['cache-control']).toBe('no-store');
+    expect((await request(server).get('/paca/ilsan-admissions/share-link')).status).toBe(401);
+    for(const user of [1,3]) expect((await http('get','/share-link?academy_id=2',undefined,user)).status).toBe(403);
+    await mockPool.execute('UPDATE users SET permissions=? WHERE id=3',[JSON.stringify({students:{view:true,edit:true}})]);
+    try {expect((await http('get','/share-link',undefined,3)).status).toBe(200);}
+    finally {await mockPool.execute('UPDATE users SET permissions=? WHERE id=3',[JSON.stringify({students:{view:true,edit:false}})]);}
+    await mockPool.execute('UPDATE users SET academy_id=1 WHERE id=2');
+    try {expect((await http('get','/share-link')).status).toBe(403);}
+    finally {await mockPool.execute('UPDATE users SET academy_id=2 WHERE id=2');}
+  });
+
+  (process.env.PACA_ADMISSION_LINK_BASE_URL ? test : test.skip)('copied link opens anonymously and stores only in Ilsan via real HTTP and SQL',async()=>{
+    const {verifyAdmissionLinkBrowser}=require('./ilsan-admission-link-browser');
+    await verifyAdmissionLinkBrowser({app,pool:mockPool,token:token(2).slice(7),otherToken:token(1).slice(7),readerToken:token(3).slice(7)});
+  },90000);
 
   test('public intake is encrypted, academy-fixed and idempotent; staff reads are authorized',async()=>{
     const key=crypto.randomUUID(),profile={...form(),academy_id:1,status:'active',monthly_tuition:1};
@@ -43,19 +70,19 @@ run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
     expect(stored.profile_encrypted).not.toContain(profile.name);
     expect(JSON.parse(open(stored.profile_encrypted))).not.toHaveProperty('monthly_tuition');
     expect(await counts()).toEqual({students:0,payments:0,attendance:0});
-    expect((await request(app).get('/paca/ilsan-admissions')).status).toBe(401);
+    expect((await request(server).get('/paca/ilsan-admissions')).status).toBe(401);
     expect((await http('get','/',undefined,1)).status).toBe(403);
     expect((await http('get','/',undefined,3)).status).toBe(403);
     expect((await http('get','/')).headers['cache-control']).toBe('no-store');
   });
   test('validates birth digits, consent, dates and staff identity without any write',async()=>{
-    const ready=await request(app).get('/paca/ilsan-admissions/availability').set('Origin','null');
+    const ready=await request(server).get('/paca/ilsan-admissions/availability').set('Origin','null');
     expect(ready.body).toEqual({available:true,academy_name:'일산 맥스체대입시'});
     expect(ready.headers['access-control-allow-origin']).toBe('null');
     for(const change of [{birth_six:'0802291234567'},{consent:false},{enrollment_date:'2026-02-30'},{father_phone:'',mother_phone:''}])expect((await submit({...form(),...change})).status).toBe(422);
     await mockPool.query("UPDATE academies SET name='다른 교육원' WHERE id=2");
     expect((await submit()).status).toBe(503);
-    expect((await request(app).get('/paca/ilsan-admissions/availability')).status).toBe(503);
+    expect((await request(server).get('/paca/ilsan-admissions/availability')).status).toBe(503);
     await mockPool.query("UPDATE academies SET name='일산 맥스체대입시' WHERE id=2");
     expect(await counts()).toEqual({students:0,payments:0,attendance:0});
   });
@@ -153,7 +180,7 @@ run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
       expect((await http('get',`/${record.id}/existing-students`,undefined,user)).status).toBe(403);
       expect((await http('post',`/${record.id}/existing-confirm`,{student_id:wrong.insertId,preview_hash:'x'},user)).status).toBe(403);
     }
-    expect((await request(app).post(`/paca/ilsan-admissions/${record.id}/existing-confirm`).send({})).status).toBe(401);
+    expect((await request(server).post(`/paca/ilsan-admissions/${record.id}/existing-confirm`).send({})).status).toBe(401);
   });
   test.each(['paused','withdrawn'])('missing-phone %s student can be selected explicitly without re-enrollment',async status=>{
     const [created]=await fixture.insert('students',{academy_id:2,name:seal('상태 학생'),phone:null,parent_phone:null,father_name:null,mother_name:null,father_phone:null,mother_phone:null,status,monthly_tuition:450000,class_days:'[1,3]'});

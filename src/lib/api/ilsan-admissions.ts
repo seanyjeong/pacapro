@@ -14,6 +14,7 @@ export async function submitAdmission(profile: AdmissionProfile, key: string): P
   return result;
 }
 export const admissionsAPI = {
+  shareLink: () => apiClient.get<{path:string}>('/ilsan-admissions/share-link', {suppressErrorToast:true}),
   existingStudents:(id:number)=>apiClient.get<{students:AdmissionExistingStudent[]}>(`/ilsan-admissions/${id}/existing-students`),
   existingPreview:(id:number,studentId:number)=>apiClient.post<AdmissionExistingPreview>(`/ilsan-admissions/${id}/existing-preview`,{student_id:studentId},{suppressErrorToast:true}),
   existingConfirm:(id:number,studentId:number,hash:string)=>apiClient.post<AdmissionApplication>(`/ilsan-admissions/${id}/existing-confirm`,{student_id:studentId,preview_hash:hash},{suppressErrorToast:true}),

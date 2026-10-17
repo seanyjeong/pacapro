@@ -3,7 +3,7 @@ const enrollmentRepo = require('../repositories/ilsanEnrollmentRepository');
 const enrollment = require('./ilsanEnrollmentService');
 const codec = require('./ilsanAdmissionCodec');
 const model = require('../models/ilsanAdmission');
-const { ACADEMY_ID, ACADEMY_NAME } = require('../constants/ilsanAdmission');
+const { ACADEMY_ID, ACADEMY_NAME, PUBLIC_FORM_PATH } = require('../constants/ilsanAdmission');
 const { getKoreaDateText } = require('../utils/proratedPaymentDueDate');
 
 function createAdmissionService(pool, today = getKoreaDateText) {
@@ -31,6 +31,14 @@ function createAdmissionService(pool, today = getKoreaDateText) {
   }
   return {
     ...require('./ilsanAdmissionExistingService').createExistingService(pool,{actor,scope,row}),
+    async shareLink(user) {
+      actor(user);
+      return repo.transaction(pool, async conn => {
+        await scope(conn);
+        await repo.ready(conn);
+        return { path: PUBLIC_FORM_PATH };
+      });
+    },
     async availability() {
       return repo.transaction(pool, async conn => {
         await scope(conn); await repo.ready(conn);
