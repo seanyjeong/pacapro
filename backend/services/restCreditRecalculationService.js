@@ -143,14 +143,8 @@ function isChanged(credit, recalculated) {
         || credit.status !== recalculated.status;
 }
 
-async function recalculateRestCreditsOnResume({ connection, student, resumeDate }) {
+function planRestCreditsOnResume({ student, resumeDate, credits }) {
     const period = getRestPeriod(student, resumeDate);
-    const credits = await repository.findCurrentRestCreditsForUpdate(connection, {
-        academyId: student.academy_id,
-        restStartDate: period.restStartDate,
-        studentId: student.id,
-    });
-
     if (credits.length === 0) return null;
     if (credits.length > 1) {
         throw new RestCreditRecalculationConflictError(
@@ -199,8 +193,18 @@ async function recalculateRestCreditsOnResume({ connection, student, resumeDate 
         status,
     };
 
-    if (!isChanged(credit, result)) return result;
+    return { ...result, adjusted: isChanged(credit, result) };
+}
 
+async function recalculateRestCreditsOnResume({ connection, student, resumeDate }) {
+    const period = getRestPeriod(student, resumeDate);
+    const credits = await repository.findCurrentRestCreditsForUpdate(connection, {
+        academyId: student.academy_id, restStartDate: period.restStartDate, studentId: student.id,
+    });
+    const result = planRestCreditsOnResume({ student, resumeDate, credits });
+    if (!result?.adjusted) return result;
+    const { creditAmount, remainingAmount, status, previousAmount } = result;
+    const credit = credits[0];
     const note = `[복귀 재계산] ${resumeDate} 복귀: ${period.restStartDate} ~ `
         + `${period.restEndDate} (${period.restDays}일), `
         + `${previousAmount.toLocaleString()}원 → ${creditAmount.toLocaleString()}원`;
@@ -224,4 +228,5 @@ module.exports = {
     RestCreditRecalculationConflictError,
     RestCreditRecalculationValidationError,
     recalculateRestCreditsOnResume,
+    planRestCreditsOnResume,
 };
