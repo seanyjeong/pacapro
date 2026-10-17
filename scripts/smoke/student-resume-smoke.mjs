@@ -46,6 +46,7 @@ function makeState(overrides = {}) {
     hits: [],
     resumeAuthHeaders: [],
     resumeMode: 'technical',
+    studentStatus: 'paused',
     resumePayloads: [],
     ...overrides,
   };
@@ -68,7 +69,7 @@ async function installRoutes(context, state) {
         message: 'ok',
         payments: [],
         performances: [],
-        student: makePausedStudent(),
+        student: { ...makePausedStudent(), status: state.studentStatus },
       });
     }
 
@@ -86,6 +87,7 @@ async function installRoutes(context, state) {
         }, 409);
       }
       if (state.resumeMode === 'success') {
+        state.studentStatus = 'active';
         return jsonRoute(route, {
           message: '2026-06-23 복귀 처리가 완료되었습니다. 휴식 크레딧이 520,000원에서 351,000원으로 재계산되었습니다.',
           student: { ...makePausedStudent(), status: 'active' },
@@ -194,6 +196,44 @@ async function runResumeSuccess(browser) {
   return { diagnostics, state };
 }
 
+async function runEditResume(browser, width) {
+  const state = makeState({ resumeMode: 'conflict' });
+  const context = await createAuthedContext(browser, { width, height: 900 });
+  await installRoutes(context, state);
+  const page = await context.newPage();
+  const diagnostics = createDiagnostics(page);
+  await page.goto('/students/42/edit', { waitUntil: 'domcontentloaded' });
+  const button = page.getByRole('button', { name: '휴원 복귀', exact: true });
+  await button.waitFor();
+  const activeOption = page.locator('select option[value="active"]');
+  if (!await activeOption.isDisabled()) throw new Error('paused → active dropdown must be disabled');
+  await button.click();
+  await page.getByText('이복귀 학생은 며칠에 복귀하시겠습니까?').waitFor();
+  if (await page.locator('form form').count()) throw new Error('nested resume form can submit the profile');
+  await page.getByRole('dialog').getByRole('button', { name: '취소', exact: true }).click();
+  if (state.resumePayloads.length) throw new Error('cancel must not resume');
+  await button.click();
+  await page.getByLabel('복귀 날짜', { exact: true }).fill('2026-06-01');
+  await page.getByRole('dialog').getByText('468,000원', { exact: true }).waitFor();
+  await page.getByLabel('복귀 날짜', { exact: true }).fill('2026-06-23');
+  await assertNoHorizontalOverflow(page, `edit resume ${width}`);
+  await page.getByRole('dialog').getByRole('button', { name: '복귀 처리', exact: true }).click();
+  await page.getByRole('alert').getByText(/이미 사용한 휴식 크레딧/).waitFor();
+  if (state.resumePayloads.at(-1)?.resume_date !== '2026-06-23') throw new Error('selected date was not submitted');
+  if (state.hits.some(hit => hit.startsWith('PUT '))) throw new Error('resume submitted profile form');
+  state.resumeMode = 'success';
+  await page.getByRole('dialog').getByRole('button', { name: '복귀 처리', exact: true }).click();
+  await page.getByText('복귀 처리 완료', { exact: true }).waitFor();
+  await button.waitFor({ state: 'hidden' });
+  if (await page.locator('select').filter({ has: page.locator('option[value="active"]') }).inputValue() !== 'active') {
+    throw new Error('form did not refresh active state');
+  }
+  if (state.resumePayloads.length !== 2) throw new Error('unexpected duplicate resume request');
+  await assertNoHorizontalOverflow(page, `edit resume complete ${width}`);
+  await context.close();
+  return { diagnostics, state };
+}
+
 function assertDiagnostics(result) {
   const pageErrors = nonServiceWorkerErrors(result.diagnostics.pageErrors);
   if (pageErrors.length > 0) throw new Error(`unexpected page errors: ${pageErrors.join(' | ')}`);
@@ -202,6 +242,9 @@ function assertDiagnostics(result) {
 async function main() {
   const browser = await launchSmokeBrowser();
   try {
+    for (const width of [390, 768, 1365]) {
+      assertDiagnostics(await runEditResume(browser, width));
+    }
     const resumeError = await runResumeError(browser);
     const resumeConflict = await runResumeConflict(browser);
     const resumeSuccess = await runResumeSuccess(browser);
@@ -215,6 +258,7 @@ async function main() {
       consoleErrors: resumeError.diagnostics.consoleErrors,
       conflictMessageVerified: true,
       successMessageVerified: true,
+      editResumeVerifiedWidths: [390, 768, 1365],
     }, null, 2));
   } finally {
     await browser.close();
