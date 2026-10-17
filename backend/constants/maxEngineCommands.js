@@ -22,6 +22,7 @@ const record = {
   target_memo: text(10000), general_memo: text(10000),
 };
 const commands = {
+  ...require('./maxEngineTrialCommands').commands,
   ...require('./maxEngineScheduleCommands').commands,
   ...require('./maxEngineLifecycleCommands').commands,
   ...require('./maxEngineSettlementCommands').commands,

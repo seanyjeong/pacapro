@@ -16,7 +16,7 @@ const workflows = {
     student_search: ['name', 'phone_last4', 'grade', 'school'],
     unpaid_list: ['month'], payment_status: ['month'],
     consultation_schedule: ['date', 'start_date', 'end_date', 'status'],
-    trial_students: ['status'], today_brief: [],
+    trial_students: ['status', 'student_id'], today_brief: [],
   },
   peak: {
     teaching_context: ['date', 'time_slot'],
