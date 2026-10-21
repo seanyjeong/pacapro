@@ -1,0 +1,14 @@
+DROP TRIGGER IF EXISTS google_academy_event_insert;
+DROP TRIGGER IF EXISTS google_academy_event_update;
+DROP TRIGGER IF EXISTS google_academy_event_delete;
+DROP TRIGGER IF EXISTS google_consultation_insert;
+DROP TRIGGER IF EXISTS google_consultation_update;
+DROP TRIGGER IF EXISTS google_consultation_delete;
+DROP TRIGGER IF EXISTS google_consultation_record_insert;
+DROP TRIGGER IF EXISTS google_consultation_record_update;
+DROP TRIGGER IF EXISTS google_consultation_record_delete;
+DROP TABLE IF EXISTS google_calendar_events;
+DROP TABLE IF EXISTS google_calendar_outbox;
+DROP TABLE IF EXISTS google_sync_versions;
+DROP TABLE IF EXISTS google_oauth_states;
+DROP TABLE IF EXISTS google_connections;

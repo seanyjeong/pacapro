@@ -1,0 +1,141 @@
+-- Apply once with the MySQL client (DELIMITER support), before enabling the worker.
+-- InnoDB triggers keep every caller's consultation write and outbox signal atomic.
+CREATE TABLE google_connections (
+ academy_id BIGINT NOT NULL PRIMARY KEY,
+ account_id VARCHAR(255) NOT NULL, email VARCHAR(320) NOT NULL,
+ calendar_id VARCHAR(512) NOT NULL, connection_key CHAR(64) NOT NULL,
+ access_token TEXT NULL, refresh_token TEXT NULL, expires_at BIGINT NOT NULL,
+ scopes TEXT NOT NULL,
+ calendar_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+ drive_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+ sheets_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+ last_error VARCHAR(64) NULL, last_synced_at DATETIME(3) NULL
+) ENGINE=InnoDB;
+CREATE TABLE google_oauth_states (
+ state_hash CHAR(64) PRIMARY KEY, browser_hash CHAR(64) NOT NULL,
+ academy_id BIGINT NOT NULL, user_id BIGINT NOT NULL,
+ verifier TEXT NOT NULL, expires_at BIGINT NOT NULL, started BOOLEAN NOT NULL DEFAULT FALSE,
+ INDEX expires_idx (expires_at)
+) ENGINE=InnoDB;
+CREATE TABLE google_sync_versions (
+ academy_id BIGINT NOT NULL, resource_type VARCHAR(24) NOT NULL, resource_id BIGINT NOT NULL,
+ version BIGINT UNSIGNED NOT NULL DEFAULT 1,
+ PRIMARY KEY (academy_id, resource_type, resource_id)
+) ENGINE=InnoDB;
+CREATE TABLE google_calendar_outbox (
+ academy_id BIGINT NOT NULL, resource_type VARCHAR(24) NOT NULL, resource_id BIGINT NOT NULL, version BIGINT UNSIGNED NOT NULL,
+ attempts INT UNSIGNED NOT NULL DEFAULT 0,
+ available_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+ last_error VARCHAR(64) NULL,
+ PRIMARY KEY (academy_id, resource_type, resource_id, version), INDEX ready_idx (available_at)
+) ENGINE=InnoDB;
+CREATE TABLE google_calendar_events (
+ connection_key CHAR(64) NOT NULL, resource_type VARCHAR(24) NOT NULL, resource_id BIGINT NOT NULL,
+ event_id VARCHAR(128) NULL, generation BIGINT UNSIGNED NOT NULL DEFAULT 0,
+ synced_version BIGINT UNSIGNED NOT NULL DEFAULT 0,
+ PRIMARY KEY (connection_key, resource_type, resource_id), UNIQUE KEY event_idx (connection_key, event_id)
+) ENGINE=InnoDB;
+INSERT INTO google_sync_versions (academy_id, resource_type, resource_id)
+ SELECT academy_id, 'consultation', id FROM consultations;
+INSERT INTO google_sync_versions (academy_id, resource_type, resource_id) SELECT academy_id, 'academy_event', id FROM academy_events;
+DELIMITER $$
+CREATE TRIGGER google_consultation_insert AFTER INSERT ON consultations FOR EACH ROW
+BEGIN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (NEW.academy_id, 'consultation', NEW.id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=NEW.academy_id AND resource_type='consultation' AND resource_id=NEW.id;
+END$$
+CREATE TRIGGER google_consultation_update AFTER UPDATE ON consultations FOR EACH ROW
+BEGIN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (NEW.academy_id, 'consultation', NEW.id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=NEW.academy_id AND resource_type='consultation' AND resource_id=NEW.id;
+  IF OLD.academy_id <> NEW.academy_id THEN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (OLD.academy_id, 'consultation', OLD.id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=OLD.academy_id AND resource_type='consultation' AND resource_id=OLD.id;
+  END IF;
+END$$
+CREATE TRIGGER google_consultation_delete AFTER DELETE ON consultations FOR EACH ROW
+BEGIN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (OLD.academy_id, 'consultation', OLD.id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=OLD.academy_id AND resource_type='consultation' AND resource_id=OLD.id;
+END$$
+CREATE TRIGGER google_consultation_record_insert AFTER INSERT ON student_consultations FOR EACH ROW
+BEGIN
+  IF NEW.consultation_id IS NOT NULL THEN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (NEW.academy_id, 'consultation', NEW.consultation_id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=NEW.academy_id AND resource_type='consultation' AND resource_id=NEW.consultation_id;
+  END IF;
+END$$
+CREATE TRIGGER google_consultation_record_update AFTER UPDATE ON student_consultations FOR EACH ROW
+BEGIN
+  IF NEW.consultation_id IS NOT NULL THEN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (NEW.academy_id, 'consultation', NEW.consultation_id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=NEW.academy_id AND resource_type='consultation' AND resource_id=NEW.consultation_id;
+  END IF;
+  IF OLD.consultation_id IS NOT NULL AND (NOT (OLD.consultation_id <=> NEW.consultation_id) OR OLD.academy_id <> NEW.academy_id) THEN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (OLD.academy_id, 'consultation', OLD.consultation_id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=OLD.academy_id AND resource_type='consultation' AND resource_id=OLD.consultation_id;
+  END IF;
+END$$
+CREATE TRIGGER google_consultation_record_delete AFTER DELETE ON student_consultations FOR EACH ROW
+BEGIN
+  IF OLD.consultation_id IS NOT NULL THEN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (OLD.academy_id, 'consultation', OLD.consultation_id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=OLD.academy_id AND resource_type='consultation' AND resource_id=OLD.consultation_id;
+  END IF;
+END$$
+CREATE TRIGGER google_academy_event_insert AFTER INSERT ON academy_events FOR EACH ROW
+BEGIN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (NEW.academy_id, 'academy_event', NEW.id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=NEW.academy_id AND resource_type='academy_event' AND resource_id=NEW.id;
+END$$
+CREATE TRIGGER google_academy_event_update AFTER UPDATE ON academy_events FOR EACH ROW
+BEGIN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (NEW.academy_id, 'academy_event', NEW.id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=NEW.academy_id AND resource_type='academy_event' AND resource_id=NEW.id;
+  IF OLD.academy_id <> NEW.academy_id THEN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (OLD.academy_id, 'academy_event', OLD.id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=OLD.academy_id AND resource_type='academy_event' AND resource_id=OLD.id;
+  END IF;
+END$$
+CREATE TRIGGER google_academy_event_delete AFTER DELETE ON academy_events FOR EACH ROW
+BEGIN
+  INSERT INTO google_sync_versions (academy_id, resource_type, resource_id, version)
+    VALUES (OLD.academy_id, 'academy_event', OLD.id, 1) ON DUPLICATE KEY UPDATE version=version+1;
+  INSERT INTO google_calendar_outbox (academy_id, resource_type, resource_id, version)
+    SELECT academy_id, resource_type, resource_id, version FROM google_sync_versions
+    WHERE academy_id=OLD.academy_id AND resource_type='academy_event' AND resource_id=OLD.id;
+END$$
+DELIMITER ;

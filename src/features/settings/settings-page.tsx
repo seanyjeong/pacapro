@@ -14,6 +14,7 @@ import { TUITION_SECTIONS } from './settings-constants';
 import { TuitionSectionCard } from './tuition-section-card';
 import { UserInfoCard } from './user-info-card';
 import { useSettingsPageState } from './use-settings-page-state';
+import { GoogleIntegrationCard } from '@/features/google-integration/google-integration-card';
 
 export function SettingsPage() {
   const state = useSettingsPageState();
@@ -46,6 +47,7 @@ export function SettingsPage() {
             />
           ))}
           <SalarySettingsCard settings={state.settings} updateSetting={state.updateSetting} />
+          {state.user?.role === 'owner' && <GoogleIntegrationCard />}
           <div className="flex justify-end border-t border-border/70 pt-4">
             <Button
               onClick={state.saveSettings}
@@ -64,6 +66,7 @@ export function SettingsPage() {
             settings={state.settings}
             hasUnsavedChanges={state.hasUnsavedChanges}
             isSaving={state.isSaving}
+            canManageGoogle={state.user?.role === 'owner'}
           />
           <UserInfoCard user={state.user} loading={state.isLoadingSettings} />
           <SettingsSystemCard />
