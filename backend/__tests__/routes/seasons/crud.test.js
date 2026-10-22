@@ -231,6 +231,20 @@ describe('PUT /paca/seasons/:id', () => {
         expect(pool.execute.mock.calls[1][1]).toContain('season_plus_monthly');
     });
 
+    test('200: active 전환 시 휴원생은 시즌 스케줄 자동 배정에서 제외한다', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'upcoming' }]]); // 조회
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);              // UPDATE
+        pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'active' }]]);   // 재조회
+        pool.execute.mockResolvedValueOnce([[{ id: 5, status: 'active' }]]);   // autoAssignAll 시즌 조회
+        pool.execute.mockResolvedValueOnce([[]]);                              // 배정 대상 등록생
+        const res = await request(makeApp()).put('/paca/seasons/5').send({ status: 'active' });
+
+        expect(res.status).toBe(200);
+        expect(res.body.scheduleAssignment).toEqual({ totalAssigned: 0, totalCreated: 0, studentsProcessed: 0 });
+        expect(pool.execute.mock.calls[4][0]).toContain("s.status != 'paused'");
+    });
+
     test('5xx: 한국어 메시지', async () => {
         pool.execute.mockReset();
         pool.execute.mockRejectedValueOnce(new Error('DB'));

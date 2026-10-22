@@ -37,12 +37,13 @@ export function isEligibleSeasonStudent(student: SeasonEnrollStudent): boolean {
   return student.grade === '고3' || student.grade === 'N수' || student.grade_type === 'n_su';
 }
 
-export function isActiveEnrolledStudent(student: SeasonEnrollStudent): boolean {
-  return student.status === 'active' && student.is_trial !== true && student.is_trial !== 1;
+export function isSeasonEnrollableStudent(student: SeasonEnrollStudent): boolean {
+  const enrolled = student.status === 'active' || student.status === 'paused';
+  return enrolled && student.is_trial !== true && student.is_trial !== 1;
 }
 
 export function filterEligibleStudents(students: SeasonEnrollStudent[]): SeasonEnrollStudent[] {
-  return students.filter((student) => isActiveEnrolledStudent(student) && isEligibleSeasonStudent(student));
+  return students.filter((student) => isSeasonEnrollableStudent(student) && isEligibleSeasonStudent(student));
 }
 
 export function filterStudents(students: SeasonEnrollStudent[], searchTerm: string): SeasonEnrollStudent[] {

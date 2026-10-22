@@ -152,7 +152,7 @@ async function installRoutes(context, state) {
       method === 'GET' &&
       path === '/students' &&
       url.searchParams.get('grade_type') === 'high' &&
-      url.searchParams.get('status') === 'active' &&
+      url.searchParams.get('status') === 'active,paused' &&
       url.searchParams.get('is_trial') === 'false'
     ) {
       return jsonRoute(route, { students });
@@ -204,7 +204,10 @@ async function runNormal(browser) {
   await page.getByRole('heading', { name: '학생 등록' }).waitFor();
   await page.getByText('김민서').waitFor();
   await page.getByText('이등록').waitFor();
-  await page.getByText('휴원학생').waitFor({ state: 'hidden' });
+  await page
+    .locator('[data-testid="available-student-row"]:has-text("휴원학생")')
+    .getByText('휴원', { exact: true })
+    .waitFor();
   await page.getByText('체험학생').waitFor({ state: 'hidden' });
   await page.getByText('퇴원학생').waitFor({ state: 'hidden' });
   const availableDetailLink = page.getByRole('link', { name: '김민서 학생 상세' }).first();

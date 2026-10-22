@@ -27,7 +27,7 @@
  *   2. students UPDATE (is_season_registered, current_season_id)
  *   3. student_payments INSERT (시즌비 청구)
  *   4. season_monthly_policy='season_replaces_monthly' 이면 시즌 기간 미납 월회비 삭제
- *   5. season.status='active' 일 때만:
+ *   5. season.status='active' 이고 학생이 휴원(paused)이 아닐 때만 (휴원생은 복귀 시 배정):
  *      a. removeStudentFromRegularSchedules (정규 스케줄 attendance 삭제)
  *      b. autoAssignStudentToSeasonSchedules (시즌 스케줄 attendance 자동 배정)
  *      → 둘 다 try/catch 로 격리 (실패해도 enrollment 는 성공 유지).
@@ -386,7 +386,7 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
         let removeResult = null;
         let seasonAssignResult = null;
 
-        if (season.status === 'active') {
+        if (season.status === 'active' && student.status !== 'paused') {
             try {
                 removeResult = await removeStudentFromRegularSchedules(
                     student_id,
@@ -413,6 +413,8 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
             } catch (assignError) {
                 logger.error('Season auto-assign failed:', assignError);
             }
+        } else if (student.status === 'paused') {
+            logger.info(`Student ${student_id} is paused, season schedules will be assigned on resume`);
         } else {
             logger.info(`Season ${seasonId} is not active (status: ${season.status}), skipping auto-assignment`);
         }

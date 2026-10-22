@@ -1,14 +1,14 @@
 /**
  * paca/seasons/_utils.js — seasons 도메인 sub-라우터 공통 유틸
  *
- * 사용처: seasons/{list,crud,enrollments,enroll,students}.js
+ * 사용처: seasons/{list,crud,enrollments,enroll,students}.js, students/rest/resume.js
  *
  * 제공:
  *   - pool/db (mysql2 promise pool, ADR-005/ADR-011 alias)
  *   - decrypt (utils/encryption — ADR-007 보안 헬퍼 시그니처 무변경)
  *   - logger (utils/logger)
  *   - seasonCalculator 헬퍼 5종
- *   - 시즌 스케줄 자동 배치 헬퍼 3종 (autoAssign / removeFromRegular / autoAssignAll)
+ *   - 시즌 스케줄 자동 배치 헬퍼 4종 (autoAssign / removeFromRegular / autoAssignAll / findResumeSeasonEnrollment)
  *
  * 본 _utils.js 는 hoisting/공유 헬퍼만 둔다. endpoint 핸들러는 sub-라우터에 둔다.
  *
@@ -34,7 +34,7 @@ const db = pool;
  * 학생을 시즌 스케줄에 자동 배정 (시즌 기간 동안 운영 요일 + 시간대 별 attendance 생성)
  * 원본 routes/seasons.js (lines 27~144) 동작 1:1 보존.
  */
-async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, studentGrade, studentType, customTimeSlots = null, registrationDate = null) {
+async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, studentGrade, studentType, customTimeSlots = null, registrationDate = null, dbConn = pool) {
     try {
         const operatingDays = typeof season.operating_days === 'string'
             ? JSON.parse(season.operating_days)
@@ -95,7 +95,7 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
                 const dateStr = currentDate.toISOString().split('T')[0];
 
                 for (const timeSlot of timeSlots) {
-                    let [schedules] = await pool.execute(
+                    let [schedules] = await dbConn.execute(
                         `SELECT id FROM class_schedules
                          WHERE academy_id = ? AND class_date = ? AND time_slot = ?`,
                         [academyId, dateStr, timeSlot]
@@ -103,7 +103,7 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
 
                     let scheduleId;
                     if (schedules.length === 0) {
-                        const [result] = await pool.execute(
+                        const [result] = await dbConn.execute(
                             `INSERT INTO class_schedules (academy_id, class_date, time_slot, attendance_taken)
                              VALUES (?, ?, ?, false)`,
                             [academyId, dateStr, timeSlot]
@@ -114,13 +114,13 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
                         scheduleId = schedules[0].id;
                     }
 
-                    const [existing] = await pool.execute(
+                    const [existing] = await dbConn.execute(
                         `SELECT id FROM attendance WHERE class_schedule_id = ? AND student_id = ?`,
                         [scheduleId, studentId]
                     );
 
                     if (existing.length === 0) {
-                        await pool.execute(
+                        await dbConn.execute(
                             `INSERT INTO attendance (class_schedule_id, student_id, attendance_status)
                              VALUES (?, ?, NULL)`,
                             [scheduleId, studentId]
@@ -145,9 +145,9 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
  * 기존 정규 스케줄에서 학생 제거 (시즌 기간 동안만, 출석 처리 안된 attendance 만)
  * 원본 routes/seasons.js (lines 153~175) 동작 1:1 보존.
  */
-async function removeStudentFromRegularSchedules(studentId, academyId, seasonStartDate, seasonEndDate) {
+async function removeStudentFromRegularSchedules(studentId, academyId, seasonStartDate, seasonEndDate, dbConn = pool) {
     try {
-        const [result] = await pool.execute(
+        const [result] = await dbConn.execute(
             `DELETE a FROM attendance a
              JOIN class_schedules cs ON a.class_schedule_id = cs.id
              WHERE a.student_id = ?
@@ -190,6 +190,7 @@ async function autoAssignAllSeasonStudentsToSchedules(seasonId, academyId) {
              JOIN students s ON ss.student_id = s.id
              WHERE ss.season_id = ?
              AND ss.is_cancelled = 0
+             AND s.status != 'paused'
              AND s.deleted_at IS NULL`,
             [seasonId]
         );
@@ -221,6 +222,32 @@ async function autoAssignAllSeasonStudentsToSchedules(seasonId, academyId) {
     }
 }
 
+/**
+ * 복귀일 이후에도 진행 중인 시즌 등록 조회 (휴원 복귀 시 정규 대신 시즌 스케줄 배정용)
+ * 복귀 트랜잭션 안에서 호출되므로 dbConn 을 그대로 쓴다.
+ */
+async function findResumeSeasonEnrollment(dbConn, studentId, academyId, resumeDate) {
+    const [rows] = await dbConn.execute(
+        `SELECT se.*, ss.time_slots AS enrollment_time_slots
+         FROM student_seasons ss
+         JOIN seasons se ON ss.season_id = se.id
+         WHERE ss.student_id = ?
+         AND se.academy_id = ?
+         AND se.status = 'active'
+         AND se.season_end_date >= ?
+         AND ss.is_cancelled = 0
+         AND ss.payment_status != 'cancelled'
+         ORDER BY se.season_start_date ASC
+         LIMIT 1`,
+        [studentId, academyId, resumeDate]
+    );
+    if (rows.length === 0) return null;
+
+    const { enrollment_time_slots: rawTimeSlots, ...season } = rows[0];
+    const timeSlots = typeof rawTimeSlots === 'string' ? JSON.parse(rawTimeSlots) : rawTimeSlots;
+    return { season, timeSlots };
+}
+
 module.exports = {
     pool,
     db,
@@ -234,5 +261,6 @@ module.exports = {
     truncateToThousands,
     autoAssignStudentToSeasonSchedules,
     removeStudentFromRegularSchedules,
-    autoAssignAllSeasonStudentsToSchedules
+    autoAssignAllSeasonStudentsToSchedules,
+    findResumeSeasonEnrollment
 };

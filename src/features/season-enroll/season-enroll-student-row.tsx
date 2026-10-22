@@ -35,6 +35,9 @@ export function SeasonEnrollStudentRow({ enrolling, student, type, onEnrollClick
           >
             {isAvailable ? '등록 가능' : '등록 완료'}
           </span>
+          {student.status === 'paused' ? (
+            <span className="rounded-md bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-700">휴원</span>
+          ) : null}
         </div>
         <p className="truncate text-xs text-slate-500">{meta}</p>
       </div>
