@@ -18,6 +18,7 @@ import type { WithdrawalBillingResult } from '@/lib/types/lifecycle-billing';
 import { describeWithdrawalBillingResult, getLifecycleErrorMessage } from '@/lib/utils/lifecycle-billing';
 import { STATUS_LABELS } from '@/lib/types/student';
 import { LifecycleBillingResultPanel } from '@/components/students/lifecycle-billing-preview';
+import { getStudentListReturnUrl } from '@/features/students/student-list-return';
 import { StudentDetailActionDialog } from './student-detail-action-dialog';
 import { StudentDetailActions } from './student-detail-actions';
 import { StudentDetailError, StudentDetailLoading } from './student-detail-states';
@@ -45,7 +46,7 @@ export function StudentDetailPage() {
   const unpaidPaymentCount = payments.filter((payment) => !['paid', 'cancelled'].includes(payment.payment_status)).length;
   const resolvedActiveTab = activeTab ?? (unpaidPaymentCount > 0 ? 'payments' : 'performance');
 
-  const goBack = () => router.push('/students');
+  const goBack = () => router.push(getStudentListReturnUrl(studentId));
 
   const handleEdit = () => {
     router.push(`/students/${studentId}/edit`);

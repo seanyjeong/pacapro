@@ -16,14 +16,26 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, UserPlus, Trash2, Clock, Sparkles, FileText, Check, X, StickyNote } from 'lucide-react';
 import { StudentAvatar } from '@/components/students/student-avatar';
 import type { Student } from '@/lib/types/student';
+import type { StudentListSort } from '@/features/students/student-page-types';
+import { compareDate, compareText, SortHeader } from './student-list-table';
 import apiClient from '@/lib/api/client';
 import { PendingStudentActionDialog } from './pending-student-action-dialog';
 import { PendingStudentMemoDialog, type PendingStudentMemoData } from './pending-student-memo-dialog';
+import { rememberStudentListReturn } from '@/features/students/student-list-return';
 
 interface PendingStudentListProps {
   students: Student[];
   loading: boolean;
+  sort: StudentListSort | null;
   onReload: () => void;
+  onSortChange: (key: string) => void;
+}
+
+const PENDING_SORT_KEYS = ['name', 'school', 'grade', 'consultation', 'trial'] as const;
+type PendingSortKey = (typeof PENDING_SORT_KEYS)[number];
+
+function isPendingSortKey(value: string | undefined): value is PendingSortKey {
+  return PENDING_SORT_KEYS.some((key) => key === value);
 }
 
 interface ConsultationInfo {
@@ -38,8 +50,10 @@ interface TrialDate {
   time_slot: string;
 }
 
-export function PendingStudentList({ students, loading, onReload }: PendingStudentListProps) {
+export function PendingStudentList({ students, loading, sort, onReload, onSortChange }: PendingStudentListProps) {
   const router = useRouter();
+  const sortKey = sort && isPendingSortKey(sort.key) ? sort.key : null;
+  const sortDir = sort?.dir ?? 'asc';
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [loadingConsultationId, setLoadingConsultationId] = useState<number | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
@@ -146,6 +160,7 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
 
   // 새 일정을 입력한 뒤 체험생으로 다시 등록한다.
   const handleTrialRegister = (student: Student) => {
+    rememberStudentListReturn(student.id);
     router.push(`/students/${student.id}/edit?activate_trial=true`);
   };
 
@@ -191,6 +206,36 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
     return trialDates as TrialDate[];
   };
 
+  const sortStudents = () => {
+    if (!sortKey) return students;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    const firstTrialDate = (student: Student) => parseTrialDates(student.trial_dates)
+      .map((trial) => trial.date)
+      .sort()[0] || null;
+    return [...students].sort((a, b) => {
+      let cmp = 0;
+      switch (sortKey) {
+        case 'name':
+          cmp = compareText(a.name || '', b.name || '');
+          break;
+        case 'school':
+          cmp = compareText(a.school || '', b.school || '');
+          break;
+        case 'grade':
+          cmp = compareText(a.grade || '', b.grade || '');
+          break;
+        case 'consultation':
+          cmp = compareDate(a.consultation_date || a.created_at, b.consultation_date || b.created_at);
+          break;
+        case 'trial':
+          cmp = compareDate(firstTrialDate(a), firstTrialDate(b));
+          break;
+      }
+      return cmp * dir;
+    });
+  };
+  const sortedStudents = sortStudents();
+
   // 체험 날짜 포맷팅 (짧게)
   const formatTrialDate = (date: string) => {
     return new Date(date).toLocaleDateString('ko-KR', {
@@ -228,150 +273,151 @@ export function PendingStudentList({ students, loading, onReload }: PendingStude
     <>
       <Card>
         <CardContent className="p-0">
-          <table className="w-full">
-            <thead className="bg-muted border-b border-border">
-              <tr>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">이름</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학년</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">연락처</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">상담일</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">체험 일정</th>
-                <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">메모</th>
-                <th className="text-right py-3 px-4 text-sm font-semibold text-muted-foreground">액션</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border bg-card">
-              {students.map((student) => (
-                <tr key={student.id} className="hover:bg-muted">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
-                      <StudentAvatar student={student} />
-                      <div>
-                        <span className="font-medium text-foreground">{student.name}</span>
-                        {student.school && (
-                          <div className="text-xs text-muted-foreground">{student.school}</div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-sm text-muted-foreground">
-                    {student.grade || '-'}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-muted-foreground">
-                    {student.phone || '-'}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-muted-foreground">
-                    {formatDate(student.consultation_date || student.created_at)}
-                  </td>
-                  <td className="py-3 px-4">
-                    {(() => {
-                      const trialDates = parseTrialDates(student.trial_dates);
-                      if (trialDates.length === 0) {
-                        return <span className="text-sm text-muted-foreground">-</span>;
-                      }
-                      return (
-                        <div className="flex flex-wrap gap-1">
-                          {trialDates.map((trial, idx) => (
-                            <Badge
-                              key={idx}
-                              variant="outline"
-                              className={`text-xs flex items-center gap-1 ${
-                                trial.attended
-                                  ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
-                                  : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700'
-                              }`}
-                            >
-                              {formatTrialDate(trial.date)}
-                              {trial.attended ? (
-                                <Check className="h-3 w-3" />
-                              ) : (
-                                <X className="h-3 w-3 opacity-50" />
-                              )}
-                            </Badge>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  <td className="py-3 px-4 max-w-[120px]">
-                    <button
-                      onClick={() => handleOpenMemoModal(student)}
-                      aria-label={`${student.name} 미등록관리 메모 보기`}
-                      className="text-left w-full group"
-                    >
-                      {student.memo ? (
-                        <span className="text-sm text-muted-foreground truncate block group-hover:text-foreground transition-colors">
-                          {student.memo.length > 12 ? student.memo.slice(0, 12) + '...' : student.memo}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground/50 group-hover:text-muted-foreground transition-colors flex items-center gap-1">
-                          <StickyNote className="w-3 h-3" />
-                          메모
-                        </span>
-                      )}
-                    </button>
-                  </td>
-                  <td className="py-3 px-4 text-right">
-                    <div className="flex items-center justify-end gap-3">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleViewConsultation(student)}
-                        title="상담 정보 보기"
-                        aria-label={`${student.name} 상담 정보 보기`}
-                        disabled={loadingConsultationId === student.id}
-                        className="min-h-[40px] min-w-[40px]"
-                      >
-                        {loadingConsultationId === student.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <FileText className="w-4 h-4" />
-                        )}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleTrialRegister(student)}
-                        title="새 체험 일정 등록"
-                        aria-label={`${student.name} 새 체험 일정 등록`}
-                        className="min-h-[40px] px-3"
-                      >
-                        <Sparkles className="w-4 h-4 mr-1" />
-                        새 체험 등록
-                      </Button>
-                      <Button
-                        size="default"
-                        variant="default"
-                        onClick={() => handleRegister(student)}
-                        aria-label={`${student.name} 정식 등록`}
-                        className="min-h-[40px] px-4"
-                      >
-                        <UserPlus className="w-4 h-4 mr-1" />
-                        정식 등록
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950 min-h-[40px] min-w-[40px]"
-                        onClick={() => {
-                          setDeleteError(null);
-                          setDeleteTarget(student);
-                        }}
-                        aria-label={`${student.name} 미등록 학생 삭제`}
-                        disabled={deletingId === student.id}
-                      >
-                        {deletingId === student.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-muted border-b border-border">
+                <tr>
+                  <SortHeader className="whitespace-nowrap" label="이름" column="name" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
+                  <SortHeader className="whitespace-nowrap" label="학교" column="school" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
+                  <SortHeader className="whitespace-nowrap" label="학년" column="grade" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
+                  <th className="whitespace-nowrap text-left py-3 px-4 text-sm font-semibold text-muted-foreground">연락처</th>
+                  <SortHeader className="whitespace-nowrap" label="상담일" column="consultation" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
+                  <SortHeader className="whitespace-nowrap" label="체험 일정" column="trial" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
+                  <th className="whitespace-nowrap text-left py-3 px-4 text-sm font-semibold text-muted-foreground">메모</th>
+                  <th className="whitespace-nowrap text-right py-3 px-4 text-sm font-semibold text-muted-foreground">액션</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-border bg-card">
+                {sortedStudents.map((student) => (
+                  <tr key={student.id} className="hover:bg-muted">
+                    <td className="whitespace-nowrap py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <StudentAvatar student={student} />
+                        <span className="font-medium text-foreground">{student.name}</span>
+                      </div>
+                    </td>
+                    <td className="whitespace-nowrap py-3 px-4 text-sm text-muted-foreground">
+                      {student.school || '-'}
+                    </td>
+                    <td className="whitespace-nowrap py-3 px-4 text-sm text-muted-foreground">
+                      {student.grade || '-'}
+                    </td>
+                    <td className="whitespace-nowrap py-3 px-4 text-sm text-muted-foreground">
+                      {student.phone || '-'}
+                    </td>
+                    <td className="whitespace-nowrap py-3 px-4 text-sm text-muted-foreground">
+                      {formatDate(student.consultation_date || student.created_at)}
+                    </td>
+                    <td className="py-3 px-4">
+                      {(() => {
+                        const trialDates = parseTrialDates(student.trial_dates);
+                        if (trialDates.length === 0) {
+                          return <span className="text-sm text-muted-foreground">-</span>;
+                        }
+                        return (
+                          <div className="flex flex-wrap gap-1">
+                            {trialDates.map((trial, idx) => (
+                              <Badge
+                                key={idx}
+                                variant="outline"
+                                className={`text-xs flex items-center gap-1 ${
+                                  trial.attended
+                                    ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
+                                    : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900 dark:text-gray-400 dark:border-gray-700'
+                                }`}
+                              >
+                                {formatTrialDate(trial.date)}
+                                {trial.attended ? (
+                                  <Check className="h-3 w-3" />
+                                ) : (
+                                  <X className="h-3 w-3 opacity-50" />
+                                )}
+                              </Badge>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    <td className="py-3 px-4 max-w-[120px]">
+                      <button
+                        onClick={() => handleOpenMemoModal(student)}
+                        aria-label={`${student.name} 미등록관리 메모 보기`}
+                        className="text-left w-full group"
+                      >
+                        {student.memo ? (
+                          <span className="text-sm text-muted-foreground truncate block group-hover:text-foreground transition-colors">
+                            {student.memo.length > 12 ? student.memo.slice(0, 12) + '...' : student.memo}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground/50 group-hover:text-muted-foreground transition-colors flex items-center gap-1">
+                            <StickyNote className="w-3 h-3" />
+                            메모
+                          </span>
+                        )}
+                      </button>
+                    </td>
+                    <td className="whitespace-nowrap py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-3">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleViewConsultation(student)}
+                          title="상담 정보 보기"
+                          aria-label={`${student.name} 상담 정보 보기`}
+                          disabled={loadingConsultationId === student.id}
+                          className="min-h-[40px] min-w-[40px]"
+                        >
+                          {loadingConsultationId === student.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <FileText className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleTrialRegister(student)}
+                          title="새 체험 일정 등록"
+                          aria-label={`${student.name} 새 체험 일정 등록`}
+                          className="min-h-[40px] px-3"
+                        >
+                          <Sparkles className="w-4 h-4 mr-1" />
+                          새 체험 등록
+                        </Button>
+                        <Button
+                          size="default"
+                          variant="default"
+                          onClick={() => handleRegister(student)}
+                          aria-label={`${student.name} 정식 등록`}
+                          className="min-h-[40px] px-4"
+                        >
+                          <UserPlus className="w-4 h-4 mr-1" />
+                          정식 등록
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950 min-h-[40px] min-w-[40px]"
+                          onClick={() => {
+                            setDeleteError(null);
+                            setDeleteTarget(student);
+                          }}
+                          aria-label={`${student.name} 미등록 학생 삭제`}
+                          disabled={deletingId === student.id}
+                        >
+                          {deletingId === student.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
       <PendingStudentMemoDialog

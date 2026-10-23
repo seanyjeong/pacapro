@@ -2,11 +2,15 @@ import { Clock, GraduationCap, School, Sparkles, UserCheck, Users, UserX } from 
 import type { StudentFilters, StudentStatus } from '@/lib/types/student';
 import {
     ADMISSION_TYPE_LABELS,
+    ADMISSION_TYPE_OPTIONS,
     GENDER_LABELS,
+    GENDER_OPTIONS,
     GRADE_LABELS,
+    GRADE_OPTIONS,
     STUDENT_TYPE_LABELS,
+    STUDENT_TYPE_OPTIONS,
 } from '@/lib/types/student';
-import type { StudentTab, StudentTabOption } from './student-page-types';
+import type { StudentListSort, StudentListState, StudentTab, StudentTabOption } from './student-page-types';
 
 export const STUDENT_TABS: StudentTabOption[] = [
     { id: 'active', label: '재원생', description: '수강 중', icon: UserCheck, toneClass: 'text-emerald-700 dark:text-emerald-300' },
@@ -47,5 +51,56 @@ export function getActiveFilterLabels(filters: StudentFilters): string[] {
 }
 
 export function shouldShowStudentFilters(tab: StudentTab): boolean {
-    return tab !== 'trial' && tab !== 'pending';
+    return tab !== 'trial';
+}
+
+// 목록 상태(탭·검색·필터·정렬)를 주소에 담아 학생 상세에서 돌아와도 그대로 보이게 한다.
+const LIST_FILTER_OPTIONS = {
+    student_type: STUDENT_TYPE_OPTIONS,
+    grade: GRADE_OPTIONS,
+    admission_type: ADMISSION_TYPE_OPTIONS,
+    gender: GENDER_OPTIONS,
+} as const;
+
+type ListFilterKey = keyof typeof LIST_FILTER_OPTIONS;
+const LIST_FILTER_KEYS = Object.keys(LIST_FILTER_OPTIONS) as ListFilterKey[];
+
+export function readStudentListState(params: URLSearchParams): StudentListState {
+    const tabParam = params.get('tab');
+    const tab: StudentTab = isStudentTab(tabParam) ? tabParam : 'active';
+    const search = params.get('q') || '';
+    const filters: StudentFilters = getFiltersForTab(tab);
+    LIST_FILTER_KEYS.forEach((key) => {
+        const value = params.get(key);
+        const options: ReadonlyArray<{ value: string }> = LIST_FILTER_OPTIONS[key];
+        if (value && options.some((option) => option.value === value)) {
+            Object.assign(filters, { [key]: value });
+        }
+    });
+    if (search) filters.search = search;
+    const sortKey = params.get('sort');
+    const sort: StudentListSort | null = sortKey
+        ? { key: sortKey, dir: params.get('dir') === 'desc' ? 'desc' : 'asc' }
+        : null;
+    return { tab, search, filters, sort };
+}
+
+export function buildStudentListQuery({ tab, search, filters, sort }: StudentListState): string {
+    const params = new URLSearchParams();
+    if (tab !== 'active') params.set('tab', tab);
+    if (search) params.set('q', search);
+    LIST_FILTER_KEYS.forEach((key) => {
+        const value = filters[key];
+        if (value) params.set(key, value);
+    });
+    if (sort) {
+        params.set('sort', sort.key);
+        params.set('dir', sort.dir);
+    }
+    return params.toString();
+}
+
+export function getNextSort(current: StudentListSort | null, key: string): StudentListSort {
+    if (current?.key === key) return { key, dir: current.dir === 'asc' ? 'desc' : 'asc' };
+    return { key, dir: 'asc' };
 }

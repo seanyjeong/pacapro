@@ -16,6 +16,7 @@ import { StudentAvatar } from '@/components/students/student-avatar';
 import type { Student, TrialDate } from '@/lib/types/student';
 import apiClient from '@/lib/api/client';
 import { TrialStudentActionDialog, type TrialStudentAction } from './trial-student-action-dialog';
+import { rememberStudentListReturn } from '@/features/students/student-list-return';
 
 interface TrialStudentListProps {
   students: Student[];
@@ -247,7 +248,10 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                         aria-label="체험 일정 수정"
                         size="sm"
                         variant="outline"
-                        onClick={() => router.push(`/students/${student.id}/edit`)}
+                        onClick={() => {
+                          rememberStudentListReturn(student.id);
+                          router.push(`/students/${student.id}/edit`);
+                        }}
                         title="체험 일정 수정"
                       >
                         <Pencil className="w-4 h-4" />
