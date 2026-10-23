@@ -223,6 +223,19 @@ run('D-117 isolated MySQL transactions and delegation', () => {
     expect((await preview({operation:'payment_update',resource_id:700,changes:{base_amount:'1000'}})).status).toBe(422);
     await paca.query('DELETE FROM student_payments WHERE id IN (700,701)');await paca.query('DELETE FROM students WHERE id=700');
   });
+  test('expense_create records one expense like the expense screen and is idempotent', async () => {
+    const count = async () => (await paca.query('SELECT COUNT(*) n FROM expenses'))[0][0].n;
+    const before = await count();
+    const p = await preview({operation:'expense_create',changes:{expense_date:'2026-10-23',category:'supplies',amount:'35000',description:'매트 구입',payment_method:'card'}});
+    expect(p.status).toBe(200);expect(p.body).toMatchObject({resource_id:null,before:null,after:{amount:'35000',category:'supplies'}});
+    expect(await count()).toBe(before);
+    const done = await confirm(p.body);expect(done.status).toBe(200);expect((await confirm(p.body)).body).toEqual(done.body);
+    expect((await paca.query('SELECT academy_id,expense_date,category,amount,description,payment_method,notes,recorded_by,salary_id,instructor_id FROM expenses WHERE id=?',[done.body.resource_id]))[0][0])
+      .toEqual({academy_id:1,expense_date:'2026-10-23',category:'supplies',amount:'35000.00',description:'매트 구입',payment_method:'card',notes:null,recorded_by:1,salary_id:null,instructor_id:null});
+    expect(await count()).toBe(before + 1);
+    expect((await preview({operation:'expense_create',changes:{expense_date:'2026-10-23',category:'salary',amount:'1'}})).status).toBe(422);
+    await paca.query('DELETE FROM expenses WHERE id=?',[done.body.resource_id]);
+  });
   test('consultation blocks: create blocks a time range once, keeps reservations, and delete releases only manual blocks', async () => {
     await paca.query("INSERT INTO consultations(id,academy_id,consultation_type,student_grade,preferred_date,preferred_time,status) VALUES(700,1,'new_registration','고3','2030-10-14','11:30:00','confirmed'),(701,1,'new_registration','고3','2030-10-14','12:30:00','pending')");
     const blocks = async () => (await paca.query("SELECT id,is_all_day,start_time,end_time,reason,created_by,academy_event_id FROM consultation_blocked_slots WHERE academy_id=1 AND blocked_date='2030-10-14' ORDER BY id"))[0];

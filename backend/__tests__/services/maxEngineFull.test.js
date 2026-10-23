@@ -90,3 +90,12 @@ test('payment_update recalculates final amount like the payment screen and guard
  expect(()=>validate({operation:'payment_update',resource_id:1,changes:{final_amount:'1000',notes:'x'}})).toThrow();
  expect(catalog('paca').find(c=>c.operation==='payment_update')).toMatchObject({resource:'student_payments',source:'paca'});
 });
+test('expense_create needs date, screen category and positive amount without id',()=>{
+ expect(catalog('paca').find(c=>c.operation==='expense_create')).toMatchObject({resource:'expenses',source:'paca',requires_id:false});
+ const changes={expense_date:'2026-10-23',category:'supplies',amount:'35000',description:'매트 구입',payment_method:'card'};
+ expect(validate({operation:'expense_create',changes})).toEqual({operation:'expense_create',resource_id:null,changes});
+ for(const bad of [{...changes,amount:'0'},{...changes,amount:35000},{...changes,category:'salary'},{...changes,category:'refund'},
+  {...changes,payment_method:'bank'},{...changes,expense_date:'2026-02-30'},{...changes,academy_id:2},{category:'other',amount:'1'}])
+  expect(()=>validate({operation:'expense_create',changes:bad})).toThrow();
+ expect(()=>validate({operation:'expense_create',resource_id:1,changes})).toThrow();
+});

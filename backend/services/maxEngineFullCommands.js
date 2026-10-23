@@ -49,6 +49,7 @@ async function state(conn, actor, command, lock = false) {
   if (schedules.supports(command.operation)) return schedules.state(conn, actor, command, lock);
   if (command.operation.startsWith('consultation_record_')) return consultationRecords.state(conn, actor, command, lock);
   if (command.operation === 'student_create') return repo.roster(conn, actor.academy_id, lock);
+  if (command.operation === 'expense_create') return {};
   if (command.operation === 'consultation_create') return repo.row(conn, 'students', command.changes.student_id, actor.academy_id, lock);
   if (command.operation === 'attendance_set') return attendance.state(conn, actor, command.resource_id, lock);
   const before = await repo.row(conn, commands[command.operation].resource, command.resource_id, actor.academy_id, lock);
@@ -101,6 +102,10 @@ async function apply(conn, actor, command, before) {
     case 'attendance_set': return attendance.apply(conn, actor, id, changes, before);
     case 'payment_pay': return payments.apply(conn, actor, id, changes, before);
     case 'payment_update': return payments.update(conn, id, changes, before);
+    // 지출 화면 등록(POST /paca/expenses)과 같은 행: 빈 값은 null, 기록자는 위임 계정
+    case 'expense_create': return repo.insert(conn, 'expenses', { academy_id: actor.academy_id, expense_date: changes.expense_date,
+      category: changes.category, amount: changes.amount, description: changes.description || null,
+      payment_method: changes.payment_method || null, notes: changes.notes || null, recorded_by: actor.user_id });
     default: fail(403, 'WRITE_FORBIDDEN', '허용된 작업이 아닙니다.');
   }
 }
