@@ -19,7 +19,7 @@ const toneClass: Record<AuthTone, string> = {
 
 export function AuthPageShell({ children, description, icon, title, tone = 'default' }: AuthPageShellProps) {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
+    <main className="theme-light min-h-screen bg-slate-50 px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-5xl items-center gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <section className="space-y-5">
           <div>
