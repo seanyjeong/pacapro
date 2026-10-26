@@ -4,4 +4,6 @@ const FIELDS = Object.freeze({
   mother_name: '어머님 성함', mother_phone: '어머님 전화번호', parent_phone: '학원 안내 전화번호',
 });
 const ENCRYPTED_FIELDS = ['phone','father_name','father_phone','mother_name','mother_phone','parent_phone'];
-module.exports = { FIELDS, ENCRYPTED_FIELDS };
+// Not yet enrolled students are registered from the application; active and paused students only get their details updated.
+const REGISTER_STATUSES = ['pending','trial','withdrawn','graduated'];
+module.exports = { FIELDS, ENCRYPTED_FIELDS, REGISTER_STATUSES };

@@ -10,6 +10,20 @@ async function createStudent(conn, fields) {
     VALUES (${keys.map(() => '?').join(',')})`, Object.values(fields));
   return result.insertId;
 }
+async function student(conn, id) {
+  return (await conn.execute(`SELECT id,status,student_number FROM students
+    WHERE id=? AND academy_id=? AND deleted_at IS NULL FOR UPDATE`, [id, ACADEMY_ID]))[0][0];
+}
+async function updateStudent(conn, id, fields) {
+  // Field names are constructed by the internal enrollment service, never from a request object.
+  const keys = Object.keys(fields);
+  await conn.execute(`UPDATE students SET ${keys.map(k => `\`${k}\`=?`).join(',')}
+    WHERE id=? AND academy_id=? AND deleted_at IS NULL`, [...Object.values(fields), id, ACADEMY_ID]);
+}
+async function monthlyPayment(conn, studentId, yearMonth) {
+  return (await conn.execute(`SELECT id FROM student_payments WHERE academy_id=? AND student_id=?
+    AND payment_type='monthly' AND \`year_month\`=? LIMIT 1`, [ACADEMY_ID, studentId, yearMonth]))[0][0];
+}
 async function createPayment(conn, studentId, userId, quote) {
   if (quote.final_amount === 0) return null;
   const [result] = await conn.execute(`INSERT INTO student_payments
@@ -34,4 +48,4 @@ async function assignClasses(conn, studentId, quote) {
       ON DUPLICATE KEY UPDATE student_id=student_id`, [rows[0].id, studentId]);
   }
 }
-module.exports = { roster, createStudent, createPayment, assignClasses };
+module.exports = { roster, createStudent, student, updateStudent, monthlyPayment, createPayment, assignClasses };

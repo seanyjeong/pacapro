@@ -84,3 +84,17 @@ profile: 이름, 학교, 학년, 성별 male/female, 생년월일 `birth_six` 6�
 - 원서의 내부 완료 상태는 `enrolled`, `terms_json.operation='fill_missing'`와 target_student_id/filled_fields로 보완 이력을 구분한다. 응답 completion_kind와 학생 보기 링크로 연결한다. 학생 신규 생성용 unique student_id 열은 비워 두므로 같은 기존 학생의 다음 원서도 안전하게 보완할 수 있다. 화면은 '정보 보완 완료'로 표시한다.
 - 예약 원서를 정보 보완으로 승인하면 신규 등록 예약도 완료 상태로 끝나므로 추후 중복 등록하지 않는다. 기존 원서가 이미 등록 완료/취소된 경우 새 승인은 차단한다.
 - DB schema 변경 없음. 기존 태블릿 HTML 파일은 그대로 사용한다.
+
+## 기존 학생 원서 반영·정식 등록 (4.0.67)
+
+2026-10-26 사용자 요청("원서대로 적용", "입학원서 받으면 그쪽에서 요일 정하고 학원비 생성까지")으로 4.0.60의 빈 칸 보완을 확장한다.
+
+- 미리보기 항목 action은 `fill`(기존 빈 칸) · `replace`(원서와 다름) · `keep`(같거나 원서가 비어 있음). 전화번호는 숫자만 비교한다. 원서 값이 비어 있으면 기존 값을 지우지 않는다.
+- 학원 안내 전화번호의 원서 값은 원서에서 고른 보호자 번호다.
+- `POST /:id/existing-confirm`에 `replace_fields`(바꿀 항목, `replace` 항목의 부분집합)를 받는다. 화면은 다른 항목을 모두 체크한 채로 보여 주고 담당자가 해제할 수 있다. 생략하면 바꾸지 않는다.
+- 기존 학생이 미등록·체험·퇴원·졸업(`REGISTER_STATUSES`)이면 `existing-preview`에 `terms`를 함께 보내 일할 금액을 계산하고, `existing-confirm`은 `terms`가 필수다. 학생 정보는 승인 시 바로 반영하고, 원서는 신규 등록과 같은 `scheduled` 상태로 `terms_json.target_student_id`를 함께 저장한다.
+- 등록일이 오늘이면 바로, 미래면 기존 스케줄러(`activateDue`)가 등록일에 같은 학생 row를 재원으로 바꾸고(학번이 없으면 부여, 학원비·요일·시간대 설정) 첫 달 일할 청구서와 수업 배정을 만든다. 새 학생은 만들지 않으며 unique `student_id` 열은 비워 둔다.
+- 등록일 전에 학생 상태가 바뀌었거나(`STUDENT_STATUS_CHANGED`), 해당 월 monthly 청구서가 이미 있거나(`PAYMENT_EXISTS`), 학생이 삭제되면(`STUDENT_NOT_FOUND`) 자동 등록하지 않고 `review`로 남긴다. 당일 승인에서는 409로 막고 정보 반영도 함께 원복한다.
+- 재원·휴원 학생은 정보만 반영하고 상태·학원비·수업 배정은 바꾸지 않는다(`fill_missing` 완료).
+- DB schema·스케줄러 파일 변경 없음.
+

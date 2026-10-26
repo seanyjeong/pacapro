@@ -156,7 +156,7 @@ run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
     for(const key of Object.keys(before).filter(k=>!['father_name','father_phone','school','updated_at'].includes(k)))expect(after[key]).toEqual(before[key]);
     expect(await counts()).toEqual(beforeCounts);expect((await http('post',`/${application.id}/existing-confirm`,body)).status).toBe(409);
     const later=await add('기존 학생'),next=await http('post',`/${later.id}/existing-preview`,{student_id:studentId});
-    expect(next.body.fields.every(f=>f.action==='keep')).toBe(true);
+    expect(next.body.fields.filter(f=>f.action!=='keep').map(f=>[f.field,f.action])).toEqual([['mother_name','replace']]);
     const completed=await http('post',`/${later.id}/existing-confirm`,{student_id:studentId,preview_hash:next.body.preview_hash});expect(completed.status).toBe(200);expect(completed.body.filled_fields).toEqual([]);
     expect(await counts()).toEqual(beforeCounts);
   });
@@ -182,7 +182,7 @@ run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
     }
     expect((await request(server).post(`/paca/ilsan-admissions/${record.id}/existing-confirm`).send({})).status).toBe(401);
   });
-  test.each(['paused','withdrawn'])('missing-phone %s student can be selected explicitly without re-enrollment',async status=>{
+  test.each(['active','paused'])('missing-phone %s student can be selected explicitly without re-enrollment',async status=>{
     const [created]=await fixture.insert('students',{academy_id:2,name:seal('상태 학생'),phone:null,parent_phone:null,father_name:null,mother_name:null,father_phone:null,mother_phone:null,status,monthly_tuition:450000,class_days:'[1,3]'});
     const record=await add('상태 학생'),studentId=created.insertId;
     const candidates=await http('get',`/${record.id}/existing-students`);expect(candidates.body.students[0].exact_phone).toBe(false);
@@ -190,6 +190,48 @@ run('Ilsan admission HTTP and scheduled enrollment on isolated MySQL',()=>{
     expect((await http('post',`/${record.id}/existing-confirm`,{student_id:studentId,preview_hash:preview.body.preview_hash})).status).toBe(200);
     const [[student]]=await mockPool.query('SELECT * FROM students WHERE id=?',[studentId]);expect(student.status).toBe(status);expect(Number(student.monthly_tuition)).toBe(450000);expect(typeof student.class_days==='string'?JSON.parse(student.class_days):student.class_days).toEqual([1,3]);expect(open(student.phone)).toBe('010-1234-5678');expect(open(student.parent_phone)).toBe('010-3333-4444');
     expect(await counts()).toEqual({students:1,payments:0,attendance:0});
+  });
+  test.each([['pending',null,'2026001'],['withdrawn','2025007','2025007']])('%s existing student is registered on the same record with the chosen replacements',async(status,number,expected)=>{
+    const [created]=await fixture.insert('students',{academy_id:2,name:seal('재등록 학생'),phone:seal('010-9999-0000'),school:'예전고',father_name:null,father_phone:null,mother_name:null,mother_phone:null,parent_phone:null,status,student_number:number,memo:'상담 메모'});
+    const record=await add('재등록 학생'),studentId=created.insertId;
+    const first=await http('post',`/${record.id}/existing-preview`,{student_id:studentId});
+    expect(first.body.register).toBe(true);expect(first.body.quote).toBeNull();
+    expect(first.body.fields.filter(f=>f.action==='replace').map(f=>f.field)).toEqual(['phone','school']);
+    expect((await http('post',`/${record.id}/existing-confirm`,{student_id:studentId,preview_hash:first.body.preview_hash})).body.code).toBe('TERMS_REQUIRED');
+    const preview=await http('post',`/${record.id}/existing-preview`,{student_id:studentId,terms:terms(mockToday)});expect(preview.body.quote.remaining_classes).toBeGreaterThan(0);
+    const result=await http('post',`/${record.id}/existing-confirm`,{student_id:studentId,terms:terms(mockToday),replace_fields:['phone'],preview_hash:preview.body.preview_hash});
+    expect(result.status).toBe(200);expect(result.body.status).toBe('enrolled');expect(result.body.student_id).toBe(studentId);expect(result.body.terms).toEqual(terms(mockToday));
+    const [[student]]=await mockPool.query('SELECT * FROM students WHERE id=?',[studentId]);
+    expect([student.status,student.student_number,student.school,student.memo,Number(student.monthly_tuition)]).toEqual(['active',expected,'예전고','상담 메모',300000]);
+    expect(open(student.phone)).toBe('010-1234-5678');expect(open(student.mother_name)).toBe('합성어머니');expect(open(student.parent_phone)).toBe('010-3333-4444');
+    const [[payment]]=await mockPool.query('SELECT student_id,final_amount,payment_status FROM student_payments');
+    expect([payment.student_id,Number(payment.final_amount),payment.payment_status]).toEqual([studentId,preview.body.quote.final_amount,'pending']);
+    expect(await counts()).toEqual({students:1,payments:1,attendance:preview.body.quote.class_dates.length});
+  });
+  test('future existing registration applies details now and enrolls on the date, or waits for review if the student changed',async()=>{
+    const [created]=await fixture.insert('students',{academy_id:2,name:seal('예약 기존학생'),phone:null,status:'pending'});
+    const [changed]=await fixture.insert('students',{academy_id:2,name:seal('예약 변경학생'),phone:null,status:'pending'});
+    for(const [name,studentId] of [['예약 기존학생',created.insertId],['예약 변경학생',changed.insertId]]){
+      const record=await add(name),preview=await http('post',`/${record.id}/existing-preview`,{student_id:studentId,terms:terms()});
+      const result=await http('post',`/${record.id}/existing-confirm`,{student_id:studentId,terms:terms(),preview_hash:preview.body.preview_hash});
+      expect([result.body.status,result.body.student_id]).toEqual(['scheduled',studentId]);
+    }
+    const [[early]]=await mockPool.query('SELECT status,phone FROM students WHERE id=?',[created.insertId]);
+    expect(early.status).toBe('pending');expect(open(early.phone)).toBe('010-1234-5678');expect(await counts()).toEqual({students:2,payments:0,attendance:0});
+    await mockPool.query("UPDATE students SET status='active' WHERE id=?",[changed.insertId]);
+    mockToday='2026-10-20';expect(await service.activateDue()).toEqual({enrolled:1,review:1});
+    const [[student]]=await mockPool.query('SELECT status FROM students WHERE id=?',[created.insertId]);expect(student.status).toBe('active');
+    const [rows]=await mockPool.query('SELECT status,review_code FROM ilsan_admission_applications ORDER BY id');
+    expect(rows).toEqual([{status:'enrolled',review_code:null},{status:'review',review_code:'STUDENT_STATUS_CHANGED'}]);
+    expect((await counts()).payments).toBe(1);
+  });
+  test('an existing bill for the month blocks registration and rolls back the detail changes',async()=>{
+    const [created]=await fixture.insert('students',{academy_id:2,name:seal('청구 기존학생'),phone:null,status:'withdrawn'});
+    await fixture.insert('student_payments',{academy_id:2,student_id:created.insertId,year_month:'2026-10',payment_type:'monthly',final_amount:100000});
+    const record=await add('청구 기존학생'),preview=await http('post',`/${record.id}/existing-preview`,{student_id:created.insertId,terms:terms(mockToday)});
+    const result=await http('post',`/${record.id}/existing-confirm`,{student_id:created.insertId,terms:terms(mockToday),preview_hash:preview.body.preview_hash});
+    expect([result.status,result.body.code]).toEqual([409,'PAYMENT_EXISTS']);
+    const [[student]]=await mockPool.query('SELECT status,phone FROM students WHERE id=?',[created.insertId]);expect([student.status,student.phone]).toEqual(['withdrawn',null]);
   });
   test('enriching a previously scheduled application stops its future new enrollment',async()=>{
     const record=await add('예약 보완학생');expect((await approve(record.id)).status).toBe(200);

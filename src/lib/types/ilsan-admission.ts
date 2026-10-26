@@ -26,6 +26,8 @@ export interface AdmissionExistingStudent {
 }
 export interface AdmissionExistingPreview {
   student:AdmissionExistingStudent;
-  fields:{field:string;label:string;current:string;incoming:string;action:'fill'|'keep'}[];
+  fields:{field:string;label:string;current:string;incoming:string;action:'fill'|'replace'|'keep'}[];
+  /** 미등록·체험·퇴원·졸업 학생은 원서에서 정식 등록까지 합니다. */
+  register:boolean; terms:AdmissionTerms|null; quote:AdmissionQuote|null;
   preview_hash:string;
 }

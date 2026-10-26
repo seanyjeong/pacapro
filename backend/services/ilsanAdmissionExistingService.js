@@ -1,8 +1,11 @@
 const repo = require('../repositories/ilsanAdmissionExistingRepository');
 const apps = require('../repositories/ilsanAdmissionRepository');
 const codec = require('./ilsanAdmissionCodec');
+const enrollment = require('./ilsanEnrollmentService');
 const { plan, ENCRYPTED_FIELDS } = require('../models/ilsanAdmissionExisting');
-const { fail, fingerprint } = require('../models/ilsanAdmission');
+const { REGISTER_STATUSES } = require('../constants/ilsanAdmissionExisting');
+const model = require('../models/ilsanAdmission');
+const { fail, fingerprint } = model;
 
 function readable(student) {
   const result={...student,name:codec.open(student.name)};
@@ -14,17 +17,18 @@ function openApplication(record) {
   return codec.view(record).profile;
 }
 const phoneDigits = phone => (phone || '').replace(/\D/g,'');
-function createExistingService(pool,{actor,scope,row}) {
-  async function preview(conn,record,targetId,lock=false) {
+function createExistingService(pool,{actor,scope,row,today}) {
+  async function preview(conn,record,targetId,termsInput,lock=false) {
     const profile=openApplication(record);
     if (!Number.isSafeInteger(targetId) || targetId<1) fail(422,'INVALID_STUDENT','기존 학생을 선택해 주세요.');
     const [raw]=await repo.students(conn,targetId,lock);
     if (!raw) fail(404,'STUDENT_NOT_FOUND','일산 교육원의 기존 학생을 찾을 수 없습니다.');
     const current=readable(raw);
     if (current.name.trim()!==profile.name) fail(409,'STUDENT_MISMATCH','원서와 기존 학생 이름이 다릅니다. 학생을 다시 확인해 주세요.');
-    const changes=plan(profile,current);
-    return { student:current,fields:changes.fields,additions:changes.additions,
-      preview_hash:fingerprint({application:record.id,revision:record.revision,profile,current,fields:changes.fields}) };
+    const changes=plan(profile,current), register=REGISTER_STATUSES.includes(current.status);
+    const terms=register && termsInput ? model.terms(termsInput,today()) : null, quote=terms && model.quote(terms);
+    return { student:current,fields:changes.fields,additions:changes.additions,replacements:changes.replacements,register,terms,quote,
+      preview_hash:fingerprint({application:record.id,revision:record.revision,profile,current,fields:changes.fields,terms,quote}) };
   }
   return {
     async existingStudents(user,id) {
@@ -38,18 +42,26 @@ function createExistingService(pool,{actor,scope,row}) {
     },
     async existingPreview(user,id,input) {
       actor(user);
-      return apps.transaction(pool,async conn=>{await scope(conn);const result=await preview(conn,await row(conn,id),input.student_id);
-        const {additions,...visible}=result;return visible;});
+      return apps.transaction(pool,async conn=>{await scope(conn);const result=await preview(conn,await row(conn,id),input.student_id,input.terms);
+        const {additions,replacements,...visible}=result;return visible;});
     },
     async existingConfirm(user,id,input) {
       actor(user);
       return apps.transaction(pool,async conn=>{
         await scope(conn,true);const record=await row(conn,id,true);
-        const result=await preview(conn,record,input.student_id,true);
+        const result=await preview(conn,record,input.student_id,input.terms,true);
         if (input.preview_hash!==result.preview_hash) fail(409,'SOURCE_CHANGED','학생 정보가 변경됐습니다. 추가할 정보를 다시 확인해 주세요.');
-        const values=Object.fromEntries(Object.entries(result.additions).map(([key,value])=>[key,ENCRYPTED_FIELDS.includes(key)?codec.seal(value):value]));
+        if (result.register && !result.quote) fail(422,'TERMS_REQUIRED','등록 조건을 입력하고 일할 금액을 확인해 주세요.');
+        const replace=input.replace_fields ?? [];
+        if (!Array.isArray(replace) || replace.some(field=>!Object.hasOwn(result.replacements,field))) fail(422,'INVALID_FIELDS','바꿀 정보를 다시 선택해 주세요.');
+        const changes={...result.additions,...Object.fromEntries(replace.map(field=>[field,result.replacements[field]]))};
+        const values=Object.fromEntries(Object.entries(changes).map(([key,value])=>[key,ENCRYPTED_FIELDS.includes(key)?codec.seal(value):value]));
         await repo.fill(conn,input.student_id,values);
-        await repo.complete(conn,id,user.id,{operation:'fill_missing',target_student_id:input.student_id,filled_fields:Object.keys(values)});
+        if (result.register) {
+          // Details apply now; enrollment, the first bill and classes follow on the enrollment date like a new student.
+          await apps.approve(conn,id,user.id,{...result.terms,target_student_id:input.student_id},result.quote);
+          await enrollment.activate(conn,await row(conn,id,true),today());
+        } else await repo.complete(conn,id,user.id,{operation:'fill_missing',target_student_id:input.student_id,filled_fields:Object.keys(values)});
         return codec.view(await row(conn,id));
       });
     },

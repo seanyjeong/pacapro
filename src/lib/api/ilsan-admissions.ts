@@ -16,8 +16,8 @@ export async function submitAdmission(profile: AdmissionProfile, key: string): P
 export const admissionsAPI = {
   shareLink: () => apiClient.get<{path:string}>('/ilsan-admissions/share-link', {suppressErrorToast:true}),
   existingStudents:(id:number)=>apiClient.get<{students:AdmissionExistingStudent[]}>(`/ilsan-admissions/${id}/existing-students`),
-  existingPreview:(id:number,studentId:number)=>apiClient.post<AdmissionExistingPreview>(`/ilsan-admissions/${id}/existing-preview`,{student_id:studentId},{suppressErrorToast:true}),
-  existingConfirm:(id:number,studentId:number,hash:string)=>apiClient.post<AdmissionApplication>(`/ilsan-admissions/${id}/existing-confirm`,{student_id:studentId,preview_hash:hash},{suppressErrorToast:true}),
+  existingPreview:(id:number,studentId:number,terms?:AdmissionTerms)=>apiClient.post<AdmissionExistingPreview>(`/ilsan-admissions/${id}/existing-preview`,{student_id:studentId,terms},{suppressErrorToast:true}),
+  existingConfirm:(id:number,studentId:number,hash:string,replaceFields:string[],terms?:AdmissionTerms)=>apiClient.post<AdmissionApplication>(`/ilsan-admissions/${id}/existing-confirm`,{student_id:studentId,preview_hash:hash,replace_fields:replaceFields,terms},{suppressErrorToast:true}),
   list: (before?:number) => apiClient.get<{applications:AdmissionApplication[];next_cursor:number|null}>(`/ilsan-admissions${before ? `?before=${before}` : ''}`),
   preview: (id:number, terms:AdmissionTerms) => apiClient.post<AdmissionPreview>(`/ilsan-admissions/${id}/preview`,terms,{suppressErrorToast:true}),
   confirm: (id:number, terms:AdmissionTerms, hash:string) => apiClient.post<AdmissionApplication>(`/ilsan-admissions/${id}/confirm`,{...terms,preview_hash:hash},{suppressErrorToast:true}),

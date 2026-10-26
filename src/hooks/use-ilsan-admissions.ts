@@ -19,6 +19,7 @@ export function useIlsanAdmissions() {
   const [existingStudentId,setExistingStudentId]=useState<number|null>(null);
   const [existingPreview,setExistingPreview]=useState<AdmissionExistingPreview|null>(null);
   const [identityConfirmed,setIdentityConfirmed]=useState(false);
+  const [replaceFields,setReplaceFields]=useState<string[]>([]);
   const [busy,setBusy] = useState(false), [loading,setLoading] = useState(false);
   const [error,setError] = useState(''), [notice,setNotice] = useState('');
   const generation = useRef(0), actionLock = useRef(false), listGeneration = useRef(0);
@@ -61,6 +62,7 @@ export function useIlsanAdmissions() {
     if(mutationLock.current) return;
     // Editing while a preview request is running invalidates its response immediately.
     generation.current++;setPreview(null);setError('');setNotice('');
+    setExistingPreview(previous => previous?.quote ? {...previous,terms:null,quote:null} : previous);
     setDraft(previous => previous ? {...previous,...patch} : null);
   },[]);
   async function calculate() {
@@ -96,20 +98,36 @@ export function useIlsanAdmissions() {
     if(actionLock.current)return;
     generation.current++;setExistingStudentId(value);setExistingPreview(null);setIdentityConfirmed(false);setError('');
   }
-  async function checkExistingFields() {
+  /** Compares with the chosen student; with terms it also quotes the registration of a not-enrolled student. */
+  async function checkExistingFields(withTerms=false) {
     if(!selected || !existingStudentId || !existingReady || mode!=='existing' || actionLock.current)return;
-    const request=++generation.current;actionLock.current=true;setBusy(true);setError('');setExistingPreview(null);setIdentityConfirmed(false);
-    try{const result=await admissionsAPI.existingPreview(selected.id,existingStudentId);if(request===generation.current)setExistingPreview(result);}
+    if(withTerms && draft?.monthly_tuition === '') {setError('월 학원비를 입력해 주세요. 무료 수업이면 0원을 입력해 주세요.');return;}
+    const request=++generation.current;actionLock.current=true;setBusy(true);setError('');
+    if(!withTerms){setExistingPreview(null);setIdentityConfirmed(false);}
+    try{
+      const result=await admissionsAPI.existingPreview(selected.id,existingStudentId,withTerms && draft ? {...draft,monthly_tuition:Number(draft.monthly_tuition)} : undefined);
+      if(request!==generation.current)return;
+      // The application is the latest information, so every differing value starts selected.
+      if(!withTerms)setReplaceFields(result.fields.filter(f=>f.action==='replace').map(f=>f.field));
+      setExistingPreview(result);
+    }
     catch(cause){if(request===generation.current)setError(admissionError(cause));}
     finally{actionLock.current=false;setBusy(false);}
   }
+  function toggleReplace(field:string,checked:boolean) {
+    if(actionLock.current)return;
+    setReplaceFields(previous=>checked ? [...previous.filter(f=>f!==field),field] : previous.filter(f=>f!==field));
+  }
   async function confirmExisting() {
-    if(!selected || !existingPreview || !identityConfirmed || mode!=='existing' || actionLock.current)return;
+    if(!selected || !existingPreview || !identityConfirmed || mode!=='existing' || actionLock.current || (existingPreview.register && !existingPreview.quote))return;
     actionLock.current=true;mutationLock.current=true;setBusy(true);setError('');
+    const changed=existingPreview.fields.filter(f=>f.action==='fill' || replaceFields.includes(f.field)).length;
     try{
-      const result=await admissionsAPI.existingConfirm(selected.id,existingPreview.student.id,existingPreview.preview_hash);
+      const result=await admissionsAPI.existingConfirm(selected.id,existingPreview.student.id,existingPreview.preview_hash,replaceFields,existingPreview.terms ?? undefined);
       generation.current++;replace(result);setExistingPreview(null);setIdentityConfirmed(false);
-      setNotice(`기존 학생의 비어 있는 정보 ${(result.filled_fields||[]).length}개를 반영했습니다. 재원 상태·학원비·수업 배정은 유지했습니다.`);
+      setNotice(!existingPreview.register ? `기존 학생 정보 ${changed}개를 원서대로 반영했습니다. 재원 상태·학원비·수업 배정은 유지했습니다.`
+        : result.status==='enrolled' ? `기존 학생 정보 ${changed}개를 반영하고 재원 등록했습니다. 첫 달 청구서와 수업 배정을 만들었습니다.`
+        : `기존 학생 정보 ${changed}개를 반영했습니다. ${result.enrollment_date}에 재원 등록·첫 달 청구서·수업 배정을 만듭니다.`);
     }catch(cause){setExistingPreview(null);setIdentityConfirmed(false);setError(admissionError(cause));}
     finally{actionLock.current=false;mutationLock.current=false;setBusy(false);}
   }
@@ -126,7 +144,7 @@ export function useIlsanAdmissions() {
     await load();
   }
   const editable=existingReady && !!selected && ['submitted','scheduled','review'].includes(selected.status);
-  return {mode,existingStudents,existingStudentId,existingPreview,identityConfirmed,setIdentityConfirmed,changeMode,chooseExisting,checkExistingFields,confirmExisting,applications,nextCursor,selected,draft,preview,busy,loading,error,notice,editable,
+  return {mode,existingStudents,existingStudentId,existingPreview,identityConfirmed,setIdentityConfirmed,replaceFields,toggleReplace,changeMode,chooseExisting,checkExistingFields,confirmExisting,applications,nextCursor,selected,draft,preview,busy,loading,error,notice,editable,
     canConfirm:editable && mode==='new' && !!preview && !busy && !preview.duplicate_student_ids.length,
     today:koreaToday(),select,changeTerms,calculate,confirm,cancel,refresh,
     loadMore:()=>nextCursor && !loading ? load(nextCursor) : Promise.resolve()};

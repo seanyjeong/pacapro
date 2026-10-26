@@ -13,6 +13,9 @@ const REVIEW_REASONS: Record<string,string> = {
   ENROLLMENT_OVERDUE: '등록 예정월이 지나 자동 등록하지 않았습니다. 등록일과 학원비를 다시 확인해 주세요.',
   QUOTE_CHANGED: '확정한 뒤 학원비 계산이 달라졌습니다. 다시 계산하고 승인해 주세요.',
   DUPLICATE_STUDENT: '같은 이름과 전화번호의 학생이 이미 있습니다. 기존 학생을 확인해 주세요.',
+  STUDENT_STATUS_CHANGED: '예약한 뒤 기존 학생의 상태가 바뀌어 자동 등록하지 않았습니다. 학생 정보를 확인하고 다시 처리해 주세요.',
+  PAYMENT_EXISTS: '기존 학생에게 해당 월 학원비가 이미 있어 자동 등록하지 않았습니다. 학생 화면에서 청구서를 확인해 주세요.',
+  STUDENT_NOT_FOUND: '등록할 기존 학생을 찾을 수 없어 자동 등록하지 않았습니다.',
 };
 const GENDERS: Record<string,string> = {male:'남학생',female:'여학생'};
 
