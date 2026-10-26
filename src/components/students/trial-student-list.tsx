@@ -73,14 +73,8 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
 
   // 정식 등록 처리
   const handleRegister = (student: Student) => {
-    // 체험생 정보를 쿼리 파라미터로 전달
-    const params = new URLSearchParams({
-      from_trial: student.id.toString(),
-      name: student.name,
-      phone: student.phone || '',
-      student_type: student.student_type,
-      grade: student.grade || '',
-    });
+    // 등록 화면이 저장된 체험생 정보를 불러옵니다
+    const params = new URLSearchParams({ from_trial: student.id.toString() });
     router.push(`/students/new?${params.toString()}`);
   };
 

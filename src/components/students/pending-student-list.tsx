@@ -141,20 +141,8 @@ export function PendingStudentList({ students, loading, sort, onReload, onSortCh
 
   // 정식 등록 처리 (active 상태로 변경)
   const handleRegister = (student: Student) => {
-    // 학생 정보를 쿼리 파라미터로 전달 (학부모 연락처는 정식 등록 시 입력)
-    const params = new URLSearchParams({
-      from_pending: student.id.toString(),
-      name: student.name,
-      phone: student.phone || '',
-      student_type: student.student_type || 'exam',
-      grade: student.grade || '',
-      school: student.school || '',
-      gender: student.gender || '',
-      class_days: JSON.stringify(typeof student.class_days === 'string' ? JSON.parse(student.class_days || '[]') : (student.class_days || [])),
-      weekly_count: String(student.weekly_count || 0),
-      monthly_tuition: String(student.monthly_tuition || 0),
-      time_slot: student.time_slot || 'evening',
-    });
+    // 등록 화면이 저장된 학생 정보를 불러옵니다 (학부모 연락처는 정식 등록 시 확인·입력)
+    const params = new URLSearchParams({ from_pending: student.id.toString() });
     router.push(`/students/new?${params.toString()}`);
   };
 
