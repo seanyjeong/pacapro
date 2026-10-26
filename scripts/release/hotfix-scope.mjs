@@ -11,6 +11,7 @@ const ALLOWED_EXACT_PATHS = new Set([
 const ALLOWED_PATH_PREFIXES = [
   'backend/__tests__/',
   'backend/constants/',
+  'backend/models/',
   'backend/repositories/',
   'backend/routes/',
   'backend/services/',
@@ -51,6 +52,7 @@ const SENSITIVE_PATH_PREFIXES = [
 const RUNTIME_PATH_PREFIXES = [
   'backend/routes/',
   'backend/constants/',
+  'backend/models/',
   'backend/repositories/',
   'backend/services/',
   'backend/utils/',
