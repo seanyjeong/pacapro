@@ -45,6 +45,30 @@ async function login(email, password) {
     suggested_branch_name: settings.jungsiLink?.branchName || null };
 }
 
+// 10분 자동 가져오기(sync) 허용 근거 — 맥스엔진이 연결할 때 이 PACA 가 서명해 준 연결 토큰.
+// 연결(동의)은 엔진에서 해제할 때까지 유지되므로 만료(1시간)·비밀번호 변경은 보지 않고,
+// 그 계정이 지금도 그 학원의 승인된 원장·관리자인지만 매번 확인한다. 근거가 아니면 null.
+async function linkedAcademy(token) {
+  const signing = signingKey();
+  if (!signing || typeof token !== 'string' || !token || token.length > 4096) return null;
+  let claims;
+  try {
+    claims = jwt.verify(token, signing, { algorithms: ['HS256'], issuer: ISSUER, audience: AUDIENCE,
+      ignoreExpiration: true });
+  } catch {
+    return null;
+  }
+  if (!/^\d+$/.test(claims.sub) || claims.scope !== 'students:read records:read' ||
+      !Number.isSafeInteger(claims.academy_id)) return null;
+  const user = await repo.userById(claims.sub);
+  try {
+    authorized(user);
+  } catch {
+    return null;
+  }
+  return Number(user.academy_id) === claims.academy_id ? claims.academy_id : null;
+}
+
 async function authenticate(header) {
   const signing = key();
   let claims;
@@ -87,4 +111,4 @@ async function snapshot(academyId, afterId, dataset) {
   })) };
 }
 
-module.exports = { LinkError, login, authenticate, snapshot };
+module.exports = { LinkError, login, authenticate, linkedAcademy, snapshot };
