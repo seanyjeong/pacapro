@@ -377,6 +377,66 @@ run('D-117 isolated MySQL transactions and delegation', () => {
       await paca.query(`UPDATE users SET \`${column}\`=? WHERE id=1`,[before.v]);
     }
   });
+  test('staff connect with PACA staff permissions: catalog, reads, workflows and writes follow view/edit; login is not rate limited', async () => {
+    const perms = { students: { view: true, edit: false }, payments: { view: false, edit: false }, schedules: { view: true, edit: false } };
+    await paca.query("INSERT INTO users(id,name,email,password_hash,role,academy_id,is_active,approval_status,permissions) VALUES (3,'Synthetic staff','staff@example.invalid',?,'staff',1,1,'approved',?),(4,'Synthetic pending','pending@example.invalid',?,'staff',1,1,'pending',NULL),(5,'Synthetic teacher','teacher@example.invalid',?,'teacher',1,1,'approved',NULL)",
+      [bcrypt.hashSync(password, 4), JSON.stringify(perms), bcrypt.hashSync(password, 4), bcrypt.hashSync(password, 4)]);
+    for (let i = 0; i < 12; i++) {
+      const wrong = await request(server).post(base + '/token').send({ email: 'staff@example.invalid', password: 'wrong' });
+      expect(wrong.status).toBe(401); expect(wrong.body.error.code).toBe('LOGIN_FAILED');
+    }
+    const pending = await request(server).post(base + '/token').send({ email: 'pending@example.invalid', password });
+    expect(pending.status).toBe(403); expect(pending.body.error.message).toContain('승인되지 않은');
+    const teacher = await request(server).post(base + '/token').send({ email: 'teacher@example.invalid', password });
+    expect(teacher.status).toBe(403); expect(teacher.body.error.message).toContain('원장·관리자·직원');
+    const login = await request(server).post(base + '/token').send({ email: 'staff@example.invalid', password, purpose: 'mcp' });
+    expect(login.status).toBe(200);
+    const staff = login.body.access_token;
+    const sget = path => request(server).get(base + path).auth(staff, { type: 'bearer' });
+    const spost = (path, body) => request(server).post(base + path).auth(staff, { type: 'bearer' }).send(body);
+    expect((await sget('/identity')).body).toEqual(expect.objectContaining({ user_id: 3, academy_id: 1, role: 'staff' }));
+    expect((await sget('/identity')).body.permissions).toBeUndefined();
+
+    const catalogBody = (await sget('/paca/catalog')).body;
+    const names = catalogBody.resources.map(r => r.resource);
+    expect(names).toEqual(expect.arrayContaining(['students', 'attendance', 'peak_student_records']));
+    expect(names).not.toContain('student_payments'); expect(names).not.toContain('users'); expect(names).not.toContain('salary_records');
+    expect(catalogBody.commands.map(c => c.operation)).toEqual(expect.arrayContaining(['peak_record_create']));
+    expect(catalogBody.commands.map(c => c.operation)).not.toContain('student_update');
+    expect(catalogBody.commands.map(c => c.operation)).not.toContain('peak_exercise_pack_create');
+    expect(catalogBody.workflows.map(w => w.name)).not.toContain('unpaid_list');
+
+    const own = await sget('/paca/resources/students');
+    expect(own.status).toBe(200); expect(own.body.items.map(s => s.id)).toContain(1); expect(own.body.items.map(s => s.id)).not.toContain(2);
+    const denied = await sget('/paca/resources/student_payments');
+    expect(denied.status).toBe(403); expect(denied.body.error).toEqual(expect.objectContaining({ code: 'PERMISSION_DENIED' }));
+    expect(denied.body.error.message).toContain('학원비 조회');
+    expect((await sget('/paca/resources/users')).status).toBe(403);
+    expect((await sget('/peak/resources/students')).status).toBe(200);
+    expect((await sget('/paca/workflows/unpaid_list?params=%7B%7D')).status).toBe(403);
+    const brief = await sget('/paca/workflows/today_brief?params=%7B%7D');
+    expect(brief.status).toBe(200); expect(brief.body.unpaid).toEqual({ hidden: true, reason: '파카 직원 권한 밖' });
+    expect(brief.body.classes.hidden).toBeUndefined();
+
+    const change = { operation: 'student_update', resource_id: 1, changes: { school: '직원고' } };
+    const blocked = await spost('/paca/preview', change);
+    expect(blocked.status).toBe(403); expect(blocked.body.error.message).toContain('학생 관리 수정');
+    expect((await spost('/paca/preview', { operation: 'peak_exercise_pack_create', changes: { name: 'x', exercise_ids: [1] } })).status).toBe(403);
+    // 원장이 학생 수정을 켜면 바로(재연결 없이) 되고, 미리보기 뒤 끄면 확인도 막힌다
+    await paca.query('UPDATE users SET permissions=? WHERE id=3', [JSON.stringify({ ...perms, students: { view: true, edit: true } })]);
+    const p = (await spost('/paca/preview', change)).body;
+    expect(p.preview_token).toBeTruthy();
+    await paca.query('UPDATE users SET permissions=? WHERE id=3', [JSON.stringify(perms)]);
+    const late = await spost('/paca/confirm', { preview_token: p.preview_token, idempotency_key: p.idempotency_key, confirm: true });
+    expect(late.status).toBe(403);
+    const [[student]] = await paca.query('SELECT school FROM students WHERE id=1');
+    expect(student.school).not.toBe('직원고');
+    await paca.query('UPDATE users SET permissions=? WHERE id=3', [JSON.stringify({ ...perms, students: { view: true, edit: true } })]);
+    const applied = await spost('/paca/confirm', { preview_token: p.preview_token, idempotency_key: p.idempotency_key, confirm: true });
+    expect(applied.status).toBe(200); expect(applied.body.applied).toBe(true);
+    await paca.query('UPDATE students SET school=NULL WHERE id=1');
+    await paca.query('DELETE FROM users WHERE id IN (3,4,5)');
+  });
   test('withdrawal is preview-only then atomic; preserves invoices, past and checked future attendance; return is idempotent', async () => {
     await paca.query("INSERT INTO students(id,academy_id,name,class_days,weekly_count,monthly_tuition,status) VALUES(600,1,'Synthetic lifecycle','[]',0,0,'active')");
     const day = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0,10);

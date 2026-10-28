@@ -16,6 +16,7 @@ const consultationRecords = require('./maxEngineFullConsultationRecords');
 const schedules = require('./maxEngineScheduleCommands');
 const trials = require('./maxEngineTrialCommands');
 const instructorSchedule = require('./maxEngineInstructorScheduleCreate');
+const permissions = require('./maxEngineFullPermissions');
 
 function catalog(provider) {
   return Object.entries(commands).map(([operation, c]) => ({ operation, resource: c.provider === provider ? c.resource : c.provider + '_' + c.resource,
@@ -76,6 +77,7 @@ function display(command, before) {
 }
 async function preview(actor, provider, body) {
   const command = validate(body);
+  permissions.command(actor, command.operation);
   const before = await repo.transaction(conn => state(conn, actor, command), peak.supports(command.operation) ? peakPool : undefined);
   const view = display(command, before);
   const expiresAt = Math.min(actor.expires_at, Math.floor(Date.now() / 1000) + previewSeconds);
@@ -116,6 +118,7 @@ async function confirm(actor, provider, body) {
   if (payload.actor.user_id !== actor.user_id || payload.actor.academy_id !== actor.academy_id ||
       payload.provider !== provider || payload.idempotency_key !== body.idempotency_key) fail(409, 'PREVIEW_MISMATCH', '미리보기의 계정·대상·확인 키가 다릅니다.');
   const command = validate(payload.command);
+  permissions.command(actor, command.operation);   // 미리보기 뒤 권한을 끈 직원은 확인도 못 한다
   const requestHash = digest(payload), idempotencyHash = digest(body.idempotency_key);
   return repo.transaction(async conn => {
     await (peak.supports(command.operation) ? peakRepo : repo).lockAcademy(conn, actor.academy_id);
