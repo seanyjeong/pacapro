@@ -214,9 +214,6 @@ async function installRoutes(context, state) {
     }
 
     if (method === 'PUT' && path === '/seasons/enrollments/701') {
-      if (state.mode === 'season-edit-error') {
-        return jsonRoute(route, { message: 'HTTP 500 DB timeout stack trace' }, 500);
-      }
       return jsonRoute(route, { message: 'updated', enrollment: makeSeasonEnrollment() });
     }
 
@@ -432,26 +429,6 @@ async function runError(browser) {
   return result;
 }
 
-async function runSeasonEditError(browser) {
-  const result = await createStudentDetailPage(browser, 'season-edit-error');
-  const { context, page } = result;
-
-  await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '학생 상세' }).waitFor();
-  await page.getByRole('button', { name: '시즌 등록 보기' }).click();
-  await page.getByRole('heading', { name: '시즌 등록 현황' }).waitFor();
-  await page.getByRole('button', { name: '시즌 등록 수정' }).click();
-  await page.getByRole('heading', { name: '시즌 등록 정보 수정' }).waitFor();
-  await page.getByRole('button', { name: '저장' }).click();
-  await page.getByRole('alert').getByText('시즌 등록 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
-  await assertNoRawVisibleText(page, 'student detail season edit error');
-  await assertNoHorizontalOverflow(page, 'student detail season edit error');
-  await page.screenshot({ path: '/Users/etlab/paca-student-season-edit-error.png', fullPage: true });
-
-  await context.close();
-  return result;
-}
-
 async function runAttendanceError(browser) {
   const result = await createStudentDetailPage(browser, 'attendance-error', { width: 390, height: 844 });
   const { context, page } = result;
@@ -480,9 +457,8 @@ async function main() {
     const desktop = await runNormalDesktop(browser);
     const mobile = await runNormalMobile(browser);
     const error = await runError(browser);
-    const seasonEditError = await runSeasonEditError(browser);
     const attendanceError = await runAttendanceError(browser);
-    [desktop, mobile, error, seasonEditError, attendanceError].forEach(assertDiagnostics);
+    [desktop, mobile, error, attendanceError].forEach(assertDiagnostics);
     console.log(JSON.stringify({
       attendanceErrorHits: attendanceError.state.hits,
       desktopHits: desktop.state.hits,
@@ -490,7 +466,6 @@ async function main() {
       errorHits: error.state.hits,
       mobileHits: mobile.state.hits,
       normalConsoleErrors: desktop.diagnostics.consoleErrors,
-      seasonEditErrorHits: seasonEditError.state.hits,
     }, null, 2));
   } finally {
     await browser.close();

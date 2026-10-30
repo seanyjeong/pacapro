@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import type { Season, TimeSlot } from '@/lib/types/season';
-import { fetchSeasonEligibleStudents, fetchSeasonForEnrollment, registerSeasonStudent } from './season-enroll-api';
+import type { ProRatedPreview, Season, TimeSlot } from '@/lib/types/season';
+import {
+  fetchSeasonEligibleStudents,
+  fetchSeasonEnrollPreview,
+  fetchSeasonForEnrollment,
+  registerSeasonStudent,
+} from './season-enroll-api';
 import type { SeasonEnrollStudent } from './season-enroll-types';
 import {
   filterEligibleStudents,
@@ -26,6 +31,9 @@ export function useSeasonEnrollState(seasonId: number | null) {
   const [selectedStudent, setSelectedStudent] = useState<SeasonEnrollStudent | null>(null);
   const [selectedTimeSlots, setSelectedTimeSlots] = useState<TimeSlot[]>(['evening']);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [seasonFee, setSeasonFee] = useState(0);
+  const [preview, setPreview] = useState<ProRatedPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const reload = useCallback(async () => {
     if (!seasonId) {
@@ -54,6 +62,24 @@ export function useSeasonEnrollState(seasonId: number | null) {
     reload();
   }, [reload]);
 
+  const selectedStudentId = selectedStudent?.id ?? null;
+  useEffect(() => {
+    if (!seasonId || !selectedStudentId) return;
+    let cancelled = false;
+    setPreviewLoading(true);
+    // 금액을 입력하는 동안 매 글자마다 계산하지 않도록 잠깐 기다린다
+    const timer = setTimeout(() => {
+      fetchSeasonEnrollPreview(seasonId, selectedStudentId, seasonFee, discountAmount)
+        .then((result) => !cancelled && setPreview(result))
+        .catch(() => !cancelled && setPreview(null))
+        .finally(() => !cancelled && setPreviewLoading(false));
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [seasonId, selectedStudentId, seasonFee, discountAmount]);
+
   const filteredStudents = useMemo(() => filterStudents(students, searchTerm), [searchTerm, students]);
   const groupedStudents = useMemo(
     () => (seasonId ? splitStudentsByEnrollment(filteredStudents, seasonId) : { available: [], enrolled: [] }),
@@ -64,6 +90,9 @@ export function useSeasonEnrollState(seasonId: number | null) {
     setSelectedStudent(student);
     setSelectedTimeSlots(getDefaultTimeSlots(season, student));
     setDiscountAmount(0);
+    setSeasonFee(parseSeasonFee(season));
+    setPreview(null);
+    setPreviewLoading(true);
   };
 
   const closeDialog = () => {
@@ -84,10 +113,10 @@ export function useSeasonEnrollState(seasonId: number | null) {
 
     try {
       setEnrollingId(selectedStudent.id);
-      const baseFee = parseSeasonFee(season);
+      // season_fee 는 일할·할인 전 이 학생 시즌비 — 시즌 도중 합류 일할은 서버가 미리보기와 같은 계산으로 적용한다
       await registerSeasonStudent(seasonId, {
         student_id: selectedStudent.id,
-        season_fee: baseFee,
+        season_fee: seasonFee,
         discount_amount: discountAmount,
         time_slots: selectedTimeSlots,
       });
@@ -119,12 +148,16 @@ export function useSeasonEnrollState(seasonId: number | null) {
     enrollingId,
     error,
     loading,
+    preview,
+    previewLoading,
     reload,
     searchTerm,
     season,
+    seasonFee,
     selectedStudent,
     selectedTimeSlots,
     setDiscountAmount,
+    setSeasonFee,
     setSearchTerm,
     totalEligibleCount: students.length,
   };

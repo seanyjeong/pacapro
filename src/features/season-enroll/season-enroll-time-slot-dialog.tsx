@@ -1,37 +1,42 @@
 import { CheckCircle, Clock, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { MoneyInput } from '@/components/ui/money-input';
-import type { Season, TimeSlot } from '@/lib/types/season';
+import type { ProRatedPreview, TimeSlot } from '@/lib/types/season';
 import type { SeasonEnrollStudent } from './season-enroll-types';
-import { ALL_TIME_SLOTS, formatTimeSlots, formatWon, parseSeasonFee, TIME_SLOT_LABELS } from './season-enroll-utils';
+import { ALL_TIME_SLOTS, formatTimeSlots, formatWon, TIME_SLOT_LABELS } from './season-enroll-utils';
 
 interface SeasonEnrollTimeSlotDialogProps {
   discountAmount: number;
   enrolling: boolean;
-  season: Season;
+  preview: ProRatedPreview | null;
+  previewLoading: boolean;
+  seasonFee: number;
   selectedStudent: SeasonEnrollStudent | null;
   selectedTimeSlots: TimeSlot[];
   onClose: () => void;
   onConfirm: () => void;
   onDiscountChange: (value: number) => void;
+  onSeasonFeeChange: (value: number) => void;
   onTimeSlotToggle: (slot: TimeSlot) => void;
 }
 
 export function SeasonEnrollTimeSlotDialog({
   discountAmount,
   enrolling,
-  season,
+  preview,
+  previewLoading,
+  seasonFee,
   selectedStudent,
   selectedTimeSlots,
   onClose,
   onConfirm,
   onDiscountChange,
+  onSeasonFeeChange,
   onTimeSlotToggle,
 }: SeasonEnrollTimeSlotDialogProps) {
   if (!selectedStudent) return null;
 
-  const baseFee = parseSeasonFee(season);
-  const finalFee = Math.max(0, baseFee - discountAmount);
+  const midSeason = preview?.mid_season_prorated;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4">
@@ -91,14 +96,31 @@ export function SeasonEnrollTimeSlotDialog({
           </div>
 
           <div className="space-y-2 border-t border-slate-200 pt-4">
-            <label className="block text-sm font-medium text-slate-800" htmlFor="season-enroll-discount">
-              할인 금액
-            </label>
-            <MoneyInput id="season-enroll-discount" value={discountAmount} onChange={onDiscountChange} />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-slate-800" htmlFor="season-enroll-fee">
+                  이 학생 시즌비
+                </label>
+                <MoneyInput id="season-enroll-fee" value={seasonFee} onChange={onSeasonFeeChange} />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-slate-800" htmlFor="season-enroll-discount">
+                  할인 금액
+                </label>
+                <MoneyInput id="season-enroll-discount" value={discountAmount} onChange={onDiscountChange} />
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="text-slate-500">시즌비 {formatWon(baseFee)}</span>
+              <span className="text-slate-500">시즌비 {formatWon(seasonFee)}</span>
+              {midSeason && (
+                <span className="text-orange-600">
+                  중간합류 ({midSeason.remaining_days}/{midSeason.total_days}일) -{formatWon(midSeason.discount)}
+                </span>
+              )}
               {discountAmount > 0 && <span className="text-rose-600">할인 {formatWon(discountAmount)}</span>}
-              <span className="font-semibold text-slate-950">최종 {formatWon(finalFee)}</span>
+              <span className="font-semibold text-slate-950">
+                최종 {previewLoading ? '계산 중...' : preview ? formatWon(preview.final_calculation.total_due) : '계산하지 못했습니다'}
+              </span>
             </div>
           </div>
         </div>
@@ -107,7 +129,7 @@ export function SeasonEnrollTimeSlotDialog({
           <Button className="flex-1" variant="outline" onClick={onClose} disabled={enrolling}>
             취소
           </Button>
-          <Button className="flex-1" onClick={onConfirm} disabled={selectedTimeSlots.length === 0 || enrolling}>
+          <Button className="flex-1" onClick={onConfirm} disabled={selectedTimeSlots.length === 0 || enrolling || previewLoading || !preview}>
             {enrolling ? <Loader2 className="h-4 w-4 animate-spin" /> : '등록하기'}
           </Button>
         </div>

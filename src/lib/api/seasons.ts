@@ -138,13 +138,17 @@ export const seasonsApi = {
     studentId: number,
     isContinuous?: boolean,
     previousSeasonId?: number,
-    registrationDate?: string  // 시즌 중간 합류 시 등록일
+    registrationDate?: string,  // 시즌 중간 합류 시 등록일
+    seasonFee?: number,  // 이 학생 시즌비 (일할·할인 전, 없으면 시즌 기본 시즌비)
+    discountAmount?: number  // 직접 할인
   ): Promise<ProRatedPreview> => {
     const params = new URLSearchParams();
     params.append('student_id', studentId.toString());
     if (isContinuous) params.append('is_continuous', 'true');
     if (previousSeasonId) params.append('previous_season_id', previousSeasonId.toString());
     if (registrationDate) params.append('registration_date', registrationDate);
+    if (seasonFee !== undefined) params.append('season_fee', seasonFee.toString());
+    if (discountAmount) params.append('discount_amount', discountAmount.toString());
 
     const response = await apiClient.get<{ message: string; preview: ProRatedPreview }>(
       `${BASE_PATH}/${seasonId}/preview?${params.toString()}`
@@ -165,6 +169,7 @@ export const seasonsApi = {
 
   /**
    * 시즌 등록 정보 수정 (등록일, 시즌비, 할인, 시간대)
+   * season_fee 는 일할·할인 전 이 학생 시즌비 — 서버가 다시 계산해 낸 돈이 없는 청구에 반영한다
    */
   updateEnrollment: async (
     enrollmentId: number,

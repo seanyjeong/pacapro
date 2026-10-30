@@ -2,11 +2,10 @@ const {
     pool,
     decrypt,
     logger,
-    calculateProRatedFee,
-    calculateMidSeasonFee,
     parseWeeklyDays,
 } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { planSeasonEnrollment } = require('../../services/seasonEnrollmentService');
 
 module.exports = function(router) {
 router.get('/:id/preview', verifyToken, checkPermission('seasons', 'edit'), async (req, res) => {
@@ -69,42 +68,24 @@ router.get('/:id/preview', verifyToken, checkPermission('seasons', 'edit'), asyn
         const weeklyDays = parseWeeklyDays(student.class_days);
         const nonSeasonEnd = new Date(season.non_season_end_date);
         const seasonStart = new Date(season.season_start_date);
-        const seasonEnd = new Date(season.season_end_date);
 
-        const proRated = calculateProRatedFee({
-            monthlyFee: parseFloat(student.monthly_tuition) || 0,
-            weeklyDays,
-            nonSeasonEndDate: nonSeasonEnd,
-            discountRate: parseFloat(student.discount_rate) || 0
+        // 등록(POST /:id/enroll)과 같은 계산 — 미리보기 금액이 실제 청구 금액이다
+        const { registration_date, season_fee, discount_amount, is_continuous, previous_season_id } = req.query;
+        const baseSeasonFee = season_fee !== undefined && season_fee !== ''
+            ? parseFloat(season_fee) || 0
+            : parseFloat(season.default_season_fee) || 0;
+        const manualDiscount = parseFloat(discount_amount) > 0 ? parseFloat(discount_amount) : 0;
+        const plan = planSeasonEnrollment({
+            season,
+            student,
+            seasonFee: baseSeasonFee,
+            registrationDate: registration_date,
+            isContinuous: is_continuous === 'true',
+            previousSeasonId: previous_season_id ? parseInt(previous_season_id) : null,
+            manualDiscount
         });
-
-        const { registration_date } = req.query;
-        let midSeasonProRated = null;
-        let finalSeasonFee = parseFloat(season.default_season_fee) || 0;
-
-        if (registration_date) {
-            const regDate = new Date(registration_date);
-            if (regDate > seasonStart) {
-                const operatingDays = typeof season.operating_days === 'string'
-                    ? JSON.parse(season.operating_days)
-                    : season.operating_days;
-
-                const dayMap = { '일': 0, '월': 1, '화': 2, '수': 3, '목': 4, '금': 5, '토': 6 };
-                const weeklyDaysForSeason = operatingDays
-                    .map(d => typeof d === 'string' ? dayMap[d] : d)
-                    .filter(d => d !== undefined);
-
-                midSeasonProRated = calculateMidSeasonFee({
-                    seasonFee: finalSeasonFee,
-                    seasonStartDate: seasonStart,
-                    seasonEndDate: seasonEnd,
-                    joinDate: regDate,
-                    weeklyDays: weeklyDaysForSeason
-                });
-
-                finalSeasonFee = midSeasonProRated.proRatedFee;
-            }
-        }
+        const proRated = plan.proRated;
+        const midSeasonProRated = plan.midSeasonProRated;
 
         const gapStart = new Date(nonSeasonEnd);
         gapStart.setDate(gapStart.getDate() + 1);
@@ -164,12 +145,13 @@ router.get('/:id/preview', verifyToken, checkPermission('seasons', 'edit'), asyn
                 discount_amount: 0
             } : null,
             final_calculation: {
-                season_fee: finalSeasonFee,
-                original_season_fee: parseFloat(season.default_season_fee) || 0,
+                season_fee: midSeasonProRated ? midSeasonProRated.proRatedFee : baseSeasonFee,
+                original_season_fee: baseSeasonFee,
                 mid_season_discount: midSeasonProRated ? midSeasonProRated.discount : 0,
                 prorated_fee: 0,
-                discount_amount: 0,
-                total_due: finalSeasonFee
+                discount_amount: plan.discountAmount - manualDiscount,
+                manual_discount: manualDiscount,
+                total_due: plan.finalSeasonFee
             },
             non_season_prorated_info: proRated.proRatedFee > 0 ? {
                 amount: proRated.proRatedFee,

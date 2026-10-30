@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils/cn';
+import { hasPaidSeasonAmount } from '@/features/season-detail/season-detail-utils';
 import type { StudentSeason } from '@/lib/types/season';
 import {
   formatSeasonFee,
@@ -167,7 +168,7 @@ function SeasonEnrollmentRow({
             >
               <Edit2 className="h-4 w-4" />
             </Button>
-            {enrollment.payment_status === 'paid' ? (
+            {hasPaidSeasonAmount(enrollment) ? (
               <Button
                 className="text-orange-700 hover:text-orange-800"
                 disabled={refundLoading}
