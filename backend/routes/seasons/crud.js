@@ -5,7 +5,7 @@
  *         mount path: '/paca/seasons'
  *
  * Endpoint (3건):
- *   - POST   /        — 신규 시즌 생성 (status='upcoming' 기본)
+ *   - POST   /        — 신규 시즌 생성 (status='upcoming' 기본, 검사·INSERT 는 services/seasonCreateService — MCP season_create 와 공유)
  *   - PUT    /:id     — 시즌 dynamic update (13 필드 + 'active' 전환 시 학생 자동 배정)
  *   - DELETE /:id     — 소프트 삭제 (status='ended', enrolled student 0명일 때만)
  *
@@ -36,130 +36,27 @@ const {
     autoAssignAllSeasonStudentsToSchedules
 } = require('./_utils');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
-const {
-    DEFAULT_SEASON_MONTHLY_POLICY,
-    isSeasonMonthlyPolicy,
-} = require('../../utils/seasonMonthlyPolicy');
+const { isSeasonMonthlyPolicy } = require('../../utils/seasonMonthlyPolicy');
 const { validateSeasonAftercare } = require('../../services/seasonAftercarePolicy');
+const { validateSeasonCreate, insertSeason } = require('../../services/seasonCreateService');
 
 module.exports = function(router) {
 
 router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, res) => {
     try {
-        const {
-            season_name,
-            season_type,
-            season_start_date,
-            season_end_date,
-            free_lesson_end_date,
-            post_free_action,
-            non_season_end_date,
-            operating_days,
-            grade_time_slots,
-            default_season_fee,
-            payment_due_date,
-            season_monthly_policy,
-            allows_continuous,
-            continuous_to_season_type,
-            continuous_discount_type,
-            continuous_discount_rate
-        } = req.body;
-
-        if (!season_name || !season_type || !season_start_date || !season_end_date || !non_season_end_date || !operating_days) {
+        const validationError = validateSeasonCreate(req.body);
+        if (validationError) {
             return res.status(400).json({
                 error: 'Validation Error',
-                message: 'Required fields: season_name, season_type, season_start_date, season_end_date, non_season_end_date, operating_days'
+                message: validationError
             });
         }
 
-        if (!['early', 'regular'].includes(season_type)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'season_type must be early or regular'
-            });
-        }
-
-        if (!isValidSeasonMonthlyPolicy(season_monthly_policy)) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: '월납부 처리 방식을 확인해주세요.'
-            });
-        }
-
-        const monthlyPolicy = season_monthly_policy || DEFAULT_SEASON_MONTHLY_POLICY;
-
-        const nonSeasonEnd = new Date(non_season_end_date);
-        const seasonStart = new Date(season_start_date);
-        const seasonEnd = new Date(season_end_date);
-
-        if (nonSeasonEnd >= seasonStart) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'non_season_end_date must be before season_start_date'
-            });
-        }
-
-        if (seasonStart >= seasonEnd) {
-            return res.status(400).json({
-                error: 'Validation Error',
-                message: 'season_start_date must be before season_end_date'
-            });
-        }
-
-        const aftercareError = validateSeasonAftercare({
-            seasonEndDate: season_end_date,
-            freeLessonEndDate: free_lesson_end_date || null,
-            postFreeAction: post_free_action || null,
-        }, { required: true });
-        if (aftercareError) {
-            return res.status(400).json({ error: 'Validation Error', message: aftercareError });
-        }
-
-        const [result] = await pool.execute(
-            `INSERT INTO seasons (
-                academy_id,
-                season_name,
-                season_type,
-                season_start_date,
-                season_end_date,
-                free_lesson_end_date,
-                post_free_action,
-                non_season_end_date,
-                operating_days,
-                grade_time_slots,
-                default_season_fee,
-                payment_due_date,
-                season_monthly_policy,
-                allows_continuous,
-                continuous_to_season_type,
-                continuous_discount_type,
-                continuous_discount_rate,
-                status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
-            [
-                req.user.academyId,
-                season_name,
-                season_type,
-                season_start_date,
-                season_end_date,
-                free_lesson_end_date || null,
-                post_free_action || null,
-                non_season_end_date,
-                JSON.stringify(operating_days),
-                grade_time_slots ? JSON.stringify(grade_time_slots) : null,
-                default_season_fee || 0,
-                payment_due_date || null,
-                monthlyPolicy,
-                allows_continuous || false,
-                continuous_to_season_type || null,
-                continuous_discount_type || 'none',
-                continuous_discount_rate || 0
-            ]
-        );
+        const seasonId = await insertSeason(pool, req.user.academyId, req.body);
 
         const [created] = await pool.execute(
             'SELECT * FROM seasons WHERE id = ?',
-            [result.insertId]
+            [seasonId]
         );
 
         res.status(201).json({
@@ -397,7 +294,3 @@ router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
 });
 
 };
-
-function isValidSeasonMonthlyPolicy(value) {
-    return value === undefined || isSeasonMonthlyPolicy(value);
-}

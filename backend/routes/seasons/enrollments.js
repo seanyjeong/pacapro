@@ -9,6 +9,7 @@
  *   - PUT  /enrollments/:enrollment_id                   — 등록 정보 수정 (등록일/시즌비/할인/시간대)
  *   - POST /enrollments/:enrollment_id/refund-preview    — 환불 미리보기 계산
  *   - POST /enrollments/:enrollment_id/cancel            — 등록 취소 + 환불 처리 + 시즌비 청구 정리
+ *                                                          (환불 계산·반영은 services/seasonEnrollmentService — MCP season_enrollment_cancel 과 공유)
  *
  * 인증: verifyToken + checkPermission('seasons', 'edit') (4건 동일).
  *
@@ -39,8 +40,9 @@ const {
     calculateSeasonRefund,
     parseWeeklyDays
 } = require('./_utils');
-const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('./payment-summary');
+const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../../services/seasonPaymentSummary');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { planSeasonCancel, applySeasonCancel } = require('../../services/seasonEnrollmentService');
 
 module.exports = function(router) {
 
@@ -411,26 +413,10 @@ router.post('/enrollments/:enrollment_id/cancel', verifyToken, checkPermission('
             `SELECT operating_days FROM seasons WHERE id = ?`,
             [enrollment.season_id]
         );
-        let weeklyDays = [];
-        if (seasonInfo[0]?.operating_days) {
-            weeklyDays = typeof seasonInfo[0].operating_days === 'string'
-                ? JSON.parse(seasonInfo[0].operating_days)
-                : seasonInfo[0].operating_days;
-        } else {
-            weeklyDays = parseWeeklyDays(enrollment.class_days);
-        }
-
-        const originalFee = parseFloat(enrollment.season_fee) || 0;
-        const discountAmount = parseFloat(enrollment.discount_amount) || 0;
-        const paidAmount = parseFloat(enrollment.paid_amount) || 0;
-
-        const refundResult = calculateSeasonRefund({
-            paidAmount: paidAmount,
-            originalFee: originalFee,
-            seasonStartDate: new Date(enrollment.season_start_date),
-            seasonEndDate: new Date(enrollment.season_end_date),
-            cancellationDate: new Date(cancelDate),
-            weeklyDays,
+        const { paidAmount, refund: refundResult } = planSeasonCancel({
+            enrollment,
+            operatingDays: seasonInfo[0]?.operating_days,
+            cancelDate,
             includeVat: include_vat
         });
 
@@ -438,37 +424,13 @@ router.post('/enrollments/:enrollment_id/cancel', verifyToken, checkPermission('
             ? parseFloat(final_refund_amount)
             : refundResult.finalRefundAmount;
 
-        if (actualRefundAmount > 0 && paidAmount > 0) {
-            await pool.execute(
-                `INSERT INTO expenses (
-                    academy_id,
-                    category,
-                    amount,
-                    expense_date,
-                    description
-                ) VALUES (?, 'refund', ?, ?, ?)`,
-                [
-                    enrollment.academy_id,
-                    actualRefundAmount,
-                    cancelDate,
-                    `시즌 중도 해지 환불 - ${enrollment.student_name} (${enrollment.season_name})${include_vat ? ' (부가세 제외)' : ''}`
-                ]
-            );
-        }
-
-        await pool.execute(`DELETE FROM student_seasons WHERE id = ?`, [enrollmentId]);
-
-        await pool.execute(
-            `UPDATE students SET is_season_registered = false, current_season_id = NULL WHERE id = ?`,
-            [enrollment.student_id]
-        );
-
-        await pool.execute(
-            `DELETE FROM student_payments
-            WHERE student_id = ? AND payment_type = 'season' AND payment_status != 'paid'
-            AND description LIKE ?`,
-            [enrollment.student_id, `%${enrollment.season_name}%`]
-        );
+        await applySeasonCancel(pool, {
+            enrollment,
+            cancelDate,
+            includeVat: include_vat,
+            refundAmount: actualRefundAmount,
+            paidAmount
+        });
 
         res.json({
             message: 'Season enrollment deleted successfully',

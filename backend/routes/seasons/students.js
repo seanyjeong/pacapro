@@ -37,7 +37,7 @@ const {
     calculateSeasonRefund,
     parseWeeklyDays
 } = require('./_utils');
-const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('./payment-summary');
+const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../../services/seasonPaymentSummary');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 
 module.exports = function(router) {
