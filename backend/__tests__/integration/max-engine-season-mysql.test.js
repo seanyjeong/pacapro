@@ -83,6 +83,7 @@ run('MCP season create/enroll/update/cancel match the PACA season screens', () =
     ['mid-season join prorates', {}, {}, { registration_date: '2099-07-15' }, 15, null],
     ['paused student defers schedule', {}, { status: 'paused' }, { registration_date: '2099-06-20' }, 1, 1000000],
     ['manual discount and time slots', {}, {}, { registration_date: '2099-06-20', discount_amount: '50000', discount_reason: '형제', time_slots: ['morning', 'evening'] }, 54, 950000],
+    ['mid-season join with this student fee and discount', {}, {}, { registration_date: '2099-07-15', season_fee: '900000', discount_amount: '100000' }, 15, null],
     ['monthly kept when season adds to monthly', { season_monthly_policy: 'season_plus_monthly', payment_due_date: '2099-06-25' }, {}, { registration_date: '2099-06-20' }, 27, 1000000],
   ])('enroll %s: preview writes nothing, confirm equals the screen API', async (_label, season, student, changes, attendance, fee) => {
     await reset({ season, student });
@@ -128,14 +129,43 @@ run('MCP season create/enroll/update/cancel match the PACA season screens', () =
       expect((await preview('season_create', null, { ...input, ...bad })).body.error.code).toBe('SEASON_INVALID');
     }
   });
-  test('enrollment update equals the screen API and leaves the bill', async () => {
-    const changes = { registration_date: '2099-06-22', season_fee: '900000', discount_amount: '100000', time_slots: ['afternoon'] };
+  test('screen preview amount is the bill the screen enroll creates (mid-season, this student fee, discount)', async () => {
+    await reset();
+    const query = 'student_id=4&registration_date=2099-07-15&season_fee=900000&discount_amount=100000';
+    const shown = await request(app).get(`/paca/seasons/700/preview?${query}`);
+    expect(shown.status).toBe(200);
+    const due = shown.body.preview.final_calculation.total_due;
+    expect(due).toBeGreaterThan(0); expect(due).toBeLessThan(800000);
+    expect(shown.body.preview.final_calculation.manual_discount).toBe(100000);
+    expect((await request(app).post('/paca/seasons/700/enroll').send({ student_id: 4, season_fee: 900000, registration_date: '2099-07-15', discount_amount: 100000 })).status).toBe(201);
+    expect(Number((await outcome()).payments.find(x => x.payment_type === 'season').final_amount)).toBe(due);
+  });
+  test('enrollment update recalculates like enroll, syncs the unpaid bill, and equals the screen API', async () => {
+    const changes = { registration_date: '2099-07-15', season_fee: '900000', discount_amount: '100000', discount_reason: '형제', time_slots: ['afternoon'] };
     await reset({ paid: 0 });
     const { p, after } = await previewConfirm('season_enrollment_update', 4100, changes);
-    expect(p.after.related.season_bill_changed).toBe(false);
-    expect(Number(after.payments.find(x => x.payment_type === 'season').final_amount)).toBe(1000000);
+    expect(p.after.related.season_bill_changed).toBe(true);
+    const bill = after.payments.find(x => x.payment_type === 'season');
+    expect(Number(bill.final_amount)).toBe(p.after.related.season_payment.final_amount);
+    expect(Number(after.enrollments[0].season_fee)).toBe(Number(bill.final_amount));
+    expect(after.enrollments[0]).toMatchObject({ discount_type: 'manual', discount_reason: '형제', registration_date: '2099-07-15' });
     await reset({ paid: 0 });
     expect((await request(app).put('/paca/seasons/enrollments/4100').send(changes)).status).toBe(200);
+    expect(await outcome()).toEqual(after);
+    // 같은 입력으로 새로 등록한 청구와 금액이 같다 (일할은 한 번만)
+    await reset();
+    await request(app).post('/paca/seasons/700/enroll').send({ student_id: 4, season_fee: 900000, registration_date: '2099-07-15', discount_amount: 100000 });
+    expect(Number((await outcome()).payments.find(x => x.payment_type === 'season').final_amount)).toBe(Number(bill.final_amount));
+  });
+  test('paid bill: amount change is refused on both sides, reason-only change still saves', async () => {
+    await reset({ paid: 400000 }); const before = await outcome();
+    expect((await preview('season_enrollment_update', 4100, { discount_amount: '50000' })).body.error.code).toBe('SEASON_CONFLICT');
+    expect((await request(app).put('/paca/seasons/enrollments/4100').send({ discount_amount: '50000' })).status).toBe(409);
+    expect(await outcome()).toEqual(before);
+    const { after } = await previewConfirm('season_enrollment_update', 4100, { discount_reason: '장학' });
+    expect(after.enrollments[0].discount_reason).toBe('장학'); expect(after.payments).toEqual(before.payments);
+    await reset({ paid: 400000 });
+    expect((await request(app).put('/paca/seasons/enrollments/4100').send({ discount_reason: '장학' })).status).toBe(200);
     expect(await outcome()).toEqual(after);
   });
   test.each([

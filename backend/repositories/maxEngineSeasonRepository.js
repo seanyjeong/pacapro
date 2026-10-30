@@ -38,8 +38,11 @@ async function enrollmentState(conn, actor, enrollmentId, lock) {
   if (!enrollment) fail(404, 'NOT_FOUND', '내 교육원에서 시즌 등록을 찾을 수 없습니다.');
   if (lock) await rows(conn, 'SELECT id FROM student_seasons WHERE id = ?', [enrollmentId], true);
   applySeasonPaymentSummary(enrollment);
-  return { enrollment,
-    seasonPayments: await rows(conn, `SELECT id, \`year_month\`, final_amount, paid_amount, payment_status, description FROM student_payments
+  // 수정 재계산(seasonEnrollmentUpdateService)이 등록과 같이 시즌·학생 행을 쓴다
+  const [season] = await rows(conn, 'SELECT * FROM seasons WHERE id = ?', [enrollment.season_id], false);
+  const student = await commands.row(conn, 'students', enrollment.student_id, actor.academy_id, false);
+  return { enrollment, season, student,
+    seasonPayments: await rows(conn, `SELECT id, \`year_month\`, base_amount, final_amount, paid_amount, payment_status, due_date, description FROM student_payments
       WHERE student_id = ? AND academy_id = ? AND payment_type = 'season' AND description LIKE ? ORDER BY id`,
       [enrollment.student_id, actor.academy_id, `%${enrollment.season_name}%`], lock) };
 }

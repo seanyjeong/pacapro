@@ -1,8 +1,8 @@
 const { commands } = require('../constants/maxEngineSeasonCommands');
 const repo = require('../repositories/maxEngineSeasonRepository');
-const commandRepo = require('../repositories/maxEngineFullCommandRepository');
 const { validateSeasonCreate, insertSeason } = require('./seasonCreateService');
 const seasonEnrollment = require('./seasonEnrollmentService');
+const { planSeasonEnrollmentUpdate, applySeasonEnrollmentUpdate } = require('./seasonEnrollmentUpdateService');
 const { getKoreaDateText } = require('../utils/proratedPaymentDueDate');
 const { fail, decrypt } = require('./maxEngineFullSecurity');
 const supports = operation => Object.hasOwn(commands, operation);
@@ -32,13 +32,20 @@ function planEnroll({ changes }, before) {
     if (!previous) invalid('이전 시즌 등록이 없어 연속 등록 할인을 적용할 수 없습니다.');
     previousSeasonId = previous.season_id;
   }
-  // 화면 학생 등록과 같이 시즌 기본 시즌비에서 시작한다
-  const plan = seasonEnrollment.planSeasonEnrollment({ season, student, seasonFee: season.default_season_fee, registrationDate,
+  // 화면 등록과 같이 일할·할인 전 이 학생 시즌비에서 시작한다 (생략하면 시즌 기본 시즌비)
+  const plan = seasonEnrollment.planSeasonEnrollment({ season, student, seasonFee: changes.season_fee ?? season.default_season_fee, registrationDate,
     isContinuous: changes.is_continuous, previousSeasonId, manualDiscount: changes.discount_amount });
   if (seasonPayments.some(p => p.year_month === plan.yearMonth)) {
     conflict(existing ? '이미 이 시즌에 등록되어 있습니다.' : `${plan.yearMonth} 시즌비 청구가 이미 있습니다. 학원관리에서 먼저 확인해 주세요.`);
   }
   return { existing, previousSeasonId, plan, timeSlots: seasonEnrollment.parseSeasonTimeSlots(changes.time_slots) };
+}
+// 화면 수정(PUT /paca/seasons/enrollments/:id)과 같은 재계산 — 낸 돈이 있는 청구 금액이 달라지면 확인되지 않는다
+function planUpdate({ changes }, { enrollment, season, student, seasonPayments }) {
+  if (enrollment.payment_status === 'cancelled') conflict('취소된 시즌 등록입니다.');
+  const planned = planSeasonEnrollmentUpdate({ enrollment, season, student, bills: seasonPayments, changes });
+  if (planned.conflict) conflict(planned.conflict);
+  return planned;
 }
 function planCancel({ changes }, { enrollment, cancelDate }) {
   if (enrollment.payment_status === 'cancelled') conflict('이미 취소된 시즌 등록입니다.');
@@ -82,10 +89,14 @@ function display(command, before) {
   }
   const { enrollment, seasonPayments } = before;
   if (operation === 'season_enrollment_update') {
-    if (enrollment.payment_status === 'cancelled') conflict('취소된 시즌 등록입니다.');
+    const { plan, bill, billChanged } = planUpdate(command, before);
     const view = enrollmentView(enrollment);
+    const amounts = plan ? { season_fee: plan.finalSeasonFee, discount_type: plan.discountType, discount_amount: plan.discountAmount } : {};
+    const billAfter = plan && bill ? { ...bill, base_amount: plan.payment.baseAmount, final_amount: plan.payment.finalAmount,
+      due_date: changes.registration_date !== undefined ? plan.payment.dueDate : bill.due_date, description: plan.payment.description } : null;
     return { before: { ...view, related: { season_payments: seasonPayments } },
-      after: { ...view, ...changes, related: { season_payments: seasonPayments, season_bill_changed: false } }, notice };
+      after: { ...view, ...changes, ...amounts, related: { season_payment: billAfter, season_bill_changed: billChanged,
+        mid_season: plan?.midSeasonProRated || null } }, notice };
   }
   const result = planCancel(command, before);
   const recordsRefund = result.refundAmount > 0 && result.paidAmount > 0;
@@ -109,8 +120,7 @@ async function apply(conn, actor, command, before) {
     return result.enrollmentId;
   }
   if (operation === 'season_enrollment_update') {
-    await commandRepo.update(conn, 'student_seasons', id, changes.time_slots
-      ? { ...changes, time_slots: JSON.stringify(changes.time_slots) } : changes);
+    await applySeasonEnrollmentUpdate(conn, { enrollmentId: id, changes, planned: planUpdate(command, before) });
     return id;
   }
   const { enrollment, cancelDate } = before;
