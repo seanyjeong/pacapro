@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { StudentFormData, StudentStatus } from '@/lib/types/student';
 import { STATUS_OPTIONS } from '@/lib/types/student';
@@ -13,10 +14,12 @@ interface AdditionalInfoSectionProps {
   setIsIndefiniteRest: (v: boolean) => void;
   handleChange: (field: keyof StudentFormData, value: unknown) => void;
   onOpenRestModal: () => void;
+  onOpenResumeModal: () => void;
+  submitting: boolean;
 }
 
 export function AdditionalInfoSection({
-  mode, formData, initialData, isIndefiniteRest, setIsIndefiniteRest, handleChange, onOpenRestModal,
+  mode, formData, initialData, isIndefiniteRest, setIsIndefiniteRest, handleChange, onOpenRestModal, onOpenResumeModal, submitting,
 }: AdditionalInfoSectionProps) {
   return (
     <Card className="rounded-md shadow-none">
@@ -59,6 +62,10 @@ export function AdditionalInfoSection({
             <select value={formData.status}
               onChange={(e) => {
                 const newStatus = e.target.value as StudentStatus;
+                if (initialData?.status === 'paused' && newStatus === 'active') {
+                  onOpenResumeModal();
+                  return;
+                }
                 if (newStatus === 'paused' && formData.status !== 'paused' && initialData?.id) {
                   onOpenRestModal();
                   return;
@@ -75,9 +82,21 @@ export function AdditionalInfoSection({
               {STATUS_OPTIONS.filter((option) => initialData?.status === 'prospect'
                 ? ['prospect', 'active'].includes(option.value)
                 : option.value !== 'prospect').map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
+                <option key={option.value} value={option.value}
+                  disabled={initialData?.status === 'paused' && option.value === 'active'}>{option.label}</option>
               ))}
             </select>
+            {initialData?.status === 'paused' && (
+              <div className="mt-3 space-y-2">
+                <Button type="button" onClick={onOpenResumeModal} disabled={submitting}>
+                  휴원 복귀
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  재원으로 전환하려면 휴원 복귀 버튼에서 복귀일을 선택해주세요.
+                  복귀는 저장된 수업·학원비·휴원 정보로 처리되므로 수정 사항은 먼저 저장해주세요.
+                </p>
+              </div>
+            )}
             {formData.status !== 'paused' && initialData?.id && (
               <p className="text-xs text-muted-foreground mt-1">
                 휴원 선택 시 수업료 처리 옵션을 선택할 수 있습니다.

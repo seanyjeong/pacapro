@@ -7,6 +7,7 @@ export function middleware(request: NextRequest) {
 
   // 로그인 페이지, API, 정적 파일, 공개 페이지는 스킵
   if (
+    pathname === '/admissions/ilsan' ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/_next') ||
@@ -66,6 +67,8 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL(tabletRoute, request.url));
       }
     }
+
+    if (pathname === '/admissions') return NextResponse.next();
 
     // 그 외 경로는 태블릿 대시보드로
     return NextResponse.redirect(new URL('/tablet', request.url));

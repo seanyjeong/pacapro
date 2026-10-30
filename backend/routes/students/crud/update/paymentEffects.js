@@ -19,6 +19,9 @@ async function updatePendingPayments(context) {
         discountRate,
         updatedStudent,
     } = context;
+    // A paused student's existing bill may already be reduced by process-rest.
+    // The resume transaction restores it; saving the profile must not reset it.
+    if (context.oldStatus === 'paused' || updatedStudent?.status === 'paused') return;
     if (monthlyTuition === undefined && discountRate === undefined) return;
 
     try {

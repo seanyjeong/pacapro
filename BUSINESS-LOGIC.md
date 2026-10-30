@@ -43,10 +43,9 @@
 - `push_subscriptions` 테이블에 구독 저장
 - 서버에서 push 호출
 
-## 페일오버 동작 시 주의
-- 페일오버 중에는 **vultr 에서 DML 발생** → n100 복구 후 데이터 분기 위험
-- 복구 시 vultr → n100 역동기화 필요 (스크립트 확인 필요)
-- **장기 페일오버 (1시간+) 면 sync 방향 주의**
+## 운영 서버
+- 운영 백엔드·DB 는 **vultr 단독** (`paca-failover.service`, `/root/pacapro/backend`, MySQL `paca`). 자세한 건 `DEPLOYMENT.md`
+- n100 은 폐기됨 (2026-10-21) — n100 의 `paca` DB 는 2026-06 시점 낡은 사본. 조회·배포·동기화 대상 아님
 
 ## 자주 틀리는 함정
 - `academy_id` 필터 누락 → 다른 학원 데이터 노출 (치명적)

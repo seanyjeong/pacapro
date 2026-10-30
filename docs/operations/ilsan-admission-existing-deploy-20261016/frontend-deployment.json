@@ -1,0 +1,17 @@
+{
+  "id": "dpl_EmUGriqwPvGLMJFSWqfGgZ9dmYpk",
+  "url": "pacapro-1par6ff6w-seanys-projects-4437e034.vercel.app",
+  "readyState": "READY",
+  "target": "production",
+  "alias": [
+    "pacapro.vercel.app",
+    "pacapro-seanys-projects-4437e034.vercel.app",
+    "pacapro-git-main-seanys-projects-4437e034.vercel.app"
+  ],
+  "aliasAssigned": true,
+  "createdAt": 1792155800342,
+  "ready": 1792156141165,
+  "git_commit": "ed5f50ba3b7d49c910a182253b0bd5c412feec5f",
+  "git_ref": "main",
+  "frontend_version": "4.0.60"
+}

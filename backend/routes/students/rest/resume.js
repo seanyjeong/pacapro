@@ -11,6 +11,11 @@ const {
     recalculateRestCreditsOnResume,
 } = require('../../../services/restCreditRecalculationService');
 const { autoAssignStudentToSchedules } = require('../_utils');
+const {
+    autoAssignStudentToSeasonSchedules,
+    findResumeSeasonEnrollment,
+    removeStudentFromRegularSchedules,
+} = require('../../seasons/_utils');
 const { processResumePayment, normalizeResumeClassDays } = require('../../../services/resumePaymentService');
 
 module.exports = function registerResumeRoute(router) {
@@ -38,6 +43,7 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
         const [students] = await connection.execute(
             `SELECT s.id, s.academy_id, s.name, s.status, s.class_days,
                     s.monthly_tuition, s.discount_rate, s.rest_start_date, s.rest_end_date, s.time_slot,
+                    s.grade, s.student_type,
                     COALESCE(s.payment_due_day, ast.tuition_due_day, 5) as due_day
              FROM students s
              LEFT JOIN academy_settings ast ON s.academy_id = ast.academy_id
@@ -81,6 +87,22 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
             reassignResult = await autoAssignStudentToSchedules(
                 connection, studentId, req.user.academyId, classDays,
                 resumeDateStr, student.time_slot || 'evening', { includeFutureMonth: true }
+            );
+        }
+
+        // 진행 중인 시즌 등록생은 시즌 기간을 정규 대신 시즌 스케줄로 채운다 (시즌 등록 시와 같은 순서).
+        const seasonEnrollment = await findResumeSeasonEnrollment(
+            connection, studentId, req.user.academyId, resumeDateStr
+        );
+        if (seasonEnrollment) {
+            const { season, timeSlots } = seasonEnrollment;
+            const removeFrom = resumeDateStr > season.season_start_date ? resumeDateStr : season.season_start_date;
+            await removeStudentFromRegularSchedules(
+                studentId, req.user.academyId, removeFrom, season.season_end_date, connection
+            );
+            reassignResult = await autoAssignStudentToSeasonSchedules(
+                studentId, req.user.academyId, season, student.grade || '', student.student_type,
+                timeSlots, resumeDateStr, connection
             );
         }
 

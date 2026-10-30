@@ -1,0 +1,11 @@
+{
+  "unit_tests": 12,
+  "native_mysql_http_tests": 17,
+  "existing_student_browser_smoke": "passed",
+  "new_enrollment_browser_smoke": "passed",
+  "isolated_production_build": "passed",
+  "affected_eslint": "passed",
+  "production_student_writes": 0,
+  "schema_migrations": 0,
+  "limitations": "Browser API responses are synthetic. Production student data is not changed by tests. Initial shared-worktree typecheck saw stale Opus preview .next artifacts; isolated clean production build passed."
+}

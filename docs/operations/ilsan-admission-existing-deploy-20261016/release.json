@@ -1,0 +1,12 @@
+{
+  "version": "4.0.25",
+  "previous_version": "4.0.24",
+  "frontend_version": "4.0.60",
+  "runtime_files": 9,
+  "native_mysql_verified": true,
+  "git_release_verified": true,
+  "production_source_refreshed": true,
+  "commit": "10a5405556e75f9a5ebe78c825c1774406ff57e9",
+  "rollback_tag": "rollback/paca-ilsan-existing-20261016",
+  "candidate_sha256": "cd911bebd0cc64633d13adb25ce7b00b0f19c92cfc3e87294bd639c5d5bd0bec"
+}

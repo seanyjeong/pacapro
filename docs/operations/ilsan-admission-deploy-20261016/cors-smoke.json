@@ -1,0 +1,20 @@
+[
+  {
+    "path": "availability",
+    "status": 200,
+    "allow_origin": "null",
+    "allow_credentials": null
+  },
+  {
+    "path": "submit",
+    "status": 204,
+    "allow_origin": "null",
+    "allow_credentials": null
+  },
+  {
+    "path": "1/confirm",
+    "status": 401,
+    "allow_origin": null,
+    "allow_credentials": null
+  }
+]

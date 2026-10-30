@@ -18,6 +18,8 @@ import { TabletStudentCardList } from '@/features/tablet-students/tablet-student
 import { useStudents } from '@/hooks/use-students';
 import { cn } from '@/lib/utils';
 import type { StudentStatus } from '@/lib/types/student';
+import type { StudentListSort } from '@/features/students/student-page-types';
+import { getNextSort } from '@/features/students/student-page-utils';
 
 // 탭 타입
 type StudentTab = 'active' | 'paused' | 'withdrawn' | 'trial' | 'pending' | 'graduated';
@@ -35,6 +37,7 @@ function TabletStudentsPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<StudentTab>(initialTab);
   const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
+  const [pendingSort, setPendingSort] = useState<StudentListSort | null>(null);
 
   // URL 파라미터로 탭 변경 시 적용
   useEffect(() => {
@@ -182,7 +185,9 @@ function TabletStudentsPageContent() {
         <PendingStudentList
           students={students}
           loading={loading}
+          sort={pendingSort}
           onReload={handleReload}
+          onSortChange={(key) => setPendingSort((current) => getNextSort(current, key))}
         />
       ) : (
         <TabletStudentCardList

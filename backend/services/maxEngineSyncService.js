@@ -5,6 +5,7 @@ const { authenticate, query, cursor, mysqlToIso } = require('../models/maxEngine
 // Reuse the existing strict crypto helper; legacy utils/encryption returns
 // ciphertext on failure, which must never be exported as a student's name.
 const { decrypt } = require('./maxEngineFullSecurity');
+const { linkedAcademy } = require('./maxEngineService');
 
 async function students(input, header, socketAddress, headers) {
   const key = config.signingKey(), academies = config.academyIds();
@@ -13,7 +14,8 @@ async function students(input, header, socketAddress, headers) {
   }
   authenticate(key, header, socketAddress, headers);
   const page = query(input, key);
-  if (!academies.has(page.academyId)) {
+  // env 허용 목록 또는 맥스엔진 연결 토큰(X-Max-Engine-Link) — 연결한 학원은 목록 수작업 없이 바로 허용
+  if (!academies.has(page.academyId) && await linkedAcademy(headers['x-max-engine-link']) !== page.academyId) {
     fail(403, 'SYNC_ACADEMY_FORBIDDEN', '자동 가져오기를 허용한 교육원이 아닙니다.');
   }
   page.watermark = page.watermark || await repository.serverTime();

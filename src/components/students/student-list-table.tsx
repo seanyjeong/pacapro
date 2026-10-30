@@ -6,7 +6,7 @@
 'use client';
 
 import { StudentParentNames } from '@/components/students/student-parent-names';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StudentAvatar } from '@/components/students/student-avatar';
@@ -22,6 +22,7 @@ import {
   Users,
 } from 'lucide-react';
 import type { Student } from '@/lib/types/student';
+import type { StudentListSort } from '@/features/students/student-page-types';
 import {
   formatStudentNumber,
   formatPhoneNumber,
@@ -43,7 +44,11 @@ interface StudentListTableProps {
   loading?: boolean;
   onStudentClick: (id: number) => void;
   hideMonthlyTuition?: boolean;
+  sort: StudentListSort | null;
+  onSortChange: (key: string) => void;
 }
+
+const SORT_KEYS = ['name', 'gender', 'type', 'admission', 'classDays', 'tuition', 'status', 'enrollment'] as const;
 
 type SortKey =
   | 'name'
@@ -57,21 +62,25 @@ type SortKey =
 
 type SortDir = 'asc' | 'desc';
 
-function compareText(a: string, b: string): number {
+function isSortKey(value: string | undefined): value is SortKey {
+  return SORT_KEYS.some((key) => key === value);
+}
+
+export function compareText(a: string, b: string): number {
   return (a || '').localeCompare(b || '', 'ko', { sensitivity: 'base', numeric: true });
 }
 
-function compareNumber(a: number, b: number): number {
+export function compareNumber(a: number, b: number): number {
   return a - b;
 }
 
-function compareDate(a?: string | null, b?: string | null): number {
+export function compareDate(a?: string | null, b?: string | null): number {
   const ta = a ? Date.parse(a) : 0;
   const tb = b ? Date.parse(b) : 0;
   return (Number.isFinite(ta) ? ta : 0) - (Number.isFinite(tb) ? tb : 0);
 }
 
-function SortHeader({
+export function SortHeader<K extends string>({
   label,
   column,
   sortKey,
@@ -80,10 +89,10 @@ function SortHeader({
   className = '',
 }: {
   label: string;
-  column: SortKey;
-  sortKey: SortKey | null;
+  column: K;
+  sortKey: K | null;
   sortDir: SortDir;
-  onSort: (key: SortKey) => void;
+  onSort: (key: K) => void;
   className?: string;
 }) {
   const active = sortKey === column;
@@ -107,18 +116,10 @@ function SortHeader({
   );
 }
 
-export function StudentListTable({ students, loading, onStudentClick, hideMonthlyTuition }: StudentListTableProps) {
-  const [sortKey, setSortKey] = useState<SortKey | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortKey(key);
-      setSortDir('asc');
-    }
-  };
+export function StudentListTable({ students, loading, onStudentClick, hideMonthlyTuition, sort, onSortChange }: StudentListTableProps) {
+  const sortKey = sort && isSortKey(sort.key) ? sort.key : null;
+  const sortDir: SortDir = sort?.dir ?? 'asc';
+  const handleSort = (key: SortKey) => onSortChange(key);
 
   const sortedStudents = useMemo(() => {
     if (!sortKey) return students;

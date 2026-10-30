@@ -1,0 +1,5 @@
+{
+  "apiBase": "https://supermax.kr/paca/ilsan-admissions",
+  "academyName": "일산 맥스체대입시",
+  "timeoutMs": 15000
+}

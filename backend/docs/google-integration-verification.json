@@ -1,0 +1,79 @@
+{
+  "cloud": {
+    "project": "paca-480014",
+    "publishingStatus": "In production",
+    "verificationSubmitted": false,
+    "userCap": 100,
+    "checkedAt": "2026-10-21T16:01:30.005Z",
+    "publicDocs": "https://supermax.kr/files/paca-google/index.html"
+  },
+  "oauth": {
+    "status": "passed",
+    "checkedAt": "2026-10-21T16:03:03.289Z",
+    "pkce": true,
+    "refresh": true,
+    "refreshTokenExpiresIn": null,
+    "emailVerified": true,
+    "allScopes": true,
+    "grantedScopes": [
+      "https://www.googleapis.com/auth/calendar.calendars",
+      "https://www.googleapis.com/auth/drive.file",
+      "https://www.googleapis.com/auth/calendar.events",
+      "https://www.googleapis.com/auth/spreadsheets",
+      "https://www.googleapis.com/auth/userinfo.email",
+      "openid",
+      "https://www.googleapis.com/auth/calendar.calendarlist.readonly"
+    ],
+    "businessDataTouched": false,
+    "googleEventsTouched": false
+  },
+  "public_documents": [
+    {
+      "file": "public/google-integration/index.html",
+      "url": "https://supermax.kr/files/paca-google/index.html",
+      "status": 200,
+      "sha256": "54ffade55a73540e17003068e345e23cce2b3da348dd502449728407355e27d7"
+    },
+    {
+      "file": "public/google-integration/terms.html",
+      "url": "https://supermax.kr/files/paca-google/terms.html",
+      "status": 200,
+      "sha256": "6632a8ce7cb627f780d7629c1d756df6991ce6b879fe4a3c6b3826c87216acc1"
+    },
+    {
+      "file": "public/google-integration/legal.css",
+      "url": "https://supermax.kr/files/paca-google/legal.css",
+      "status": 200,
+      "sha256": "f5d85028f31ce110a82d9024427bb8f3a80ec39523686bfa17848c160a095e89"
+    },
+    {
+      "file": "public/google-integration/privacy.html",
+      "url": "https://supermax.kr/files/paca-google/privacy.html",
+      "status": 200,
+      "sha256": "1f71b641a3709d85919f911003468591409888e174bc46363dcfd7d2cc22275d"
+    }
+  ],
+  "local": {
+    "backend_suites": 13,
+    "backend_tests": 110,
+    "mysql_isolated": true,
+    "typescript": "passed",
+    "frontend_lint_errors": 0,
+    "frontend_existing_warnings": 83,
+    "changed_frontend_lint_warnings": 0,
+    "next_build": "passed",
+    "ui_synthetic_checks": [
+      "calendar-drive-sheets toggles",
+      "failed toggle preserves state",
+      "reload recovery",
+      "disconnect disables switches"
+    ],
+    "ui_widths_without_horizontal_overflow": [
+      1365,
+      768,
+      390
+    ]
+  },
+  "application_deployed": false,
+  "mcp_modified": false
+}

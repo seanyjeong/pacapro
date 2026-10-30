@@ -1,5 +1,5 @@
 // JSON 파싱 오류 객체에는 입력 본문(비밀번호·토큰)이 붙으므로 기존 오류 로거로 넘기지 않는다.
-function isIntegration(req) { return req.path.startsWith('/paca/integrations/max-engine'); }
+function isIntegration(req) { return req.path.startsWith('/paca/integrations/max-engine') || req.path.startsWith('/paca/google-integration'); }
 function errorHandler(error, req, res, next) {
   if (!isIntegration(req)) return next(error);
   res.status(error.status === 413 ? 413 : 400).json({ error: {

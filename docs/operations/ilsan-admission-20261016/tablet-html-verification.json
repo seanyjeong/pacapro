@@ -1,0 +1,15 @@
+{
+  "file": "일산맥스_입학원서_접수용.html",
+  "sha256": "f1d0293b7560325db3a8cb3947d7249bcc67f1925591170637bd7fe2a23472af",
+  "production_api_checked": "GET https://supermax.kr/paca/ilsan-admissions returned 404",
+  "deployed": false,
+  "model_and_cors_tests": {
+    "passed": 10
+  },
+  "isolated_mysql_http_browser_tests": {
+    "passed": 10
+  },
+  "browser_case": "Local file Origin:null → availability → one real isolated DB insert → lost response → same UUID retry → one application only → clear fields → next applicant",
+  "credentials_in_file": false,
+  "source_snapshot": "/tmp/ilsan-admission-html/일산맥스_입학원서_학부모폼.html"
+}

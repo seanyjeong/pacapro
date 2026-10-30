@@ -39,6 +39,7 @@ import {
     CalendarCog,
 } from 'lucide-react';
 import type { Permissions } from '@/lib/types/staff';
+import { ILSAN_ACADEMY_ID } from '@/constants/ilsan-admission';
 import apiClient from '@/lib/api/client';
 import {
     pushAPI,
@@ -77,6 +78,7 @@ const navCategories: NavCategory[] = [
         defaultOpen: true,
         items: [
             { title: '학생', href: '/students', icon: Users, permissionKey: 'students' },
+            { title: '입학원서', href: '/admissions', icon: UserCheck, permissionKey: 'students' },
             { title: '강사', href: '/instructors', icon: UserCog, permissionKey: 'instructors' },
             { title: '수업스케줄', href: '/schedules', icon: Calendar, permissionKey: 'schedules' },
             { title: '수업일관리', href: '/students/class-days', icon: CalendarCog, permissionKey: 'class_days' },
@@ -309,6 +311,7 @@ export function Sidebar() {
 
     // 메뉴 접근 가능 여부 확인
     const canAccessMenu = (item: NavItem): boolean => {
+        if (item.href === '/admissions' && (!mounted || Number(user?.academyId ?? user?.academy_id) !== ILSAN_ACADEMY_ID || (isStaff && permissions.students?.edit !== true))) return false;
         // 마운트 전에는 모든 메뉴 표시 (hydration 문제 방지)
         if (!mounted) return true;
 

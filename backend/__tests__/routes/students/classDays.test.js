@@ -86,4 +86,38 @@ describe('students class-days routes', () => {
             { day: 3, timeSlot: 'afternoon' },
         ]);
     });
+
+    test('PUT /class-days/bulk immediate change keeps prorated pending bills', async () => {
+        db.query
+            .mockResolvedValueOnce([[{ settings: { exam_tuition: { weekly_2: 300000 } } }]])
+            .mockResolvedValueOnce([[{ class_days: '[3,6]', time_slot: 'evening', student_type: 'exam' }]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[{ discount_rate: 0 }]])
+            .mockResolvedValue([{ affectedRows: 0 }]);
+
+        const res = await request(makeApp())
+            .put('/paca/students/class-days/bulk')
+            .send({ students: [{ id: 56, class_days: [3, 6] }] });
+
+        expect(res.status).toBe(200);
+        const paymentCall = db.query.mock.calls.find(([sql]) => /UPDATE student_payments/.test(sql));
+        expect(paymentCall[0]).toMatch(/NOT \(is_prorated = 1 OR description LIKE '%일할계산%'\)/);
+    });
+
+    test('PUT /:id/class-days immediate change keeps prorated pending bills', async () => {
+        db.query
+            .mockResolvedValueOnce([[{ id: 56, class_days: '[3,6]', time_slot: 'evening', student_type: 'exam' }]])
+            .mockResolvedValueOnce([[{ settings: { exam_tuition: { weekly_2: 300000 } } }]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[{ discount_rate: 0 }]])
+            .mockResolvedValue([{ affectedRows: 0 }]);
+
+        const res = await request(makeApp())
+            .put('/paca/students/56/class-days')
+            .send({ class_days: [3, 6] });
+
+        expect(res.status).toBe(200);
+        const paymentCall = db.query.mock.calls.find(([sql]) => /UPDATE student_payments/.test(sql));
+        expect(paymentCall[0]).toMatch(/NOT \(is_prorated = 1 OR description LIKE '%일할계산%'\)/);
+    });
 });

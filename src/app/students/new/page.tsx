@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
@@ -9,7 +9,7 @@ import { StudentFormCancelDialog } from '@/features/student-form/student-form-ca
 import { StudentFormPageHeader } from '@/features/student-form/student-form-page-header';
 import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
-import type { StudentFormData, Student, Gender, StudentType, Grade, StudentStatus } from '@/lib/types/student';
+import type { StudentFormData, Student, StudentStatus } from '@/lib/types/student';
 import { prepareStudentPhotoPayload } from '@/lib/utils/student-photo-client';
 
 function NewStudentContent() {
@@ -18,28 +18,29 @@ function NewStudentContent() {
   const isTrial = searchParams.get('is_trial') === 'true';
   const [cancelOpen, setCancelOpen] = useState(false);
 
-  // 미등록관리 또는 체험생에서 넘어온 경우 학생 정보 초기값 설정
+  // 미등록관리 또는 체험생에서 넘어온 경우 저장된 학생 정보로 초기값 설정
   const fromPendingId = searchParams.get('from_pending');
   const fromTrialId = searchParams.get('from_trial');
   const existingStudentId = fromPendingId || fromTrialId;
-  const initialData = useMemo(() => {
-    if (!existingStudentId) return undefined;
+  const [initialData, setInitialData] = useState<Partial<Student>>();
+  const [loadError, setLoadError] = useState(false);
 
-    return {
-      id: parseInt(existingStudentId),
-      name: searchParams.get('name') || '',
-      phone: searchParams.get('phone') || '',
-      parent_phone: searchParams.get('parent_phone') || '',
-      student_type: (searchParams.get('student_type') || 'exam') as StudentType,
-      grade: (searchParams.get('grade') || '') as Grade,
-      school: searchParams.get('school') || '',
-      gender: (searchParams.get('gender') || undefined) as Gender | undefined,
-      class_days: searchParams.get('class_days') || '[]',
-      weekly_count: parseInt(searchParams.get('weekly_count') || '0'),
-      monthly_tuition: searchParams.get('monthly_tuition') || '0',
-      time_slot: (searchParams.get('time_slot') || 'evening') as 'morning' | 'afternoon' | 'evening',
-    } as Partial<Student>;
-  }, [existingStudentId, searchParams]);
+  useEffect(() => {
+    if (!existingStudentId) return;
+    let cancelled = false;
+    // 저장 시 폼 전체가 기존 학생을 덮어쓰므로, 캐시가 아닌 최신 저장값으로 폼을 채웁니다.
+    studentsAPI.getStudent(parseInt(existingStudentId), { suppressErrorToast: true })
+      .then(({ student }) => {
+        if (cancelled) return;
+        // 등록일·체험·상태 값은 정식 등록 폼의 기본값을 쓰고, 나머지 저장 정보는 그대로 유지합니다.
+        setInitialData({
+          ...student, enrollment_date: undefined, is_trial: undefined, trial_dates: undefined, status: undefined,
+          rest_start_date: undefined, rest_end_date: undefined, rest_reason: undefined,
+        });
+      })
+      .catch(() => { if (!cancelled) setLoadError(true); });
+    return () => { cancelled = true; };
+  }, [existingStudentId]);
 
   const handleSubmit = async (data: StudentFormData, pendingPhotoFile?: File | null) => {
     try {
@@ -124,6 +125,17 @@ function NewStudentContent() {
       />
 
       {/* Form */}
+      {existingStudentId && !initialData ? (
+        loadError ? (
+          <p role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            학생 정보를 불러오지 못했습니다. 학생 목록에서 다시 시도해주세요.
+          </p>
+        ) : (
+          <div className="flex min-h-[400px] items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )
+      ) : (
       <StudentForm
         mode="create"
         initialData={initialData as Student | undefined}
@@ -131,6 +143,7 @@ function NewStudentContent() {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
       />
+      )}
       <StudentFormCancelDialog
         mode="create"
         open={cancelOpen}

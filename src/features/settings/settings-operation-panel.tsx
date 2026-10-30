@@ -1,4 +1,4 @@
-import { Banknote, Clock, DollarSign, Home, MapPin } from 'lucide-react';
+import { Banknote, Clock, DollarSign, Home, MapPin, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import type { AcademySettings } from './settings-types';
 import { getSalaryPayDayLabel } from './settings-utils';
@@ -7,6 +7,7 @@ interface SettingsOperationPanelProps {
   settings: AcademySettings;
   hasUnsavedChanges: boolean;
   isSaving: boolean;
+  canManageGoogle?: boolean;
 }
 
 const links = [
@@ -14,9 +15,10 @@ const links = [
   { href: '#class-times', label: '수업 시간 바로가기', icon: Clock },
   { href: '#tuition', label: '학원비 바로가기', icon: DollarSign },
   { href: '#salary-settings', label: '급여 설정 바로가기', icon: Banknote },
+  { href: '#google-integration', label: '구글 연동하기', icon: Link2 },
 ];
 
-export function SettingsOperationPanel({ settings, hasUnsavedChanges, isSaving }: SettingsOperationPanelProps) {
+export function SettingsOperationPanel({ settings, hasUnsavedChanges, isSaving, canManageGoogle = false }: SettingsOperationPanelProps) {
   const statusText = isSaving ? '저장 중' : hasUnsavedChanges ? '변경 사항 있음' : '저장됨';
 
   return (
@@ -42,7 +44,7 @@ export function SettingsOperationPanel({ settings, hasUnsavedChanges, isSaving }
       </div>
 
       <div className="mt-4 grid gap-2">
-        {links.map((item) => {
+        {links.filter(item => item.href !== '#google-integration' || canManageGoogle).map((item) => {
           const Icon = item.icon;
           return (
             <a

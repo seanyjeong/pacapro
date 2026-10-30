@@ -83,6 +83,8 @@ function createCorsOptions({ env = process.env, logger } = {}) {
 // 개발 환경: 모든 도메인 허용 / 프로덕션: 화이트리스트 적용
 const isDev = process.env.NODE_ENV === 'development';
 const corsOptions = createCorsOptions({ logger });
+const { ilsanAdmissionFileCors } = require('./middleware/ilsanAdmissionFileCors');
+app.use(ilsanAdmissionFileCors);
 app.use(cors(corsOptions));
 // 프리플라이트 확실히 처리하고 싶으면 한 줄 더
 app.options('*', cors(corsOptions));

@@ -33,6 +33,12 @@ jest.mock('../../../routes/students/_utils', () => ({
   autoAssignStudentToSchedules: jest.fn(),
 }));
 
+jest.mock('../../../routes/seasons/_utils', () => ({
+  autoAssignStudentToSeasonSchedules: jest.fn(),
+  findResumeSeasonEnrollment: jest.fn(),
+  removeStudentFromRegularSchedules: jest.fn(),
+}));
+
 jest.mock('../../../repositories/restCreditRepository', () => ({
   findCurrentRestCreditsForUpdate: jest.fn(),
   updateRecalculatedCredit: jest.fn(),
@@ -43,6 +49,7 @@ const request = require('supertest');
 const pool = require('../../../config/database');
 const repository = require('../../../repositories/restCreditRepository');
 const { autoAssignStudentToSchedules } = require('../../../routes/students/_utils');
+const seasonUtils = require('../../../routes/seasons/_utils');
 
 function makeApp() {
   const app = express();
@@ -94,6 +101,9 @@ function resetMocks() {
   pool.__conn.rollback.mockClear();
   pool.__conn.release.mockClear();
   autoAssignStudentToSchedules.mockReset();
+  seasonUtils.findResumeSeasonEnrollment.mockReset().mockResolvedValue(null);
+  seasonUtils.removeStudentFromRegularSchedules.mockReset().mockResolvedValue({ removed: 0 });
+  seasonUtils.autoAssignStudentToSeasonSchedules.mockReset().mockResolvedValue({ assigned: 0, created: 0 });
   repository.findCurrentRestCreditsForUpdate.mockReset().mockResolvedValue([]);
   repository.updateRecalculatedCredit.mockReset().mockResolvedValue();
 }
@@ -135,6 +145,34 @@ describe('POST /paca/students/:id/resume', () => {
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: 'VALIDATION_ERROR', message: '휴식 상태인 학생만 복귀할 수 있습니다.' });
     expect(pool.__conn.rollback).toHaveBeenCalledTimes(1);
+  });
+
+  test('진행 중 시즌 등록생은 복귀일부터 시즌 스케줄로 같은 트랜잭션에서 배정한다', async () => {
+    const season = { id: 5, status: 'active', season_start_date: '2026-07-01', season_end_date: '2026-11-30' };
+    seasonUtils.findResumeSeasonEnrollment.mockResolvedValue({ season, timeSlots: ['evening'] });
+    seasonUtils.autoAssignStudentToSeasonSchedules.mockResolvedValue({ assigned: 30, created: 0, timeSlots: ['evening'] });
+    autoAssignStudentToSchedules.mockResolvedValue({ assigned: 6, created: 0 });
+    mockCriticalResume(makePausedStudent({
+      monthly_tuition: 0, class_days: '[1,3]', grade: '고3', student_type: 'regular',
+    }));
+    mockPostResume();
+
+    const res = await request(makeApp())
+      .post('/paca/students/1/resume')
+      .send({ resume_date: '2026-08-20' });
+
+    expect(res.status).toBe(200);
+    expect(seasonUtils.findResumeSeasonEnrollment).toHaveBeenCalledWith(pool.__conn, 1, 1, '2026-08-20');
+    expect(seasonUtils.removeStudentFromRegularSchedules).toHaveBeenCalledWith(
+      1, 1, '2026-08-20', '2026-11-30', pool.__conn
+    );
+    expect(seasonUtils.autoAssignStudentToSeasonSchedules).toHaveBeenCalledWith(
+      1, 1, season, '고3', 'regular', ['evening'], '2026-08-20', pool.__conn
+    );
+    expect(seasonUtils.removeStudentFromRegularSchedules.mock.invocationCallOrder[0])
+      .toBeGreaterThan(autoAssignStudentToSchedules.mock.invocationCallOrder[0]);
+    expect(res.body.scheduleAssigned).toEqual({ assigned: 30, created: 0, timeSlots: ['evening'] });
+    expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
   });
 
   test('크레딧이 없어도 상태 변경과 응답 계약을 트랜잭션으로 보존한다', async () => {

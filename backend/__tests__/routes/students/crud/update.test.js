@@ -193,6 +193,27 @@ describe('PUT /paca/students/:id (update)', () => {
         expect(pool.__conn.commit).not.toHaveBeenCalled(); expect(pool.__conn.release).toHaveBeenCalledTimes(1);
         expect(JSON.stringify(res.body)).not.toContain('private billing failure');
     });
+    test('휴원 중 프로필 저장은 축소된 월청구를 월정액으로 덮어쓰지 않는다', async () => {
+        const student = existingStudent({ status: 'paused', monthly_tuition: 310000 });
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute.mockResolvedValueOnce([[student]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[student]]);
+        const res = await request(makeApp()).put('/paca/students/5').send({
+            status: 'paused', monthly_tuition: 310000, discount_rate: 0, memo: '메모 수정',
+        });
+        expect(res.status).toBe(200);
+        expect(pool.__conn.execute.mock.calls.some(([sql]) => sql.includes('UPDATE student_payments'))).toBe(false);
+    });
+    test('휴원 학생의 일반 재원 전환은 정식 복귀로 안내하고 쓰기를 하지 않는다', async () => {
+        pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'paused' })]]);
+        const res = await request(makeApp()).put('/paca/students/5').send({ status: 'active' });
+        expect(res.status).toBe(409);
+        expect(res.body.error).toBe('RESUME_REQUIRED');
+        expect(res.body.message).toContain('휴원 복귀');
+        expect(pool.__conn.execute).toHaveBeenCalledTimes(1);
+    });
+
     test('예비생은 원장이 재원으로 바꿀 수 있고, 일반 재원생을 예비생으로 지정할 수 없다', async () => {
         pool.__conn.execute.mockResolvedValueOnce([[existingStudent({ status: 'active' })]]);
         const blocked = await request(makeApp()).put('/paca/students/5').send({ status: 'prospect' });

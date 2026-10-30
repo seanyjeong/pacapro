@@ -3,22 +3,26 @@ import { SchoolStudentList } from '@/components/students/school-student-list';
 import { StudentListTable } from '@/components/students/student-list-table';
 import { TrialStudentList } from '@/components/students/trial-student-list';
 import type { Student } from '@/lib/types/student';
-import type { StudentTab } from './student-page-types';
+import type { StudentListSort, StudentTab } from './student-page-types';
 import { StudentsMobileList } from './students-mobile-list';
 
 interface StudentsPageListProps {
     activeTab: StudentTab;
     loading: boolean;
+    sort: StudentListSort | null;
     students: Student[];
     onReload: () => void;
+    onSortChange: (key: string) => void;
     onStudentClick: (id: number) => void;
 }
 
 export function StudentsPageList({
     activeTab,
     loading,
+    sort,
     students,
     onReload,
+    onSortChange,
     onStudentClick,
 }: StudentsPageListProps) {
     if (activeTab === 'trial') {
@@ -43,7 +47,7 @@ export function StudentsPageList({
                     <StudentsMobileList students={students} loading={loading} onStudentClick={onStudentClick} />
                 </div>
                 <div className="hidden md:block">
-                    <PendingStudentList students={students} loading={loading} onReload={onReload} />
+                    <PendingStudentList students={students} loading={loading} sort={sort} onReload={onReload} onSortChange={onSortChange} />
                 </div>
             </>
         );
@@ -59,7 +63,13 @@ export function StudentsPageList({
                 <StudentsMobileList students={students} loading={loading} onStudentClick={onStudentClick} />
             </div>
             <div className="hidden md:block">
-                <StudentListTable students={students} loading={loading} onStudentClick={onStudentClick} />
+                <StudentListTable
+                    students={students}
+                    loading={loading}
+                    sort={sort}
+                    onSortChange={onSortChange}
+                    onStudentClick={onStudentClick}
+                />
             </div>
         </>
     );

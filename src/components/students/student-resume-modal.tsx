@@ -26,11 +26,11 @@ function getResumeErrorMessage(error: unknown): string {
     return RESUME_ERROR_MESSAGE;
   }
 
-  if (error.response?.data?.error !== CREDIT_CONFLICT_ERROR) {
+  if (![CREDIT_CONFLICT_ERROR, 'VALIDATION_ERROR'].includes(String(error.response?.data?.error))) {
     return RESUME_ERROR_MESSAGE;
   }
 
-  return getSafeApiToastMessage(error.response.data.message);
+  return getSafeApiToastMessage(error.response?.data?.message);
 }
 
 // 휴원 학생 타입 (무기한 휴원 지원)
@@ -114,14 +114,14 @@ function parseClassDays(classDays: number[] | string | Array<{day: number; timeS
 
 // 복귀일부터 월말까지 수업요일 카운트
 function countClassDaysUntilMonthEnd(resumeDate: string, classDays: number[]): number {
-  if (!resumeDate || classDays.length === 0) return 0;
+  if (!resumeDate) return 0;
 
-  const start = new Date(resumeDate);
+  const start = new Date(`${resumeDate}T00:00:00`);
   const end = new Date(start.getFullYear(), start.getMonth() + 1, 0); // 월말
   let count = 0;
 
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    if (classDays.includes(d.getDay())) count++;
+    if (classDays.length === 0 || classDays.includes(d.getDay())) count++;
   }
   return count;
 }
@@ -138,7 +138,7 @@ export function StudentResumeModal({
   onSuccess,
 }: StudentResumeModalProps) {
   const [resumeDate, setResumeDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
   );
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -148,7 +148,7 @@ export function StudentResumeModal({
     if (!student || !resumeDate) return null;
 
     const classDaysArray = parseClassDays(student.class_days);
-    const weeklyCount = student.weekly_count || classDaysArray.length || 2;
+    const weeklyCount = classDaysArray.length || 2;
     const monthlyTuition = parseFloat(student.monthly_tuition) || 0;
     const discountRate = parseFloat(student.discount_rate) || 0;
 
@@ -159,12 +159,13 @@ export function StudentResumeModal({
     const monthlyTotal = weeklyCount * 4;
 
     // 복귀일~월말 수업 횟수
-    const remainingDays = countClassDaysUntilMonthEnd(resumeDate, classDaysArray);
+    const remainingDays = Math.min(countClassDaysUntilMonthEnd(resumeDate, classDaysArray), monthlyTotal);
 
     // 일할계산 금액 (천원 단위 절삭)
-    const proRatedAmount = monthlyTotal > 0
-      ? truncateToThousands(discountedTuition * (remainingDays / monthlyTotal))
-      : 0;
+    const baseAmount = resumeDate.endsWith('-01')
+      ? monthlyTuition
+      : truncateToThousands(monthlyTuition * (remainingDays / monthlyTotal));
+    const proRatedAmount = baseAmount - truncateToThousands(baseAmount * discountRate / 100);
 
     return {
       classDays: formatClassDays(student.class_days),
@@ -178,7 +179,7 @@ export function StudentResumeModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!student) return;
+    if (!student || processing || !resumeDate) return;
 
     try {
       setProcessing(true);
@@ -191,7 +192,8 @@ export function StudentResumeModal({
       });
 
       onSuccess();
-      handleClose();
+      setError('');
+      onClose();
     } catch (err: unknown) {
       console.warn('학생 복귀 처리에 실패했습니다.', err);
       setError(getResumeErrorMessage(err));
@@ -201,7 +203,8 @@ export function StudentResumeModal({
   };
 
   const handleClose = () => {
-    setResumeDate(new Date().toISOString().split('T')[0]);
+    if (processing) return;
+    setResumeDate(new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' }));
     setError('');
     onClose();
   };
@@ -219,7 +222,7 @@ export function StudentResumeModal({
             휴원 복귀 처리
           </DialogTitle>
           <DialogDescription>
-            {student.name} 학생의 복귀 날짜를 선택해주세요.
+            {student.name} 학생은 며칠에 복귀하시겠습니까?
           </DialogDescription>
         </DialogHeader>
 
@@ -264,7 +267,9 @@ export function StudentResumeModal({
                 value={resumeDate}
                 onChange={(e) => setResumeDate(e.target.value)}
                 className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                min={new Date().toISOString().split('T')[0]}
+                min={student.rest_start_date || undefined}
+                required
+                disabled={processing}
               />
             </div>
 
@@ -291,7 +296,7 @@ export function StudentResumeModal({
                 <div className="flex items-start gap-2 text-emerald-600 dark:text-emerald-500">
                   <Banknote className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <div>
-                    <div>예상 학원비 (일할계산)</div>
+                    <div>청구가 없을 때 예상 학원비 (일할계산)</div>
                     <div className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
                       {formatCurrency(preview.proRatedAmount)}
                     </div>
@@ -304,6 +309,7 @@ export function StudentResumeModal({
                 <div className="text-xs text-emerald-600 dark:text-emerald-500">
                   휴식 크레딧은 복귀 전날까지의 실제 휴식일수로 자동 재계산됩니다.
                 </div>
+                <p className="text-xs">기존 월 청구가 있으면 중복 생성하지 않으며, 같은 달 휴원으로 줄어든 청구는 복귀 기간을 반영합니다.</p>
               </div>
             )}
 
@@ -316,7 +322,7 @@ export function StudentResumeModal({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={processing}>
               취소
             </Button>
             <Button

@@ -1,0 +1,2 @@
+-- Preserve/export admission data before an explicitly authorized destructive rollback.
+DROP TABLE IF EXISTS ilsan_admission_applications;

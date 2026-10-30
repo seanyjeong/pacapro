@@ -320,7 +320,7 @@ async function runDesktop(browser) {
   }
   await page.goBack({ waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
-  await page.getByRole('button', { name: /미등록관리/ }).click();
+  await page.getByRole('button', { name: '미등록관리 상담 후속' }).click();
   await page.getByPlaceholder('학생·부모님 이름, 학번, 연락처').fill('이민수');
   await pendingRow.waitFor();
   await clickWithoutNativeDialog(page, pendingRow.locator('button').last(), 'pending student delete');

@@ -8,13 +8,16 @@ import { StudentStatsCards } from '@/components/students/student-stats-cards';
 import { useStudents } from '@/hooks/use-students';
 import { exportsApi } from '@/lib/api/exports';
 import { studentsAPI } from '@/lib/api/students';
+import { rememberStudentListReturn } from './student-list-return';
 import {
+    buildStudentListQuery,
     getActiveFilterLabels,
     getFiltersForTab,
-    isStudentTab,
+    getNextSort,
+    readStudentListState,
     shouldShowStudentFilters,
 } from './student-page-utils';
-import type { StudentTab } from './student-page-types';
+import type { StudentListSort, StudentTab } from './student-page-types';
 import { StudentsEmptyGuide } from './students-empty-guide';
 import { StudentsPageError } from './students-page-error';
 import { StudentsPageHeader } from './students-page-header';
@@ -43,25 +46,37 @@ export function StudentsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const excelUploadInputRef = useRef<HTMLInputElement>(null);
-    const tabParam = searchParams.get('tab');
-    const initialTab: StudentTab = isStudentTab(tabParam) ? tabParam : 'active';
+    const writtenQueryRef = useRef(searchParams.toString());
+    const [initialState] = useState(() => readStudentListState(new URLSearchParams(searchParams.toString())));
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<StudentTab>(initialTab);
+    const [searchQuery, setSearchQuery] = useState(initialState.search);
+    const [activeTab, setActiveTab] = useState<StudentTab>(initialState.tab);
+    const [sort, setSort] = useState<StudentListSort | null>(initialState.sort);
     const [statsRefreshTrigger, setStatsRefreshTrigger] = useState(0);
     const [excelDownloading, setExcelDownloading] = useState(false);
     const [excelUploading, setExcelUploading] = useState(false);
     const [summaryStats, setSummaryStats] = useState<StudentSummaryStats>(EMPTY_SUMMARY_STATS);
 
-    const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents(getFiltersForTab(initialTab));
+    const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents(initialState.filters);
+
+    // 사이드바 등 바깥에서 주소가 바뀌면 그 주소의 목록 상태를 따른다.
+    useEffect(() => {
+        const query = searchParams.toString();
+        if (query === writtenQueryRef.current) return;
+        writtenQueryRef.current = query;
+        const next = readStudentListState(new URLSearchParams(query));
+        setActiveTab(next.tab);
+        setSearchQuery(next.search);
+        setFilters(next.filters);
+        setSort(next.sort);
+    }, [searchParams, setFilters]);
 
     useEffect(() => {
-        if (isStudentTab(tabParam)) {
-            setActiveTab(tabParam);
-            setSearchQuery('');
-            setFilters(getFiltersForTab(tabParam));
-        }
-    }, [setFilters, tabParam]);
+        const query = buildStudentListQuery({ tab: activeTab, search: searchQuery, filters, sort });
+        if (query === writtenQueryRef.current) return;
+        writtenQueryRef.current = query;
+        window.history.replaceState(null, '', query ? `/students?${query}` : '/students');
+    }, [activeTab, filters, searchQuery, sort]);
 
     const handleReload = () => {
         reload();
@@ -82,6 +97,11 @@ export function StudentsPageContent() {
         setActiveTab(tab);
         setSearchQuery('');
         setFilters(getFiltersForTab(tab));
+        setSort(null);
+    };
+
+    const handleSortChange = (key: string) => {
+        setSort((current) => getNextSort(current, key));
     };
 
     const handleExcelDownload = async () => {
@@ -129,7 +149,10 @@ export function StudentsPageContent() {
     const filterLabels = getActiveFilterLabels(filters);
     const showFilters = shouldShowStudentFilters(activeTab);
     const showEmptyGuide = !loading && students.length === 0 && !searchQuery && !filters.grade && !filters.student_type;
-    const openStudentDetail = (id: number) => router.push(`/students/${id}`);
+    const openStudentDetail = (id: number) => {
+        rememberStudentListReturn(id);
+        router.push(`/students/${id}`);
+    };
 
     return (
         <div className="w-full max-w-full space-y-5" data-testid="students-operations-workspace">
@@ -179,8 +202,10 @@ export function StudentsPageContent() {
                             <StudentsPageList
                                 activeTab={activeTab}
                                 loading={loading}
+                                sort={sort}
                                 students={students}
                                 onReload={handleReload}
+                                onSortChange={handleSortChange}
                                 onStudentClick={openStudentDetail}
                             />
 

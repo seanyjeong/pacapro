@@ -138,11 +138,18 @@ export default function EditStudentPage() {
 
       {/* Form */}
       <StudentForm
+        key={`${student.id}-${student.status}`}
         mode="edit"
         initialData={student}
         initialIsTrial={isTrialActivation}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        onResumeSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['students'] });
+          queryClient.invalidateQueries({ queryKey: ['payments'] });
+          queryClient.invalidateQueries({ queryKey: ['schedules'] });
+          reload();
+        }}
         onPhotoChanged={() => {
           queryClient.invalidateQueries({ queryKey: ['students', studentId] });
           queryClient.invalidateQueries({ queryKey: ['students'] });

@@ -11,7 +11,8 @@ html, body {
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
 
 @layer base {
-  :root {
+  /* .theme-light: 다크모드에서도 밝게 고정하는 화면(로그인 등)에 라이트 토큰을 다시 적용 */
+  :root, .theme-light {
     /* 기본 색상 */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;

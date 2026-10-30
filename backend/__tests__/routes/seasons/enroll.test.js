@@ -380,6 +380,30 @@ describe('POST /paca/seasons/:id/enroll', () => {
         expect(paymentInserts[1][0]).not.toContain('season_id');
     });
 
+    test('201: 진행 중 시즌에 휴원생을 등록하면 시즌비만 청구하고 스케줄은 복귀 때로 미룬다', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{
+            id: 5, status: 'active', non_season_end_date: '2026-02-28', operating_days: '["월"]',
+            season_start_date: '2026-03-01', season_end_date: '2026-08-31', continuous_discount_type: 'none'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[{
+            id: 10, name: 'enc_홍길동', status: 'paused', class_days: '월수', monthly_tuition: 100000, grade: '고3'
+        }]]);
+        pool.execute.mockResolvedValueOnce([[]]);
+        pool.execute.mockResolvedValueOnce([[]]);
+        pool.execute.mockResolvedValueOnce([{ insertId: 99 }]);
+        pool.execute.mockResolvedValue([[{ id: 99, student_name: 'enc_홍길동' }]]);
+
+        const res = await request(makeApp()).post('/paca/seasons/5/enroll').send({
+            student_id: 10, season_fee: 100000, registration_date: '2026-02-15'
+        });
+
+        expect(res.status).toBe(201);
+        expect(res.body.schedule_assignment).toEqual({ removed_from_regular: null, assigned_to_season: null });
+        expect(pool.execute.mock.calls.find(c => c[0].includes('INSERT INTO student_payments'))).toBeDefined();
+        expect(pool.execute.mock.calls.find(c => c[0].includes('attendance'))).toBeUndefined();
+    });
+
     test('5xx: 한국어 메시지 + e.message 누출 0건', async () => {
         pool.execute.mockReset();
         pool.execute.mockRejectedValueOnce(new Error('DB error xyz'));

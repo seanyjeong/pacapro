@@ -1,38 +1,4 @@
-/**
- * routes/students/crud/update.js
- *
- * 학생 정보 수정 (PUT /paca/students/:id) — 18+ 필드 dynamic update + 학원비 자동 처리 +
- * 스케줄 재배정 + 체험생 trial_dates 분기 + pending→active 자동 학번 발급.
- *
- * ## Endpoint
- * - PUT /:id : 학생 정보 dynamic update.
- *
- * ## 인증
- * - verifyToken + checkPermission('students', 'edit') — owner / admin.
- *
- * ## DB 패턴 (ADR-005)
- * - 학생 행 잠금·갱신과 결제/스케줄 후처리를 하나의 connection 트랜잭션에서 처리한다.
- * - 검증 실패와 재무 처리 오류는 rollback 후 connection을 반환한다.
- *
- * ## 응답 표면 (ADR-013) — 보존 의무
- * - 200: `{message: 'Student updated successfully', student}` (기본) +
- *   상황별 옵션 root 키 (firstPaymentFromPending / trialAssignResult / paymentReassignResult /
- *   reassignResult / timeSlotReassignResult / scheduleDeleteResult / unpaidDeleteResult /
- *   schedulesDeleted / paymentsDeleted) — 프론트 `StudentUpdateResponse` (`{message, student}`) +
- *   `student-form.tsx` 가 옵션 키 직접 소비 (재배정 결과 토스트 표시).
- *   ⚠️ 모든 옵션 root 키 1:1 보존 — 변경 시 프론트 토스트 누락.
- * - 400/404: `{error, message}` 검증 메시지 영문 그대로 보존 (응답 표면 보존, 응답 통일 트랙으로 분리).
- *   404 만 ADR-003 한국어 적용 (`'학생 정보를 찾을 수 없습니다.'`).
- * - 5xx: `{error: 'Server Error', message: '학생 정보 수정에 실패했습니다.'}` (한국어, ADR-003).
- *
- * ## 보안 헬퍼 (ADR-007)
- * - `encrypt(value)` / `decryptFields(student, ENCRYPTED_FIELDS.students)` 시그니처 무변경.
- *
- * ## 후처리 분리
- * - 결제·스케줄 후처리는 `crud/update/` 모듈로 분리하고 이 파일은 요청 검증과 응답 계약을 담당한다.
- * - 신규생 일할 청구의 납부기한은 등록일이며, 이후 정기 청구부터 학생/학원 납부일을 적용한다.
- */
-
+// Student profile updates and their existing billing/schedule effects.
 const {
     pool,
     verifyToken,
@@ -166,6 +132,13 @@ router.put('/:id', verifyToken, checkPermission('students', 'edit'), async (req,
                 expectedPreviewHash: req.body.billing_preview_hash,
             })
             : null;
+
+        if (oldStatus === 'paused' && trialUpdate.status === 'active') {
+            return res.status(409).json({
+                error: 'RESUME_REQUIRED',
+                message: '휴원 학생은 휴원 복귀 버튼에서 복귀 날짜를 선택해주세요.',
+            });
+        }
 
         const parentContacts = prepareStudentParentContacts(req.body);
         const previousParents = decryptStudentParentContacts(students[0]);

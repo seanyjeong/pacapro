@@ -1,0 +1,42 @@
+{
+  "version": "4.0.25",
+  "frontend_target_version": "4.0.60",
+  "frontend_deployed": false,
+  "commit": "10a5405556e75f9a5ebe78c825c1774406ff57e9",
+  "rollback_tag": "rollback/paca-ilsan-existing-20261016",
+  "backup": "/root/backups/paca-ilsan-admission-20261016T130211244313Z",
+  "runtime_files": 9,
+  "services": [
+    "paca-failover.service"
+  ],
+  "schema_migrations": 0,
+  "new_table_preserved_on_rollback": true,
+  "authenticated_student_actions": 0,
+  "database_restore_executed": false,
+  "status": "deployed_verified",
+  "source_hashes_matched": true,
+  "env_unchanged": true,
+  "unrelated_services_unchanged": true,
+  "backup_integrity_verified": true,
+  "internal_health": {
+    "status": "OK",
+    "timestamp": "2026-10-16T13:02:14.853Z",
+    "uptime": 2.003985411,
+    "environment": "production"
+  },
+  "public_health": {
+    "status": "OK",
+    "timestamp": "2026-10-16T13:02:14.897Z",
+    "uptime": 2.047502981,
+    "environment": "production"
+  },
+  "route_smoke": {
+    "GET /paca/ilsan-admissions": 401,
+    "GET /paca/ilsan-admissions/1/existing-students": 401,
+    "POST /paca/ilsan-admissions/1/existing-preview": 401,
+    "POST /paca/ilsan-admissions/1/existing-confirm": 401,
+    "GET availability": 200,
+    "POST empty submission": 422
+  },
+  "at": "2026-10-16T13:02:14.987683+00:00"
+}

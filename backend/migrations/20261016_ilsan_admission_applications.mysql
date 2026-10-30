@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS ilsan_admission_applications (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  academy_id INT NOT NULL,
+  submission_key CHAR(36) NOT NULL,
+  payload_hash CHAR(64) NOT NULL,
+  profile_encrypted MEDIUMTEXT NOT NULL,
+  status ENUM('submitted','scheduled','enrolled','cancelled','review') NOT NULL DEFAULT 'submitted',
+  revision INT NOT NULL DEFAULT 1,
+  enrollment_date DATE NULL,
+  terms_json JSON NULL,
+  quote_json JSON NULL,
+  approved_by INT NULL,
+  approved_at DATETIME NULL,
+  student_id INT NULL,
+  payment_id INT NULL,
+  review_code VARCHAR(64) NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_admission_submission (academy_id, submission_key),
+  UNIQUE KEY uq_admission_student (student_id),
+  KEY idx_admission_due (academy_id, status, enrollment_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

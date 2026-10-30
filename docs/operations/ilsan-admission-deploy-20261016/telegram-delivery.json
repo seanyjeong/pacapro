@@ -1,0 +1,12 @@
+{
+  "reported_by": "Mac helper /tools/session_read",
+  "reported_at": "2026-10-16T06:58:29.369Z",
+  "file": "일산맥스_입학원서_접수용.html",
+  "bytes": 352002,
+  "message_id": 42,
+  "caption_message_id": 41,
+  "attachment_sent_reported": true,
+  "recipient_open_confirmed": false,
+  "production_file_readiness_browser_verified": true,
+  "production_test_submission": false
+}

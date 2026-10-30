@@ -29,6 +29,12 @@ export interface StudentResumeResponse {
     remainingClassDays: number;
     totalClassDays: number;
   } | null;
+  paymentAdjusted?: {
+    id: number;
+    yearMonth: string;
+    previousAmount: number;
+    finalAmount: number;
+  } | null;
   creditRecalculation: RestCreditRecalculation | null;
   resumeDate: string;
 }

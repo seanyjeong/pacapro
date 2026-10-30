@@ -9,6 +9,8 @@
  * UI 섹션 → _components/<XxxSection>.tsx
  */
 
+import { useState } from 'react';
+import { StudentResumeModal } from '../student-resume-modal';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudentRestModal } from '../student-rest-modal';
@@ -34,6 +36,7 @@ interface StudentFormProps {
   onCancel: () => void;
   onPhotoChanged?: () => void;
   onRestSuccess?: () => void;
+  onResumeSuccess?: () => void;
 }
 
 export function StudentForm({
@@ -44,10 +47,14 @@ export function StudentForm({
   onCancel,
   onPhotoChanged,
   onRestSuccess,
+  onResumeSuccess,
 }: StudentFormProps) {
   const hook = useStudentForm({ mode, initialData, initialIsTrial, onSubmit });
 
+  const [resumeOpen, setResumeOpen] = useState(false);
+
   return (
+    <>
     <form onSubmit={hook.handleSubmit} className="space-y-5">
       <StudentPhotoField
         mode={mode}
@@ -142,6 +149,8 @@ export function StudentForm({
         setIsIndefiniteRest={hook.setIsIndefiniteRest}
         handleChange={hook.handleChange}
         onOpenRestModal={() => hook.setRestModalOpen(true)}
+        onOpenResumeModal={() => setResumeOpen(true)}
+        submitting={hook.submitting}
       />
 
       {hook.showBillingPreview ? (
@@ -176,6 +185,28 @@ export function StudentForm({
         </Button>
       </div>
 
+    </form>
+      {mode === 'edit' && initialData?.status === 'paused' && (
+        <StudentResumeModal
+          open={resumeOpen}
+          onClose={() => setResumeOpen(false)}
+          student={{
+            ...initialData,
+            phone: initialData.phone || null,
+            school: initialData.school || null,
+            grade: initialData.grade || null,
+            rest_start_date: initialData.rest_start_date || '',
+            rest_end_date: initialData.rest_end_date || null,
+            rest_reason: initialData.rest_reason || null,
+            time_slot: initialData.time_slot || null,
+          }}
+          onSuccess={() => {
+            setResumeOpen(false);
+            if (onResumeSuccess) onResumeSuccess();
+            else window.location.reload();
+          }}
+        />
+      )}
       {/* 휴원 처리 모달 */}
       {initialData && (
         <StudentRestModal
@@ -205,6 +236,6 @@ export function StudentForm({
         onCancel={() => hook.setConfirmState(null)}
         onConfirm={hook.confirmPendingSubmit}
       />
-    </form>
+    </>
   );
 }

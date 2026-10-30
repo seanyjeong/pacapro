@@ -152,7 +152,8 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
                                    AND academy_id = ?
                                    AND \`year_month\` >= ?
                                    AND payment_status = 'pending'
-                                   AND payment_type = 'monthly'`,
+                                   AND payment_type = 'monthly'
+                                   AND NOT (is_prorated = 1 OR description LIKE '%일할계산%')`,
                                 [newTuition, finalTuition, id, academyId, currentYearMonth]
                             );
                         } catch (payErr) {
@@ -294,7 +295,8 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
                            AND academy_id = ?
                            AND \`year_month\` >= ?
                            AND payment_status = 'pending'
-                           AND payment_type = 'monthly'`,
+                           AND payment_type = 'monthly'
+                           AND NOT (is_prorated = 1 OR description LIKE '%일할계산%')`,
                         [newTuition, finalTuition, studentId, req.user.academyId, currentYearMonth]
                     );
                 } catch (payErr) {
