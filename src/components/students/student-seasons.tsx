@@ -13,6 +13,13 @@ import { StudentSeasonCancelDialog } from './student-season-cancel-dialog';
 import { StudentSeasonHistoryCard } from './student-season-history-card';
 import { StudentSeasonEditModal, StudentSeasonEnrollModal } from './student-season-modals';
 
+const EMPTY_EDIT_DATA = {
+  registration_date: '',
+  season_fee: 0,
+  discount_amount: 0,
+  discount_reason: '',
+};
+
 interface StudentSeasonsProps {
   studentId: number;
   studentType: 'exam' | 'adult';
@@ -29,18 +36,16 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [isContinuous, setIsContinuous] = useState(false);
   const [registrationDate, setRegistrationDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [seasonFee, setSeasonFee] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(0);
   const [preview, setPreview] = useState<ProRatedPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEnrollment, setEditingEnrollment] = useState<StudentSeason | null>(null);
-  const [editData, setEditData] = useState({
-    registration_date: '',
-    season_fee: 0,
-    discount_amount: 0,
-    discount_reason: '',
-  });
+  const [editData, setEditData] = useState(EMPTY_EDIT_DATA);
+  const [editOriginal, setEditOriginal] = useState(EMPTY_EDIT_DATA);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
@@ -71,21 +76,23 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     }
   }, [studentId]);
 
+  // 연속등록 기준 — 다른 시즌의 가장 최근 등록 (이력은 등록일 최신순)
+  const previousEnrollment = enrollments.find(e => e.season_id !== selectedSeasonId);
+
   const loadPreview = useCallback(async () => {
     if (!selectedSeasonId) return;
 
     try {
       setPreviewLoading(true);
       setPreviewError(null);
-      const previousEnrollment = enrollments.find(e =>
-        e.status === 'completed' || e.status === 'active'
-      );
       const previewData = await seasonsApi.getProRatedPreview(
         selectedSeasonId,
         studentId,
         isContinuous,
         isContinuous ? previousEnrollment?.season_id : undefined,
-        registrationDate  // 시즌 중간 합류 일할계산을 위한 등록일
+        registrationDate,  // 시즌 중간 합류 일할계산을 위한 등록일
+        seasonFee,
+        discountAmount
       );
       setPreview(previewData);
     } catch (err: unknown) {
@@ -103,7 +110,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     } finally {
       setPreviewLoading(false);
     }
-  }, [selectedSeasonId, enrollments, studentId, isContinuous, registrationDate]);
+  }, [selectedSeasonId, previousEnrollment?.season_id, studentId, isContinuous, registrationDate, seasonFee, discountAmount]);
 
   useEffect(() => {
     if (studentType === 'adult') return;
@@ -112,9 +119,10 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
 
   useEffect(() => {
     if (studentType === 'adult') return;
-    if (selectedSeasonId && showEnrollModal) {
-      loadPreview();
-    }
+    if (!selectedSeasonId || !showEnrollModal) return;
+    // 금액을 입력하는 동안 매 글자마다 계산하지 않도록 잠깐 기다린다
+    const timer = setTimeout(loadPreview, 300);
+    return () => clearTimeout(timer);
   }, [loadPreview, selectedSeasonId, showEnrollModal, studentType]);
 
   if (studentType === 'adult') {
@@ -136,28 +144,19 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
 
     try {
       setEnrolling(true);
-      const previousEnrollment = enrollments.find(e =>
-        e.status === 'completed' || e.status === 'active'
-      );
 
-      const selectedSeason = activeSeasons.find(s => s.id === selectedSeasonId);
-      const seasonFee = preview?.final_calculation?.season_fee ||
-        (selectedSeason ? parseFloat(selectedSeason.default_season_fee) : 0);
-
+      // season_fee 는 일할·할인 전 이 학생 시즌비 — 일할·연속등록 할인·직접 할인은 서버가 미리보기와 같은 계산으로 적용한다
       await seasonsApi.enrollStudent(selectedSeasonId, {
         student_id: studentId,
         season_fee: seasonFee,
+        discount_amount: discountAmount,
         registration_date: registrationDate,  // 시즌 중간 합류를 위한 등록일
         is_continuous: isContinuous,
         previous_season_id: isContinuous ? previousEnrollment?.season_id : undefined,
       }, { suppressErrorToast: true });
 
       toast.success('시즌 등록이 완료되었습니다.');
-      setShowEnrollModal(false);
-      setSelectedSeasonId(null);
-      setIsContinuous(false);
-      setRegistrationDate(new Date().toISOString().split('T')[0]);
-      setPreview(null);
+      closeEnrollModal();
       loadData();
     } catch (err: unknown) {
       console.warn('시즌 등록에 실패했습니다.', err);
@@ -167,15 +166,36 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     }
   };
 
+  const changeSelectedSeason = (seasonId: number | null) => {
+    const season = activeSeasons.find(s => s.id === seasonId);
+    setSelectedSeasonId(seasonId);
+    setSeasonFee(season ? parseFloat(season.default_season_fee) || 0 : 0);
+    setDiscountAmount(0);
+  };
+
+  const closeEnrollModal = () => {
+    setShowEnrollModal(false);
+    setSelectedSeasonId(null);
+    setIsContinuous(false);
+    setRegistrationDate(new Date().toISOString().split('T')[0]);
+    setSeasonFee(0);
+    setDiscountAmount(0);
+    setPreview(null);
+    setPreviewError(null);
+  };
+
   const handleEditClick = (enrollment: StudentSeason) => {
+    // 시즌비는 일할·할인 전 이 학생 시즌비(청구의 기본 금액), 할인은 직접 할인만 — 연속등록 할인은 서버가 다시 계산한다
+    const original = {
+      registration_date: enrollment.registration_date || '',
+      season_fee: parseFloat(String(enrollment.season_base_fee ?? '')) || parseFloat(String(enrollment.default_season_fee ?? '')) || 0,
+      discount_amount: enrollment.discount_type === 'manual' ? parseFloat(String(enrollment.discount_amount)) || 0 : 0,
+      discount_reason: enrollment.discount_reason || '',
+    };
     setEditError(null);
     setEditingEnrollment(enrollment);
-    setEditData({
-      registration_date: enrollment.registration_date || '',
-      season_fee: parseFloat(String(enrollment.season_fee)) || 0,
-      discount_amount: parseFloat(String(enrollment.discount_amount)) || 0,
-      discount_reason: enrollment.discount_type === 'custom' ? '할인 적용' : '',
-    });
+    setEditData(original);
+    setEditOriginal(original);
     setShowEditModal(true);
   };
 
@@ -185,31 +205,39 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     try {
       setSaving(true);
       setEditError(null);
-      await seasonsApi.updateEnrollment(editingEnrollment.id, {
-        registration_date: editData.registration_date || undefined,
-        season_fee: editData.season_fee,
-        discount_amount: editData.discount_amount,
-        discount_reason: editData.discount_reason || undefined,
-      }, { suppressErrorToast: true });
+      // 바꾼 값만 보낸다 — 안 바꾼 값은 서버가 지금 값 그대로 다시 계산한다
+      const changed = <K extends keyof typeof editData>(key: K) =>
+        editData[key] !== editOriginal[key] ? editData[key] : undefined;
+      const changes = {
+        registration_date: editData.registration_date ? changed('registration_date') : undefined,
+        season_fee: changed('season_fee'),
+        discount_amount: changed('discount_amount'),
+        discount_reason: changed('discount_reason'),
+      };
+      if (Object.values(changes).every(value => value === undefined)) {
+        setShowEditModal(false);
+        setEditingEnrollment(null);
+        return;
+      }
+      const { enrollment } = await seasonsApi.updateEnrollment(editingEnrollment.id, changes, { suppressErrorToast: true });
 
-      toast.success('시즌 등록 정보가 수정되었습니다.');
+      toast.success('시즌 등록 정보가 수정되었습니다.', {
+        description: `청구 금액 ${Math.floor(parseFloat(String(enrollment.season_fee)) || 0).toLocaleString()}원`,
+      });
       setShowEditModal(false);
       setEditingEnrollment(null);
       loadData();
     } catch (err: unknown) {
       console.warn('시즌 등록 정보 수정에 실패했습니다.', err);
-      setEditError('시즌 등록 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      setEditError(axios.isAxiosError(err) && err.response?.status === 409
+        ? err.response.data?.message
+        : '시즌 등록 정보를 수정하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleOpenRefundModal = async (enrollment: StudentSeason) => {
-    if (enrollment.payment_status !== 'paid') {
-      toast.error('완납된 시즌만 환불 처리할 수 있습니다.');
-      return;
-    }
-
     try {
       setRefundLoading(true);
       setSelectedEnrollmentForRefund(enrollment);
@@ -332,21 +360,18 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
           selectedSeasonId={selectedSeasonId}
           registrationDate={registrationDate}
           isContinuous={isContinuous}
+          seasonFee={seasonFee}
+          discountAmount={discountAmount}
           preview={preview}
           previewLoading={previewLoading}
           previewError={previewError}
           enrolling={enrolling}
-          onSeasonChange={setSelectedSeasonId}
+          onSeasonChange={changeSelectedSeason}
           onRegistrationDateChange={setRegistrationDate}
           onContinuousChange={setIsContinuous}
-          onClose={() => {
-            setShowEnrollModal(false);
-            setSelectedSeasonId(null);
-            setIsContinuous(false);
-            setRegistrationDate(new Date().toISOString().split('T')[0]);
-            setPreview(null);
-            setPreviewError(null);
-          }}
+          onSeasonFeeChange={setSeasonFee}
+          onDiscountChange={setDiscountAmount}
+          onClose={closeEnrollModal}
           onEnroll={handleEnroll}
         />
       )}

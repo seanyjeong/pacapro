@@ -119,7 +119,7 @@ const students = [
 ];
 
 function makeState(overrides = {}) {
-  return { externalContinues: [], hits: [], enrollPayloads: [], ...overrides };
+  return { externalContinues: [], hits: [], enrollPayloads: [], previewQueries: [], ...overrides };
 }
 
 async function installRoutes(context, state) {
@@ -156,6 +156,36 @@ async function installRoutes(context, state) {
       url.searchParams.get('is_trial') === 'false'
     ) {
       return jsonRoute(route, { students });
+    }
+    if (method === 'GET' && path === '/seasons/88/preview') {
+      // 서버 미리보기 흉내 — 시즌 도중 합류 80% 일할 후 직접 할인
+      const fee = Number(url.searchParams.get('season_fee'));
+      const discount = Number(url.searchParams.get('discount_amount') || 0);
+      const prorated = Math.floor((fee * 0.8) / 1000) * 1000;
+      state.previewQueries.push(url.search);
+      return jsonRoute(route, {
+        message: 'ok',
+        preview: {
+          mid_season_prorated: {
+            is_mid_season: true,
+            original_fee: fee,
+            prorated_fee: prorated,
+            discount: fee - prorated,
+            total_days: 50,
+            remaining_days: 40,
+            details: '40/50일',
+          },
+          final_calculation: {
+            season_fee: prorated,
+            original_season_fee: fee,
+            mid_season_discount: fee - prorated,
+            prorated_fee: 0,
+            discount_amount: 0,
+            manual_discount: discount,
+            total_due: Math.max(0, prorated - discount),
+          },
+        },
+      });
     }
     if (state.failEnroll && method === 'POST' && path === '/seasons/88/enroll') {
       return jsonRoute(route, { message: 'HTTP 500 stack trace' }, 500);
@@ -231,13 +261,21 @@ async function runNormal(browser) {
   await page.locator('[data-testid="available-student-row"]:has-text("김민서")').getByRole('button', { name: '시간대 선택' }).click();
   await page.getByRole('dialog', { name: '시간대 선택' }).waitFor();
   await page.getByRole('button', { name: '오전' }).click();
+  await page.getByText('최종 1,200,000원').waitFor();
+  await page.getByLabel('이 학생 시즌비').fill('1400000');
   await page.getByLabel('할인 금액').fill('100000');
+  await page.getByText('최종 1,020,000원').waitFor();
+  await page.getByText('중간합류 (40/50일) -280,000원').waitFor();
   await page.getByRole('button', { name: '등록하기' }).click();
   await page.getByText('시즌 등록이 완료되었습니다.').waitFor();
 
   const payload = state.enrollPayloads.at(-1);
   if (payload?.student_id !== 10) throw new Error(`unexpected student id ${JSON.stringify(payload)}`);
-  if (payload?.season_fee !== 1500000) throw new Error(`unexpected fee ${JSON.stringify(payload)}`);
+  // 일할 전 이 학생 시즌비를 보낸다 — 일할은 서버가 한 번만 한다
+  if (payload?.season_fee !== 1400000) throw new Error(`unexpected fee ${JSON.stringify(payload)}`);
+  if (!state.previewQueries.some((query) => query.includes('season_fee=1400000') && query.includes('discount_amount=100000'))) {
+    throw new Error(`preview did not use edited fee: ${JSON.stringify(state.previewQueries)}`);
+  }
   if (payload?.discount_amount !== 100000) throw new Error(`unexpected discount ${JSON.stringify(payload)}`);
   for (const slot of ['afternoon', 'evening', 'morning']) {
     if (!payload?.time_slots?.includes(slot)) throw new Error(`missing slot ${slot}: ${JSON.stringify(payload)}`);

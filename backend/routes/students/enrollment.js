@@ -40,6 +40,7 @@ const pool = require('../../config/database');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
 const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
+const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../../services/seasonPaymentSummary');
 const {
     getAdmissionTypeAfterGradeChange,
 } = require('../../services/studentGradePromotionService');
@@ -235,6 +236,7 @@ require('./enrollment/autoPromote')(router);
 
 /**
  * GET /paca/students/:id/seasons — 학생의 시즌 등록 이력 (student_seasons + seasons join).
+ *   status(등록 상태)·청구 기본 금액을 함께 주고, 납부 상태·낸 금액은 시즌 화면과 같이 시즌비 청구 기준으로 요약한다.
  * Access: verifyToken (학원 소속 검증은 SQL where 절). 응답: { message, student, seasons } (ADR-013 보존).
  */
 router.get('/:id/seasons', verifyToken, async (req, res) => {
@@ -255,6 +257,7 @@ router.get('/:id/seasons', verifyToken, async (req, res) => {
 
         const [seasons] = await pool.execute(
             `SELECT
+                ss.id,
                 ss.id as enrollment_id,
                 ss.season_id,
                 ss.season_fee,
@@ -267,6 +270,7 @@ router.get('/:id/seasons', verifyToken, async (req, res) => {
                 ss.previous_season_id,
                 ss.discount_type,
                 ss.discount_amount,
+                ss.discount_reason,
                 ss.payment_status,
                 ss.paid_date,
                 ss.paid_amount,
@@ -283,13 +287,30 @@ router.get('/:id/seasons', verifyToken, async (req, res) => {
                 s.non_season_end_date,
                 s.status as season_status,
                 s.operating_days,
-                s.grade_time_slots
+                s.grade_time_slots,
+                s.default_season_fee,
+                (SELECT MAX(p.base_amount) FROM student_payments p
+                 WHERE p.student_id = ss.student_id AND p.payment_type = 'season'
+                 AND p.description LIKE CONCAT('%', s.season_name, '%')) as season_base_fee,
+                CASE
+                    WHEN ss.is_cancelled = 1 THEN 'cancelled'
+                    WHEN s.status = 'ended' THEN 'completed'
+                    WHEN s.status = 'active' THEN 'active'
+                    ELSE 'registered'
+                END as status,
+                sp.payment_paid_amount,
+                sp.payment_final_amount,
+                sp.payment_record_status
             FROM student_seasons ss
             JOIN seasons s ON ss.season_id = s.id
+            ${SEASON_PAYMENT_SUMMARY_JOIN}
             WHERE ss.student_id = ?
             ORDER BY ss.registration_date DESC`,
             [studentId]
         );
+
+        // 납부 상태·낸 금액은 시즌 화면과 같이 시즌비 청구 기준 (시즌 화면 목록과 같은 요약)
+        seasons.forEach(applySeasonPaymentSummary);
 
         res.json({
             message: `Found ${seasons.length} season enrollments`,

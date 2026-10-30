@@ -54,12 +54,15 @@ export function SeasonEnrollPage() {
       <SeasonEnrollTimeSlotDialog
         discountAmount={state.discountAmount}
         enrolling={state.enrollingId === state.selectedStudent?.id}
-        season={state.season}
+        preview={state.preview}
+        previewLoading={state.previewLoading}
+        seasonFee={state.seasonFee}
         selectedStudent={state.selectedStudent}
         selectedTimeSlots={state.selectedTimeSlots}
         onClose={state.closeDialog}
         onConfirm={state.confirmEnrollment}
         onDiscountChange={state.setDiscountAmount}
+        onSeasonFeeChange={state.setSeasonFee}
         onTimeSlotToggle={state.changeTimeSlot}
       />
     </div>

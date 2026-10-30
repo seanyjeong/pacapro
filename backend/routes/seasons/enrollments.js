@@ -7,6 +7,7 @@
  * Endpoint (4건, 정적 /enrollments/* 경로 — /:id 와일드카드 충돌 회피 위해 가장 먼저 등록):
  *   - POST /enrollments/:enrollment_id/pay              — 시즌비 납부 기록 + revenues INSERT
  *   - PUT  /enrollments/:enrollment_id                   — 등록 정보 수정 (등록일/시즌비/할인/시간대)
+ *                                                          (금액 재계산·안 낸 청구 동기화는 services/seasonEnrollmentUpdateService — MCP season_enrollment_update 와 공유)
  *   - POST /enrollments/:enrollment_id/refund-preview    — 환불 미리보기 계산
  *   - POST /enrollments/:enrollment_id/cancel            — 등록 취소 + 환불 처리 + 시즌비 청구 정리
  *                                                          (환불 계산·반영은 services/seasonEnrollmentService — MCP season_enrollment_cancel 과 공유)
@@ -43,6 +44,7 @@ const {
 const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../../services/seasonPaymentSummary');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { planSeasonCancel, applySeasonCancel } = require('../../services/seasonEnrollmentService');
+const { planSeasonEnrollmentUpdate, applySeasonEnrollmentUpdate } = require('../../services/seasonEnrollmentUpdateService');
 
 module.exports = function(router) {
 
@@ -182,48 +184,42 @@ router.put('/enrollments/:enrollment_id', verifyToken, checkPermission('seasons'
             });
         }
 
-        const updates = [];
-        const params = [];
+        const changes = { registration_date, season_fee, discount_amount, discount_reason, time_slots };
+        Object.keys(changes).forEach(key => changes[key] === undefined && delete changes[key]);
 
-        if (registration_date !== undefined) {
-            updates.push('registration_date = ?');
-            params.push(registration_date);
-        }
-
-        if (season_fee !== undefined) {
-            updates.push('season_fee = ?');
-            params.push(season_fee);
-        }
-
-        if (discount_amount !== undefined) {
-            updates.push('discount_amount = ?');
-            params.push(discount_amount);
-        }
-
-        if (discount_reason !== undefined) {
-            updates.push('discount_type = ?');
-            params.push(discount_reason ? 'custom' : 'none');
-        }
-
-        if (time_slots !== undefined) {
-            updates.push('time_slots = ?');
-            params.push(JSON.stringify(time_slots));
-        }
-
-        if (updates.length === 0) {
+        if (Object.keys(changes).length === 0) {
             return res.status(400).json({
                 error: 'Validation Error',
                 message: 'No fields to update'
             });
         }
 
-        updates.push('updated_at = NOW()');
-        params.push(enrollmentId);
+        if (['season_fee', 'discount_amount'].some(key => changes[key] !== undefined && !(Number(changes[key]) >= 0))) {
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: '시즌비와 할인 금액은 0 이상 숫자로 입력해 주세요.'
+            });
+        }
 
-        await pool.execute(
-            `UPDATE student_seasons SET ${updates.join(', ')} WHERE id = ?`,
-            params
+        const [[season]] = await pool.execute('SELECT * FROM seasons WHERE id = ?', [enrollment.season_id]);
+        const [[student]] = await pool.execute('SELECT * FROM students WHERE id = ?', [enrollment.student_id]);
+        const [bills] = await pool.execute(
+            `SELECT id, \`year_month\`, base_amount, final_amount, paid_amount, payment_status, due_date
+             FROM student_payments
+             WHERE student_id = ? AND academy_id = ? AND payment_type = 'season' AND description LIKE ?
+             ORDER BY id`,
+            [enrollment.student_id, req.user.academyId, `%${enrollment.season_name}%`]
         );
+
+        const planned = planSeasonEnrollmentUpdate({ enrollment, season, student, bills, changes });
+        if (planned.conflict) {
+            return res.status(409).json({
+                error: 'Conflict',
+                message: planned.conflict
+            });
+        }
+
+        await applySeasonEnrollmentUpdate(pool, { enrollmentId, changes, planned });
 
         const [updated] = await pool.execute(
             `SELECT

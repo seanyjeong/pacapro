@@ -101,8 +101,11 @@ export interface StudentSeason {
   prorated_details: ProRatedDetails | null;
   is_continuous: boolean;
   previous_season_id: number | null;
-  discount_type: ContinuousDiscountType | 'custom' | null;
+  discount_type: ContinuousDiscountType | 'manual' | 'custom' | null;
   discount_amount: string | null;
+  discount_reason?: string | null;
+  default_season_fee?: string;
+  season_base_fee?: string | null;  // 시즌비 청구의 일할·할인 전 금액
   final_fee: string;
   paid_amount?: string | number | null;
   remaining_amount?: string | number | null;
@@ -188,7 +191,8 @@ export interface ProRatedPreview {
     original_season_fee?: number;  // 일할 전 원래 시즌비
     mid_season_discount?: number;  // 시즌 중간 합류 할인액
     prorated_fee: number;
-    discount_amount: number;
+    discount_amount: number;  // 연속등록 할인
+    manual_discount?: number;  // 직접 할인
     total_due: number;
   };
   // 비시즌 종강 일할 정보 (시즌 전달 학원비에서 별도 청구됨)

@@ -133,22 +133,79 @@ describe('PUT /paca/seasons/enrollments/:id', () => {
         expect(res.body.message).toBe('No fields to update');
     });
 
-    test('200: dynamic update + 응답 표면 {message, enrollment}', async () => {
+    const enrollmentRow = {
+        id: 1, academy_id: 1, student_id: 10, season_id: 5, student_name: 'enc_x', season_name: 'S',
+        season_fee: 300000, registration_date: '2026-05-01', discount_type: 'none', discount_amount: 0,
+        is_continuous: 0, previous_season_id: null
+    };
+    const seasonRow = {
+        id: 5, season_name: 'S', season_start_date: '2026-06-01', season_end_date: '2026-08-31',
+        non_season_end_date: null, operating_days: '[1,3,5]', default_season_fee: 300000,
+        continuous_discount_type: 'none', payment_due_date: null
+    };
+    const studentRow = { id: 10, class_days: null };
+    const bill = (overrides = {}) => ({
+        id: 77, year_month: '2026-06', base_amount: 300000, final_amount: 300000,
+        paid_amount: 0, payment_status: 'pending', due_date: '2026-05-08', ...overrides
+    });
+    function mockReads(bills) {
         pool.execute.mockReset();
-        pool.execute.mockResolvedValueOnce([[{ id: 1, academy_id: 1, student_name: 'enc_x', season_name: 'S' }]]);
-        pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
-        pool.execute.mockResolvedValueOnce([[{ id: 1, student_name: 'enc_x', season_name: 'S' }]]);
-        const res = await request(makeApp()).put('/paca/seasons/enrollments/1').send({
-            registration_date: '2026-05-01', season_fee: 200000, time_slots: ['evening']
-        });
+        pool.execute.mockResolvedValueOnce([[enrollmentRow]]);
+        pool.execute.mockResolvedValueOnce([[seasonRow]]);
+        pool.execute.mockResolvedValueOnce([[studentRow]]);
+        pool.execute.mockResolvedValueOnce([bills]);
+        pool.execute.mockResolvedValue([[{ id: 1, student_name: 'enc_x', season_name: 'S' }]]);
+    }
+    const sqlCalls = pattern => pool.execute.mock.calls.filter(([sql]) => pattern.test(sql));
+
+    test('200: 시간대만 바꾸면 금액·청구는 그대로 + 응답 표면 {message, enrollment}', async () => {
+        mockReads([bill()]);
+        const res = await request(makeApp()).put('/paca/seasons/enrollments/1').send({ time_slots: ['evening'] });
         expect(res.status).toBe(200);
         expect(res.body.message).toBe('Season enrollment updated successfully');
-        expect(res.body.enrollment).toBeDefined();
-        // UPDATE SQL 에 dynamic SET 절 포함
-        expect(pool.execute.mock.calls[1][0]).toMatch(/UPDATE student_seasons SET/);
-        expect(pool.execute.mock.calls[1][0]).toMatch(/registration_date = \?/);
-        expect(pool.execute.mock.calls[1][0]).toMatch(/season_fee = \?/);
-        expect(pool.execute.mock.calls[1][0]).toMatch(/time_slots = \?/);
+        expect(res.body.enrollment.student_name).toBe('x');
+        const [[sql, params]] = sqlCalls(/UPDATE student_seasons SET/);
+        expect(sql).toMatch(/time_slots = \?/);
+        expect(sql).not.toMatch(/season_fee = \?/);
+        expect(params).toEqual(['["evening"]', 1]);
+        expect(sqlCalls(/UPDATE student_payments/)).toHaveLength(0);
+    });
+
+    test('200: 이 학생 시즌비·직접 할인을 바꾸면 등록과 같이 다시 계산하고 안 낸 청구도 같이 고친다', async () => {
+        mockReads([bill()]);
+        const res = await request(makeApp()).put('/paca/seasons/enrollments/1').send({
+            season_fee: 250000, discount_amount: 20000, discount_reason: '형제 할인'
+        });
+        expect(res.status).toBe(200);
+        const [[sql, params]] = sqlCalls(/UPDATE student_seasons SET/);
+        expect(sql).toMatch(/season_fee = \?, discount_type = \?, discount_amount = \?, discount_reason = \?/);
+        expect(params).toEqual([230000, 'manual', 20000, '형제 할인', 1]);
+        const [[, billParams]] = sqlCalls(/UPDATE student_payments/);
+        expect(billParams).toEqual([250000, 20000, 230000, '2026-05-08', 'S 시즌비', 77]);
+    });
+
+    test('200: 할인 사유만 넣어도 저장된다 (DB enum 에 없는 discount_type 을 쓰지 않는다)', async () => {
+        mockReads([bill()]);
+        const res = await request(makeApp()).put('/paca/seasons/enrollments/1').send({ discount_reason: '장학' });
+        expect(res.status).toBe(200);
+        const [[sql, params]] = sqlCalls(/UPDATE student_seasons SET/);
+        expect(sql).not.toMatch(/discount_type/);
+        expect(params).toEqual(['장학', 1]);
+    });
+
+    test('409: 낸 돈이 있는 청구는 금액이 달라지면 아무것도 바꾸지 않는다', async () => {
+        mockReads([bill({ paid_amount: 100000, payment_status: 'partial' })]);
+        const res = await request(makeApp()).put('/paca/seasons/enrollments/1').send({ discount_amount: 50000 });
+        expect(res.status).toBe(409);
+        expect(res.body.message).toMatch(/결제 화면/);
+        expect(sqlCalls(/UPDATE/)).toHaveLength(0);
+    });
+
+    test('400: 금액이 숫자가 아니면 막는다', async () => {
+        mockReads([bill()]);
+        const res = await request(makeApp()).put('/paca/seasons/enrollments/1').send({ season_fee: 'abc' });
+        expect(res.status).toBe(400);
+        expect(sqlCalls(/UPDATE/)).toHaveLength(0);
     });
 
     test('5xx: 한국어 메시지', async () => {

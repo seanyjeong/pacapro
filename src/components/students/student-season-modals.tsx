@@ -29,6 +29,8 @@ interface StudentSeasonEnrollModalProps {
   selectedSeasonId: number | null;
   registrationDate: string;
   isContinuous: boolean;
+  seasonFee: number;
+  discountAmount: number;
   preview: ProRatedPreview | null;
   previewLoading: boolean;
   previewError: string | null;
@@ -36,6 +38,8 @@ interface StudentSeasonEnrollModalProps {
   onSeasonChange: (seasonId: number | null) => void;
   onRegistrationDateChange: (registrationDate: string) => void;
   onContinuousChange: (isContinuous: boolean) => void;
+  onSeasonFeeChange: (seasonFee: number) => void;
+  onDiscountChange: (discountAmount: number) => void;
   onClose: () => void;
   onEnroll: () => void;
 }
@@ -78,8 +82,9 @@ export function StudentSeasonEditModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">시즌비</label>
+            <label htmlFor="student-season-edit-fee" className="block text-sm font-medium text-gray-700 mb-1">이 학생 시즌비 (일할·할인 전)</label>
             <MoneyInput
+              id="student-season-edit-fee"
               value={editData.season_fee}
               onChange={(season_fee) => onEditDataChange({ ...editData, season_fee })}
               className="focus:ring-primary-500 focus:border-primary-500"
@@ -88,8 +93,9 @@ export function StudentSeasonEditModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">할인 금액</label>
+            <label htmlFor="student-season-edit-discount" className="block text-sm font-medium text-gray-700 mb-1">직접 할인</label>
             <MoneyInput
+              id="student-season-edit-discount"
               value={editData.discount_amount}
               onChange={(discount_amount) => onEditDataChange({ ...editData, discount_amount })}
               className="focus:ring-primary-500 focus:border-primary-500"
@@ -97,23 +103,27 @@ export function StudentSeasonEditModal({
             <p className="text-xs text-gray-500 mt-1">1만원 단위</p>
           </div>
 
+          <div>
+            <label htmlFor="student-season-edit-reason" className="block text-sm font-medium text-gray-700 mb-1">할인 사유</label>
+            <input
+              id="student-season-edit-reason"
+              type="text"
+              maxLength={255}
+              value={editData.discount_reason}
+              onChange={(e) => onEditDataChange({ ...editData, discount_reason: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+            />
+          </div>
+
           <div className="p-3 bg-gray-50 rounded-lg">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">시즌비</span>
-              <span>{editData.season_fee.toLocaleString()}원</span>
+              <span className="text-gray-600">지금 청구 금액</span>
+              <span>{formatSeasonFee(editingEnrollment.season_fee)}</span>
             </div>
-            {editData.discount_amount > 0 && (
-              <div className="flex justify-between text-sm text-red-600 mt-1">
-                <span>할인</span>
-                <span>-{editData.discount_amount.toLocaleString()}원</span>
-              </div>
-            )}
-            <div className="flex justify-between font-semibold mt-2 pt-2 border-t">
-              <span>최종 금액</span>
-              <span className="text-primary-600">
-                {Math.max(0, editData.season_fee - editData.discount_amount).toLocaleString()}원
-              </span>
-            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              저장하면 시즌 도중 합류 일할과 연속등록 할인을 등록 때와 같이 다시 계산해, 아직 안 낸 시즌비 청구에 반영합니다.
+              이미 낸 돈이 있으면 청구 금액은 결제 화면에서 고쳐 주세요.
+            </p>
           </div>
         </div>
 
@@ -145,6 +155,8 @@ export function StudentSeasonEnrollModal({
   selectedSeasonId,
   registrationDate,
   isContinuous,
+  seasonFee,
+  discountAmount,
   preview,
   previewLoading,
   previewError,
@@ -152,6 +164,8 @@ export function StudentSeasonEnrollModal({
   onSeasonChange,
   onRegistrationDateChange,
   onContinuousChange,
+  onSeasonFeeChange,
+  onDiscountChange,
   onClose,
   onEnroll,
 }: StudentSeasonEnrollModalProps) {
@@ -205,6 +219,19 @@ export function StudentSeasonEnrollModal({
           )}
 
           {selectedSeasonId && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="student-season-enroll-fee" className="block text-sm font-medium text-gray-700 mb-1">이 학생 시즌비</label>
+                <MoneyInput id="student-season-enroll-fee" value={seasonFee} onChange={onSeasonFeeChange} />
+              </div>
+              <div>
+                <label htmlFor="student-season-enroll-discount" className="block text-sm font-medium text-gray-700 mb-1">직접 할인</label>
+                <MoneyInput id="student-season-enroll-discount" value={discountAmount} onChange={onDiscountChange} />
+              </div>
+            </div>
+          )}
+
+          {selectedSeasonId && (
             <div className="border-t pt-4">
               <h4 className="text-sm font-medium text-gray-900 mb-2">납부 예상 금액</h4>
               {previewLoading ? (
@@ -230,7 +257,7 @@ export function StudentSeasonEnrollModal({
           <Button variant="outline" onClick={onClose}>
             취소
           </Button>
-          <Button onClick={onEnroll} disabled={!selectedSeasonId || enrolling || !!previewError}>
+          <Button onClick={onEnroll} disabled={!selectedSeasonId || enrolling || previewLoading || !!previewError}>
             {enrolling && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
             등록
           </Button>
@@ -269,6 +296,13 @@ function SeasonPreview({ preview }: { preview: ProRatedPreview }) {
         <div className="flex justify-between text-green-600">
           <span>연속등록 할인</span>
           <span>-{formatSeasonFee(preview.final_calculation.discount_amount)}</span>
+        </div>
+      )}
+
+      {(preview.final_calculation.manual_discount ?? 0) > 0 && (
+        <div className="flex justify-between text-green-600">
+          <span>직접 할인</span>
+          <span>-{formatSeasonFee(preview.final_calculation.manual_discount ?? 0)}</span>
         </div>
       )}
 
