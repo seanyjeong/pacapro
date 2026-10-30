@@ -15,6 +15,7 @@ const payments = require('./maxEngineFullPayments');
 const consultationRecords = require('./maxEngineFullConsultationRecords');
 const schedules = require('./maxEngineScheduleCommands');
 const trials = require('./maxEngineTrialCommands');
+const seasons = require('./maxEngineSeasonCommands');
 const instructorSchedule = require('./maxEngineInstructorScheduleCreate');
 const permissions = require('./maxEngineFullPermissions');
 
@@ -43,6 +44,7 @@ function validate(body) {
 }
 async function state(conn, actor, command, lock = false) {
   if (trials.supports(command.operation)) return trials.state(conn, actor, command, lock);
+  if (seasons.supports(command.operation)) return seasons.state(conn, actor, command, lock);
   if (instructorSchedule.supports(command.operation)) return instructorSchedule.state(conn, actor, command, lock);
   if (peak.supports(command.operation)) return peak.state(conn, actor, command, lock);
   if (lifecycle.supports(command.operation)) return lifecycle.state(conn, actor, command, lock);
@@ -60,6 +62,7 @@ async function state(conn, actor, command, lock = false) {
 }
 function display(command, before) {
   if (trials.supports(command.operation)) return trials.display(command, before);
+  if (seasons.supports(command.operation)) return seasons.display(command, before);
   if (instructorSchedule.supports(command.operation)) return { ...instructorSchedule.display(command, before), notice: commands[command.operation].notice };
   if (peak.supports(command.operation)) return { ...peak.display(command, before), notice: commands[command.operation].notice };
   if (lifecycle.supports(command.operation)) return { ...lifecycle.display(command, before), notice: commands[command.operation].notice };
@@ -88,6 +91,7 @@ async function preview(actor, provider, body) {
 }
 async function apply(conn, actor, command, before) {
   if (trials.supports(command.operation)) return trials.apply(conn, actor, command, before);
+  if (seasons.supports(command.operation)) return seasons.apply(conn, actor, command, before);
   if (instructorSchedule.supports(command.operation)) return instructorSchedule.apply(conn, actor, command, before);
   if (peak.supports(command.operation)) return peak.apply(conn, actor, command, before);
   if (lifecycle.supports(command.operation)) return lifecycle.apply(conn, actor, command, before);

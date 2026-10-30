@@ -23,6 +23,7 @@ const record = {
 };
 const commands = {
   ...require('./maxEngineTrialCommands').commands,
+  ...require('./maxEngineSeasonCommands').commands,
   ...require('./maxEngineScheduleCommands').commands,
   ...require('./maxEngineLifecycleCommands').commands,
   ...require('./maxEngineSettlementCommands').commands,
