@@ -1,5 +1,6 @@
 const credits = require('./restCreditRepository');
 const payments = require('./resumePaymentRepository');
+const { seasonGapRanges } = require('./seasonGapSchedule');
 
 async function state(connection, student, resumeDate, lock) {
   const suffix = lock ? ' FOR UPDATE' : '';
@@ -21,7 +22,7 @@ async function state(connection, student, resumeDate, lock) {
       studentId: student.id, academyId: student.academy_id, restStartDate: student.rest_start_date, lock,
     }),
     payments: await payments.findMonthlyPayments(connection, student, yearMonth, lock),
-    schedules, attendance,
+    schedules, attendance, seasonGaps: await seasonGapRanges(connection, student.id, student.academy_id),
   };
 }
 module.exports = { state };

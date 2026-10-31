@@ -26,7 +26,7 @@ function plan(before) {
     const creditRecalculation = creditService.planRestCreditsOnResume({ student, resumeDate, credits });
     const classDays = paymentService.normalizeResumeClassDays(student.class_days);
     const billing = paymentService.planResumePayment({ student, resumeDate, classDays, creditRecalculation, payments, canCreateMonthlyPayment: before.canCreateMonthlyPayment });
-    const scheduleChanges = resumeScheduleTargets(classDays, resumeDate, student.time_slot || 'evening').map(target => {
+    const scheduleChanges = resumeScheduleTargets(classDays, resumeDate, student.time_slot || 'evening', before.seasonGaps).map(target => {
       const schedule = schedules.find(s => s.class_date === target.date && s.time_slot === target.time_slot);
       return { ...target, schedule_id: schedule?.id ?? null,
         create_schedule: !schedule, assign_attendance: !schedule || !attendance.some(a => a.class_schedule_id === schedule.id) };

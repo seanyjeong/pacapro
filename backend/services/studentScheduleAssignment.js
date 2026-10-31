@@ -1,5 +1,6 @@
 const logger = require('../utils/logger');
 const repository = require('../repositories/studentScheduleAssignmentRepository');
+const { seasonGapRanges, inSeasonGap } = require('../repositories/seasonGapSchedule');
 // ===== 요일별 시간대 유틸리티 (하위호환) =====
 
 /**
@@ -50,15 +51,17 @@ function getTimeSlotForDay(slots, day, defaultTimeSlot = 'evening') {
 }
 
 // Share the date/slot plan between the screen writer and the read-only MCP preview.
-function resumeScheduleTargets(classDays, enrollmentDate, defaultTimeSlot = 'evening') {
+// seasonGaps: 시즌 공백 기간(repositories/seasonGapSchedule) — 그 날짜는 정규 수업을 배정하지 않는다
+function resumeScheduleTargets(classDays, enrollmentDate, defaultTimeSlot = 'evening', seasonGaps = []) {
     const slots = parseClassDaysWithSlots(classDays, defaultTimeSlot);
     const [year, month, start] = enrollmentDate.split('-').map(Number);
     const last = new Date(Date.UTC(year, month, 0)).getUTCDate();
     const targets = [];
     for (let day = start; day <= last; day++) {
         const weekday = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
-        if (extractDayNumbers(slots).includes(weekday)) targets.push({
-            date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+        const date = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        if (extractDayNumbers(slots).includes(weekday) && !inSeasonGap(seasonGaps, date)) targets.push({
+            date,
             time_slot: getTimeSlotForDay(slots, weekday, defaultTimeSlot),
         });
     }
@@ -97,7 +100,8 @@ async function autoAssignStudentToSchedules(dbConn, studentId, academyId, classD
 
         let assignedCount = 0;
         let createdCount = 0;
-        for (const target of resumeScheduleTargets(classDays, enrollmentDate, defaultTimeSlot)) {
+        const seasonGaps = await seasonGapRanges(dbConn, studentId, academyId);
+        for (const target of resumeScheduleTargets(classDays, enrollmentDate, defaultTimeSlot, seasonGaps)) {
             const result = await repository.assign(dbConn, academyId, studentId, target);
             createdCount += result.created;
             assignedCount += result.assigned;

@@ -1,6 +1,7 @@
 const logger = require('../../utils/logger');
 
 const { parseClassDaysWithSlots, extractDayNumbers, getTimeSlotForDay, autoAssignStudentToSchedules } = require('../../services/studentScheduleAssignment');
+const { seasonGapRanges, inSeasonGap } = require('../../repositories/seasonGapSchedule');
 
 function normalizeStudentClassDays(student) {
     if (!student || typeof student !== 'object') return student;
@@ -58,16 +59,17 @@ async function reassignStudentSchedules(dbConn, studentId, academyId, oldClassDa
 
         logger.info(`Removed ${deleteResult.affectedRows} future attendance records for student ${studentId}`);
 
-        // 2. 새 요일로 재배정 (시작일부터 월말까지) - 등록일 이전 배정 방지
+        // 2. 새 요일로 재배정 (시작일부터 월말까지) - 등록일 이전·시즌 공백 기간 배정 방지
         let assignedCount = 0;
         let createdCount = 0;
+        const seasonGaps = await seasonGapRanges(dbConn, studentId, academyId);
 
         for (let day = startDate.getDate(); day <= lastDay; day++) {
             const currentDate = new Date(year, month, day);
             const dayOfWeek = currentDate.getDay();
 
-            if (newDayNumbers.includes(dayOfWeek)) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            if (newDayNumbers.includes(dayOfWeek) && !inSeasonGap(seasonGaps, dateStr)) {
                 // 해당 요일의 시간대 조회
                 const timeSlot = getTimeSlotForDay(newSlots, dayOfWeek, defaultTimeSlot);
 
