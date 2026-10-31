@@ -99,3 +99,11 @@ test('expense_create needs date, screen category and positive amount without id'
   expect(()=>validate({operation:'expense_create',changes:bad})).toThrow();
  expect(()=>validate({operation:'expense_create',resource_id:1,changes})).toThrow();
 });
+test('monthly_payment_create needs a student and billing month without id',()=>{
+ expect(catalog('paca').find(c=>c.operation==='monthly_payment_create')).toMatchObject({resource:'student_payments',source:'paca',requires_id:false});
+ const changes={student_id:4,year_month:'2026-11'};
+ expect(validate({operation:'monthly_payment_create',changes})).toEqual({operation:'monthly_payment_create',resource_id:null,changes});
+ for(const bad of [{student_id:4},{year_month:'2026-11'},{student_id:4,year_month:'2026-13'},{student_id:4,year_month:'2026-11',amount:'1000'},{student_id:'4',year_month:'2026-11'}])
+  expect(()=>validate({operation:'monthly_payment_create',changes:bad})).toThrow();
+ expect(()=>validate({operation:'monthly_payment_create',resource_id:4,changes})).toThrow();
+});

@@ -87,6 +87,7 @@ const commands = {
   student_settle: edit('payments'),
   payment_pay: edit('payments'),
   payment_update: edit('payments'),
+  monthly_payment_create: edit('payments'),
   expense_create: edit('expenses'),
   season_create: edit('seasons'),
   season_enroll: edit('seasons'),
