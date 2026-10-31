@@ -29,7 +29,7 @@
  * **결제 데이터 영속 변경 X (사장님 결정 2026-05-02)**:
  *   - student_payments INSERT/UPDATE 컬럼/순서/값 1:1 보존
  *   - rest_credits UPDATE (carryover 차감) 1:1 보존
- *   - calculateNonSeasonEndProrated 헬퍼 결과 적용 1:1 보존
+ *   - 비시즌 종강 일할은 2026-11-01부터 시즌 시작 달 별도 청구(services/nonSeasonProratedBilling)
  *   - notes 멀티라인 ('\n' 구분자) + description 후위 추가 패턴 보존
  *
  * 개별 월청구 라우트는 500줄 제한을 지키도록 별도 모듈로 분리.
@@ -39,11 +39,11 @@ const {
     pool,
     truncateToThousands,
     calculateDueDate,
-    calculateNonSeasonEndProrated,
     logger,
 } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../repositories/seasonMonthlyExclusion');
+const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../services/nonSeasonProratedBilling');
 
 module.exports = function(router) {
 
@@ -123,28 +123,10 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
             const discountRate = parseFloat(student.discount_rate) || 0;
             const discount = truncateToThousands(baseAmount * (discountRate / 100));
 
-            // 비시즌 종강 일할 계산 (다음 달 비시즌 종강일까지)
-            let additionalAmount = 0;
+            // 비시즌 종강 일할은 전달에 붙이지 않고 시즌 시작 달에 따로 청구한다 (아래 nonSeasonProratedBilling)
+            const additionalAmount = 0;
             let notes = null;
             let description = `${year}년 ${month}월 수강료`;
-
-            try {
-                const nonSeasonProrated = await calculateNonSeasonEndProrated({
-                    studentId: student.id,
-                    academyId: req.user.academyId,
-                    year,
-                    month
-                });
-
-                if (nonSeasonProrated) {
-                    additionalAmount = nonSeasonProrated.amount;
-                    notes = `[비시즌 종강 일할] ${nonSeasonProrated.description}\n${nonSeasonProrated.details.formula}`;
-                    description = `${year}년 ${month}월 수강료 + 비시즌 종강 일할`;
-                    withNonSeasonProrated++;
-                }
-            } catch (err) {
-                logger.error(`Failed to calculate non-season prorated for student ${student.id}:`, err);
-            }
 
             // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 확인 및 적용
             let carryoverAmount = 0;
@@ -274,6 +256,13 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
                 );
                 created++;
             }
+        }
+
+        // 시즌으로 이 달 월회비가 빠진 학생의 1일~비시즌 종강일 수업료 — 매월 자동 청구와 같은 규칙
+        for (const candidate of await nonSeasonProratedCandidates(pool, req.user.academyId, yearMonth)) {
+            await insertNonSeasonProrated(pool, req.user.academyId, candidate, planNonSeasonProrated(candidate, yearMonth), req.user.userId);
+            created++;
+            withNonSeasonProrated++;
         }
 
         // 결과 메시지 생성

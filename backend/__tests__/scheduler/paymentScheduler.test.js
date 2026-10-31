@@ -17,7 +17,7 @@ const { generateMonthlyPayments } = require('../../scheduler/paymentScheduler');
 
 beforeEach(() => {
     jest.useFakeTimers().setSystemTime(new Date('2026-06-25T09:00:00+09:00'));
-    db.query.mockReset();
+    db.query.mockReset().mockResolvedValue([[]]);
     db.getConnection.mockReset();
     graduateDueSeasonStudents.mockReset().mockResolvedValue(0);
 });
@@ -47,6 +47,10 @@ describe('payment scheduler season monthly policy', () => {
         expect(studentParams).toEqual([5, 5, '2026-06', ...Array(7).fill('2026-06')]);
         expect(graduateDueSeasonStudents).toHaveBeenCalledWith('2026-06-01');
         expect(db.getConnection).not.toHaveBeenCalled();
+        // 시즌으로 빠진 학생의 비시즌 종강 일할 대상 조회 (services/nonSeasonProratedBilling)
+        const [proratedSql, proratedParams] = db.query.mock.calls[2];
+        expect(proratedSql).toContain('ss.prorated_month = ?');
+        expect(proratedParams.slice(0, 3)).toEqual([5, '2026-06', '2026-06']);
     });
 
     test('함께 청구 시즌은 시즌 row 정책으로만 판정한다', async () => {

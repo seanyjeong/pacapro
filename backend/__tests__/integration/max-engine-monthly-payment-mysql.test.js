@@ -57,6 +57,35 @@ run('MCP monthly_payment_create matches the 1st-of-month automatic bill', () => 
     const [[{ recorded_by }]] = await f.paca.query('SELECT recorded_by FROM student_payments WHERE id=?', [c.body.resource_id]);
     expect(recorded_by).toBe(1);
   });
+  // 시즌이 이번 달 20일 시작·10일 비시즌 종강이면 이번 달 월회비 대신 1일~10일 일할(시즌 등록 때 계산한 금액)을 청구한다
+  async function seasonGap() {
+    await reset();
+    for (const table of ['student_seasons', 'seasons']) await f.paca.query(`DELETE FROM ${table}`);
+    await f.insert('paca', 'seasons', { id: 800, academy_id: 1, season_name: '합성 정시', season_type: 'regular', status: 'upcoming', non_season_end_date: now + '-10',
+      season_start_date: now + '-20', season_end_date: '2099-12-31', operating_days: '[1,2,3,4,5,6]', default_season_fee: 1000000, season_monthly_policy: 'season_replaces_monthly' });
+    await f.insert('paca', 'student_seasons', { id: 801, student_id: 4, season_id: 800, season_fee: 1000000, registration_date: now + '-01', payment_status: 'pending',
+      prorated_month: now, prorated_amount: 105000, prorated_details: JSON.stringify({ calculationDetails: { formula: '315,500원 ÷ 8회 × 3회 = 118,312원' } }) });
+  }
+  test('non-season prorated bill: same as the scheduler, no regular monthly bill', async () => {
+    await seasonGap();
+    await generateMonthlyPayments();
+    const expected = await outcome();
+    expect(expected.bills).toHaveLength(1);
+    expect(expected.bills[0]).toMatchObject({ final_amount: '105000.00', carryover_amount: '0.00', description: `${Number(now.slice(5))}월 학원비 (비시즌 종강 일할)` });
+    expect(expected.bills[0].notes).toContain('합성 정시 비시즌 종강 ' + now + '-10까지');
+    await seasonGap();
+    const p = await preview({ student_id: 4, year_month: now });
+    expect(p.body.error).toBeUndefined(); expect(p.status).toBe(200);
+    expect(p.body.after).toMatchObject({ final_amount: 105000, related: { non_season_prorated: { enrollment_id: 801 } } });
+    const c = await confirm(p.body); expect(c.status).toBe(200);
+    expect(await outcome()).toEqual(expected);
+    await generateMonthlyPayments();
+    expect((await outcome()).bills).toHaveLength(1);
+    await f.paca.query('UPDATE student_seasons SET is_cancelled=1 WHERE id=801');
+    await f.paca.query('DELETE FROM student_payments WHERE student_id=4');
+    expect((await preview({ student_id: 4, year_month: now })).body.error?.code).toBeUndefined();
+    await f.paca.query('DELETE FROM student_seasons'); await f.paca.query('DELETE FROM seasons');
+  });
   test('rejects existing, paused, zero-tuition, pre-enrollment and foreign students with reasons; stale preview fails', async () => {
     await reset({ credit: '50000.00' });
     const p = await preview({ student_id: 4, year_month: now });

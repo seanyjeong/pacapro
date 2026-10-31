@@ -64,7 +64,7 @@ const commands = {
   monthly_payment_create: { resource: 'student_payments', provider: 'paca', label: '학생 월회비 청구 생성',
     schema: Joi.object({ student_id: Joi.number().integer().positive().required(),
       year_month: Joi.string().pattern(/^\d{4}-(0[1-9]|1[0-2])$/).required() }).unknown(false),
-    notice: '매월 1일 자동 청구와 같은 계산으로 그 달 월회비 청구 한 건을 새로 만듭니다: 학생 월회비 − 할인율 할인 − 휴원 이월·공결·수동 크레딧(가장 오래된 한 건, 크레딧 잔액도 줄임), 천원 단위 버림, 납부기한은 학생 납부일(없으면 학원 설정) 이후 첫 수업일. 재원·월회비가 있는 학생만, 등록월 이전 달·시즌 무료 수업·자동 졸업 기간은 거절합니다. 그 달 월회비 청구가 이미 있으면(취소 포함) 만들지 않으니 금액은 청구 금액 수정(payment_update)으로 고칩니다.' },
+    notice: '매월 1일 자동 청구와 같은 계산으로 그 달 월회비 청구 한 건을 새로 만듭니다: 학생 월회비 − 할인율 할인 − 휴원 이월·공결·수동 크레딧(가장 오래된 한 건, 크레딧 잔액도 줄임), 천원 단위 버림, 납부기한은 학생 납부일(없으면 학원 설정) 이후 첫 수업일. 재원·월회비가 있는 학생만, 등록월 이전 달·시즌 무료 수업·자동 졸업 기간은 거절합니다. 시즌비가 월회비를 대신하는 달에 시즌이 그 달 중간에 시작하면 1일~비시즌 종강일 수업료(시즌 등록 때 계산한 금액)를 그 달 월회비 청구로 만듭니다(자동 청구와 같음). 그 달 월회비 청구가 이미 있으면(취소 포함) 만들지 않으니 금액은 청구 금액 수정(payment_update)으로 고칩니다.' },
   expense_create: { resource: 'expenses', provider: 'paca', label: '지출 등록',
     schema: Joi.object({ expense_date: date.required(),
       category: Joi.string().valid('utilities', 'rent', 'supplies', 'marketing', 'other').required(),
