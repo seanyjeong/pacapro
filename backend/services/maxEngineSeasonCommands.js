@@ -3,6 +3,7 @@ const repo = require('../repositories/maxEngineSeasonRepository');
 const { validateSeasonCreate, insertSeason } = require('./seasonCreateService');
 const seasonEnrollment = require('./seasonEnrollmentService');
 const { planSeasonEnrollmentUpdate, applySeasonEnrollmentUpdate } = require('./seasonEnrollmentUpdateService');
+const { seasonRegularBlockStart } = require('./seasonScheduleAssignment');
 const { getKoreaDateText } = require('../utils/proratedPaymentDueDate');
 const { fail, decrypt } = require('./maxEngineFullSecurity');
 const supports = operation => Object.hasOwn(commands, operation);
@@ -75,9 +76,10 @@ function display(command, before) {
     const identity = { student_id: student.id, name: decrypt(student.name), status: student.status };
     const seasonView = { season_id: season.id, season_name: season.season_name, season_status: season.status,
       season_start_date: season.season_start_date, season_end_date: season.season_end_date, default_season_fee: season.default_season_fee };
-    const schedule = season.status !== 'active' ? '시즌 시작 전이라 출결 배정은 파카 시즌 화면에서 시즌을 시작(활성화)할 때 합니다.'
-      : student.status === 'paused' ? '휴원생이라 시즌 출결 배정은 복귀 때 합니다.'
-        : `시즌 기간의 미체크 정규 출결 ${regularToRemove.length}건을 지우고 시즌 수업에 배정합니다.`;
+    const removal = `비시즌 종강 다음 날(${seasonRegularBlockStart(season)})부터 시즌 끝까지 미체크 정규 출결 ${regularToRemove.length}건을 지우`;
+    const schedule = student.status === 'paused' ? '휴원생이라 정규 출결 정리와 시즌 출결 배정은 복귀 때 합니다.'
+      : season.status !== 'active' ? `${removal}고, 시즌 출결 배정은 파카 시즌 화면에서 시즌을 시작(활성화)할 때 합니다.`
+        : `${removal}고 시즌 수업에 배정합니다.`;
     return { before: { ...identity, season: seasonView, enrollment: existing ? { id: existing.id } : null,
       related: { monthly_payments: monthlyToDelete } },
     after: { ...identity, season: seasonView, enrollment: { id: existing?.id ?? null, restores_missing_season_bill: Boolean(existing),

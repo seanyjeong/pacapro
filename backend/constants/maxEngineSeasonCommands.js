@@ -19,7 +19,7 @@ const commands = {
   season_enroll: { resource: 'students', provider: 'paca', label: '학생 시즌 등록',
     schema: Joi.object({ season_id: id.required(), registration_date: date, season_fee: money, is_continuous: Joi.boolean(),
       discount_amount: money, discount_reason: text(255), time_slots: slots }).unknown(false),
-    notice: '파카 화면 시즌 등록과 같은 계산으로 시즌비 청구를 만듭니다(이 학생 시즌비 → 시즌 도중 합류 일할 → 연속 등록 할인 → 직접 할인, 납부 마감일). season_fee는 일할·할인 전 이 학생 시즌비이고 생략하면 시즌 기본 시즌비입니다. 시즌비가 월회비를 대신하는 시즌이면 시즌 기간의 미납 월회비를 지웁니다. 진행 중 시즌이면 시즌 기간의 미체크 정규 출결을 지우고 시즌 수업에 배정하며, 휴원생은 복귀 때 배정합니다. registration_date 생략 시 한국 날짜 오늘.' },
+    notice: '파카 화면 시즌 등록과 같은 계산으로 시즌비 청구를 만듭니다(이 학생 시즌비 → 시즌 도중 합류 일할 → 연속 등록 할인 → 직접 할인, 납부 마감일). season_fee는 일할·할인 전 이 학생 시즌비이고 생략하면 시즌 기본 시즌비입니다. 시즌비가 월회비를 대신하는 시즌이면 시즌 기간의 미납 월회비를 지웁니다. 비시즌 종강 다음 날부터 시즌 끝까지 미체크 정규 출결을 지우고(시작 전 시즌도, 종강~시즌 시작 사이는 수업 없음) 진행 중 시즌이면 시즌 수업에 배정하며, 휴원생은 복귀 때 합니다. registration_date 생략 시 한국 날짜 오늘.' },
   season_enrollment_update: { resource: 'student_seasons', provider: 'paca', label: '학생 시즌 등록 정보 수정',
     schema: Joi.object({ registration_date: date, season_fee: money, discount_amount: money, discount_reason: text(255).allow(''),
       time_slots: slots }).min(1).unknown(false),

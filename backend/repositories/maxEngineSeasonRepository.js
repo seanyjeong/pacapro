@@ -1,5 +1,6 @@
 const commands = require('./maxEngineFullCommandRepository');
 const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../services/seasonPaymentSummary');
+const { seasonRegularBlockStart } = require('../services/seasonScheduleAssignment');
 const { DEFAULT_SEASON_MONTHLY_POLICY } = require('../utils/seasonMonthlyPolicy');
 const { fail } = require('../models/maxEngineError');
 async function rows(conn, sql, params, lock) {
@@ -25,7 +26,7 @@ async function enrollState(conn, actor, studentId, seasonId, lock) {
     regularToRemove: await rows(conn, `SELECT a.id, cs.class_date, cs.time_slot FROM attendance a
       JOIN class_schedules cs ON cs.id = a.class_schedule_id WHERE a.student_id = ? AND cs.academy_id = ?
       AND cs.class_date >= ? AND cs.class_date <= ? AND a.attendance_status IS NULL ORDER BY a.id`,
-      [student.id, actor.academy_id, season.season_start_date, season.season_end_date], lock) };
+      [student.id, actor.academy_id, seasonRegularBlockStart(season), season.season_end_date], lock) };
 }
 // 시즌 취소 화면(POST /paca/seasons/enrollments/:id/cancel)과 같은 조회 + 확인 때 지워질 시즌비 청구
 async function enrollmentState(conn, actor, enrollmentId, lock) {

@@ -79,7 +79,7 @@ run('MCP season create/enroll/update/cancel match the PACA season screens', () =
 
   test.each([
     ['active season before start', {}, {}, { registration_date: '2099-06-20' }, 27, 1000000],
-    ['upcoming season keeps attendance', { status: 'upcoming' }, {}, { registration_date: '2099-06-20' }, 1, 1000000],
+    ['upcoming season removes regular attendance', { status: 'upcoming' }, {}, { registration_date: '2099-06-20' }, 0, 1000000],
     ['mid-season join prorates', {}, {}, { registration_date: '2099-07-15' }, 15, null],
     ['paused student defers schedule', {}, { status: 'paused' }, { registration_date: '2099-06-20' }, 1, 1000000],
     ['manual discount and time slots', {}, {}, { registration_date: '2099-06-20', discount_amount: '50000', discount_reason: '형제', time_slots: ['morning', 'evening'] }, 54, 950000],
@@ -97,6 +97,30 @@ run('MCP season create/enroll/update/cancel match the PACA season screens', () =
     const ui = await request(app).post('/paca/seasons/700/enroll').send({ student_id: 4, season_fee: 1000000, ...changes });
     expect(ui.status).toBe(201);
     expect(await outcome()).toEqual(after);
+  });
+  test('no regular class between non-season end and season start; activation assigns the chosen time slots', async () => {
+    const gap = async () => {
+      await reset({ season: { status: 'upcoming', non_season_end_date: '2099-06-25' } });
+      for (const [id, date] of [[4001, '2099-06-24'], [4002, '2099-06-27']]) {
+        await f.insert('paca', 'class_schedules', { id, academy_id: 1, class_date: date, time_slot: 'evening' });
+        await f.insert('paca', 'attendance', { id, class_schedule_id: id, student_id: 4, attendance_status: null });
+      }
+    };
+    await gap();
+    const { p, after } = await previewConfirm('season_enroll', 4, { season_id: 700, registration_date: '2099-06-20', time_slots: ['morning'] });
+    expect(p.after.related.schedule).toContain('비시즌 종강 다음 날(2099-06-26)부터 시즌 끝까지 미체크 정규 출결 2건');
+    expect(after.schedules).toEqual([{ class_date: '2099-06-24', time_slot: 'evening' }]);
+    await gap();
+    expect((await request(app).post('/paca/seasons/700/enroll').send({ student_id: 4, season_fee: 1000000, registration_date: '2099-06-20', time_slots: ['morning'] })).status).toBe(201);
+    expect(await outcome()).toEqual(after);
+    await f.insert('paca', 'class_schedules', { id: 4003, academy_id: 1, class_date: '2099-07-08', time_slot: 'evening' });
+    await f.insert('paca', 'attendance', { id: 4003, class_schedule_id: 4003, student_id: 4, attendance_status: null });
+    await f.paca.query('UPDATE student_seasons SET is_cancelled=0'); // 운영 기본값 0 — 합성 스키마에는 기본값이 없다
+    expect((await request(app).put('/paca/seasons/700').send({ status: 'active' })).status).toBe(200);
+    const { schedules } = await outcome();
+    expect(schedules[0]).toEqual({ class_date: '2099-06-24', time_slot: 'evening' });
+    expect(schedules.slice(1).map(s => s.time_slot)).toEqual(Array(27).fill('morning'));
+    expect(schedules.slice(1).every(s => s.class_date >= '2099-07-01')).toBe(true);
   });
   test('continuous discount uses the previous season like the screen', async () => {
     await reset();
