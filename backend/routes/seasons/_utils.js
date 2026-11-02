@@ -8,7 +8,7 @@
  *   - decrypt (utils/encryption — ADR-007 보안 헬퍼 시그니처 무변경)
  *   - logger (utils/logger)
  *   - seasonCalculator 헬퍼 5종
- *   - 시즌 스케줄 자동 배치 헬퍼 4종 (autoAssign / removeFromRegular / autoAssignAll / findResumeSeasonEnrollment)
+ *   - 시즌 스케줄 자동 배치 헬퍼 5종 (autoAssign / removeFromRegular / findSeasonRegularBlocks / autoAssignAll / findResumeSeasonEnrollment)
  *
  * 본 _utils.js 는 hoisting/공유 헬퍼만 둔다. endpoint 핸들러는 sub-라우터에 둔다.
  *
@@ -28,7 +28,9 @@ const {
 } = require('../../utils/seasonCalculator');
 const {
     autoAssignStudentToSeasonSchedules,
-    removeStudentFromRegularSchedules
+    removeStudentFromRegularSchedules,
+    seasonRegularBlockStart,
+    findSeasonRegularBlocks
 } = require('../../services/seasonScheduleAssignment');
 
 // pool 의 alias (ADR-011 — 신규 표준은 pool, 호환을 위해 db 도 노출)
@@ -68,12 +70,23 @@ async function autoAssignAllSeasonStudentsToSchedules(seasonId, academyId) {
 
         for (const enrollment of enrollments) {
             try {
+                // 비시즌 종강 다음 날~시즌 끝 정규 출결을 빼고, 등록 때 고른 시간대로 시즌 출결을 넣는다
+                await removeStudentFromRegularSchedules(
+                    enrollment.student_id,
+                    academyId,
+                    seasonRegularBlockStart(season),
+                    season.season_end_date
+                );
+                const timeSlots = typeof enrollment.time_slots === 'string'
+                    ? JSON.parse(enrollment.time_slots)
+                    : enrollment.time_slots;
                 const result = await autoAssignStudentToSeasonSchedules(
                     enrollment.student_id,
                     academyId,
                     season,
                     enrollment.grade,
-                    enrollment.student_type
+                    enrollment.student_type,
+                    timeSlots
                 );
                 totalAssigned += result.assigned;
                 totalCreated += result.created;
@@ -129,6 +142,7 @@ module.exports = {
     truncateToThousands,
     autoAssignStudentToSeasonSchedules,
     removeStudentFromRegularSchedules,
+    findSeasonRegularBlocks,
     autoAssignAllSeasonStudentsToSchedules,
     findResumeSeasonEnrollment
 };

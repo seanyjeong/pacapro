@@ -16,7 +16,8 @@ const {
 const { DEFAULT_SEASON_MONTHLY_POLICY } = require('../utils/seasonMonthlyPolicy');
 const {
     autoAssignStudentToSeasonSchedules,
-    removeStudentFromRegularSchedules
+    removeStudentFromRegularSchedules,
+    seasonRegularBlockStart
 } = require('./seasonScheduleAssignment');
 
 const VALID_TIME_SLOTS = ['morning', 'afternoon', 'evening'];
@@ -254,7 +255,8 @@ async function deleteUnpaidMonthlyPaymentsForSeason(conn, studentId, academyId, 
 
 /**
  * 1. student_seasons INSERT (기존 등록이 있으면 누락 시즌비만 복구) 2. students 시즌 표시 3. 시즌비 청구
- * 4. 시즌 기간 미납 월회비 정리 5. 진행 중 시즌이고 휴원생이 아니면 정규 출결 → 시즌 출결 (실패해도 등록은 유지)
+ * 4. 시즌 기간 미납 월회비 정리 5. 휴원생이 아니면 비시즌 종강 다음 날~시즌 끝 정규 출결 제거 (시작 전 시즌도)
+ * 6. 진행 중 시즌이고 휴원생이 아니면 시즌 출결 배정 (5·6 은 실패해도 등록은 유지, 휴원생은 복귀 때)
  */
 async function applySeasonEnrollment(conn, { season, seasonId, student, studentId, academyId, userId, existingEnrollmentId, plan, input }) {
     let enrollmentId = existingEnrollmentId;
@@ -315,19 +317,21 @@ async function applySeasonEnrollment(conn, { season, seasonId, student, studentI
     let removeResult = null;
     let seasonAssignResult = null;
 
-    if (season.status === 'active' && student.status !== 'paused') {
+    if (student.status !== 'paused') {
         try {
             removeResult = await removeStudentFromRegularSchedules(
                 studentId,
                 academyId,
-                season.season_start_date,
+                seasonRegularBlockStart(season),
                 season.season_end_date,
                 conn
             );
         } catch (removeError) {
             logger.error('Remove from regular schedules failed:', removeError);
         }
+    }
 
+    if (season.status === 'active' && student.status !== 'paused') {
         try {
             const studentGrade = student.grade || '';
             const regDateStr = input.registrationDate || new Date().toISOString().split('T')[0];

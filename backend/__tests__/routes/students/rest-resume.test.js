@@ -36,6 +36,7 @@ jest.mock('../../../routes/students/_utils', () => ({
 jest.mock('../../../routes/seasons/_utils', () => ({
   autoAssignStudentToSeasonSchedules: jest.fn(),
   findResumeSeasonEnrollment: jest.fn(),
+  findSeasonRegularBlocks: jest.fn(),
   removeStudentFromRegularSchedules: jest.fn(),
 }));
 
@@ -102,6 +103,7 @@ function resetMocks() {
   pool.__conn.release.mockClear();
   autoAssignStudentToSchedules.mockReset();
   seasonUtils.findResumeSeasonEnrollment.mockReset().mockResolvedValue(null);
+  seasonUtils.findSeasonRegularBlocks.mockReset().mockResolvedValue([]);
   seasonUtils.removeStudentFromRegularSchedules.mockReset().mockResolvedValue({ removed: 0 });
   seasonUtils.autoAssignStudentToSeasonSchedules.mockReset().mockResolvedValue({ assigned: 0, created: 0 });
   repository.findCurrentRestCreditsForUpdate.mockReset().mockResolvedValue([]);
@@ -172,6 +174,27 @@ describe('POST /paca/students/:id/resume', () => {
     expect(seasonUtils.removeStudentFromRegularSchedules.mock.invocationCallOrder[0])
       .toBeGreaterThan(autoAssignStudentToSchedules.mock.invocationCallOrder[0]);
     expect(res.body.scheduleAssigned).toEqual({ assigned: 30, created: 0, timeSlots: ['evening'] });
+    expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
+  });
+
+  test('시작 전 시즌 등록생은 비시즌 종강 다음 날부터 시즌 끝까지 정규 출결을 뺀다', async () => {
+    seasonUtils.findSeasonRegularBlocks.mockResolvedValue([{ studentId: 1, from: '2026-11-01', to: '2027-01-29' }]);
+    autoAssignStudentToSchedules.mockResolvedValue({ assigned: 6, created: 0 });
+    mockCriticalResume(makePausedStudent({ monthly_tuition: 0, class_days: '[1,3]' }));
+    mockPostResume();
+
+    const res = await request(makeApp())
+      .post('/paca/students/1/resume')
+      .send({ resume_date: '2026-11-04' });
+
+    expect(res.status).toBe(200);
+    expect(seasonUtils.findSeasonRegularBlocks).toHaveBeenCalledWith(pool.__conn, 1, '2026-11-04', 1);
+    expect(seasonUtils.removeStudentFromRegularSchedules).toHaveBeenCalledWith(
+      1, 1, '2026-11-04', '2027-01-29', pool.__conn
+    );
+    expect(seasonUtils.removeStudentFromRegularSchedules.mock.invocationCallOrder[0])
+      .toBeGreaterThan(autoAssignStudentToSchedules.mock.invocationCallOrder[0]);
+    expect(seasonUtils.autoAssignStudentToSeasonSchedules).not.toHaveBeenCalled();
     expect(pool.__conn.commit).toHaveBeenCalledTimes(1);
   });
 
