@@ -173,7 +173,8 @@ describe('POST /paca/seasons/:id/enroll', () => {
         pool.execute.mockResolvedValueOnce([{ insertId: 50 }]);
         // ❽ DELETE replaced monthly payments
         pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
-        // ❾ SELECT enrollment 재조회
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 2 }]); // ❾ DELETE 비시즌 종강 다음 날~시즌 끝 정규 출결
+        // ❿ SELECT enrollment 재조회
         pool.execute.mockResolvedValueOnce([[{
             id: 99, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
         }]]);
@@ -187,9 +188,10 @@ describe('POST /paca/seasons/:id/enroll', () => {
         expect(res.body.enrollment.student_name).toBe('홍길동');
         expect(res.body.proRatedCalculation).toBeDefined();
         expect(res.body.schedule_assignment).toEqual({
-            removed_from_regular: null,
+            removed_from_regular: { removed: 2 },
             assigned_to_season: null
         });
+        expect(pool.execute.mock.calls.find(c => c[0].includes('DELETE a FROM attendance'))[1]).toEqual([10, 1, '2026-03-01', '2026-08-31']);
         // 핵심 SQL 호출 확인
         const insertSeasonsCall = pool.execute.mock.calls.find(c => c[0].includes('INSERT INTO student_seasons'));
         const insertPaymentsCall = pool.execute.mock.calls.find(c => c[0].includes('INSERT INTO student_payments'));
@@ -229,6 +231,7 @@ describe('POST /paca/seasons/:id/enroll', () => {
         pool.execute.mockResolvedValueOnce([{ insertId: 99 }]);
         pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
         pool.execute.mockResolvedValueOnce([{ insertId: 50 }]);
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 0 }]); // DELETE 시즌 기간 정규 출결
         pool.execute.mockResolvedValueOnce([[{
             id: 99, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
         }]]);
@@ -285,6 +288,7 @@ describe('POST /paca/seasons/:id/enroll', () => {
         pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]); // UPDATE students
         pool.execute.mockResolvedValueOnce([{ insertId: 50 }]); // INSERT student_payments
         pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]); // DELETE replaced monthly payments
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 0 }]); // DELETE 시즌 기간 정규 출결
         pool.execute.mockResolvedValueOnce([[{
             id: 88, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
         }]]);
@@ -327,6 +331,7 @@ describe('POST /paca/seasons/:id/enroll', () => {
         pool.execute.mockRejectedValueOnce(missingSeasonId); // INSERT student_payments with season_id
         pool.execute.mockResolvedValueOnce([{ insertId: 50 }]); // fallback INSERT without season_id
         pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]); // DELETE replaced monthly payments
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 0 }]); // DELETE 시즌 기간 정규 출결
         pool.execute.mockResolvedValueOnce([[{
             id: 99, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
         }]]);
@@ -365,6 +370,7 @@ describe('POST /paca/seasons/:id/enroll', () => {
         pool.execute.mockRejectedValueOnce(invalidSeasonIdReference);
         pool.execute.mockResolvedValueOnce([{ insertId: 50 }]);
         pool.execute.mockResolvedValueOnce([{ affectedRows: 1 }]);
+        pool.execute.mockResolvedValueOnce([{ affectedRows: 0 }]); // DELETE 시즌 기간 정규 출결
         pool.execute.mockResolvedValueOnce([[{
             id: 99, student_name: 'enc_홍길동', season_name: '2026 봄', season_type: 'regular'
         }]]);

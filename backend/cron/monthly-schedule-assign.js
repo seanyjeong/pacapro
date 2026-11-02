@@ -13,6 +13,7 @@
 
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const db = require('../config/database');
+const { findSeasonRegularBlocks } = require('../services/seasonScheduleAssignment');
 
 const DEFAULT_TIME_SLOT = 'evening';
 
@@ -46,8 +47,9 @@ function getTimeSlotForDay(slots, day, defaultTimeSlot = DEFAULT_TIME_SLOT) {
  * 특정 학생을 해당 월에 배정
  * classDays: 숫자 배열 [1,3,6] 또는 객체 배열 [{day:1,timeSlot:"morning"}]
  * defaultTimeSlot: 숫자 배열일 때 사용할 기본 시간대
+ * seasonBlocks: 정규 수업이 없는 시즌 기간 [{ from, to }] (비시즌 종강 다음 날~시즌 끝)
  */
-async function assignStudentToMonth(dbConn, studentId, academyId, classDays, year, month, defaultTimeSlot = DEFAULT_TIME_SLOT, enrollmentDate = null) {
+async function assignStudentToMonth(dbConn, studentId, academyId, classDays, year, month, defaultTimeSlot = DEFAULT_TIME_SLOT, enrollmentDate = null, seasonBlocks = []) {
     const slots = parseClassDaysWithSlots(classDays, defaultTimeSlot);
     if (slots.length === 0) return { assigned: 0, created: 0 };
 
@@ -69,6 +71,7 @@ async function assignStudentToMonth(dbConn, studentId, academyId, classDays, yea
 
         if (dayNumbers.includes(dayOfWeek)) {
             const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            if (seasonBlocks.some(block => dateStr >= block.from && dateStr <= block.to)) continue;
             // 해당 요일의 시간대 조회
             const timeSlot = getTimeSlotForDay(slots, dayOfWeek, defaultTimeSlot);
 
@@ -172,6 +175,9 @@ async function runMonthlyAssignment() {
 
             console.log(`\n학원 ID ${academyId}: ${students.length}명 처리 중...`);
 
+            const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
+            const seasonBlocks = await findSeasonRegularBlocks(db, academyId, monthStart);
+
             for (const student of students) {
                 try {
                     const classDays = typeof student.class_days === 'string'
@@ -188,7 +194,8 @@ async function runMonthlyAssignment() {
                         year,
                         month,
                         student.time_slot || DEFAULT_TIME_SLOT,
-                        student.enrollment_date
+                        student.enrollment_date,
+                        seasonBlocks.filter(block => block.studentId === student.id)
                     );
 
                     totalStudents++;

@@ -14,6 +14,7 @@ const { autoAssignStudentToSchedules } = require('../_utils');
 const {
     autoAssignStudentToSeasonSchedules,
     findResumeSeasonEnrollment,
+    findSeasonRegularBlocks,
     removeStudentFromRegularSchedules,
 } = require('../../seasons/_utils');
 const { processResumePayment, normalizeResumeClassDays } = require('../../../services/resumePaymentService');
@@ -87,6 +88,17 @@ router.post('/:id/resume', verifyToken, checkPermission('students', 'edit'), asy
             reassignResult = await autoAssignStudentToSchedules(
                 connection, studentId, req.user.academyId, classDays,
                 resumeDateStr, student.time_slot || 'evening', { includeFutureMonth: true }
+            );
+        }
+
+        // 시즌 등록생(시작 전 시즌 포함)은 비시즌 종강 다음 날~시즌 끝에 정규 수업이 없다.
+        const seasonBlocks = await findSeasonRegularBlocks(
+            connection, req.user.academyId, resumeDateStr, studentId
+        );
+        for (const block of seasonBlocks) {
+            await removeStudentFromRegularSchedules(
+                studentId, req.user.academyId, resumeDateStr > block.from ? resumeDateStr : block.from,
+                block.to, connection
             );
         }
 

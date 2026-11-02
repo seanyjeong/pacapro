@@ -118,7 +118,7 @@ async function autoAssignStudentToSeasonSchedules(studentId, academyId, season, 
 }
 
 /**
- * 기존 정규 스케줄에서 학생 제거 (시즌 기간 동안만, 출석 처리 안된 attendance 만)
+ * 기존 정규 스케줄에서 학생 제거 (받은 기간 동안만, 출석 처리 안된 attendance 만)
  * 원본 routes/seasons.js (lines 153~175) 동작 1:1 보존.
  */
 async function removeStudentFromRegularSchedules(studentId, academyId, seasonStartDate, seasonEndDate, dbConn = pool) {
@@ -142,7 +142,44 @@ async function removeStudentFromRegularSchedules(studentId, academyId, seasonSta
     }
 }
 
+/**
+ * 시즌 등록생은 비시즌 종강일 다음 날부터 시즌 끝날 때까지 정규 수업이 없다 (종강~시즌 시작 사이는 수업 없음).
+ * 그 첫날을 돌려준다. 비시즌 종강일이 없는 옛 시즌은 시즌 시작일.
+ */
+function seasonRegularBlockStart(season) {
+    if (!season.non_season_end_date) return season.season_start_date;
+    const next = new Date(`${season.non_season_end_date}T00:00:00Z`);
+    next.setUTCDate(next.getUTCDate() + 1);
+    return next.toISOString().slice(0, 10);
+}
+
+/**
+ * fromDate 이후에도 정규 수업이 막히는 시즌 등록 (끝나지 않은 시즌, 취소 안 된 등록) — 시작 전 시즌도 포함.
+ * studentId 를 주면 그 학생만. [{ studentId, from, to }] (YYYY-MM-DD, 양 끝 포함)
+ */
+async function findSeasonRegularBlocks(dbConn, academyId, fromDate, studentId = null) {
+    const [rows] = await dbConn.execute(
+        `SELECT ss.student_id, se.non_season_end_date, se.season_start_date, se.season_end_date
+         FROM student_seasons ss
+         JOIN seasons se ON ss.season_id = se.id
+         WHERE se.academy_id = ?
+         AND se.status != 'ended'
+         AND se.season_end_date >= ?
+         AND ss.is_cancelled = 0
+         AND ss.payment_status != 'cancelled'
+         ${studentId ? 'AND ss.student_id = ?' : ''}`,
+        studentId ? [academyId, fromDate, studentId] : [academyId, fromDate]
+    );
+    return rows.map(row => ({
+        studentId: row.student_id,
+        from: seasonRegularBlockStart(row),
+        to: row.season_end_date
+    }));
+}
+
 module.exports = {
     autoAssignStudentToSeasonSchedules,
-    removeStudentFromRegularSchedules
+    removeStudentFromRegularSchedules,
+    seasonRegularBlockStart,
+    findSeasonRegularBlocks
 };
