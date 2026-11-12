@@ -48,20 +48,22 @@ export function ClassDaysFilters({
       <div className="flex items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />
         {branches.length > 0 ? (
-          <Select value={filterPlacement} onValueChange={onPlacementChange}>
-            <SelectTrigger aria-label="지점·반 필터" className="h-8 w-[170px] text-sm">
-              <SelectValue placeholder="지점·반" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">전체 지점·반</SelectItem>
-              {branches.flatMap((branch) => [
-                <SelectItem key={`b:${branch.id}`} value={`b:${branch.id}`}>{branch.name} 전체</SelectItem>,
-                ...branch.classes.map((cls) => (
-                  <SelectItem key={`c:${cls.id}`} value={`c:${cls.id}`}>{branch.name} {cls.class_name}</SelectItem>
-                )),
-              ])}
-            </SelectContent>
-          </Select>
+          <select
+            aria-label="지점·반 필터"
+            value={filterPlacement}
+            onChange={(event) => onPlacementChange(event.target.value)}
+            className="h-8 w-[170px] rounded-md border border-border bg-background px-2 text-sm text-foreground"
+          >
+            <option value="all">전체 지점·반</option>
+            {branches.map((branch) => (
+              <optgroup key={branch.id} label={branch.name}>
+                <option value={`b:${branch.id}`}>{branch.name} 전체</option>
+                {branch.classes.map((cls) => (
+                  <option key={cls.id} value={`c:${cls.id}`}>{branch.name} {cls.class_name}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
         ) : null}
         <Select value={filterGrade} onValueChange={onGradeChange}>
           <SelectTrigger aria-label="학년 필터" className="h-8 w-[120px] text-sm">

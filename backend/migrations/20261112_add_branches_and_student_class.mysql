@@ -35,3 +35,15 @@ SET @branch_sql = (
 PREPARE branch_stmt FROM @branch_sql;
 EXECUTE branch_stmt;
 DEALLOCATE PREPARE branch_stmt;
+
+-- 반의 수업 요일 [1,3,5] (0=일 ~ 6=토). NULL = 요일을 정하지 않은 반.
+SET @branch_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE classes ADD COLUMN class_days JSON NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @branch_schema AND TABLE_NAME = 'classes' AND COLUMN_NAME = 'class_days'
+);
+PREPARE branch_stmt FROM @branch_sql;
+EXECUTE branch_stmt;
+DEALLOCATE PREPARE branch_stmt;

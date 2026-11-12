@@ -121,12 +121,27 @@ export function ClassDaysPage() {
   };
 
   // 지점·반을 고르면 그 반 학생 전원을 바로 선택한다 — 아래 일괄 변경으로 반 단위 수업일을 한 번에 정한다.
+  // 반을 고르면 일괄 변경 칸을 그 반의 수업 요일로 맞춘다(안 정한 반은 비운다).
   const changePlacementFilter = (value: string) => {
     setFilterPlacement(value);
-    if (value !== 'all') {
-      setSelectedIds(new Set(students.filter((student) => matchesPlacement(student, value)).map((student) => student.id)));
+    if (value === 'all') return;
+    setSelectedIds(new Set(students.filter((student) => matchesPlacement(student, value)).map((student) => student.id)));
+    const cls = branches.flatMap((branch) => branch.classes).find((item) => `c:${item.id}` === value);
+    if (cls) {
+      setBulkSlots(sortClassDaySlots(cls.class_days.map((day) => ({ day, timeSlot: cls.default_time_slot }))));
     }
   };
+
+  // 설정의 "학생에게 적용"에서 넘어온 경우(?class=반 번호): 그 반을 고른 상태로 시작한다.
+  // 목록을 새로 읽으면 선택이 비워지므로, 다른 반으로 바꾸기 전까지는 읽을 때마다 다시 고른다.
+  const requestedClassId = searchParams.get('class');
+  useEffect(() => {
+    const requested = `c:${requestedClassId}`;
+    if (!requestedClassId || loading || branches.length === 0) return;
+    if (filterPlacement !== 'all' && filterPlacement !== requested) return;
+    changePlacementFilter(requested);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedClassId, loading, students, branches.length]);
 
   const toggleSelectAll = () => {
     setSelectedIds((prev) => (

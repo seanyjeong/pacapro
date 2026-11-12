@@ -17,6 +17,7 @@ export interface BranchClass extends BranchCounts {
   branch_id: number;
   class_name: string;
   default_time_slot: BranchTimeSlot;
+  class_days: number[]; // 반 수업 요일 0(일)~6(토), 안 정했으면 빈 배열
   sort_order: number;
   status: BranchStatus;
 }
@@ -51,7 +52,7 @@ export const branchesAPI = {
     apiClient.post(`${BASE_PATH}/${branchId}/classes`, { class_name: className }, config),
   updateClass: (
     id: number,
-    data: { class_name?: string; default_time_slot?: BranchTimeSlot; status?: BranchStatus; branch_id?: number },
+    data: { class_name?: string; default_time_slot?: BranchTimeSlot; class_days?: number[]; status?: BranchStatus; branch_id?: number },
     config?: APIRequestConfig,
   ) => apiClient.put(`${BASE_PATH}/classes/${id}`, data, config),
   deleteClass: (id: number, config?: APIRequestConfig) => apiClient.delete(`${BASE_PATH}/classes/${id}`, config),

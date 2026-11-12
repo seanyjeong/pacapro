@@ -8,6 +8,14 @@ const TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 const STATUSES = ['active', 'inactive'];
 const fail = (status, message) => ({ status, message });
 const text = value => (typeof value === 'string' ? value.trim() : '');
+// 반의 수업 요일: 0(일)~6(토). DB 에는 JSON 배열, 비어 있으면 NULL.
+const parseDays = value => {
+    const days = typeof value === 'string' ? JSON.parse(value) : value;
+    return Array.isArray(days) ? days : [];
+};
+const toDays = value => (Array.isArray(value) && value.every(day => Number.isInteger(day) && day >= 0 && day <= 6)
+    ? [...new Set(value)].sort((a, b) => a - b) : null);
+const withDays = item => ({ ...item, class_days: parseDays(item.class_days) });
 const toId = value => (Number.isSafeInteger(Number(value)) && Number(value) > 0 ? Number(value) : null);
 
 async function getTree(academyId) {
@@ -19,7 +27,7 @@ async function getTree(academyId) {
         branches: branches.map(branch => ({
             ...branch, ...count(row => row.branch_id === branch.id),
             classes: classes.filter(item => item.branch_id === branch.id)
-                .map(item => ({ ...item, ...count(row => row.class_id === item.id) }))
+                .map(item => ({ ...withDays(item), ...count(row => row.class_id === item.id) }))
         })),
         unassigned: count(row => row.branch_id === null)
     };
@@ -62,7 +70,7 @@ async function createClass(branchId, academyId, body) {
     if (!TIME_SLOTS.includes(timeSlot)) return fail(400, '기본 시간대 값이 올바르지 않습니다.');
     if (await repo.findClassByName(academyId, branchId, className)) return fail(409, '이 지점에 같은 이름의 반이 이미 있습니다.');
     const id = await repo.insertClass(academyId, branchId, { class_name: className, default_time_slot: timeSlot });
-    return { status: 201, message: '반을 만들었습니다.', class: await repo.findClass(id, academyId) };
+    return { status: 201, message: '반을 만들었습니다.', class: withDays(await repo.findClass(id, academyId)) };
 }
 
 async function updateClass(id, academyId, body) {
@@ -72,17 +80,19 @@ async function updateClass(id, academyId, body) {
         branch_id: body.branch_id === undefined ? current.branch_id : toId(body.branch_id),
         class_name: body.class_name === undefined ? current.class_name : text(body.class_name),
         default_time_slot: body.default_time_slot || current.default_time_slot,
+        class_days: body.class_days === undefined ? parseDays(current.class_days) : toDays(body.class_days),
         sort_order: Number.isInteger(body.sort_order) ? body.sort_order : current.sort_order,
         status: body.status || current.status
     };
     if (!fields.class_name) return fail(400, '반 이름을 입력해주세요.');
     if (!TIME_SLOTS.includes(fields.default_time_slot)) return fail(400, '기본 시간대 값이 올바르지 않습니다.');
+    if (!fields.class_days) return fail(400, '수업 요일 값이 올바르지 않습니다.');
     if (!STATUSES.includes(fields.status)) return fail(400, '상태 값이 올바르지 않습니다.');
     if (!fields.branch_id || !await repo.findBranch(fields.branch_id, academyId)) return fail(404, '지점을 찾을 수 없습니다.');
     const duplicate = await repo.findClassByName(academyId, fields.branch_id, fields.class_name);
     if (duplicate && duplicate.id !== current.id) return fail(409, '이 지점에 같은 이름의 반이 이미 있습니다.');
     await repo.withTransaction(connection => repo.updateClass(connection, id, academyId, fields));
-    return { status: 200, message: '반을 수정했습니다.', class: await repo.findClass(id, academyId) };
+    return { status: 200, message: '반을 수정했습니다.', class: withDays(await repo.findClass(id, academyId)) };
 }
 
 async function deleteClass(id, academyId) {

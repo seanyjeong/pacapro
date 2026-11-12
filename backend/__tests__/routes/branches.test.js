@@ -35,7 +35,7 @@ jest.mock('../../config/database', () => {
                 );
                 CREATE TABLE classes (
                     id INTEGER PRIMARY KEY, academy_id INTEGER, branch_id INTEGER, class_name TEXT,
-                    default_time_slot TEXT DEFAULT 'afternoon', sort_order INTEGER DEFAULT 0, status TEXT DEFAULT 'active'
+                    default_time_slot TEXT DEFAULT 'afternoon', class_days TEXT, sort_order INTEGER DEFAULT 0, status TEXT DEFAULT 'active'
                 );
                 CREATE TABLE students (
                     id INTEGER PRIMARY KEY, academy_id INTEGER, status TEXT, branch_id INTEGER, class_id INTEGER,
@@ -139,4 +139,21 @@ test('다른 학원의 지점·반·학생은 건드리지 못하고, 직원은 
     expect((await call('get', path, undefined, 20)).status).toBe(200);
     expect((await call('post', path, { name: '복현' }, 20)).status).toBe(403);
     expect((await call('put', `${path}/students`, { student_ids: [1], class_id: regular }, 20)).status).toBe(403);
+});
+
+test('반에 수업 요일을 정하면 목록에 순서대로 나오고, 비우거나 잘못된 값은 구분한다', async () => {
+    const { regular, early } = await seed();
+    expect((await call('post', `${path}/1/classes`, { class_name: '새반' })).body.class.class_days).toEqual([]);
+    const saved = await call('put', `${path}/classes/${regular}`, { class_days: [5, 1, 3, 1], default_time_slot: 'evening' });
+    expect(saved.status).toBe(200);
+    expect(saved.body.class).toMatchObject({ class_days: [1, 3, 5], default_time_slot: 'evening' });
+    // 이름만 바꿔도 요일은 그대로
+    await call('put', `${path}/classes/${regular}`, { class_name: '정시A반' });
+    const classes = (await call('get', path)).body.branches[0].classes;
+    expect(classes.find(item => item.id === regular).class_days).toEqual([1, 3, 5]);
+    expect(classes.find(item => item.id === early).class_days).toEqual([]);
+    for (const bad of [[7], [-1], ['1'], '1,3', [1.5]]) {
+        expect((await call('put', `${path}/classes/${regular}`, { class_days: bad })).status).toBe(400);
+    }
+    expect((await call('put', `${path}/classes/${regular}`, { class_days: [] })).body.class.class_days).toEqual([]);
 });

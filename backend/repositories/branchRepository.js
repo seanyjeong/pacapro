@@ -20,7 +20,7 @@ async function findTree(academyId) {
     const [branches] = await db.query(
         'SELECT id, name, sort_order, status FROM branches WHERE academy_id = ? ORDER BY sort_order, id', [academyId]);
     const [classes] = await db.query(
-        `SELECT id, branch_id, class_name, default_time_slot, sort_order, status FROM classes
+        `SELECT id, branch_id, class_name, default_time_slot, class_days, sort_order, status FROM classes
          WHERE academy_id = ? AND branch_id IS NOT NULL ORDER BY sort_order, id`, [academyId]);
     const [counts] = await db.query(
         `SELECT branch_id, class_id, COUNT(*) AS student_count, SUM(status = 'active') AS active_count
@@ -85,9 +85,10 @@ async function insertClass(academyId, branchId, fields) {
 // 반이 다른 지점으로 가면 그 반 학생의 지점도 같이 옮긴다.
 async function updateClass(connection, id, academyId, fields) {
     await connection.query(
-        `UPDATE classes SET branch_id = ?, class_name = ?, default_time_slot = ?, sort_order = ?, status = ?
+        `UPDATE classes SET branch_id = ?, class_name = ?, default_time_slot = ?, class_days = ?, sort_order = ?, status = ?
          WHERE id = ? AND academy_id = ?`,
-        [fields.branch_id, fields.class_name, fields.default_time_slot, fields.sort_order, fields.status, id, academyId]);
+        [fields.branch_id, fields.class_name, fields.default_time_slot,
+            fields.class_days.length ? JSON.stringify(fields.class_days) : null, fields.sort_order, fields.status, id, academyId]);
     await connection.query('UPDATE students SET branch_id = ? WHERE class_id = ? AND academy_id = ?',
         [fields.branch_id, id, academyId]);
 }

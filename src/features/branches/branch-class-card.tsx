@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Building2, Plus, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,9 @@ import { Input } from '@/components/ui/input';
 import { SettingsSectionCard } from '@/features/settings/settings-section-card';
 import { getSettingsSaveErrorMessage } from '@/features/settings/settings-error-message';
 import { BRANCH_TREE_QUERY_KEY, useBranchTree } from '@/hooks/use-branches';
-import { branchesAPI } from '@/lib/api/branches';
+import { branchesAPI, type BranchClass, type BranchTimeSlot } from '@/lib/api/branches';
+import { WEEKDAY_OPTIONS } from '@/lib/types/student';
+import { cn } from '@/lib/utils';
 
 const quiet = { suppressErrorToast: true };
 
@@ -30,6 +33,65 @@ function NameInput({ label, name, disabled, onSave }: { label: string; name: str
       onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
       className="h-9"
     />
+  );
+}
+
+const TIME_SLOT_OPTIONS: Array<{ value: BranchTimeSlot; label: string }> = [
+  { value: 'morning', label: '오전' },
+  { value: 'afternoon', label: '오후' },
+  { value: 'evening', label: '저녁' },
+];
+
+// 반의 수업 요일·시간대. 누르면 바로 저장한다. 학생 수업일은 "학생에게 적용"을 눌러야 바뀐다.
+function ClassDaysRow({ label, cls, disabled, onSave }: {
+  label: string;
+  cls: BranchClass;
+  disabled: boolean;
+  onSave: (data: { class_days?: number[]; default_time_slot?: BranchTimeSlot }) => void;
+}) {
+  const toggle = (day: number) => onSave({
+    class_days: cls.class_days.includes(day) ? cls.class_days.filter((item) => item !== day) : [...cls.class_days, day],
+  });
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex gap-1" role="group" aria-label={`${label} 수업 요일`}>
+        {WEEKDAY_OPTIONS.map((option) => {
+          const active = cls.class_days.includes(option.value);
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-label={`${label} ${option.label}요일`}
+              aria-pressed={active}
+              disabled={disabled}
+              onClick={() => toggle(option.value)}
+              className={cn(
+                'h-8 w-8 rounded-md border text-xs font-medium transition-colors disabled:opacity-50',
+                active
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-input bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
+              )}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+      <select
+        aria-label={`${label} 수업 시간대`}
+        value={cls.default_time_slot}
+        disabled={disabled}
+        onChange={(event) => onSave({ default_time_slot: event.target.value as BranchTimeSlot })}
+        className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
+      >
+        {TIME_SLOT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+      {cls.class_days.length > 0 && cls.active_count > 0 ? (
+        <Link href={`/students/class-days?class=${cls.id}`} className="text-xs font-medium text-primary underline-offset-2 hover:underline">
+          학생 {cls.active_count}명에게 적용
+        </Link>
+      ) : null}
+    </div>
   );
 }
 
@@ -119,28 +181,36 @@ export function BranchClassCard() {
 
             <div className="mt-3 space-y-2 border-l-2 border-border/70 pl-4">
               {branch.classes.map((cls) => (
-                <div key={cls.id} className="flex items-center gap-2">
-                  <div className="min-w-0 flex-1">
-                    <NameInput
-                      key={cls.class_name}
-                      label={`${branch.name} ${cls.class_name} 반 이름`}
-                      name={cls.class_name}
-                      disabled={busy}
-                      onSave={(name) => void act(() => branchesAPI.updateClass(cls.id, { class_name: name }, quiet))}
-                    />
+                <div key={cls.id} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <NameInput
+                        key={cls.class_name}
+                        label={`${branch.name} ${cls.class_name} 반 이름`}
+                        name={cls.class_name}
+                        disabled={busy}
+                        onSave={(name) => void act(() => branchesAPI.updateClass(cls.id, { class_name: name }, quiet))}
+                      />
+                    </div>
+                    <span className="shrink-0 text-sm text-muted-foreground">재원 {cls.active_count}명</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      aria-label={`${branch.name} ${cls.class_name} 반 삭제`}
+                      disabled={busy || cls.student_count > 0}
+                      title={cls.student_count > 0 ? '학생이 있으면 지울 수 없습니다' : undefined}
+                      onClick={() => void act(() => branchesAPI.deleteClass(cls.id, quiet))}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <span className="shrink-0 text-sm text-muted-foreground">재원 {cls.active_count}명</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    aria-label={`${branch.name} ${cls.class_name} 반 삭제`}
-                    disabled={busy || cls.student_count > 0}
-                    title={cls.student_count > 0 ? '학생이 있으면 지울 수 없습니다' : undefined}
-                    onClick={() => void act(() => branchesAPI.deleteClass(cls.id, quiet))}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <ClassDaysRow
+                    label={`${branch.name} ${cls.class_name}`}
+                    cls={cls}
+                    disabled={busy}
+                    onSave={(data) => void act(() => branchesAPI.updateClass(cls.id, data, quiet))}
+                  />
                 </div>
               ))}
               <AddRow
