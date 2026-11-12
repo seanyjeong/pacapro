@@ -70,9 +70,8 @@ function calculateSameMonthAdjustment(payment, student, resumeDate, creditRecalc
         ? fullAmount : round(fullAmount * attendedDays / daysInMonth));
 }
 
-async function processResumePayment({ connection, student, resumeDate, classDays, creditRecalculation, recordedBy }) {
+function planResumePayment({ student, resumeDate, classDays, creditRecalculation, payments, canCreateMonthlyPayment = true }) {
     const yearMonth = resumeDate.slice(0, 7);
-    const payments = await repository.findMonthlyPayments(connection, student, yearMonth);
     if (payments.length > 1) {
         throw new RestCreditRecalculationConflictError('복귀월 청구가 여러 건입니다. 정산 내역을 먼저 확인해주세요.');
     }
@@ -81,14 +80,24 @@ async function processResumePayment({ connection, student, resumeDate, classDays
         if (student.rest_start_date.slice(0, 7) !== yearMonth) return {};
         const finalAmount = calculateSameMonthAdjustment(payment, student, resumeDate, creditRecalculation);
         if (finalAmount === null || finalAmount === Number(payment.final_amount)) return {};
-        await repository.adjustPayment(connection, student, payment, finalAmount, resumeDate);
         return { paymentAdjusted: { id: payment.id, yearMonth, previousAmount: Number(payment.final_amount), finalAmount } };
     }
-    if (!(Number(student.monthly_tuition) > 0)) return {};
-    if (!await repository.canCreateMonthlyPayment(connection, student, yearMonth)) return {};
-    const payment = calculateResumePayment(student, resumeDate, classDays);
-    const id = await repository.insertPayment(connection, student, payment, recordedBy);
-    return { paymentCreated: { id, ...payment } };
+    if (!(Number(student.monthly_tuition) > 0) || !canCreateMonthlyPayment) return {};
+    return { paymentCreated: { id: null, ...calculateResumePayment(student, resumeDate, classDays) } };
 }
 
-module.exports = { processResumePayment, calculateResumePayment, calculateSameMonthAdjustment, normalizeResumeClassDays };
+async function processResumePayment({ connection, student, resumeDate, classDays, creditRecalculation, recordedBy }) {
+    const payments = await repository.findMonthlyPayments(connection, student, resumeDate.slice(0, 7));
+    const canCreateMonthlyPayment = payments.length || !(Number(student.monthly_tuition) > 0)
+        ? true : await repository.canCreateMonthlyPayment(connection, student, resumeDate.slice(0, 7));
+    const plan = planResumePayment({ student, resumeDate, classDays, creditRecalculation, payments, canCreateMonthlyPayment });
+    if (plan.paymentAdjusted) {
+        await repository.adjustPayment(connection, student, payments[0], plan.paymentAdjusted.finalAmount, resumeDate);
+    }
+    if (plan.paymentCreated) {
+        plan.paymentCreated.id = await repository.insertPayment(connection, student, plan.paymentCreated, recordedBy);
+    }
+    return plan;
+}
+
+module.exports = { processResumePayment, planResumePayment, calculateResumePayment, calculateSameMonthAdjustment, normalizeResumeClassDays };

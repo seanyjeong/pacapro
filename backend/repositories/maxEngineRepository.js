@@ -4,14 +4,14 @@ const { PAGE_SIZE } = require('../config/maxEngine');
 
 async function userByEmail(email) {
   const [rows] = await db.execute(
-    `SELECT id, password_hash, role, academy_id, is_active, approval_status
+    `SELECT id, password_hash, role, academy_id, is_active, approval_status, permissions
      FROM users WHERE email = ? AND deleted_at IS NULL`, [email]);
   return rows[0];
 }
 
 async function userById(id) {
   const [rows] = await db.execute(
-    `SELECT id, password_hash, role, academy_id, is_active, approval_status
+    `SELECT id, password_hash, role, academy_id, is_active, approval_status, permissions
      FROM users WHERE id = ? AND deleted_at IS NULL`, [id]);
   return rows[0];
 }

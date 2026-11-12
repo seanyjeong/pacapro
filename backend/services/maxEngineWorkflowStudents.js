@@ -26,7 +26,7 @@ async function resolve(actor, provider, p) {
   return { student: matches[0] };
 }
 async function trial(actor, p) {
-  const students = await rows.all(actor, 'paca', 'students', p.status ? { status: p.status } : {},
+  const students = await rows.all(actor, 'paca', 'students', { ...(p.status ? { status: p.status } : {}), ...(p.student_id ? { id: p.student_id } : {}) },
     { columns: [...fields.student, 'is_trial', 'trial_remaining', 'trial_dates'] });
   return table(students.filter(s => {
     const dates = typeof s.trial_dates === 'string' ? JSON.parse(s.trial_dates) : s.trial_dates;

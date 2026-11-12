@@ -3,12 +3,14 @@ const lifecycle = require('../repositories/maxEngineLifecycleRepository');
 const settlement = require('./maxEngineSettlementCommands');
 const { decrypt, fail } = require('./maxEngineFullSecurity');
 const { prepareStudentTrialUpdate } = require('./trialStatusService');
+const resume = require('./maxEngineResumeCommands');
 const supports = operation => ['student_withdraw', 'student_reactivate'].includes(operation);
 const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul',
   year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 async function state(conn, actor, command, lock) {
   const student = await repo.row(conn, 'students', command.resource_id, actor.academy_id, lock);
   const day = today();
+  if (command.operation === 'student_reactivate' && student.status === 'paused') return resume.state(conn, student, command, lock);
   const reservations = command.operation === 'student_withdraw'
     ? await lifecycle.reservations(conn, actor.academy_id, student.id, day, lock) : [];
   return { student, today: day, reservations,
@@ -22,6 +24,8 @@ function reactivationValues(student) {
 }
 function display(command, before) {
   const { student, reservations } = before;
+  if (command.operation === 'student_reactivate' && student.status === 'paused') return resume.display(command, before);
+  if (command.operation === 'student_reactivate' && command.changes.resume_date) fail(422, 'INVALID_INPUT', '복귀 날짜 정산은 휴원 학생에게만 적용됩니다. 퇴원·졸업 학생은 날짜 없이 재원 복귀해주세요.');
   if (command.operation === 'student_withdraw') {
     if (student.status === 'withdrawn') fail(409, 'STUDENT_STATUS_CONFLICT', '이미 퇴원한 학생입니다.');
     if (command.changes.withdrawal_date > before.today) fail(422, 'STUDENT_DATE_RANGE', '퇴원 예약은 지원하지 않습니다. 퇴원일은 오늘(KST)까지 입력해 주세요.');
@@ -49,6 +53,7 @@ async function apply(conn, actor, command, before) {
     await settlement.apply(conn, actor, command, before);
     return lifecycle.withdraw(conn, actor, command, before);
   }
+  if (before.student.status === 'paused') return resume.apply(conn, actor, command, before);
   await repo.update(conn, 'students', command.resource_id, reactivationValues(before.student));
   return command.resource_id;
 }

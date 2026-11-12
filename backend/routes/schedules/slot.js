@@ -36,6 +36,7 @@
 
 const { db, decrypt, validateAttendance, logger } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { seasonGapExclusionSql, seasonGapExclusionParams } = require('../../repositories/seasonGapSchedule');
 
 module.exports = function(router) {
 
@@ -78,8 +79,9 @@ router.get('/slot', verifyToken, async (req, res) => {
                 (JSON_CONTAINS(s.class_days, CAST(? AS JSON)) AND s.time_slot = ?)
                 OR JSON_CONTAINS(s.class_days, CAST(? AS JSON))
              )
-             AND (s.enrollment_date IS NULL OR s.enrollment_date <= ?)`,
-            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), date]
+             AND (s.enrollment_date IS NULL OR s.enrollment_date <= ?)
+             AND ${seasonGapExclusionSql('s')}`,
+            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), date, ...seasonGapExclusionParams(date)]
         );
 
         // 스케줄이 없으면: 현재 월까지만 + 해당 시간대에 학생이 있을 때만 자동 생성
@@ -105,7 +107,7 @@ router.get('/slot', verifyToken, async (req, res) => {
             schedule = { id: result.insertId, class_date: date, time_slot, attendance_taken: 0 };
         }
 
-        // 아직 출석 기록 없는 학생 자동 추가 (enrollment_date 이전은 제외)
+        // 아직 출석 기록 없는 학생 자동 추가 (enrollment_date 이전·시즌 공백 기간은 제외)
         const [missingStudents] = await db.query(
             `SELECT s.id
              FROM students s
@@ -120,8 +122,9 @@ router.get('/slot', verifyToken, async (req, res) => {
                 SELECT a.student_id FROM attendance a
                 WHERE a.class_schedule_id = ?
              )
-             AND (s.enrollment_date IS NULL OR s.enrollment_date <= ?)`,
-            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), schedule.id, date]
+             AND (s.enrollment_date IS NULL OR s.enrollment_date <= ?)
+             AND ${seasonGapExclusionSql('s')}`,
+            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), schedule.id, date, ...seasonGapExclusionParams(date)]
         );
 
         // 누락된 학생들 자동 추가 (attendance_status = NULL로 추가)

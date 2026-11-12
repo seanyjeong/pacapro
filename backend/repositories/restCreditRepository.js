@@ -2,6 +2,7 @@ async function findCurrentRestCreditsForUpdate(connection, {
     academyId,
     restStartDate,
     studentId,
+    lock = true,
 }) {
     const [rows] = await connection.execute(
         `SELECT id, rest_start_date, rest_end_date, rest_days,
@@ -13,7 +14,7 @@ async function findCurrentRestCreditsForUpdate(connection, {
            AND credit_type IN ('carryover', 'refund')
            AND COALESCE(status, 'pending') <> 'cancelled'
          ORDER BY id
-         FOR UPDATE`,
+         ${lock ? 'FOR UPDATE' : ''}`,
         [studentId, academyId, restStartDate]
     );
 

@@ -3,6 +3,7 @@ const { STUDENT_ADMISSION_TYPES } = require('./studentAdmissionTypes');
 const text = max => Joi.string().max(max).allow('', null);
 const date = Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).custom((v, h) =>
   !Number.isNaN(Date.parse(v)) && new Date(v).toISOString().slice(0, 10) === v ? v : h.error('any.invalid'));
+const money = Joi.string().pattern(/^(0|[1-9]\d{0,7})(\.\d{1,2})?$/);
 const profile = {
   admission_type: Joi.string().valid(...STUDENT_ADMISSION_TYPES).allow(null),
   name: Joi.string().min(1).max(60), phone: Joi.string().pattern(/^[0-9+() -]{3,30}$/),
@@ -21,6 +22,8 @@ const record = {
   target_memo: text(10000), general_memo: text(10000),
 };
 const commands = {
+  ...require('./maxEngineTrialCommands').commands,
+  ...require('./maxEngineSeasonCommands').commands,
   ...require('./maxEngineScheduleCommands').commands,
   ...require('./maxEngineLifecycleCommands').commands,
   ...require('./maxEngineSettlementCommands').commands,
@@ -54,6 +57,21 @@ const commands = {
     schema: Joi.object({ paid_amount: Joi.string().pattern(/^(0|[1-9]\d{0,7})(\.\d{1,2})?$/).required(),
       payment_date: date.required(), payment_method: Joi.string().valid('account', 'card', 'cash', 'other').required(),
       notes: text(4000) }).unknown(false), notice: '납부금액을 기존 수납액에 더하고 같은 트랜잭션에서 수입 장부를 기록합니다.' },
+  payment_update: { resource: 'student_payments', provider: 'paca', label: '청구 금액 수정',
+    schema: Joi.object({ base_amount: money, discount_amount: money, additional_amount: money,
+      notes: Joi.string().max(4000).pattern(/\S/).required() }).or('base_amount', 'discount_amount', 'additional_amount').unknown(false),
+    notice: '기본·할인·추가 금액으로 최종 청구액을 다시 계산합니다(천원 단위 버림, 이월액 차감). 완납·취소 청구, 퇴원·졸업 학생, 이미 낸 금액보다 낮추는 변경은 거부하고 같으면 완납으로 바꿉니다. notes에 수정 사유가 필요합니다. 수입 장부는 바꾸지 않습니다.' },
+  monthly_payment_create: { resource: 'student_payments', provider: 'paca', label: '학생 월회비 청구 생성',
+    schema: Joi.object({ student_id: Joi.number().integer().positive().required(),
+      year_month: Joi.string().pattern(/^\d{4}-(0[1-9]|1[0-2])$/).required() }).unknown(false),
+    notice: '매월 1일 자동 청구와 같은 계산으로 그 달 월회비 청구 한 건을 새로 만듭니다: 학생 월회비 − 할인율 할인 − 휴원 이월·공결·수동 크레딧(가장 오래된 한 건, 크레딧 잔액도 줄임), 천원 단위 버림, 납부기한은 학생 납부일(없으면 학원 설정) 이후 첫 수업일. 재원·월회비가 있는 학생만, 등록월 이전 달·시즌 무료 수업·자동 졸업 기간은 거절합니다. 시즌비가 월회비를 대신하는 달에 시즌이 그 달 중간에 시작하면 1일~비시즌 종강일 수업료(시즌 등록 때 계산한 금액)를 그 달 월회비 청구로 만듭니다(자동 청구와 같음). 그 달 월회비 청구가 이미 있으면(취소 포함) 만들지 않으니 금액은 청구 금액 수정(payment_update)으로 고칩니다.' },
+  expense_create: { resource: 'expenses', provider: 'paca', label: '지출 등록',
+    schema: Joi.object({ expense_date: date.required(),
+      category: Joi.string().valid('utilities', 'rent', 'supplies', 'marketing', 'other').required(),
+      amount: Joi.string().pattern(/^[1-9]\d{0,7}(\.\d{1,2})?$/).required(),
+      description: text(4000), payment_method: Joi.string().valid('account', 'card', 'cash', 'other').allow(null),
+      notes: text(4000) }).unknown(false),
+    notice: '지출 화면과 같이 지출 장부에 한 건 기록합니다. 분류는 공과금 utilities·임대료 rent·소모품 supplies·홍보비 marketing·기타 other. 급여는 급여 화면, 환불은 퇴원 정산에서 처리합니다.' },
 };
 const encryptedFields = ['name', 'phone', 'parent_phone', 'address', 'father_name', 'mother_name'];
 module.exports = { commands, encryptedFields };

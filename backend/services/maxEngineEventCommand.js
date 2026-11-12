@@ -2,6 +2,11 @@ const events = require('./academyEventService');
 const { fail } = require('../models/maxEngineError');
 const { TIME_SLOTS, MORNING_END_HOUR, AFTERNOON_END_HOUR } = require('../constants/academyEvents');
 const { clock, timeSlot, timeRange, conflict } = require('./maxEngineScheduleValidation');
+const eventRepo = require('../repositories/academyEventRepository');
+const blocks = require('./maxEngineConsultationBlocks');
+
+const today = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul',
+  year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
 function plan(command, state) {
   const old = state.record;
@@ -54,4 +59,40 @@ async function apply(conn, actor, command) {
   if (result.status !== 200) fail(result.status, 'SCHEDULE_CONFLICT', result.message);
   return command.resource_id;
 }
-module.exports = { display, apply };
+// 일정 화면의 등록(createEvent)과 같은 결과: 시간을 주면 종일 아님, 종료는 선택(상담 차단 시 필수)
+function createPlan(command, state) {
+  const changes = command.changes;
+  if (changes.event_date < today()) fail(422, 'SCHEDULE_TIME_RANGE', '오늘 이전 날짜에는 일정을 만들 수 없습니다.');
+  const timed = changes.start_time != null || changes.end_time != null;
+  const allDay = changes.is_all_day ?? !timed;
+  if (allDay && timed) fail(422, 'SCHEDULE_TIME_RANGE', '종일 일정에는 시작·종료 시간을 넣지 않습니다.');
+  if (!allDay && !changes.start_time) fail(422, 'SCHEDULE_TIME_RANGE', '시작 시간을 넣어 주세요.');
+  if (changes.end_time != null) timeRange(changes.start_time, changes.end_time, true);
+  const { event, error } = events.normalizeEvent({ ...changes, is_all_day: allDay });
+  if (error) fail(422, 'SCHEDULE_TIME_RANGE', error);
+  const slots = events.consultationSlots(event);
+  if (slots.some(slot => { const [start, end] = blocks.range({ time_slot: slot }); return state.blocks.some(row => blocks.overlaps(row, start, end)); })) {
+    conflict('같은 날짜의 기존 상담 차단과 겹칩니다. 기존 차단을 먼저 확인해 주세요.');
+  }
+  if (event.is_holiday && (state.holidays.length || state.classes.some(row => row.is_closed || row.academy_event_id))) {
+    conflict('같은 날짜에 다른 휴일 또는 별도 휴강이 있습니다. 해당 일정을 먼저 확인해 주세요.');
+  }
+  return { event, slots, related: {
+    classes_to_close: event.is_holiday ? state.classes.map(({ id, class_date, time_slot }) => ({ id, class_date, time_slot })) : [],
+    consultation_blocks: slots.map(time_slot => ({ blocked_date: event.event_date, time_slot })),
+    unchanged_reservations_in_blocked_slots: state.reservations.filter(row => slots.includes(timeSlot(row.preferred_time))) } };
+}
+function createDisplay(command, state) {
+  const { event, related } = createPlan(command, state);
+  const keys = ['title', 'description', 'event_type', 'event_date', 'start_time', 'end_time', 'is_all_day', 'is_holiday', 'block_consultation', 'color'];
+  return { before: null, after: { ...Object.fromEntries(keys.map(key => [key, event[key] ?? null])), related } };
+}
+async function create(conn, actor, command, state) {
+  const { event, slots } = createPlan(command, state);
+  for (const field of ['start_time', 'end_time']) if (event[field]) event[field] += ':00';
+  const id = await eventRepo.insertEvent(conn, actor.academy_id, actor.user_id, event);
+  for (const slot of slots) await eventRepo.addConsultationBlock(conn, id, actor.academy_id, event, slot);
+  if (event.is_holiday) await eventRepo.closeClasses(conn, id, actor.academy_id, event);
+  return Number(id);
+}
+module.exports = { display, apply, createDisplay, create };

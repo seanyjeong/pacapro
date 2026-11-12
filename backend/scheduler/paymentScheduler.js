@@ -11,6 +11,7 @@ const db = require('../config/database');
 const { calculateDueDate } = require('../utils/dueDateCalculator');
 const { graduateDueSeasonStudents } = require('../services/seasonGraduationService');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../repositories/seasonMonthlyExclusion');
+const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../services/nonSeasonProratedBilling');
 
 /**
  * 천원 단위 절삭
@@ -252,6 +253,18 @@ async function generateMonthlyPayments() {
                     connection.release();
                     totalErrors++;
                     console.error(`[PaymentScheduler] Transaction failed for student ${student.id} (${student.name}):`, err.message);
+                }
+            }
+
+            // 시즌으로 이 달 월회비가 빠진 학생의 1일~비시즌 종강일 수업료 (services/nonSeasonProratedBilling)
+            for (const candidate of await nonSeasonProratedCandidates(db, academy.academy_id, yearMonth)) {
+                try {
+                    await insertNonSeasonProrated(db, academy.academy_id, candidate, planNonSeasonProrated(candidate, yearMonth));
+                    totalGenerated++;
+                    console.log(`[PaymentScheduler] Generated non-season prorated payment for student ${candidate.student_id} - ${yearMonth}`);
+                } catch (err) {
+                    totalErrors++;
+                    console.error(`[PaymentScheduler] Non-season prorated payment failed for student ${candidate.student_id}:`, err.message);
                 }
             }
         }

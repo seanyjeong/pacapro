@@ -14,7 +14,11 @@ const attendance = require('./maxEngineFullAttendance');
 const payments = require('./maxEngineFullPayments');
 const consultationRecords = require('./maxEngineFullConsultationRecords');
 const schedules = require('./maxEngineScheduleCommands');
+const trials = require('./maxEngineTrialCommands');
+const seasons = require('./maxEngineSeasonCommands');
+const monthlyPayment = require('./maxEngineMonthlyPayment');
 const instructorSchedule = require('./maxEngineInstructorScheduleCreate');
+const permissions = require('./maxEngineFullPermissions');
 
 function catalog(provider) {
   return Object.entries(commands).map(([operation, c]) => ({ operation, resource: c.provider === provider ? c.resource : c.provider + '_' + c.resource,
@@ -40,6 +44,9 @@ function validate(body) {
   return { operation: body.operation, resource_id: body.resource_id ?? null, changes: parsed.value };
 }
 async function state(conn, actor, command, lock = false) {
+  if (trials.supports(command.operation)) return trials.state(conn, actor, command, lock);
+  if (seasons.supports(command.operation)) return seasons.state(conn, actor, command, lock);
+  if (monthlyPayment.supports(command.operation)) return monthlyPayment.state(conn, actor, command, lock);
   if (instructorSchedule.supports(command.operation)) return instructorSchedule.state(conn, actor, command, lock);
   if (peak.supports(command.operation)) return peak.state(conn, actor, command, lock);
   if (lifecycle.supports(command.operation)) return lifecycle.state(conn, actor, command, lock);
@@ -47,18 +54,24 @@ async function state(conn, actor, command, lock = false) {
   if (schedules.supports(command.operation)) return schedules.state(conn, actor, command, lock);
   if (command.operation.startsWith('consultation_record_')) return consultationRecords.state(conn, actor, command, lock);
   if (command.operation === 'student_create') return repo.roster(conn, actor.academy_id, lock);
+  if (command.operation === 'expense_create') return {};
   if (command.operation === 'consultation_create') return repo.row(conn, 'students', command.changes.student_id, actor.academy_id, lock);
   if (command.operation === 'attendance_set') return attendance.state(conn, actor, command.resource_id, lock);
   const before = await repo.row(conn, commands[command.operation].resource, command.resource_id, actor.academy_id, lock);
   if (command.operation === 'payment_pay') await repo.row(conn, 'students', before.student_id, actor.academy_id, lock);
+  if (command.operation === 'payment_update') return { ...before, student_status: (await repo.row(conn, 'students', before.student_id, actor.academy_id, lock)).status };
   return before;
 }
 function display(command, before) {
+  if (trials.supports(command.operation)) return trials.display(command, before);
+  if (seasons.supports(command.operation)) return seasons.display(command, before);
+  if (monthlyPayment.supports(command.operation)) return monthlyPayment.display(command, before);
   if (instructorSchedule.supports(command.operation)) return { ...instructorSchedule.display(command, before), notice: commands[command.operation].notice };
   if (peak.supports(command.operation)) return { ...peak.display(command, before), notice: commands[command.operation].notice };
   if (lifecycle.supports(command.operation)) return { ...lifecycle.display(command, before), notice: commands[command.operation].notice };
   if (settlement.supports(command.operation)) return settlement.display(command, before);
   if (schedules.supports(command.operation)) return schedules.display(command, before);
+  if (command.operation === 'payment_update') return { ...payments.updateView(command.changes, before), notice: commands[command.operation].notice };
   const old = command.operation === 'attendance_set' ? before.attendance : before.record || before;
   const previous = command.operation.endsWith('_create') ? null : Object.fromEntries(
     Object.keys(command.changes).map(k => [k, decrypt(old[k] ?? null)]));
@@ -70,6 +83,7 @@ function display(command, before) {
 }
 async function preview(actor, provider, body) {
   const command = validate(body);
+  permissions.command(actor, command.operation);
   const before = await repo.transaction(conn => state(conn, actor, command), peak.supports(command.operation) ? peakPool : undefined);
   const view = display(command, before);
   const expiresAt = Math.min(actor.expires_at, Math.floor(Date.now() / 1000) + previewSeconds);
@@ -79,11 +93,14 @@ async function preview(actor, provider, body) {
     ...view, preview_token: seal(payload), idempotency_key: idempotencyKey, expires_at: expiresAt, requires_confirmation: true };
 }
 async function apply(conn, actor, command, before) {
+  if (trials.supports(command.operation)) return trials.apply(conn, actor, command, before);
+  if (seasons.supports(command.operation)) return seasons.apply(conn, actor, command, before);
+  if (monthlyPayment.supports(command.operation)) return monthlyPayment.apply(conn, actor, command, before);
   if (instructorSchedule.supports(command.operation)) return instructorSchedule.apply(conn, actor, command, before);
   if (peak.supports(command.operation)) return peak.apply(conn, actor, command, before);
   if (lifecycle.supports(command.operation)) return lifecycle.apply(conn, actor, command, before);
   if (settlement.supports(command.operation)) return settlement.apply(conn, actor, command, before);
-  if (schedules.supports(command.operation)) return schedules.apply(conn, actor, command);
+  if (schedules.supports(command.operation)) return schedules.apply(conn, actor, command, before);
   const { operation, resource_id: id, changes } = command;
   switch (operation) {
     case 'student_create': return students.create(conn, actor, changes, before);
@@ -94,6 +111,11 @@ async function apply(conn, actor, command, before) {
     case 'consultation_record_update': return consultationRecords.update(conn, id, changes);
     case 'attendance_set': return attendance.apply(conn, actor, id, changes, before);
     case 'payment_pay': return payments.apply(conn, actor, id, changes, before);
+    case 'payment_update': return payments.update(conn, id, changes, before);
+    // 지출 화면 등록(POST /paca/expenses)과 같은 행: 빈 값은 null, 기록자는 위임 계정
+    case 'expense_create': return repo.insert(conn, 'expenses', { academy_id: actor.academy_id, expense_date: changes.expense_date,
+      category: changes.category, amount: changes.amount, description: changes.description || null,
+      payment_method: changes.payment_method || null, notes: changes.notes || null, recorded_by: actor.user_id });
     default: fail(403, 'WRITE_FORBIDDEN', '허용된 작업이 아닙니다.');
   }
 }
@@ -104,6 +126,7 @@ async function confirm(actor, provider, body) {
   if (payload.actor.user_id !== actor.user_id || payload.actor.academy_id !== actor.academy_id ||
       payload.provider !== provider || payload.idempotency_key !== body.idempotency_key) fail(409, 'PREVIEW_MISMATCH', '미리보기의 계정·대상·확인 키가 다릅니다.');
   const command = validate(payload.command);
+  permissions.command(actor, command.operation);   // 미리보기 뒤 권한을 끈 직원은 확인도 못 한다
   const requestHash = digest(payload), idempotencyHash = digest(body.idempotency_key);
   return repo.transaction(async conn => {
     await (peak.supports(command.operation) ? peakRepo : repo).lockAcademy(conn, actor.academy_id);

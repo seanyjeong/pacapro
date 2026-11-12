@@ -26,7 +26,19 @@ test.each([undefined, 'mcp'])('delegation purpose %s issues a 30-day signed toke
   expect(claims.exp - claims.iat).toBe(2592000);
   expect(claims.scope).toBe('business:read business:confirmed-write');
   expect(await auth.authenticate('Bearer ' + issued.access_token))
-    .toEqual({ user_id: 1, academy_id: 2, expires_at: claims.exp });
+    .toEqual({ user_id: 1, academy_id: 2, expires_at: claims.exp, role: 'owner', permissions: {} });
+});
+
+test('staff connects and carries the current PACA staff permissions; other roles get a specific reason', async () => {
+  const perms = { students: { view: true, edit: false } };
+  repo.userByEmail.mockResolvedValue({ ...user, role: 'staff', permissions: JSON.stringify(perms) });
+  const issued = await auth.login('synthetic@example.invalid', 'synthetic-password', { purpose: 'mcp' });
+  repo.userById.mockResolvedValue({ ...user, role: 'staff', permissions: JSON.stringify(perms) });
+  expect(await auth.authenticate('Bearer ' + issued.access_token)).toEqual(expect.objectContaining({ role: 'staff', permissions: perms }));
+  repo.userByEmail.mockResolvedValue({ ...user, role: 'teacher' });
+  await expect(auth.login('synthetic@example.invalid', 'synthetic-password')).rejects.toThrow('원장·관리자·직원');
+  repo.userByEmail.mockResolvedValue({ ...user, approval_status: 'pending' });
+  await expect(auth.login('synthetic@example.invalid', 'synthetic-password')).rejects.toThrow('승인되지 않은');
 });
 
 test.each([
