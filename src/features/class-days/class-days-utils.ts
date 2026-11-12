@@ -26,13 +26,21 @@ export function getEffectiveMonthOptions() {
   return options;
 }
 
+// 지점·반 필터 값: 'all' | 'b:<지점 번호>' | 'c:<반 번호>'
+export function matchesPlacement(student: ClassDaysStudent, filterPlacement: string) {
+  if (filterPlacement === 'all') return true;
+  const [kind, rawId] = filterPlacement.split(':');
+  return (kind === 'b' ? student.branch_id : student.class_id) === Number(rawId);
+}
+
 export function filterAndSortClassDaysStudents(
   students: ClassDaysStudent[],
   filterGrade: string,
   filterWeekly: string,
   searchQuery: string,
   focusedStudentId: number | null = null,
-  showScheduledOnly = false
+  showScheduledOnly = false,
+  filterPlacement = 'all'
 ) {
   const q = searchQuery.trim().toLowerCase();
 
@@ -42,6 +50,7 @@ export function filterAndSortClassDaysStudents(
       if (showScheduledOnly && student.class_days_next === null) return false;
       if (filterGrade !== 'all' && student.grade !== filterGrade) return false;
       if (filterWeekly !== 'all' && student.weekly_count !== Number(filterWeekly)) return false;
+      if (!matchesPlacement(student, filterPlacement)) return false;
       if (q && !student.name.toLowerCase().includes(q)) return false;
       return true;
     })

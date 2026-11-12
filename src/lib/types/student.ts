@@ -448,6 +448,8 @@ export interface ClassDaysStudent {
   time_slot: 'morning' | 'afternoon' | 'evening' | null;
   class_days_next: ClassDaySlot[] | number[] | string | null;
   class_days_effective_from: string | null;
+  branch_id?: number | null;
+  class_id?: number | null;
 }
 
 // 수업일 관리 목록 응답

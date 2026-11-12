@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { useBranchTree } from '@/hooks/use-branches';
 import { studentsAPI } from '@/lib/api/students';
 import type { ClassDaysStudent, ClassDaySlot } from '@/lib/types/student';
 import { extractDayNumbers, parseClassDaysWithSlots } from '@/lib/utils/student-helpers';
@@ -16,7 +17,7 @@ import { ClassDaysOperationsBoard } from './class-days-operations-board';
 import { ClassDaysSaveError } from './class-days-save-error';
 import { ClassDaysTable } from './class-days-table';
 import type { StudentEdit, TimeSlot } from './class-days-types';
-import { filterAndSortClassDaysStudents, getEffectiveMonthOptions } from './class-days-utils';
+import { filterAndSortClassDaysStudents, getEffectiveMonthOptions, matchesPlacement } from './class-days-utils';
 
 export function ClassDaysPage() {
   const router = useRouter();
@@ -34,13 +35,15 @@ export function ClassDaysPage() {
   const [filterWeekly, setFilterWeekly] = useState('all');
   const [showScheduledOnly, setShowScheduledOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterPlacement, setFilterPlacement] = useState('all');
+  const { branches } = useBranchTree();
   const requestedStudentId = Number.parseInt(searchParams.get('studentId') || '', 10);
   const focusedStudentId = Number.isFinite(requestedStudentId) ? requestedStudentId : null;
 
   const monthOptions = useMemo(() => getEffectiveMonthOptions(), []);
   const filteredStudents = useMemo(
-    () => filterAndSortClassDaysStudents(students, filterGrade, filterWeekly, searchQuery, focusedStudentId, showScheduledOnly),
-    [focusedStudentId, students, filterGrade, filterWeekly, searchQuery, showScheduledOnly]
+    () => filterAndSortClassDaysStudents(students, filterGrade, filterWeekly, searchQuery, focusedStudentId, showScheduledOnly, filterPlacement),
+    [focusedStudentId, students, filterGrade, filterWeekly, searchQuery, showScheduledOnly, filterPlacement]
   );
   const focusedStudentName = useMemo(() => {
     if (focusedStudentId === null) return null;
@@ -115,6 +118,14 @@ export function ClassDaysPage() {
       }
       return next;
     });
+  };
+
+  // 지점·반을 고르면 그 반 학생 전원을 바로 선택한다 — 아래 일괄 변경으로 반 단위 수업일을 한 번에 정한다.
+  const changePlacementFilter = (value: string) => {
+    setFilterPlacement(value);
+    if (value !== 'all') {
+      setSelectedIds(new Set(students.filter((student) => matchesPlacement(student, value)).map((student) => student.id)));
+    }
   };
 
   const toggleSelectAll = () => {
@@ -243,6 +254,7 @@ export function ClassDaysPage() {
   const resetFilters = () => {
     setFilterGrade('all');
     setFilterWeekly('all');
+    setFilterPlacement('all');
     setShowScheduledOnly(false);
     setSearchQuery('');
     if (focusedStudentId !== null) {
@@ -252,7 +264,7 @@ export function ClassDaysPage() {
 
   const changedCount = Array.from(edits.values()).filter((edit) => edit.changed).length;
   const scheduledCount = students.filter((student) => student.class_days_next !== null).length;
-  const hasActiveFilters = filterGrade !== 'all' || filterWeekly !== 'all' || searchQuery || focusedStudentId !== null || showScheduledOnly;
+  const hasActiveFilters = filterGrade !== 'all' || filterWeekly !== 'all' || filterPlacement !== 'all' || searchQuery || focusedStudentId !== null || showScheduledOnly;
   const effectiveFromLabel = monthOptions.find((option) => option.value === effectiveFrom)?.label || '즉시 적용 (이번 달)';
 
   if (loading) {
@@ -279,7 +291,10 @@ export function ClassDaysPage() {
           />
           <ClassDaysSaveError message={saveError} />
           <ClassDaysFilters
+            branches={branches}
             filterGrade={filterGrade}
+            filterPlacement={filterPlacement}
+            onPlacementChange={changePlacementFilter}
             filterWeekly={filterWeekly}
             focusedStudentName={focusedStudentName}
             searchQuery={searchQuery}

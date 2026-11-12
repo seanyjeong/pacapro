@@ -1,6 +1,7 @@
 import { Filter, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import type { Branch } from '@/lib/api/branches';
 import {
   Select,
   SelectContent,
@@ -10,11 +11,14 @@ import {
 } from '@/components/ui/select';
 
 interface ClassDaysFiltersProps {
+  branches: Branch[];
   filterGrade: string;
+  filterPlacement: string;
   filterWeekly: string;
   focusedStudentName?: string | null;
   hasActiveFilters: boolean;
   onGradeChange: (value: string) => void;
+  onPlacementChange: (value: string) => void;
   onReset: () => void;
   onSearchChange: (value: string) => void;
   onWeeklyChange: (value: string) => void;
@@ -24,11 +28,14 @@ interface ClassDaysFiltersProps {
 }
 
 export function ClassDaysFilters({
+  branches,
   filterGrade,
+  filterPlacement,
   filterWeekly,
   focusedStudentName,
   hasActiveFilters,
   onGradeChange,
+  onPlacementChange,
   onReset,
   onSearchChange,
   onWeeklyChange,
@@ -40,6 +47,22 @@ export function ClassDaysFilters({
     <section className="flex flex-wrap items-center gap-3 rounded-md border border-border bg-card p-4">
       <div className="flex items-center gap-2">
         <Filter className="h-4 w-4 text-muted-foreground" />
+        {branches.length > 0 ? (
+          <Select value={filterPlacement} onValueChange={onPlacementChange}>
+            <SelectTrigger aria-label="지점·반 필터" className="h-8 w-[170px] text-sm">
+              <SelectValue placeholder="지점·반" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">전체 지점·반</SelectItem>
+              {branches.flatMap((branch) => [
+                <SelectItem key={`b:${branch.id}`} value={`b:${branch.id}`}>{branch.name} 전체</SelectItem>,
+                ...branch.classes.map((cls) => (
+                  <SelectItem key={`c:${cls.id}`} value={`c:${cls.id}`}>{branch.name} {cls.class_name}</SelectItem>
+                )),
+              ])}
+            </SelectContent>
+          </Select>
+        ) : null}
         <Select value={filterGrade} onValueChange={onGradeChange}>
           <SelectTrigger aria-label="학년 필터" className="h-8 w-[120px] text-sm">
             <SelectValue placeholder="학년" />

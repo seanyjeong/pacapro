@@ -19,7 +19,7 @@ router.get('/class-days', verifyToken, checkPermission('class_days', 'view'), as
 
         const [students] = await db.query(
             `SELECT id, name, grade, class_days, weekly_count, time_slot,
-                    class_days_next, class_days_effective_from
+                    class_days_next, class_days_effective_from, branch_id, class_id
              FROM students
              WHERE academy_id = ?
              AND deleted_at IS NULL
