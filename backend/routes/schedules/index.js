@@ -39,6 +39,7 @@ const express = require('express');
 const router = express.Router();
 
 require('./slot')(router);                    // 정적 /slot/* 4건 (와일드카드 충돌 회피)
+require('./class-roster')(router);            // 정적 /class-roster (반 명단 출석 조회)
 require('./instructor-calendar')(router);
 require('./instructor-schedules')(router);    // 정적 /date/*/instructor-schedules + /instructor-schedules/month
 require('./instructor-attendance')(router);   // 혼합: 정적 /date/* + /:id/instructor-attendance
