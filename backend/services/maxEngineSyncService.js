@@ -27,19 +27,35 @@ async function students(input, header, socketAddress, headers) {
   authenticate(key, header, socketAddress, headers);
   const page = query(input, key);
   await allowed(academies, page.academyId, headers);
+  const scope = page.branchIds && new Set(page.branchIds);
+  if (scope) {
+    const owned = new Set((await repository.branches(page.academyId)).map(row => row.id));
+    if (page.branchIds.some(id => !owned.has(id))) {
+      fail(422, 'SYNC_INVALID_QUERY', 'branch_ids에 이 교육원의 지점이 아닌 번호가 있습니다.');
+    }
+  }
   page.watermark = page.watermark || await repository.serverTime();
   const rows = await repository.students(page), selected = rows.slice(0, config.pageSize);
-  const items = selected.map(row => ({
-    paca_student_id: row.id, academy_id: row.academy_id,
-    name: decrypt(row.name), gender: row.gender, school_name: row.school,
-    grade: row.grade, phone: decrypt(row.phone), parent_phone: decrypt(row.parent_phone),
-    father_phone: decrypt(row.father_phone), mother_phone: decrypt(row.mother_phone),
-    admission_type: row.admission_type, status: row.status,
-    deleted_at: mysqlToIso(row.deleted_at), updated_at: mysqlToIso(row.updated_at),
-  }));
+  const items = selected.map(row => {
+    // 범위 밖(다른 지점·지점 없음)으로 바뀐 학생은 번호만 — 개인정보 없이 "삭제가 아니라 범위 밖"임을 알린다.
+    if (scope && !scope.has(row.branch_id)) {
+      return { paca_student_id: row.id, academy_id: row.academy_id, out_of_scope: true, updated_at: mysqlToIso(row.updated_at) };
+    }
+    const item = {
+      paca_student_id: row.id, academy_id: row.academy_id,
+      name: decrypt(row.name), gender: row.gender, school_name: row.school,
+      grade: row.grade, phone: decrypt(row.phone), parent_phone: decrypt(row.parent_phone),
+      father_phone: decrypt(row.father_phone), mother_phone: decrypt(row.mother_phone),
+      admission_type: row.admission_type, status: row.status,
+      deleted_at: mysqlToIso(row.deleted_at), updated_at: mysqlToIso(row.updated_at),
+    };
+    return scope ? { ...item, branch_id: row.branch_id, branch_name: row.branch_name,
+      class_id: row.class_id, class_name: row.class_name } : item;
+  });
   const last = selected[selected.length - 1];
   const next = rows.length > config.pageSize ? cursor({
     academyId: page.academyId, since: page.since, watermark: page.watermark,
+    ...(page.branchIds ? { branchIds: page.branchIds } : {}),
     after: { id: last.id, updated_at: last.updated_at },
   }, key) : null;
   return { items, next_cursor: next, server_time: page.watermark };
@@ -49,6 +65,22 @@ function positive(value, name) {
     fail(422, 'SYNC_INVALID_QUERY', `${name}는 양의 정수여야 합니다.`);
   }
   return Number(value);
+}
+
+// 연결 화면용 지점·반 목록 — 맥스엔진 교육원이 "내 지점"을 고른다. 이름만, 학생 정보 없음.
+async function branches(input, header, socketAddress, headers) {
+  const { key, academies } = enabled();
+  authenticate(key, header, socketAddress, headers);
+  if (Object.keys(input).some(k => k !== 'academy_id')) fail(422, 'SYNC_INVALID_QUERY', 'academy_id만 지정해 주세요.');
+  const academyId = positive(input.academy_id, 'academy_id');
+  await allowed(academies, academyId, headers);
+  const list = [];
+  for (const row of await repository.branches(academyId)) {
+    let branch = list[list.length - 1];
+    if (!branch || branch.id !== row.id) list.push(branch = { id: row.id, name: row.name, status: row.status, classes: [] });
+    if (row.class_id) branch.classes.push({ id: row.class_id, name: row.class_name, status: row.class_status });
+  }
+  return { academy_id: academyId, branches: list };
 }
 
 /**
@@ -80,4 +112,4 @@ async function seasons(input, header, socketAddress, headers) {
     next_offset: regs.length > size ? offset + size : null,
   };
 }
-module.exports = { students, seasons };
+module.exports = { students, branches, seasons };

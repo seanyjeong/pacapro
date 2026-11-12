@@ -14,13 +14,24 @@ function cursor(payload, key) {
   const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
   return data + '.' + mac(data, key);
 }
+// 지점 범위(branch_ids=3,5): 한 파카 학원에 맥스엔진 교육원 여러 개가 붙을 때 자기 지점만. 없으면 학원 전체(지금과 같다).
+function branches(value) {
+  if (value === undefined) return null;
+  const parts = typeof value === 'string' ? value.split(',') : [];
+  if (!parts.length || parts.length > 50 || parts.some(id => !/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)))) {
+    fail(422, 'SYNC_INVALID_QUERY', 'branch_ids는 쉼표로 나눈 양의 정수(최대 50개)여야 합니다.');
+  }
+  return [...new Set(parts.map(Number))].sort((a, b) => a - b);
+}
 function query(input, key) {
-  if (Object.keys(input).some(k => !['academy_id', 'updated_since', 'cursor'].includes(k)) ||
+  if (Object.keys(input).some(k => !['academy_id', 'updated_since', 'cursor', 'branch_ids'].includes(k)) ||
       typeof input.academy_id !== 'string' || !/^[1-9]\d*$/.test(input.academy_id) || !Number.isSafeInteger(Number(input.academy_id))) {
     fail(422, 'SYNC_INVALID_QUERY', '양의 정수 academy_id와 updated_since·cursor만 지정해 주세요.');
   }
   const academyId = Number(input.academy_id), since = input.updated_since === undefined ? null : iso(input.updated_since);
-  if (input.cursor === undefined) return { academyId, since, after: null, watermark: null };
+  // 범위 없는 조회는 돌려주는 모양이 지금과 같다(branchIds 칸 없음).
+  const branchIds = branches(input.branch_ids), scope = branchIds ? { branchIds } : {};
+  if (input.cursor === undefined) return { academyId, since, ...scope, after: null, watermark: null };
   try {
     if (typeof input.cursor !== 'string' || input.cursor.length > 2000) throw new Error('format');
     const [data, signature, extra] = input.cursor.split('.');
@@ -29,10 +40,11 @@ function query(input, key) {
         !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) throw new Error('signature');
     const page = JSON.parse(Buffer.from(data, 'base64url').toString());
     if (page.academyId !== academyId || page.since !== since ||
+        JSON.stringify(page.branchIds ?? null) !== JSON.stringify(branchIds) ||
         !page.after || !Number.isSafeInteger(page.after.id) || page.after.id < 1 ||
         typeof page.after.updated_at !== 'string') throw new Error('scope');
     iso(page.watermark);
-    return { academyId, since, after: page.after, watermark: page.watermark };
+    return { academyId, since, ...scope, after: page.after, watermark: page.watermark };
   } catch { fail(422, 'SYNC_INVALID_CURSOR', 'cursor가 유효하지 않거나 교육원·updated_since가 다릅니다. 첫 페이지부터 다시 조회해 주세요.'); }
 }
 function authenticate(key, header, socketAddress, headers) {

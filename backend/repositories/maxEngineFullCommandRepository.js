@@ -32,6 +32,10 @@ async function roster(conn, academyId, lock = false) {
   const [rows] = await conn.execute('SELECT id, name, phone, student_number, deleted_at, updated_at FROM students WHERE academy_id = ? ORDER BY id' + (lock ? ' FOR UPDATE' : ''), [academyId]);
   return rows;
 }
+async function branchOwned(conn, branchId, academyId) {
+  const [rows] = await conn.execute('SELECT id FROM branches WHERE id = ? AND academy_id = ?', [branchId, academyId]);
+  return rows.length > 0;
+}
 async function insert(conn, table, values) {
   const fields = Object.keys(values);
   const [result] = await conn.execute(`INSERT INTO \`${table}\` (${fields.map(f => `\`${f}\``).join(',')}) VALUES (${fields.map(() => '?').join(',')})`, Object.values(values));
@@ -52,4 +56,4 @@ async function completed(conn, actor, idempotencyHash, requestHash, operation, r
     idempotency_hash: idempotencyHash, request_hash: requestHash, operation, resource_id: result.resource_id,
     result_json: JSON.stringify(result) });
 }
-module.exports = { transaction, lockAcademy, row, roster, insert, update, previous, completed };
+module.exports = { transaction, lockAcademy, row, roster, branchOwned, insert, update, previous, completed };

@@ -35,6 +35,9 @@ function validateCreate(changes, roster) {
 async function create(conn, actor, changes, before) {
   validateCreate(changes, before);
   const { registration_source: registrationSource, ...profile } = changes;
+  if (profile.branch_id !== undefined && !await repo.branchOwned(conn, profile.branch_id, actor.academy_id)) {
+    fail(422, 'INVALID_INPUT', '이 교육원의 지점이 아닙니다. 지점을 다시 골라 주세요.');
+  }
   const isProspect = registrationSource === 'max_engine';
   const memo = isProspect ? ['엔진등록', profile.memo].filter(Boolean).join('\n') : profile.memo;
   const year = new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Asia/Seoul' }).format(new Date());

@@ -10,17 +10,36 @@ async function serverTime() {
   return new Date(rows[0].server_time).toISOString();
 }
 async function students(page) {
-  const where = ['academy_id = ?', 'updated_at <= ?'];
+  // 지점 범위 조회만 지점·반 칸을 읽는다. 범위 없는 조회는 SQL 이 지금과 글자까지 같다.
+  const scoped = Boolean(page.branchIds), col = scoped ? 's.' : '';
+  const where = [`${col}academy_id = ?`, `${col}updated_at <= ?`];
   const params = [page.academyId, isoToMysql(page.watermark)];
-  if (page.since) { where.push('updated_at > ?'); params.push(isoToMysql(page.since)); }
+  if (page.since) { where.push(`${col}updated_at > ?`); params.push(isoToMysql(page.since)); }
   if (page.after) {
-    where.push('(updated_at > ? OR (updated_at = ? AND id > ?))');
+    where.push(`(${col}updated_at > ? OR (${col}updated_at = ? AND ${col}id > ?))`);
     params.push(page.after.updated_at, page.after.updated_at, page.after.id);
   }
   // No status/deleted filter: tombstones and prospect students are required for safe reconciliation.
-  const [rows] = await db.execute(`SELECT id, academy_id, name, gender, school, grade,
+  if (!scoped) {
+    const [rows] = await db.execute(`SELECT id, academy_id, name, gender, school, grade,
     phone, parent_phone, father_phone, mother_phone, admission_type, status, deleted_at, updated_at
     FROM students WHERE ${where.join(' AND ')} ORDER BY updated_at, id LIMIT ${pageSize + 1}`, params);
+    return rows;
+  }
+  // 범위 밖 학생도 같이 읽는다 — 다른 지점으로 옮긴 학생을 맥스엔진이 "삭제"로 보지 않게 번호만 알려 준다.
+  const [rows] = await db.execute(`SELECT s.id, s.academy_id, s.name, s.gender, s.school, s.grade,
+    s.phone, s.parent_phone, s.father_phone, s.mother_phone, s.admission_type, s.status, s.deleted_at, s.updated_at,
+    s.branch_id, s.class_id, b.name AS branch_name, c.class_name
+    FROM students s
+    LEFT JOIN branches b ON b.id = s.branch_id AND b.academy_id = s.academy_id
+    LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
+    WHERE ${where.join(' AND ')} ORDER BY s.updated_at, s.id LIMIT ${pageSize + 1}`, params);
+  return rows;
+}
+async function branches(academyId) {
+  const [rows] = await db.execute(`SELECT b.id, b.name, b.status, c.id AS class_id, c.class_name, c.status AS class_status
+    FROM branches b LEFT JOIN classes c ON c.branch_id = b.id AND c.academy_id = b.academy_id
+    WHERE b.academy_id = ? ORDER BY b.sort_order, b.id, c.sort_order, c.id`, [academyId]);
   return rows;
 }
 async function seasons(academyId) {
@@ -44,4 +63,4 @@ async function studentSeasons(academyId, seasonIds, studentId, offset) {
     WHERE ${where.join(' AND ')} ORDER BY ss.id LIMIT ${SEASON_PAGE_SIZE + 1} OFFSET ${offset}`, params);
   return rows;
 }
-module.exports = { serverTime, students, seasons, studentSeasons, SEASON_PAGE_SIZE };
+module.exports = { serverTime, students, branches, seasons, studentSeasons, SEASON_PAGE_SIZE };

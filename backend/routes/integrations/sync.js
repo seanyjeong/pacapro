@@ -30,4 +30,18 @@ router.get('/seasons', async (req, res) => {
     } });
   }
 });
+// 지점·반 목록(이름만) — 맥스엔진 연결 화면에서 내 지점을 고를 때. 같은 키·같은 교육원 범위.
+router.get('/branches', async (req, res) => {
+  try {
+    res.json(await service.branches(req.query, req.headers['x-max-engine-sync-key'],
+      req.socket.remoteAddress, req.headers));
+  } catch (error) {
+    const known = error instanceof LinkError;
+    res.status(known ? error.status : 503).json({ error: {
+      code: known ? error.code : 'SOURCE_UNAVAILABLE',
+      message: known ? error.message : '동기화 지점 자료를 읽지 못했습니다. 잠시 뒤 다시 시도해 주세요.',
+      details: {},
+    } });
+  }
+});
 module.exports = router;
