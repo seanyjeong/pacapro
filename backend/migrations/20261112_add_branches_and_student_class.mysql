@@ -1,0 +1,37 @@
+-- Backup first. Apply before deploying code that selects students.branch_id / class_id.
+-- 지점(branches) → 반(classes) 두 단계. 지점이 없는 학원은 아무것도 달라지지 않는다.
+CREATE TABLE IF NOT EXISTS branches (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    academy_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL COMMENT '지점 이름 (예: 수성, 칠곡)',
+    sort_order INT NOT NULL DEFAULT 0,
+    status ENUM('active','inactive') NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_branches_academy_name (academy_id, name),
+    CONSTRAINT fk_branches_academy FOREIGN KEY (academy_id) REFERENCES academies (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='지점 (학원 안의 분원)';
+
+-- Add at the end so MySQL 8 can use INSTANT without rebuilding existing rows.
+SET @branch_schema = DATABASE();
+SET @branch_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE classes ADD COLUMN branch_id INT NULL DEFAULT NULL, ADD COLUMN sort_order INT NOT NULL DEFAULT 0, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @branch_schema AND TABLE_NAME = 'classes' AND COLUMN_NAME = 'branch_id'
+);
+PREPARE branch_stmt FROM @branch_sql;
+EXECUTE branch_stmt;
+DEALLOCATE PREPARE branch_stmt;
+
+SET @branch_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE students ADD COLUMN branch_id INT NULL DEFAULT NULL, ADD COLUMN class_id INT NULL DEFAULT NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @branch_schema AND TABLE_NAME = 'students' AND COLUMN_NAME = 'branch_id'
+);
+PREPARE branch_stmt FROM @branch_sql;
+EXECUTE branch_stmt;
+DEALLOCATE PREPARE branch_stmt;

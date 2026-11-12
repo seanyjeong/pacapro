@@ -98,6 +98,9 @@ export interface Student extends StudentParentNames, StudentParentPhones {
   // 수업일 예약 변경
   class_days_next: ClassDaySlot[] | number[] | string | null; // 변경 예정 수업요일
   class_days_effective_from: string | null; // 변경 적용 시작일 (YYYY-MM-DD)
+  // 지점·반 (지점을 쓰는 학원만 값이 있다)
+  branch_id?: number | null;
+  class_id?: number | null;
   // 상담일
   consultation_date: string | null; // 상담 완료일
   created_at: string;
@@ -155,6 +158,8 @@ export interface StudentFilters {
   gender?: Gender;
   search?: string;
   is_trial?: boolean; // 체험생 필터
+  branch_id?: number | 'none'; // 지점 ('none' = 배정 안 됨)
+  class_id?: number | 'none'; // 반 ('none' = 반 없음)
 }
 
 // 학생 상세 정보 (성적, 납부내역 포함)

@@ -149,6 +149,20 @@ describe('GET /paca/students (list)', () => {
         expect(params).toContain('advance');
     });
 
+    test('지점·반 필터 → branch_id / class_id 조건, none 은 배정 안 된 학생', async () => {
+        pool.execute.mockResolvedValue([[]]);
+        await request(makeApp()).get('/paca/students?branch_id=3&class_id=7');
+        const [sql, params] = pool.execute.mock.calls[0];
+        expect(sql).toMatch(/s\.branch_id,\s+s\.class_id/);
+        expect(sql).toMatch(/AND\s+s\.branch_id\s*=\s*\?\s+AND\s+s\.class_id\s*=\s*\?/);
+        expect(params).toEqual([1, '3', '7']);
+
+        await request(makeApp()).get('/paca/students?branch_id=none&class_id=none');
+        const [noneSql, noneParams] = pool.execute.mock.calls[1];
+        expect(noneSql).toMatch(/AND\s+s\.branch_id IS NULL\s+AND\s+s\.class_id IS NULL/);
+        expect(noneParams).toEqual([1]);
+    });
+
     test('is_trial=true → s.is_trial = TRUE 분기', async () => {
         pool.execute.mockResolvedValueOnce([[]]);
         await request(makeApp()).get('/paca/students?is_trial=true');

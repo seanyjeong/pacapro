@@ -119,6 +119,31 @@ describe('GET /paca/exports/students', () => {
         expect(workbook.getWorksheet('재원생').getCell('H5').value).toBe('선행반');
     });
 
+    test('지점·반을 쓰는 학원은 No. 다음 칸에 지점·반이 나오고, 안 쓰는 학원은 칸이 그대로다', async () => {
+        const student = { id: 1, name: '학생', phone: '010-1', school: '일산고', gender: 'male', grade: '고2',
+            enrollment_date: '2026-08-26', admission_type: 'regular', student_type: 'exam', status: 'active', is_trial: 0 };
+        const sheetFor = async rows => {
+            pool.execute.mockResolvedValueOnce([[{ name: '테스트학원' }]]).mockResolvedValueOnce([rows]);
+            const res = await request(buildApp()).get('/paca/exports/students').buffer(true).parse(binaryParser);
+            const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.load(res.body);
+            return workbook.getWorksheet('재원생');
+        };
+
+        const branched = await sheetFor([
+            { ...student, branch_name: '수성', class_name: '정시반' },
+            { ...student, id: 2, branch_name: null, class_name: null }
+        ]);
+        expect(['B4', 'C4', 'D4', 'J4'].map(cell => branched.getCell(cell).value)).toEqual(['지점', '반', '이름', '입시유형']);
+        expect(['B5', 'C5', 'D5', 'B6', 'C6'].map(cell => branched.getCell(cell).value))
+            .toEqual(['수성', '정시반', 'dec(학생)', '-', '-']);
+        expect(pool.execute.mock.calls[1][0]).toMatch(/ORDER BY b\.sort_order, c\.sort_order, s\.name ASC/);
+
+        const plain = await sheetFor([{ ...student, branch_name: null, class_name: null }]);
+        expect(['B4', 'H4', 'I4'].map(cell => plain.getCell(cell).value)).toEqual(['이름', '입시유형', null]);
+        expect(plain.getCell('B5').value).toBe('dec(학생)');
+    });
+
     test('학생이 없어도 Windows Excel에서 열 수 있는 등록 양식 시트를 생성한다', async () => {
         pool.execute
             .mockResolvedValueOnce([[{ name: '새학원' }]])

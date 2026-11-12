@@ -9,6 +9,7 @@ import { StudentParentNames } from '@/components/students/student-parent-names';
 import { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { StudentAvatar } from '@/components/students/student-avatar';
 import {
   ArrowDown,
@@ -46,6 +47,15 @@ interface StudentListTableProps {
   hideMonthlyTuition?: boolean;
   sort: StudentListSort | null;
   onSortChange: (key: string) => void;
+  // 지점·반을 쓰는 학원만 넘긴다: 지점·반 칸과 여러 명 선택이 생긴다.
+  placement?: StudentListPlacement;
+}
+
+export interface StudentListPlacement {
+  labelOf: (student: Student) => string;
+  selectedIds: ReadonlySet<number>;
+  onToggle: (id: number) => void;
+  onToggleAll: (ids: number[], checked: boolean) => void;
 }
 
 const SORT_KEYS = ['name', 'gender', 'type', 'admission', 'classDays', 'tuition', 'status', 'enrollment'] as const;
@@ -116,7 +126,7 @@ export function SortHeader<K extends string>({
   );
 }
 
-export function StudentListTable({ students, loading, onStudentClick, hideMonthlyTuition, sort, onSortChange }: StudentListTableProps) {
+export function StudentListTable({ students, loading, onStudentClick, hideMonthlyTuition, sort, onSortChange, placement }: StudentListTableProps) {
   const sortKey = sort && isSortKey(sort.key) ? sort.key : null;
   const sortDir: SortDir = sort?.dir ?? 'asc';
   const handleSort = (key: SortKey) => onSortChange(key);
@@ -200,7 +210,19 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
           <table className="w-full">
             <thead className="border-b border-border bg-muted/60">
               <tr>
+                {placement && (
+                  <th className="w-10 px-4 py-3">
+                    <Checkbox
+                      aria-label="보이는 학생 모두 선택"
+                      checked={students.every((student) => placement.selectedIds.has(student.id))}
+                      onCheckedChange={(checked) => placement.onToggleAll(students.map((student) => student.id), checked === true)}
+                    />
+                  </th>
+                )}
                 <SortHeader label="학생 정보" column="name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                {placement && (
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">지점·반</th>
+                )}
                 <SortHeader label="성별" column="gender" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <SortHeader label="유형" column="type" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
                 <SortHeader label="입시유형" column="admission" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
@@ -225,6 +247,15 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                     onClick={() => onStudentClick(student.id)}
                     className="cursor-pointer transition-colors hover:bg-muted/45"
                   >
+                    {placement && (
+                      <td className="px-4 py-4" onClick={(event) => event.stopPropagation()}>
+                        <Checkbox
+                          aria-label={`${student.name} 선택`}
+                          checked={placement.selectedIds.has(student.id)}
+                          onCheckedChange={() => placement.onToggle(student.id)}
+                        />
+                      </td>
+                    )}
                     <td className="whitespace-nowrap px-4 py-4">
                       <div className="flex items-center">
                         <StudentAvatar student={student} />
@@ -254,6 +285,10 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                         </div>
                       </div>
                     </td>
+
+                    {placement && (
+                      <td className="whitespace-nowrap px-4 py-4 text-sm text-foreground">{placement.labelOf(student)}</td>
+                    )}
 
                     <td className="whitespace-nowrap px-4 py-4">
                       {student.gender ? (

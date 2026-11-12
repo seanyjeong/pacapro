@@ -24,6 +24,7 @@ import { StudentDetailActions } from './student-detail-actions';
 import { StudentDetailError, StudentDetailLoading } from './student-detail-states';
 import { StudentDetailHeader } from './student-detail-header';
 import { StudentDetailSummary } from './student-detail-summary';
+import { StudentPlacementPanel } from '@/features/branches/student-placement-panel';
 import { StudentDetailTabs } from './student-detail-tabs';
 import type { StudentDetailAction, StudentDetailTab } from './student-detail-types';
 import { buildStudentTabs, getOutstandingAmount } from './student-detail-utils';
@@ -122,6 +123,11 @@ export function StudentDetailPage() {
       />
 
       <StudentDetailSummary payments={payments} student={student} />
+      <StudentPlacementPanel
+        studentId={student.id}
+        value={{ branch_id: student.branch_id ?? null, class_id: student.class_id ?? null }}
+        onChange={() => reload()}
+      />
       {billingResult ? <LifecycleBillingResultPanel title="퇴원 학원비 처리 결과" result={billingResult} /> : null}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">

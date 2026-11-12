@@ -1,0 +1,4 @@
+-- Manual rollback only. 지점·반 배정 값이 사라진다.
+ALTER TABLE students DROP COLUMN class_id, DROP COLUMN branch_id;
+ALTER TABLE classes DROP COLUMN sort_order, DROP COLUMN branch_id;
+DROP TABLE branches;

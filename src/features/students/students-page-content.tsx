@@ -1,11 +1,15 @@
 'use client';
 
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { StudentFiltersComponent } from '@/components/students/student-filters';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
+import { StudentsBranchBar } from '@/features/branches/students-branch-bar';
+import { StudentsBulkPlacementBar } from '@/features/branches/students-bulk-placement-bar';
+import { useBranchTree } from '@/hooks/use-branches';
 import { useStudents } from '@/hooks/use-students';
+import { branchesAPI, type StudentPlacement } from '@/lib/api/branches';
 import { exportsApi } from '@/lib/api/exports';
 import { studentsAPI } from '@/lib/api/students';
 import { rememberStudentListReturn } from './student-list-return';
@@ -59,6 +63,19 @@ export function StudentsPageContent() {
 
     const { students, loading, error, filters, setFilters, updateFilters, reload } = useStudents(initialState.filters);
 
+    // 지점·반 (지점을 만든 학원만 보인다)
+    const branchTree = useBranchTree();
+    const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
+    const [movingStudents, setMovingStudents] = useState(false);
+    const placementLabels = useMemo(() => {
+        const labels = new Map<string, string>();
+        branchTree.branches.forEach((branch) => {
+            labels.set(`b:${branch.id}`, branch.name);
+            branch.classes.forEach((cls) => labels.set(`c:${cls.id}`, `${branch.name} ${cls.class_name}`));
+        });
+        return labels;
+    }, [branchTree.branches]);
+
     // 사이드바 등 바깥에서 주소가 바뀌면 그 주소의 목록 상태를 따른다.
     useEffect(() => {
         const query = searchParams.toString();
@@ -88,17 +105,54 @@ export function StudentsPageContent() {
         updateFilters({ search: query });
     };
 
+    // 탭을 바꾸거나 필터를 초기화해도 고른 지점·반은 그대로 둔다.
+    const filtersForTab = (tab: StudentTab) => ({
+        ...getFiltersForTab(tab),
+        branch_id: filters.branch_id,
+        class_id: filters.class_id,
+    });
+
     const handleResetFilters = () => {
         setSearchQuery('');
-        setFilters(getFiltersForTab(activeTab));
+        setFilters(filtersForTab(activeTab));
     };
 
     const handleTabChange = (tab: StudentTab) => {
         setActiveTab(tab);
         setSearchQuery('');
-        setFilters(getFiltersForTab(tab));
+        setFilters(filtersForTab(tab));
         setSort(null);
+        setSelectedIds(new Set());
     };
+
+    const handleMoveStudents = async (placement: StudentPlacement) => {
+        setMovingStudents(true);
+        try {
+            await branchesAPI.assignStudents([...selectedIds], placement, { suppressErrorToast: true });
+            toast.success(`학생 ${selectedIds.size}명을 옮겼습니다.`);
+            setSelectedIds(new Set());
+            reload();
+            branchTree.reload();
+        } catch {
+            toast.error('학생을 옮기지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        } finally {
+            setMovingStudents(false);
+        }
+    };
+
+    const placement = branchTree.enabled
+        ? {
+            labelOf: (student: { branch_id?: number | null; class_id?: number | null }) =>
+                placementLabels.get(student.class_id ? `c:${student.class_id}` : `b:${student.branch_id}`) || '-',
+            selectedIds,
+            onToggle: (id: number) => setSelectedIds((current) => {
+                const next = new Set(current);
+                if (!next.delete(id)) next.add(id);
+                return next;
+            }),
+            onToggleAll: (ids: number[], checked: boolean) => setSelectedIds(checked ? new Set(ids) : new Set()),
+        }
+        : undefined;
 
     const handleSortChange = (key: string) => {
         setSort((current) => getNextSort(current, key));
@@ -148,7 +202,7 @@ export function StudentsPageContent() {
 
     const filterLabels = getActiveFilterLabels(filters);
     const showFilters = shouldShowStudentFilters(activeTab);
-    const showEmptyGuide = !loading && students.length === 0 && !searchQuery && !filters.grade && !filters.student_type;
+    const showEmptyGuide = !loading && students.length === 0 && !searchQuery && !filters.grade && !filters.student_type && !filters.branch_id;
     const openStudentDetail = (id: number) => {
         rememberStudentListReturn(id);
         router.push(`/students/${id}`);
@@ -181,6 +235,19 @@ export function StudentsPageContent() {
 
                     <StudentStatsCards refreshTrigger={statsRefreshTrigger} onStatsLoaded={setSummaryStats} />
 
+                    {branchTree.enabled && (
+                        <StudentsBranchBar
+                            branches={branchTree.branches}
+                            unassignedCount={branchTree.unassigned.active_count}
+                            branchId={filters.branch_id}
+                            classId={filters.class_id}
+                            onChange={(next) => {
+                                updateFilters(next);
+                                setSelectedIds(new Set());
+                            }}
+                        />
+                    )}
+
                     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
                         <div className="order-2 min-w-0 space-y-5 xl:order-1">
                             {showFilters && (
@@ -199,6 +266,16 @@ export function StudentsPageContent() {
                                 onSearch={handleSearch}
                             />
 
+                            {selectedIds.size > 0 && (
+                                <StudentsBulkPlacementBar
+                                    branches={branchTree.branches}
+                                    count={selectedIds.size}
+                                    moving={movingStudents}
+                                    onMove={handleMoveStudents}
+                                    onClear={() => setSelectedIds(new Set())}
+                                />
+                            )}
+
                             <StudentsPageList
                                 activeTab={activeTab}
                                 loading={loading}
@@ -207,6 +284,7 @@ export function StudentsPageContent() {
                                 onReload={handleReload}
                                 onSortChange={handleSortChange}
                                 onStudentClick={openStudentDetail}
+                                placement={placement}
                             />
 
                             {showEmptyGuide && <StudentsEmptyGuide />}

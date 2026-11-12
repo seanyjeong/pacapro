@@ -7,6 +7,8 @@ import { Loader2 } from 'lucide-react';
 import { StudentForm } from '@/components/students/student-form';
 import { StudentFormCancelDialog } from '@/features/student-form/student-form-cancel-dialog';
 import { StudentFormPageHeader } from '@/features/student-form/student-form-page-header';
+import { StudentPlacementPanel } from '@/features/branches/student-placement-panel';
+import { branchesAPI, type StudentPlacement } from '@/lib/api/branches';
 import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
 import type { StudentFormData, Student, StudentStatus } from '@/lib/types/student';
@@ -24,6 +26,7 @@ function NewStudentContent() {
   const existingStudentId = fromPendingId || fromTrialId;
   const [initialData, setInitialData] = useState<Partial<Student>>();
   const [loadError, setLoadError] = useState(false);
+  const [placement, setPlacement] = useState<StudentPlacement>({ branch_id: null, class_id: null });
 
   useEffect(() => {
     if (!existingStudentId) return;
@@ -37,6 +40,7 @@ function NewStudentContent() {
           ...student, enrollment_date: undefined, is_trial: undefined, trial_dates: undefined, status: undefined,
           rest_start_date: undefined, rest_end_date: undefined, rest_reason: undefined,
         });
+        setPlacement({ branch_id: student.branch_id ?? null, class_id: student.class_id ?? null });
       })
       .catch(() => { if (!cancelled) setLoadError(true); });
     return () => { cancelled = true; };
@@ -60,6 +64,14 @@ function NewStudentContent() {
         // 신규 등록: 새 학생 생성
         const response = await studentsAPI.createStudent(data, { suppressErrorToast: true });
         student = response.student;
+      }
+
+      if (placement.branch_id) {
+        try {
+          await branchesAPI.assignStudents([student.id], placement, { suppressErrorToast: true });
+        } catch {
+          toast.warning('학생은 등록되었지만 지점·반을 저장하지 못했습니다. 학생 상세에서 다시 선택해주세요.');
+        }
       }
 
       // 시즌 등록이 선택된 경우
@@ -136,6 +148,8 @@ function NewStudentContent() {
           </div>
         )
       ) : (
+      <>
+      <StudentPlacementPanel value={placement} onChange={setPlacement} />
       <StudentForm
         mode="create"
         initialData={initialData as Student | undefined}
@@ -143,6 +157,7 @@ function NewStudentContent() {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
       />
+      </>
       )}
       <StudentFormCancelDialog
         mode="create"

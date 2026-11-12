@@ -75,6 +75,8 @@ export const studentsAPI = {
     if (filters?.gender) params.append('gender', filters.gender);
     if (filters?.search) params.append('search', filters.search);
     if (filters?.is_trial !== undefined) params.append('is_trial', String(filters.is_trial));
+    if (filters?.branch_id) params.append('branch_id', String(filters.branch_id));
+    if (filters?.class_id) params.append('class_id', String(filters.class_id));
 
     const queryString = params.toString();
     const url = queryString ? `/students?${queryString}` : '/students';

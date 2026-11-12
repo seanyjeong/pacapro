@@ -1,6 +1,6 @@
 import { PendingStudentList } from '@/components/students/pending-student-list';
 import { SchoolStudentList } from '@/components/students/school-student-list';
-import { StudentListTable } from '@/components/students/student-list-table';
+import { StudentListTable, type StudentListPlacement } from '@/components/students/student-list-table';
 import { TrialStudentList } from '@/components/students/trial-student-list';
 import type { Student } from '@/lib/types/student';
 import type { StudentListSort, StudentTab } from './student-page-types';
@@ -14,6 +14,7 @@ interface StudentsPageListProps {
     onReload: () => void;
     onSortChange: (key: string) => void;
     onStudentClick: (id: number) => void;
+    placement?: StudentListPlacement;
 }
 
 export function StudentsPageList({
@@ -24,6 +25,7 @@ export function StudentsPageList({
     onReload,
     onSortChange,
     onStudentClick,
+    placement,
 }: StudentsPageListProps) {
     if (activeTab === 'trial') {
         const trialStudents = students.filter((student) => student.is_trial);
@@ -69,6 +71,7 @@ export function StudentsPageList({
                     sort={sort}
                     onSortChange={onSortChange}
                     onStudentClick={onStudentClick}
+                    placement={placement}
                 />
             </div>
         </>

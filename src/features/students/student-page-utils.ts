@@ -77,6 +77,10 @@ export function readStudentListState(params: URLSearchParams): StudentListState 
             Object.assign(filters, { [key]: value });
         }
     });
+    const branch = params.get('branch');
+    const cls = params.get('class');
+    if (branch) filters.branch_id = branch === 'none' ? 'none' : Number(branch) || undefined;
+    if (cls) filters.class_id = cls === 'none' ? 'none' : Number(cls) || undefined;
     if (search) filters.search = search;
     const sortKey = params.get('sort');
     const sort: StudentListSort | null = sortKey
@@ -93,6 +97,8 @@ export function buildStudentListQuery({ tab, search, filters, sort }: StudentLis
         const value = filters[key];
         if (value) params.set(key, value);
     });
+    if (filters.branch_id) params.set('branch', String(filters.branch_id));
+    if (filters.class_id) params.set('class', String(filters.class_id));
     if (sort) {
         params.set('sort', sort.key);
         params.set('dir', sort.dir);

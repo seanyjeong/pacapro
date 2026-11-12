@@ -15,6 +15,7 @@ import { TuitionSectionCard } from './tuition-section-card';
 import { UserInfoCard } from './user-info-card';
 import { useSettingsPageState } from './use-settings-page-state';
 import { GoogleIntegrationCard } from '@/features/google-integration/google-integration-card';
+import { BranchClassCard } from '@/features/branches/branch-class-card';
 
 export function SettingsPage() {
   const state = useSettingsPageState();
@@ -47,6 +48,7 @@ export function SettingsPage() {
             />
           ))}
           <SalarySettingsCard settings={state.settings} updateSetting={state.updateSetting} />
+          <BranchClassCard />
           {state.user?.role === 'owner' && <GoogleIntegrationCard />}
           <div className="flex justify-end border-t border-border/70 pt-4">
             <Button

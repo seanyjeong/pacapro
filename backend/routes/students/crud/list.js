@@ -37,7 +37,7 @@ module.exports = function(router) {
 
 router.get('/', verifyToken, async (req, res) => {
     try {
-        const { grade, student_type, admission_type, status, gender, search, is_trial } = req.query;
+        const { grade, student_type, admission_type, status, gender, search, is_trial, branch_id, class_id } = req.query;
 
         let query = `
             SELECT
@@ -80,6 +80,8 @@ router.get('/', verifyToken, async (req, res) => {
                 s.memo,
                 s.class_days_next,
                 s.class_days_effective_from,
+                s.branch_id,
+                s.class_id,
                 s.created_at
             FROM students s
             WHERE s.academy_id = ?
@@ -114,6 +116,21 @@ router.get('/', verifyToken, async (req, res) => {
         if (gender) {
             query += ' AND s.gender = ?';
             params.push(gender);
+        }
+
+        // 지점·반 필터 ('none' = 배정 안 된 학생)
+        if (branch_id === 'none') {
+            query += ' AND s.branch_id IS NULL';
+        } else if (branch_id) {
+            query += ' AND s.branch_id = ?';
+            params.push(branch_id);
+        }
+
+        if (class_id === 'none') {
+            query += ' AND s.class_id IS NULL';
+        } else if (class_id) {
+            query += ' AND s.class_id = ?';
+            params.push(class_id);
         }
 
         if (status) {
