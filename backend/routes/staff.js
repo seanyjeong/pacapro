@@ -12,6 +12,7 @@ const db = require('../config/database');
 const { verifyToken, requireRole } = require('../middleware/auth');
 const { decrypt } = require('../utils/encryption');
 const logger = require('../utils/logger');
+const { readUserBranchIds } = require('../utils/branchFilter');
 
 // 복호화 헬퍼
 function decryptStaffFields(obj) {
@@ -40,6 +41,7 @@ router.get('/', verifyToken, requireRole('owner'), async (req, res) => {
                 u.name,
                 u.position,
                 u.permissions,
+                u.branch_ids,
                 u.instructor_id,
                 u.is_active,
                 u.created_at,
@@ -58,7 +60,8 @@ router.get('/', verifyToken, requireRole('owner'), async (req, res) => {
             const decrypted = decryptStaffFields({...s});
             return {
                 ...decrypted,
-                permissions: decrypted.permissions ? (typeof decrypted.permissions === 'string' ? JSON.parse(decrypted.permissions) : decrypted.permissions) : {}
+                permissions: decrypted.permissions ? (typeof decrypted.permissions === 'string' ? JSON.parse(decrypted.permissions) : decrypted.permissions) : {},
+                branch_ids: readUserBranchIds(decrypted.branch_ids)
             };
         });
 
@@ -260,6 +263,7 @@ router.get('/:id', verifyToken, requireRole('owner'), async (req, res) => {
                 u.name,
                 u.position,
                 u.permissions,
+                u.branch_ids,
                 u.instructor_id,
                 u.is_active,
                 u.created_at,
@@ -286,6 +290,7 @@ router.get('/:id', verifyToken, requireRole('owner'), async (req, res) => {
         staffMember.permissions = staffMember.permissions
             ? (typeof staffMember.permissions === 'string' ? JSON.parse(staffMember.permissions) : staffMember.permissions)
             : {};
+        staffMember.branch_ids = readUserBranchIds(staffMember.branch_ids);
 
         res.json({
             staff: staffMember
@@ -307,7 +312,7 @@ router.get('/:id', verifyToken, requireRole('owner'), async (req, res) => {
 router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { position, permissions, password, is_active } = req.body;
+        const { position, permissions, password, is_active, branch_ids: branchIds } = req.body;
 
         // Check if staff exists
         const [existing] = await db.query(
@@ -351,6 +356,22 @@ router.put('/:id', verifyToken, requireRole('owner'), async (req, res) => {
         if (is_active !== undefined) {
             updates.push('is_active = ?');
             params.push(is_active);
+        }
+
+        // 담당 지점 (빈 배열 = 담당 지점 없음). 지점별 화면의 처음 체크 값일 뿐, 보는 범위를 막지 않는다.
+        if (branchIds !== undefined) {
+            const valid = Array.isArray(branchIds) && branchIds.every((branchId) => Number.isSafeInteger(branchId) && branchId > 0);
+            const [owned] = valid && branchIds.length
+                ? await db.query('SELECT id FROM branches WHERE academy_id = ? AND id IN (?)', [req.user.academyId, branchIds])
+                : [[]];
+            if (!valid || owned.length !== new Set(branchIds).size) {
+                return res.status(400).json({
+                    error: 'Validation Error',
+                    message: '담당 지점을 확인해주세요.'
+                });
+            }
+            updates.push('branch_ids = ?');
+            params.push(branchIds.length ? JSON.stringify([...new Set(branchIds)]) : null);
         }
 
         if (updates.length === 0) {

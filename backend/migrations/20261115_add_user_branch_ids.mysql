@@ -1,0 +1,15 @@
+-- Backup first. Apply before deploying code that selects users.branch_ids.
+-- 직원 계정의 담당 지점: 지점별 화면이 처음 열릴 때 이 지점이 체크돼 있다. NULL = 담당 지점 없음(학원 전체).
+-- 보는 범위를 막는 값이 아니다. 체크를 풀면 다른 지점도 보인다.
+-- Add at the end so MySQL 8 can use INSTANT without rebuilding existing rows.
+SET @branch_schema = DATABASE();
+SET @branch_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE users ADD COLUMN branch_ids JSON NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @branch_schema AND TABLE_NAME = 'users' AND COLUMN_NAME = 'branch_ids'
+);
+PREPARE branch_stmt FROM @branch_sql;
+EXECUTE branch_stmt;
+DEALLOCATE PREPARE branch_stmt;

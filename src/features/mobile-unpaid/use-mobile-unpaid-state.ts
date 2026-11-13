@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { inBranches } from '@/features/branches/branch-checks';
+import { inBranches, useBranchChecks } from '@/features/branches/branch-checks';
 import { paymentsAPI } from '@/lib/api/payments';
 import type { UnpaidPayment } from '@/lib/types/payment';
 import { canEdit, canView } from '@/lib/utils/permissions';
@@ -31,7 +31,7 @@ export function useMobileUnpaidState() {
   const [query, setQuery] = useState('');
   const [scope, setScope] = useState<MobileUnpaidScope>('today');
   const [selectedMonth, setSelectedMonth] = useState(getCurrentYearMonth);
-  const [branchIds, setBranchIds] = useState<number[]>([]);
+  const [branchIds, setBranchIds] = useBranchChecks();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);

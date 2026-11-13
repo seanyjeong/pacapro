@@ -9,6 +9,7 @@ interface User {
   id: number;
   role: string;
   permissions?: Permissions;
+  branch_ids?: number[]; // 담당 지점(직원 계정)
 }
 
 /**

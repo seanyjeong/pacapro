@@ -15,6 +15,7 @@ import {
     getKoreanDateLabel,
     getLocalDateKey,
 } from './dashboard-utils';
+import { useBranchChecks } from '@/features/branches/branch-checks';
 
 const emptySlots: InstructorSlotMap = { morning: [], afternoon: [], evening: [] };
 const quietRequest = { suppressErrorToast: true };
@@ -49,7 +50,7 @@ export function useDashboardData() {
     const [todayConsultations, setTodayConsultations] = useState<Consultation[]>([]);
     const [restEndedStudents, setRestEndedStudents] = useState<RestEndedStudent[]>([]);
     const [todayLabel, setTodayLabel] = useState('');
-    const [branchIds, setBranchIds] = useState<number[]>([]);
+    const [branchIds, setBranchIds] = useBranchChecks();
 
     const loadDashboard = useCallback(async () => {
         try {

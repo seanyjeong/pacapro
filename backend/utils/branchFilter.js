@@ -22,4 +22,14 @@ function paymentBranchSql(payment, student, ids) {
     return ids.length ? ` AND COALESCE(${payment}.branch_id, ${student}.branch_id, 0) IN (${placeholders(ids)})` : '';
 }
 
-module.exports = { parseBranchIds, studentBranchSql, paymentBranchSql };
+// DB의 users.branch_ids(JSON) → 번호 배열. 비었거나 읽을 수 없으면 [].
+function readUserBranchIds(value) {
+    try {
+        const ids = typeof value === 'string' ? JSON.parse(value) : value;
+        return Array.isArray(ids) ? ids.filter(Number.isSafeInteger) : [];
+    } catch {
+        return [];
+    }
+}
+
+module.exports = { parseBranchIds, studentBranchSql, paymentBranchSql, readUserBranchIds };

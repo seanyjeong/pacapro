@@ -46,6 +46,7 @@ export interface Staff {
   name: string;
   position: string | null;
   permissions: Permissions;
+  branch_ids?: number[]; // 담당 지점(지점별 화면의 처음 체크 값)
   instructor_id: number | null;
   is_active: boolean;
   created_at: string;
@@ -79,6 +80,7 @@ export interface UpdateStaffRequest {
   permissions?: Permissions;
   password?: string;
   is_active?: boolean;
+  branch_ids?: number[];
 }
 
 // 페이지 권한 정보 (UI용)

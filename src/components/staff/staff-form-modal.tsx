@@ -9,6 +9,8 @@ import type { AvailableInstructor, PermissionKey, Permissions, Staff } from '@/l
 import { DEFAULT_PERMISSIONS, PERMISSION_CATEGORIES } from '@/lib/types/staff';
 import { toast } from 'sonner';
 import { getStaffFormError, type StaffFormErrorField } from './staff-form-errors';
+import { BranchChecks } from '@/features/branches/branch-checks';
+import { useBranchTree } from '@/hooks/use-branches';
 
 interface StaffFormModalProps {
   staff: Staff | null;
@@ -31,7 +33,9 @@ export function StaffFormModal({
     password: '',
     position: staff?.position || '',
     permissions: staff?.permissions || { ...DEFAULT_PERMISSIONS },
+    branch_ids: staff?.branch_ids || [],
   });
+  const { branches } = useBranchTree();
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -84,6 +88,7 @@ export function StaffFormModal({
           position: formData.position || undefined,
           permissions: formData.permissions,
           password: formData.password || undefined,
+          branch_ids: formData.branch_ids,
         }, { suppressErrorToast: true });
         toast.success('직원 정보가 수정되었습니다.');
       } else {
@@ -297,6 +302,22 @@ export function StaffFormModal({
                 placeholder="부원장, 경리, 실장 등"
               />
             </div>
+
+            {/* 담당 지점 — 수정할 때만. 지점이 없는 학원에는 나오지 않는다 */}
+            {isEdit && branches.length > 0 && (
+              <div>
+                <span className="block text-sm font-medium text-foreground mb-1">담당 지점</span>
+                <BranchChecks
+                  branches={branches}
+                  selected={formData.branch_ids}
+                  withoutNone
+                  onChange={(branch_ids) => setFormData((prev) => ({ ...prev, branch_ids }))}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  지점별 화면을 열면 이 지점이 먼저 체크돼 있습니다. 체크를 풀면 다른 지점도 볼 수 있습니다. 다음 로그인부터 적용됩니다.
+                </p>
+              </div>
+            )}
 
             {/* 권한 설정 */}
             <div>

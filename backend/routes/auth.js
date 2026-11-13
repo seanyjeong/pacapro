@@ -13,6 +13,7 @@ const { generateToken, verifyToken } = require('../middleware/auth');
 const { sendPasswordResetEmail } = require('../utils/emailSender');
 const { decrypt, decryptFields, ENCRYPTED_FIELDS } = require('../utils/encryption');
 const logger = require('../utils/logger');
+const { readUserBranchIds } = require('../utils/branchFilter');
 
 /** POST /api/auth/register */
 router.post('/register', registerHandler);
@@ -36,7 +37,7 @@ router.post('/login', async (req, res) => {
         // Find user
         const [users] = await db.query(
             `SELECT id, email, password_hash, name, role, academy_id,
-             approval_status, is_active, position, permissions
+             approval_status, is_active, position, permissions, branch_ids
              FROM users
              WHERE email = ? AND deleted_at IS NULL`,
             [email]
@@ -120,7 +121,8 @@ router.post('/login', async (req, res) => {
                 academyId: user.academy_id,
                 academy,
                 position: user.position,
-                permissions: permissions
+                permissions: permissions,
+                branch_ids: readUserBranchIds(user.branch_ids)
             }
         });
 
@@ -142,7 +144,7 @@ router.get('/me', verifyToken, async (req, res) => {
     try {
         const [users] = await db.query(
             `SELECT u.id, u.email, u.name, u.phone, u.role, u.academy_id,
-             u.position, u.permissions,
+             u.position, u.permissions, u.branch_ids,
              a.name as academy_name
              FROM users u
              LEFT JOIN academies a ON u.academy_id = a.id
@@ -170,6 +172,7 @@ router.get('/me', verifyToken, async (req, res) => {
             }
         }
         decryptedUser.permissions = permissions;
+        decryptedUser.branch_ids = readUserBranchIds(decryptedUser.branch_ids);
         decryptedUser.academyId = decryptedUser.academy_id;
         decryptedUser.academy = decryptedUser.academy_id
             ? { id: decryptedUser.academy_id, name: decryptedUser.academy_name }

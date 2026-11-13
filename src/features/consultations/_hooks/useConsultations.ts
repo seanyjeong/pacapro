@@ -16,6 +16,7 @@ import apiClient from '@/lib/api/client';
 import { getLearningConsultationErrorText } from '@/lib/api/learning-consultation-error';
 import type { EditForm, DirectForm, LearningForm, TrialDate } from '../_types';
 import { getConsultationErrorText, SILENT_CONFIG } from './consultation-error-utils';
+import { useBranchChecks } from '@/features/branches/branch-checks';
 
 const DEFAULT_DIRECT_FORM: DirectForm = {
   studentName: '',
@@ -53,7 +54,7 @@ export function useConsultations() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
-  const [branchIds, setBranchIds] = useState<number[]>([]);
+  const [branchIds, setBranchIds] = useBranchChecks();
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week'>('all');
 
   // 상세 모달

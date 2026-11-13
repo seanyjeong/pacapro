@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { inBranches } from '@/features/branches/branch-checks';
+import { inBranches, useBranchChecks } from '@/features/branches/branch-checks';
 import type { Payment, PaymentFilters } from '@/lib/types/payment';
 import { parseClassDays } from '@/lib/types/student';
 import { getRemainingPaymentAmount, isSeasonUpcoming } from '@/lib/utils/payment-helpers';
@@ -35,7 +35,7 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
   const [sendingNotification, setSendingNotification] = useState(false);
   const [markingPaymentId, setMarkingPaymentId] = useState<number | null>(null);
   const [todayUnpaidOnly, setTodayUnpaidOnly] = useState(false);
-  const [branchIds, setBranchIds] = useState<number[]>([]);
+  const [branchIds, setBranchIds] = useBranchChecks();
   const [studentClassDaysMap, setStudentClassDaysMap] = useState<Map<number, number[]>>(new Map());
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [creditModalOpen, setCreditModalOpen] = useState(false);

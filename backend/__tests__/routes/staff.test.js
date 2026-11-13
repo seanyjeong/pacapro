@@ -77,3 +77,29 @@ describe('POST /paca/staff', () => {
     expect(connection.query).toHaveBeenCalledTimes(3);
   });
 });
+
+describe('PUT /paca/staff/:id — 담당 지점', () => {
+  beforeEach(() => db.query.mockReset());
+
+  test('그 학원 지점만 담당 지점으로 저장한다', async () => {
+    db.query
+      .mockResolvedValueOnce([[{ id: 5 }]])
+      .mockResolvedValueOnce([[{ id: 1 }, { id: 2 }]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    const res = await request(makeApp()).put('/paca/staff/5').send({ branch_ids: [1, 2] });
+    expect(res.status).toBe(200);
+    expect(db.query.mock.calls[1][1]).toEqual([1, [1, 2]]);
+    expect(db.query.mock.calls[2][0]).toContain('branch_ids = ?');
+    expect(db.query.mock.calls[2][1][0]).toBe('[1,2]');
+  });
+
+  test('다른 학원 지점이 섞이면 저장하지 않는다', async () => {
+    db.query
+      .mockResolvedValueOnce([[{ id: 5 }]])
+      .mockResolvedValueOnce([[{ id: 1 }]]);
+    const res = await request(makeApp()).put('/paca/staff/5').send({ branch_ids: [1, 99] });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('담당 지점을 확인해주세요.');
+    expect(db.query).toHaveBeenCalledTimes(2);
+  });
+});

@@ -12,6 +12,7 @@ import {
   REPORT_EXPORT_ERROR,
   REPORT_LOAD_ERROR,
 } from './reports-utils';
+import { useBranchChecks } from '@/features/branches/branch-checks';
 
 const EMPTY_SOURCE: ReportSourceData = {
   students: [], payments: [], paidPayments: [], expenses: [], instructors: [], otherIncomes: [],
@@ -20,7 +21,7 @@ const EMPTY_SOURCE: ReportSourceData = {
 export function useReportsPageState() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentYearMonth);
   const [source, setSource] = useState<ReportSourceData>(EMPTY_SOURCE);
-  const [branchIds, setBranchIds] = useState<number[]>([]);
+  const [branchIds, setBranchIds] = useBranchChecks();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);

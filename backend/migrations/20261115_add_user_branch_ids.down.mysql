@@ -1,0 +1,2 @@
+-- Manual rollback only. 직원 계정에 적어 둔 담당 지점이 사라진다.
+ALTER TABLE users DROP COLUMN branch_ids;
