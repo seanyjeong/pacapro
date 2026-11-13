@@ -178,8 +178,8 @@ module.exports = function (router) {
             const [studentResult] = await pool.execute(
                 `INSERT INTO students (
                     academy_id, name, grade, school, gender, phone, parent_phone, status,
-                    is_trial, trial_remaining, trial_dates, class_days, monthly_tuition, consultation_date, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'trial', 1, ?, ?, '[]', 0, ?, NOW())`,
+                    is_trial, trial_remaining, trial_dates, class_days, monthly_tuition, consultation_date, branch_id, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'trial', 1, ?, ?, '[]', 0, ?, ?, NOW())`,
                 [
                     academyId,
                     encryptedName,
@@ -190,7 +190,8 @@ module.exports = function (router) {
                     encryptedParentPhone,
                     trialActivation.trialRemaining,
                     JSON.stringify(trialDatesJson),
-                    consultation.preferred_date
+                    consultation.preferred_date,
+                    consultation.branch_id || null
                 ]
             );
 

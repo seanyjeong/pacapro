@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
+import { BranchChecks } from '@/features/branches/branch-checks';
+import { useBranchTree } from '@/hooks/use-branches';
 
 import { useConsultations } from './_hooks/useConsultations';
 import { ConsultationStatsCards } from './_components/ConsultationStatsCards';
@@ -23,6 +25,7 @@ import { ConsultationsWorkQueue } from './consultations-work-queue';
 
 export function ConsultationsPage() {
   const h = useConsultations();
+  const { branches } = useBranchTree();
   const activeFilterCount = [h.statusFilter, h.typeFilter, h.dateFilter !== 'all' ? h.dateFilter : ''].filter(Boolean).length;
   const pendingCount = h.stats.pending || 0;
   const confirmedCount = h.stats.confirmed || 0;
@@ -141,10 +144,12 @@ export function ConsultationsPage() {
                     <RefreshCw className="h-4 w-4" />새로고침
                   </Button>
                 </div>
+                <BranchChecks branches={branches} selected={h.branchIds} onChange={h.setBranchIds} />
               </CardContent>
             </Card>
 
             <ConsultationList
+              branches={branches}
               consultations={h.consultations}
               loading={h.loading}
               pagination={h.pagination}

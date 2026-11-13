@@ -10,6 +10,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import type { Consultation } from '@/lib/types/consultation';
 import type { EditForm } from '../_types';
+import { BranchSelect } from '@/features/branches/branch-select';
 
 interface Props {
   open: boolean;
@@ -46,6 +47,7 @@ export function EditInfoModal({
 
         {consultation && (
           <div className="space-y-4 px-6 py-4">
+            <BranchSelect value={editForm.branch_id} onChange={(branch_id) => setEditForm({ ...editForm, branch_id })} />
             <div className="grid grid-cols-3 gap-3">
               <div>
                 <Label>학생명</Label>

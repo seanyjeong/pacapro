@@ -29,6 +29,7 @@ export function ConsultationBookingPage() {
 
       {state.step === 1 && (
         <BookingInfoStep
+          branches={state.pageInfo?.branches || []}
           error={state.formError}
           formData={state.formData}
           onChange={state.updateForm}

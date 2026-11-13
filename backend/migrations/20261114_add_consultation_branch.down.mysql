@@ -1,0 +1,2 @@
+-- Manual rollback only. 상담에 적어 둔 지점이 사라진다.
+ALTER TABLE consultations DROP COLUMN branch_id;

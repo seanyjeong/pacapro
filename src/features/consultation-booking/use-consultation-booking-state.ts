@@ -82,7 +82,7 @@ export function useConsultationBookingState(slug: string, onSubmitted: () => voi
   };
 
   const goToSchedule = () => {
-    const error = validateInfoStep(formData);
+    const error = validateInfoStep(formData, (pageInfo?.branches?.length ?? 0) > 0);
     if (error) {
       setFormError(error);
       return;
@@ -149,7 +149,8 @@ export function useConsultationBookingState(slug: string, onSubmitted: () => voi
   };
 }
 
-function validateInfoStep(formData: ConsultationFormData): string | null {
+function validateInfoStep(formData: ConsultationFormData, needsBranch: boolean): string | null {
+  if (needsBranch && !formData.branchId) return '지점을 선택해주세요.';
   if (!formData.studentName.trim()) return '학생 이름을 입력해주세요.';
   if (!formData.studentPhone?.trim()) return '연락처를 입력해주세요.';
   if (formData.studentPhone.replace(/\D/g, '').length !== 11) return '전화번호 11자리를 정확히 입력해주세요.';

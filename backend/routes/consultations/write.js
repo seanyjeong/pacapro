@@ -40,6 +40,7 @@ const {
     generateReservationNumber,
     sendConfirmationAlimtalk,
     logger,
+    resolveConsultationBranch,
 } = require('./_utils');
 
 module.exports = function (router) {
@@ -58,7 +59,8 @@ module.exports = function (router) {
                 studentName, studentGrade, studentSchool,
                 mockTestGrades, schoolGradeAvg, admissionType,
                 target_school, targetSchool, referrerStudent,
-                parent_phone, parentPhone
+                parent_phone, parentPhone,
+                branch_id: branchInput
             } = req.body;
 
             // camelCase → snake_case 호환
@@ -105,6 +107,16 @@ module.exports = function (router) {
                 // HH:MM 형식이면 :00 붙이고, 이미 HH:MM:SS면 그대로 사용
                 const timeValue = preferredTime.length === 5 ? preferredTime + ':00' : preferredTime;
                 params.push(timeValue);
+            }
+
+            // 상담 지점 (null = 지점 없음)
+            if (branchInput !== undefined) {
+                const branchId = await resolveConsultationBranch(academyId, branchInput);
+                if (branchId === undefined) {
+                    return res.status(400).json({ error: '지점을 확인해주세요.' });
+                }
+                updates.push('branch_id = ?');
+                params.push(branchId);
             }
 
             // 체크리스트 업데이트
@@ -253,12 +265,16 @@ module.exports = function (router) {
             const {
                 studentName, phone, grade, preferredDate, preferredTime, notes,
                 gender, studentSchool, schoolGradeAvg, admissionType, mockTestGrades,
-                targetSchool, referrerStudent
+                targetSchool, referrerStudent, branch_id: branchInput
             } = req.body;
 
             // 필수 필드 검증
             if (!studentName || !phone || !grade || !preferredDate || !preferredTime) {
                 return res.status(400).json({ error: '학생명, 전화번호, 학년, 상담일시는 필수입니다.' });
+            }
+            const branchId = await resolveConsultationBranch(academyId, branchInput ?? null);
+            if (branchId === undefined) {
+                return res.status(400).json({ error: '지점을 확인해주세요.' });
             }
 
             // 성적 정보 JSON 구성
@@ -276,8 +292,8 @@ module.exports = function (router) {
                     student_name, student_grade, student_school, gender,
                     academic_scores, target_school, referrer_student,
                     preferred_date, preferred_time, status, admin_notes,
-                    checklist, consultation_memo, created_at
-                ) VALUES (?, 'new_registration', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, NULL, NULL, NOW())`,
+                    checklist, consultation_memo, branch_id, created_at
+                ) VALUES (?, 'new_registration', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?, NULL, NULL, ?, NOW())`,
                 [
                     academyId,
                     studentName,  // parent_name 에 학생명
@@ -291,7 +307,8 @@ module.exports = function (router) {
                     referrerStudent || null,
                     preferredDate,
                     preferredTime + ':00',
-                    notes || null
+                    notes || null,
+                    branchId
                 ]
             );
 

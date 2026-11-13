@@ -30,7 +30,8 @@ const DEFAULT_DIRECT_FORM: DirectForm = {
   referrerStudent: '',
   preferredDate: '',
   preferredTime: '',
-  notes: ''
+  notes: '',
+  branch_id: null
 };
 
 const DEFAULT_LEARNING_FORM: LearningForm = {
@@ -52,6 +53,7 @@ export function useConsultations() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
+  const [branchIds, setBranchIds] = useState<number[]>([]);
   const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week'>('all');
 
   // 상세 모달
@@ -85,7 +87,8 @@ export function useConsultations() {
     admissionType: '',
     mockTestGrades: { korean: undefined, math: undefined, english: undefined, exploration: undefined },
     targetSchool: '',
-    referrerStudent: ''
+    referrerStudent: '',
+    branch_id: null
   });
   const [savingInfo, setSavingInfo] = useState(false);
 
@@ -164,6 +167,7 @@ export function useConsultations() {
         search: search || undefined,
         status: statusFilter || undefined,
         consultationType: typeFilter || undefined,
+        branchIds,
         startDate,
         endDate,
         page: pagination.page,
@@ -179,7 +183,7 @@ export function useConsultations() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, typeFilter, getDateRange, pagination.page, pagination.limit]);
+  }, [search, statusFilter, typeFilter, branchIds, getDateRange, pagination.page, pagination.limit]);
 
   useEffect(() => {
     loadData();
@@ -218,7 +222,8 @@ export function useConsultations() {
             exploration: scores.mockTestGrades?.exploration ?? undefined
           },
           targetSchool: editInfoConsultation.target_school || '',
-          referrerStudent: editInfoConsultation.referrer_student || ''
+          referrerStudent: editInfoConsultation.referrer_student || '',
+          branch_id: editInfoConsultation.branch_id ?? null
         });
       });
       setEditInfoModalOpen(true);
@@ -309,7 +314,8 @@ export function useConsultations() {
         admissionType: editForm.admissionType || undefined,
         mockTestGrades: editForm.mockTestGrades,
         targetSchool: editForm.targetSchool,
-        referrerStudent: editForm.referrerStudent
+        referrerStudent: editForm.referrerStudent,
+        branch_id: editForm.branch_id
       }, SILENT_CONFIG);
       toast.success('정보가 수정되었습니다.');
       setEditInfoModalOpen(false);
@@ -456,7 +462,7 @@ export function useConsultations() {
     consultations, loading, loadError, stats, pagination, setPagination,
     // 필터
     search, setSearch, statusFilter, setStatusFilter,
-    typeFilter, setTypeFilter, dateFilter, setDateFilter,
+    typeFilter, setTypeFilter, branchIds, setBranchIds, dateFilter, setDateFilter,
     // 상세 모달
     selectedConsultation, setSelectedConsultation, detailOpen, setDetailOpen,
     openDetailModal,

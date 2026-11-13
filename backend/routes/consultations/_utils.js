@@ -124,8 +124,8 @@ async function createPendingStudentFromConsultation(consultation, { studentPhone
     const [studentResult] = await pool.execute(
         `INSERT INTO students (
             academy_id, name, grade, school, gender, phone, parent_phone, status,
-            is_trial, memo, class_days, monthly_tuition, consultation_date, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, NULL, 'pending', 0, ?, '[]', 0, ?, NOW())`,
+            is_trial, memo, class_days, monthly_tuition, consultation_date, branch_id, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, NULL, 'pending', 0, ?, '[]', 0, ?, ?, NOW())`,
         [
             consultation.academy_id,
             encryptedName,
@@ -134,7 +134,8 @@ async function createPendingStudentFromConsultation(consultation, { studentPhone
             consultation.gender || null,
             encryptedPhone,
             memo || consultation.inquiry_content || null,
-            consultation.preferred_date
+            consultation.preferred_date,
+            consultation.branch_id || null
         ]
     );
 
@@ -348,7 +349,18 @@ async function sendConfirmationAlimtalk(consultation, academyId) {
     }
 }
 
+/**
+ * 요청의 상담 지점 값 확인. 없음(null·''·0) → null, 그 학원 지점 → 번호, 그 밖 → undefined.
+ */
+async function resolveConsultationBranch(academyId, value) {
+    if (value === null || value === '' || value === 0 || value === '0') return null;
+    if (!/^\d+$/.test(String(value))) return undefined;
+    const [rows] = await pool.execute('SELECT id FROM branches WHERE id = ? AND academy_id = ?', [Number(value), academyId]);
+    return rows.length ? rows[0].id : undefined;
+}
+
 module.exports = {
+    resolveConsultationBranch,
     db,
     pool,
     verifyToken,

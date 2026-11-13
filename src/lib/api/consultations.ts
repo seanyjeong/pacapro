@@ -79,6 +79,7 @@ export async function getConsultations(params?: {
   endDate?: string;
   search?: string;
   consultationType?: string;
+  branchIds?: number[]; // 체크한 지점(0 = 지점 없음). 비우면 학원 전체
   page?: number;
   limit?: number;
 }, config?: APIRequestConfig): Promise<ConsultationListResponse> {
@@ -88,6 +89,7 @@ export async function getConsultations(params?: {
   if (params?.endDate) searchParams.append('endDate', params.endDate);
   if (params?.search) searchParams.append('search', params.search);
   if (params?.consultationType) searchParams.append('consultationType', params.consultationType);
+  if (params?.branchIds?.length) searchParams.append('branch_ids', params.branchIds.join(','));
   if (params?.page) searchParams.append('page', params.page.toString());
   if (params?.limit) searchParams.append('limit', params.limit.toString());
 
@@ -125,6 +127,7 @@ export async function updateConsultation(
     admissionType?: 'early' | 'regular' | 'both' | '';
     targetSchool?: string;
     referrerStudent?: string;
+    branch_id?: number | null;
   },
   config?: APIRequestConfig
 ): Promise<{ message: string }> {
@@ -236,6 +239,7 @@ export async function createDirectConsultation(data: {
   preferredDate: string;
   preferredTime: string;
   notes?: string;
+  branch_id?: number | null;
 }, config?: APIRequestConfig): Promise<{ message: string; id: number }> {
   return apiClient.post<{ message: string; id: number }>('/consultations/direct', data, config);
 }

@@ -1,0 +1,14 @@
+-- Backup first. Apply before deploying code that writes consultations.branch_id.
+-- 상담 지점: 상담 신청이 어느 지점 것인지 적는다. NULL = 지점 없음(지점을 안 쓰는 학원은 전부 NULL).
+-- Add at the end so MySQL 8 can use INSTANT without rebuilding existing rows.
+SET @branch_schema = DATABASE();
+SET @branch_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE consultations ADD COLUMN branch_id INT NULL DEFAULT NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @branch_schema AND TABLE_NAME = 'consultations' AND COLUMN_NAME = 'branch_id'
+);
+PREPARE branch_stmt FROM @branch_sql;
+EXECUTE branch_stmt;
+DEALLOCATE PREPARE branch_stmt;

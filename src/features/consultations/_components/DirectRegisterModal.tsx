@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { DirectForm } from '../_types';
+import { BranchSelect } from '@/features/branches/branch-select';
 
 interface Props {
   open: boolean;
@@ -41,6 +42,7 @@ export function DirectRegisterModal({
         </DialogHeader>
 
         <div className="space-y-4 px-6 py-4">
+          <BranchSelect value={directForm.branch_id} onChange={(branch_id) => setDirectForm({ ...directForm, branch_id })} />
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>학생명 *</Label>

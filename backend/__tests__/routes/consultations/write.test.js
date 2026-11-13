@@ -289,3 +289,28 @@ describe('POST /paca/consultations/:id/link-student', () => {
         expect(res.body.linkedStudent).toEqual({ id: 100, name: '홍길동' });
     });
 });
+
+describe('상담 지점', () => {
+    beforeEach(resetMocks);
+
+    test('직접 등록에 지점을 주면 그 학원 지점인지 확인하고 저장한다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 3 }]])
+            .mockResolvedValueOnce([{ insertId: 9 }]);
+        const body = { studentName: '가', phone: '010-0000-0000', grade: '고1', preferredDate: '2026-11-20', preferredTime: '15:00', branch_id: 3 };
+        const res = await request(makeApp()).post('/paca/consultations/direct').send(body);
+        expect(res.status).toBe(201);
+        expect(pool.execute.mock.calls[0][1]).toEqual([3, 1]);
+        expect(pool.execute.mock.calls[1][0]).toContain('branch_id');
+        expect(pool.execute.mock.calls[1][1].slice(-1)).toEqual([3]);
+    });
+
+    test('다른 학원 지점이면 저장하지 않는다', async () => {
+        pool.execute.mockResolvedValueOnce([[]]);
+        const body = { studentName: '가', phone: '010-0000-0000', grade: '고1', preferredDate: '2026-11-20', preferredTime: '15:00', branch_id: 99 };
+        const res = await request(makeApp()).post('/paca/consultations/direct').send(body);
+        expect(res.status).toBe(400);
+        expect(res.body.error).toBe('지점을 확인해주세요.');
+        expect(pool.execute).toHaveBeenCalledTimes(1);
+    });
+});

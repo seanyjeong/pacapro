@@ -5,6 +5,7 @@ import { admissionOptions, formatPhoneNumber, genderOptions, gradeScoreOptions, 
 import { BookingIntakePanel } from './booking-intake-panel';
 
 interface BookingInfoStepProps {
+  branches: { id: number; name: string }[];
   error: string | null;
   formData: ConsultationFormData;
   onChange: (patch: Partial<ConsultationFormData>) => void;
@@ -14,6 +15,7 @@ interface BookingInfoStepProps {
 }
 
 export function BookingInfoStep({
+  branches,
   error,
   formData,
   onChange,
@@ -34,6 +36,15 @@ export function BookingInfoStep({
             <div className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
               {error}
             </div>
+          )}
+
+          {branches.length > 0 && (
+            <SelectField
+              label="지점 *"
+              value={formData.branchId ? String(formData.branchId) : ''}
+              options={[{ label: '지점 선택', value: '' }, ...branches.map((branch) => ({ label: branch.name, value: String(branch.id) }))]}
+              onChange={(branchId) => onChange({ branchId: branchId ? Number(branchId) : undefined })}
+            />
           )}
 
           <div className="grid gap-4 md:grid-cols-2">

@@ -66,12 +66,19 @@ router.get('/consultation/:slug', async (req, res) => {
       }
     }
 
+    // 지점을 쓰는 학원은 신청할 때 지점을 고른다 (없으면 빈 목록)
+    const [branches] = await db.query(
+      `SELECT id, name FROM branches WHERE academy_id = ? AND status = 'active' ORDER BY sort_order, id`,
+      [academy.id]
+    );
+
     res.json({
       academy: {
         id: academy.id,
         name: academy.name,
         slug: academy.slug
       },
+      branches,
       settings: {
         pageTitle: academy.page_title || '상담 예약',
         pageDescription: academy.page_description || '',
@@ -255,7 +262,8 @@ router.post('/consultation/:slug/apply', async (req, res) => {
       referralSources,
       inquiryContent,
       preferredDate,
-      preferredTime
+      preferredTime,
+      branchId
     } = req.body;
 
     // 필수 필드 검증 (학생 이름, 연락처, 학년, 학교, 일정)
@@ -295,6 +303,18 @@ router.post('/consultation/:slug/apply', async (req, res) => {
 
     if (academy.is_enabled === false) {
       return res.status(403).json({ error: '현재 상담 예약이 불가능합니다.' });
+    }
+
+    // 고른 지점이 이 학원의 지점인지 확인 (안 고르면 지점 없음)
+    let consultationBranchId = null;
+    if (branchId !== undefined && branchId !== null && branchId !== '') {
+      const [branchRows] = /^\d+$/.test(String(branchId))
+        ? await db.query(`SELECT id FROM branches WHERE id = ? AND academy_id = ? AND status = 'active'`, [Number(branchId), academy.id])
+        : [[]];
+      if (branchRows.length === 0) {
+        return res.status(400).json({ error: '지점을 다시 선택해주세요.' });
+      }
+      consultationBranchId = branchRows[0].id;
     }
 
     // 해당 시간대 예약 가능 여부 재확인
@@ -347,8 +367,8 @@ router.post('/consultation/:slug/apply', async (req, res) => {
         academic_scores, target_school, referrer_student,
         referral_sources, inquiry_content,
         preferred_date, preferred_time,
-        linked_student_id, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        linked_student_id, branch_id, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [
         academy.id,
         consultationType || 'new_registration',
@@ -365,7 +385,8 @@ router.post('/consultation/:slug/apply', async (req, res) => {
         inquiryContent || null,
         preferredDate,
         preferredTime + ':00',
-        linkedStudentId
+        linkedStudentId,
+        consultationBranchId
       ]
     );
 

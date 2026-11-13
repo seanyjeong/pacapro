@@ -59,6 +59,8 @@ async function branchUsage(id, academyId) {
 }
 
 async function deleteBranch(id, academyId) {
+    // 지운 지점의 상담은 지점 없음으로 돌린다
+    await db.query('UPDATE consultations SET branch_id = NULL WHERE branch_id = ? AND academy_id = ?', [id, academyId]);
     await db.query('DELETE FROM branches WHERE id = ? AND academy_id = ?', [id, academyId]);
 }
 

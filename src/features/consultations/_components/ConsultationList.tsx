@@ -10,6 +10,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import type { Branch } from '@/lib/api/branches';
 import type { Consultation, ConsultationStatus } from '@/lib/types/consultation';
 import { CONSULTATION_TYPE_LABELS, CONSULTATION_STATUS_LABELS, CONSULTATION_STATUS_COLORS } from '@/lib/types/consultation';
 
@@ -21,6 +22,7 @@ interface PaginationState {
 }
 
 interface Props {
+  branches: Branch[];
   consultations: Consultation[];
   loading: boolean;
   pagination: PaginationState;
@@ -39,9 +41,10 @@ function StatusBadge({ status }: { status: ConsultationStatus }) {
 }
 
 export function ConsultationList({
-  consultations, loading, pagination, setPagination,
+  branches, consultations, loading, pagination, setPagination,
   onOpenDetail, onOpenStatusModal, onOpenDeleteModal,
 }: Props) {
+  const branchName = (id?: number | null) => branches.find((branch) => branch.id === id)?.name;
   return (
     <>
       <Card className="rounded-md shadow-none">
@@ -83,6 +86,7 @@ export function ConsultationList({
                           <span className="text-sm text-muted-foreground">{c.student_grade}</span>
                           <StatusBadge status={c.status} />
                           <Badge variant="outline">{CONSULTATION_TYPE_LABELS[c.consultation_type]}</Badge>
+                          {branchName(c.branch_id) && <Badge variant="outline">{branchName(c.branch_id)}</Badge>}
                         </div>
                         <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
                           <span className="flex min-w-0 items-center gap-1">

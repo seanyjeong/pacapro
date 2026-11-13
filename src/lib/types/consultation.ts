@@ -73,6 +73,7 @@ export interface AcademicScores {
 export interface Consultation {
   id: number;
   academy_id: number;
+  branch_id?: number | null;
   consultation_type: ConsultationType;
   learning_type?: LearningType; // 재원생 상담 유형
 
@@ -162,6 +163,7 @@ export interface ConsultationFormData {
   inquiryContent?: string;
   preferredDate?: string;
   preferredTime?: string;
+  branchId?: number; // 지점을 쓰는 학원만
 }
 
 // 요일별 운영 시간
@@ -204,6 +206,7 @@ export interface ConsultationPageInfo {
     name: string;
     slug: string;
   };
+  branches?: { id: number; name: string }[]; // 지점을 쓰는 학원만 채워진다
   settings: {
     pageTitle?: string;
     pageDescription?: string;

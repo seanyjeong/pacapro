@@ -35,6 +35,7 @@
  * `/direct`, `/learning`) 와 충돌 X.
  */
 
+const { parseBranchIds } = require('../../utils/branchFilter');
 const { pool, verifyToken, decrypt, decryptConsultationNames, logger } = require('./_utils');
 
 module.exports = function (router) {
@@ -75,6 +76,16 @@ module.exports = function (router) {
             if (consultationType) {
                 whereClause += ' AND c.consultation_type = ?';
                 params.push(consultationType);
+            }
+
+            // 지점별 보기 (0 = 지점 없음). 비우면 학원 전체.
+            const branchIds = parseBranchIds(req.query.branch_ids);
+            if (!branchIds) {
+                return res.status(400).json({ error: '지점을 확인해주세요.' });
+            }
+            if (branchIds.length) {
+                whereClause += ` AND COALESCE(c.branch_id, 0) IN (${branchIds.map(() => '?').join(',')})`;
+                params.push(...branchIds);
             }
 
             if (search) {

@@ -17,6 +17,7 @@ export interface EditForm {
   };
   targetSchool: string;
   referrerStudent: string;
+  branch_id: number | null;
 }
 
 export interface DirectForm {
@@ -38,6 +39,7 @@ export interface DirectForm {
   preferredDate: string;
   preferredTime: string;
   notes: string;
+  branch_id: number | null;
 }
 
 export interface LearningForm {

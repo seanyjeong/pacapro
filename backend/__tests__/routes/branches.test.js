@@ -48,6 +48,7 @@ jest.mock('../../config/database', () => {
                 );
                 INSERT INTO student_payments (id, academy_id, student_id, updated_at) VALUES
                     (1, 1, 1, 'kept'), (2, 1, 2, 'kept');
+                CREATE TABLE consultations (id INTEGER PRIMARY KEY, academy_id INTEGER, branch_id INTEGER);
             `);
         }
     };
