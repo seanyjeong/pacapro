@@ -153,6 +153,17 @@ test('이름 중복·사용 중 삭제를 막고 빈 것만 지운다', async ()
         .toMatchObject({ name: '수성본원', status: 'inactive' });
 });
 
+test('100자를 넘는 지점·반 이름은 자르지 않고 거절한다', async () => {
+    const { suseong, regular } = await seed();
+    const long = '가'.repeat(101);
+    const ok = '나'.repeat(100);
+    expect((await call('post', path, { name: long })).body.message).toBe('지점 이름은 100자까지 쓸 수 있습니다.');
+    expect((await call('put', `${path}/${suseong}`, { name: long })).status).toBe(400);
+    expect((await call('post', `${path}/${suseong}/classes`, { class_name: long })).body.message).toBe('반 이름은 100자까지 쓸 수 있습니다.');
+    expect((await call('put', `${path}/classes/${regular}`, { class_name: long })).status).toBe(400);
+    expect((await call('post', `${path}/${suseong}/classes`, { class_name: ok })).status).toBe(201);
+});
+
 test('다른 학원의 지점·반·학생은 건드리지 못하고, 직원은 권한이 있어야 바꾼다', async () => {
     const { suseong, regular } = await seed();
     expect((await call('get', path, undefined, 30)).body.branches).toEqual([]);

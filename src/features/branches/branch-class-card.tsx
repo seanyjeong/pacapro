@@ -28,6 +28,7 @@ function NameInput({ label, name, disabled, onSave }: { label: string; name: str
     <Input
       aria-label={label}
       value={draft}
+      maxLength={100}
       disabled={disabled}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={save}
@@ -123,6 +124,7 @@ function AddRow({ placeholder, buttonLabel, disabled, onAdd }: { placeholder: st
         aria-label={placeholder}
         placeholder={placeholder}
         value={draft}
+        maxLength={100}
         disabled={disabled}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => { if (event.key === 'Enter') add(); }}

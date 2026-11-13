@@ -7,6 +7,8 @@ const { decrypt } = require('../utils/encryption');
 
 const TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 const STATUSES = ['active', 'inactive'];
+// branches.name·classes.class_name 이 VARCHAR(100) 이다. 넘으면 DB 가 말없이 자른다.
+const NAME_MAX = 100;
 const fail = (status, message) => ({ status, message });
 const text = value => (typeof value === 'string' ? value.trim() : '');
 // 반의 수업 요일: 0(일)~6(토). DB 에는 JSON 배열, 비어 있으면 NULL.
@@ -41,6 +43,7 @@ async function getTree(academyId) {
 async function createBranch(academyId, body) {
     const name = text(body.name);
     if (!name) return fail(400, '지점 이름을 입력해주세요.');
+    if (name.length > NAME_MAX) return fail(400, `지점 이름은 ${NAME_MAX}자까지 쓸 수 있습니다.`);
     if (await repo.findBranchByName(academyId, name)) return fail(409, '같은 이름의 지점이 이미 있습니다.');
     const id = await repo.insertBranch(academyId, name);
     return { status: 201, message: '지점을 만들었습니다.', branch: await repo.findBranch(id, academyId) };
@@ -51,6 +54,7 @@ async function updateBranch(id, academyId, body) {
     if (!branch) return fail(404, '지점을 찾을 수 없습니다.');
     const name = body.name === undefined ? branch.name : text(body.name);
     if (!name) return fail(400, '지점 이름을 입력해주세요.');
+    if (name.length > NAME_MAX) return fail(400, `지점 이름은 ${NAME_MAX}자까지 쓸 수 있습니다.`);
     if (body.status !== undefined && !STATUSES.includes(body.status)) return fail(400, '상태 값이 올바르지 않습니다.');
     const duplicate = name === branch.name ? null : await repo.findBranchByName(academyId, name);
     if (duplicate) return fail(409, '같은 이름의 지점이 이미 있습니다.');
@@ -71,6 +75,7 @@ async function createClass(branchId, academyId, body) {
     if (!await repo.findBranch(branchId, academyId)) return fail(404, '지점을 찾을 수 없습니다.');
     const className = text(body.class_name);
     if (!className) return fail(400, '반 이름을 입력해주세요.');
+    if (className.length > NAME_MAX) return fail(400, `반 이름은 ${NAME_MAX}자까지 쓸 수 있습니다.`);
     const timeSlot = body.default_time_slot || 'afternoon';
     if (!TIME_SLOTS.includes(timeSlot)) return fail(400, '기본 시간대 값이 올바르지 않습니다.');
     if (await repo.findClassByName(academyId, branchId, className)) return fail(409, '이 지점에 같은 이름의 반이 이미 있습니다.');
@@ -92,6 +97,7 @@ async function updateClass(id, academyId, body) {
         status: body.status || current.status
     };
     if (!fields.class_name) return fail(400, '반 이름을 입력해주세요.');
+    if (fields.class_name.length > NAME_MAX) return fail(400, `반 이름은 ${NAME_MAX}자까지 쓸 수 있습니다.`);
     if (!TIME_SLOTS.includes(fields.default_time_slot)) return fail(400, '기본 시간대 값이 올바르지 않습니다.');
     if (!fields.class_days) return fail(400, '수업 요일 값이 올바르지 않습니다.');
     if (!STATUSES.includes(fields.status)) return fail(400, '상태 값이 올바르지 않습니다.');
