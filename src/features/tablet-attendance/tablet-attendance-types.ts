@@ -14,10 +14,11 @@ export interface TabletAttendanceStudent {
   trial_remaining?: number | null;
   season_type?: string | null;
   is_makeup?: boolean | null;
+  assigned?: boolean; // 반으로 볼 때만: 그날 수업에 아직 없는 반 학생이면 false
 }
 
 export interface TabletAttendanceSchedule {
-  id: number;
+  id: number | null; // 반으로 볼 때 그날 수업이 아직 없으면 null
   class_date?: string;
   time_slot?: string;
   students: TabletAttendanceStudent[];

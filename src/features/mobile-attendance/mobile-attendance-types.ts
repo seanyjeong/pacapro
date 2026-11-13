@@ -15,6 +15,7 @@ export interface MobileAttendanceStudent {
   parent_phone?: string | null;
   is_makeup?: boolean | null;
   is_season_student?: boolean;
+  assigned?: boolean; // 반으로 볼 때만: 그날 수업에 아직 없는 반 학생이면 false
 }
 
 export interface MobileAttendanceSchedule {

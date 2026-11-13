@@ -1,5 +1,7 @@
 'use client';
 
+import { ClassRosterSelect } from '@/features/class-roster/class-roster-select';
+import { useBranchTree } from '@/hooks/use-branches';
 import { MobileAttendanceHeader } from './mobile-attendance-header';
 import { MobileAttendanceList } from './mobile-attendance-list';
 import { MobileAttendanceReasonSheet } from './mobile-attendance-reason-sheet';
@@ -8,6 +10,7 @@ import { useMobileAttendanceState } from './use-mobile-attendance-state';
 
 export function MobileAttendancePage() {
   const state = useMobileAttendanceState();
+  const { branches } = useBranchTree();
 
   if (state.hasPermission === null) {
     return (
@@ -32,6 +35,12 @@ export function MobileAttendancePage() {
       />
 
       <main className="mx-auto w-full max-w-md space-y-4 px-4 py-4 pb-28">
+        <ClassRosterSelect
+          branches={branches}
+          classId={state.classId}
+          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+          onChange={state.setClassId}
+        />
         {!state.loading && !state.loadError && <MobileAttendanceStats stats={state.stats} />}
         <MobileAttendanceList
           attendances={state.attendances}

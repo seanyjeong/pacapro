@@ -54,7 +54,7 @@ router.get('/class-roster', verifyToken, async (req, res) => {
         const schedule = schedules[0] || null;
 
         const [rows] = await db.query(
-            `SELECT s.id AS student_id, s.name AS student_name, s.grade, s.phone, s.parent_phone,
+            `SELECT s.id AS student_id, s.name AS student_name, s.student_number, s.grade, s.phone, s.parent_phone,
                     a.id AS attendance_id, a.attendance_status, a.notes, a.is_makeup
              FROM students s
              LEFT JOIN attendance a ON a.student_id = s.id AND a.class_schedule_id = ?

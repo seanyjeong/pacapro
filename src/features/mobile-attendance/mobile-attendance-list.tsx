@@ -57,7 +57,7 @@ export function MobileAttendanceList({
     );
   }
 
-  if (!scheduleId) {
+  if (!scheduleId && students.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-zinc-300 bg-white px-4 py-12 text-center dark:border-zinc-700 dark:bg-zinc-950">
         <AlertCircle className="mx-auto h-10 w-10 text-zinc-400" />

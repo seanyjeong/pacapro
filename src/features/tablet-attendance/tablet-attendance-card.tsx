@@ -31,6 +31,7 @@ export function TabletAttendanceCard({ saving, student, onChange }: TabletAttend
             {student.season_type && <span className="rounded-full bg-orange-50 px-1.5 py-0.5 text-orange-700">시즌</span>}
             {student.is_trial && <span className="rounded-full bg-pink-50 px-1.5 py-0.5 text-pink-700">체험 {student.trial_remaining ?? 0}회</span>}
             {student.is_makeup && <span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-violet-700">보충</span>}
+            {student.assigned === false && <span className="rounded-full bg-zinc-100 px-1.5 py-0.5 text-zinc-600">오늘 수업 아님</span>}
           </div>
         </div>
       </div>

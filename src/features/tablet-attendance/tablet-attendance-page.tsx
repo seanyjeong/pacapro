@@ -1,6 +1,8 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { ClassRosterSelect } from '@/features/class-roster/class-roster-select';
+import { useBranchTree } from '@/hooks/use-branches';
 import { TabletAttendanceFilters } from './tablet-attendance-filters';
 import { TabletAttendanceGrid } from './tablet-attendance-grid';
 import { TabletAttendanceHeader } from './tablet-attendance-header';
@@ -10,6 +12,7 @@ import { useTabletAttendanceState } from './use-tablet-attendance-state';
 
 export function TabletAttendancePage() {
   const state = useTabletAttendanceState();
+  const { branches } = useBranchTree();
   const hasStudents = state.students.length > 0;
 
   return (
@@ -24,6 +27,13 @@ export function TabletAttendancePage() {
         onPreviousDate={state.previousDate}
         onRefresh={state.reload}
         onTimeSlotChange={state.setTimeSlot}
+      />
+
+      <ClassRosterSelect
+        branches={branches}
+        classId={state.classId}
+        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-3 text-base text-zinc-950 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50"
+        onChange={state.setClassId}
       />
 
       {!state.loading && !state.loadError && (

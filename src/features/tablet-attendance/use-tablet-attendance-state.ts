@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { assignClassStudents, getClassRoster, withClassRoster } from '@/features/class-roster/class-roster-api';
 import { schedulesApi } from '@/lib/api/schedules';
 import { hapticForStatus } from '@/lib/attendance/haptics';
 import { useAttendanceRealtime } from '@/hooks/use-attendance-realtime';
@@ -30,6 +31,7 @@ interface LoadScheduleOptions {
 export function useTabletAttendanceState() {
   const [date, setDate] = useState(() => toLocalDateStr(new Date()));
   const [timeSlot, setTimeSlot] = useState<TimeSlot>('evening');
+  const [classId, setClassId] = useState<number | null>(null);
   const [schedule, setSchedule] = useState<TabletAttendanceSchedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -43,16 +45,24 @@ export function useTabletAttendanceState() {
       setLoadError(null);
     }
     try {
-      const response = await schedulesApi.getSlotData(date, timeSlot, { suppressErrorToast: true });
+      const [response, roster] = await Promise.all([
+        schedulesApi.getSlotData(date, timeSlot, { suppressErrorToast: true }),
+        classId !== null ? getClassRoster(date, classId, timeSlot) : null,
+      ]);
       const nextSchedule = response.schedule as TabletAttendanceSchedule | null;
-      setSchedule(nextSchedule ? {
-        ...nextSchedule,
-        students: nextSchedule.students.map((student) => ({
-          ...student,
-          attendance_status: isMarkableStatus(student.attendance_status) ? student.attendance_status : null,
-          notes: student.notes ?? null,
-        })),
-      } : null);
+      const slotStudents: TabletAttendanceStudent[] = (nextSchedule?.students || []).map((student) => ({
+        ...student,
+        attendance_status: isMarkableStatus(student.attendance_status) ? student.attendance_status : null,
+        notes: student.notes ?? null,
+      }));
+      if (roster) {
+        setSchedule({
+          id: nextSchedule?.id ?? roster.schedule?.id ?? null,
+          students: withClassRoster(slotStudents, roster.students),
+        });
+      } else {
+        setSchedule(nextSchedule ? { ...nextSchedule, students: slotStudents } : null);
+      }
       setLoadError(null);
     } catch {
       if (!background) {
@@ -62,7 +72,7 @@ export function useTabletAttendanceState() {
     } finally {
       if (!background) setLoading(false);
     }
-  }, [date, timeSlot]);
+  }, [classId, date, timeSlot]);
 
   useEffect(() => {
     void loadSchedule();
@@ -94,6 +104,19 @@ export function useTabletAttendanceState() {
     });
   };
 
+  // 반으로 볼 때 그날 수업에 없던 학생은 먼저 수업에 넣는다. 저장할 수업 id 를 돌려준다.
+  const assignMissing = async (current: TabletAttendanceSchedule, targets: TabletAttendanceStudent[]) => {
+    const missing = targets.filter((student) => student.assigned === false).map((student) => student.student_id);
+    if (missing.length === 0 || classId === null) return current.id;
+    const scheduleId = await assignClassStudents(date, timeSlot, classId, missing);
+    setSchedule((prev) => prev && {
+      ...prev,
+      id: scheduleId,
+      students: prev.students.map((student) => (missing.includes(student.student_id) ? { ...student, assigned: true } : student)),
+    });
+    return scheduleId;
+  };
+
   const saveAttendance = async (studentId: number, status: AttendanceStatus | 'none', notes?: string) => {
     if (!schedule || savingId !== null) return;
     const previousSchedule = schedule;
@@ -103,13 +126,16 @@ export function useTabletAttendanceState() {
     patchStudent(studentId, { attendance_status: nextStatus, notes: nextNotes });
     setSavingId(studentId);
     try {
+      const targetId = await assignMissing(schedule, students.filter((student) => student.student_id === studentId));
+      if (!targetId) throw new Error('수업을 찾을 수 없습니다.');
       await schedulesApi.submitAttendance(
-        schedule.id,
+        targetId,
         { attendance_records: [{ student_id: studentId, attendance_status: status, notes: nextNotes || undefined }] },
         { suppressErrorToast: true }
       );
     } catch {
       setSchedule(previousSchedule);
+      if (classId !== null) void loadSchedule({ background: true });
       toast.error(TABLET_ATTENDANCE_MESSAGES.save);
     } finally {
       setSavingId(null);
@@ -151,8 +177,10 @@ export function useTabletAttendanceState() {
     });
     setSavingId(-1);
     try {
+      const targetId = await assignMissing(schedule, schedule.students);
+      if (!targetId) throw new Error('수업을 찾을 수 없습니다.');
       await schedulesApi.submitAttendance(
-        schedule.id,
+        targetId,
         {
           attendance_records: schedule.students.map((student) => ({
             student_id: student.student_id,
@@ -164,6 +192,7 @@ export function useTabletAttendanceState() {
       toast.success('전체 출석 처리되었습니다.');
     } catch {
       setSchedule(previousSchedule);
+      if (classId !== null) void loadSchedule({ background: true });
       toast.error(TABLET_ATTENDANCE_MESSAGES.allPresent);
     } finally {
       setSavingId(null);
@@ -172,6 +201,7 @@ export function useTabletAttendanceState() {
 
   return {
     changeAttendance,
+    classId,
     confirmReason,
     date,
     dateLabel,
@@ -188,6 +218,7 @@ export function useTabletAttendanceState() {
     reload: loadSchedule,
     savingId,
     schedule,
+    setClassId,
     setDate,
     setFilters,
     setReasonState,
