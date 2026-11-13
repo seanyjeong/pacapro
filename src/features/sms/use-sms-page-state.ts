@@ -48,6 +48,7 @@ export function useSmsPageState() {
   const [recipientType, setRecipientType] = useState<RecipientType>('parent');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('active');
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
+  const [placementFilter, setPlacementFilter] = useState('all'); // 'all' | 'b:<지점 id>' | 'c:<반 id>'
   const [content, setContent] = useState('');
   const [customPhones, setCustomPhones] = useState<string[]>(['']);
   const [sending, setSending] = useState(false);
@@ -104,14 +105,14 @@ export function useSmsPageState() {
   const loadRecipientsCount = useCallback(async () => {
     setRecipientsError(null);
     try {
-      const data = await smsAPI.getRecipientsCount(statusFilter, gradeFilter, SILENT_CONFIG);
+      const data = await smsAPI.getRecipientsCount(statusFilter, gradeFilter, SILENT_CONFIG, placementFilter);
       setRecipientsCount(data);
     } catch {
       setRecipientsCount({ all: 0, students: 0, parents: 0, fathers: 0, mothers: 0 });
       setRecipientsError('문자 수신자 수를 불러오지 못했습니다. 필터를 확인한 뒤 다시 시도해주세요.');
       toast.error('문자 수신자 수를 불러오지 못했습니다.');
     }
-  }, [gradeFilter, statusFilter]);
+  }, [gradeFilter, placementFilter, statusFilter]);
 
   const loadSenderNumbers = useCallback(async () => {
     setSenderNumbersError(null);
@@ -209,7 +210,10 @@ export function useSmsPageState() {
     setSelectedStudent(null);
     setSearchQuery('');
     setSearchResults([]);
-    if (mode !== 'all') setGradeFilter('all');
+    if (mode !== 'all') {
+      setGradeFilter('all');
+      setPlacementFilter('all');
+    }
   };
 
   const handlePhoneChange = (index: number, value: string) => {
@@ -333,6 +337,7 @@ export function useSmsPageState() {
         images,
         statusFilter,
         gradeFilter,
+        placementFilter,
         senderNumberId: selectedSenderId,
       });
       const result = await smsAPI.send(payload, SILENT_CONFIG);
@@ -356,6 +361,7 @@ export function useSmsPageState() {
     recipientType,
     statusFilter,
     gradeFilter,
+    placementFilter,
     content,
     customPhones,
     sending,
@@ -382,6 +388,7 @@ export function useSmsPageState() {
     setRecipientType,
     setStatusFilter,
     setGradeFilter,
+    setPlacementFilter,
     setContent,
     setSearchQuery,
     setSelectedStudent,

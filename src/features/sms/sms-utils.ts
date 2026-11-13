@@ -52,6 +52,7 @@ export function buildSmsPayload(params: {
   images: SmsImageFile[];
   statusFilter: 'active' | 'pending';
   gradeFilter: GradeFilter;
+  placementFilter: string;
   senderNumberId: number | null;
 }): SendSMSParams {
   const imageData = params.images.length > 0
@@ -88,6 +89,7 @@ export function buildSmsPayload(params: {
     images: imageData,
     statusFilter: params.statusFilter,
     gradeFilter: params.gradeFilter,
+    placementFilter: params.placementFilter,
     senderNumberId,
   };
 }

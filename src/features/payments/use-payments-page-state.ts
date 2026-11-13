@@ -132,11 +132,6 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
   };
 
   const sendUnpaid = async () => {
-    // 미납 알림은 학원 전체로 나간다 — 지점을 체크한 화면의 인원수와 달라지지 않게 막는다.
-    if (branchIds.length > 0) {
-      toast.error('지점을 체크한 상태에서는 미납 알림을 보낼 수 없습니다. 체크를 풀고 보내 주세요.');
-      return;
-    }
     const unpaidList = filteredPayments.filter((payment) => payment.payment_status !== 'paid' && !isSeasonUpcoming(payment));
     if (unpaidList.length === 0) {
       toast.error('미납자가 없습니다.');
@@ -144,7 +139,11 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
     }
     setSendingNotification(true);
     try {
-      const result = await sendUnpaidNotifications(filters.year || new Date().getFullYear(), filters.month || new Date().getMonth() + 1);
+      const result = await sendUnpaidNotifications(
+        filters.year || new Date().getFullYear(),
+        filters.month || new Date().getMonth() + 1,
+        branchIds
+      );
       toast.success(`알림 발송 완료: ${result.sent}명 성공, ${result.failed}명 실패`);
     } catch {
       toast.error('미납 알림을 발송하지 못했습니다. 잠시 후 다시 시도해주세요.');

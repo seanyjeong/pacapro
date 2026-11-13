@@ -47,12 +47,19 @@ module.exports = function(router) {
      */
     router.post('/send-unpaid', verifyToken, checkPermission('notifications', 'edit'), async (req, res) => {
         try {
-            const { year, month } = req.body;
+            const { year, month, branch_ids: branchIds = [] } = req.body;
 
             if (!year || !month) {
                 return res.status(400).json({
                     error: 'Validation Error',
                     message: '년도와 월을 지정해주세요.'
+                });
+            }
+            // 지점별 발송: 청구서의 지점(옮긴 적 없으면 학생의 지금 지점, 0 = 지점 없음)으로 가른다. 비우면 학원 전체.
+            if (!Array.isArray(branchIds) || branchIds.some((id) => !Number.isSafeInteger(id) || id < 0)) {
+                return res.status(400).json({
+                    error: 'Validation Error',
+                    message: '알림을 보낼 지점을 확인해주세요.'
                 });
             }
 
@@ -128,8 +135,9 @@ module.exports = function(router) {
                     AND ${remainingAmountSql('p')} > 0
                     AND s.status = 'active'
                     AND (s.parent_phone IS NOT NULL OR s.phone IS NOT NULL)
-                    AND s.deleted_at IS NULL`,
-                [req.user.academyId, yearMonth]
+                    AND s.deleted_at IS NULL
+                    ${branchIds.length ? `AND COALESCE(p.branch_id, s.branch_id, 0) IN (${branchIds.map(() => '?').join(',')})` : ''}`,
+                [req.user.academyId, yearMonth, ...branchIds]
             );
 
             // 복호화

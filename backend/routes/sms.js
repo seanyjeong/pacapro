@@ -20,7 +20,7 @@ const {
 const { decryptArrayFields } = require('../utils/encryption');
 const logger = require('../utils/logger');
 const registerSmsAuxiliaryRoutes = require('./sms/auxiliary');
-const { selectSmsRecipients } = require('../services/smsRecipientService');
+const { selectSmsRecipients, smsPlacementCondition } = require('../services/smsRecipientService');
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
 if (!ENCRYPTION_KEY) {
@@ -37,13 +37,18 @@ if (!ENCRYPTION_KEY) {
  *   images?: [{name, data}],
  *   statusFilter?: 'active' | 'pending',  // 상태 필터 (재원생/미등록관리)
  *   gradeFilter?: 'all' | 'junior' | 'senior'  // 학년 필터 (선행반/3학년)
+ *   placementFilter?: 'all' | 'b:<지점 id>' | 'c:<반 id>'  // 지점·반 필터
  * }
  */
 router.post('/send', verifyToken, checkPermission('sms', 'edit'), async (req, res) => {
     try {
-        const { target, content, customPhones, images, statusFilter = 'active', gradeFilter = 'all', senderNumberId } = req.body;
+        const { target, content, customPhones, images, statusFilter = 'active', gradeFilter = 'all', placementFilter = 'all', senderNumberId } = req.body;
         if (!['active', 'pending'].includes(statusFilter)) {
             return res.status(400).json({ error: 'Validation Error', message: '문자 대상 학생 상태를 확인해주세요.' });
+        }
+        const placement = smsPlacementCondition(placementFilter);
+        if (!placement) {
+            return res.status(400).json({ error: 'Validation Error', message: '문자 대상 지점·반을 확인해주세요.' });
         }
 
         if (!content || content.trim().length === 0) {
@@ -202,6 +207,8 @@ router.post('/send', verifyToken, checkPermission('sms', 'edit'), async (req, re
                 // 3학년반: 고3 + N수
                 query += ` AND s.grade IN ('고3', 'N수')`;
             }
+            query += placement.sql;
+            queryParams.push(...placement.params);
 
             let [students] = await db.query(query, queryParams);
 

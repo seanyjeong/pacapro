@@ -64,6 +64,7 @@ export interface SendSMSParams {
   images?: { name: string; data: string }[];
   statusFilter?: 'active' | 'pending';
   gradeFilter?: 'all' | 'junior' | 'senior';
+  placementFilter?: string; // 'all' | 'b:<지점 id>' | 'c:<반 id>'
   senderNumberId?: number;
 }
 
@@ -81,11 +82,13 @@ export const smsAPI = {
   getRecipientsCount: async (
     statusFilter?: string,
     gradeFilter?: string,
-    config?: APIRequestConfig
+    config?: APIRequestConfig,
+    placementFilter?: string
   ): Promise<RecipientsCountResponse> => {
     const params: Record<string, string> = {};
     if (statusFilter) params.statusFilter = statusFilter;
     if (gradeFilter) params.gradeFilter = gradeFilter;
+    if (placementFilter) params.placementFilter = placementFilter;
     return apiClient.get<RecipientsCountResponse>('/sms/recipients-count', { ...config, params });
   },
 

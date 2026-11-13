@@ -1,6 +1,7 @@
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useBranchTree } from '@/hooks/use-branches';
 import { AllRecipientFilters } from './all-recipient-filters';
 import { CustomPhoneFields } from './custom-phone-fields';
 import { ImageAttachmentField } from './image-attachment-field';
@@ -17,6 +18,7 @@ interface SmsComposeCardProps {
 
 export function SmsComposeCard({ sms }: SmsComposeCardProps) {
   const canSend = !sms.sending && sms.content.trim().length > 0;
+  const { branches } = useBranchTree();
 
   return (
     <Card id="sms-compose" className="scroll-mt-24 rounded-lg border-border/80 shadow-none">
@@ -42,10 +44,13 @@ export function SmsComposeCard({ sms }: SmsComposeCardProps) {
               <AllRecipientFilters
                 statusFilter={sms.statusFilter}
                 gradeFilter={sms.gradeFilter}
+                branches={branches}
+                placementFilter={sms.placementFilter}
                 recipientsCount={sms.recipientsCount}
                 errorMessage={sms.recipientsError}
                 onStatusFilterChange={sms.setStatusFilter}
                 onGradeFilterChange={sms.setGradeFilter}
+                onPlacementFilterChange={sms.setPlacementFilter}
               />
             )}
 

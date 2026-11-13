@@ -20,10 +20,14 @@ export function getStudentForCredit(studentId: number): Promise<StudentDetailRes
   return apiClient.get<StudentDetailResponse>(`/students/${studentId}`, SILENT_CONFIG);
 }
 
-export async function sendUnpaidNotifications(year: number, month: number): Promise<{ sent: number; failed: number }> {
+export async function sendUnpaidNotifications(
+  year: number,
+  month: number,
+  branchIds: number[]
+): Promise<{ sent: number; failed: number }> {
   const response = await apiClient.post<{ sent?: number; failed?: number }>(
     '/notifications/send-unpaid',
-    { year, month },
+    { year, month, branch_ids: branchIds },
     SILENT_CONFIG
   );
   return { sent: response.sent || 0, failed: response.failed || 0 };

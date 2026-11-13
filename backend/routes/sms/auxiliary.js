@@ -1,14 +1,18 @@
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { decryptArrayFields } = require('../../utils/encryption');
-const { countSmsRecipients } = require('../../services/smsRecipientService');
+const { countSmsRecipients, smsPlacementCondition } = require('../../services/smsRecipientService');
 const logger = require('../../utils/logger');
 
 function registerSmsAuxiliaryRoutes(router, db) {
     router.get('/recipients-count', verifyToken, async (req, res) => {
         try {
-            const { statusFilter = 'active', gradeFilter = 'all' } = req.query;
+            const { statusFilter = 'active', gradeFilter = 'all', placementFilter = 'all' } = req.query;
             if (!['active', 'pending'].includes(statusFilter)) {
                 return res.status(400).json({ error: 'Validation Error', message: '문자 대상 학생 상태를 확인해주세요.' });
+            }
+            const placement = smsPlacementCondition(placementFilter);
+            if (!placement) {
+                return res.status(400).json({ error: 'Validation Error', message: '문자 대상 지점·반을 확인해주세요.' });
             }
             let query = `
                 SELECT s.phone AS student_phone, s.parent_phone,
@@ -25,6 +29,8 @@ function registerSmsAuxiliaryRoutes(router, db) {
             } else if (gradeFilter === 'senior') {
                 query += ` AND s.grade IN ('고3', 'N수')`;
             }
+            query += placement.sql;
+            queryParams.push(...placement.params);
 
             let [students] = await db.query(query, queryParams);
             students = decryptArrayFields(students,

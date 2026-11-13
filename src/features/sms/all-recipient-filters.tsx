@@ -1,14 +1,18 @@
 import { GraduationCap, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { Branch } from '@/lib/api/branches';
 import type { GradeFilter, SmsRecipientsCount, StatusFilter } from './sms-types';
 
 interface AllRecipientFiltersProps {
   statusFilter: StatusFilter;
   gradeFilter: GradeFilter;
+  branches: Branch[];
+  placementFilter: string;
   recipientsCount: SmsRecipientsCount;
   errorMessage?: string | null;
   onStatusFilterChange: (value: StatusFilter) => void;
   onGradeFilterChange: (value: GradeFilter) => void;
+  onPlacementFilterChange: (value: string) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -25,10 +29,13 @@ const GRADE_OPTIONS = [
 export function AllRecipientFilters({
   statusFilter,
   gradeFilter,
+  branches,
+  placementFilter,
   recipientsCount,
   errorMessage,
   onStatusFilterChange,
   onGradeFilterChange,
+  onPlacementFilterChange,
 }: AllRecipientFiltersProps) {
   return (
     <section className="rounded-lg border border-border bg-background p-4">
@@ -79,6 +86,28 @@ export function AllRecipientFilters({
           ))}
         </div>
       </div>
+
+      {branches.length > 0 ? (
+        <div className="mt-4">
+          <label className="mb-2 block text-sm font-medium text-foreground" htmlFor="sms-placement-filter">지점·반</label>
+          <select
+            id="sms-placement-filter"
+            value={placementFilter}
+            onChange={(event) => onPlacementFilterChange(event.target.value)}
+            className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-foreground"
+          >
+            <option value="all">전체 지점·반</option>
+            {branches.map((branch) => (
+              <optgroup key={branch.id} label={branch.name}>
+                <option value={`b:${branch.id}`}>{branch.name} 전체</option>
+                {branch.classes.map((cls) => (
+                  <option key={cls.id} value={`c:${cls.id}`}>{branch.name} {cls.class_name}</option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+      ) : null}
 
       <div className="mt-4 grid grid-cols-2 gap-2 rounded-md bg-muted px-3 py-2 text-center text-xs sm:grid-cols-3 xl:grid-cols-5">
         <span>전체 {recipientsCount.all}명</span>

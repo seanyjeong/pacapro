@@ -85,3 +85,24 @@ test('legacy-only parent number is never treated as father or mother', async () 
     expect(response.body).toMatchObject({ sent: 0, failed: 0 });
     expect(sendSMS).not.toHaveBeenCalled();
 });
+
+test('지점·반을 고르면 그 지점·반 학생만 세고 보낸다', async () => {
+    const count = await request(buildApp()).get('/paca/sms/recipients-count?placementFilter=c:8');
+    expect(count.status).toBe(200);
+    expect(db.query.mock.calls[0][0]).toContain('AND s.class_id = ?');
+    expect(db.query.mock.calls[0][1]).toEqual([7, 'active', 8]);
+
+    jest.clearAllMocks();
+    const sent = await request(buildApp()).post('/paca/sms/send').send({ target: 'students', content: '공지', placementFilter: 'b:3' });
+    expect(sent.status).toBe(200);
+    const studentQuery = db.query.mock.calls.find(([query]) => query.includes('FROM students'));
+    expect(studentQuery[0]).toContain('AND s.branch_id = ?');
+    expect(studentQuery[1]).toEqual([7, 'active', 3]);
+});
+
+test('지점·반 값의 형식이 틀리면 아무에게도 보내지 않는다', async () => {
+    expect((await request(buildApp()).get('/paca/sms/recipients-count?placementFilter=b:1%20OR%201')).status).toBe(400);
+    const sent = await request(buildApp()).post('/paca/sms/send').send({ target: 'students', content: '공지', placementFilter: 'x:3' });
+    expect(sent.status).toBe(400);
+    expect(sendSMS).not.toHaveBeenCalled();
+});

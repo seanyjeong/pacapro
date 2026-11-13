@@ -41,4 +41,12 @@ function countSmsRecipients(students) {
     };
 }
 
-module.exports = { countSmsRecipients, selectSmsRecipients };
+// 문자 대상의 지점·반 조건: 'all' | 'b:<지점 id>' | 'c:<반 id>'. 형식이 틀리면 null.
+function smsPlacementCondition(placementFilter = 'all') {
+    if (placementFilter === 'all') return { sql: '', params: [] };
+    const match = /^([bc]):(\d+)$/.exec(placementFilter);
+    if (!match) return null;
+    return { sql: match[1] === 'b' ? ' AND s.branch_id = ?' : ' AND s.class_id = ?', params: [Number(match[2])] };
+}
+
+module.exports = { countSmsRecipients, selectSmsRecipients, smsPlacementCondition };

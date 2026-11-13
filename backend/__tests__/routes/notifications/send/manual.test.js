@@ -112,6 +112,25 @@ describe('POST /send-unpaid (verifyToken + checkPermission)', () => {
         expect(res.body.message).toBe('알림 설정을 먼저 완료하고 활성화해주세요.');
     });
 
+    test('지점을 주면 그 지점 청구서의 미납자만 찾고, 형식이 틀리면 보내지 않는다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ is_enabled: 1, service_type: 'sens', naver_secret_key: 'GOOD' }]])
+            .mockResolvedValueOnce([[{ name: '학원A', phone: '02-1234-5678', tuition_due_day: 5 }]])
+            .mockResolvedValueOnce([[]]);
+        const app = buildApp();
+        const res = await request(app).post('/paca/notifications/send-unpaid').send({ year: 2026, month: 5, branch_ids: [3, 0] });
+        expect(res.status).toBe(200);
+        const [sql, params] = pool.execute.mock.calls[2];
+        expect(sql).toContain('COALESCE(p.branch_id, s.branch_id, 0) IN (?,?)');
+        expect(params).toEqual([1, '2026-05', 3, 0]);
+
+        pool.execute.mockClear();
+        const bad = await request(app).post('/paca/notifications/send-unpaid').send({ year: 2026, month: 5, branch_ids: ['3 OR 1'] });
+        expect(bad.status).toBe(400);
+        expect(bad.body.message).toBe('알림을 보낼 지점을 확인해주세요.');
+        expect(pool.execute).not.toHaveBeenCalled();
+    });
+
     test('200 — 미납자 0명 시 {message, sent:0, failed:0} 표면', async () => {
         pool.execute
             .mockResolvedValueOnce([[{
