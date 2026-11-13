@@ -15,6 +15,7 @@ export interface ExportFilters {
   month?: number;
   status?: string;
   payment_status?: string;
+  branch_ids?: number[]; // 체크한 지점(0 = 지점 없음). 비우면 학원 전체
 }
 
 /**
@@ -52,6 +53,7 @@ async function downloadExcel(endpoint: string, filters?: ExportFilters, defaultF
   if (filters?.month) params.append('month', filters.month.toString());
   if (filters?.status) params.append('status', filters.status);
   if (filters?.payment_status) params.append('payment_status', filters.payment_status);
+  if (filters?.branch_ids?.length) params.append('branch_ids', filters.branch_ids.join(','));
 
   const queryString = params.toString();
   const url = queryString

@@ -49,13 +49,13 @@ export function useReportsPageState() {
 
     try {
       if (type === 'revenue') {
-        await exportsApi.downloadRevenue({ start_date: range.startDate, end_date: range.endDate });
+        await exportsApi.downloadRevenue({ start_date: range.startDate, end_date: range.endDate, branch_ids: branchIds });
       }
       if (type === 'expenses') {
         await exportsApi.downloadExpenses({ start_date: range.startDate, end_date: range.endDate });
       }
       if (type === 'payments') {
-        await exportsApi.downloadPayments({ year: range.year, month: range.month });
+        await exportsApi.downloadPayments({ year: range.year, month: range.month, branch_ids: branchIds });
       }
       if (type === 'financial') {
         await exportsApi.downloadFinancial(range.year);

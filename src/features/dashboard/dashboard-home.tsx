@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { StudentResumeModal, type RestEndedStudent } from '@/components/students/student-resume-modal';
 import { PasswordConfirmModal } from '@/components/modals/password-confirm-modal';
+import { BranchChecks } from '@/features/branches/branch-checks';
+import { useBranchTree } from '@/hooks/use-branches';
 import { useDashboardData } from './use-dashboard-data';
 import { DashboardErrorState } from './dashboard-error-state';
 import { DashboardKpiStrip } from './dashboard-kpi-strip';
@@ -17,6 +19,7 @@ import { useDashboardAmountPrivacy } from './use-dashboard-amount-privacy';
 export function DashboardHome() {
     const router = useRouter();
     const dashboard = useDashboardData();
+    const { branches } = useBranchTree();
     const amountPrivacy = useDashboardAmountPrivacy();
     const [showRestEndedDialog, setShowRestEndedDialog] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<RestEndedStudent | null>(null);
@@ -65,6 +68,13 @@ export function DashboardHome() {
                     </Button>
                 </div>
             </header>
+
+            <BranchChecks branches={branches} selected={dashboard.branchIds} onChange={dashboard.setBranchIds} />
+            {dashboard.branchIds.length > 0 && (
+                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900" role="note">
+                    학생 수와 학원비 매출·미납만 체크한 지점 기준입니다. 기타 수입·지출·강사는 학원 전체 금액입니다.
+                </p>
+            )}
 
             <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
                 <DashboardWorkQueue

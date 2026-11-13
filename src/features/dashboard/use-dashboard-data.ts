@@ -49,11 +49,12 @@ export function useDashboardData() {
     const [todayConsultations, setTodayConsultations] = useState<Consultation[]>([]);
     const [restEndedStudents, setRestEndedStudents] = useState<RestEndedStudent[]>([]);
     const [todayLabel, setTodayLabel] = useState('');
+    const [branchIds, setBranchIds] = useState<number[]>([]);
 
     const loadDashboard = useCallback(async () => {
         try {
             setLoading(true);
-            const data = await dashboardAPI.getStats(quietRequest);
+            const data = await dashboardAPI.getStats(quietRequest, branchIds);
             setStats(data);
             setError(null);
         } catch (loadError: unknown) {
@@ -62,7 +63,7 @@ export function useDashboardData() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [branchIds]);
 
     const loadTodayData = useCallback(async () => {
         const today = getLocalDateKey();
@@ -135,6 +136,8 @@ export function useDashboardData() {
         instructorsBySlot,
         todayConsultations,
         restEndedStudents,
+        branchIds,
+        setBranchIds,
         refresh,
     };
 }

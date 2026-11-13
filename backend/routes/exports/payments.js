@@ -30,10 +30,17 @@ const {
     applyTotalRowStyle
 } = require('./_utils');
 
+const { parseBranchIds, paymentBranchSql } = require('../../utils/branchFilter');
+
 module.exports = function(router) {
     router.get('/payments', verifyToken, checkPermission('reports', 'view'), async (req, res) => {
         try {
             const { status, year, month, start_date, end_date } = req.query;
+            // 지점별 내려받기: 청구서의 지점으로 가른다(0 = 지점 없음). 비우면 학원 전체.
+            const branchIds = parseBranchIds(req.query.branch_ids);
+            if (!branchIds) {
+                return res.status(400).json({ error: 'Validation Error', message: '지점을 확인해주세요.' });
+            }
 
             let dateFilter = '';
             const params = [req.user.academyId];
@@ -69,14 +76,17 @@ module.exports = function(router) {
                     p.description,
                     s.name as student_name,
                     s.student_number,
-                    s.grade
+                    s.grade,
+                    b.name AS branch_name
                 FROM student_payments p
                 JOIN students s ON p.student_id = s.id
+                LEFT JOIN branches b ON b.id = COALESCE(p.branch_id, s.branch_id)
                 WHERE p.academy_id = ?
                 ${dateFilter}
                 ${statusFilter}
+                ${paymentBranchSql('p', 's', branchIds)}
                 ORDER BY p.due_date DESC, s.name
-            `, params);
+            `, [...params, ...branchIds]);
             const payments = decryptArray(paymentsRaw);
 
             // Excel 생성
@@ -97,7 +107,9 @@ module.exports = function(router) {
                 { header: '납부일', key: 'paid_date', width: 12 },
                 { header: '마감일', key: 'due_date', width: 12 },
                 { header: '상태', key: 'status', width: 10 },
-                { header: '결제방법', key: 'payment_method', width: 10 }
+                { header: '결제방법', key: 'payment_method', width: 10 },
+                // 지점을 쓰는 학원만 맨 뒤에 지점 칸을 둔다
+                ...(payments.some(payment => payment.branch_name) ? [{ header: '지점', key: 'branch_name', width: 12 }] : [])
             ];
 
             applyHeaderStyle(sheet.getRow(1));
@@ -137,7 +149,8 @@ module.exports = function(router) {
                     paid_date: payment.paid_date ? new Date(payment.paid_date).toLocaleDateString('ko-KR') : '-',
                     due_date: payment.due_date ? new Date(payment.due_date).toLocaleDateString('ko-KR') : '-',
                     status: STATUS_LABELS[payment.payment_status] || payment.payment_status,
-                    payment_method: PAYMENT_METHOD_LABELS[payment.payment_method] || payment.payment_method || '-'
+                    payment_method: PAYMENT_METHOD_LABELS[payment.payment_method] || payment.payment_method || '-',
+                    branch_name: payment.branch_name || '-'
                 });
 
                 row.eachCell((cell, colNumber) => {

@@ -72,6 +72,20 @@ describe('GET /paca/exports/payments', () => {
         expect(res.body.length).toBeGreaterThan(100);
     });
 
+    test('지점을 주면 청구서의 지점으로 가르고, 형식이 틀리면 조회하지 않는다', async () => {
+        pool.execute.mockResolvedValueOnce([[]]);
+        const res = await request(buildApp()).get('/paca/exports/payments?year=2026&month=11&branch_ids=3,0');
+        expect(res.status).toBe(200);
+        const [sql, params] = pool.execute.mock.calls[0];
+        expect(sql).toContain('COALESCE(p.branch_id, s.branch_id, 0) IN (?,?)');
+        expect(params).toEqual([1, '2026-11', 3, 0]);
+
+        pool.execute.mockReset();
+        const bad = await request(buildApp()).get('/paca/exports/payments?branch_ids=3%20OR%201');
+        expect(bad.status).toBe(400);
+        expect(pool.execute).not.toHaveBeenCalled();
+    });
+
     test('pool.execute 1건 (ADR-005, student_payments JOIN students)', async () => {
         pool.execute.mockResolvedValueOnce([[]]);
 
