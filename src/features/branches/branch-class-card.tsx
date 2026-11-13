@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Building2, Plus, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import { SettingsSectionCard } from '@/features/settings/settings-section-card';
 import { getSettingsSaveErrorMessage } from '@/features/settings/settings-error-message';
 import { BRANCH_TREE_QUERY_KEY, useBranchTree } from '@/hooks/use-branches';
 import { branchesAPI, type BranchClass, type BranchTimeSlot } from '@/lib/api/branches';
+import { instructorsAPI } from '@/lib/api/instructors';
 import { WEEKDAY_OPTIONS } from '@/lib/types/student';
 import { cn } from '@/lib/utils';
 
@@ -43,11 +44,12 @@ const TIME_SLOT_OPTIONS: Array<{ value: BranchTimeSlot; label: string }> = [
 ];
 
 // 반의 수업 요일·시간대. 누르면 바로 저장한다. 학생 수업일은 "학생에게 적용"을 눌러야 바뀐다.
-function ClassDaysRow({ label, cls, disabled, onSave }: {
+function ClassDaysRow({ label, cls, instructors, disabled, onSave }: {
   label: string;
   cls: BranchClass;
+  instructors: Array<{ id: number; name: string }>;
   disabled: boolean;
-  onSave: (data: { class_days?: number[]; default_time_slot?: BranchTimeSlot }) => void;
+  onSave: (data: { class_days?: number[]; default_time_slot?: BranchTimeSlot; instructor_id?: number | null }) => void;
 }) {
   const toggle = (day: number) => onSave({
     class_days: cls.class_days.includes(day) ? cls.class_days.filter((item) => item !== day) : [...cls.class_days, day],
@@ -86,6 +88,18 @@ function ClassDaysRow({ label, cls, disabled, onSave }: {
       >
         {TIME_SLOT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
+      {instructors.length > 0 ? (
+        <select
+          aria-label={`${label} 담당 강사`}
+          value={cls.instructor_id ?? ''}
+          disabled={disabled}
+          onChange={(event) => onSave({ instructor_id: event.target.value ? Number(event.target.value) : null })}
+          className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
+        >
+          <option value="">담당 강사 없음</option>
+          {instructors.map((instructor) => <option key={instructor.id} value={instructor.id}>{instructor.name}</option>)}
+        </select>
+      ) : null}
       {cls.class_days.length > 0 && cls.active_count > 0 ? (
         <Link href={`/students/class-days?class=${cls.id}`} className="text-xs font-medium text-primary underline-offset-2 hover:underline">
           학생 {cls.active_count}명에게 적용
@@ -127,6 +141,13 @@ export function BranchClassCard() {
   const { branches, loading } = useBranchTree();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // 반 담당 강사 고르기에 쓰는 강사 목록. 못 읽으면 고르는 칸만 안 나온다.
+  const [instructors, setInstructors] = useState<Array<{ id: number; name: string }>>([]);
+  useEffect(() => {
+    instructorsAPI.getInstructors({ status: 'active' }, quiet)
+      .then((data) => setInstructors(data.instructors.map((instructor) => ({ id: instructor.id, name: instructor.name }))))
+      .catch(() => setInstructors([]));
+  }, []);
 
   async function act(work: () => Promise<unknown>) {
     setBusy(true);
@@ -208,6 +229,7 @@ export function BranchClassCard() {
                   <ClassDaysRow
                     label={`${branch.name} ${cls.class_name}`}
                     cls={cls}
+                    instructors={instructors}
                     disabled={busy}
                     onSave={(data) => void act(() => branchesAPI.updateClass(cls.id, data, quiet))}
                   />

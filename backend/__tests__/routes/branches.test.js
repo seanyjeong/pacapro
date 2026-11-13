@@ -35,8 +35,10 @@ jest.mock('../../config/database', () => {
                 );
                 CREATE TABLE classes (
                     id INTEGER PRIMARY KEY, academy_id INTEGER, branch_id INTEGER, class_name TEXT,
-                    default_time_slot TEXT DEFAULT 'afternoon', class_days TEXT, sort_order INTEGER DEFAULT 0, status TEXT DEFAULT 'active'
+                    default_time_slot TEXT DEFAULT 'afternoon', class_days TEXT, instructor_id INTEGER, sort_order INTEGER DEFAULT 0, status TEXT DEFAULT 'active'
                 );
+                CREATE TABLE instructors (id INTEGER PRIMARY KEY, academy_id INTEGER, name TEXT);
+                INSERT INTO instructors (id, academy_id, name) VALUES (7, 1, '가강사'), (8, 2, '나강사');
                 CREATE TABLE students (
                     id INTEGER PRIMARY KEY, academy_id INTEGER, status TEXT, branch_id INTEGER, class_id INTEGER,
                     deleted_at TEXT
@@ -182,4 +184,17 @@ test('반에 수업 요일을 정하면 목록에 순서대로 나오고, 비우
         expect((await call('put', `${path}/classes/${regular}`, { class_days: bad })).status).toBe(400);
     }
     expect((await call('put', `${path}/classes/${regular}`, { class_days: [] })).body.class.class_days).toEqual([]);
+});
+
+test('반에 담당 강사를 정하고 지울 수 있고, 다른 학원 강사는 못 정한다', async () => {
+    const { regular } = await seed();
+    const saved = await call('put', `${path}/classes/${regular}`, { instructor_id: 7 });
+    expect(saved.status).toBe(200);
+    expect(saved.body.class.instructor_id).toBe(7);
+    expect((await call('put', `${path}/classes/${regular}`, { class_name: '정시A' })).body.class.instructor_id).toBe(7);
+    expect((await call('get', path)).body.branches.flatMap(branch => branch.classes).find(item => item.id === regular).instructor_name).toBe('가강사');
+    expect((await call('put', `${path}/classes/${regular}`, { instructor_id: 8 })).status).toBe(404);
+    expect((await call('put', `${path}/classes/${regular}`, { instructor_id: null })).body.class.instructor_id).toBeNull();
+    const tree = (await call('get', path)).body.branches.flatMap(branch => branch.classes);
+    expect(tree.find(item => item.id === regular).instructor_id).toBeNull();
 });

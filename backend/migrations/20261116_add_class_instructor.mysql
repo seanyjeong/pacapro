@@ -1,0 +1,15 @@
+-- Backup first. Apply before deploying code that selects classes.instructor_id.
+-- 반 담당 강사: 반마다 담당 강사 한 명을 적어 둔다. NULL = 안 정함.
+-- 표시용이다. 강사 근무 일정·출근·급여 계산에는 쓰지 않는다.
+-- Add at the end so MySQL 8 can use INSTANT without rebuilding existing rows.
+SET @branch_schema = DATABASE();
+SET @branch_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE classes ADD COLUMN instructor_id INT NULL DEFAULT NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @branch_schema AND TABLE_NAME = 'classes' AND COLUMN_NAME = 'instructor_id'
+);
+PREPARE branch_stmt FROM @branch_sql;
+EXECUTE branch_stmt;
+DEALLOCATE PREPARE branch_stmt;

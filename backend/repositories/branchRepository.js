@@ -20,8 +20,11 @@ async function findTree(academyId) {
     const [branches] = await db.query(
         'SELECT id, name, sort_order, status FROM branches WHERE academy_id = ? ORDER BY sort_order, id', [academyId]);
     const [classes] = await db.query(
-        `SELECT id, branch_id, class_name, default_time_slot, class_days, sort_order, status FROM classes
-         WHERE academy_id = ? AND branch_id IS NOT NULL ORDER BY sort_order, id`, [academyId]);
+        `SELECT c.id, c.branch_id, c.class_name, c.default_time_slot, c.class_days, c.instructor_id, i.name AS instructor_name,
+                c.sort_order, c.status
+         FROM classes c
+         LEFT JOIN instructors i ON i.id = c.instructor_id AND i.academy_id = c.academy_id
+         WHERE c.academy_id = ? AND c.branch_id IS NOT NULL ORDER BY c.sort_order, c.id`, [academyId]);
     const [counts] = await db.query(
         `SELECT branch_id, class_id, COUNT(*) AS student_count, SUM(status = 'active') AS active_count
          FROM students WHERE academy_id = ? AND deleted_at IS NULL GROUP BY branch_id, class_id`, [academyId]);
@@ -70,6 +73,11 @@ async function findClass(id, academyId, connection = db) {
     return rows[0] || null;
 }
 
+async function instructorExists(id, academyId) {
+    const [rows] = await db.query('SELECT id FROM instructors WHERE id = ? AND academy_id = ?', [id, academyId]);
+    return rows.length > 0;
+}
+
 async function findClassByName(academyId, branchId, className) {
     const [rows] = await db.query(
         'SELECT id FROM classes WHERE academy_id = ? AND branch_id = ? AND class_name = ?', [academyId, branchId, className]);
@@ -103,10 +111,10 @@ async function keepPaymentBranch(connection, academyId, studentFilter, filterPar
 // 반이 다른 지점으로 가면 그 반 학생의 지점도 같이 옮긴다.
 async function updateClass(connection, id, academyId, fields) {
     await connection.query(
-        `UPDATE classes SET branch_id = ?, class_name = ?, default_time_slot = ?, class_days = ?, sort_order = ?, status = ?
+        `UPDATE classes SET branch_id = ?, class_name = ?, default_time_slot = ?, class_days = ?, instructor_id = ?, sort_order = ?, status = ?
          WHERE id = ? AND academy_id = ?`,
         [fields.branch_id, fields.class_name, fields.default_time_slot,
-            fields.class_days.length ? JSON.stringify(fields.class_days) : null, fields.sort_order, fields.status, id, academyId]);
+            fields.class_days.length ? JSON.stringify(fields.class_days) : null, fields.instructor_id, fields.sort_order, fields.status, id, academyId]);
     await keepPaymentBranch(connection, academyId, 's.class_id = ?', [id], fields.branch_id);
     await connection.query('UPDATE students SET branch_id = ? WHERE class_id = ? AND academy_id = ?',
         [fields.branch_id, id, academyId]);
@@ -133,5 +141,5 @@ async function assignStudents(academyId, studentIds, branchId, classId) {
 
 module.exports = {
     withTransaction, findTree, findBranch, findBranchByName, insertBranch, updateBranch, branchUsage, deleteBranch,
-    findClass, findClassByName, insertClass, updateClass, classStudentCount, deleteClass, assignStudents
+    findClass, instructorExists, findClassByName, insertClass, updateClass, classStudentCount, deleteClass, assignStudents
 };

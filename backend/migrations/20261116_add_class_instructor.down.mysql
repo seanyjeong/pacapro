@@ -1,0 +1,2 @@
+-- Manual rollback only. 반에 적어 둔 담당 강사가 사라진다.
+ALTER TABLE classes DROP COLUMN instructor_id;

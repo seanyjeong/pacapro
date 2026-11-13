@@ -3,6 +3,7 @@
  * 지점이 하나도 없는 학원은 이 기능을 쓰지 않는 학원이다.
  */
 const repo = require('../repositories/branchRepository');
+const { decrypt } = require('../utils/encryption');
 
 const TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 const STATUSES = ['active', 'inactive'];
@@ -27,7 +28,11 @@ async function getTree(academyId) {
         branches: branches.map(branch => ({
             ...branch, ...count(row => row.branch_id === branch.id),
             classes: classes.filter(item => item.branch_id === branch.id)
-                .map(item => ({ ...withDays(item), ...count(row => row.class_id === item.id) }))
+                .map(item => ({
+                    ...withDays(item),
+                    instructor_name: item.instructor_name ? decrypt(item.instructor_name) : null,
+                    ...count(row => row.class_id === item.id)
+                }))
         })),
         unassigned: count(row => row.branch_id === null)
     };
@@ -81,6 +86,8 @@ async function updateClass(id, academyId, body) {
         class_name: body.class_name === undefined ? current.class_name : text(body.class_name),
         default_time_slot: body.default_time_slot || current.default_time_slot,
         class_days: body.class_days === undefined ? parseDays(current.class_days) : toDays(body.class_days),
+        // 담당 강사(표시용). null 이면 안 정함.
+        instructor_id: body.instructor_id === undefined ? current.instructor_id : toId(body.instructor_id),
         sort_order: Number.isInteger(body.sort_order) ? body.sort_order : current.sort_order,
         status: body.status || current.status
     };
@@ -88,6 +95,9 @@ async function updateClass(id, academyId, body) {
     if (!TIME_SLOTS.includes(fields.default_time_slot)) return fail(400, '기본 시간대 값이 올바르지 않습니다.');
     if (!fields.class_days) return fail(400, '수업 요일 값이 올바르지 않습니다.');
     if (!STATUSES.includes(fields.status)) return fail(400, '상태 값이 올바르지 않습니다.');
+    if (body.instructor_id != null && !(fields.instructor_id && await repo.instructorExists(fields.instructor_id, academyId))) {
+        return fail(404, '강사를 찾을 수 없습니다.');
+    }
     if (!fields.branch_id || !await repo.findBranch(fields.branch_id, academyId)) return fail(404, '지점을 찾을 수 없습니다.');
     const duplicate = await repo.findClassByName(academyId, fields.branch_id, fields.class_name);
     if (duplicate && duplicate.id !== current.id) return fail(409, '이 지점에 같은 이름의 반이 이미 있습니다.');

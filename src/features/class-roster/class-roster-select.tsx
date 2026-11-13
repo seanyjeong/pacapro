@@ -22,7 +22,9 @@ export function ClassRosterSelect({ branches, classId, className, onChange }: Cl
       {branches.map((branch) => (
         <optgroup key={branch.id} label={branch.name}>
           {branch.classes.map((cls) => (
-            <option key={cls.id} value={cls.id}>{branch.name} {cls.class_name}</option>
+            <option key={cls.id} value={cls.id}>
+              {branch.name} {cls.class_name}{cls.instructor_name ? ` · ${cls.instructor_name}` : ''}
+            </option>
           ))}
         </optgroup>
       ))}
