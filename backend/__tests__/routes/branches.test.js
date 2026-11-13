@@ -153,6 +153,16 @@ test('이름 중복·사용 중 삭제를 막고 빈 것만 지운다', async ()
         .toMatchObject({ name: '수성본원', status: 'inactive' });
 });
 
+test('청구서가 고정된 지점은 학생·반이 없어도 지우지 않는다', async () => {
+    const empty = (await call('post', path, { name: '상인' })).body.branch.id;
+    await db.query('UPDATE student_payments SET branch_id = ? WHERE id = 1', [empty]);
+    const res = await call('delete', `${path}/${empty}`);
+    expect(res.status).toBe(409);
+    expect(res.body.message).toBe('학원비 청구서가 있는 지점은 지울 수 없습니다. 지난 매출·미납을 이 지점으로 볼 수 있게 남겨 둡니다.');
+    await db.query('UPDATE student_payments SET branch_id = NULL WHERE id = 1');
+    expect((await call('delete', `${path}/${empty}`)).status).toBe(200);
+});
+
 test('100자를 넘는 지점·반 이름은 자르지 않고 거절한다', async () => {
     const { suseong, regular } = await seed();
     const long = '가'.repeat(101);

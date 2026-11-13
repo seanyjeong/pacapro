@@ -56,8 +56,9 @@ async function updateBranch(id, academyId, fields) {
 async function branchUsage(id, academyId) {
     const [[row]] = await db.query(
         `SELECT (SELECT COUNT(*) FROM classes WHERE branch_id = ? AND academy_id = ?) AS classes,
-                (SELECT COUNT(*) FROM students WHERE branch_id = ? AND academy_id = ? AND deleted_at IS NULL) AS students`,
-        [id, academyId, id, academyId]);
+                (SELECT COUNT(*) FROM students WHERE branch_id = ? AND academy_id = ? AND deleted_at IS NULL) AS students,
+                (SELECT COUNT(*) FROM student_payments WHERE branch_id = ? AND academy_id = ?) AS payments`,
+        [id, academyId, id, academyId, id, academyId]);
     return row;
 }
 
