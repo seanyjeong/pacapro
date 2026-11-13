@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { exportsApi } from '@/lib/api/exports';
 import { fetchReportSourceData } from './reports-api';
-import type { ReportExportType, ReportStats } from './reports-types';
+import type { ReportExportType, ReportSourceData } from './reports-types';
 import {
   calculateComputedStats,
   calculateReportStats,
@@ -13,17 +13,14 @@ import {
   REPORT_LOAD_ERROR,
 } from './reports-utils';
 
-const INITIAL_STATS: ReportStats = {
-  students: { total: 0, active: 0, paused: 0, avgMonthlyTuition: 0 },
-  payments: { total: 0, paid: 0, unpaid: 0, totalAmount: 0, paidAmountFromBilled: 0, paidAmount: 0 },
-  expenses: { total: 0, totalAmount: 0 },
-  instructors: { total: 0, active: 0 },
-  otherIncomes: { total: 0, totalAmount: 0 },
+const EMPTY_SOURCE: ReportSourceData = {
+  students: [], payments: [], paidPayments: [], expenses: [], instructors: [], otherIncomes: [],
 };
 
 export function useReportsPageState() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentYearMonth);
-  const [stats, setStats] = useState<ReportStats>(INITIAL_STATS);
+  const [source, setSource] = useState<ReportSourceData>(EMPTY_SOURCE);
+  const [branchIds, setBranchIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -33,8 +30,7 @@ export function useReportsPageState() {
     setLoading(true);
     setError(null);
     try {
-      const source = await fetchReportSourceData(selectedMonth);
-      setStats(calculateReportStats(source));
+      setSource(await fetchReportSourceData(selectedMonth));
     } catch {
       setError(REPORT_LOAD_ERROR);
     } finally {
@@ -72,9 +68,11 @@ export function useReportsPageState() {
     }
   };
 
+  const stats = useMemo(() => calculateReportStats(source, branchIds), [branchIds, source]);
   const computed = useMemo(() => calculateComputedStats(stats), [stats]);
 
   return {
+    branchIds,
     computed,
     error,
     exportMenuOpen,
@@ -82,6 +80,7 @@ export function useReportsPageState() {
     loading,
     reload,
     selectedMonth,
+    setBranchIds,
     setExportMenuOpen,
     setSelectedMonth,
     stats,

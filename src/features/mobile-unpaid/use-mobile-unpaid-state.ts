@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { inBranches } from '@/features/branches/branch-checks';
 import { paymentsAPI } from '@/lib/api/payments';
 import type { UnpaidPayment } from '@/lib/types/payment';
 import { canEdit, canView } from '@/lib/utils/permissions';
@@ -30,6 +31,7 @@ export function useMobileUnpaidState() {
   const [query, setQuery] = useState('');
   const [scope, setScope] = useState<MobileUnpaidScope>('today');
   const [selectedMonth, setSelectedMonth] = useState(getCurrentYearMonth);
+  const [branchIds, setBranchIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -86,8 +88,9 @@ export function useMobileUnpaidState() {
   }, [hasPermission, loadPayments]);
 
   const scopedPayments = useMemo(
-    () => (scope === 'month' ? filterUnpaidPaymentsByMonth(payments, selectedMonth) : payments),
-    [payments, scope, selectedMonth]
+    () => (scope === 'month' ? filterUnpaidPaymentsByMonth(payments, selectedMonth) : payments)
+      .filter((payment: UnpaidPayment) => inBranches(payment.branch_id, branchIds)),
+    [branchIds, payments, scope, selectedMonth]
   );
   const stats = useMemo(() => calculateUnpaidStats(scopedPayments), [scopedPayments]);
   const filteredPayments = useMemo(() => filterUnpaidPayments(scopedPayments, query), [scopedPayments, query]);
@@ -142,6 +145,7 @@ export function useMobileUnpaidState() {
   };
 
   return {
+    branchIds,
     callPaymentContact,
     canMarkPaid,
     canViewAmount,
@@ -159,6 +163,7 @@ export function useMobileUnpaidState() {
     router,
     scope,
     selectedMonth,
+    setBranchIds,
     setPaySheet,
     setPaymentMethod,
     setQuery,

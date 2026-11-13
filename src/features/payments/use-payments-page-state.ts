@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { inBranches } from '@/features/branches/branch-checks';
 import type { Payment, PaymentFilters } from '@/lib/types/payment';
 import { parseClassDays } from '@/lib/types/student';
 import { getRemainingPaymentAmount, isSeasonUpcoming } from '@/lib/utils/payment-helpers';
@@ -34,6 +35,7 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
   const [sendingNotification, setSendingNotification] = useState(false);
   const [markingPaymentId, setMarkingPaymentId] = useState<number | null>(null);
   const [todayUnpaidOnly, setTodayUnpaidOnly] = useState(false);
+  const [branchIds, setBranchIds] = useState<number[]>([]);
   const [studentClassDaysMap, setStudentClassDaysMap] = useState<Map<number, number[]>>(new Map());
   const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [creditModalOpen, setCreditModalOpen] = useState(false);
@@ -115,17 +117,26 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
 
   const selectedYearMonth = getSelectedYearMonth(filters);
   const filteredPayments = useMemo(
-    () => filterPayments(payments, filters, viewOnly, todayUnpaidOnly, studentClassDaysMap),
-    [payments, filters, viewOnly, todayUnpaidOnly, studentClassDaysMap]
+    () => filterPayments(
+      payments.filter((payment) => inBranches(payment.branch_id, branchIds)),
+      filters, viewOnly, todayUnpaidOnly, studentClassDaysMap
+    ),
+    [payments, branchIds, filters, viewOnly, todayUnpaidOnly, studentClassDaysMap]
   );
   const summary = useMemo(() => calculatePaymentSummary(filteredPayments, selectedYearMonth), [filteredPayments, selectedYearMonth]);
 
   const resetPageFilters = () => {
     setTodayUnpaidOnly(false);
+    setBranchIds([]);
     setFilters(createInitialPaymentFilters());
   };
 
   const sendUnpaid = async () => {
+    // 미납 알림은 학원 전체로 나간다 — 지점을 체크한 화면의 인원수와 달라지지 않게 막는다.
+    if (branchIds.length > 0) {
+      toast.error('지점을 체크한 상태에서는 미납 알림을 보낼 수 없습니다. 체크를 풀고 보내 주세요.');
+      return;
+    }
     const unpaidList = filteredPayments.filter((payment) => payment.payment_status !== 'paid' && !isSeasonUpcoming(payment));
     if (unpaidList.length === 0) {
       toast.error('미납자가 없습니다.');
@@ -188,6 +199,7 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
     sendingNotification,
     markingPaymentId,
     todayUnpaidOnly,
+    branchIds,
     calculatorOpen,
     creditModalOpen,
     creditStudentInfo,
@@ -195,6 +207,7 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
     setCreditModalOpen,
     setCreditStudentInfo,
     setTodayUnpaidOnly,
+    setBranchIds,
     updateFilters,
     resetPageFilters,
     reload: loadPayments,

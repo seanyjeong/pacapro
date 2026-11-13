@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { BranchChecks } from '@/features/branches/branch-checks';
+import { useBranchTree } from '@/hooks/use-branches';
 import { ManualCreditModal } from '@/components/students/manual-credit-modal';
 import { PaymentList } from '@/components/payments/payment-list';
 import { PaymentRecordModal } from '@/components/payments/payment-record-modal';
@@ -38,6 +40,7 @@ export function PaymentsPageContent() {
   const canViewPayments = canView('payments');
   const viewOnly = canViewPayments && !canEditPayments;
   const state = usePaymentsPageState({ statusFromUrl: searchParams.get('status'), viewOnly });
+  const { branches } = useBranchTree();
 
   const submitDetailedPayment = async (data: {
     paid_amount: number;
@@ -79,6 +82,8 @@ export function PaymentsPageContent() {
         onSendUnpaid={() => setUnpaidDialogOpen(true)}
         onAddPayment={() => router.push('/payments/new')}
       />
+
+      <BranchChecks branches={branches} selected={state.branchIds} onChange={state.setBranchIds} />
 
       <PaymentSummaryStrip summary={state.summary} viewOnly={viewOnly} isOwner={isOwner} />
 

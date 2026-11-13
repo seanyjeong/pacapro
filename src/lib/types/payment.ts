@@ -11,6 +11,7 @@ export interface Payment extends StudentParentNames {
   student_id: number;
   student_name: string;
   student_number: string;
+  branch_id?: number | null; // 청구 당시 지점(옮긴 적 없으면 학생의 지금 지점). 0·null = 지점 없음
   year_month: string; // YYYY-MM
   payment_type: 'monthly' | 'season' | 'material' | 'other';
   base_amount: number; // 기본 금액

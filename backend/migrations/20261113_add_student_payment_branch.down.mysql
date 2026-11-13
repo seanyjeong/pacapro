@@ -1,0 +1,2 @@
+-- Manual rollback only. 청구서에 적어 둔 옮기기 전 지점이 사라진다(지점별 매출이 학생의 지금 지점을 따르게 된다).
+ALTER TABLE student_payments DROP COLUMN branch_id;

@@ -43,6 +43,11 @@ jest.mock('../../config/database', () => {
                 );
                 INSERT INTO students (id, academy_id, status) VALUES
                     (1, 1, 'active'), (2, 1, 'active'), (3, 1, 'paused'), (4, 2, 'active');
+                CREATE TABLE student_payments (
+                    id INTEGER PRIMARY KEY, academy_id INTEGER, student_id INTEGER, branch_id INTEGER, updated_at TEXT
+                );
+                INSERT INTO student_payments (id, academy_id, student_id, updated_at) VALUES
+                    (1, 1, 1, 'kept'), (2, 1, 2, 'kept');
             `);
         }
     };
@@ -108,6 +113,26 @@ test('반을 옮기면 지점이 따라가고, 둘 다 비우면 배정이 풀�
     expect(await student(2)).toEqual({ branch_id: chilgok, class_id: regular });
     await call('put', `${path}/students`, { student_ids: [1], branch_id: null, class_id: null });
     expect(await student(1)).toEqual({ branch_id: null, class_id: null });
+});
+
+test('지점을 옮기면 그때까지의 청구서는 옮기기 전 지점에 남는다', async () => {
+    const { suseong, chilgok, regular } = await seed();
+    const payment = async id => (await db.query('SELECT branch_id, updated_at FROM student_payments WHERE id = ?', [id]))[0][0];
+    // 처음 배정될 때는 적지 않는다 — 지난 청구서도 그 지점을 따른다
+    await call('put', `${path}/students`, { student_ids: [1], class_id: regular });
+    await call('put', `${path}/students`, { student_ids: [2], branch_id: suseong });
+    expect(await payment(1)).toEqual({ branch_id: null, updated_at: 'kept' });
+    // 같은 지점 안에서 반만 바꾸면 그대로
+    await call('put', `${path}/students`, { student_ids: [2], class_id: regular });
+    expect(await payment(2)).toEqual({ branch_id: null, updated_at: 'kept' });
+    // 반이 다른 지점으로 가면 그 반 학생의 청구서에 옮기기 전 지점이 남는다
+    await call('put', `${path}/classes/${regular}`, { branch_id: chilgok });
+    expect(await payment(1)).toEqual({ branch_id: suseong, updated_at: 'kept' });
+    // 다시 옮기거나 배정을 풀어도 처음 적은 지점은 바뀌지 않는다
+    await call('put', `${path}/students`, { student_ids: [1], branch_id: null, class_id: null });
+    await call('put', `${path}/students`, { student_ids: [1], branch_id: suseong });
+    expect(await payment(1)).toEqual({ branch_id: suseong, updated_at: 'kept' });
+    expect(await payment(2)).toEqual({ branch_id: suseong, updated_at: 'kept' });
 });
 
 test('이름 중복·사용 중 삭제를 막고 빈 것만 지운다', async () => {

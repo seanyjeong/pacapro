@@ -1,3 +1,4 @@
+import { inBranches } from '@/features/branches/branch-checks';
 import type { ReportComputedStats, ReportDateRange, ReportExportType, ReportSourceData, ReportStats } from './reports-types';
 
 export const REPORT_LOAD_ERROR = '리포트 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
@@ -50,12 +51,17 @@ export function getExportSuccessMessage(type: ReportExportType): string {
   return labels[type];
 }
 
-export function calculateReportStats(data: ReportSourceData): ReportStats {
-  const activeStudents = data.students.filter((student) => student.status === 'active');
-  const pausedStudents = data.students.filter((student) => student.status === 'paused');
-  const graduatedStudents = data.students.filter((student) => student.status === 'graduated');
-  const activeStudentIds = new Set(activeStudents.map((student) => student.id));
-  const activePayments = data.payments.filter((payment) => activeStudentIds.has(payment.student_id));
+// branchIds 를 주면 학생 수와 학원비만 그 지점으로 가른다. 지출·기타 수입·강사는 지점 정보가 없어 학원 전체다.
+// 학원비는 청구서의 지점으로 가른다 — 지점을 옮긴 학생의 지난 청구서는 옮기기 전 지점에 남는다.
+export function calculateReportStats(data: ReportSourceData, branchIds: number[] = []): ReportStats {
+  const students = data.students.filter((student) => inBranches(student.branch_id, branchIds));
+  const activeStudents = students.filter((student) => student.status === 'active');
+  const pausedStudents = students.filter((student) => student.status === 'paused');
+  const graduatedStudents = students.filter((student) => student.status === 'graduated');
+  const activeStudentIds = new Set(data.students.filter((student) => student.status === 'active').map((student) => student.id));
+  const activePayments = data.payments.filter(
+    (payment) => activeStudentIds.has(payment.student_id) && inBranches(payment.branch_id, branchIds)
+  );
   const activeStudentsWithTuition = activeStudents.filter((student) => toAmount(student.monthly_tuition) > 0);
   const tuitionSum = activeStudentsWithTuition.reduce((sum, student) => sum + toAmount(student.monthly_tuition), 0);
   const avgTuition = activeStudentsWithTuition.length > 0 ? tuitionSum / activeStudentsWithTuition.length : 0;
@@ -77,7 +83,9 @@ export function calculateReportStats(data: ReportSourceData): ReportStats {
       totalAmount: Math.floor(activePayments.reduce((sum, payment) => sum + toAmount(payment.final_amount), 0)),
       paidAmountFromBilled: Math.floor(paidAmountFromBilled),
       paidAmount: Math.floor(
-        data.paidPayments.reduce((sum, payment) => sum + toAmount(payment.paid_amount || payment.final_amount), 0)
+        data.paidPayments
+          .filter((payment) => inBranches(payment.branch_id, branchIds))
+          .reduce((sum, payment) => sum + toAmount(payment.paid_amount || payment.final_amount), 0)
       ),
     },
     expenses: {

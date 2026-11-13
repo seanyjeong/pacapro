@@ -82,6 +82,22 @@ async function insertClass(academyId, branchId, fields) {
     return result.insertId;
 }
 
+// 지점이 바뀌는 학생의 지금까지 청구서에 옮기기 전 지점을 적어 둔다 — 지점별 매출·미납이 나중에 옮겨 가지 않게.
+// 지점이 없던 학생은 적지 않는다(처음 배정될 때는 지난 청구서도 그 지점을 따른다).
+async function keepPaymentBranch(connection, academyId, studentFilter, filterParams, nextBranchId) {
+    await connection.query(
+        `UPDATE student_payments
+         SET branch_id = (SELECT s.branch_id FROM students s WHERE s.id = student_payments.student_id),
+             updated_at = updated_at
+         WHERE academy_id = ? AND branch_id IS NULL
+         AND student_id IN (
+             SELECT s.id FROM students s
+             WHERE s.academy_id = ? AND s.branch_id IS NOT NULL AND (? IS NULL OR s.branch_id <> ?)
+             AND ${studentFilter}
+         )`,
+        [academyId, academyId, nextBranchId, nextBranchId, ...filterParams]);
+}
+
 // 반이 다른 지점으로 가면 그 반 학생의 지점도 같이 옮긴다.
 async function updateClass(connection, id, academyId, fields) {
     await connection.query(
@@ -89,6 +105,7 @@ async function updateClass(connection, id, academyId, fields) {
          WHERE id = ? AND academy_id = ?`,
         [fields.branch_id, fields.class_name, fields.default_time_slot,
             fields.class_days.length ? JSON.stringify(fields.class_days) : null, fields.sort_order, fields.status, id, academyId]);
+    await keepPaymentBranch(connection, academyId, 's.class_id = ?', [id], fields.branch_id);
     await connection.query('UPDATE students SET branch_id = ? WHERE class_id = ? AND academy_id = ?',
         [fields.branch_id, id, academyId]);
 }
@@ -104,6 +121,7 @@ async function deleteClass(id, academyId) {
 }
 
 async function assignStudents(academyId, studentIds, branchId, classId) {
+    await keepPaymentBranch(db, academyId, `s.id IN (${studentIds.map(() => '?').join(',')})`, studentIds, branchId);
     const [result] = await db.query(
         `UPDATE students SET branch_id = ?, class_id = ?
          WHERE academy_id = ? AND deleted_at IS NULL AND id IN (${studentIds.map(() => '?').join(',')})`,

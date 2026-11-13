@@ -1,5 +1,7 @@
 'use client';
 
+import { BranchChecks } from '@/features/branches/branch-checks';
+import { useBranchTree } from '@/hooks/use-branches';
 import { MobileUnpaidFilters } from './mobile-unpaid-filters';
 import { MobileUnpaidHeader } from './mobile-unpaid-header';
 import { MobileUnpaidList } from './mobile-unpaid-list';
@@ -9,6 +11,7 @@ import { useMobileUnpaidState } from './use-mobile-unpaid-state';
 
 export function MobileUnpaidPage() {
   const state = useMobileUnpaidState();
+  const { branches } = useBranchTree();
 
   if (state.hasPermission === null) {
     return (
@@ -38,6 +41,7 @@ export function MobileUnpaidPage() {
           onMonthChange={state.setSelectedMonth}
           onScopeChange={state.setScope}
         />
+        <BranchChecks branches={branches} selected={state.branchIds} onChange={state.setBranchIds} />
         {!state.loading && !state.loadError && (
           <MobileUnpaidSummary canViewAmount={state.canViewAmount} stats={state.stats} />
         )}

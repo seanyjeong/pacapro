@@ -1,0 +1,15 @@
+-- Backup first. Apply before deploying code that selects student_payments.branch_id.
+-- 지점별 학원비 매출·미납: 학생이 지점을 옮길 때 그때까지의 청구서에 옮기기 전 지점을 적어 둔다.
+-- NULL = 적어 둔 적 없음(학생의 지금 지점을 따른다). 0 = 지점 없음으로 고정.
+-- Add at the end so MySQL 8 can use INSTANT without rebuilding existing rows.
+SET @branch_schema = DATABASE();
+SET @branch_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE student_payments ADD COLUMN branch_id INT NULL DEFAULT NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @branch_schema AND TABLE_NAME = 'student_payments' AND COLUMN_NAME = 'branch_id'
+);
+PREPARE branch_stmt FROM @branch_sql;
+EXECUTE branch_stmt;
+DEALLOCATE PREPARE branch_stmt;
