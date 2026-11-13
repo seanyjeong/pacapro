@@ -97,6 +97,8 @@ export function StudentsPageContent() {
 
     const handleReload = () => {
         reload();
+        // 지점 칩의 인원수도 같이 새로 읽는다(엑셀 업로드·체험 처리 뒤 본문과 어긋나지 않게).
+        branchTree.reload();
         setStatsRefreshTrigger((prev) => prev + 1);
     };
 
