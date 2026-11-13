@@ -56,11 +56,11 @@ export default function AttendancePage() {
 
   const isLoading = scheduleLoading || attendanceLoading;
 
-  const handleSubmit = async (submissions: AttendanceSubmission[]) => {
+  const handleSubmit = async (submissions: AttendanceSubmission[], mode?: 'class') => {
     try {
       await submitAttendance.mutateAsync({
         scheduleId,
-        data: { attendance_records: submissions },
+        data: { attendance_records: submissions, mode },
       });
       router.push(`/schedules/${scheduleId}`);
     } catch {

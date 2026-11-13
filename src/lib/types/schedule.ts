@@ -66,6 +66,8 @@ export interface AttendanceSubmission {
 
 export interface AttendanceBatchSubmission {
   attendance_records: AttendanceSubmission[];
+  /** 반으로 보기에서 저장: 같은 시간대에 미체크 학생이 남아 있으면 수업을 마감하지 않는다 */
+  mode?: 'class';
 }
 
 export interface ScheduleStats {

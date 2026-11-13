@@ -47,7 +47,7 @@ export function AttendanceChecker(props: AttendanceCheckerProps) {
 
   const editor = useAttendanceEditor({
     attendances: shownAttendances,
-    onSubmit,
+    onSubmit: (submissions) => onSubmit(submissions, classId !== null ? 'class' : undefined),
     currentDate,
     timeSlot,
     onStudentAdded,

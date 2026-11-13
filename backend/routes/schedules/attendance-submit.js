@@ -18,7 +18,8 @@ module.exports = function registerAttendanceSubmit(router) {
         try {
             const { attendance_records: attendanceRecords } = req.body;
             const individual = req.body.mode === 'individual';
-            if (req.body.mode !== undefined && !individual) {
+            const classView = req.body.mode === 'class';
+            if (req.body.mode !== undefined && !individual && !classView) {
                 connection.release();
                 return res.status(400).json({ error: 'Validation Error', message: '출석 저장 방식을 확인해주세요.' });
             }
@@ -64,7 +65,18 @@ module.exports = function registerAttendanceSubmit(router) {
             }
 
             // 개별 정정은 전체 출석 제출과 달리 반 전체를 마감하거나 알림을 보내지 않는다.
-            if (!individual) {
+            if (classView) {
+                // 반으로 보기 저장은 그 반만 체크한 것이다. 같은 시간대에 미체크 학생이 남아 있으면 수업을 마감하지 않는다.
+                await connection.query(
+                    `UPDATE class_schedules SET attendance_taken = true
+                     WHERE id = ?
+                       AND NOT EXISTS (
+                           SELECT 1 FROM attendance
+                           WHERE class_schedule_id = ? AND attendance_status IS NULL
+                       )`,
+                    [scheduleId, scheduleId]
+                );
+            } else if (!individual) {
                 await connection.query(
                     'UPDATE class_schedules SET attendance_taken = true WHERE id = ?',
                     [scheduleId]

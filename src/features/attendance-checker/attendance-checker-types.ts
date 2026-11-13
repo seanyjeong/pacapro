@@ -2,7 +2,7 @@ import type { Attendance, AttendanceStatus, AttendanceSubmission } from '@/lib/t
 
 export interface AttendanceCheckerProps {
   attendances: Attendance[];
-  onSubmit: (submissions: AttendanceSubmission[]) => void;
+  onSubmit: (submissions: AttendanceSubmission[], mode?: 'class') => void;
   isSubmitting?: boolean;
   readOnly?: boolean;
   currentDate?: string;
