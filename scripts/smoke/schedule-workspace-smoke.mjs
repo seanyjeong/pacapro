@@ -7,6 +7,7 @@ import {
   launchSmokeBrowser,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
+  statTile,
 } from './paca-smoke-utils.mjs';
 
 function formatDate(date) {
@@ -93,31 +94,40 @@ async function createPage(browser, viewport) {
   return { context, diagnostics, page, state };
 }
 
+// 새 디자인: '수업 운영 보드'를 '수업 숫자 요약' 줄(같은 test id)로 합쳤다. 상담 일정 수는 '선택일 상담' 칸(누르면 상담 달력),
+// 승인 대기 수는 머리의 '승인 대기' 버튼 배지, 수업 등록·출결 테스트발송은 머리 버튼, 강사 출근·미배정 출근·출석 체크는
+// 선택일 카드로 옮겨졌다.
 async function assertScheduleBoard(page, label) {
-  await page.getByTestId('schedules-operations-board').waitFor();
   const board = page.getByTestId('schedules-operations-board');
-  await board.getByRole('heading', { name: '수업 운영 보드' }).waitFor();
-  await board.getByText(/이번 달 수업\s*1건/).waitFor();
-  await board.getByText(/선택일 수업\s*1건/).waitFor();
-  await board.getByText(/선택일 학생\s*8명/).waitFor();
-  await board.getByText(/상담 일정\s*1건/).waitFor();
-  await board.getByText(/승인 대기\s*1건/).waitFor();
-  await board.getByRole('button', { name: '강사 출근' }).waitFor();
-  await board.getByRole('button', { name: '미배정 출근' }).waitFor();
-  const consultationHref = await board.getByRole('link', { name: '상담 일정 보기' }).getAttribute('href');
-  if (consultationHref !== `/consultations/calendar?from=schedule&date=${range.today}`) {
-    throw new Error(`schedule consultation href mismatch: ${consultationHref}`);
-  }
-  const addHref = await board.getByRole('link', { name: '수업 등록' }).getAttribute('href');
-  if (addHref !== `/schedules/new?date=${range.today}`) throw new Error(`schedule create href mismatch: ${addHref}`);
-  const attendanceHref = await board.getByRole('link', { name: '출석 체크' }).getAttribute('href');
+  await board.waitFor();
+  if ((await board.getAttribute('aria-label')) !== '수업 숫자 요약') throw new Error('schedule summary label mismatch');
+  await statTile(board, '이번 달 수업').getByText('1건', { exact: true }).waitFor();
+  await statTile(board, '선택일 수업').getByText('1건', { exact: true }).waitFor();
+  await statTile(board, '선택일 학생').getByText('8명', { exact: true }).waitFor();
+  await statTile(board, '선택일 상담').getByText('1건', { exact: true }).waitFor();
+  await page.locator('header').getByRole('button', { name: /^승인 대기\s*1$/ }).waitFor();
+  await page.getByRole('button', { name: '강사 출근' }).waitFor();
+  await page.getByRole('button', { name: '미배정 출근' }).waitFor();
+  await page.locator('header').getByRole('button', { name: '개별수업등록' }).waitFor();
+  const attendanceHref = await page.getByTestId('selected-date-operations').getByRole('link', { name: /출석 체크$/ }).getAttribute('href');
   if (attendanceHref !== '/schedules/101/attendance') throw new Error(`schedule attendance href mismatch: ${attendanceHref}`);
-  const attendanceTestHref = await board.getByRole('link', { name: '출결 테스트발송' }).getAttribute('href');
+  const attendanceTestHref = await page.locator('header').getByRole('link', { name: '출결 테스트발송' }).getAttribute('href');
   if (attendanceTestHref !== '/settings/notifications?service=solapi&template=attendance') {
     throw new Error(`attendance test send href mismatch: ${attendanceTestHref}`);
   }
   await assertNoRawVisibleText(page, label);
   await assertNoHorizontalOverflow(page, label);
+}
+
+// 옛 보드의 '상담 일정 보기'·'수업 등록' 링크 주소는 이제 버튼을 눌러 이동한 주소로 확인한다.
+async function assertScheduleNavigation(page) {
+  await statTile(page.getByTestId('schedules-operations-board'), '선택일 상담').click();
+  await page.waitForURL(`**/consultations/calendar?from=schedule&date=${range.today}`);
+  await page.goBack({ waitUntil: 'networkidle' });
+  await page.locator('header').getByRole('button', { name: '개별수업등록' }).click();
+  await page.waitForURL(`**/schedules/new?date=${range.today}`);
+  await page.goBack({ waitUntil: 'networkidle' });
+  await page.getByRole('heading', { name: '수업 관리' }).waitFor();
 }
 
 async function runDesktop(browser) {
@@ -126,11 +136,12 @@ async function runDesktop(browser) {
   await page.goto('/schedules', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '수업 관리' }).waitFor();
   await assertScheduleBoard(page, 'schedule workspace desktop');
-  await page.getByTestId('schedules-operations-board').getByRole('button', { name: '강사 출근' }).click();
+  await page.getByRole('button', { name: '강사 출근' }).click();
   await page.getByRole('heading', { name: '강사 출근 체크', exact: true }).waitFor();
   await page.getByRole('button', { name: '닫기' }).click();
   await assertScheduleBoard(page, 'schedule workspace desktop after modal');
   await page.screenshot({ path: '/Users/etlab/paca-schedule-workspace-desktop.png', fullPage: true });
+  await assertScheduleNavigation(page);
   await context.close();
   return { diagnostics: result.diagnostics, state };
 }

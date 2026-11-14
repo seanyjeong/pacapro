@@ -94,9 +94,8 @@ async function readScheduleDeskLayout(page) {
       .map((node) => node.getBoundingClientRect().width)
       .filter((width) => width > 0);
     const board = document.querySelector('[data-testid="schedules-operations-board"]');
-    const calendar = [...document.querySelectorAll('h3')]
-      .find((node) => /\d{4}년\s+\d{1,2}월/.test(node.textContent || ''))
-      ?.closest('div.rounded-xl, div.rounded-lg, div.rounded-md, div[class*="rounded"]');
+    // 새 디자인: 달력은 '수업 달력' 이름의 흰 카드(section)이고 월 제목은 h2 다.
+    const calendar = document.querySelector('section[aria-label="수업 달력"]');
     if (!board || !calendar || slotWidths.length === 0) return null;
     const boardRect = board.getBoundingClientRect();
     const calendarRect = calendar.getBoundingClientRect();

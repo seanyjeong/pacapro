@@ -114,19 +114,28 @@ async function gotoAcademyEvents(page) {
   await page.getByTestId('academy-events-workspace').waitFor();
 }
 
+// 새 디자인: '일정 작업 보드'는 숫자 요약 줄('일정 숫자 요약')로 합쳐졌다.
+// 종류별(업무일정) 건수는 달력 범례로, 일정 등록 버튼·상담 시간 설정 링크는 화면 머리로 옮겨졌다.
 async function assertOperationsBoard(page) {
   const board = page.getByTestId('academy-events-operations-board');
-  await board.getByRole('heading', { name: '일정 작업 보드' }).waitFor();
+  await board.waitFor();
+  assert.equal(await board.getAttribute('aria-label'), '일정 숫자 요약');
   await board.getByTestId('academy-events-metric-month').getByText('1건').waitFor();
   await board.getByTestId('academy-events-metric-today').getByText('1건').waitFor();
   await board.getByTestId('academy-events-metric-holiday').getByText('0건').waitFor();
-  await board.getByTestId('academy-events-metric-work').getByText('1건').waitFor();
-  await board.getByRole('button', { name: '새 일정 등록' }).waitFor();
-  const settingsHref = await board.getByRole('link', { name: '상담 시간 설정' }).getAttribute('href');
+  await page.getByTestId('academy-events-metric-work').getByText('1', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '일정 등록', exact: true }).waitFor();
+  const settingsHref = await page.getByRole('link', { name: '상담 시간 설정' }).getAttribute('href');
   assert.equal(settingsHref, '/consultations/settings');
   const settingsResponse = await page.request.get(settingsHref);
   assert.equal(settingsResponse.status(), 200, 'consultation settings link must resolve');
   assert.equal(new URL(settingsResponse.url()).pathname, settingsHref);
+}
+
+// 요약 줄의 '다음 일정' 칸을 누르면 가장 가까운 일정 수정 창이 열린다(옛 보드의 '… 일정 수정' 버튼).
+function upcomingEventButton(page) {
+  return page.getByTestId('academy-events-operations-board')
+    .getByRole('button', { name: /다음 일정.*월말 운영 회의/ });
 }
 
 async function runDesktop(browser) {
@@ -136,10 +145,7 @@ async function runDesktop(browser) {
   await gotoAcademyEvents(page);
   await page.getByRole('heading', { level: 1, name: '학원일정' }).waitFor();
   await assertOperationsBoard(page);
-  await page
-    .getByTestId('academy-events-operations-board')
-    .getByRole('button', { name: '월말 운영 회의 일정 수정' })
-    .click();
+  await upcomingEventButton(page).click();
   const editDialog = page.getByRole('dialog', { name: '일정 수정' });
   await editDialog.waitFor();
   await editDialog.getByPlaceholder('일정 제목').waitFor();
@@ -153,8 +159,7 @@ async function runDesktop(browser) {
   await editDialog.getByRole('button', { name: '수정', exact: true }).click();
   await editDialog.waitFor({ state: 'hidden' });
   assert.equal(result.state.updatePayload.block_consultation, false);
-  await page.getByTestId('academy-events-operations-board')
-    .getByRole('button', { name: '월말 운영 회의 일정 수정' }).click();
+  await upcomingEventButton(page).click();
   assert.equal(await toggle.getAttribute('aria-checked'), 'false', 'saved block opt-out must be shown');
   await editDialog.getByRole('button', { name: '일정 수정 닫기' }).click();
   await page.getByRole('button', { name: '월말 운영 회의 수정' }).waitFor();

@@ -199,7 +199,8 @@ async function runNormal(browser) {
   await page.getByText(/\d{4}년\s+\d{1,2}월/).first().waitFor();
   await page.getByRole('button', { name: /승인 대기\s+1/ }).waitFor();
   await page.getByTestId('selected-date-operations').waitFor();
-  await page.getByText('선택일 운영').waitFor();
+  // 새 디자인: '선택일 운영' 제목 대신 고른 날짜가 카드 제목이고, 설명 문장으로 같은 카드를 확인한다.
+  await page.getByText('시간대를 눌러 학생·강사 출석을 바로 처리해요.').waitFor();
   await page.getByText('오후 실기 집중반').waitFor();
   const attendanceHref = await page
     .getByRole('link', { name: '오후 실기 집중반 출석 체크' })
@@ -278,7 +279,8 @@ async function runAttendanceNormal(browser) {
 
   await page.goto('/schedules/101/attendance', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { level: 1, name: '출석 체크' }).waitFor();
-  await page.getByText('학생 출석 체크').waitFor();
+  // 새 디자인: '학생 출석 체크' 카드 제목은 학생 수('학생 N명')로 바뀌었다.
+  await page.getByRole('heading', { name: /^학생 \d+명$/ }).waitFor();
   const studentHref = await page
     .getByRole('link', { name: '김진우 학생 상세' })
     .getAttribute('href');

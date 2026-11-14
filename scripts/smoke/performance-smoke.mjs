@@ -140,14 +140,16 @@ async function runNormal(browser) {
   await assertJungsiLinkFlow(page, state);
   await openMockExamTab(page);
   await page.getByText('김민서').waitFor();
-  const board = page.getByTestId('performance-operations-board');
-  await board.getByRole('button', { name: '휴원 학생 1명' }).click();
+  // 새 디자인: 재원·휴원·전체 조회 칸은 위 '성적 요약' 줄의 같은 test id 칸(누르면 목록 거르기)이다.
+  // 지점 이름은 모의고사·수능 탭의 검색 줄 배지로 옮겨졌다.
+  await page.getByRole('search', { name: '성적 학생 검색' }).getByText('일산 지점').waitFor();
+  await page.getByTestId('performance-metric-paused').getByRole('button').click();
   await page.locator('[data-testid="performance-student-row"]:has-text("한서준")').waitFor();
   await page.locator('[data-testid="performance-student-row"]:has-text("김민서")').waitFor({ state: 'hidden' });
-  await board.getByRole('button', { name: '재원 학생 1명' }).click();
+  await page.getByTestId('performance-metric-active').getByRole('button').click();
   await page.locator('[data-testid="performance-student-row"]:has-text("김민서")').waitFor();
   await page.locator('[data-testid="performance-student-row"]:has-text("한서준")').waitFor({ state: 'hidden' });
-  await board.getByRole('button', { name: '전체 조회 2명' }).click();
+  await page.getByTestId('performance-metric-ready').getByRole('button', { name: /2명/ }).click();
   await page.locator('[data-testid="performance-student-row"]:has-text("한서준")').waitFor();
   await assertNoRawVisibleText(page, 'performance desktop');
   await assertNoHorizontalOverflow(page, 'performance desktop');
@@ -179,13 +181,14 @@ async function runNormal(browser) {
 }
 
 async function assertOperationsBoard(page) {
+  // 새 디자인: '성적 작업 보드'는 '성적 요약' 숫자 줄(같은 test id)이 되었다. '모의고사·수능 보기' 버튼은
+  // 탭('모의고사·수능')으로, 지점 이름은 그 탭 안 검색 줄로 옮겨졌다(runNormal 에서 탭을 연 뒤 확인).
   const board = page.getByTestId('performance-operations-board');
-  await board.getByRole('heading', { name: '성적 작업 보드' }).waitFor();
+  if ((await board.getAttribute('aria-label')) !== '성적 요약') throw new Error('performance summary label mismatch');
   await board.getByTestId('performance-metric-active').getByText('1명').waitFor();
   await board.getByTestId('performance-metric-paused').getByText('1명').waitFor();
   await board.getByTestId('performance-metric-exams').getByText('4종').waitFor();
-  await board.getByText('일산 지점').waitFor();
-  await board.getByRole('button', { name: '모의고사·수능 보기' }).waitFor();
+  await page.getByRole('button', { name: '모의고사·수능', exact: true }).waitFor();
 }
 
 async function assertSidebarEngineShortcuts(page) {
@@ -202,8 +205,8 @@ async function assertSidebarEngineShortcuts(page) {
 }
 
 async function assertJungsiLinkFlow(page, state) {
-  const board = page.getByTestId('performance-operations-board');
-  await board.getByRole('button', { name: '정시엔진 재연동' }).click();
+  // 재연동 버튼은 화면 머리로 옮겨졌다.
+  await page.getByRole('button', { name: '정시엔진 재연동' }).click();
   await page.getByRole('dialog').getByText('정시엔진 아이디와 비밀번호로 로그인하면').waitFor();
   await page.getByText('비밀번호는 PACA에 저장하지 않고').waitFor();
   await page.screenshot({ path: '/Users/etlab/paca-performance-jungsi-link-dialog.png', fullPage: true });
@@ -241,7 +244,8 @@ async function runStatusError(browser) {
   await page.getByTestId('performance-workspace').waitFor();
   await page.getByRole('heading', { name: '성적관리' }).waitFor();
   await page.getByText('정시엔진 연결 확인 필요').waitFor();
-  await page.getByTestId('performance-operations-board').getByText('연결 확인 필요').waitFor();
+  // 엔진 연결 상태는 보드 대신 화면 머리의 상태 표시에 보인다.
+  await page.getByTestId('performance-engine-status').getByText('연결 확인 필요').waitFor();
   await openMockExamTab(page);
   await page.getByText('정시엔진 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'performance status error');
@@ -263,9 +267,9 @@ async function runHealthOnlyNotLinked(browser) {
   await page.getByTestId('performance-workspace').waitFor();
   await page.getByRole('heading', { name: '성적관리' }).waitFor();
   await page.getByText('정시엔진 연동 필요').waitFor();
-  const board = page.getByTestId('performance-operations-board');
-  await board.getByText('연동 필요').waitFor();
-  await board.getByText('지점 미연동').waitFor();
+  // 엔진 연결 상태는 화면 머리에 보인다. 옛 보드의 '지점 미연동' 글자는 없어졌고(지점 배지는 연동된 뒤 탭 안에만 보임),
+  // 미연동 상태는 머리 상태와 탭 안 '정시엔진 연동이 필요합니다' 안내로 확인한다.
+  await page.getByTestId('performance-engine-status').getByText('연동 필요').waitFor();
   await openMockExamTab(page);
   await page.getByText('정시엔진 연동이 필요합니다').waitFor();
   await assertNoRawVisibleText(page, 'performance health-only unlinked');

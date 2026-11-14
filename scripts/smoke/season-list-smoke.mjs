@@ -106,7 +106,8 @@ async function runNormal(browser) {
   await page.getByRole('heading', { name: '시즌 관리' }).waitFor();
   await assertOperationsBoard(page);
   await page.getByTestId('season-active-panel').waitFor();
-  await page.getByText('진행 중 시즌').waitFor();
+  // 새 디자인: 진행 중 시즌 카드의 머리 글자는 '대표 시즌'으로 바뀌었다.
+  await page.getByTestId('season-active-panel').getByText('대표 시즌', { exact: true }).waitFor();
   const activePanel = page.getByTestId('season-active-panel');
   const enrollHref = await page
     .getByTestId('season-active-panel')
@@ -127,14 +128,14 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'season list desktop');
   await page.screenshot({ path: '/Users/etlab/paca-season-list-desktop.png', fullPage: true });
 
-  const board = page.getByTestId('season-list-operations-board');
-  await board.getByRole('button', { name: /진행 중\s*1개/ }).click();
+  // 새 디자인: '시즌 작업 보드'의 진행 중·전체 칸은 '시즌 요약' 줄의 같은 test id 칸(누르면 거르기)이 되었다.
+  await page.getByTestId('season-list-metric-active').getByRole('button', { name: /1개/ }).click();
   await waitForSeasonAbsent(page, '2026 수시 실전반');
   if (!state.hits.some((hit) => hit.includes('/seasons?status=active'))) {
     throw new Error(`missing active filter request: ${state.hits.join(' | ')}`);
   }
 
-  await board.getByRole('button', { name: /전체 시즌/ }).click();
+  await page.getByTestId('season-list-metric-total').getByRole('button', { name: /전체 시즌/ }).click();
   await page.locator('[data-testid="season-row"]:has-text("2026 수시 실전반")').first().waitFor();
 
   await page.getByLabel('시즌 타입').selectOption('regular');
@@ -164,14 +165,16 @@ async function runNormal(browser) {
 }
 
 async function assertOperationsBoard(page) {
+  // 새 디자인: '시즌 작업 보드'는 '시즌 요약' 숫자 줄(같은 test id)이 되고, 새 시즌 등록은 화면 머리의 '시즌 등록',
+  // 대표 시즌 학생 등록 링크는 대표 시즌 카드로 옮겨졌다.
   const board = page.getByTestId('season-list-operations-board');
-  await board.getByRole('heading', { name: '시즌 작업 보드' }).waitFor();
+  if ((await board.getAttribute('aria-label')) !== '시즌 요약') throw new Error('season summary label mismatch');
   await board.getByTestId('season-list-metric-total').getByText('2개').waitFor();
   await board.getByTestId('season-list-metric-active').getByText('1개').waitFor();
   await board.getByTestId('season-list-metric-regular').getByText('1개').waitFor();
   await board.getByTestId('season-list-metric-early').getByText('1개').waitFor();
-  await board.getByRole('button', { name: '새 시즌 등록' }).waitFor();
-  await board.getByRole('link', { name: '2026 정시 집중반 학생 등록' }).waitFor();
+  await page.locator('header').getByRole('button', { name: '시즌 등록', exact: true }).waitFor();
+  await page.getByTestId('season-active-panel').getByRole('link', { name: '2026 정시 집중반 학생 등록' }).waitFor();
 }
 
 async function assertSeasonDesktopLayout(page) {
@@ -185,6 +188,13 @@ async function assertSeasonDesktopLayout(page) {
       return new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top))).size;
     });
     const actionCellWidths = actionCells.map((cell) => cell.getBoundingClientRect().width);
+    const actionButtonsClipped = actionCells.some((cell) => {
+      const cellRect = cell.getBoundingClientRect();
+      return [...cell.querySelectorAll('a, button')].some((button) => {
+        const rect = button.getBoundingClientRect();
+        return rect.left < cellRect.left - 1 || rect.right > cellRect.right + 1;
+      });
+    });
     const activePanelActionTops = activePanel
       ? [...activePanel.querySelectorAll('a, button')].map((node) => Math.round(node.getBoundingClientRect().top))
       : [];
@@ -196,6 +206,7 @@ async function assertSeasonDesktopLayout(page) {
     return {
       activePanelLineCount: new Set(activePanelActionTops).size,
       actionButtonLineCounts,
+      actionButtonsClipped,
       boardLeft: boardRect?.left || 0,
       minActionCellWidth: Math.min(...actionCellWidths),
       sharesVerticalBand,
@@ -205,7 +216,8 @@ async function assertSeasonDesktopLayout(page) {
   if (layout.actionButtonLineCounts.some((count) => count > 1)) {
     throw new Error(`season row action buttons wrapped: ${JSON.stringify(layout)}`);
   }
-  if (layout.minActionCellWidth < 320) {
+  // 새 표는 작업 칸을 300px 로 고정했다(season-list-table.tsx). 버튼이 칸 밖으로 넘치지 않는지도 함께 본다.
+  if (layout.minActionCellWidth < 300 || layout.actionButtonsClipped) {
     throw new Error(`season action column too narrow: ${JSON.stringify(layout)}`);
   }
   if (layout.activePanelLineCount > 1) {

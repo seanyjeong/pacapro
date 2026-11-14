@@ -7,6 +7,7 @@ import {
   launchSmokeBrowser,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
+  statTile,
 } from './paca-smoke-utils.mjs';
 import { makeMonthlyWorkSchedules } from './instructor-work-calendar-fixture.mjs';
 
@@ -219,22 +220,19 @@ async function runListDesktop(browser) {
   await desktopList.getByText('최강사').waitFor();
   await desktopList.getByText('박코치').waitFor();
   await desktopList.getByRole('button', { name: '최강사 상세 보기' }).waitFor();
-  const focusLink = page.getByTestId('instructors-work-queue').getByRole('link', { name: '최강사 상세 보기' });
-  await focusLink.waitFor();
-  if ((await focusLink.getAttribute('href')) !== '/instructors/31') {
-    throw new Error('focused instructor detail link mismatch');
-  }
-  await page.getByTestId('instructors-work-queue').getByRole('button', { name: '휴직 보기' }).click();
+  // 새 디자인: 보드의 '대표 강사 상세' 바로가기는 없어지고 목록 줄의 상세 보기만 남았다.
+  // 재직·휴직·전체 거르기는 위 숫자 칸 버튼(같은 이름), '현재 목록 N명'은 목록 카드의 '총 N명'이 되었다.
+  await page.getByRole('button', { name: '휴직 보기' }).click();
   await desktopList.getByText('이휴직').waitFor();
-  await page.getByTestId('instructors-work-queue').getByText(/현재 목록\s*1명/).waitFor();
-  if ((await page.getByTestId('instructors-work-queue').getByRole('button', { name: '휴직 보기' }).getAttribute('aria-pressed')) !== 'true') {
+  await instructorListCount(page, 1).waitFor();
+  if ((await page.getByRole('button', { name: '휴직 보기' }).getAttribute('aria-pressed')) !== 'true') {
     throw new Error('instructor leave shortcut did not expose selected state');
   }
   if (await desktopList.getByText('최강사').count()) {
     throw new Error('instructor leave shortcut did not filter active instructors');
   }
-  await page.getByTestId('instructors-work-queue').getByRole('button', { name: '전체 강사 보기' }).click();
-  if ((await page.getByTestId('instructors-work-queue').getByRole('button', { name: '전체 강사 보기' }).getAttribute('aria-pressed')) !== 'true') {
+  await page.getByRole('button', { name: '전체 강사 보기' }).click();
+  if ((await page.getByRole('button', { name: '전체 강사 보기' }).getAttribute('aria-pressed')) !== 'true') {
     throw new Error('instructor reset shortcut did not expose selected state');
   }
   await desktopList.getByText('최강사').waitFor();
@@ -242,7 +240,7 @@ async function runListDesktop(browser) {
   await assertNoHorizontalOverflow(page, 'instructors list desktop');
   await page.screenshot({ path: '/Users/etlab/paca-instructors-desktop.png', fullPage: true });
 
-  await page.getByPlaceholder('이름, 전화번호, 이메일로 검색...').fill('박코치');
+  await page.getByLabel('강사 검색').fill('박코치');
   await desktopList.getByText('박코치').waitFor();
 
   await context.close();
@@ -270,22 +268,30 @@ async function runListMobile(browser) {
   return result;
 }
 
+function instructorListCount(page, count) {
+  return page.getByRole('region', { name: '강사 목록' }).getByText(new RegExp(`^총\\s*${count}\\s*명$`));
+}
+
+// 새 디자인: '강사 운영 보드'를 없앴다. 재직·휴직 수는 위 숫자 칸, 현재 목록 수는 목록 카드의 '총 N명',
+// 수업스케줄·급여 관리·모바일 출근 링크는 화면 머리의 '연결 업무' 메뉴로 옮겨졌다.
 async function assertInstructorsWorkQueue(page, label) {
   await page.getByTestId('instructors-operations-workspace').waitFor();
-  const board = page.getByTestId('instructors-work-queue');
-  await board.getByRole('heading', { name: '강사 운영 보드' }).waitFor();
-  await board.getByText(/현재 목록\s*3명/).waitFor();
-  await board.getByText(/재직\s*2명/).waitFor();
-  await board.getByText(/휴직\s*1명/).waitFor();
-  if ((await board.getByRole('link', { name: '수업스케줄' }).getAttribute('href')) !== '/schedules') {
+  await instructorListCount(page, 3).waitFor();
+  await statTile(page, '재직').getByText('2명').waitFor();
+  await statTile(page, '휴직').getByText('1명').waitFor();
+  await page.getByRole('button', { name: '연결 업무' }).click();
+  const menu = page.getByRole('menu');
+  if ((await menu.getByRole('menuitem', { name: '수업스케줄' }).getAttribute('href')) !== '/schedules') {
     throw new Error('instructor schedules link mismatch');
   }
-  if ((await board.getByRole('link', { name: '급여 관리' }).getAttribute('href')) !== '/salaries') {
+  if ((await menu.getByRole('menuitem', { name: '급여 관리' }).getAttribute('href')) !== '/salaries') {
     throw new Error('instructor salaries link mismatch');
   }
-  if ((await board.getByRole('link', { name: '모바일 출근' }).getAttribute('href')) !== '/m/instructor') {
+  if ((await menu.getByRole('menuitem', { name: '모바일 출근' }).getAttribute('href')) !== '/m/instructor') {
     throw new Error('instructor mobile check-in link mismatch');
   }
+  await page.keyboard.press('Escape');
+  await menu.waitFor({ state: 'hidden' });
   await assertNoRawVisibleText(page, label);
 }
 

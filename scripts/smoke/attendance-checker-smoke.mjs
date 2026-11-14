@@ -97,7 +97,8 @@ async function runNormal(browser) {
   await page.goto('/schedules/901/attendance', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '출석 체크' }).waitFor();
   await page.getByText('저녁 실기 집중반').waitFor();
-  await page.getByText('출석 통계').waitFor();
+  // 새 디자인: '출석 통계' 글자 제목 대신 같은 이름의 통계 묶음(region)으로 보인다.
+  await page.getByRole('region', { name: '출석 통계' }).getByText('출석률').waitFor();
 
   const testSendLink = page.getByRole('link', { name: '출결 테스트발송' });
   await testSendLink.waitFor();
