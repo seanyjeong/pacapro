@@ -453,6 +453,52 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         }
     });
 
+    test('첫 달 일할·휴원 정산·휴원 복귀 청구가 있는 달에 일괄·자동 청구를 다시 돌려도 금액 그대로(건너뜀)', async () => {
+        const [year, mon] = THIS_MONTH.split('-').map(Number);
+        const transaction = async work => {
+            const conn = await pool.getConnection();
+            try { await conn.beginTransaction(); const out = await work(conn); await conn.commit(); return out; }
+            catch (error) { await conn.rollback(); throw error; } finally { conn.release(); }
+        };
+        const { pause } = require('../../services/studentLifecycleBillingService');
+        const { processResumePayment } = require('../../services/resumePaymentService');
+        const { generateMonthlyPayments } = require('../../scheduler/paymentScheduler');
+        const fullBill = () => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type, base_amount,
+            discount_amount, additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status, description)
+            VALUES (1, 1, 1, ?, 'monthly', 450000, 0, 0, 0, 450000, 0, 0, ?, 'pending', ?)`, [THIS_MONTH, `${THIS_MONTH}-05`, `${mon}월 학원비`]);
+        const kinds = {
+            '첫 달 일할': async () => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type, base_amount,
+                discount_amount, additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status, description)
+                VALUES (1, 1, 1, ?, 'monthly', 225000, 0, 0, 0, 225000, 0, 1, ?, 'pending', ?)`, [THIS_MONTH, `${THIS_MONTH}-16`, `${mon}월 학원비 (16일 등록, 일할계산)`]),
+            '휴원 정산': async () => {
+                await fullBill();
+                await transaction(conn => pause(conn, { academyId: 1, studentId: 1, userId: 1, date: `${THIS_MONTH}-16`, creditType: 'none' }));
+            },
+            '휴원 복귀': async () => {
+                await fullBill();
+                await transaction(conn => pause(conn, { academyId: 1, studentId: 1, userId: 1, date: `${THIS_MONTH}-16`, creditType: 'none' }));
+                const [[student]] = await pool.query('SELECT * FROM students WHERE id = 1');
+                await transaction(connection => processResumePayment({ connection, student: { ...student, rest_start_date: `${THIS_MONTH}-16` },
+                    resumeDate: `${THIS_MONTH}-21`, classDays: [1, 3, 5], creditRecalculation: null, recordedBy: 1 }));
+            },
+        };
+        const snapshot = async () => (await pool.query('SELECT base_amount, discount_amount, final_amount, is_prorated, description FROM student_payments WHERE id = 1'))[0][0];
+        const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+        for (const [kind, make] of Object.entries(kinds)) {
+            await seed({ tuition: 450000, rate: 0, bills: false });
+            await make();
+            const before = await snapshot();
+            expect([kind, Number(before.final_amount) < 450000]).toEqual([kind, true]);
+            const bulk = await request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon });
+            expect([kind, bulk.body.skipped, bulk.body.updated]).toEqual([kind, 1, 0]);
+            expect(await snapshot()).toEqual(before);
+            await generateMonthlyPayments();
+            expect(await snapshot()).toEqual(before);
+            expect((await pool.query("SELECT COUNT(*) AS n FROM student_payments WHERE `year_month` = ? AND payment_type = 'monthly'", [THIS_MONTH]))[0][0].n).toBe(1);
+        }
+        log.mockRestore();
+    });
+
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {
         const [year, mon] = THIS_MONTH.split('-').map(Number);
         const pendingBill = (carryover, final) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,

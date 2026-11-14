@@ -13,7 +13,7 @@ const { graduateDueSeasonStudents } = require('../services/seasonGraduationServi
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../repositories/seasonMonthlyExclusion');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../services/nonSeasonProratedBilling');
 const { lockStudentForBilling } = require('../repositories/studentBillingLock');
-const { monthlyBillAmounts } = require('../utils/monthlyBillAmounts');
+const { monthlyBillAmounts, isSeparatelyPricedBill } = require('../utils/monthlyBillAmounts');
 
 /**
  * 서버가 UTC여도 학원비 year_month 는 항상 KST 기준.
@@ -98,18 +98,19 @@ async function generateMonthlyPayments() {
 
                     // 이미 해당 월 학원비가 있는지 확인
                     const [existing] = await connection.query(`
-                        SELECT id, payment_status, additional_amount, carryover_amount, rest_credit_id, notes FROM student_payments
+                        SELECT id, payment_status, base_amount, discount_amount, additional_amount, carryover_amount, final_amount,
+                            is_prorated, description, rest_credit_id, notes FROM student_payments
                         WHERE student_id = ?
                         AND \`year_month\` = ?
                         AND payment_type = 'monthly'
                         FOR UPDATE
                     `, [student.id, yearMonth]);
 
-                    // 이미 납부 완료된 건은 건너뛰기
-                    if (existing.length > 0 && existing[0].payment_status === 'paid') {
+                    // 이미 납부 완료된 건, 일할·휴원 정산 등으로 금액을 따로 정한 미납 청구는 건너뛰기(정액으로 덮지 않는다)
+                    if (existing.length > 0 && (existing[0].payment_status === 'paid' || isSeparatelyPricedBill(existing[0]))) {
                         await connection.rollback();
                         connection.release();
-                        console.log(`[PaymentScheduler] Payment already paid for student ${student.id} (${student.name}) - ${yearMonth}`);
+                        console.log(`[PaymentScheduler] Payment already paid or separately priced for student ${student.id} (${student.name}) - ${yearMonth}`);
                         continue;
                     }
 

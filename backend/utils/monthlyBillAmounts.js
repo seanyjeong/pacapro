@@ -86,11 +86,25 @@ function billFinalAmount(base, discount, additional = 0, carryover = 0) {
  *   학원비 칸은 그대로 두고 최종 금액만 줄인 청구, 예전 식으로 만든 청구가 여기에 든다.
  *   조정 표시(is_prorated·proration_details·메모)는 경로마다 다르거나 없어서(휴원 처리 process-rest 등) 금액이 공통 식과 맞는지로 가린다.
  */
+function hasSeparateFinal(bill) {
+    return !sameDecimal(bill.final_amount,
+        billFinalAmount(bill.base_amount, bill.discount_amount, bill.additional_amount, bill.carryover_amount));
+}
+
 function chargeTerms(bill) {
-    const formula = billFinalAmount(bill.base_amount, bill.discount_amount, bill.additional_amount, bill.carryover_amount);
-    return sameDecimal(bill.final_amount, formula)
-        ? [[bill.base_amount, 1], [bill.discount_amount, -1], [bill.additional_amount, 1]]
-        : [[bill.final_amount, 1], [bill.carryover_amount, 1]];
+    return hasSeparateFinal(bill)
+        ? [[bill.final_amount, 1], [bill.carryover_amount, 1]]
+        : [[bill.base_amount, 1], [bill.discount_amount, -1], [bill.additional_amount, 1]];
+}
+
+/**
+ * 월 청구를 같은 달에 다시 돌릴 때(일괄 청구·매달 자동 청구) 금액을 건드리지 않고 건너뛸 미납 청구.
+ * - 최종 금액을 따로 정한 청구(위 hasSeparateFinal — 휴원·퇴원 정산, 휴원 복귀, AI 연결 정산, 예전 식 청구)
+ * - 일할 청구(is_prorated = 1 또는 설명에 '일할' — 첫 달·복귀 일할, 비시즌 종강 일할)
+ * 예전엔 학원비 정액으로 덮어써 줄이거나 일할로 정한 금액이 사라졌다.
+ */
+function isSeparatelyPricedBill(bill) {
+    return Number(bill.is_prorated) === 1 || String(bill.description || '').includes('일할') || hasSeparateFinal(bill);
 }
 
 const BILL_AMOUNT_KEYS = ['base_amount', 'discount_amount', 'additional_amount', 'carryover_amount'];
@@ -123,5 +137,6 @@ function monthlyBillAmounts(tuition, discountRate, additional = 0, carryover = 0
 }
 
 module.exports = {
-    monthlyBillAmounts, monthlyDiscountAmount, billFinalAmount, billFinalAfterChange, billCreditRoom, floorRatio, floorPercent, sameDecimal
+    monthlyBillAmounts, monthlyDiscountAmount, billFinalAmount, billFinalAfterChange, billCreditRoom, isSeparatelyPricedBill,
+    floorRatio, floorPercent, sameDecimal
 };

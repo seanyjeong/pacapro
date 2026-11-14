@@ -95,7 +95,7 @@ describe('payment scheduler 같은 달 미납 청구 다시 쓰기', () => {
     }
 
     test('추가 금액이 있는 미납 청구를 다시 돌리면 추가 금액을 최종 금액에 넣는다(예전엔 빠졌다)', async () => {
-        const connection = mockStudentWithExisting({ id: 70, payment_status: 'pending', additional_amount: '10000.00', carryover_amount: '0.00', rest_credit_id: null, notes: null });
+        const connection = mockStudentWithExisting({ id: 70, payment_status: 'pending', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '10000.00', carryover_amount: '0.00', final_amount: '460000.00', rest_credit_id: null, notes: null });
 
         await generateMonthlyPayments();
 
@@ -106,9 +106,24 @@ describe('payment scheduler 같은 달 미납 청구 다시 쓰기', () => {
         expect(update[1].slice(0, 5)).toEqual([450000, 0, 0, null, 460000]);
     });
 
+    test.each([
+        ['첫 달 일할 청구', { is_prorated: 1, base_amount: '225000.00', final_amount: '225000.00', description: '7월 학원비 (16일 등록, 일할계산)' }],
+        ['휴원 정산으로 최종 금액만 줄인 청구', { is_prorated: 1, base_amount: '450000.00', final_amount: '225000.00' }],
+        ['표시 없이 최종 금액만 줄인 청구', { is_prorated: 0, base_amount: '450000.00', final_amount: '300000.00' }],
+        ['비시즌 종강 일할 청구', { is_prorated: 0, base_amount: '120000.00', final_amount: '120000.00', description: '7월 학원비 (비시즌 종강 일할)' }],
+    ])('%s는 다시 돌려도 금액을 건드리지 않고 건너뛴다(예전엔 정액으로 덮었다)', async (_label, row) => {
+        const connection = mockStudentWithExisting({ id: 70, payment_status: 'pending', discount_amount: '0.00', additional_amount: '0.00',
+            carryover_amount: 0, rest_credit_id: null, notes: null, description: '7월 학원비', ...row });
+
+        await generateMonthlyPayments();
+
+        expect(connection.query.mock.calls.some(([sql]) => /UPDATE student_payments|rest_credits/.test(sql))).toBe(false);
+        expect(connection.rollback).toHaveBeenCalled();
+    });
+
     test('크레딧과 추가 금액이 있는 미납 청구는 공통 식(크레딧 빼고 천원 절삭)으로 최종 금액을 낸다', async () => {
         const { monthlyBillAmounts } = require('../../utils/monthlyBillAmounts');
-        const connection = mockStudentWithExisting({ id: 70, payment_status: 'pending', additional_amount: '10000.00', carryover_amount: '166500.00', rest_credit_id: 9, notes: '[크레딧 차감]' });
+        const connection = mockStudentWithExisting({ id: 70, payment_status: 'pending', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '10000.00', carryover_amount: '166500.00', final_amount: '293000.00', rest_credit_id: 9, notes: '[크레딧 차감]' });
 
         await generateMonthlyPayments();
 

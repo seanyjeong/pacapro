@@ -46,7 +46,7 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../repositories/seasonMonthlyExclusion');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../services/nonSeasonProratedBilling');
 const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
-const { monthlyBillAmounts, floorRatio, floorPercent } = require('../../utils/monthlyBillAmounts');
+const { monthlyBillAmounts, floorRatio, floorPercent, isSeparatelyPricedBill } = require('../../utils/monthlyBillAmounts');
 const { parseClassDaysWithSlots, extractDayNumbers } = require('../../services/studentScheduleAssignment');
 const { deductMonthlyCredit } = require('../../services/monthlyCreditDeduction');
 
@@ -143,13 +143,15 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
                 // 해당 학생의 기존 학원비 확인 — 낸 청구는 크레딧을 건드리기 전에 건너뛴다
                 // (예전엔 크레딧을 먼저 빼고 건너뛰어 크레딧이 청구 없이 사라졌다)
                 const [existingPayment] = await conn.execute(
-                    `SELECT id, payment_status, paid_amount, additional_amount, carryover_amount, rest_credit_id, notes FROM student_payments
+                    `SELECT id, payment_status, paid_amount, base_amount, discount_amount, additional_amount, carryover_amount, final_amount,
+                        is_prorated, description, rest_credit_id, notes FROM student_payments
                      WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'
                      FOR UPDATE`,
                     [student.id, req.user.academyId, yearMonth]
                 );
                 const existing = existingPayment[0] || null;
-                if (existing && existing.payment_status === 'paid') {
+                // 낸 청구, 일할·휴원 정산 등으로 금액을 따로 정한 미납 청구는 금액을 건드리지 않고 건너뛴다(정액으로 덮지 않는다)
+                if (existing && (existing.payment_status === 'paid' || isSeparatelyPricedBill(existing))) {
                     await conn.commit();
                     skipped++;
                     continue;
@@ -272,7 +274,7 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
         const messageParts = [];
         if (created > 0) messageParts.push(`${created}명 생성`);
         if (updated > 0) messageParts.push(`${updated}명 업데이트`);
-        if (skipped > 0) messageParts.push(`${skipped}명 건너뜀(납부완료)`);
+        if (skipped > 0) messageParts.push(`${skipped}명 건너뜀(납부완료·일할·정산 청구)`);
 
         let message = messageParts.length > 0
             ? `학원비 처리 완료: ${messageParts.join(', ')}`

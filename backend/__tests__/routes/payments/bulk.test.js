@@ -142,7 +142,7 @@ describe('POST /paca/payments/bulk-monthly', () => {
             .mockResolvedValueOnce([[
                 { id: 7, name: 'enc_홍', monthly_tuition: 450000, discount_rate: 0, class_days: '[1,3]', payment_due_day: 5 },
             ]])
-            .mockResolvedValueOnce([[{ id: 70, payment_status: 'pending', paid_amount: 0, additional_amount: '10000.00', carryover_amount: '0.00', rest_credit_id: null, notes: null }]])
+            .mockResolvedValueOnce([[{ id: 70, payment_status: 'pending', paid_amount: 0, base_amount: '450000.00', discount_amount: '0.00', additional_amount: '10000.00', carryover_amount: '0.00', final_amount: '460000.00', rest_credit_id: null, notes: null }]])
             .mockResolvedValueOnce([[]]) // 크레딧 없음
             .mockResolvedValueOnce([{ affectedRows: 1 }]); // UPDATE
         const res = await request(makeApp())
@@ -163,7 +163,7 @@ describe('POST /paca/payments/bulk-monthly', () => {
             .mockResolvedValueOnce([[
                 { id: 7, name: 'enc_홍', monthly_tuition: 450000, discount_rate: 0, class_days: '[1,3]', payment_due_day: 5 },
             ]])
-            .mockResolvedValueOnce([[{ id: 70, payment_status: 'pending', paid_amount: 0, additional_amount: '10000.00', carryover_amount: '166500.00', rest_credit_id: 9, notes: '[크레딧 차감]' }]])
+            .mockResolvedValueOnce([[{ id: 70, payment_status: 'pending', paid_amount: 0, base_amount: '450000.00', discount_amount: '0.00', additional_amount: '10000.00', carryover_amount: '166500.00', final_amount: '293000.00', rest_credit_id: 9, notes: '[크레딧 차감]' }]])
             .mockResolvedValueOnce([{ affectedRows: 1 }]); // UPDATE
         const res = await request(makeApp())
             .post('/paca/payments/bulk-monthly')
@@ -173,6 +173,28 @@ describe('POST /paca/payments/bulk-monthly', () => {
         // 450,000 + 10,000 − 166,500 = 293,500 → 293,000
         expect(update[1].slice(0, 6)).toEqual([450000, 0, 10000, 166500, 9, 293000]);
         expect(update[1][5]).toBe(monthlyBillAmounts(450000, 0, 10000, 166500).final);
+    });
+
+    test('첫 달 일할·휴원 정산 등으로 금액을 따로 정한 미납 청구는 다시 돌려도 건너뛴다(skipped, 예전엔 정액으로 덮었다)', async () => {
+        pool.query.mockResolvedValue([[]]);
+        pool.execute
+            .mockResolvedValueOnce([[{ tuition_due_day: 5 }]])
+            .mockResolvedValueOnce([[
+                { id: 7, name: 'enc_홍', monthly_tuition: 450000, discount_rate: 0, class_days: '[1,3]', payment_due_day: 5 },
+                { id: 8, name: 'enc_김', monthly_tuition: 450000, discount_rate: 0, class_days: '[1,3]', payment_due_day: 5 },
+            ]])
+            // 7: 첫 달 일할 청구
+            .mockResolvedValueOnce([[{ id: 70, payment_status: 'pending', paid_amount: 0, base_amount: '225000.00', discount_amount: '0.00', additional_amount: '0.00',
+                carryover_amount: 0, final_amount: '225000.00', is_prorated: 1, description: '5월 학원비 (16일 등록, 일할계산)', rest_credit_id: null, notes: null }]])
+            // 8: 휴원 정산(학원비 칸 그대로, 최종 금액만 줄임)
+            .mockResolvedValueOnce([[{ id: 80, payment_status: 'pending', paid_amount: 0, base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00',
+                carryover_amount: 0, final_amount: '225000.00', is_prorated: 1, description: '5월 학원비', rest_credit_id: null, notes: null }]]);
+        const res = await request(makeApp())
+            .post('/paca/payments/bulk-monthly')
+            .send({ year: 2026, month: 5 });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ created: 0, updated: 0, skipped: 2 });
+        expect(pool.execute.mock.calls.some(([sql]) => /UPDATE student_payments|rest_credits|INSERT INTO student_payments/.test(sql))).toBe(false);
     });
 
     test('500: SQL 에러 시 한국어 메시지', async () => {
