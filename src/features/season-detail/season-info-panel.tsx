@@ -15,18 +15,18 @@ export function SeasonInfoPanel({ season }: SeasonInfoPanelProps) {
   ];
 
   return (
-    <section className="rounded-md border border-border bg-card p-5" aria-labelledby="season-info-title">
-      <h2 id="season-info-title" className="text-lg font-semibold text-foreground">
+    <section className="rounded-2xl bg-card p-5 sm:p-6" aria-labelledby="season-info-title">
+      <h2 id="season-info-title" className="text-[17px] font-bold tracking-tight text-foreground">
         시즌 정보
       </h2>
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <dl className="mt-3 divide-y divide-border/60">
         {rows.map((row) => (
-          <div key={row.label} className="rounded-md border border-border/80 bg-muted/25 p-3">
-            <p className="text-sm text-muted-foreground">{row.label}</p>
-            <p className="mt-1 text-sm font-semibold text-foreground">{row.value}</p>
+          <div key={row.label} className="flex items-center justify-between gap-4 py-3">
+            <dt className="text-sm text-muted-foreground">{row.label}</dt>
+            <dd className="text-right text-[15px] font-semibold text-foreground">{row.value}</dd>
           </div>
         ))}
-      </div>
+      </dl>
     </section>
   );
 }

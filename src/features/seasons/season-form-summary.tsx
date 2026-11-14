@@ -37,15 +37,13 @@ export function SeasonFormSummary({ formData }: SeasonFormSummaryProps) {
   ];
 
   return (
-    <section className="rounded-md border border-border bg-card" data-testid="season-form-summary">
-      <div className="border-b border-border bg-muted/20 px-4 py-3">
-        <h2 className="text-sm font-semibold text-foreground">운영 요약</h2>
-      </div>
-      <div className="grid gap-px bg-border md:grid-cols-3 xl:grid-cols-6">
+    <section className="rounded-2xl bg-card px-5 pb-5 pt-5 sm:px-6 sm:pb-6" data-testid="season-form-summary">
+      <h2 className="text-[17px] font-bold tracking-tight text-foreground">운영 요약</h2>
+      <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
         {items.map((item) => {
           const Icon = item.icon;
           return (
-            <div key={item.label} className="min-w-0 bg-card px-4 py-3">
+            <div key={item.label} className="min-w-0 rounded-xl bg-muted px-3.5 py-3">
               <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                 <Icon className="h-4 w-4" />
                 {item.label}

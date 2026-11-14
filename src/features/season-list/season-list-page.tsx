@@ -9,7 +9,6 @@ import { SeasonListError } from './season-list-error';
 import { SeasonListFilters } from './season-list-filters';
 import { SeasonListHeader } from './season-list-header';
 import { SeasonListLoading } from './season-list-loading';
-import { SeasonListOperationsBoard } from './season-list-operations-board';
 import { SeasonListSummary } from './season-list-summary';
 import { SeasonListTable } from './season-list-table';
 import { useSeasonListState } from './use-season-list-state';
@@ -29,49 +28,42 @@ export function SeasonListPage() {
   };
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[1760px] space-y-5" data-testid="season-list-workspace">
+    <div className="mx-auto w-full min-w-0 max-w-[1760px] space-y-4" data-testid="season-list-workspace">
       <SeasonListHeader onAddSeason={() => router.push('/seasons/new')} onRefresh={state.reload} />
 
       {state.error ? (
         <SeasonListError message={state.error} onRetry={state.reload} />
       ) : (
         <>
-          <SeasonListSummary stats={state.stats} />
+          <SeasonListSummary
+            filters={state.filters}
+            stats={state.stats}
+            onClearFilters={state.clearFilters}
+            onFilterChange={state.setFilters}
+          />
 
-          <div className="grid gap-4 min-[1700px]:grid-cols-[minmax(0,1fr)_320px] min-[1700px]:items-start">
-            <main className="order-2 min-w-0 space-y-5 min-[1700px]:order-1">
-              <SeasonActivePanel seasons={state.seasons} onRefresh={state.reload} />
-              <SeasonListFilters
-                filters={state.filters}
-                years={state.years}
-                onClear={state.clearFilters}
-                onChange={state.setFilters}
-              />
+          <SeasonActivePanel seasons={state.seasons} />
 
-              {state.loading ? (
-                <SeasonListLoading />
-              ) : state.seasons.length === 0 ? (
-                <SeasonListEmpty onAddSeason={() => router.push('/seasons/new')} />
-              ) : (
-                <SeasonListTable
-                  seasons={state.seasons}
-                  onDelete={(seasonId, seasonName) => setDeleteTarget({ seasonId, seasonName })}
-                  onOpen={(seasonId) => router.push(`/seasons/${seasonId}`)}
-                />
-              )}
-            </main>
-            <div className="order-1 min-w-0 min-[1700px]:sticky min-[1700px]:top-20 min-[1700px]:order-2">
-              <SeasonListOperationsBoard
-                filters={state.filters}
+          <section className="min-w-0 overflow-hidden rounded-2xl bg-card">
+            <SeasonListFilters
+              filters={state.filters}
+              years={state.years}
+              onClear={state.clearFilters}
+              onChange={state.setFilters}
+            />
+
+            {state.loading ? (
+              <SeasonListLoading />
+            ) : state.seasons.length === 0 ? (
+              <SeasonListEmpty onAddSeason={() => router.push('/seasons/new')} />
+            ) : (
+              <SeasonListTable
                 seasons={state.seasons}
-                stats={state.stats}
-                onAddSeason={() => router.push('/seasons/new')}
-                onClearFilters={state.clearFilters}
-                onFilterChange={state.setFilters}
-                onRefresh={state.reload}
+                onDelete={(seasonId, seasonName) => setDeleteTarget({ seasonId, seasonName })}
+                onOpen={(seasonId) => router.push(`/seasons/${seasonId}`)}
               />
-            </div>
-          </div>
+            )}
+          </section>
         </>
       )}
 

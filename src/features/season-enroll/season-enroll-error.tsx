@@ -12,8 +12,8 @@ interface SeasonEnrollErrorProps {
 export function SeasonEnrollError({ message, onBack, onRetry }: SeasonEnrollErrorProps) {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4">
-      <Button variant="ghost" size="sm" onClick={onBack}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
+      <Button className="-ml-2 gap-1 px-2 text-muted-foreground" variant="ghost" size="sm" onClick={onBack}>
+        <ArrowLeft className="h-4 w-4" />
         시즌 목록
       </Button>
       <SeasonAlert

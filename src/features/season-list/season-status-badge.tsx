@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import type { SeasonStatus } from '@/lib/types/season';
 import { SEASON_STATUS_LABELS } from '@/lib/types/season';
 
@@ -6,18 +7,14 @@ interface SeasonStatusBadgeProps {
 }
 
 export function SeasonStatusBadge({ status }: SeasonStatusBadgeProps) {
-  const className =
+  const variant =
     status === 'active'
-      ? 'border-success/30 bg-success-soft text-success'
+      ? 'success'
       : status === 'draft' || status === 'upcoming'
-        ? 'border-warning/30 bg-warning-soft text-warning'
+        ? 'warning'
         : status === 'completed' || status === 'ended'
-          ? 'border-border bg-muted text-secondary-foreground'
-          : 'border-destructive/30 bg-destructive-soft text-destructive';
+          ? 'secondary'
+          : 'destructive';
 
-  return (
-    <span className={`inline-flex rounded-md border px-2 py-1 text-xs font-medium ${className}`}>
-      {SEASON_STATUS_LABELS[status]}
-    </span>
-  );
+  return <Badge variant={variant}>{SEASON_STATUS_LABELS[status]}</Badge>;
 }

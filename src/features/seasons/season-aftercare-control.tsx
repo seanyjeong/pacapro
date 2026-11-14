@@ -6,17 +6,17 @@ interface SeasonAftercareControlProps {
   required?: boolean;
 }
 
-const inputClass = 'h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15';
+const inputClass = 'h-11 w-full min-w-0 rounded-xl border border-transparent bg-muted px-3 text-[15px] font-normal text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10 disabled:opacity-50';
 
 export function SeasonAftercareControl({ formData, onChange, required = false }: SeasonAftercareControlProps) {
   return (
-    <section className="rounded-md border border-border bg-card">
-      <div className="border-b border-border bg-muted/20 px-4 py-3">
-        <h2 className="text-sm font-semibold text-foreground">시즌 종료 후 처리</h2>
+    <section className="rounded-2xl bg-card">
+      <div className="px-5 pt-5 sm:px-6">
+        <h2 className="text-[17px] font-bold tracking-tight text-foreground">시즌 종료 후 처리</h2>
       </div>
-      <div className="grid gap-4 p-4 md:grid-cols-2">
-        <label className="grid gap-1 text-sm font-medium text-foreground">
-          무료 수업 종료일 {required && <span className="text-destructive">*</span>}
+      <div className="grid gap-4 px-5 pb-5 pt-3 sm:px-6 sm:pb-6 md:grid-cols-2">
+        <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
+          <span>무료 수업 종료일 {required && <span className="text-destructive">*</span>}</span>
           <input
             className={inputClass}
             min={formData.end_date || undefined}
@@ -29,8 +29,8 @@ export function SeasonAftercareControl({ formData, onChange, required = false }:
           />
           <span className="text-xs font-normal text-muted-foreground">시즌 종료일 이후 이 날짜까지 월 수강료를 청구하지 않습니다.</span>
         </label>
-        <label className="grid gap-1 text-sm font-medium text-foreground">
-          무료 수업 종료 후 {required && <span className="text-destructive">*</span>}
+        <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
+          <span>무료 수업 종료 후 {required && <span className="text-destructive">*</span>}</span>
           <select
             className={inputClass}
             disabled={!formData.free_lesson_end_date}
