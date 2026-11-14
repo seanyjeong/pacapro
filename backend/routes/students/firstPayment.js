@@ -16,6 +16,8 @@
  * - 납부완료 건은 거부 (결제 내역에서 직접 수정 안내).
  * - 등록월에 일할계산 건이 없으면 404 (다른 월로 옮겨간 건 자동으로 끌어오지 않음 — 복귀 일할 오인 방지).
  * - 재계산된 일할 청구의 납부기한은 등록일로 통일.
+ * - 이미 적용된 크레딧(carryover_amount)과 추가 금액은 그대로 두고 최종 금액에 반영한다
+ *   (결제 수정과 같은 식: 천원 절삭(기본 - 할인 + 추가) - 크레딧, 0원 미만 없음).
  *
  * ## 응답
  * - 200: {message, payment: {id, year_month, base_amount, discount_amount, final_amount, due_date}}
@@ -64,7 +66,7 @@ router.post('/:id/recalculate-first-payment', verifyToken, checkPermission('stud
         const enrollYearMonth = String(student.enrollment_date).slice(0, 7);
 
         const [proratedRows] = await pool.execute(
-            `SELECT id, payment_status FROM student_payments
+            `SELECT id, payment_status, additional_amount, carryover_amount FROM student_payments
              WHERE student_id = ? AND academy_id = ?
                AND \`year_month\` = ? AND payment_type = 'monthly'
                AND (is_prorated = 1 OR description LIKE '%일할계산%')`,
@@ -118,7 +120,13 @@ router.post('/:id/recalculate-first-payment', verifyToken, checkPermission('stud
         }
         const discountRateNum = parseFloat(student.discount_rate) || 0;
         const discountAmount = truncateToThousands(proRatedAmount * discountRateNum / 100);
-        const finalAmount = proRatedAmount - discountAmount;
+        // 이미 적용된 크레딧·추가 금액은 재계산이 지우지 않는다 (payments/crud.js 수정과 같은 식).
+        const additionalAmount = parseFloat(proratedPayment.additional_amount) || 0;
+        const carryoverAmount = parseFloat(proratedPayment.carryover_amount) || 0;
+        const finalAmount = Math.max(
+            truncateToThousands(proRatedAmount - discountAmount + additionalAmount) - carryoverAmount,
+            0
+        );
 
         const dueDateStr = resolveProratedPaymentDueDate(String(student.enrollment_date));
 

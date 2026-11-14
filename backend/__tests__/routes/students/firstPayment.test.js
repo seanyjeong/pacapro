@@ -62,4 +62,30 @@ describe('POST /paca/students/:id/recalculate-first-payment', () => {
         expect(updatePayment[1]).toContain('2026-07-20');
         expect(updatePayment[1]).not.toContain('2026-07-27');
     });
+
+    test('이미 적용한 크레딧과 추가 금액은 재계산 뒤에도 최종 금액에 남는다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[
+                {
+                    id: 5,
+                    enrollment_date: '2026-11-16',
+                    monthly_tuition: 300000,
+                    discount_rate: 0,
+                    class_days: '[]',
+                    time_slot: 'evening',
+                },
+            ]])
+            .mockResolvedValueOnce([[{ id: 77, payment_status: 'pending', additional_amount: '5000.00', carryover_amount: '12000.00' }]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/students/5/recalculate-first-payment')
+            .send({});
+
+        // 11월 30일 중 15일: 300,000 × 15/30 = 150,000 → + 추가 5,000 - 크레딧 12,000
+        expect(res.status).toBe(200);
+        expect(res.body.payment.final_amount).toBe(143000);
+        const updatePayment = pool.execute.mock.calls.find(([sql]) => /UPDATE student_payments/.test(sql));
+        expect(updatePayment[1][2]).toBe(143000);
+    });
 });
