@@ -232,16 +232,19 @@ test('반 학원비 적용 뒤 미납 청구 = 학생 수정으로 같은 금액
     const preview = (await call('get', `${path}/classes/9/tuition-preview`)).body.students.filter(item => item.student_id === 1);
     await call('post', `${path}/classes/9/apply-tuition`, { changes: confirm(preview) });
     const applied = await bills();
-    const studentSave = () => updatePendingPayments({ pool: db, studentId: 1, academyId: 1, monthlyTuition: 350000, discountRate: 10,
-        oldStatus: 'active', updatedStudent: { status: 'active', monthly_tuition: 350000, discount_rate: 10 } });
+    const stored = { status: 'active', monthly_tuition: '350000.00', discount_rate: '10.00' };
+    const studentSave = oldStudent => updatePendingPayments({ pool: db, studentId: 1, academyId: 1, monthlyTuition: 350000, discountRate: 10,
+        oldStatus: 'active', oldStudent, updatedStudent: stored });
 
-    // 같은 청구에 학생 수정(학원비 350,000 입력)을 한 결과와 같다
+    // 같은 청구에 학생 수정(학원비 300,000 → 350,000)을 한 결과와 같다
     db.reset(months);
-    await studentSave();
+    await studentSave({ monthly_tuition: '300000.00', discount_rate: '10.00' });
     expect(await bills()).toEqual(applied);
 
-    // 전화번호만 고친 저장: 학생 화면은 학원비·할인율을 지금 값 그대로 같이 보낸다
-    await studentSave();
+    // 전화번호만 고친 저장: 학생 화면은 학원비·할인율을 지금 값 그대로 같이 보낸다 → 청구는 한 줄도 다시 쓰지 않는다
+    await db.query("UPDATE student_payments SET updated_at = 'kept'");
+    await studentSave({ monthly_tuition: '350000.00', discount_rate: '10.00' });
+    expect((await bills()).every(row => row.updated_at === 'kept')).toBe(true);
     expect((await bills()).map(row => [row.id, row.base_amount, row.final_amount]))
         .toEqual(applied.map(row => [row.id, row.base_amount, row.final_amount]));
 });

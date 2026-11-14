@@ -111,6 +111,23 @@ describe('POST /paca/payments/bulk-monthly', () => {
         expect([insert[1][3], insert[1][4], insert[1][8]]).toEqual([100000, 10000, 90000]);
     });
 
+    test('낸 청구가 있는 학생은 크레딧을 건드리지 않고 건너뛴다(예전엔 크레딧을 먼저 빼서 사라졌다)', async () => {
+        pool.query.mockResolvedValue([[]]); // 비시즌 종강 일할 대상 없음
+        pool.execute
+            .mockResolvedValueOnce([[{ tuition_due_day: 5 }]])
+            .mockResolvedValueOnce([[
+                { id: 7, name: 'enc_홍', monthly_tuition: 100000, discount_rate: 0, class_days: '[1,3]', payment_due_day: 5 },
+            ]])
+            .mockResolvedValueOnce([[{ id: 70, payment_status: 'paid', paid_amount: 100000 }]]) // 이미 낸 청구
+            .mockResolvedValue([[{ id: 9, remaining_amount: 30000, credit_type: 'carryover' }]]); // 크레딧이 있어도
+        const res = await request(makeApp())
+            .post('/paca/payments/bulk-monthly')
+            .send({ year: 2026, month: 5 });
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ created: 0, updated: 0, skipped: 1, withCarryover: 0 });
+        expect(pool.execute.mock.calls.some(([sql]) => /rest_credits/.test(sql))).toBe(false);
+    });
+
     test('500: SQL 에러 시 한국어 메시지', async () => {
         pool.execute.mockRejectedValueOnce(new Error('Academy SQL fail'));
         const res = await request(makeApp())
@@ -143,7 +160,7 @@ describe('POST /paca/payments/generate-prorated', () => {
     test('400: 이미 해당 월 납부건 존재', async () => {
         pool.execute
             .mockResolvedValueOnce([[
-                { id: 7, name: 'enc_홍', monthly_tuition: 100000, discount_rate: 0, payment_due_day: 5, enrollment_date: '2026-05-15', class_days: '["월","수","금"]', tuition_due_day: 5 },
+                { id: 7, name: 'enc_홍', monthly_tuition: 100000, discount_rate: 0, payment_due_day: 5, enrollment_date: '2026-05-15', class_days: '[1,3,5]', tuition_due_day: 5 },
             ]])
             .mockResolvedValueOnce([[{ id: 1 }]]); // existing
         const res = await request(makeApp())
@@ -156,7 +173,7 @@ describe('POST /paca/payments/generate-prorated', () => {
     test('201: 정상 생성 (lesson #206 — 핵심 SQL 호출만 검증)', async () => {
         pool.execute
             .mockResolvedValueOnce([[
-                { id: 7, name: 'enc_홍', monthly_tuition: 100000, discount_rate: 10, payment_due_day: 5, enrollment_date: '2026-05-15', class_days: '["월","수","금"]', tuition_due_day: 5 },
+                { id: 7, name: 'enc_홍', monthly_tuition: 100000, discount_rate: 10, payment_due_day: 5, enrollment_date: '2026-05-15', class_days: '[1,3,5]', tuition_due_day: 5 },
             ]])
             .mockResolvedValueOnce([[]])                  // existing 없음
             .mockResolvedValueOnce([{ insertId: 42 }])    // INSERT student_payments
@@ -171,6 +188,8 @@ describe('POST /paca/payments/generate-prorated', () => {
         expect(res.body.payment.id).toBe(42);
         expect(res.body.proration).toBeDefined();
         expect(res.body.proration.registration_day).toBe(15);
+        // 실제 저장 형식(숫자 요일)으로 일할: 2026년 5월 월·수·금 13회 중 15일부터 7회
+        expect([res.body.proration.total_class_days, res.body.proration.remaining_class_days]).toEqual([13, 7]);
 
         // 핵심 SQL: INSERT student_payments
         const insertCall = pool.execute.mock.calls[2];
@@ -228,7 +247,7 @@ describe('POST /paca/payments/generate-monthly-for-student', () => {
             ]])
             .mockResolvedValueOnce([[{ allowed: 1 }]])
             .mockResolvedValueOnce([[]])                  // existing
-            .mockResolvedValueOnce([[]])                  // calculateNonSeasonEndProrated SELECT (반환 0건 → null)
+            .mockResolvedValueOnce([[]])                  // rest_credits SELECT (크레딧 없음)
             .mockResolvedValueOnce([{ insertId: 50 }])
             .mockResolvedValueOnce([[
                 { id: 50, student_name: 'enc_홍', final_amount: 90000 },
@@ -243,6 +262,7 @@ describe('POST /paca/payments/generate-monthly-for-student', () => {
     });
 
     test('409: 무료 수업 기간에는 개별 월 청구를 만들지 않는다', async () => {
+        pool.query.mockResolvedValueOnce([[]]); // 비시즌 종강 일할 대상도 아님
         pool.execute
             .mockResolvedValueOnce([[{ id: 7, monthly_tuition: 100000 }]])
             .mockResolvedValueOnce([[{ allowed: 0 }]]);

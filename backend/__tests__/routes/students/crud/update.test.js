@@ -496,8 +496,36 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
         expect(res.status).toBe(200);
         const paymentUpdateCall = pool.__conn.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]));
         // 월 자동 청구와 같은 식: 학원비 − 할인액 + 추가 금액 − 크레딧 → 천원 절삭 → 0 이상
-        expect(paymentUpdateCall[0]).toMatch(/final_amount = GREATEST\(FLOOR\(\(\? - \? \+ COALESCE\(additional_amount, 0\) - COALESCE\(carryover_amount, 0\)\) \/ 1000\) \* 1000, 0\)/);
+        expect(paymentUpdateCall[0]).toMatch(/final_amount = GREATEST\(FLOOR\(\(CAST\(\? AS DECIMAL\(14,4\)\) - \? \+ COALESCE\(additional_amount, 0\) - COALESCE\(carryover_amount, 0\)\) \/ 1000\) \* 1000, 0\)/);
         expect(paymentUpdateCall[1].slice(0, 4)).toEqual([320000, 0, 320000, 0]);
+    });
+
+    test('학원비·할인율이 저장 전과 같으면(화면이 같이 보내도) 미납 월 청구를 다시 쓰지 않는다', async () => {
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: '320000.00', discount_rate: '5.00' })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: '320000.00', discount_rate: '5.00', phone: 'enc_010-2' })]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ phone: '010-2222-3333', monthly_tuition: 320000, discount_rate: 5 });
+
+        expect(res.status).toBe(200);
+        expect(pool.__conn.execute.mock.calls.some(([sql]) => /UPDATE student_payments/.test(sql))).toBe(false);
+    });
+
+    test('할인율만 바뀌어도 미납 월 청구를 저장된 값으로 다시 쓴다', async () => {
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: '320000.00', discount_rate: '5.00' })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: '320000.00', discount_rate: '4.13' })]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ monthly_tuition: 320000, discount_rate: 4.125 });
+
+        expect(res.status).toBe(200);
+        const paymentUpdateCall = pool.__conn.execute.mock.calls.find(([sql]) => /UPDATE student_payments/.test(sql));
+        // 저장된 4.13% 로: 320,000 × 4.13% = 13,216 → 13,000
+        expect(paymentUpdateCall[1].slice(0, 2)).toEqual([320000, 13000]);
     });
 
     test('등록일 변경 재계산은 이미 적용한 크레딧을 최종 금액에서 그대로 뺀다', async () => {

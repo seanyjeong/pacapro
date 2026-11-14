@@ -144,7 +144,7 @@ async function billAll(students) {
         global.__classTuitionDb = billingDb(students);
         await request(app).post('/paca/payments/generate-monthly-for-student').send({ student_id: student.id, year: 2026, month: 12 });
         const [p] = global.__classTuitionDb.writes;
-        result.perStudent.push({ student: p[0], base: p[3], discount: p[4], final: p[6] });
+        result.perStudent.push({ student: p[0], base: p[3], discount: p[4], final: p[8] }); // …, additional, carryover, credit, final
 
         global.__classTuitionDb = billingDb(students);
         const recalculated = await request(app).post(`/paca/students/${student.id}/recalculate-first-payment`).send({});

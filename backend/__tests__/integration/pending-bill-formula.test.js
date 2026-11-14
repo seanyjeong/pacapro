@@ -30,6 +30,7 @@ const koreaMonth = offset => {
 };
 const THIS_MONTH = koreaMonth(0);
 const LAST_MONTH = koreaMonth(-1);
+const NEXT_MONTH = koreaMonth(1);
 
 // --- 기대값: 실제 월 자동 청구 코드 (DB 경계만 대역) ---
 function autoBillingDb(student, carryover) {
@@ -103,6 +104,11 @@ function memoryDb({ base, rate, additional, carryover }) {
         VALUES (?, 1, 1, ?, 'monthly', 'pending', '월 학원비', 300000, 0, ?, ?, ?, 'kept')`);
     bill.run(1, THIS_MONTH, additional, carryover, 300000 + additional - carryover);
     bill.run(2, LAST_MONTH, additional, carryover, 300000 + additional - carryover);
+    // 비시즌 종강 일할 청구(services/nonSeasonProratedBilling 이 만드는 모양: is_prorated 없음) — 월 정액으로 덮으면 안 된다
+    database.prepare(`INSERT INTO student_payments (id, academy_id, student_id, year_month, payment_type, payment_status,
+        description, base_amount, discount_amount, additional_amount, carryover_amount, final_amount, updated_at)
+        VALUES (3, 1, 1, ?, 'monthly', 'pending', ?, 120000, 0, 0, 0, 120000, 'kept')`)
+        .run(NEXT_MONTH, `${Number(NEXT_MONTH.slice(5))}월 학원비 (비시즌 종강 일할)`);
     const query = async (sql, params = []) => {
         const statement = database.prepare(sql);
         if (/^\s*SELECT/i.test(sql)) return [statement.all(...params)];
@@ -127,7 +133,8 @@ const confirm = changes => changes.map(({ student_id, current_tuition, new_tuiti
 const paths = {
     async '학생 수정'({ base, rate }) {
         await updatePendingPayments({ pool: global.__billFormulaDb, studentId: 1, academyId: 1, monthlyTuition: base, discountRate: rate,
-            oldStatus: 'active', updatedStudent: { status: 'active', monthly_tuition: base, discount_rate: rate } });
+            oldStatus: 'active', oldStudent: { monthly_tuition: '300000.00', discount_rate: rate },
+            updatedStudent: { status: 'active', monthly_tuition: base, discount_rate: rate } });
     },
     async '수업일 변경'() {
         // 학원 표 주2회 = base
@@ -171,13 +178,14 @@ describe.each(cases)('할인 $rate%, 학원비 $base, 추가 $additional, 크레
         };
     });
 
-    test.each(Object.keys(paths))('%s: 고친 미납 청구 = 월 자동 청구 금액, 지난 달 청구는 그대로', async (name) => {
+    test.each(Object.keys(paths))('%s: 고친 미납 청구 = 월 자동 청구 금액, 지난 달·비시즌 종강 일할 청구는 그대로', async (name) => {
         global.__billFormulaDb = memoryDb(input);
         const previewBills = await paths[name](input);
         const rows = global.__billFormulaDb.database.prepare(
             'SELECT id, base_amount, discount_amount, final_amount FROM student_payments ORDER BY id').all();
         expect({ ...rows[0] }).toEqual({ id: 1, ...expected });
         expect({ ...rows[1] }).toEqual({ id: 2, base_amount: 300000, discount_amount: 0, final_amount: 300000 + input.additional - input.carryover });
+        expect({ ...rows[2] }).toEqual({ id: 3, base_amount: 120000, discount_amount: 0, final_amount: 120000 });
         // 미리보기가 보여 준 새 청구 금액도 같다
         if (previewBills) expect(previewBills.map(bill => bill.new_amount)).toEqual([expected.final_amount]);
         // 할인 0%·천원 단위 금액이면 예전 식(학원비 + 추가 − 크레딧)과 같다

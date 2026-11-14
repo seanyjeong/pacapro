@@ -92,7 +92,6 @@ function findCombo(combos, oldFn, exactFn) {
     return null;
 }
 const WEEKDAY_SETS = [[1, 3, 5], [2, 4], [1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5, 6], [1, 3], [2, 4, 6], [1, 2, 3, 4, 5, 6], [6], [0, 6]];
-const KOREAN = ['일', '월', '화', '수', '목', '금', '토'];
 // 2026년 12월 등록일 2~28일 × 요일 조합의 (남은 수업일, 전체 수업일)
 const enrollCombos = WEEKDAY_SETS.flatMap(weekdays => Array.from({ length: 27 }, (_, i) => i + 2).map(day => {
     const { total, remaining } = daysOf(2026, 12, weekdays, day);
@@ -106,7 +105,7 @@ describe('(b) 경로별: 예전 식이 틀리던 입력에서 이제 정확한 �
         const call = async (tuition, rate, weekdays, day) => {
             const date = `2026-12-${String(day).padStart(2, '0')}`;
             const student = { id: 1, name: '합성', monthly_tuition: String(tuition), discount_rate: String(rate), payment_due_day: 5,
-                enrollment_date: date, class_days: JSON.stringify(weekdays.map(w => KOREAN[w])), tuition_due_day: 5 };
+                enrollment_date: date, class_days: JSON.stringify(weekdays), tuition_due_day: 5 };
             const inserts = [];
             global.__exactDb = { execute: async (sql, params) => {
                 if (/INSERT INTO student_payments/.test(sql)) { inserts.push(params); return [{ insertId: 1 }]; }
