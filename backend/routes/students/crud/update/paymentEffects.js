@@ -10,7 +10,7 @@ const {
 } = require('../../../../utils/proratedPaymentDueDate');
 const lifecycleBilling = require('../../../../services/studentLifecycleBillingService');
 const { updatePendingMonthlyTuition } = require('../../../../repositories/pendingMonthlyTuitionRepository');
-const { floorRatio, floorPercent } = require('../../../../utils/monthlyBillAmounts');
+const { floorRatio, floorPercent, sameDecimal } = require('../../../../utils/monthlyBillAmounts');
 
 async function updatePendingPayments(context) {
     const {
@@ -25,6 +25,12 @@ async function updatePendingPayments(context) {
     // The resume transaction restores it; saving the profile must not reset it.
     if (context.oldStatus === 'paused' || updatedStudent?.status === 'paused') return;
     if (monthlyTuition === undefined && discountRate === undefined) return;
+    // 학생 화면은 저장할 때마다 학원비·할인율을 같이 보낸다. 저장 전과 실제로 달라졌을 때만 미납 청구를 다시 쓴다
+    // (전화번호만 고친 저장이 손으로 고친 청구를 덮지 않게). 비교는 저장된 값끼리 — '350000.00' 과 350000 은 같다.
+    const { oldStudent } = context;
+    if (oldStudent && updatedStudent
+        && sameDecimal(oldStudent.monthly_tuition, updatedStudent.monthly_tuition)
+        && sameDecimal(oldStudent.discount_rate || 0, updatedStudent.discount_rate || 0)) return;
 
     try {
         // 저장된 값(DECIMAL 칸에 맞춰진 학원비·할인율)으로 계산한다
