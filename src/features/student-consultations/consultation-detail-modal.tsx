@@ -119,19 +119,19 @@ export function ConsultationDetailModal({
       if (!nextOpen) handleClose();
     }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="p-4 border-b sticky top-0 bg-card z-10">
+        <DialogHeader className="sticky top-0 z-10 border-b border-border/60 bg-card p-4">
           <div className="flex items-center justify-between">
             <DialogTitle>상담 기록 상세</DialogTitle>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handleDownloadPDF} disabled={downloading}>
                 {downloading ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     저장 중...
                   </>
                 ) : (
                   <>
-                    <Download className="h-4 w-4 mr-2" />
+                    <Download className="h-4 w-4" />
                     PDF 저장
                   </>
                 )}
@@ -144,7 +144,7 @@ export function ConsultationDetailModal({
         </DialogHeader>
 
         {pdfError ? (
-          <div role="alert" className="mx-4 mt-4 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive-soft p-3 text-destructive">
+          <div role="alert" className="mx-4 mt-4 flex items-start gap-3 rounded-xl bg-destructive-soft p-3 text-destructive">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="text-sm font-medium">{pdfError}</p>
           </div>

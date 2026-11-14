@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
 import {
     BookOpen,
     ChevronDown,
@@ -41,11 +40,11 @@ export function InitialConsultationCard({
     const checklist = parseJsonArray(consultation.checklist);
 
     return (
-        <Card className="overflow-hidden">
+        <div className="overflow-hidden rounded-xl bg-muted">
             <button
                 type="button"
                 onClick={onToggle}
-                className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/50"
+                className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/70"
             >
                 <div className="flex min-w-0 flex-wrap items-center gap-2">
                     <PhoneCall className="h-4 w-4 text-muted-foreground" />
@@ -53,10 +52,10 @@ export function InitialConsultationCard({
                     {consultation.preferred_time && (
                         <span className="text-sm text-muted-foreground">{consultation.preferred_time.slice(0, 5)}</span>
                     )}
-                    <Badge variant="secondary" className="bg-primary-soft text-primary">
+                    <Badge>
                         신규상담
                     </Badge>
-                    <Badge variant="outline" className={getInitialStatusClassName(consultation.status)}>
+                    <Badge variant={getInitialStatusVariant(consultation.status)}>
                         {INITIAL_STATUS_LABELS[consultation.status] || consultation.status}
                     </Badge>
                 </div>
@@ -68,7 +67,7 @@ export function InitialConsultationCard({
             </button>
 
             {isExpanded && (
-                <CardContent className="border-t border-border pt-4 space-y-4">
+                <div className="space-y-4 border-t border-border/60 p-4">
                     <TextSection icon={<MessageSquare className="h-4 w-4 text-primary" />} title="문의 내용" text={consultation.inquiry_content} />
                     <TextSection icon={<FileText className="h-4 w-4 text-success" />} title="상담 메모" text={consultation.consultation_memo} />
                     <TextSection icon={<ClipboardList className="h-4 w-4 text-warning" />} title="관리자 메모" text={consultation.admin_notes} />
@@ -76,17 +75,17 @@ export function InitialConsultationCard({
                     {academicScores && <InitialAcademicSection academicScores={academicScores} />}
                     {checklist && checklist.length > 0 && <ChecklistSection checklist={checklist} />}
                     <ApplicantSection consultation={consultation} />
-                </CardContent>
+                </div>
             )}
-        </Card>
+        </div>
     );
 }
 
-function getInitialStatusClassName(status: string): string {
-    if (status === 'completed') return 'border-success/30 text-success';
-    if (status === 'confirmed') return 'border-primary/30 text-primary';
-    if (status === 'cancelled' || status === 'no_show') return 'border-destructive/30 text-destructive';
-    return '';
+function getInitialStatusVariant(status: string): BadgeProps['variant'] {
+    if (status === 'completed') return 'success';
+    if (status === 'confirmed') return 'default';
+    if (status === 'cancelled' || status === 'no_show') return 'destructive';
+    return 'outline';
 }
 
 function TextSection({ icon, title, text }: { icon: ReactNode; title: string; text: string | null }) {
@@ -109,7 +108,7 @@ function TargetSchoolSection({ targetSchool }: { targetSchool: string | null }) 
     return (
         <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Target className="h-4 w-4 text-purple-600" />
+                <Target className="h-4 w-4 text-primary" />
                 목표 학교
             </div>
             <p className="pl-6 text-sm font-medium">{targetSchool}</p>
@@ -143,7 +142,7 @@ function InitialAcademicSection({ academicScores }: { academicScores: Record<str
                         {INITIAL_GRADE_SUBJECTS.map(({ key, label }) => {
                             if (mockTestGrades[key] === null || mockTestGrades[key] === undefined) return null;
                             return (
-                                <div key={key} className="bg-muted rounded p-2 text-center text-sm">
+                                <div key={key} className="rounded-lg bg-card p-2 text-center text-sm">
                                     <div className="text-xs text-muted-foreground">{label}</div>
                                     <div className="font-medium">{formatGradeValue(mockTestGrades[key])}</div>
                                 </div>
@@ -160,7 +159,7 @@ function ChecklistSection({ checklist }: { checklist: unknown[] }) {
     return (
         <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <ClipboardList className="h-4 w-4 text-teal-600" />
+                <ClipboardList className="h-4 w-4 text-success" />
                 체크리스트
             </div>
             <div className="pl-6">

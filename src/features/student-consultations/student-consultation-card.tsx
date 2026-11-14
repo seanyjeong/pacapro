@@ -1,5 +1,4 @@
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import {
     Calendar,
     ChevronDown,
@@ -40,13 +39,13 @@ export function StudentConsultationCard({
     const physicalRecords = parseJsonRecord(consultation.physical_records);
 
     return (
-        <Card className="overflow-hidden">
-            <div className="flex items-stretch justify-between hover:bg-muted/50 transition-colors">
+        <div className="overflow-hidden rounded-xl bg-muted">
+            <div className="flex items-stretch justify-between hover:bg-muted/70 transition-colors">
                 <button type="button" onClick={onToggle} className="flex min-w-0 flex-1 items-center gap-3 p-4 text-left">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{formatKoreanDate(consultation.consultation_date)}</span>
-                        <Badge variant="secondary" className="bg-success-soft text-success">
+                        <Badge variant="success">
                             {CONSULTATION_TYPE_LABELS[consultation.consultation_type] || consultation.consultation_type}
                         </Badge>
                         {consultation.admission_type && (
@@ -61,19 +60,19 @@ export function StudentConsultationCard({
                         type="button"
                         onClick={onViewDetail}
                         aria-label="상담 기록 상세 및 PDF 저장"
-                        className="rounded-md p-1.5 text-primary transition-colors hover:bg-primary/10"
+                        className="rounded-lg p-1.5 text-primary transition-colors hover:bg-primary-soft"
                         title="상세보기 / PDF 저장"
                     >
                         <Eye className="h-4 w-4" />
                     </button>
-                    <button type="button" onClick={onToggle} className="rounded-md p-1 text-muted-foreground">
+                    <button type="button" onClick={onToggle} className="rounded-lg p-1 text-muted-foreground">
                         {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
                     </button>
                 </div>
             </div>
 
             {isExpanded && (
-                <CardContent className="border-t border-border pt-4 space-y-4">
+                <div className="space-y-4 border-t border-border/60 p-4">
                     <StudentAcademicSection consultation={consultation} mockTestScores={mockTestScores} />
                     <StudentPhysicalSection consultation={consultation} physicalRecords={physicalRecords} />
                     <StudentTargetSection consultation={consultation} />
@@ -88,9 +87,9 @@ export function StudentConsultationCard({
                             </p>
                         </section>
                     )}
-                </CardContent>
+                </div>
             )}
-        </Card>
+        </div>
     );
 }
 
@@ -135,7 +134,7 @@ function MockScoreGrid({ mockTestScores }: { mockTestScores: Record<string, unkn
                     if (!scoreRecord || !hasAnyValue(scoreRecord)) return null;
 
                     return (
-                        <div key={month} className="bg-muted rounded p-2 text-xs">
+                        <div key={month} className="rounded-lg bg-card p-2 text-xs">
                             <div className="font-medium mb-1">{getMonthLabel(month)}</div>
                             <div className="grid grid-cols-5 gap-1 text-center">
                                 {MOCK_SCORE_SUBJECTS.map((subject) => (
@@ -175,7 +174,7 @@ function StudentPhysicalSection({
                         const value = formatUnknownValue(record.value);
                         const unit = record.unit ? String(record.unit) : '';
                         return (
-                            <div key={name} className="bg-muted rounded p-2 text-center text-sm">
+                            <div key={name} className="rounded-lg bg-card p-2 text-center text-sm">
                                 <div className="text-xs text-muted-foreground">{name}</div>
                                 <div className="font-medium">
                                     {value}{unit && ` ${unit}`}
@@ -200,7 +199,7 @@ function StudentTargetSection({ consultation }: { consultation: StudentConsultat
     return (
         <section className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Target className="h-4 w-4 text-purple-600" />
+                <Target className="h-4 w-4 text-primary" />
                 목표
             </div>
             <div className="pl-6 space-y-1">
