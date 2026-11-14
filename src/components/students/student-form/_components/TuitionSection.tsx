@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { StudentFormData } from '@/lib/types/student';
 import type { AcademySettings } from '../_types';
 import { MoneyInput } from '@/components/ui/money-input';
+import { resolveTuitionTable } from '@/lib/utils/tuition-table';
 
 interface TuitionSectionProps {
   isTrial: boolean;
@@ -11,15 +12,16 @@ interface TuitionSectionProps {
   errors: Record<string, string>;
   finalTuition: number;
   academySettings: AcademySettings;
+  classTuition?: AcademySettings['exam_tuition'] | null; // 학생 반에 따로 정한 학원비 표
   handleChange: (field: keyof StudentFormData, value: unknown) => void;
   formatCurrency: (amount: number) => string;
 }
 
 export function TuitionSection({
-  isTrial, formData, errors, finalTuition, academySettings, handleChange, formatCurrency,
+  isTrial, formData, errors, finalTuition, academySettings, classTuition, handleChange, formatCurrency,
 }: TuitionSectionProps) {
   if (isTrial) return null;
-  const tuitionTable = formData.student_type === 'exam' ? academySettings.exam_tuition : academySettings.adult_tuition;
+  const tuitionTable = resolveTuitionTable(academySettings, formData.student_type, classTuition);
   const weeklyKey = `weekly_${formData.weekly_count || 0}` as keyof typeof tuitionTable;
   const automaticTuition = tuitionTable[weeklyKey] || 0;
 
@@ -34,6 +36,7 @@ export function TuitionSection({
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
             현재 기준: 주 {formData.weekly_count || 0}회, 자동 금액 {formatCurrency(automaticTuition)}
+            {classTuition ? ' (반 학원비 표)' : ''}
           </p>
         </div>
 

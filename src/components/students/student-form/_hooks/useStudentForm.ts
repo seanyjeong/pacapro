@@ -11,6 +11,8 @@ import { EXAM_ADMISSION_OPTIONS, ADULT_ADMISSION_OPTIONS, isAdvanceAdmissionGrad
 import type { ClassDaySlot } from '@/lib/types/student';
 import { parseClassDaysWithSlots, extractDayNumbers } from '@/lib/utils/student-helpers';
 import { STUDENT_PARENT_PHONE_FIELDS } from '@/constants/student-parent-phones';
+import { useBranchTree } from '@/hooks/use-branches';
+import { resolveTuitionTable } from '@/lib/utils/tuition-table';
 import { AcademySettings, TuitionByWeeklyCount, DEFAULT_TUITION, type StudentFormConfirmState } from '../_types';
 
 interface StudentFormProps {
@@ -18,12 +20,13 @@ interface StudentFormProps {
   initialData?: Student;
   initialIsTrial?: boolean;
   onSubmit: (data: StudentFormData, pendingPhotoFile?: File | null) => Promise<void>;
+  classId?: number | null; // 신규 등록에서 고른 반. 없으면 학생의 지금 반
 }
 
 // 엑셀 가져오기 등으로 숫자만 저장된 번호를 서버 정규화와 같은 하이픈 형식으로 맞춰 수정 검증을 통과시킨다.
 const toHyphenPhone = (value: string) => value.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3');
 
-export function useStudentForm({ mode, initialData, initialIsTrial = false, onSubmit }: StudentFormProps) {
+export function useStudentForm({ mode, initialData, initialIsTrial = false, onSubmit, classId }: StudentFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmState, setConfirmState] = useState<StudentFormConfirmState | null>(null);
@@ -44,6 +47,12 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     adult_tuition: { ...DEFAULT_TUITION },
   });
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // 학생 반의 학원비 표(이 반만 따로 정한 경우). 없으면 학원 표로 자동 채운다.
+  const { branches } = useBranchTree();
+  const placementClassId = classId !== undefined ? classId : initialData?.class_id ?? null;
+  const classTuition = useMemo(() => branches.flatMap((branch) => branch.classes)
+    .find((item) => item.id === placementClassId)?.tuition_by_weekly ?? null, [branches, placementClassId]);
 
   // 시즌
   const [availableSeasons, setAvailableSeasons] = useState<Season[]>([]);
@@ -195,12 +204,21 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
   // 헬퍼
   const getTuitionByWeeklyCount = (studentType: StudentType, weeklyCount: number): number => {
     if (weeklyCount < 1 || weeklyCount > 7) return 0;
-    const tuitionTable = studentType === 'exam'
-      ? academySettings.exam_tuition
-      : academySettings.adult_tuition;
+    const tuitionTable = resolveTuitionTable(academySettings, studentType, classTuition);
     const key = `weekly_${weeklyCount}` as keyof TuitionByWeeklyCount;
     return tuitionTable[key] || 0;
   };
+
+  // 신규 등록에서 반을 바꾸면 그 반 기준 금액으로 다시 채운다(수업요일을 고른 뒤라면).
+  const previousClassId = useRef(placementClassId);
+  useEffect(() => {
+    if (previousClassId.current === placementClassId) return;
+    previousClassId.current = placementClassId;
+    if (mode !== 'create' || !settingsLoaded) return;
+    setFormData((prev) => (prev.weekly_count > 0
+      ? { ...prev, monthly_tuition: getTuitionByWeeklyCount(prev.student_type, prev.weekly_count) }
+      : prev));
+  }, [placementClassId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const finalTuition = useMemo(() => {
     const base = formData.monthly_tuition || 0;
@@ -444,6 +462,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     restModalOpen, setRestModalOpen,
     pendingPhotoFile, setPendingPhotoFile,
     academySettings,
+    classTuition,
     availableSeasons, seasonsLoading,
     enrollInSeason, setEnrollInSeason,
     selectedSeasonId, setSelectedSeasonId,

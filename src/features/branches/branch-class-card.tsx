@@ -14,6 +14,7 @@ import { branchesAPI, type BranchClass, type BranchTimeSlot } from '@/lib/api/br
 import { instructorsAPI } from '@/lib/api/instructors';
 import { WEEKDAY_OPTIONS } from '@/lib/types/student';
 import { cn } from '@/lib/utils';
+import { ClassTuitionRow } from './class-tuition-row';
 
 const quiet = { suppressErrorToast: true };
 
@@ -240,6 +241,14 @@ export function BranchClassCard() {
                     instructors={instructors}
                     disabled={busy}
                     onSave={(data) => void act(() => branchesAPI.updateClass(cls.id, data, quiet))}
+                  />
+                  <ClassTuitionRow
+                    key={JSON.stringify(cls.tuition_by_weekly)}
+                    label={`${branch.name} ${cls.class_name}`}
+                    cls={cls}
+                    disabled={busy}
+                    onSave={(table) => void act(() => branchesAPI.updateClass(cls.id, { tuition_by_weekly: table }, quiet))}
+                    onApplied={() => void queryClient.invalidateQueries({ queryKey: BRANCH_TREE_QUERY_KEY })}
                   />
                 </div>
               ))}

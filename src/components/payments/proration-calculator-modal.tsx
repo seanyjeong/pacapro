@@ -4,6 +4,7 @@
  * 일할계산 계산기 모달
  * 설정의 주1~7회 요금표(exam_tuition/adult_tuition)를 가져와
  * 수업 요일 + 등록일 선택 시 첫 달 일할 학원비를 즉시 안내.
+ * 반을 고르면 그 반에 따로 정한 학원비 표를, 고르지 않거나 표가 없으면 학원 표를 쓴다.
  * 공식은 backend create.js / update.js 일할계산과 동일 (실수업일 기준, 천원 단위 절삭).
  */
 
@@ -21,7 +22,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Calculator } from 'lucide-react';
 import apiClient from '@/lib/api/client';
+import { useBranchTree } from '@/hooks/use-branches';
 import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
+import { resolveTuitionTable } from '@/lib/utils/tuition-table';
 
 interface ProrationCalculatorModalProps {
   open: boolean;
@@ -56,6 +59,9 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
   const [tuitionOverride, setTuitionOverride] = useState<number | null>(null);
   const [examTuition, setExamTuition] = useState<TuitionTable>({});
   const [adultTuition, setAdultTuition] = useState<TuitionTable>({});
+  const { branches, enabled: branchesEnabled } = useBranchTree();
+  const [classId, setClassId] = useState<number | null>(null);
+  const selectedClass = branches.flatMap((branch) => branch.classes).find((item) => item.id === classId) ?? null;
 
   // 모달 열릴 때 요금표 로드 + 등록일 오늘로 초기화
   useEffect(() => {
@@ -75,14 +81,14 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
   }, [open]);
 
   const weeklyCount = selectedDays.length;
-  const tuitionTable = studentType === 'exam' ? examTuition : adultTuition;
+  const tuitionTable = resolveTuitionTable({ exam_tuition: examTuition, adult_tuition: adultTuition }, studentType, selectedClass?.tuition_by_weekly);
   const autoTuition = weeklyCount > 0 ? getTuitionForWeeklyCount(tuitionTable, weeklyCount) : 0;
   const tuition = tuitionOverride !== null ? tuitionOverride : autoTuition;
 
-  // 구분/요일 변경 시 수동 입력값 초기화 → 요금표 자동 반영
+  // 구분/반/요일 변경 시 수동 입력값 초기화 → 요금표 자동 반영
   useEffect(() => {
     setTuitionOverride(null);
-  }, [studentType, weeklyCount]);
+  }, [studentType, weeklyCount, classId]);
 
   const toggleDay = (num: number) => {
     setSelectedDays((prev) =>
@@ -168,6 +174,35 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
               </Button>
             </div>
           </div>
+
+          {/* 반 — 지점·반을 쓰는 학원만. 안 고르면 학원 표 */}
+          {branchesEnabled ? (
+            <div className="space-y-2">
+              <Label htmlFor="proration-class">반</Label>
+              <select
+                id="proration-class"
+                value={classId ?? ''}
+                onChange={(event) => setClassId(event.target.value ? Number(event.target.value) : null)}
+                className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
+              >
+                <option value="">반 선택 안 함 (학원 기본표)</option>
+                {branches.map((branch) => (
+                  <optgroup key={branch.id} label={branch.name}>
+                    {branch.classes.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {branch.name} {item.class_name}{item.tuition_by_weekly ? ' · 반 학원비' : ''}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              {selectedClass ? (
+                <p className="text-xs text-muted-foreground">
+                  {selectedClass.tuition_by_weekly ? '이 반에 따로 정한 학원비 표로 계산해요.' : '이 반은 학원 기본표를 써요.'}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {/* 수업 요일 */}
           <div className="space-y-2">

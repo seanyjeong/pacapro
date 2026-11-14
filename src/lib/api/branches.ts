@@ -3,6 +3,7 @@
  */
 
 import apiClient, { type APIRequestConfig } from './client';
+import type { WeeklyTuitionTable } from '@/lib/utils/tuition-table';
 
 export type BranchStatus = 'active' | 'inactive';
 export type BranchTimeSlot = 'morning' | 'afternoon' | 'evening';
@@ -22,6 +23,7 @@ export interface BranchClass extends BranchCounts {
   instructor_name?: string | null;
   sort_order: number;
   status: BranchStatus;
+  tuition_by_weekly: WeeklyTuitionTable | null; // 이 반만 따로 정한 주1~7회 학원비. null 이면 학원 기본표
 }
 
 export interface Branch extends BranchCounts {
@@ -42,6 +44,28 @@ export interface StudentPlacement {
   class_id: number | null;
 }
 
+// 학원비 다시 계산 한 줄: 지금 금액 → 새 금액(반 표, 없으면 학원 표). new_tuition null = 표에 금액 없음
+export interface TuitionChange {
+  student_id: number;
+  name: string;
+  status: string;
+  weekly_count: number;
+  current_tuition: number;
+  new_tuition: number | null;
+  discount_rate: number;
+  new_final_tuition: number | null;
+  changed: boolean;
+}
+
+export interface ClassTuitionPreview {
+  class: { id: number; class_name: string; tuition_by_weekly: WeeklyTuitionTable | null };
+  students: TuitionChange[];
+}
+
+// 확인한 금액. 서버가 다시 계산한 금액과 다르면 409 로 아무것도 바꾸지 않는다.
+const confirmed = (changes: TuitionChange[]) =>
+  changes.map((change) => ({ student_id: change.student_id, new_tuition: change.new_tuition }));
+
 const BASE_PATH = '/branches';
 
 export const branchesAPI = {
@@ -56,11 +80,21 @@ export const branchesAPI = {
     id: number,
     data: {
       class_name?: string; default_time_slot?: BranchTimeSlot; class_days?: number[]; status?: BranchStatus; branch_id?: number;
-      instructor_id?: number | null;
+      instructor_id?: number | null; tuition_by_weekly?: WeeklyTuitionTable | null;
     },
     config?: APIRequestConfig,
   ) => apiClient.put(`${BASE_PATH}/classes/${id}`, data, config),
   deleteClass: (id: number, config?: APIRequestConfig) => apiClient.delete(`${BASE_PATH}/classes/${id}`, config),
-  assignStudents: (studentIds: number[], placement: StudentPlacement, config?: APIRequestConfig) =>
-    apiClient.put(`${BASE_PATH}/students`, { student_ids: studentIds, ...placement }, config),
+  // tuitionChanges 를 주면(반 이동 때 묻고 고른 학생) 그 학생만 새 반 기준 학원비로 바꾼다.
+  assignStudents: (studentIds: number[], placement: StudentPlacement, config?: APIRequestConfig, tuitionChanges?: TuitionChange[]) =>
+    apiClient.put(`${BASE_PATH}/students`, {
+      student_ids: studentIds, ...placement, ...(tuitionChanges?.length ? { tuition_changes: confirmed(tuitionChanges) } : {}),
+    }, config),
+  // 반 이동 전에 바뀔 학원비. 새 반(또는 지금 반)에 따로 정한 표가 있을 때만 나온다.
+  previewMoveTuition: (studentIds: number[], classId: number | null, config?: APIRequestConfig): Promise<{ changes: TuitionChange[] }> =>
+    apiClient.post(`${BASE_PATH}/students/tuition-preview`, { student_ids: studentIds, class_id: classId }, config),
+  previewClassTuition: (classId: number, config?: APIRequestConfig): Promise<ClassTuitionPreview> =>
+    apiClient.get(`${BASE_PATH}/classes/${classId}/tuition-preview`, config),
+  applyClassTuition: (classId: number, changes: TuitionChange[], config?: APIRequestConfig): Promise<{ message: string; updated: number }> =>
+    apiClient.post(`${BASE_PATH}/classes/${classId}/apply-tuition`, { changes: confirmed(changes) }, config),
 };

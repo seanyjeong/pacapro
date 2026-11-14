@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useBranchTree } from '@/hooks/use-branches';
-import { branchesAPI, type StudentPlacement } from '@/lib/api/branches';
+import type { StudentPlacement } from '@/lib/api/branches';
 import { StudentPlacementSelect } from './student-placement-select';
+import { useStudentMove } from './use-student-move';
 
 interface StudentPlacementPanelProps {
   value: StudentPlacement;
@@ -17,14 +18,17 @@ interface StudentPlacementPanelProps {
 export function StudentPlacementPanel({ value, studentId, onChange }: StudentPlacementPanelProps) {
   const { branches, enabled, reload } = useBranchTree();
   const [saving, setSaving] = useState(false);
+  const studentMove = useStudentMove();
   if (!enabled) return null;
 
   const handleChange = async (placement: StudentPlacement) => {
     if (!studentId) return onChange(placement);
     setSaving(true);
     try {
-      await branchesAPI.assignStudents([studentId], placement, { suppressErrorToast: true });
-      toast.success('지점·반을 바꿨습니다.');
+      // 새 반 학원비가 지금과 다르면 묻고, 고른 경우에만 학원비도 바꾼다.
+      const result = await studentMove.move([studentId], placement);
+      if (!result.moved) return;
+      toast.success(result.tuitionUpdated > 0 ? '지점·반과 학원비를 바꿨습니다.' : '지점·반을 바꿨습니다.');
       onChange(placement);
       void reload();
     } catch {
@@ -40,6 +44,7 @@ export function StudentPlacementPanel({ value, studentId, onChange }: StudentPla
       <div className="min-w-0">
         <StudentPlacementSelect id="student-placement" branches={branches} value={value} onChange={handleChange} disabled={saving} />
       </div>
+      {studentMove.dialog}
     </section>
   );
 }

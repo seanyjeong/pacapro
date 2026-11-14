@@ -7,9 +7,10 @@ import { StudentFiltersComponent } from '@/components/students/student-filters';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
 import { StudentsBranchBar } from '@/features/branches/students-branch-bar';
 import { StudentsBulkPlacementBar } from '@/features/branches/students-bulk-placement-bar';
+import { useStudentMove } from '@/features/branches/use-student-move';
 import { useBranchTree } from '@/hooks/use-branches';
 import { useStudents } from '@/hooks/use-students';
-import { branchesAPI, type StudentPlacement } from '@/lib/api/branches';
+import type { StudentPlacement } from '@/lib/api/branches';
 import { exportsApi } from '@/lib/api/exports';
 import { studentsAPI } from '@/lib/api/students';
 import { rememberStudentListReturn } from './student-list-return';
@@ -49,6 +50,7 @@ export function StudentsPageContent() {
     const branchTree = useBranchTree();
     const [selectedIds, setSelectedIds] = useState<ReadonlySet<number>>(new Set());
     const [movingStudents, setMovingStudents] = useState(false);
+    const studentMove = useStudentMove();
     const placementLabels = useMemo(() => {
         const labels = new Map<string, string>();
         branchTree.branches.forEach((branch) => {
@@ -112,8 +114,12 @@ export function StudentsPageContent() {
     const handleMoveStudents = async (placement: StudentPlacement) => {
         setMovingStudents(true);
         try {
-            await branchesAPI.assignStudents([...selectedIds], placement, { suppressErrorToast: true });
-            toast.success(`학생 ${selectedIds.size}명을 옮겼습니다.`);
+            // 새 반 학원비가 지금과 다른 학생이 있으면 한 번에 묻고, 고른 학생만 학원비도 바꾼다.
+            const result = await studentMove.move([...selectedIds], placement);
+            if (!result.moved) return;
+            toast.success(result.tuitionUpdated > 0
+                ? `학생 ${selectedIds.size}명을 옮기고 ${result.tuitionUpdated}명의 학원비를 바꿨습니다.`
+                : `학생 ${selectedIds.size}명을 옮겼습니다.`);
             setSelectedIds(new Set());
             reload();
             branchTree.reload();
@@ -203,6 +209,7 @@ export function StudentsPageContent() {
                 onReload={handleReload}
                 onUploadExcel={handleExcelUploadClick}
             />
+            {studentMove.dialog}
             <input
                 ref={excelUploadInputRef}
                 type="file"

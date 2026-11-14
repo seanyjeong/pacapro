@@ -156,6 +156,7 @@ function NewStudentContent() {
         initialIsTrial={isTrial}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
+        classId={placement.class_id}
       />
       </>
       )}

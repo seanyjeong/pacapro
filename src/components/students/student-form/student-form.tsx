@@ -37,6 +37,7 @@ interface StudentFormProps {
   onPhotoChanged?: () => void;
   onRestSuccess?: () => void;
   onResumeSuccess?: () => void;
+  classId?: number | null; // 신규 등록에서 고른 반(반 학원비 표 자동 채움)
 }
 
 export function StudentForm({
@@ -48,8 +49,9 @@ export function StudentForm({
   onPhotoChanged,
   onRestSuccess,
   onResumeSuccess,
+  classId,
 }: StudentFormProps) {
-  const hook = useStudentForm({ mode, initialData, initialIsTrial, onSubmit });
+  const hook = useStudentForm({ mode, initialData, initialIsTrial, onSubmit, classId });
 
   const [resumeOpen, setResumeOpen] = useState(false);
 
@@ -136,6 +138,7 @@ export function StudentForm({
         errors={hook.errors}
         finalTuition={hook.finalTuition}
         academySettings={hook.academySettings}
+        classTuition={hook.classTuition}
         handleChange={hook.handleChange}
         formatCurrency={hook.formatCurrency}
       />
