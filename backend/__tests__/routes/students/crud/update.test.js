@@ -546,6 +546,22 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
         expect(paymentUpdateCall[1]).toContain(152000);
     });
 
+    test('등록일 변경 재계산은 크레딧을 빼고 나서 천원 절삭한다(월 청구·청구 수정과 같은 식)', async () => {
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000 })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000, enrollment_date: '2026-01-15' })]])
+            .mockResolvedValueOnce([[{ id: 77, payment_status: 'pending', additional_amount: '0.00', carryover_amount: '12500.00' }]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ enrollment_date: '2026-01-15' });
+
+        expect(res.status).toBe(200);
+        // 일할 164,000 − 크레딧 12,500 = 151,500 → 151,000 (예전 식은 절삭 뒤 크레딧을 빼 151,500)
+        expect(res.body.enrollmentDateRecalc.finalAmount).toBe(151000);
+    });
+
     test('첫 달 학원비가 이미 paid → 재계산 스킵 + enrollmentDateRecalc skipped', async () => {
         pool.__conn.execute.mockResolvedValue([[]]);
         pool.__conn.execute

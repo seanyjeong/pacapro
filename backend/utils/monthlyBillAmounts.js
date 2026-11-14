@@ -61,15 +61,22 @@ function monthlyDiscountAmount(tuition, discountRate) {
     return floorPercent(tuition, discountRate);
 }
 
+/**
+ * 청구 최종 금액 = 천원 절삭(청구 금액 − 할인액 + 추가 금액 − 크레딧), 0 미만이면 0.
+ * 월 청구(아래 monthlyBillAmounts)와 청구 수정 화면·첫 달 일할 재계산이 같은 식을 쓴다(크레딧을 빼고 절삭).
+ */
+function billFinalAmount(base, discount, additional = 0, carryover = 0) {
+    const parts = [decimal(base), decimal(discount), decimal(additional), decimal(carryover)];
+    const scale = Math.max(...parts.map(part => part.scale));
+    const [b, d, add, carry] = parts.map(part => part.n * pow10(scale - part.scale));
+    return Math.max(toUnits(floorDivide(b - d + add - carry, 1000n * pow10(scale)), 1000), 0);
+}
+
 function monthlyBillAmounts(tuition, discountRate, additional = 0, carryover = 0) {
     const discount = monthlyDiscountAmount(tuition, discountRate);
-    const parts = [decimal(tuition), decimal(additional), decimal(carryover)];
-    const scale = Math.max(...parts.map(part => part.scale));
-    const [t, add, carry] = parts.map(part => part.n * pow10(scale - part.scale));
-    const total = t - BigInt(discount) * pow10(scale) + add - carry;
-    return { discount, final: Math.max(toUnits(floorDivide(total, 1000n * pow10(scale)), 1000), 0) };
+    return { discount, final: billFinalAmount(tuition, discount, additional, carryover) };
 }
 
 module.exports = {
-    monthlyBillAmounts, monthlyDiscountAmount, floorRatio, floorPercent, sameDecimal
+    monthlyBillAmounts, monthlyDiscountAmount, billFinalAmount, floorRatio, floorPercent, sameDecimal
 };

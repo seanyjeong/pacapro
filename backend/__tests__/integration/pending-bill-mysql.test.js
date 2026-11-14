@@ -108,6 +108,7 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         a.use('/paca/branches', require('../../routes/branches'));
         const payments = express.Router();
         require('../../routes/payments/bulk')(payments); require('../../routes/payments/bulk/monthlyForStudent')(payments);
+        require('../../routes/payments/crud')(payments);
         a.use('/paca/payments', payments);
         return a;
     };
@@ -236,6 +237,22 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         expect(result.students[0].newTuition).toBe(333333);
         const want = monthlyBillAmounts(333333, '12.50');
         expect(await monthBill()).toEqual([[333333, want.discount, want.final]]);
+    });
+
+    test('청구 수정 화면: 크레딧 166,500원·학원비 450,000원 → 283,000원, 월 청구로 만든 금액과 같다', async () => {
+        const month = koreaMonth(2), [year, mon] = month.split('-').map(Number);
+        await seed({ tuition: 450000, rate: 0, credit: 166500, bills: false });
+        expect((await request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon })).status).toBe(200);
+        const [[made]] = await pool.query('SELECT id, carryover_amount, final_amount FROM student_payments WHERE `year_month` = ?', [month]);
+        expect([made.carryover_amount, Number(made.final_amount)]).toEqual([166500, 283000]);
+        // 같은 금액으로 저장만 다시 해도(예전 식 450,000 − 166,500 = 283,500) 월 청구 금액 그대로
+        expect((await request(app()).put(`/paca/payments/${made.id}`).send({ base_amount: 450000 })).status).toBe(200);
+        const [[saved]] = await pool.query('SELECT final_amount FROM student_payments WHERE id = ?', [made.id]);
+        expect(Number(saved.final_amount)).toBe(283000);
+        // 추가 금액 10,000원 넣으면 월 청구 공통 식 그대로
+        expect((await request(app()).put(`/paca/payments/${made.id}`).send({ additional_amount: 10000 })).status).toBe(200);
+        const [[added]] = await pool.query('SELECT final_amount FROM student_payments WHERE id = ?', [made.id]);
+        expect(Number(added.final_amount)).toBe(monthlyBillAmounts(450000, 0, 10000, 166500).final);
     });
 
     test('크레딧: 같은 달 일괄 청구를 두 번 돌려도, 학생별 청구를 동시에 두 번 눌러도 크레딧은 한 번만', async () => {

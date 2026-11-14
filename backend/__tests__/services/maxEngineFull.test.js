@@ -77,6 +77,8 @@ test('payment_update recalculates final amount like the payment screen and guard
  expect(cut).toMatchObject({base_amount:'300000.00',discount_amount:'50500.00',final_amount:'239000.00',payment_status:'pending'});
  expect(cut.notes).toBe('prior\n청구액 수정: 290000.00 → 239000.00 (형제 할인)');
  expect(payments.updated({base_amount:'5000',notes:'x'},{...before,carryover_amount:20000}).final_amount).toBe('0.00');
+ // 월 청구와 같은 식: 크레딧을 빼고 천원 절삭 (450,000 − 166,500 = 283,500 → 283,000)
+ expect(payments.updated({base_amount:'450000',notes:'x'},{...before,carryover_amount:'166500.00'}).final_amount).toBe('283000.00');
  const partial={...before,paid_amount:'100000.00',payment_status:'partial'};
  expect(payments.updated({base_amount:'200000',notes:'x'},partial).payment_status).toBe('partial');
  expect(payments.updated({base_amount:'110000',notes:'x'},partial)).toMatchObject({final_amount:'100000.00',payment_status:'paid'});

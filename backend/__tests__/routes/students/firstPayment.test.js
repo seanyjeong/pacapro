@@ -88,4 +88,28 @@ describe('POST /paca/students/:id/recalculate-first-payment', () => {
         const updatePayment = pool.execute.mock.calls.find(([sql]) => /UPDATE student_payments/.test(sql));
         expect(updatePayment[1][2]).toBe(143000);
     });
+
+    test('천원 단위가 아닌 크레딧은 빼고 나서 천원 절삭한다(월 청구·청구 수정과 같은 식)', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[
+                {
+                    id: 5,
+                    enrollment_date: '2026-11-16',
+                    monthly_tuition: 300000,
+                    discount_rate: 0,
+                    class_days: '[]',
+                    time_slot: 'evening',
+                },
+            ]])
+            .mockResolvedValueOnce([[{ id: 77, payment_status: 'pending', additional_amount: '0.00', carryover_amount: '12500.00' }]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/students/5/recalculate-first-payment')
+            .send({});
+
+        // 150,000 − 크레딧 12,500 = 137,500 → 137,000 (예전 식은 절삭 뒤 크레딧을 빼 137,500)
+        expect(res.status).toBe(200);
+        expect(res.body.payment.final_amount).toBe(137000);
+    });
 });

@@ -29,8 +29,8 @@ const pool = require('../../config/database');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const logger = require('../../utils/logger');
 const { resolveProratedPaymentDueDate } = require('../../utils/proratedPaymentDueDate');
-const { parseClassDaysWithSlots, extractDayNumbers, truncateToThousands } = require('./_utils');
-const { floorRatio, floorPercent } = require('../../utils/monthlyBillAmounts');
+const { parseClassDaysWithSlots, extractDayNumbers } = require('./_utils');
+const { floorRatio, floorPercent, billFinalAmount } = require('../../utils/monthlyBillAmounts');
 
 module.exports = function(router) {
 
@@ -124,10 +124,8 @@ router.post('/:id/recalculate-first-payment', verifyToken, checkPermission('stud
         // 이미 적용된 크레딧·추가 금액은 재계산이 지우지 않는다 (payments/crud.js 수정과 같은 식).
         const additionalAmount = parseFloat(proratedPayment.additional_amount) || 0;
         const carryoverAmount = parseFloat(proratedPayment.carryover_amount) || 0;
-        const finalAmount = Math.max(
-            truncateToThousands(proRatedAmount - discountAmount + additionalAmount) - carryoverAmount,
-            0
-        );
+        // 월 청구·청구 수정 화면과 같은 식: 천원 절삭(일할 − 할인 + 추가 − 크레딧), 0 미만이면 0
+        const finalAmount = billFinalAmount(proRatedAmount, discountAmount, additionalAmount, carryoverAmount);
 
         const dueDateStr = resolveProratedPaymentDueDate(String(student.enrollment_date));
 

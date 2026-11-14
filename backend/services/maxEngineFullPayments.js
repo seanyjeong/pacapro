@@ -23,8 +23,8 @@ function updated(changes, before) {
   if (['withdrawn', 'graduated'].includes(before.student_status)) fail(409, 'STUDENT_STATUS_CONFLICT', '퇴원·졸업 학생의 청구는 학생 정산 미리보기(preview_student_settlement)에서 조정해 주세요.');
   const base = cents(changes.base_amount ?? before.base_amount), discount = cents(changes.discount_amount ?? before.discount_amount),
     additional = cents(changes.additional_amount ?? before.additional_amount), paid = cents(before.paid_amount);
-  // 화면의 청구서 수정(PUT /paca/payments/:id)과 같은 계산: 천원 단위 버림 → 이월액 차감 → 0 미만은 0
-  const total = Math.max(Math.floor((base - discount + additional) / 100000) * 100000 - cents(before.carryover_amount), 0);
+  // 화면의 청구서 수정(PUT /paca/payments/:id)·월 청구와 같은 계산: 이월액(크레딧) 차감 → 천원 단위 버림 → 0 미만은 0
+  const total = Math.max(Math.floor((base - discount + additional - cents(before.carryover_amount)) / 100000) * 100000, 0);
   if (total >= 1e10) fail(422, 'INVALID_AMOUNT', '청구 금액 범위를 확인해 주세요.');
   if (total < paid) fail(422, 'PAYMENT_BELOW_PAID', `이미 낸 금액(${money(paid)})보다 낮출 수 없습니다. 환불은 퇴원 정산에서 처리합니다.`);
   return { base_amount: money(base), discount_amount: money(discount), additional_amount: money(additional), final_amount: money(total),

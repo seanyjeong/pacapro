@@ -1,7 +1,6 @@
 const {
     parseClassDaysWithSlots,
     extractDayNumbers,
-    truncateToThousands,
     logger,
 } = require('../_utils');
 const {
@@ -10,7 +9,7 @@ const {
 } = require('../../../../utils/proratedPaymentDueDate');
 const lifecycleBilling = require('../../../../services/studentLifecycleBillingService');
 const { updatePendingMonthlyTuition } = require('../../../../repositories/pendingMonthlyTuitionRepository');
-const { floorRatio, floorPercent, sameDecimal } = require('../../../../utils/monthlyBillAmounts');
+const { floorRatio, floorPercent, sameDecimal, billFinalAmount } = require('../../../../utils/monthlyBillAmounts');
 
 async function updatePendingPayments(context) {
     const {
@@ -143,10 +142,8 @@ async function recalculateEnrollmentPayment(context) {
         // 이미 적용된 크레딧·추가 금액은 재계산이 지우지 않는다 (payments/crud.js 수정과 같은 식).
         const additionalAmount = parseFloat(proratedPayment.additional_amount) || 0;
         const carryoverAmount = parseFloat(proratedPayment.carryover_amount) || 0;
-        const finalAmount = Math.max(
-            truncateToThousands(proratedAmount - discountAmount + additionalAmount) - carryoverAmount,
-            0
-        );
+        // 월 청구·청구 수정 화면과 같은 식: 천원 절삭(일할 − 할인 + 추가 − 크레딧), 0 미만이면 0
+        const finalAmount = billFinalAmount(proratedAmount, discountAmount, additionalAmount, carryoverAmount);
         const dueDate = resolveProratedPaymentDueDate(String(enrollmentDate));
 
         await pool.execute(

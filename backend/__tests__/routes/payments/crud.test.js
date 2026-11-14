@@ -244,6 +244,29 @@ describe('PUT /paca/payments/:id', () => {
         expect(updateCall[1]).toContain(0);
     });
 
+    test('200: 월 청구와 같은 식 — 크레딧 166,500원·학원비 450,000원 → 283,000원(크레딧 빼고 천원 절삭)', async () => {
+        const { monthlyBillAmounts } = require('../../../utils/monthlyBillAmounts');
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 820, academy_id: 5 }]])
+            .mockResolvedValueOnce([[
+                { base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 166500 },
+            ]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[{ id: 820, student_name: 'enc_유', final_amount: 283000 }]]);
+
+        const res = await request(makeApp())
+            .put('/paca/payments/820')
+            .send({ base_amount: 450000 });
+
+        expect(res.status).toBe(200);
+        const updateCall = pool.execute.mock.calls[2];
+        const finalParam = updateCall[1][updateCall[0].split('?').findIndex(part => /final_amount = $/.test(part))];
+        // 예전 식(천원 절삭 뒤 크레딧 빼기)이면 283,500원
+        expect(finalParam).toBe(283000);
+        // 같은 청구를 월 청구로 만든 금액과 같다
+        expect(finalParam).toBe(monthlyBillAmounts(450000, 0, 0, 166500).final);
+    });
+
     test('200: 단일 필드만 변경 시 final_amount 재계산 X', async () => {
         pool.execute
             .mockResolvedValueOnce([[{ id: 1, academy_id: 5 }]])

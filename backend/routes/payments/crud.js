@@ -34,6 +34,7 @@
  */
 
 const { pool, decryptStudentName, truncateToThousands, logger } = require('./_utils');
+const { billFinalAmount } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql } = require('../../utils/paymentAmountSql');
 
@@ -270,12 +271,11 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             const newBase = base_amount !== undefined ? base_amount : currentData.base_amount;
             const newDiscount = discount_amount !== undefined ? discount_amount : currentData.discount_amount;
             const newAdditional = additional_amount !== undefined ? additional_amount : currentData.additional_amount;
-            const currentCarryover = parseFloat(currentData.carryover_amount) || 0;
+            const currentCarryover = currentData.carryover_amount;
 
-            const chargeBeforeCredit = truncateToThousands(
-                parseFloat(newBase) - parseFloat(newDiscount) + parseFloat(newAdditional)
-            );
-            const finalAmount = Math.max(chargeBeforeCredit - currentCarryover, 0);
+            // 월 청구와 같은 식: 천원 절삭(학원비 − 할인액 + 추가 − 이미 적용된 크레딧), 0 미만이면 0
+            // (예전엔 천원 절삭 뒤 크레딧을 빼 같은 청구가 월 청구와 최대 999원 달랐다)
+            const finalAmount = billFinalAmount(newBase, newDiscount, newAdditional, currentCarryover);
             updates.push('final_amount = ?');
             params.push(finalAmount);
         }
