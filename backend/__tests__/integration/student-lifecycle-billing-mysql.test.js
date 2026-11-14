@@ -102,7 +102,18 @@ run('native withdrawal and both pause routes preserve financial history atomical
       before_paid_amount: '100000.00', after_paid_amount: '100000.00', refund_amount: '0.00', recorded_by: 1 });
     expect(await financialHistory()).toEqual(history);
   });
-  async function pauseBills(paid = '100000') {
+  test('이미 퇴원한 학생의 연락처만 고친 저장(상태도 같이 보냄)은 정산을 다시 하지 않고 저장된다 — 예전엔 409', async () => {
+    await bill(101, { year_month: f.date.slice(0, 7) }); // 퇴원 달 청구 → 일할 정산(is_prorated = 1)
+    expect((await withdraw('update')).status).toBe(200);
+    const settled = await rows('student_payments'), audits = await rows('max_engine_payment_settlements');
+    expect(settled.find(row => row.id === 101).is_prorated).toBe(1);
+    const response = await request(server).put('/paca/students/101').auth(token, { type: 'bearer' }).send({ status: 'withdrawn', phone: '010-1234-5678' });
+    expect(response.status).toBe(200);
+    expect(await rows('student_payments')).toEqual(settled);
+    expect(await rows('max_engine_payment_settlements')).toEqual(audits);
+    expect((await getStudent(101)).status).toBe('withdrawn');
+  });
+    async function pauseBills(paid = '100000') {
     await bill(101); await bill(102, { paid_amount: paid, payment_status: 'partial' });
     await bill(103, { base_amount: '100000', final_amount: '100000', payment_status: 'overdue' });
     await bill(104, { paid_amount: '300000', payment_status: 'paid' });

@@ -288,8 +288,10 @@ async function adjustPausedPayment(context) {
 }
 
 async function cleanupWithdrawal(context) {
-    const { pool, studentId, academyId, userId, status } = context;
-    if (!['withdrawn', 'graduated'].includes(status)) return null;
+    const { pool, studentId, academyId, userId, status, oldStatus } = context;
+    // 이번 저장으로 퇴원·졸업이 될 때만 정산한다. 이미 퇴원한 학생의 연락처만 고친 저장(화면은 상태도 같이 보낸다)은
+    // 정산을 다시 하지 않는다 — 예전엔 정산한 청구를 다시 일할하려다 "기존 일할 청구의 원금이 없어…" 409 로 저장이 막혔다.
+    if (!['withdrawn', 'graduated'].includes(status) || status === oldStatus) return null;
 
     const today = getKoreaDateText();
     const withdrawalInfo = await lifecycleBilling.withdraw(pool, {
