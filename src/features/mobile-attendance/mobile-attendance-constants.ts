@@ -27,31 +27,31 @@ export const EXCUSED_REASONS = [
 
 export const STATUS_META: Record<
   MarkableAttendanceStatus,
-  { label: string; buttonClassName: string; activeClassName: string; badgeClassName: string }
+  { label: string; buttonClassName: string; activeClassName: string; badgeVariant: 'success' | 'warning' | 'destructive' | 'default' }
 > = {
   present: {
     label: '출석',
-    buttonClassName: 'border-success/30 bg-success-soft text-success',
-    activeClassName: 'border-success bg-success text-white',
-    badgeClassName: 'border-success/30 bg-success-soft text-success',
+    buttonClassName: 'bg-success-soft text-success',
+    activeClassName: 'bg-success text-success-foreground',
+    badgeVariant: 'success',
   },
   late: {
     label: '지각',
-    buttonClassName: 'border-warning/30 bg-warning-soft text-warning',
-    activeClassName: 'border-warning bg-warning text-white',
-    badgeClassName: 'border-warning/30 bg-warning-soft text-warning',
+    buttonClassName: 'bg-warning-soft text-warning',
+    activeClassName: 'bg-warning text-warning-foreground',
+    badgeVariant: 'warning',
   },
   absent: {
     label: '결석',
-    buttonClassName: 'border-destructive/30 bg-destructive-soft text-destructive',
-    activeClassName: 'border-destructive bg-destructive text-white',
-    badgeClassName: 'border-destructive/30 bg-destructive-soft text-destructive',
+    buttonClassName: 'bg-destructive-soft text-destructive',
+    activeClassName: 'bg-destructive text-destructive-foreground',
+    badgeVariant: 'destructive',
   },
   excused: {
     label: '공결',
-    buttonClassName: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300',
-    activeClassName: 'border-sky-600 bg-sky-600 text-white dark:border-sky-400',
-    badgeClassName: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/50 dark:text-sky-300',
+    buttonClassName: 'bg-primary-soft text-primary',
+    activeClassName: 'bg-primary text-primary-foreground',
+    badgeVariant: 'default',
   },
 };
 

@@ -1,5 +1,7 @@
-import { AlertCircle } from 'lucide-react';
+import { CalendarX2, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/page';
+import { MobileBottomBar, MobileErrorCard, MobileSkeleton } from '../mobile-home/mobile-screen';
 import type { AttendanceStatus, TimeSlot } from '@/lib/types/schedule';
 import type { MarkableAttendanceStatus, MobileAttendanceStudent } from './mobile-attendance-types';
 import { getTimeSlotLabel } from './mobile-attendance-utils';
@@ -37,42 +39,25 @@ export function MobileAttendanceList({
   onStatusChange,
 }: MobileAttendanceListProps) {
   if (loading) {
-    return (
-      <div className="space-y-3" data-testid="mobile-attendance-loading">
-        {[0, 1, 2].map((key) => (
-          <div key={key} className="h-40 animate-pulse rounded-lg border border-border bg-card" />
-        ))}
-      </div>
-    );
+    return <MobileSkeleton className="h-40" testId="mobile-attendance-loading" />;
   }
 
   if (error) {
-    return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive-soft p-4 text-destructive">
-        <p className="text-sm font-medium">{error}</p>
-        <Button variant="outline" className="mt-3 w-full border-destructive/30 bg-card" onClick={onRetry}>
-          다시 불러오기
-        </Button>
-      </div>
-    );
+    return <MobileErrorCard message={error} onRetry={onRetry} />;
   }
 
   if (!scheduleId && students.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card px-4 py-12 text-center">
-        <AlertCircle className="mx-auto h-10 w-10 text-muted-foreground" />
-        <p className="mt-3 text-sm font-medium text-secondary-foreground">
-          {dateLabel} {getTimeSlotLabel(timeSlot)}에 등록된 수업이 없습니다.
-        </p>
+      <div className="rounded-2xl bg-card">
+        <EmptyState icon={CalendarX2} title={`${dateLabel} ${getTimeSlotLabel(timeSlot)}에 등록된 수업이 없어요`} />
       </div>
     );
   }
 
   if (students.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card px-4 py-12 text-center">
-        <AlertCircle className="mx-auto h-10 w-10 text-muted-foreground" />
-        <p className="mt-3 text-sm font-medium text-secondary-foreground">배정된 학생이 없습니다.</p>
+      <div className="rounded-2xl bg-card">
+        <EmptyState icon={Users} title="배정된 학생이 없어요" />
       </div>
     );
   }
@@ -93,11 +78,11 @@ export function MobileAttendanceList({
         ))}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-4 backdrop-blur">
-        <Button type="button" className="h-12 w-full" onClick={onAllPresent} disabled={saving}>
+      <MobileBottomBar>
+        <Button type="button" size="lg" className="w-full" onClick={onAllPresent} disabled={saving}>
           전체 출석
         </Button>
-      </div>
+      </MobileBottomBar>
     </>
   );
 }

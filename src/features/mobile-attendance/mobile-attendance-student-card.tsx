@@ -1,5 +1,7 @@
-import { Phone, UserRound } from 'lucide-react';
+import { Phone } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils/cn';
 import type { AttendanceStatus } from '@/lib/types/schedule';
 import { MARKABLE_STATUSES, STATUS_META } from './mobile-attendance-constants';
 import type { MarkableAttendanceStatus, MobileAttendanceStudent } from './mobile-attendance-types';
@@ -25,39 +27,34 @@ export function MobileAttendanceStudentCard({
   const activeMeta = activeStatus ? STATUS_META[activeStatus] : null;
 
   return (
-    <article
-      className="rounded-lg border border-border bg-card p-4 shadow-sm"
-      data-testid="mobile-attendance-row"
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-secondary-foreground">
-          <UserRound className="h-5 w-5" />
+    <article className="rounded-2xl bg-card p-4" data-testid="mobile-attendance-row">
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-[15px] font-bold text-secondary-foreground">
+          {student.student_name.charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
-            <h2 className="truncate text-base font-semibold text-foreground">{student.student_name}</h2>
-            {activeMeta && <span className={`shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium ${activeMeta.badgeClassName}`}>{activeMeta.label}</span>}
+            <h2 className="truncate text-[17px] font-bold text-foreground">{student.student_name}</h2>
+            {activeMeta && <Badge variant={activeMeta.badgeVariant} className="shrink-0">{activeMeta.label}</Badge>}
           </div>
-          <div className="mt-1 flex flex-wrap gap-1.5 text-xs text-muted-foreground">
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
             {student.grade && student.grade !== '0' && student.grade !== '00' && <span>{student.grade}</span>}
-            {student.is_season_student && <span className="rounded-full bg-warning-soft px-1.5 py-0.5 text-warning">시즌</span>}
-            {student.is_makeup && <span className="rounded-full bg-violet-50 px-1.5 py-0.5 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300">보충</span>}
-            {student.assigned === false && <span className="rounded-full bg-muted px-1.5 py-0.5 text-secondary-foreground">오늘 수업 아님</span>}
-            {student.is_trial && <span className="rounded-full bg-pink-50 px-1.5 py-0.5 text-pink-700 dark:bg-pink-950/50 dark:text-pink-300">체험 {student.trial_remaining ?? 0}회</span>}
+            {student.is_season_student && <Badge variant="warning">시즌</Badge>}
+            {student.is_makeup && <Badge variant="default">보충</Badge>}
+            {student.assigned === false && <Badge variant="secondary">오늘 수업 아님</Badge>}
+            {student.is_trial && <Badge variant="success">체험 {student.trial_remaining ?? 0}회</Badge>}
           </div>
         </div>
-        <Button type="button" variant="ghost" size="icon" onClick={() => onCall(student.phone)} aria-label={`${student.student_name} 전화`} className="shrink-0">
-          <Phone className="h-4 w-4" />
+        <Button type="button" variant="outline" size="icon" onClick={() => onCall(student.phone)} aria-label={`${student.student_name} 전화`} className="shrink-0 rounded-full">
+          <Phone className="h-5 w-5" />
         </Button>
       </div>
 
       {note && (
-        <div className="mt-3 rounded-lg bg-muted px-3 py-2 text-sm text-secondary-foreground">
-          {note}
-        </div>
+        <p className="mt-3 rounded-xl bg-muted px-3 py-2.5 text-sm text-secondary-foreground">{note}</p>
       )}
 
-      <div className="mt-3 grid grid-cols-4 gap-1.5">
+      <div className="mt-3 grid grid-cols-4 gap-2">
         {MARKABLE_STATUSES.map((status) => {
           const meta = STATUS_META[status];
           const active = attendanceStatus === status;
@@ -66,8 +63,12 @@ export function MobileAttendanceStudentCard({
               type="button"
               key={status}
               disabled={saving}
+              aria-pressed={active}
               onClick={() => onStatusChange(student, status)}
-              className={`rounded-lg border px-2 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:opacity-50 ${active ? meta.activeClassName : meta.buttonClassName}`}
+              className={cn(
+                'h-11 rounded-xl text-[15px] font-bold transition active:scale-[0.98] disabled:opacity-50',
+                active ? meta.activeClassName : meta.buttonClassName
+              )}
             >
               {meta.label}
             </button>
