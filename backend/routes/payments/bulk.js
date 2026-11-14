@@ -15,6 +15,8 @@
  *
  * 응답 표면 보존 (ADR-013):
  *   POST /bulk-monthly                  → { message, created, updated, skipped, withNonSeasonProrated, withCarryover, year, month, due_date }
+ *                                          (due_date = 마지막으로 계산한 학생의 납부기한. 예전에는 이 값이 반복문 밖에서 정의되지 않아
+ *                                           청구를 다 만든 뒤 응답에서 500 이 났다 — 2026-11-14 고침)
  *   POST /generate-prorated             → { message, payment, proration } (201)
  *   POST /generate-monthly-for-student  → { message, payment, nonSeasonProrated } (201)
  *   4xx                                 → { error, message }
@@ -104,6 +106,8 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
         let skipped = 0;
         let withNonSeasonProrated = 0;
         let withCarryover = 0;
+        // 응답의 due_date: 마지막으로 계산한 학생의 납부기한(학생마다 납부일이 달라 하나만 대표로)
+        let lastDueDate = null;
 
         for (const student of students) {
             // 학생별 납부기한 계산 (스케줄러와 동일한 로직)
@@ -114,11 +118,8 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
             } catch (e) {
                 classDays = [];
             }
-            // ⚠️ 원본 동작 보존 (ADR-013) — `const due_date` 가 for 블록 안에서 declare 되어
-            // 응답 객체의 `due_date` 키가 ReferenceError 를 throw → 5xx 분기로 빠짐.
-            // 학생 0명 early return 만 정상 응답. lesson #227 (원본 동작 보존) 패턴.
-            // 본 endpoint 의 fix 는 별도 트랙 (응답 표면 표준화) 에서 진행.
             const due_date = calculateDueDate(year, month, studentDueDay, classDays);
+            lastDueDate = due_date;
 
             const baseAmount = parseFloat(student.monthly_tuition) || 0;
             const discountRate = parseFloat(student.discount_rate) || 0;
@@ -289,7 +290,7 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
             withCarryover,
             year,
             month,
-            due_date
+            due_date: lastDueDate
         });
     } catch (error) {
         logger.error('Error creating bulk monthly charges:', error);

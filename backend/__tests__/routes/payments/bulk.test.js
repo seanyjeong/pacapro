@@ -3,7 +3,7 @@
  *
  * 회귀 보호 범위:
  *   - POST /paca/payments/bulk-monthly                  → { message, created, updated, skipped, withNonSeasonProrated, withCarryover, year, month, due_date }
- *     ⚠️ 원본 동작 보존 (ADR-013 / lesson #227): students.length > 0 일 때 due_date ReferenceError → 5xx
+ *     학생이 있으면 due_date = 마지막으로 계산한 납부기한 (예전 due_date ReferenceError → 5xx 는 2026-11-14 고침)
  *   - POST /paca/payments/generate-prorated             → { message, payment, proration } (201)
  *   - POST /paca/payments/generate-monthly-for-student  → { message, payment, nonSeasonProrated } (201)
  *   - DB 호출: pool.execute (ADR-005, db.query 잔존 0건)
@@ -91,9 +91,8 @@ describe('POST /paca/payments/bulk-monthly', () => {
         expect(res.body.due_date).toBeUndefined();
     });
 
-    test('⚠️ 원본 동작 보존 (lesson #227): 학생 존재 시 due_date ReferenceError → 5xx', async () => {
-        // 원본 (line 848) 의 due_date 가 for 블록 안 const 라 응답 객체에서 ReferenceError.
-        // ADR-013 응답 표면 보존: 동일 broken 동작 1:1 보존.
+    test('200: 학생이 있으면 청구를 만들고 due_date 는 마지막으로 계산한 납부기한(예전 ReferenceError 500 고침)', async () => {
+        pool.query.mockResolvedValue([[]]); // 비시즌 종강 일할 대상 없음
         pool.execute
             .mockResolvedValueOnce([[{ tuition_due_day: 5 }]])
             .mockResolvedValueOnce([[
@@ -105,9 +104,11 @@ describe('POST /paca/payments/bulk-monthly', () => {
         const res = await request(makeApp())
             .post('/paca/payments/bulk-monthly')
             .send({ year: 2026, month: 5 });
-        expect(res.status).toBe(500);
-        expect(res.body.message).toBe('학원비 일괄 생성에 실패했습니다.');
-        expect(res.body.error).toBe('Server Error');
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ created: 1, updated: 0, skipped: 0, year: 2026, month: 5, due_date: '2026-05-05' });
+        // 100,000원·할인 10% → 할인 10,000, 최종 90,000
+        const insert = pool.execute.mock.calls.find(([sql]) => /INSERT INTO student_payments/.test(sql));
+        expect([insert[1][3], insert[1][4], insert[1][8]]).toEqual([100000, 10000, 90000]);
     });
 
     test('500: SQL 에러 시 한국어 메시지', async () => {
