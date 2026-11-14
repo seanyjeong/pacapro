@@ -146,6 +146,20 @@ describe('PUT /paca/consultations/settings/info', () => {
         expect(res.body.error).toBe('이미 사용 중인 주소입니다.');
     });
 
+    test('페이지 주소만 저장하면 상담 설정을 기본값으로 덮지 않는다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[]])   // slug 중복 확인
+            .mockResolvedValueOnce([{}]);  // academies slug UPDATE
+
+        const res = await request(makeApp())
+            .put('/paca/consultations/settings/info')
+            .send({ slug: 'new-page' });
+
+        expect(res.status).toBe(200);
+        expect(pool.execute).toHaveBeenCalledTimes(2);
+        expect(pool.execute.mock.calls.some(([sql]) => /consultation_settings/.test(sql))).toBe(false);
+    });
+
     test('정상 UPSERT → { message }', async () => {
         // slug 미포함 → academies 조회 skip, UPSERT 1건만 호출
         pool.execute.mockResolvedValueOnce([{}]);
@@ -181,7 +195,7 @@ describe('PUT /paca/consultations/settings/info', () => {
         pool.execute.mockRejectedValueOnce(new Error('DB X'));
         const res = await request(makeApp())
             .put('/paca/consultations/settings/info')
-            .send({});
+            .send({ pageTitle: '상담 예약' });
         expect(res.status).toBe(500);
         expect(res.body.error).toBe('서버 오류가 발생했습니다.');
     });

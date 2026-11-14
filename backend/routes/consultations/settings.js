@@ -144,6 +144,15 @@ module.exports = function (router) {
                 await pool.execute('UPDATE academies SET slug = ? WHERE id = ?', [slug, academyId]);
             }
 
+            // 페이지 주소만 저장할 때는 설정을 건드리지 않는다. 아래 UPSERT 는 보내지 않은 칸을 기본값으로 덮는다.
+            const settingsSent = [
+                isEnabled, pageTitle, pageDescription, slotDuration, maxReservationsPerSlot, advanceDays,
+                referralSources, sendConfirmationAlimtalk, confirmationTemplateCode, minAdvanceHours, checklist_template
+            ].some((value) => value !== undefined);
+            if (!settingsSent) {
+                return res.json({ message: '설정이 저장되었습니다.' });
+            }
+
             // 설정 UPSERT
             await pool.execute(
                 `INSERT INTO consultation_settings (
