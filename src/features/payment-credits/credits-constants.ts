@@ -31,15 +31,15 @@ export const CREDIT_TYPE_OPTIONS = [
 ] as const;
 
 export const CREDIT_STATUS_BADGE_COLORS: Record<Credit['status'], string> = {
-  pending: 'border-warning/30 bg-warning-soft text-warning',
-  partial: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300',
-  applied: 'border-success/30 bg-success-soft text-success',
-  refunded: 'border-violet-200 bg-violet-50 text-violet-700 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-300',
-  cancelled: 'border-border bg-muted text-secondary-foreground',
+  pending: 'bg-warning-soft text-warning',
+  partial: 'bg-primary-soft text-primary',
+  applied: 'bg-success-soft text-success',
+  refunded: 'bg-destructive-soft text-destructive',
+  cancelled: 'bg-muted text-secondary-foreground',
 };
 
 export const CREDIT_TYPE_BADGE_COLORS: Record<Credit['credit_type'], string> = {
-  carryover: 'border-primary/30 bg-primary-soft text-primary',
-  refund: 'border-destructive/30 bg-destructive-soft text-destructive',
-  manual: 'border-border bg-muted text-secondary-foreground',
+  carryover: 'bg-primary-soft text-primary',
+  refund: 'bg-destructive-soft text-destructive',
+  manual: 'bg-muted text-secondary-foreground',
 };
