@@ -29,10 +29,10 @@ export function InstructorScheduleRow({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-lg border p-3 transition-all',
+        'overflow-hidden rounded-xl p-3 transition-colors',
         isSelected
-          ? `${activeSlotInfo.bgColor} ${activeSlotInfo.darkBgColor} border-current`
-          : 'border-border bg-card hover:border-muted-foreground'
+          ? 'bg-primary-soft ring-2 ring-inset ring-primary/40'
+          : 'bg-muted hover:bg-muted/70'
       )}
     >
       <div className="flex items-center justify-between">
@@ -44,7 +44,7 @@ export function InstructorScheduleRow({
           <div
             className={cn(
               'flex h-8 w-8 items-center justify-center rounded-full transition-colors',
-              isSelected ? 'bg-card' : 'bg-muted'
+              isSelected ? 'bg-card' : 'bg-card/70'
             )}
           >
             {isSelected ? (
@@ -54,9 +54,9 @@ export function InstructorScheduleRow({
             )}
           </div>
           <div>
-            <span className="font-medium">{instructor.name}</span>
+            <span className="text-[15px] font-semibold text-foreground">{instructor.name}</span>
             {isHourly && (
-              <Badge variant="outline" className="ml-2 border-warning/30 bg-warning-soft text-xs text-warning">
+              <Badge variant="warning" className="ml-2">
                 시급제
               </Badge>
             )}
@@ -65,7 +65,7 @@ export function InstructorScheduleRow({
       </div>
 
       {isSelected && isHourly && (
-        <div className="mt-3 border-t border-border/50 pt-3">
+        <div className="mt-3 pt-1">
           <div className="flex flex-wrap items-center gap-2">
             <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
             <div className="flex min-w-0 flex-1 items-center gap-2">

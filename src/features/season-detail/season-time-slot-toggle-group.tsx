@@ -10,14 +10,14 @@ interface SeasonTimeSlotToggleGroupProps {
 
 export function SeasonTimeSlotToggleGroup({ selectedSlots, updating, onChange }: SeasonTimeSlotToggleGroupProps) {
   return (
-    <div className="flex gap-1" aria-label="시간대">
+    <div className="flex gap-1 rounded-xl bg-muted p-1" aria-label="시간대">
       {DETAIL_TIME_SLOTS.map((slot) => {
         const selected = selectedSlots.includes(slot);
         return (
           <button
             key={slot}
-            className={`rounded-md px-2 py-1 text-xs transition ${
-              selected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            className={`h-9 min-w-11 rounded-lg px-2.5 text-[13px] font-semibold transition ${
+              selected ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
             } ${updating ? 'cursor-not-allowed opacity-50' : ''}`}
             disabled={updating}
             type="button"

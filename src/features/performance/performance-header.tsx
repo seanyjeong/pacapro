@@ -1,4 +1,7 @@
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page';
+import { cn } from '@/lib/utils';
+import { PerformanceJungsiLinkButton } from './performance-jungsi-link-button';
 import type { JungsiStatus } from './performance-types';
 import { isJungsiLinked, isJungsiReady } from './performance-utils';
 
@@ -6,38 +9,46 @@ interface PerformanceHeaderProps {
   status: JungsiStatus | null;
   statusError: string | null;
   statusLoading: boolean;
+  onRefreshStatus: () => void;
 }
 
-export function PerformanceHeader({ status, statusError, statusLoading }: PerformanceHeaderProps) {
+export function PerformanceHeader({ status, statusError, statusLoading, onRefreshStatus }: PerformanceHeaderProps) {
   const ready = isJungsiReady(status, statusError);
   const linked = isJungsiLinked(status);
 
   return (
-    <header className="flex flex-col gap-3 border-b border-border/70 pb-4 md:flex-row md:items-end md:justify-between">
-      <div>
-        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">성적관리</h1>
-        <p className="mt-1 text-sm text-muted-foreground">내신과 모의고사 성적을 한 화면에서 확인합니다.</p>
-      </div>
-      <div className="flex h-9 w-fit items-center gap-2 rounded-md border border-border bg-card px-3 text-sm shadow-sm">
-        {statusLoading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            <span className="text-muted-foreground">연결 확인 중</span>
-          </>
-        ) : ready ? (
-          <>
-            <CheckCircle2 className="h-4 w-4 text-success" />
-            <span className="font-medium text-success">정시엔진 연결됨</span>
-          </>
-        ) : (
-          <>
-            <AlertCircle className="h-4 w-4 text-warning" />
-            <span className="font-medium text-warning">
-              {statusError || linked ? '정시엔진 연결 확인 필요' : '정시엔진 연동 필요'}
-            </span>
-          </>
-        )}
-      </div>
-    </header>
+    <PageHeader
+      title="성적관리"
+      description="내신과 모의고사 성적을 한 화면에서 봐요."
+      actions={
+        <>
+          <span
+            className={cn(
+              'inline-flex h-11 items-center gap-2 rounded-xl px-3.5 text-sm font-semibold',
+              statusLoading ? 'bg-muted text-muted-foreground' : ready ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning'
+            )}
+            data-testid="performance-engine-status"
+          >
+            {statusLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                연결 확인 중
+              </>
+            ) : ready ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                정시엔진 연결됨
+              </>
+            ) : (
+              <>
+                <AlertCircle className="h-4 w-4" />
+                {statusError || linked ? '정시엔진 연결 확인 필요' : '정시엔진 연동 필요'}
+              </>
+            )}
+          </span>
+          <PerformanceJungsiLinkButton status={status} onRefresh={onRefreshStatus} />
+        </>
+      }
+    />
   );
 }

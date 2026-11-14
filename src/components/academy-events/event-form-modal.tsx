@@ -95,41 +95,41 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4">
             <div
                 aria-labelledby="academy-event-form-title"
                 aria-modal="true"
-                className="mx-4 max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-md border border-border bg-background"
+                className="max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-card pb-[env(safe-area-inset-bottom)] shadow-xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-2xl sm:pb-0"
                 role="dialog"
             >
-                <div className="flex items-center justify-between p-4 border-b border-border">
-                    <h2 id="academy-event-form-title" className="text-lg font-semibold text-foreground">
+                <div className="flex items-center justify-between px-6 pb-1 pt-5">
+                    <h2 id="academy-event-form-title" className="text-[19px] font-bold tracking-tight text-foreground">
                         {event ? '일정 수정' : '일정 등록'}
                     </h2>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
                         aria-label={event ? '일정 수정 닫기' : '일정 등록 닫기'}
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4 px-6 pb-6 pt-3">
                     {/* 일정 타입 선택 */}
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">일정 타입</label>
+                        <label className="mb-2 block text-[13px] font-semibold text-secondary-foreground">일정 타입</label>
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                             {(Object.keys(EVENT_TYPE_LABELS) as AcademyEventType[]).map((type) => (
                                 <button
                                     key={type}
                                     type="button"
                                     onClick={() => handleEventTypeChange(type)}
-                                    className={`min-h-10 whitespace-nowrap rounded-md border px-2 py-2 text-sm font-medium transition-colors
+                                    className={`min-h-11 whitespace-nowrap rounded-xl px-2 py-2 text-sm font-semibold transition-colors
                                         ${formData.event_type === type
-                                            ? 'text-white border-transparent'
-                                            : 'bg-background text-foreground border-border hover:bg-muted'
+                                            ? 'text-white'
+                                            : 'bg-muted text-secondary-foreground hover:text-foreground'
                                         }`}
                                     style={formData.event_type === type ? { backgroundColor: EVENT_TYPE_COLORS[type] } : {}}
                                 >
@@ -141,12 +141,12 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
 
                     {/* 제목 */}
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">제목 *</label>
+                        <label className="mb-1.5 block text-[13px] font-semibold text-secondary-foreground">제목 *</label>
                         <input
                             type="text"
                             value={formData.title}
                             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
+                            className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
                             placeholder="일정 제목"
                             required
                         />
@@ -154,12 +154,12 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
 
                     {/* 날짜 */}
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">날짜 *</label>
+                        <label className="mb-1.5 block text-[13px] font-semibold text-secondary-foreground">날짜 *</label>
                         <input
                             type="date"
                             value={formData.event_date}
                             onChange={(e) => setFormData(prev => ({ ...prev, event_date: e.target.value }))}
-                            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
+                            className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
                             required
                         />
                     </div>
@@ -181,7 +181,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                         <div className="space-y-3">
                             {/* 빠른 시간 선택 버튼 */}
                             <div>
-                                <label className="block text-sm font-medium text-foreground mb-2">빠른 선택</label>
+                                <label className="mb-2 block text-[13px] font-semibold text-secondary-foreground">빠른 선택</label>
                                 <div className="grid grid-cols-3 gap-2">
                                     {[
                                         { label: '오전', start: '09:00', end: '12:00' },
@@ -196,10 +196,10 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                                                 start_time: preset.start,
                                                 end_time: preset.end
                                             }))}
-                                            className={`px-3 py-2 rounded-md text-sm font-medium border transition-colors
+                                            className={`h-11 rounded-xl px-3 text-sm font-semibold transition-colors
                                                 ${formData.start_time === preset.start && formData.end_time === preset.end
-                                                    ? 'bg-primary text-primary-foreground border-primary'
-                                                    : 'bg-background text-foreground border-border hover:bg-muted'
+                                                    ? 'bg-primary-soft text-primary ring-2 ring-inset ring-primary/40'
+                                                    : 'bg-muted text-secondary-foreground hover:text-foreground'
                                                 }`}
                                         >
                                             {preset.label}
@@ -211,11 +211,11 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                             {/* 세부 시간 선택 */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1">시작 시간</label>
+                                    <label className="mb-1.5 block text-[13px] font-semibold text-secondary-foreground">시작 시간</label>
                                     <select
                                         value={formData.start_time}
                                         onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
-                                        className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
+                                        className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
                                     >
                                         <option value="">선택</option>
                                         {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => (
@@ -226,11 +226,11 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-foreground mb-1">종료 시간</label>
+                                    <label className="mb-1.5 block text-[13px] font-semibold text-secondary-foreground">종료 시간</label>
                                     <select
                                         value={formData.end_time}
                                         onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
-                                        className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
+                                        className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
                                     >
                                         <option value="">선택</option>
                                         {Array.from({ length: 15 }, (_, i) => i + 7).map((hour) => (
@@ -246,17 +246,17 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
 
                     {/* 설명 */}
                     <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">설명</label>
+                        <label className="mb-1.5 block text-[13px] font-semibold text-secondary-foreground">설명</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                            className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md"
+                            className="w-full rounded-xl border border-transparent bg-muted px-3 py-2.5 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
                             rows={3}
                             placeholder="일정 설명 (선택)"
                         />
                     </div>
 
-                    <div className="p-3 bg-destructive-soft rounded-md border border-destructive/30">
+                    <div className="rounded-xl bg-destructive-soft p-3">
                         <div className="flex items-center gap-2 mb-2">
                             <input
                                 type="checkbox"
@@ -277,7 +277,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                         )}
                     </div>
 
-                    <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
+                    <div className="flex items-start justify-between gap-4 rounded-xl bg-muted p-3">
                         <div className="space-y-1">
                             <label htmlFor="block_consultation" className="cursor-pointer text-sm font-medium">
                                 상담 차단
@@ -302,7 +302,7 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
 
                     {submitError && (
                         <div
-                            className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
+                            className="rounded-xl bg-warning-soft p-4 text-warning"
                             role="alert"
                         >
                             <div className="flex items-start gap-3">
@@ -315,11 +315,11 @@ export function EventFormModal({ isOpen, onClose, onSubmit, event, selectedDate 
                         </div>
                     )}
 
-                    <div className="flex justify-end gap-2 pt-4">
-                        <Button type="button" variant="outline" onClick={onClose}>
+                    <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+                        <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onClose}>
                             취소
                         </Button>
-                        <Button type="submit" disabled={loading}>
+                        <Button type="submit" className="w-full sm:w-auto" disabled={loading}>
                             {loading ? '처리 중...' : event ? '수정' : '등록'}
                         </Button>
                     </div>

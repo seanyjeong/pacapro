@@ -23,30 +23,22 @@ export function AttendanceReasonModal({
   const reasons = isExcused ? EXCUSED_REASONS : ABSENT_REASONS;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4">
+      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-card pb-[env(safe-area-inset-bottom)] shadow-xl sm:rounded-2xl sm:pb-0">
+        <div className="flex items-center justify-between px-5 pb-2 pt-5">
+          <h3 className="flex items-center gap-2 text-[19px] font-bold tracking-tight">
             <AlertCircle className={cn('h-5 w-5', isExcused ? 'text-primary' : 'text-destructive')} />
             {isExcused ? '공결 사유 입력' : '결석 사유 입력'}
           </h3>
-          <Button variant="ghost" size="sm" onClick={onCancel} aria-label="닫기">
+          <Button variant="ghost" size="icon-sm" onClick={onCancel} aria-label="닫기">
             <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="p-4 space-y-4">
-          <div className="text-center py-2">
-            <p className="font-medium text-lg">{data.studentName}</p>
-            <Badge
-              variant="outline"
-              className={cn(
-                'mt-1',
-                isExcused
-                  ? 'bg-primary-soft text-primary border-primary/30'
-                  : 'bg-destructive-soft text-destructive border-destructive/30'
-              )}
-            >
+        <div className="space-y-4 px-5 pb-2">
+          <div className="flex items-center gap-2 py-1">
+            <p className="text-[17px] font-bold">{data.studentName}</p>
+            <Badge variant={isExcused ? 'default' : 'destructive'}>
               {isExcused ? '공결' : '결석'}
             </Badge>
           </div>
@@ -54,7 +46,7 @@ export function AttendanceReasonModal({
           {isExcused ? <ExcusedHelp /> : <AbsentHelp />}
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">사유 선택</label>
+            <label className="text-[13px] font-semibold text-secondary-foreground">사유 선택</label>
             <div className="grid grid-cols-2 gap-2">
               {reasons.map((option) => (
                 <ReasonChoice
@@ -79,11 +71,11 @@ export function AttendanceReasonModal({
 
           {data.reason === '기타' && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">사유 입력</label>
+              <label className="text-[13px] font-semibold text-secondary-foreground">사유 입력</label>
               <Textarea
                 value={data.customReason}
                 onChange={(event) => onChange({ ...data, customReason: event.target.value })}
-                placeholder="사유를 입력하세요..."
+                placeholder="사유를 입력해 주세요"
                 rows={2}
                 className="resize-none"
               />
@@ -91,7 +83,7 @@ export function AttendanceReasonModal({
           )}
         </div>
 
-        <div className="flex gap-2 p-4 border-t">
+        <div className="flex gap-2 p-5">
           <Button variant="outline" className="flex-1" onClick={onCancel}>
             취소
           </Button>
@@ -110,7 +102,7 @@ export function AttendanceReasonModal({
 
 function ExcusedHelp() {
   return (
-    <div className="bg-primary-soft border border-primary/30 rounded-lg p-3">
+    <div className="rounded-xl bg-primary-soft p-3">
       <div className="flex items-start gap-2">
         <HelpCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
         <div className="text-sm text-primary">
@@ -132,7 +124,7 @@ function ExcusedHelp() {
 
 function AbsentHelp() {
   return (
-    <div className="bg-destructive-soft border border-destructive/30 rounded-lg p-3">
+    <div className="rounded-xl bg-destructive-soft p-3">
       <div className="flex items-start gap-2">
         <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
         <div className="text-sm text-destructive">
@@ -163,12 +155,12 @@ function ReasonChoice({ selected, isExcused, onClick, children, className }: Rea
       type="button"
       onClick={onClick}
       className={cn(
-        'p-3 border rounded-lg text-sm font-medium transition-all',
+        'h-12 rounded-xl px-3 text-[15px] font-semibold transition-colors',
         selected
           ? isExcused
-            ? 'border-primary bg-primary-soft text-primary'
-            : 'border-destructive bg-destructive-soft text-destructive'
-          : 'border-border hover:border-muted-foreground/40',
+            ? 'bg-primary-soft text-primary ring-2 ring-inset ring-primary/50'
+            : 'bg-destructive-soft text-destructive ring-2 ring-inset ring-destructive/50'
+          : 'bg-muted text-secondary-foreground hover:text-foreground',
         className
       )}
     >

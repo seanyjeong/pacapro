@@ -1,5 +1,6 @@
 import { Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page';
 
 interface SeasonListHeaderProps {
   onAddSeason: () => void;
@@ -8,21 +9,20 @@ interface SeasonListHeaderProps {
 
 export function SeasonListHeader({ onAddSeason, onRefresh }: SeasonListHeaderProps) {
   return (
-    <header className="flex flex-col gap-4 border-b border-border/70 pb-4 md:flex-row md:items-end md:justify-between">
-      <div>
-        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">시즌 관리</h1>
-        <p className="mt-1 text-sm text-muted-foreground">수시/정시 시즌 등록 및 관리</p>
-      </div>
-      <div className="grid grid-cols-2 gap-2 sm:flex">
-        <Button variant="outline" onClick={onRefresh}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          새로고침
-        </Button>
-        <Button onClick={onAddSeason}>
-          <Plus className="mr-2 h-4 w-4" />
-          시즌 등록
-        </Button>
-      </div>
-    </header>
+    <PageHeader
+      title="시즌 관리"
+      description="수시·정시 시즌을 등록하고 학생을 배정해요."
+      actions={
+        <>
+          <Button variant="outline" size="icon" onClick={onRefresh} aria-label="새로고침" title="새로고침">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Button onClick={onAddSeason}>
+            <Plus className="h-4 w-4" />
+            시즌 등록
+          </Button>
+        </>
+      }
+    />
   );
 }

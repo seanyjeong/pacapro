@@ -28,7 +28,7 @@ export function InstructorScheduleLoadingState() {
 
 export function InstructorScheduleErrorState({ message, onRetry }: ErrorProps) {
   return (
-    <div className="rounded-md border border-destructive/30 bg-destructive-soft p-4 text-sm text-destructive" role="alert">
+    <div className="rounded-xl bg-destructive-soft p-4 text-sm text-destructive" role="alert">
       <div className="flex items-start gap-2">
         <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />
         <div className="min-w-0 flex-1">

@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { ClassSchedule, ScheduleFormData, TimeSlot } from '@/lib/types/schedule';
 import { TIME_SLOT_LABELS } from '@/lib/types/schedule';
 import { cn } from '@/lib/utils';
@@ -102,15 +101,11 @@ export function ScheduleForm({
   };
 
   return (
-    <Card className="rounded-md">
-      <CardHeader className="border-b border-border px-4 py-3">
-        <CardTitle className="text-base tracking-normal">{schedule ? '수업 수정' : '수업 등록'}</CardTitle>
-      </CardHeader>
-      <CardContent className="p-4">
+    <section className="rounded-2xl bg-card p-5 sm:p-6">
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-5">
           {loadError && (
             <div
-              className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
+              className="rounded-xl bg-warning-soft p-4 text-warning"
               role="alert"
             >
               <div className="flex items-start gap-3">
@@ -148,7 +143,7 @@ export function ScheduleForm({
                   key={slot}
                   type="button"
                   variant={timeSlot === slot ? 'default' : 'outline'}
-                  className={cn('h-10', errors.time_slot && 'border-destructive')}
+                  className={cn(errors.time_slot && 'ring-2 ring-destructive')}
                   aria-pressed={timeSlot === slot}
                   onClick={() => setValue('time_slot', slot, { shouldDirty: true, shouldValidate: true })}
                 >
@@ -196,7 +191,7 @@ export function ScheduleForm({
               placeholder="예: 소방수업"
             />
             <p className="text-sm text-muted-foreground">
-              입력하지 않으면 자동으로 생성됩니다
+              비워 두면 자동으로 만들어요
             </p>
           </div>
 
@@ -222,7 +217,7 @@ export function ScheduleForm({
 
           {submitError && (
             <div
-              className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning"
+              className="rounded-xl bg-warning-soft p-4 text-warning"
               role="alert"
             >
               <div className="flex items-start gap-3">
@@ -235,18 +230,17 @@ export function ScheduleForm({
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
             {onCancel && (
-              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+              <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={onCancel} disabled={isSubmitting}>
                 취소
               </Button>
             )}
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
               {isSubmitting ? '처리 중...' : schedule ? '수정' : '등록'}
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+    </section>
   );
 }

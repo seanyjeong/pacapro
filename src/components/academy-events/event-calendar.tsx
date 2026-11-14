@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import type { AcademyEvent } from '@/lib/types/academyEvent';
 
 interface EventCalendarProps {
@@ -13,6 +14,8 @@ interface EventCalendarProps {
     onEventDelete: (event: AcademyEvent) => void;
     onMonthChange: (yearMonth: string) => void;
     initialYearMonth?: string;
+    /** 달력 아래에 놓는 범례(종류별 건수). */
+    legend?: React.ReactNode;
 }
 
 // 로컬 시간 기준 날짜 문자열 생성 (YYYY-MM-DD)
@@ -44,6 +47,7 @@ export function EventCalendar({
     onEventDelete,
     onMonthChange,
     initialYearMonth,
+    legend,
 }: EventCalendarProps) {
     const [currentDate, setCurrentDate] = useState(() => {
         if (initialYearMonth) {
@@ -111,61 +115,167 @@ export function EventCalendar({
     const todayStr = formatLocalDate(new Date());
 
     return (
-        <div className="bg-card rounded-lg border border-border overflow-hidden">
-            {/* 헤더 */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={handlePrevMonth} aria-label="이전 달">
-                        <ChevronLeft className="w-4 h-4" />
-                    </Button>
-                    <h2 className="text-lg font-semibold text-foreground min-w-[140px] text-center">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
+            <section className="min-w-0 rounded-2xl bg-card px-2 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-5" aria-label="학원일정 달력">
+                {/* 헤더 */}
+                <div className="mb-3 flex items-center justify-between gap-2 px-2 sm:px-0">
+                    <h2 className="text-[17px] font-bold tracking-tight text-foreground">
                         {year}년 {month + 1}월
                     </h2>
-                    <Button variant="outline" size="sm" onClick={handleNextMonth} aria-label="다음 달">
-                        <ChevronRight className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                        <Button variant="outline" size="sm" onClick={handleToday}>
+                            오늘
+                        </Button>
+                        <Button variant="outline" size="icon-sm" onClick={handlePrevMonth} aria-label="이전 달">
+                            <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <Button variant="outline" size="icon-sm" onClick={handleNextMonth} aria-label="다음 달">
+                            <ChevronRight className="w-4 h-4" />
+                        </Button>
+                    </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleToday}>
-                    오늘
-                </Button>
-            </div>
 
-            <div className="border-b border-border bg-muted/20 p-4">
-                <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">이번 달 일정</h3>
-                    <span className="text-xs text-muted-foreground">{monthEvents.length}건</span>
+                {/* 요일 헤더 */}
+                <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+                    {weekDays.map((day, index) => (
+                        <div
+                            key={day}
+                            className={cn(
+                                'py-1.5 text-center text-[13px] font-semibold',
+                                index === 0 ? 'text-destructive' : index === 6 ? 'text-primary' : 'text-muted-foreground'
+                            )}
+                        >
+                            {day}
+                        </div>
+                    ))}
+
+                    {/* 달력 그리드 */}
+                    {calendarData.map((cell, index) => {
+                        if (!cell.date) {
+                            return <div key={index} className="min-h-[76px] sm:min-h-[104px]" />;
+                        }
+
+                        const dateStr = formatLocalDate(cell.date);
+                        const dayOfWeek = cell.date.getDay();
+                        const isToday = dateStr === todayStr;
+                        const hasHoliday = cell.events.some(e => e.is_holiday);
+
+                        return (
+                            <div
+                                key={index}
+                                className={cn(
+                                    'min-h-[76px] min-w-0 overflow-hidden rounded-xl p-0.5 transition-colors sm:min-h-[104px] sm:p-1.5',
+                                    canEditEvents && 'cursor-pointer hover:bg-muted',
+                                    hasHoliday && 'bg-destructive-soft hover:bg-destructive-soft'
+                                )}
+                                onClick={() => {
+                                    if (canEditEvents) onDateClick(dateStr);
+                                }}
+                            >
+                                <div className="mb-1 flex items-center justify-between px-0.5">
+                                    <span
+                                        className={cn(
+                                            'flex h-6 min-w-6 items-center justify-center rounded-full text-[13px] font-bold tabular-nums',
+                                            isToday
+                                                ? 'bg-primary text-primary-foreground'
+                                                : dayOfWeek === 0 || hasHoliday ? 'text-destructive' : dayOfWeek === 6 ? 'text-primary' : 'text-foreground'
+                                        )}
+                                    >
+                                        {cell.date.getDate()}
+                                    </span>
+                                    {canEditEvents ? (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDateClick(dateStr);
+                                            }}
+                                            className="hidden h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-card hover:text-foreground sm:flex"
+                                            aria-label={`${dateStr} 일정 등록`}
+                                        >
+                                            <Plus className="w-3.5 h-3.5" />
+                                        </button>
+                                    ) : null}
+                                </div>
+                                <div className="space-y-0.5 sm:space-y-1">
+                                    {cell.events.slice(0, 3).map((event, eventIndex) => (
+                                        <div
+                                            key={event.id}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (canEditEvents) onEventClick(event);
+                                            }}
+                                            className={cn(
+                                                'group relative truncate rounded-md px-1 py-0.5 text-[11px] font-semibold leading-tight sm:px-1.5 sm:text-xs',
+                                                eventIndex === 2 && 'hidden sm:block',
+                                                canEditEvents && 'cursor-pointer'
+                                            )}
+                                            style={{ backgroundColor: event.color + '20', color: event.color }}
+                                        >
+                                            <span className="truncate">{event.title}</span>
+                                            {canEditEvents ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onEventDelete(event);
+                                                    }}
+                                                    className="absolute right-0.5 top-1/2 hidden -translate-y-1/2 rounded bg-card p-0.5 opacity-0 hover:bg-destructive-soft group-hover:opacity-100 sm:block"
+                                                    aria-label={`${event.title} 삭제`}
+                                                >
+                                                    <Trash2 className="w-3 h-3 text-destructive" />
+                                                </button>
+                                            ) : null}
+                                        </div>
+                                    ))}
+                                    {cell.events.length > 2 && (
+                                        <div className={cn('px-1 text-[11px] font-semibold text-muted-foreground', cell.events.length <= 3 && 'sm:hidden')}>
+                                            <span className="sm:hidden">+{cell.events.length - 2}</span>
+                                            <span className="hidden sm:inline">+{cell.events.length - 3}개 더보기</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                {legend ? <div className="mt-4 border-t border-border/60 px-2 pt-4 sm:px-0">{legend}</div> : null}
+            </section>
+
+            <section className="min-w-0 rounded-2xl bg-card px-5 pb-3 pt-5 sm:px-6" aria-label="이번 달 일정 목록">
+                <div className="mb-2 flex items-center justify-between">
+                    <h3 className="text-[17px] font-bold tracking-tight text-foreground">이번 달 일정</h3>
+                    <span className="text-[13px] font-semibold text-muted-foreground tabular-nums">{monthEvents.length}건</span>
                 </div>
                 {monthEvents.length === 0 ? (
-                    <p className="rounded-md border border-dashed border-border bg-background px-3 py-4 text-sm text-muted-foreground">
-                        등록된 일정이 없습니다. 날짜의 + 버튼이나 일정 등록으로 새 일정을 추가하세요.
+                    <p className="py-8 text-center text-sm text-muted-foreground">
+                        등록된 일정이 없어요. 날짜의 + 버튼이나 일정 등록으로 새 일정을 추가해 주세요.
                     </p>
                 ) : (
-                    <div className="max-h-52 space-y-2 overflow-y-auto pr-1">
+                    <div className="max-h-[560px] divide-y divide-border/60 overflow-y-auto">
                         {monthEvents.map((event) => (
-                            <div key={event.id} className="flex items-center gap-2 rounded-md border border-border bg-background p-2">
+                            <div key={event.id} className="flex items-center gap-2 py-2">
                                 <button
                                     type="button"
                                     disabled={!canEditEvents}
                                     onClick={() => onEventClick(event)}
-                                    className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-default"
+                                    className="-mx-1 flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-xl px-1 py-1 text-left transition-colors hover:bg-muted disabled:cursor-default disabled:hover:bg-transparent"
                                     aria-label={canEditEvents ? `${event.title} 수정` : `${event.title} 일정`}
                                 >
                                     <span
-                                        className="h-8 w-1.5 shrink-0 rounded-full"
+                                        className="h-9 w-1.5 shrink-0 rounded-full"
                                         style={{ backgroundColor: event.color }}
                                     />
                                     <span className="min-w-0">
-                                        <span className="block text-xs text-muted-foreground">
+                                        <span className="block truncate text-[15px] font-semibold text-foreground">{event.title}</span>
+                                        <span className="block text-[13px] text-muted-foreground">
                                             {formatEventDate(event.event_date)} · {formatEventTime(event)}
                                         </span>
-                                        <span className="block truncate text-sm font-medium text-foreground">{event.title}</span>
                                     </span>
                                 </button>
                                 {canEditEvents ? (
                                     <button
                                         type="button"
                                         onClick={() => onEventDelete(event)}
-                                        className="rounded-md p-2 text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
+                                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted-foreground hover:bg-destructive-soft hover:text-destructive"
                                         aria-label={`${event.title} 삭제`}
                                     >
                                         <Trash2 className="h-4 w-4" />
@@ -175,100 +285,7 @@ export function EventCalendar({
                         ))}
                     </div>
                 )}
-            </div>
-
-            {/* 요일 헤더 */}
-            <div className="grid grid-cols-7 border-b border-border">
-                {weekDays.map((day, index) => (
-                    <div
-                        key={day}
-                        className={`p-2 text-center text-sm font-medium
-                            ${index === 0 ? 'text-destructive' : index === 6 ? 'text-primary' : 'text-muted-foreground'}`}
-                    >
-                        {day}
-                    </div>
-                ))}
-            </div>
-
-            {/* 달력 그리드 */}
-            <div className="grid grid-cols-7">
-                {calendarData.map((cell, index) => {
-                    if (!cell.date) {
-                        return <div key={index} className="min-h-[100px] bg-muted/30 border-b border-r border-border" />;
-                    }
-
-                    const dateStr = formatLocalDate(cell.date);
-                    const dayOfWeek = cell.date.getDay();
-                    const isToday = dateStr === todayStr;
-                    const hasHoliday = cell.events.some(e => e.is_holiday);
-
-                    return (
-                        <div
-                            key={index}
-                            className={`min-h-[100px] border-b border-r border-border p-1 transition-colors
-                                ${canEditEvents ? 'cursor-pointer hover:bg-muted/50' : ''}
-                                ${hasHoliday ? 'bg-destructive-soft' : ''}`}
-                            onClick={() => {
-                                if (canEditEvents) onDateClick(dateStr);
-                            }}
-                        >
-                            <div className="flex items-center justify-between mb-1">
-                                <span
-                                    className={`text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full
-                                        ${isToday ? 'bg-primary text-primary-foreground' : ''}
-                                        ${dayOfWeek === 0 || hasHoliday ? 'text-destructive' : dayOfWeek === 6 ? 'text-primary' : 'text-foreground'}`}
-                                >
-                                    {cell.date.getDate()}
-                                </span>
-                                {canEditEvents ? (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onDateClick(dateStr);
-                                        }}
-                                        className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
-                                        aria-label={`${dateStr} 일정 등록`}
-                                    >
-                                        <Plus className="w-3 h-3" />
-                                    </button>
-                                ) : null}
-                            </div>
-                            <div className="space-y-1">
-                                {cell.events.slice(0, 3).map((event) => (
-                                    <div
-                                        key={event.id}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (canEditEvents) onEventClick(event);
-                                        }}
-                                        className={`group relative px-1.5 py-0.5 rounded text-xs font-medium truncate ${canEditEvents ? 'cursor-pointer' : ''}`}
-                                        style={{ backgroundColor: event.color + '20', color: event.color }}
-                                    >
-                                        <span className="truncate">{event.title}</span>
-                                        {canEditEvents ? (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onEventDelete(event);
-                                                }}
-                                                className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-destructive-soft"
-                                                aria-label={`${event.title} 삭제`}
-                                            >
-                                                <Trash2 className="w-3 h-3 text-destructive" />
-                                            </button>
-                                        ) : null}
-                                    </div>
-                                ))}
-                                {cell.events.length > 3 && (
-                                    <div className="text-xs text-muted-foreground px-1.5">
-                                        +{cell.events.length - 3}개 더보기
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+            </section>
         </div>
     );
 }

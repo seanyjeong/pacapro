@@ -8,15 +8,15 @@ interface SeasonPaymentStatusBadgeProps {
 
 export function SeasonPaymentStatusBadge({ status }: SeasonPaymentStatusBadgeProps) {
   return (
-    <Badge className="rounded-md" variant={getPaymentVariant(status)}>
+    <Badge variant={getPaymentVariant(status)}>
       {getPaymentStatusLabel(status)}
     </Badge>
   );
 }
 
-function getPaymentVariant(status: PaymentStatus): 'success' | 'warning' | 'destructive' | 'outline' {
+function getPaymentVariant(status: PaymentStatus): 'success' | 'warning' | 'destructive' | 'secondary' {
   if (status === 'paid') return 'success';
   if (status === 'partial') return 'warning';
   if (status === 'pending') return 'destructive';
-  return 'outline';
+  return 'secondary';
 }

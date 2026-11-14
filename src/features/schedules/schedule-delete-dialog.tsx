@@ -27,7 +27,7 @@ export function ScheduleDeleteDialog({
 }: ScheduleDeleteDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="rounded-md">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>수업 삭제</AlertDialogTitle>
           <AlertDialogDescription>

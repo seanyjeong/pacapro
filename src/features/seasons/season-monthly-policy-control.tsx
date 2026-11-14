@@ -15,18 +15,18 @@ export function SeasonMonthlyPolicyControl({ value, onChange }: SeasonMonthlyPol
   const currentValue = value || DEFAULT_SEASON_MONTHLY_POLICY;
 
   return (
-    <div className="border-t border-border/70 p-4">
+    <div className="border-t border-border/60 px-5 pb-5 pt-4 sm:px-6 sm:pb-6">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
             <ReceiptText className="h-4 w-4 text-muted-foreground" />
-            <h3 className="text-sm font-semibold text-foreground">월납부 처리</h3>
+            <h3 className="text-[15px] font-bold text-foreground">월납부 처리</h3>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
             이 시즌에 등록한 학생의 기존 월 학원비 처리 기준입니다.
           </p>
         </div>
-        <span className="rounded-md border border-border bg-muted/50 px-2 py-1 text-xs font-medium text-muted-foreground">
+        <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground">
           시즌별
         </span>
       </div>
@@ -41,10 +41,10 @@ export function SeasonMonthlyPolicyControl({ value, onChange }: SeasonMonthlyPol
               aria-checked={selected}
               onClick={() => onChange(option.value)}
               className={cn(
-                'min-h-[86px] rounded-md border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-primary/20',
+                'min-h-[86px] rounded-xl px-4 py-3 text-left transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/20',
                 selected
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border bg-background text-foreground hover:border-primary/50'
+                  ? 'bg-primary-soft text-primary ring-2 ring-inset ring-primary/50'
+                  : 'bg-muted text-foreground hover:bg-muted/70'
               )}
             >
               <span className="block text-sm font-semibold">{option.label}</span>

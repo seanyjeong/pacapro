@@ -1,6 +1,7 @@
 import { User, UserPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/page';
 import type { TimeSlot } from '@/lib/types/schedule';
 import { MakeupStudentSearch } from './makeup-student-search';
 import { StudentAttendanceCard } from './student-attendance-card';
@@ -61,17 +62,17 @@ export function StudentAttendanceSection({
 }: StudentAttendanceSectionProps) {
   return (
     <section>
-      <div className="flex items-center gap-2 mb-3">
+      <div className="mb-3 flex items-center gap-2">
         <User className="h-4 w-4 text-muted-foreground" />
-        <h3 className="font-semibold text-foreground">학생 출결</h3>
+        <h3 className="text-[15px] font-bold text-foreground">학생 출결</h3>
         <Badge variant="secondary">{students.length}명</Badge>
         <Button
           size="sm"
-          variant="outline"
-          className="ml-auto h-7 text-xs"
+          variant="secondary"
+          className="ml-auto"
           onClick={() => onShowAddStudent(true)}
         >
-          <UserPlus className="h-3.5 w-3.5 mr-1" />
+          <UserPlus className="h-4 w-4" />
           보충 추가
         </Button>
       </div>
@@ -89,10 +90,7 @@ export function StudentAttendanceSection({
       )}
 
       {students.length === 0 ? (
-        <div className="py-8 text-center">
-          <User className="h-10 w-10 mx-auto text-muted-foreground/50 mb-2" />
-          <p className="text-muted-foreground text-sm">배정된 학생이 없습니다</p>
-        </div>
+        <EmptyState icon={User} title="배정된 학생이 없어요" className="py-6" />
       ) : (
         <div className="space-y-2">
           {sortStudentsForAttendance(students).map((student) => (

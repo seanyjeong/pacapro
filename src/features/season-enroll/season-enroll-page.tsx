@@ -27,7 +27,7 @@ export function SeasonEnrollPage() {
 
   return (
     <div
-      className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl"
+      className="mx-auto w-full min-w-0 max-w-7xl space-y-4"
       data-testid="season-enroll-workspace"
     >
       <SeasonEnrollHeader season={state.season} onBack={() => router.push(`/seasons/${seasonId}`)} />

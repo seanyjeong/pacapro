@@ -23,8 +23,8 @@ export const TIME_SLOT_INFO: Record<TimeSlot, {
   evening: {
     label: '저녁',
     icon: Moon,
-    color: 'text-purple-600 dark:text-purple-400',
-    bgColor: 'bg-purple-100 dark:bg-purple-950',
+    color: 'text-secondary-foreground',
+    bgColor: 'bg-muted',
   },
 };
 
@@ -35,17 +35,17 @@ export const OTHER_SLOTS: Record<TimeSlot, TimeSlot[]> = {
 };
 
 export const INSTRUCTOR_ATTENDANCE_STATUS = [
-  { value: 'present', label: '출근', color: 'bg-success' },
-  { value: 'absent', label: '결근', color: 'bg-destructive' },
-  { value: 'late', label: '지각', color: 'bg-warning' },
-  { value: 'half_day', label: '반차', color: 'bg-primary' },
+  { value: 'present', label: '출근', color: 'bg-success-soft text-success ring-2 ring-inset ring-success/50' },
+  { value: 'absent', label: '결근', color: 'bg-destructive-soft text-destructive ring-2 ring-inset ring-destructive/50' },
+  { value: 'late', label: '지각', color: 'bg-warning-soft text-warning ring-2 ring-inset ring-warning/50' },
+  { value: 'half_day', label: '반차', color: 'bg-primary-soft text-primary ring-2 ring-inset ring-primary/50' },
 ] as const;
 
 export const STUDENT_ATTENDANCE_STATUS = [
-  { value: 'present', label: '출석', color: 'bg-success' },
-  { value: 'absent', label: '결석', color: 'bg-destructive' },
-  { value: 'late', label: '지각', color: 'bg-warning' },
-  { value: 'excused', label: '공결', color: 'bg-primary' },
+  { value: 'present', label: '출석', color: 'bg-success-soft text-success ring-2 ring-inset ring-success/50' },
+  { value: 'absent', label: '결석', color: 'bg-destructive-soft text-destructive ring-2 ring-inset ring-destructive/50' },
+  { value: 'late', label: '지각', color: 'bg-warning-soft text-warning ring-2 ring-inset ring-warning/50' },
+  { value: 'excused', label: '공결', color: 'bg-primary-soft text-primary ring-2 ring-inset ring-primary/50' },
 ] as const;
 
 export const EXCUSED_REASONS = [

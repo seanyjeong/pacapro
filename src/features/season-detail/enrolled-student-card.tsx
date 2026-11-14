@@ -36,12 +36,12 @@ export function EnrolledStudentCard({
   const hasPaidAmount = hasPaidSeasonAmount(enrollment);
 
   return (
-    <article className="space-y-4 px-4 py-4" data-testid="enrolled-student-card">
+    <article className="space-y-3 px-5 py-4" data-testid="enrolled-student-card">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <Link
             aria-label={`${enrollment.student_name ?? '학생'} 학생 상세`}
-            className="inline-flex items-center gap-1.5 font-semibold text-foreground underline-offset-4 hover:underline"
+            className="inline-flex items-center gap-1.5 text-[16px] font-bold text-foreground underline-offset-4 hover:underline"
             href={`/students/${enrollment.student_id}`}
           >
             <UserRound className="h-4 w-4 text-muted-foreground" />
@@ -55,8 +55,8 @@ export function EnrolledStudentCard({
         <SeasonPaymentStatusBadge status={enrollment.payment_status} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-md bg-muted p-3">
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="rounded-xl bg-muted p-3">
           <p className="text-xs text-muted-foreground">시즌비</p>
           {discountAmount > 0 ? (
             <div className="mt-1 space-y-0.5">
@@ -68,7 +68,7 @@ export function EnrolledStudentCard({
           )}
           <SeasonPaymentAmountSummary enrollment={enrollment} />
         </div>
-        <div className="rounded-md bg-muted p-3">
+        <div className="rounded-xl bg-muted p-3">
           <p className="text-xs text-muted-foreground">등록일</p>
           <p className="mt-1 font-medium text-foreground">
             {enrollment.registration_date || enrollment.registered_at?.split('T')[0] || '-'}
@@ -91,7 +91,7 @@ export function EnrolledStudentCard({
         <div className="flex justify-end gap-2">
           {hasPaidAmount ? (
             <Button className="text-warning hover:text-warning" size="sm" type="button" variant="ghost" onClick={onOpenRefund}>
-              <Receipt className="mr-1 h-4 w-4" />
+              <Receipt className="h-4 w-4" />
               환불
             </Button>
           ) : (
@@ -103,7 +103,7 @@ export function EnrolledStudentCard({
               variant="ghost"
               onClick={onCancel}
             >
-              {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="mr-1 h-4 w-4" />}
+              {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
               {!cancelling ? '취소' : null}
             </Button>
           )}

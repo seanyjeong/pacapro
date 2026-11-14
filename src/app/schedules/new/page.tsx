@@ -61,10 +61,9 @@ function NewSchedulePageContent() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-5 py-4 md:py-8">
+    <div className="mx-auto w-full max-w-3xl space-y-4">
       <SchedulePageHeader
-        description="날짜, 시간대, 담당 강사를 지정해 수업 일정을 등록합니다."
-        eyebrow="Schedule Editor"
+        description="날짜, 시간대, 담당 강사를 정해 수업을 등록해요."
         onBack={() => router.push('/schedules')}
         title="수업 등록"
       />

@@ -7,9 +7,10 @@
  */
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Sun, Sunrise, Moon, User, UserCheck, Sparkles, PhoneCall } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, User, UserCheck, Sparkles, PhoneCall } from 'lucide-react';
+import { toneIcon } from '@/components/ui/page';
+import { TIME_SLOT_META } from '@/features/schedules/time-slot-meta';
 import { cn } from '@/lib/utils';
 import {
   generateCalendarGrid,
@@ -44,12 +45,6 @@ interface ScheduleCalendarV2Props {
   currentMonth: number;  // 부모에서 관리하는 월
   onConsultationClick?: (date: string) => void;  // 상담 클릭 시 상담 달력으로 이동
 }
-
-const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; bgColor: string }[] = [
-  { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-warning', bgColor: 'bg-warning-soft hover:bg-warning-soft border-warning/30 hover:shadow-sm' },
-  { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-primary', bgColor: 'bg-primary-soft hover:bg-primary-soft border-primary/30 hover:shadow-sm' },
-  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-50 dark:bg-purple-950 hover:bg-purple-100 dark:hover:bg-purple-900 border-purple-200 dark:border-purple-800 hover:shadow-sm' },
-];
 
 export function ScheduleCalendarV2({
   schedules,
@@ -123,197 +118,193 @@ export function ScheduleCalendarV2({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5" />
-            {year}년 {month + 1}월
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleToday}>
-              오늘
-            </Button>
-            <Button variant="outline" size="icon" onClick={handlePrevMonth}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleNextMonth}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+    <section className="rounded-2xl bg-card px-2 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-5" aria-label="수업 달력">
+      <div className="mb-3 flex items-center justify-between gap-2 px-2 sm:px-0">
+        <h2 className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-foreground">
+          <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+          {year}년 {month + 1}월
+        </h2>
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={handleToday}>
+            오늘
+          </Button>
+          <Button variant="outline" size="icon-sm" onClick={handlePrevMonth} aria-label="이전 달">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon-sm" onClick={handleNextMonth} aria-label="다음 달">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-1">
-          {/* 요일 헤더 */}
-          {weekdays.map((day, index) => (
+      </div>
+
+      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+        {/* 요일 헤더 */}
+        {weekdays.map((day, index) => (
+          <div
+            key={day}
+            className={cn(
+              'py-1.5 text-center text-[13px] font-semibold text-muted-foreground',
+              index === 0 && 'text-destructive',
+              index === 6 && 'text-primary'
+            )}
+          >
+            {day}
+          </div>
+        ))}
+
+        {/* 캘린더 그리드 */}
+        {calendarGrid.map((date, index) => {
+          const dateStr = formatDateToString(date);
+          const inMonth = isInMonth(date, year, month);
+          const today = isToday(dateStr);
+          const selected = dateStr === selectedDate;
+          const consultationCount = inMonth ? consultations?.[dateStr]?.length || 0 : 0;
+
+          return (
             <div
-              key={day}
+              key={index}
+              onClick={() => onDateSelect(dateStr)}
               className={cn(
-                'text-center text-sm font-semibold py-2',
-                index === 0 && 'text-destructive',
-                index === 6 && 'text-primary'
+                'min-h-[96px] min-w-0 cursor-pointer overflow-hidden rounded-xl p-0.5 text-left transition-colors sm:min-h-[128px] sm:p-1.5',
+                !inMonth && 'min-h-0 opacity-40 sm:min-h-0',
+                selected ? 'bg-primary-soft ring-2 ring-inset ring-primary' : 'hover:bg-muted'
               )}
             >
-              {day}
-            </div>
-          ))}
-
-          {/* 캘린더 그리드 */}
-          {calendarGrid.map((date, index) => {
-            const dateStr = formatDateToString(date);
-            const inMonth = isInMonth(date, year, month);
-            const today = isToday(dateStr);
-            const selected = dateStr === selectedDate;
-
-            return (
-              <div
-                key={index}
-                onClick={() => onDateSelect(dateStr)}
-                className={cn(
-                  'min-h-[140px] p-1 rounded-lg border text-left transition-all duration-200 cursor-pointer overflow-hidden',
-                  !inMonth && 'bg-muted/50 opacity-50',
-                  today && 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary border-2 shadow-sm',
-                  selected && !today && 'bg-primary/5 ring-2 ring-primary shadow-md',
-                  selected && today && 'ring-2 ring-primary shadow-md',
-                  !selected && !today && 'hover:shadow-sm hover:border-primary/30'
-                )}
-              >
-                <div className="flex flex-col h-full">
-                  {/* 날짜 + 상담 */}
-                  <div className="flex items-center justify-between mb-1 px-1 shrink-0">
-                    <span
-                      className={cn(
-                        'text-sm font-semibold shrink-0',
-                        today && 'text-primary',
-                        !today && index % 7 === 0 && 'text-destructive',
-                        !today && index % 7 === 6 && 'text-primary',
-                        !inMonth && 'text-muted-foreground'
-                      )}
-                    >
-                      {date.getDate()}
-                    </span>
-                    {/* 상담 예약 표시 */}
-                    {inMonth && consultations?.[dateStr] && consultations[dateStr].length > 0 && (
-                      <span
-                        className="flex items-center gap-0.5 text-xs text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-pink-100 dark:hover:bg-pink-900 transition-all hover:shadow-sm shrink-0"
-                        title={`상담 ${consultations[dateStr].length}건 - 클릭하여 상담 달력으로 이동`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onConsultationClick?.(dateStr);
-                        }}
-                      >
-                        <PhoneCall className="h-3 w-3 shrink-0" />
-                        <span className="shrink-0">{consultations[dateStr].length}</span>
-                      </span>
+              <div className="flex h-full flex-col">
+                {/* 날짜 + 상담 */}
+                <div className="mb-1 flex shrink-0 items-center justify-between gap-0.5 px-0.5">
+                  <span
+                    className={cn(
+                      'flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full text-[13px] font-bold tabular-nums',
+                      today && 'bg-primary text-primary-foreground',
+                      !today && index % 7 === 0 && 'text-destructive',
+                      !today && index % 7 === 6 && 'text-primary',
+                      !today && index % 7 !== 0 && index % 7 !== 6 && 'text-foreground'
                     )}
-                  </div>
-
-                  {/* 타임 슬롯들 */}
-                  {inMonth && (
-                    <div className="flex-1 space-y-0.5 overflow-hidden">
-                      {TIME_SLOTS.map(({ slot, label, icon: Icon, color, bgColor }) => {
-                        const key = `${dateStr}_${slot}`;
-                        const schedule = scheduleMap.get(key);
-                        const studentCount = schedule?.student_count || 0;
-                        const trialCount = schedule?.trial_count || 0;
-
-                        // 강사 통계
-                        const dayStats = instructorStats?.[dateStr];
-                        const slotStats = dayStats?.[slot];
-                        const scheduledInstructors = slotStats?.scheduled || 0;
-                        const attendedInstructors = slotStats?.attended || 0;
-
-                        return (
-                          <div
-                            key={slot}
-                            aria-label={label}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSlotClick?.(dateStr, slot);
-                            }}
-                            onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, dateStr, slot)}
-                            className={cn(
-                              'flex items-center gap-1 px-0.5 py-0.5 rounded text-xs border transition-all cursor-pointer overflow-hidden sm:px-1',
-                              bgColor,
-                              draggedStudent && 'ring-1 ring-dashed ring-muted-foreground'
-                            )}
-                          >
-                            <Icon className={cn('h-3 w-3 shrink-0', color)} />
-                            <span className={cn('hidden shrink-0 font-medium sm:inline', color)}>{label}</span>
-                            <div className="ml-auto flex items-center gap-1 shrink-0 overflow-hidden">
-                              {/* 강사 출근/배정 현황 */}
-                              {scheduledInstructors > 0 && (
-                                <span
-                                  className={cn(
-                                    'flex items-center gap-0.5 shrink-0 px-1 py-0.5 rounded-full text-[10px] font-semibold',
-                                    attendedInstructors >= scheduledInstructors
-                                      ? 'bg-success-soft text-success'
-                                      : attendedInstructors > 0
-                                      ? 'bg-warning-soft text-warning'
-                                      : 'bg-muted text-muted-foreground'
-                                  )}
-                                  title={`출근 ${attendedInstructors}명 / 배정 ${scheduledInstructors}명`}
-                                >
-                                  <UserCheck className="h-2.5 w-2.5 shrink-0" />
-                                  <span className="shrink-0">{attendedInstructors}/{scheduledInstructors}</span>
-                                </span>
-                              )}
-                              {/* 체험생 태그 */}
-                              {trialCount > 0 && (
-                                <span className="flex items-center gap-0.5 shrink-0 px-1 py-0.5 rounded-full text-[10px] font-semibold bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400" title={`체험생 ${trialCount}명`}>
-                                  <Sparkles className="h-2.5 w-2.5 shrink-0" />
-                                  <span className="shrink-0">{trialCount}</span>
-                                </span>
-                              )}
-                              {/* 학생 수 */}
-                              {studentCount > 0 && (
-                                <span className="flex items-center gap-0.5 shrink-0 text-muted-foreground">
-                                  <User className="h-3 w-3 shrink-0" />
-                                  <span className="shrink-0">{studentCount}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  >
+                    {date.getDate()}
+                  </span>
+                  {/* 상담 예약 표시 */}
+                  {consultationCount > 0 && (
+                    <span
+                      className="flex h-5 shrink-0 cursor-pointer items-center gap-0.5 rounded-full bg-warning-soft px-1.5 text-[11px] font-bold text-warning tabular-nums transition-colors hover:bg-warning-soft/70"
+                      title={`상담 ${consultationCount}건 - 클릭하여 상담 달력으로 이동`}
+                      aria-label={`상담 ${consultationCount}건`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onConsultationClick?.(dateStr);
+                      }}
+                    >
+                      <PhoneCall className="hidden h-3 w-3 shrink-0 sm:block" />
+                      {consultationCount}
+                    </span>
                   )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
 
-        {/* 범례 */}
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex flex-wrap gap-4 text-sm">
-            {TIME_SLOTS.map(({ slot, label, icon: Icon, color }) => (
-              <div key={slot} className="flex items-center gap-2">
-                <Icon className={cn('h-4 w-4', color)} />
-                <span>{label}</span>
+                {/* 타임 슬롯들 */}
+                {inMonth && (
+                  <div className="flex-1 space-y-0.5 overflow-hidden">
+                    {TIME_SLOT_META.map(({ slot, label, icon: Icon, tone }) => {
+                      const key = `${dateStr}_${slot}`;
+                      const schedule = scheduleMap.get(key);
+                      const studentCount = schedule?.student_count || 0;
+                      const trialCount = schedule?.trial_count || 0;
+
+                      // 강사 통계
+                      const dayStats = instructorStats?.[dateStr];
+                      const slotStats = dayStats?.[slot];
+                      const scheduledInstructors = slotStats?.scheduled || 0;
+                      const attendedInstructors = slotStats?.attended || 0;
+
+                      return (
+                        <div
+                          key={slot}
+                          aria-label={label}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSlotClick?.(dateStr, slot);
+                          }}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, dateStr, slot)}
+                          className={cn(
+                            'flex h-[22px] cursor-pointer items-center gap-0.5 overflow-hidden rounded-md px-1 text-[11px] font-semibold transition-opacity hover:opacity-80 sm:h-6 sm:gap-1 sm:px-1.5 sm:text-xs',
+                            toneIcon[tone],
+                            draggedStudent && 'ring-1 ring-dashed ring-muted-foreground'
+                          )}
+                        >
+                          <Icon className="h-3 w-3 shrink-0" />
+                          <span className="hidden shrink-0 sm:inline">{label}</span>
+                          <div className="ml-auto flex shrink-0 items-center gap-1 overflow-hidden">
+                            {/* 강사 출근/배정 현황 */}
+                            {scheduledInstructors > 0 && (
+                              <span
+                                className={cn(
+                                  'hidden shrink-0 items-center gap-0.5 rounded-full px-1 text-[10px] font-bold tabular-nums lg:flex',
+                                  attendedInstructors >= scheduledInstructors
+                                    ? 'bg-success text-success-foreground'
+                                    : attendedInstructors > 0
+                                    ? 'bg-warning text-warning-foreground'
+                                    : 'bg-card text-muted-foreground'
+                                )}
+                                title={`출근 ${attendedInstructors}명 / 배정 ${scheduledInstructors}명`}
+                              >
+                                <UserCheck className="h-2.5 w-2.5 shrink-0" />
+                                <span className="shrink-0">{attendedInstructors}/{scheduledInstructors}</span>
+                              </span>
+                            )}
+                            {/* 체험생 태그 */}
+                            {trialCount > 0 && (
+                              <span className="hidden shrink-0 items-center gap-0.5 rounded-full bg-card px-1 text-[10px] font-bold text-primary tabular-nums lg:flex" title={`체험생 ${trialCount}명`}>
+                                <Sparkles className="h-2.5 w-2.5 shrink-0" />
+                                <span className="shrink-0">{trialCount}</span>
+                              </span>
+                            )}
+                            {/* 학생 수 */}
+                            {studentCount > 0 && (
+                              <span className="flex shrink-0 items-center gap-0.5 text-foreground tabular-nums" title={`학생 ${studentCount}명`}>
+                                <User className="hidden h-3 w-3 shrink-0 sm:block" />
+                                <span className="shrink-0">{studentCount}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            ))}
-            <div className="flex items-center gap-2 ml-4 border-l pl-4">
-              <UserCheck className="h-4 w-4 text-success" />
-              <span>= 강사 출근/배정</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-600" />
-              <span>= 체험생</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span>= 학생 수</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <PhoneCall className="h-4 w-4 text-pink-600" />
-              <span>= 상담 예약</span>
-            </div>
+          );
+        })}
+      </div>
+
+      {/* 범례 */}
+      <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 border-t border-border/60 px-2 pt-4 text-[13px] text-muted-foreground sm:px-0">
+        {TIME_SLOT_META.map(({ slot, label, icon: Icon, tone }) => (
+          <div key={slot} className="flex items-center gap-1.5">
+            <span className={cn('flex h-5 w-5 items-center justify-center rounded-md', toneIcon[tone])}>
+              <Icon className="h-3 w-3" />
+            </span>
+            <span>{label}</span>
           </div>
+        ))}
+        <div className="flex items-center gap-1.5">
+          <User className="h-4 w-4" />
+          <span>학생 수</span>
         </div>
-      </CardContent>
-    </Card>
+        <div className="hidden items-center gap-1.5 lg:flex">
+          <UserCheck className="h-4 w-4 text-success" />
+          <span>강사 출근/배정</span>
+        </div>
+        <div className="hidden items-center gap-1.5 lg:flex">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span>체험생</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <PhoneCall className="h-4 w-4 text-warning" />
+          <span>상담 예약</span>
+        </div>
+      </div>
+    </section>
   );
 }

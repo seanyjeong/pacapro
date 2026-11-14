@@ -23,14 +23,14 @@ export function TimeSlotDetailHeader({
   const { shortDate, dayOfWeek } = formatSlotDate(date);
 
   return (
-    <div className={cn('px-5 py-4 border-b shrink-0', slotInfo.bgColor)}>
+    <div className="shrink-0 px-5 pb-3 pt-5">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2 rounded-full bg-background/80 dark:bg-black/30">
+          <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full', slotInfo.bgColor)}>
             <Icon className={cn('h-5 w-5', slotInfo.color)} />
           </div>
           <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-foreground truncate">
+            <h2 className="truncate text-[19px] font-bold tracking-tight text-foreground">
               {shortDate} ({dayOfWeek}) {slotInfo.label}반
             </h2>
             <p className="text-sm text-muted-foreground">학생 {studentCount}명</p>
@@ -39,7 +39,7 @@ export function TimeSlotDetailHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 rounded-full hover:bg-background/60 shrink-0"
+          className="h-9 w-9 shrink-0 rounded-full"
           onClick={onClose}
           aria-label="닫기"
         >

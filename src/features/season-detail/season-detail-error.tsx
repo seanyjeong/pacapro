@@ -11,9 +11,9 @@ interface SeasonDetailErrorProps {
 
 export function SeasonDetailError({ message, onBack, onRetry }: SeasonDetailErrorProps) {
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
-      <Button type="button" variant="ghost" onClick={onBack}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
+    <div className="mx-auto w-full max-w-7xl space-y-4">
+      <Button className="-ml-2 gap-1 px-2 text-muted-foreground" size="sm" type="button" variant="ghost" onClick={onBack}>
+        <ArrowLeft className="h-4 w-4" />
         목록
       </Button>
 

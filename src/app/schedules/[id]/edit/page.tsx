@@ -57,10 +57,9 @@ export default function EditSchedulePage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto w-full max-w-3xl space-y-5 py-4 md:py-8">
+      <div className="mx-auto w-full max-w-3xl space-y-4">
         <SchedulePageHeader
-          description="수업 정보를 불러오는 중입니다."
-          eyebrow="Schedule Editor"
+          description="수업 정보를 불러오는 중이에요."
           onBack={() => router.push('/schedules')}
           title="수업 수정"
         />
@@ -71,10 +70,9 @@ export default function EditSchedulePage() {
 
   if (error || !schedule) {
     return (
-      <div className="mx-auto w-full max-w-3xl space-y-5 py-4 md:py-8">
+      <div className="mx-auto w-full max-w-3xl space-y-4">
         <SchedulePageHeader
-          description="수업 정보를 다시 불러올 수 있습니다."
-          eyebrow="Schedule Editor"
+          description="수업 정보를 다시 불러올 수 있어요."
           onBack={() => router.push('/schedules')}
           title="수업 수정"
         />
@@ -84,10 +82,9 @@ export default function EditSchedulePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-5 py-4 md:py-8">
+    <div className="mx-auto w-full max-w-3xl space-y-4">
       <SchedulePageHeader
-        description="수업 일정과 담당 강사 정보를 수정합니다."
-        eyebrow="Schedule Editor"
+        description="수업 일정과 담당 강사를 고쳐요."
         onBack={() => router.push('/schedules')}
         title="수업 수정"
       />

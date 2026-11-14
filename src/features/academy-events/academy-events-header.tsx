@@ -1,5 +1,7 @@
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { CalendarDays, Plus, Settings } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page';
 
 interface AcademyEventsHeaderProps {
   canEditEvents: boolean;
@@ -8,17 +10,27 @@ interface AcademyEventsHeaderProps {
 
 export function AcademyEventsHeader({ canEditEvents, onAddEvent }: AcademyEventsHeaderProps) {
   return (
-    <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-      <div>
-        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">학원일정</h1>
-        <p className="mt-1 text-sm text-muted-foreground">업무일정, 학원일정, 휴일 지정을 월 단위로 관리합니다.</p>
-      </div>
-      {canEditEvents && onAddEvent ? (
-        <Button className="gap-2" onClick={onAddEvent}>
-          <Plus className="h-4 w-4" />
-          일정 등록
-        </Button>
-      ) : null}
-    </header>
+    <PageHeader
+      title="학원일정"
+      description="업무일정, 학원일정, 휴일을 월 단위로 관리해요."
+      actions={
+        <>
+          <Link className={buttonVariants({ variant: 'outline' })} href="/schedules">
+            <CalendarDays className="h-4 w-4" />
+            수업 일정 확인
+          </Link>
+          <Link className={buttonVariants({ variant: 'outline' })} href="/consultations/settings">
+            <Settings className="h-4 w-4" />
+            상담 시간 설정
+          </Link>
+          {canEditEvents && onAddEvent ? (
+            <Button onClick={onAddEvent}>
+              <Plus className="h-4 w-4" />
+              일정 등록
+            </Button>
+          ) : null}
+        </>
+      }
+    />
   );
 }
