@@ -7,6 +7,8 @@ const cron = require('node-cron');
 const db = require('../config/database');
 const logger = require('../utils/logger');
 const { resolveTuitionTable, weeklyTuitionAmount } = require('../utils/tuitionSettings');
+const { pendingMonthlyTuitionUpdate } = require('../repositories/pendingMonthlyTuitionRepository');
+const { sameDecimal } = require('../utils/monthlyBillAmounts');
 
 // ===== 요일별 시간대 유틸리티 (하위호환) =====
 function parseClassDaysWithSlots(classDays, defaultTimeSlot = 'evening') {
@@ -35,8 +37,8 @@ async function applyScheduledClassDaysChanges() {
         // 변경 예정일이 오늘 이전인 학생들 조회
         // 반 학원비 표가 있으면 그 표, 없으면 학원 표로 계산한다.
         const [studentsToUpdate] = await db.query(
-            `SELECT s.id, s.name, s.class_days, s.class_days_next, s.class_days_effective_from, s.student_type, s.time_slot,
-                    c.tuition_by_weekly AS class_tuition
+            `SELECT s.id, s.academy_id, s.name, s.class_days, s.class_days_next, s.class_days_effective_from, s.student_type, s.time_slot,
+                    s.monthly_tuition, s.discount_rate, c.tuition_by_weekly AS class_tuition
              FROM students s
              LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
              WHERE s.class_days_next IS NOT NULL
@@ -95,6 +97,18 @@ async function applyScheduledClassDaysChanges() {
                         ? [JSON.stringify(newClassDays), newWeeklyCount, newTuition, student.id]
                         : [JSON.stringify(newClassDays), newWeeklyCount, student.id]
                 );
+
+                // 학원비가 실제로 바뀌면 이번 달 이후 미납 월 청구도 즉시 변경(routes/students/classDays)과 같은 함수로 맞춘다.
+                // 매달 1일 00:01 월 자동 청구가 00:05 이 예약 적용보다 먼저 돌아 예전 학원비로 청구가 생기기 때문.
+                if (newTuition !== null && !sameDecimal(newTuition, student.monthly_tuition)) {
+                    try {
+                        await db.query(...pendingMonthlyTuitionUpdate({
+                            studentId: student.id, academyId: student.academy_id, tuition: newTuition, discountRate: student.discount_rate || 0
+                        }));
+                    } catch (payErr) {
+                        logger.error(`[ClassDaysScheduler] 학생 ${student.id} 미납 청구 갱신 실패:`, payErr);
+                    }
+                }
 
                 updatedStudents.push({
                     id: student.id,
