@@ -158,7 +158,7 @@ router.put('/', verifyToken, checkPermission('settings', 'edit'), async (req, re
                 [
                     req.user.academyId,
                     tuition_due_day || 5,
-                    salary_payment_day || 10,
+                    salary_payment_day ?? 10,
                     salary_month_type || 'next',
                     morning_class_time || '09:30-12:00',
                     afternoon_class_time || '14:00-18:00',
