@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StudentAvatar } from '@/components/students/student-avatar';
@@ -84,7 +83,7 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
   // 상태 필터 버튼
   const filterButtons = [
     { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-success' },
-    { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600' },
+    { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-primary' },
     { id: 'pending' as const, label: '미등록', icon: Clock, color: 'text-warning' },
     { id: 'all' as const, label: '전체', icon: Users, color: 'text-primary' },
   ];
@@ -102,21 +101,24 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
     return (
       <div className="space-y-4">
         {/* 상태 필터 */}
-        <div className="flex items-center gap-2">
+        <div className="scrollbar-none flex items-center gap-1.5 overflow-x-auto">
           {filterButtons.map((btn) => {
             const Icon = btn.icon;
             const isActive = statusFilter === btn.id;
             return (
-              <Button
+              <button
                 key={btn.id}
-                variant={isActive ? 'default' : 'outline'}
-                size="sm"
+                type="button"
+                aria-pressed={isActive}
                 onClick={() => setStatusFilter(btn.id)}
-                className="gap-2"
+                className={cn(
+                  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold transition-colors',
+                  isActive ? 'bg-foreground text-background' : 'bg-muted text-secondary-foreground hover:text-foreground'
+                )}
               >
-                <Icon className={cn('w-4 h-4', isActive ? '' : btn.color)} />
+                <Icon className={cn('h-4 w-4', isActive ? '' : btn.color)} />
                 {btn.label}
-              </Button>
+              </button>
             );
           })}
         </div>
@@ -129,26 +131,22 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
 
         {/* 학교 카드 그리드 */}
         {schoolGroups.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              해당 조건의 학생이 없습니다.
-            </CardContent>
-          </Card>
+          <p className="py-12 text-center text-sm text-muted-foreground">해당 조건의 학생이 없어요.</p>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {schoolGroups.map(([school, schoolStudents]) => (
-              <Card
+              <button
+                type="button"
                 key={school}
-                className="cursor-pointer hover:shadow-md transition-shadow hover:border-primary"
+                className="rounded-2xl bg-muted p-4 text-left transition-colors hover:bg-primary-soft"
                 onClick={() => setSelectedSchool(school)}
               >
-                <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <School className="w-5 h-5 text-primary" />
-                    <span className="font-medium text-foreground truncate">{school}</span>
+                    <span className="truncate font-semibold text-foreground">{school}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-foreground">{schoolStudents.length}</span>
+                    <span className="text-2xl font-extrabold tabular-nums text-foreground">{schoolStudents.length}</span>
                     <span className="text-sm text-muted-foreground">명</span>
                   </div>
                   {/* 상태별 작은 배지 */}
@@ -156,25 +154,24 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
                     {statusFilter === 'all' && (
                       <>
                         {schoolStudents.filter(s => s.status === 'active').length > 0 && (
-                          <Badge variant="outline" className="text-xs text-success border-success/30">
+                          <Badge variant="success">
                             재원 {schoolStudents.filter(s => s.status === 'active').length}
                           </Badge>
                         )}
                         {schoolStudents.filter(s => s.status === 'trial').length > 0 && (
-                          <Badge variant="outline" className="text-xs text-purple-600 border-purple-300">
+                          <Badge>
                             체험 {schoolStudents.filter(s => s.status === 'trial').length}
                           </Badge>
                         )}
                         {schoolStudents.filter(s => s.status === 'pending').length > 0 && (
-                          <Badge variant="outline" className="text-xs text-warning border-warning/30">
+                          <Badge variant="warning">
                             미등록 {schoolStudents.filter(s => s.status === 'pending').length}
                           </Badge>
                         )}
                       </>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+              </button>
             ))}
           </div>
         )}
@@ -198,61 +195,59 @@ export function SchoolStudentList({ students, loading, onStudentClick }: SchoolS
         </Button>
         <div className="flex items-center gap-2">
           <School className="w-5 h-5 text-primary" />
-          <h3 className="text-lg font-semibold text-foreground">{selectedSchool}</h3>
+          <h3 className="text-lg font-bold text-foreground">{selectedSchool}</h3>
           <Badge variant="secondary">{selectedSchoolStudents.length}명</Badge>
         </div>
       </div>
 
       {/* 학생 목록 테이블 */}
-      <Card>
-        <CardContent className="p-0">
+      <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-muted/50">
+            <thead className="border-b border-border/60">
               <tr>
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">이름</th>
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">학년</th>
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">상태</th>
-                <th className="text-left p-3 text-sm font-medium text-muted-foreground">연락처</th>
+                <th className="text-left px-3 py-3 text-[13px] font-semibold text-muted-foreground">이름</th>
+                <th className="text-left px-3 py-3 text-[13px] font-semibold text-muted-foreground">학년</th>
+                <th className="text-left px-3 py-3 text-[13px] font-semibold text-muted-foreground">상태</th>
+                <th className="text-left px-3 py-3 text-[13px] font-semibold text-muted-foreground">연락처</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border/60">
               {selectedSchoolStudents.map((student) => (
                 <tr
                   key={student.id}
                   className="hover:bg-muted/50 cursor-pointer transition-colors"
                   onClick={() => onStudentClick(student.id)}
                 >
-                  <td className="p-3">
+                  <td className="px-3 py-3.5">
                     <div className="flex items-center gap-3">
                       <StudentAvatar student={student} />
                       <span className="font-medium text-foreground">{student.name}</span>
                     </div>
                   </td>
-                  <td className="p-3 text-muted-foreground">{student.grade || '-'}</td>
-                  <td className="p-3">
+                  <td className="px-3 py-3.5 text-muted-foreground">{student.grade || '-'}</td>
+                  <td className="px-3 py-3.5">
                     {student.status === 'active' && (
-                      <Badge className="bg-success-soft text-success">재원</Badge>
+                      <Badge variant="success">재원</Badge>
                     )}
                     {student.status === 'trial' && (
-                      <Badge className="bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">체험</Badge>
+                      <Badge>체험</Badge>
                     )}
                     {student.status === 'pending' && (
-                      <Badge className="bg-warning-soft text-warning">미등록</Badge>
+                      <Badge variant="warning">미등록</Badge>
                     )}
                     {student.status === 'paused' && (
-                      <Badge className="bg-warning-soft text-warning">휴원</Badge>
+                      <Badge variant="warning">휴원</Badge>
                     )}
                     {student.status === 'withdrawn' && (
                       <Badge variant="secondary">퇴원</Badge>
                     )}
                   </td>
-                  <td className="p-3 text-muted-foreground">{student.phone || student.parent_phone || '-'}</td>
+                  <td className="px-3 py-3.5 text-muted-foreground">{student.phone || student.parent_phone || '-'}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   );
 }

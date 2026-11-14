@@ -1,5 +1,13 @@
-import { Download, Loader2, Plus, RefreshCw, Upload } from 'lucide-react';
+import Link from 'next/link';
+import { CalendarDays, ClipboardList, Download, Loader2, MessageSquareText, MoreHorizontal, Plus, RefreshCw, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { PageHeader } from '@/components/ui/page';
 import type { StudentTab } from './student-page-types';
 
 interface StudentsPageHeaderProps {
@@ -12,6 +20,12 @@ interface StudentsPageHeaderProps {
     onUploadExcel: () => void;
 }
 
+const QUICK_LINKS = [
+    { href: '/students/class-days', label: '수업일 관리', icon: CalendarDays },
+    { href: '/consultations/enrolled', label: '상담 관리', icon: ClipboardList },
+    { href: '/sms', label: '문자 발송', icon: MessageSquareText },
+];
+
 export function StudentsPageHeader({
     activeTab,
     excelDownloading,
@@ -22,29 +36,45 @@ export function StudentsPageHeader({
     onUploadExcel,
 }: StudentsPageHeaderProps) {
     return (
-        <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-                <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">학생 운영</h1>
-                <p className="mt-1 text-sm text-muted-foreground">등록, 상태, 학교, 후속 관리를 한 화면에서 확인합니다.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-                <Button variant="outline" className="gap-2" onClick={onReload}>
-                    <RefreshCw className="h-4 w-4" />
-                    새로고침
-                </Button>
-                <Button variant="outline" className="gap-2" onClick={onDownloadExcel} disabled={excelDownloading}>
-                    {excelDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                    {excelDownloading ? '다운로드 중' : '엑셀'}
-                </Button>
-                <Button variant="outline" className="gap-2" onClick={onUploadExcel} disabled={excelUploading}>
-                    {excelUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                    {excelUploading ? '업로드 중' : '업로드'}
-                </Button>
-                <Button className="gap-2" onClick={onAddStudent}>
-                    <Plus className="h-4 w-4" />
-                    {activeTab === 'trial' ? '체험생 등록' : '학생 등록'}
-                </Button>
-            </div>
-        </header>
+        <PageHeader
+            title="학생 운영"
+            description="등록·상태·학교·후속 관리를 한 화면에서 봐요."
+            actions={(
+                <>
+                    <Button variant="outline" size="icon" onClick={onReload} title="새로고침" aria-label="새로고침">
+                        <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" onClick={onDownloadExcel} disabled={excelDownloading}>
+                        {excelDownloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                        {excelDownloading ? '다운로드 중' : '엑셀'}
+                    </Button>
+                    <Button variant="outline" onClick={onUploadExcel} disabled={excelUploading}>
+                        {excelUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        {excelUploading ? '업로드 중' : '업로드'}
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="icon" title="바로 가기" aria-label="바로 가기">
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {QUICK_LINKS.map((link) => (
+                                <DropdownMenuItem key={link.href} asChild>
+                                    <Link href={link.href} className="gap-2">
+                                        <link.icon className="h-4 w-4 text-muted-foreground" />
+                                        {link.label}
+                                    </Link>
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button onClick={onAddStudent}>
+                        <Plus className="h-4 w-4" />
+                        {activeTab === 'trial' ? '체험생 등록' : '학생 등록'}
+                    </Button>
+                </>
+            )}
+        />
     );
 }

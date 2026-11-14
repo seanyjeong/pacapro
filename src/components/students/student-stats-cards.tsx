@@ -6,13 +6,18 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Users, UserCheck, UserX, GraduationCap, Sparkles, Clock } from 'lucide-react';
+import { StatTile, type Tone } from '@/components/ui/page';
+import { cn } from '@/lib/utils/cn';
 import { studentsAPI } from '@/lib/api/students';
+
+type StatKey = 'active' | 'paused' | 'graduated' | 'trial' | 'pending';
 
 interface StudentStatsCardsProps {
   onStatsLoaded?: (stats: StudentStats) => void;
   refreshTrigger?: number; // 이 값이 변경될 때마다 리로드
+  /** 누르면 그 상태 목록으로 바꾼다(학생 목록 화면). */
+  activeKey?: string;
+  onSelect?: (key: StatKey) => void;
 }
 
 interface StudentStats {
@@ -24,7 +29,7 @@ interface StudentStats {
   pending: number;
 }
 
-export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStatsCardsProps) {
+export function StudentStatsCards({ onStatsLoaded, refreshTrigger, activeKey, onSelect }: StudentStatsCardsProps) {
   const [stats, setStats] = useState<StudentStats>({
     total: 0,
     active: 0,
@@ -75,75 +80,43 @@ export function StudentStatsCards({ onStatsLoaded, refreshTrigger }: StudentStat
     loadAllStudentsStats();
   }, [loadAllStudentsStats, refreshTrigger]);
 
-  const cards = [
-    {
-      title: '전체 학생',
-      value: stats.total,
-      icon: Users,
-      bgColor: 'bg-primary-soft',
-      iconColor: 'text-primary',
-    },
-    {
-      title: '재원',
-      value: stats.active,
-      icon: UserCheck,
-      bgColor: 'bg-success-soft',
-      iconColor: 'text-success',
-    },
-    {
-      title: '휴원',
-      value: stats.paused,
-      icon: UserX,
-      bgColor: 'bg-warning-soft',
-      iconColor: 'text-warning',
-    },
-    {
-      title: '졸업',
-      value: stats.graduated,
-      icon: GraduationCap,
-      bgColor: 'bg-purple-100 dark:bg-purple-900',
-      iconColor: 'text-purple-600 dark:text-purple-400',
-    },
-    {
-      title: '체험',
-      value: stats.trial,
-      icon: Sparkles,
-      bgColor: 'bg-pink-100 dark:bg-pink-900',
-      iconColor: 'text-pink-600 dark:text-pink-400',
-    },
-    {
-      title: '미등록',
-      value: stats.pending,
-      icon: Clock,
-      bgColor: 'bg-warning-soft',
-      iconColor: 'text-warning',
-    },
+  const cards: { title: string; value: number; tone: Tone; key?: StatKey; ariaLabel?: string }[] = [
+    { title: '전체 학생', value: stats.total, tone: 'neutral' },
+    { title: '재원', value: stats.active, tone: 'success', key: 'active', ariaLabel: '재원 학생 보기' },
+    { title: '휴원', value: stats.paused, tone: 'warning', key: 'paused', ariaLabel: '휴원 학생 보기' },
+    { title: '졸업', value: stats.graduated, tone: 'primary', key: 'graduated', ariaLabel: '졸업 학생 보기' },
+    { title: '체험', value: stats.trial, tone: 'primary', key: 'trial', ariaLabel: '체험 학생 보기' },
+    { title: '미등록', value: stats.pending, tone: 'warning', key: 'pending', ariaLabel: '미등록 학생 보기' },
   ];
 
   return (
-    <div className="overflow-x-auto pb-1 md:overflow-visible md:pb-0">
-      <div className="flex w-max gap-3 md:grid md:w-full md:grid-cols-3 lg:grid-cols-6 lg:gap-4">
+    <div className="grid grid-cols-3 gap-2 sm:gap-3 lg:grid-cols-6">
       {cards.map((card) => {
-        const Icon = card.icon;
+        const selectable = Boolean(onSelect && card.key);
+        const active = selectable && activeKey === card.key;
+        const tile = (
+          <StatTile
+            label={card.title}
+            value={loading ? '-' : <>{card.value}<span className="ml-0.5 text-base font-bold text-muted-foreground">명</span></>}
+            tone={card.tone}
+            className={cn('h-full p-4 sm:p-5', active && 'ring-2 ring-inset ring-primary/40')}
+          />
+        );
+        if (!selectable || !card.key) return <div key={card.title}>{tile}</div>;
+        const key = card.key;
         return (
-          <Card key={card.title} className="w-36 shrink-0 md:w-auto md:min-w-0 md:shrink">
-            <CardContent className="p-3 lg:p-4">
-              <div className="flex min-w-0 items-center gap-3">
-                <div className={`shrink-0 p-2 ${card.bgColor} rounded-lg`}>
-                  <Icon className={`w-5 h-5 ${card.iconColor}`} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate text-xs text-muted-foreground">{card.title}</div>
-                  <div className="text-xl font-bold text-foreground">
-                    {loading ? '-' : card.value}명
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <button
+            key={card.title}
+            type="button"
+            aria-label={card.ariaLabel}
+            aria-pressed={active}
+            onClick={() => onSelect?.(key)}
+            className="rounded-2xl text-left transition-transform focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20 active:scale-[0.99]"
+          >
+            {tile}
+          </button>
         );
       })}
-      </div>
     </div>
   );
 }

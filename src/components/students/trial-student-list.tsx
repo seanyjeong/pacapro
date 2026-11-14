@@ -122,12 +122,10 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-12 text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto" />
-          <p className="text-muted-foreground mt-2">로딩 중...</p>
-        </CardContent>
-      </Card>
+      <div className="py-12 text-center">
+        <Loader2 className="mx-auto h-7 w-7 animate-spin text-muted-foreground" />
+        <p className="mt-2 text-sm text-muted-foreground">불러오는 중이에요</p>
+      </div>
     );
   }
 
@@ -152,57 +150,52 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
   return (
     <>
       <Card>
-        <CardContent className="p-0">
+        <CardContent className="overflow-x-auto p-0">
           <table className="w-full">
-          <thead className="bg-muted border-b border-border">
+          <thead className="border-b border-border/60">
             <tr>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">이름</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학년</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">성별</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">학교</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">연락처</th>
-              <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">체험 일정</th>
-              <th className="text-center py-3 px-4 text-sm font-semibold text-muted-foreground">남은 횟수</th>
-              <th className="text-right py-3 px-4 text-sm font-semibold text-muted-foreground">액션</th>
+              <th className="text-left py-3 px-3 text-[13px] font-semibold text-muted-foreground">이름</th>
+              <th className="text-left py-3 px-3 text-[13px] font-semibold text-muted-foreground">학년</th>
+              <th className="text-left py-3 px-3 text-[13px] font-semibold text-muted-foreground">성별</th>
+              <th className="text-left py-3 px-3 text-[13px] font-semibold text-muted-foreground">학교</th>
+              <th className="text-left py-3 px-3 text-[13px] font-semibold text-muted-foreground">연락처</th>
+              <th className="text-left py-3 px-3 text-[13px] font-semibold text-muted-foreground">체험 일정</th>
+              <th className="text-center py-3 px-3 text-[13px] font-semibold text-muted-foreground">남은 횟수</th>
+              <th className="text-right py-3 px-3 text-[13px] font-semibold text-muted-foreground">액션</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border bg-card">
+          <tbody className="divide-y divide-border/60">
             {students.map((student) => {
               const trialDates = parseTrialDates(student.trial_dates);
               const remaining = student.trial_remaining ?? 0;
               const total = trialDates.length || 2; // 체험 일정 수 기준
 
               return (
-                <tr key={student.id} className="hover:bg-muted">
-                  <td className="py-3 px-4">
+                <tr key={student.id} className="transition-colors hover:bg-muted/60">
+                  <td className="py-3.5 px-3">
                     <div className="flex items-center gap-3">
                       <StudentAvatar student={student} />
                       <span className="font-medium text-foreground">{student.name}</span>
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-sm text-muted-foreground">
+                  <td className="py-3.5 px-3 text-sm text-muted-foreground">
                     {student.grade || '-'}
                   </td>
-                  <td className="py-3 px-4 text-sm text-muted-foreground">
+                  <td className="py-3.5 px-3 text-sm text-muted-foreground">
                     {student.gender === 'male' ? '남' : student.gender === 'female' ? '여' : '-'}
                   </td>
-                  <td className="py-3 px-4 text-sm text-muted-foreground">
+                  <td className="py-3.5 px-3 text-sm text-muted-foreground">
                     {student.school || '-'}
                   </td>
-                  <td className="py-3 px-4 text-sm text-muted-foreground">
+                  <td className="py-3.5 px-3 text-sm text-muted-foreground">
                     {student.phone || '-'}
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-3.5 px-3">
                     <div className="flex flex-wrap gap-1">
                       {trialDates.map((td, idx) => (
                         <Badge
                           key={idx}
-                          variant="outline"
-                          className={`text-xs flex items-center gap-1 ${
-                            td.attended
-                              ? 'bg-success-soft text-success border-success/30'
-                              : 'bg-muted text-secondary-foreground border-border'
-                          }`}
+                          variant={td.attended ? 'success' : 'secondary'}
                         >
                           <Calendar className="w-3 h-3" />
                           {td.date} {getTimeSlotLabel(td.time_slot)}
@@ -214,7 +207,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                       )}
                     </div>
                   </td>
-                  <td className="py-3 px-4 text-center">
+                  <td className="py-3.5 px-3 text-center">
                     <Badge
                       variant={remaining === 0 ? 'destructive' : 'secondary'}
                       className="font-mono"
@@ -222,7 +215,7 @@ export function TrialStudentList({ students, loading, onReload }: TrialStudentLi
                       {remaining}/{total}
                     </Badge>
                   </td>
-                  <td className="py-3 px-4 text-right">
+                  <td className="py-3.5 px-3 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <Button
                         aria-label="상담 정보 보기"
