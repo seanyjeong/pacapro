@@ -58,7 +58,7 @@ export function ConsultationCalendarDetailDialog({
           <div className="space-y-6 px-6 py-4">
             <div className="flex flex-wrap items-center gap-2">
               <ConsultationCalendarStatusBadge status={consultation.status} />
-              <Badge variant="outline" className={consultation.consultation_type === 'learning' ? 'border-success/30 text-success' : ''}>
+              <Badge variant={consultation.consultation_type === 'learning' ? 'success' : 'secondary'}>
                 {CONSULTATION_TYPE_LABELS[consultation.consultation_type]}
               </Badge>
               {consultation.consultation_type === 'learning' && consultation.learning_type && (
@@ -74,7 +74,7 @@ export function ConsultationCalendarDetailDialog({
               )}
             </div>
 
-            <div className="rounded-lg bg-primary-soft p-4">
+            <div className="rounded-xl bg-primary-soft p-4">
               <h4 className="mb-2 font-medium text-primary">상담 일정</h4>
               <div className="flex flex-wrap items-center gap-4 text-primary">
                 <span className="flex items-center gap-1">
@@ -89,7 +89,7 @@ export function ConsultationCalendarDetailDialog({
             </div>
 
             <div>
-              <h4 className="mb-2 font-medium">학생 정보</h4>
+              <h4 className="mb-2 font-bold">학생 정보</h4>
               <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                 <p><span className="text-muted-foreground">이름:</span> {consultation.student_name}</p>
                 <p><span className="text-muted-foreground">연락처:</span> {consultation.student_phone || consultation.parent_phone}</p>
@@ -100,11 +100,11 @@ export function ConsultationCalendarDetailDialog({
 
             {(hasMockGrades || hasSchoolGradeAvg || hasAdmissionType) && scores && (
               <div>
-                <h4 className="mb-3 flex items-center gap-2 font-medium">
+                <h4 className="mb-3 flex items-center gap-2 font-bold">
                   <GraduationCap className="h-4 w-4" />
                   성적 정보
                 </h4>
-                <div className="space-y-4 rounded-lg bg-muted p-4">
+                <div className="space-y-4 rounded-xl bg-muted p-4">
                   <div className="flex flex-wrap gap-6">
                     {hasSchoolGradeAvg && (
                       <span className="flex items-center gap-2">
@@ -126,7 +126,7 @@ export function ConsultationCalendarDetailDialog({
                         {Object.entries({ korean: '국어', math: '수학', english: '영어', exploration: '탐구' }).map(([subject, label]) => {
                           const value = scores.mockTestGrades?.[subject as keyof typeof scores.mockTestGrades];
                           return (
-                            <div key={subject} className="rounded-lg border bg-card p-3 text-center">
+                            <div key={subject} className="rounded-xl bg-card p-3 text-center">
                               <div className="mb-1 text-xs text-muted-foreground">{label}</div>
                               <div className={`text-lg font-bold ${value === -1 ? 'text-muted-foreground' : 'text-foreground'}`}>
                                 {value === -1 ? '-' : value ?? '-'}
@@ -154,7 +154,7 @@ export function ConsultationCalendarDetailDialog({
 
             {consultation.inquiry_content && (
               <div>
-                <h4 className="mb-2 flex items-center gap-1 font-medium">
+                <h4 className="mb-2 flex items-center gap-1 font-bold">
                   <MessageSquare className="h-4 w-4" />
                   문의 내용
                 </h4>
@@ -164,7 +164,7 @@ export function ConsultationCalendarDetailDialog({
 
             {consultation.admin_notes && (
               <div>
-                <h4 className="mb-2 font-medium">관리자 메모</h4>
+                <h4 className="mb-2 font-bold">관리자 메모</h4>
                 <p className="whitespace-pre-wrap rounded bg-warning-soft p-3 text-sm">{consultation.admin_notes}</p>
               </div>
             )}
@@ -173,9 +173,9 @@ export function ConsultationCalendarDetailDialog({
               신청일: {format(parseISO(consultation.created_at), 'yyyy-MM-dd HH:mm')}
             </p>
 
-            <div className="mt-4 border-t pt-4">
+            <div className="mt-4 border-t border-border/60 pt-4">
               <div className="mb-3 flex items-center justify-between">
-                <h4 className="flex items-center gap-2 font-medium">
+                <h4 className="flex items-center gap-2 font-bold">
                   <CheckSquare className="h-4 w-4" />
                   상담 진행
                 </h4>
@@ -186,7 +186,7 @@ export function ConsultationCalendarDetailDialog({
             </div>
 
             {consultation.linked_student_id && consultation.linked_student_is_trial && (
-              <div className="rounded-lg bg-success-soft p-4">
+              <div className="rounded-xl bg-success-soft p-4">
                 <p className="flex items-center gap-2 text-success">
                   <Sparkles className="h-4 w-4" />
                   체험 학생으로 등록 완료
@@ -197,8 +197,8 @@ export function ConsultationCalendarDetailDialog({
           </div>
         )}
         <DialogFooter>
-          <Button variant="outline" onClick={onBackToList}>목록으로</Button>
-          <Button onClick={() => onOpenChange(false)}>닫기</Button>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={onBackToList}>목록으로</Button>
+          <Button className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -25,9 +25,9 @@ export function ConsultationCalendarDayCell({
 
   return (
     <div
-      className={`group relative min-h-[74px] rounded-md border p-1.5 transition-colors sm:min-h-[96px] ${
-        hasEntries ? 'hover:bg-primary-soft/70' : 'hover:bg-muted/40'
-      } ${isToday ? 'border-primary/30 bg-primary-soft/80' : 'border-border bg-card'}`}
+      className={`group relative min-h-[74px] min-w-0 rounded-xl p-1 transition-colors sm:min-h-[96px] sm:p-1.5 ${
+        isToday ? 'bg-primary-soft' : hasEntries ? 'bg-muted/60 hover:bg-muted' : 'hover:bg-muted/60'
+      }`}
     >
       <div className="mb-1 flex items-center justify-between">
         <div className="flex items-center gap-1">
@@ -53,7 +53,7 @@ export function ConsultationCalendarDayCell({
             event.stopPropagation();
             onCreateLearning(date);
           }}
-          className="rounded-md p-0.5 opacity-0 transition-opacity hover:bg-success-soft group-hover:opacity-100 focus:opacity-100"
+          className="rounded-lg p-0.5 opacity-0 transition-opacity hover:bg-success-soft group-hover:opacity-100 focus:opacity-100"
           title="재원생 상담 등록"
         >
           <Plus className="h-3.5 w-3.5 text-success" />

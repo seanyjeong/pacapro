@@ -17,49 +17,41 @@ export function ConsultationCalendarContent() {
   const confirmedCount = state.consultations.filter((item) => item.status === 'confirmed').length;
 
   return (
-    <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl" data-testid="consultation-calendar-operations-workspace">
-        <ConsultationCalendarHeader
-          fromSchedule={state.fromSchedule}
-          memoCount={state.studentMemos.length}
-          onBack={state.handleBack}
-          totalCount={state.consultations.length}
-        />
-        {state.loadError ? (
-          <section className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-              <div>
-                <h2 className="text-sm font-semibold">상담 달력 정보를 불러오지 못했습니다</h2>
-                <p className="mt-1 text-sm">{state.loadError}</p>
-              </div>
-            </div>
-          </section>
-        ) : null}
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <ConsultationCalendarMonthCard
-            currentMonth={state.currentMonth}
-            loading={state.loading}
-            calendarDays={state.calendarDays}
-            startPadding={state.startPadding}
-            onPreviousMonth={state.previousMonth}
-            onNextMonth={state.nextMonth}
-            getConsultationsForDate={state.getConsultationsForDate}
-            getMemosForDate={state.getMemosForDate}
-            onDateClick={state.handleDateClick}
-            onCreateLearning={state.openLearningModal}
-          />
-          <ConsultationCalendarWorkQueue
-            confirmedCount={confirmedCount}
-            learningCount={learningCount}
-            memoCount={state.studentMemos.length}
-            newInquiryCount={newInquiryCount}
-            onCreateLearningToday={() => state.openLearningModal(new Date())}
-            pendingCount={pendingCount}
-            totalCount={state.consultations.length}
-          />
-        </div>
-      </div>
+    <div className="space-y-4" data-testid="consultation-calendar-operations-workspace">
+      <ConsultationCalendarHeader
+        fromSchedule={state.fromSchedule}
+        onBack={state.handleBack}
+        onCreateLearningToday={() => state.openLearningModal(new Date())}
+      />
+      {state.loadError ? (
+        <section className="flex items-start gap-3 rounded-2xl bg-warning-soft p-4 text-warning">
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+          <div>
+            <h2 className="text-sm font-semibold">상담 달력 정보를 불러오지 못했어요</h2>
+            <p className="mt-1 text-sm">{state.loadError}</p>
+          </div>
+        </section>
+      ) : null}
+      <ConsultationCalendarWorkQueue
+        confirmedCount={confirmedCount}
+        learningCount={learningCount}
+        memoCount={state.studentMemos.length}
+        newInquiryCount={newInquiryCount}
+        pendingCount={pendingCount}
+        totalCount={state.consultations.length}
+      />
+      <ConsultationCalendarMonthCard
+        currentMonth={state.currentMonth}
+        loading={state.loading}
+        calendarDays={state.calendarDays}
+        startPadding={state.startPadding}
+        onPreviousMonth={state.previousMonth}
+        onNextMonth={state.nextMonth}
+        getConsultationsForDate={state.getConsultationsForDate}
+        getMemosForDate={state.getMemosForDate}
+        onDateClick={state.handleDateClick}
+        onCreateLearning={state.openLearningModal}
+      />
       <ConsultationCalendarDayListDialog
         open={state.dayListModalOpen}
         selectedDate={state.selectedDate}
@@ -86,6 +78,6 @@ export function ConsultationCalendarContent() {
         onLearningTypeChange={state.setLearningType}
         onSubmit={state.handleLearningSubmit}
       />
-    </main>
+    </div>
   );
 }

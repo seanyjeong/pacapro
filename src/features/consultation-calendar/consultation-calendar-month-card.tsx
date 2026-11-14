@@ -2,7 +2,6 @@ import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Consultation } from '@/lib/types/consultation';
 import { ConsultationCalendarGrid } from './consultation-calendar-grid';
 import { ConsultationCalendarLegend } from './consultation-calendar-legend';
@@ -34,43 +33,37 @@ export function ConsultationCalendarMonthCard({
   onCreateLearning,
 }: ConsultationCalendarMonthCardProps) {
   return (
-    <Card className="rounded-md shadow-none" data-testid="consultation-calendar-month-card">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={onPreviousMonth}>
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <CardTitle className="text-xl">
-            {format(currentMonth, 'yyyy년 M월', { locale: ko })}
-          </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onNextMonth}>
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+    <section className="rounded-2xl bg-card px-3 pb-4 pt-4 sm:px-6 sm:pb-6" data-testid="consultation-calendar-month-card">
+      <div className="mb-3 flex items-center justify-between">
+        <Button variant="ghost" size="icon" onClick={onPreviousMonth} aria-label="이전 달">
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        <h2 className="text-xl font-extrabold tracking-tight text-foreground tabular-nums">
+          {format(currentMonth, 'yyyy년 M월', { locale: ko })}
+        </h2>
+        <Button variant="ghost" size="icon" onClick={onNextMonth} aria-label="다음 달">
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+      </div>
+      {loading ? (
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: 35 }).map((_, index) => (
+            <div key={index} className="h-24 animate-pulse rounded-xl bg-muted" />
+          ))}
         </div>
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <div className="space-y-3 py-2">
-            <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: 35 }).map((_, index) => (
-                <div key={index} className="h-24 animate-pulse rounded-md bg-muted" />
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <ConsultationCalendarGrid
-              calendarDays={calendarDays}
-              startPadding={startPadding}
-              getConsultationsForDate={getConsultationsForDate}
-              getMemosForDate={getMemosForDate}
-              onDateClick={onDateClick}
-              onCreateLearning={onCreateLearning}
-            />
-            <ConsultationCalendarLegend />
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      ) : (
+        <div className="space-y-4">
+          <ConsultationCalendarGrid
+            calendarDays={calendarDays}
+            startPadding={startPadding}
+            getConsultationsForDate={getConsultationsForDate}
+            getMemosForDate={getMemosForDate}
+            onDateClick={onDateClick}
+            onCreateLearning={onCreateLearning}
+          />
+          <ConsultationCalendarLegend />
+        </div>
+      )}
+    </section>
   );
 }

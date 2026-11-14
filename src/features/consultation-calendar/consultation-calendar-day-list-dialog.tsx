@@ -64,7 +64,7 @@ export function ConsultationCalendarDayListDialog({
                     <Clock className="h-4 w-4 text-primary" />
                     <span className="font-semibold text-primary">{time}</span>
                   </div>
-                  <div className="flex-1 border-t border-border" />
+                  <div className="flex-1 border-t border-border/60" />
                 </div>
                 <div className="space-y-2 pl-2">
                   {items.map((consultation) => {
@@ -77,13 +77,13 @@ export function ConsultationCalendarDayListDialog({
                         className="w-full text-left"
                         onClick={() => onOpenDetail(consultation)}
                       >
-                        <Card className={`transition-all hover:shadow-md ${
-                          isLearning ? 'border-success/30 hover:bg-success-soft/30' : 'hover:border-primary/30 hover:bg-primary-soft/30'
+                        <Card className={`bg-muted transition-colors ${
+                          isLearning ? 'hover:bg-success-soft' : 'hover:bg-primary-soft'
                         } ${isDone ? 'opacity-60' : ''}`}
                         >
                           <CardContent className="p-4">
-                            <div className="flex items-center justify-between gap-3">
-                              <div className="flex min-w-0 items-center gap-2">
+                            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
+                              <div className="flex min-w-0 flex-wrap items-center gap-2">
                                 <i className={`h-2.5 w-2.5 flex-shrink-0 rounded-full ${getStatusDot(consultation.status, isLearning)}`} />
                                 {isLearning && <UserCheck className="h-3.5 w-3.5 flex-shrink-0 text-success" />}
                                 <span className={`truncate font-medium ${isDone ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
@@ -92,7 +92,7 @@ export function ConsultationCalendarDayListDialog({
                                 <span className="text-sm text-muted-foreground">{consultation.student_grade}</span>
                                 <ConsultationCalendarStatusBadge status={consultation.status} />
                                 {isLearning && consultation.learning_type && (
-                                  <Badge variant="outline" className="border-success/30 text-xs text-success">
+                                  <Badge variant="success">
                                     {LEARNING_TYPE_LABELS[consultation.learning_type]}
                                   </Badge>
                                 )}
@@ -117,16 +117,16 @@ export function ConsultationCalendarDayListDialog({
                     <FileText className="h-4 w-4 text-warning" />
                     <span className="font-semibold text-warning">상담 메모</span>
                   </div>
-                  <div className="flex-1 border-t border-border" />
+                  <div className="flex-1 border-t border-border/60" />
                 </div>
                 <div className="space-y-2 pl-2">
                   {memos.map((memo) => (
-                    <Card key={`memo-${memo.id}`} className="border-warning/30">
+                    <Card key={`memo-${memo.id}`} className="bg-warning-soft/60">
                       <CardContent className="space-y-2 p-4">
                         <div className="flex min-w-0 items-center gap-2">
                           <span className="truncate font-medium text-foreground">{memo.student_name}</span>
                           <span className="text-sm text-muted-foreground">{memo.grade}</span>
-                          <Badge variant="outline" className="border-warning/30 text-xs text-warning">
+                          <Badge variant="warning">
                             {CONSULTATION_TYPE_LABELS[memo.consultation_type] || memo.consultation_type}
                           </Badge>
                         </div>
@@ -144,7 +144,7 @@ export function ConsultationCalendarDayListDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>닫기</Button>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => onOpenChange(false)}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
