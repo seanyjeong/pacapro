@@ -14,7 +14,7 @@ export function RecipientButton({ label, detail, selected, onClick }: RecipientB
       onClick={onClick}
       className={cn(
         'rounded-lg border px-3 py-3 text-left transition-colors',
-        selected ? 'border-sky-400 bg-sky-50' : 'border-border bg-background hover:border-muted-foreground/50'
+        selected ? 'border-primary bg-primary-soft' : 'border-border bg-background hover:border-muted-foreground/50'
       )}
     >
       <span className="block text-sm font-semibold text-foreground">{label}</span>

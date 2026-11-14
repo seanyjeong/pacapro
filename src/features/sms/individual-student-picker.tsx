@@ -24,11 +24,11 @@ export function IndividualStudentPicker({
 }: IndividualStudentPickerProps) {
   if (selectedStudent) {
     return (
-      <section className="rounded-lg border border-sky-200 bg-sky-50 p-4">
+      <section className="rounded-lg border border-primary/30 bg-primary-soft p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-sky-950">{selectedStudent.name}</h3>
-            <p className="mt-1 text-xs text-sky-800">
+            <h3 className="text-sm font-semibold text-foreground">{selectedStudent.name}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
               학생 {selectedStudent.phone || '미등록'} · 아버님 {selectedStudent.father_phone || '미등록'} · 어머님 {selectedStudent.mother_phone || '미등록'} · 대표번호 {selectedStudent.parent_phone || '미등록'}
             </p>
           </div>
