@@ -6,11 +6,10 @@ import { usePermissions } from '@/lib/utils/permissions';
 import { IncomeDeleteDialog } from './income-delete-dialog';
 import { IncomeLoadingState } from './income-loading-state';
 import { IncomeSummaryStrip } from './income-summary-strip';
-import { IncomeTabs } from './income-tabs';
 import { IncomesError } from './incomes-error';
 import { IncomesEmptyState } from './incomes-empty-state';
+import { IncomesFilterBar } from './incomes-filter-bar';
 import { IncomesHeader } from './incomes-header';
-import { IncomesOperationsBoard } from './incomes-operations-board';
 import { OtherIncomeDetailDialog } from './other-income-detail-dialog';
 import { OtherIncomeForm } from './other-income-form';
 import { OtherIncomesTable } from './other-incomes-table';
@@ -45,87 +44,70 @@ export function IncomesPage() {
   }
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-4">
       <IncomesHeader
-        viewMode={state.viewMode}
-        selectedMonth={state.selectedMonth}
-        searchQuery={state.searchQuery}
         exporting={state.exporting}
         showForm={state.showForm}
         editingId={state.editingId}
         canEdit={canEditIncomes}
-        onViewModeChange={state.setViewMode}
-        onMonthChange={state.setSelectedMonth}
-        onSearchChange={state.setSearchQuery}
         onExport={state.exportRevenue}
         onCreateClick={state.openCreateForm}
       />
 
-      <IncomeSummaryStrip summary={state.summary} />
+      <IncomeSummaryStrip summary={state.summary} activeTab={state.activeTab} onTabChange={state.setActiveTab} />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
-        <main className="order-2 min-w-0 space-y-5 xl:order-1">
-          {state.showForm && canEditIncomes ? (
-            <OtherIncomeForm
-              formData={state.formData}
-              editingId={state.editingId}
-              saving={state.saving}
-              onUpdate={state.updateForm}
-              onSubmit={state.submitForm}
-              onCancel={state.resetForm}
-            />
-          ) : null}
+      {state.showForm && canEditIncomes ? (
+        <OtherIncomeForm
+          formData={state.formData}
+          editingId={state.editingId}
+          saving={state.saving}
+          onUpdate={state.updateForm}
+          onSubmit={state.submitForm}
+          onCancel={state.resetForm}
+        />
+      ) : null}
 
-          {state.viewMode === 'calendar' ? (
-            <IncomeCalendar
-              otherIncomes={state.otherIncomes}
-              tuitionPayments={state.tuitionPayments}
-              onMonthChange={state.setSelectedMonth}
-              initialYearMonth={state.selectedMonth}
-            />
-          ) : (
-            <div className="space-y-4">
-              <IncomeTabs
-                activeTab={state.activeTab}
-                tuitionCount={state.tuitionPayments.length}
-                otherCount={state.otherIncomes.length}
-                onTabChange={state.setActiveTab}
-              />
-
-              {visibleTuition.length > 0 ? <TuitionPaymentsTable payments={visibleTuition} /> : null}
-              {visibleOther.length > 0 ? (
-                <OtherIncomesTable
-                  incomes={visibleOther}
-                  canEdit={canEditIncomes}
-                  onSelect={state.setSelectedIncome}
-                  onEdit={state.editIncome}
-                  onDelete={setPendingDeleteId}
-                />
-              ) : null}
-              {!hasVisibleRows && !state.showForm ? <IncomesEmptyState hasSearch={hasSearch} /> : null}
-            </div>
-          )}
-        </main>
-        <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
-          <IncomesOperationsBoard
+      <section className="min-w-0 rounded-2xl bg-card">
+        <div className="border-b border-border/60 p-4 sm:px-6 sm:py-5">
+          <IncomesFilterBar
             activeTab={state.activeTab}
-            canEdit={canEditIncomes}
-            editingId={state.editingId}
-            exporting={state.exporting}
             searchQuery={state.searchQuery}
             selectedMonth={state.selectedMonth}
-            showForm={state.showForm}
-            summary={state.summary}
             viewMode={state.viewMode}
-            onCreateClick={state.openCreateForm}
-            onExport={state.exportRevenue}
+            tuitionCount={state.tuitionPayments.length}
+            otherCount={state.otherIncomes.length}
             onMonthChange={state.setSelectedMonth}
             onSearchChange={state.setSearchQuery}
             onTabChange={state.setActiveTab}
             onViewModeChange={state.setViewMode}
           />
         </div>
-      </div>
+
+        {state.viewMode === 'calendar' ? (
+          <div className="p-4 sm:p-6">
+            <IncomeCalendar
+              otherIncomes={state.otherIncomes}
+              tuitionPayments={state.tuitionPayments}
+              onMonthChange={state.setSelectedMonth}
+              initialYearMonth={state.selectedMonth}
+            />
+          </div>
+        ) : (
+          <div className="divide-y divide-border/60">
+            {visibleTuition.length > 0 ? <TuitionPaymentsTable payments={visibleTuition} /> : null}
+            {visibleOther.length > 0 ? (
+              <OtherIncomesTable
+                incomes={visibleOther}
+                canEdit={canEditIncomes}
+                onSelect={state.setSelectedIncome}
+                onEdit={state.editIncome}
+                onDelete={setPendingDeleteId}
+              />
+            ) : null}
+            {!hasVisibleRows && !state.showForm ? <IncomesEmptyState hasSearch={hasSearch} /> : null}
+          </div>
+        )}
+      </section>
 
       <OtherIncomeDetailDialog
         income={state.selectedIncome}
