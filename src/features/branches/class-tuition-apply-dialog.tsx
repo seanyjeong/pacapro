@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { StatTile } from '@/components/ui/page';
-import { branchesAPI, type TuitionChange } from '@/lib/api/branches';
+import { branchesAPI, defaultTuitionSelection, type TuitionChange } from '@/lib/api/branches';
 import { getSettingsSaveErrorMessage } from '@/features/settings/settings-error-message';
 import { TuitionChangeList } from './tuition-change-list';
 
@@ -37,7 +37,7 @@ export function ClassTuitionApplyDialog({ classId, label, onClose, onApplied }: 
         if (cancelled) return;
         setStudents(preview.students);
         setOwnTable(preview.class.tuition_by_weekly !== null);
-        setSelected(new Set(preview.students.filter((item) => item.changed).map((item) => item.student_id)));
+        setSelected(defaultTuitionSelection(preview.students));
       })
       .catch((err) => { if (!cancelled) setError(getSettingsSaveErrorMessage(err)); });
     return () => { cancelled = true; };
@@ -66,8 +66,8 @@ export function ClassTuitionApplyDialog({ classId, label, onClose, onApplied }: 
         <DialogHeader>
           <DialogTitle>{label} 학원비 적용</DialogTitle>
           <DialogDescription className="break-keep">
-            {ownTable ? '이 반 학원비 표' : '학원 기본 학원비 표'}로 학생 학원비를 다시 맞춰요. 할인율은 그대로이고,
-            이미 만든 청구서는 바뀌지 않아요. 다음 청구부터 새 금액이에요.
+            {ownTable ? '이 반 학원비 표' : '학원 기본 학원비 표'}로 학생 학원비를 다시 맞춰요. 할인율은 그대로예요.
+            이번 달부터 미납 월 청구도 같이 바뀌고, 낸 청구·일할 청구는 그대로예요. 개별 금액 학생은 처음엔 고르지 않아요.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 px-6 py-3">

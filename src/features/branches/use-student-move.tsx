@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { branchesAPI, type StudentPlacement, type TuitionChange } from '@/lib/api/branches';
+import { branchesAPI, defaultTuitionSelection, type StudentPlacement, type TuitionChange } from '@/lib/api/branches';
 import { TuitionChangeList } from './tuition-change-list';
 
 const quiet = { suppressErrorToast: true };
@@ -38,7 +38,7 @@ export function useStudentMove() {
       await branchesAPI.assignStudents(studentIds, placement, quiet);
       return { moved: true, tuitionUpdated: 0 };
     }
-    setSelected(new Set(changes.map((change) => change.student_id)));
+    setSelected(defaultTuitionSelection(changes));
     return new Promise((resolve, reject) => setPending({ studentIds, placement, changes, resolve, reject }));
   };
 
@@ -68,7 +68,8 @@ export function useStudentMove() {
         <DialogHeader>
           <DialogTitle>학원비도 바꿀까요?</DialogTitle>
           <DialogDescription className="break-keep">
-            옮길 반의 학원비와 지금 금액이 다른 학생이에요. 고른 학생만 바꾸고, 할인율과 이미 만든 청구서는 그대로예요.
+            옮길 반의 학원비와 지금 금액이 다른 학생이에요. 고른 학생만 바꾸고 할인율은 그대로예요.
+            이번 달부터 미납 월 청구도 같이 바뀌고, 낸 청구·일할 청구는 그대로예요.
           </DialogDescription>
         </DialogHeader>
         <div className="px-6 py-3 sm:max-h-[52vh] sm:overflow-y-auto">

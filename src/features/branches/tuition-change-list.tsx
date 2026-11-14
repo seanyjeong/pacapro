@@ -15,6 +15,24 @@ function unchangedReason(change: TuitionChange) {
   return '지금과 같아요';
 }
 
+const monthLabel = (yearMonth: string) => `${Number(yearMonth.slice(5, 7))}월`;
+
+// 같이 바뀌는 미납 월 청구. 휴원 학생은 복귀 때 맞추므로 바꾸지 않는다.
+function PendingBills({ change }: { change: TuitionChange }) {
+  if (change.status === 'paused') {
+    return <span className="mt-1 block text-[12px] text-muted-foreground">휴원 중이라 미납 청구는 복귀 때 맞춰요</span>;
+  }
+  if (change.pending_bills.length === 0) {
+    return <span className="mt-1 block text-[12px] text-muted-foreground">바꿀 미납 월 청구 없음</span>;
+  }
+  return (
+    <span className="mt-1 block text-[12px] text-secondary-foreground tabular-nums">
+      미납 청구 {change.pending_bills.length}건:{' '}
+      {change.pending_bills.map((bill) => `${monthLabel(bill.year_month)} ${formatWon(bill.current_amount)} → ${formatWon(bill.new_amount)}`).join(', ')}
+    </span>
+  );
+}
+
 interface TuitionChangeListProps {
   changes: TuitionChange[];
   selected: Set<number>;
@@ -44,6 +62,9 @@ export function TuitionChangeList({ changes, selected, onToggle }: TuitionChange
                   {STATUS_LABELS[change.status as StudentStatus] ?? change.status}
                 </span>
                 <span className="text-[13px] text-muted-foreground">주 {change.weekly_count}회</span>
+                {change.individual ? (
+                  <span className="rounded-full bg-warning-soft px-2 py-0.5 text-[12px] font-semibold text-warning">개별 금액</span>
+                ) : null}
               </span>
               {change.changed ? (
                 <span className="mt-1 flex flex-wrap items-center gap-x-1.5 text-sm tabular-nums">
@@ -56,11 +77,13 @@ export function TuitionChangeList({ changes, selected, onToggle }: TuitionChange
                     <span className="text-[13px] text-muted-foreground">(할인 {change.discount_rate}% 후 {formatWon(change.new_final_tuition)})</span>
                   ) : null}
                 </span>
-              ) : (
+              ) : null}
+              {change.changed ? <PendingBills change={change} /> : null}
+              {!change.changed ? (
                 <span className="mt-1 block text-[13px] text-muted-foreground tabular-nums">
                   {formatWon(change.current_tuition)} · {unchangedReason(change)}
                 </span>
-              )}
+              ) : null}
             </label>
           </li>
         );

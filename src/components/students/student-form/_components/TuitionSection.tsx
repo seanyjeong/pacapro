@@ -36,7 +36,7 @@ export function TuitionSection({
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
             현재 기준: 주 {formData.weekly_count || 0}회, 자동 금액 {formatCurrency(automaticTuition)}
-            {classTuition ? ' (반 학원비 표)' : ''}
+            {classTuition ? (automaticTuition ? ' (반 학원비 표)' : ' (반 학원비 표에 이 횟수 금액이 없어 지금 금액을 그대로 둬요)') : ''}
           </p>
         </div>
 

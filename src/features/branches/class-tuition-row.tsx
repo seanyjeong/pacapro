@@ -57,7 +57,7 @@ export function ClassTuitionRow({ label, cls, disabled, onSave, onApplied }: Cla
             이 반만 따로
           </button>
         </div>
-        {cls.student_count > 0 ? (
+        {saved !== null && cls.student_count > 0 ? (
           <Button type="button" size="sm" variant="secondary" className="ml-auto" disabled={disabled || dirty} onClick={() => setApplyOpen(true)}>
             반 학원비 적용
           </Button>

@@ -44,6 +44,14 @@ export interface StudentPlacement {
   class_id: number | null;
 }
 
+// 같이 바뀌는 이번 달부터의 미납 월 청구(학생 수정과 같은 식). 낸 청구·일할 청구는 들어 있지 않다.
+export interface PendingBillChange {
+  id: number;
+  year_month: string;
+  current_amount: number;
+  new_amount: number;
+}
+
 // 학원비 다시 계산 한 줄: 지금 금액 → 새 금액(반 표, 없으면 학원 표). new_tuition null = 표에 금액 없음
 export interface TuitionChange {
   student_id: number;
@@ -55,6 +63,8 @@ export interface TuitionChange {
   discount_rate: number;
   new_final_tuition: number | null;
   changed: boolean;
+  individual: boolean; // 예전 표 금액과 다른 개별 금액 — 처음엔 고르지 않는다
+  pending_bills: PendingBillChange[]; // 휴원 학생은 비어 있다(복귀 때 맞춤)
 }
 
 export interface ClassTuitionPreview {
@@ -62,9 +72,13 @@ export interface ClassTuitionPreview {
   students: TuitionChange[];
 }
 
-// 확인한 금액. 서버가 다시 계산한 금액과 다르면 409 로 아무것도 바꾸지 않는다.
+// 확인한 지금·새 금액. 서버가 다시 계산한 금액과 다르면 409 로 아무것도 바꾸지 않는다.
 const confirmed = (changes: TuitionChange[]) =>
-  changes.map((change) => ({ student_id: change.student_id, new_tuition: change.new_tuition }));
+  changes.map((change) => ({ student_id: change.student_id, current_tuition: change.current_tuition, new_tuition: change.new_tuition }));
+
+// 처음에 고를 학생: 바뀌는 학생 중 개별 금액이 아닌 학생
+export const defaultTuitionSelection = (changes: TuitionChange[]) =>
+  new Set(changes.filter((change) => change.changed && !change.individual).map((change) => change.student_id));
 
 const BASE_PATH = '/branches';
 

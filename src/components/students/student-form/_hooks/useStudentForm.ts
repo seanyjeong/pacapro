@@ -12,8 +12,8 @@ import type { ClassDaySlot } from '@/lib/types/student';
 import { parseClassDaysWithSlots, extractDayNumbers } from '@/lib/utils/student-helpers';
 import { STUDENT_PARENT_PHONE_FIELDS } from '@/constants/student-parent-phones';
 import { useBranchTree } from '@/hooks/use-branches';
-import { resolveTuitionTable } from '@/lib/utils/tuition-table';
-import { AcademySettings, TuitionByWeeklyCount, DEFAULT_TUITION, type StudentFormConfirmState } from '../_types';
+import { autoFillTuition, resolveTuitionTable } from '@/lib/utils/tuition-table';
+import { AcademySettings, DEFAULT_TUITION, type StudentFormConfirmState } from '../_types';
 
 interface StudentFormProps {
   mode: 'create' | 'edit';
@@ -203,12 +203,9 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
   };
 
   // 헬퍼
-  const getTuitionByWeeklyCount = (studentType: StudentType, weeklyCount: number): number => {
-    if (weeklyCount < 1 || weeklyCount > 7) return 0;
-    const tuitionTable = resolveTuitionTable(academySettings, studentType, classTuition);
-    const key = `weekly_${weeklyCount}` as keyof TuitionByWeeklyCount;
-    return tuitionTable[key] || 0;
-  };
+  // current: 지금 학원비. 반 표에 그 횟수 금액이 없으면(0원) 바꾸지 않는다(백엔드와 같음). 학원 표 0원은 지금처럼 0.
+  const getTuitionByWeeklyCount = (studentType: StudentType, weeklyCount: number, current: number): number =>
+    autoFillTuition(resolveTuitionTable(academySettings, studentType, classTuition), weeklyCount, Boolean(classTuition), current);
 
   // 신규 등록에서 반을 바꾸면 그 반 기준 금액으로 다시 채운다(수업요일을 고른 뒤라면).
   const previousClassId = useRef(placementClassId);
@@ -217,7 +214,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     previousClassId.current = placementClassId;
     if (mode !== 'create' || !settingsLoaded) return;
     setFormData((prev) => (prev.weekly_count > 0
-      ? { ...prev, monthly_tuition: getTuitionByWeeklyCount(prev.student_type, prev.weekly_count) }
+      ? { ...prev, monthly_tuition: getTuitionByWeeklyCount(prev.student_type, prev.weekly_count, prev.monthly_tuition) }
       : prev));
   }, [placementClassId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -267,7 +264,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
           newData.admission_type = examAdmissionTypeRef.current;
         }
         if (settingsLoaded && newData.weekly_count > 0) {
-          newData.monthly_tuition = getTuitionByWeeklyCount(value as StudentType, newData.weekly_count);
+          newData.monthly_tuition = getTuitionByWeeklyCount(value as StudentType, newData.weekly_count, prev.monthly_tuition);
         }
       }
       if (field === 'grade' && prev.student_type === 'exam') {
@@ -300,7 +297,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     }
     const newWeeklyCount = newDays.length;
     const newTuition = settingsLoaded
-      ? getTuitionByWeeklyCount(formData.student_type, newWeeklyCount)
+      ? getTuitionByWeeklyCount(formData.student_type, newWeeklyCount, formData.monthly_tuition)
       : formData.monthly_tuition;
     setFormData((prev) => ({
       ...prev,

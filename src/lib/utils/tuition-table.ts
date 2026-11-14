@@ -15,3 +15,12 @@ export function resolveTuitionTable<T>(
   if (classTuition) return classTuition;
   return studentType === 'adult' ? academy.adult_tuition : academy.exam_tuition;
 }
+
+/**
+ * 자동 채움 금액: 표의 주N회 금액. 반 표에 그 횟수 금액이 없으면(0원) 지금 금액을 그대로 둔다(백엔드와 같음).
+ * 학원 표는 지금처럼 금액이 없으면 0.
+ */
+export function autoFillTuition(table: Partial<Record<string, number>>, weeklyCount: number, fromClassTable: boolean, current: number): number {
+  const amount = weeklyCount >= 1 && weeklyCount <= 7 ? table[`weekly_${weeklyCount}`] || 0 : 0;
+  return amount || (fromClassTable ? current : 0);
+}
