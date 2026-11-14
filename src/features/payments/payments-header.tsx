@@ -1,5 +1,6 @@
 import { Bell, Calculator, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page';
 import { cn } from '@/lib/utils/cn';
 
 interface PaymentsHeaderProps {
@@ -7,6 +8,7 @@ interface PaymentsHeaderProps {
   canEdit: boolean;
   sendingNotification: boolean;
   unpaidCount: number;
+  selectedYearMonth: string;
   onOpenCalculator: () => void;
   onReload: () => void;
   onSendUnpaid: () => void;
@@ -18,51 +20,44 @@ export function PaymentsHeader({
   canEdit,
   sendingNotification,
   unpaidCount,
+  selectedYearMonth,
   onOpenCalculator,
   onReload,
   onSendUnpaid,
   onAddPayment,
 }: PaymentsHeaderProps) {
   return (
-    <header className="space-y-4 border-b border-border/70 pb-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">
-            {viewOnly ? '미납 학원비' : '학원비 관리'}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {viewOnly ? '미납 학원비 현황 조회' : '청구, 수납, 크레딧, 미납 알림'}
-          </p>
-        </div>
-        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end">
-          <Button type="button" variant="outline" onClick={onOpenCalculator} className="w-full sm:w-auto">
-            <Calculator className="mr-2 h-4 w-4" />
-            일할계산기
-          </Button>
-          <Button type="button" variant="outline" onClick={onReload} className="w-full sm:w-auto">
-            <RefreshCw className="mr-2 h-4 w-4" />
-            새로고침
+    <PageHeader
+      title={viewOnly ? '미납 학원비' : '학원비 관리'}
+      description={`${selectedYearMonth} · ${viewOnly ? '미납 학원비 현황 조회' : '청구, 수납, 크레딧, 미납 알림'}`}
+      actions={(
+        <>
+          <Button type="button" variant="outline" onClick={onOpenCalculator}>
+            <Calculator className="h-4 w-4" />
+            일할계산
           </Button>
           {canEdit ? (
             <>
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={onSendUnpaid}
                 disabled={sendingNotification || unpaidCount === 0}
-                className="w-full sm:w-auto"
               >
-                <Bell className={cn('mr-2 h-4 w-4', sendingNotification && 'animate-pulse')} />
+                <Bell className={cn('h-4 w-4', sendingNotification && 'animate-pulse')} />
                 {sendingNotification ? '발송 중...' : `미납 알림 (${unpaidCount}명)`}
               </Button>
-              <Button type="button" onClick={onAddPayment} className="w-full sm:w-auto">
-                <Plus className="mr-2 h-4 w-4" />
+              <Button type="button" onClick={onAddPayment}>
+                <Plus className="h-4 w-4" />
                 학원비 청구
               </Button>
             </>
           ) : null}
-        </div>
-      </div>
-    </header>
+          <Button type="button" variant="outline" size="icon" onClick={onReload} aria-label="새로고침" title="새로고침">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </>
+      )}
+    />
   );
 }
