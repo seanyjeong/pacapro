@@ -128,7 +128,8 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
             const discount = monthlyBillAmounts(baseAmount, discountRate).discount;
 
             // 비시즌 종강 일할은 전달에 붙이지 않고 시즌 시작 달에 따로 청구한다 (아래 nonSeasonProratedBilling)
-            const additionalAmount = 0;
+            // 추가 금액은 새 청구면 0, 이미 있는 미납 청구면 그 청구의 추가 금액을 그대로 둔다(아래)
+            let additionalAmount = 0;
             let notes = null;
             let description = `${year}년 ${month}월 수강료`;
 
@@ -139,7 +140,7 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
                 // 해당 학생의 기존 학원비 확인 — 낸 청구는 크레딧을 건드리기 전에 건너뛴다
                 // (예전엔 크레딧을 먼저 빼고 건너뛰어 크레딧이 청구 없이 사라졌다)
                 const [existingPayment] = await conn.execute(
-                    `SELECT id, payment_status, paid_amount, carryover_amount, rest_credit_id, notes FROM student_payments
+                    `SELECT id, payment_status, paid_amount, additional_amount, carryover_amount, rest_credit_id, notes FROM student_payments
                      WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'
                      FOR UPDATE`,
                     [student.id, req.user.academyId, yearMonth]
@@ -150,6 +151,9 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
                     skipped++;
                     continue;
                 }
+
+                // 같은 달 미납 청구를 다시 쓸 때 원장이 넣은 추가 금액을 지킨다(예전엔 0으로 덮어써 사라졌다)
+                if (existing) additionalAmount = Number(existing.additional_amount) || 0;
 
                 // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 확인 및 적용(학생별 청구와 공유)
                 let carryoverAmount = 0;

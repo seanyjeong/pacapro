@@ -94,7 +94,7 @@ async function generateMonthlyPayments() {
 
                     // 이미 해당 월 학원비가 있는지 확인
                     const [existing] = await connection.query(`
-                        SELECT id, payment_status, carryover_amount, rest_credit_id, notes FROM student_payments
+                        SELECT id, payment_status, additional_amount, carryover_amount, rest_credit_id, notes FROM student_payments
                         WHERE student_id = ?
                         AND \`year_month\` = ?
                         AND payment_type = 'monthly'
@@ -114,6 +114,10 @@ async function generateMonthlyPayments() {
                     const discountRate = parseFloat(student.discount_rate) || 0;
                     // 월 청구 금액 공통 함수(소수 오차 없는 할인액 천원 절삭)
                     const discountAmount = monthlyBillAmounts(baseAmount, discountRate).discount;
+
+                    // 같은 달 미납 청구를 다시 쓸 때 원장이 넣은 추가 금액을 지킨다(UPDATE 는 추가 금액 칸을 그대로 두고, 최종 금액에 넣는다).
+                    // 예전엔 칸은 두고 최종 금액에서만 빠져 추가 금액이 청구되지 않았다.
+                    const additionalAmount = existing.length > 0 ? Number(existing[0].additional_amount) || 0 : 0;
 
                     // 휴식 이월 크레딧 확인 및 적용
                     let carryoverAmount = 0;
@@ -143,7 +147,7 @@ async function generateMonthlyPayments() {
 
                     if (pendingCredits.length > 0) {
                         const credit = pendingCredits[0];
-                        const amountBeforeCarryover = baseAmount - discountAmount;
+                        const amountBeforeCarryover = baseAmount - discountAmount + additionalAmount;
 
                         carryoverAmount = Math.min(credit.remaining_amount, amountBeforeCarryover);
                         restCreditId = credit.id;
@@ -166,7 +170,7 @@ async function generateMonthlyPayments() {
                         totalWithCarryover++;
                     }
 
-                    const finalAmount = monthlyBillAmounts(baseAmount, discountRate, 0, carryoverAmount).final;
+                    const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount, carryoverAmount).final;
 
                     // 납부일 계산 (납부일 이후 첫 출석일)
                     let classDays = [];

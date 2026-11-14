@@ -255,6 +255,36 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         expect(Number(added.final_amount)).toBe(monthlyBillAmounts(450000, 0, 10000, 166500).final);
     });
 
+    test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {
+        const [year, mon] = THIS_MONTH.split('-').map(Number);
+        const pendingBill = (carryover, final) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,
+            base_amount, discount_amount, additional_amount, carryover_amount, rest_credit_id, final_amount, paid_amount, is_prorated, due_date, payment_status)
+            VALUES (1, 1, 1, ?, 'monthly', 450000, 0, 10000, ?, ?, ?, 0, 0, ?, 'pending')`, [THIS_MONTH, carryover, carryover ? 1 : null, final, `${THIS_MONTH}-05`]);
+        const monthBill = async () => {
+            const [[row]] = await pool.query('SELECT additional_amount, carryover_amount, final_amount FROM student_payments WHERE id = 1');
+            return [Number(row.additional_amount), Number(row.carryover_amount), Number(row.final_amount)];
+        };
+        const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+        const { generateMonthlyPayments } = require('../../scheduler/paymentScheduler');
+        for (const [carryover, final] of [[0, 460000], [166500, 293000]]) {
+            // 일괄 청구
+            await seed({ tuition: 450000, rate: 0, credit: carryover, bills: false });
+            if (carryover) await pool.query("UPDATE rest_credits SET remaining_amount = 0, status = 'applied'"); // 이미 이 청구에 적용됨
+            await pendingBill(carryover, final);
+            expect((await request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon })).body).toMatchObject({ updated: 1 });
+            expect(await monthBill()).toEqual([10000, carryover, final]);
+            expect(final).toBe(monthlyBillAmounts(450000, 0, 10000, carryover).final);
+
+            // 매달 자동 청구
+            await seed({ tuition: 450000, rate: 0, credit: carryover, bills: false });
+            if (carryover) await pool.query("UPDATE rest_credits SET remaining_amount = 0, status = 'applied'");
+            await pendingBill(carryover, final);
+            await generateMonthlyPayments();
+            expect(await monthBill()).toEqual([10000, carryover, final]);
+        }
+        log.mockRestore();
+    });
+
     test('크레딧: 같은 달 일괄 청구를 두 번 돌려도, 학생별 청구를 동시에 두 번 눌러도 크레딧은 한 번만', async () => {
         const month = koreaMonth(2), [year, mon] = month.split('-').map(Number);
         const creditState = async () => (await pool.query('SELECT remaining_amount FROM rest_credits WHERE id = 1'))[0][0].remaining_amount;

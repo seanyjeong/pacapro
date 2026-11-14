@@ -75,3 +75,46 @@ describe('payment scheduler season monthly policy', () => {
         expect(db.query).not.toHaveBeenCalled();
     });
 });
+
+describe('payment scheduler 같은 달 미납 청구 다시 쓰기', () => {
+    function mockStudentWithExisting(existingRow) {
+        db.query
+            .mockResolvedValueOnce([[{ academy_id: 5, default_due_day: 5 }]])
+            .mockResolvedValueOnce([[{ id: 7, name: 'enc_홍', monthly_tuition: 450000, discount_rate: 0, class_days: '[1,3]', due_day: 5 }]]);
+        const connection = {
+            beginTransaction: jest.fn(), commit: jest.fn(), rollback: jest.fn(), release: jest.fn(),
+            query: jest.fn()
+                .mockResolvedValueOnce([[existingRow]])
+                .mockResolvedValue([[]]),
+        };
+        jest.spyOn(console, 'log').mockImplementation(() => {});
+        db.getConnection.mockResolvedValue(connection);
+        return connection;
+    }
+
+    test('추가 금액이 있는 미납 청구를 다시 돌리면 추가 금액을 최종 금액에 넣는다(예전엔 빠졌다)', async () => {
+        const connection = mockStudentWithExisting({ id: 70, payment_status: 'pending', additional_amount: '10000.00', carryover_amount: '0.00', rest_credit_id: null, notes: null });
+
+        await generateMonthlyPayments();
+
+        const update = connection.query.mock.calls.find(([sql]) => /UPDATE student_payments SET/.test(sql));
+        // UPDATE 는 추가 금액 칸을 건드리지 않는다 → 그대로 남는다
+        expect(update[0]).not.toContain('additional_amount');
+        // [base, discount, carryover, rest_credit_id, final, ...] — 450,000 + 10,000
+        expect(update[1].slice(0, 5)).toEqual([450000, 0, 0, null, 460000]);
+    });
+
+    test('크레딧과 추가 금액이 있는 미납 청구는 공통 식(크레딧 빼고 천원 절삭)으로 최종 금액을 낸다', async () => {
+        const { monthlyBillAmounts } = require('../../utils/monthlyBillAmounts');
+        const connection = mockStudentWithExisting({ id: 70, payment_status: 'pending', additional_amount: '10000.00', carryover_amount: '166500.00', rest_credit_id: 9, notes: '[크레딧 차감]' });
+
+        await generateMonthlyPayments();
+
+        const update = connection.query.mock.calls.find(([sql]) => /UPDATE student_payments SET/.test(sql));
+        // 450,000 + 10,000 − 166,500 = 293,500 → 293,000
+        expect(update[1].slice(0, 5)).toEqual([450000, 0, 166500, 9, 293000]);
+        expect(update[1][4]).toBe(monthlyBillAmounts(450000, 0, 10000, 166500).final);
+        // 이미 적용된 크레딧이 있으니 크레딧을 또 빼지 않는다
+        expect(connection.query.mock.calls.some(([sql]) => /rest_credits/.test(sql))).toBe(false);
+    });
+});
