@@ -32,12 +32,23 @@ function floorDivide(numerator: bigint, denominator: bigint) {
   return remainder !== ZERO && (remainder < ZERO) !== (denominator < ZERO) ? quotient - ONE : quotient;
 }
 
-// 부호 붙은 10진 값들의 합을 unit 단위로 내림, 0 미만이면 0
-function floorSum(terms: Array<[Amount, 1 | -1]>, unit: number) {
+// 부호 붙은 10진 값들의 합을 unit 단위로 내림(음수도 내림, 0 하한 없음)
+function floorTotal(terms: Array<[Amount, 1 | -1]>, unit: number) {
   const parts = terms.map(([value]) => decimal(value));
   const scale = Math.max(...parts.map((part) => part.scale));
   const total = parts.reduce((sum, part, i) => sum + BigInt(terms[i][1]) * part.n * pow10(scale - part.scale), ZERO);
-  return Math.max(Number(floorDivide(total, BigInt(unit) * pow10(scale))) * unit, 0);
+  return Number(floorDivide(total, BigInt(unit) * pow10(scale))) * unit;
+}
+
+// 합을 unit 단위로 내림, 0 미만이면 0
+function floorSum(terms: Array<[Amount, 1 | -1]>, unit: number) {
+  return Math.max(floorTotal(terms, unit), 0);
+}
+
+// 10진 값 + 원 단위 정수(소수 오차 없이)
+function addWon(value: Amount, won: number) {
+  const { n, scale } = decimal(value);
+  return Number(n + BigInt(won) * pow10(scale)) / Number(pow10(scale));
 }
 
 function sameDecimal(left: Amount, right: Amount) {
@@ -68,15 +79,17 @@ export function hasSeparateFinal(bill: BillAmounts) {
 
 const BILL_AMOUNT_KEYS = ['base_amount', 'discount_amount', 'additional_amount', 'carryover_amount'] as const;
 
-/** 금액 칸·크레딧을 바꾼 뒤 최종 금액 — 바꾼 칸이 없으면 지금 최종 금액 그대로 */
+/**
+ * 금액 칸·크레딧을 바꾼 뒤 최종 금액 — 바꾼 칸이 없으면 지금 최종 금액 그대로.
+ * 보통 청구: 천원 절삭(바꾼 학원비 − 할인 + 추가 − 크레딧). 따로 정한 청구: 지금 최종 금액 + 바꾼 차이(천원 단위로 내림), 다시 절삭하지 않는다.
+ */
 export function billFinalAfterChange(bill: BillAmounts, changes: BillAmountChanges = {}) {
   const next = (key: (typeof BILL_AMOUNT_KEYS)[number]) => (changes[key] !== undefined ? changes[key] : bill[key]);
   if (BILL_AMOUNT_KEYS.every((key) => sameDecimal(next(key), bill[key]))) return Number(bill.final_amount);
-  const charge: Array<[Amount, 1 | -1]> = hasSeparateFinal(bill)
-    ? [[bill.final_amount, 1], [bill.carryover_amount, 1]]
-    : [[bill.base_amount, 1], [bill.discount_amount, -1], [bill.additional_amount, 1]];
-  return floorSum([...charge,
-    [next('base_amount'), 1], [next('discount_amount'), -1], [next('additional_amount'), 1],
-    [bill.base_amount, -1], [bill.discount_amount, 1], [bill.additional_amount, -1],
-    [next('carryover_amount'), -1]], 1000);
+  const difference: Array<[Amount, 1 | -1]> = [
+    [next('base_amount'), 1], [next('discount_amount'), -1], [next('additional_amount'), 1], [next('carryover_amount'), -1],
+    [bill.base_amount, -1], [bill.discount_amount, 1], [bill.additional_amount, -1], [bill.carryover_amount, 1]];
+  if (hasSeparateFinal(bill)) return Math.max(addWon(bill.final_amount, floorTotal(difference, 1000)), 0);
+  return floorSum([[bill.base_amount, 1], [bill.discount_amount, -1], [bill.additional_amount, 1],
+    ...difference, [bill.carryover_amount, -1]], 1000);
 }

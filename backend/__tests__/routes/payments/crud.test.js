@@ -331,6 +331,12 @@ describe('PUT /paca/payments/:id', () => {
         expect(await savedFinal(paused, { base_amount: 450000, discount_amount: 0, additional_amount: 10000 })).toBe(235000);
     });
 
+    test('200: 따로 정한 청구의 추가 금액 변경은 지금 최종 금액을 다시 절삭하지 않는다(332,500원 + 1원 = 332,500원, 예전 332,000원)', async () => {
+        const old = { base_amount: '350000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 0, final_amount: '332500.00' };
+        expect(await savedFinal(old, { additional_amount: 1 })).toBe(332500);
+        expect(await savedFinal(old, { additional_amount: 10500 })).toBe(342500);
+    });
+
     test('400: 따로 정한 청구의 기본·할인 금액 변경은 막고 아무것도 쓰지 않는다(기본 금액을 225,000원으로 고치면 0원이 되던 것)', async () => {
         const paused = { base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 0, final_amount: '225000.00' };
         for (const body of [{ base_amount: 225000 }, { discount_amount: 1000, additional_amount: 0 }]) {

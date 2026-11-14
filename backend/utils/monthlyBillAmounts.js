@@ -61,12 +61,28 @@ function monthlyDiscountAmount(tuition, discountRate) {
     return floorPercent(tuition, discountRate);
 }
 
-// 부호 붙은 10진 값들의 합을 unit 단위로 내림, 0 미만이면 0. terms: [[값, +1 | −1], ...]
-function floorSum(terms, unit) {
+// 부호 붙은 10진 값들의 정확한 합 { n, scale }. terms: [[값, +1 | −1], ...]
+function decimalSum(terms) {
     const parts = terms.map(([value]) => decimal(value));
     const scale = Math.max(...parts.map(part => part.scale));
-    const total = parts.reduce((sum, part, i) => sum + BigInt(terms[i][1]) * part.n * pow10(scale - part.scale), 0n);
-    return Math.max(toUnits(floorDivide(total, BigInt(unit) * pow10(scale)), unit), 0);
+    return { n: parts.reduce((sum, part, i) => sum + BigInt(terms[i][1]) * part.n * pow10(scale - part.scale), 0n), scale };
+}
+
+// 합을 unit 단위로 내림(음수도 내림, 0 하한 없음)
+function floorTotal(terms, unit) {
+    const { n, scale } = decimalSum(terms);
+    return toUnits(floorDivide(n, BigInt(unit) * pow10(scale)), unit);
+}
+
+// 합을 unit 단위로 내림, 0 미만이면 0
+function floorSum(terms, unit) {
+    return Math.max(floorTotal(terms, unit), 0);
+}
+
+// 10진 값 + 원 단위 정수(소수 오차 없이)
+function addWon(value, won) {
+    const { n, scale } = decimal(value);
+    return Number(n + BigInt(won) * pow10(scale)) / Number(pow10(scale));
 }
 
 /**
@@ -112,18 +128,20 @@ const BILL_AMOUNT_KEYS = ['base_amount', 'discount_amount', 'additional_amount',
 /**
  * 청구의 금액 칸·크레딧을 바꾼 뒤 최종 금액 — 청구 수정 화면, AI 연결 청구 수정, 크레딧 수동 적용, 미리 납부·선납이 쓴다.
  * changes: base_amount·discount_amount·additional_amount·carryover_amount 중 바꾸는 칸(없는 칸은 지금 값).
- * 최종 = 천원 절삭(청구 대상 금액 + 바뀐 (학원비 − 할인액 + 추가) 차이 − 크레딧), 0 미만이면 0.
- *   보통 청구는 그대로 천원 절삭(바꾼 학원비 − 할인액 + 추가 − 크레딧) = 월 청구와 같은 금액,
- *   최종 금액만 줄인 청구는 줄인 금액에서 바뀐 만큼만 더하고 뺀다(정액으로 돌아가지 않는다).
- * 금액 칸·크레딧이 하나도 안 바뀌면 지금 최종 금액 그대로(조정·예전 금액을 다시 절삭하지 않는다).
+ * - 보통 청구: 천원 절삭(바꾼 학원비 − 할인액 + 추가 − 크레딧), 0 미만이면 0 = 월 청구와 같은 금액.
+ * - 최종 금액을 따로 정한 청구: 지금 최종 금액 + 바꾼 차이(학원비 − 할인액 + 추가 − 크레딧)를 천원 단위로 내린 것, 0 미만이면 0.
+ *   지금 최종 금액은 다시 절삭하지 않는다(332,500원 청구에 추가 1원 → 332,500원, 예전엔 332,000원).
+ *   차이를 내려(늘 때는 덜, 줄 때는 더) 학생에게 불리하지 않고, 천원 단위 청구는 예전 식과 같다.
+ * 금액 칸·크레딧이 하나도 안 바뀌면 지금 최종 금액 그대로.
  */
 function billFinalAfterChange(bill, changes = {}) {
     const next = key => (changes[key] !== undefined ? changes[key] : bill[key]);
     if (BILL_AMOUNT_KEYS.every(key => sameDecimal(next(key), bill[key]))) return Number(bill.final_amount);
-    return floorSum([...chargeTerms(bill),
-        [next('base_amount'), 1], [next('discount_amount'), -1], [next('additional_amount'), 1],
-        [bill.base_amount, -1], [bill.discount_amount, 1], [bill.additional_amount, -1],
-        [next('carryover_amount'), -1]], 1000);
+    const difference = [
+        [next('base_amount'), 1], [next('discount_amount'), -1], [next('additional_amount'), 1], [next('carryover_amount'), -1],
+        [bill.base_amount, -1], [bill.discount_amount, 1], [bill.additional_amount, -1], [bill.carryover_amount, 1]];
+    if (hasSeparateFinal(bill)) return Math.max(addWon(bill.final_amount, floorTotal(difference, 1000)), 0);
+    return floorSum([...chargeTerms(bill), ...difference, [bill.carryover_amount, -1]], 1000);
 }
 
 // 크레딧 수동 적용 한도: 이 청구에서 더 뺄 수 있는 금액(청구 대상 금액 − 이미 적용된 크레딧, 원 단위 내림)
