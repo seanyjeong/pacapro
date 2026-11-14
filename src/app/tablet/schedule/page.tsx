@@ -9,10 +9,10 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState, PageHeader } from '@/components/ui/page';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, List, Loader2, ChevronLeft, ChevronRight, Users, UserCog } from 'lucide-react';
+import { Calendar, List, Loader2, ChevronLeft, ChevronRight, RefreshCw, UserCog } from 'lucide-react';
 import { ScheduleCalendarV2 } from '@/components/schedules/schedule-calendar-v2';
 import { ScheduleList } from '@/components/schedules/schedule-list';
 import { TimeSlotDetailModal } from '@/components/schedules/time-slot-detail-modal';
@@ -123,8 +123,8 @@ export default function TabletSchedulePage() {
     return (
       <div className="flex items-center justify-center h-full min-h-[400px]">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">로딩 중...</p>
+          <Loader2 className="mx-auto mb-4 h-10 w-10 animate-spin text-primary" />
+          <p className="text-muted-foreground">불러오는 중이에요</p>
         </div>
       </div>
     );
@@ -135,17 +135,63 @@ export default function TabletSchedulePage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">수업 관리</h1>
-          <p className="text-muted-foreground">수업 일정 확인</p>
-        </div>
-        <Button variant="outline" onClick={() => refetch()}>
-          새로고침
+    <div className="space-y-4">
+      <PageHeader
+        title="수업 관리"
+        description="수업 일정 확인"
+        actions={(
+          <Button variant="outline" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4" />
+            새로고침
+          </Button>
+        )}
+      />
+
+      {/* 날짜 선택 */}
+      <section className="flex items-center gap-3 rounded-2xl bg-card p-3" aria-label="날짜 선택">
+        <Button
+          variant="outline"
+          size="icon-lg"
+          aria-label="이전 날짜"
+          onClick={() => {
+            const date = new Date(selectedDate || getToday());
+            date.setDate(date.getDate() - 1);
+            setSelectedDate(date.toISOString().split('T')[0]);
+          }}
+        >
+          <ChevronLeft className="h-5 w-5" />
         </Button>
-      </div>
+
+        <button
+          type="button"
+          className="flex-1 rounded-xl py-2 text-center transition-colors hover:bg-muted active:bg-muted"
+          onClick={() => setInstructorModalOpen(true)}
+        >
+          <span className="flex items-center justify-center gap-2">
+            <span className="text-xl font-extrabold tracking-tight text-foreground">
+              {selectedDate ? formatDate(selectedDate) : '날짜 선택'}
+            </span>
+            {isToday && <Badge variant="default">오늘</Badge>}
+          </span>
+          <span className="mt-1 flex items-center justify-center gap-1 text-[13px] text-muted-foreground">
+            <UserCog className="h-3.5 w-3.5" />
+            눌러서 강사 배정
+          </span>
+        </button>
+
+        <Button
+          variant="outline"
+          size="icon-lg"
+          aria-label="다음 날짜"
+          onClick={() => {
+            const date = new Date(selectedDate || getToday());
+            date.setDate(date.getDate() + 1);
+            setSelectedDate(date.toISOString().split('T')[0]);
+          }}
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+      </section>
 
       <TabletScheduleOperations
         dateLabel={selectedDate ? formatDate(selectedDate) : '날짜 선택'}
@@ -155,87 +201,9 @@ export default function TabletSchedulePage() {
         onAssignInstructor={() => setInstructorModalOpen(true)}
       />
 
-      {/* 날짜 선택 */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                const date = new Date(selectedDate || getToday());
-                date.setDate(date.getDate() - 1);
-                setSelectedDate(date.toISOString().split('T')[0]);
-              }}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <button
-              className="text-center flex-1 mx-4 py-2 rounded-lg hover:bg-muted/50 active:bg-muted transition-colors"
-              onClick={() => setInstructorModalOpen(true)}
-            >
-              <p className="text-lg font-bold text-foreground">
-                {selectedDate ? formatDate(selectedDate) : '날짜 선택'}
-              </p>
-              {isToday && (
-                <Badge variant="secondary" className="mt-1">오늘</Badge>
-              )}
-              <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
-                <UserCog className="h-3 w-3" />
-                탭하여 강사 배정
-              </p>
-            </button>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                const date = new Date(selectedDate || getToday());
-                date.setDate(date.getDate() + 1);
-                setSelectedDate(date.toISOString().split('T')[0]);
-              }}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 통계 */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-soft rounded-full flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">수업 수</p>
-                <p className="text-xl font-bold text-foreground">{selectedDateSchedules.length}개</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-success-soft rounded-full flex items-center justify-center">
-                <Users className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">총 학생</p>
-                <p className="text-xl font-bold text-foreground">{totalStudents}명</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* 탭 */}
       <Tabs defaultValue="calendar" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full max-w-xs grid-cols-2">
           <TabsTrigger value="calendar" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             캘린더
@@ -248,32 +216,25 @@ export default function TabletSchedulePage() {
 
         {/* 캘린더 뷰 */}
         <TabsContent value="calendar">
-          <Card>
-            <CardContent className="p-4">
-              <ScheduleCalendarV2
-                schedules={schedules}
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
-                onMonthChange={handleMonthChange}
-                onSlotClick={handleSlotClick}
-                instructorStats={instructorStats}
-                consultations={consultations}
-                currentYear={currentYear}
-                currentMonth={currentMonth}
-              />
-            </CardContent>
-          </Card>
+          <ScheduleCalendarV2
+            schedules={schedules}
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            onMonthChange={handleMonthChange}
+            onSlotClick={handleSlotClick}
+            instructorStats={instructorStats}
+            consultations={consultations}
+            currentYear={currentYear}
+            currentMonth={currentMonth}
+          />
         </TabsContent>
 
         {/* 목록 뷰 */}
         <TabsContent value="list">
           {selectedDateSchedules.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">선택한 날짜에 수업이 없습니다</p>
-              </CardContent>
-            </Card>
+            <div className="rounded-2xl bg-card py-6">
+              <EmptyState icon={Calendar} title="선택한 날짜에 수업이 없어요" />
+            </div>
           ) : (
             <ScheduleList
               schedules={selectedDateSchedules}

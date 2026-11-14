@@ -9,9 +9,9 @@ interface TabletScheduleErrorProps {
 export function TabletScheduleError({ onRetry }: TabletScheduleErrorProps) {
   return (
     <div className="mx-auto w-full max-w-5xl space-y-4">
-      <section className="rounded-md border border-border bg-background px-6 py-10 text-center shadow-none">
-        <AlertCircle className="mx-auto h-10 w-10 text-destructive" />
-        <h1 className="mt-4 text-xl font-semibold text-foreground">수업 정보를 불러오지 못했습니다</h1>
+      <section className="rounded-2xl bg-card px-6 py-10 text-center">
+        <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive-soft text-destructive"><AlertCircle className="h-6 w-6" /></span>
+        <h1 className="mt-4 text-xl font-bold text-foreground">수업 정보를 불러오지 못했습니다</h1>
         <p className="mt-2 text-sm text-muted-foreground">잠시 후 다시 시도해주세요.</p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           <Button onClick={onRetry} className="gap-2">
