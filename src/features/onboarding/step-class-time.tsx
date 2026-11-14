@@ -9,22 +9,22 @@ interface StepClassTimeProps {
 }
 
 const TIME_INPUT_CLASS =
-  'h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary/30';
+  'h-12 w-full rounded-xl border border-transparent bg-card px-3 text-[15px] text-foreground outline-none transition-colors focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/10';
 
 export function StepClassTime({ formData, updateFormData }: StepClassTimeProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+    <div className="space-y-3">
       {TIME_SLOTS.map((slot) => {
         const times = parseTimeRange(formData[slot.key]);
 
         return (
-          <section key={slot.key} className="rounded-md border border-border bg-background p-4">
+          <section key={slot.key} className="rounded-xl bg-muted p-4">
             <div className="mb-4 flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-secondary-foreground">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-card text-primary">
                 <Clock3 className="h-4 w-4" />
               </span>
               <div>
-                <h3 className="text-base font-semibold text-foreground">{slot.label}</h3>
+                <h3 className="text-base font-bold text-foreground">{slot.label}</h3>
                 <p className="text-sm text-muted-foreground">{slot.helper}</p>
               </div>
             </div>

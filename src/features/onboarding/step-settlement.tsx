@@ -14,15 +14,15 @@ const MONTH_OPTIONS: Array<{ id: SalaryMonthType; label: string; helper: string 
 
 export function StepSettlement({ formData, updateFormData }: StepSettlementProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1fr_0.8fr]">
-      <section className="rounded-md border border-border bg-background p-4">
+    <div className="space-y-6">
+      <section>
         <div className="mb-4 flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-warning-soft text-warning">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-warning-soft text-warning">
             <CreditCard className="h-4 w-4" />
           </span>
           <div>
-            <h3 className="text-base font-semibold text-foreground">급여 지급일</h3>
-            <p className="text-sm text-muted-foreground">강사 급여 정산 기준일입니다.</p>
+            <h3 className="text-base font-bold text-foreground">급여 지급일</h3>
+            <p className="text-sm text-muted-foreground">강사 급여 정산 기준일이에요.</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -31,10 +31,10 @@ export function StepSettlement({ formData, updateFormData }: StepSettlementProps
               key={day}
               aria-pressed={formData.salary_payment_day === day}
               className={[
-                'h-10 rounded-md border px-4 text-sm font-medium transition',
+                'h-11 rounded-xl px-4 text-[15px] font-semibold tabular-nums transition-colors',
                 formData.salary_payment_day === day
-                  ? 'border-muted-foreground/40 bg-foreground text-white'
-                  : 'border-border bg-card text-foreground hover:bg-muted',
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-foreground hover:bg-primary-soft hover:text-primary',
               ].join(' ')}
               type="button"
               onClick={() => updateFormData('salary_payment_day', day)}
@@ -45,22 +45,22 @@ export function StepSettlement({ formData, updateFormData }: StepSettlementProps
         </div>
       </section>
 
-      <section className="rounded-md border border-border bg-background p-4">
+      <section>
         <div className="mb-4 flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-sky-50 text-sky-700">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary">
             <CalendarDays className="h-4 w-4" />
           </span>
           <div>
-            <h3 className="text-base font-semibold text-foreground">학원비 납부일</h3>
-            <p className="text-sm text-muted-foreground">월별 청구 기본 기준입니다.</p>
+            <h3 className="text-base font-bold text-foreground">학원비 납부일</h3>
+            <p className="text-sm text-muted-foreground">월별 청구 기본 기준이에요.</p>
           </div>
         </div>
-        <label className="mb-1.5 block text-sm font-medium text-foreground" htmlFor="tuition-due-day">
+        <label className="mb-1.5 block text-sm font-semibold text-secondary-foreground" htmlFor="tuition-due-day">
           학원비 기본 납부일
         </label>
         <select
           id="tuition-due-day"
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-primary/30"
+          className="h-12 w-full rounded-xl border border-transparent bg-muted px-4 text-[15px] text-foreground outline-none transition-colors focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
           value={formData.tuition_due_day}
           onChange={(event) => updateFormData('tuition_due_day', Number(event.target.value))}
         >
@@ -72,18 +72,18 @@ export function StepSettlement({ formData, updateFormData }: StepSettlementProps
         </select>
       </section>
 
-      <section className="rounded-md border border-border bg-background p-4 xl:col-span-2">
-        <h3 className="mb-3 text-base font-semibold text-foreground">정산 방식</h3>
+      <section>
+        <h3 className="mb-3 text-base font-bold text-foreground">정산 방식</h3>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {MONTH_OPTIONS.map((option) => (
             <button
               key={option.id}
               aria-pressed={formData.salary_month_type === option.id}
               className={[
-                'rounded-md border p-4 text-left transition',
+                'rounded-xl border-2 p-4 text-left transition-colors',
                 formData.salary_month_type === option.id
-                  ? 'border-muted-foreground/40 bg-muted'
-                  : 'border-border bg-card hover:bg-muted',
+                  ? 'border-primary bg-primary-soft'
+                  : 'border-transparent bg-muted hover:bg-primary-soft/60',
               ].join(' ')}
               type="button"
               onClick={() => updateFormData('salary_month_type', option.id)}

@@ -7,17 +7,17 @@ interface StepAcademyProps {
 }
 
 const FIELD_CLASS =
-  'h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary/30';
+  'h-12 w-full rounded-xl border border-transparent bg-muted px-4 text-[15px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/80 focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10';
 
 export function StepAcademy({ formData, updateFormData }: StepAcademyProps) {
   return (
     <div className="space-y-5">
-      <div className="flex items-start gap-3 rounded-md border border-sky-200 bg-sky-50 p-4">
-        <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-sky-700" />
+      <div className="flex items-start gap-3 rounded-xl bg-primary-soft p-4">
+        <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
         <div>
-          <h3 className="text-sm font-semibold text-sky-950">운영 화면에 표시되는 기본 정보입니다</h3>
-          <p className="mt-1 text-sm text-sky-900">
-            학생, 강사, 상담 화면의 학원명과 기본 연락처에 사용됩니다.
+          <h3 className="text-sm font-semibold text-primary">운영 화면에 표시되는 기본 정보예요</h3>
+          <p className="mt-1 text-sm text-primary/80">
+            학생, 강사, 상담 화면의 학원명과 기본 연락처에 쓰여요.
           </p>
         </div>
       </div>
@@ -87,7 +87,7 @@ function Field({
 
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium text-foreground" htmlFor={id}>
+      <label className="text-sm font-semibold text-secondary-foreground" htmlFor={id}>
         {label}
         {required ? <span className="ml-1 text-destructive">*</span> : null}
       </label>
