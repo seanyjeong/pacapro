@@ -58,11 +58,6 @@ module.exports = function (router) {
             let whereClause = 'WHERE c.academy_id = ?';
             const params = [academyId];
 
-            if (status) {
-                whereClause += ' AND c.status = ?';
-                params.push(status);
-            }
-
             if (startDate) {
                 whereClause += ' AND c.preferred_date >= ?';
                 params.push(startDate);
@@ -94,6 +89,15 @@ module.exports = function (router) {
                 params.push(searchTerm, searchTerm, searchTerm);
             }
 
+            // 상태별 통계는 목록과 같은 범위(날짜·종류·지점·검색)에서 상태 조건만 빼고 센다
+            const statsWhereClause = whereClause;
+            const statsParams = [...params];
+
+            if (status) {
+                whereClause += ' AND c.status = ?';
+                params.push(status);
+            }
+
             // 전체 개수 조회
             const [countResult] = await pool.execute(
                 `SELECT COUNT(*) as total FROM consultations c ${whereClause}`,
@@ -121,11 +125,11 @@ module.exports = function (router) {
 
             // 상태별 통계
             const [stats] = await pool.execute(
-                `SELECT status, COUNT(*) as count
-                 FROM consultations
-                 WHERE academy_id = ?
-                 GROUP BY status`,
-                [academyId]
+                `SELECT c.status, COUNT(*) as count
+                 FROM consultations c
+                 ${statsWhereClause}
+                 GROUP BY c.status`,
+                statsParams
             );
 
             // 완료된 상담이 있으면 학생 매칭을 위해 학생 목록 조회

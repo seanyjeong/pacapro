@@ -47,6 +47,11 @@ export function generateTimeSlots(date: string, weeklyHours: WeeklyHour[]) {
   return slots;
 }
 
+// 서버 상태별 통계에는 전체 칸이 없다 — 같은 범위의 상태별 수를 모두 더한다
+export function getEnrolledConsultationTotal(stats: Record<string, number>) {
+  return Object.values(stats).reduce((sum, count) => sum + (count || 0), 0);
+}
+
 export function filterStudents(students: Student[], keyword: string) {
   const normalized = keyword.toLowerCase();
   return students.filter((student) => (

@@ -95,6 +95,25 @@ describe('GET /paca/consultations', () => {
         expect(selectCall[1]).toContain('%홍%');
     });
 
+    test('상태별 통계는 목록과 같은 범위(날짜·종류·지점·검색)에서 상태 조건만 빼고 센다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ total: 1 }]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[{ status: 'confirmed', count: 1 }]]);
+
+        const res = await request(makeApp())
+            .get(`/paca/consultations?status=confirmed&consultationType=learning&startDate=2026-11-14&endDate=2026-11-14&branch_ids=3&search=${encodeURIComponent('홍')}`);
+
+        expect(res.status).toBe(200);
+        const [statsSql, statsParams] = pool.execute.mock.calls[2];
+        expect(statsSql).toMatch(/c\.preferred_date >= \?/);
+        expect(statsSql).toMatch(/c\.consultation_type = \?/);
+        expect(statsSql).toMatch(/COALESCE\(c\.branch_id, 0\) IN \(\?\)/);
+        expect(statsSql).not.toMatch(/c\.status = \?/);
+        expect(statsParams).toEqual([1, '2026-11-14', '2026-11-14', 'learning', 3, '%홍%', '%홍%', '%홍%']);
+        expect(pool.execute.mock.calls[0][1]).toEqual([...statsParams, 'confirmed']);
+    });
+
     test('completed 상담 있을 때 → 학생 매칭 SELECT 추가 (4번째 호출), matched_student_status 채움', async () => {
         pool.execute
             .mockResolvedValueOnce([[{ total: 1 }]]) // COUNT
