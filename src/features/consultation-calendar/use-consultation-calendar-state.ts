@@ -35,6 +35,7 @@ export function useConsultationCalendarState() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedConsultations, setSelectedConsultations] = useState<Consultation[]>([]);
+  const [selectedMemos, setSelectedMemos] = useState<StudentConsultationMemo[]>([]);
   const [dayListModalOpen, setDayListModalOpen] = useState(false);
   const [selectedConsultation, setSelectedConsultation] = useState<Consultation | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -93,12 +94,13 @@ export function useConsultationCalendarState() {
       if (dayConsultations.length > 0) {
         setSelectedDate(targetDate);
         setSelectedConsultations(dayConsultations);
+        setSelectedMemos(getMemosForDate(studentMemos, targetDate));
         setDayListModalOpen(true);
       }
     } catch {
       return;
     }
-  }, [consultations, dateParam]);
+  }, [consultations, dateParam, studentMemos]);
 
   const loadStudents = useCallback(async () => {
     setStudentsLoading(true);
@@ -163,12 +165,14 @@ export function useConsultationCalendarState() {
 
   const handleDateClick = useCallback((date: Date) => {
     const dayConsultations = getConsultationsForDate(consultations, date);
-    if (dayConsultations.length > 0) {
+    const dayMemos = getMemosForDate(studentMemos, date);
+    if (dayConsultations.length > 0 || dayMemos.length > 0) {
       setSelectedDate(date);
       setSelectedConsultations(dayConsultations);
+      setSelectedMemos(dayMemos);
       setDayListModalOpen(true);
     }
-  }, [consultations]);
+  }, [consultations, studentMemos]);
 
   const openDetailModal = useCallback((consultation: Consultation) => {
     setSelectedConsultation(consultation);
@@ -189,6 +193,7 @@ export function useConsultationCalendarState() {
     loadError,
     selectedDate,
     selectedConsultations,
+    selectedMemos,
     dayListModalOpen,
     selectedConsultation,
     detailModalOpen,

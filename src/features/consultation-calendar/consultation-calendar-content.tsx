@@ -64,6 +64,7 @@ export function ConsultationCalendarContent() {
         open={state.dayListModalOpen}
         selectedDate={state.selectedDate}
         consultations={state.selectedConsultations}
+        memos={state.selectedMemos}
         onOpenChange={state.setDayListModalOpen}
         onOpenDetail={state.openDetailModal}
       />
