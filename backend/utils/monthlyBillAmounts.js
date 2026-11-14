@@ -7,7 +7,7 @@
  * 금액·비율은 받은 10진 값 그대로(반올림 없이) BigInt 정수 × 10^-자리수 로 바꿔 계산한다.
  * (예전 식 학원비 × (할인율 / 100) 은 29%·100,000원에서 28,999.999… → 28,000원이 되는 등 천원이 틀렸다.)
  *
- * 일할·시즌·환불·크레딧 계산도 아래 정확한 곱셈·나눗셈 도우미(floorRatio·floorPercent·floorAfterPercent·exactPercent)를 쓴다.
+ * 일할·시즌·환불·크레딧 계산도 아래 정확한 곱셈·나눗셈 도우미(floorRatio·floorPercent)를 쓴다.
  * 각 경로의 식 구조·절삭 위치는 그대로 두고, 소수 곱셈·나눗셈만 이 도우미로 바꾼다.
  */
 
@@ -50,18 +50,6 @@ function floorPercent(amount, rate, unit = 1000) {
     return toUnits(floorDivide(a.n * r.n, pow10(a.scale + r.scale + 2) * BigInt(unit)), unit);
 }
 
-// (금액 − 금액 × 비율 / 100)을 정확히 계산해 unit 단위로 한 번에 내림
-function floorAfterPercent(amount, rate, unit = 1000) {
-    const a = decimal(amount), r = decimal(rate);
-    return toUnits(floorDivide(a.n * (100n * pow10(r.scale) - r.n), pow10(a.scale + r.scale + 2) * BigInt(unit)), unit);
-}
-
-// 금액 × 비율 / 100 의 값(절삭하지 않는 칸용). 정확한 분수를 가장 가까운 소수로.
-function exactPercent(amount, rate) {
-    const a = decimal(amount), r = decimal(rate);
-    return Number(a.n * r.n) / Number(pow10(a.scale + r.scale + 2));
-}
-
 // 두 10진 값이 같은가('350000.00' 과 350000 은 같다)
 function sameDecimal(left, right) {
     const a = decimal(left), b = decimal(right);
@@ -83,5 +71,5 @@ function monthlyBillAmounts(tuition, discountRate, additional = 0, carryover = 0
 }
 
 module.exports = {
-    monthlyBillAmounts, monthlyDiscountAmount, floorRatio, floorPercent, floorAfterPercent, exactPercent, sameDecimal
+    monthlyBillAmounts, monthlyDiscountAmount, floorRatio, floorPercent, sameDecimal
 };

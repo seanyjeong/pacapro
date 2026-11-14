@@ -45,7 +45,7 @@ const {
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../repositories/seasonMonthlyExclusion');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../services/nonSeasonProratedBilling');
-const { monthlyBillAmounts, floorRatio, floorAfterPercent, exactPercent } = require('../../utils/monthlyBillAmounts');
+const { monthlyBillAmounts, floorRatio, floorPercent } = require('../../utils/monthlyBillAmounts');
 const { parseClassDaysWithSlots, extractDayNumbers } = require('../../services/studentScheduleAssignment');
 const { deductMonthlyCredit } = require('../../services/monthlyCreditDeduction');
 
@@ -363,8 +363,10 @@ router.post('/generate-prorated', verifyToken, checkPermission('payments', 'edit
             isProrated = true;
         }
 
-        // 일할 금액 − 일할 금액 × 할인율 → 천원 절삭(식은 그대로, 소수 오차 없이)
-        const finalAmount = floorAfterPercent(proRatedAmount, discountRate);
+        // 할인액 = 천원 절삭(일할 × 할인율), 최종 = 일할 − 할인액 — 학생 등록 첫 달 청구(crud/create)와 같은 식.
+        // 예전엔 천원 절삭(일할 − 일할 × 할인율)이라 같은 학생·같은 달이 경로에 따라 달랐다(100,000원·12.5%: 87,000 대 88,000).
+        const discountAmount = floorPercent(proRatedAmount, discountRate);
+        const finalAmount = proRatedAmount - discountAmount;
 
         // 납부기한 계산 (등록월의 납부일 또는 등록일 + 7일)
         let dueDate;
@@ -419,7 +421,7 @@ router.post('/generate-prorated', verifyToken, checkPermission('payments', 'edit
                 req.user.academyId,
                 yearMonth,
                 proRatedAmount,
-                exactPercent(proRatedAmount, discountRate),
+                discountAmount,
                 finalAmount,
                 isProrated ? 1 : 0,
                 JSON.stringify(prorationDetails),

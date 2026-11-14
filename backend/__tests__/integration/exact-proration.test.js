@@ -17,7 +17,7 @@ jest.mock('../../utils/logger', () => ({ error: jest.fn(), warn: jest.fn(), info
 
 const express = require('express');
 const request = require('supertest');
-const { floorRatio, floorPercent, floorAfterPercent, exactPercent } = require('../../utils/monthlyBillAmounts');
+const { floorRatio, floorPercent } = require('../../utils/monthlyBillAmounts');
 const { calculateResumePayment } = require('../../services/resumePaymentService');
 const { planSeasonEnrollment } = require('../../services/seasonEnrollmentService');
 const { calculateMidSeasonFee, calculateProRatedFee, calculateSeasonRefund } = require('../../utils/seasonCalculator');
@@ -28,7 +28,6 @@ const h = value => BigInt(Math.round(value * 100));
 const floorBig = (a, b) => (a >= 0n ? a / b : -((-a + b - 1n) / b));
 const exRatio = (amount, n, d, unit = 1000) => Number(floorBig(h(amount) * BigInt(n), BigInt(d) * 100n * BigInt(unit)) * BigInt(unit));
 const exPct = (amount, rate, unit = 1000) => Number(floorBig(h(amount) * h(rate), 1000000n * BigInt(unit)) * BigInt(unit));
-const exAfter = (amount, rate, unit = 1000) => Number(floorBig(h(amount) * (10000n - h(rate)), 1000000n * BigInt(unit)) * BigInt(unit));
 const t = (x, unit = 1000) => Math.floor(x / unit) * unit;
 const RATES_2DP = Array.from({ length: 10001 }, (_, i) => i / 100);
 
@@ -42,12 +41,11 @@ describe('(a) 정확한 계산 도우미 = BigInt 기대값', () => {
         expect(wrong).toEqual([]);
     });
 
-    test('floorPercent·floorAfterPercent: 정수 비율 × 금액 1,000~2,000,000, 소수 둘째 자리 비율 × 금액 1,000~100,000', () => {
+    test('floorPercent: 정수 비율 × 금액 1,000~2,000,000, 소수 둘째 자리 비율 × 금액 1,000~100,000', () => {
         const wrong = [];
         const check = (x, r) => {
             if (floorPercent(x, r) !== exPct(x, r)) wrong.push(['pct', x, r]);
             if (floorPercent(x, r, 1) !== exPct(x, r, 1)) wrong.push(['pct1', x, r]);
-            if (floorAfterPercent(x, r) !== exAfter(x, r)) wrong.push(['after', x, r]);
         };
         for (let x = 1000; x <= 2000000; x += 1000) for (let r = 0; r <= 100; r++) check(x, r);
         for (let x = 1000; x <= 100000; x += 1000) for (const r of RATES_2DP) check(x, r);
@@ -57,8 +55,6 @@ describe('(a) 정확한 계산 도우미 = BigInt 기대값', () => {
     test('전 단위 금액·DB 문자열 값, 절삭 없는 할인액 칸 값', () => {
         expect(floorRatio('333333.33', 7, 13)).toBe(exRatio(333333.33, 7, 13));
         expect(floorPercent('350000.00', '32.80')).toBe(114000);
-        expect(exactPercent(125000, 32.8)).toBe(41000);
-        expect(exactPercent(138000, 10)).toBe(13800);
     });
 });
 
@@ -99,7 +95,7 @@ const enrollCombos = WEEKDAY_SETS.flatMap(weekdays => Array.from({ length: 27 },
 })).filter(c => c.d > 0 && c.n > 0);
 
 describe('(b) 경로별: 예전 식이 틀리던 입력에서 이제 정확한 값', () => {
-    test('등록일 일할 청구(POST /payments/generate-prorated): 학원비 × (남은/전체 수업일), 일할 − 일할 × 할인율', async () => {
+    test('등록일 일할 청구(POST /payments/generate-prorated): 학원비 × (남은/전체 수업일), 할인 = 천원 절삭(일할 × 할인율), 최종 = 일할 − 할인', async () => {
         const app = express(); app.use(express.json());
         const router = express.Router(); require('../../routes/payments/bulk')(router); app.use('/p', router);
         const call = async (tuition, rate, weekdays, day) => {
@@ -122,11 +118,36 @@ describe('(b) 경로별: 예전 식이 틀리던 입력에서 이제 정확한 �
         expect(combo).not.toBeNull();
         const ratioInsert = await call(combo.amount, 0, combo.weekdays, combo.day);
         expect(ratioInsert[3]).toBe(exRatio(combo.amount, combo.n, combo.d));
-        // 최종: 예전 x − x × (r / 100) 가 틀리던 입력(1일 등록 = 일할 없음 → 일할 금액 = 학원비)
-        const rate = findRate(r => t(25000 - 25000 * (r / 100)), r => exAfter(25000, r));
-        expect(rate).toBe(56);
-        const afterInsert = await call(25000, rate, [1, 3, 5], 1);
-        expect([afterInsert[3], afterInsert[4], afterInsert[5]]).toEqual([25000, 14000, 11000]);
+        // 할인: 학생 등록 첫 달 청구와 같은 식(할인액 천원 절삭 → 빼기). 예전 식 천원 절삭(일할 − 일할 × 할인율)이면
+        // 100,000원·12.5% 가 87,000원(할인 칸 12,500)이었다 → 이제 할인 12,000·최종 88,000
+        const discounted = await call(100000, 12.5, [1, 3, 5], 1); // 1일 등록 = 일할 없음 → 일할 금액 = 학원비
+        expect([discounted[3], discounted[4], discounted[5]]).toEqual([100000, 12000, 88000]);
+        // 예전 x × r / 100 할인이 소수 오차로 틀리던 입력: 125,000원·32.8%
+        const decimalRate = await call(125000, 32.8, [1, 3, 5], 1);
+        expect([decimalRate[3], decimalRate[4], decimalRate[5]]).toEqual([125000, 41000, 84000]);
+    });
+
+    test('같은 학생·같은 등록일이면 등록일 일할 청구 = 첫 달 일할 재계산(학생 등록 첫 달과 같은 식)', async () => {
+        const app = express(); app.use(express.json());
+        const payments = express.Router(); require('../../routes/payments/bulk')(payments); app.use('/p', payments);
+        const students = express.Router(); require('../../routes/students/firstPayment')(students); app.use('/s', students);
+        for (const [tuition, rate, weekdays, day] of [[100000, 12.5, [1, 3, 5], 10], [333333.33, 33.33, [2, 4, 6], 16], [125000, 32.8, [1, 3, 5], 1]]) {
+            const date = `2026-12-${String(day).padStart(2, '0')}`;
+            const student = { id: 1, name: '합성', monthly_tuition: String(tuition), discount_rate: String(rate), payment_due_day: 5,
+                enrollment_date: date, class_days: JSON.stringify(weekdays), time_slot: 'evening', tuition_due_day: 5 };
+            let generated, recalculated;
+            global.__exactDb = { execute: async (sql, params) => {
+                if (/INSERT INTO student_payments/.test(sql)) { generated = params.slice(3, 6); return [{ insertId: 1 }]; }
+                if (/UPDATE student_payments/.test(sql)) { recalculated = params.slice(0, 3); return [{ affectedRows: 1 }]; }
+                if (/FROM students/.test(sql)) return [[student]];
+                if (/is_prorated = 1 OR description/.test(sql)) return [[{ id: 7, payment_status: 'pending', additional_amount: 0, carryover_amount: 0 }]];
+                if (/FROM student_payments p/.test(sql)) return [[{ id: 1 }]];
+                return [[]];
+            } };
+            expect((await request(app).post('/p/generate-prorated').send({ student_id: 1, enrollment_date: date })).status).toBe(201);
+            expect((await request(app).post('/s/1/recalculate-first-payment').send({})).status).toBe(200);
+            expect([tuition, rate, ...generated]).toEqual([tuition, rate, ...recalculated]);
+        }
     });
 
     test('첫 달 일할 재계산(POST /students/:id/recalculate-first-payment): 학원비 ÷ 전체 × 남은 수업일, 할인 = 일할 × 할인율', async () => {

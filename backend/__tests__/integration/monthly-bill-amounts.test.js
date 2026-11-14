@@ -67,13 +67,12 @@ describe('(a) 공통 함수 = 정확한 값', () => {
     });
 
     test('소수 셋째 자리 이상 비율도 반올림하지 않는다(요청 본문 값 등)', () => {
-        const { floorPercent, floorAfterPercent, floorRatio } = require('../../utils/monthlyBillAmounts');
+        const { floorPercent, floorRatio } = require('../../utils/monthlyBillAmounts');
         expect(floorPercent(100000, 0.995)).toBe(0);            // 995원 → 0 (예전 0.01% 반올림이면 1,000)
         expect(monthlyBillAmounts(200000, 0.995)).toEqual({ discount: 1000, final: 199000 }); // 1,990 → 1,000
         expect(floorPercent(1000000, 4.125)).toBe(41000);       // 41,250 → 41,000
         expect(floorPercent('1000000.00', '4.125')).toBe(41000);
         expect(floorPercent(100000, '33.3333')).toBe(33000);
-        expect(floorAfterPercent(100000, 0.995)).toBe(99000);   // 99,005 → 99,000
         expect(floorRatio('333333.333', 1, 3, 1)).toBe(111111);
         expect(floorRatio(1000, 1, 0)).toBeNaN();               // 분모 0 은 예전 소수 계산처럼 NaN
     });
