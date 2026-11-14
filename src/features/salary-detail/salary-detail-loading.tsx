@@ -1,5 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { SalaryDetailTitleBar } from './salary-detail-header';
 
 interface SalaryDetailLoadingProps {
   onBack: () => void;
@@ -7,16 +6,18 @@ interface SalaryDetailLoadingProps {
 
 export function SalaryDetailLoading({ onBack }: SalaryDetailLoadingProps) {
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <div className="flex items-center gap-3 border-b border-border/70 pb-4">
-        <Button type="button" variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-2xl font-semibold text-foreground">급여 명세서</h1>
-      </div>
-      <section className="rounded-lg border border-border/70 bg-card p-8">
-        <div className="h-8 w-40 rounded-md bg-muted" />
-        <div className="mt-4 h-20 rounded-md bg-muted/70" />
+    <div className="mx-auto max-w-4xl space-y-4" aria-busy="true">
+      <SalaryDetailTitleBar onBack={onBack} />
+      <section className="rounded-2xl bg-card p-5 sm:p-6">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          {[1, 2, 3, 4].map((item) => (
+            <div key={item} className="h-16 rounded-xl bg-muted" />
+          ))}
+        </div>
+      </section>
+      <section className="rounded-2xl bg-card p-5 sm:p-6">
+        <div className="h-6 w-32 rounded-lg bg-muted" />
+        <div className="mt-4 h-40 rounded-xl bg-muted/70" />
       </section>
     </div>
   );
