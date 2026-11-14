@@ -7,7 +7,7 @@ import { Building2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AuthPageShell } from '@/features/auth/auth-page-shell';
+import { AuthNotice, AuthPageShell, authInputClass, authLabelClass } from '@/features/auth/auth-page-shell';
 import { authAPI } from '@/lib/api/auth';
 
 const REGISTER_ERROR_MESSAGE = '회원가입을 완료하지 못했습니다. 입력 내용을 확인한 뒤 다시 시도해주세요.';
@@ -78,9 +78,9 @@ export default function RegisterPage() {
         icon={<CheckCircle className="h-6 w-6" />}
         title="회원가입 요청 완료"
         tone="success"
-        description="관리자 승인 후 로그인이 가능합니다. 승인 상태는 등록한 이메일로 안내됩니다."
+        description="관리자 승인 후 로그인할 수 있어요. 승인 상태는 등록한 이메일로 안내해 드려요."
       >
-        <p className="text-sm text-secondary-foreground">잠시 후 로그인 페이지로 이동합니다.</p>
+        <p className="text-sm text-secondary-foreground">잠시 후 로그인 페이지로 이동해요.</p>
       </AuthPageShell>
     );
   }
@@ -89,7 +89,7 @@ export default function RegisterPage() {
     <AuthPageShell
       icon={<Building2 className="h-6 w-6" />}
       title="P-ACA 회원가입"
-      description="학원 운영 계정을 요청합니다. 승인 후 실제 운영 화면에 접속할 수 있습니다."
+      description="학원 운영 계정을 요청해요. 승인 후 운영 화면에 접속할 수 있어요."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <AuthInput
@@ -147,26 +147,24 @@ export default function RegisterPage() {
         />
 
         {error ? (
-          <div role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
-            {error}
-          </div>
+          <AuthNotice role="alert">{error}</AuthNotice>
         ) : null}
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? '가입 중...' : '회원가입'}
         </Button>
       </form>
 
-      <div className="mt-5 space-y-4">
+      <div className="mt-6 space-y-4">
         <p className="text-center text-sm text-muted-foreground">
           이미 계정이 있으신가요?{' '}
-          <Link href="/login" className="font-medium text-primary hover:underline">
+          <Link href="/login" className="font-semibold text-primary hover:underline">
             로그인
           </Link>
         </p>
-        <div className="rounded-md border border-primary/30 bg-primary-soft px-4 py-3 text-xs leading-5 text-primary">
-          회원가입 후 관리자 승인이 필요합니다. 학원명은 승인 기준으로 사용되므로 정확히 입력해주세요.
-        </div>
+        <AuthNotice tone="primary">
+          회원가입 후 관리자 승인이 필요해요. 학원명은 승인 기준으로 쓰이니 정확히 입력해주세요.
+        </AuthNotice>
       </div>
     </AuthPageShell>
   );
@@ -187,7 +185,7 @@ interface AuthInputProps {
 function AuthInput({ autoComplete, id, label, name, onChange, placeholder, required, type = 'text', value }: AuthInputProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>
+      <Label htmlFor={id} className={authLabelClass}>
         {label}
         {required ? <span className="ml-1 text-destructive">*</span> : null}
       </Label>
@@ -200,6 +198,7 @@ function AuthInput({ autoComplete, id, label, name, onChange, placeholder, requi
         placeholder={placeholder}
         autoComplete={autoComplete}
         required={required}
+        className={authInputClass}
       />
     </div>
   );

@@ -6,7 +6,7 @@ import { ArrowLeft, CheckCircle, Mail } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AuthPageShell } from '@/features/auth/auth-page-shell';
+import { AuthNotice, AuthPageShell, authInputClass, authLabelClass } from '@/features/auth/auth-page-shell';
 import { PACA_API_BASE_URL } from '@/lib/api/base-url';
 
 const API_URL = PACA_API_BASE_URL;
@@ -49,15 +49,13 @@ export default function ForgotPasswordPage() {
         tone="success"
         description={
           <>
-            <strong className="font-semibold text-foreground">{email}</strong>로 비밀번호 재설정 링크를 발송했습니다.
+            <strong className="font-semibold text-foreground">{email}</strong>로 비밀번호 재설정 링크를 보냈어요.
           </>
         }
       >
         <div className="space-y-4">
-          <div className="rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
-            메일함과 스팸함을 확인해주세요. 링크는 1시간 동안 유효합니다.
-          </div>
-          <Link href="/login" className={buttonVariants({ variant: 'outline', className: 'w-full gap-2' })}>
+          <AuthNotice tone="success">메일함과 스팸함을 확인해주세요. 링크는 1시간 동안 유효해요.</AuthNotice>
+          <Link href="/login" className={buttonVariants({ variant: 'outline', size: 'lg', className: 'w-full' })}>
             <ArrowLeft className="h-4 w-4" />
             로그인으로 돌아가기
           </Link>
@@ -70,11 +68,11 @@ export default function ForgotPasswordPage() {
     <AuthPageShell
       icon={<Mail className="h-6 w-6" />}
       title="비밀번호 찾기"
-      description="가입한 이메일 주소를 입력하면 비밀번호 재설정 링크를 보내드립니다."
+      description="가입한 이메일 주소를 입력하면 비밀번호 재설정 링크를 보내 드려요."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">이메일</Label>
+          <Label htmlFor="email" className={authLabelClass}>이메일</Label>
           <Input
             id="email"
             type="email"
@@ -83,16 +81,15 @@ export default function ForgotPasswordPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={isLoading}
+            className={authInputClass}
           />
         </div>
 
         {error ? (
-          <div role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
-            {error}
-          </div>
+          <AuthNotice role="alert">{error}</AuthNotice>
         ) : null}
 
-        <Button type="submit" className="w-full" disabled={isLoading}>
+        <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
           {isLoading ? '발송 중...' : '재설정 링크 받기'}
         </Button>
 
