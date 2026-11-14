@@ -8,7 +8,7 @@
  *
  * 쿼리: 없음 (학원 단위 전체 학생 export)
  * 응답:
- *   - 성공: ExcelJS workbook 바이너리 (재원생/휴원생/퇴원생/체험생/미등록 시트별 분리)
+ *   - 성공: ExcelJS workbook 바이너리 (재원생/휴원생/퇴원생/졸업생/체험생/예비생/미등록 시트별 분리)
  *   - 5xx : { error: 'Server Error', message: '<한국어>' } — 응답 표면 보존 (ADR-013)
  *
  * DB: pool.execute (ADR-005). academies + students 두 SELECT.
@@ -94,6 +94,7 @@ module.exports = function(router) {
                 active: { name: '재원생', color: 'FF2E7D32', students: [] },
                 paused: { name: '휴원생', color: 'FFFFA000', students: [] },
                 withdrawn: { name: '퇴원생', color: 'FFC62828', students: [] },
+                graduated: { name: '졸업생', color: 'FF455A64', students: [] },
                 trial: { name: '체험생', color: 'FF1565C0', students: [] },
                 prospect: { name: '예비생', color: 'FF0284C7', students: [] },
                 pending: { name: '미등록', color: 'FF757575', students: [] }

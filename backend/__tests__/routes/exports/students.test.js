@@ -207,6 +207,28 @@ describe('GET /paca/exports/students', () => {
         expect(res.body.length).toBeGreaterThan(500);
     });
 
+    test('졸업생은 재원생 시트에 섞이지 않고 졸업생 시트로 따로 나간다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ name: 'P-ACA' }]])
+            .mockResolvedValueOnce([[
+                { id: 1, name: '재원', status: 'active', is_trial: 0 },
+                { id: 2, name: '재원2', status: 'active', is_trial: 0 },
+                { id: 3, name: '졸업', status: 'graduated', is_trial: 0 }
+            ]]);
+
+        const res = await request(buildApp())
+            .get('/paca/exports/students')
+            .buffer(true)
+            .parse(binaryParser);
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(res.body);
+
+        expect(workbook.worksheets.map(sheet => sheet.name)).toEqual(['학생등록양식', '재원생', '졸업생']);
+        expect(workbook.getWorksheet('재원생').getCell('A2').value).toMatch(/총 2명$/);
+        expect(workbook.getWorksheet('졸업생').getCell('A2').value).toMatch(/총 1명$/);
+        expect(workbook.getWorksheet('졸업생').getCell('B5').value).toBe('dec(졸업)');
+    });
+
     test('5xx + 한국어 메시지 + e.message 누출 0건', async () => {
         pool.execute.mockRejectedValueOnce(new Error('SECRET_DB_ERROR_DO_NOT_LEAK'));
 
