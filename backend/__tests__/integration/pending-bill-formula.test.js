@@ -3,6 +3,8 @@
  * 기대값은 실제 월 자동 청구 코드(scheduler/paymentScheduler, POST /payments/bulk-monthly)에 같은 입력을 넣어 얻는다.
  * 네 경로(학생 수정·수업일 변경·반 학원비 적용·반 이동)를 실제 SQL(메모리 DB)로 돌려 비교한다.
  */
+// 48가지 × 4 경로를 실제 코드로 돌려, 전체 시험을 함께 돌릴 때 첫 준비가 기본 5초를 넘을 수 있다
+jest.setTimeout(30000);
 jest.mock('../../config/database', () => ({
     query: (...args) => global.__billFormulaDb.query(...args),
     execute: (...args) => global.__billFormulaDb.execute(...args),
