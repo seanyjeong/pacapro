@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { ChevronRight } from 'lucide-react';
+import { SectionCard } from '@/components/ui/page';
 import type { TabletHomeAction } from './tablet-home-types';
 
 interface TabletHomeActionGridProps {
@@ -10,9 +12,8 @@ export function TabletHomeActionGrid({ actions, title }: TabletHomeActionGridPro
   if (actions.length === 0) return null;
 
   return (
-    <section className="rounded-md border border-border bg-background p-4" aria-label={title}>
-      <h2 className="text-base font-semibold text-foreground">{title}</h2>
-      <div className="mt-3 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+    <SectionCard title={title}>
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3" aria-label={title}>
         {actions.map((action) => {
           const Icon = action.icon;
           return (
@@ -20,21 +21,20 @@ export function TabletHomeActionGrid({ actions, title }: TabletHomeActionGridPro
               key={action.href}
               href={action.href}
               aria-label={action.label}
-              className="group rounded-md border border-border bg-muted/20 px-3 py-3 transition-colors hover:bg-muted/45 focus:outline-none focus:ring-2 focus:ring-ring/30"
+              className="group flex min-h-[72px] items-center gap-3 rounded-xl bg-muted px-4 py-3 transition-colors hover:bg-primary-soft focus:outline-none focus-visible:ring-4 focus-visible:ring-ring/20"
             >
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground group-hover:text-foreground">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-foreground">{action.label}</span>
-                  <span className="mt-1 block text-xs leading-5 text-muted-foreground">{action.description}</span>
-                </span>
-              </div>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card text-primary">
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-bold text-foreground">{action.label}</span>
+                <span className="mt-0.5 block text-[13px] leading-5 text-muted-foreground">{action.description}</span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/60" />
             </Link>
           );
         })}
       </div>
-    </section>
+    </SectionCard>
   );
 }
