@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Edit, RefreshCw, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { StatTile } from '@/components/ui/page';
-import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,15 +24,16 @@ import { InstructorInitial, InstructorStatusBadge } from '@/features/instructors
 import { INSTRUCTOR_TYPE_LABELS, SALARY_TYPE_LABELS } from '@/lib/types/instructor';
 import { InstructorWorkCalendar } from '@/features/instructors/instructor-work-calendar';
 import { InstructorErrorPanel, InstructorLoadingPanel } from '@/features/instructors/instructor-page-states';
-import { useInstructor } from '@/hooks/use-instructors';
-import { instructorsAPI } from '@/lib/api/instructors';
+import { useDeleteInstructor, useInstructor } from '@/hooks/use-instructors';
 
 export default function InstructorDetailPage() {
   const params = useParams();
   const router = useRouter();
   const instructorId = Number(params.id);
-  const [deleting, setDeleting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  // 삭제 성공 시 강사 목록 쿼리를 무효화해 목록으로 돌아가면 바로 빠진다
+  const deleteMutation = useDeleteInstructor();
+  const deleting = deleteMutation.isPending;
 
   const { instructor, attendances, salaries, loading, error, reload } = useInstructor(instructorId);
 
@@ -47,16 +47,12 @@ export default function InstructorDetailPage() {
     if (!instructor) return;
 
     try {
-      setDeleting(true);
-      await instructorsAPI.deleteInstructor(instructorId, { suppressErrorToast: true });
-      toast.success('강사가 삭제되었습니다.');
+      await deleteMutation.mutateAsync(instructorId);
       setDeleteDialogOpen(false);
       router.push('/instructors');
     } catch (err) {
+      // 성공·실패 안내는 useDeleteInstructor 가 띄운다
       console.error('Failed to delete instructor:', err);
-      toast.error('강사 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.');
-    } finally {
-      setDeleting(false);
     }
   };
 

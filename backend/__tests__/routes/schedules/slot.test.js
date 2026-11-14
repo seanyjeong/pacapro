@@ -98,6 +98,27 @@ describe('GET /paca/schedules/slot', () => {
         expect(params).toEqual(['2026-01-01', 1, 77]);
     });
 
+    test('다른 시간대로 옮긴 학생은 원래 시간대 자동 추가에서 빠진다 (그날 출석 기록 기준)', async () => {
+        pool.query.mockReset();
+        pool.query
+            .mockResolvedValueOnce([[{ id: 8413, class_date: '2026-11-14', time_slot: 'evening' }]]) // 저녁 스케줄
+            .mockResolvedValueOnce([[{ id: 11645 }]]) // 요일·시간대 기준 대상 학생
+            .mockResolvedValueOnce([[]]) // 자동 추가 대상 — 오후로 옮긴 11645 는 그날 기록이 있어 없음
+            .mockResolvedValueOnce([[]]) // 배정 학생
+            .mockResolvedValueOnce([[]]); // 가용 학생
+
+        const res = await request(makeApp())
+            .get('/paca/schedules/slot?date=2026-11-14&time_slot=evening');
+
+        expect(res.status).toBe(200);
+        const [missingSql, missingParams] = pool.query.mock.calls[2];
+        expect(missingSql).toMatch(/s\.id NOT IN \(\s*SELECT a\.student_id FROM attendance a\s+JOIN class_schedules cs ON a\.class_schedule_id = cs\.id\s+WHERE cs\.academy_id = \? AND cs\.class_date = \?\s*\)/);
+        expect(missingSql).not.toMatch(/WHERE a\.class_schedule_id = \?/);
+        expect(missingParams.slice(0, 7)).toEqual([1, '6', 'evening', JSON.stringify({ day: 6, timeSlot: 'evening' }), 1, '2026-11-14', '2026-11-14']);
+        // 자동 추가할 학생이 없으면 출석 기록을 만들지 않는다
+        expect(pool.query.mock.calls.some(([sql]) => /INSERT IGNORE INTO attendance/.test(sql))).toBe(false);
+    });
+
     test('5xx 한국어 메시지', async () => {
         pool.query.mockReset();
         pool.query.mockRejectedValueOnce(new Error('boom'));

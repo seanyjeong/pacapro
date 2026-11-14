@@ -8,6 +8,7 @@ import { staffApi } from '@/lib/api/staff';
 import type { PermissionKey, Permissions, Staff } from '@/lib/types/staff';
 import { PERMISSION_CATEGORIES, PERMISSION_PAGES } from '@/lib/types/staff';
 import { toast } from 'sonner';
+import { selectAllPermissions } from './permission-select-all';
 
 interface PermissionModalProps {
   staff: Staff;
@@ -110,17 +111,9 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
     return checkedCount > 0 && checkedCount < category.items.length;
   };
 
+  // 렌더 시점의 permissions 가 아니라 직전 상태에서 계산해야 '전체 해제'의 보기·수정 해제가 둘 다 남는다
   const handleSelectAll = (action: 'view' | 'edit', value: boolean) => {
-    const newPermissions: Permissions = {};
-    PERMISSION_CATEGORIES.forEach((category) => {
-      category.items.forEach((page) => {
-        newPermissions[page.key] = {
-          view: action === 'edit' && value ? true : (action === 'view' ? value : (permissions[page.key]?.view || false)),
-          edit: action === 'edit' ? value : (permissions[page.key]?.edit || false),
-        };
-      });
-    });
-    setPermissions(newPermissions);
+    setPermissions((prev) => selectAllPermissions(prev, action, value));
   };
 
   const toggleCategory = (title: string) => {
