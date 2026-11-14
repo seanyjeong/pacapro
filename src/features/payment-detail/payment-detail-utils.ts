@@ -22,9 +22,9 @@ export function getPaymentProgress(payment: Payment) {
 }
 
 export function getStatusTone(status: Payment['payment_status']) {
-  if (status === 'paid') return 'border-success/30 bg-success-soft text-success';
-  if (status === 'partial') return 'border-warning/30 bg-warning-soft text-warning';
-  return 'border-destructive/30 bg-destructive-soft text-destructive';
+  if (status === 'paid') return 'bg-success-soft text-success';
+  if (status === 'partial') return 'bg-warning-soft text-warning';
+  return 'bg-destructive-soft text-destructive';
 }
 
 export function getStatusLabel(payment: Payment) {
