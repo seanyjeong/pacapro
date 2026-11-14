@@ -150,7 +150,7 @@ async function runDesktopSend(browser) {
 
   await page.goto('/sms', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
-  await page.locator('header').getByText('Messaging Desk').waitFor();
+  // 영어 소제목 'Messaging Desk' 는 새 디자인에서 없앴다.
   await assertOperationsBoard(page);
   await page.getByText('김진우 학부모').waitFor();
   const studentLink = page.getByRole('link', { name: '김진우 학부모 학생 상세 보기' });
@@ -248,7 +248,7 @@ async function runMobile(browser) {
 
   await page.goto('/sms', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '문자 보내기' }).waitFor();
-  await page.locator('header').getByText('Messaging Desk').waitFor();
+  // 영어 소제목 'Messaging Desk' 는 새 디자인에서 없앴다.
   await assertOperationsBoard(page);
   await page.getByTestId('sms-operations-board').scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/Users/etlab/paca-sms-mobile-board.png', fullPage: false });

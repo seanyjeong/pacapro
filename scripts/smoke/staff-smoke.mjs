@@ -150,7 +150,8 @@ async function runDesktop(browser) {
   await page.getByTestId('staff-operations-workspace').waitFor();
   await page.getByTestId('staff-summary-strip').waitFor();
   await page.getByTestId('staff-work-queue').waitFor();
-  await page.getByText('관리 계정 운영 보드').waitFor();
+  // 새 디자인: '관리 계정 운영 보드'의 숫자는 위 요약 칸으로 옮겨졌고, 오른쪽에는 '권한 부여 대기' 카드가 남는다.
+  await page.getByTestId('staff-work-queue').getByRole('heading', { name: '권한 부여 대기' }).waitFor();
   await page.getByText('박강사').waitFor();
   const desktopList = page.getByTestId('staff-desktop-list');
   await desktopList.getByText('김관리').waitFor();
@@ -178,7 +179,7 @@ async function runDesktop(browser) {
   await desktopList.getByText('보기: 19개, 수정: 1개').waitFor();
 
   await page.getByRole('button', { name: '권한 부여', exact: true }).click();
-  await page.getByRole('heading', { name: '권한 부여' }).waitFor();
+  await page.getByRole('heading', { name: '권한 부여', exact: true }).waitFor();
   await page.getByLabel(/강사 선택/).selectOption('7');
   await page.getByRole('textbox', { name: /이메일/ }).fill('manager@example.com');
   await page.getByLabel('비밀번호 *').fill('password123');
@@ -203,7 +204,7 @@ async function runDesktop(browser) {
   ]);
   await page.getByText('직원 계정이 삭제되었습니다.').waitFor();
   await deleteDialog.waitFor({ state: 'hidden' });
-  await page.getByText('등록된 직원이 없습니다').waitFor();
+  await page.getByText('등록된 직원이 없어요').waitFor();
   if (state.deletedStaffId !== 11) throw new Error('staff delete endpoint was not called');
 
   await assertNoRawVisibleText(page, 'staff desktop');
@@ -247,7 +248,7 @@ async function runLoadError(browser) {
 
   await gotoStaff(page);
   await page.getByRole('heading', { name: '직원 관리' }).waitFor();
-  await page.getByRole('heading', { name: '직원 정보를 불러오지 못했습니다' }).waitFor();
+  await page.getByRole('heading', { name: '직원 정보를 불러오지 못했어요' }).waitFor();
   await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'staff load error');
   await assertNoHorizontalOverflow(page, 'staff load error');

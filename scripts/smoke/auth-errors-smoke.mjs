@@ -48,12 +48,13 @@ async function assertSafeAuthError(page, state, label, expectedText) {
   await assertNoHorizontalOverflow(page, label);
 }
 
+// 새 디자인: '체대입시 학원관리'는 제목(heading)이 아니라 로고 옆 글자로 바뀌었고, 화면 제목(로그인 등)이 h1 이다.
 async function runLoginError(browser) {
   const result = await createPublicPage(browser);
   const { context, page } = result;
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
-  await page.getByRole('heading', { name: '체대입시 학원관리' }).waitFor();
+  await page.getByText('체대입시 학원관리', { exact: true }).waitFor();
   await page.getByRole('heading', { name: '로그인' }).waitFor();
   await page.locator('#email').fill('owner@example.com');
   await page.locator('#password').fill('bad-password');
@@ -69,7 +70,7 @@ async function runRegisterError(browser) {
   const { context, page } = result;
   await page.goto('/register', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
-  await page.getByRole('heading', { name: '체대입시 학원관리' }).waitFor();
+  await page.getByText('체대입시 학원관리', { exact: true }).waitFor();
   await page.locator('#academyName').fill('PACA 일산');
   await page.locator('#name').fill('원장');
   await page.locator('#email').fill('owner@example.com');
@@ -88,7 +89,7 @@ async function runForgotError(browser) {
   const { context, page } = result;
   await page.goto('/forgot-password', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
-  await page.getByRole('heading', { name: '체대입시 학원관리' }).waitFor();
+  await page.getByText('체대입시 학원관리', { exact: true }).waitFor();
   await page.locator('#email').fill('owner@example.com');
   await page.getByRole('button', { name: '재설정 링크 받기' }).click();
   await assertSafeAuthError(page, result.state, 'forgot password error', AUTH_ERRORS.forgot);
@@ -102,7 +103,7 @@ async function runResetError(browser) {
   const { context, page } = result;
   await page.goto('/reset-password?token=valid-token', { waitUntil: 'domcontentloaded' });
   await page.waitForLoadState('networkidle');
-  await page.getByRole('heading', { name: '체대입시 학원관리' }).waitFor();
+  await page.getByText('체대입시 학원관리', { exact: true }).waitFor();
   await page.getByRole('heading', { name: '새 비밀번호 설정' }).waitFor();
   await page.locator('#newPassword').fill('password123');
   await page.locator('#confirmPassword').fill('password123');

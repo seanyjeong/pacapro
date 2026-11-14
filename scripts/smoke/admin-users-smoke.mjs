@@ -8,6 +8,7 @@ import {
   launchSmokeBrowser,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
+  statTile,
 } from './paca-smoke-utils.mjs';
 
 const BASE_USERS = [
@@ -131,13 +132,16 @@ async function clickWithoutNativeDialog(page, locator, label) {
   if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
 }
 
+// 새 디자인: '승인 작업 보드'의 숫자(승인 대기·원장·강사)는 화면 위 숫자 요약 칸으로,
+// '목록 새로고침' 버튼은 화면 머리의 '새로고침' 버튼으로 옮겨졌다. 보드에는 가장 오래 대기·학원별 대기가 남는다.
 async function assertOperationsBoard(page, expectedPendingCount) {
   const board = page.getByTestId('admin-users-operations-board');
-  await board.getByRole('heading', { name: '승인 작업 보드' }).waitFor();
-  await board.getByText(`${expectedPendingCount}명`).first().waitFor();
-  await board.getByText('원장 1명').waitFor();
-  await board.getByText('강사 1명').waitFor();
-  await board.getByRole('button', { name: '목록 새로고침' }).waitFor();
+  await board.getByRole('heading', { name: '가장 오래 대기' }).waitFor();
+  await board.getByRole('heading', { name: '학원별 대기' }).waitFor();
+  await statTile(page, '승인 대기').getByText(`${expectedPendingCount}명`).waitFor();
+  await statTile(page, '원장').getByText('1명').waitFor();
+  await statTile(page, '강사').getByText('1명').waitFor();
+  await page.getByRole('button', { name: '새로고침' }).waitFor();
 }
 
 async function runApproveDesktop(browser) {
@@ -208,7 +212,7 @@ async function runLoadError(browser) {
 
   await page.goto('/admin/users', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '사용자 승인 관리' }).waitFor();
-  await page.getByRole('heading', { name: '사용자 목록을 불러오지 못했습니다' }).waitFor();
+  await page.getByRole('heading', { name: '사용자 목록을 불러오지 못했어요' }).waitFor();
   await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'admin users load error');
   await assertNoHorizontalOverflow(page, 'admin users load error');

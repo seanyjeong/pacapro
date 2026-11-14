@@ -315,10 +315,12 @@ async function runDesktop(browser) {
   }
   const solapiClassName = await solapiButton.getAttribute('class');
   const sensClassName = await sensButton.getAttribute('class');
-  if (!solapiClassName?.includes('bg-blue-600')) {
+  // 새 디자인은 직접 색(bg-blue-600) 대신 토큰(bg-primary)으로 선택된 버튼을 칠한다.
+  const selectedClass = (className) => className?.split(/\s+/).includes('bg-primary');
+  if (!selectedClass(solapiClassName)) {
     throw new Error(`solapi service button did not receive selected styling: ${solapiClassName}`);
   }
-  if (sensClassName?.includes('bg-blue-600')) {
+  if (selectedClass(sensClassName)) {
     throw new Error(`sens service button kept selected styling: ${sensClassName}`);
   }
   await clickWithoutNativeDialog(

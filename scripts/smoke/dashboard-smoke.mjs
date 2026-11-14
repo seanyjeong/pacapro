@@ -53,6 +53,10 @@ async function installRoutes(context, state) {
     const isLocal = url.origin === BASE_URL;
     const isApi = isPacaApiRequest(url);
 
+    // 피크 새 창은 실제 피크 사이트 대신 빈 화면으로 받는다(새 창 주소만 확인한다).
+    if (url.hostname === 'peak-rose.vercel.app') {
+      return route.fulfill({ status: 200, contentType: 'text/html', body: '<html><body>P-EAK</body></html>' });
+    }
     if (!isApi) {
       if (!isLocal) state.externalContinues.push(request.url());
       return route.continue();
@@ -117,8 +121,9 @@ async function installRoutes(context, state) {
 
 async function openDashboard(page) {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '오늘의 운영 현황' }).waitFor({ timeout: 10000 });
-  await page.getByText('PACA Operations Desk').waitFor();
+  // 새 디자인: 화면 제목은 '오늘'(영어 소제목 PACA Operations Desk 는 없앴다), 할 일 묶음은 '오늘 할 일'.
+  await page.getByRole('heading', { level: 1, name: '오늘', exact: true }).waitFor({ timeout: 10000 });
+  await page.getByRole('heading', { name: '오늘 할 일' }).waitFor();
 }
 
 async function assertAmountHidden(page, label) {
@@ -134,9 +139,11 @@ async function assertAmountHidden(page, label) {
 async function revealAmounts(page, state) {
   await page.getByRole('button', { name: /금액 보기/ }).click();
   await page.getByText('금액 보기 확인').waitFor();
-  await page.getByLabel('비밀번호').fill('owner-pass');
+  // 머리 버튼 접근 이름에도 '비밀번호'가 있어 입력칸을 정확히 고른다.
+  await page.getByLabel('비밀번호', { exact: true }).fill('owner-pass');
   await page.getByRole('button', { name: '확인', exact: true }).click();
-  await page.getByText('금액 표시 중').waitFor();
+  // 금액이 보이는 동안은 머리 버튼이 '금액 가리기'로 바뀐다(옛 '금액 표시 중' 글자).
+  await page.getByRole('button', { name: '금액 가리기' }).waitFor();
   await page.getByText('₩3,600,000').waitFor();
   if (state.verifyPayloads[0]?.password !== 'owner-pass') {
     throw new Error(`verify password payload mismatch: ${JSON.stringify(state.verifyPayloads)}`);
@@ -166,7 +173,8 @@ async function runDesktopPrivacy(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openDashboard(page);
-  const movementAnalysisLink = page.getByRole('link', { name: '동작분석사이트' });
+  // 동작분석 바로가기는 사이드바 '바로가기' 묶음으로 옮겨졌다.
+  const movementAnalysisLink = page.getByRole('link', { name: '동작분석', exact: true });
   await movementAnalysisLink.waitFor();
   const movementHref = await movementAnalysisLink.getAttribute('href');
   const movementTarget = await movementAnalysisLink.getAttribute('target');
@@ -199,6 +207,7 @@ async function runPeakSsoFallback(browser) {
   const popupPromise = page.waitForEvent('popup');
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: 'P-EAK 실기관리' }), 'peak SSO fallback');
   const popup = await popupPromise;
+  await popup.waitForLoadState('domcontentloaded');
   if (!popup.url().startsWith('https://peak-rose.vercel.app')) {
     throw new Error(`unexpected peak fallback URL: ${popup.url()}`);
   }

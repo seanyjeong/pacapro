@@ -10,6 +10,10 @@ import {
   nonServiceWorkerErrors,
   normalizePacaApiPath,
 } from './paca-smoke-utils.mjs';
+import { createRequire } from 'node:module';
+
+// 버전처럼 마지막 업데이트 날짜도 고정값 대신 release.json 에서 읽는다(옛 고정값 2026-07-20 은 4.0.68 에서 바뀜).
+const releaseInfo = createRequire(import.meta.url)('../../src/constants/release.json');
 
 function makeState(mode = 'success') {
   return {
@@ -106,6 +110,20 @@ async function installRoutes(context, state) {
       });
     }
 
+    // 설정 화면의 '구글 연동하기' 카드(10월 추가)가 부르는 상태. 응답이 없으면 카드가 화면 전체를 멈추게 한다.
+    if (method === 'GET' && path === '/google-integration') {
+      const service = { enabled: false, granted: false };
+      return jsonRoute(route, {
+        configured: true,
+        worker_enabled: true,
+        connected: false,
+        email: null,
+        last_error: null,
+        last_synced_at: null,
+        services: { calendar: { ...service, implemented: true }, drive: { ...service }, sheets: { ...service } },
+      });
+    }
+
     if (method === 'PUT' && path === '/settings/academy') {
       state.academyAuthorization = request.headers().authorization || null;
       state.academyPayload = JSON.parse(request.postData() || '{}');
@@ -161,6 +179,18 @@ async function clickWithoutNativeDialog(page, locator, label) {
   if (message) throw new Error(`${label} opened native browser dialog: ${message}`);
 }
 
+// 새 디자인: 바로가기 목록은 섹션 이름(입시반 학원비·급여 설정·수업 시간대 …)만 보여 주고 학원명 요약은 없앴다.
+// 불러온 학원명은 '학원 기본 정보'의 '학원명' 칸 값으로 확인한다.
+async function waitForAcademyName(page, expected = 'PACA 일산') {
+  const input = page.getByLabel('학원명');
+  await input.waitFor();
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    if ((await input.inputValue()) === expected) return;
+    await page.waitForTimeout(100);
+  }
+  throw new Error(`academy name was not loaded: ${await input.inputValue()}`);
+}
+
 async function runDesktop(browser) {
   const result = await createSettingsPage(browser);
   const { context, page } = result;
@@ -168,17 +198,17 @@ async function runDesktop(browser) {
   await page.goto('/settings', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '설정', exact: true }).waitFor();
   await page.getByText(`v${DEFAULT_APP_VERSION}`, { exact: true }).waitFor();
-  await page.getByText('2026-07-20', { exact: true }).waitFor();
+  await page.getByText(releaseInfo.lastUpdate, { exact: true }).waitFor();
   const operationNav = page.getByRole('navigation', { name: '운영 설정 바로가기' });
   await operationNav.waitFor();
-  await operationNav.getByText('PACA 일산').waitFor();
+  await waitForAcademyName(page);
   await page.getByText('저장됨').first().waitFor();
-  await page.getByRole('link', { name: '학원비 바로가기' }).waitFor();
-  await page.getByRole('link', { name: '급여 설정 바로가기' }).waitFor();
+  await operationNav.getByRole('link', { name: '입시반 학원비' }).waitFor();
+  await operationNav.getByRole('link', { name: '급여 설정' }).waitFor();
   const noAfternoonClass = page.getByRole('checkbox', { name: '오후반 수업 없음' });
   await noAfternoonClass.waitFor();
   if (!(await noAfternoonClass.isChecked())) throw new Error('오후반 수업 없음 설정이 표시되지 않음');
-  const seasonLinkCount = await page.getByRole('link', { name: '시즌비 바로가기' }).count();
+  const seasonLinkCount = await page.getByRole('link', { name: /시즌비/ }).count();
   if (seasonLinkCount !== 0) throw new Error('settings page should not expose season fee shortcut');
   const seasonPolicyCount = await page.getByRole('radio', { name: /시즌비가 월납부를 대체/ }).count();
   if (seasonPolicyCount !== 0) throw new Error('settings page should not expose season monthly policy radios');
@@ -187,7 +217,7 @@ async function runDesktop(browser) {
   await assertNoRawVisibleText(page, 'settings desktop');
   await assertNoHorizontalOverflow(page, 'settings desktop');
   await page.screenshot({ path: '/Users/etlab/paca-settings-desktop.png', fullPage: true });
-  await page.getByRole('link', { name: '수업 시간 바로가기' }).click();
+  await operationNav.getByRole('link', { name: '수업 시간대' }).click();
   await page.getByRole('heading', { name: '수업 시간대' }).waitFor();
 
   await context.close();
@@ -255,7 +285,7 @@ async function runSaveFlow(browser) {
 
   await page.goto('/settings', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '설정', exact: true }).waitFor();
-  await page.getByRole('navigation', { name: '운영 설정 바로가기' }).getByText('PACA 일산').waitFor();
+  await waitForAcademyName(page);
   await page.getByText('저장됨').first().waitFor();
   const noAfternoonClass = page.getByRole('checkbox', { name: '오후반 수업 없음' });
   await noAfternoonClass.uncheck();
@@ -305,7 +335,7 @@ async function runSaveError(browser) {
 
   await page.goto('/settings', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '설정', exact: true }).waitFor();
-  await page.getByRole('navigation', { name: '운영 설정 바로가기' }).getByText('PACA 일산').waitFor();
+  await waitForAcademyName(page);
   await page.getByLabel('학원명').fill('PACA 강남');
   await page.getByRole('button', { name: /저장/ }).first().click();
   await page.getByText('오전 수업시간을 다시 선택해주세요. 수업이 없으면 "수업 없음"을 선택할 수 있습니다.').waitFor();
@@ -326,8 +356,8 @@ async function runMobile(browser) {
   await page.getByRole('heading', { name: '설정', exact: true }).waitFor();
   const operationNav = page.getByRole('navigation', { name: '운영 설정 바로가기' });
   await operationNav.waitFor();
-  await operationNav.getByText('PACA 일산').waitFor();
-  await page.getByRole('link', { name: '학원비 바로가기' }).waitFor();
+  await waitForAcademyName(page);
+  await operationNav.getByRole('link', { name: '입시반 학원비' }).waitFor();
   await assertNoRawVisibleText(page, 'settings mobile');
   await assertNoHorizontalOverflow(page, 'settings mobile');
   await page.screenshot({ path: '/Users/etlab/paca-settings-mobile.png', fullPage: true });
