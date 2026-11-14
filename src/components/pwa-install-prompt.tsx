@@ -81,7 +81,7 @@ export default function PWAInstallPrompt() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 p-4 safe-area-inset animate-in slide-in-from-bottom duration-300">
-      <div className="bg-card border border-border rounded-2xl shadow-lg p-4 max-w-md mx-auto">
+      <div className="mx-auto max-w-md rounded-2xl bg-card p-5 shadow-lg">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
             <Image
@@ -95,14 +95,15 @@ export default function PWAInstallPrompt() {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-semibold text-foreground">P-ACA 앱 설치</h3>
+                <h3 className="text-[17px] font-bold tracking-tight text-foreground">P-ACA 앱 설치</h3>
                 <p className="text-sm text-muted-foreground mt-0.5">
                   홈화면에 추가하면 더 빠르게 접속할 수 있어요
                 </p>
               </div>
               <button
                 onClick={handleDismiss}
-                className="p-1 -mr-1 -mt-1 text-muted-foreground hover:text-foreground"
+                aria-label="앱 설치 안내 닫기"
+                className="-mr-1 -mt-1 rounded-lg p-1 text-muted-foreground hover:text-foreground"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -110,7 +111,7 @@ export default function PWAInstallPrompt() {
 
             {isIOS ? (
               // iOS Safari 안내
-              <div className="mt-3 p-3 bg-muted rounded-lg">
+              <div className="mt-3 rounded-xl bg-muted p-3">
                 <p className="text-sm text-foreground font-medium mb-2">설치 방법:</p>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
@@ -127,7 +128,7 @@ export default function PWAInstallPrompt() {
               // Android/Chrome 설치 버튼
               <button
                 onClick={handleInstall}
-                className="mt-3 w-full flex items-center justify-center gap-2 bg-primary text-white py-2.5 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+                className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 <Download className="h-5 w-5" />
                 앱 설치하기
