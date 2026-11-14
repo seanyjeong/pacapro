@@ -28,7 +28,7 @@ export function StaffDeleteDialog({
 }: StaffDeleteDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="rounded-md">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>직원 계정 삭제</AlertDialogTitle>
           <AlertDialogDescription>

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState, SectionCard } from '@/components/ui/page';
 import type { PendingUser } from '@/lib/api/users';
 import { CheckCircle2, Loader2, Users, XCircle } from 'lucide-react';
 import {
@@ -20,25 +20,15 @@ interface AdminUsersListProps {
 export function AdminUsersList({ actionLoading, pendingAction, users, onOpenAction }: AdminUsersListProps) {
     if (users.length === 0) {
         return (
-            <Card className="rounded-md border-border shadow-sm">
-                <CardContent className="p-12 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                        <Users className="h-7 w-7" />
-                    </div>
-                    <h2 className="mb-2 text-lg font-semibold text-foreground">승인 대기 중인 사용자가 없습니다</h2>
-                    <p className="text-sm text-muted-foreground">새 회원가입 요청이 생기면 이 화면에서 바로 검토할 수 있습니다.</p>
-                </CardContent>
-            </Card>
+            <section className="rounded-2xl bg-card">
+                <EmptyState icon={Users} title="승인 대기 중인 사용자가 없어요" description="새 회원가입 요청이 생기면 이 화면에서 바로 검토할 수 있어요." />
+            </section>
         );
     }
 
     return (
-        <Card className="rounded-md border-border shadow-sm">
-            <CardHeader className="border-b border-border px-5 py-4">
-                <CardTitle className="text-base font-semibold">승인 대기 목록</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-                <div data-testid="admin-users-list" className="divide-y divide-border">
+        <SectionCard title="승인 대기 목록" bodyClassName="px-3 pb-3 sm:px-3">
+                <div data-testid="admin-users-list" className="divide-y divide-border/60">
                     {users.map((user) => (
                         <AdminUsersListRow
                             key={user.id}
@@ -49,8 +39,7 @@ export function AdminUsersList({ actionLoading, pendingAction, users, onOpenActi
                         />
                     ))}
                 </div>
-            </CardContent>
-        </Card>
+        </SectionCard>
     );
 }
 
@@ -65,13 +54,13 @@ function AdminUsersListRow({ actionLoading, pendingAction, user, onOpenAction }:
     const isRowLoading = actionLoading === user.id;
 
     return (
-        <div className="grid gap-4 px-5 py-4 transition-colors hover:bg-muted/45 md:grid-cols-[minmax(0,1.15fr)_minmax(190px,0.95fr)_auto] md:items-center">
+        <div className="grid gap-3 rounded-xl px-3 py-4 transition-colors hover:bg-muted/60 md:grid-cols-[minmax(0,1.15fr)_minmax(190px,0.95fr)_auto] md:items-center">
             <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-bold text-primary">
                     {getInitial(user.name)}
                 </div>
                 <div className="min-w-0">
-                    <div className="truncate font-semibold text-foreground">{user.name}</div>
+                    <div className="truncate text-[15px] font-bold text-foreground">{user.name}</div>
                     <div className="truncate text-sm text-muted-foreground">{user.email}</div>
                 </div>
             </div>
@@ -92,7 +81,6 @@ function AdminUsersListRow({ actionLoading, pendingAction, user, onOpenAction }:
                     onClick={() => onOpenAction({ kind: 'approve', user })}
                     disabled={actionLoading !== null}
                     aria-label={`${user.name} 승인`}
-                    className="bg-success hover:bg-success/90"
                 >
                     {isRowLoading && pendingAction?.kind === 'approve' ? (
                         <>
@@ -112,7 +100,7 @@ function AdminUsersListRow({ actionLoading, pendingAction, user, onOpenAction }:
                     onClick={() => onOpenAction({ kind: 'reject', user })}
                     disabled={actionLoading !== null}
                     aria-label={`${user.name} 거절`}
-                    className="border-destructive/30 text-destructive hover:bg-destructive-soft hover:text-destructive"
+                    className="text-destructive hover:bg-destructive-soft hover:text-destructive"
                 >
                     {isRowLoading && pendingAction?.kind === 'reject' ? (
                         <>

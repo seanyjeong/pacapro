@@ -117,11 +117,11 @@ export default function AdminUsersPage() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             <AdminUsersHeader withRefresh onRefresh={loadPendingUsers} />
-            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
-                <div className="order-2 space-y-5 xl:order-1">
-                    <AdminUsersSummary pendingCount={pendingUsers.length} />
+            <AdminUsersSummary users={pendingUsers} />
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
+                <div className="min-w-0">
                     <AdminUsersList
                         actionLoading={actionLoading}
                         pendingAction={pendingAction}
@@ -129,9 +129,9 @@ export default function AdminUsersPage() {
                         onOpenAction={openPendingAction}
                     />
                 </div>
-                <div className="order-1 xl:order-2">
+                <div>
                     <div className="xl:sticky xl:top-20">
-                        <AdminUsersOperationsBoard users={pendingUsers} onRefresh={loadPendingUsers} />
+                        <AdminUsersOperationsBoard users={pendingUsers} />
                     </div>
                 </div>
             </div>
