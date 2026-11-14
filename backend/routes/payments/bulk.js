@@ -47,6 +47,7 @@ const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../services/nonSeasonProratedBilling');
 const { monthlyBillAmounts, floorRatio, floorAfterPercent, exactPercent } = require('../../utils/monthlyBillAmounts');
 const { parseClassDaysWithSlots, extractDayNumbers } = require('../../services/studentScheduleAssignment');
+const { deductMonthlyCredit } = require('../../services/monthlyCreditDeduction');
 
 module.exports = function(router) {
 
@@ -131,42 +132,28 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
             let notes = null;
             let description = `${year}년 ${month}월 수강료`;
 
-            // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 확인 및 적용
+            // 해당 학생의 기존 학원비 확인 — 낸 청구는 크레딧을 건드리기 전에 건너뛴다
+            // (예전엔 크레딧을 먼저 빼고 건너뛰어 크레딧이 청구 없이 사라졌다)
+            const [existingPayment] = await pool.execute(
+                `SELECT id, payment_status, paid_amount FROM student_payments
+                 WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
+                [student.id, req.user.academyId, yearMonth]
+            );
+            const existing = existingPayment[0] || null;
+            if (existing && existing.payment_status === 'paid') {
+                skipped++;
+                continue;
+            }
+
+            // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 확인 및 적용(학생별 청구와 공유)
             let carryoverAmount = 0;
             let restCreditId = null;
             try {
-                const [pendingCredits] = await pool.execute(
-                    `SELECT id, remaining_amount, credit_type FROM rest_credits
-                     WHERE student_id = ?
-                     AND academy_id = ?
-                     AND credit_type IN ('carryover', 'excused', 'manual')
-                     AND status IN ('pending', 'partial')
-                     AND remaining_amount > 0
-                     ORDER BY created_at ASC`,
-                    [student.id, req.user.academyId]
-                );
-
-                if (pendingCredits.length > 0) {
-                    const credit = pendingCredits[0];
-                    const amountBeforeCarryover = baseAmount - discount + additionalAmount;
-
-                    // 이월 금액이 청구 금액보다 크면 청구 금액만큼만 차감
-                    carryoverAmount = Math.min(credit.remaining_amount, amountBeforeCarryover);
-                    restCreditId = credit.id;
-
-                    // 크레딧 잔액 업데이트
-                    const newRemaining = credit.remaining_amount - carryoverAmount;
-                    const newStatus = newRemaining <= 0 ? 'applied' : 'partial';
-
-                    await pool.execute(
-                        `UPDATE rest_credits SET
-                            remaining_amount = ?,
-                            status = ?,
-                            processed_at = NOW()
-                         WHERE id = ?`,
-                        [newRemaining, newStatus, credit.id]
-                    );
-
+                ({ carryoverAmount, restCreditId } = await deductMonthlyCredit(pool, {
+                    studentId: student.id, academyId: req.user.academyId,
+                    amountBeforeCarryover: baseAmount - discount + additionalAmount,
+                }));
+                if (restCreditId) {
                     notes = (notes || '') + `\n[이월 차감] 휴식 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
                     description += ' (이월 차감 적용)';
                     withCarryover++;
@@ -177,22 +164,7 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
 
             const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount, carryoverAmount).final;
 
-            // 해당 학생의 기존 학원비 확인
-            const [existingPayment] = await pool.execute(
-                `SELECT id, payment_status, paid_amount FROM student_payments
-                 WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
-                [student.id, req.user.academyId, yearMonth]
-            );
-
-            if (existingPayment.length > 0) {
-                const existing = existingPayment[0];
-
-                // 이미 납부 완료된 건은 건너뛰기
-                if (existing.payment_status === 'paid') {
-                    skipped++;
-                    continue;
-                }
-
+            if (existing) {
                 // 기존 학원비 업데이트 (금액 변경사항 반영)
                 await pool.execute(
                     `UPDATE student_payments SET

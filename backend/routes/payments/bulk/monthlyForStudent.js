@@ -1,7 +1,21 @@
-const { pool, calculateNonSeasonEndProrated, logger } = require('../_utils');
+const { pool, logger } = require('../_utils');
 const { verifyToken, checkPermission } = require('../../../middleware/auth');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../../repositories/seasonMonthlyExclusion');
 const { monthlyBillAmounts } = require('../../../utils/monthlyBillAmounts');
+const { deductMonthlyCredit } = require('../../../services/monthlyCreditDeduction');
+const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../../services/nonSeasonProratedBilling');
+
+// 만든 청구와 학생 이름
+async function createdPayment(paymentId) {
+    const [created] = await pool.execute(
+        `SELECT p.*, s.name as student_name
+        FROM student_payments p
+        JOIN students s ON p.student_id = s.id
+        WHERE p.id = ?`,
+        [paymentId]
+    );
+    return created[0];
+}
 
 module.exports = function registerMonthlyForStudent(router) {
 /**
@@ -49,6 +63,20 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
             [...seasonMonthlyExclusionParams(yearMonth), student_id, req.user.academyId]
         );
         if (!eligibility[0]?.allowed) {
+            // 시즌으로 이 달 월회비가 빠지는 학생: 매달 자동·일괄 청구처럼 비시즌 종강 일할 청구 대상이면 그것을 만든다
+            const [candidate] = await nonSeasonProratedCandidates(pool, req.user.academyId, yearMonth, Number(student_id));
+            if (candidate) {
+                const plan = planNonSeasonProrated(candidate, yearMonth);
+                const paymentId = await insertNonSeasonProrated(pool, req.user.academyId, candidate, plan, req.user.userId);
+                return res.status(201).json({
+                    message: '비시즌 종강 일할 납부건이 생성되었습니다.',
+                    payment: await createdPayment(paymentId),
+                    nonSeasonProrated: {
+                        amount: plan.amount, seasonName: candidate.season_name, nonSeasonEndDate: candidate.non_season_end_date,
+                        description: plan.description,
+                    }
+                });
+            }
             return res.status(409).json({
                 error: 'Season Aftercare',
                 message: '시즌 무료 수업 또는 자동 졸업 대상 기간에는 월 납부건을 생성할 수 없습니다.'
@@ -74,31 +102,28 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
         // 월 청구 금액 공통 함수(소수 오차 없는 할인액 천원 절삭)
         const discountAmount = monthlyBillAmounts(baseAmount, discountRate).discount;
 
-        // 비시즌 종강 일할 계산
-        let additionalAmount = 0;
+        // 비시즌 종강 일할은 월회비에 붙이지 않고 시즌 시작 달에 따로 청구한다(위 비시즌 처리, 매달 자동·일괄 청구와 같음)
+        const additionalAmount = 0;
         let notes = null;
         let description = `${year}년 ${month}월 학원비`;
-        let nonSeasonProratedInfo = null;
 
+        // 휴식 이월·공결·수동 크레딧 차감(일괄 청구와 같은 함수)
+        let carryoverAmount = 0;
+        let restCreditId = null;
         try {
-            const nonSeasonProrated = await calculateNonSeasonEndProrated({
-                studentId: student_id,
-                academyId: req.user.academyId,
-                year,
-                month
-            });
-
-            if (nonSeasonProrated) {
-                additionalAmount = nonSeasonProrated.amount;
-                notes = `[비시즌 종강 일할] ${nonSeasonProrated.description}\n${nonSeasonProrated.details.formula}`;
-                description = `${year}년 ${month}월 학원비 + 비시즌 종강 일할`;
-                nonSeasonProratedInfo = nonSeasonProrated;
+            ({ carryoverAmount, restCreditId } = await deductMonthlyCredit(pool, {
+                studentId: student.id, academyId: req.user.academyId,
+                amountBeforeCarryover: baseAmount - discountAmount + additionalAmount,
+            }));
+            if (restCreditId) {
+                notes = `[이월 차감] 휴식 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
+                description += ' (이월 차감 적용)';
             }
         } catch (err) {
-            logger.error(`Failed to calculate non-season prorated for student ${student_id}:`, err);
+            logger.error(`Failed to apply carryover credit for student ${student_id}:`, err);
         }
 
-        const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount).final;
+        const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount, carryoverAmount).final;
 
         // Due date
         const dueDate = new Date(year, month - 1, dueDay);
@@ -106,9 +131,9 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
         const [result] = await pool.execute(
             `INSERT INTO student_payments (
                 student_id, academy_id, \`year_month\`, payment_type,
-                base_amount, discount_amount, additional_amount, final_amount,
+                base_amount, discount_amount, additional_amount, carryover_amount, rest_credit_id, final_amount,
                 due_date, payment_status, description, notes, recorded_by
-            ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+            ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
             [
                 student_id,
                 req.user.academyId,
@@ -116,6 +141,8 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
                 baseAmount,
                 discountAmount,
                 additionalAmount,
+                carryoverAmount,
+                restCreditId,
                 finalAmount,
                 dueDate.toISOString().split('T')[0],
                 description,
@@ -124,20 +151,10 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
             ]
         );
 
-        const [created] = await pool.execute(
-            `SELECT p.*, s.name as student_name
-            FROM student_payments p
-            JOIN students s ON p.student_id = s.id
-            WHERE p.id = ?`,
-            [result.insertId]
-        );
-
         res.status(201).json({
-            message: nonSeasonProratedInfo
-                ? '월 납부건이 생성되었습니다. (비시즌 종강 일할 포함)'
-                : '월 납부건이 생성되었습니다.',
-            payment: created[0],
-            nonSeasonProrated: nonSeasonProratedInfo
+            message: '월 납부건이 생성되었습니다.',
+            payment: await createdPayment(result.insertId),
+            nonSeasonProrated: null
         });
     } catch (error) {
         logger.error('Error generating monthly payment:', error);
