@@ -20,6 +20,8 @@
  * - 200: `{message: 'Student deleted permanently', student: {id, name}}` — 프론트
  *   `StudentDeleteResponse` (`{message, student: {id, name}}`) 직접 소비.
  * - 404: `{error: 'Not Found', message: '학생 정보를 찾을 수 없습니다.'}` (한국어, ADR-003).
+ * - 409: 수납한 금액이 있는 청구가 남아 있으면 지우지 않는다(회계 기록 보존). 퇴원 처리를 쓰거나,
+ *   잘못 받은 수납이면 학원비 화면에서 그 납부 내역을 먼저 지운다.
  * - 5xx: `{error: 'Server Error', message: '학생 삭제에 실패했습니다.'}` (한국어, ADR-003).
  *   ⚠️ 원본의 `detail: error.sqlMessage` 키는 제거 — 사용자 노출 시스템 정보 누출 차단.
  *   디버깅은 logger.error 로 충분.
@@ -34,6 +36,7 @@ const {
     requireRole,
     logger
 } = require('./_utils');
+const { paidAmountSql } = require('../../../utils/paymentAmountSql');
 
 module.exports = function(router) {
 
@@ -51,6 +54,19 @@ router.delete('/:id', verifyToken, requireRole('owner'), async (req, res) => {
             return res.status(404).json({
                 error: 'Not Found',
                 message: '학생 정보를 찾을 수 없습니다.'
+            });
+        }
+
+        // 학생을 지우면 청구도 함께 지워진다. 수납 기록은 매출 근거라 남겨야 한다.
+        const [paidRows] = await pool.execute(
+            `SELECT COUNT(*) AS paid_count FROM student_payments p
+             WHERE p.student_id = ? AND p.academy_id = ? AND (${paidAmountSql('p')}) > 0`,
+            [studentId, req.user.academyId]
+        );
+        if (Number(paidRows[0]?.paid_count) > 0) {
+            return res.status(409).json({
+                error: 'Conflict',
+                message: '수납 기록이 있는 학생은 삭제할 수 없습니다. 퇴원 처리를 해 주세요. 잘못 받은 수납이면 학원비 화면에서 그 납부 내역을 먼저 지워 주세요.'
             });
         }
 

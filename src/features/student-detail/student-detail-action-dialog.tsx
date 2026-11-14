@@ -29,7 +29,7 @@ interface StudentDetailActionDialogProps {
 const ACTION_COPY = {
   delete: {
     confirmLabel: '삭제 실행',
-    description: '삭제 후에는 학생 목록에서 보이지 않습니다. 필요한 기록을 먼저 확인해 주세요.',
+    description: '학생과 함께 청구·출석·크레딧·성적·알림 기록을 모두 지우며 되돌릴 수 없습니다. 수납 기록이 있는 학생은 삭제할 수 없으니 퇴원 처리를 해 주세요.',
     title: '학생 삭제',
   },
   graduate: {

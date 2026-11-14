@@ -64,6 +64,8 @@ function makeFakeConn() {
 
 beforeEach(() => {
     pool.execute.mockReset();
+    // 학생 SELECT 다음의 수납 기록 확인: 기본은 수납 0건
+    pool.execute.mockResolvedValue([[{ paid_count: 0 }]]);
     pool.getConnection.mockReset();
 });
 
@@ -73,6 +75,17 @@ describe('DELETE /paca/students/:id (remove)', () => {
         const res = await request(makeApp()).delete('/paca/students/999');
         expect(res.status).toBe(404);
         expect(res.body).toEqual({ error: 'Not Found', message: '학생 정보를 찾을 수 없습니다.' });
+        expect(pool.getConnection).not.toHaveBeenCalled();
+    });
+
+    test('수납한 청구가 있으면 409 로 막고 아무것도 지우지 않는다', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 5, name: '홍길동' }]])
+            .mockResolvedValueOnce([[{ paid_count: 2 }]]);
+        const res = await request(makeApp()).delete('/paca/students/5');
+        expect(res.status).toBe(409);
+        expect(res.body.message).toContain('퇴원 처리');
+        expect(pool.execute.mock.calls[1][1]).toEqual([5, 1]);
         expect(pool.getConnection).not.toHaveBeenCalled();
     });
 
