@@ -1,0 +1,14 @@
+-- Backup first. Apply before deploying code that writes seasons.branch_id.
+-- 지점별 시즌: 시즌을 지점마다 따로 만들 수 있다. NULL = 전 지점 시즌(지금과 같음).
+-- Add at the end so MySQL 8 can use INSTANT without rebuilding existing rows.
+SET @branch_schema = DATABASE();
+SET @branch_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE seasons ADD COLUMN branch_id INT NULL DEFAULT NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @branch_schema AND TABLE_NAME = 'seasons' AND COLUMN_NAME = 'branch_id'
+);
+PREPARE branch_stmt FROM @branch_sql;
+EXECUTE branch_stmt;
+DEALLOCATE PREPARE branch_stmt;

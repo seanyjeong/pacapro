@@ -1,0 +1,2 @@
+-- Manual rollback only. 지점별로 만든 시즌이 모두 전 지점 시즌으로 보인다.
+ALTER TABLE seasons DROP COLUMN branch_id;
