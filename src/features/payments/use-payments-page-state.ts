@@ -23,6 +23,7 @@ import {
   toAmount,
   toCreditStudentInfo,
 } from './payments-utils';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 const LOAD_ERROR_MESSAGE = '학원비 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 
@@ -176,7 +177,7 @@ export function usePaymentsPageState({ statusFromUrl, viewOnly }: PaymentsPageSt
       await recordQuickPayment(payment.id, {
         paid_amount: getRemainingPaymentAmount(payment),
         payment_method: method,
-        payment_date: new Date().toISOString().split('T')[0],
+        payment_date: getKoreaDateText(),
         notes: `빠른 납부 처리 (${method})`,
       });
       toast.success(`${payment.student_name}님의 학원비가 납부 처리되었습니다.`);

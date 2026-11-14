@@ -13,6 +13,7 @@ import { studentsAPI } from '@/lib/api/students';
 import { seasonsApi } from '@/lib/api/seasons';
 import type { StudentFormData, Student, StudentStatus } from '@/lib/types/student';
 import { prepareStudentPhotoPayload } from '@/lib/utils/student-photo-client';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 function NewStudentContent() {
   const router = useRouter();
@@ -84,7 +85,7 @@ function NewStudentContent() {
           await seasonsApi.enrollStudent(data.selected_season_id, {
             student_id: student.id,
             season_fee: seasonFee,
-            registration_date: data.enrollment_date || new Date().toISOString().split('T')[0],
+            registration_date: data.enrollment_date || getKoreaDateText(),
           });
 
           toast.success(`${student.name} 학생이 등록되었습니다!`, {

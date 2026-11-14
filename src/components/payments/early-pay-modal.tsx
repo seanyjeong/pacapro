@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Banknote, Loader2 } from 'lucide-react';
 import { paymentsAPI } from '@/lib/api/payments';
 import { toast } from 'sonner';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 interface EarlyPayModalProps {
   open: boolean;
@@ -82,7 +83,7 @@ export function EarlyPayModal({
     if (!open) return;
     setYearMonth(defaultNextMonth());
     setPaymentMethod('account');
-    setPaymentDate(new Date().toISOString().split('T')[0]);
+    setPaymentDate(getKoreaDateText());
     setFormError(null);
     setSubmitting(false);
   }, [open]);

@@ -86,7 +86,7 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     discount_rate: initialData ? parseFloat(initialData.discount_rate) : 0,
     discount_reason: initialData?.discount_reason || '',
     payment_due_day: initialData?.payment_due_day || undefined,
-    enrollment_date: initialData?.enrollment_date || new Date().toISOString().split('T')[0],
+    enrollment_date: initialData?.enrollment_date || getKoreaDateText(),
     address: initialData?.address || '',
     notes: initialData?.notes || '',
     memo: initialData?.memo || '',

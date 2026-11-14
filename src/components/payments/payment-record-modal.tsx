@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { X, CreditCard, Banknote, Building2, HelpCircle, Calendar } from 'lucide-react';
 import { PAYMENT_METHOD_OPTIONS } from '@/lib/types/payment';
 import { MoneyInput } from '@/components/ui/money-input';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 interface PaymentRecordModalProps {
   isOpen: boolean;
@@ -33,7 +34,7 @@ const PAYMENT_METHOD_ICONS: Record<string, React.ReactNode> = {
 };
 
 function getTodayString() {
-  return new Date().toISOString().split('T')[0];
+  return getKoreaDateText();
 }
 
 export function PaymentRecordModal({

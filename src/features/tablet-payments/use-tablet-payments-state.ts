@@ -12,6 +12,7 @@ import {
   parseStudentId,
   shiftPaymentMonth,
 } from './tablet-payments-utils';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 const LOAD_ERROR_MESSAGE = '결제 정보를 불러오지 못했습니다';
 const LOAD_ERROR_DETAIL = '잠시 후 다시 시도해주세요.';
@@ -106,7 +107,7 @@ export function useTabletPaymentsState({ studentIdParam, statusFromUrl }: UseTab
       await recordQuickPayment(payment.id, {
         paid_amount: getRemainingAmount(payment),
         payment_method: method,
-        payment_date: new Date().toISOString().split('T')[0],
+        payment_date: getKoreaDateText(),
         notes: `태블릿 빠른 납부 처리 (${method})`,
       });
       toast.success(`${payment.student_name}님의 학원비가 납부 처리되었습니다.`);

@@ -1,5 +1,6 @@
 import { CATEGORY_LABELS } from './incomes-constants';
 import type { IncomeFormData, IncomeSummary, OtherIncome, TuitionPayment } from './incomes-types';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 export function formatAmount(amount: number): string {
   return Math.floor(toAmount(amount)).toLocaleString();
@@ -12,7 +13,7 @@ export function getCurrentYearMonth(): string {
 
 export function createDefaultIncomeFormData(): IncomeFormData {
   return {
-    income_date: new Date().toISOString().split('T')[0],
+    income_date: getKoreaDateText(),
     category: 'other',
     amount: 0,
     description: '',

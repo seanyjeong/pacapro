@@ -5,6 +5,7 @@
 
 import type { Salary, SalaryCalculationResult } from '@/lib/types/salary';
 import { TAX_RATES } from '@/lib/types/salary';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 const NATIONAL_PENSION_LIMITS = [
   { fromYearMonth: '2026-07', minimumMonthlyIncome: 410000, maximumMonthlyIncome: 6590000 },
@@ -26,7 +27,7 @@ export const SOCIAL_INSURANCE_RATES = {
 function normalizeYearMonth(yearMonth?: string): string {
   return typeof yearMonth === 'string' && /^\d{4}-\d{2}$/.test(yearMonth)
     ? yearMonth
-    : new Date().toISOString().slice(0, 7);
+    : getKoreaDateText().slice(0, 7);
 }
 
 function getNationalPensionLimits(yearMonth?: string) {

@@ -1,5 +1,6 @@
 import { EXPENSE_CATEGORY_LABELS, PAYMENT_METHOD_LABELS, REFUND_PENDING_CATEGORY } from './expenses-constants';
 import type { Expense, ExpenseFormData, ExpenseSummary } from './expenses-types';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 export function formatAmount(amount: number): string {
   return Math.floor(toAmount(amount)).toLocaleString();
@@ -12,7 +13,7 @@ export function getCurrentYearMonth(): string {
 
 export function createDefaultExpenseFormData(): ExpenseFormData {
   return {
-    expense_date: new Date().toISOString().split('T')[0],
+    expense_date: getKoreaDateText(),
     category: 'utilities',
     amount: 0,
     description: '',

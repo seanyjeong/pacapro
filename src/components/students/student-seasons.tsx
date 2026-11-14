@@ -12,6 +12,7 @@ import { RefundModal } from '@/components/refund/refund-modal';
 import { StudentSeasonCancelDialog } from './student-season-cancel-dialog';
 import { StudentSeasonHistoryCard } from './student-season-history-card';
 import { StudentSeasonEditModal, StudentSeasonEnrollModal } from './student-season-modals';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 const EMPTY_EDIT_DATA = {
   registration_date: '',
@@ -35,7 +36,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [isContinuous, setIsContinuous] = useState(false);
-  const [registrationDate, setRegistrationDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [registrationDate, setRegistrationDate] = useState<string>(getKoreaDateText());
   const [seasonFee, setSeasonFee] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [preview, setPreview] = useState<ProRatedPreview | null>(null);
@@ -177,7 +178,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     setShowEnrollModal(false);
     setSelectedSeasonId(null);
     setIsContinuous(false);
-    setRegistrationDate(new Date().toISOString().split('T')[0]);
+    setRegistrationDate(getKoreaDateText());
     setSeasonFee(0);
     setDiscountAmount(0);
     setPreview(null);
@@ -241,7 +242,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     try {
       setRefundLoading(true);
       setSelectedEnrollmentForRefund(enrollment);
-      const today = new Date().toISOString().split('T')[0];
+      const today = getKoreaDateText();
       const preview = await seasonsApi.getRefundPreview(enrollment.id, today, false);
       setRefundPreview(preview);
       setRefundModalOpen(true);
@@ -258,7 +259,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
     if (!selectedEnrollmentForRefund) return;
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getKoreaDateText();
       await seasonsApi.cancelEnrollmentWithRefund(
         selectedEnrollmentForRefund.id,
         today,

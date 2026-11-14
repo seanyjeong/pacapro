@@ -14,6 +14,7 @@ import {
   getSalaryPageSettings,
 } from './salaries-page-api';
 import { calculateSalarySummary, createDefaultFilters, getCurrentFilterYearMonth } from './salaries-page-utils';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 const LOAD_ERROR_MESSAGE = '급여 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 
@@ -140,7 +141,7 @@ export function useSalariesPageState() {
       const { downloadSalariesAsZip } = await import('@/lib/utils/pdf-generator');
       await downloadSalariesAsZip(
         salaryDataList,
-        getCurrentFilterYearMonth(filters) || new Date().toISOString().slice(0, 7),
+        getCurrentFilterYearMonth(filters) || getKoreaDateText().slice(0, 7),
         (current, total) => setPdfProgress({ current, total }),
         settings.academy_name || 'P-ACA'
       );

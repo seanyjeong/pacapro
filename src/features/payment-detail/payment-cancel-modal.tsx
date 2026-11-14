@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MoneyInput } from '@/components/ui/money-input';
 import { Textarea } from '@/components/ui/textarea';
 import type { PaymentCancelData } from '@/lib/types/payment';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 interface PaymentCancelModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ interface PaymentCancelModalProps {
 }
 
 function getTodayString() {
-  return new Date().toISOString().split('T')[0];
+  return getKoreaDateText();
 }
 
 export function PaymentCancelModal({

@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Calculator } from 'lucide-react';
 import apiClient from '@/lib/api/client';
+import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 
 interface ProrationCalculatorModalProps {
   open: boolean;
@@ -59,7 +60,7 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
   // 모달 열릴 때 요금표 로드 + 등록일 오늘로 초기화
   useEffect(() => {
     if (!open) return;
-    setEnrollDate(new Date().toISOString().split('T')[0]);
+    setEnrollDate(getKoreaDateText());
     apiClient
       .get<{ settings: { exam_tuition?: TuitionTable; adult_tuition?: TuitionTable } }>('/settings/academy')
       .then((response) => {
