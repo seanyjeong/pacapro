@@ -109,7 +109,8 @@ router.get('/slot', verifyToken, async (req, res) => {
             schedule = { id: result.insertId, class_date: date, time_slot, attendance_taken: 0 };
         }
 
-        // 아직 출석 기록 없는 학생 자동 추가 (enrollment_date 이전·시즌 공백 기간은 제외)
+        // 그날 어느 시간대에도 출석 기록 없는 학생만 자동 추가 (enrollment_date 이전·시즌 공백 기간은 제외).
+        // 다른 시간대로 옮긴 학생은 그날 출석 기록이 이미 있으므로 원래 시간대에 다시 넣지 않는다.
         const [missingStudents] = await db.query(
             `SELECT s.id
              FROM students s
@@ -122,11 +123,12 @@ router.get('/slot', verifyToken, async (req, res) => {
              )
              AND s.id NOT IN (
                 SELECT a.student_id FROM attendance a
-                WHERE a.class_schedule_id = ?
+                JOIN class_schedules cs ON a.class_schedule_id = cs.id
+                WHERE cs.academy_id = ? AND cs.class_date = ?
              )
              AND (s.enrollment_date IS NULL OR s.enrollment_date <= ?)
              AND ${seasonGapExclusionSql('s')}`,
-            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), schedule.id, date, ...seasonGapExclusionParams(date)]
+            [req.user.academyId, JSON.stringify(dayOfWeek), time_slot, JSON.stringify({day: dayOfWeek, timeSlot: time_slot}), req.user.academyId, date, date, ...seasonGapExclusionParams(date)]
         );
 
         // 누락된 학생들 자동 추가 (attendance_status = NULL로 추가)
