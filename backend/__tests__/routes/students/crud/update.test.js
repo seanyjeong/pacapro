@@ -484,6 +484,39 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
         expect(paymentUpdateCall[1]).toContain(77);              // 대상 payment id
     });
 
+    test('수강료 변경은 미납 월 청구의 크레딧·추가 금액을 남긴 채 최종 금액을 바꾼다', async () => {
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000 })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 320000 })]]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ monthly_tuition: 320000 });
+
+        expect(res.status).toBe(200);
+        const paymentUpdateCall = pool.__conn.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]));
+        expect(paymentUpdateCall[0]).toMatch(/final_amount = GREATEST\(\? \+ COALESCE\(additional_amount, 0\) - COALESCE\(carryover_amount, 0\), 0\)/);
+        expect(paymentUpdateCall[1].slice(0, 2)).toEqual([320000, 320000]);
+    });
+
+    test('등록일 변경 재계산은 이미 적용한 크레딧을 최종 금액에서 그대로 뺀다', async () => {
+        pool.__conn.execute.mockResolvedValue([[]]);
+        pool.__conn.execute
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000 })]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[existingStudent({ monthly_tuition: 300000, enrollment_date: '2026-01-15' })]])
+            .mockResolvedValueOnce([[{ id: 77, payment_status: 'pending', additional_amount: '0.00', carryover_amount: '12000.00' }]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }]);
+
+        const res = await request(makeApp()).put('/paca/students/5').send({ enrollment_date: '2026-01-15' });
+
+        expect(res.status).toBe(200);
+        // 164,000 - 크레딧 12,000
+        expect(res.body.enrollmentDateRecalc.finalAmount).toBe(152000);
+        const paymentUpdateCall = pool.__conn.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]));
+        expect(paymentUpdateCall[1]).toContain(152000);
+    });
+
     test('첫 달 학원비가 이미 paid → 재계산 스킵 + enrollmentDateRecalc skipped', async () => {
         pool.__conn.execute.mockResolvedValue([[]]);
         pool.__conn.execute

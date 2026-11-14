@@ -30,9 +30,12 @@ async function updatePendingPayments(context) {
         const finalTuition = nextTuition * (1 - nextDiscountRate / 100);
         const currentYearMonth = new Date().toISOString().slice(0, 7);
 
+        // 이미 적용된 크레딧(carryover_amount)·추가 금액은 남긴다.
         await pool.execute(
             `UPDATE student_payments
-             SET base_amount = ?, final_amount = ?, updated_at = NOW()
+             SET base_amount = ?,
+                 final_amount = GREATEST(? + COALESCE(additional_amount, 0) - COALESCE(carryover_amount, 0), 0),
+                 updated_at = NOW()
              WHERE student_id = ?
                AND academy_id = ?
                AND \`year_month\` >= ?
@@ -83,7 +86,7 @@ async function recalculateEnrollmentPayment(context) {
     try {
         const oldYearMonth = String(oldEnrollmentDate).slice(0, 7);
         const [proratedRows] = await pool.execute(
-            `SELECT id, payment_status FROM student_payments
+            `SELECT id, payment_status, additional_amount, carryover_amount FROM student_payments
              WHERE student_id = ? AND academy_id = ?
                AND \`year_month\` = ? AND payment_type = 'monthly'
                AND (is_prorated = 1 OR description LIKE '%일할계산%')`,
@@ -140,7 +143,13 @@ async function recalculateEnrollmentPayment(context) {
             ? truncateToThousands(baseAmount / totalClassDaysInMonth * classDaysCount)
             : truncateToThousands(baseAmount * remainingDays / lastDayOfMonth);
         const discountAmount = truncateToThousands(proratedAmount * discountRate / 100);
-        const finalAmount = proratedAmount - discountAmount;
+        // 이미 적용된 크레딧·추가 금액은 재계산이 지우지 않는다 (payments/crud.js 수정과 같은 식).
+        const additionalAmount = parseFloat(proratedPayment.additional_amount) || 0;
+        const carryoverAmount = parseFloat(proratedPayment.carryover_amount) || 0;
+        const finalAmount = Math.max(
+            truncateToThousands(proratedAmount - discountAmount + additionalAmount) - carryoverAmount,
+            0
+        );
         const dueDate = resolveProratedPaymentDueDate(String(enrollmentDate));
 
         await pool.execute(
