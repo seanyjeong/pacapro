@@ -22,6 +22,8 @@
  *   GET /slot 의 schedule 객체 안 students 배열은 정렬 (체험 → 일반 → 보충, 가나다순).
  *   학생 객체는 student_id / student_name (복호화) / grade / attendance_status / season_type /
  *   is_trial / trial_remaining / phone (복호화) / parent_phone (복호화) / is_makeup 등 포함.
+ *   지점·반: branch_id / branch_name / branch_sort_order / class_id / class_name / class_sort_order
+ *   (지점·반이 없는 학생은 null — 출석 창에서 지점·반별로 묶어 보기용).
  *
  * DB 호출 (ADR-005): 원본 db.query 그대로 보존 (분리 단계 — pool alias). ADR-005 단독 정렬은 별도 트랙.
  *
@@ -146,6 +148,8 @@ router.get('/slot', verifyToken, async (req, res) => {
                         s.is_trial, s.trial_remaining, s.trial_dates,
                         s.phone, s.parent_phone,
                         a.is_makeup,
+                        s.branch_id, b.name as branch_name, b.sort_order as branch_sort_order,
+                        s.class_id, c.class_name, c.sort_order as class_sort_order,
                         (SELECT se2.season_type
                          FROM student_seasons ss2
                          JOIN seasons se2 ON ss2.season_id = se2.id
@@ -159,6 +163,8 @@ router.get('/slot', verifyToken, async (req, res) => {
                  FROM attendance a
                  JOIN students s ON a.student_id = s.id
                  AND s.academy_id = ?
+                 LEFT JOIN branches b ON b.id = s.branch_id AND b.academy_id = s.academy_id
+                 LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
                  WHERE a.class_schedule_id = ?
                  AND s.deleted_at IS NULL
                  ORDER BY season_type IS NOT NULL DESC, s.name`,
