@@ -99,6 +99,10 @@ router.post('/:id/enroll', verifyToken, checkPermission('seasons', 'edit'), asyn
         if (student.status === 'prospect') {
             return res.status(400).json({ error: 'Validation Error', message: '예비생은 재원으로 전환한 뒤 시즌에 등록할 수 있습니다.' });
         }
+        // 지점 시즌에는 그 지점 학생만 등록한다(전 지점 시즌은 지금처럼 모두).
+        if (season.branch_id && student.branch_id !== season.branch_id) {
+            return res.status(400).json({ error: 'Validation Error', message: '이 시즌은 다른 지점 시즌입니다. 그 지점 학생만 등록할 수 있습니다.' });
+        }
 
         const [existing] = await pool.execute(
             `SELECT id FROM student_seasons

@@ -74,8 +74,9 @@ async function insertSeason(conn, academyId, input) {
             continuous_to_season_type,
             continuous_discount_type,
             continuous_discount_rate,
+            branch_id,
             status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'upcoming')`,
         [
             academyId,
             input.season_name,
@@ -93,7 +94,9 @@ async function insertSeason(conn, academyId, input) {
             input.allows_continuous || false,
             input.continuous_to_season_type || null,
             input.continuous_discount_type || 'none',
-            input.continuous_discount_rate || 0
+            input.continuous_discount_rate || 0,
+            // 지점별 시즌. 없으면 전 지점(지금과 같음). 지점 확인은 부르는 쪽(화면 라우터)이 한다.
+            input.branch_id || null
         ]
     );
     return result.insertId;

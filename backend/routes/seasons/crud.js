@@ -19,7 +19,7 @@
  *     - DELETE /:id  → 200 { message, season:{id, season_name} }
  *     - 4xx/5xx       → { error, message }
  *
- * DB 호출 (ADR-005): pool.execute. 7건. db.query 잔존 0건.
+ * DB 호출 (ADR-005): pool.execute. 8건(지점 확인 1건 포함). db.query 잔존 0건.
  * ADR-016 IN 절: 본 파일 IN 절 사용 0건.
  *
  * 보안 (ADR-007): decrypt 사용 X (시즌 메타데이터). bcrypt/JWT/결제 외부 X.
@@ -40,6 +40,16 @@ const { isSeasonMonthlyPolicy } = require('../../utils/seasonMonthlyPolicy');
 const { validateSeasonAftercare } = require('../../services/seasonAftercarePolicy');
 const { validateSeasonCreate, insertSeason } = require('../../services/seasonCreateService');
 
+// 지점별 시즌: null = 전 지점(지금과 같음). 값이 있으면 이 학원의 지점이어야 한다. 문제 없으면 null.
+async function seasonBranchError(academyId, branchId) {
+    if (branchId === undefined || branchId === null) return null;
+    if (!Number.isSafeInteger(branchId) || branchId <= 0) {
+        return { status: 400, body: { error: 'Validation Error', message: '지점 값이 올바르지 않습니다.' } };
+    }
+    const [rows] = await pool.execute('SELECT id FROM branches WHERE id = ? AND academy_id = ?', [branchId, academyId]);
+    return rows.length ? null : { status: 404, body: { error: 'Not Found', message: '지점을 찾을 수 없습니다.' } };
+}
+
 module.exports = function(router) {
 
 router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, res) => {
@@ -51,6 +61,9 @@ router.post('/', verifyToken, checkPermission('seasons', 'edit'), async (req, re
                 message: validationError
             });
         }
+
+        const branchError = await seasonBranchError(req.user.academyId, req.body.branch_id);
+        if (branchError) return res.status(branchError.status).json(branchError.body);
 
         const seasonId = await insertSeason(pool, req.user.academyId, req.body);
 
@@ -105,6 +118,7 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
             continuous_to_season_type,
             continuous_discount_type,
             continuous_discount_rate,
+            branch_id,
             status
         } = req.body;
 
@@ -123,6 +137,9 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
                 return res.status(400).json({ error: 'Validation Error', message: aftercareError });
             }
         }
+
+        const branchError = await seasonBranchError(req.user.academyId, branch_id);
+        if (branchError) return res.status(branchError.status).json(branchError.body);
 
         if (season_name !== undefined) {
             updates.push('season_name = ?');
@@ -193,6 +210,10 @@ router.put('/:id', verifyToken, checkPermission('seasons', 'edit'), async (req, 
         if (continuous_discount_rate !== undefined) {
             updates.push('continuous_discount_rate = ?');
             params.push(continuous_discount_rate);
+        }
+        if (branch_id !== undefined) {
+            updates.push('branch_id = ?');
+            params.push(branch_id);
         }
         if (status !== undefined) {
             updates.push('status = ?');

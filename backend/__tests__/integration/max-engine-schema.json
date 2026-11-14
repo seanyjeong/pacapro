@@ -2957,6 +2957,12 @@
       "timestamp",
       "YES",
       ""
+    ],
+    [
+      "branch_id",
+      "int",
+      "YES",
+      ""
     ]
   ],
   "paca.sender_numbers": [

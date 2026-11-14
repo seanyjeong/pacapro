@@ -24,6 +24,8 @@ function planEnroll({ changes }, before) {
   if (season.status === 'ended') conflict('종료된 시즌에는 등록할 수 없습니다.');
   if (!['active', 'paused'].includes(student.status)) conflict('재원·휴원 학생만 시즌에 등록할 수 있습니다. 예비·체험생은 먼저 정식 등록해 주세요.');
   if (student.student_type === 'adult') conflict('성인·공무원 학생은 시즌 대신 월회비로 관리합니다.');
+  // 화면 등록과 같이 지점 시즌에는 그 지점 학생만
+  if (season.branch_id && student.branch_id !== season.branch_id) conflict('이 시즌은 다른 지점 시즌입니다. 그 지점 학생만 등록할 수 있습니다.');
   const existing = enrollments.find(e => e.season_id === season.id && e.payment_status !== 'cancelled') || null;
   let previousSeasonId = null;
   if (changes.is_continuous) {
