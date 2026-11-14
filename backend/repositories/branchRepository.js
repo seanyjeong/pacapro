@@ -1,4 +1,5 @@
 const db = require('../config/database');
+const { findPendingMonthlyTuition } = require('./pendingMonthlyTuitionRepository');
 
 async function withTransaction(work) {
     const connection = await db.getConnection();
@@ -113,11 +114,12 @@ async function keepPaymentBranch(connection, academyId, studentFilter, filterPar
 async function updateClass(connection, id, academyId, fields) {
     await connection.query(
         `UPDATE classes SET branch_id = ?, class_name = ?, default_time_slot = ?, class_days = ?, instructor_id = ?, sort_order = ?, status = ?,
-                tuition_by_weekly = ?
+                tuition_by_weekly = ?, tuition_by_weekly_before = ?
          WHERE id = ? AND academy_id = ?`,
         [fields.branch_id, fields.class_name, fields.default_time_slot,
             fields.class_days.length ? JSON.stringify(fields.class_days) : null, fields.instructor_id, fields.sort_order, fields.status,
-            fields.tuition_by_weekly ? JSON.stringify(fields.tuition_by_weekly) : null, id, academyId]);
+            fields.tuition_by_weekly ? JSON.stringify(fields.tuition_by_weekly) : null,
+            fields.tuition_by_weekly_before ? JSON.stringify(fields.tuition_by_weekly_before) : null, id, academyId]);
     await keepPaymentBranch(connection, academyId, 's.class_id = ?', [id], fields.branch_id);
     await connection.query('UPDATE students SET branch_id = ? WHERE class_id = ? AND academy_id = ?',
         [fields.branch_id, id, academyId]);
@@ -150,18 +152,24 @@ async function academySettings(academyId) {
     return typeof settings === 'string' ? JSON.parse(settings) : settings;
 }
 
-// 학원비를 다시 계산할 학생들과 지금 반의 학원비 표. 퇴원·졸업생은 뺀다.
+// 학원비를 다시 계산할 학생들과 지금 반의 학원비 표. 퇴원·졸업생과 체험·미등록·예비생은 뺀다.
 async function findTuitionStudents(academyId, studentFilter, filterParams) {
     const [rows] = await db.query(
         `SELECT s.id, s.name, s.status, s.student_type, s.weekly_count, s.monthly_tuition, s.discount_rate,
                 s.class_id, c.tuition_by_weekly AS class_tuition
          FROM students s
          LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
-         WHERE s.academy_id = ? AND s.deleted_at IS NULL AND s.status NOT IN ('withdrawn', 'graduated')
+         WHERE s.academy_id = ? AND s.deleted_at IS NULL
+         AND s.status NOT IN ('withdrawn', 'graduated', 'trial', 'pending', 'prospect') AND COALESCE(s.is_trial, 0) = 0
          AND ${studentFilter}
          ORDER BY s.id`,
         [academyId, ...filterParams]);
     return rows;
+}
+
+// 학생들의 이번 달부터 미납 월 청구(학생 수정이 바꾸는 것과 같은 조건)
+async function pendingMonthlyBills(academyId, studentIds) {
+    return findPendingMonthlyTuition(db, academyId, studentIds);
 }
 
 // 학생 학원비만 바꾼다. 할인율은 그대로, 이미 만든 청구서는 건드리지 않는다.
@@ -177,7 +185,7 @@ async function updateStudentTuition(connection, academyId, studentId, monthlyTui
 }
 
 module.exports = {
-    academySettings, findTuitionStudents, updateStudentTuition,
+    academySettings, findTuitionStudents, pendingMonthlyBills, updateStudentTuition,
     withTransaction, findTree, findBranch, findBranchByName, insertBranch, updateBranch, branchUsage, deleteBranch,
     findClass, instructorExists, findClassByName, insertClass, updateClass, classStudentCount, deleteClass, assignStudents
 };

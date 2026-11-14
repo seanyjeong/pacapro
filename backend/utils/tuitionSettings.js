@@ -37,11 +37,13 @@ function normalizeTuitionSettings(settings) {
     };
 }
 
-// 반 학원비 표(classes.tuition_by_weekly). NULL·빈 값이면 null = 학원 기본표를 쓴다.
+// 반 학원비 표(classes.tuition_by_weekly). NULL·빈 값·모두 0원이면 null = 학원 기본표를 쓴다.
 function parseClassTuition(value) {
     if (value === null || value === undefined || value === '') return null;
     const parsed = typeof value === 'string' ? JSON.parse(value) : value;
-    return parsed && typeof parsed === 'object' ? normalizeWeeklyTuition(parsed) : null;
+    if (!parsed || typeof parsed !== 'object') return null;
+    const table = normalizeWeeklyTuition(parsed);
+    return Object.values(table).some(amount => amount > 0) ? table : null;
 }
 
 /**
