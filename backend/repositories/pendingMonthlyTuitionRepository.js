@@ -23,8 +23,9 @@ const PENDING_MONTHLY_FILTER = `\`year_month\` >= ?
 /**
  * 미납 월 청구를 맞추는 UPDATE [sql, params]. 부르는 쪽이 자기 연결 방식(query/execute)으로 실행한다.
  * 최종 금액은 청구마다 추가 금액·크레딧이 달라 SQL 에서 monthlyBillAmounts 와 같은 순서로 계산한다
- * (학원비 − 할인액 + 추가 금액 − 크레딧 → 천원 절삭 → 0 이상). 학원비 인자는 DECIMAL 로 바꿔 넣어
- * 소수(DOUBLE) 계산이 섞이지 않게 한다(학원비는 DECIMAL(10,2) 저장값이라 넷째 자리 안에서 그대로다).
+ * (학원비 − 할인액 + 추가 금액 − 크레딧 → 천원 절삭 → 0 이상). mysql2 는 JS 숫자 인자를 DOUBLE 로 보내므로
+ * 학원비·할인액 인자를 둘 다 DECIMAL 로 바꿔 넣어 SQL 안 계산이 모두 10진(DECIMAL·INT)이 되게 한다
+ * (학원비·할인액은 소수 둘째 자리 안이라 DECIMAL(14,4) 로 바꿔도 값이 그대로다).
  */
 function pendingMonthlyTuitionUpdate({ studentId, academyId, tuition, discountRate }) {
     const base = Number(tuition);
@@ -34,7 +35,8 @@ function pendingMonthlyTuitionUpdate({ studentId, academyId, tuition, discountRa
         `UPDATE student_payments
          SET base_amount = ?,
              discount_amount = ?,
-             final_amount = GREATEST(FLOOR((CAST(? AS DECIMAL(14,4)) - ? + COALESCE(additional_amount, 0) - COALESCE(carryover_amount, 0)) / 1000) * 1000, 0),
+             final_amount = GREATEST(FLOOR((CAST(? AS DECIMAL(14,4)) - CAST(? AS DECIMAL(14,4))
+                 + COALESCE(additional_amount, 0) - COALESCE(carryover_amount, 0)) / 1000) * 1000, 0),
              updated_at = NOW()
          WHERE student_id = ?
            AND academy_id = ?
