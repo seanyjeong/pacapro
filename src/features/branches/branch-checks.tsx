@@ -43,7 +43,7 @@ export function BranchChecks({ branches, selected, className, withoutNone, onCha
   );
 
   return (
-    <section className={cn('-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 py-0.5', className)} aria-label="지점별 보기">
+    <section className={cn('scrollbar-none -mx-1 flex items-center gap-1.5 overflow-x-auto px-1 py-0.5', className)} aria-label="지점별 보기">
       <button type="button" aria-pressed={selected.length === 0} className={chip(selected.length === 0)} onClick={() => onChange([])}>
         전체 지점
       </button>

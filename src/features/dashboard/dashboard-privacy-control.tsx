@@ -1,4 +1,4 @@
-import { Eye, EyeOff, LockKeyhole } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface DashboardPrivacyControlProps {
@@ -13,21 +13,14 @@ export function DashboardPrivacyControl({
     onHide,
 }: DashboardPrivacyControlProps) {
     return (
-        <div className="flex items-center gap-2 rounded-md border border-border bg-card px-2 py-1.5">
-            <span className="flex items-center gap-1.5 px-1 text-xs text-muted-foreground">
-                <LockKeyhole className="h-3.5 w-3.5" />
-                {amountsVisible ? '금액 표시 중' : '금액 가림'}
-            </span>
-            <Button
-                type="button"
-                variant={amountsVisible ? 'outline' : 'default'}
-                size="sm"
-                className="h-8 gap-1.5"
-                onClick={amountsVisible ? onHide : onReveal}
-            >
-                {amountsVisible ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                {amountsVisible ? '가리기' : '금액 보기'}
-            </Button>
-        </div>
+        <Button
+            type="button"
+            variant={amountsVisible ? 'outline' : 'secondary'}
+            onClick={amountsVisible ? onHide : onReveal}
+            aria-label={amountsVisible ? '금액 가리기' : '금액 보기 (비밀번호 확인)'}
+        >
+            {amountsVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {amountsVisible ? '금액 가리기' : '금액 보기'}
+        </Button>
     );
 }

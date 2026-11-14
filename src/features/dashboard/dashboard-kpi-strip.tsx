@@ -1,6 +1,6 @@
 import { Banknote, Clock, TrendingUp, UserCog, Users, WalletCards } from 'lucide-react';
 import { DashboardStats } from '@/lib/types';
-import { cn } from '@/lib/utils/cn';
+import { StatTile, type Tone } from '@/components/ui/page';
 import type { DashboardPermissions } from './dashboard-types';
 import { formatCompactCurrency, toSafeNumber } from './dashboard-utils';
 
@@ -18,12 +18,12 @@ interface KpiItem {
     icon: React.ComponentType<{ className?: string }>;
 }
 
-const toneClass = {
-    normal: 'text-muted-foreground',
-    good: 'text-success',
-    warn: 'text-warning',
-    bad: 'text-destructive',
-};
+const toneOf = {
+    normal: 'neutral',
+    good: 'success',
+    warn: 'warning',
+    bad: 'danger',
+} satisfies Record<NonNullable<KpiItem['tone']>, Tone>;
 
 function getProtectedAmount(amountsVisible: boolean, value: string): string {
     return amountsVisible ? value : '••••';
@@ -91,20 +91,17 @@ export function DashboardKpiStrip({ stats, permissions, amountsVisible }: Dashbo
     });
 
     return (
-        <section className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 2xl:grid-cols-3">
-            {items.map((item) => {
-                const Icon = item.icon;
-                return (
-                    <div key={item.label} className="min-w-0 bg-card p-4">
-                        <div className="flex items-center justify-between gap-3">
-                            <div className="text-[11px] font-semibold uppercase tracking-[0.05em] text-muted-foreground">{item.label}</div>
-                            <Icon className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="mt-2 break-keep text-2xl font-semibold tracking-normal text-foreground">{item.value}</div>
-                        <div className={cn('mt-1 text-xs', toneClass[item.tone || 'normal'])}>{item.note}</div>
-                    </div>
-                );
-            })}
+        <section className="grid grid-cols-2 gap-3 lg:grid-cols-3" aria-label="오늘 숫자">
+            {items.map((item) => (
+                <StatTile
+                    key={item.label}
+                    label={item.label}
+                    value={item.value}
+                    note={item.note}
+                    tone={toneOf[item.tone || 'normal']}
+                    icon={item.icon}
+                />
+            ))}
         </section>
     );
 }

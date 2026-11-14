@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils/cn';
 import releaseInfo from '../../constants/release.json';
 import { Bell, BellOff, Loader2, PanelLeftClose, PanelLeft } from 'lucide-react';
-import apiClient from '@/lib/api/client';
 import {
     pushAPI,
     isPushSupported,
@@ -128,15 +127,16 @@ export function Sidebar() {
                 )}
             </div>
 
-            <SidebarNavigation
-                collapsed={collapsed}
-                pathname={pathname}
-                mounted={mounted}
-                user={user}
-                consultationCounts={consultationCounts}
-            />
-
-            <SidebarShortcuts collapsed={collapsed} />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+                <SidebarNavigation
+                    collapsed={collapsed}
+                    pathname={pathname}
+                    mounted={mounted}
+                    user={user}
+                    consultationCounts={consultationCounts}
+                />
+                <SidebarShortcuts collapsed={collapsed} />
+            </div>
 
             {/* 접기 · 버전 */}
             <div className={cn('flex shrink-0 items-center border-t border-border/60 py-3', collapsed ? 'justify-center px-2' : 'justify-between px-5')}>

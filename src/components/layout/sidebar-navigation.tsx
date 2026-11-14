@@ -68,7 +68,7 @@ export function SidebarNavigation({ collapsed, pathname, mounted, user, consulta
         .filter((category) => category.items.length > 0);
 
     return (
-        <nav className={cn('flex-1 overflow-y-auto pb-3', collapsed ? 'px-2' : 'px-3')}>
+        <nav className={cn('pb-1', collapsed ? 'px-2' : 'px-3')}>
             <NavLink item={dashboardItem} active={activeHref === dashboardItem.href} collapsed={collapsed} count={0} />
 
             {categories.map((category) => (

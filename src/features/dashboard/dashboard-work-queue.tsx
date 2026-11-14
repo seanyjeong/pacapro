@@ -1,6 +1,6 @@
-import { Banknote, Calendar, ChevronRight, Clock, MessageCircle, PlayCircle, RefreshCw } from 'lucide-react';
+import { Banknote, CalendarCheck, Clock, MessageCircle, PlayCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils/cn';
+import { EmptyState, ListRow, SectionCard, type Tone } from '@/components/ui/page';
 import { DashboardStats } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils/format';
 import type { Consultation } from '@/lib/types/consultation';
@@ -23,12 +23,12 @@ interface DashboardWorkQueueProps {
     onRefresh: () => void;
 }
 
-const toneClass: Record<DashboardTone, string> = {
-    accent: 'border-teal-200 bg-teal-50 text-teal-900 dark:border-teal-900/70 dark:bg-teal-950/30 dark:text-teal-100',
-    success: 'border-success/30 bg-success-soft text-success',
-    warning: 'border-warning/30 bg-warning-soft text-warning',
-    danger: 'border-destructive/30 bg-destructive-soft text-destructive',
-    neutral: 'border-border bg-muted/40 text-foreground',
+const toneOf: Record<DashboardTone, Tone> = {
+    accent: 'primary',
+    success: 'success',
+    warning: 'warning',
+    danger: 'danger',
+    neutral: 'neutral',
 };
 
 function buildQueueItems({
@@ -98,61 +98,35 @@ export function DashboardWorkQueue(props: DashboardWorkQueueProps) {
     const items = buildQueueItems(props);
 
     return (
-        <aside className="rounded-lg border border-border bg-card">
-            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-                <div>
-                    <h2 className="text-sm font-semibold text-foreground">오늘의 업무</h2>
-                    <p className="mt-0.5 text-xs text-muted-foreground">{items.length}건 처리 대기</p>
-                </div>
-                <Button variant="outline" size="icon-sm" onClick={props.onRefresh} title="새로고침">
+        <SectionCard
+            title="오늘 할 일"
+            description={items.length > 0 ? `${items.length}건이 기다리고 있어요` : undefined}
+            actions={(
+                <Button variant="ghost" size="icon-sm" onClick={props.onRefresh} title="새로고침" aria-label="오늘 할 일 새로고침">
                     <RefreshCw className="h-4 w-4" />
                 </Button>
-            </div>
-
+            )}
+        >
             {props.todayDataError && (
-                <div className="mx-4 mt-4 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-xs text-warning">
-                    {props.todayDataError}
+                <p className="mb-2 rounded-xl bg-warning-soft px-3 py-2 text-[13px] font-medium text-warning">{props.todayDataError}</p>
+            )}
+            {items.length === 0 ? (
+                <EmptyState icon={CalendarCheck} title="오늘 처리할 일이 없어요" description="상담·일정·미납이 생기면 여기에 먼저 보여 드려요." />
+            ) : (
+                <div className="divide-y divide-border/60">
+                    {items.map((item) => (
+                        <ListRow
+                            key={item.id}
+                            icon={item.icon}
+                            tone={toneOf[item.tone]}
+                            title={item.title}
+                            detail={item.detail}
+                            trailing={<span className="text-[13px] font-semibold text-muted-foreground">{item.badge}</span>}
+                            onClick={() => item.href ? props.onNavigate(item.href) : item.action?.()}
+                        />
+                    ))}
                 </div>
             )}
-
-            <div className="space-y-2 p-4">
-                {items.length === 0 ? (
-                    <div className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-8 text-center">
-                        <Calendar className="mx-auto h-6 w-6 text-muted-foreground" />
-                        <p className="mt-3 text-sm font-medium text-foreground">오늘 처리할 긴급 업무가 없습니다</p>
-                        <p className="mt-1 text-xs text-muted-foreground">상담, 일정, 미납 항목이 생기면 여기에 먼저 표시됩니다.</p>
-                    </div>
-                ) : (
-                    items.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <button
-                                key={item.id}
-                                type="button"
-                                onClick={() => item.href ? props.onNavigate(item.href) : item.action?.()}
-                                className={cn(
-                                    'group flex w-full items-start justify-between gap-3 rounded-md border p-3 text-left transition-colors hover:bg-muted/50',
-                                    toneClass[item.tone]
-                                )}
-                            >
-                                <span className="flex min-w-0 gap-3">
-                                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-card/70">
-                                        <Icon className="h-4 w-4" />
-                                    </span>
-                                    <span className="min-w-0">
-                                        <span className="flex items-center gap-2">
-                                            <span className="truncate text-sm font-semibold">{item.title}</span>
-                                            <span className="rounded border border-current/20 px-1.5 py-0.5 text-[11px] font-medium">{item.badge}</span>
-                                        </span>
-                                        <span className="mt-1 block line-clamp-2 text-xs opacity-80">{item.detail}</span>
-                                    </span>
-                                </span>
-                                <ChevronRight className="mt-1 h-4 w-4 shrink-0 opacity-55 transition-transform group-hover:translate-x-0.5" />
-                            </button>
-                        );
-                    })
-                )}
-            </div>
-        </aside>
+        </SectionCard>
     );
 }

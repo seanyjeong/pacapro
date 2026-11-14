@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page';
 import { DashboardSkeleton } from '@/components/dashboard/dashboard-skeleton';
 import { StudentResumeModal, type RestEndedStudent } from '@/components/students/student-resume-modal';
 import { PasswordConfirmModal } from '@/components/modals/password-confirm-modal';
@@ -42,40 +43,40 @@ export function DashboardHome() {
     };
 
     return (
-        <div className="space-y-5">
-            <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                <div>
-                    <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">오늘의 운영 현황</h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {dashboard.todayLabel} · {dashboard.stats.current_month.month} 기준
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-md border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
-                        실제 운영 자료 연결
-                    </span>
-                    {hasSensitiveAmounts && (
-                        <DashboardPrivacyControl
-                            amountsVisible={amountPrivacy.amountsVisible}
-                            onReveal={amountPrivacy.requestReveal}
-                            onHide={amountPrivacy.hideAmounts}
-                        />
-                    )}
-                    <Button variant="outline" className="gap-2" onClick={dashboard.refresh}>
-                        <RefreshCw className="h-4 w-4" />
-                        새로고침
-                    </Button>
-                </div>
-            </header>
+        <div className="space-y-4">
+            <PageHeader
+                title="오늘"
+                description={`${dashboard.todayLabel} · ${dashboard.stats.current_month.month} 기준`}
+                actions={(
+                    <>
+                        {hasSensitiveAmounts && (
+                            <DashboardPrivacyControl
+                                amountsVisible={amountPrivacy.amountsVisible}
+                                onReveal={amountPrivacy.requestReveal}
+                                onHide={amountPrivacy.hideAmounts}
+                            />
+                        )}
+                        <Button variant="outline" size="icon" onClick={dashboard.refresh} title="새로고침" aria-label="새로고침">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
+                    </>
+                )}
+            />
 
             <BranchChecks branches={branches} selected={dashboard.branchIds} onChange={dashboard.setBranchIds} />
             {dashboard.branchIds.length > 0 && (
-                <p className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning" role="note">
-                    학생 수와 학원비 매출·미납만 체크한 지점 기준입니다. 기타 수입·지출·강사는 학원 전체 금액입니다.
+                <p className="rounded-2xl bg-warning-soft px-4 py-3 text-[13px] font-medium text-warning" role="note">
+                    학생 수와 학원비 매출·미납만 고른 지점 기준이에요. 기타 수입·지출·강사는 학원 전체 금액이에요.
                 </p>
             )}
 
-            <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+            <DashboardKpiStrip
+                stats={dashboard.stats}
+                permissions={dashboard.permissions}
+                amountsVisible={amountPrivacy.amountsVisible}
+            />
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <DashboardWorkQueue
                     stats={dashboard.stats}
                     permissions={dashboard.permissions}
@@ -87,19 +88,11 @@ export function DashboardHome() {
                     onOpenRestEnded={() => setShowRestEndedDialog(true)}
                     onRefresh={dashboard.refresh}
                 />
-
-                <main className="min-w-0 space-y-5">
-                    <DashboardKpiStrip
-                        stats={dashboard.stats}
-                        permissions={dashboard.permissions}
-                        amountsVisible={amountPrivacy.amountsVisible}
-                    />
-                    <DashboardMonthSummary
-                        stats={dashboard.stats}
-                        permissions={dashboard.permissions}
-                        amountsVisible={amountPrivacy.amountsVisible}
-                    />
-                </main>
+                <DashboardMonthSummary
+                    stats={dashboard.stats}
+                    permissions={dashboard.permissions}
+                    amountsVisible={amountPrivacy.amountsVisible}
+                />
             </div>
 
             <DashboardRestEndedDialog
