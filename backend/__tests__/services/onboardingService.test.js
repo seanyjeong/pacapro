@@ -64,4 +64,18 @@ describe('onboardingService.complete', () => {
         });
         expect(settings.exam_tuition).not.toHaveProperty('1');
     });
+
+    test('급여 지급일 말일(0)을 10일로 바꾸지 않고 0 으로 저장한다', async () => {
+        const connection = createConnection();
+        db.getConnection.mockResolvedValue(connection);
+
+        await onboardingService.complete(7, {
+            academy_name: '테스트학원',
+            salary_payment_day: 0,
+            salary_month_type: 'next',
+            tuition_due_day: 5
+        });
+
+        expect(connection.query.mock.calls[1][1][3]).toBe(0);
+    });
 });

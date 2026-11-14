@@ -90,7 +90,7 @@ async function complete(academyId, body) {
                 morning_class_time || '09:30-12:00',
                 afternoon_class_time || '14:00-18:00',
                 evening_class_time || '18:30-21:00',
-                salary_payment_day || 10,
+                salary_payment_day ?? 10, // 0 = 말일
                 salary_month_type || 'next',
                 tuition_due_day || 5,
                 tuition_settings ? JSON.stringify(normalizeTuitionSettings(tuition_settings)) : null,
