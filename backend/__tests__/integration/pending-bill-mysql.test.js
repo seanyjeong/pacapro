@@ -112,6 +112,7 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         require('../../routes/payments/crud')(payments); require('../../routes/payments/early-pay')(payments);
         require('../../routes/payments/prepaid')(payments); require('../../routes/payments/pay')(payments);
         a.use('/paca/payments', payments);
+        const seasons = express.Router(); require('../../routes/seasons/enrollments')(seasons); a.use('/paca/seasons', seasons);
         return a;
     };
     const confirm = changes => changes.map(({ student_id, current_tuition, new_tuition }) => ({ student_id, current_tuition, new_tuition }));
@@ -666,6 +667,25 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         const [[row]] = await pool.query('SELECT discount_amount, final_amount, paid_amount, payment_status FROM student_payments WHERE id = 1');
         expect([Number(row.discount_amount), Number(row.final_amount), Number(row.paid_amount), row.payment_status]).toEqual([0, 33000, 33000, 'paid']);
         expect((await pool.query('SELECT COUNT(*) AS n FROM student_payments WHERE discount_amount < 0'))[0][0].n).toBe(0);
+    });
+
+    test('시즌 등록 → 시즌 이름 변경 → 등록 취소: season_id 로 이은 미납 시즌비 청구도 지워진다(예전엔 50,000원 남음)', async () => {
+        const month = koreaMonth(2);
+        await seed({ tuition: 450000, rate: 0, bills: false });
+        await pool.query(`INSERT INTO seasons (id, academy_id, season_name, season_type, non_season_end_date, season_start_date, season_end_date,
+            operating_days, default_season_fee, season_monthly_policy) VALUES (29, 1, 'QA-지점수시', 'regular', ?, ?, ?, '[1,3,5]', 50000, 'season_replaces_monthly')`,
+        [`${month}-01`, `${month}-02`, `${month}-28`]);
+        await pool.query(`INSERT INTO student_seasons (id, student_id, season_id, season_fee, registration_date, payment_status)
+            VALUES (214, 1, 29, 50000, ?, 'pending')`, [`${month}-01`]);
+        await pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type, season_id, base_amount, discount_amount,
+            additional_amount, final_amount, paid_amount, is_prorated, due_date, payment_status, description)
+            VALUES (8503, 1, 1, ?, 'season', 29, 50000, 0, 0, 50000, 0, 0, ?, 'pending', 'QA-지점수시 시즌비')`, [month, `${month}-02`]);
+        await pool.query("UPDATE seasons SET season_name = 'QA-지점수시수정' WHERE id = 29");
+        const res = await request(app()).post('/paca/seasons/enrollments/214/cancel').send({ cancellation_date: `${month}-01` });
+        expect(res.status).toBe(200);
+        expect((await pool.query('SELECT COUNT(*) AS n FROM student_seasons WHERE id = 214'))[0][0].n).toBe(0);
+        expect((await pool.query('SELECT COUNT(*) AS n FROM student_payments WHERE id = 8503'))[0][0].n).toBe(0);
+        await pool.query('DELETE FROM seasons');
     });
 
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {

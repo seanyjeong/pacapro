@@ -211,6 +211,21 @@ describe('DELETE /paca/seasons/:id/students/:student_id', () => {
         expect(calls.some(c => c.includes('DELETE FROM student_payments'))).toBe(true);
     });
 
+    test('시즌비 청구는 season_id 로 찾고, season_id 없는 예전 청구만 시즌 이름으로(이름을 바꿔도 미납 청구가 남지 않게)', async () => {
+        pool.execute.mockReset();
+        pool.execute.mockResolvedValueOnce([[{
+            id: 1, season_id: 5, academy_id: 1, payment_status: 'pending',
+            student_name: 'enc_홍길동', class_days: '월수',
+            season_name: '2026 봄(이름 바꿈)', season_fee: 100000,
+            season_start_date: '2026-03-01', season_end_date: '2026-08-31'
+        }]]);
+        pool.execute.mockResolvedValue([{ affectedRows: 1 }]);
+        expect((await request(makeApp()).delete('/paca/seasons/5/students/10')).status).toBe(200);
+        const [sql, params] = pool.execute.mock.calls.find(([q]) => q.includes('DELETE FROM student_payments'));
+        expect(sql).toMatch(/season_id = \? OR \(season_id IS NULL AND description LIKE \?\)/);
+        expect(params).toEqual([10, 5, '%2026 봄(이름 바꿈)%']);
+    });
+
     test('5xx: 한국어 메시지', async () => {
         pool.execute.mockReset();
         pool.execute.mockRejectedValueOnce(new Error('DB'));

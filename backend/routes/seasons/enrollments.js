@@ -46,6 +46,7 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { planSeasonCancel, applySeasonCancel } = require('../../services/seasonEnrollmentService');
 const { planSeasonEnrollmentUpdate, applySeasonEnrollmentUpdate } = require('../../services/seasonEnrollmentUpdateService');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
+const { seasonBillMatchSql, seasonBillMatchParams } = require('../../repositories/seasonBillMatch');
 
 module.exports = function(router) {
 
@@ -207,9 +208,9 @@ router.put('/enrollments/:enrollment_id', verifyToken, checkPermission('seasons'
         const [bills] = await pool.execute(
             `SELECT id, \`year_month\`, base_amount, final_amount, paid_amount, payment_status, due_date
              FROM student_payments
-             WHERE student_id = ? AND academy_id = ? AND payment_type = 'season' AND description LIKE ?
+             WHERE student_id = ? AND academy_id = ? AND payment_type = 'season' AND ${seasonBillMatchSql()}
              ORDER BY id`,
-            [enrollment.student_id, req.user.academyId, `%${enrollment.season_name}%`]
+            [enrollment.student_id, req.user.academyId, ...seasonBillMatchParams(enrollment.season_id, enrollment.season_name)]
         );
 
         const planned = planSeasonEnrollmentUpdate({ enrollment, season, student, bills, changes });

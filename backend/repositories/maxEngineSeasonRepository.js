@@ -3,6 +3,7 @@ const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../s
 const { seasonRegularBlockStart } = require('../services/seasonScheduleAssignment');
 const { DEFAULT_SEASON_MONTHLY_POLICY } = require('../utils/seasonMonthlyPolicy');
 const { fail } = require('../models/maxEngineError');
+const { seasonBillMatchSql, seasonBillMatchParams } = require('./seasonBillMatch');
 async function rows(conn, sql, params, lock) {
   const [result] = await conn.execute(sql + (lock ? ' FOR UPDATE' : ''), params);
   return result;
@@ -44,7 +45,7 @@ async function enrollmentState(conn, actor, enrollmentId, lock) {
   const student = await commands.row(conn, 'students', enrollment.student_id, actor.academy_id, false);
   return { enrollment, season, student,
     seasonPayments: await rows(conn, `SELECT id, \`year_month\`, base_amount, final_amount, paid_amount, payment_status, due_date, description FROM student_payments
-      WHERE student_id = ? AND academy_id = ? AND payment_type = 'season' AND description LIKE ? ORDER BY id`,
-      [enrollment.student_id, actor.academy_id, `%${enrollment.season_name}%`], lock) };
+      WHERE student_id = ? AND academy_id = ? AND payment_type = 'season' AND ${seasonBillMatchSql()} ORDER BY id`,
+      [enrollment.student_id, actor.academy_id, ...seasonBillMatchParams(enrollment.season_id, enrollment.season_name)], lock) };
 }
 module.exports = { enrollState, enrollmentState };

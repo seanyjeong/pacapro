@@ -292,7 +292,7 @@ router.get('/:id/seasons', verifyToken, async (req, res) => {
                 s.default_season_fee,
                 (SELECT MAX(p.base_amount) FROM student_payments p
                  WHERE p.student_id = ss.student_id AND p.payment_type = 'season'
-                 AND p.description LIKE CONCAT('%', s.season_name, '%')) as season_base_fee,
+                 AND (p.season_id = ss.season_id OR (p.season_id IS NULL AND p.description LIKE CONCAT('%', s.season_name, '%')))) as season_base_fee,
                 CASE
                     WHEN ss.is_cancelled = 1 THEN 'cancelled'
                     WHEN s.status = 'ended' THEN 'completed'

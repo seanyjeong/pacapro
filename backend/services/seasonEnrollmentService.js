@@ -20,6 +20,7 @@ const {
     seasonRegularBlockStart
 } = require('./seasonScheduleAssignment');
 const { getKoreaDateText } = require('../utils/proratedPaymentDueDate');
+const { seasonBillMatchSql, seasonBillMatchParams } = require('../repositories/seasonBillMatch');
 
 const VALID_TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 
@@ -413,8 +414,8 @@ async function applySeasonCancel(conn, { enrollment, cancelDate, includeVat, ref
     await conn.execute(
         `DELETE FROM student_payments
         WHERE student_id = ? AND payment_type = 'season' AND payment_status != 'paid'
-        AND description LIKE ?`,
-        [enrollment.student_id, `%${enrollment.season_name}%`]
+        AND ${seasonBillMatchSql()}`,
+        [enrollment.student_id, ...seasonBillMatchParams(enrollment.season_id, enrollment.season_name)]
     );
 }
 
