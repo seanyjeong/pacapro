@@ -37,8 +37,36 @@ function normalizeTuitionSettings(settings) {
     };
 }
 
+// 반 학원비 표(classes.tuition_by_weekly). NULL·빈 값이면 null = 학원 기본표를 쓴다.
+function parseClassTuition(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+    return parsed && typeof parsed === 'object' ? normalizeWeeklyTuition(parsed) : null;
+}
+
+/**
+ * 학생에게 쓸 주N회 학원비 표: 학생 반의 표 → 없으면 학원 표.
+ * 입시/성인 구분은 학원 표에만 있다(반 표는 하나). 학원 표는 저장된 모양 그대로 돌려줘
+ * 반 표가 없을 때 결과가 지금과 글자까지 같다.
+ */
+function resolveTuitionTable(academySettings, studentType, classTuition) {
+    const classTable = parseClassTuition(classTuition);
+    if (classTable) return classTable;
+    const settings = academySettings || {};
+    return (studentType === 'adult' ? settings.adult_tuition : settings.exam_tuition) || null;
+}
+
+// 표에서 주N회 금액. 없거나 0이면 null(학원비를 바꾸지 않는다) — 기존 수업일 변경과 같은 규칙.
+function weeklyTuitionAmount(tuitionTable, weeklyCount) {
+    if (!tuitionTable || !(weeklyCount > 0)) return null;
+    return tuitionTable[`weekly_${weeklyCount}`] || null;
+}
+
 module.exports = {
     normalizeSeasonFees,
     normalizeTuitionSettings,
-    normalizeWeeklyTuition
+    normalizeWeeklyTuition,
+    parseClassTuition,
+    resolveTuitionTable,
+    weeklyTuitionAmount
 };

@@ -4,6 +4,7 @@ const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
 const { parseClassDaysWithSlots, reassignStudentSchedules } = require('./_utils');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
+const { resolveTuitionTable, weeklyTuitionAmount } = require('../../utils/tuitionSettings');
 
 module.exports = function(router) {
 
@@ -77,8 +78,7 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
         const results = [];
 
         // 학원비 자동 계산용 academy_settings 1회 조회
-        let exam_tuition = null;
-        let adult_tuition = null;
+        let academyTuition = null;
         try {
             const [settings] = await db.query(
                 'SELECT settings FROM academy_settings WHERE academy_id = ?',
@@ -88,8 +88,7 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
                 const parsed = typeof settings[0].settings === 'string'
                     ? JSON.parse(settings[0].settings)
                     : settings[0].settings;
-                exam_tuition = parsed.exam_tuition || null;
-                adult_tuition = parsed.adult_tuition || null;
+                academyTuition = parsed;
             }
         } catch (e) {
             logger.error('Failed to load academy_settings for tuition calculation:', e);
@@ -100,8 +99,12 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
             if (!id || !Array.isArray(class_days)) continue;
 
             try {
+                // 반 학원비 표가 있으면 그 표, 없으면 학원 표로 계산한다.
                 const [rows] = await db.query(
-                    'SELECT class_days, time_slot, student_type FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+                    `SELECT s.class_days, s.time_slot, s.student_type, c.tuition_by_weekly AS class_tuition
+                     FROM students s
+                     LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
+                     WHERE s.id = ? AND s.academy_id = ? AND s.deleted_at IS NULL`,
                     [id, academyId]
                 );
                 if (rows.length === 0) continue;
@@ -117,13 +120,9 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
                     const weeklyCount = normalizedDays.length;
 
                     // 학원비 자동 계산
-                    let newTuition = null;
-                    if (weeklyCount > 0) {
-                        const tuitionTable = studentType === 'adult' ? adult_tuition : exam_tuition;
-                        if (tuitionTable) {
-                            newTuition = tuitionTable[`weekly_${weeklyCount}`] || null;
-                        }
-                    }
+                    const newTuition = weeklyTuitionAmount(
+                        resolveTuitionTable(academyTuition, studentType, rows[0].class_tuition), weeklyCount
+                    );
 
                     await db.query(
                         `UPDATE students
@@ -221,8 +220,12 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
     }
 
     try {
+        // 반 학원비 표가 있으면 그 표, 없으면 학원 표로 계산한다.
         const [students] = await db.query(
-            'SELECT id, class_days, time_slot, student_type FROM students WHERE id = ? AND academy_id = ? AND deleted_at IS NULL',
+            `SELECT s.id, s.class_days, s.time_slot, s.student_type, c.tuition_by_weekly AS class_tuition
+             FROM students s
+             LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
+             WHERE s.id = ? AND s.academy_id = ? AND s.deleted_at IS NULL`,
             [studentId, req.user.academyId]
         );
 
@@ -255,16 +258,15 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
                     'SELECT settings FROM academy_settings WHERE academy_id = ?',
                     [req.user.academyId]
                 );
-                if (settings.length > 0 && settings[0].settings) {
-                    const parsed = typeof settings[0].settings === 'string'
+                const parsed = settings.length > 0 && settings[0].settings
+                    ? (typeof settings[0].settings === 'string'
                         ? JSON.parse(settings[0].settings)
-                        : settings[0].settings;
-                    const studentType = students[0].student_type || 'exam';
-                    const tuitionTable = studentType === 'adult' ? parsed.adult_tuition : parsed.exam_tuition;
-                    if (tuitionTable) {
-                        newTuition = tuitionTable[`weekly_${weeklyCount}`] || null;
-                    }
-                }
+                        : settings[0].settings)
+                    : null;
+                const studentType = students[0].student_type || 'exam';
+                newTuition = weeklyTuitionAmount(
+                    resolveTuitionTable(parsed, studentType, students[0].class_tuition), weeklyCount
+                );
             }
 
             const normalizedClassDays = parseClassDaysWithSlots(class_days, timeSlot);

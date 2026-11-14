@@ -26,6 +26,18 @@ router.get('/', verifyToken, respond('fetching branches', req => branchService.g
 router.put('/students', verifyToken, checkPermission('students', 'edit'),
     respond('assigning students', req => branchService.assignStudents(req.user.academyId, req.body)));
 
+/** POST /paca/branches/students/tuition-preview — 반 이동 전에 바뀔 학원비(새 반에 따로 정한 표가 있을 때만) */
+router.post('/students/tuition-preview', verifyToken, checkPermission('students', 'edit'),
+    respond('previewing move tuition', req => branchService.previewMoveTuition(req.user.academyId, req.body)));
+
+/** GET /paca/branches/classes/:classId/tuition-preview — 반 학원비 적용 미리보기 */
+router.get('/classes/:classId/tuition-preview', verifyToken, checkPermission('students', 'edit'),
+    respond('previewing class tuition', req => branchService.previewClassTuition(req.params.classId, req.user.academyId)));
+
+/** POST /paca/branches/classes/:classId/apply-tuition — 확인한 학생 학원비를 한꺼번에 바꾼다(학생 수정 권한) */
+router.post('/classes/:classId/apply-tuition', verifyToken, checkPermission('students', 'edit'),
+    respond('applying class tuition', req => branchService.applyClassTuition(req.params.classId, req.user.academyId, req.body)));
+
 /** PUT /paca/branches/classes/:classId */
 router.put('/classes/:classId', verifyToken, checkPermission('settings', 'edit'),
     respond('updating class', req => branchService.updateClass(req.params.classId, req.user.academyId, req.body)));

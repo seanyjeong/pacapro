@@ -21,7 +21,7 @@ async function findTree(academyId) {
         'SELECT id, name, sort_order, status FROM branches WHERE academy_id = ? ORDER BY sort_order, id', [academyId]);
     const [classes] = await db.query(
         `SELECT c.id, c.branch_id, c.class_name, c.default_time_slot, c.class_days, c.instructor_id, i.name AS instructor_name,
-                c.sort_order, c.status
+                c.sort_order, c.status, c.tuition_by_weekly
          FROM classes c
          LEFT JOIN instructors i ON i.id = c.instructor_id AND i.academy_id = c.academy_id
          WHERE c.academy_id = ? AND c.branch_id IS NOT NULL ORDER BY c.sort_order, c.id`, [academyId]);
@@ -112,10 +112,12 @@ async function keepPaymentBranch(connection, academyId, studentFilter, filterPar
 // 반이 다른 지점으로 가면 그 반 학생의 지점도 같이 옮긴다.
 async function updateClass(connection, id, academyId, fields) {
     await connection.query(
-        `UPDATE classes SET branch_id = ?, class_name = ?, default_time_slot = ?, class_days = ?, instructor_id = ?, sort_order = ?, status = ?
+        `UPDATE classes SET branch_id = ?, class_name = ?, default_time_slot = ?, class_days = ?, instructor_id = ?, sort_order = ?, status = ?,
+                tuition_by_weekly = ?
          WHERE id = ? AND academy_id = ?`,
         [fields.branch_id, fields.class_name, fields.default_time_slot,
-            fields.class_days.length ? JSON.stringify(fields.class_days) : null, fields.instructor_id, fields.sort_order, fields.status, id, academyId]);
+            fields.class_days.length ? JSON.stringify(fields.class_days) : null, fields.instructor_id, fields.sort_order, fields.status,
+            fields.tuition_by_weekly ? JSON.stringify(fields.tuition_by_weekly) : null, id, academyId]);
     await keepPaymentBranch(connection, academyId, 's.class_id = ?', [id], fields.branch_id);
     await connection.query('UPDATE students SET branch_id = ? WHERE class_id = ? AND academy_id = ?',
         [fields.branch_id, id, academyId]);
@@ -131,16 +133,51 @@ async function deleteClass(id, academyId) {
     await db.query('DELETE FROM classes WHERE id = ? AND academy_id = ?', [id, academyId]);
 }
 
-async function assignStudents(academyId, studentIds, branchId, classId) {
-    await keepPaymentBranch(db, academyId, `s.id IN (${studentIds.map(() => '?').join(',')})`, studentIds, branchId);
-    const [result] = await db.query(
+async function assignStudents(academyId, studentIds, branchId, classId, connection = db) {
+    await keepPaymentBranch(connection, academyId, `s.id IN (${studentIds.map(() => '?').join(',')})`, studentIds, branchId);
+    const [result] = await connection.query(
         `UPDATE students SET branch_id = ?, class_id = ?
          WHERE academy_id = ? AND deleted_at IS NULL AND id IN (${studentIds.map(() => '?').join(',')})`,
         [branchId, classId, academyId, ...studentIds]);
     return result.affectedRows;
 }
 
+// 학원 설정(학원 기본 학원비 표). 없으면 null.
+async function academySettings(academyId) {
+    const [rows] = await db.query('SELECT settings FROM academy_settings WHERE academy_id = ?', [academyId]);
+    const settings = rows[0]?.settings;
+    if (!settings) return null;
+    return typeof settings === 'string' ? JSON.parse(settings) : settings;
+}
+
+// 학원비를 다시 계산할 학생들과 지금 반의 학원비 표. 퇴원·졸업생은 뺀다.
+async function findTuitionStudents(academyId, studentFilter, filterParams) {
+    const [rows] = await db.query(
+        `SELECT s.id, s.name, s.status, s.student_type, s.weekly_count, s.monthly_tuition, s.discount_rate,
+                s.class_id, c.tuition_by_weekly AS class_tuition
+         FROM students s
+         LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
+         WHERE s.academy_id = ? AND s.deleted_at IS NULL AND s.status NOT IN ('withdrawn', 'graduated')
+         AND ${studentFilter}
+         ORDER BY s.id`,
+        [academyId, ...filterParams]);
+    return rows;
+}
+
+// 학생 학원비만 바꾼다. 할인율은 그대로, 이미 만든 청구서는 건드리지 않는다.
+// final_monthly_tuition 은 값이 있던 학생만 다시 계산한다(비어 있으면 화면이 학원비·할인율로 계산한다).
+async function updateStudentTuition(connection, academyId, studentId, monthlyTuition, finalTuition) {
+    const [result] = await connection.query(
+        `UPDATE students
+         SET monthly_tuition = ?,
+             final_monthly_tuition = CASE WHEN final_monthly_tuition IS NULL THEN NULL ELSE ? END
+         WHERE id = ? AND academy_id = ? AND deleted_at IS NULL`,
+        [monthlyTuition, finalTuition, studentId, academyId]);
+    return result.affectedRows;
+}
+
 module.exports = {
+    academySettings, findTuitionStudents, updateStudentTuition,
     withTransaction, findTree, findBranch, findBranchByName, insertBranch, updateBranch, branchUsage, deleteBranch,
     findClass, instructorExists, findClassByName, insertClass, updateClass, classStudentCount, deleteClass, assignStudents
 };

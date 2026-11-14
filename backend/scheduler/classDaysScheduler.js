@@ -6,6 +6,7 @@
 const cron = require('node-cron');
 const db = require('../config/database');
 const logger = require('../utils/logger');
+const { resolveTuitionTable, weeklyTuitionAmount } = require('../utils/tuitionSettings');
 
 // ===== 요일별 시간대 유틸리티 (하위호환) =====
 function parseClassDaysWithSlots(classDays, defaultTimeSlot = 'evening') {
@@ -32,14 +33,17 @@ async function applyScheduledClassDaysChanges() {
 
     try {
         // 변경 예정일이 오늘 이전인 학생들 조회
+        // 반 학원비 표가 있으면 그 표, 없으면 학원 표로 계산한다.
         const [studentsToUpdate] = await db.query(
-            `SELECT id, name, class_days, class_days_next, class_days_effective_from, student_type, time_slot
-             FROM students
-             WHERE class_days_next IS NOT NULL
-               AND (status IS NULL OR status <> 'prospect')
-               AND class_days_effective_from IS NOT NULL
-               AND class_days_effective_from <= ?
-               AND deleted_at IS NULL`,
+            `SELECT s.id, s.name, s.class_days, s.class_days_next, s.class_days_effective_from, s.student_type, s.time_slot,
+                    c.tuition_by_weekly AS class_tuition
+             FROM students s
+             LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
+             WHERE s.class_days_next IS NOT NULL
+               AND (s.status IS NULL OR s.status <> 'prospect')
+               AND s.class_days_effective_from IS NOT NULL
+               AND s.class_days_effective_from <= ?
+               AND s.deleted_at IS NULL`,
             [koreaDate]
         );
 
@@ -66,16 +70,15 @@ async function applyScheduledClassDaysChanges() {
                         'SELECT settings FROM academy_settings WHERE academy_id = (SELECT academy_id FROM students WHERE id = ?)',
                         [student.id]
                     );
-                    if (settings.length > 0 && settings[0].settings) {
-                        const parsed = typeof settings[0].settings === 'string'
+                    const parsed = settings.length > 0 && settings[0].settings
+                        ? (typeof settings[0].settings === 'string'
                             ? JSON.parse(settings[0].settings)
-                            : settings[0].settings;
-                        const studentType = student.student_type || 'exam';
-                        const tuitionTable = studentType === 'adult' ? parsed.adult_tuition : parsed.exam_tuition;
-                        if (tuitionTable) {
-                            newTuition = tuitionTable[`weekly_${newWeeklyCount}`] || null;
-                        }
-                    }
+                            : settings[0].settings)
+                        : null;
+                    const studentType = student.student_type || 'exam';
+                    newTuition = weeklyTuitionAmount(
+                        resolveTuitionTable(parsed, studentType, student.class_tuition), newWeeklyCount
+                    );
                 }
 
                 // 수업일 변경 적용

@@ -4,6 +4,8 @@
  */
 const repo = require('../repositories/branchRepository');
 const { decrypt } = require('../utils/encryption');
+const { parseClassTuition, resolveTuitionTable, weeklyTuitionAmount } = require('../utils/tuitionSettings');
+const { truncateToThousands } = require('../utils/seasonCalculator');
 
 const TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 const STATUSES = ['active', 'inactive'];
@@ -18,8 +20,24 @@ const parseDays = value => {
 };
 const toDays = value => (Array.isArray(value) && value.every(day => Number.isInteger(day) && day >= 0 && day <= 6)
     ? [...new Set(value)].sort((a, b) => a - b) : null);
-const withDays = item => ({ ...item, class_days: parseDays(item.class_days) });
+// 반 응답: 수업 요일 배열, 반 학원비 표(없으면 null = 학원 기본표).
+const withDays = item => ({ ...item, class_days: parseDays(item.class_days), tuition_by_weekly: parseClassTuition(item.tuition_by_weekly) });
 const toId = value => (Number.isSafeInteger(Number(value)) && Number(value) > 0 ? Number(value) : null);
+const toIds = value => (Array.isArray(value) ? [...new Set(value.map(toId))] : []);
+// 반 학원비 표 {weekly_1..weekly_7}: 0 이상 정수(students.monthly_tuition DECIMAL(10,2) 안). 모두 0이면 받지 않는다.
+const TUITION_MAX = 99999999;
+const toTuition = value => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    const table = {};
+    for (let count = 1; count <= 7; count++) {
+        const amount = value[`weekly_${count}`] ?? 0;
+        if (!Number.isInteger(amount) || amount < 0 || amount > TUITION_MAX) return undefined;
+        table[`weekly_${count}`] = amount;
+    }
+    return Object.values(table).some(amount => amount > 0) ? table : undefined;
+};
+// 할인 후 월 학원비: 월 자동 청구와 같은 순서(할인액 천원 절삭 → 빼고 천원 절삭).
+const discountedTuition = (base, rate) => truncateToThousands(base - truncateToThousands(base * rate / 100));
 
 async function getTree(academyId) {
     const { branches, classes, counts } = await repo.findTree(academyId);
@@ -96,13 +114,17 @@ async function updateClass(id, academyId, body) {
         // 담당 강사(표시용). null 이면 안 정함.
         instructor_id: body.instructor_id === undefined ? current.instructor_id : toId(body.instructor_id),
         sort_order: Number.isInteger(body.sort_order) ? body.sort_order : current.sort_order,
-        status: body.status || current.status
+        status: body.status || current.status,
+        // 반 학원비 표. null = 학원 기본표 그대로. 바꿔도 학생 학원비는 "반 학원비 적용"을 눌러야 바뀐다.
+        tuition_by_weekly: body.tuition_by_weekly === undefined ? parseClassTuition(current.tuition_by_weekly)
+            : body.tuition_by_weekly === null ? null : toTuition(body.tuition_by_weekly)
     };
     if (!fields.class_name) return fail(400, '반 이름을 입력해주세요.');
     if (fields.class_name.length > NAME_MAX) return fail(400, `반 이름은 ${NAME_MAX}자까지 쓸 수 있습니다.`);
     if (!TIME_SLOTS.includes(fields.default_time_slot)) return fail(400, '기본 시간대 값이 올바르지 않습니다.');
     if (!fields.class_days) return fail(400, '수업 요일 값이 올바르지 않습니다.');
     if (!STATUSES.includes(fields.status)) return fail(400, '상태 값이 올바르지 않습니다.');
+    if (fields.tuition_by_weekly === undefined) return fail(400, '반 학원비는 주1~7회 중 하나 이상을 0원 넘게, 원 단위 숫자로 입력해주세요.');
     if (body.instructor_id != null && !(fields.instructor_id && await repo.instructorExists(fields.instructor_id, academyId))) {
         return fail(404, '강사를 찾을 수 없습니다.');
     }
@@ -120,21 +142,130 @@ async function deleteClass(id, academyId) {
     return { status: 200, message: '반을 지웠습니다.' };
 }
 
+// 학원비 다시 계산: 주는 반 표 → 없으면 학원 표, 학생의 주 수업 횟수로 찾는다.
+// 표에 금액이 없으면(null) 바꾸지 않는다. 할인율은 그대로 둔다.
+function planTuition(student, settings, classTuition) {
+    const current = Number(student.monthly_tuition) || 0;
+    const weeklyCount = Number(student.weekly_count) || 0;
+    const found = weeklyTuitionAmount(resolveTuitionTable(settings, student.student_type || 'exam', classTuition), weeklyCount);
+    const next = found === null ? null : Number(found);
+    const discountRate = Number(student.discount_rate) || 0;
+    return {
+        student_id: student.id, name: decrypt(student.name), status: student.status, weekly_count: weeklyCount,
+        current_tuition: current, new_tuition: next, discount_rate: discountRate,
+        new_final_tuition: next === null ? null : discountedTuition(next, discountRate),
+        changed: next !== null && next !== current
+    };
+}
+
+// 화면이 보여 준 금액과 지금 다시 계산한 금액이 같아야 바꾼다. 그 사이 표가 바뀌었으면 아무것도 안 바꾼다.
+function confirmedPlans(plans, changes) {
+    const expected = new Map((Array.isArray(changes) ? changes : []).map(item => [toId(item?.student_id), Number(item?.new_tuition)]));
+    expected.delete(null);
+    if (expected.size === 0) return { plans: [] };
+    const chosen = plans.filter(plan => expected.has(plan.student_id));
+    if (chosen.length !== expected.size || chosen.some(plan => !plan.changed || plan.new_tuition !== expected.get(plan.student_id))) {
+        return { error: fail(409, '학원비가 그사이 바뀌었어요. 미리보기를 다시 확인해주세요.') };
+    }
+    return { plans: chosen };
+}
+
+const idFilter = ids => `s.id IN (${ids.map(() => '?').join(',')})`;
+
+// 반 이동 전에 묻기: 새 반(또는 지금 반)에 따로 정한 학원비 표가 있을 때만, 새 금액이 지금과 다른 학생.
+// 양쪽 다 학원 기본표면 묻지 않는다(지금과 같음).
+async function previewMoveTuition(academyId, body) {
+    const studentIds = toIds(body.student_ids);
+    if (studentIds.length === 0 || studentIds.includes(null)) return fail(400, '옮길 학생을 선택해주세요.');
+    const classId = body.class_id == null ? null : toId(body.class_id);
+    const target = classId ? await repo.findClass(classId, academyId) : null;
+    if (classId && !target) return fail(404, '반을 찾을 수 없습니다.');
+    const newTable = target ? parseClassTuition(target.tuition_by_weekly) : null;
+    const students = (await repo.findTuitionStudents(academyId, idFilter(studentIds), studentIds))
+        .filter(student => (student.class_id ?? null) !== classId && (newTable || parseClassTuition(student.class_tuition)));
+    if (students.length === 0) return { status: 200, changes: [] };
+    const settings = await repo.academySettings(academyId);
+    return { status: 200, changes: students.map(student => planTuition(student, settings, newTable)).filter(plan => plan.changed) };
+}
+
 // 반을 주면 지점은 그 반의 지점으로 정한다. 둘 다 비우면 배정 해제.
+// tuition_changes([{ student_id, new_tuition }])를 같이 주면 그 학생만 새 반 기준 학원비로 바꾼다(묻고 고른 경우).
 async function assignStudents(academyId, body) {
-    const studentIds = Array.isArray(body.student_ids) ? [...new Set(body.student_ids.map(toId))] : [];
+    const studentIds = toIds(body.student_ids);
     if (studentIds.length === 0 || studentIds.includes(null)) return fail(400, '옮길 학생을 선택해주세요.');
     let branchId = body.branch_id == null ? null : toId(body.branch_id);
     const classId = body.class_id == null ? null : toId(body.class_id);
+    let target = null;
     if (classId) {
-        const target = await repo.findClass(classId, academyId);
+        target = await repo.findClass(classId, academyId);
         if (!target) return fail(404, '반을 찾을 수 없습니다.');
         branchId = target.branch_id;
     } else if (branchId && !await repo.findBranch(branchId, academyId)) {
         return fail(404, '지점을 찾을 수 없습니다.');
     }
-    const updated = await repo.assignStudents(academyId, studentIds, branchId, classId);
-    return { status: 200, message: `학생 ${studentIds.length}명의 지점·반을 바꿨습니다.`, updated };
+    const tuitionIds = toIds((Array.isArray(body.tuition_changes) ? body.tuition_changes : []).map(item => item?.student_id))
+        .filter(id => studentIds.includes(id));
+    if (tuitionIds.length === 0) {
+        const updated = await repo.assignStudents(academyId, studentIds, branchId, classId);
+        return { status: 200, message: `학생 ${studentIds.length}명의 지점·반을 바꿨습니다.`, updated };
+    }
+    const settings = await repo.academySettings(academyId);
+    const newTable = target ? parseClassTuition(target.tuition_by_weekly) : null;
+    const planned = (await repo.findTuitionStudents(academyId, idFilter(tuitionIds), tuitionIds))
+        .map(student => planTuition(student, settings, newTable));
+    const { plans, error } = confirmedPlans(planned, body.tuition_changes.filter(item => tuitionIds.includes(toId(item?.student_id))));
+    if (error) return error;
+    const updated = await repo.withTransaction(async connection => {
+        const count = await repo.assignStudents(academyId, studentIds, branchId, classId, connection);
+        for (const plan of plans) {
+            await repo.updateStudentTuition(connection, academyId, plan.student_id, plan.new_tuition, plan.new_final_tuition);
+        }
+        return count;
+    });
+    return {
+        status: 200, message: `학생 ${studentIds.length}명의 지점·반을 바꾸고 ${plans.length}명의 학원비를 바꿨습니다.`,
+        updated, tuition_updated: plans.length
+    };
 }
 
-module.exports = { getTree, createBranch, updateBranch, deleteBranch, createClass, updateClass, deleteClass, assignStudents };
+// 반 학원비 적용 미리보기: 그 반 학생별 지금 금액 → 새 금액(반 표, 없으면 학원 표).
+async function previewClassTuition(classId, academyId) {
+    const cls = await repo.findClass(classId, academyId);
+    if (!cls) return fail(404, '반을 찾을 수 없습니다.');
+    const table = parseClassTuition(cls.tuition_by_weekly);
+    const settings = await repo.academySettings(academyId);
+    const students = await repo.findTuitionStudents(academyId, 's.class_id = ?', [cls.id]);
+    return {
+        status: 200,
+        class: { id: cls.id, class_name: cls.class_name, tuition_by_weekly: table },
+        students: students.map(student => planTuition(student, settings, table))
+    };
+}
+
+// 반 학원비 적용: 미리보기에서 확인한 학생만, 확인한 금액 그대로 한꺼번에. 이미 만든 청구서는 그대로 둔다.
+async function applyClassTuition(classId, academyId, body) {
+    const cls = await repo.findClass(classId, academyId);
+    if (!cls) return fail(404, '반을 찾을 수 없습니다.');
+    const ids = toIds((Array.isArray(body.changes) ? body.changes : []).map(item => item?.student_id)).filter(Boolean);
+    if (ids.length === 0) return fail(400, '학원비를 바꿀 학생을 선택해주세요.');
+    const settings = await repo.academySettings(academyId);
+    const table = parseClassTuition(cls.tuition_by_weekly);
+    const planned = (await repo.findTuitionStudents(academyId, `s.class_id = ? AND ${idFilter(ids)}`, [cls.id, ...ids]))
+        .map(student => planTuition(student, settings, table));
+    const { plans, error } = confirmedPlans(planned, body.changes);
+    if (error) return error;
+    await repo.withTransaction(async connection => {
+        for (const plan of plans) {
+            await repo.updateStudentTuition(connection, academyId, plan.student_id, plan.new_tuition, plan.new_final_tuition);
+        }
+    });
+    return {
+        status: 200, message: `학생 ${plans.length}명의 학원비를 바꿨습니다. 이미 만든 청구서는 그대로이고 다음 청구부터 새 금액이에요.`,
+        updated: plans.length, students: plans
+    };
+}
+
+module.exports = {
+    getTree, createBranch, updateBranch, deleteBranch, createClass, updateClass, deleteClass, assignStudents,
+    previewMoveTuition, previewClassTuition, applyClassTuition
+};
