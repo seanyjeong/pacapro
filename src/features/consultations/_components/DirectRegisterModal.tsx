@@ -100,7 +100,7 @@ export function DirectRegisterModal({
             </div>
           </div>
 
-          <div className="border-t pt-4">
+          <div className="border-t border-border/60 pt-4">
             <Label className="text-sm font-medium">성적 정보 (선택)</Label>
             <div className="grid grid-cols-2 gap-3 mt-2">
               <div>
@@ -174,7 +174,7 @@ export function DirectRegisterModal({
             </div>
           </div>
 
-          <div className="border-t pt-4">
+          <div className="border-t border-border/60 pt-4">
             <Label className="text-sm font-medium">상담 일정 *</Label>
             <div className="grid grid-cols-2 gap-3 mt-2">
               <div>
@@ -215,8 +215,8 @@ export function DirectRegisterModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
-          <Button onClick={handleDirectRegister} disabled={registering}>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
+          <Button className="w-full sm:w-auto" onClick={handleDirectRegister} disabled={registering}>
             {registering ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             등록
           </Button>

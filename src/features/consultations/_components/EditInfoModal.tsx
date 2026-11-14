@@ -102,7 +102,7 @@ export function EditInfoModal({
               </div>
             </div>
 
-            <div className="border-t pt-4">
+            <div className="border-t border-border/60 pt-4">
               <Label className="text-sm font-medium">성적 정보</Label>
               <div className="grid grid-cols-2 gap-3 mt-2">
                 <div>
@@ -211,8 +211,8 @@ export function EditInfoModal({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => { onOpenChange(false); onClose(); }}>취소</Button>
-          <Button onClick={handleSaveInfo} disabled={savingInfo}>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => { onOpenChange(false); onClose(); }}>취소</Button>
+          <Button className="w-full sm:w-auto" onClick={handleSaveInfo} disabled={savingInfo}>
             {savingInfo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             저장
           </Button>

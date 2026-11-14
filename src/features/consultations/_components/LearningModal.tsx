@@ -116,11 +116,11 @@ export function LearningModal({
         </div>
 
         <DialogFooter className="px-6 pb-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
           <Button
             onClick={handleLearningSubmit}
             disabled={submittingLearning}
-            className="bg-success hover:bg-success/90"
+            className="w-full sm:w-auto bg-success hover:bg-success/90"
           >
             {submittingLearning ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             등록

@@ -26,8 +26,8 @@ export function DeleteModal({ open, onOpenChange, consultation, deleting, handle
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
+          <Button className="w-full sm:w-auto" variant="destructive" onClick={handleDelete} disabled={deleting}>
             {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             삭제
           </Button>

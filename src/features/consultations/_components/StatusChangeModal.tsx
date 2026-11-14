@@ -54,7 +54,7 @@ export function StatusChangeModal({
 
         <div className="space-y-4 px-6 py-4">
           {consultation && (
-            <div className="bg-muted rounded-lg p-3 text-sm">
+            <div className="bg-muted rounded-xl p-3 text-sm">
               <span className="text-muted-foreground">현재 일정: </span>
               <span className="font-medium text-foreground">
                 {consultation.preferred_date} {consultation.preferred_time.substring(0, 5)}
@@ -78,7 +78,7 @@ export function StatusChangeModal({
             </Select>
           </div>
 
-          <div className="border-t border-border pt-4">
+          <div className="border-t border-border/60 pt-4">
             <Label className="text-sm font-medium">일정 변경 (선택)</Label>
             <p className="text-xs text-muted-foreground mb-2">변경이 필요한 경우에만 선택하세요</p>
             <div className="space-y-3">
@@ -146,8 +146,8 @@ export function StatusChangeModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
-          <Button onClick={handleStatusChange} disabled={updating}>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
+          <Button className="w-full sm:w-auto" onClick={handleStatusChange} disabled={updating}>
             {updating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             저장
           </Button>
