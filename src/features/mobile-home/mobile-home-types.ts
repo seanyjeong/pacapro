@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import type { Tone } from '@/components/ui/page';
 import type { NotificationSettings } from '@/lib/api/notificationSettings';
 
 export interface MobileHomeUser {
@@ -12,7 +13,7 @@ export interface MobileHomeMenuItem {
   icon: LucideIcon;
   label: string;
   description: string;
-  tone: 'blue' | 'violet' | 'amber' | 'emerald';
+  tone: Tone;
   permission: boolean;
 }
 
