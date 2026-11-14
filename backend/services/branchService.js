@@ -5,7 +5,8 @@
 const repo = require('../repositories/branchRepository');
 const { decrypt } = require('../utils/encryption');
 const { parseClassTuition, resolveTuitionTable, weeklyTuitionAmount } = require('../utils/tuitionSettings');
-const { monthlyBillAmounts, updatePendingMonthlyTuition } = require('../repositories/pendingMonthlyTuitionRepository');
+const { updatePendingMonthlyTuition } = require('../repositories/pendingMonthlyTuitionRepository');
+const { monthlyBillAmounts } = require('../utils/monthlyBillAmounts');
 
 const TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 const STATUSES = ['active', 'inactive'];

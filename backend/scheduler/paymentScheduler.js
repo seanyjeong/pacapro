@@ -12,13 +12,7 @@ const { calculateDueDate } = require('../utils/dueDateCalculator');
 const { graduateDueSeasonStudents } = require('../services/seasonGraduationService');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../repositories/seasonMonthlyExclusion');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../services/nonSeasonProratedBilling');
-
-/**
- * 천원 단위 절삭
- */
-function truncateToThousands(amount) {
-    return Math.floor(amount / 1000) * 1000;
-}
+const { monthlyBillAmounts } = require('../utils/monthlyBillAmounts');
 
 /**
  * 서버가 UTC여도 학원비 year_month 는 항상 KST 기준.
@@ -117,7 +111,8 @@ async function generateMonthlyPayments() {
                     // 학원비 계산
                     const baseAmount = parseFloat(student.monthly_tuition);
                     const discountRate = parseFloat(student.discount_rate) || 0;
-                    const discountAmount = truncateToThousands(baseAmount * discountRate / 100);
+                    // 월 청구 금액 공통 함수(소수 오차 없는 할인액 천원 절삭)
+                    const discountAmount = monthlyBillAmounts(baseAmount, discountRate).discount;
 
                     // 휴식 이월 크레딧 확인 및 적용
                     let carryoverAmount = 0;
@@ -161,7 +156,7 @@ async function generateMonthlyPayments() {
                         totalWithCarryover++;
                     }
 
-                    const finalAmount = truncateToThousands(baseAmount - discountAmount - carryoverAmount);
+                    const finalAmount = monthlyBillAmounts(baseAmount, discountRate, 0, carryoverAmount).final;
 
                     // 납부일 계산 (납부일 이후 첫 출석일)
                     let classDays = [];

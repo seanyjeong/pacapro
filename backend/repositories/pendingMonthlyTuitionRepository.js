@@ -6,16 +6,7 @@
  * 일할 청구·낸 청구는 건드리지 않으며, 이미 적용된 크레딧(carryover_amount)·추가 금액은 남긴다.
  */
 const { getKoreaDateText } = require('../utils/proratedPaymentDueDate');
-const { truncateToThousands } = require('../utils/seasonCalculator');
-
-/**
- * 월 청구 금액 — 월 자동 청구와 같은 식.
- * 할인액 = 천원 절삭(학원비 × 할인율 / 100), 최종 = 천원 절삭(학원비 − 할인액 + 추가 금액 − 크레딧), 0 아래로는 안 내려간다.
- */
-function monthlyBillAmounts(tuition, discountRate, additional = 0, carryover = 0) {
-    const discount = truncateToThousands(tuition * discountRate / 100);
-    return { discount, final: Math.max(truncateToThousands(tuition - discount + additional - carryover), 0) };
-}
+const { monthlyBillAmounts } = require('../utils/monthlyBillAmounts');
 
 /**
  * 미납 월 청구를 맞추는 UPDATE [sql, params]. 부르는 쪽이 자기 연결 방식(query/execute)으로 실행한다.
@@ -65,4 +56,4 @@ async function findPendingMonthlyTuition(conn, academyId, studentIds) {
     return rows;
 }
 
-module.exports = { monthlyBillAmounts, pendingMonthlyTuitionUpdate, updatePendingMonthlyTuition, findPendingMonthlyTuition };
+module.exports = { pendingMonthlyTuitionUpdate, updatePendingMonthlyTuition, findPendingMonthlyTuition };

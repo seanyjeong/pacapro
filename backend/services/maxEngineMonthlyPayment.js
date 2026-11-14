@@ -5,9 +5,9 @@ const nonSeason = require('./nonSeasonProratedBilling');
 const { calculateDueDate } = require('../utils/dueDateCalculator');
 const { commands } = require('../constants/maxEngineCommands');
 const { fail, decrypt } = require('./maxEngineFullSecurity');
+const { monthlyBillAmounts } = require('../utils/monthlyBillAmounts');
 
 const supports = operation => operation === 'monthly_payment_create';
-const truncateToThousands = amount => Math.floor(amount / 1000) * 1000;
 const conflict = message => fail(409, 'STUDENT_STATUS_CONFLICT', message);
 function classDaysOf(value) {
   if (!value) return [];
@@ -37,7 +37,8 @@ function plan({ changes }, { student, allowed, existing, credit, nonSeason: cand
   const [year, month] = yearMonth.split('-').map(Number);
   const baseAmount = parseFloat(student.monthly_tuition);
   const discountRate = parseFloat(student.discount_rate) || 0;
-  const discountAmount = truncateToThousands(baseAmount * discountRate / 100);
+  // 월 청구 금액 공통 함수(소수 오차 없는 할인액 천원 절삭)
+  const discountAmount = monthlyBillAmounts(baseAmount, discountRate).discount;
   // 휴원 이월·공결·수동 크레딧 중 가장 오래된 한 건을 차감 (스케줄러와 같음)
   let carryoverAmount = 0, notes = null, creditAfter = null;
   if (credit) {
@@ -47,7 +48,7 @@ function plan({ changes }, { student, allowed, existing, credit, nonSeason: cand
     notes = `[크레딧 차감] ${credit.credit_type === 'excused' ? '공결' : '휴식'} 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
   }
   return { yearMonth, baseAmount, discountAmount, carryoverAmount, restCreditId: credit?.id ?? null,
-    finalAmount: truncateToThousands(baseAmount - discountAmount - carryoverAmount),
+    finalAmount: monthlyBillAmounts(baseAmount, discountRate, 0, carryoverAmount).final,
     dueDate: calculateDueDate(year, month, student.due_day, classDaysOf(student.class_days)),
     description: carryoverAmount > 0 ? `${month}월 학원비 (이월 차감 적용)` : `${month}월 학원비`, notes, creditAfter };
 }

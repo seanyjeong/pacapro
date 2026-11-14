@@ -1,6 +1,7 @@
-const { pool, truncateToThousands, calculateNonSeasonEndProrated, logger } = require('../_utils');
+const { pool, calculateNonSeasonEndProrated, logger } = require('../_utils');
 const { verifyToken, checkPermission } = require('../../../middleware/auth');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../../repositories/seasonMonthlyExclusion');
+const { monthlyBillAmounts } = require('../../../utils/monthlyBillAmounts');
 
 module.exports = function registerMonthlyForStudent(router) {
 /**
@@ -70,7 +71,8 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
 
         const baseAmount = parseFloat(student.monthly_tuition) || 0;
         const discountRate = parseFloat(student.discount_rate) || 0;
-        const discountAmount = truncateToThousands(baseAmount * (discountRate / 100));
+        // 월 청구 금액 공통 함수(소수 오차 없는 할인액 천원 절삭)
+        const discountAmount = monthlyBillAmounts(baseAmount, discountRate).discount;
 
         // 비시즌 종강 일할 계산
         let additionalAmount = 0;
@@ -96,7 +98,7 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
             logger.error(`Failed to calculate non-season prorated for student ${student_id}:`, err);
         }
 
-        const finalAmount = truncateToThousands(baseAmount - discountAmount + additionalAmount);
+        const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount).final;
 
         // Due date
         const dueDate = new Date(year, month - 1, dueDay);

@@ -44,6 +44,7 @@ const {
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { seasonMonthlyExclusionSql, seasonMonthlyExclusionParams } = require('../../repositories/seasonMonthlyExclusion');
 const { nonSeasonProratedCandidates, planNonSeasonProrated, insertNonSeasonProrated } = require('../../services/nonSeasonProratedBilling');
+const { monthlyBillAmounts } = require('../../utils/monthlyBillAmounts');
 
 module.exports = function(router) {
 
@@ -121,7 +122,8 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
 
             const baseAmount = parseFloat(student.monthly_tuition) || 0;
             const discountRate = parseFloat(student.discount_rate) || 0;
-            const discount = truncateToThousands(baseAmount * (discountRate / 100));
+            // 월 청구 금액 공통 함수(소수 오차 없는 할인액 천원 절삭)
+            const discount = monthlyBillAmounts(baseAmount, discountRate).discount;
 
             // 비시즌 종강 일할은 전달에 붙이지 않고 시즌 시작 달에 따로 청구한다 (아래 nonSeasonProratedBilling)
             const additionalAmount = 0;
@@ -172,7 +174,7 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
                 logger.error(`Failed to apply carryover credit for student ${student.id}:`, err);
             }
 
-            const finalAmount = truncateToThousands(baseAmount - discount + additionalAmount - carryoverAmount);
+            const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount, carryoverAmount).final;
 
             // 해당 학생의 기존 학원비 확인
             const [existingPayment] = await pool.execute(
