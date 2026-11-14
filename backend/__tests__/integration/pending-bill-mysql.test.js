@@ -11,6 +11,8 @@ jest.mock('../../middleware/auth', () => ({
     requireRole: () => (req, res, next) => next(),
 }));
 jest.mock('../../utils/logger', () => ({ info: jest.fn(), warn: jest.fn(), error: jest.fn() }));
+jest.mock('node-cron', () => ({ schedule: jest.fn() }));
+jest.mock('../../services/seasonGraduationService', () => ({ graduateDueSeasonStudents: jest.fn().mockResolvedValue(0) }));
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
@@ -51,6 +53,8 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
             const sql = fs.readFileSync(path.join(__dirname, '../../migrations', file), 'utf8');
             for (const statement of sql.replace(/^--.*$/gm, '').split(';').filter(s => s.trim())) await admin.query(statement);
         }
+        // 운영과 같은 유일 키(학생·월·종류) — 같은 달 월 청구가 두 개 생기지 않는다
+        await admin.query('ALTER TABLE student_payments ADD UNIQUE KEY uq_student_month_type (student_id, `year_month`, payment_type)');
         pool = mysql.createPool({ ...options, database, multipleStatements: false });
         pool.on('connection', connection => connection.query("SET time_zone = '+09:00'"));
         global.__pendingBillMysql = pool;
@@ -60,7 +64,7 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         await pool?.end(); await admin?.end();
     });
 
-    async function seed({ tuition, rate, classId = 9, classTable = 450000, academyWeekly2 = 450000, credit = 0 }) {
+    async function seed({ tuition, rate, classId = 9, classTable = 450000, academyWeekly2 = 450000, credit = 0, bills: withBills = true }) {
         for (const table of ['student_payments', 'rest_credits', 'students', 'classes', 'branches', 'academy_settings', 'academies', 'seasons', 'student_seasons']) {
             await pool.query(`DELETE FROM ${table}`);
         }
@@ -78,14 +82,15 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
             (id, student_id, academy_id, \`year_month\`, payment_type, base_amount, discount_amount, additional_amount, carryover_amount,
              final_amount, paid_amount, is_prorated, due_date, payment_status, description)
             VALUES (?, 1, 1, ?, 'monthly', 300000, 0, ?, ?, ?, 0, 0, ?, ?, ?)`, [id, month, additional, carryover, final, `${month}-05`, status, description]);
-        await bill(1, THIS_MONTH, 'pending', '이번 달 학원비', '5000.50', 12300, '293000.00');
-        await bill(2, LAST_MONTH, 'pending', '지난 달 학원비', '0.00', 0, '300000.00');
-        await bill(3, NEXT_MONTH, 'pending', `${Number(NEXT_MONTH.slice(5))}월 학원비 (비시즌 종강 일할)`, '0.00', 0, '120000.00');
         if (credit) {
             await pool.query(`INSERT INTO rest_credits (id, student_id, academy_id, rest_start_date, rest_end_date, rest_days, credit_amount,
                 remaining_amount, credit_type, status, created_at) VALUES (1, 1, 1, '2026-01-01', '2026-01-10', 10, ?, ?, 'carryover', 'pending', NOW())`,
             [credit, credit]);
         }
+        if (!withBills) return;
+        await bill(1, THIS_MONTH, 'pending', '이번 달 학원비', '5000.50', 12300, '293000.00');
+        await bill(2, LAST_MONTH, 'pending', '지난 달 학원비', '0.00', 0, '300000.00');
+        await bill(3, NEXT_MONTH, 'pending', `${Number(NEXT_MONTH.slice(5))}월 학원비 (비시즌 종강 일할)`, '0.00', 0, '120000.00');
     }
     const bills = async () => (await pool.query('SELECT id, base_amount, discount_amount, final_amount FROM student_payments ORDER BY id'))[0]
         .map(row => [row.id, Number(row.base_amount), Number(row.discount_amount), Number(row.final_amount)]);
@@ -176,5 +181,93 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         const skipped = await request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon });
         expect(skipped.body).toMatchObject({ skipped: 1, withCarryover: 0 });
         expect((await pool.query('SELECT remaining_amount, status FROM rest_credits'))[0][0]).toMatchObject({ remaining_amount: 12300, status: 'pending' });
+    });
+
+    test('[DOUBLE 섞임] 미납 갱신 SQL 이 전 단위 학원비·소수 할인율·추가 금액 조합에서 JS 계산과 원 단위까지 같다(execute·query 둘 다)', async () => {
+        const { pendingMonthlyTuitionUpdate } = require('../../repositories/pendingMonthlyTuitionRepository');
+        await seed({ tuition: 300000, rate: 0, bills: false });
+        const cases = [];
+        for (let cents = 1; cents < 100; cents += 3) {
+            for (const rate of ['0', '12.50', '5.00', '33.33']) {
+                for (const base of [333333, 1000000, 450999]) {
+                    const tuition = (base + cents / 100).toFixed(2);
+                    const discount = monthlyBillAmounts(tuition, rate).discount;
+                    // 학원비 − 할인액 + 추가 금액이 정확히 천원 배수가 되는 추가 금액(경계: DOUBLE 이면 999.99… 로 내려간다)
+                    const centsTotal = Math.round(Number(tuition) * 100) - discount * 100;
+                    const additional = ((Math.ceil(centsTotal / 100000) * 100000 - centsTotal) / 100).toFixed(2);
+                    cases.push([tuition, rate, additional, 0], [tuition, rate, additional, 700]);
+                }
+            }
+        }
+        const wrong = [];
+        for (const [tuition, rate, additional, carryover] of cases) {
+            for (const via of ['execute', 'query']) {
+                await pool.query('DELETE FROM student_payments');
+                await pool.query(`INSERT INTO student_payments (student_id, academy_id, \`year_month\`, payment_type, base_amount, discount_amount,
+                    additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status, description)
+                    VALUES (1, 1, ?, 'monthly', 0, 0, ?, ?, 0, 0, 0, ?, 'pending', '월 학원비')`, [THIS_MONTH, additional, carryover, `${THIS_MONTH}-05`]);
+                // 실제 호출처처럼 저장값 문자열을 넘긴다
+                await pool[via](...pendingMonthlyTuitionUpdate({ studentId: 1, academyId: 1, tuition, discountRate: rate }));
+                const [[row]] = await pool.query('SELECT discount_amount, final_amount FROM student_payments');
+                const want = monthlyBillAmounts(tuition, rate, additional, carryover);
+                if (Number(row.final_amount) !== want.final || Number(row.discount_amount) !== want.discount) {
+                    wrong.push({ via, tuition, rate, additional, carryover, db: row.final_amount, js: want.final });
+                }
+            }
+        }
+        expect(cases.length).toBeGreaterThan(700);
+        expect(wrong).toEqual([]);
+    }, 120000);
+
+    test('수업일 변경 예약: 1일 00:01 월 자동 청구가 예전 학원비로 먼저 만들고, 00:05 예약 적용 뒤 그 청구가 새 금액', async () => {
+        await seed({ tuition: 300000, rate: '12.50', academyWeekly2: 333333, bills: false });
+        await pool.query('UPDATE students SET class_days_next = ?, class_days_effective_from = ? WHERE id = 1',
+            ['[1,3]', new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date())]);
+        const log = jest.spyOn(console, 'log').mockImplementation(() => {});
+        const { generateMonthlyPayments } = require('../../scheduler/paymentScheduler');
+        await generateMonthlyPayments(); // 00:01 월 자동 청구
+        log.mockRestore();
+        const monthBill = async () => (await pool.query(
+            'SELECT base_amount, discount_amount, final_amount FROM student_payments WHERE `year_month` = ? AND payment_type = \'monthly\'', [THIS_MONTH]))[0]
+            .map(row => [Number(row.base_amount), Number(row.discount_amount), Number(row.final_amount)]);
+        expect(await monthBill()).toEqual([[300000, 37000, 263000]]);
+        const { applyScheduledClassDaysChanges } = require('../../scheduler/classDaysScheduler');
+        const result = await applyScheduledClassDaysChanges(); // 00:05 예약 적용
+        expect(result.students[0].newTuition).toBe(333333);
+        const want = monthlyBillAmounts(333333, '12.50');
+        expect(await monthBill()).toEqual([[333333, want.discount, want.final]]);
+    });
+
+    test('크레딧: 같은 달 일괄 청구를 두 번 돌려도, 학생별 청구를 동시에 두 번 눌러도 크레딧은 한 번만', async () => {
+        const month = koreaMonth(2), [year, mon] = month.split('-').map(Number);
+        const creditState = async () => (await pool.query('SELECT remaining_amount FROM rest_credits WHERE id = 1'))[0][0].remaining_amount;
+        const monthBills = async () => (await pool.query('SELECT carryover_amount, rest_credit_id, final_amount FROM student_payments WHERE `year_month` = ?', [month]))[0];
+
+        // 일괄 청구 두 번(같은 달, 미납 청구가 남아 있는 상태에서 다시): 앞에서 적용한 크레딧을 그대로 두고 또 빼지 않는다
+        await seed({ tuition: 300000, rate: 0, credit: 100000, bills: false });
+        await pool.query(`INSERT INTO rest_credits (id, student_id, academy_id, rest_start_date, rest_end_date, rest_days, credit_amount,
+            remaining_amount, credit_type, status, created_at) VALUES (2, 1, 1, '2026-02-01', '2026-02-10', 10, 5000, 5000, 'manual', 'pending', NOW())`);
+        expect((await request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon })).status).toBe(200);
+        expect((await request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon })).status).toBe(200);
+        const [after] = await monthBills();
+        expect([after.carryover_amount, after.rest_credit_id, Number(after.final_amount)]).toEqual([100000, 1, 200000]);
+        expect(await creditState()).toBe(0);
+        expect((await pool.query('SELECT remaining_amount FROM rest_credits WHERE id = 2'))[0][0].remaining_amount).toBe(5000);
+
+        // 학생별 청구를 동시에 두 번: 청구 하나, 크레딧 한 번
+        await seed({ tuition: 300000, rate: 0, credit: 12300, bills: false });
+        const responses = await Promise.all([1, 2].map(() =>
+            request(app()).post('/paca/payments/generate-monthly-for-student').send({ student_id: 1, year, month: mon })));
+        expect(responses.map(res => res.status).sort()).toEqual([201, 400]);
+        expect((await monthBills()).map(row => row.carryover_amount)).toEqual([12300]);
+        expect(await creditState()).toBe(0);
+
+        // 일괄 청구를 동시에 두 번: 청구 하나, 크레딧 합 보존(빠진 크레딧 = 청구에 적힌 크레딧)
+        await seed({ tuition: 300000, rate: 0, credit: 12300, bills: false });
+        await Promise.all([1, 2].map(() => request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon })));
+        const bills = await monthBills();
+        expect(bills).toHaveLength(1);
+        expect(12300 - await creditState()).toBe(bills[0].carryover_amount);
+        expect(bills[0].carryover_amount).toBe(12300);
     });
 });
