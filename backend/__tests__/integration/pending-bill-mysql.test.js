@@ -19,11 +19,11 @@ const mysql = require('mysql2/promise');
 const express = require('express');
 const request = require('supertest');
 const schema = require('./max-engine-schema.json');
-const { monthlyBillAmounts } = require('../../utils/monthlyBillAmounts');
+const { monthlyBillAmounts, floorRatio } = require('../../utils/monthlyBillAmounts');
 
 const database = 'pending_bill_mysql_test';
 const TABLES = ['academies', 'academy_settings', 'students', 'student_payments', 'rest_credits', 'classes', 'seasons', 'student_seasons',
-    'instructors', 'consultations'];
+    'instructors', 'consultations', 'max_engine_payment_settlements'];
 const MIGRATIONS = ['20261001_add_season_aftercare.mysql', '20261112_add_branches_and_student_class.mysql', '20261113_add_student_payment_branch.mysql',
     '20261114_add_consultation_branch.mysql', '20261116_add_class_instructor.mysql', '20261118_add_class_tuition_by_weekly.mysql',
     '20261118_add_season_branch.mysql'];
@@ -295,6 +295,67 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         const partial = await Promise.all([apply(), apply()]);
         expect(partial.map(r => r.status).sort()).toEqual([200, 400]);
         expect(await state()).toEqual([450000, 1, 0, 50000, 'partial', 1]);
+    });
+
+    test('휴원 정산·복귀로 최종 금액만 줄인 청구: 크레딧 적용·청구 수정 저장·AI 연결 청구 수정이 줄인 금액 기준', async () => {
+        const month = koreaMonth(2);
+        const days = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0)).getUTCDate();
+        const transaction = async work => {
+            const conn = await pool.getConnection();
+            try { await conn.beginTransaction(); const out = await work(conn); await conn.commit(); return out; }
+            catch (error) { await conn.rollback(); throw error; } finally { conn.release(); }
+        };
+        const bill = async () => {
+            const [[row]] = await pool.query('SELECT base_amount, additional_amount, carryover_amount, final_amount FROM student_payments WHERE id = 1');
+            return [Number(row.base_amount), Number(row.additional_amount), row.carryover_amount, Number(row.final_amount)];
+        };
+        const manualCredit = amount => pool.query(`INSERT INTO rest_credits (id, student_id, academy_id, rest_start_date, rest_end_date, rest_days,
+            credit_amount, remaining_amount, credit_type, status, created_at) VALUES (5, 1, 1, '2026-01-01', '2026-01-02', 1, ?, ?, 'manual', 'pending', NOW())`, [amount, amount]);
+        const { pause } = require('../../services/studentLifecycleBillingService');
+        const { processResumePayment } = require('../../services/resumePaymentService');
+        const engine = require('../../services/maxEngineFullPayments');
+
+        // (1) 휴원 정산: 16일 휴원 → 최종 = 450,000 × 15/일수 (학원비 칸은 그대로)
+        const reseedPaused = async () => {
+            await seed({ tuition: 450000, rate: 0, bills: false });
+            await pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type, base_amount, discount_amount,
+                additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status)
+                VALUES (1, 1, 1, ?, 'monthly', 450000, 0, 0, 0, 450000, 0, 0, ?, 'pending')`, [month, `${month}-05`]);
+            await transaction(conn => pause(conn, { academyId: 1, studentId: 1, userId: 1, date: `${month}-16`, creditType: 'none' }));
+        };
+        const paused = floorRatio(450000, 15, days);
+        await reseedPaused();
+        expect(await bill()).toEqual([450000, 0, 0, paused]);
+
+        // 크레딧 30,000원 수동 적용 → 줄인 금액 − 30,000 (예전: 450,000 − 30,000 = 420,000)
+        await manualCredit(30000);
+        const applied = await request(app()).post('/paca/students/1/credits/5/apply').send({ year_month: month });
+        expect(applied.body).toMatchObject({ applied_amount: 30000, new_final_amount: paused - 30000, credit_remaining: 0 });
+        expect(await bill()).toEqual([450000, 0, 30000, paused - 30000]);
+        // 청구 수정 화면 저장(화면은 학원비를 같이 보낸다): 그대로, 추가 10,000원이면 그만큼만 (예전: 정액 420,000원으로)
+        expect((await request(app()).put('/paca/payments/1').send({ base_amount: 450000, discount_amount: 0, additional_amount: 0, notes: '메모' })).status).toBe(200);
+        expect(await bill()).toEqual([450000, 0, 30000, paused - 30000]);
+        expect((await request(app()).put('/paca/payments/1').send({ base_amount: 450000, discount_amount: 0, additional_amount: 10000 })).status).toBe(200);
+        expect(await bill()).toEqual([450000, 10000, 30000, paused - 20000]);
+        // AI 연결 청구 수정: 추가 금액을 0원으로 되돌리면 다시 줄인 금액 − 크레딧
+        await transaction(async conn => {
+            const [[before]] = await conn.query('SELECT * FROM student_payments WHERE id = 1 FOR UPDATE');
+            await engine.update(conn, 1, { additional_amount: '0', notes: '추가 취소' }, { ...before, student_status: 'paused' });
+        });
+        expect(await bill()).toEqual([450000, 0, 30000, paused - 30000]);
+
+        // (2) 휴원 복귀: 21일 복귀 → 최종 = 450,000 × (15 + 일수 − 20)/일수, 학원비 칸 그대로 → 크레딧 적용은 그 금액 기준
+        await reseedPaused();
+        await pool.query("UPDATE students SET status = 'paused', rest_start_date = ? WHERE id = 1", [`${month}-16`]);
+        const [[student]] = await pool.query('SELECT * FROM students WHERE id = 1');
+        await transaction(connection => processResumePayment({ connection, student: { ...student, rest_start_date: `${month}-16` },
+            resumeDate: `${month}-21`, classDays: [1, 3, 5], creditRecalculation: null, recordedBy: 1 }));
+        const resumed = floorRatio(450000, 15 + days - 20, days);
+        expect(await bill()).toEqual([450000, 0, 0, resumed]);
+        await manualCredit(30000);
+        const afterResume = await request(app()).post('/paca/students/1/credits/5/apply').send({ year_month: month });
+        expect(afterResume.body).toMatchObject({ applied_amount: 30000, new_final_amount: resumed - 30000 });
+        expect(await bill()).toEqual([450000, 0, 30000, resumed - 30000]);
     });
 
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {

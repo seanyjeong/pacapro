@@ -52,7 +52,7 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
 const { truncateToThousands, countClassDaysInPeriod } = require('./_utils');
-const { floorRatio, billFinalAmount } = require('../../utils/monthlyBillAmounts');
+const { floorRatio, billFinalAfterChange, billCreditRoom } = require('../../utils/monthlyBillAmounts');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
@@ -468,8 +468,8 @@ router.delete('/:id/credits/:creditId', verifyToken, checkPermission('payments',
  *
  * 처리:
  *   - 대상 학원비 조회 (student_payments, payment_type='monthly')
- *   - 적용 금액 = min(크레딧 잔액, 학원비 − 할인액 + 추가 − 기존 크레딧) — 월 청구 크레딧 차감과 같은 원칙
- *   - student_payments UPDATE: carryover_amount += apply, final_amount = 천원 절삭(학원비 − 할인액 + 추가 − 크레딧) (월 청구·청구 수정과 같은 식), rest_credit_id, notes 추가, updated_at
+ *   - 적용 금액 = min(크레딧 잔액, 청구 대상 금액 − 기존 크레딧) — 월 청구 크레딧 차감과 같은 원칙 (utils/monthlyBillAmounts billCreditRoom)
+ *   - student_payments UPDATE: carryover_amount += apply, final_amount = 천원 절삭(청구 대상 금액 − 크레딧) (월 청구·청구 수정과 같은 식, billFinalAfterChange), rest_credit_id, notes 추가, updated_at
  *   - rest_credits UPDATE: remaining_amount -= apply, status (전액 → 'applied' / 일부 → 'partial'), applied_to_payment_id, processed_at
  *   - 한 트랜잭션 + 청구·크레딧 행 잠금(FOR UPDATE) — 두 번 동시에 눌러도 크레딧은 한 번만 빠지고, 중간 실패는 되돌린다.
  *
@@ -547,12 +547,11 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
             });
         }
 
-        // 적용할 금액 = min(크레딧 잔액, 이 청구에서 더 뺄 수 있는 금액(학원비 − 할인액 + 추가 − 기존 크레딧, 원 단위))
+        // 적용할 금액 = min(크레딧 잔액, 이 청구에서 더 뺄 수 있는 금액(청구 대상 금액 − 기존 크레딧, 원 단위))
+        //   청구 대상 금액: 보통 청구는 학원비 − 할인액 + 추가, 휴원·퇴원·복귀로 최종 금액만 줄인 청구는 줄인 최종 금액 + 기존 크레딧
         // 월 청구와 같은 원칙: 크레딧은 이 금액만큼 빼고, 최종 금액은 그 뒤 천원 절삭 — 절삭으로 줄어든 몫은 크레딧에서 더 빼지 않는다.
         const currentCarryover = parseFloat(payment.carryover_amount) || 0;
-        const payableAmount = billFinalAmount(
-            payment.base_amount, payment.discount_amount, payment.additional_amount, currentCarryover, 1
-        );
+        const payableAmount = billCreditRoom(payment);
         const applyAmount = Math.min(credit.remaining_amount, payableAmount);
 
         if (applyAmount <= 0) {
@@ -563,9 +562,9 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
             });
         }
 
-        // 학원비 업데이트값 계산 — 최종 금액은 월 청구·청구 수정 화면과 같은 식
+        // 학원비 업데이트값 계산 — 최종 금액은 월 청구·청구 수정 화면과 같은 식(줄인 청구는 줄인 금액에서 크레딧만 더 뺀다)
         const newCarryover = currentCarryover + applyAmount;
-        const newFinal = billFinalAmount(payment.base_amount, payment.discount_amount, payment.additional_amount, newCarryover);
+        const newFinal = billFinalAfterChange(payment, { carryover_amount: newCarryover });
         const creditTypeLabel = credit.credit_type === 'excused' ? '공결' :
                                credit.credit_type === 'manual' ? '수동' : '휴식';
         const newNotes = payment.notes

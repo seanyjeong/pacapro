@@ -1,5 +1,6 @@
 const repo = require('../repositories/maxEngineFullCommandRepository');
 const { fail } = require('./maxEngineFullSecurity');
+const { billFinalAfterChange } = require('../utils/monthlyBillAmounts');
 
 function cents(value) {
   const text = String(value ?? '0');
@@ -23,8 +24,9 @@ function updated(changes, before) {
   if (['withdrawn', 'graduated'].includes(before.student_status)) fail(409, 'STUDENT_STATUS_CONFLICT', '퇴원·졸업 학생의 청구는 학생 정산 미리보기(preview_student_settlement)에서 조정해 주세요.');
   const base = cents(changes.base_amount ?? before.base_amount), discount = cents(changes.discount_amount ?? before.discount_amount),
     additional = cents(changes.additional_amount ?? before.additional_amount), paid = cents(before.paid_amount);
-  // 화면의 청구서 수정(PUT /paca/payments/:id)·월 청구와 같은 계산: 이월액(크레딧) 차감 → 천원 단위 버림 → 0 미만은 0
-  const total = Math.max(Math.floor((base - discount + additional - cents(before.carryover_amount)) / 100000) * 100000, 0);
+  // 화면의 청구서 수정(PUT /paca/payments/:id)·월 청구와 같은 공통 함수: 천원 절삭(청구 대상 금액 − 크레딧), 0 미만은 0.
+  // 휴원·퇴원·복귀로 최종 금액만 줄인 청구는 줄인 금액에서 바꾼 칸 차이만큼만 움직이고, 금액 칸이 그대로면 최종 금액도 그대로.
+  const total = cents(billFinalAfterChange(before, { base_amount: money(base), discount_amount: money(discount), additional_amount: money(additional) }));
   if (total >= 1e10) fail(422, 'INVALID_AMOUNT', '청구 금액 범위를 확인해 주세요.');
   if (total < paid) fail(422, 'PAYMENT_BELOW_PAID', `이미 낸 금액(${money(paid)})보다 낮출 수 없습니다. 환불은 퇴원 정산에서 처리합니다.`);
   return { base_amount: money(base), discount_amount: money(discount), additional_amount: money(additional), final_amount: money(total),

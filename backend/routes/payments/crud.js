@@ -34,7 +34,7 @@
  */
 
 const { pool, decryptStudentName, truncateToThousands, logger } = require('./_utils');
-const { billFinalAmount } = require('../../utils/monthlyBillAmounts');
+const { billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql } = require('../../utils/paymentAmountSql');
 
@@ -263,19 +263,16 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
         // Recalculate final_amount if any amount fields changed
         if (base_amount !== undefined || discount_amount !== undefined || additional_amount !== undefined) {
             const [current] = await pool.execute(
-                'SELECT base_amount, discount_amount, additional_amount, carryover_amount FROM student_payments WHERE id = ?',
+                'SELECT base_amount, discount_amount, additional_amount, carryover_amount, final_amount FROM student_payments WHERE id = ?',
                 [paymentId]
             );
-            const currentData = current[0];
 
-            const newBase = base_amount !== undefined ? base_amount : currentData.base_amount;
-            const newDiscount = discount_amount !== undefined ? discount_amount : currentData.discount_amount;
-            const newAdditional = additional_amount !== undefined ? additional_amount : currentData.additional_amount;
-            const currentCarryover = currentData.carryover_amount;
-
-            // 월 청구와 같은 식: 천원 절삭(학원비 − 할인액 + 추가 − 이미 적용된 크레딧), 0 미만이면 0
-            // (예전엔 천원 절삭 뒤 크레딧을 빼 같은 청구가 월 청구와 최대 999원 달랐다)
-            const finalAmount = billFinalAmount(newBase, newDiscount, newAdditional, currentCarryover);
+            // 월 청구와 같은 식: 천원 절삭(청구 대상 금액 − 이미 적용된 크레딧), 0 미만이면 0 (utils/monthlyBillAmounts)
+            // - 보통 청구: 청구 대상 = 학원비 − 할인액 + 추가 (예전엔 천원 절삭 뒤 크레딧을 빼 월 청구와 최대 999원 달랐다)
+            // - 휴원·퇴원·복귀로 최종 금액만 줄인 청구: 줄인 금액에서 바꾼 칸의 차이만큼만 더하고 뺀다
+            //   (화면은 저장할 때마다 학원비를 같이 보내, 예전엔 메모만 고쳐도 정액으로 돌아갔다)
+            // - 금액 칸이 그대로면 최종 금액도 그대로
+            const finalAmount = billFinalAfterChange(current[0], { base_amount, discount_amount, additional_amount });
             updates.push('final_amount = ?');
             params.push(finalAmount);
         }

@@ -190,7 +190,7 @@ describe('PUT /paca/payments/:id', () => {
     test('200: dynamic update + final_amount 재계산', async () => {
         pool.execute
             .mockResolvedValueOnce([[{ id: 1, academy_id: 5 }]])                          // payment lookup
-            .mockResolvedValueOnce([[{ base_amount: 100000, discount_amount: 0, additional_amount: 0, carryover_amount: 0 }]]) // current
+            .mockResolvedValueOnce([[{ base_amount: 100000, discount_amount: 0, additional_amount: 0, carryover_amount: 0, final_amount: 100000 }]]) // current
             .mockResolvedValueOnce([{ affectedRows: 1 }])                                   // UPDATE
             .mockResolvedValueOnce([[{ id: 1, student_name: 'enc_홍', final_amount: 80000 }]]); // SELECT updated
         const res = await request(makeApp())
@@ -211,7 +211,7 @@ describe('PUT /paca/payments/:id', () => {
         pool.execute
             .mockResolvedValueOnce([[{ id: 819, academy_id: 5 }]])
             .mockResolvedValueOnce([[
-                { base_amount: '400000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: '99000.00' },
+                { base_amount: '400000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: '99000.00', final_amount: '301000.00' },
             ]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[{ id: 819, student_name: 'enc_유', final_amount: 300000 }]]);
@@ -230,7 +230,7 @@ describe('PUT /paca/payments/:id', () => {
         pool.execute
             .mockResolvedValueOnce([[{ id: 819, academy_id: 5 }]])
             .mockResolvedValueOnce([[
-                { base_amount: '50000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: '99000.00' },
+                { base_amount: '50000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: '99000.00', final_amount: '0.00' },
             ]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[{ id: 819, student_name: 'enc_유', final_amount: 0 }]]);
@@ -244,27 +244,41 @@ describe('PUT /paca/payments/:id', () => {
         expect(updateCall[1]).toContain(0);
     });
 
-    test('200: 월 청구와 같은 식 — 크레딧 166,500원·학원비 450,000원 → 283,000원(크레딧 빼고 천원 절삭)', async () => {
-        const { monthlyBillAmounts } = require('../../../utils/monthlyBillAmounts');
+    // 화면은 저장할 때마다 학원비·할인·추가 금액을 다 보낸다 — UPDATE 의 final_amount 인자
+    async function savedFinal(current, body) {
         pool.execute
             .mockResolvedValueOnce([[{ id: 820, academy_id: 5 }]])
-            .mockResolvedValueOnce([[
-                { base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 166500 },
-            ]])
+            .mockResolvedValueOnce([[current]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
-            .mockResolvedValueOnce([[{ id: 820, student_name: 'enc_유', final_amount: 283000 }]]);
-
-        const res = await request(makeApp())
-            .put('/paca/payments/820')
-            .send({ base_amount: 450000 });
-
+            .mockResolvedValueOnce([[{ id: 820, student_name: 'enc_유' }]]);
+        const offset = pool.execute.mock.calls.length;
+        const res = await request(makeApp()).put('/paca/payments/820').send(body);
         expect(res.status).toBe(200);
-        const updateCall = pool.execute.mock.calls[2];
-        const finalParam = updateCall[1][updateCall[0].split('?').findIndex(part => /final_amount = $/.test(part))];
-        // 예전 식(천원 절삭 뒤 크레딧 빼기)이면 283,500원
-        expect(finalParam).toBe(283000);
+        const updateCall = pool.execute.mock.calls[offset + 2];
+        return updateCall[1][updateCall[0].split('?').findIndex(part => /final_amount = $/.test(part))];
+    }
+
+    test('200: 월 청구와 같은 식 — 크레딧 166,500원·학원비 450,000원에 추가 10,000원 → 293,000원(크레딧 빼고 천원 절삭)', async () => {
+        const { monthlyBillAmounts } = require('../../../utils/monthlyBillAmounts');
+        const monthly = { base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 166500, final_amount: '283000.00' };
+        // 예전 식(천원 절삭 뒤 크레딧 빼기)이면 293,500원
+        const final = await savedFinal(monthly, { base_amount: 450000, discount_amount: 0, additional_amount: 10000 });
+        expect(final).toBe(293000);
         // 같은 청구를 월 청구로 만든 금액과 같다
-        expect(finalParam).toBe(monthlyBillAmounts(450000, 0, 0, 166500).final);
+        expect(final).toBe(monthlyBillAmounts(450000, 0, 10000, 166500).final);
+    });
+
+    test('200: 금액 칸이 그대로면 최종 금액도 그대로(메모·납부기한만 고친 저장)', async () => {
+        const monthly = { base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 166500, final_amount: '283000.00' };
+        expect(await savedFinal(monthly, { base_amount: 450000, discount_amount: 0, additional_amount: 0, notes: 'x' })).toBe(283000);
+    });
+
+    test('200: 휴원 정산으로 최종 금액만 줄인 청구는 정액으로 돌아가지 않고, 바꾼 칸 차이만큼만 움직인다', async () => {
+        // 학원비 450,000원 → 휴원 정산 225,000원 (학원비 칸은 그대로, 최종 금액만 줄임)
+        const paused = { base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 0, final_amount: '225000.00' };
+        // 예전: 저장만 해도 450,000원
+        expect(await savedFinal(paused, { base_amount: 450000, discount_amount: 0, additional_amount: 0, notes: 'x' })).toBe(225000);
+        expect(await savedFinal(paused, { base_amount: 450000, discount_amount: 0, additional_amount: 10000 })).toBe(235000);
     });
 
     test('200: 단일 필드만 변경 시 final_amount 재계산 X', async () => {

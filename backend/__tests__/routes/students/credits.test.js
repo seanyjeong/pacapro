@@ -501,6 +501,29 @@ describe('POST /paca/students/:id/credits/:creditId/apply', () => {
     expect(pool.execute.mock.calls[3][1]).toEqual([9500, 'partial', 99, 55]);
   });
 
+  test('휴원 정산으로 최종 금액만 줄인 청구(450,000원 → 225,000원)에 크레딧 30,000원 → 195,000원(예전 420,000원)', async () => {
+    pool.execute
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'pending', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', final_amount: '225000.00', carryover_amount: 0, is_prorated: 1, notes: null }))
+      .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 30000, credit_type: 'manual' }]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-05' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ applied_amount: 30000, new_final_amount: 195000, credit_remaining: 0 });
+    expect(pool.execute.mock.calls[2][1].slice(0, 2)).toEqual([30000, 195000]);
+  });
+
+  test('줄인 청구보다 크레딧이 크면 줄인 금액만큼만 뺀다(225,000원 청구에 크레딧 300,000원 → 225,000원만)', async () => {
+    pool.execute
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'pending', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', final_amount: '225000.00', carryover_amount: 0, is_prorated: 1, notes: null }))
+      .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 300000, credit_type: 'manual' }]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-05' });
+    expect(res.body).toMatchObject({ applied_amount: 225000, new_final_amount: 0, credit_remaining: 75000 });
+    expect(pool.execute.mock.calls[3][1]).toEqual([75000, 'partial', 99, 55]);
+  });
+
   test('더 뺄 금액이 없는 청구 → 400, 크레딧 그대로', async () => {
     pool.execute
       .mockResolvedValueOnce(bill({ id: 99, payment_status: 'pending', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', final_amount: '0.00', carryover_amount: 450000, notes: null }))

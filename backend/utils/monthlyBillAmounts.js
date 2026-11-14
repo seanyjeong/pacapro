@@ -61,16 +61,60 @@ function monthlyDiscountAmount(tuition, discountRate) {
     return floorPercent(tuition, discountRate);
 }
 
+// 부호 붙은 10진 값들의 합을 unit 단위로 내림, 0 미만이면 0. terms: [[값, +1 | −1], ...]
+function floorSum(terms, unit) {
+    const parts = terms.map(([value]) => decimal(value));
+    const scale = Math.max(...parts.map(part => part.scale));
+    const total = parts.reduce((sum, part, i) => sum + BigInt(terms[i][1]) * part.n * pow10(scale - part.scale), 0n);
+    return Math.max(toUnits(floorDivide(total, BigInt(unit) * pow10(scale)), unit), 0);
+}
+
 /**
  * 청구 최종 금액 = 천원 절삭(청구 금액 − 할인액 + 추가 금액 − 크레딧), 0 미만이면 0.
- * 월 청구(아래 monthlyBillAmounts)와 청구 수정 화면·첫 달 일할 재계산·크레딧 수동 적용이 같은 식을 쓴다(크레딧을 빼고 절삭).
- * unit: 절삭 단위(기본 천원). 크레딧 수동 적용은 unit 1 로 '이 청구에서 더 뺄 수 있는 원 단위 금액'을 구한다.
+ * 월 청구(아래 monthlyBillAmounts)와 첫 달 일할 재계산이 같은 식을 쓴다(크레딧을 빼고 절삭).
  */
-function billFinalAmount(base, discount, additional = 0, carryover = 0, unit = 1000) {
-    const parts = [decimal(base), decimal(discount), decimal(additional), decimal(carryover)];
-    const scale = Math.max(...parts.map(part => part.scale));
-    const [b, d, add, carry] = parts.map(part => part.n * pow10(scale - part.scale));
-    return Math.max(toUnits(floorDivide(b - d + add - carry, BigInt(unit) * pow10(scale)), unit), 0);
+function billFinalAmount(base, discount, additional = 0, carryover = 0) {
+    return floorSum([[base, 1], [discount, -1], [additional, 1], [carryover, -1]], 1000);
+}
+
+/**
+ * 청구 대상 금액(크레딧 빼기 전)의 항.
+ * - 보통 청구(저장된 최종 금액 = 위 공통 식 결과): 학원비 − 할인액 + 추가 금액.
+ *   첫 달·복귀·비시즌 종강 일할 청구도 학원비 칸 자체가 일할 금액이라 여기에 든다.
+ * - 최종 금액만 따로 정한 청구: 지금 최종 금액 + 이미 적용된 크레딧.
+ *   휴원·퇴원 정산(studentLifecycleBillingRepository), 휴원 복귀(resumePaymentRepository), AI 연결 정산처럼
+ *   학원비 칸은 그대로 두고 최종 금액만 줄인 청구, 예전 식으로 만든 청구가 여기에 든다.
+ *   조정 표시(is_prorated·proration_details·메모)는 경로마다 다르거나 없어서(휴원 처리 process-rest 등) 금액이 공통 식과 맞는지로 가린다.
+ */
+function chargeTerms(bill) {
+    const formula = billFinalAmount(bill.base_amount, bill.discount_amount, bill.additional_amount, bill.carryover_amount);
+    return sameDecimal(bill.final_amount, formula)
+        ? [[bill.base_amount, 1], [bill.discount_amount, -1], [bill.additional_amount, 1]]
+        : [[bill.final_amount, 1], [bill.carryover_amount, 1]];
+}
+
+const BILL_AMOUNT_KEYS = ['base_amount', 'discount_amount', 'additional_amount', 'carryover_amount'];
+
+/**
+ * 청구의 금액 칸·크레딧을 바꾼 뒤 최종 금액 — 청구 수정 화면, AI 연결 청구 수정, 크레딧 수동 적용, 미리 납부·선납이 쓴다.
+ * changes: base_amount·discount_amount·additional_amount·carryover_amount 중 바꾸는 칸(없는 칸은 지금 값).
+ * 최종 = 천원 절삭(청구 대상 금액 + 바뀐 (학원비 − 할인액 + 추가) 차이 − 크레딧), 0 미만이면 0.
+ *   보통 청구는 그대로 천원 절삭(바꾼 학원비 − 할인액 + 추가 − 크레딧) = 월 청구와 같은 금액,
+ *   최종 금액만 줄인 청구는 줄인 금액에서 바뀐 만큼만 더하고 뺀다(정액으로 돌아가지 않는다).
+ * 금액 칸·크레딧이 하나도 안 바뀌면 지금 최종 금액 그대로(조정·예전 금액을 다시 절삭하지 않는다).
+ */
+function billFinalAfterChange(bill, changes = {}) {
+    const next = key => (changes[key] !== undefined ? changes[key] : bill[key]);
+    if (BILL_AMOUNT_KEYS.every(key => sameDecimal(next(key), bill[key]))) return Number(bill.final_amount);
+    return floorSum([...chargeTerms(bill),
+        [next('base_amount'), 1], [next('discount_amount'), -1], [next('additional_amount'), 1],
+        [bill.base_amount, -1], [bill.discount_amount, 1], [bill.additional_amount, -1],
+        [next('carryover_amount'), -1]], 1000);
+}
+
+// 크레딧 수동 적용 한도: 이 청구에서 더 뺄 수 있는 금액(청구 대상 금액 − 이미 적용된 크레딧, 원 단위 내림)
+function billCreditRoom(bill) {
+    return floorSum([...chargeTerms(bill), [bill.carryover_amount, -1]], 1);
 }
 
 function monthlyBillAmounts(tuition, discountRate, additional = 0, carryover = 0) {
@@ -79,5 +123,5 @@ function monthlyBillAmounts(tuition, discountRate, additional = 0, carryover = 0
 }
 
 module.exports = {
-    monthlyBillAmounts, monthlyDiscountAmount, billFinalAmount, floorRatio, floorPercent, sameDecimal
+    monthlyBillAmounts, monthlyDiscountAmount, billFinalAmount, billFinalAfterChange, billCreditRoom, floorRatio, floorPercent, sameDecimal
 };
