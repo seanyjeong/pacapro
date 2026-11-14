@@ -1,0 +1,28 @@
+-- Backup first. Apply before deploying code that links season bills by student_payments.season_id.
+-- 시즌비 청구를 시즌에 season_id 로 잇는다(등록 뒤 시즌 이름을 바꿔도 등록 취소·수정이 청구를 찾게).
+-- 1) student_payments.season_id 가 옛 season_settings(쓰지 않는 표)를 가리키는 외래 키 때문에 시즌 id 를 넣으면 실패해
+--    지금까지 시즌비 청구가 season_id 없이(NULL) 저장됐다 → 그 외래 키만 지운다(인덱스·칸은 그대로).
+SET @season_schema = DATABASE();
+SET @season_fk = (
+    SELECT MIN(CONSTRAINT_NAME) FROM information_schema.KEY_COLUMN_USAGE
+    WHERE TABLE_SCHEMA = @season_schema AND TABLE_NAME = 'student_payments' AND COLUMN_NAME = 'season_id'
+      AND REFERENCED_TABLE_NAME = 'season_settings'
+);
+SET @season_sql = IF(@season_fk IS NULL, 'SELECT 1', CONCAT('ALTER TABLE student_payments DROP FOREIGN KEY `', @season_fk, '`'));
+PREPARE season_stmt FROM @season_sql;
+EXECUTE season_stmt;
+DEALLOCATE PREPARE season_stmt;
+-- 2) season_id 가 없는 예전 시즌비 청구에 시즌 id 를 채운다: 그 학생의 시즌 등록 중 설명에 이름이 들어 있는 시즌이 딱 하나일 때만.
+--    등록이 이미 지워진(취소된) 청구는 채우지 않는다 — 배포 문서의 "남은 시즌비 청구" 조회로 따로 확인한다.
+UPDATE student_payments p
+JOIN (
+    SELECT p2.id AS payment_id, MIN(se.id) AS season_id
+    FROM student_payments p2
+    JOIN student_seasons ss ON ss.student_id = p2.student_id
+    JOIN seasons se ON se.id = ss.season_id AND se.academy_id = p2.academy_id
+    WHERE p2.payment_type = 'season' AND p2.season_id IS NULL
+      AND p2.description LIKE CONCAT('%', se.season_name, '%')
+    GROUP BY p2.id
+    HAVING COUNT(DISTINCT se.id) = 1
+) matched ON matched.payment_id = p.id
+SET p.season_id = matched.season_id;

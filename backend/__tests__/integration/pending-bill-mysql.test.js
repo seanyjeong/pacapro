@@ -709,6 +709,47 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         }
     });
 
+    test('마이그레이션 20261119: 옛 season_settings 외래 키를 지우고 예전 시즌비 청구에 season_id 를 채운다', async () => {
+        const month = koreaMonth(2);
+        const runMigration = async () => {
+            const sql = fs.readFileSync(path.join(__dirname, '../../migrations/20261119_fix_season_payment_link.mysql'), 'utf8');
+            for (const statement of sql.replace(/^--.*$/gm, '').split(';').filter(s => s.trim())) await admin.query(statement);
+        };
+        // 운영 형태: season_id 가 비어 있는 season_settings 를 가리키는 외래 키 → 시즌 id 를 넣으면 실패
+        await admin.query('CREATE TABLE IF NOT EXISTS season_settings (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB');
+        await admin.query('ALTER TABLE student_payments ADD CONSTRAINT student_payments_ibfk_3 FOREIGN KEY (season_id) REFERENCES season_settings (id) ON DELETE SET NULL');
+        try {
+            await seed({ tuition: 450000, rate: 0, bills: false });
+            await pool.query(`INSERT INTO seasons (id, academy_id, season_name, season_type, non_season_end_date, season_start_date, season_end_date,
+                operating_days, default_season_fee, season_monthly_policy) VALUES (31, 1, '여름 정시', 'regular', ?, ?, ?, '[1,3,5]', 50000, 'season_replaces_monthly'),
+                (32, 1, '여름 정시 심화', 'regular', ?, ?, ?, '[1,3,5]', 50000, 'season_replaces_monthly')`,
+            [`${month}-01`, `${month}-02`, `${month}-28`, `${month}-01`, `${month}-02`, `${month}-28`]);
+            await pool.query(`INSERT INTO student_seasons (id, student_id, season_id, season_fee, registration_date, payment_status)
+                VALUES (301, 1, 31, 50000, ?, 'pending')`, [`${month}-01`]);
+            const legacy = (id, ym, description) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,
+                base_amount, discount_amount, additional_amount, final_amount, paid_amount, is_prorated, due_date, payment_status, description)
+                VALUES (?, 1, 1, ?, 'season', 50000, 0, 0, 50000, 0, 0, ?, 'pending', ?)`, [id, ym, `${ym}-02`, description]);
+            await legacy(9001, month, '여름 정시 시즌비'); // 등록 있는 시즌 하나와만 맞음 → 채움
+            await legacy(9002, koreaMonth(3), '없어진 시즌 시즌비'); // 맞는 등록 없음 → 그대로(남은 청구 조회 대상)
+            await expect(pool.query("UPDATE student_payments SET season_id = 31 WHERE id = 9001")).rejects.toThrow(/foreign key/i);
+
+            await runMigration();
+            const [rows] = await pool.query('SELECT id, season_id FROM student_payments ORDER BY id');
+            expect(rows.map(row => [row.id, row.season_id])).toEqual([[9001, 31], [9002, null]]);
+            // 이제 새 시즌비 청구에 season_id 를 넣을 수 있다
+            await pool.query('UPDATE student_payments SET season_id = 32 WHERE id = 9002');
+            await runMigration(); // 두 번 돌려도 된다
+        } finally {
+            await pool.query('DELETE FROM student_payments');
+            await pool.query('DELETE FROM student_seasons');
+            await pool.query('DELETE FROM seasons');
+            const [fk] = await admin.query(`SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = 'student_payments' AND REFERENCED_TABLE_NAME = 'season_settings'`);
+            for (const row of fk) await admin.query(`ALTER TABLE student_payments DROP FOREIGN KEY \`${row.CONSTRAINT_NAME}\``);
+            await admin.query('DROP TABLE IF EXISTS season_settings');
+        }
+    });
+
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {
         const [year, mon] = THIS_MONTH.split('-').map(Number);
         const pendingBill = (carryover, final) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,
