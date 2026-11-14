@@ -1,171 +1,34 @@
 'use client';
 
-import Link from 'next/link';
-import { AlertTriangle, CalendarDays, CheckCircle2, ClipboardList, GraduationCap, Settings, UserPlus } from 'lucide-react';
-import { Button, buttonVariants } from '@/components/ui/button';
+import { AlertTriangle, CheckCircle2, ClipboardList } from 'lucide-react';
+import { ListRow } from '@/components/ui/page';
 import type { Consultation } from '@/lib/types/consultation';
-import { cn } from '@/lib/utils/cn';
 
 interface EnrolledConsultationsWorkQueueProps {
-  activeStatus: string;
-  confirmedCount: number;
   hasWeeklyHours: boolean;
   nextConsultation: Consultation | null;
-  onCreate: () => void;
-  onFilterConfirmed: () => void;
-  onFilterPending: () => void;
-  pendingCount: number;
-  totalCount: number;
 }
 
-export function EnrolledConsultationsWorkQueue({
-  activeStatus,
-  confirmedCount,
-  hasWeeklyHours,
-  nextConsultation,
-  onCreate,
-  onFilterConfirmed,
-  onFilterPending,
-  pendingCount,
-  totalCount,
-}: EnrolledConsultationsWorkQueueProps) {
-  const followUpCount = Math.max(totalCount - pendingCount - confirmedCount, 0);
-
+/** 다음 상담 바로 가기와 상담 시간 설정 상태. 숫자는 위 요약 칸에만 있다. */
+export function EnrolledConsultationsWorkQueue({ hasWeeklyHours, nextConsultation }: EnrolledConsultationsWorkQueueProps) {
   return (
-    <div className="space-y-4" data-testid="enrolled-consultations-work-queue">
-      <section className="rounded-md border border-border bg-card p-4">
-        <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-sky-50 text-sky-700">
-            <GraduationCap className="h-4 w-4" />
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">재원생상담 운영 보드</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              확인 대기 {pendingCount}건, 일정 확정 {confirmedCount}건
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-2">
-          <QueueRow
-            ariaLabel="확인 대기 보기"
-            label="확인 대기"
-            pressed={activeStatus === 'pending'}
-            value={`${pendingCount}건`}
-            onClick={onFilterPending}
-          />
-          <QueueRow
-            ariaLabel="일정 확정 보기"
-            label="일정 확정"
-            pressed={activeStatus === 'confirmed'}
-            value={`${confirmedCount}건`}
-            onClick={onFilterConfirmed}
-          />
-          <QueueRow label="후속 처리" value={`${followUpCount}건`} />
-        </div>
-
-        <Button className="mt-4 w-full gap-2" onClick={onCreate}>
-          <UserPlus className="h-4 w-4" />
-          상담 등록 시작
-        </Button>
-      </section>
-
-      <section className="rounded-md border border-border bg-card p-4">
-        <div className="flex items-start gap-3">
-          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${hasWeeklyHours ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning'}`}>
-            {hasWeeklyHours ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-foreground">
-              {hasWeeklyHours ? '상담 시간 설정 정상' : '상담 시간 설정 필요'}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {hasWeeklyHours ? '저장된 요일별 시간이 등록 상담에 반영됩니다.' : '요일별 상담 가능 시간을 먼저 저장해야 합니다.'}
-            </p>
-          </div>
-        </div>
-      </section>
-
+    <section className="grid gap-x-6 rounded-2xl bg-card px-5 py-2 sm:px-6 lg:grid-cols-2" data-testid="enrolled-consultations-work-queue">
       {nextConsultation ? (
-        <section className="rounded-md border border-border bg-card p-4">
-          <h2 className="text-sm font-semibold text-foreground">다음 상담</h2>
-          <p className="mt-2 text-sm font-medium text-foreground">{nextConsultation.student_name}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {nextConsultation.preferred_date} {nextConsultation.preferred_time?.slice(0, 5)}
-          </p>
-          <Link
-            className={cn(buttonVariants({ variant: 'outline' }), 'mt-3 w-full justify-start gap-2')}
-            href={`/consultations/${nextConsultation.id}/conduct`}
-          >
-            <ClipboardList className="h-4 w-4" />
-            상담 진행
-          </Link>
-        </section>
+        <ListRow
+          icon={ClipboardList}
+          tone="primary"
+          title={`다음 상담 · ${nextConsultation.student_name}`}
+          detail={`${nextConsultation.preferred_date} ${nextConsultation.preferred_time?.slice(0, 5) ?? ''} · 눌러서 상담 진행`}
+          href={`/consultations/${nextConsultation.id}/conduct`}
+        />
       ) : null}
-
-      <section className="rounded-md border border-border bg-card p-4">
-        <h2 className="text-sm font-semibold text-foreground">빠른 이동</h2>
-        <div className="mt-3 space-y-2">
-          <Link className={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start gap-2')} href="/consultations/calendar?type=learning">
-            <CalendarDays className="h-4 w-4" />
-            상담 달력
-          </Link>
-          <Link className={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start gap-2')} href="/consultations/settings">
-            <Settings className="h-4 w-4" />
-            상담 시간 설정
-          </Link>
-          <Link className={cn(buttonVariants({ variant: 'outline' }), 'w-full justify-start gap-2')} href="/consultations">
-            <ClipboardList className="h-4 w-4" />
-            전체 상담 관리
-          </Link>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function QueueRow({
-  ariaLabel,
-  label,
-  onClick,
-  pressed = false,
-  value,
-}: {
-  ariaLabel?: string;
-  label: string;
-  onClick?: () => void;
-  pressed?: boolean;
-  value: string;
-}) {
-  const className = cn(
-    'flex w-full items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm',
-    onClick && 'text-left transition hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
-    pressed && 'border-primary/40 bg-primary/5'
-  );
-  const content = (
-    <>
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold text-foreground">{value}</span>
-    </>
-  );
-
-  if (onClick) {
-    return (
-      <button
-        aria-label={ariaLabel || label}
-        aria-pressed={pressed}
-        className={className}
-        type="button"
-        onClick={onClick}
-      >
-        {content}
-      </button>
-    );
-  }
-
-  return (
-    <div className={className}>
-      {content}
-    </div>
+      <ListRow
+        icon={hasWeeklyHours ? CheckCircle2 : AlertTriangle}
+        tone={hasWeeklyHours ? 'success' : 'warning'}
+        title={hasWeeklyHours ? '상담 시간 설정 정상' : '상담 시간 설정 필요'}
+        detail={hasWeeklyHours ? '저장된 요일별 시간이 상담 등록에 쓰여요.' : '요일별 상담 가능 시간을 먼저 저장해야 해요.'}
+        href="/consultations/settings"
+      />
+    </section>
   );
 }

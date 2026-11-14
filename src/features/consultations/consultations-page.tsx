@@ -1,9 +1,9 @@
 'use client';
 
-import { AlertCircle, Calendar, ClipboardList, Plus, RefreshCw, Search, Settings, UserPlus } from 'lucide-react';
+import { AlertCircle, Calendar, Plus, RefreshCw, Search, Settings, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
@@ -21,162 +21,124 @@ import { DirectRegisterModal } from './_components/DirectRegisterModal';
 import { EditInfoModal } from './_components/EditInfoModal';
 import { TrialModal } from './_components/TrialModal';
 import { LearningModal } from './_components/LearningModal';
-import { ConsultationsWorkQueue } from './consultations-work-queue';
 
 export function ConsultationsPage() {
   const h = useConsultations();
   const { branches } = useBranchTree();
   const activeFilterCount = [h.statusFilter, h.typeFilter, h.dateFilter !== 'all' ? h.dateFilter : ''].filter(Boolean).length;
-  const pendingCount = h.stats.pending || 0;
-  const confirmedCount = h.stats.confirmed || 0;
-  const totalCount = h.stats.total || h.consultations.length;
-  const toggleStatusFilter = (status: string) => {
-    h.setStatusFilter(h.statusFilter === status ? '' : status);
-  };
 
   return (
-    <main className="min-h-screen bg-muted/20 px-4 py-5 sm:px-6 lg:px-8">
-      <div
-        className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl"
-        data-testid="consultations-operations-workspace"
-      >
-        <header className="rounded-md border border-border bg-card px-5 py-4 shadow-none">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-primary/30 bg-primary-soft text-primary">
-                <ClipboardList className="h-5 w-5" />
-              </span>
-              <div className="min-w-0">
-                <h1 className="text-2xl font-semibold tracking-normal text-foreground">상담 관리</h1>
-                <p className="mt-1 text-sm text-muted-foreground">신규 상담, 재원생 상담, 일정 변경과 후속 전환을 한 화면에서 관리합니다.</p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => h.setTypeSelectOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" />직접 등록
+    <div className="space-y-4" data-testid="consultations-operations-workspace">
+      <PageHeader
+        title="상담 관리"
+        description="신규·재원생 상담, 일정 변경, 후속 전환을 한곳에서 관리해요."
+        actions={(
+          <>
+            <Button onClick={() => h.setTypeSelectOpen(true)}>
+              <Plus className="h-4 w-4" />직접 등록
+            </Button>
+            <Link href="/consultations/new-inquiry">
+              <Button variant="outline">
+                <UserPlus className="h-4 w-4" />신규상담
               </Button>
-              <Link href="/consultations/new-inquiry">
-                <Button variant="outline" className="gap-2">
-                  <UserPlus className="h-4 w-4" />신규상담
-                </Button>
-              </Link>
-              <Link href="/consultations/calendar">
-                <Button variant="outline" className="gap-2">
-                  <Calendar className="h-4 w-4" />달력 보기
-                </Button>
-              </Link>
-              <Link href="/consultations/settings">
-                <Button variant="outline" className="gap-2">
-                  <Settings className="h-4 w-4" />상담 설정
-                </Button>
-              </Link>
+            </Link>
+            <Link href="/consultations/calendar">
+              <Button variant="outline">
+                <Calendar className="h-4 w-4" />달력 보기
+              </Button>
+            </Link>
+            <Link href="/consultations/settings">
+              <Button variant="outline">
+                <Settings className="h-4 w-4" />상담 설정
+              </Button>
+            </Link>
+          </>
+        )}
+      />
+
+      <BranchChecks branches={branches} selected={h.branchIds} onChange={h.setBranchIds} />
+
+      {h.loadError ? (
+        <section className="flex flex-col gap-3 rounded-2xl bg-warning-soft p-4 text-warning sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <h2 className="text-sm font-semibold">상담 목록을 불러오지 못했어요</h2>
+              <p className="mt-1 text-sm">잠시 후 다시 시도해 주세요.</p>
             </div>
           </div>
-        </header>
+          <Button size="sm" variant="outline" onClick={h.loadData}>
+            <RefreshCw className="h-4 w-4" />
+            다시 불러오기
+          </Button>
+        </section>
+      ) : null}
 
-        {h.loadError ? (
-          <section className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
-                <div>
-                  <h2 className="text-sm font-semibold">상담 목록을 불러오지 못했습니다</h2>
-                  <p className="mt-1 text-sm">잠시 후 다시 시도해주세요.</p>
-                </div>
+      <ConsultationStatsCards
+        stats={h.stats}
+        statusFilter={h.statusFilter}
+        onStatusFilter={h.setStatusFilter}
+      />
+
+      <ConsultationList
+        branches={branches}
+        consultations={h.consultations}
+        loading={h.loading}
+        pagination={h.pagination}
+        setPagination={h.setPagination}
+        filterBar={(
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center" data-testid="consultations-filter-bar">
+            <Tabs value={h.dateFilter} onValueChange={(v) => h.setDateFilter(v as 'all' | 'today' | 'week')} className="w-auto">
+              <TabsList className="w-full lg:w-auto">
+                <TabsTrigger value="all">전체</TabsTrigger>
+                <TabsTrigger value="today">오늘</TabsTrigger>
+                <TabsTrigger value="week">이번 주</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="이름, 전화번호로 검색"
+                className="pl-10"
+                value={h.search}
+                onChange={(e) => h.setSearch(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-2">
+              <div className="min-w-0 flex-1 lg:w-[160px] lg:flex-none">
+                <Select
+                  value={h.typeFilter || 'all'}
+                  onValueChange={(value) => h.setTypeFilter(value === 'all' ? '' : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="상담 유형" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 유형</SelectItem>
+                    <SelectItem value="new_registration">신규 등록</SelectItem>
+                    <SelectItem value="learning">학습 상담</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Button size="sm" variant="outline" onClick={h.loadData}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                다시 불러오기
+              <Button variant="outline" size="icon" onClick={h.loadData} title="새로고침" aria-label="새로고침">
+                <RefreshCw className="h-4 w-4" />
               </Button>
             </div>
-          </section>
-        ) : null}
-
-        <ConsultationStatsCards
-          stats={h.stats}
-          statusFilter={h.statusFilter}
-          onStatusFilter={h.setStatusFilter}
-        />
-
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
-          <section className="min-w-0 space-y-5">
-            <Card className="rounded-md shadow-none" data-testid="consultations-filter-bar">
-              <CardContent className="space-y-4 p-4">
-                <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                  <Tabs value={h.dateFilter} onValueChange={(v) => h.setDateFilter(v as 'all' | 'today' | 'week')}>
-                    <TabsList className="w-full sm:w-auto">
-                      <TabsTrigger value="all">전체</TabsTrigger>
-                      <TabsTrigger value="today">오늘</TabsTrigger>
-                      <TabsTrigger value="week">이번 주</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                  <span className="whitespace-nowrap rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                    활성 필터 {activeFilterCount}개
-                  </span>
-                </div>
-
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_auto]">
-                  <div className="relative min-w-0">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="이름, 전화번호로 검색..."
-                      className="pl-9"
-                      value={h.search}
-                      onChange={(e) => h.setSearch(e.target.value)}
-                    />
-                  </div>
-                  <Select
-                    value={h.typeFilter || 'all'}
-                    onValueChange={(value) => h.setTypeFilter(value === 'all' ? '' : value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="상담 유형" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">전체 유형</SelectItem>
-                      <SelectItem value="new_registration">신규 등록</SelectItem>
-                      <SelectItem value="learning">학습 상담</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" className="gap-2" onClick={h.loadData}>
-                    <RefreshCw className="h-4 w-4" />새로고침
-                  </Button>
-                </div>
-                <BranchChecks branches={branches} selected={h.branchIds} onChange={h.setBranchIds} />
-              </CardContent>
-            </Card>
-
-            <ConsultationList
-              branches={branches}
-              consultations={h.consultations}
-              loading={h.loading}
-              pagination={h.pagination}
-              setPagination={h.setPagination}
-              onOpenDetail={h.openDetailModal}
-              onOpenStatusModal={(c) => {
-                h.setSelectedConsultation(c);
-                h.setNewStatus(c.status);
-                h.setAdminNotes(c.admin_notes || '');
-                h.setStatusModalOpen(true);
-              }}
-              onOpenDeleteModal={(c) => {
-                h.setSelectedConsultation(c);
-                h.setDeleteModalOpen(true);
-              }}
-            />
-          </section>
-
-          <ConsultationsWorkQueue
-            activeStatus={h.statusFilter}
-            confirmedCount={confirmedCount}
-            pendingCount={pendingCount}
-            totalCount={totalCount}
-            onFilterConfirmed={() => toggleStatusFilter('confirmed')}
-            onFilterPending={() => toggleStatusFilter('pending')}
-            onOpenDirectRegister={() => h.setTypeSelectOpen(true)}
-          />
-        </div>
+          </div>
+        )}
+        activeFilterCount={activeFilterCount}
+        onOpenDetail={h.openDetailModal}
+        onOpenStatusModal={(c) => {
+          h.setSelectedConsultation(c);
+          h.setNewStatus(c.status);
+          h.setAdminNotes(c.admin_notes || '');
+          h.setStatusModalOpen(true);
+        }}
+        onOpenDeleteModal={(c) => {
+          h.setSelectedConsultation(c);
+          h.setDeleteModalOpen(true);
+        }}
+      />
 
       {/* 상세 모달 */}
       <DetailModal
@@ -280,7 +242,6 @@ export function ConsultationsPage() {
         submittingLearning={h.submittingLearning}
         handleLearningSubmit={h.handleLearningSubmit}
       />
-      </div>
-    </main>
+    </div>
   );
 }

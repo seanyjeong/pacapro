@@ -6,11 +6,11 @@ interface SettingsReadonlyFieldProps {
 
 export function SettingsReadonlyField({ label, value, loading }: SettingsReadonlyFieldProps) {
   return (
-    <div className="space-y-1.5">
-      <span className="block text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</span>
-      <div className="min-h-10 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-foreground">
+    <div className="flex items-center justify-between gap-4 py-3.5">
+      <span className="shrink-0 text-[15px] text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-all text-right text-[15px] font-semibold text-foreground">
         {loading ? '불러오는 중' : value || '-'}
-      </div>
+      </span>
     </div>
   );
 }

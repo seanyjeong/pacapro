@@ -74,14 +74,14 @@ export function PasswordConfirmModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Lock className="w-5 h-5 text-primary-600" />
+            <Lock className="h-5 w-5 text-primary" />
             {title}
           </DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="py-4 px-6">
+          <div className="px-6 py-4">
             <div className="space-y-2">
               <Label htmlFor="password">비밀번호</Label>
               <Input
@@ -105,11 +105,11 @@ export function PasswordConfirmModal({
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
+          <DialogFooter className="flex-col-reverse sm:flex-row">
+            <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={handleClose}>
               취소
             </Button>
-            <Button type="submit" disabled={verifying}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={verifying}>
               {verifying ? '확인 중...' : '확인'}
             </Button>
           </DialogFooter>

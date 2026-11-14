@@ -8,7 +8,7 @@ interface EnrolledConsultationsErrorProps {
 
 export function EnrolledConsultationsError({ message, onRetry }: EnrolledConsultationsErrorProps) {
   return (
-    <section className="rounded-md border border-warning/30 bg-warning-soft p-4 text-warning shadow-none">
+    <section className="rounded-2xl bg-warning-soft p-4 text-warning">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />

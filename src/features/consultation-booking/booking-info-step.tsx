@@ -1,8 +1,10 @@
+import { ChevronDown } from 'lucide-react';
 import type { ConsultationFormData, MockTestGrades, StudentGrade } from '@/lib/types/consultation';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { admissionOptions, formatPhoneNumber, genderOptions, gradeScoreOptions, gradeSelectOptions } from './booking-constants';
 import { BookingIntakePanel } from './booking-intake-panel';
+import { BookingActionBar, BookingCard } from './booking-ui';
 
 interface BookingInfoStepProps {
   branches: { id: number; name: string }[];
@@ -14,6 +16,8 @@ interface BookingInfoStepProps {
   referralSources: string[];
 }
 
+const fieldClass = 'h-12 w-full min-w-0 rounded-xl border border-transparent bg-muted px-4 text-base text-foreground transition-colors focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10';
+
 export function BookingInfoStep({
   branches,
   error,
@@ -24,20 +28,11 @@ export function BookingInfoStep({
   referralSources,
 }: BookingInfoStepProps) {
   return (
-    <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start">
+    <div className="space-y-4">
       <BookingIntakePanel formData={formData} />
 
-      <section className="rounded-md border border-border bg-card">
-        <div className="border-b border-border px-4 py-3">
-          <h2 className="text-sm font-semibold text-foreground">정보 입력</h2>
-        </div>
-        <div className="space-y-5 p-4">
-          {error && (
-            <div className="rounded-md border border-destructive/30 bg-destructive-soft px-4 py-3 text-sm font-medium text-destructive">
-              {error}
-            </div>
-          )}
-
+      <BookingCard title="학생 정보">
+        <div className="space-y-4">
           {branches.length > 0 && (
             <SelectField
               label="지점 *"
@@ -46,94 +41,95 @@ export function BookingInfoStep({
               onChange={(branchId) => onChange({ branchId: branchId ? Number(branchId) : undefined })}
             />
           )}
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <TextField label="이름 *" value={formData.studentName} onChange={(studentName) => onChange({ studentName })} />
-            <TextField
-              inputMode="numeric"
-              label="연락처 *"
-              value={formData.studentPhone || ''}
-              onChange={(studentPhone) => onChange({ studentPhone: formatPhoneNumber(studentPhone) })}
+          <TextField label="이름 *" value={formData.studentName} onChange={(studentName) => onChange({ studentName })} />
+          <TextField
+            inputMode="numeric"
+            label="연락처 *"
+            value={formData.studentPhone || ''}
+            onChange={(studentPhone) => onChange({ studentPhone: formatPhoneNumber(studentPhone) })}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <SelectField
+              label="학년 *"
+              value={formData.studentGrade || ''}
+              options={gradeSelectOptions}
+              onChange={(studentGrade) => onChange({ studentGrade: studentGrade ? (studentGrade as StudentGrade) : undefined })}
+            />
+            <SelectField
+              label="성별 *"
+              value={formData.gender || ''}
+              options={genderOptions}
+              onChange={(gender) => onChange({ gender: gender ? (gender as 'male' | 'female') : undefined })}
             />
           </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <SelectField
-            label="학년 *"
-            value={formData.studentGrade || ''}
-            options={gradeSelectOptions}
-            onChange={(studentGrade) => onChange({ studentGrade: studentGrade ? (studentGrade as StudentGrade) : undefined })}
-          />
-          <SelectField
-            label="성별 *"
-            value={formData.gender || ''}
-            options={genderOptions}
-            onChange={(gender) => onChange({ gender: gender ? (gender as 'male' | 'female') : undefined })}
-          />
           <TextField label="학교 *" value={formData.studentSchool || ''} onChange={(studentSchool) => onChange({ studentSchool })} />
         </div>
+      </BookingCard>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <SelectField
-            label="내신 평균등급 *"
-            value={formData.schoolGradeAvg?.toString() || ''}
-            options={gradeScoreOptions}
-            onChange={(value) => onChange({ schoolGradeAvg: parseOptionalGrade(value) })}
-          />
-          <SelectField
-            label="입시 유형 *"
-            value={formData.admissionType || ''}
-            options={admissionOptions}
-            onChange={(admissionType) => onChange({ admissionType })}
-          />
-        </div>
-
-        <div>
-          <p className="mb-2 text-sm font-medium text-secondary-foreground">모의고사 등급</p>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <SelectField label="국어 *" value={formData.mockTestGrades?.korean?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('korean', parseOptionalGrade(value))} />
-            <SelectField label="수학 *" value={formData.mockTestGrades?.math?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('math', parseOptionalGrade(value))} />
-            <SelectField label="영어 *" value={formData.mockTestGrades?.english?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('english', parseOptionalGrade(value))} />
-            <SelectField label="탐구 *" value={formData.mockTestGrades?.exploration?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('exploration', parseOptionalGrade(value))} />
+      <BookingCard title="성적">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <SelectField
+              label="내신 평균등급 *"
+              value={formData.schoolGradeAvg?.toString() || ''}
+              options={gradeScoreOptions}
+              onChange={(value) => onChange({ schoolGradeAvg: parseOptionalGrade(value) })}
+            />
+            <SelectField
+              label="입시 유형 *"
+              value={formData.admissionType || ''}
+              options={admissionOptions}
+              onChange={(admissionType) => onChange({ admissionType })}
+            />
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-semibold text-foreground">모의고사 등급</p>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <SelectField label="국어 *" value={formData.mockTestGrades?.korean?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('korean', parseOptionalGrade(value))} />
+              <SelectField label="수학 *" value={formData.mockTestGrades?.math?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('math', parseOptionalGrade(value))} />
+              <SelectField label="영어 *" value={formData.mockTestGrades?.english?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('english', parseOptionalGrade(value))} />
+              <SelectField label="탐구 *" value={formData.mockTestGrades?.exploration?.toString() || ''} options={gradeScoreOptions} onChange={(value) => onMockGradeChange('exploration', parseOptionalGrade(value))} />
+            </div>
           </div>
         </div>
+      </BookingCard>
 
-        <div className="grid gap-4 md:grid-cols-2">
+      <BookingCard title="추가 정보">
+        <div className="space-y-4">
           <TextField label="희망 학교" value={formData.targetSchool || ''} onChange={(targetSchool) => onChange({ targetSchool })} />
           <TextField label="소개해주신 재원생" value={formData.referrerStudent || ''} onChange={(referrerStudent) => onChange({ referrerStudent })} />
+          {referralSources.length > 0 && (
+            <SelectField
+              label="학원을 알게 된 경로"
+              value={formData.referralSource || ''}
+              options={[{ value: '', label: '선택' }, ...referralSources.map((source) => ({ value: source, label: source }))]}
+              onChange={(referralSource) => onChange({ referralSource })}
+            />
+          )}
+          <label className="grid gap-1.5 text-sm font-semibold text-secondary-foreground">
+            문의 내용
+            <Textarea
+              className="min-h-28 text-base"
+              value={formData.inquiryContent || ''}
+              onChange={(event) => onChange({ inquiryContent: event.target.value })}
+            />
+          </label>
         </div>
+      </BookingCard>
 
-        {referralSources.length > 0 && (
-          <SelectField
-            label="학원을 알게 된 경로"
-            value={formData.referralSource || ''}
-            options={[{ value: '', label: '선택' }, ...referralSources.map((source) => ({ value: source, label: source }))]}
-            onChange={(referralSource) => onChange({ referralSource })}
-          />
-        )}
-
-        <label className="grid gap-1 text-sm font-medium text-secondary-foreground">
-          문의 내용
-          <Textarea
-            className="min-h-24 border-border text-sm"
-            value={formData.inquiryContent || ''}
-            onChange={(event) => onChange({ inquiryContent: event.target.value })}
-          />
-        </label>
-
-          <Button className="w-full" onClick={onNext}>다음: 일정 선택</Button>
-        </div>
-      </section>
+      <BookingActionBar error={error}>
+        <Button className="w-full" size="lg" onClick={onNext}>다음: 일정 선택</Button>
+      </BookingActionBar>
     </div>
   );
 }
 
 function TextField({ inputMode, label, onChange, value }: { inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode']; label: string; onChange: (value: string) => void; value: string }) {
   return (
-    <label className="grid min-w-0 gap-1 text-sm font-medium text-secondary-foreground">
+    <label className="grid min-w-0 gap-1.5 text-sm font-semibold text-secondary-foreground">
       {label}
       <input
-        className="h-10 w-full min-w-0 rounded-md border border-border bg-card px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+        className={fieldClass}
         inputMode={inputMode}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -144,17 +140,20 @@ function TextField({ inputMode, label, onChange, value }: { inputMode?: React.HT
 
 function SelectField({ label, onChange, options, value }: { label: string; onChange: (value: string) => void; options: Array<{ label: string; value: string }>; value: string }) {
   return (
-    <label className="grid min-w-0 gap-1 text-sm font-medium text-secondary-foreground">
+    <label className="grid min-w-0 gap-1.5 text-sm font-semibold text-secondary-foreground">
       {label}
-      <select
-        className="h-10 w-full min-w-0 rounded-md border border-border bg-card px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>{option.label}</option>
-        ))}
-      </select>
+      <span className="relative block min-w-0">
+        <select
+          className={`${fieldClass} appearance-none pr-10`}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      </span>
     </label>
   );
 }

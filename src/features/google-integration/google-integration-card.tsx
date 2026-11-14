@@ -64,29 +64,29 @@ export function GoogleIntegrationCard() {
   return (
     <SettingsSectionCard id="google-integration" title="구글 연동하기" icon={Link2}
       description="교육원에서 사용할 구글 계정을 연결하고 서비스별로 사용 여부를 설정합니다.">
-      {error && <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 text-sm text-destructive">
+      {error && <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-destructive-soft px-4 py-3 text-sm font-medium text-destructive">
         <p>{error}</p><Button variant="outline" size="sm" disabled={busy} onClick={() => void refresh()}>다시 불러오기</Button>
       </div>}
-      {notice && <p role="status" className="mb-4 text-sm text-foreground">{notice}</p>}
+      {notice && <p role="status" className="mb-4 rounded-xl bg-primary-soft px-4 py-3 text-sm font-medium text-primary">{notice}</p>}
       {!status && !error && <p role="status" className="text-sm text-muted-foreground">구글 연동 상태를 불러오는 중입니다.</p>}
       {status && <>
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/60 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-muted p-4">
           <div className="min-w-0">
-            <p className="text-sm font-medium">{status.connected ? '연결됨' : '연결된 구글 계정 없음'}</p>
+            <p className="text-[15px] font-bold text-foreground">{status.connected ? '연결됨' : '연결된 구글 계정 없음'}</p>
             {status.connected && <p className="mt-1 break-all text-sm text-muted-foreground">{status.email}</p>}
             {!status.configured && <p className="mt-1 text-sm text-muted-foreground">구글 연결 준비 중입니다. 관리자에게 문의해 주세요.</p>}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button disabled={busy || !status.configured} onClick={connect}>
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+            <Button className="flex-1 sm:flex-none" disabled={busy || !status.configured} onClick={connect}>
               {busy ? '처리 중…' : status.connected ? '구글 계정 다시 연결' : '구글 계정 연결'}
             </Button>
-            {status.connected && <Button variant="outline" disabled={busy} onClick={disconnect}>연결 해제</Button>}
+            {status.connected && <Button variant="outline" className="flex-1 sm:flex-none" disabled={busy} onClick={disconnect}>연결 해제</Button>}
           </div>
         </div>
-        <div className="divide-y divide-border/60">
+        <div className="mt-2 divide-y divide-border/60">
           {services.map(({ key, label, description }) => <div key={key} className="flex items-start justify-between gap-4 py-4">
             <div className="min-w-0">
-              <label htmlFor={`google-${key}`} className="text-sm font-medium">{label}</label>
+              <label htmlFor={`google-${key}`} className="text-[15px] font-semibold text-foreground">{label}</label>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p>
               {status.connected && !status.services[key].granted && <p className="mt-1 text-sm text-muted-foreground">다시 연결하여 권한을 허용해 주세요.</p>}
             </div>
@@ -95,7 +95,7 @@ export function GoogleIntegrationCard() {
               onCheckedChange={(enabled) => void toggle(key, enabled)} />
           </div>)}
         </div>
-        <div className="space-y-2 border-t border-border/60 pt-4 text-sm leading-6 text-muted-foreground">
+        <div className="space-y-2 rounded-xl bg-muted p-4 text-[13px] leading-6 text-muted-foreground">
           <p>연동을 끄거나 연결을 해제해도 기존 구글 일정은 유지됩니다. 다시 켜면 최신 파카 일정으로 반영합니다.</p>
           <p className="flex flex-wrap gap-x-4">
             <a href="/google-integration/privacy.html" target="_blank" rel="noreferrer" className="underline underline-offset-4">개인정보처리방침</a>

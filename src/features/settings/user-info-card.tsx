@@ -11,7 +11,7 @@ interface UserInfoCardProps {
 
 export function UserInfoCard({ user, loading }: UserInfoCardProps) {
   return (
-    <SettingsSectionCard title="내 정보" icon={User} contentClassName="space-y-4">
+    <SettingsSectionCard id="my-info" title="내 정보" icon={User} tone="neutral" contentClassName="divide-y divide-border/60 pt-2">
       <SettingsReadonlyField label="이름" value={user?.name} loading={loading} />
       <SettingsReadonlyField label="이메일" value={user?.email} loading={loading} />
       <SettingsReadonlyField label="권한" value={getRoleLabel(user?.role)} loading={loading} />

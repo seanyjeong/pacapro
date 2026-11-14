@@ -1,5 +1,7 @@
 import { Save } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page';
 
 interface SettingsHeaderProps {
   hasUnsavedChanges: boolean;
@@ -13,25 +15,24 @@ export function SettingsHeader({ hasUnsavedChanges, isLoading, isSaving, onSave 
   const saveLabel = isSaving ? '저장 중...' : hasUnsavedChanges ? '저장' : '저장됨';
 
   return (
-    <header className="flex flex-col gap-3 border-b border-border/70 pb-4 md:flex-row md:items-end md:justify-between">
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-normal text-foreground">설정</h1>
-          <span className="rounded-full border border-border bg-muted/35 px-2.5 py-1 text-xs font-semibold text-foreground">
+    <PageHeader
+      title="설정"
+      description="학원 운영 기준을 한곳에서 관리해요"
+      actions={(
+        <>
+          <Badge variant={isSaving ? 'secondary' : hasUnsavedChanges ? 'warning' : 'success'} className="px-3 py-1 text-[13px]">
             {statusText}
-          </span>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">지점 운영 기준 관리</p>
-      </div>
-      <Button
-        onClick={onSave}
-        disabled={isLoading || isSaving || !hasUnsavedChanges}
-        variant={hasUnsavedChanges ? 'default' : 'secondary'}
-        className="w-full md:w-auto"
-      >
-        <Save className="mr-2 h-4 w-4" />
-        {saveLabel}
-      </Button>
-    </header>
+          </Badge>
+          <Button
+            onClick={onSave}
+            disabled={isLoading || isSaving || !hasUnsavedChanges}
+            variant={hasUnsavedChanges ? 'default' : 'outline'}
+          >
+            <Save className="h-4 w-4" />
+            {saveLabel}
+          </Button>
+        </>
+      )}
+    />
   );
 }

@@ -50,8 +50,8 @@ function AcademicScoresSection({ scores }: { scores: Consultation['academicScore
 
   return (
     <div>
-      <h4 className="font-medium text-foreground mb-3">성적 정보</h4>
-      <div className="bg-muted rounded-lg p-4 space-y-4">
+      <h4 className="font-bold text-foreground mb-3">성적 정보</h4>
+      <div className="bg-muted rounded-xl p-4 space-y-4">
         <div className="flex gap-6">
           {hasSchoolGradeAvg && (
             <div className="flex items-center gap-2">
@@ -74,7 +74,7 @@ function AcademicScoresSection({ scores }: { scores: Consultation['academicScore
                 const labels = { korean: '국어', math: '수학', english: '영어', exploration: '탐구' };
                 const value = scores.mockTestGrades?.[subject];
                 return (
-                  <div key={subject} className="bg-card rounded-lg p-3 text-center border border-border">
+                  <div key={subject} className="bg-card rounded-xl p-3 text-center">
                     <div className="text-xs text-muted-foreground mb-1">{labels[subject]}</div>
                     <div className={`font-bold text-lg ${value === -1 ? 'text-muted-foreground' : 'text-foreground'}`}>
                       {value === -1 ? '-' : value ?? '-'}
@@ -132,7 +132,7 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
             )}
           </div>
 
-          <section className="rounded-md border border-border bg-muted/30 p-4">
+          <section className="rounded-2xl bg-muted p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0 space-y-1">
                 <h4 className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -176,8 +176,8 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
             </div>
           </section>
 
-          <div className="bg-primary-soft rounded-lg p-4">
-            <h4 className="font-medium text-primary mb-2">상담 일정</h4>
+          <div className="bg-primary-soft rounded-2xl p-4">
+            <h4 className="font-bold text-primary mb-2">상담 일정</h4>
             <div className="flex items-center gap-4 text-primary">
               <span className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
@@ -191,7 +191,7 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
           </div>
 
           <div>
-            <h4 className="font-medium text-foreground mb-2">학생 정보</h4>
+            <h4 className="font-bold text-foreground mb-2">학생 정보</h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <p className="text-foreground"><span className="text-muted-foreground">이름:</span> {c.student_name}</p>
               <p className="text-foreground"><span className="text-muted-foreground">연락처:</span> {c.student_phone || c.parent_phone}</p>
@@ -219,17 +219,17 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
 
           {c.inquiry_content && (
             <div>
-              <h4 className="font-medium text-foreground mb-2 flex items-center gap-1">
+              <h4 className="font-bold text-foreground mb-2 flex items-center gap-1">
                 <MessageSquare className="h-4 w-4" />문의 내용
               </h4>
-              <p className="text-sm bg-muted rounded p-3 whitespace-pre-wrap text-foreground">{c.inquiry_content}</p>
+              <p className="text-sm bg-muted rounded-xl p-3 whitespace-pre-wrap text-foreground">{c.inquiry_content}</p>
             </div>
           )}
 
           {c.admin_notes && (
             <div>
-              <h4 className="font-medium text-foreground mb-2">관리자 메모</h4>
-              <p className="text-sm bg-warning-soft rounded p-3 whitespace-pre-wrap text-foreground">{c.admin_notes}</p>
+              <h4 className="font-bold text-foreground mb-2">관리자 메모</h4>
+              <p className="text-sm bg-warning-soft rounded-xl p-3 whitespace-pre-wrap text-foreground">{c.admin_notes}</p>
             </div>
           )}
 
@@ -238,7 +238,7 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
           </p>
 
           {c.linked_student_id && c.linked_student_is_trial && (
-            <div className="bg-success-soft rounded-lg p-4">
+            <div className="bg-success-soft rounded-xl p-4">
               <p className="text-success flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
                 체험 학생으로 등록 완료
@@ -249,7 +249,7 @@ export function DetailModal({ open, onOpenChange, consultation, onEditInfo, onSt
         </div>
 
         <DialogFooter>
-          <Button onClick={() => onOpenChange(false)}>닫기</Button>
+          <Button className="w-full sm:w-auto" onClick={() => onOpenChange(false)}>닫기</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

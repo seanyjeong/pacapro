@@ -6,7 +6,7 @@ import { LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AuthPageShell } from '@/features/auth/auth-page-shell';
+import { AuthNotice, AuthPageShell, authInputClass, authLabelClass } from '@/features/auth/auth-page-shell';
 import { authAPI } from '@/lib/api/auth';
 import { onboardingAPI } from '@/lib/api/onboarding';
 
@@ -55,11 +55,11 @@ export default function LoginPage() {
     <AuthPageShell
       icon={<LogIn className="h-6 w-6" />}
       title="로그인"
-      description="운영 계정으로 접속합니다."
+      description="운영 계정으로 접속해요."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">이메일</Label>
+          <Label htmlFor="email" className={authLabelClass}>이메일</Label>
           <Input
             id="email"
             type="email"
@@ -69,11 +69,12 @@ export default function LoginPage() {
             autoComplete="email"
             required
             disabled={loading}
+            className={authInputClass}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">비밀번호</Label>
+          <Label htmlFor="password" className={authLabelClass}>비밀번호</Label>
           <Input
             id="password"
             type="password"
@@ -83,27 +84,26 @@ export default function LoginPage() {
             autoComplete="current-password"
             required
             disabled={loading}
+            className={authInputClass}
           />
         </div>
 
         {error ? (
-          <div role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-3 text-sm text-destructive">
-            {error}
-          </div>
+          <AuthNotice role="alert">{error}</AuthNotice>
         ) : null}
 
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? '로그인 중...' : '로그인'}
         </Button>
       </form>
 
-      <div className="mt-5 grid gap-2 text-center text-sm">
+      <div className="mt-6 grid gap-3 text-center text-sm">
         <Link href="/forgot-password" className="text-muted-foreground transition-colors hover:text-primary">
           비밀번호를 잊으셨나요?
         </Link>
         <p className="text-muted-foreground">
           계정이 없으신가요?{' '}
-          <Link href="/register" className="font-medium text-primary hover:underline">
+          <Link href="/register" className="font-semibold text-primary hover:underline">
             회원가입
           </Link>
         </p>

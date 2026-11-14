@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, Loader2, MessageSquare, Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { ConsultationDetailModal } from '@/components/students/consultation-detail-modal';
 import apiClient from '@/lib/api/client';
 import { InitialConsultationCard } from './initial-consultation-card';
@@ -89,12 +88,10 @@ export function StudentConsultationsComponent({
 
     if (loading) {
         return (
-            <Card>
-                <CardContent className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-                    <span className="ml-2 text-muted-foreground">상담 기록 로딩 중...</span>
-                </CardContent>
-            </Card>
+            <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">상담 기록 로딩 중...</span>
+            </div>
         );
     }
 
@@ -113,10 +110,10 @@ export function StudentConsultationsComponent({
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
-                <h3 className="text-lg font-semibold text-foreground">상담 기록 ({countLabel})</h3>
+                <h3 className="text-[17px] font-bold tracking-tight text-foreground">상담 기록 ({countLabel})</h3>
                 <Link href="/consultations/enrolled">
                     <Button variant="outline" size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
+                        <Plus className="h-4 w-4" />
                         새 상담 등록
                     </Button>
                 </Link>
@@ -167,36 +164,32 @@ function StudentConsultationsErrorState({
     onRetry: () => void;
 }) {
     return (
-        <Card>
-            <CardContent className="py-7 text-center">
-                <AlertCircle className="mx-auto mb-3 h-9 w-9 text-destructive" />
-                <h3 className="mb-2 text-base font-semibold text-foreground">상담 기록을 불러오지 못했습니다</h3>
-                <p className="mx-auto mb-4 max-w-sm text-sm text-muted-foreground">{message}</p>
-                <Button variant="outline" onClick={onRetry}>
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    다시 불러오기
-                </Button>
-            </CardContent>
-        </Card>
+        <div className="px-4 py-7 text-center">
+            <AlertCircle className="mx-auto mb-3 h-9 w-9 text-destructive" />
+            <h3 className="mb-2 text-base font-semibold text-foreground">상담 기록을 불러오지 못했습니다</h3>
+            <p className="mx-auto mb-4 max-w-sm text-sm text-muted-foreground">{message}</p>
+            <Button variant="outline" onClick={onRetry}>
+                <RefreshCw className="h-4 w-4" />
+                다시 불러오기
+            </Button>
+        </div>
     );
 }
 
 function StudentConsultationsEmptyState({ studentName }: { studentName: string }) {
     return (
-        <Card>
-            <CardContent className="text-center py-12">
-                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-foreground mb-2">상담 기록이 없습니다</h3>
-                <p className="text-muted-foreground mb-4">
-                    {studentName} 학생의 상담 기록을 재원생상담에서 등록할 수 있습니다.
-                </p>
-                <Link href="/consultations/enrolled">
-                    <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        상담 등록하기
-                    </Button>
-                </Link>
-            </CardContent>
-        </Card>
+        <div className="px-4 py-12 text-center">
+            <MessageSquare className="mx-auto mb-4 h-12 w-12 text-muted-foreground/40" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">상담 기록이 없습니다</h3>
+            <p className="text-muted-foreground mb-4">
+                {studentName} 학생의 상담 기록을 재원생상담에서 등록할 수 있습니다.
+            </p>
+            <Link href="/consultations/enrolled">
+                <Button>
+                    <Plus className="h-4 w-4" />
+                    상담 등록하기
+                </Button>
+            </Link>
+        </div>
     );
 }

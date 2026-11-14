@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { use, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, ArrowLeft, Calendar, CheckCircle2, Clock, Loader2, UserRound } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { PACA_API_BASE_URL } from '@/lib/api/base-url';
 import { cn } from '@/lib/utils/cn';
@@ -173,24 +174,17 @@ export default function ReservationChangePage({
     <section className="space-y-4 text-foreground" data-testid="reservation-change-workspace">
       <HeaderCard academyName={reservation?.academyName} />
 
-      <section className="rounded-lg border border-border bg-card shadow-sm">
-        <div className="border-b border-border px-5 py-4">
-          <h2 className="text-base font-semibold tracking-normal text-foreground">현재 예약 정보</h2>
-        </div>
-        <div className="space-y-3 px-5 py-5 text-sm">
+      <section className="rounded-2xl bg-card px-5 pb-2 pt-5">
+        <h2 className="text-[17px] font-bold tracking-tight text-foreground">현재 예약 정보</h2>
+        <div className="mt-2 divide-y divide-border/60 text-[15px]">
           <InfoRow label="예약번호" value={reservation?.reservationNumber || '-'} />
           <InfoRow label="학생" value={`${reservation?.studentName || '-'} (${reservation?.studentGrade || '-'})`} icon={<UserRound className="h-4 w-4" />} />
           <InfoRow label="현재 일정" value={reservation ? `${formatDisplayDate(reservation.preferredDate)} ${formatDisplayTime(reservation.preferredTime)}` : '-'} />
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 py-3">
             <span className="text-muted-foreground">상태</span>
-            <span className={cn(
-              'rounded-full border px-2.5 py-0.5 text-xs font-medium',
-              reservation?.status === 'confirmed'
-                ? 'border-success/30 bg-success-soft text-success'
-                : 'border-warning/30 bg-warning-soft text-warning'
-            )}>
+            <Badge variant={reservation?.status === 'confirmed' ? 'success' : 'warning'}>
               {reservation?.status === 'confirmed' ? '확정' : '대기중'}
-            </span>
+            </Badge>
           </div>
         </div>
       </section>
@@ -216,14 +210,14 @@ export default function ReservationChangePage({
 
       <SelectionCard icon={<Clock className="h-4 w-4" />} title="새로운 시간 선택">
         {loadingSlots ? (
-          <div className="flex items-center justify-center gap-2 rounded-md border border-border bg-muted px-4 py-5 text-sm text-secondary-foreground">
+          <div className="flex items-center justify-center gap-2 rounded-xl bg-muted px-4 py-6 text-sm text-secondary-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             가능한 시간을 확인하고 있습니다.
           </div>
         ) : slotsError ? (
           <SafeAlert tone="warning" message={slotsError} />
         ) : availableSlots.length === 0 ? (
-          <div className="rounded-md border border-dashed border-border bg-muted px-4 py-5 text-center text-sm text-muted-foreground">
+          <div className="rounded-xl bg-muted px-4 py-6 text-center text-sm text-muted-foreground">
             {selectedDate ? '선택한 날짜에 가능한 시간이 없습니다.' : '날짜를 먼저 선택해주세요.'}
           </div>
         ) : (
@@ -244,19 +238,21 @@ export default function ReservationChangePage({
         )}
       </SelectionCard>
 
-      {submitError ? <SafeAlert tone="danger" message={submitError} /> : null}
-
-      <Button
-        type="button"
-        onClick={handleSubmit}
-        disabled={submitting || !selectedDate || !selectedTime}
-        className="h-12 w-full"
-      >
-        {submitting ? '변경 중...' : '예약 변경하기'}
-      </Button>
-      <p className="px-2 text-center text-sm leading-6 text-muted-foreground">
-        예약 변경 후 담당자 확인을 거쳐 다시 확정 안내를 받게 됩니다.
-      </p>
+      <div className="sticky bottom-0 z-10 -mx-4 space-y-2 bg-background/95 px-4 pb-4 pt-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        {submitError ? <SafeAlert tone="danger" message={submitError} /> : null}
+        <Button
+          type="button"
+          size="lg"
+          onClick={handleSubmit}
+          disabled={submitting || !selectedDate || !selectedTime}
+          className="w-full"
+        >
+          {submitting ? '변경 중...' : '예약 변경하기'}
+        </Button>
+        <p className="px-2 text-center text-[13px] leading-5 text-muted-foreground">
+          예약 변경 후 담당자 확인을 거쳐 다시 확정 안내를 받게 돼요.
+        </p>
+      </div>
     </section>
   );
 }
@@ -278,17 +274,17 @@ function VerificationState({
 }) {
   return (
     <section className="space-y-4 text-foreground" data-testid="reservation-verification-workspace">
-      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">예약자 확인</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-normal text-foreground">상담 예약 변경</h1>
-        <p className="mt-2 text-sm leading-6 text-secondary-foreground">
-          예약자 확인 후 상담 일정을 변경할 수 있습니다.
+      <header className="pt-2">
+        <p className="text-[13px] font-semibold text-muted-foreground">예약자 확인</p>
+        <h1 className="mt-1 text-[26px] font-extrabold leading-tight tracking-tight text-foreground">상담 예약 변경</h1>
+        <p className="mt-2 text-[15px] leading-6 text-muted-foreground">
+          예약자 확인 후 상담 일정을 변경할 수 있어요.
         </p>
-      </section>
+      </header>
 
-      <form onSubmit={onSubmit} className="rounded-lg border border-border bg-card p-5 shadow-sm">
+      <form onSubmit={onSubmit} className="rounded-2xl bg-card p-5 sm:p-6">
         <div className="space-y-2">
-          <label htmlFor="phone-last4" className="text-sm font-medium text-secondary-foreground">
+          <label htmlFor="phone-last4" className="text-sm font-semibold text-secondary-foreground">
             예약자 연락처 끝 4자리
           </label>
           <input
@@ -299,12 +295,12 @@ function VerificationState({
             maxLength={4}
             value={phoneLast4}
             onChange={(event) => onPhoneLast4Change(event.target.value)}
-            className="h-12 w-full rounded-md border border-border bg-card px-3 text-base font-medium tracking-normal text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/30"
+            className="h-14 w-full rounded-xl border border-transparent bg-muted px-4 text-center text-xl font-bold tracking-[0.3em] text-foreground outline-none transition-colors placeholder:text-base placeholder:font-medium placeholder:tracking-normal placeholder:text-muted-foreground/80 focus:border-primary focus:bg-card focus:ring-4 focus:ring-primary/10"
             placeholder="예: 1234"
             autoComplete="tel-national"
           />
-          <p className="text-xs leading-5 text-muted-foreground">
-            예약번호 {reservationNumber}에 등록된 연락처로 확인합니다.
+          <p className="text-[13px] leading-5 text-muted-foreground">
+            예약번호 {reservationNumber}에 등록된 연락처로 확인해요.
           </p>
         </div>
 
@@ -312,8 +308,9 @@ function VerificationState({
 
         <Button
           type="submit"
+          size="lg"
           disabled={verifying || phoneLast4.length !== 4}
-          className="mt-5 h-12 w-full gap-2"
+          className="mt-5 w-full"
         >
           {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           {verifying ? '확인 중...' : '예약 정보 확인'}
@@ -325,46 +322,46 @@ function VerificationState({
 
 function HeaderCard({ academyName }: { academyName?: string }) {
   return (
-    <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
-      <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">예약 변경 데스크</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-normal text-foreground">상담 예약 변경</h1>
-      <p className="mt-2 text-sm leading-6 text-secondary-foreground">
-        {academyName || '담당 학원'} 상담 일정을 다시 선택할 수 있습니다. 변경 후 담당자가 한 번 더 확인합니다.
+    <header className="pt-2">
+      <p className="text-[13px] font-semibold text-muted-foreground">예약 변경 데스크</p>
+      <h1 className="mt-1 text-[26px] font-extrabold leading-tight tracking-tight text-foreground">상담 예약 변경</h1>
+      <p className="mt-2 text-[15px] leading-6 text-muted-foreground">
+        {academyName || '담당 학원'} 상담 일정을 다시 선택할 수 있어요. 변경 후 담당자가 한 번 더 확인해요.
       </p>
-    </section>
+    </header>
   );
 }
 
 function SelectionCard({ children, icon, title }: { children: ReactNode; icon: ReactNode; title: string }) {
   return (
-    <section className="rounded-lg border border-border bg-card shadow-sm">
-      <div className="flex items-center gap-2 border-b border-border px-5 py-4">
-        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-secondary-foreground">{icon}</span>
-        <h2 className="text-base font-semibold tracking-normal text-foreground">{title}</h2>
+    <section className="rounded-2xl bg-card p-5">
+      <div className="mb-4 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary">{icon}</span>
+        <h2 className="text-[17px] font-bold tracking-tight text-foreground">{title}</h2>
       </div>
-      <div className="px-5 py-5">{children}</div>
+      {children}
     </section>
   );
 }
 
 function InfoRow({ icon, label, value }: { icon?: ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="flex items-center gap-2 text-muted-foreground">
+    <div className="flex items-center justify-between gap-3 py-3">
+      <span className="flex shrink-0 items-center gap-2 text-muted-foreground">
         {icon}
         {label}
       </span>
-      <span className="min-w-0 text-right font-medium text-foreground">{value}</span>
+      <span className="min-w-0 text-right font-semibold text-foreground">{value}</span>
     </div>
   );
 }
 
 function SafeAlert({ message, tone }: { message: string; tone: 'danger' | 'warning' }) {
   const classes = tone === 'danger'
-    ? 'border-destructive/30 bg-destructive-soft text-destructive'
-    : 'border-warning/30 bg-warning-soft text-warning';
+    ? 'bg-destructive-soft text-destructive'
+    : 'bg-warning-soft text-warning';
   return (
-    <div role="alert" className={cn('flex items-start gap-3 rounded-md border p-4 text-sm leading-6', classes)}>
+    <div role="alert" className={cn('flex items-start gap-3 rounded-xl px-4 py-3 text-sm leading-6', classes)}>
       <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
       <p className="font-medium">{message}</p>
     </div>
@@ -382,31 +379,27 @@ function SuccessState({
 }) {
   return (
     <section className="space-y-4 text-foreground">
-      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
-        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-md border border-success/30 bg-success-soft text-success">
-          <CheckCircle2 className="h-6 w-6" />
-        </div>
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">예약 변경 완료</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-normal text-foreground">예약이 변경되었습니다</h1>
-        <p className="mt-3 text-sm leading-6 text-secondary-foreground">
-          담당자 확인 후 다시 확정 안내를 받으실 수 있습니다.
+      <section className="flex flex-col items-center rounded-2xl bg-card px-5 pb-8 pt-10 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success-soft text-success">
+          <CheckCircle2 className="h-8 w-8" />
+        </span>
+        <p className="mt-5 text-[13px] font-semibold text-muted-foreground">예약 변경 완료</p>
+        <h1 className="mt-1 text-[26px] font-extrabold leading-tight tracking-tight text-foreground">예약이 변경되었습니다</h1>
+        <p className="mt-3 text-[15px] leading-6 text-secondary-foreground">
+          담당자 확인 후 다시 확정 안내를 받으실 수 있어요.
         </p>
       </section>
-      <section className="rounded-lg border border-border bg-card shadow-sm">
-        <div className="border-b border-border px-5 py-4">
-          <p className="text-sm font-medium text-muted-foreground">{reservation.academyName}</p>
-          <h2 className="mt-2 text-lg font-semibold tracking-normal text-foreground">새로운 일정</h2>
-        </div>
-        <div className="space-y-4 px-5 py-5">
-          <div className="rounded-md border border-success/30 bg-success-soft px-4 py-3 text-sm font-medium text-success">
-            {formatDisplayDate(selectedDate)} {formatDisplayTime(selectedTime)}
-          </div>
-          <Link href={`/c/${reservation.academySlug}`} className={buttonVariants({ variant: 'outline', className: 'w-full gap-2' })}>
-            <ArrowLeft className="h-4 w-4" />
-            예약 페이지로 돌아가기
-          </Link>
-        </div>
+      <section className="rounded-2xl bg-card p-5">
+        <p className="text-[13px] font-semibold text-muted-foreground">{reservation.academyName}</p>
+        <h2 className="mt-1 text-[17px] font-bold tracking-tight text-foreground">새로운 일정</h2>
+        <p className="mt-3 rounded-xl bg-success-soft px-4 py-3 text-lg font-extrabold text-success tabular-nums">
+          {formatDisplayDate(selectedDate)} {formatDisplayTime(selectedTime)}
+        </p>
       </section>
+      <Link href={`/c/${reservation.academySlug}`} className={buttonVariants({ variant: 'outline', size: 'lg', className: 'w-full' })}>
+        <ArrowLeft className="h-4 w-4" />
+        예약 페이지로 돌아가기
+      </Link>
     </section>
   );
 }
@@ -444,9 +437,9 @@ function formatDisplayTime(time: string) {
 
 function selectableClass(selected: boolean, disabled = false) {
   return cn(
-    'min-h-10 rounded-md border px-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30',
-    selected && 'border-primary bg-primary text-white',
-    !selected && !disabled && 'border-border bg-muted text-secondary-foreground hover:bg-muted',
-    disabled && 'cursor-not-allowed border-border bg-muted text-muted-foreground/60 line-through'
+    'h-12 rounded-xl px-2 text-[15px] font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20',
+    selected && 'bg-primary text-primary-foreground',
+    !selected && !disabled && 'bg-muted text-foreground hover:bg-primary-soft hover:text-primary',
+    disabled && 'cursor-not-allowed bg-muted text-muted-foreground/50 line-through'
   );
 }

@@ -25,24 +25,26 @@ export function OnboardingActions({
   const isLastStep = currentStep === ONBOARDING_STEPS.length;
 
   return (
-    <footer className="flex flex-col gap-3 border-t border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-h-5 text-sm text-warning" role={validationMessage ? 'alert' : undefined}>
-        {validationMessage}
-      </div>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Button disabled={currentStep === 1 || submitting} type="button" variant="outline" onClick={onPrevious}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
+    <footer className="space-y-3 px-5 pb-5 sm:px-6 sm:pb-6">
+      {validationMessage ? (
+        <p className="rounded-xl bg-warning-soft px-4 py-3 text-sm font-medium text-warning" role="alert">
+          {validationMessage}
+        </p>
+      ) : null}
+      <div className="grid grid-cols-[1fr_2fr] gap-2 sm:flex sm:justify-end">
+        <Button disabled={currentStep === 1 || submitting} size="lg" type="button" variant="outline" onClick={onPrevious}>
+          <ArrowLeft className="h-4 w-4" />
           이전
         </Button>
         {isLastStep ? (
-          <Button disabled={submitting} type="button" onClick={onComplete}>
-            {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          <Button disabled={submitting} size="lg" type="button" onClick={onComplete}>
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             운영 시작
           </Button>
         ) : (
-          <Button disabled={submitting} type="button" onClick={onNext}>
+          <Button disabled={submitting} size="lg" type="button" onClick={onNext}>
             {currentStepInfo.nextLabel}
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
           </Button>
         )}
       </div>

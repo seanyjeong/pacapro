@@ -52,7 +52,7 @@ export function ConsultationCalendarLearningDialog({
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 px-6 py-4">
-          <div className="rounded-lg bg-success-soft p-3">
+          <div className="rounded-xl bg-success-soft p-3">
             <p className="flex items-center gap-2 text-sm text-success">
               <CalendarIcon className="h-4 w-4" />
               {date && format(date, 'yyyy년 M월 d일 (EEE)', { locale: ko })}
@@ -120,11 +120,11 @@ export function ConsultationCalendarLearningDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
           <Button
             onClick={onSubmit}
             disabled={submitting || !form.studentId}
-            className="bg-success hover:bg-success/90"
+            className="w-full sm:w-auto bg-success hover:bg-success/90"
           >
             {submitting ? (
               <>

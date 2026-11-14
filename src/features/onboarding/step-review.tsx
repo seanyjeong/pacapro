@@ -10,18 +10,18 @@ interface StepReviewProps {
 export function StepReview({ formData, updateFormData }: StepReviewProps) {
   return (
     <div className="space-y-5">
-      <section className="rounded-md border border-border bg-background p-4">
+      <section>
         <div className="mb-4 flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-success-soft text-success">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-success-soft text-success">
             <CheckCircle2 className="h-4 w-4" />
           </span>
           <div>
-            <h3 className="text-base font-semibold text-foreground">핵심 설정 요약</h3>
-            <p className="text-sm text-muted-foreground">저장 후 설정 메뉴에서 다시 수정할 수 있습니다.</p>
+            <h3 className="text-base font-bold text-foreground">핵심 설정 요약</h3>
+            <p className="text-sm text-muted-foreground">저장 후 설정 메뉴에서 다시 바꿀 수 있어요.</p>
           </div>
         </div>
 
-        <dl className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <dl className="grid grid-cols-2 gap-2">
           <SummaryItem label="학원명" value={formData.academy_name || '-'} />
           <SummaryItem label="대표 전화" value={formData.phone || '-'} />
           <SummaryItem label="오전반" value={formData.morning_class_time} />
@@ -36,23 +36,23 @@ export function StepReview({ formData, updateFormData }: StepReviewProps) {
         </dl>
       </section>
 
-      <section className="rounded-md border border-border bg-muted p-4">
+      <section className="rounded-xl bg-muted p-4">
         <label className="flex cursor-pointer items-start gap-3">
           <input
-            className="mt-1 h-4 w-4 rounded border-border text-foreground focus-visible:ring-2 focus-visible:ring-primary/30"
+            className="mt-0.5 h-5 w-5 rounded accent-primary focus-visible:ring-2 focus-visible:ring-primary/30"
             type="checkbox"
             checked={formData.create_sample_data}
             onChange={(event) => updateFormData('create_sample_data', event.target.checked)}
           />
           <span className="min-w-0">
             <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Sparkles className="h-4 w-4 text-secondary-foreground" />
+              <Sparkles className="h-4 w-4 text-primary" />
               테스트용 샘플 데이터 생성
             </span>
             <span className="mt-1 block text-sm text-muted-foreground">
-              학생, 강사, 시즌 샘플을 만들어 처음 화면을 바로 확인할 수 있습니다.
+              학생, 강사, 시즌 샘플을 만들어 처음 화면을 바로 확인할 수 있어요.
             </span>
-            <span className="mt-3 inline-flex items-center gap-2 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs text-secondary-foreground">
+            <span className="mt-3 inline-flex items-center gap-2 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-secondary-foreground">
               <UsersRound className="h-3.5 w-3.5" />
               학생 3명, 강사 2명, 시즌 1개
             </span>
@@ -65,9 +65,9 @@ export function StepReview({ formData, updateFormData }: StepReviewProps) {
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-border bg-card px-3 py-2">
+    <div className="min-w-0 rounded-xl bg-muted px-3.5 py-3">
       <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-      <dd className="mt-1 truncate text-sm font-semibold text-foreground">{value}</dd>
+      <dd className="mt-1 truncate text-[15px] font-bold text-foreground">{value}</dd>
     </div>
   );
 }

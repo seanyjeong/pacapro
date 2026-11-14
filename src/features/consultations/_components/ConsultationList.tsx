@@ -1,11 +1,12 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Calendar, Clock, ClipboardList, Edit, Eye, Loader2, MoreHorizontal, Phone, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/page';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator, DropdownMenuTrigger
@@ -27,6 +28,8 @@ interface Props {
   loading: boolean;
   pagination: PaginationState;
   setPagination: (p: PaginationState) => void;
+  filterBar: ReactNode;
+  activeFilterCount: number;
   onOpenDetail: (c: Consultation) => void;
   onOpenStatusModal: (c: Consultation) => void;
   onOpenDeleteModal: (c: Consultation) => void;
@@ -41,114 +44,111 @@ function StatusBadge({ status }: { status: ConsultationStatus }) {
 }
 
 export function ConsultationList({
-  branches, consultations, loading, pagination, setPagination,
+  branches, consultations, loading, pagination, setPagination, filterBar, activeFilterCount,
   onOpenDetail, onOpenStatusModal, onOpenDeleteModal,
 }: Props) {
   const branchName = (id?: number | null) => branches.find((branch) => branch.id === id)?.name;
   return (
-    <>
-      <Card className="rounded-md shadow-none">
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : consultations.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 px-5 py-16 text-center">
-              <span className="flex h-10 w-10 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                <ClipboardList className="h-5 w-5" />
-              </span>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-foreground">상담 신청이 없습니다.</p>
-                <p className="text-xs text-muted-foreground">필터를 초기화하거나 직접 등록으로 상담을 추가해주세요.</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-center justify-between border-b border-border px-4 py-3">
-                <div>
-                  <p className="text-sm font-semibold text-foreground">상담 목록</p>
-                  <p className="text-xs text-muted-foreground">최근 접수와 예약 상태를 빠르게 확인합니다.</p>
-                </div>
-                <Badge variant="secondary">{pagination.total}건</Badge>
-              </div>
-              <div className="divide-y">
-                {consultations.map((c) => (
-                  <div
-                    key={c.id}
-                    className="cursor-pointer p-4 transition-colors hover:bg-muted/40"
-                    onClick={() => onOpenDetail(c)}
-                  >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div className="min-w-0 space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-foreground">{c.student_name}</span>
-                          <span className="text-sm text-muted-foreground">{c.student_grade}</span>
-                          <StatusBadge status={c.status} />
-                          <Badge variant="outline">{CONSULTATION_TYPE_LABELS[c.consultation_type]}</Badge>
-                          {branchName(c.branch_id) && <Badge variant="outline">{branchName(c.branch_id)}</Badge>}
-                        </div>
-                        <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-3">
-                          <span className="flex min-w-0 items-center gap-1">
-                            <Phone className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">{c.student_phone || c.parent_phone}</span>
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            {format(parseISO(c.preferred_date), 'M/d (EEE)', { locale: ko })}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5" />
-                            {c.preferred_time.substring(0, 5)}
-                          </span>
-                        </div>
-                      </div>
+    <section className="rounded-2xl bg-card">
+      <div className="space-y-4 px-5 pb-2 pt-5 sm:px-6">
+        {filterBar}
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-[17px] font-bold tracking-tight text-foreground">
+            상담 목록 <span className="ml-1 font-extrabold text-primary tabular-nums">{pagination.total}</span>
+          </h2>
+          {activeFilterCount > 0 && <Badge variant="secondary">필터 {activeFilterCount}개 적용</Badge>}
+        </div>
+      </div>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button aria-label={`${c.student_name} 상담 작업`} variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onOpenDetail(c); }}>
-                            <Eye className="h-4 w-4 mr-2" />상세 보기
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onOpenStatusModal(c); }}>
-                            <Edit className="h-4 w-4 mr-2" />상태 변경
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={(e) => { e.stopPropagation(); onOpenDeleteModal(c); }}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />삭제
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+      <div className="px-5 pb-3 sm:px-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : consultations.length === 0 ? (
+          <EmptyState
+            icon={ClipboardList}
+            title="상담 신청이 없어요"
+            description="필터를 풀거나 직접 등록으로 상담을 추가해 보세요."
+          />
+        ) : (
+          <div className="divide-y divide-border/60">
+            {consultations.map((c) => (
+              <div
+                key={c.id}
+                className="-mx-2 flex cursor-pointer items-start gap-3 rounded-xl px-2 py-3.5 transition-colors hover:bg-muted"
+                onClick={() => onOpenDetail(c)}
+              >
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[15px] font-semibold text-foreground">{c.student_name}</span>
+                    <span className="text-sm text-muted-foreground">{c.student_grade}</span>
+                    <StatusBadge status={c.status} />
+                    <Badge variant="secondary">{CONSULTATION_TYPE_LABELS[c.consultation_type]}</Badge>
+                    {branchName(c.branch_id) && <Badge variant="secondary">{branchName(c.branch_id)}</Badge>}
                   </div>
-                ))}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted-foreground">
+                    <span className="flex items-center gap-1 font-semibold text-secondary-foreground">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {format(parseISO(c.preferred_date), 'M/d (EEE)', { locale: ko })}
+                    </span>
+                    <span className="flex items-center gap-1 font-semibold text-secondary-foreground tabular-nums">
+                      <Clock className="h-3.5 w-3.5" />
+                      {c.preferred_time.substring(0, 5)}
+                    </span>
+                    {(c.student_phone || c.parent_phone) && (
+                      <span className="flex min-w-0 items-center gap-1 tabular-nums">
+                        <Phone className="h-3.5 w-3.5 shrink-0" />
+                        <span className="truncate">{c.student_phone || c.parent_phone}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button aria-label={`${c.student_name} 상담 작업`} variant="ghost" size="icon-sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onOpenDetail(c); }}>
+                      <Eye className="h-4 w-4 mr-2" />상세 보기
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onOpenStatusModal(c); }}>
+                      <Edit className="h-4 w-4 mr-2" />상태 변경
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={(e) => { e.stopPropagation(); onOpenDeleteModal(c); }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />삭제
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       {pagination.totalPages > 1 && (
-        <div className="flex justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 border-t border-border/60 px-5 py-4">
           <Button
             variant="outline"
+            size="sm"
             disabled={pagination.page === 1}
             onClick={() => setPagination({ ...pagination, page: pagination.page - 1 })}
           >
             이전
           </Button>
-          <span className="flex items-center px-4">
+          <span className="px-3 text-sm font-semibold text-secondary-foreground tabular-nums">
             {pagination.page} / {pagination.totalPages}
           </span>
           <Button
             variant="outline"
+            size="sm"
             disabled={pagination.page === pagination.totalPages}
             onClick={() => setPagination({ ...pagination, page: pagination.page + 1 })}
           >
@@ -156,6 +156,6 @@ export function ConsultationList({
           </Button>
         </div>
       )}
-    </>
+    </section>
   );
 }

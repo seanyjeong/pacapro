@@ -97,7 +97,7 @@ export function TrialModal({
             ))}
           </div>
 
-          <div className="bg-primary-soft rounded-lg p-3 text-sm text-primary">
+          <div className="bg-primary-soft rounded-xl p-3 text-sm text-primary">
             체험 학생으로 등록되면:
             <ul className="mt-1 ml-4 list-disc">
               <li>학생 관리에 체험생으로 추가됩니다</li>
@@ -108,8 +108,8 @@ export function TrialModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
-          <Button onClick={handleConvertToTrial} disabled={convertingToTrial}>
+          <Button className="w-full sm:w-auto" variant="outline" onClick={() => onOpenChange(false)}>취소</Button>
+          <Button className="w-full sm:w-auto" onClick={handleConvertToTrial} disabled={convertingToTrial}>
             {convertingToTrial ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
             체험 학생 등록
           </Button>

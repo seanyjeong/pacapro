@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Building2, Plus, Trash2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SettingsSectionCard } from '@/features/settings/settings-section-card';
@@ -17,7 +18,7 @@ import { cn } from '@/lib/utils';
 const quiet = { suppressErrorToast: true };
 
 // 이름을 바로 고치는 칸: 포커스를 떼거나 Enter 를 누르면 저장한다.
-function NameInput({ label, name, disabled, onSave }: { label: string; name: string; disabled: boolean; onSave: (name: string) => void }) {
+function NameInput({ label, name, disabled, className, onSave }: { label: string; name: string; disabled: boolean; className?: string; onSave: (name: string) => void }) {
   const [draft, setDraft] = useState(name);
   const save = () => {
     const next = draft.trim();
@@ -33,10 +34,13 @@ function NameInput({ label, name, disabled, onSave }: { label: string; name: str
       onChange={(event) => setDraft(event.target.value)}
       onBlur={save}
       onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }}
-      className="h-9"
+      className={className}
     />
   );
 }
+
+// 반 줄 안의 작은 고르기 칸
+const selectClass = 'h-9 rounded-lg border border-transparent bg-muted px-2.5 text-sm text-foreground outline-none focus-visible:border-primary focus-visible:ring-4 focus-visible:ring-primary/10 disabled:opacity-50';
 
 const TIME_SLOT_OPTIONS: Array<{ value: BranchTimeSlot; label: string }> = [
   { value: 'morning', label: '오전' },
@@ -69,10 +73,10 @@ function ClassDaysRow({ label, cls, instructors, disabled, onSave }: {
               disabled={disabled}
               onClick={() => toggle(option.value)}
               className={cn(
-                'h-8 w-8 rounded-md border text-xs font-medium transition-colors disabled:opacity-50',
+                'h-9 w-9 rounded-full text-sm font-semibold transition-colors disabled:opacity-50',
                 active
-                  ? 'border-primary bg-primary text-primary-foreground'
-                  : 'border-input bg-background text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-primary-soft hover:text-primary'
               )}
             >
               {option.label}
@@ -85,7 +89,7 @@ function ClassDaysRow({ label, cls, instructors, disabled, onSave }: {
         value={cls.default_time_slot}
         disabled={disabled}
         onChange={(event) => onSave({ default_time_slot: event.target.value as BranchTimeSlot })}
-        className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
+        className={selectClass}
       >
         {TIME_SLOT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
@@ -95,14 +99,14 @@ function ClassDaysRow({ label, cls, instructors, disabled, onSave }: {
           value={cls.instructor_id ?? ''}
           disabled={disabled}
           onChange={(event) => onSave({ instructor_id: event.target.value ? Number(event.target.value) : null })}
-          className="h-8 rounded-md border border-border bg-card px-2 text-xs text-foreground"
+          className={selectClass}
         >
           <option value="">담당 강사 없음</option>
           {instructors.map((instructor) => <option key={instructor.id} value={instructor.id}>{instructor.name}</option>)}
         </select>
       ) : null}
       {cls.class_days.length > 0 && cls.active_count > 0 ? (
-        <Link href={`/students/class-days?class=${cls.id}`} className="text-xs font-medium text-primary underline-offset-2 hover:underline">
+        <Link href={`/students/class-days?class=${cls.id}`} className="inline-flex h-9 items-center rounded-lg bg-primary-soft px-3 text-[13px] font-semibold text-primary hover:bg-primary-soft/70">
           학생 {cls.active_count}명에게 적용
         </Link>
       ) : null}
@@ -110,7 +114,7 @@ function ClassDaysRow({ label, cls, instructors, disabled, onSave }: {
   );
 }
 
-function AddRow({ placeholder, buttonLabel, disabled, onAdd }: { placeholder: string; buttonLabel: string; disabled: boolean; onAdd: (name: string) => void }) {
+function AddRow({ placeholder, buttonLabel, disabled, inputClassName, onAdd }: { placeholder: string; buttonLabel: string; disabled: boolean; inputClassName?: string; onAdd: (name: string) => void }) {
   const [draft, setDraft] = useState('');
   const add = () => {
     const name = draft.trim();
@@ -128,10 +132,10 @@ function AddRow({ placeholder, buttonLabel, disabled, onAdd }: { placeholder: st
         disabled={disabled}
         onChange={(event) => setDraft(event.target.value)}
         onKeyDown={(event) => { if (event.key === 'Enter') add(); }}
-        className="h-9"
+        className={inputClassName}
       />
-      <Button type="button" variant="outline" size="sm" className="h-9 shrink-0" disabled={disabled || !draft.trim()} onClick={add}>
-        <Plus className="mr-1 h-4 w-4" />
+      <Button type="button" variant="secondary" className="shrink-0" disabled={disabled || !draft.trim()} onClick={add}>
+        <Plus className="h-4 w-4" />
         {buttonLabel}
       </Button>
     </div>
@@ -170,14 +174,14 @@ export function BranchClassCard() {
       id="branches"
       title="지점·반"
       icon={Building2}
-      description="한 계정으로 여러 지점을 함께 관리할 때만 만드세요. 지점을 만들지 않으면 모든 화면이 지금 그대로입니다."
+      description="한 계정으로 여러 지점을 함께 관리할 때만 만드세요. 지점을 만들지 않으면 모든 화면이 지금 그대로예요."
     >
-      {error && <p role="alert" className="mb-4 text-sm text-destructive">{error}</p>}
-      {loading && <p role="status" className="text-sm text-muted-foreground">지점·반을 불러오는 중입니다.</p>}
+      {error && <p role="alert" className="mb-4 rounded-xl bg-destructive-soft px-4 py-3 text-sm font-medium text-destructive">{error}</p>}
+      {loading && <p role="status" className="text-sm text-muted-foreground">지점·반을 불러오는 중이에요.</p>}
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {branches.map((branch) => (
-          <section key={branch.id} className="rounded-md border border-border/70 p-4">
+          <section key={branch.id} className="rounded-xl bg-muted p-3 sm:p-4">
             <div className="flex items-center gap-2">
               <div className="min-w-0 flex-1">
                 <NameInput
@@ -185,14 +189,15 @@ export function BranchClassCard() {
                   label={`${branch.name} 지점 이름`}
                   name={branch.name}
                   disabled={busy}
+                  className="bg-card text-base font-bold"
                   onSave={(name) => void act(() => branchesAPI.updateBranch(branch.id, { name }, quiet))}
                 />
               </div>
-              <span className="shrink-0 text-sm text-muted-foreground">재원 {branch.active_count}명</span>
+              <Badge variant="secondary" className="shrink-0 bg-card tabular-nums">재원 {branch.active_count}명</Badge>
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 aria-label={`${branch.name} 지점 삭제`}
                 disabled={busy || branch.student_count > 0 || branch.classes.length > 0}
                 title={branch.student_count > 0 || branch.classes.length > 0 ? '반이나 학생이 있으면 지울 수 없습니다' : undefined}
@@ -202,9 +207,9 @@ export function BranchClassCard() {
               </Button>
             </div>
 
-            <div className="mt-3 space-y-2 border-l-2 border-border/70 pl-4">
+            <div className="mt-3 space-y-2">
               {branch.classes.map((cls) => (
-                <div key={cls.id} className="space-y-2">
+                <div key={cls.id} className="space-y-3 rounded-xl bg-card p-3">
                   <div className="flex items-center gap-2">
                     <div className="min-w-0 flex-1">
                       <NameInput
@@ -212,14 +217,15 @@ export function BranchClassCard() {
                         label={`${branch.name} ${cls.class_name} 반 이름`}
                         name={cls.class_name}
                         disabled={busy}
+                        className="h-10 font-semibold"
                         onSave={(name) => void act(() => branchesAPI.updateClass(cls.id, { class_name: name }, quiet))}
                       />
                     </div>
-                    <span className="shrink-0 text-sm text-muted-foreground">재원 {cls.active_count}명</span>
+                    <Badge variant="secondary" className="shrink-0 tabular-nums">재원 {cls.active_count}명</Badge>
                     <Button
                       type="button"
                       variant="ghost"
-                      size="sm"
+                      size="icon-sm"
                       aria-label={`${branch.name} ${cls.class_name} 반 삭제`}
                       disabled={busy || cls.student_count > 0}
                       title={cls.student_count > 0 ? '학생이 있으면 지울 수 없습니다' : undefined}
@@ -241,6 +247,7 @@ export function BranchClassCard() {
                 placeholder={`${branch.name}에 추가할 반 이름 (예: 정시반)`}
                 buttonLabel="반 추가"
                 disabled={busy}
+                inputClassName="bg-card"
                 onAdd={(name) => void act(() => branchesAPI.createClass(branch.id, name, quiet))}
               />
             </div>

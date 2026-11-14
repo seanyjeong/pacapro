@@ -1,4 +1,4 @@
-import { TIME_OPTIONS } from './settings-constants';
+import { SETTINGS_FIELD_CLASS, TIME_OPTIONS } from './settings-constants';
 import type { TimeRangePart } from './settings-types';
 import { parseTimeRange } from './settings-utils';
 import { cn } from '@/lib/utils/cn';
@@ -16,10 +16,10 @@ export function TimeRangeSelect({ label, value, tone, onChange, onNoClassChange 
   const range = parseTimeRange(value);
 
   return (
-    <div className={cn('rounded-lg border p-4', tone)}>
+    <div className="rounded-xl bg-muted p-4">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold">{label}</span>
-        <label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+        <span className={cn('text-[15px] font-bold', tone)}>{label}</span>
+        <label className="flex cursor-pointer items-center gap-2 text-[13px] font-medium text-secondary-foreground">
           <input
             type="checkbox"
             aria-label={`${label} 수업 없음`}
@@ -31,8 +31,8 @@ export function TimeRangeSelect({ label, value, tone, onChange, onNoClassChange 
         </label>
       </div>
       {isNoClass ? (
-        <div className="mt-3 flex h-10 items-center rounded-md border border-current/15 bg-background/70 px-3 text-xs">
-          이 시간대에는 수업을 운영하지 않습니다.
+        <div className="mt-3 flex h-11 items-center rounded-xl bg-card px-4 text-[13px] text-muted-foreground">
+          이 시간대에는 수업을 운영하지 않아요.
         </div>
       ) : (
         <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
@@ -40,7 +40,7 @@ export function TimeRangeSelect({ label, value, tone, onChange, onNoClassChange 
             aria-label={`${label} 시작 시간`}
             value={range.start}
             onChange={(event) => onChange('start', event.target.value)}
-            className="h-10 min-w-0 rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className={cn(SETTINGS_FIELD_CLASS, 'min-w-0 bg-card px-3')}
           >
             {TIME_OPTIONS.map((time) => (
               <option key={time} value={time}>
@@ -53,7 +53,7 @@ export function TimeRangeSelect({ label, value, tone, onChange, onNoClassChange 
             aria-label={`${label} 종료 시간`}
             value={range.end}
             onChange={(event) => onChange('end', event.target.value)}
-            className="h-10 min-w-0 rounded-md border border-border bg-background px-2 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className={cn(SETTINGS_FIELD_CLASS, 'min-w-0 bg-card px-3')}
           >
             {TIME_OPTIONS.map((time) => (
               <option key={time} value={time}>

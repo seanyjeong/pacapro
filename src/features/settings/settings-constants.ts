@@ -42,6 +42,10 @@ export const DEFAULT_ACADEMY_SETTINGS: AcademySettings = {
   season_monthly_policy: DEFAULT_SEASON_MONTHLY_POLICY,
 };
 
+/** 설정 화면 입력칸(회색 채움, 누르면 파란 테두리). ui Input 과 같은 모양이다. */
+export const SETTINGS_FIELD_CLASS =
+  'h-11 w-full rounded-xl border border-transparent bg-muted px-4 text-[15px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/80 focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50';
+
 export const TIME_OPTIONS: string[] = Array.from({ length: 48 }, (_, index) => {
   const hour = Math.floor(index / 2);
   const minute = (index % 2) * 30;
@@ -68,9 +72,9 @@ export const SALARY_MONTH_TYPE_OPTIONS = [
 ] as const;
 
 export const CLASS_TIME_FIELDS: Array<{ key: ClassTimeKey; label: string; tone: string }> = [
-  { key: 'morning_class_time', label: '오전반', tone: 'border-warning/30 bg-warning-soft/70 text-warning' },
-  { key: 'afternoon_class_time', label: '오후반', tone: 'border-sky-200 bg-sky-50/70 text-sky-900' },
-  { key: 'evening_class_time', label: '저녁반', tone: 'border-violet-200 bg-violet-50/70 text-violet-900' },
+  { key: 'morning_class_time', label: '오전반', tone: 'text-warning' },
+  { key: 'afternoon_class_time', label: '오후반', tone: 'text-primary' },
+  { key: 'evening_class_time', label: '저녁반', tone: 'text-success' },
 ];
 
 export const WEEKLY_TUITION_FIELDS: Array<{ key: WeeklyTuitionKey; label: string }> = [
