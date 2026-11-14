@@ -1,4 +1,5 @@
 import { ChevronDown, ChevronUp, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import type { PerformanceStudent, StudentAllScores } from './performance-types';
 import { PerformanceScoreGrid } from './performance-score-grid';
 
@@ -20,27 +21,25 @@ export function PerformanceStudentRow({
   onToggle,
 }: PerformanceStudentRowProps) {
   const statusLabel = student.status === 'paused' ? '휴원' : '재원';
-  const statusClass = student.status === 'paused'
-    ? 'border-warning/30 bg-warning-soft text-warning'
-    : 'border-success/30 bg-success-soft text-success';
+
 
   return (
     <div data-testid="performance-student-row">
       <button
-        className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-4 text-left transition hover:bg-muted/40"
+        className="grid w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3.5 text-left transition hover:bg-muted/60 sm:px-5"
         type="button"
         onClick={onToggle}
       >
         <span className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <User className="h-5 w-5" />
           </span>
           <span className="min-w-0">
             <span className="flex min-w-0 items-center gap-2">
-              <span className="truncate text-sm font-semibold text-foreground">{student.name}</span>
-              <span className={`rounded-md border px-1.5 py-0.5 text-[11px] font-medium ${statusClass}`}>{statusLabel}</span>
+              <span className="truncate text-[15px] font-semibold text-foreground">{student.name}</span>
+              <Badge variant={student.status === 'paused' ? 'warning' : 'success'}>{statusLabel}</Badge>
             </span>
-            <span className="mt-1 block truncate text-xs text-muted-foreground">
+            <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
               {student.grade} · {student.school || '학교 미등록'}
             </span>
           </span>
@@ -49,7 +48,7 @@ export function PerformanceStudentRow({
       </button>
 
       {expanded && (
-        <div className="border-t border-border bg-muted/25 px-4 py-4">
+        <div className="bg-muted/60 px-4 py-4 sm:px-5">
           <PerformanceScoreGrid scores={scores} scoresError={scoresError} scoresLoading={scoresLoading} />
         </div>
       )}

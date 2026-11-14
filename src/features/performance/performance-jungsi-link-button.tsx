@@ -146,7 +146,7 @@ export function PerformanceJungsiLinkButton({ status, onRefresh }: PerformanceJu
 
   return (
     <>
-      <div className="grid gap-2 rounded-md border border-border bg-card p-3">
+      <div className="flex flex-wrap gap-2">
         <Button className="gap-2" type="button" onClick={() => setOpen(true)} disabled={linking}>
           {linking ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
           {getButtonText(status)}
@@ -160,7 +160,7 @@ export function PerformanceJungsiLinkButton({ status, onRefresh }: PerformanceJu
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md rounded-md">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>정시엔진 계정으로 연동</DialogTitle>
             <DialogDescription>
@@ -168,16 +168,16 @@ export function PerformanceJungsiLinkButton({ status, onRefresh }: PerformanceJu
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3 rounded-md border border-border bg-muted p-3 text-sm text-secondary-foreground">
+          <div className="space-y-3 rounded-xl bg-muted p-3.5 text-sm text-secondary-foreground">
             <p>로그인 성공 후 PACA가 학생 이름과 학교를 기준으로 정시엔진 성적을 조회합니다.</p>
             <p>비밀번호는 PACA에 저장하지 않고, 정시엔진이 발급한 연동 토큰만 확인합니다.</p>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={linking}>
+            <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={() => setOpen(false)} disabled={linking}>
               취소
             </Button>
-            <Button className="gap-2" type="button" onClick={handleStartLink} disabled={linking}>
+            <Button className="w-full gap-2 sm:w-auto" type="button" onClick={handleStartLink} disabled={linking}>
               {linking ? <Loader2 className="h-4 w-4 animate-spin" /> : <ExternalLink className="h-4 w-4" />}
               정시엔진 로그인 열기
             </Button>
