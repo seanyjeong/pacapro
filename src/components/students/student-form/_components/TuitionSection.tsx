@@ -35,8 +35,9 @@ export function TuitionSection({
             수업요일을 바꾸면 주 수업횟수 기준으로 학원 설정 금액을 불러옵니다. 필요하면 월 학원비를 직접 수정할 수 있습니다.
           </p>
           <p className="mt-2 text-xs text-muted-foreground">
-            현재 기준: 주 {formData.weekly_count || 0}회, 자동 금액 {formatCurrency(automaticTuition)}
-            {classTuition ? (automaticTuition ? ' (반 학원비 표)' : ' (반 학원비 표에 이 횟수 금액이 없어 지금 금액을 그대로 둬요)') : ''}
+            {classTuition && !automaticTuition
+              ? `현재 기준: 주 ${formData.weekly_count || 0}회, 반 학원비 표에 이 횟수 금액이 없어 지금 금액을 그대로 둬요`
+              : `현재 기준: 주 ${formData.weekly_count || 0}회, 자동 금액 ${formatCurrency(automaticTuition)}${classTuition ? ' (반 학원비 표)' : ''}`}
           </p>
         </div>
 
