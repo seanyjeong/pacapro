@@ -26,7 +26,6 @@ import { recordQuickPayment } from './payments-page-api';
 import { PaymentFilterBar } from './payment-filter-bar';
 import { PaymentPageError } from './payment-page-error';
 import { PaymentsHeader } from './payments-header';
-import { PaymentsOperationsBoard } from './payments-operations-board';
 import { PaymentSummaryStrip } from './payment-summary-strip';
 import { usePaymentsPageState } from './use-payments-page-state';
 
@@ -71,12 +70,13 @@ export function PaymentsPageContent() {
   }
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[1760px] space-y-5">
+    <div className="mx-auto w-full min-w-0 max-w-[1760px] space-y-4">
       <PaymentsHeader
         viewOnly={viewOnly}
         canEdit={canEditPayments}
         sendingNotification={state.sendingNotification}
         unpaidCount={state.summary.unpaidNotifyCount}
+        selectedYearMonth={state.summary.selectedYearMonth}
         onOpenCalculator={() => state.setCalculatorOpen(true)}
         onReload={state.reload}
         onSendUnpaid={() => setUnpaidDialogOpen(true)}
@@ -85,10 +85,19 @@ export function PaymentsPageContent() {
 
       <BranchChecks branches={branches} selected={state.branchIds} onChange={state.setBranchIds} />
 
-      <PaymentSummaryStrip summary={state.summary} viewOnly={viewOnly} isOwner={isOwner} />
+      <PaymentSummaryStrip
+        summary={state.summary}
+        viewOnly={viewOnly}
+        isOwner={isOwner}
+        filters={state.filters}
+        onFilterChange={state.updateFilters}
+      />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
-        <main className="order-2 min-w-0 space-y-5 xl:order-1">
+      <PaymentList
+        showParentNames
+        payments={state.filteredPayments}
+        loading={state.loading}
+        toolbar={(
           <PaymentFilterBar
             filters={state.filters}
             todayUnpaidOnly={state.todayUnpaidOnly}
@@ -96,36 +105,16 @@ export function PaymentsPageContent() {
             onTodayUnpaidToggle={() => state.setTodayUnpaidOnly(!state.todayUnpaidOnly)}
             onReset={state.resetPageFilters}
           />
-
-          <PaymentList
-            showParentNames
-            payments={state.filteredPayments}
-            loading={state.loading}
-            onPaymentClick={(id) => router.push(`/payments/${id}`)}
-            onCreditClick={canEditPayments ? state.openCreditModal : undefined}
-            showCreditButton={canEditPayments}
-            onPaymentMark={canEditPayments ? state.markPayment : undefined}
-            onDetailedPay={canEditPayments ? (payment) => setRecordPayment(payment) : undefined}
-            showPaymentMarkButton={canEditPayments}
-            markingPaymentId={state.markingPaymentId}
-            confirmBeforePayment
-          />
-        </main>
-        <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
-          <PaymentsOperationsBoard
-            canEdit={canEditPayments}
-            filters={state.filters}
-            sendingNotification={state.sendingNotification}
-            summary={state.summary}
-            viewOnly={viewOnly}
-            onAddPayment={() => router.push('/payments/new')}
-            onFilterChange={state.updateFilters}
-            onOpenCalculator={() => state.setCalculatorOpen(true)}
-            onReload={state.reload}
-            onSendUnpaid={() => setUnpaidDialogOpen(true)}
-          />
-        </div>
-      </div>
+        )}
+        onPaymentClick={(id) => router.push(`/payments/${id}`)}
+        onCreditClick={canEditPayments ? state.openCreditModal : undefined}
+        showCreditButton={canEditPayments}
+        onPaymentMark={canEditPayments ? state.markPayment : undefined}
+        onDetailedPay={canEditPayments ? (payment) => setRecordPayment(payment) : undefined}
+        showPaymentMarkButton={canEditPayments}
+        markingPaymentId={state.markingPaymentId}
+        confirmBeforePayment
+      />
 
       <ProrationCalculatorModal open={state.calculatorOpen} onClose={() => state.setCalculatorOpen(false)} />
 

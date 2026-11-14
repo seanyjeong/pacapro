@@ -70,8 +70,10 @@ export function PaymentDetailPage() {
         onDelete={() => setDeleteDialogOpen(true)}
       />
       <PaymentDetailSummary payment={state.payment} />
-      <PaymentDetailAmountSection payment={state.payment} />
-      <PaymentDetailMetaSection payment={state.payment} canEditPaidDate={canEditPayments && Boolean(state.payment.paid_date)} onUpdatePaidDate={state.updatePaidDate} />
+      <div className="grid gap-4 md:grid-cols-2">
+        <PaymentDetailAmountSection payment={state.payment} />
+        <PaymentDetailMetaSection payment={state.payment} canEditPaidDate={canEditPayments && Boolean(state.payment.paid_date)} onUpdatePaidDate={state.updatePaidDate} />
+      </div>
       <PaymentDetailNotes payment={state.payment} />
       <PaymentRecordModal
         parentNames={state.payment}

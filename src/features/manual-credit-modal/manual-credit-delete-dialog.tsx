@@ -30,7 +30,7 @@ export function ManualCreditDeleteDialog({
 
   return (
     <AlertDialog open={Boolean(credit)} onOpenChange={(open) => !open && !busy && onCancel()}>
-      <AlertDialogContent className="max-w-md rounded-md">
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>크레딧 삭제</AlertDialogTitle>
           <AlertDialogDescription>
@@ -38,7 +38,7 @@ export function ManualCreditDeleteDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
+        <div className="rounded-xl bg-warning-soft p-3 text-sm text-warning">
           이미 적용된 크레딧은 삭제할 수 없습니다. 삭제 후에는 학생 납부 내역에서 다시 확인하세요.
         </div>
 

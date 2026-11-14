@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { PAYMENT_STATUS_LABELS } from '@/lib/types/salary';
 import type { AttendanceSummary, SalaryDetailWithRates } from './salary-detail-types';
 import { getSalaryTypeLabel } from './salary-detail-utils';
@@ -14,12 +15,17 @@ export function SalaryBasicInfo({ salary, attendanceSummary }: SalaryBasicInfoPr
         <h1 className="text-xl font-bold">급 여 명 세 서</h1>
         <p className="text-sm text-secondary-foreground">{salary.year_month} ({attendanceSummary?.work_year_month} 근무분)</p>
       </div>
-      <section className="print-section rounded-lg border border-border/70 bg-card p-4 print-compact">
-        <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+      <section className="print-section rounded-2xl bg-card p-5 sm:p-6 print-compact" aria-label="급여 기본 정보">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <Info label="강사명" value={salary.instructor_name} />
           <Info label="급여유형" value={getSalaryTypeLabel(salary)} />
           <Info label="급여월" value={salary.year_month} />
-          <Info label="상태" value={PAYMENT_STATUS_LABELS[salary.payment_status]} />
+          <div className="min-w-0 rounded-xl bg-muted px-4 py-3">
+            <p className="text-[13px] font-medium text-muted-foreground">상태</p>
+            <Badge className="mt-1" variant={salary.payment_status === 'paid' ? 'success' : 'warning'}>
+              {PAYMENT_STATUS_LABELS[salary.payment_status]}
+            </Badge>
+          </div>
         </div>
       </section>
     </>
@@ -28,9 +34,9 @@ export function SalaryBasicInfo({ salary, attendanceSummary }: SalaryBasicInfoPr
 
 function Info({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <span className="text-muted-foreground">{label}</span>
-      <span className="ml-2 font-semibold text-foreground">{value}</span>
+    <div className="min-w-0 rounded-xl bg-muted px-4 py-3">
+      <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
+      <p className="mt-0.5 truncate text-[15px] font-bold text-foreground">{value}</p>
     </div>
   );
 }

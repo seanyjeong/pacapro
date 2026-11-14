@@ -1,4 +1,3 @@
-import { Banknote } from 'lucide-react';
 import { PAYMENT_METHOD_LABELS } from './expenses-constants';
 import { ExpenseCategoryBadge } from './expense-category-badge';
 import { ExpenseRowActions } from './expense-row-actions';
@@ -16,46 +15,30 @@ interface ExpensesTableProps {
 
 export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, onCompleteRefund }: ExpensesTableProps) {
   return (
-    <section className="rounded-md border border-border bg-card shadow-none" aria-label="지출 내역">
-      <div className="flex items-center gap-2 border-b border-border/70 px-5 py-4">
-        <Banknote className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-sm font-medium text-foreground">지출 내역</h2>
-      </div>
-
-      <div className="space-y-3 p-3 2xl:hidden">
+    <section aria-label="지출 내역">
+      <div className="divide-y divide-border/60 lg:hidden">
         {expenses.map((expense) => (
-          <article
-            key={expense.id}
-            className="rounded-md border border-border bg-background p-4 text-left transition-colors hover:bg-muted/35"
-          >
+          <article key={expense.id} className="px-4 py-4 sm:px-6">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">{expense.description || '-'}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{expense.expense_date.split('T')[0]}</p>
+                <p className="truncate text-[15px] font-semibold text-foreground">{expense.description || '-'}</p>
+                <p className="mt-0.5 text-[13px] text-muted-foreground tabular-nums">{expense.expense_date.split('T')[0]}</p>
               </div>
-              <p className="shrink-0 text-base font-semibold tabular-nums text-destructive">
+              <p className="shrink-0 text-base font-bold tabular-nums text-destructive">
                 -{formatAmount(expense.amount)}원
               </p>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <p className="text-xs text-muted-foreground">카테고리</p>
-                <div className="mt-1">
-                  <ExpenseCategoryBadge expense={expense} />
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">지불</p>
-                <p className="mt-1 text-foreground">{PAYMENT_METHOD_LABELS[expense.payment_method || 'account']}</p>
-              </div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
+              <ExpenseCategoryBadge expense={expense} />
+              <span>{PAYMENT_METHOD_LABELS[expense.payment_method || 'account']}</span>
             </div>
 
             {expense.notes ? (
-              <p className="mt-4 rounded-md bg-muted/35 px-3 py-2 text-xs text-muted-foreground">{expense.notes}</p>
+              <p className="mt-3 rounded-xl bg-muted px-3 py-2 text-[13px] text-secondary-foreground">{expense.notes}</p>
             ) : null}
 
-            <div className="mt-4 border-t border-border/70 pt-3">
+            <div className="mt-3">
               <ExpenseRowActions
                 expense={expense}
                 canEdit={canEdit}
@@ -69,36 +52,33 @@ export function ExpensesTable({ expenses, canEdit, onSelect, onEdit, onDelete, o
         ))}
       </div>
 
-      <div className="hidden overflow-x-auto 2xl:block">
-        <table className="w-full min-w-[1040px] text-sm">
-          <thead className="border-b border-border bg-muted/40">
-            <tr>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">날짜</th>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">카테고리</th>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">설명</th>
-              <th className="px-5 py-3 text-right font-medium text-muted-foreground">금액</th>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">지불</th>
-              <th className="px-5 py-3 text-right font-medium text-muted-foreground">작업</th>
+      <div className="hidden overflow-x-auto px-6 pb-2 lg:block">
+        <table className="w-full min-w-[820px] text-sm">
+          <thead>
+            <tr className="border-b border-border/60 text-[13px] font-semibold text-muted-foreground">
+              <th className="px-3 py-3 text-left">날짜</th>
+              <th className="px-3 py-3 text-left">카테고리</th>
+              <th className="px-3 py-3 text-left">설명</th>
+              <th className="px-3 py-3 text-right">금액</th>
+              <th className="px-3 py-3 text-left">지불</th>
+              <th className="px-3 py-3 text-right">작업</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody>
             {expenses.map((expense) => (
-              <tr
-                key={expense.id}
-                className="transition-colors hover:bg-muted/35"
-              >
-                <td className="px-5 py-3 text-muted-foreground">{expense.expense_date.split('T')[0]}</td>
-                <td className="px-5 py-3">
+              <tr key={expense.id} className="border-b border-border/60 transition-colors last:border-b-0 hover:bg-muted/50">
+                <td className="whitespace-nowrap px-3 py-3.5 tabular-nums text-secondary-foreground">{expense.expense_date.split('T')[0]}</td>
+                <td className="px-3 py-3.5">
                   <ExpenseCategoryBadge expense={expense} />
                 </td>
-                <td className="max-w-[280px] truncate px-5 py-3 text-foreground">{expense.description || '-'}</td>
-                <td className="px-5 py-3 text-right font-semibold tabular-nums text-destructive">
+                <td className="max-w-[280px] truncate px-3 py-3.5 font-medium text-foreground">{expense.description || '-'}</td>
+                <td className="whitespace-nowrap px-3 py-3.5 text-right text-[15px] font-bold tabular-nums text-destructive">
                   -{formatAmount(expense.amount)}원
                 </td>
-                <td className="px-5 py-3 text-muted-foreground">
+                <td className="whitespace-nowrap px-3 py-3.5 text-secondary-foreground">
                   {PAYMENT_METHOD_LABELS[expense.payment_method || 'account']}
                 </td>
-                <td className="px-5 py-3">
+                <td className="px-3 py-3.5">
                   <ExpenseRowActions
                     expense={expense}
                     canEdit={canEdit}

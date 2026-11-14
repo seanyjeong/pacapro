@@ -250,7 +250,7 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
 
         <div ref={printRef} className="space-y-4 py-4 px-2">
           {/* 학생 정보 */}
-          <div className="bg-muted rounded-lg p-4">
+          <div className="rounded-xl bg-muted p-4">
             <h3 className="font-semibold text-foreground mb-2">학생 정보</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="text-muted-foreground">학생명</div>
@@ -267,7 +267,7 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
           </div>
 
           {/* 수업일 계산 */}
-          <div className="bg-primary-soft rounded-lg p-4">
+          <div className="rounded-xl bg-primary-soft p-4">
             <h3 className="font-semibold text-foreground mb-2">수업일 계산</h3>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div className="text-muted-foreground">전체 수업일</div>
@@ -295,7 +295,7 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
           </div>
 
           {/* 금액 계산 */}
-          <div className="bg-success-soft rounded-lg p-4">
+          <div className="rounded-xl bg-success-soft p-4">
             <h3 className="font-semibold text-foreground mb-2">금액 계산</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -319,7 +319,7 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
           </div>
 
           {/* 부가세 옵션 */}
-          <div className="border border-border rounded-lg p-4">
+          <div className="rounded-xl bg-muted p-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -354,7 +354,7 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
 
           {/* 학원법 기준 안내 */}
           {isOverHalf && (
-            <div className="bg-warning-soft border border-warning/30 rounded-lg p-4">
+            <div className="rounded-xl bg-warning-soft p-4">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="w-5 h-5 text-warning flex-shrink-0 mt-0.5" />
                 <div>
@@ -371,7 +371,7 @@ ${includeVat ? `최종 환불금: ${formatCurrency(refund.refundAfterVat)}` : ''
           )}
 
           {/* 최종 환불금액 */}
-          <div className="bg-primary-50 dark:bg-primary-950 rounded-lg p-4">
+          <div className="rounded-xl bg-primary-soft p-4">
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-foreground">최종 환불금액</span>
               <span className="text-2xl font-bold text-primary-600">

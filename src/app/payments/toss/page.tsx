@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { EmptyState, PageHeader, SectionCard, StatTile } from '@/components/ui/page';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -179,105 +179,59 @@ export default function TossPaymentsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="outline" className="bg-warning-soft text-warning border-warning/30">대기중</Badge>;
+        return <Badge variant="warning">대기중</Badge>;
       case 'matched':
-        return <Badge variant="outline" className="bg-success-soft text-success border-success/30">매칭완료</Badge>;
+        return <Badge variant="success">매칭완료</Badge>;
       case 'ignored':
-        return <Badge variant="outline" className="bg-muted text-secondary-foreground border-border">무시됨</Badge>;
+        return <Badge variant="secondary">무시됨</Badge>;
       case 'error':
-        return <Badge variant="outline" className="bg-destructive-soft text-destructive border-destructive/30">오류</Badge>;
+        return <Badge variant="destructive">오류</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   if (loading) {
     return (
-      <div className="space-y-6 py-6 px-6">
+      <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} className="h-28 rounded-2xl" />
           ))}
         </div>
-        <Skeleton className="h-96" />
+        <Skeleton className="h-96 rounded-2xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 py-6 px-6">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">토스 결제 관리</h1>
-          <p className="text-muted-foreground mt-1">
-            토스플레이스 결제 내역 및 매칭 관리
-          </p>
-        </div>
-        <Button onClick={loadData} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          새로고침
-        </Button>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="토스 결제 관리"
+        description="토스플레이스 결제 내역과 매칭을 관리해요."
+        actions={(
+          <Button onClick={loadData} variant="outline" size="icon" aria-label="새로고침" title="새로고침">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        )}
+      />
 
-      {/* 통계 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-success-soft rounded-full flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">자동 매칭</p>
-                <p className="text-2xl font-bold">{stats.historyCount}건</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary-soft rounded-full flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">총 결제액</p>
-                <p className="text-2xl font-bold">{formatNumber(stats.historyAmount)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-warning-soft rounded-full flex items-center justify-center">
-                <Clock className="w-6 h-6 text-warning" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">매칭 대기</p>
-                <p className="text-2xl font-bold text-warning">{stats.pendingCount}건</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">대기 금액</p>
-                <p className="text-2xl font-bold">{formatNumber(stats.pendingAmount)}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* 통계 */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatTile label="자동 매칭" value={`${stats.historyCount}건`} icon={CheckCircle} tone="success" />
+        <StatTile
+          label="총 결제액"
+          value={<span className="text-[20px] sm:text-[26px]">{formatNumber(stats.historyAmount)}</span>}
+          icon={TrendingUp}
+          tone="primary"
+        />
+        <StatTile label="매칭 대기" value={`${stats.pendingCount}건`} icon={Clock} tone="warning" />
+        <StatTile
+          label="대기 금액"
+          value={<span className="text-[20px] sm:text-[26px]">{formatNumber(stats.pendingAmount)}</span>}
+          icon={CreditCard}
+        />
       </div>
 
       {/* 탭 컨텐츠 */}
@@ -290,58 +244,46 @@ export default function TossPaymentsPage() {
           <TabsTrigger value="queue">
             <Clock className="w-4 h-4 mr-2" />
             매칭 대기
-            {stats.pendingCount > 0 && (
-              <Badge variant="destructive" className="ml-2">
-                {stats.pendingCount}
-              </Badge>
-            )}
           </TabsTrigger>
         </TabsList>
 
         {/* 결제 이력 탭 */}
         <TabsContent value="history" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>토스 결제 이력</CardTitle>
-              <CardDescription>
-                토스플레이스를 통해 결제된 내역입니다. (총 {totalHistoryCount}건)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <SectionCard
+            title="토스 결제 이력"
+            description={`토스플레이스로 결제된 내역이에요. (총 ${totalHistoryCount}건)`}
+          >
               {history.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <CreditCard className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>토스 결제 이력이 없습니다.</p>
-                </div>
+                <EmptyState icon={CreditCard} title="토스 결제 이력이 없습니다." />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="-mx-5 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
+                  <table className="w-full min-w-[760px] text-sm">
                     <thead>
-                      <tr className="border-b text-left">
-                        <th className="p-3 font-medium">학생</th>
-                        <th className="p-3 font-medium">청구월</th>
-                        <th className="p-3 font-medium text-right">금액</th>
-                        <th className="p-3 font-medium">결제수단</th>
-                        <th className="p-3 font-medium">카드사</th>
-                        <th className="p-3 font-medium">결제일시</th>
-                        <th className="p-3 font-medium text-center">영수증</th>
+                      <tr className="border-b border-border/60 text-left text-[13px] font-semibold text-muted-foreground">
+                        <th className="px-3 py-3">학생</th>
+                        <th className="px-3 py-3">청구월</th>
+                        <th className="px-3 py-3 text-right">금액</th>
+                        <th className="px-3 py-3">결제수단</th>
+                        <th className="px-3 py-3">카드사</th>
+                        <th className="px-3 py-3">결제일시</th>
+                        <th className="px-3 py-3 text-center">영수증</th>
                       </tr>
                     </thead>
                     <tbody>
                       {history.map(item => (
-                        <tr key={item.id} className="border-b hover:bg-muted/50">
-                          <td className="p-3">
+                        <tr key={item.id} className="border-b border-border/60 last:border-b-0 hover:bg-muted/50">
+                          <td className="px-3 py-3.5">
                             <div>
-                              <p className="font-medium">{item.student_name || '-'}</p>
+                              <p className="text-[15px] font-semibold">{item.student_name || '-'}</p>
                               <p className="text-sm text-muted-foreground">{item.student_number}</p>
                             </div>
                           </td>
-                          <td className="p-3">{item.year_month || '-'}</td>
-                          <td className="p-3 text-right font-medium">
+                          <td className="px-3 py-3.5">{item.year_month || '-'}</td>
+                          <td className="px-3 py-3.5 text-right text-[15px] font-bold tabular-nums">
                             {formatNumber(item.amount)}
                           </td>
-                          <td className="p-3">{getMethodLabel(item.method)}</td>
-                          <td className="p-3">
+                          <td className="px-3 py-3.5">{getMethodLabel(item.method)}</td>
+                          <td className="px-3 py-3.5">
                             {item.card_company || '-'}
                             {item.installment_months > 0 && (
                               <span className="text-sm text-muted-foreground ml-1">
@@ -349,12 +291,12 @@ export default function TossPaymentsPage() {
                               </span>
                             )}
                           </td>
-                          <td className="p-3 text-sm">
+                          <td className="px-3 py-3.5 text-sm">
                             {item.approved_at
                               ? new Date(item.approved_at).toLocaleString('ko-KR')
                               : '-'}
                           </td>
-                          <td className="p-3 text-center">
+                          <td className="px-3 py-3.5 text-center">
                             {item.receipt_url ? (
                               <a
                                 href={item.receipt_url}
@@ -374,63 +316,55 @@ export default function TossPaymentsPage() {
                   </table>
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </SectionCard>
         </TabsContent>
 
         {/* 매칭 대기 탭 */}
         <TabsContent value="queue" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>매칭 대기열</CardTitle>
-              <CardDescription>
-                자동 매칭되지 않은 결제입니다. 수동으로 매칭하거나 무시할 수 있습니다.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <SectionCard
+            title="매칭 대기열"
+            description="자동 매칭되지 않은 결제예요. 직접 매칭하거나 무시할 수 있어요."
+          >
               {queue.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50 text-success" />
-                  <p>매칭 대기 중인 결제가 없습니다.</p>
-                </div>
+                <EmptyState icon={CheckCircle} title="매칭 대기 중인 결제가 없습니다." />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="-mx-5 overflow-x-auto px-5 sm:-mx-6 sm:px-6">
+                  <table className="w-full min-w-[760px] text-sm">
                     <thead>
-                      <tr className="border-b text-left">
-                        <th className="p-3 font-medium">주문번호</th>
-                        <th className="p-3 font-medium text-right">금액</th>
-                        <th className="p-3 font-medium">결제수단</th>
-                        <th className="p-3 font-medium">결제일시</th>
-                        <th className="p-3 font-medium text-center">상태</th>
-                        <th className="p-3 font-medium">사유</th>
-                        <th className="p-3 font-medium text-center">액션</th>
+                      <tr className="border-b border-border/60 text-left text-[13px] font-semibold text-muted-foreground">
+                        <th className="px-3 py-3">주문번호</th>
+                        <th className="px-3 py-3 text-right">금액</th>
+                        <th className="px-3 py-3">결제수단</th>
+                        <th className="px-3 py-3">결제일시</th>
+                        <th className="px-3 py-3 text-center">상태</th>
+                        <th className="px-3 py-3">사유</th>
+                        <th className="px-3 py-3 text-center">액션</th>
                       </tr>
                     </thead>
                     <tbody>
                       {queue.map(item => (
-                        <tr key={item.id} className="border-b hover:bg-muted/50">
-                          <td className="p-3">
-                            <code className="text-xs bg-muted px-2 py-1 rounded">
+                        <tr key={item.id} className="border-b border-border/60 last:border-b-0 hover:bg-muted/50">
+                          <td className="px-3 py-3.5">
+                            <code className="rounded-lg bg-muted px-2 py-1 text-xs">
                               {item.order_id}
                             </code>
                           </td>
-                          <td className="p-3 text-right font-medium">
+                          <td className="px-3 py-3.5 text-right text-[15px] font-bold tabular-nums">
                             {formatNumber(item.amount)}
                           </td>
-                          <td className="p-3">{getMethodLabel(item.method)}</td>
-                          <td className="p-3 text-sm">
+                          <td className="px-3 py-3.5">{getMethodLabel(item.method)}</td>
+                          <td className="px-3 py-3.5 text-sm">
                             {item.approved_at
                               ? new Date(item.approved_at).toLocaleString('ko-KR')
                               : '-'}
                           </td>
-                          <td className="p-3 text-center">
+                          <td className="px-3 py-3.5 text-center">
                             {getStatusBadge(item.match_status)}
                           </td>
-                          <td className="p-3 text-sm text-muted-foreground">
+                          <td className="px-3 py-3.5 text-sm text-muted-foreground">
                             {item.error_reason || '-'}
                           </td>
-                          <td className="p-3 text-center">
+                          <td className="px-3 py-3.5 text-center">
                             {item.match_status === 'pending' && (
                               <div className="flex gap-2 justify-center">
                                 <Button
@@ -458,8 +392,7 @@ export default function TossPaymentsPage() {
                   </table>
                 </div>
               )}
-            </CardContent>
-          </Card>
+          </SectionCard>
         </TabsContent>
       </Tabs>
 
@@ -475,14 +408,14 @@ export default function TossPaymentsPage() {
 
           <div className="space-y-4 py-4">
             {/* 결제 정보 */}
-            <div className="bg-muted p-4 rounded-lg space-y-2">
+            <div className="space-y-2 rounded-xl bg-muted p-4">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">주문번호</span>
                 <code className="text-xs">{selectedQueueItem?.order_id}</code>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">결제 금액</span>
-                <span className="font-bold">{formatNumber(selectedQueueItem?.amount || 0)}</span>
+                <span className="font-bold tabular-nums">{formatNumber(selectedQueueItem?.amount || 0)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">결제일시</span>
@@ -512,11 +445,11 @@ export default function TossPaymentsPage() {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setMatchModalOpen(false)}>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row">
+            <Button variant="outline" className="w-full sm:w-auto" onClick={() => setMatchModalOpen(false)}>
               취소
             </Button>
-            <Button onClick={handleManualMatch} disabled={matchLoading || !selectedPaymentId}>
+            <Button className="w-full sm:w-auto" onClick={handleManualMatch} disabled={matchLoading || !selectedPaymentId}>
               {matchLoading ? '처리 중...' : '매칭 완료'}
             </Button>
           </DialogFooter>

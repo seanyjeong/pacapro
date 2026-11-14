@@ -111,10 +111,10 @@ export function PaymentRecordModal({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
-      <Card className="w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <CardHeader className="border-b">
+      <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl">납부하기</CardTitle>
+            <CardTitle className="text-xl font-bold">납부하기</CardTitle>
             <button
               onClick={onClose}
               aria-label="납부하기 닫기"
@@ -124,10 +124,10 @@ export function PaymentRecordModal({
             </button>
           </div>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* 학생 정보 */}
-            <div className="p-4 bg-muted rounded-lg">
+            <div className="rounded-xl bg-muted p-4">
               <p className="text-sm text-muted-foreground">학생</p>
               <p className="text-lg font-semibold text-foreground">{studentName}</p>
               {parentNames && <StudentParentNames student={parentNames} />}
@@ -163,7 +163,7 @@ export function PaymentRecordModal({
                     paid_amount: newRemaining
                   });
                 }}
-                className="py-2 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="tabular-nums"
               />
               <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
               {formData.discount_amount > 0 && (
@@ -185,14 +185,14 @@ export function PaymentRecordModal({
                 id="payment-record-paid-amount"
                 value={formData.paid_amount}
                 onChange={(paid_amount) => setFormData({ ...formData, paid_amount })}
-                className="py-3 rounded-lg text-lg font-semibold focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                className="h-12 text-lg font-bold tabular-nums"
               />
               <p className="text-xs text-muted-foreground mt-1">1천원 단위</p>
               <div className="flex gap-2 mt-2">
                 <button
                   type="button"
                   onClick={() => handleQuickAmount(actualRemainingAmount)}
-                  className="px-3 py-1 text-xs bg-primary-100 text-primary-700 rounded-full hover:bg-primary-200 transition-colors"
+                  className="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary transition-colors hover:bg-primary-soft/70"
                 >
                   전액 ({actualRemainingAmount.toLocaleString()}원)
                 </button>
@@ -228,14 +228,14 @@ export function PaymentRecordModal({
                     key={option.value}
                     type="button"
                     onClick={() => setFormData({ ...formData, payment_method: option.value })}
-                    className={`flex items-center gap-2 px-4 py-3 border rounded-lg transition-all ${
+                    className={`flex items-center gap-2 rounded-xl px-4 py-3 transition-colors ${
                       formData.payment_method === option.value
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-950 text-primary-700 dark:text-primary-300 ring-2 ring-primary-200 dark:ring-primary-800'
-                        : 'border-border hover:border-border hover:bg-muted'
+                        ? 'bg-primary-soft text-primary ring-2 ring-inset ring-primary'
+                        : 'bg-muted text-secondary-foreground hover:bg-muted/70 hover:text-foreground'
                     }`}
                   >
                     {PAYMENT_METHOD_ICONS[option.value]}
-                    <span className="font-medium">{option.label}</span>
+                    <span className="font-semibold">{option.label}</span>
                   </button>
                 ))}
               </div>
@@ -252,7 +252,7 @@ export function PaymentRecordModal({
                   type="date"
                   value={formData.payment_date}
                   onChange={(e) => setFormData({ ...formData, payment_date: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 border border-border bg-background rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="h-12 w-full rounded-xl border border-transparent bg-muted pl-10 pr-4 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
                   required
                 />
               </div>

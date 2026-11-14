@@ -1,5 +1,5 @@
 import { Banknote, CheckCircle, TrendingDown, WalletCards } from 'lucide-react';
-import { ExpenseStatCard } from './expense-stat-card';
+import { StatTile } from '@/components/ui/page';
 import type { ExpenseSummary } from './expenses-types';
 import { formatAmount } from './expenses-utils';
 
@@ -9,30 +9,35 @@ interface ExpenseSummaryStripProps {
 
 export function ExpenseSummaryStrip({ summary }: ExpenseSummaryStripProps) {
   return (
-    <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4" aria-label="지출 요약">
-      <ExpenseStatCard
-        label="총 지출 건수"
-        value={`${summary.totalCount}건`}
-        icon={<TrendingDown className="h-4 w-4" />}
-      />
-      <ExpenseStatCard
-        label="총 지출 금액"
-        value={`-${formatAmount(summary.totalAmount)}원`}
-        tone="danger"
-        icon={<Banknote className="h-4 w-4" />}
-      />
-      <ExpenseStatCard
+    <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="지출 요약">
+      <div className="min-w-0" data-testid="expenses-metric-total">
+        <StatTile className="h-full" label="총 지출 건수" value={`${summary.totalCount}건`} icon={TrendingDown} />
+      </div>
+      <div className="min-w-0" data-testid="expenses-metric-amount">
+        <StatTile
+          className="h-full"
+          label="총 지출 금액"
+          value={<span className="text-[20px] text-destructive sm:text-[26px]">-{formatAmount(summary.totalAmount)}원</span>}
+          tone="danger"
+          icon={Banknote}
+        />
+      </div>
+      <StatTile
+        className="h-full"
         label="월 평균 지출"
-        value={`${formatAmount(summary.monthlyAverage)}원`}
-        icon={<WalletCards className="h-4 w-4" />}
+        value={<span className="text-[20px] sm:text-[26px]">{formatAmount(summary.monthlyAverage)}원</span>}
+        icon={WalletCards}
       />
-      <ExpenseStatCard
-        label="환불 대기"
-        value={`${summary.refundPendingCount}건`}
-        subValue={`급여 연동 ${summary.salaryLinkedCount}건`}
-        tone={summary.refundPendingCount > 0 ? 'warning' : 'default'}
-        icon={<CheckCircle className="h-4 w-4" />}
-      />
+      <div className="min-w-0" data-testid="expenses-metric-refund">
+        <StatTile
+          className="h-full"
+          label="환불 대기"
+          value={`${summary.refundPendingCount}건`}
+          note={<span data-testid="expenses-metric-salary">급여 연동 {summary.salaryLinkedCount}건</span>}
+          tone={summary.refundPendingCount > 0 ? 'warning' : 'neutral'}
+          icon={CheckCircle}
+        />
+      </div>
     </section>
   );
 }

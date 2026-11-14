@@ -1,3 +1,6 @@
+import { cn } from '@/lib/utils/cn';
+import { FILTER_FIELD_CLASS } from './expenses-filter-bar';
+
 interface ExpenseSelectProps {
   id?: string;
   label: string;
@@ -9,12 +12,12 @@ interface ExpenseSelectProps {
 export function ExpenseSelect({ id, label, value, options, onChange }: ExpenseSelectProps) {
   return (
     <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-foreground">{label}</label>
+      <label htmlFor={id} className="block text-sm font-semibold text-secondary-foreground">{label}</label>
       <select
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/25"
+        className={cn(FILTER_FIELD_CLASS, 'w-full px-4')}
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

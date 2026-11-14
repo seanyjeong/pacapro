@@ -13,19 +13,19 @@ interface SalaryDetailFooterProps {
 
 export function SalaryDetailFooter({ salary, paying, recalculating, onBack, onPay, onRecalculate }: SalaryDetailFooterProps) {
   return (
-    <div className="flex flex-col gap-2 pt-2 no-print sm:flex-row sm:items-center sm:justify-between">
-      <Button type="button" variant="outline" onClick={onBack}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
+    <div className="flex flex-col gap-2 pt-1 no-print sm:flex-row sm:items-center sm:justify-between">
+      <Button type="button" variant="outline" onClick={onBack} className="w-full sm:w-auto">
+        <ArrowLeft className="h-4 w-4" />
         목록
       </Button>
       {salary.payment_status === 'pending' ? (
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex">
           <Button type="button" variant="outline" onClick={onRecalculate} disabled={recalculating}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${recalculating ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${recalculating ? 'animate-spin' : ''}`} />
             재계산
           </Button>
           <Button type="button" onClick={onPay} disabled={paying}>
-            <CheckCircle className="mr-2 h-4 w-4" />
+            <CheckCircle className="h-4 w-4" />
             {paying ? '처리 중' : '지급 완료'}
           </Button>
         </div>

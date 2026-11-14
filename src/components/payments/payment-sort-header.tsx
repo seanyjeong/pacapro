@@ -25,7 +25,7 @@ export function PaymentSortHeader({
 
   return (
     <th
-      className={cn('px-3 py-3 text-left font-medium text-muted-foreground', className)}
+      className={cn('px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground', className)}
       aria-sort={ariaSort}
     >
       <button

@@ -185,7 +185,7 @@ export function PrepaidPaymentModal({
 
         <div className="py-6 px-6 space-y-5">
           {/* 학생 정보 */}
-          <div className="p-3 bg-muted/50 rounded-lg">
+          <div className="rounded-xl bg-muted p-3">
             <div className="text-sm font-medium">{studentName}</div>
             <div className="text-xs text-muted-foreground">
               월 수강료: {monthlyTuition.toLocaleString()}원
@@ -219,7 +219,7 @@ export function PrepaidPaymentModal({
               id="startMonth"
               value={startMonth}
               onChange={(e) => setStartMonth(e.target.value)}
-              className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+              className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
             >
               {startMonthOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -253,7 +253,7 @@ export function PrepaidPaymentModal({
           {preview && !previewLoading && (
             <div className="space-y-3">
               <div className="text-sm font-medium">월별 내역</div>
-              <div className="border rounded-lg divide-y">
+              <div className="divide-y divide-border/60 rounded-xl bg-muted/60">
                 {preview.months.map((m) => (
                   <div
                     key={m.year_month}
@@ -284,7 +284,7 @@ export function PrepaidPaymentModal({
               </div>
 
               {/* 합계 */}
-              <div className="p-3 bg-muted/50 rounded-lg space-y-1.5 text-sm">
+              <div className="space-y-1.5 rounded-xl bg-muted p-3 text-sm">
                 <div className="flex justify-between text-muted-foreground">
                   <span>정상가 ({preview.months_payable}개월)</span>
                   <span>{totalNormal.toLocaleString()}원</span>
@@ -342,7 +342,7 @@ export function PrepaidPaymentModal({
         </div>
 
         {formError ? (
-          <div role="alert" className="mx-6 mb-4 flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive-soft p-3 text-destructive">
+          <div role="alert" className="mx-6 mb-4 flex items-start gap-3 rounded-xl bg-destructive-soft p-3 text-destructive">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="text-sm font-medium">{formError}</p>
           </div>

@@ -6,12 +6,12 @@
 'use client';
 
 import { StudentParentNames } from '@/components/students/student-parent-names';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { getAmountView } from './payment-amount-view';
 import { PaymentListTable } from './payment-list-table';
 import type { PaymentSortKey, SortDir } from './payment-sort-header';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/page';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,9 +51,9 @@ import {
 type MarkMethod = 'account' | 'card' | 'cash';
 
 const PAYMENT_ACTIONS = [
-  { method: 'account', label: '계좌', Icon: Wallet, className: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300' },
-  { method: 'card', label: '카드', Icon: CreditCard, className: 'border-primary/30 bg-primary-soft text-primary hover:bg-primary-soft' },
-  { method: 'cash', label: '현금', Icon: Banknote, className: 'border-success/30 bg-success-soft text-success hover:bg-success-soft' },
+  { method: 'account', label: '계좌', Icon: Wallet, className: 'bg-muted text-secondary-foreground hover:bg-muted/70 hover:text-foreground' },
+  { method: 'card', label: '카드', Icon: CreditCard, className: 'bg-primary-soft text-primary hover:bg-primary-soft/70' },
+  { method: 'cash', label: '현금', Icon: Banknote, className: 'bg-success-soft text-success hover:bg-success-soft/70' },
 ] as const;
 
 interface PaymentListProps {
@@ -70,6 +70,8 @@ interface PaymentListProps {
   markingPaymentId?: number | null;
   hideDueDate?: boolean;
   confirmBeforePayment?: boolean;
+  /** 목록 카드 맨 위에 붙는 필터 줄 */
+  toolbar?: ReactNode;
 }
 
 export function PaymentList({
@@ -85,6 +87,7 @@ export function PaymentList({
   markingPaymentId = null,
   hideDueDate = false,
   confirmBeforePayment = false,
+  toolbar,
 }: PaymentListProps) {
   // 확인 다이얼로그 상태
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -169,14 +172,14 @@ export function PaymentList({
             event.stopPropagation();
             onCreditClick(payment);
           }}
-          className="h-7 shrink-0 border-primary/30 bg-primary-soft px-2 text-xs text-primary hover:bg-primary-soft"
+          className="h-8 shrink-0 bg-primary-soft px-2.5 text-[13px] text-primary hover:bg-primary-soft/70"
         >
-          <Coins className="mr-1 h-3.5 w-3.5" />
+          <Coins className="h-3.5 w-3.5" />
           크레딧
         </Button>
         {creditLabel ? (
           <span
-            className="inline-flex max-w-full items-center rounded-md border border-success/30 bg-success-soft px-2 py-0.5 text-xs font-semibold tabular-nums leading-tight text-success"
+            className="inline-flex max-w-full items-center rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-bold tabular-nums leading-tight text-success"
             title={`잔여 크레딧 ${creditLabel}`}
           >
             {creditLabel}
@@ -190,7 +193,7 @@ export function PaymentList({
     if (!showPaymentMarkButton || (!onPaymentMark && !onDetailedPay)) return null;
     if (payment.payment_status === 'paid') {
       return (
-        <span className="inline-flex h-8 min-w-[88px] items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-success/30 bg-success-soft px-3.5 text-sm font-medium leading-none text-success">
+        <span className="inline-flex h-8 min-w-[88px] items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-success-soft px-3.5 text-sm font-semibold leading-none text-success">
           <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
           <span className="tracking-wide">완납</span>
         </span>
@@ -199,7 +202,7 @@ export function PaymentList({
 
     if (markingPaymentId === payment.id) {
       return (
-        <span className="inline-flex h-8 min-w-[96px] items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-border bg-muted px-3.5 text-sm font-medium leading-none text-muted-foreground">
+        <span className="inline-flex h-8 min-w-[96px] items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-muted px-3.5 text-sm font-medium leading-none text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
           <span>처리중...</span>
         </span>
@@ -210,7 +213,7 @@ export function PaymentList({
       <div className="flex min-w-0 flex-col items-stretch gap-1.5">
         {onPaymentMark ? (
           <div className="min-w-0">
-            <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">빠른납부</p>
+            <p className="mb-1 text-[11px] font-medium text-muted-foreground">빠른납부</p>
             <div className="inline-flex flex-wrap items-center gap-1">
               {PAYMENT_ACTIONS.map(({ method, label, Icon, className }) => (
                 <Button
@@ -222,7 +225,7 @@ export function PaymentList({
                     handlePaymentMarkClick(payment, method);
                   }}
                   className={cn(
-                    'h-7 min-w-[48px] shrink-0 gap-0.5 border px-2 text-[11px] font-semibold shadow-none active:scale-95',
+                    'h-8 min-w-[52px] shrink-0 gap-1 px-2 text-[13px] font-semibold active:scale-95',
                     className
                   )}
                   title={`${methodLabels[method]}로 전액 빠른 납부`}
@@ -243,10 +246,10 @@ export function PaymentList({
               event.stopPropagation();
               onDetailedPay(payment);
             }}
-            className="h-7 w-full justify-center gap-1 border-border bg-card px-2 text-[11px] font-semibold text-secondary-foreground shadow-none hover:bg-muted"
+            className="h-8 w-full justify-center gap-1 px-2 text-[13px] font-semibold"
             title="금액·할인·납부일 입력"
           >
-            <FilePenLine className="h-3 w-3 shrink-0" />
+            <FilePenLine className="h-3.5 w-3.5 shrink-0" />
             상세납부
           </Button>
         ) : null}
@@ -254,36 +257,39 @@ export function PaymentList({
     );
   };
 
+  const shellClassName = 'min-w-0 overflow-hidden rounded-2xl bg-card';
+
   if (loading) {
     return (
-      <Card className="rounded-md border-border shadow-none">
-        <CardContent className="space-y-3 p-5">
-          <div className="h-10 w-full rounded-md bg-muted" />
-          <div className="h-10 w-full rounded-md bg-muted/70" />
-          <div className="h-10 w-full rounded-md bg-muted/50" />
-        </CardContent>
-      </Card>
+      <section className={shellClassName}>
+        {toolbar}
+        <div className="space-y-3 p-5">
+          <div className="h-12 w-full rounded-xl bg-muted" />
+          <div className="h-12 w-full rounded-xl bg-muted/70" />
+          <div className="h-12 w-full rounded-xl bg-muted/50" />
+        </div>
+      </section>
     );
   }
 
   if (payments.length === 0) {
     return (
-      <Card className="rounded-md border-border shadow-none">
-        <CardContent className="p-12 text-center">
-          <Banknote className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">학원비 내역이 없습니다</h3>
-          <p className="text-muted-foreground">
-            학원비를 청구하시면 여기에 표시됩니다.
-          </p>
-        </CardContent>
-      </Card>
+      <section className={shellClassName}>
+        {toolbar}
+        <EmptyState
+          icon={Banknote}
+          title="학원비 내역이 없습니다"
+          description="학원비를 청구하시면 여기에 표시됩니다."
+          className="py-14"
+        />
+      </section>
     );
   }
 
   return (
-    <Card className="rounded-md border-border shadow-none">
-      <CardContent className="p-0">
-        <div className="space-y-3 p-3 lg:hidden">
+    <section className={shellClassName}>
+      {toolbar}
+        <div className="divide-y divide-border/60 lg:hidden">
           {sortedPayments.map((payment) => {
             const overdue = isOverdue(payment);
             const upcomingSeason = isSeasonUpcoming(payment);
@@ -293,43 +299,40 @@ export function PaymentList({
             return (
               <article
                 key={payment.id}
-                className={cn(
-                  'overflow-hidden rounded-md border border-border bg-background',
-                  overdue && 'border-destructive/30 bg-destructive-soft/70'
-                )}
+                className={cn('min-w-0', overdue && 'bg-destructive-soft/40')}
               >
-                <button className="block w-full px-4 py-4 text-left" type="button" onClick={() => onPaymentClick(payment.id)}>
+                <button className="block w-full px-4 pb-3 pt-4 text-left sm:px-5" type="button" onClick={() => onPaymentClick(payment.id)}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{payment.student_name}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{payment.student_number}</p>
-                      {showParentNames && <StudentParentNames student={payment} />}
+                      <p className="truncate text-[16px] font-bold text-foreground">{payment.student_name}</p>
+                      <p className="mt-0.5 text-[13px] text-muted-foreground">
+                        {payment.student_number} · {formatYearMonth(payment.year_month)} {PAYMENT_TYPE_LABELS[payment.payment_type]}
+                      </p>
+                      {showParentNames && <StudentParentNames student={payment} className="mt-1" />}
                     </div>
                     <span
-                      className={`inline-flex shrink-0 items-center rounded-md px-2.5 py-1 text-xs font-medium ${getPaymentStatusColor(
-                        payment.payment_status
-                      )}`}
+                      className={cn(
+                        'inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-semibold',
+                        getPaymentStatusColor(payment.payment_status)
+                      )}
                     >
                       {PAYMENT_STATUS_LABELS[payment.payment_status]}
                       {upcomingSeason ? ' · 납부예정' : ''}
                     </span>
                   </div>
 
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-xs text-muted-foreground">청구</p>
-                      <p className="mt-1 font-medium text-foreground">{formatYearMonth(payment.year_month)}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{PAYMENT_TYPE_LABELS[payment.payment_type]}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">{amountView.label}</p>
-                      <p className={`mt-1 font-semibold ${amountView.tone}`}>{formatPaymentAmount(amountView.amount)}</p>
-                      {amountView.detail ? <p className="mt-1 text-xs text-muted-foreground">{amountView.detail}</p> : null}
+                  <div className="mt-3 flex items-end justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[13px] text-muted-foreground">{amountView.label}</p>
+                      <p className={cn('text-[20px] font-extrabold leading-tight tabular-nums', amountView.tone)}>
+                        {formatPaymentAmount(amountView.amount)}
+                      </p>
+                      {amountView.detail ? <p className="mt-0.5 text-xs text-muted-foreground">{amountView.detail}</p> : null}
                     </div>
                     {!hideDueDate ? (
-                      <div className="col-span-2">
-                        <p className="text-xs text-muted-foreground">납부 기한</p>
-                        <p className={cn('mt-1 text-sm text-foreground', overdue && 'font-semibold text-destructive')}>
+                      <div className="shrink-0 text-right">
+                        <p className="text-[13px] text-muted-foreground">납부 기한</p>
+                        <p className={cn('text-sm font-medium tabular-nums text-foreground', overdue && 'font-semibold text-destructive')}>
                           {formatDate(payment.due_date)}
                           {upcomingSeason ? ' · 납부예정' : overdue ? ' · 연체' : ''}
                         </p>
@@ -339,7 +342,7 @@ export function PaymentList({
                 </button>
 
                 {(showCreditButton || showPaymentMarkButton) && (
-                  <div className="space-y-2 border-t border-border bg-muted/25 px-4 py-3">
+                  <div className="flex flex-wrap items-end justify-between gap-3 px-4 pb-4 sm:px-5">
                     {renderCreditAction(payment)}
                     {renderPaymentActions(payment)}
                   </div>
@@ -358,7 +361,6 @@ export function PaymentList({
           onCreditClick={Boolean(onCreditClick)} onPaymentMark={Boolean(onPaymentMark)}
           renderCreditAction={renderCreditAction} renderPaymentActions={renderPaymentActions}
         />
-      </CardContent>
 
       {/* 납부 처리 확인 다이얼로그 */}
       <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
@@ -385,6 +387,6 @@ export function PaymentList({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </section>
   );
 }

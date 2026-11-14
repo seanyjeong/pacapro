@@ -42,7 +42,7 @@ export function ManualCreditApplyDialog({
         </DialogHeader>
         <div className="py-6 px-6 space-y-4">
           {applyingCredit && (
-            <div className="p-3 bg-muted/50 rounded-lg">
+            <div className="rounded-xl bg-muted p-3">
               <div className="flex items-center gap-2 mb-1">
                 <span className="px-2 py-0.5 text-xs font-medium rounded bg-muted">
                   {CREDIT_TYPE_LABELS[applyingCredit.credit_type] || applyingCredit.credit_type}

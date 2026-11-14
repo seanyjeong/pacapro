@@ -26,7 +26,7 @@ interface PaymentListTableProps {
 export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sortDir, handleSort, hideDueDate, showCreditButton, showParentNames, showPaymentMarkButton, onCreditClick, onPaymentMark, renderCreditAction, renderPaymentActions }: PaymentListTableProps) {
   return (
         <div className="hidden overflow-x-auto lg:block">
-          <table className={cn('w-full table-fixed text-sm', showPaymentMarkButton ? 'min-w-[1040px]' : 'min-w-[820px]')}>
+          <table className={cn('w-full table-fixed text-sm [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_th:first-child]:pl-5 [&_th:last-child]:pr-5', showPaymentMarkButton ? 'min-w-[1040px]' : 'min-w-[820px]')}>
             <colgroup>
               <col style={{ width: '14%' }} />
               <col style={{ width: '16%' }} />
@@ -36,7 +36,7 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
               {showCreditButton ? <col style={{ width: '14%' }} /> : null}
               {showPaymentMarkButton ? <col style={{ width: '23%' }} /> : null}
             </colgroup>
-            <thead className="border-b border-border bg-muted/40">
+            <thead className="border-b border-border/60">
               <tr>
                 <PaymentSortHeader
                   label="학생 정보"
@@ -81,18 +81,18 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
                   className="px-3"
                 />
                 {showCreditButton && (
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">
+                  <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     크레딧
                   </th>
                 )}
                 {showPaymentMarkButton && (
-                  <th className="px-3 py-3 text-left font-medium text-muted-foreground">
+                  <th className="px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                     납부처리
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border/60">
               {sortedPayments.map((payment) => {
                 const overdue = isOverdue(payment);
                 const upcomingSeason = isSeasonUpcoming(payment);
@@ -103,22 +103,20 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
                   <tr
                     key={payment.id}
                     onClick={() => onPaymentClick(payment.id)}
-                    className={`cursor-pointer transition-colors hover:bg-muted/35 ${
-                      overdue ? 'bg-destructive-soft' : ''
-                    }`}
+                    className={cn('cursor-pointer transition-colors hover:bg-muted/60', overdue && 'bg-destructive-soft/40')}
                   >
-                    <td className="px-3 py-3 align-middle">
+                    <td className="px-3 py-3.5 align-middle">
                       <div className="min-w-0">
-                        <div className="truncate font-medium text-foreground">{payment.student_name}</div>
+                        <div className="truncate text-[15px] font-semibold text-foreground">{payment.student_name}</div>
                         <div className="truncate text-xs text-muted-foreground">{payment.student_number}</div>
                         {showParentNames && <StudentParentNames student={payment} />}
                       </div>
                     </td>
-                    <td className="px-3 py-3 align-middle">
+                    <td className="px-3 py-3.5 align-middle">
                       <div className="min-w-0">
                         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                           <span
-                            className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${getPaymentTypeColor(
+                            className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${getPaymentTypeColor(
                               payment.payment_type
                             )}`}
                           >
@@ -146,11 +144,11 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
                         ) : null}
                       </div>
                     </td>
-                    <td className="px-3 py-3 align-middle">
+                    <td className="px-3 py-3.5 align-middle">
                       <div className="min-w-0">
                         <div className="text-[11px] text-muted-foreground">{amountView.label}</div>
                         <div
-                          className={`text-sm font-semibold tabular-nums ${amountView.tone}`}
+                          className={`text-[15px] font-bold tabular-nums ${amountView.tone}`}
                           title={formatPaymentAmount(amountView.amount)}
                         >
                           {formatPaymentAmount(amountView.amount)}
@@ -181,7 +179,7 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
                       </div>
                     </td>
                     {!hideDueDate && (
-                      <td className="px-3 py-3 align-middle">
+                      <td className="px-3 py-3.5 align-middle">
                         <div className={cn('text-sm tabular-nums', overdue ? 'font-semibold text-destructive' : 'text-foreground')}>
                           {formatDate(payment.due_date)}
                         </div>
@@ -198,11 +196,11 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
                         ) : null}
                       </td>
                     )}
-                    <td className="px-3 py-3 align-middle">
+                    <td className="px-3 py-3.5 align-middle">
                       <div className="flex min-w-0 flex-col items-start gap-1">
                         <span
                           className={cn(
-                            'inline-flex max-w-full items-center rounded-full border px-2.5 py-1 text-xs font-medium leading-none tracking-wide',
+                            'inline-flex max-w-full items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none',
                             getPaymentStatusColor(payment.payment_status)
                           )}
                         >
@@ -219,10 +217,10 @@ export function PaymentListTable({ sortedPayments, onPaymentClick, sortKey, sort
                       </div>
                     </td>
                     {showCreditButton && onCreditClick ? (
-                      <td className="px-3 py-3 align-middle">{renderCreditAction(payment)}</td>
+                      <td className="px-3 py-3.5 align-middle">{renderCreditAction(payment)}</td>
                     ) : null}
                     {showPaymentMarkButton && onPaymentMark ? (
-                      <td className="px-3 py-3 align-middle">{renderPaymentActions(payment)}</td>
+                      <td className="px-3 py-3.5 align-middle">{renderPaymentActions(payment)}</td>
                     ) : null}
                   </tr>
                 );

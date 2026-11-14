@@ -91,8 +91,8 @@ export function PaymentCancelModal({
       aria-labelledby="payment-cancel-title"
       onClick={handleClose}
     >
-      <Card className="w-full max-w-md shadow-2xl" onClick={(event) => event.stopPropagation()}>
-        <CardHeader className="border-b">
+      <Card className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <CardHeader>
           <div className="flex items-center justify-between gap-3">
             <CardTitle id="payment-cancel-title" className="flex items-center gap-2 text-xl">
               <RotateCcw className="h-5 w-5 text-destructive" />
@@ -109,9 +109,9 @@ export function PaymentCancelModal({
             </button>
           </div>
         </CardHeader>
-        <CardContent className="pt-6">
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="rounded-lg bg-muted p-4">
+            <div className="rounded-xl bg-muted p-4">
               <p className="text-sm text-muted-foreground">학생</p>
               <p className="text-lg font-semibold text-foreground">{studentName}</p>
               <div className="mt-2 flex justify-between text-sm">
@@ -133,7 +133,7 @@ export function PaymentCancelModal({
                 value={cancelAmount}
                 onChange={setCancelAmount}
                 disabled={canceling}
-                className="rounded-lg py-3 text-lg font-semibold focus:ring-2 focus:ring-destructive"
+                className="h-12 text-lg font-bold tabular-nums"
               />
             </div>
 
@@ -149,7 +149,7 @@ export function PaymentCancelModal({
                   value={cancelDate}
                   onChange={(event) => setCancelDate(event.target.value)}
                   disabled={canceling}
-                  className="w-full rounded-lg border border-border bg-background py-3 pl-10 pr-4 focus:border-destructive focus:ring-2 focus:ring-destructive"
+                  className="h-12 w-full rounded-xl border border-transparent bg-muted pl-10 pr-4 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
                   required
                 />
               </div>

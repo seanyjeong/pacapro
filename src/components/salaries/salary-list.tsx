@@ -1,12 +1,13 @@
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Banknote, Eye, UserRound } from 'lucide-react';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/page';
 import type { Salary } from '@/lib/types/salary';
 import {
   formatSalaryAmount,
   formatYearMonth,
   formatDate,
-  getPaymentStatusColor,
-  getTaxTypeColor,
 } from '@/lib/utils/salary-helpers';
 import {
   TAX_TYPE_LABELS,
@@ -17,38 +18,52 @@ interface SalaryListProps {
   salaries: Salary[];
   loading?: boolean;
   onSalaryClick: (id: number) => void;
+  /** 표 카드 맨 위 한 줄(필터) */
+  toolbar?: ReactNode;
 }
 
-export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps) {
+const STATUS_BADGE: Record<string, BadgeProps['variant']> = {
+  paid: 'success',
+  pending: 'warning',
+};
+
+function StatusBadge({ status }: { status: Salary['payment_status'] }) {
+  return <Badge variant={STATUS_BADGE[status] ?? 'secondary'}>{PAYMENT_STATUS_LABELS[status]}</Badge>;
+}
+
+export function SalaryList({ salaries, loading, onSalaryClick, toolbar }: SalaryListProps) {
+  return (
+    <section className="min-w-0 rounded-2xl bg-card" aria-label={loading ? '급여 내역 로딩' : '급여 내역'}>
+      {toolbar ? <div className="border-b border-border/60 p-4 sm:px-6">{toolbar}</div> : null}
+      <SalaryListBody salaries={salaries} loading={loading} onSalaryClick={onSalaryClick} />
+    </section>
+  );
+}
+
+function SalaryListBody({ salaries, loading, onSalaryClick }: Omit<SalaryListProps, 'toolbar'>) {
   if (loading) {
     return (
-      <section className="rounded-md border border-border bg-card shadow-none" aria-label="급여 내역 로딩">
-        <div className="space-y-3 p-5">
-          <div className="h-10 w-full rounded-md bg-muted" />
-          <div className="h-10 w-full rounded-md bg-muted/70" />
-          <div className="h-10 w-full rounded-md bg-muted/50" />
-        </div>
-      </section>
+      <div className="space-y-3 p-5 sm:p-6">
+        <div className="h-12 w-full rounded-xl bg-muted" />
+        <div className="h-12 w-full rounded-xl bg-muted/70" />
+        <div className="h-12 w-full rounded-xl bg-muted/50" />
+      </div>
     );
   }
 
   if (salaries.length === 0) {
     return (
-      <section className="rounded-md border border-border bg-card p-12 text-center shadow-none">
-        <Banknote className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-        <h2 className="mb-2 text-lg font-semibold text-foreground">급여 내역이 없습니다</h2>
-        <p className="text-sm text-muted-foreground">필터를 변경하거나 새로고침 후 다시 확인해주세요.</p>
-      </section>
+      <EmptyState
+        icon={Banknote}
+        title="급여 내역이 없습니다"
+        description="필터를 바꾸거나 새로고침 후 다시 확인해 주세요."
+      />
     );
   }
 
   return (
-    <section className="rounded-md border border-border bg-card shadow-none" aria-label="급여 내역">
-      <div className="border-b border-border/70 px-5 py-4">
-        <h2 className="text-sm font-medium text-foreground">급여 내역</h2>
-      </div>
-
-      <div className="space-y-3 p-3 2xl:hidden">
+    <>
+      <div className="divide-y divide-border/60 px-4 xl:hidden">
         {salaries.map((salary) => {
           const grossAmount = salary.base_amount + salary.incentive_amount;
           const deductionAmount = salary.tax_amount + salary.total_deduction;
@@ -56,44 +71,34 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
             <article
               key={salary.id}
               aria-label={`${salary.instructor_name} 급여 내역`}
-              className="rounded-md border border-border bg-background p-4 text-left transition-colors hover:bg-muted/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+              className="py-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-foreground">{salary.instructor_name}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{formatYearMonth(salary.year_month)}</p>
+                  <p className="truncate text-[15px] font-bold text-foreground">{salary.instructor_name}</p>
+                  <p className="mt-0.5 text-[13px] text-muted-foreground">
+                    {formatYearMonth(salary.year_month)}
+                    {salary.payment_date ? ` · 지급일 ${formatDate(salary.payment_date)}` : ''}
+                  </p>
                 </div>
-                <span className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${getPaymentStatusColor(salary.payment_status)}`}>
-                  {PAYMENT_STATUS_LABELS[salary.payment_status]}
-                </span>
+                <StatusBadge status={salary.payment_status} />
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">총액</p>
-                  <p className="mt-1 font-medium text-foreground">{formatSalaryAmount(grossAmount)}</p>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <div className="min-w-0 text-[13px] text-muted-foreground">
+                  <p>
+                    총액 <span className="font-semibold tabular-nums text-foreground">{formatSalaryAmount(grossAmount)}</span>
+                  </p>
+                  <div className="mt-0.5">
+                    공제 <span className="font-semibold tabular-nums text-destructive">-{formatSalaryAmount(deductionAmount)}</span>
+                    <Badge variant="secondary" className="ml-1.5 align-middle">{TAX_TYPE_LABELS[salary.tax_type]}</Badge>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">공제</p>
-                  <p className="mt-1 text-destructive">-{formatSalaryAmount(deductionAmount)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">실수령액</p>
-                  <p className="mt-1 text-base font-semibold text-foreground">{formatSalaryAmount(salary.net_salary)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">과세</p>
-                  <span className={`mt-1 inline-flex rounded border px-2 py-0.5 text-xs ${getTaxTypeColor(salary.tax_type)}`}>
-                    {TAX_TYPE_LABELS[salary.tax_type]}
-                  </span>
+                <div className="shrink-0 text-right">
+                  <p className="text-[12px] font-medium text-muted-foreground">실수령액</p>
+                  <p className="text-[19px] font-extrabold tabular-nums text-foreground">{formatSalaryAmount(salary.net_salary)}</p>
                 </div>
               </div>
-
-              {salary.payment_date ? (
-                <p className="mt-4 rounded-md bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
-                  지급일 {formatDate(salary.payment_date)}
-                </p>
-              ) : null}
 
               <SalaryActions salary={salary} onSalaryClick={onSalaryClick} mobile />
             </article>
@@ -101,59 +106,51 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
         })}
       </div>
 
-      <div className="hidden overflow-x-auto 2xl:block">
-        <table className="w-full min-w-[920px] text-sm">
-          <thead className="border-b border-border bg-muted/40">
-            <tr>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">강사</th>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">급여월</th>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">금액</th>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">공제</th>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">실수령액</th>
-              <th className="px-5 py-3 text-left font-medium text-muted-foreground">상태</th>
-              <th className="px-5 py-3 text-right font-medium text-muted-foreground">작업</th>
+      <div className="hidden overflow-x-auto px-2 pb-2 xl:block">
+        <table className="w-full min-w-[920px] text-[15px]">
+          <thead>
+            <tr className="border-b border-border/60 text-[13px] font-semibold text-muted-foreground">
+              <th className="px-4 py-3 text-left font-semibold">강사</th>
+              <th className="px-4 py-3 text-left font-semibold">급여월</th>
+              <th className="px-4 py-3 text-right font-semibold">금액</th>
+              <th className="px-4 py-3 text-right font-semibold">공제</th>
+              <th className="px-4 py-3 text-right font-semibold">실수령액</th>
+              <th className="px-4 py-3 text-left font-semibold">상태</th>
+              <th className="px-4 py-3 text-right font-semibold">작업</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody>
             {salaries.map((salary) => (
               <tr
                 key={salary.id}
-                className="transition-colors hover:bg-muted/35"
+                className="border-b border-border/60 transition-colors last:border-b-0 hover:bg-muted/50"
               >
-                <td className="whitespace-nowrap px-5 py-4">
-                  <div className="font-medium text-foreground">{salary.instructor_name}</div>
+                <td className="whitespace-nowrap px-4 py-3.5">
+                  <div className="font-semibold text-foreground">{salary.instructor_name}</div>
                 </td>
-                <td className="whitespace-nowrap px-5 py-4">
-                  <div className="text-foreground">{formatYearMonth(salary.year_month)}</div>
+                <td className="whitespace-nowrap px-4 py-3.5 text-secondary-foreground">
+                  {formatYearMonth(salary.year_month)}
                 </td>
-                <td className="whitespace-nowrap px-5 py-4">
-                  <div>
-                    <div className="font-semibold text-foreground">{formatSalaryAmount(salary.base_amount + salary.incentive_amount)}</div>
-                    {salary.incentive_amount > 0 && (
-                      <div className="text-xs text-primary">인센티브: +{formatSalaryAmount(salary.incentive_amount)}</div>
-                    )}
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-5 py-4">
-                  <div>
-                    <div className="text-destructive">-{formatSalaryAmount(salary.tax_amount + salary.total_deduction)}</div>
-                    <span className={`rounded border px-2 py-0.5 text-xs ${getTaxTypeColor(salary.tax_type)}`}>
-                      {TAX_TYPE_LABELS[salary.tax_type]}
-                    </span>
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-5 py-4">
-                  <div className="text-lg font-bold text-foreground">{formatSalaryAmount(salary.net_salary)}</div>
-                  {salary.payment_date && (
-                    <div className="text-xs text-success">지급: {formatDate(salary.payment_date)}</div>
+                <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                  <div className="font-bold tabular-nums text-foreground">{formatSalaryAmount(salary.base_amount + salary.incentive_amount)}</div>
+                  {salary.incentive_amount > 0 && (
+                    <div className="text-[13px] tabular-nums text-primary">인센티브 +{formatSalaryAmount(salary.incentive_amount)}</div>
                   )}
                 </td>
-                <td className="whitespace-nowrap px-5 py-4">
-                  <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getPaymentStatusColor(salary.payment_status)}`}>
-                    {PAYMENT_STATUS_LABELS[salary.payment_status]}
-                  </span>
+                <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                  <div className="font-bold tabular-nums text-destructive">-{formatSalaryAmount(salary.tax_amount + salary.total_deduction)}</div>
+                  <Badge variant="secondary" className="mt-0.5">{TAX_TYPE_LABELS[salary.tax_type]}</Badge>
                 </td>
-                <td className="whitespace-nowrap px-5 py-4 text-right">
+                <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                  <div className="text-[17px] font-extrabold tabular-nums text-foreground">{formatSalaryAmount(salary.net_salary)}</div>
+                  {salary.payment_date && (
+                    <div className="text-[13px] text-success">지급 {formatDate(salary.payment_date)}</div>
+                  )}
+                </td>
+                <td className="whitespace-nowrap px-4 py-3.5">
+                  <StatusBadge status={salary.payment_status} />
+                </td>
+                <td className="whitespace-nowrap px-4 py-3.5 text-right">
                   <SalaryActions salary={salary} onSalaryClick={onSalaryClick} />
                 </td>
               </tr>
@@ -161,7 +158,7 @@ export function SalaryList({ salaries, loading, onSalaryClick }: SalaryListProps
           </tbody>
         </table>
       </div>
-    </section>
+    </>
   );
 }
 
@@ -175,26 +172,28 @@ function SalaryActions({
   mobile?: boolean;
 }) {
   const className = mobile
-    ? 'mt-4 grid grid-cols-2 gap-2'
-    : 'inline-flex items-center justify-end gap-2';
+    ? 'mt-3 grid grid-cols-2 gap-2'
+    : 'inline-flex items-center justify-end gap-1.5';
+  const buttonClass =
+    'inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-secondary px-3 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-secondary/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring/20';
 
   return (
     <div className={className}>
       <button
         aria-label={`${salary.instructor_name} 급여 명세서 보기`}
-        className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        className={buttonClass}
         type="button"
         onClick={() => onSalaryClick(salary.id)}
       >
-        <Eye className="h-3.5 w-3.5" />
+        <Eye className="h-4 w-4" />
         명세서
       </button>
       <Link
         aria-label={`${salary.instructor_name} 강사 상세 보기`}
-        className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+        className={buttonClass}
         href={`/instructors/${salary.instructor_id}`}
       >
-        <UserRound className="h-3.5 w-3.5" />
+        <UserRound className="h-4 w-4" />
         강사
       </Link>
     </div>
