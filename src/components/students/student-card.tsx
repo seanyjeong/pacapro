@@ -29,8 +29,8 @@ export function StudentCard({ student }: StudentCardProps) {
           {student.notes ? (
             <DetailRow className="sm:col-span-2 xl:col-span-1" label="비고" value={student.notes} />
           ) : null}
-          <StudentMemoDetail memo={student.memo} />
         </div>
+        <StudentMemoDetail memo={student.memo} />
       </div>
     </SectionCard>
   );

@@ -43,7 +43,7 @@ export function StudentSeasonHistoryCard({
 
   return (
     <Card>
-      <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <CardHeader className="gap-3 px-0 pt-0 sm:flex-row sm:items-center sm:justify-between sm:px-0 sm:pt-0">
         <div>
           <CardTitle className="flex items-center text-lg">
             <Trophy className="mr-2 h-5 w-5" />
@@ -60,7 +60,7 @@ export function StudentSeasonHistoryCard({
           </Button>
         ) : null}
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0 sm:px-0">
         {enrollments.length === 0 ? (
           <EmptySeasonState canEnroll={hasAvailableSeason} onOpenEnroll={onOpenEnroll} />
         ) : (

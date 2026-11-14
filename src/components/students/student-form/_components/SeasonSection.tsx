@@ -24,7 +24,7 @@ export function SeasonSection({
   if (!isSeasonTarget || mode !== 'create' || isTrial) return null;
 
   return (
-    <Card className="rounded-md shadow-none">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
           <Trophy className="w-5 h-5 mr-2 text-warning" />
@@ -47,7 +47,7 @@ export function SeasonSection({
                   setEnrollInSeason(e.target.checked);
                   if (!e.target.checked) setSelectedSeasonId(null);
                 }}
-                className="w-4 h-4 text-primary-600 border-border rounded focus:ring-primary-500" />
+                className="h-4 w-4 accent-primary" />
               <label htmlFor="enrollInSeason" className="text-sm font-medium text-foreground">
                 시즌에 함께 등록하기
               </label>
@@ -59,7 +59,7 @@ export function SeasonSection({
                   <label className="block text-sm font-medium text-foreground mb-1">등록할 시즌 선택</label>
                   <select value={selectedSeasonId || ''}
                     onChange={(e) => setSelectedSeasonId(e.target.value ? parseInt(e.target.value) : null)}
-                    className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:ring-primary-500 focus:border-primary-500">
+                    className="w-full min-h-11 rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10">
                     <option value="">시즌을 선택하세요</option>
                     {availableSeasons.map((season) => (
                       <option key={season.id} value={season.id}>
@@ -70,7 +70,7 @@ export function SeasonSection({
                 </div>
 
                 {selectedSeasonId && (
-                  <div className="bg-warning-soft border border-warning/30 rounded-md p-3 text-sm text-warning">
+                  <div className="rounded-xl bg-warning-soft p-3 text-sm text-warning">
                     <p>학생 등록 완료 후 시즌 등록 페이지에서 상세 설정이 가능합니다.</p>
                     <p className="mt-1 text-xs text-warning">
                       (등록일이 시즌 시작일 이후인 경우 시즌비가 자동으로 일할계산됩니다)

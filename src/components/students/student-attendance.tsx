@@ -119,7 +119,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
 
       {/* Calendar */}
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-0 sm:p-0">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
@@ -196,7 +196,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
       {/* Detailed list */}
       {data?.records && data.records.length > 0 && (
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-0 sm:p-0">
             <h4 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
               <CalendarDays className="w-4 h-4" />
               상세 기록

@@ -193,7 +193,7 @@ export function StudentPaymentsComponent({
       {/* 크레딧 섹션 */}
       {canUseCredit && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between px-0 pb-2 pt-0 sm:px-0 sm:pt-0">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Coins className="w-5 h-5 text-primary" />
@@ -236,7 +236,7 @@ export function StudentPaymentsComponent({
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 sm:px-0">
             {creditsLoading ? (
               <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
             ) : credits.length === 0 ? (

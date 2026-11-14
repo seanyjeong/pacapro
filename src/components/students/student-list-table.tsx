@@ -81,6 +81,14 @@ function isSortKey(value: string | undefined): value is SortKey {
   return SORT_KEYS.some((key) => key === value);
 }
 
+// 표 칸을 줄이려고 등록일은 2026.11.14 처럼 짧게(전체 날짜는 마우스를 올리면 보인다).
+function formatShortDate(value?: string | null): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return formatDate(value);
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+}
+
 export function compareText(a: string, b: string): number {
   return (a || '').localeCompare(b || '', 'ko', { sensitivity: 'base', numeric: true });
 }
@@ -116,7 +124,7 @@ export function SortHeader<K extends string>({
 
   return (
     <th
-      className={`whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground ${className}`}
+      className={`whitespace-nowrap px-2.5 py-3 text-left text-[13px] font-semibold text-muted-foreground ${className}`}
       aria-sort={ariaSort}
     >
       <button
@@ -190,8 +198,8 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
     return <EmptyState icon={Users} title="학생이 없어요" description="학생을 등록하면 여기에 보여요." />;
   }
 
-  const th = 'whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground';
-  const td = 'whitespace-nowrap px-3 py-3.5';
+  const th = 'whitespace-nowrap px-2.5 py-3 text-left text-[13px] font-semibold text-muted-foreground';
+  const td = 'whitespace-nowrap px-2.5 py-3.5';
 
   return (
     <div className="-mx-5 overflow-x-auto px-2 sm:-mx-6 sm:px-3">
@@ -329,22 +337,22 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
                   )}
                 </td>
 
-                <td className={`${td} text-sm tabular-nums text-muted-foreground`}>
-                  {formatDate(student.enrollment_date)}
+                <td className={`${td} text-sm tabular-nums text-muted-foreground`} title={formatDate(student.enrollment_date)}>
+                  {formatShortDate(student.enrollment_date)}
                 </td>
                 <td className={`${td} text-right`}>
                   <Button
                     type="button"
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
+                    size="icon-sm"
+                    title="상세"
                     aria-label={`${student.name} 상세 보기`}
                     onClick={(event) => {
                       event.stopPropagation();
                       onStudentClick(student.id);
                     }}
                   >
-                    상세
-                    <ChevronRight className="h-3.5 w-3.5" />
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </td>
               </tr>
