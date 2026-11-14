@@ -16,6 +16,7 @@ export interface PaymentSummary {
   paidCount: number;
   unpaidCount: number;
   partialCount: number;
+  unpaidNotifyCount: number;
   totalAmount: number;
   paidAmount: number;
   unpaidAmount: number;

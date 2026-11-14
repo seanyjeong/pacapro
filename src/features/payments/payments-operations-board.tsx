@@ -85,13 +85,13 @@ export function PaymentsOperationsBoard({
           <>
             <Button
               className="w-full justify-start gap-2"
-              disabled={sendingNotification || summary.unpaidCount === 0}
+              disabled={sendingNotification || summary.unpaidNotifyCount === 0}
               type="button"
               variant="outline"
               onClick={onSendUnpaid}
             >
               <Bell className="h-4 w-4" />
-              {sendingNotification ? '알림 발송 중' : `미납 알림 발송 (${summary.unpaidCount}명)`}
+              {sendingNotification ? '알림 발송 중' : `미납 알림 발송 (${summary.unpaidNotifyCount}명)`}
             </Button>
             <Button className="w-full justify-start gap-2" type="button" onClick={onAddPayment}>
               <Plus className="h-4 w-4" />

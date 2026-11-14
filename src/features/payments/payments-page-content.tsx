@@ -76,7 +76,7 @@ export function PaymentsPageContent() {
         viewOnly={viewOnly}
         canEdit={canEditPayments}
         sendingNotification={state.sendingNotification}
-        unpaidCount={state.summary.unpaidCount}
+        unpaidCount={state.summary.unpaidNotifyCount}
         onOpenCalculator={() => state.setCalculatorOpen(true)}
         onReload={state.reload}
         onSendUnpaid={() => setUnpaidDialogOpen(true)}
@@ -134,7 +134,7 @@ export function PaymentsPageContent() {
           <AlertDialogHeader>
             <AlertDialogTitle>미납 알림 발송</AlertDialogTitle>
             <AlertDialogDescription>
-              미납자 {state.summary.unpaidCount}명에게 알림톡을 발송할까요?
+              미납자 {state.summary.unpaidNotifyCount}명에게 알림톡을 발송할까요?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
