@@ -20,6 +20,8 @@ interface StudentFormProps {
   onSubmit: (data: StudentFormData, pendingPhotoFile?: File | null) => Promise<void>;
 }
 
+// 엑셀 가져오기 등으로 숫자만 저장된 번호를 서버 정규화와 같은 하이픈 형식으로 맞춰 수정 검증을 통과시킨다.
+const toHyphenPhone = (value: string) => value.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3');
 
 export function useStudentForm({ mode, initialData, initialIsTrial = false, onSubmit }: StudentFormProps) {
   const [submitting, setSubmitting] = useState(false);
@@ -70,8 +72,8 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     name: initialData?.name || '',
     gender: initialData?.gender || undefined,
     student_type: (initialData?.student_type || 'exam') as StudentType,
-    phone: initialData?.phone || '',
-    parent_phone: initialData?.parent_phone || '',
+    phone: toHyphenPhone(initialData?.phone || ''),
+    parent_phone: toHyphenPhone(initialData?.parent_phone || ''),
     father_name: initialData?.father_name || '',
     mother_name: initialData?.mother_name || '',
     father_phone: initialData?.father_phone || '',

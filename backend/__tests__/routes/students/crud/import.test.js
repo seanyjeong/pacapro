@@ -183,6 +183,25 @@ describe('POST /paca/students/import', () => {
         expect(insertCall[1]).toContain('중2');
     });
 
+    test('숫자만 있는 연락처는 학생 수정 화면과 같은 하이픈 형식으로 저장한다', async () => {
+        const buffer = await buildStudentWorkbook([
+            { name: '숫자번호', phone: '01000009007' },
+        ]);
+        pool.execute
+            .mockResolvedValueOnce([[{ student_number: '2026007' }]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([{ insertId: 104 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/students/import')
+            .set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            .send(Buffer.from(buffer));
+
+        expect(res.status).toBe(200);
+        const insertCall = pool.execute.mock.calls.find(([sql]) => /INSERT INTO students/.test(sql));
+        expect(insertCall[1]).toContain('enc_010-0000-9007');
+    });
+
     test('고3 선행반 행은 저장하지 않고 한국어 실패 사유를 반환한다', async () => {
         const buffer = await buildStudentWorkbook([
             { name: '고3생', phone: '010-7777-8888', grade: '고3', admissionType: '선행반' },

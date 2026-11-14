@@ -10,6 +10,7 @@ const {
     ADVANCE_ADMISSION_VALIDATION_MESSAGE,
     isAdvanceAdmissionAllowed,
 } = require('../../../constants/studentAdmissionTypes');
+const { STUDENT_PARENT_PHONE_DIGITS_PATTERN } = require('../../../constants/studentParentPhones');
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
@@ -107,6 +108,11 @@ function normalizeDate(value) {
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
 }
 
+// 학생 등록·수정 화면이 저장하는 010-1234-5678 형식으로 맞춘다. 숫자만 있는 셀(01012345678)도 같은 번호로 저장된다.
+function normalizePhone(value) {
+    return normalizeEmpty(value).replace(STUDENT_PARENT_PHONE_DIGITS_PATTERN, '$1-$2-$3');
+}
+
 function normalizeGender(value) {
     return GENDER_BY_LABEL[normalizeEmpty(value).toLowerCase()] || null;
 }
@@ -163,7 +169,7 @@ function extractWorkbookRows(workbook) {
         for (let rowNumber = header.rowNumber + 1; rowNumber <= sheet.rowCount; rowNumber++) {
             const row = sheet.getRow(rowNumber);
             const name = normalizeEmpty(getMappedCellText(row, header.headerMap, 'name'));
-            const phone = normalizeEmpty(getMappedCellText(row, header.headerMap, 'phone'));
+            const phone = normalizePhone(getMappedCellText(row, header.headerMap, 'phone'));
 
             if (!name && !phone) continue;
             if (/^총\s*\d+명?$/.test(name)) continue;
