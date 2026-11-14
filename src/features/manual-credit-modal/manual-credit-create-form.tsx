@@ -74,7 +74,7 @@ export function ManualCreditCreateForm({
   return (
     <form onSubmit={onSubmit}>
       <div className="py-6 px-6 space-y-4">
-        <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-1">
+        <div className="space-y-1 rounded-xl bg-muted p-3 text-sm">
           <div>월 수강료: <span className="font-medium">{monthlyTuition.toLocaleString()}원</span></div>
           <div>주당 횟수: <span className="font-medium">{weeklyCount}회</span> (월 {weeklyCount * 4}회)</div>
           <div>수업 요일: <span className="font-medium">{classDaysText}</span></div>
@@ -125,7 +125,7 @@ export function ManualCreditCreateForm({
             </div>
 
             {startDate && endDate && (
-              <div className="p-3 bg-primary-soft rounded-lg text-sm">
+              <div className="rounded-xl bg-primary-soft p-3 text-sm">
                 <div className="flex items-center gap-1 font-medium text-primary mb-1">
                   <Calculator className="w-4 h-4" />
                   계산 결과
@@ -170,7 +170,7 @@ export function ManualCreditCreateForm({
               <p className="text-xs text-muted-foreground">1~12 사이의 값을 입력하세요.</p>
             </div>
 
-            <div className="p-3 bg-primary-soft rounded-lg text-sm">
+            <div className="rounded-xl bg-primary-soft p-3 text-sm">
               <div className="flex items-center gap-1 font-medium text-primary mb-1">
                 <Calculator className="w-4 h-4" />
                 계산 결과
@@ -197,7 +197,7 @@ export function ManualCreditCreateForm({
             </div>
 
             {directAmount > 0 && (
-              <div className="p-3 bg-primary-soft rounded-lg text-sm">
+              <div className="rounded-xl bg-primary-soft p-3 text-sm">
                 <div className="flex items-center gap-1 font-medium text-primary mb-1">
                   <Banknote className="w-4 h-4" />
                   입력 금액

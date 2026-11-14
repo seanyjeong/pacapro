@@ -117,7 +117,7 @@ function CreditRow({
   onApply,
 }: CreditRowProps) {
   return (
-    <div className="p-3 border rounded-lg space-y-2">
+    <div className="space-y-2 rounded-xl bg-muted p-3">
       {editing ? (
         <div className="space-y-3">
           <div className="space-y-1">

@@ -135,7 +135,7 @@ export function EarlyPayModal({
             <Label htmlFor="early-pay-month">청구 월</Label>
             <select
               id="early-pay-month"
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
               value={yearMonth}
               onChange={(e) => setYearMonth(e.target.value)}
             >
@@ -147,7 +147,7 @@ export function EarlyPayModal({
             </select>
           </div>
 
-          <div className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+          <div className="rounded-xl bg-muted px-3 py-2 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">기본 학원비</span>
               <span>{monthlyTuition.toLocaleString()}원</span>
@@ -168,7 +168,7 @@ export function EarlyPayModal({
             <Label htmlFor="early-pay-method">납부 방법</Label>
             <select
               id="early-pay-method"
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
             >
