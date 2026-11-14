@@ -102,6 +102,21 @@ describe('수업일 즉시 변경', () => {
         expect(tuitionWritten()).toBe(expected);
     });
 
+    test.each([
+        ['개별', () => request(makeApp()).put('/paca/students/56/class-days').send({ class_days: [1, 4] }), true],
+        ['일괄', () => request(makeApp()).put('/paca/students/class-days/bulk').send({ students: [{ id: 56, class_days: [1, 4] }] }), false],
+    ])('%s 변경: 요일만 바뀌고 새 금액이 지금과 같으면 미납 청구(손으로 고친 것)를 건드리지 않는다', async (_label, send, single) => {
+        const row = { id: 56, class_days: '[3,6]', time_slot: 'evening', student_type: 'exam', monthly_tuition: '300000.00', class_tuition: null };
+        const settings = [[{ settings: academySettings }]];
+        if (single) db.query.mockResolvedValueOnce([[row]]).mockResolvedValueOnce(settings);
+        else db.query.mockResolvedValueOnce(settings).mockResolvedValueOnce([[row]]);
+        db.query.mockResolvedValue([{ affectedRows: 1 }]);
+
+        expect((await send()).status).toBe(200);
+        expect(tuitionWritten()).toBe(300000);
+        expect(billUpdate()).toBeUndefined();
+    });
+
     test('반 표에 그 횟수 금액이 없으면 학원비를 바꾸지 않는다', async () => {
         db.query
             .mockResolvedValueOnce([[{ id: 56, class_days: '[3]', time_slot: 'evening', student_type: 'exam', class_tuition: classTable }]])

@@ -5,6 +5,7 @@ const logger = require('../../utils/logger');
 const { parseClassDaysWithSlots, reassignStudentSchedules } = require('./_utils');
 const { resolveTuitionTable, weeklyTuitionAmount } = require('../../utils/tuitionSettings');
 const { pendingMonthlyTuitionUpdate } = require('../../repositories/pendingMonthlyTuitionRepository');
+const { sameDecimal } = require('../../utils/monthlyBillAmounts');
 
 module.exports = function(router) {
 
@@ -101,7 +102,7 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
             try {
                 // 반 학원비 표가 있으면 그 표, 없으면 학원 표로 계산한다.
                 const [rows] = await db.query(
-                    `SELECT s.class_days, s.time_slot, s.student_type, c.tuition_by_weekly AS class_tuition
+                    `SELECT s.class_days, s.time_slot, s.student_type, s.monthly_tuition, c.tuition_by_weekly AS class_tuition
                      FROM students s
                      LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
                      WHERE s.id = ? AND s.academy_id = ? AND s.deleted_at IS NULL`,
@@ -136,7 +137,8 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
                     );
 
                     // 학원비 변경 시 현재 월 이후 pending 결제 내역 자동 업데이트
-                    if (newTuition !== null) {
+                    // — 새 금액이 지금 금액과 같으면 건드리지 않는다(학생 수정과 같은 "실제로 바뀔 때만" 규칙)
+                    if (newTuition !== null && !sameDecimal(newTuition, rows[0].monthly_tuition)) {
                         try {
                             const [stRows] = await db.query(
                                 'SELECT discount_rate FROM students WHERE id = ?',
@@ -213,7 +215,7 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
     try {
         // 반 학원비 표가 있으면 그 표, 없으면 학원 표로 계산한다.
         const [students] = await db.query(
-            `SELECT s.id, s.class_days, s.time_slot, s.student_type, c.tuition_by_weekly AS class_tuition
+            `SELECT s.id, s.class_days, s.time_slot, s.student_type, s.monthly_tuition, c.tuition_by_weekly AS class_tuition
              FROM students s
              LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id
              WHERE s.id = ? AND s.academy_id = ? AND s.deleted_at IS NULL`,
@@ -273,7 +275,8 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
             );
 
             // 학원비 변경 시 현재 월 이후 pending 결제 내역 자동 업데이트
-            if (newTuition !== null) {
+            // — 새 금액이 지금 금액과 같으면 건드리지 않는다(학생 수정과 같은 "실제로 바뀔 때만" 규칙)
+            if (newTuition !== null && !sameDecimal(newTuition, students[0].monthly_tuition)) {
                 try {
                     const [stRows] = await db.query(
                         'SELECT discount_rate FROM students WHERE id = ?',
