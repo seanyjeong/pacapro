@@ -29,6 +29,9 @@ export interface Payment extends StudentParentNames {
   created_at: string;
   updated_at?: string;
   credit_balance?: number; // 학생의 남은 크레딧 잔액
+  carryover_amount?: number | string | null; // 이 청구에 이미 적용된 크레딧
+  separately_priced?: boolean; // 휴원·퇴원 정산 등으로 최종 금액을 따로 정한 청구(청구 조회 응답) — 기본·할인 금액 잠금
+  credit_amount?: number; // 이 청구에 이미 적용된 크레딧(청구 조회 응답)
 }
 
 // 미납 정보 (연체일수 포함)

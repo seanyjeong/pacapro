@@ -92,6 +92,16 @@ describe('GET /paca/payments/:id', () => {
         expect(params).toEqual([1, 5]);
     });
 
+    test('200: 편집 화면 미리보기용 separately_priced·credit_amount', async () => {
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 1, student_name: 'enc_홍', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 0, final_amount: '225000.00' }]])
+            .mockResolvedValueOnce([[{ id: 2, student_name: 'enc_홍', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 166500, final_amount: '283000.00' }]]);
+        const paused = await request(makeApp()).get('/paca/payments/1');
+        expect(paused.body.payment).toMatchObject({ separately_priced: true, credit_amount: 0 });
+        const monthly = await request(makeApp()).get('/paca/payments/2');
+        expect(monthly.body.payment).toMatchObject({ separately_priced: false, credit_amount: 166500 });
+    });
+
     test('404: 한국어 메시지', async () => {
         pool.execute.mockResolvedValueOnce([[]]);
         const res = await request(makeApp()).get('/paca/payments/999');
@@ -219,7 +229,9 @@ describe('PUT /paca/payments/:id', () => {
     });
 
     test('400: 수정 항목 없음', async () => {
-        pool.execute.mockResolvedValueOnce([[{ id: 1, academy_id: 5 }]]);
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 1, student_id: 7, academy_id: 5 }]])
+            .mockResolvedValueOnce([[{ base_amount: '100000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 0, final_amount: '100000.00' }]]);
         const res = await request(makeApp()).put('/paca/payments/1').send({});
         expect(res.status).toBe(400);
         expect(res.body.message).toBe('수정할 항목이 없습니다.');
@@ -319,15 +331,46 @@ describe('PUT /paca/payments/:id', () => {
         expect(await savedFinal(paused, { base_amount: 450000, discount_amount: 0, additional_amount: 10000 })).toBe(235000);
     });
 
+    test('400: 따로 정한 청구의 기본·할인 금액 변경은 막고 아무것도 쓰지 않는다(기본 금액을 225,000원으로 고치면 0원이 되던 것)', async () => {
+        const paused = { base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 0, final_amount: '225000.00' };
+        for (const body of [{ base_amount: 225000 }, { discount_amount: 1000, additional_amount: 0 }]) {
+            pool.execute.mockReset();
+            pool.execute
+                .mockResolvedValueOnce([[{ id: 820, student_id: 7, academy_id: 5 }]])
+                .mockResolvedValueOnce([[paused]]);
+            const res = await request(makeApp()).put('/paca/payments/820').send(body);
+            expect(res.status).toBe(400);
+            expect(res.body.message).toBe('휴원·퇴원 정산 등으로 금액이 따로 정해진 청구는 기본·할인 금액을 바꿀 수 없습니다. 추가 금액으로 조정해 주세요.');
+            expect(pool.execute.mock.calls.some(([sql]) => /UPDATE student_payments/.test(sql))).toBe(false);
+        }
+    });
+
+    test('학생 → 청구 순서로 잠그고 같은 트랜잭션에서 읽고 쓴다', async () => {
+        const { lockStudentForBilling } = require('../../../repositories/studentBillingLock');
+        lockStudentForBilling.mockClear();
+        conn.commit.mockClear();
+        const monthly = { base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 0, final_amount: '450000.00' };
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 820, student_id: 7, academy_id: 5 }]])
+            .mockResolvedValueOnce([[monthly]])
+            .mockResolvedValueOnce([{ affectedRows: 1 }])
+            .mockResolvedValueOnce([[{ id: 820, student_name: 'enc_유' }]]);
+        await request(makeApp()).put('/paca/payments/820').send({ additional_amount: 10000 });
+        expect(lockStudentForBilling).toHaveBeenCalledWith(conn, 7, 5);
+        expect(pool.execute.mock.calls[1][0]).toMatch(/FROM student_payments WHERE id = \? FOR UPDATE/);
+        expect(conn.commit).toHaveBeenCalled();
+    });
+
     test('200: 단일 필드만 변경 시 final_amount 재계산 X', async () => {
         pool.execute
-            .mockResolvedValueOnce([[{ id: 1, academy_id: 5 }]])
+            .mockResolvedValueOnce([[{ id: 1, student_id: 7, academy_id: 5 }]])
+            .mockResolvedValueOnce([[{ base_amount: '100000.00', discount_amount: '0.00', additional_amount: '0.00', carryover_amount: 0, final_amount: '100000.00' }]])
             .mockResolvedValueOnce([{ affectedRows: 1 }])
             .mockResolvedValueOnce([[{ id: 1, student_name: 'enc_홍' }]]);
         await request(makeApp())
             .put('/paca/payments/1')
             .send({ description: '메모 변경' });
-        const updateCall = pool.execute.mock.calls[1];
+        const updateCall = pool.execute.mock.calls[2];
         expect(updateCall[0]).not.toContain('final_amount = ?');
         expect(updateCall[0]).toContain('description = ?');
     });

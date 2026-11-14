@@ -22,7 +22,10 @@ interface PaymentFormProps {
 
 export function PaymentForm({ mode, initialData, editingPayment, students, onSubmit, onCancel, loading }: PaymentFormProps) {
   const [formData, setFormData] = useState<PaymentFormData>(initialData || buildDefaultPaymentFormData());
-  const finalAmount = getFinalPaymentAmount(formData);
+  const editing = mode === 'edit' && editingPayment && initialData ? { payment: editingPayment, initial: initialData } : undefined;
+  const finalAmount = getFinalPaymentAmount(formData, editing);
+  // 휴원·퇴원 정산 등으로 최종 금액을 따로 정한 청구: 기본·할인 금액은 잠그고 추가 금액으로만 조정(서버도 막는다)
+  const amountLocked = Boolean(editing?.payment.separately_priced);
 
   const setField = <K extends keyof PaymentFormData>(key: K, value: PaymentFormData[K]) => {
     setFormData((previous) => ({ ...previous, [key]: value }));
@@ -36,7 +39,7 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
 
   const changePaymentType = (paymentType: PaymentFormData['payment_type']) => {
     const student = students.find((item) => item.id === formData.student_id);
-    const tuition = paymentType === 'monthly' ? getStudentTuitionValues(student) : {};
+    const tuition = paymentType === 'monthly' && !amountLocked ? getStudentTuitionValues(student) : {};
     setFormData((previous) => ({ ...previous, payment_type: paymentType, ...tuition }));
   };
 
@@ -52,7 +55,7 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
   return (
     <form onSubmit={submit} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
       <div className="min-w-0 lg:sticky lg:top-20 lg:order-2">
-        <PaymentFormSummary finalAmount={finalAmount} formData={formData} students={students} paymentContext={editingPayment} />
+        <PaymentFormSummary finalAmount={finalAmount} formData={formData} students={students} paymentContext={editingPayment} amountLocked={amountLocked} />
       </div>
 
       <div className="min-w-0 space-y-4 lg:order-1">
@@ -89,9 +92,15 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
 
         <section className="rounded-2xl bg-card">
           <SectionHeader title="금액" />
+          {amountLocked ? (
+            <p className="mx-5 mb-3 break-keep rounded-xl bg-warning/10 px-4 py-3 text-[13px] leading-relaxed text-foreground sm:mx-6" data-testid="payment-amount-locked">
+              휴원·퇴원 정산 등으로 금액이 따로 정해진 청구예요. 기본·할인 금액은 바꿀 수 없어요.
+              금액을 바꾸려면 추가 금액을 쓰세요 — 바꾼 만큼 지금 청구 금액에 더하거나 빠져요.
+            </p>
+          ) : null}
           <div className="grid gap-4 px-5 pb-5 sm:grid-cols-3 sm:px-6">
-            <MoneyField label="기본 금액" value={formData.base_amount} onChange={(value) => setField('base_amount', value)} required />
-            <MoneyField label="할인 금액" value={formData.discount_amount} onChange={(value) => setField('discount_amount', value)} />
+            <MoneyField label="기본 금액" value={formData.base_amount} onChange={(value) => setField('base_amount', value)} required disabled={amountLocked} />
+            <MoneyField label="할인 금액" value={formData.discount_amount} onChange={(value) => setField('discount_amount', value)} disabled={amountLocked} />
             <MoneyField label="추가 금액" value={formData.additional_amount} onChange={(value) => setField('additional_amount', value)} />
           </div>
         </section>
@@ -136,10 +145,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function MoneyField({ label, value, onChange, required = false }: { label: string; value?: number; onChange: (value: number) => void; required?: boolean }) {
+function MoneyField({ label, value, onChange, required = false, disabled = false }: { label: string; value?: number; onChange: (value: number) => void; required?: boolean; disabled?: boolean }) {
   return (
     <Field label={label}>
-      <MoneyInput value={value} onChange={onChange} required={required} className="text-[15px] font-semibold tabular-nums" />
+      <MoneyInput value={value} onChange={onChange} required={required} disabled={disabled} className="text-[15px] font-semibold tabular-nums disabled:cursor-not-allowed disabled:opacity-60" />
     </Field>
   );
 }

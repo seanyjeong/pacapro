@@ -34,10 +34,18 @@
  */
 
 const { pool, decryptStudentName, logger } = require('./_utils');
-const { billFinalAmount, billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
+const { billFinalAmount, billFinalAfterChange, hasSeparateFinal, sameDecimal } = require('../../utils/monthlyBillAmounts');
 const { verifyToken, requireRole, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql } = require('../../utils/paymentAmountSql');
 const { lockStudentForBilling } = require('../../repositories/studentBillingLock');
+
+// 청구 수정 화면이 서버와 같은 식으로 미리 보도록 내려 주는 값:
+// separately_priced — 휴원·퇴원 정산 등으로 최종 금액을 따로 정한 청구(기본·할인 금액 잠금), credit_amount — 이미 적용된 크레딧
+function withBillFlags(payment) {
+    return { ...payment, separately_priced: hasSeparateFinal(payment), credit_amount: Number(payment.carryover_amount) || 0 };
+}
+
+const SEPARATELY_PRICED_MESSAGE = '휴원·퇴원 정산 등으로 금액이 따로 정해진 청구는 기본·할인 금액을 바꿀 수 없습니다. 추가 금액으로 조정해 주세요.';
 
 module.exports = function(router) {
 
@@ -74,7 +82,7 @@ router.get('/:id', verifyToken, checkPermission('payments', 'view'), async (req,
         }
 
         res.json({
-            payment: decryptStudentName(payments[0])
+            payment: withBillFlags(decryptStudentName(payments[0]))
         });
     } catch (error) {
         logger.error('Error fetching payment:', error);
@@ -229,10 +237,15 @@ router.post('/', verifyToken, checkPermission('payments', 'edit'), async (req, r
 router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req, res) => {
     const paymentId = parseInt(req.params.id);
 
+    // 한 트랜잭션: 학생 → 청구 순서로 잠그고(다른 청구 경로와 같은 순서, repositories/studentBillingLock) 같은 트랜잭션에서 읽고 쓴다
+    const conn = await pool.getConnection();
+    let committed = false;
     try {
+        await conn.beginTransaction();
+
         // Verify payment exists and belongs to this academy
-        const [payments] = await pool.execute(
-            `SELECT p.id, s.academy_id
+        const [payments] = await conn.execute(
+            `SELECT p.id, p.student_id, s.academy_id
             FROM student_payments p
             JOIN students s ON p.student_id = s.id
             WHERE p.id = ?`,
@@ -253,6 +266,12 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             });
         }
 
+        await lockStudentForBilling(conn, payments[0].student_id, req.user.academyId);
+        const [[current]] = await conn.execute(
+            'SELECT base_amount, discount_amount, additional_amount, carryover_amount, final_amount FROM student_payments WHERE id = ? FOR UPDATE',
+            [paymentId]
+        );
+
         const {
             payment_type,
             base_amount,
@@ -266,6 +285,13 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             description,
             notes
         } = req.body;
+
+        // 휴원·퇴원 정산 등으로 최종 금액을 따로 정한 청구는 기본·할인 금액을 바꿀 수 없다(화면은 칸을 잠근다, 화면을 거치지 않은 요청도 막는다).
+        // 기본 금액을 줄인 금액으로 고치면 '바꾼 차이만큼' 식으로 0원이 될 수 있었다. 추가 금액은 바꾼 차이만큼 움직인다.
+        const changes = key => req.body[key] !== undefined && !sameDecimal(req.body[key], current[key]);
+        if (hasSeparateFinal(current) && (changes('base_amount') || changes('discount_amount'))) {
+            return res.status(400).json({ error: 'Validation Error', message: SEPARATELY_PRICED_MESSAGE });
+        }
 
         // Build update query dynamically
         const updates = [];
@@ -290,17 +316,11 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
 
         // Recalculate final_amount if any amount fields changed
         if (base_amount !== undefined || discount_amount !== undefined || additional_amount !== undefined) {
-            const [current] = await pool.execute(
-                'SELECT base_amount, discount_amount, additional_amount, carryover_amount, final_amount FROM student_payments WHERE id = ?',
-                [paymentId]
-            );
-
             // 월 청구와 같은 식: 천원 절삭(청구 대상 금액 − 이미 적용된 크레딧), 0 미만이면 0 (utils/monthlyBillAmounts)
             // - 보통 청구: 청구 대상 = 학원비 − 할인액 + 추가 (예전엔 천원 절삭 뒤 크레딧을 빼 월 청구와 최대 999원 달랐다)
-            // - 휴원·퇴원·복귀로 최종 금액만 줄인 청구: 줄인 금액에서 바꾼 칸의 차이만큼만 더하고 뺀다
-            //   (화면은 저장할 때마다 학원비를 같이 보내, 예전엔 메모만 고쳐도 정액으로 돌아갔다)
+            // - 휴원·퇴원·복귀로 최종 금액만 줄인 청구: 줄인 금액에서 바꾼 추가 금액 차이만큼만 더하고 뺀다
             // - 금액 칸이 그대로면 최종 금액도 그대로
-            const finalAmount = billFinalAfterChange(current[0], { base_amount, discount_amount, additional_amount });
+            const finalAmount = billFinalAfterChange(current, { base_amount, discount_amount, additional_amount });
             updates.push('final_amount = ?');
             params.push(finalAmount);
         }
@@ -344,10 +364,12 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
         updates.push('updated_at = NOW()');
         params.push(paymentId);
 
-        await pool.execute(
+        await conn.execute(
             `UPDATE student_payments SET ${updates.join(', ')} WHERE id = ?`,
             params
         );
+        await conn.commit();
+        committed = true;
 
         // Fetch updated payment
         const [updated] = await pool.execute(
@@ -365,7 +387,7 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
 
         res.json({
             message: '납부 내역이 수정되었습니다.',
-            payment: decryptStudentName(updated[0])
+            payment: withBillFlags(decryptStudentName(updated[0]))
         });
     } catch (error) {
         logger.error('Error updating payment:', error);
@@ -373,6 +395,9 @@ router.put('/:id', verifyToken, checkPermission('payments', 'edit'), async (req,
             error: 'Server Error',
             message: '납부 내역 수정에 실패했습니다.'
         });
+    } finally {
+        if (!committed) await conn.rollback().catch(error => logger.error('Payment update rollback failed:', error));
+        conn.release();
     }
 });
 

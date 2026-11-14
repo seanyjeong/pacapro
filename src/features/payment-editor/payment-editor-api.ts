@@ -40,7 +40,7 @@ export function createPaymentFromEditor(data: PaymentFormData): Promise<PaymentC
   return apiClient.post<PaymentCreateResponse>('/payments', data, SILENT_CONFIG);
 }
 
-export function updatePaymentFromEditor(id: number, data: PaymentFormData): Promise<PaymentUpdateResponse> {
+export function updatePaymentFromEditor(id: number, data: Partial<PaymentFormData>): Promise<PaymentUpdateResponse> {
   return apiClient.put<PaymentUpdateResponse>(`/payments/${id}`, data, SILENT_CONFIG);
 }
 

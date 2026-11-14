@@ -10,7 +10,8 @@ import {
   getPaymentFromEditorResponse,
   updatePaymentFromEditor,
 } from './payment-editor-api';
-import { ensurePaymentStudent } from './payment-editor-utils';
+import axios from 'axios';
+import { buildPaymentUpdate, ensurePaymentStudent, toPaymentFormData } from './payment-editor-utils';
 import type { PaymentEditorStateBase } from './payment-editor-types';
 
 const LOAD_ERROR_MESSAGE = '학원비 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
@@ -57,11 +58,15 @@ export function usePaymentEditState(paymentId: number): PaymentEditState {
   const submitPayment = async (data: PaymentFormData, onUpdated: () => void) => {
     setState((previous) => ({ ...previous, saving: true }));
     try {
-      await updatePaymentFromEditor(paymentId, data);
+      // 바꾸지 않은 금액 칸은 보내지 않는다(화면 표시용 내림 값이 '바뀐 것'으로 잡히지 않게)
+      await updatePaymentFromEditor(paymentId, state.payment ? buildPaymentUpdate(toPaymentFormData(state.payment), data) : data);
       toast.success('학원비가 수정되었습니다.');
       onUpdated();
-    } catch {
-      toast.error('학원비 수정을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } catch (err: unknown) {
+      // 400: 따로 정한 청구의 기본·할인 금액 변경 등 — 서버 안내 문구를 그대로 보여 준다
+      toast.error(axios.isAxiosError(err) && err.response?.status === 400 && err.response.data?.message
+        ? err.response.data.message
+        : '학원비 수정을 완료하지 못했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
       setState((previous) => ({ ...previous, saving: false }));
     }

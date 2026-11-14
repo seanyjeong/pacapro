@@ -552,6 +552,47 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         expect(await ledger()).toEqual([[m1, 300000, 290000, 'partial', 290000]]);
     });
 
+    test('청구 수정 화면: 따로 정한 청구의 기본 금액 변경 400·금액 그대로, 메모만 그대로, 추가 +10,000원은 그만큼, 보통 청구 크레딧 미리보기 = 저장', async () => {
+        const month = koreaMonth(2);
+        const days = new Date(Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0)).getUTCDate();
+        const { pause } = require('../../services/studentLifecycleBillingService');
+        const { billFinalAfterChange } = require('../../utils/monthlyBillAmounts');
+        const conn = await pool.getConnection();
+        await seed({ tuition: 450000, rate: 0, bills: false });
+        await pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type, base_amount, discount_amount,
+            additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status)
+            VALUES (1, 1, 1, ?, 'monthly', 450000, 0, 0, 0, 450000, 0, 0, ?, 'pending')`, [month, `${month}-05`]);
+        try { await conn.beginTransaction(); await pause(conn, { academyId: 1, studentId: 1, userId: 1, date: `${month}-16`, creditType: 'none' }); await conn.commit(); }
+        finally { conn.release(); }
+        const paused = floorRatio(450000, 15, days);
+        const final = async () => Number((await pool.query('SELECT final_amount FROM student_payments WHERE id = 1'))[0][0].final_amount);
+
+        const view = (await request(app()).get('/paca/payments/1')).body.payment;
+        expect([view.separately_priced, view.credit_amount, Number(view.final_amount)]).toEqual([true, 0, paused]);
+        // 기본 금액을 줄인 금액으로 고치면(예전엔 0원) 400, 금액 그대로
+        const blocked = await request(app()).put('/paca/payments/1').send({ base_amount: paused, discount_amount: 0, additional_amount: 0 });
+        expect(blocked.status).toBe(400);
+        expect(await final()).toBe(paused);
+        // 메모만(화면이 예전처럼 금액 칸을 같은 값으로 보내도) 그대로
+        expect((await request(app()).put('/paca/payments/1').send({ base_amount: 450000, discount_amount: 0, additional_amount: 0, notes: '메모' })).status).toBe(200);
+        expect(await final()).toBe(paused);
+        // 추가 +10,000원 → 그만큼 (화면 미리보기 함수 = 서버 함수, test/bill-amounts-parity.test.mjs)
+        const preview = billFinalAfterChange(view, { additional_amount: 10000 });
+        expect((await request(app()).put('/paca/payments/1').send({ additional_amount: 10000 })).status).toBe(200);
+        expect([preview, await final()]).toEqual([paused + 10000, paused + 10000]);
+
+        // 보통 청구 + 크레딧 166,500원: 미리보기(추가 10,000원) = 저장 금액 293,000원
+        await seed({ tuition: 450000, rate: 0, bills: false });
+        await pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type, base_amount, discount_amount,
+            additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status)
+            VALUES (1, 1, 1, ?, 'monthly', 450000, 0, 0, 166500, 283000, 0, 0, ?, 'pending')`, [month, `${month}-05`]);
+        const normal = (await request(app()).get('/paca/payments/1')).body.payment;
+        expect([normal.separately_priced, normal.credit_amount]).toEqual([false, 166500]);
+        const normalPreview = billFinalAfterChange(normal, { additional_amount: 10000 });
+        expect((await request(app()).put('/paca/payments/1').send({ additional_amount: 10000 })).status).toBe(200);
+        expect([normalPreview, await final()]).toEqual([293000, 293000]);
+    });
+
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {
         const [year, mon] = THIS_MONTH.split('-').map(Number);
         const pendingBill = (carryover, final) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,

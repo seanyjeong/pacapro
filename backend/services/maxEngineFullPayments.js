@@ -1,6 +1,6 @@
 const repo = require('../repositories/maxEngineFullCommandRepository');
 const { fail } = require('./maxEngineFullSecurity');
-const { billFinalAfterChange } = require('../utils/monthlyBillAmounts');
+const { billFinalAfterChange, hasSeparateFinal } = require('../utils/monthlyBillAmounts');
 
 function cents(value) {
   const text = String(value ?? '0');
@@ -22,6 +22,10 @@ const AMOUNT_FIELDS = ['base_amount', 'discount_amount', 'additional_amount', 'c
 function updated(changes, before) {
   if (['paid', 'cancelled'].includes(before.payment_status)) fail(409, 'PAYMENT_CLOSED', '완납 또는 취소된 청구는 청구액을 바꿀 수 없습니다.');
   if (['withdrawn', 'graduated'].includes(before.student_status)) fail(409, 'STUDENT_STATUS_CONFLICT', '퇴원·졸업 학생의 청구는 학생 정산 미리보기(preview_student_settlement)에서 조정해 주세요.');
+  // 휴원·퇴원 정산 등으로 최종 금액을 따로 정한 청구는 기본·할인 금액을 바꿀 수 없다(화면 청구 수정과 같음) — 추가 금액으로 조정
+  if (hasSeparateFinal(before) && ['base_amount', 'discount_amount'].some(key => changes[key] != null && cents(changes[key]) !== cents(before[key]))) {
+    fail(409, 'SEPARATELY_PRICED_BILL', '휴원·퇴원 정산 등으로 금액이 따로 정해진 청구는 기본·할인 금액을 바꿀 수 없습니다. 추가 금액으로 조정해 주세요.');
+  }
   const base = cents(changes.base_amount ?? before.base_amount), discount = cents(changes.discount_amount ?? before.discount_amount),
     additional = cents(changes.additional_amount ?? before.additional_amount), paid = cents(before.paid_amount);
   // 화면의 청구서 수정(PUT /paca/payments/:id)·월 청구와 같은 공통 함수: 천원 절삭(청구 대상 금액 − 크레딧), 0 미만은 0.

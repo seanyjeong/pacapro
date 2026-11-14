@@ -137,6 +137,6 @@ function monthlyBillAmounts(tuition, discountRate, additional = 0, carryover = 0
 }
 
 module.exports = {
-    monthlyBillAmounts, monthlyDiscountAmount, billFinalAmount, billFinalAfterChange, billCreditRoom, isSeparatelyPricedBill,
+    monthlyBillAmounts, monthlyDiscountAmount, billFinalAmount, billFinalAfterChange, billCreditRoom, hasSeparateFinal, isSeparatelyPricedBill,
     floorRatio, floorPercent, sameDecimal
 };

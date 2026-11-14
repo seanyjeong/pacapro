@@ -25,18 +25,6 @@ export function formatPaymentAmount(amount: number): string {
 }
 
 /**
- * 최종 금액 계산 (백원 단위 절삭)
- */
-export function calculateFinalAmount(
-  baseAmount: number,
-  discountAmount: number = 0,
-  additionalAmount: number = 0
-): number {
-  const result = baseAmount - discountAmount + additionalAmount;
-  return truncateToThousands(result);
-}
-
-/**
  * 연체일수 계산
  */
 export function calculateOverdueDays(dueDate: string): number {

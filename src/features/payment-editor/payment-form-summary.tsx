@@ -9,13 +9,15 @@ interface PaymentFormSummaryProps {
   formData: PaymentFormData;
   students: PaymentFormStudent[];
   paymentContext?: Payment;
+  amountLocked?: boolean;
 }
 
-export function PaymentFormSummary({ finalAmount, formData, students, paymentContext }: PaymentFormSummaryProps) {
+export function PaymentFormSummary({ finalAmount, formData, students, paymentContext, amountLocked = false }: PaymentFormSummaryProps) {
   const student = students.find((item) => item.id === formData.student_id);
   const baseAmount = formData.base_amount || 0;
   const discountAmount = formData.discount_amount || 0;
   const additionalAmount = formData.additional_amount || 0;
+  const creditAmount = Number(paymentContext?.credit_amount) || 0;
   const settledAmount = getSettledAmount(paymentContext);
   const currentRemainingAmount = paymentContext ? getRemainingPaymentAmount(paymentContext) : 0;
   const nextRemainingAmount = paymentContext ? Math.max(finalAmount - settledAmount, 0) : 0;
@@ -51,7 +53,9 @@ export function PaymentFormSummary({ finalAmount, formData, students, paymentCon
         </div>
         <p className="mt-1 text-[28px] font-extrabold leading-tight tracking-tight text-primary tabular-nums">{formatWon(finalAmount)}</p>
         <p className="mt-1 break-keep text-[13px] text-primary/80 tabular-nums">
-          기본 {formatWon(baseAmount)} - 할인 {formatWon(discountAmount)} + 추가 {formatWon(additionalAmount)}
+          {amountLocked && paymentContext
+            ? `정해진 청구 ${formatWon(Number(paymentContext.final_amount) || 0)} 기준, 추가 금액 바꾼 만큼 더하고 빼요`
+            : `기본 ${formatWon(baseAmount)} - 할인 ${formatWon(discountAmount)} + 추가 ${formatWon(additionalAmount)}${creditAmount > 0 ? ` - 크레딧 ${formatWon(creditAmount)}` : ''} (천원 절삭)`}
         </p>
       </div>
 

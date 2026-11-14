@@ -1,5 +1,6 @@
 import type { Payment, PaymentFormData } from '@/lib/types/payment';
-import { calculateFinalAmount, getCurrentYearMonth, getNextDueDate } from '@/lib/utils/payment-helpers';
+import { billFinalAfterChange, billFinalAmount } from '@/lib/utils/bill-amounts';
+import { getCurrentYearMonth, getNextDueDate } from '@/lib/utils/payment-helpers';
 import type { PaymentFormStudent } from './payment-editor-types';
 
 export function buildDefaultPaymentFormData(): PaymentFormData {
@@ -42,8 +43,24 @@ export function getStudentTuitionValues(student: PaymentFormStudent | undefined)
   return { base_amount: baseAmount, discount_amount: discountAmount };
 }
 
-export function getFinalPaymentAmount(data: PaymentFormData) {
-  return calculateFinalAmount(data.base_amount, data.discount_amount, data.additional_amount);
+const AMOUNT_FIELDS = ['base_amount', 'discount_amount', 'additional_amount'] as const;
+
+/** 화면에서 실제로 바꾼 금액 칸만 — 바꾸지 않은 칸은 보내지 않아(서버 원래 값 그대로) '바뀐 것'으로 잡히지 않는다 */
+export function getChangedAmountFields(initial: PaymentFormData, data: PaymentFormData) {
+  return Object.fromEntries(AMOUNT_FIELDS.filter((key) => (data[key] || 0) !== (initial[key] || 0)).map((key) => [key, data[key] || 0]));
+}
+
+/** 청구 수정 저장 내용: 바꾸지 않은 금액 칸은 빼고 보낸다 */
+export function buildPaymentUpdate(initial: PaymentFormData, data: PaymentFormData): Partial<PaymentFormData> {
+  const payload: Partial<PaymentFormData> = { ...data };
+  for (const key of AMOUNT_FIELDS) delete payload[key];
+  return { ...payload, ...getChangedAmountFields(initial, data) };
+}
+
+/** 최종 청구 금액 미리보기 — 서버와 같은 식(크레딧 빼고 천원 절삭, 따로 정한 청구는 그 금액 기준) */
+export function getFinalPaymentAmount(data: PaymentFormData, editing?: { payment: Payment; initial: PaymentFormData }) {
+  if (editing) return billFinalAfterChange(editing.payment, getChangedAmountFields(editing.initial, data));
+  return billFinalAmount(data.base_amount, data.discount_amount, data.additional_amount);
 }
 
 export function ensurePaymentStudent(students: PaymentFormStudent[], payment: Payment) {

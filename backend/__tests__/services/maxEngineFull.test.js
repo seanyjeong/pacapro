@@ -76,13 +76,16 @@ test('payment_update recalculates final amount like the payment screen and guard
  const cut=payments.updated({discount_amount:'50500',notes:'형제 할인'},before);
  expect(cut).toMatchObject({base_amount:'300000.00',discount_amount:'50500.00',final_amount:'239000.00',payment_status:'pending'});
  expect(cut.notes).toBe('prior\n청구액 수정: 290000.00 → 239000.00 (형제 할인)');
- expect(payments.updated({base_amount:'5000',notes:'x'},{...before,carryover_amount:20000}).final_amount).toBe('0.00');
+ expect(payments.updated({base_amount:'5000',notes:'x'},{...before,carryover_amount:20000,final_amount:'280000.00'}).final_amount).toBe('0.00');
  // 월 청구와 같은 식: 크레딧을 빼고 천원 절삭 (450,000 − 166,500 = 283,500 → 283,000)
  expect(payments.updated({base_amount:'450000',notes:'x'},{...before,carryover_amount:'166500.00',final_amount:'133000.00'}).final_amount).toBe('283000.00');
  // 휴원 정산으로 최종 금액만 줄인 청구(학원비 450,000원 → 225,000원): 정액으로 돌아가지 않고 바꾼 칸 차이만큼만
  const paused={...before,base_amount:'450000.00',carryover_amount:0,final_amount:'225000.00'};
  expect(payments.updated({base_amount:'450000',notes:'x'},paused).final_amount).toBe('225000.00');
  expect(payments.updated({additional_amount:'10000',notes:'x'},paused).final_amount).toBe('235000.00');
+ // 따로 정한 청구의 기본·할인 금액 변경은 막는다(기본 금액을 225,000원으로 고치면 0원이 되던 것)
+ expect(()=>payments.updated({base_amount:'225000',notes:'x'},paused)).toThrow(expect.objectContaining({ code:'SEPARATELY_PRICED_BILL' }));
+ expect(()=>payments.updated({discount_amount:'1000',notes:'x'},paused)).toThrow(expect.objectContaining({ code:'SEPARATELY_PRICED_BILL' }));
  const partial={...before,paid_amount:'100000.00',payment_status:'partial'};
  expect(payments.updated({base_amount:'200000',notes:'x'},partial).payment_status).toBe('partial');
  expect(payments.updated({base_amount:'110000',notes:'x'},partial)).toMatchObject({final_amount:'100000.00',payment_status:'paid'});
