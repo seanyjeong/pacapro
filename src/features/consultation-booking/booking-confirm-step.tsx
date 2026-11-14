@@ -1,8 +1,9 @@
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { Loader2 } from 'lucide-react';
+import { CalendarCheck2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { ConsultationFormData } from '@/lib/types/consultation';
+import { BookingActionBar, BookingCard } from './booking-ui';
 
 interface BookingConfirmStepProps {
   error: string | null;
@@ -24,66 +25,76 @@ export function BookingConfirmStep({
   submitting,
 }: BookingConfirmStepProps) {
   return (
-    <section className="rounded-md border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold text-foreground">신청 내용 확인</h2>
-      </div>
-      <div className="space-y-4 p-4">
-        {error && (
-          <div className="rounded-md border border-destructive/30 bg-destructive-soft px-4 py-3 text-sm font-medium text-destructive">
-            {error}
-          </div>
-        )}
-
-        <div className="rounded-md border border-primary/30 bg-primary-soft p-4">
-          <p className="text-xs font-medium text-primary">상담 일정</p>
-          <p className="mt-1 text-sm font-semibold text-primary">
+    <div className="space-y-4">
+      <section className="flex items-center gap-4 rounded-2xl bg-primary-soft p-5">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-card text-primary">
+          <CalendarCheck2 className="h-6 w-6" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[13px] font-semibold text-primary">상담 일정</p>
+          <p className="mt-0.5 text-lg font-extrabold tracking-tight text-foreground tabular-nums">
             {format(selectedDate, 'yyyy년 M월 d일 (EEEE)', { locale: ko })} {selectedTime}
           </p>
         </div>
+      </section>
 
-        <div className="grid grid-cols-2 gap-3 text-sm">
+      <BookingCard title="신청 내용 확인">
+        <dl className="divide-y divide-border/60">
           <SummaryItem label="이름" value={formData.studentName} />
           <SummaryItem label="연락처" value={formData.studentPhone || ''} />
           <SummaryItem label="학년" value={formData.studentGrade || ''} />
           <SummaryItem label="학교" value={formData.studentSchool || ''} />
           <SummaryItem label="내신 평균" value={formatGrade(formData.schoolGradeAvg)} />
           <SummaryItem label="입시 유형" value={formatAdmission(formData.admissionType)} />
-        </div>
+        </dl>
 
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">모의고사 등급</p>
-          <div className="mt-2 flex flex-wrap gap-2 text-sm text-secondary-foreground">
-            <span>국어 {formatGrade(formData.mockTestGrades?.korean)}</span>
-            <span>수학 {formatGrade(formData.mockTestGrades?.math)}</span>
-            <span>영어 {formatGrade(formData.mockTestGrades?.english)}</span>
-            <span>탐구 {formatGrade(formData.mockTestGrades?.exploration)}</span>
+        <div className="mt-4">
+          <p className="text-[13px] font-semibold text-muted-foreground">모의고사 등급</p>
+          <div className="mt-2 grid grid-cols-4 gap-2 text-center">
+            <GradeChip label="국어" value={formatGrade(formData.mockTestGrades?.korean)} />
+            <GradeChip label="수학" value={formatGrade(formData.mockTestGrades?.math)} />
+            <GradeChip label="영어" value={formatGrade(formData.mockTestGrades?.english)} />
+            <GradeChip label="탐구" value={formatGrade(formData.mockTestGrades?.exploration)} />
           </div>
         </div>
 
         {formData.inquiryContent && (
-          <div className="rounded-md border border-border bg-muted p-3 text-sm text-secondary-foreground">
-            {formData.inquiryContent}
+          <div className="mt-4">
+            <p className="text-[13px] font-semibold text-muted-foreground">문의 내용</p>
+            <p className="mt-2 whitespace-pre-wrap rounded-xl bg-muted px-4 py-3 text-sm leading-6 text-secondary-foreground">
+              {formData.inquiryContent}
+            </p>
           </div>
         )}
+      </BookingCard>
 
-        <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={onBack}>이전</Button>
-          <Button onClick={onSubmit} disabled={submitting}>
-            {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      <BookingActionBar error={error}>
+        <div className="grid grid-cols-[1fr_2fr] gap-2">
+          <Button size="lg" variant="outline" onClick={onBack}>이전</Button>
+          <Button size="lg" onClick={onSubmit} disabled={submitting}>
+            {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
             상담 신청하기
           </Button>
         </div>
-      </div>
-    </section>
+      </BookingActionBar>
+    </div>
   );
 }
 
 function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
-    <div>
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 font-semibold text-foreground">{value || '-'}</p>
+    <div className="flex items-center justify-between gap-4 py-3 text-[15px]">
+      <dt className="shrink-0 text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-semibold text-foreground">{value || '-'}</dd>
+    </div>
+  );
+}
+
+function GradeChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0 rounded-xl bg-muted px-1 py-2.5">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-0.5 truncate text-sm font-bold text-foreground">{value}</p>
     </div>
   );
 }
