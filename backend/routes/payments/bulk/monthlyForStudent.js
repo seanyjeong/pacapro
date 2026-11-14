@@ -58,7 +58,7 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
         // Check existing
         const [existing] = await pool.execute(
             `SELECT id FROM student_payments
-            WHERE student_id = ? AND year_month = ? AND payment_type = 'monthly'`,
+            WHERE student_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
             [student_id, yearMonth]
         );
 
@@ -105,7 +105,7 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
 
         const [result] = await pool.execute(
             `INSERT INTO student_payments (
-                student_id, academy_id, year_month, payment_type,
+                student_id, academy_id, \`year_month\`, payment_type,
                 base_amount, discount_amount, additional_amount, final_amount,
                 due_date, payment_status, description, notes, recorded_by
             ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,

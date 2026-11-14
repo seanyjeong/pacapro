@@ -408,7 +408,7 @@ router.post('/generate-prorated', verifyToken, checkPermission('payments', 'edit
         // 이미 해당 월 납부건이 있는지 확인
         const [existing] = await pool.execute(
             `SELECT id FROM student_payments
-            WHERE student_id = ? AND year_month = ? AND payment_type = 'monthly'`,
+            WHERE student_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
             [student_id, yearMonth]
         );
 
@@ -435,7 +435,7 @@ router.post('/generate-prorated', verifyToken, checkPermission('payments', 'edit
 
         const [result] = await pool.execute(
             `INSERT INTO student_payments (
-                student_id, academy_id, year_month, payment_type,
+                student_id, academy_id, \`year_month\`, payment_type,
                 base_amount, discount_amount, additional_amount, final_amount,
                 is_prorated, proration_details,
                 due_date, payment_status, description, recorded_by
