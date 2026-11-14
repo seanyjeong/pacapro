@@ -242,6 +242,18 @@ describe('POST /paca/consultations/settings/blocked-slots', () => {
         expect(res.body.message).toBe('시간대가 차단되었습니다.');
         expect(res.body.id).toBe(42);
     });
+
+    test('isAllDay 없이 보내면(공휴일 차단) 하루 종일로 저장하고 undefined 를 바인딩하지 않는다', async () => {
+        pool.execute.mockResolvedValueOnce([{ insertId: 43 }]);
+
+        const res = await request(makeApp())
+            .post('/paca/consultations/settings/blocked-slots')
+            .send({ blockedDate: '2026-12-25', reason: '크리스마스' });
+
+        expect(res.status).toBe(201);
+        const params = pool.execute.mock.calls[0][1];
+        expect(params).toEqual([1, '2026-12-25', true, null, null, '크리스마스', 100]);
+    });
 });
 
 describe('DELETE /paca/consultations/settings/blocked-slots/:id', () => {

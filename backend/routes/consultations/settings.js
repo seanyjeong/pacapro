@@ -233,6 +233,8 @@ module.exports = function (router) {
             const academyId = req.user.academy_id;
             const userId = req.user.id;
             const { blockedDate, isAllDay, startTime, endTime, reason } = req.body;
+            // isAllDay 를 안 보내면 하루 종일 차단이다. 시각 칸도 같은 기본값을 따라야 undefined 바인딩이 안 생긴다.
+            const allDay = isAllDay ?? true;
 
             if (!blockedDate) {
                 return res.status(400).json({ error: '날짜를 선택해주세요.' });
@@ -245,9 +247,9 @@ module.exports = function (router) {
                 [
                     academyId,
                     blockedDate,
-                    isAllDay ?? true,
-                    isAllDay ? null : startTime,
-                    isAllDay ? null : endTime,
+                    allDay,
+                    allDay ? null : startTime,
+                    allDay ? null : endTime,
                     reason || null,
                     userId
                 ]
