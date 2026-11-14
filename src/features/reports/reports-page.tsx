@@ -2,15 +2,14 @@
 
 import { BranchChecks } from '@/features/branches/branch-checks';
 import { useBranchTree } from '@/hooks/use-branches';
+import { cn } from '@/lib/utils/cn';
 import { PeopleAnalysisPanel } from './people-analysis-panel';
-import { ProfitAnalysisPanel } from './profit-analysis-panel';
+import { ReportQuickLinks } from './report-quick-links';
 import { ReportSummaryStrip } from './report-summary-strip';
 import { ReportsErrorState } from './reports-error-state';
 import { ReportsHeader } from './reports-header';
 import { ReportsLoadingState } from './reports-loading-state';
-import { ReportsOperationsBoard } from './reports-operations-board';
 import { RevenueAnalysisPanel } from './revenue-analysis-panel';
-import { canSeeProfit } from './reports-utils';
 import { useReportsPageState } from './use-reports-page-state';
 
 export function ReportsPage() {
@@ -39,7 +38,7 @@ export function ReportsPage() {
   }
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
+    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-4 md:max-w-7xl">
       <ReportsHeader
         exportMenuOpen={state.exportMenuOpen}
         exportingType={state.exportingType}
@@ -51,42 +50,26 @@ export function ReportsPage() {
 
       <BranchChecks branches={branches} selected={state.branchIds} onChange={state.setBranchIds} />
       {state.branchIds.length > 0 && (
-        <p className="rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning" role="note">
-          학생 수와 학원비 매출·미납만 체크한 지점 기준입니다. 지출·기타 수입·강사는 지점으로 나누지 않아 학원 전체 금액이고,
-          순이익은 그 전체 지출을 뺀 값입니다.
+        <p className="rounded-2xl bg-warning-soft px-4 py-3 text-[13px] font-medium text-warning" role="note">
+          학생 수와 학원비 매출·미납만 체크한 지점 기준이에요. 지출·기타 수입·강사는 지점으로 나누지 않아 학원 전체 금액이고,
+          순이익은 그 전체 지출을 뺀 값이에요.
         </p>
       )}
       {hiddenLabels.length > 0 && (
-        <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground" role="note">
-          권한에 맞춰 {hiddenLabels.join('·')} 정보는 숨겨져 있습니다.
+        <p className="rounded-2xl bg-muted px-4 py-3 text-[13px] font-medium text-muted-foreground" role="note">
+          권한에 맞춰 {hiddenLabels.join('·')} 정보는 숨겨져 있어요.
         </p>
       )}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
-        <div className="order-1 min-w-0 xl:col-start-1 xl:row-start-1">
-          <ReportSummaryStrip access={state.access} computed={state.computed} stats={state.stats} />
-        </div>
+      <ReportSummaryStrip access={state.access} computed={state.computed} stats={state.stats} />
 
-        <main className="order-3 min-w-0 space-y-5 xl:col-start-1 xl:row-start-2">
-          <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
-            {state.access.payments && (
-              <RevenueAnalysisPanel access={state.access} computed={state.computed} stats={state.stats} />
-            )}
-            <PeopleAnalysisPanel access={state.access} stats={state.stats} />
-          </div>
-
-          {canSeeProfit(state.access) && <ProfitAnalysisPanel computed={state.computed} stats={state.stats} />}
-        </main>
-        <div className="order-2 min-w-0 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1">
-          <ReportsOperationsBoard
-            access={state.access}
-            computed={state.computed}
-            exportingType={state.exportingType}
-            selectedMonth={state.selectedMonth}
-            stats={state.stats}
-            onExport={state.exportReport}
-            onMonthChange={state.setSelectedMonth}
-          />
+      <div className={cn('grid gap-4', state.access.payments && 'xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] xl:items-start')}>
+        {state.access.payments && (
+          <RevenueAnalysisPanel access={state.access} computed={state.computed} stats={state.stats} />
+        )}
+        <div className="min-w-0 space-y-4">
+          <PeopleAnalysisPanel access={state.access} stats={state.stats} />
+          <ReportQuickLinks access={state.access} stats={state.stats} />
         </div>
       </div>
     </div>
