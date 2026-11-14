@@ -29,10 +29,11 @@ async function updatePendingPayments(context) {
         const nextTuition = monthlyTuition !== undefined ? monthlyTuition : updatedStudent.monthly_tuition;
         const nextDiscountRate = discountRate !== undefined ? discountRate : (updatedStudent.discount_rate || 0);
         // 반 학원비 적용·반 이동도 같은 함수로 미납 월 청구를 맞춘다.
-        const { finalTuition } = await updatePendingMonthlyTuition(pool, {
+        // 금액은 월 자동 청구와 같은 식(할인액·최종 천원 절삭, 추가 금액·크레딧 유지).
+        const { final } = await updatePendingMonthlyTuition(pool, {
             studentId, academyId, tuition: nextTuition, discountRate: nextDiscountRate,
         });
-        logger.info(`[Student ${studentId}] Pending payments updated: ${nextTuition}원 (할인 후: ${finalTuition}원)`);
+        logger.info(`[Student ${studentId}] Pending payments updated: ${nextTuition}원 (할인 후: ${final}원)`);
     } catch (error) {
         logger.error('Payment update failed:', error);
     }

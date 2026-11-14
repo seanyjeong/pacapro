@@ -59,7 +59,7 @@ function memoryDb() {
             (3, 1, '반 없는 학생', 'active', 'exam', 3, 300000, 0, NULL, NULL, '[1,3,5]', 'evening', '2026-11-18', '2026-12-01');
         CREATE TABLE student_payments (
             id INTEGER PRIMARY KEY, academy_id INTEGER, student_id INTEGER, year_month TEXT, payment_type TEXT, payment_status TEXT,
-            is_prorated INTEGER DEFAULT 0, description TEXT, base_amount REAL, additional_amount REAL DEFAULT 0,
+            is_prorated INTEGER DEFAULT 0, description TEXT, base_amount REAL, discount_amount REAL DEFAULT 0, additional_amount REAL DEFAULT 0,
             carryover_amount REAL DEFAULT 0, final_amount REAL, updated_at TEXT
         );
     `);

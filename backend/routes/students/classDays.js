@@ -3,8 +3,8 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
 const { parseClassDaysWithSlots, reassignStudentSchedules } = require('./_utils');
-const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 const { resolveTuitionTable, weeklyTuitionAmount } = require('../../utils/tuitionSettings');
+const { pendingMonthlyTuitionUpdate } = require('../../repositories/pendingMonthlyTuitionRepository');
 
 module.exports = function(router) {
 
@@ -143,19 +143,10 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
                                 [id]
                             );
                             const discountRate = stRows.length > 0 ? (stRows[0].discount_rate || 0) : 0;
-                            const finalTuition = newTuition * (1 - discountRate / 100);
-                            const currentYearMonth = getKoreaDateText().slice(0, 7);
-                            await db.query(
-                                `UPDATE student_payments
-                                 SET base_amount = ?, final_amount = ?, updated_at = NOW()
-                                 WHERE student_id = ?
-                                   AND academy_id = ?
-                                   AND \`year_month\` >= ?
-                                   AND payment_status = 'pending'
-                                   AND payment_type = 'monthly'
-                                   AND NOT (is_prorated = 1 OR description LIKE '%일할계산%')`,
-                                [newTuition, finalTuition, id, academyId, currentYearMonth]
-                            );
+                            // 월 자동 청구와 같은 금액 식(할인액·최종 천원 절삭, 추가 금액·크레딧 유지)
+                            await db.query(...pendingMonthlyTuitionUpdate({
+                                studentId: id, academyId, tuition: newTuition, discountRate
+                            }));
                         } catch (payErr) {
                             logger.error(`Pending payments update failed for student ${id}:`, payErr);
                         }
@@ -289,19 +280,10 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
                         [studentId]
                     );
                     const discountRate = stRows.length > 0 ? (stRows[0].discount_rate || 0) : 0;
-                    const finalTuition = newTuition * (1 - discountRate / 100);
-                    const currentYearMonth = getKoreaDateText().slice(0, 7);
-                    await db.query(
-                        `UPDATE student_payments
-                         SET base_amount = ?, final_amount = ?, updated_at = NOW()
-                         WHERE student_id = ?
-                           AND academy_id = ?
-                           AND \`year_month\` >= ?
-                           AND payment_status = 'pending'
-                           AND payment_type = 'monthly'
-                           AND NOT (is_prorated = 1 OR description LIKE '%일할계산%')`,
-                        [newTuition, finalTuition, studentId, req.user.academyId, currentYearMonth]
-                    );
+                    // 월 자동 청구와 같은 금액 식(할인액·최종 천원 절삭, 추가 금액·크레딧 유지)
+                    await db.query(...pendingMonthlyTuitionUpdate({
+                        studentId, academyId: req.user.academyId, tuition: newTuition, discountRate
+                    }));
                 } catch (payErr) {
                     logger.error(`Pending payments update failed for student ${studentId}:`, payErr);
                 }

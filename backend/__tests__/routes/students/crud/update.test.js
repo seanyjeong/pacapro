@@ -495,8 +495,9 @@ describe('PUT /paca/students/:id — 등록일 변경 시 첫 달 일할계산 �
 
         expect(res.status).toBe(200);
         const paymentUpdateCall = pool.__conn.execute.mock.calls.find(c => /UPDATE student_payments/.test(c[0]));
-        expect(paymentUpdateCall[0]).toMatch(/final_amount = GREATEST\(\? \+ COALESCE\(additional_amount, 0\) - COALESCE\(carryover_amount, 0\), 0\)/);
-        expect(paymentUpdateCall[1].slice(0, 2)).toEqual([320000, 320000]);
+        // 월 자동 청구와 같은 식: 학원비 − 할인액 + 추가 금액 − 크레딧 → 천원 절삭 → 0 이상
+        expect(paymentUpdateCall[0]).toMatch(/final_amount = GREATEST\(FLOOR\(\(\? - \? \+ COALESCE\(additional_amount, 0\) - COALESCE\(carryover_amount, 0\)\) \/ 1000\) \* 1000, 0\)/);
+        expect(paymentUpdateCall[1].slice(0, 4)).toEqual([320000, 0, 320000, 0]);
     });
 
     test('등록일 변경 재계산은 이미 적용한 크레딧을 최종 금액에서 그대로 뺀다', async () => {

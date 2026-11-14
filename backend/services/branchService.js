@@ -5,8 +5,7 @@
 const repo = require('../repositories/branchRepository');
 const { decrypt } = require('../utils/encryption');
 const { parseClassTuition, resolveTuitionTable, weeklyTuitionAmount } = require('../utils/tuitionSettings');
-const { truncateToThousands } = require('../utils/seasonCalculator');
-const { pendingMonthlyFinal, updatePendingMonthlyTuition } = require('../repositories/pendingMonthlyTuitionRepository');
+const { monthlyBillAmounts, updatePendingMonthlyTuition } = require('../repositories/pendingMonthlyTuitionRepository');
 
 const TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 const STATUSES = ['active', 'inactive'];
@@ -37,8 +36,6 @@ const toTuition = value => {
     }
     return Object.values(table).some(amount => amount > 0) ? table : undefined;
 };
-// 할인 후 월 학원비: 월 자동 청구와 같은 순서(할인액 천원 절삭 → 빼고 천원 절삭).
-const discountedTuition = (base, rate) => truncateToThousands(base - truncateToThousands(base * rate / 100));
 
 async function getTree(academyId) {
     const { branches, classes, counts } = await repo.findTree(academyId);
@@ -170,14 +167,15 @@ function planTuition(student, settings, classTuition, previousTables, bills) {
     const pendingBills = changed && student.status !== 'paused'
         ? bills.filter(bill => bill.student_id === student.id).map(bill => ({
             id: bill.id, year_month: bill.year_month, current_amount: Number(bill.final_amount),
-            new_amount: Math.max(pendingMonthlyFinal(next, discountRate)
-                + Number(bill.additional_amount || 0) - Number(bill.carryover_amount || 0), 0)
+            new_amount: monthlyBillAmounts(next, discountRate,
+                Number(bill.additional_amount || 0), Number(bill.carryover_amount || 0)).final
         }))
         : [];
     return {
         student_id: student.id, name: decrypt(student.name), status: student.status, weekly_count: Number(student.weekly_count) || 0,
         current_tuition: current, new_tuition: next, discount_rate: discountRate,
-        new_final_tuition: next === null ? null : discountedTuition(next, discountRate),
+        // 할인 후 월 학원비: 월 자동 청구와 같은 식
+        new_final_tuition: next === null ? null : monthlyBillAmounts(next, discountRate).final,
         changed, individual: changed && !references.includes(current), pending_bills: pendingBills
     };
 }

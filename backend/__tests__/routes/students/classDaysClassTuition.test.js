@@ -80,8 +80,8 @@ describe('수업일 즉시 변경', () => {
         expect(res.status).toBe(200);
         expect(db.query.mock.calls[0][0]).toMatch(/LEFT JOIN classes c ON c.id = s.class_id AND c.academy_id = s.academy_id/);
         expect(tuitionWritten()).toBe(expected);
-        // 미납 월 청구 갱신(기존 동작)도 같은 금액으로
-        expect(billUpdate()[1].slice(0, 2)).toEqual([expected, expected * 0.9]);
+        // 미납 월 청구 갱신(기존 동작)도 같은 금액으로 — 할인액은 월 자동 청구처럼 천원 절삭
+        expect(billUpdate()[1].slice(0, 4)).toEqual([expected, expected / 10, expected, expected / 10]);
     });
 
     test.each([
