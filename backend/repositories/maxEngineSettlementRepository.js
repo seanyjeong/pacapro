@@ -24,9 +24,16 @@ async function persist(conn, actor, studentId, date, invoice, item, enrollment) 
     academy_id: actor.academy_id, category: 'refund', amount: item.refund_amount, expense_date: date,
     payment_method: item.refund_method, recorded_by: actor.user_id,
     description: `MCP 퇴원 정산 환불 (청구 #${invoice.id})`, notes: item.reason });
+  // 월 청구의 최종 금액을 바꾸면 웹 퇴원 정산(studentLifecycleBillingRepository.persist)처럼 is_prorated·proration_details 표시를 남긴다.
+  // 표시가 없으면 학원비 변경 때 미납 갱신(pendingMonthlyTuitionRepository)이 정산한 금액을 월 정액으로 덮을 수 있었다.
+  const settled = invoice.payment_type === 'monthly' && item.after.final_amount !== item.before.final_amount ? {
+    is_prorated: 1, proration_details: JSON.stringify({ type: 'student_withdrawal', source: 'max_engine_settlement',
+      billing_cutoff_date: date, year_month: invoice.year_month, original_final_amount: item.before.final_amount,
+      adjusted_final_amount: item.after.final_amount, paid_amount_floor: item.after.paid_amount, settlement_action: item.action }),
+  } : {};
   await repo.update(conn, 'student_payments', invoice.id, {
     final_amount: item.after.final_amount, paid_amount: item.after.paid_amount, payment_status: item.after.payment_status,
-    notes: [invoice.notes, `[MCP 퇴원 정산 ${date}] ${item.action}: ${item.reason}`].filter(Boolean).join('\n') });
+    notes: [invoice.notes, `[MCP 퇴원 정산 ${date}] ${item.action}: ${item.reason}`].filter(Boolean).join('\n'), ...settled });
   if (enrollment) await repo.update(conn, 'student_seasons', enrollment.id, {
     paid_amount: item.after.paid_amount, payment_status: item.after.payment_status,
     ...(item.after.payment_status === 'cancelled' ? { is_cancelled: 1, cancellation_date: date, after_season_action: 'terminate' } : {}),

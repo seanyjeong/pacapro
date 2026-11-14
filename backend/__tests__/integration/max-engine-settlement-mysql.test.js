@@ -54,6 +54,12 @@ run('MCP withdrawal financial settlement', () => {
     expect((await f.paca.query('SELECT status FROM students WHERE id=100'))[0][0].status).toBe('withdrawn');
     expect((await f.paca.query('SELECT final_amount,payment_status FROM student_payments WHERE id=100'))[0][0]).toEqual({ final_amount: '0.00', payment_status: 'cancelled' });
     expect((await f.paca.query('SELECT final_amount FROM student_payments WHERE id=101'))[0][0].final_amount).toBe('50000.00');
+    // 최종 금액을 바꾼 월 청구엔 웹 퇴원 정산처럼 표시를 남긴다(미납 갱신 SQL·다시 청구가 정산 금액을 덮지 않게), 안 바꾼 청구엔 없음
+    const [[marked]] = await f.paca.query('SELECT is_prorated, proration_details FROM student_payments WHERE id=100');
+    const details = typeof marked.proration_details === 'string' ? JSON.parse(marked.proration_details) : marked.proration_details;
+    expect([marked.is_prorated, details.type, details.source, details.original_final_amount, details.adjusted_final_amount])
+      .toEqual([1, 'student_withdrawal', 'max_engine_settlement', '300000.00', '0.00']);
+    expect((await f.paca.query('SELECT is_prorated FROM student_payments WHERE id=101'))[0][0].is_prorated).not.toBe(1);
     const history = await read('resources/payment_settlements?filters=' + encodeURIComponent(JSON.stringify({ student_id: 100 })));
     expect(history.status).toBe(200); expect(history.body.items[0].before_final_amount).toBe('300000.00');
     expect((await read('workflows/unpaid_list?params=' + encodeURIComponent(JSON.stringify({ month: day.slice(0, 7) })))).body.items.some(p => p.id === 100)).toBe(false);
