@@ -23,24 +23,24 @@ export function TabletPaymentsPageContent() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-4 pb-24 lg:pb-0">
       <TabletPaymentsHeader
-        selectedYearMonth={state.selectedYearMonth}
         studentId={state.studentId}
         studentName={state.studentName}
         visibleCount={state.visiblePayments.length}
+        onReload={state.reload}
       />
 
       <TabletPaymentsSummary summary={state.summary} />
 
-      <TabletPaymentsFilters
-        filters={state.filters}
-        onChangeMonth={state.changeMonth}
-        onFilterChange={state.updateFilters}
-        onReload={state.reload}
-      />
-
       <PaymentList
         payments={state.visiblePayments}
         loading={state.loading}
+        toolbar={(
+          <TabletPaymentsFilters
+            filters={state.filters}
+            onChangeMonth={state.changeMonth}
+            onFilterChange={state.updateFilters}
+          />
+        )}
         onPaymentClick={(id) => router.push(`/payments/${id}`)}
         showPaymentMarkButton
         onPaymentMark={state.markPayment}
