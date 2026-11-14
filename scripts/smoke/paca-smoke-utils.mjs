@@ -120,6 +120,14 @@ export function jsonRoute(route, body, status = 200) {
   });
 }
 
+// 새 디자인 공통 숫자 칸(StatTile, src/components/ui/page.tsx). 라벨 글자가 정확히 같은 칸을 찾는다.
+// 칸의 여백·바탕 class 는 화면마다 덮어쓰므로 라벨(span) 에서 칸 뿌리(두 단계 위)로 올라간다.
+// 값은 돌려받은 칸 안에서 getByText 로 확인한다.
+export function statTile(scope, label) {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return scope.locator('span.text-sm.font-semibold', { hasText: new RegExp(`^${escaped}$`) }).locator('xpath=../..');
+}
+
 export function createDiagnostics(page) {
   const pageErrors = [];
   const consoleErrors = [];
