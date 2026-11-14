@@ -319,7 +319,7 @@ export function PendingStudentList({ students, loading, sort, onReload, onSortCh
                         );
                       })()}
                     </td>
-                    <td className="py-3.5 px-3 max-w-[120px]">
+                    <td className="py-3.5 px-3 min-w-[96px] max-w-[140px]">
                       <button
                         onClick={() => handleOpenMemoModal(student)}
                         aria-label={`${student.name} 미등록관리 메모 보기`}
