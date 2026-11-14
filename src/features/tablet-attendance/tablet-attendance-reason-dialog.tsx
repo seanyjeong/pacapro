@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { TABLET_ABSENT_REASONS, TABLET_EXCUSED_REASONS } from './tablet-attendance-constants';
 import type { TabletReasonState } from './tablet-attendance-types';
 
@@ -22,15 +23,15 @@ export function TabletAttendanceReasonDialog({
   const disabled = !reasonState.reason || (reasonState.reason === '기타' && !reasonState.customReason.trim());
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onCancel}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-[2px]" onClick={onCancel}>
       <section
-        className="w-full max-w-md rounded-lg bg-card p-5 shadow-2xl"
+        className="w-full max-w-md rounded-3xl bg-card p-6 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
         data-testid="tablet-attendance-reason-dialog"
       >
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+            <h2 className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{reasonState.studentName}</p>
           </div>
           <Button type="button" variant="ghost" size="icon" onClick={onCancel} aria-label="사유 입력 닫기">
@@ -44,10 +45,11 @@ export function TabletAttendanceReasonDialog({
               type="button"
               key={option.value}
               onClick={() => onChange({ ...reasonState, reason: option.value, customReason: '' })}
-              className={`rounded-lg border px-3 py-3 text-sm font-medium transition
-                ${reasonState.reason === option.value
-                  ? 'border-muted-foreground/40 bg-foreground text-white'
-                  : 'border-border bg-muted text-secondary-foreground'}`}
+              aria-pressed={reasonState.reason === option.value}
+              className={`h-12 rounded-xl px-3 text-[15px] font-semibold transition-colors ${
+                reasonState.reason === option.value
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-secondary-foreground hover:text-foreground'}`}
             >
               {option.label}
             </button>
@@ -56,21 +58,21 @@ export function TabletAttendanceReasonDialog({
 
         {reasonState.reason === '기타' && (
           <label className="mt-4 block">
-            <span className="mb-1 block text-sm font-medium text-secondary-foreground">사유 입력</span>
-            <textarea
+            <span className="mb-1.5 block text-sm font-semibold text-secondary-foreground">사유 입력</span>
+            <Textarea
               value={reasonState.customReason}
               onChange={(event) => onChange({ ...reasonState, customReason: event.target.value })}
               rows={3}
-              className="w-full resize-none rounded-lg border border-border bg-card px-3 py-3 text-foreground outline-none focus:ring-2 focus:ring-muted-foreground/40"
+              className="resize-none"
             />
           </label>
         )}
 
         <div className="mt-5 grid grid-cols-2 gap-2">
-          <Button type="button" variant="outline" className="h-12" onClick={onCancel}>
+          <Button type="button" variant="outline" size="lg" onClick={onCancel}>
             취소
           </Button>
-          <Button type="button" className="h-12" onClick={onConfirm} disabled={disabled}>
+          <Button type="button" size="lg" onClick={onConfirm} disabled={disabled}>
             확인
           </Button>
         </div>

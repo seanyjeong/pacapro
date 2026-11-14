@@ -1,5 +1,6 @@
 import { Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/page';
 import type { TabletAttendanceMark, TabletAttendanceStudent } from './tablet-attendance-types';
 import { TabletAttendanceCard } from './tablet-attendance-card';
 
@@ -26,7 +27,7 @@ export function TabletAttendanceGrid({
     return (
       <div className="grid grid-cols-3 gap-3 lg:grid-cols-4 xl:grid-cols-5" data-testid="tablet-attendance-loading">
         {Array.from({ length: 10 }).map((_, index) => (
-          <div key={index} className="h-40 animate-pulse rounded-lg border border-border bg-card" />
+          <div key={index} className="h-40 animate-pulse rounded-2xl bg-card" />
         ))}
       </div>
     );
@@ -34,9 +35,9 @@ export function TabletAttendanceGrid({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive-soft p-5 text-destructive">
-        <p className="text-sm font-medium">{error}</p>
-        <Button variant="outline" className="mt-3 border-destructive/30 bg-card" onClick={onRetry}>
+      <div role="alert" className="rounded-2xl bg-destructive-soft p-5 text-destructive">
+        <p className="text-[15px] font-semibold">{error}</p>
+        <Button variant="outline" className="mt-3 bg-card" onClick={onRetry}>
           다시 불러오기
         </Button>
       </div>
@@ -45,18 +46,16 @@ export function TabletAttendanceGrid({
 
   if (totalStudents === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card px-4 py-16 text-center">
-        <Users className="mx-auto h-12 w-12 text-muted-foreground" />
-        <p className="mt-3 text-sm font-medium text-secondary-foreground">배정된 학생이 없습니다.</p>
+      <div className="rounded-2xl bg-card py-6">
+        <EmptyState icon={Users} title="배정된 학생이 없어요" />
       </div>
     );
   }
 
   if (students.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card px-4 py-16 text-center">
-        <Users className="mx-auto h-12 w-12 text-muted-foreground" />
-        <p className="mt-3 text-sm font-medium text-secondary-foreground">조건에 맞는 학생이 없습니다.</p>
+      <div className="rounded-2xl bg-card py-6">
+        <EmptyState icon={Users} title="조건에 맞는 학생이 없어요" />
       </div>
     );
   }
