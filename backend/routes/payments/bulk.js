@@ -132,104 +132,125 @@ router.post('/bulk-monthly', verifyToken, checkPermission('payments', 'edit'), a
             let notes = null;
             let description = `${year}년 ${month}월 수강료`;
 
-            // 해당 학생의 기존 학원비 확인 — 낸 청구는 크레딧을 건드리기 전에 건너뛴다
-            // (예전엔 크레딧을 먼저 빼고 건너뛰어 크레딧이 청구 없이 사라졌다)
-            const [existingPayment] = await pool.execute(
-                `SELECT id, payment_status, paid_amount FROM student_payments
-                 WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
-                [student.id, req.user.academyId, yearMonth]
-            );
-            const existing = existingPayment[0] || null;
-            if (existing && existing.payment_status === 'paid') {
-                skipped++;
-                continue;
-            }
-
-            // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 확인 및 적용(학생별 청구와 공유)
-            let carryoverAmount = 0;
-            let restCreditId = null;
+            // 학생마다 한 트랜잭션: 기존 청구·크레딧 행을 잠그고(FOR UPDATE) 확인·차감·저장을 함께 — 동시에 두 번 돌려도 크레딧은 한 번만
+            const conn = await pool.getConnection();
             try {
-                ({ carryoverAmount, restCreditId } = await deductMonthlyCredit(pool, {
-                    studentId: student.id, academyId: req.user.academyId,
-                    amountBeforeCarryover: baseAmount - discount + additionalAmount,
-                }));
-                if (restCreditId) {
-                    notes = (notes || '') + `\n[이월 차감] 휴식 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
-                    description += ' (이월 차감 적용)';
-                    withCarryover++;
+                await conn.beginTransaction();
+                // 해당 학생의 기존 학원비 확인 — 낸 청구는 크레딧을 건드리기 전에 건너뛴다
+                // (예전엔 크레딧을 먼저 빼고 건너뛰어 크레딧이 청구 없이 사라졌다)
+                const [existingPayment] = await conn.execute(
+                    `SELECT id, payment_status, paid_amount, carryover_amount, rest_credit_id, notes FROM student_payments
+                     WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'
+                     FOR UPDATE`,
+                    [student.id, req.user.academyId, yearMonth]
+                );
+                const existing = existingPayment[0] || null;
+                if (existing && existing.payment_status === 'paid') {
+                    await conn.commit();
+                    skipped++;
+                    continue;
                 }
-            } catch (err) {
-                logger.error(`Failed to apply carryover credit for student ${student.id}:`, err);
-            }
 
-            const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount, carryoverAmount).final;
+                // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 확인 및 적용(학생별 청구와 공유)
+                let carryoverAmount = 0;
+                let restCreditId = null;
+                if (existing && Number(existing.carryover_amount) > 0) {
+                    // 이미 이 청구에 적용된 크레딧은 그대로 두고 또 빼지 않는다(예전엔 다시 돌리면 한 건 더 빼고 앞 크레딧을 덮어써 사라졌다)
+                    carryoverAmount = Number(existing.carryover_amount);
+                    restCreditId = existing.rest_credit_id;
+                    notes = existing.notes;
+                    description += ' (이월 차감 적용)';
+                } else {
+                    try {
+                        ({ carryoverAmount, restCreditId } = await deductMonthlyCredit(conn, {
+                            studentId: student.id, academyId: req.user.academyId,
+                            amountBeforeCarryover: baseAmount - discount + additionalAmount, lock: true,
+                        }));
+                        if (restCreditId) {
+                            notes = (notes || '') + `\n[이월 차감] 휴식 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
+                            description += ' (이월 차감 적용)';
+                            withCarryover++;
+                        }
+                    } catch (err) {
+                        logger.error(`Failed to apply carryover credit for student ${student.id}:`, err);
+                    }
+                }
 
-            if (existing) {
-                // 기존 학원비 업데이트 (금액 변경사항 반영)
-                await pool.execute(
-                    `UPDATE student_payments SET
-                        base_amount = ?,
-                        discount_amount = ?,
-                        additional_amount = ?,
-                        carryover_amount = ?,
-                        rest_credit_id = ?,
-                        final_amount = ?,
-                        due_date = ?,
-                        description = ?,
-                        notes = ?,
-                        updated_at = NOW()
-                     WHERE id = ?`,
-                    [
-                        baseAmount,
-                        discount,
-                        additionalAmount,
-                        carryoverAmount,
-                        restCreditId,
-                        finalAmount,
-                        due_date,
-                        description,
-                        notes,
-                        existing.id
-                    ]
-                );
-                updated++;
-            } else {
-                // 새로 생성
-                await pool.execute(
-                    `INSERT INTO student_payments (
-                        student_id,
-                        academy_id,
-                        \`year_month\`,
-                        payment_type,
-                        base_amount,
-                        discount_amount,
-                        additional_amount,
-                        carryover_amount,
-                        rest_credit_id,
-                        final_amount,
-                        due_date,
-                        payment_status,
-                        description,
-                        notes,
-                        recorded_by
-                    ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
-                    [
-                        student.id,
-                        req.user.academyId,
-                        yearMonth,
-                        baseAmount,
-                        discount,
-                        additionalAmount,
-                        carryoverAmount,
-                        restCreditId,
-                        finalAmount,
-                        due_date,
-                        description,
-                        notes,
-                        req.user.userId
-                    ]
-                );
-                created++;
+                const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount, carryoverAmount).final;
+
+                if (existing) {
+                    // 기존 학원비 업데이트 (금액 변경사항 반영)
+                    await conn.execute(
+                        `UPDATE student_payments SET
+                            base_amount = ?,
+                            discount_amount = ?,
+                            additional_amount = ?,
+                            carryover_amount = ?,
+                            rest_credit_id = ?,
+                            final_amount = ?,
+                            due_date = ?,
+                            description = ?,
+                            notes = ?,
+                            updated_at = NOW()
+                         WHERE id = ?`,
+                        [
+                            baseAmount,
+                            discount,
+                            additionalAmount,
+                            carryoverAmount,
+                            restCreditId,
+                            finalAmount,
+                            due_date,
+                            description,
+                            notes,
+                            existing.id
+                        ]
+                    );
+                    updated++;
+                } else {
+                    // 새로 생성
+                    await conn.execute(
+                        `INSERT INTO student_payments (
+                            student_id,
+                            academy_id,
+                            \`year_month\`,
+                            payment_type,
+                            base_amount,
+                            discount_amount,
+                            additional_amount,
+                            carryover_amount,
+                            rest_credit_id,
+                            final_amount,
+                            due_date,
+                            payment_status,
+                            description,
+                            notes,
+                            recorded_by
+                        ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+                        [
+                            student.id,
+                            req.user.academyId,
+                            yearMonth,
+                            baseAmount,
+                            discount,
+                            additionalAmount,
+                            carryoverAmount,
+                            restCreditId,
+                            finalAmount,
+                            due_date,
+                            description,
+                            notes,
+                            req.user.userId
+                        ]
+                    );
+                    created++;
+                }
+                await conn.commit();
+            } catch (error) {
+                await conn.rollback();
+                throw error;
+            } finally {
+                conn.release();
             }
         }
 

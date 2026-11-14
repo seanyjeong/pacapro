@@ -68,6 +68,11 @@ function makeApp() {
 beforeEach(() => {
     pool.execute.mockReset();
     pool.execute.mockResolvedValue([[]]);
+    // 학생별 트랜잭션 연결: 같은 execute 대역을 써서 쿼리 순서를 그대로 확인한다
+    pool.getConnection.mockResolvedValue({
+        execute: pool.execute, query: pool.query,
+        beginTransaction: jest.fn(), commit: jest.fn(), rollback: jest.fn(), release: jest.fn(),
+    });
 });
 
 describe('POST /paca/payments/bulk-monthly', () => {

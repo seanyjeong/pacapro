@@ -107,53 +107,73 @@ router.post('/generate-monthly-for-student', verifyToken, checkPermission('payme
         let notes = null;
         let description = `${year}년 ${month}월 학원비`;
 
-        // 휴식 이월·공결·수동 크레딧 차감(일괄 청구와 같은 함수)
-        let carryoverAmount = 0;
-        let restCreditId = null;
-        try {
-            ({ carryoverAmount, restCreditId } = await deductMonthlyCredit(pool, {
-                studentId: student.id, academyId: req.user.academyId,
-                amountBeforeCarryover: baseAmount - discountAmount + additionalAmount,
-            }));
-            if (restCreditId) {
-                notes = `[이월 차감] 휴식 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
-                description += ' (이월 차감 적용)';
-            }
-        } catch (err) {
-            logger.error(`Failed to apply carryover credit for student ${student_id}:`, err);
-        }
-
-        const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount, carryoverAmount).final;
-
         // Due date
         const dueDate = new Date(year, month - 1, dueDay);
 
-        const [result] = await pool.execute(
-            `INSERT INTO student_payments (
-                student_id, academy_id, \`year_month\`, payment_type,
-                base_amount, discount_amount, additional_amount, carryover_amount, rest_credit_id, final_amount,
-                due_date, payment_status, description, notes, recorded_by
-            ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
-            [
-                student_id,
-                req.user.academyId,
-                yearMonth,
-                baseAmount,
-                discountAmount,
-                additionalAmount,
-                carryoverAmount,
-                restCreditId,
-                finalAmount,
-                dueDate.toISOString().split('T')[0],
-                description,
-                notes,
-                req.user.userId
-            ]
-        );
+        // 크레딧 차감과 청구 저장을 한 트랜잭션으로, 크레딧 행은 잠근다(FOR UPDATE) — 두 번 눌러도 크레딧은 한 번만 빠지고,
+        // 같은 달 청구가 이미 생기면(학생·월·종류 유일 키) 차감까지 되돌린다
+        let paymentId;
+        const conn = await pool.getConnection();
+        try {
+            await conn.beginTransaction();
+            // 휴식 이월·공결·수동 크레딧 차감(일괄 청구와 같은 함수)
+            let carryoverAmount = 0;
+            let restCreditId = null;
+            try {
+                ({ carryoverAmount, restCreditId } = await deductMonthlyCredit(conn, {
+                    studentId: student.id, academyId: req.user.academyId,
+                    amountBeforeCarryover: baseAmount - discountAmount + additionalAmount, lock: true,
+                }));
+                if (restCreditId) {
+                    notes = `[이월 차감] 휴식 크레딧 ${carryoverAmount.toLocaleString()}원 차감`;
+                    description += ' (이월 차감 적용)';
+                }
+            } catch (err) {
+                logger.error(`Failed to apply carryover credit for student ${student_id}:`, err);
+            }
+
+            const finalAmount = monthlyBillAmounts(baseAmount, discountRate, additionalAmount, carryoverAmount).final;
+
+            const [result] = await conn.execute(
+                `INSERT INTO student_payments (
+                    student_id, academy_id, \`year_month\`, payment_type,
+                    base_amount, discount_amount, additional_amount, carryover_amount, rest_credit_id, final_amount,
+                    due_date, payment_status, description, notes, recorded_by
+                ) VALUES (?, ?, ?, 'monthly', ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`,
+                [
+                    student_id,
+                    req.user.academyId,
+                    yearMonth,
+                    baseAmount,
+                    discountAmount,
+                    additionalAmount,
+                    carryoverAmount,
+                    restCreditId,
+                    finalAmount,
+                    dueDate.toISOString().split('T')[0],
+                    description,
+                    notes,
+                    req.user.userId
+                ]
+            );
+            paymentId = result.insertId;
+            await conn.commit();
+        } catch (error) {
+            await conn.rollback();
+            if (error.code === 'ER_DUP_ENTRY') {
+                return res.status(400).json({
+                    error: 'Validation Error',
+                    message: `${yearMonth} 월 납부건이 이미 존재합니다.`
+                });
+            }
+            throw error;
+        } finally {
+            conn.release();
+        }
 
         res.status(201).json({
             message: '월 납부건이 생성되었습니다.',
-            payment: await createdPayment(result.insertId),
+            payment: await createdPayment(paymentId),
             nonSeasonProrated: null
         });
     } catch (error) {

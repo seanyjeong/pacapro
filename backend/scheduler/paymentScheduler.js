@@ -94,10 +94,11 @@ async function generateMonthlyPayments() {
 
                     // 이미 해당 월 학원비가 있는지 확인
                     const [existing] = await connection.query(`
-                        SELECT id, payment_status FROM student_payments
+                        SELECT id, payment_status, carryover_amount, rest_credit_id, notes FROM student_payments
                         WHERE student_id = ?
                         AND \`year_month\` = ?
                         AND payment_type = 'monthly'
+                        FOR UPDATE
                     `, [student.id, yearMonth]);
 
                     // 이미 납부 완료된 건은 건너뛰기
@@ -119,8 +120,17 @@ async function generateMonthlyPayments() {
                     let restCreditId = null;
                     let notes = null;
 
+                    // 이미 이 청구에 적용된 크레딧은 그대로 두고 또 빼지 않는다
+                    // (예전엔 미납 청구가 있는 달에 다시 돌면 한 건 더 빼고 carryover_amount 를 덮어써 앞 크레딧이 사라졌다)
+                    const appliedCredit = existing.length > 0 && Number(existing[0].carryover_amount) > 0 ? existing[0] : null;
+                    if (appliedCredit) {
+                        carryoverAmount = Number(appliedCredit.carryover_amount);
+                        restCreditId = appliedCredit.rest_credit_id;
+                        notes = appliedCredit.notes;
+                    }
+
                     // 휴식 이월(carryover) + 공결(excused) + 수동(manual) 크레딧 모두 조회
-                    const [pendingCredits] = await connection.query(`
+                    const [pendingCredits] = appliedCredit ? [[]] : await connection.query(`
                         SELECT id, remaining_amount, credit_type FROM rest_credits
                         WHERE student_id = ?
                         AND academy_id = ?
