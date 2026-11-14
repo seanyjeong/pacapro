@@ -63,13 +63,14 @@ function monthlyDiscountAmount(tuition, discountRate) {
 
 /**
  * 청구 최종 금액 = 천원 절삭(청구 금액 − 할인액 + 추가 금액 − 크레딧), 0 미만이면 0.
- * 월 청구(아래 monthlyBillAmounts)와 청구 수정 화면·첫 달 일할 재계산이 같은 식을 쓴다(크레딧을 빼고 절삭).
+ * 월 청구(아래 monthlyBillAmounts)와 청구 수정 화면·첫 달 일할 재계산·크레딧 수동 적용이 같은 식을 쓴다(크레딧을 빼고 절삭).
+ * unit: 절삭 단위(기본 천원). 크레딧 수동 적용은 unit 1 로 '이 청구에서 더 뺄 수 있는 원 단위 금액'을 구한다.
  */
-function billFinalAmount(base, discount, additional = 0, carryover = 0) {
+function billFinalAmount(base, discount, additional = 0, carryover = 0, unit = 1000) {
     const parts = [decimal(base), decimal(discount), decimal(additional), decimal(carryover)];
     const scale = Math.max(...parts.map(part => part.scale));
     const [b, d, add, carry] = parts.map(part => part.n * pow10(scale - part.scale));
-    return Math.max(toUnits(floorDivide(b - d + add - carry, 1000n * pow10(scale)), 1000), 0);
+    return Math.max(toUnits(floorDivide(b - d + add - carry, BigInt(unit) * pow10(scale)), unit), 0);
 }
 
 function monthlyBillAmounts(tuition, discountRate, additional = 0, carryover = 0) {

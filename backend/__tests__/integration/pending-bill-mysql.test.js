@@ -104,7 +104,8 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
     };
     const app = () => {
         const a = express(); a.use(express.json());
-        const students = express.Router(); require('../../routes/students/classDays')(students); a.use('/paca/students', students);
+        const students = express.Router(); require('../../routes/students/classDays')(students); require('../../routes/students/credits')(students);
+        a.use('/paca/students', students);
         a.use('/paca/branches', require('../../routes/branches'));
         const payments = express.Router();
         require('../../routes/payments/bulk')(payments); require('../../routes/payments/bulk/monthlyForStudent')(payments);
@@ -253,6 +254,47 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         expect((await request(app()).put(`/paca/payments/${made.id}`).send({ additional_amount: 10000 })).status).toBe(200);
         const [[added]] = await pool.query('SELECT final_amount FROM student_payments WHERE id = ?', [made.id]);
         expect(Number(added.final_amount)).toBe(monthlyBillAmounts(450000, 0, 10000, 166500).final);
+    });
+
+    test('크레딧 수동 적용: 166,500원 → 283,000원(월 청구로 만든 금액과 같음), 잔액 정확, 동시에 두 번 눌러도 한 번만', async () => {
+        const month = koreaMonth(2), [year, mon] = month.split('-').map(Number);
+        const apply = () => request(app()).post('/paca/students/1/credits/1/apply').send({ year_month: month });
+        const pendingBill = () => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,
+            base_amount, discount_amount, additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status)
+            VALUES (1, 1, 1, ?, 'monthly', 450000, 0, 0, 0, 450000, 0, 0, ?, 'pending')`, [month, `${month}-05`]);
+        const state = async () => {
+            const [[bill]] = await pool.query('SELECT carryover_amount, rest_credit_id, final_amount FROM student_payments WHERE id = 1');
+            const [[credit]] = await pool.query('SELECT remaining_amount, status, applied_to_payment_id FROM rest_credits WHERE id = 1');
+            return [bill.carryover_amount, bill.rest_credit_id, Number(bill.final_amount), credit.remaining_amount, credit.status, credit.applied_to_payment_id];
+        };
+
+        // 같은 학생·같은 크레딧을 월 청구로 만들면
+        await seed({ tuition: 450000, rate: 0, credit: 166500, bills: false });
+        expect((await request(app()).post('/paca/payments/bulk-monthly').send({ year, month: mon })).status).toBe(200);
+        const [[monthly]] = await pool.query('SELECT final_amount FROM student_payments WHERE `year_month` = ?', [month]);
+
+        // 수동 적용
+        await seed({ tuition: 450000, rate: 0, credit: 166500, bills: false });
+        await pendingBill();
+        const res = await apply();
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ applied_amount: 166500, new_final_amount: 283000, credit_remaining: 0 });
+        expect(await state()).toEqual([166500, 1, 283000, 0, 'applied', 1]);
+        expect(Number(monthly.final_amount)).toBe(283000);
+
+        // 동시에 두 번: 한 번만 적용
+        await seed({ tuition: 450000, rate: 0, credit: 166500, bills: false });
+        await pendingBill();
+        const both = await Promise.all([apply(), apply()]);
+        expect(both.map(r => r.status).sort()).toEqual([200, 400]);
+        expect(await state()).toEqual([166500, 1, 283000, 0, 'applied', 1]);
+
+        // 크레딧이 청구보다 크면 청구만큼만 빼고 잔액을 남긴다 — 동시에 두 번이어도 더 빠지지 않는다
+        await seed({ tuition: 450000, rate: 0, credit: 500000, bills: false });
+        await pendingBill();
+        const partial = await Promise.all([apply(), apply()]);
+        expect(partial.map(r => r.status).sort()).toEqual([200, 400]);
+        expect(await state()).toEqual([450000, 1, 0, 50000, 'partial', 1]);
     });
 
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {

@@ -10,7 +10,7 @@
  *       DELETE /paca/students/:id/credits/:creditId      → { message }
  *       POST /paca/students/:id/credits/:creditId/apply  → { message, applied_amount, new_final_amount, credit_remaining }
  *   - 에러 응답: { error: '<영문코드>', message: '<한국어 친화>' } (ADR-003)
- *   - DB 호출 패턴 (ADR-005): pool.execute 만 (db.query / pool.query / connection.query 잔존 0건).
+ *   - DB 호출 패턴 (ADR-005): execute 만 (db.query / pool.query / connection.query 잔존 0건). 크레딧 적용(apply)만 트랜잭션 연결.
  *   - 사용자 노출 detail (e.message 등) 0건 (보안).
  *   - student_payments / rest_credits 만 접촉 (학사 데이터). payments / toss 미접촉 (ADR-007).
  */
@@ -355,7 +355,21 @@ describe('DELETE /paca/students/:id/credits/:creditId', () => {
 });
 
 describe('POST /paca/students/:id/credits/:creditId/apply', () => {
-  beforeEach(resetMocks);
+  let conn;
+  beforeEach(() => {
+    resetMocks();
+    // 트랜잭션 연결 — 쿼리는 pool.execute mock 으로 모아 순서를 확인한다
+    conn = {
+      execute: (...args) => pool.execute(...args),
+      beginTransaction: jest.fn().mockResolvedValue(),
+      commit: jest.fn().mockResolvedValue(),
+      rollback: jest.fn().mockResolvedValue(),
+      release: jest.fn(),
+    };
+    pool.getConnection.mockResolvedValue(conn);
+  });
+  // 청구(FOR UPDATE) → 크레딧(FOR UPDATE) 순서로 잠근다 (월 청구와 같은 순서)
+  const bill = (row) => [[row]];
 
   test('year_month 누락 / 형식 불일치 → 400 한국어', async () => {
     let res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({});
@@ -368,14 +382,20 @@ describe('POST /paca/students/:id/credits/:creditId/apply', () => {
   });
 
   test('크레딧 미존재 → 404 한국어', async () => {
-    pool.execute.mockResolvedValueOnce([[]]);
+    pool.execute
+      .mockResolvedValueOnce([[]]) // payments
+      .mockResolvedValueOnce([[]]); // credits 없음
     const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-04' });
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: 'NOT_FOUND', message: '크레딧을 찾을 수 없습니다.' });
+    expect(conn.rollback).toHaveBeenCalled();
+    expect(conn.release).toHaveBeenCalled();
   });
 
   test('이미 applied → 400 한국어', async () => {
-    pool.execute.mockResolvedValueOnce([[{ id: 55, status: 'applied', remaining_amount: 0, credit_type: 'manual' }]]);
+    pool.execute
+      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[{ id: 55, status: 'applied', remaining_amount: 0, credit_type: 'manual' }]]);
     const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-04' });
     expect(res.status).toBe(400);
     expect(res.body.message).toBe('이미 사용 완료된 크레딧입니다.');
@@ -383,8 +403,8 @@ describe('POST /paca/students/:id/credits/:creditId/apply', () => {
 
   test('학원비 미존재 → 404 한국어 (year_month 메시지)', async () => {
     pool.execute
-      .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 30000, credit_type: 'manual' }]])
-      .mockResolvedValueOnce([[]]); // payments 없음
+      .mockResolvedValueOnce([[]]) // payments 없음
+      .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 30000, credit_type: 'manual' }]]);
     const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-04' });
     expect(res.status).toBe(404);
     expect(res.body.message).toBe('2026-04 학원비가 없습니다.');
@@ -392,8 +412,8 @@ describe('POST /paca/students/:id/credits/:creditId/apply', () => {
 
   test('학원비 paid → 400 한국어', async () => {
     pool.execute
-      .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 30000, credit_type: 'manual' }]])
-      .mockResolvedValueOnce([[{ id: 99, payment_status: 'paid', final_amount: 200000, carryover_amount: 0, notes: null }]]);
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'paid', base_amount: '200000.00', final_amount: 200000, carryover_amount: 0, notes: null }))
+      .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 30000, credit_type: 'manual' }]]);
     const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-04' });
     expect(res.status).toBe(400);
     expect(res.body.message).toBe('이미 납부 완료된 학원비에는 크레딧을 적용할 수 없습니다.');
@@ -401,10 +421,10 @@ describe('POST /paca/students/:id/credits/:creditId/apply', () => {
 
   test('정상 (전액 적용): student_payments + rest_credits 둘 다 UPDATE + 응답 표면 보존', async () => {
     pool.execute
+      // 학원비 (학원비 200000, carryover 0, notes null)
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'unpaid', base_amount: '200000.00', discount_amount: '0.00', additional_amount: '0.00', final_amount: '200000', carryover_amount: '0', notes: null }))
       // 크레딧 (remaining_amount 30000)
       .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 30000, credit_type: 'manual' }]])
-      // 학원비 (final 200000, carryover 0, notes null)
-      .mockResolvedValueOnce([[{ id: 99, payment_status: 'unpaid', final_amount: '200000', carryover_amount: '0', notes: null }]])
       // student_payments UPDATE
       .mockResolvedValueOnce([{ affectedRows: 1 }])
       // rest_credits UPDATE
@@ -417,6 +437,8 @@ describe('POST /paca/students/:id/credits/:creditId/apply', () => {
       new_final_amount: 170000, // 200000 - 30000
       credit_remaining: 0,
     });
+    expect(pool.execute.mock.calls[0][0]).toMatch(/FROM student_payments[\s\S]*FOR UPDATE/);
+    expect(pool.execute.mock.calls[1][0]).toMatch(/FROM rest_credits[\s\S]*FOR UPDATE/);
     // student_payments UPDATE: carryover, final, rest_credit_id, notes, payment.id
     const paymentUpdate = pool.execute.mock.calls[2];
     expect(paymentUpdate[0]).toMatch(/UPDATE student_payments SET/);
@@ -426,17 +448,19 @@ describe('POST /paca/students/:id/credits/:creditId/apply', () => {
     const creditUpdate = pool.execute.mock.calls[3];
     expect(creditUpdate[0]).toMatch(/UPDATE rest_credits SET/);
     expect(creditUpdate[1]).toEqual([0, 'applied', 99, 55]);
+    expect(conn.commit).toHaveBeenCalled();
+    expect(conn.release).toHaveBeenCalled();
   });
 
   test('정상 (부분 적용): 크레딧 잔액 > 학원비 → status="partial"', async () => {
     pool.execute
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'unpaid', base_amount: '35000.00', discount_amount: '0.00', additional_amount: '0.00', final_amount: '30000', carryover_amount: 5000, notes: 'prev' }))
       .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 100000, credit_type: 'excused' }]])
-      .mockResolvedValueOnce([[{ id: 99, payment_status: 'unpaid', final_amount: '30000', carryover_amount: '5000', notes: 'prev' }]])
       .mockResolvedValueOnce([{ affectedRows: 1 }])
       .mockResolvedValueOnce([{ affectedRows: 1 }]);
     const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-05' });
     expect(res.status).toBe(200);
-    expect(res.body.applied_amount).toBe(30000); // min(100000, 30000)
+    expect(res.body.applied_amount).toBe(30000); // min(100000, 35000 − 5000)
     expect(res.body.new_final_amount).toBe(0);
     expect(res.body.credit_remaining).toBe(70000);
     // 'excused' → '공결' 라벨 + carryover 누적 (5000 + 30000 = 35000) + notes prepend
@@ -448,15 +472,54 @@ describe('POST /paca/students/:id/credits/:creditId/apply', () => {
     expect(pool.execute.mock.calls[3][1]).toEqual([70000, 'partial', 99, 55]);
   });
 
-  test('ADR-005: pool.execute 만 + payments / toss 미접촉 보장', async () => {
+  test('월 청구와 같은 식: 학원비 450,000원에 크레딧 166,500원 적용 → 283,000원, 크레딧은 166,500원 그대로 빠진다', async () => {
+    const { monthlyBillAmounts } = require('../../../utils/monthlyBillAmounts');
     pool.execute
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'pending', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', final_amount: '450000.00', carryover_amount: 0, notes: null }))
+      .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 166500, credit_type: 'manual' }]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-05' });
+    expect(res.status).toBe(200);
+    // 예전엔 450,000 − 166,500 = 283,500원
+    expect(res.body).toMatchObject({ applied_amount: 166500, new_final_amount: 283000, credit_remaining: 0 });
+    expect(res.body.new_final_amount).toBe(monthlyBillAmounts(450000, 0, 0, 166500).final);
+    expect(pool.execute.mock.calls[2][1].slice(0, 2)).toEqual([166500, 283000]);
+    expect(pool.execute.mock.calls[3][1]).toEqual([0, 'applied', 99, 55]);
+  });
+
+  test('절삭으로 줄어든 몫은 크레딧에서 더 빼지 않는다: 남은 청구 500원(최종 0원)에 크레딧 10,000원 → 500원만 빠짐', async () => {
+    pool.execute
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'pending', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', final_amount: '0.00', carryover_amount: 449500, notes: null }))
+      .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 10000, credit_type: 'manual' }]])
+      .mockResolvedValueOnce([{ affectedRows: 1 }])
+      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-05' });
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ applied_amount: 500, new_final_amount: 0, credit_remaining: 9500 });
+    expect(pool.execute.mock.calls[2][1].slice(0, 2)).toEqual([450000, 0]);
+    expect(pool.execute.mock.calls[3][1]).toEqual([9500, 'partial', 99, 55]);
+  });
+
+  test('더 뺄 금액이 없는 청구 → 400, 크레딧 그대로', async () => {
+    pool.execute
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'pending', base_amount: '450000.00', discount_amount: '0.00', additional_amount: '0.00', final_amount: '0.00', carryover_amount: 450000, notes: null }))
+      .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 10000, credit_type: 'manual' }]]);
+    const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-05' });
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe('적용할 금액이 없습니다.');
+    expect(pool.execute).toHaveBeenCalledTimes(2);
+    expect(conn.rollback).toHaveBeenCalled();
+  });
+
+  test('payments / toss 미접촉 보장', async () => {
+    pool.execute
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'unpaid', base_amount: '50000.00', final_amount: '50000', carryover_amount: '0', notes: null }))
       .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 30000, credit_type: 'carryover' }]])
-      .mockResolvedValueOnce([[{ id: 99, payment_status: 'unpaid', final_amount: '50000', carryover_amount: '0', notes: null }]])
       .mockResolvedValueOnce([{ affectedRows: 1 }])
       .mockResolvedValueOnce([{ affectedRows: 1 }]);
     await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-04' });
     expect(pool.query).not.toHaveBeenCalled();
-    expect(pool.getConnection).not.toHaveBeenCalled(); // 트랜잭션 미사용 (현재 정책)
     // payments / toss / payment_methods 같은 결제 트랜잭션 테이블 미접촉 (SQL 문자열 검사)
     pool.execute.mock.calls.forEach(([sql]) => {
       expect(sql).not.toMatch(/\bFROM payments\b/i);
@@ -465,15 +528,18 @@ describe('POST /paca/students/:id/credits/:creditId/apply', () => {
     });
   });
 
-  test('5xx + e.message 누출 0건', async () => {
+  test('5xx + e.message 누출 0건, 트랜잭션 되돌림', async () => {
     pool.execute
+      .mockResolvedValueOnce(bill({ id: 99, payment_status: 'unpaid', base_amount: '50000.00', final_amount: '50000', carryover_amount: '0', notes: null }))
       .mockResolvedValueOnce([[{ id: 55, status: 'pending', remaining_amount: 30000, credit_type: 'manual' }]])
-      .mockResolvedValueOnce([[{ id: 99, payment_status: 'unpaid', final_amount: '50000', carryover_amount: '0', notes: null }]])
       .mockRejectedValueOnce(new Error('UPDATE student_payments deadlock detected'));
     const res = await request(makeApp()).post('/paca/students/7/credits/55/apply').send({ year_month: '2026-04' });
     expect(res.status).toBe(500);
     expect(res.body).toEqual({ error: 'APPLY_CREDIT_FAILED', message: '크레딧 적용에 실패했습니다.' });
     expect(JSON.stringify(res.body)).not.toContain('deadlock');
     expect(JSON.stringify(res.body)).not.toContain('student_payments');
+    expect(conn.rollback).toHaveBeenCalled();
+    expect(conn.commit).not.toHaveBeenCalled();
+    expect(conn.release).toHaveBeenCalled();
   });
 });

@@ -29,7 +29,7 @@
  *
  * DB 패턴 (ADR-005): 모든 호출 pool.execute(sql, params).
  *   - 단일 query 모두 pool.execute 로 통일 (db.query 잔재 0건).
- *   - 트랜잭션 영역 없음 (모든 endpoint 단일 query 1~3건). 트랜잭션 도입 시 conn.execute 사용.
+ *   - 트랜잭션은 크레딧 적용(apply)만 — conn.execute 사용. 나머지 endpoint 는 단일 query 1~3건.
  *
  * 보안 (ADR-007):
  *   - decrypt(name) 헬퍼 (utils/encryption) 시그니처 무변경 (manual-credit 응답 메시지 학생명 표시).
@@ -52,7 +52,7 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
 const { truncateToThousands, countClassDaysInPeriod } = require('./_utils');
-const { floorRatio } = require('../../utils/monthlyBillAmounts');
+const { floorRatio, billFinalAmount } = require('../../utils/monthlyBillAmounts');
 const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
@@ -468,10 +468,10 @@ router.delete('/:id/credits/:creditId', verifyToken, checkPermission('payments',
  *
  * 처리:
  *   - 대상 학원비 조회 (student_payments, payment_type='monthly')
- *   - 적용 금액 = min(크레딧 잔액, 학원비 final_amount)
- *   - student_payments UPDATE: carryover_amount += apply, final_amount -= apply, rest_credit_id, notes 추가, updated_at
+ *   - 적용 금액 = min(크레딧 잔액, 학원비 − 할인액 + 추가 − 기존 크레딧) — 월 청구 크레딧 차감과 같은 원칙
+ *   - student_payments UPDATE: carryover_amount += apply, final_amount = 천원 절삭(학원비 − 할인액 + 추가 − 크레딧) (월 청구·청구 수정과 같은 식), rest_credit_id, notes 추가, updated_at
  *   - rest_credits UPDATE: remaining_amount -= apply, status (전액 → 'applied' / 일부 → 'partial'), applied_to_payment_id, processed_at
- *   - 트랜잭션 미사용 (현재 정책 유지) — 두 UPDATE 사이 부분 실패 시 회계 정합성 깨짐 가능 → 향후 분리 작업 시 트랜잭션 도입 검토 항목.
+ *   - 한 트랜잭션 + 청구·크레딧 행 잠금(FOR UPDATE) — 두 번 동시에 눌러도 크레딧은 한 번만 빠지고, 중간 실패는 되돌린다.
  *
  * 결제(toss) 영역 미접촉 (ADR-007). student_payments 는 학사 데이터 (학원비 청구 내역).
  *
@@ -489,14 +489,28 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
         });
     }
 
+    // 한 트랜잭션: 청구·크레딧 행을 잠그고(FOR UPDATE, 월 청구와 같은 순서 — 청구 먼저) 확인·차감·저장을 함께.
+    // 동시에 두 번 눌러도 크레딧은 한 번만 빠진다.
+    const conn = await pool.getConnection();
     try {
+        await conn.beginTransaction();
+
+        // 해당 월 학원비 조회 (year_month 는 MySQL 예약어 → 백틱)
+        const [payments] = await conn.execute(
+            `SELECT * FROM student_payments
+             WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'
+             FOR UPDATE`,
+            [studentId, req.user.academyId, year_month]
+        );
+
         // 크레딧 조회 (학원/학생 격리)
-        const [credits] = await pool.execute(
-            `SELECT * FROM rest_credits WHERE id = ? AND student_id = ? AND academy_id = ?`,
+        const [credits] = await conn.execute(
+            `SELECT * FROM rest_credits WHERE id = ? AND student_id = ? AND academy_id = ? FOR UPDATE`,
             [creditId, studentId, req.user.academyId]
         );
 
         if (credits.length === 0) {
+            await conn.rollback();
             return res.status(404).json({
                 error: 'NOT_FOUND',
                 message: '크레딧을 찾을 수 없습니다.'
@@ -507,20 +521,15 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
 
         // 이미 사용 완료된 크레딧은 적용 불가
         if (credit.status === 'applied' || credit.remaining_amount <= 0) {
+            await conn.rollback();
             return res.status(400).json({
                 error: 'VALIDATION_ERROR',
                 message: '이미 사용 완료된 크레딧입니다.'
             });
         }
 
-        // 해당 월 학원비 조회 (year_month 는 MySQL 예약어 → 백틱)
-        const [payments] = await pool.execute(
-            `SELECT * FROM student_payments
-             WHERE student_id = ? AND academy_id = ? AND \`year_month\` = ? AND payment_type = 'monthly'`,
-            [studentId, req.user.academyId, year_month]
-        );
-
         if (payments.length === 0) {
+            await conn.rollback();
             return res.status(404).json({
                 error: 'NOT_FOUND',
                 message: `${year_month} 학원비가 없습니다.`
@@ -531,28 +540,32 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
 
         // 이미 납부 완료된 학원비는 적용 불가
         if (payment.payment_status === 'paid') {
+            await conn.rollback();
             return res.status(400).json({
                 error: 'VALIDATION_ERROR',
                 message: '이미 납부 완료된 학원비에는 크레딧을 적용할 수 없습니다.'
             });
         }
 
-        // 적용할 금액 계산 (크레딧 잔액 vs 학원비 남은 금액 중 작은 쪽)
-        const currentFinal = parseFloat(payment.final_amount);
+        // 적용할 금액 = min(크레딧 잔액, 이 청구에서 더 뺄 수 있는 금액(학원비 − 할인액 + 추가 − 기존 크레딧, 원 단위))
+        // 월 청구와 같은 원칙: 크레딧은 이 금액만큼 빼고, 최종 금액은 그 뒤 천원 절삭 — 절삭으로 줄어든 몫은 크레딧에서 더 빼지 않는다.
         const currentCarryover = parseFloat(payment.carryover_amount) || 0;
-        const payableAmount = currentFinal; // 현재 최종 금액
+        const payableAmount = billFinalAmount(
+            payment.base_amount, payment.discount_amount, payment.additional_amount, currentCarryover, 1
+        );
         const applyAmount = Math.min(credit.remaining_amount, payableAmount);
 
         if (applyAmount <= 0) {
+            await conn.rollback();
             return res.status(400).json({
                 error: 'VALIDATION_ERROR',
                 message: '적용할 금액이 없습니다.'
             });
         }
 
-        // 학원비 업데이트값 계산
+        // 학원비 업데이트값 계산 — 최종 금액은 월 청구·청구 수정 화면과 같은 식
         const newCarryover = currentCarryover + applyAmount;
-        const newFinal = currentFinal - applyAmount;
+        const newFinal = billFinalAmount(payment.base_amount, payment.discount_amount, payment.additional_amount, newCarryover);
         const creditTypeLabel = credit.credit_type === 'excused' ? '공결' :
                                credit.credit_type === 'manual' ? '수동' : '휴식';
         const newNotes = payment.notes
@@ -560,7 +573,7 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
             : `[크레딧 차감] ${creditTypeLabel} 크레딧 ${applyAmount.toLocaleString()}원 차감`;
 
         // student_payments UPDATE
-        await pool.execute(
+        await conn.execute(
             `UPDATE student_payments SET
                 carryover_amount = ?,
                 final_amount = ?,
@@ -575,7 +588,7 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
         const newRemaining = credit.remaining_amount - applyAmount;
         const newStatus = newRemaining <= 0 ? 'applied' : 'partial';
 
-        await pool.execute(
+        await conn.execute(
             `UPDATE rest_credits SET
                 remaining_amount = ?,
                 status = ?,
@@ -584,6 +597,7 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
              WHERE id = ?`,
             [newRemaining, newStatus, payment.id, creditId]
         );
+        await conn.commit();
 
         res.json({
             message: `${year_month} 학원비에 ${applyAmount.toLocaleString()}원 크레딧이 적용되었습니다.`,
@@ -593,12 +607,14 @@ router.post('/:id/credits/:creditId/apply', verifyToken, checkPermission('paymen
         });
 
     } catch (error) {
+        await conn.rollback();
         logger.error('Error applying credit:', error);
         res.status(500).json({
             error: 'APPLY_CREDIT_FAILED',
             message: '크레딧 적용에 실패했습니다.'
         });
+    } finally {
+        conn.release();
     }
 });
-
 };
