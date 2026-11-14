@@ -17,7 +17,7 @@ export function ExpenseSummaryStrip({ summary }: ExpenseSummaryStripProps) {
         <StatTile
           className="h-full"
           label="총 지출 금액"
-          value={<span className="text-destructive">-{formatAmount(summary.totalAmount)}원</span>}
+          value={<span className="text-[20px] text-destructive sm:text-[26px]">-{formatAmount(summary.totalAmount)}원</span>}
           tone="danger"
           icon={Banknote}
         />
@@ -25,7 +25,7 @@ export function ExpenseSummaryStrip({ summary }: ExpenseSummaryStripProps) {
       <StatTile
         className="h-full"
         label="월 평균 지출"
-        value={`${formatAmount(summary.monthlyAverage)}원`}
+        value={<span className="text-[20px] sm:text-[26px]">{formatAmount(summary.monthlyAverage)}원</span>}
         icon={WalletCards}
       />
       <div className="min-w-0" data-testid="expenses-metric-refund">

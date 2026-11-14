@@ -15,7 +15,7 @@ export function CreditsSummaryStrip({ stats, studentsWithCredit }: CreditsSummar
     <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="크레딧 요약">
       <StatTile
         label="총 크레딧"
-        value={formatWon(stats.total_credit)}
+        value={<span className="text-[20px] sm:text-[26px]">{formatWon(stats.total_credit)}</span>}
         note={`${stats.total_count}건`}
         icon={CreditCard}
         tone="primary"
@@ -24,7 +24,7 @@ export function CreditsSummaryStrip({ stats, studentsWithCredit }: CreditsSummar
         <StatTile
           className="h-full"
           label="잔여 크레딧"
-          value={formatWon(stats.total_remaining)}
+          value={<span className="text-[20px] sm:text-[26px]">{formatWon(stats.total_remaining)}</span>}
           note={<span data-testid="credits-metric-pending">대기 {stats.pending_count}건 · {formatWon(stats.pending_amount)}</span>}
           icon={TrendingDown}
           tone="warning"

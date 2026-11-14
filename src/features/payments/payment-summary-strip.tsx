@@ -19,7 +19,12 @@ export function PaymentSummaryStrip({ summary, viewOnly, isOwner, filters, onFil
     return (
       <section className="grid grid-cols-2 gap-3" aria-label="미납 요약">
         <StatTile label="미납 건수" value={`${summary.filteredCount}건`} tone="danger" icon={AlertCircle} />
-        <StatTile label="미납 금액" value={`${summary.unpaidAmount.toLocaleString()}원`} tone="danger" icon={Banknote} />
+        <StatTile
+          label="미납 금액"
+          value={<span className="text-[20px] sm:text-[26px]">{summary.unpaidAmount.toLocaleString()}원</span>}
+          tone="danger"
+          icon={Banknote}
+        />
       </section>
     );
   }
