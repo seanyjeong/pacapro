@@ -1,3 +1,4 @@
+import { SectionCard } from '@/components/ui/page';
 import type { ReportAccess, ReportComputedStats, ReportStats } from './reports-types';
 import { formatReportAmount } from './reports-utils';
 import { ReportProgressRow } from './report-progress-row';
@@ -14,58 +15,57 @@ export function RevenueAnalysisPanel({ access, stats, computed }: RevenueAnalysi
   const unpaidPercent = billedAmount > 0 ? (computed.unpaidAmount / billedAmount) * 100 : 0;
 
   return (
-    <section className="rounded-md border border-border bg-card p-5" aria-labelledby="revenue-analysis-title">
-      <div className="mb-5 flex items-start justify-between gap-4">
-        <div>
-          <h2 id="revenue-analysis-title" className="text-lg font-semibold text-foreground">
-            수입 분석
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">청구와 실제 수납을 분리해서 봅니다.</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">수납률</p>
-          <p className="text-2xl font-semibold text-primary">{computed.collectionRate}%</p>
-        </div>
-      </div>
-
-      <div className="space-y-5">
-        <ReportProgressRow
-          label="청구 금액"
-          percent={100}
-          tone="primary"
-          value={`${formatReportAmount(billedAmount)}원`}
-        />
-        <ReportProgressRow
-          label="수납 완료"
-          percent={collectedPercent}
-          tone="success"
-          value={`${formatReportAmount(stats.payments.paidAmountFromBilled)}원`}
-        />
-        <ReportProgressRow
-          label="미수납 금액"
-          percent={unpaidPercent}
-          tone="danger"
-          value={`${formatReportAmount(computed.unpaidAmount)}원`}
-        />
-
-        <div className="grid grid-cols-1 gap-3 border-t border-border pt-4 sm:grid-cols-2">
-          <div>
-            <p className="text-sm text-muted-foreground">실제 학원비 매출</p>
-            <p className="mt-1 text-base font-semibold text-foreground">
-              {formatReportAmount(stats.payments.paidAmount)}원
-            </p>
+    <section aria-labelledby="revenue-analysis-title" className="min-w-0">
+      <SectionCard
+        className="h-full"
+        title={<span id="revenue-analysis-title">수입 분석</span>}
+        description="청구와 실제 수납을 나눠서 봐요."
+        actions={(
+          <div className="text-right" data-testid="reports-metric-collection">
+            <p className="text-[13px] font-medium text-muted-foreground">수납률</p>
+            <p className="text-[26px] font-extrabold leading-tight tabular-nums text-primary">{computed.collectionRate}%</p>
           </div>
-          {access.incomes && (
-            <div>
-              <p className="text-sm text-muted-foreground">기타수입</p>
-              <p className="mt-1 text-base font-semibold text-foreground">
-                {formatReportAmount(stats.otherIncomes.totalAmount)}원
+        )}
+      >
+        <div className="space-y-5 pt-2">
+          <ReportProgressRow
+            label="청구 금액"
+            percent={100}
+            tone="primary"
+            value={`${formatReportAmount(billedAmount)}원`}
+          />
+          <ReportProgressRow
+            label="수납 완료"
+            percent={collectedPercent}
+            tone="success"
+            value={`${formatReportAmount(stats.payments.paidAmountFromBilled)}원`}
+          />
+          <ReportProgressRow
+            label="미수납 금액"
+            percent={unpaidPercent}
+            tone="danger"
+            testId="reports-metric-unpaid"
+            value={`${formatReportAmount(computed.unpaidAmount)}원`}
+          />
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="rounded-xl bg-muted px-4 py-3">
+              <p className="text-[13px] font-medium text-muted-foreground">실제 학원비 매출</p>
+              <p className="mt-0.5 text-[17px] font-bold tabular-nums text-foreground">
+                {formatReportAmount(stats.payments.paidAmount)}원
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">{stats.otherIncomes.total}건</p>
             </div>
-          )}
+            {access.incomes && (
+              <div className="rounded-xl bg-muted px-4 py-3">
+                <p className="text-[13px] font-medium text-muted-foreground">기타수입</p>
+                <p className="mt-0.5 text-[17px] font-bold tabular-nums text-foreground">
+                  {formatReportAmount(stats.otherIncomes.totalAmount)}원
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </SectionCard>
     </section>
   );
 }

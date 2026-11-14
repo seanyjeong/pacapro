@@ -18,7 +18,7 @@ export function OtherIncomeDetailDialog({ income, canEdit, onClose, onEdit, onDe
   return (
     <Dialog open={Boolean(income)} onOpenChange={(open) => !open && onClose()}>
       {income ? (
-        <DialogContent className="rounded-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>기타수입 상세</DialogTitle>
           </DialogHeader>
@@ -31,29 +31,31 @@ export function OtherIncomeDetailDialog({ income, canEdit, onClose, onEdit, onDe
             {income.notes ? <IncomeDetailItem label="메모" value={income.notes} wide /> : null}
           </div>
           {canEdit ? (
-            <DialogFooter>
+            <DialogFooter className="flex-col-reverse sm:flex-row">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto"
                 onClick={() => {
                   onEdit(income);
                   onClose();
                 }}
               >
-                <Pencil className="mr-1.5 h-4 w-4" />
+                <Pencil className="h-4 w-4" />
                 수정
               </Button>
               <Button
                 type="button"
                 variant="destructive"
                 size="sm"
+                className="w-full sm:w-auto"
                 onClick={() => {
                   onClose();
                   onDelete(income.id);
                 }}
               >
-                <Trash2 className="mr-1.5 h-4 w-4" />
+                <Trash2 className="h-4 w-4" />
                 삭제
               </Button>
             </DialogFooter>

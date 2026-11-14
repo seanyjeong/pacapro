@@ -60,7 +60,7 @@ export function SeasonDetailPage() {
   };
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-4">
       <SeasonDetailHeader
         addStudentHref={`/seasons/${seasonId}/enroll`}
         season={state.season}
@@ -71,7 +71,7 @@ export function SeasonDetailPage() {
 
       <SeasonSummaryStrip enrolledCount={state.enrolledStudents.length} season={state.season} />
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_0.9fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <SeasonInfoPanel season={state.season} />
         <SeasonTimeSlotsPanel season={state.season} />
       </div>

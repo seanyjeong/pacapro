@@ -1,7 +1,5 @@
-import { Calendar, Loader2, Save } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { CalendarClock, Loader2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 
 interface ClassDaysControlBarProps {
   changedCount: number;
@@ -10,9 +8,9 @@ interface ClassDaysControlBarProps {
   onEffectiveFromChange: (value: string) => void;
   onSave: () => void;
   saving: boolean;
-  scheduledCount: number;
 }
 
+// 바꾼 수업일을 언제부터 적용할지 고르고 저장한다.
 export function ClassDaysControlBar({
   changedCount,
   effectiveFrom,
@@ -20,43 +18,31 @@ export function ClassDaysControlBar({
   onEffectiveFromChange,
   onSave,
   saving,
-  scheduledCount,
 }: ClassDaysControlBarProps) {
   return (
-    <Card className="rounded-md shadow-none">
-      <CardContent className="px-6 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Calendar className="h-5 w-5 text-muted-foreground" />
-            <span className="whitespace-nowrap text-sm font-medium">적용 시작월</span>
-            <select
-              aria-label="적용 시작월"
-              className="h-10 w-[200px] rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-              value={effectiveFrom}
-              onChange={(event) => onEffectiveFromChange(event.target.value)}
-            >
-              {monthOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {changedCount > 0 ? <Badge variant="secondary">{changedCount}명 변경됨</Badge> : null}
-            {scheduledCount > 0 ? (
-              <Badge variant="outline" className="border-warning/30 text-warning">
-                {scheduledCount}명 변경 예정
-              </Badge>
-            ) : null}
-            <Button disabled={changedCount === 0 || saving} type="button" onClick={onSave}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              저장 ({changedCount}명)
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <section className="flex flex-col gap-3 rounded-2xl bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+      <label className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <span className="flex items-center gap-2 whitespace-nowrap text-[15px] font-bold text-foreground">
+          <CalendarClock className="h-5 w-5 text-muted-foreground" />
+          적용 시작월
+        </span>
+        <select
+          aria-label="적용 시작월"
+          className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10 sm:w-[220px]"
+          value={effectiveFrom}
+          onChange={(event) => onEffectiveFromChange(event.target.value)}
+        >
+          {monthOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Button className="w-full sm:w-auto" disabled={changedCount === 0 || saving} type="button" onClick={onSave}>
+        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+        저장 ({changedCount}명)
+      </Button>
+    </section>
   );
 }

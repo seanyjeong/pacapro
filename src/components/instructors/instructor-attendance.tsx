@@ -80,8 +80,8 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
   };
   if (loading) {
     return (
-      <Card className="rounded-md">
-        <CardHeader className="border-b border-border px-4 py-3">
+      <Card>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base tracking-normal">출퇴근 기록</CardTitle>
         </CardHeader>
         <CardContent className="p-12 text-center">
@@ -109,8 +109,8 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
 
   if (attendances.length === 0) {
     return (
-      <Card className="rounded-md">
-        <CardHeader className="border-b border-border px-4 py-3">
+      <Card>
+        <CardHeader className="pb-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-base tracking-normal">출퇴근 기록</CardTitle>
             <MonthNavigation />
@@ -128,8 +128,8 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
   }
 
   return (
-    <Card className="overflow-hidden rounded-md">
-      <CardHeader className="border-b border-border px-4 py-3">
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <CardTitle className="text-base tracking-normal">출퇴근 기록</CardTitle>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
@@ -143,29 +143,29 @@ export function InstructorAttendanceComponent({ attendances, loading }: Instruct
       <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="border-b border-border bg-muted/60">
+            <thead className="border-b border-border/60">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                   날짜
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                   시간대
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                   상태
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                   출근
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                   퇴근
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
+                <th className="whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground">
                   메모
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border bg-card">
+            <tbody className="divide-y divide-border/60">
               {filteredAttendances.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">

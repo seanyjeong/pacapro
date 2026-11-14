@@ -1,23 +1,23 @@
 /**
  * Instructor List Table Component
- * 강사 목록 테이블 컴포넌트
+ * 강사 목록 테이블 컴포넌트 (휴대폰: 한 줄 목록, PC: 표)
  */
 
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Banknote, Calendar, Eye, Mail, Phone, Users } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/page';
+import { ChevronRight, Loader2, Mail, Phone, Users } from 'lucide-react';
+import { InstructorInitial, InstructorStatusBadge } from '@/features/instructors/instructor-badges';
 import type { Instructor } from '@/lib/types/instructor';
 import {
   formatPhoneNumber,
   formatDate,
   formatCurrency,
-  getStatusColor,
   calculateYearsOfService,
 } from '@/lib/utils/instructor-helpers';
 import {
   SALARY_TYPE_LABELS,
   TAX_TYPE_LABELS,
-  INSTRUCTOR_STATUS_LABELS,
   INSTRUCTOR_TYPE_LABELS,
 } from '@/lib/types/instructor';
 
@@ -26,6 +26,9 @@ interface InstructorListTableProps {
   loading?: boolean;
   onInstructorClick: (id: number) => void;
 }
+
+const th = 'whitespace-nowrap px-3 py-3 text-left text-[13px] font-semibold text-muted-foreground';
+const td = 'whitespace-nowrap px-3 py-3.5';
 
 export function InstructorListTable({ instructors, loading, onInstructorClick }: InstructorListTableProps) {
   const getPaySummary = (instructor: Instructor) => {
@@ -41,264 +44,165 @@ export function InstructorListTable({ instructors, loading, onInstructorClick }:
 
   if (loading) {
     return (
-      <Card className="rounded-md">
-        <CardContent className="p-12 text-center">
-          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-muted-foreground">강사 목록을 불러오는 중...</p>
-        </CardContent>
-      </Card>
+      <div className="flex min-h-[200px] items-center justify-center gap-3 text-sm font-medium text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        강사 목록을 불러오는 중이에요
+      </div>
     );
   }
 
   if (instructors.length === 0) {
-    return (
-      <Card className="rounded-md">
-        <CardContent className="p-12 text-center">
-          <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-          <h3 className="text-lg font-semibold text-foreground mb-2">강사가 없습니다</h3>
-          <p className="text-muted-foreground">
-            강사를 등록하시면 여기에 표시됩니다.
-          </p>
-        </CardContent>
-      </Card>
-    );
+    return <EmptyState icon={Users} title="강사가 없어요" description="강사를 등록하면 여기에 보여요." />;
   }
 
   return (
     <>
-      <div className="space-y-3 md:hidden" data-testid="instructor-mobile-list">
+      <ul className="divide-y divide-border/60 md:hidden" data-testid="instructor-mobile-list">
         {instructors.map((instructor) => (
-          <Card key={instructor.id} className="rounded-md">
-            <CardContent className="space-y-4 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-md ${
-                    instructor.gender === 'male'
-                      ? 'bg-foreground'
-                      : instructor.gender === 'female'
-                      ? 'bg-destructive'
-                      : 'bg-primary'
-                  }`}>
-                    <span className="text-sm font-bold text-white">{instructor.name.charAt(0)}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-semibold text-foreground">{instructor.name}</div>
-                    <div className="mt-1 flex items-center text-xs text-muted-foreground">
-                      <Phone className="mr-1 h-3 w-3" />
-                      {instructor.phone ? formatPhoneNumber(instructor.phone) : '-'}
-                    </div>
-                    {instructor.email ? (
-                      <div className="mt-0.5 flex items-center text-xs text-muted-foreground">
-                        <Mail className="mr-1 h-3 w-3" />
-                        <span className="truncate">{instructor.email}</span>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-                <span
-                  className={`inline-flex shrink-0 rounded-md border px-2 py-1 text-xs font-medium ${getStatusColor(
-                    instructor.status
-                  )}`}
-                >
-                  {INSTRUCTOR_STATUS_LABELS[instructor.status]}
+          <li key={instructor.id}>
+            <button
+              aria-label={`${instructor.name} 상세 보기`}
+              className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-xl px-2 py-3 text-left transition-colors active:bg-muted"
+              type="button"
+              onClick={() => onInstructorClick(instructor.id)}
+            >
+              <InstructorInitial instructor={instructor} />
+              <span className="min-w-0 flex-1">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="truncate text-[16px] font-bold text-foreground">{instructor.name}</span>
+                  <InstructorStatusBadge status={instructor.status} className="shrink-0" />
                 </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-md border border-border bg-muted/30 p-3">
-                  <div className="text-muted-foreground">급여 방식</div>
-                  <div className="mt-1 font-medium text-foreground">
-                    {SALARY_TYPE_LABELS[instructor.salary_type]}
-                    {instructor.salary_type === 'hourly' && instructor.instructor_type
-                      ? ` · ${INSTRUCTOR_TYPE_LABELS[instructor.instructor_type]}`
-                      : ''}
-                  </div>
-                </div>
-                <div className="rounded-md border border-border bg-muted/30 p-3">
-                  <div className="text-muted-foreground">시급/월급</div>
-                  <div className="mt-1 font-medium text-foreground">{getPaySummary(instructor)}</div>
-                </div>
-                <div className="rounded-md border border-border bg-muted/30 p-3">
-                  <div className="text-muted-foreground">세금</div>
-                  <div className="mt-1 font-medium text-foreground">{TAX_TYPE_LABELS[instructor.tax_type]}</div>
-                </div>
-                <div className="rounded-md border border-border bg-muted/30 p-3">
-                  <div className="text-muted-foreground">입사일</div>
-                  <div className="mt-1 font-medium text-foreground">
-                    {instructor.hire_date ? formatDate(instructor.hire_date) : '-'}
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                aria-label={`${instructor.name} 상세 보기`}
-                className="w-full gap-2"
-                type="button"
-                variant="outline"
-                onClick={() => onInstructorClick(instructor.id)}
-              >
-                <Eye className="h-4 w-4" />
-                상세 보기
-              </Button>
-            </CardContent>
-          </Card>
+                <span className="mt-0.5 block truncate text-[13px] text-secondary-foreground">
+                  {SALARY_TYPE_LABELS[instructor.salary_type]}
+                  {instructor.salary_type === 'hourly' && instructor.instructor_type
+                    ? ` · ${INSTRUCTOR_TYPE_LABELS[instructor.instructor_type]}`
+                    : ''}
+                  {' · '}
+                  {getPaySummary(instructor)}
+                </span>
+                <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                  {instructor.phone ? formatPhoneNumber(instructor.phone) : '-'}
+                  {' · '}
+                  {TAX_TYPE_LABELS[instructor.tax_type]}
+                  {instructor.hire_date ? ` · 입사 ${formatDate(instructor.hire_date)}` : ''}
+                </span>
+              </span>
+              <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/60" />
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
 
-      <Card className="hidden overflow-hidden rounded-md md:block" data-testid="instructor-desktop-list">
-        <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-border bg-muted/60">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
-                  강사 정보
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
-                  급여타입
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
-                  시급/월급
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
-                  세금타입
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
-                  상태
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium tracking-normal text-muted-foreground">
-                  입사일
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium tracking-normal text-muted-foreground">
-                  작업
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border bg-card">
-              {instructors.map((instructor) => (
-                <tr
-                  key={instructor.id}
-                  onClick={() => onInstructorClick(instructor.id)}
-                  className="cursor-pointer transition-colors hover:bg-muted/60"
-                >
-                  <td className="whitespace-nowrap px-4 py-4">
-                    <div className="flex items-center">
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-md ${
-                        instructor.gender === 'male'
-                          ? 'bg-foreground'
-                          : instructor.gender === 'female'
-                          ? 'bg-destructive'
-                          : 'bg-primary'
-                      }`}>
-                        <span className="text-white font-bold text-sm">
-                          {instructor.name.charAt(0)}
-                        </span>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-foreground">
-                          {instructor.name}
-                        </div>
-                        <div className="mt-1 flex items-center text-xs text-muted-foreground">
-                          <Phone className="mr-1 h-3 w-3" />
+      <div className="-mx-5 hidden overflow-x-auto px-2 sm:-mx-6 sm:px-3 md:block" data-testid="instructor-desktop-list">
+        <table className="w-full">
+          <thead className="border-b border-border/60">
+            <tr>
+              <th className={th}>강사 정보</th>
+              <th className={th}>급여타입</th>
+              <th className={th}>시급/월급</th>
+              <th className={th}>세금타입</th>
+              <th className={th}>상태</th>
+              <th className={th}>입사일</th>
+              <th className={`${th} text-right`}>작업</th>
+            </tr>
+          </thead>
+          <tbody>
+            {instructors.map((instructor) => (
+              <tr
+                key={instructor.id}
+                onClick={() => onInstructorClick(instructor.id)}
+                className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-muted/60"
+              >
+                <td className={td}>
+                  <div className="flex items-center gap-3">
+                    <InstructorInitial instructor={instructor} />
+                    <div className="min-w-0">
+                      <div className="text-[15px] font-bold text-foreground">{instructor.name}</div>
+                      <div className="mt-0.5 flex items-center gap-3 text-[13px] text-muted-foreground">
+                        <span className="inline-flex items-center gap-1 tabular-nums">
+                          <Phone className="h-3 w-3" />
                           {instructor.phone ? formatPhoneNumber(instructor.phone) : '-'}
-                        </div>
+                        </span>
                         {instructor.email && (
-                          <div className="mt-0.5 flex items-center text-xs text-muted-foreground">
-                            <Mail className="mr-1 h-3 w-3" />
+                          <span className="inline-flex items-center gap-1">
+                            <Mail className="h-3 w-3" />
                             {instructor.email}
-                          </div>
+                          </span>
                         )}
                       </div>
                     </div>
-                  </td>
+                  </div>
+                </td>
 
-                  <td className="whitespace-nowrap px-4 py-4">
-                    <span className="inline-flex rounded-md bg-muted px-2 py-1 text-xs font-medium text-foreground">
-                      {SALARY_TYPE_LABELS[instructor.salary_type]}
-                    </span>
+                <td className={td}>
+                  <div className="flex items-center gap-1">
+                    <Badge variant="secondary">{SALARY_TYPE_LABELS[instructor.salary_type]}</Badge>
                     {instructor.salary_type === 'hourly' && instructor.instructor_type && (
-                      <span className={`ml-1 inline-flex rounded-md px-2 py-1 text-xs font-medium ${
-                        instructor.instructor_type === 'assistant'
-                          ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/70 dark:text-violet-200'
-                          : 'bg-success-soft text-success'
-                      }`}>
+                      <Badge variant={instructor.instructor_type === 'assistant' ? 'default' : 'success'}>
                         {INSTRUCTOR_TYPE_LABELS[instructor.instructor_type]}
-                      </span>
+                      </Badge>
                     )}
-                  </td>
+                  </div>
+                </td>
 
-                  <td className="whitespace-nowrap px-4 py-4">
-                    {instructor.salary_type === 'hourly' || instructor.salary_type === 'per_class' || instructor.salary_type === 'mixed' ? (
-                      <div>
-                        <div className="flex items-center text-sm font-medium text-foreground">
-                          <Banknote className="mr-1 h-4 w-4 text-muted-foreground" />
-                          {formatCurrency(parseFloat(instructor.hourly_rate || '0'))}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {instructor.salary_type === 'per_class' ? '수업당' : '시급'}
-                        </div>
+                <td className={td}>
+                  {instructor.salary_type === 'hourly' || instructor.salary_type === 'per_class' || instructor.salary_type === 'mixed' ? (
+                    <div>
+                      <div className="text-sm font-semibold tabular-nums text-foreground">
+                        {formatCurrency(parseFloat(instructor.hourly_rate || '0'))}
                       </div>
-                    ) : null}
-                    {instructor.salary_type === 'monthly' || instructor.salary_type === 'mixed' ? (
-                      <div className={instructor.salary_type === 'mixed' ? 'mt-1' : ''}>
-                        <div className="text-sm font-medium text-foreground flex items-center">
-                          <Banknote className="w-4 h-4 mr-1" />
-                          {formatCurrency(parseFloat(instructor.base_salary || '0'))}
-                        </div>
-                        <div className="text-xs text-muted-foreground">월급</div>
+                      <div className="text-[13px] text-muted-foreground">
+                        {instructor.salary_type === 'per_class' ? '수업당' : '시급'}
                       </div>
-                    ) : null}
-                  </td>
-
-                  <td className="whitespace-nowrap px-4 py-4">
-                    <span className="text-sm text-foreground">
-                      {TAX_TYPE_LABELS[instructor.tax_type]}
-                    </span>
-                  </td>
-
-                  <td className="whitespace-nowrap px-4 py-4">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full border ${getStatusColor(
-                        instructor.status
-                      )}`}
-                    >
-                      {INSTRUCTOR_STATUS_LABELS[instructor.status]}
-                    </span>
-                  </td>
-
-                  <td className="whitespace-nowrap px-4 py-4">
-                    <div className="flex items-center text-sm text-foreground">
-                      <Calendar className="mr-1 h-4 w-4 text-muted-foreground" />
-                      {instructor.hire_date ? formatDate(instructor.hire_date) : '-'}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {instructor.hire_date ? `근속 ${calculateYearsOfService(instructor.hire_date)}년` : '-'}
+                  ) : null}
+                  {instructor.salary_type === 'monthly' || instructor.salary_type === 'mixed' ? (
+                    <div className={instructor.salary_type === 'mixed' ? 'mt-1' : ''}>
+                      <div className="text-sm font-semibold tabular-nums text-foreground">
+                        {formatCurrency(parseFloat(instructor.base_salary || '0'))}
+                      </div>
+                      <div className="text-[13px] text-muted-foreground">월급</div>
                     </div>
-                  </td>
+                  ) : null}
+                </td>
 
-                  <td className="whitespace-nowrap px-4 py-4 text-right">
-                    <Button
-                      aria-label={`${instructor.name} 상세 보기`}
-                      className="gap-2"
-                      size="sm"
-                      type="button"
-                      variant="outline"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onInstructorClick(instructor.id);
-                      }}
-                    >
-                      <Eye className="h-4 w-4" />
-                      상세
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        </CardContent>
-      </Card>
+                <td className={`${td} text-sm text-foreground`}>
+                  {TAX_TYPE_LABELS[instructor.tax_type]}
+                </td>
+
+                <td className={td}>
+                  <InstructorStatusBadge status={instructor.status} />
+                </td>
+
+                <td className={td}>
+                  <div className="text-sm tabular-nums text-foreground">
+                    {instructor.hire_date ? formatDate(instructor.hire_date) : '-'}
+                  </div>
+                  <div className="text-[13px] text-muted-foreground">
+                    {instructor.hire_date ? `근속 ${calculateYearsOfService(instructor.hire_date)}년` : '-'}
+                  </div>
+                </td>
+
+                <td className={`${td} text-right`}>
+                  <Button
+                    aria-label={`${instructor.name} 상세 보기`}
+                    size="icon-sm"
+                    title="상세"
+                    type="button"
+                    variant="ghost"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onInstructorClick(instructor.id);
+                    }}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }

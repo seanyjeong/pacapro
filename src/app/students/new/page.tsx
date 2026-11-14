@@ -129,10 +129,9 @@ function NewStudentContent() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5">
+    <div className="mx-auto w-full max-w-7xl space-y-4">
       <StudentFormPageHeader
-        description="학생 기본 정보, 수업 정보, 학원비 기준을 한 번에 저장합니다."
-        eyebrow="Student Intake"
+        description="기본 정보·수업·학원비 기준을 한 번에 저장해요."
         title="학생 등록"
         onBack={handleCancel}
       />
@@ -140,7 +139,7 @@ function NewStudentContent() {
       {/* Form */}
       {existingStudentId && !initialData ? (
         loadError ? (
-          <p role="alert" className="rounded-md border border-destructive/30 bg-destructive-soft p-4 text-sm text-destructive">
+          <p role="alert" className="rounded-2xl bg-destructive-soft p-5 text-sm font-medium text-destructive">
             학생 정보를 불러오지 못했습니다. 학생 목록에서 다시 시도해주세요.
           </p>
         ) : (

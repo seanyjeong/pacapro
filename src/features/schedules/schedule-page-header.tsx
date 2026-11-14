@@ -1,16 +1,15 @@
 import type { ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page';
 
 interface SchedulePageHeaderProps {
   actions?: ReactNode;
   backLabel?: string;
   className?: string;
   description: string;
-  eyebrow: string;
   onBack?: () => void;
-  title: string;
+  title: ReactNode;
 }
 
 export function SchedulePageHeader({
@@ -18,24 +17,18 @@ export function SchedulePageHeader({
   backLabel = '목록으로',
   className,
   description,
-  eyebrow,
   onBack,
   title,
 }: SchedulePageHeaderProps) {
   return (
-    <header className={cn('flex flex-col gap-3 border-b border-border/70 pb-4 lg:flex-row lg:items-end lg:justify-between', className)}>
-      <div className="min-w-0 space-y-1">
-        {onBack ? (
-          <Button className="mb-3" size="sm" type="button" variant="outline" onClick={onBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {backLabel}
-          </Button>
-        ) : null}
-        <p className="text-xs font-semibold uppercase tracking-normal text-muted-foreground">{eyebrow}</p>
-        <h1 className="text-2xl font-semibold tracking-normal text-foreground">{title}</h1>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
-      {actions ? <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end">{actions}</div> : null}
-    </header>
+    <div className={className}>
+      {onBack ? (
+        <Button className="-ml-2 gap-1 px-2 text-muted-foreground" size="sm" type="button" variant="ghost" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" />
+          {backLabel}
+        </Button>
+      ) : null}
+      <PageHeader actions={actions} description={description} title={title} />
+    </div>
   );
 }

@@ -10,7 +10,7 @@ import { ScheduleDeleteDialog } from './schedule-delete-dialog';
 import { SchedulesHeader } from './schedules-page-header';
 import { SchedulesLoading } from './schedules-page-loading';
 import { SchedulesError } from './schedules-page-error';
-import { SchedulesOperationsBoard } from './schedules-operations-board';
+import { SchedulesSummary } from './schedules-summary';
 import { SchedulesWorkspace } from './schedules-workspace';
 import { useSchedulesPageState } from './use-schedules-page-state';
 
@@ -51,16 +51,14 @@ export function SchedulesPage() {
 
   return (
     <div
-      className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 py-4 md:max-w-[1680px] md:py-8"
+      className="mx-auto w-full min-w-0 max-w-[1680px] space-y-4"
       data-testid="schedules-workspace"
     >
       <SchedulesHeader
         canViewOvertimeApproval={state.canViewOvertimeApproval}
         pendingCount={state.pendingCount}
-        selectedDate={state.selectedDate}
         onAddSchedule={openNewSchedule}
         onOpenApprovals={() => state.setApprovalsModalOpen(true)}
-        onOpenInstructorAttendance={() => state.setInstructorAttendanceModalOpen(true)}
       />
 
       {state.schedulesLoading ? (
@@ -68,41 +66,33 @@ export function SchedulesPage() {
       ) : state.schedulesError ? (
         <SchedulesError message={state.schedulesError} onRetry={state.refreshScheduleSurface} />
       ) : (
-        <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_300px] 2xl:items-start">
-          <main className="order-1 min-w-0">
-            <SchedulesWorkspace
-              currentMonth={state.currentMonth}
-              currentYear={state.currentYear}
-              instructorStats={state.instructorStats}
-              isPanelExpanded={state.isPanelExpanded}
-              schedules={state.schedules}
-              selectedDate={state.selectedDate}
-              consultations={state.consultations}
-              onConsultationClick={(date) => router.push(`/consultations/calendar?from=schedule&date=${date}`)}
-              onDateSelect={state.setSelectedDate}
-              onDeleteSchedule={handleDeleteSchedule}
-              onEditSchedule={(scheduleId) => router.push(`/schedules/${scheduleId}/edit`)}
-              onMonthChange={state.changeMonth}
-              onOpenExtraDay={() => state.setExtraDayModalOpen(true)}
-              onScheduleClick={(scheduleId) => router.push(`/schedules/${scheduleId}`)}
-              onSlotClick={state.selectSlot}
-              onTogglePanel={state.togglePanel}
-              onPanelSave={state.loadInstructorStats}
-            />
-          </main>
-          <div className="order-2 min-w-0 2xl:sticky 2xl:top-20">
-            <SchedulesOperationsBoard
-              canViewOvertimeApproval={state.canViewOvertimeApproval}
-              consultations={state.consultations}
-              pendingCount={state.pendingCount}
-              schedules={state.schedules}
-              selectedDate={state.selectedDate}
-              onOpenApprovals={() => state.setApprovalsModalOpen(true)}
-              onOpenExtraDay={() => state.setExtraDayModalOpen(true)}
-              onOpenInstructorAttendance={() => state.setInstructorAttendanceModalOpen(true)}
-            />
-          </div>
-        </div>
+        <>
+          <SchedulesSummary
+            consultations={state.consultations}
+            schedules={state.schedules}
+            selectedDate={state.selectedDate}
+          />
+          <SchedulesWorkspace
+            currentMonth={state.currentMonth}
+            currentYear={state.currentYear}
+            instructorStats={state.instructorStats}
+            isPanelExpanded={state.isPanelExpanded}
+            schedules={state.schedules}
+            selectedDate={state.selectedDate}
+            consultations={state.consultations}
+            onConsultationClick={(date) => router.push(`/consultations/calendar?from=schedule&date=${date}`)}
+            onDateSelect={state.setSelectedDate}
+            onDeleteSchedule={handleDeleteSchedule}
+            onEditSchedule={(scheduleId) => router.push(`/schedules/${scheduleId}/edit`)}
+            onMonthChange={state.changeMonth}
+            onOpenExtraDay={() => state.setExtraDayModalOpen(true)}
+            onOpenInstructorAttendance={() => state.setInstructorAttendanceModalOpen(true)}
+            onScheduleClick={(scheduleId) => router.push(`/schedules/${scheduleId}`)}
+            onSlotClick={state.selectSlot}
+            onTogglePanel={state.togglePanel}
+            onPanelSave={state.loadInstructorStats}
+          />
+        </>
       )}
 
       <InstructorAttendanceModal

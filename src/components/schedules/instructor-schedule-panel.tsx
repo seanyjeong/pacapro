@@ -55,7 +55,7 @@ export function InstructorSchedulePanel({
 
             {state.saveError && (
               <div
-                className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm text-destructive"
+                className="flex items-start gap-2 rounded-xl bg-destructive-soft px-3 py-2 text-sm text-destructive"
                 role="alert"
               >
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />

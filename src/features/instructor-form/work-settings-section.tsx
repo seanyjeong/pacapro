@@ -23,7 +23,7 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
   return (
     <>
       <div>
-        <label className="mb-2 block text-sm font-medium text-foreground">
+        <label className="mb-2 block text-sm font-semibold text-foreground">
           출근 요일 <span className="text-destructive">*</span>
         </label>
         <div className="mb-3 flex flex-wrap gap-2">
@@ -32,7 +32,7 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
               key={preset.label}
               type="button"
               onClick={() => onChange('work_days', preset.value)}
-              className="rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+              className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-semibold text-secondary-foreground transition-colors hover:bg-secondary/70"
             >
               {preset.label}
             </button>
@@ -50,10 +50,10 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
                 key={day.value}
                 type="button"
                 onClick={() => onChange('work_days', nextDays)}
-                className={`rounded-md border px-4 py-2 transition-colors ${
+                className={`h-11 min-w-11 rounded-xl px-4 text-[15px] font-semibold transition-colors ${
                   active
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-card text-foreground border-border hover:bg-muted'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-secondary-foreground hover:text-foreground'
                 }`}
               >
                 {day.label}
@@ -66,7 +66,7 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="instructor-work-start-time" className="mb-2 block text-sm font-medium text-foreground">
+          <label htmlFor="instructor-work-start-time" className="mb-2 block text-sm font-semibold text-foreground">
             출근 시간 <span className="text-destructive">*</span>
           </label>
           <input
@@ -79,7 +79,7 @@ export function WorkSettingsSection({ formData, errors, onChange }: WorkSettings
           {errors.work_start_time && <p className="text-destructive text-sm mt-1">{errors.work_start_time}</p>}
         </div>
         <div>
-          <label htmlFor="instructor-work-end-time" className="mb-2 block text-sm font-medium text-foreground">
+          <label htmlFor="instructor-work-end-time" className="mb-2 block text-sm font-semibold text-foreground">
             퇴근 시간 <span className="text-destructive">*</span>
           </label>
           <input

@@ -1,5 +1,6 @@
 import { Edit3, Save, X } from 'lucide-react';
 import { MoneyInput } from '@/components/ui/money-input';
+import { SectionCard } from '@/components/ui/page';
 import { TAX_TYPE_LABELS } from '@/lib/types/salary';
 import type { AttendanceSummary, SalaryDetailWithRates } from './salary-detail-types';
 import { formatCurrency, parseInsuranceDetails, toNumber } from './salary-detail-utils';
@@ -43,17 +44,14 @@ export function SalaryCalculationSection({
   const insuranceDetails = parseInsuranceDetails(salary.insurance_details);
 
   return (
-    <section className="print-section overflow-hidden rounded-lg border border-border/70 bg-card">
-      <div className="border-b border-border/70 bg-success-soft p-3 print-compact">
-        <h2 className="text-sm font-semibold text-success">급여 계산</h2>
-      </div>
-      <div className="space-y-2 p-4 text-sm print-compact">
+    <SectionCard title="급여 계산" className="print-section" bodyClassName="print-compact">
+      <div className="space-y-1 text-[15px]">
         <Formula salary={salary} attendanceSummary={attendanceSummary} />
         <Line label="기본급" value={formatCurrency(salary.base_amount)} />
-        <div className="flex items-center justify-between border-b border-border/70 py-2">
-          <span className="text-muted-foreground">인센티브</span>
+        <div className="flex min-h-[52px] items-center justify-between gap-3 border-b border-border/60 py-2">
+          <span className="text-secondary-foreground">인센티브</span>
           {editingIncentive ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <label htmlFor="salary-incentive-amount" className="sr-only">
                 인센티브 금액
               </label>
@@ -61,14 +59,14 @@ export function SalaryCalculationSection({
                 id="salary-incentive-amount"
                 value={incentiveInput}
                 onChange={onIncentiveChange}
-                className="w-32 py-1 text-sm"
+                className="h-10 w-32 text-sm"
               />
               <button
                 type="button"
                 aria-label="인센티브 저장"
                 onClick={onSave}
                 disabled={savingIncentive}
-                className="rounded p-1 text-success hover:bg-success-soft"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-success hover:bg-success-soft"
               >
                 <Save className="h-4 w-4" />
               </button>
@@ -76,14 +74,14 @@ export function SalaryCalculationSection({
                 type="button"
                 aria-label="인센티브 수정 취소"
                 onClick={onCancelEdit}
-                className="rounded p-1 text-muted-foreground hover:bg-muted"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <span className={`font-medium ${salary.incentive_amount > 0 ? 'text-success' : 'text-muted-foreground'}`}>
+            <div className="flex items-center gap-1.5">
+              <span className={`font-bold tabular-nums ${salary.incentive_amount > 0 ? 'text-success' : 'text-muted-foreground'}`}>
                 {salary.incentive_amount > 0 ? `+${formatCurrency(salary.incentive_amount)}` : '0원'}
               </span>
               {salary.payment_status === 'pending' ? (
@@ -91,7 +89,7 @@ export function SalaryCalculationSection({
                   type="button"
                   aria-label="인센티브 수정"
                   onClick={onStartEdit}
-                  className="rounded p-1 text-muted-foreground hover:bg-muted no-print"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted no-print"
                 >
                   <Edit3 className="h-4 w-4" />
                 </button>
@@ -105,12 +103,12 @@ export function SalaryCalculationSection({
         ) : (
           <Line label={`세금 (${TAX_TYPE_LABELS[salary.tax_type] || salary.tax_type})`} value={`-${formatCurrency(salary.tax_amount)}`} danger />
         )}
-        <div className="mt-3 flex justify-between rounded-md bg-primary-soft px-3 py-3">
-          <span className="font-semibold text-foreground">실수령액</span>
-          <span className="text-xl font-bold text-primary">{formatCurrency(salary.net_salary)}</span>
+        <div className="!mt-4 flex items-center justify-between gap-3 rounded-xl bg-primary-soft px-4 py-4">
+          <span className="font-bold text-foreground">실수령액</span>
+          <span className="text-[24px] font-extrabold tabular-nums tracking-tight text-primary">{formatCurrency(salary.net_salary)}</span>
         </div>
       </div>
-    </section>
+    </SectionCard>
   );
 }
 
@@ -131,13 +129,13 @@ function Formula({ salary, attendanceSummary }: { salary: SalaryDetailWithRates;
     }
 
     if (rows.length > 0) {
-      return <div className="space-y-1 rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">{rows.map((row) => <p key={row}>{row}</p>)}</div>;
+      return <div className="mb-2 space-y-1 rounded-xl bg-muted px-4 py-3 text-[13px] tabular-nums text-secondary-foreground">{rows.map((row) => <p key={row}>{row}</p>)}</div>;
     }
   }
 
   if (salary.salary_type === 'hourly' && hourlyRate > 0) {
     return (
-      <div className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
+      <div className="mb-2 rounded-xl bg-muted px-4 py-3 text-[13px] tabular-nums text-secondary-foreground">
         시급 {formatCurrency(hourlyRate)} x {attendanceSummary.total_hours}시간 = {formatCurrency(hourlyRate * attendanceSummary.total_hours)}
       </div>
     );
@@ -147,25 +145,25 @@ function Formula({ salary, attendanceSummary }: { salary: SalaryDetailWithRates;
 
 function Line({ label, value, danger = false }: { label: string; value: string; danger?: boolean }) {
   return (
-    <div className="flex justify-between border-b border-border/70 py-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span className={`font-medium ${danger ? 'text-destructive' : 'text-foreground'}`}>{value}</span>
+    <div className="flex min-h-[52px] items-center justify-between gap-3 border-b border-border/60 py-2">
+      <span className="text-secondary-foreground">{label}</span>
+      <span className={`font-bold tabular-nums ${danger ? 'text-destructive' : 'text-foreground'}`}>{value}</span>
     </div>
   );
 }
 
 function InsuranceDetails({ details, total }: { details: Record<string, number>; total: number }) {
   return (
-    <div className="border-b border-border/70 py-2">
-      <div className="mb-2 flex justify-between">
-        <span className="font-medium text-muted-foreground">4대보험 공제</span>
-        <span className="font-medium text-destructive">-{formatCurrency(total)}</span>
+    <div className="border-b border-border/60 py-3">
+      <div className="mb-2 flex justify-between gap-3">
+        <span className="text-secondary-foreground">4대보험 공제</span>
+        <span className="font-bold tabular-nums text-destructive">-{formatCurrency(total)}</span>
       </div>
-      <div className="space-y-1 rounded-md bg-destructive-soft p-2 text-sm">
+      <div className="space-y-1 rounded-xl bg-destructive-soft px-4 py-3 text-sm">
         {INSURANCE_FIELDS.map(({ key, label }) => (
-          <div key={key} className="flex justify-between">
-            <span className="text-muted-foreground">{label}</span>
-            <span className="text-destructive">{formatCurrency(details[key])}</span>
+          <div key={key} className="flex justify-between gap-3">
+            <span className="text-secondary-foreground">{label}</span>
+            <span className="font-semibold tabular-nums text-destructive">{formatCurrency(details[key])}</span>
           </div>
         ))}
       </div>

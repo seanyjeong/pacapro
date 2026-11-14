@@ -71,7 +71,7 @@ export function StudentRestModal({ open, onClose, student, onSuccess }: StudentR
 
   const finish = () => { onSuccess(); onClose(); };
   if (!open) return null;
-  const inputClass = 'w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
+  const inputClass = 'h-11 w-full rounded-xl border border-transparent bg-muted px-4 text-[15px] focus-visible:border-primary focus-visible:bg-card focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10';
   return (
     <AlertDialog open={open} onOpenChange={next => { if (!next && !submitting) { if (completed) finish(); else onClose(); } }}>
       <AlertDialogContent className="max-h-[90vh] max-w-lg overflow-y-auto rounded-md">
@@ -112,7 +112,7 @@ export function StudentRestModal({ open, onClose, student, onSuccess }: StudentR
           <fieldset className="space-y-2" disabled={submitting}>
             <legend className="mb-2 text-sm font-semibold">이월·환불 크레딧 선택</legend>
             {LIFECYCLE_CREDIT_CHOICES.map(choice => (
-              <label key={choice.value} className={`flex cursor-pointer gap-3 rounded-md border p-3 ${creditType === choice.value ? 'border-primary bg-primary/5' : 'border-border'}`}>
+              <label key={choice.value} className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${creditType === choice.value ? 'border-primary bg-primary/5' : 'border-border'}`}>
                 <input type="radio" name="rest-credit-type" value={choice.value} checked={creditType === choice.value}
                   onChange={() => setCreditType(choice.value)} className="mt-1 accent-primary" />
                 <span className="min-w-0"><span className="block text-sm font-medium">{choice.label}</span><span className="block text-xs text-muted-foreground">{choice.detail}</span></span>

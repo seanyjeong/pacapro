@@ -62,7 +62,7 @@ export function StudentsPageList({
     return (
         <>
             <div className="md:hidden">
-                <StudentsMobileList students={students} loading={loading} onStudentClick={onStudentClick} />
+                <StudentsMobileList students={students} loading={loading} onStudentClick={onStudentClick} placementOf={placement?.labelOf} />
             </div>
             <div className="hidden md:block">
                 <StudentListTable

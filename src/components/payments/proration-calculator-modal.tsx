@@ -223,7 +223,7 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
 
           {/* 결과 */}
           {result ? (
-            <div className="rounded-lg border border-border bg-muted/50 p-4 space-y-1">
+            <div className="space-y-1 rounded-xl bg-muted p-4">
               <p className="text-sm text-muted-foreground">{result.detail}</p>
               <p className="text-2xl font-bold text-foreground">
                 {result.amount.toLocaleString()}원
@@ -231,7 +231,7 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
               <p className="text-xs text-muted-foreground">{result.formula} (천원 단위 절삭)</p>
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+            <div className="rounded-xl bg-muted p-4 text-center text-sm text-muted-foreground">
               수업 요일과 등록일을 선택하면 일할 금액이 표시됩니다.
             </div>
           )}

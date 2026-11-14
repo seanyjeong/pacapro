@@ -26,10 +26,9 @@ export default function EditInstructorPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-5xl space-y-5">
+      <div className="mx-auto w-full max-w-5xl space-y-4">
         <InstructorPageHeader
           description="강사 정보를 불러오는 중입니다."
-          eyebrow="Instructor Profile"
           onBack={() => router.push('/instructors')}
           title="강사 수정"
         />
@@ -40,10 +39,9 @@ export default function EditInstructorPage() {
 
   if (error || !instructor) {
     return (
-      <div className="mx-auto w-full max-w-5xl space-y-5">
+      <div className="mx-auto w-full max-w-5xl space-y-4">
         <InstructorPageHeader
           description="강사 정보를 다시 불러올 수 있습니다."
-          eyebrow="Instructor Profile"
           onBack={() => router.push('/instructors')}
           title="강사 수정"
         />
@@ -53,10 +51,9 @@ export default function EditInstructorPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-5">
+    <div className="mx-auto w-full max-w-5xl space-y-4">
       <InstructorPageHeader
         description={`${instructor.name} 강사의 정보를 수정합니다.`}
-        eyebrow="Instructor Profile"
         onBack={() => router.push('/instructors')}
         title="강사 수정"
       />

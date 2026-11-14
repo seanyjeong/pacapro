@@ -1,5 +1,6 @@
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page';
 
 interface PaymentEditorShellProps {
   title: string;
@@ -10,16 +11,13 @@ interface PaymentEditorShellProps {
 
 export function PaymentEditorShell({ title, subtitle, onBack, children }: PaymentEditorShellProps) {
   return (
-    <div className="mx-auto max-w-4xl space-y-4">
-      <header className="flex items-center gap-3 border-b border-border/70 pb-4">
-        <Button type="button" variant="ghost" size="icon" onClick={onBack} aria-label="뒤로 가기">
+    <div className="mx-auto max-w-5xl space-y-4">
+      <div className="flex items-start gap-1">
+        <Button type="button" variant="ghost" size="icon" onClick={onBack} aria-label="뒤로 가기" className="-ml-2 mt-2 shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
-          {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
-        </div>
-      </header>
+        <PageHeader className="min-w-0 flex-1" title={title} description={subtitle} />
+      </div>
       {children}
     </div>
   );

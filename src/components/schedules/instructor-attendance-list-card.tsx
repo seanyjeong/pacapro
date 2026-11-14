@@ -1,5 +1,6 @@
 import { AlertCircle, Loader2, Save, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/page';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type {
   EditedInstructorAttendance,
@@ -39,8 +40,7 @@ export function InstructorAttendanceListCard({
               전체 출근
             </Button>
             <Button onClick={onSubmit} disabled={saving || editedAttendances.size === 0}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <Save className="mr-2 h-4 w-4" />
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               저장
             </Button>
           </div>
@@ -49,7 +49,7 @@ export function InstructorAttendanceListCard({
       <CardContent>
         {saveError && (
           <div
-            className="mb-4 flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive-soft px-3 py-2 text-sm text-destructive"
+            className="mb-4 flex items-start gap-2 rounded-xl bg-destructive-soft px-3 py-2 text-sm text-destructive"
             role="alert"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 flex-none" />
@@ -58,13 +58,9 @@ export function InstructorAttendanceListCard({
         )}
 
         {instructors.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground">
-            <UserCheck className="mx-auto mb-4 h-12 w-12 opacity-50" />
-            <p>등록된 강사가 없습니다.</p>
-            <p className="mt-1 text-sm">강사 관리에서 강사를 먼저 등록해주세요.</p>
-          </div>
+          <EmptyState icon={UserCheck} title="등록된 강사가 없어요." description="강사 관리에서 강사를 먼저 등록해 주세요." />
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {instructors.map((instructor) => (
               <InstructorAttendanceRow
                 key={instructor.id}

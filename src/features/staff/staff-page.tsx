@@ -14,7 +14,7 @@ export function StaffPage() {
   const state = useStaffPageState();
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5" data-testid="staff-operations-workspace">
+    <div className="mx-auto w-full max-w-7xl space-y-4" data-testid="staff-operations-workspace">
       <StaffPageHeader
         canAddStaff={state.availableInstructors.length > 0}
         loading={state.loading}
@@ -27,7 +27,7 @@ export function StaffPage() {
       ) : (
         <>
           <StaffSummaryStrip summary={state.summary} />
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
             <main className="min-w-0">
               {state.loading ? (
                 <StaffPageLoading />
@@ -43,7 +43,6 @@ export function StaffPage() {
             </main>
             <StaffWorkQueue
               availableInstructors={state.availableInstructors}
-              staff={state.staffList}
               onAddStaff={state.handleAddStaff}
             />
           </div>

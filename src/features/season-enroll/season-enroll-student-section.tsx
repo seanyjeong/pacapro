@@ -20,13 +20,13 @@ export function SeasonEnrollStudentSection({
 }: SeasonEnrollStudentSectionProps) {
   return (
     <div className="min-w-0">
-      <div className="border-b border-border bg-muted px-4 py-3">
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <div className="px-4 pt-4 sm:px-5">
+        <h3 className="text-[15px] font-bold text-foreground">{title}</h3>
       </div>
       {students.length === 0 ? (
         <p className="px-4 py-10 text-center text-sm text-muted-foreground">{emptyMessage}</p>
       ) : (
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-border/60">
           {students.map((student) => (
             <SeasonEnrollStudentRow
               key={student.id}

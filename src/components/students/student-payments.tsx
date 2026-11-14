@@ -42,7 +42,7 @@ function getCreditTypeBadgeColor(type: string) {
     case 'carryover':
       return 'bg-primary-soft text-primary border-primary/30';
     case 'excused':
-      return 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-400 dark:border-purple-800';
+      return 'bg-primary-soft text-primary border-transparent';
     case 'manual':
       return 'bg-success-soft text-success border-success/30';
     case 'refund':
@@ -181,7 +181,7 @@ export function StudentPaymentsComponent({
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">납부 내역을 불러오는 중...</p>
         </CardContent>
       </Card>
@@ -193,7 +193,7 @@ export function StudentPaymentsComponent({
       {/* 크레딧 섹션 */}
       {canUseCredit && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardHeader className="flex flex-row items-center justify-between px-0 pb-2 pt-0 sm:px-0 sm:pt-0">
             <div>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Coins className="w-5 h-5 text-primary" />
@@ -211,9 +211,8 @@ export function StudentPaymentsComponent({
             <div className="flex flex-wrap gap-2">
               <Button
                 size="sm"
-                variant="outline"
+                variant="secondary"
                 onClick={() => setEarlyPayModalOpen(true)}
-                className="border-teal-300 text-teal-700 hover:bg-teal-50 dark:border-teal-700 dark:text-teal-400 dark:hover:bg-teal-950"
               >
                 <Banknote className="w-4 h-4 mr-1" />
                 다음 달 미리 받기
@@ -230,14 +229,13 @@ export function StudentPaymentsComponent({
               <Button
                 size="sm"
                 onClick={() => setCreditModalOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-white"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 크레딧 추가
               </Button>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 sm:px-0">
             {creditsLoading ? (
               <div className="text-center py-4 text-muted-foreground">로딩 중...</div>
             ) : credits.length === 0 ? (
@@ -395,7 +393,6 @@ export function StudentPaymentsComponent({
             <Button
               onClick={handleApplyCredit}
               disabled={applying || !applyYearMonth}
-              className="bg-primary hover:bg-primary/90 text-white"
             >
               {applying ? '적용 중...' : '적용'}
             </Button>

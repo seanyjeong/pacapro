@@ -36,7 +36,7 @@ export function SubmitConfirmDialog({
     <AlertDialog open={open} onOpenChange={(nextOpen) => {
       if (!nextOpen && !submitting) onCancel();
     }}>
-      <AlertDialogContent className="max-w-md rounded-md">
+      <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>
@@ -47,13 +47,13 @@ export function SubmitConfirmDialog({
         </AlertDialogHeader>
 
         {isImmediateClassDays ? (
-          <div className="rounded-md border border-warning/30 bg-warning-soft p-3 text-sm text-warning">
+          <div className="rounded-xl bg-warning-soft p-3 text-sm text-warning">
             다음 달부터 바꾸려면 취소 후 수업 정보의 적용 시작월을 선택하세요.
           </div>
         ) : null}
 
         {existingStudent ? (
-          <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
+          <div className="rounded-xl bg-muted p-3 text-sm">
             <p className="font-medium text-foreground">{existingStudent.name}</p>
             <p className="mt-1 text-muted-foreground">전화번호: {existingStudent.phone || '없음'}</p>
             {existingStudent.gender ? (

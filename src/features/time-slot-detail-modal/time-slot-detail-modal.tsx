@@ -21,7 +21,7 @@ export function TimeSlotDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden max-h-[85vh] flex flex-col">
+      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
         <TimeSlotDetailHeader
           date={date}
           timeSlot={timeSlot}
@@ -29,7 +29,7 @@ export function TimeSlotDetailModal({
           onClose={onClose}
         />
 
-        <div className="p-5 overflow-y-auto flex-1">
+        <div className="flex-1 overflow-y-auto px-5 pb-6 pt-2">
           {state.loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -46,7 +46,7 @@ export function TimeSlotDetailModal({
                 onClock={state.clockInstructor}
               />
 
-              <div className="border-t border-border" />
+              <div className="h-px bg-border/60" />
 
               <StudentAttendanceSection
                 date={date}

@@ -30,7 +30,7 @@ export function AdminUsersActionDialog({
 
     return (
         <AlertDialog open={open} onOpenChange={onOpenChange}>
-            <AlertDialogContent className="rounded-md">
+            <AlertDialogContent>
                 {action && copy ? (
                     <>
                         <AlertDialogHeader>

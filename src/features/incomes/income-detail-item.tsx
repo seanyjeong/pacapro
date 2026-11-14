@@ -7,8 +7,8 @@ interface IncomeDetailItemProps {
 export function IncomeDetailItem({ label, value, wide }: IncomeDetailItemProps) {
   return (
     <div className={wide ? 'sm:col-span-2' : undefined}>
-      <p className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
-      <p className="mt-1 whitespace-pre-wrap rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-foreground">
+      <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 whitespace-pre-wrap rounded-xl bg-muted px-3 py-2 text-[15px] font-semibold text-foreground">
         {value || '-'}
       </p>
     </div>

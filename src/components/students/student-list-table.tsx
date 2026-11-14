@@ -7,15 +7,15 @@
 
 import { StudentParentNames } from '@/components/students/student-parent-names';
 import { useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/page';
 import { Checkbox } from '@/components/ui/checkbox';
 import { StudentAvatar } from '@/components/students/student-avatar';
 import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  Calendar,
   ChevronRight,
   Loader2,
   Phone,
@@ -24,21 +24,26 @@ import {
 } from 'lucide-react';
 import type { Student } from '@/lib/types/student';
 import type { StudentListSort } from '@/features/students/student-page-types';
+import { StudentStatusBadge } from '@/features/students/student-status-badge';
 import {
   formatStudentNumber,
   formatPhoneNumber,
   getStudentDisplayInfo,
   formatClassDays,
   formatCurrency,
-  getStatusColor,
   formatDate,
 } from '@/lib/utils/student-helpers';
 import {
   ADMISSION_TYPE_LABELS,
-  STATUS_LABELS,
   STUDENT_TYPE_LABELS,
   GENDER_LABELS,
 } from '@/lib/types/student';
+
+const ADMISSION_BADGE: Record<string, NonNullable<BadgeProps['variant']>> = {
+  regular: 'default',
+  early: 'success',
+  advance: 'secondary',
+};
 
 interface StudentListTableProps {
   students: Student[];
@@ -76,6 +81,14 @@ function isSortKey(value: string | undefined): value is SortKey {
   return SORT_KEYS.some((key) => key === value);
 }
 
+// 표 칸을 줄이려고 등록일은 2026.11.14 처럼 짧게(전체 날짜는 마우스를 올리면 보인다).
+function formatShortDate(value?: string | null): string {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return formatDate(value);
+  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
+}
+
 export function compareText(a: string, b: string): number {
   return (a || '').localeCompare(b || '', 'ko', { sensitivity: 'base', numeric: true });
 }
@@ -111,7 +124,7 @@ export function SortHeader<K extends string>({
 
   return (
     <th
-      className={`px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground ${className}`}
+      className={`whitespace-nowrap px-2.5 py-3 text-left text-[13px] font-semibold text-muted-foreground ${className}`}
       aria-sort={ariaSort}
     >
       <button
@@ -174,230 +187,179 @@ export function StudentListTable({ students, loading, onStudentClick, hideMonthl
 
   if (loading) {
     return (
-      <Card className="rounded-md shadow-none">
-        <CardContent className="flex min-h-[260px] items-center justify-center p-8 text-center">
-          <div className="flex items-center gap-3 text-sm font-medium text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            학생 목록을 불러오는 중입니다
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex min-h-[200px] items-center justify-center gap-3 text-sm font-medium text-muted-foreground">
+        <Loader2 className="h-5 w-5 animate-spin" />
+        학생 목록을 불러오는 중이에요
+      </div>
     );
   }
 
   if (students.length === 0) {
-    return (
-      <Card className="rounded-md shadow-none">
-        <CardContent className="flex min-h-[260px] items-center justify-center p-8 text-center">
-          <div>
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-muted text-muted-foreground">
-              <Users className="h-6 w-6" />
-            </div>
-            <h3 className="mt-4 text-base font-semibold text-foreground">학생이 없습니다</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              학생을 등록하시면 여기에 표시됩니다.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <EmptyState icon={Users} title="학생이 없어요" description="학생을 등록하면 여기에 보여요." />;
   }
 
+  const th = 'whitespace-nowrap px-2.5 py-3 text-left text-[13px] font-semibold text-muted-foreground';
+  const td = 'whitespace-nowrap px-2.5 py-3.5';
+
   return (
-    <Card className="rounded-md shadow-none">
-      <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-border bg-muted/60">
-              <tr>
+    <div className="-mx-5 overflow-x-auto px-2 sm:-mx-6 sm:px-3">
+      <table className="w-full">
+        <thead className="border-b border-border/60">
+          <tr>
+            {placement && (
+              <th className="w-10 px-3 py-3">
+                <Checkbox
+                  aria-label="보이는 학생 모두 선택"
+                  checked={students.every((student) => placement.selectedIds.has(student.id))}
+                  onCheckedChange={(checked) => placement.onToggleAll(students.map((student) => student.id), checked === true)}
+                />
+              </th>
+            )}
+            <SortHeader label="학생 정보" column="name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+            {placement && <th className={th}>지점·반</th>}
+            <SortHeader label="성별" column="gender" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+            <SortHeader label="유형" column="type" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+            <SortHeader label="입시유형" column="admission" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+            <SortHeader label="수업일" column="classDays" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+            {!hideMonthlyTuition && (
+              <SortHeader label="월 학원비" column="tuition" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+            )}
+            <SortHeader label="상태" column="status" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+            <SortHeader label="등록일" column="enrollment" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+            <th className={`${th} text-right`}>관리</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedStudents.map((student) => {
+            const discountRate = Number.parseFloat(student.discount_rate) || 0;
+
+            return (
+              <tr
+                key={student.id}
+                onClick={() => onStudentClick(student.id)}
+                className="cursor-pointer border-b border-border/60 transition-colors last:border-0 hover:bg-muted/60"
+              >
                 {placement && (
-                  <th className="w-10 px-4 py-3">
+                  <td className="px-3 py-3.5" onClick={(event) => event.stopPropagation()}>
                     <Checkbox
-                      aria-label="보이는 학생 모두 선택"
-                      checked={students.every((student) => placement.selectedIds.has(student.id))}
-                      onCheckedChange={(checked) => placement.onToggleAll(students.map((student) => student.id), checked === true)}
+                      aria-label={`${student.name} 선택`}
+                      checked={placement.selectedIds.has(student.id)}
+                      onCheckedChange={() => placement.onToggle(student.id)}
                     />
-                  </th>
+                  </td>
                 )}
-                <SortHeader label="학생 정보" column="name" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                <td className={td}>
+                  <div className="flex items-center gap-3">
+                    <StudentAvatar student={student} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[15px] font-bold text-foreground">{student.name}</span>
+                        {!!student.is_trial && (
+                          <Badge>
+                            <Sparkles className="h-3 w-3" />
+                            체험
+                          </Badge>
+                        )}
+                      </div>
+                      <StudentParentNames student={student} className="mt-0.5 max-w-64" />
+                      <div className="mt-0.5 flex items-center gap-2 text-[13px] text-muted-foreground">
+                        {student.school && <span>{student.school}</span>}
+                        {student.student_number && student.student_number !== '0' && student.student_number !== '00' && (
+                          <span className="tabular-nums">{formatStudentNumber(student.student_number)}</span>
+                        )}
+                        <span className="inline-flex items-center gap-1 tabular-nums">
+                          <Phone className="h-3 w-3" />
+                          {formatPhoneNumber(student.phone)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+
                 {placement && (
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-normal text-muted-foreground">지점·반</th>
+                  <td className={`${td} text-sm text-foreground`}>{placement.labelOf(student)}</td>
                 )}
-                <SortHeader label="성별" column="gender" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <SortHeader label="유형" column="type" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <SortHeader label="입시유형" column="admission" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <SortHeader label="수업일" column="classDays" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+
+                <td className={td}>
+                  {student.gender ? (
+                    <Badge variant="secondary">{GENDER_LABELS[student.gender]}</Badge>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">-</span>
+                  )}
+                </td>
+
+                <td className={td}>
+                  <div className="flex items-center gap-2 text-sm text-foreground">
+                    <Badge variant={student.student_type === 'exam' ? 'default' : 'secondary'}>
+                      {STUDENT_TYPE_LABELS[student.student_type]}
+                    </Badge>
+                    <span>{getStudentDisplayInfo(student)}</span>
+                  </div>
+                </td>
+
+                <td className={td}>
+                  <Badge variant={ADMISSION_BADGE[student.admission_type] || 'warning'}>
+                    {ADMISSION_TYPE_LABELS[student.admission_type] || student.admission_type}
+                  </Badge>
+                </td>
+
+                <td className={td}>
+                  <div className="text-sm text-foreground">
+                    {formatClassDays(student.class_days)}
+                  </div>
+                  <div className="text-[13px] text-muted-foreground">
+                    주 {student.weekly_count}회
+                  </div>
+                </td>
+
                 {!hideMonthlyTuition && (
-                  <SortHeader label="월 학원비" column="tuition" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
+                  <td className={td}>
+                    <div className="text-sm font-semibold tabular-nums text-foreground">
+                      {formatCurrency(student.monthly_tuition)}
+                    </div>
+                    {discountRate > 0 && (
+                      <div className="text-[13px] text-destructive">
+                        {discountRate}% 할인
+                      </div>
+                    )}
+                  </td>
                 )}
-                <SortHeader label="상태" column="status" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <SortHeader label="등록일" column="enrollment" sortKey={sortKey} sortDir={sortDir} onSort={handleSort} />
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-                  관리
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border bg-card">
-              {sortedStudents.map((student) => {
-                const discountRate = Number.parseFloat(student.discount_rate) || 0;
 
-                return (
-                  <tr
-                    key={student.id}
-                    onClick={() => onStudentClick(student.id)}
-                    className="cursor-pointer transition-colors hover:bg-muted/45"
+                <td className={td}>
+                  <StudentStatusBadge status={student.status} />
+                  {student.status === 'paused' && student.rest_start_date && (
+                    <div className="mt-1 text-[13px] text-muted-foreground">
+                      {formatDate(student.rest_start_date)}
+                      {student.rest_end_date
+                        ? ` ~ ${formatDate(student.rest_end_date)}`
+                        : ' ~ (무기한)'}
+                    </div>
+                  )}
+                </td>
+
+                <td className={`${td} text-sm tabular-nums text-muted-foreground`} title={formatDate(student.enrollment_date)}>
+                  {formatShortDate(student.enrollment_date)}
+                </td>
+                <td className={`${td} text-right`}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    title="상세"
+                    aria-label={`${student.name} 상세 보기`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onStudentClick(student.id);
+                    }}
                   >
-                    {placement && (
-                      <td className="px-4 py-4" onClick={(event) => event.stopPropagation()}>
-                        <Checkbox
-                          aria-label={`${student.name} 선택`}
-                          checked={placement.selectedIds.has(student.id)}
-                          onCheckedChange={() => placement.onToggle(student.id)}
-                        />
-                      </td>
-                    )}
-                    <td className="whitespace-nowrap px-4 py-4">
-                      <div className="flex items-center">
-                        <StudentAvatar student={student} />
-                        <div className="ml-4">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                            {student.name}
-                            {student.school && (
-                              <span className="text-xs text-muted-foreground">{student.school}</span>
-                            )}
-                            {!!student.is_trial && (
-                              <Badge className="flex items-center gap-1 rounded-md border-purple-200 bg-purple-100 px-1.5 py-0 text-xs text-purple-700">
-                                <Sparkles className="h-3 w-3" />
-                                체험
-                              </Badge>
-                            )}
-                          </div>
-                          <StudentParentNames student={student} className="max-w-64" />
-                          {student.student_number && student.student_number !== '0' && student.student_number !== '00' && (
-                            <div className="text-sm text-muted-foreground">
-                              {formatStudentNumber(student.student_number)}
-                            </div>
-                          )}
-                          <div className="mt-1 flex items-center text-xs text-muted-foreground">
-                            <Phone className="mr-1 h-3 w-3" />
-                            {formatPhoneNumber(student.phone)}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {placement && (
-                      <td className="whitespace-nowrap px-4 py-4 text-sm text-foreground">{placement.labelOf(student)}</td>
-                    )}
-
-                    <td className="whitespace-nowrap px-4 py-4">
-                      {student.gender ? (
-                        <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
-                          student.gender === 'male'
-                            ? 'bg-sky-100 text-sky-800'
-                            : 'bg-pink-100 text-pink-800'
-                        }`}>
-                          {GENDER_LABELS[student.gender]}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-4">
-                      <div className="text-sm text-foreground">
-                        <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
-                          student.student_type === 'exam' ? 'bg-primary-soft text-primary' : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                        }`}>
-                          {STUDENT_TYPE_LABELS[student.student_type]}
-                        </span>
-                        <span className="ml-2">{getStudentDisplayInfo(student)}</span>
-                      </div>
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-4">
-                      <span className={`inline-flex rounded-md px-2 py-1 text-xs font-medium ${
-                        student.admission_type === 'regular'
-                          ? 'bg-primary-soft text-primary'
-                          : student.admission_type === 'early'
-                          ? 'bg-success-soft text-success'
-                          : student.admission_type === 'advance'
-                          ? 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-200'
-                          : 'bg-warning-soft text-warning'
-                      }`}>
-                        {ADMISSION_TYPE_LABELS[student.admission_type] || student.admission_type}
-                      </span>
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-4">
-                      <div className="text-sm text-foreground">
-                        {formatClassDays(student.class_days)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        주 {student.weekly_count}회
-                      </div>
-                    </td>
-
-                    {!hideMonthlyTuition && (
-                      <td className="whitespace-nowrap px-4 py-4">
-                        <div className="text-sm font-medium text-foreground">
-                          {formatCurrency(student.monthly_tuition)}
-                        </div>
-                        {discountRate > 0 && (
-                          <div className="text-xs text-destructive">
-                            {discountRate}% 할인
-                          </div>
-                        )}
-                      </td>
-                    )}
-
-                    <td className="whitespace-nowrap px-4 py-4">
-                      <div>
-                        <span
-                          className={`inline-flex rounded-md border px-2 py-1 text-xs font-medium ${getStatusColor(
-                            student.status
-                          )}`}
-                        >
-                          {STATUS_LABELS[student.status] || student.status}
-                        </span>
-                        {student.status === 'paused' && student.rest_start_date && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {formatDate(student.rest_start_date)}
-                            {student.rest_end_date
-                              ? ` ~ ${formatDate(student.rest_end_date)}`
-                              : ' ~ (무기한)'}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-4">
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <Calendar className="mr-1 h-4 w-4" />
-                        {formatDate(student.enrollment_date)}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-4 py-4 text-right">
-                      <button
-                        type="button"
-                        aria-label={`${student.name} 상세 보기`}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onStudentClick(student.id);
-                        }}
-                        className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
-                      >
-                        상세
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

@@ -22,43 +22,43 @@ export function AdditionalInfoSection({
   mode, formData, initialData, isIndefiniteRest, setIsIndefiniteRest, handleChange, onOpenRestModal, onOpenResumeModal, submitting,
 }: AdditionalInfoSectionProps) {
   return (
-    <Card className="rounded-md shadow-none">
+    <Card>
       <CardHeader><CardTitle>추가 정보</CardTitle></CardHeader>
       <CardContent className="space-y-4">
         {/* 주소 */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">주소</label>
+          <label className="mb-2 block text-sm font-semibold text-foreground">주소</label>
           <input type="text" value={formData.address || ''}
             onChange={(e) => handleChange('address', e.target.value)}
             placeholder="서울시 강남구..."
-            className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+            className="w-full min-h-11 rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10" />
         </div>
 
         {/* 비고 */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">비고</label>
+          <label className="mb-2 block text-sm font-semibold text-foreground">비고</label>
           <input type="text" value={formData.notes || ''}
             onChange={(e) => handleChange('notes', e.target.value)}
             placeholder="간단한 특이사항..."
-            className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+            className="w-full min-h-11 rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10" />
         </div>
 
         {/* 학생 메모 */}
         <div className="col-span-2">
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label className="mb-2 block text-sm font-semibold text-foreground">
             학생 메모 <span className="text-muted-foreground text-xs">(상담 내용, 특이사항 등 상세 기록)</span>
           </label>
           <textarea value={formData.memo || ''}
             onChange={(e) => handleChange('memo', e.target.value)}
             placeholder="상담 내용, 학생 특성, 주의사항 등을 자유롭게 기록하세요..."
             rows={4}
-            className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500" />
+            className="w-full min-h-11 rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10" />
         </div>
 
         {/* 상태 (수정 모드일 때만) */}
         {mode === 'edit' && (
           <div>
-            <label className="block text-sm font-medium text-foreground mb-2">상태</label>
+            <label className="mb-2 block text-sm font-semibold text-foreground">상태</label>
             <select value={formData.status}
               onChange={(e) => {
                 const newStatus = e.target.value as StudentStatus;
@@ -78,7 +78,7 @@ export function AdditionalInfoSection({
                   setIsIndefiniteRest(false);
                 }
               }}
-              className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500">
+              className="w-full min-h-11 rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10">
               {STATUS_OPTIONS.filter((option) => initialData?.status === 'prospect'
                 ? ['prospect', 'active'].includes(option.value)
                 : option.value !== 'prospect').map((option) => (
@@ -107,7 +107,7 @@ export function AdditionalInfoSection({
 
         {/* 휴식 설정 (휴원 상태일 때만) */}
         {mode === 'edit' && formData.status === 'paused' && (
-          <div className="col-span-2 p-4 bg-warning-soft border border-warning/30 rounded-lg space-y-4">
+          <div className="col-span-2 space-y-4 rounded-xl bg-warning-soft p-4">
             <h4 className="font-medium text-warning flex items-center gap-2">
               휴식 설정
             </h4>
@@ -115,23 +115,23 @@ export function AdditionalInfoSection({
             <div className="grid grid-cols-2 gap-4">
               {/* 휴식 시작일 */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
+                <label className="mb-2 block text-sm font-semibold text-foreground">
                   휴식 시작일 <span className="text-destructive">*</span>
                 </label>
                 <input type="date" value={formData.rest_start_date || ''}
                   onChange={(e) => handleChange('rest_start_date', e.target.value)}
-                  className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-warning"
+                  className="w-full min-h-11 rounded-xl border border-transparent bg-card px-4 py-2.5 text-[15px] text-foreground focus:border-warning focus:outline-none focus:ring-4 focus:ring-warning/20"
                   required />
               </div>
 
               {/* 휴식 종료일 */}
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">휴식 종료일</label>
+                <label className="mb-2 block text-sm font-semibold text-foreground">휴식 종료일</label>
                 <div className="flex items-center gap-2">
                   <input type="date" value={formData.rest_end_date || ''}
                     onChange={(e) => handleChange('rest_end_date', e.target.value)}
                     disabled={isIndefiniteRest}
-                    className={`flex-1 px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-warning ${
+                    className={`min-h-11 flex-1 rounded-xl border border-transparent bg-card px-4 py-2.5 text-[15px] text-foreground focus:border-warning focus:outline-none focus:ring-4 focus:ring-warning/20 ${
                       isIndefiniteRest ? 'opacity-50' : ''
                     }`} />
                 </div>
@@ -141,7 +141,7 @@ export function AdditionalInfoSection({
                       setIsIndefiniteRest(e.target.checked);
                       if (e.target.checked) handleChange('rest_end_date', '');
                     }}
-                    className="rounded border-border text-warning focus:ring-warning" />
+                    className="accent-warning" />
                   무기한 휴식
                 </label>
               </div>
@@ -149,11 +149,11 @@ export function AdditionalInfoSection({
 
             {/* 휴식 사유 */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">휴식 사유</label>
+              <label className="mb-2 block text-sm font-semibold text-foreground">휴식 사유</label>
               <input type="text" value={formData.rest_reason || ''}
                 onChange={(e) => handleChange('rest_reason', e.target.value)}
                 placeholder="예: 개인 사정, 부상, 여행 등"
-                className="w-full px-4 py-2 border border-border bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-warning" />
+                className="w-full min-h-11 rounded-xl border border-transparent bg-card px-4 py-2.5 text-[15px] text-foreground focus:border-warning focus:outline-none focus:ring-4 focus:ring-warning/20" />
             </div>
 
             <p className="text-xs text-warning">

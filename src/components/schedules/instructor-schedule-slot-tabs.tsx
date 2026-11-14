@@ -11,8 +11,8 @@ interface Props {
 
 export function InstructorScheduleSlotTabs({ activeSlot, slotCounts, onSlotChange }: Props) {
   return (
-    <div className="flex gap-1.5 overflow-hidden">
-      {INSTRUCTOR_SCHEDULE_TIME_SLOTS.map(({ slot, label, icon: Icon, color, bgColor, darkBgColor }) => {
+    <div className="flex gap-1 overflow-hidden rounded-xl bg-muted p-1">
+      {INSTRUCTOR_SCHEDULE_TIME_SLOTS.map(({ slot, label, icon: Icon, color }) => {
         const count = slotCounts[slot];
 
         return (
@@ -20,11 +20,10 @@ export function InstructorScheduleSlotTabs({ activeSlot, slotCounts, onSlotChang
             key={slot}
             onClick={() => onSlotChange(slot)}
             className={cn(
-              'flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg border px-2 py-1.5 text-sm transition-all',
-              'whitespace-nowrap',
+              'flex h-9 min-w-0 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-sm font-semibold transition-colors',
               activeSlot === slot
-                ? `${bgColor} ${darkBgColor} border-current font-medium ${color}`
-                : 'border-border bg-muted text-muted-foreground hover:bg-muted/80'
+                ? `bg-card ${color}`
+                : 'text-muted-foreground hover:text-foreground'
             )}
             type="button"
           >

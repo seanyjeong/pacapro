@@ -55,7 +55,7 @@ export function PendingStudentMemoDialog({
                     <MessageSquare className="h-4 w-4 text-primary" />
                     상담 신청 문의
                   </label>
-                  <div className="rounded-lg border border-primary/30 bg-primary-soft p-3 text-sm">
+                  <div className="rounded-xl bg-primary-soft p-3 text-sm">
                     {data.inquiryContent}
                   </div>
                 </div>
@@ -67,7 +67,7 @@ export function PendingStudentMemoDialog({
                     <FileText className="h-4 w-4 text-success" />
                     상담 메모
                   </label>
-                  <div className="rounded-lg border border-success/30 bg-success-soft p-3 text-sm">
+                  <div className="rounded-xl bg-success-soft p-3 text-sm">
                     {data.consultationMemo}
                   </div>
                 </div>

@@ -129,11 +129,11 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <Card className="flex h-[90vh] max-h-[760px] w-full max-w-3xl flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <CardHeader className="flex flex-row items-center justify-between border-b border-border bg-card">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-border/60 bg-card">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary-soft rounded-full flex items-center justify-center">
               <Shield className="w-5 h-5 text-primary" />
@@ -153,7 +153,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
           <form onSubmit={handleSubmit} className="flex h-full min-h-0 flex-col">
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
               {/* 빠른 설정 */}
-              <div className="rounded-md border border-border bg-muted/30 p-3">
+              <div className="rounded-xl bg-muted p-3">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-sm font-semibold text-foreground">빠른 권한 설정</p>
@@ -203,7 +203,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                   const categoryEditIndeterminate = isCategoryIndeterminate(category.title, 'edit');
 
                   return (
-                    <div key={category.title} className="border border-border rounded-lg overflow-hidden">
+                    <div key={category.title} className="overflow-hidden rounded-xl bg-muted">
                       {/* 카테고리 헤더 */}
                       <div className="bg-muted">
                         <div className="flex flex-col sm:flex-row sm:items-center">
@@ -221,7 +221,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                             <span className="text-xs text-muted-foreground">({category.items.length}개)</span>
                           </button>
                           <div className="grid grid-cols-2 gap-2 px-4 pb-3 sm:flex sm:items-center sm:gap-6 sm:pb-0">
-                            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/70 px-2 py-2 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+                            <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-card px-2 py-2 sm:bg-transparent sm:px-0 sm:py-0">
                               <input
                                 type="checkbox"
                                 checked={categoryViewChecked}
@@ -229,11 +229,11 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                                   if (el) el.indeterminate = categoryViewIndeterminate;
                                 }}
                                 onChange={(e) => handleCategoryChange(category.title, 'view', e.target.checked)}
-                                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                                className="h-4 w-4 accent-primary"
                               />
                               <span className="text-xs text-muted-foreground">전체 보기</span>
                             </label>
-                            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-card/70 px-2 py-2 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+                            <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-card px-2 py-2 sm:bg-transparent sm:px-0 sm:py-0">
                               <input
                                 type="checkbox"
                                 checked={categoryEditChecked}
@@ -241,7 +241,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                                   if (el) el.indeterminate = categoryEditIndeterminate;
                                 }}
                                 onChange={(e) => handleCategoryChange(category.title, 'edit', e.target.checked)}
-                                className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                                className="h-4 w-4 accent-primary"
                               />
                               <span className="text-xs text-muted-foreground">전체 수정</span>
                             </label>
@@ -269,7 +269,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                                       onChange={(e) =>
                                         handlePermissionChange(page.key, 'view', e.target.checked)
                                       }
-                                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                                      className="h-4 w-4 accent-primary"
                                     />
                                   </td>
                                   <td className="w-14 px-2 py-2.5 text-center sm:w-20 sm:px-4">
@@ -280,7 +280,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
                                       onChange={(e) =>
                                         handlePermissionChange(page.key, 'edit', e.target.checked)
                                       }
-                                      className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
+                                      className="h-4 w-4 accent-primary"
                                     />
                                   </td>
                                 </tr>
@@ -296,7 +296,7 @@ export function PermissionModal({ staff, onClose, onSubmit }: PermissionModalPro
             </div>
 
             {/* 버튼 */}
-            <div className="flex flex-col gap-3 border-t border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 border-t border-border/60 bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-muted-foreground">
                 {permissionChanged ? (
                   <span className="font-medium text-primary">저장하지 않은 변경사항이 있습니다.</span>

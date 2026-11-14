@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/page';
 import {
   Dialog,
   DialogContent,
@@ -39,7 +40,7 @@ type TimeSlot = 'morning' | 'afternoon' | 'evening';
 const TIME_SLOT_INFO: Record<TimeSlot, { label: string; icon: typeof Sun; color: string; bgColor: string }> = {
   morning: { label: '오전', icon: Sunrise, color: 'text-warning', bgColor: 'bg-warning-soft' },
   afternoon: { label: '오후', icon: Sun, color: 'text-primary', bgColor: 'bg-primary-soft' },
-  evening: { label: '저녁', icon: Moon, color: 'text-purple-600', bgColor: 'bg-purple-100' },
+  evening: { label: '저녁', icon: Moon, color: 'text-secondary-foreground', bgColor: 'bg-muted' },
 };
 
 interface PendingApprovalsModalProps {
@@ -140,10 +141,7 @@ export function PendingApprovalsModal({
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : requests.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-success" />
-              <p>대기 중인 요청이 없습니다.</p>
-            </div>
+            <EmptyState icon={CheckCircle2} title="대기 중인 요청이 없어요." />
           ) : (
             <div className="space-y-3">
               {requests.map((request) => {
@@ -154,7 +152,7 @@ export function PendingApprovalsModal({
                 return (
                   <div
                     key={request.id}
-                    className="p-4 bg-muted rounded-lg border border-border"
+                    className="rounded-xl bg-muted p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
@@ -168,7 +166,7 @@ export function PendingApprovalsModal({
                               {request.instructor_name}
                             </span>
                             {request.salary_type === 'hourly' && (
-                              <Badge variant="outline" className="ml-2 text-xs">
+                              <Badge variant="warning" className="ml-2">
                                 시급제
                               </Badge>
                             )}
@@ -199,7 +197,7 @@ export function PendingApprovalsModal({
 
                         {/* 사유 */}
                         {request.notes && (
-                          <p className="mt-2 text-sm text-secondary-foreground bg-card p-2 rounded">
+                          <p className="mt-2 rounded-lg bg-card p-2.5 text-sm text-secondary-foreground">
                             {request.notes}
                           </p>
                         )}
@@ -232,7 +230,7 @@ export function PendingApprovalsModal({
                           variant="outline"
                           onClick={() => handleReject(request)}
                           disabled={isProcessing}
-                          className="text-destructive border-destructive/30 hover:bg-destructive-soft"
+                          className="bg-destructive-soft text-destructive hover:bg-destructive-soft/70"
                         >
                           {isProcessing ? (
                             <Loader2 className="w-4 h-4 animate-spin" />

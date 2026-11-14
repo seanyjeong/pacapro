@@ -10,9 +10,8 @@ import { formatDate } from '@/lib/utils/format';
 import { usePermissions } from '@/lib/utils/permissions';
 import { AcademyEventDeleteDialog } from './academy-event-delete-dialog';
 import { AcademyEventsHeader } from './academy-events-header';
-import { AcademyEventsOperationsBoard } from './academy-events-operations-board';
 import { AcademyEventsError, AcademyEventsLoading } from './academy-events-states';
-import { AcademyEventsSummary } from './academy-events-summary';
+import { AcademyEventsLegend, AcademyEventsSummary } from './academy-events-summary';
 
 const QUIET_REQUEST = { suppressErrorToast: true };
 const LOAD_ERROR_MESSAGE = '학원 일정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
@@ -106,7 +105,7 @@ export function AcademyEventsPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5 py-4 md:py-8" data-testid="academy-events-workspace">
+    <div className="mx-auto w-full max-w-[1680px] space-y-4" data-testid="academy-events-workspace">
       <AcademyEventsHeader canEditEvents={canEditEvents} onAddEvent={openCreateModal} />
 
       {loadError ? (
@@ -115,32 +114,20 @@ export function AcademyEventsPage() {
 
       {!loadError && (
         <>
-          <AcademyEventsSummary events={events} />
+          <AcademyEventsSummary canEditEvents={canEditEvents} events={events} onSelectEvent={handleEventClick} />
 
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
-            <main className="order-2 min-w-0 xl:order-1">
-              <EventCalendar
-                canEditEvents={canEditEvents}
-                events={events}
-                initialYearMonth={selectedMonth}
-                onDateClick={handleDateClick}
-                onEventClick={handleEventClick}
-                onEventDelete={(event) => {
-                  if (canEditEvents) setDeleteConfirm(event);
-                }}
-                onMonthChange={setSelectedMonth}
-              />
-            </main>
-            <div className="order-1 min-w-0 xl:sticky xl:top-20 xl:order-2">
-              <AcademyEventsOperationsBoard
-                canEditEvents={canEditEvents}
-                events={events}
-                selectedMonth={selectedMonth}
-                onAddEvent={openCreateModal}
-                onSelectEvent={handleEventClick}
-              />
-            </div>
-          </div>
+          <EventCalendar
+            canEditEvents={canEditEvents}
+            events={events}
+            initialYearMonth={selectedMonth}
+            legend={<AcademyEventsLegend events={events} />}
+            onDateClick={handleDateClick}
+            onEventClick={handleEventClick}
+            onEventDelete={(event) => {
+              if (canEditEvents) setDeleteConfirm(event);
+            }}
+            onMonthChange={setSelectedMonth}
+          />
         </>
       )}
 

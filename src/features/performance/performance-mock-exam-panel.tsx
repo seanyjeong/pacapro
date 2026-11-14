@@ -1,4 +1,5 @@
 import { AlertCircle, CheckCircle2, RefreshCw, Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { JungsiStatus, PerformanceStudent, StudentAllScores } from './performance-types';
@@ -68,36 +69,30 @@ export function MockExamPanel({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-md border border-border bg-card shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-border px-4 py-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="inline-flex items-center gap-2 text-sm font-medium text-success">
-              <CheckCircle2 className="h-4 w-4" />
-              정시엔진 연결됨
-            </span>
-            <span className="rounded-md border border-border bg-muted/40 px-2 py-1 text-xs text-muted-foreground">
-              {getBranchLabel(jungsiStatus?.branchName ?? null, linked)}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <label className="relative block md:w-80">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                className="pl-9"
-                placeholder="학생 이름, 학교, 학년"
-                value={searchQuery}
-                onChange={(event) => onSearchChange(event.target.value)}
-              />
-            </label>
-            <Button variant="outline" size="sm" onClick={onRefreshStudents}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              새로고침
-            </Button>
-          </div>
+      <section className="overflow-hidden rounded-2xl bg-card">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-border/60 px-4 py-4 sm:px-5" role="search" aria-label="성적 학생 검색">
+          <label className="relative block min-w-0 basis-full sm:basis-auto sm:flex-1 md:max-w-sm">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              aria-label="학생 이름, 학교, 학년 검색"
+              className="pl-10"
+              placeholder="학생 이름, 학교, 학년"
+              value={searchQuery}
+              onChange={(event) => onSearchChange(event.target.value)}
+            />
+          </label>
+          <Badge variant="success" className="h-8 gap-1 px-3">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            {getBranchLabel(jungsiStatus?.branchName ?? null, linked)}
+          </Badge>
+          <Button variant="ghost" className="ml-auto shrink-0 px-3" onClick={onRefreshStudents}>
+            <RefreshCw className="h-4 w-4" />
+            새로고침
+          </Button>
         </div>
 
         {studentsError ? (
-          <div className="p-4">
+          <div className="p-4 sm:p-5">
             <PerformanceErrorPanel message={studentsError} title="학생 목록을 불러오지 못했습니다" onRetry={onRefreshStudents} />
           </div>
         ) : (
@@ -113,12 +108,10 @@ export function MockExamPanel({
         )}
       </section>
 
-      <section className="rounded-md border border-border bg-muted/30 px-4 py-4 text-sm text-muted-foreground">
-        <div className="flex gap-2">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-          <p className="break-keep">학생을 펼치면 3월, 6월, 9월, 수능 성적을 한 번에 조회합니다.</p>
-        </div>
-      </section>
+      <p className="flex gap-2 px-1 text-[13px] text-muted-foreground">
+        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+        <span className="break-keep">학생을 펼치면 3월, 6월, 9월, 수능 성적을 한 번에 조회해요.</span>
+      </p>
     </div>
   );
 }

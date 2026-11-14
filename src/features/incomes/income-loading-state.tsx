@@ -1,19 +1,13 @@
 import { Banknote } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState, PageHeader } from '@/components/ui/page';
 
 export function IncomeLoadingState() {
   return (
-    <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] space-y-5 md:max-w-7xl">
-      <div className="border-b border-border/70 pb-4">
-        <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">수입 관리</h1>
-        <p className="mt-1 text-sm text-muted-foreground">수입 내역을 불러오는 중입니다</p>
-      </div>
-      <Card className="rounded-md border-border shadow-none">
-        <CardContent className="flex min-h-56 flex-col items-center justify-center gap-3">
-          <Banknote className="h-8 w-8 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">잠시만 기다려주세요</p>
-        </CardContent>
-      </Card>
+    <div className="mx-auto w-full min-w-0 max-w-7xl space-y-4">
+      <PageHeader title="수입 관리" description="수입 내역을 불러오는 중이에요." />
+      <section className="rounded-2xl bg-card">
+        <EmptyState icon={Banknote} title="잠시만 기다려주세요" className="py-14" />
+      </section>
     </div>
   );
 }

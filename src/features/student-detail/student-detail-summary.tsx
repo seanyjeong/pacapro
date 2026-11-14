@@ -1,41 +1,45 @@
-import { Banknote, CalendarDays, GraduationCap, ReceiptText } from 'lucide-react';
-import { ADMISSION_TYPE_LABELS, type StudentDetail, type StudentPayment } from '@/lib/types/student';
-import { getEffectiveMonthlyTuition } from '@/lib/utils/student-helpers';
-import { getClassSummary, getOutstandingAmount, formatWon } from './student-detail-utils';
+import { StatTile } from '@/components/ui/page';
+import type { StudentDetail, StudentPayment } from '@/lib/types/student';
+import { formatClassDays, formatCurrency, getEffectiveMonthlyTuition } from '@/lib/utils/student-helpers';
+import { getOutstandingAmount, formatWon } from './student-detail-utils';
 
 interface StudentDetailSummaryProps {
   payments: StudentPayment[];
   student: StudentDetail;
+  unpaidPaymentCount: number;
+  onOpenPayments: () => void;
 }
 
-export function StudentDetailSummary({ payments, student }: StudentDetailSummaryProps) {
+// 수업·학원비·미납 요약. 학생 정보 카드에는 같은 숫자를 다시 쓰지 않는다.
+export function StudentDetailSummary({ payments, student, unpaidPaymentCount, onOpenPayments }: StudentDetailSummaryProps) {
   const outstanding = getOutstandingAmount(payments);
   const effectiveTuition = getEffectiveMonthlyTuition(student);
-  const items = [
-    { label: '수업', value: getClassSummary(student), icon: CalendarDays, tone: 'bg-muted text-secondary-foreground' },
-    { label: '실납부', value: formatWon(effectiveTuition), icon: Banknote, tone: 'bg-success-soft text-success' },
-    { label: '미납', value: formatWon(outstanding), icon: ReceiptText, tone: outstanding > 0 ? 'bg-warning-soft text-warning' : 'bg-muted text-secondary-foreground' },
-    { label: '입시 유형', value: ADMISSION_TYPE_LABELS[student.admission_type], icon: GraduationCap, tone: 'bg-sky-50 text-sky-700' },
-  ];
+  const discountRate = Number.parseFloat(student.discount_rate) || 0;
+  const days = formatClassDays(student.class_days);
+  const nextDays = student.class_days_next && student.class_days_effective_from
+    ? `변경 예정: ${formatClassDays(student.class_days_next)} (${student.class_days_effective_from.slice(0, 7)}부터)`
+    : null;
+  const tuitionNote = [
+    discountRate > 0 ? `${formatCurrency(student.monthly_tuition)}에서 ${discountRate}% 할인` : `월 학원비 ${formatCurrency(student.monthly_tuition)}`,
+    student.payment_due_day ? `매월 ${student.payment_due_day}일 납부` : '학원 기본 납부일',
+  ].join(' · ');
 
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map((item) => {
-        const Icon = item.icon;
-        return (
-          <section key={item.label} className="rounded-md border border-border bg-card p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-muted-foreground">{item.label}</p>
-                <p className="mt-1 truncate text-base font-semibold text-foreground">{item.value}</p>
-              </div>
-              <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${item.tone}`}>
-                <Icon className="h-4 w-4" />
-              </span>
-            </div>
-          </section>
-        );
-      })}
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <StatTile
+        className="col-span-2 lg:col-span-1"
+        label="수업"
+        value={`주 ${student.weekly_count}회`}
+        note={[days || '요일 없음', nextDays].filter(Boolean).join(' · ')}
+      />
+      <StatTile label="실납부" value={formatWon(effectiveTuition)} note={tuitionNote} />
+      <StatTile
+        label="미납"
+        value={formatWon(outstanding)}
+        tone={outstanding > 0 ? 'warning' : 'neutral'}
+        note={outstanding > 0 ? `${unpaidPaymentCount}건 · 납부 내역 보기` : '확인할 미납이 없어요'}
+        onClick={onOpenPayments}
+      />
     </div>
   );
 }

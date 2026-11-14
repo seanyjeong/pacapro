@@ -234,12 +234,10 @@ export function PendingStudentList({ students, loading, sort, onReload, onSortCh
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="p-12 text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground mx-auto" />
-          <p className="text-muted-foreground mt-2">로딩 중...</p>
-        </CardContent>
-      </Card>
+      <div className="py-12 text-center">
+        <Loader2 className="mx-auto h-7 w-7 animate-spin text-muted-foreground" />
+        <p className="mt-2 text-sm text-muted-foreground">불러오는 중이에요</p>
+      </div>
     );
   }
 
@@ -263,40 +261,40 @@ export function PendingStudentList({ students, loading, sort, onReload, onSortCh
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-muted border-b border-border">
+              <thead className="border-b border-border/60">
                 <tr>
                   <SortHeader className="whitespace-nowrap" label="이름" column="name" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
                   <SortHeader className="whitespace-nowrap" label="학교" column="school" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
                   <SortHeader className="whitespace-nowrap" label="학년" column="grade" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
-                  <th className="whitespace-nowrap text-left py-3 px-4 text-sm font-semibold text-muted-foreground">연락처</th>
+                  <th className="whitespace-nowrap text-left py-3 px-3 text-[13px] font-semibold text-muted-foreground">연락처</th>
                   <SortHeader className="whitespace-nowrap" label="상담일" column="consultation" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
                   <SortHeader className="whitespace-nowrap" label="체험 일정" column="trial" sortKey={sortKey} sortDir={sortDir} onSort={onSortChange} />
-                  <th className="whitespace-nowrap text-left py-3 px-4 text-sm font-semibold text-muted-foreground">메모</th>
-                  <th className="whitespace-nowrap text-right py-3 px-4 text-sm font-semibold text-muted-foreground">액션</th>
+                  <th className="whitespace-nowrap text-left py-3 px-3 text-[13px] font-semibold text-muted-foreground">메모</th>
+                  <th className="whitespace-nowrap text-right py-3 px-3 text-[13px] font-semibold text-muted-foreground">액션</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border bg-card">
+              <tbody className="divide-y divide-border/60">
                 {sortedStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-muted">
-                    <td className="whitespace-nowrap py-3 px-4">
+                  <tr key={student.id} className="transition-colors hover:bg-muted/60">
+                    <td className="whitespace-nowrap py-3.5 px-3">
                       <div className="flex items-center gap-3">
                         <StudentAvatar student={student} />
                         <span className="font-medium text-foreground">{student.name}</span>
                       </div>
                     </td>
-                    <td className="whitespace-nowrap py-3 px-4 text-sm text-muted-foreground">
+                    <td className="whitespace-nowrap py-3.5 px-3 text-sm text-muted-foreground">
                       {student.school || '-'}
                     </td>
-                    <td className="whitespace-nowrap py-3 px-4 text-sm text-muted-foreground">
+                    <td className="whitespace-nowrap py-3.5 px-3 text-sm text-muted-foreground">
                       {student.grade || '-'}
                     </td>
-                    <td className="whitespace-nowrap py-3 px-4 text-sm text-muted-foreground">
+                    <td className="whitespace-nowrap py-3.5 px-3 text-sm text-muted-foreground">
                       {student.phone || '-'}
                     </td>
-                    <td className="whitespace-nowrap py-3 px-4 text-sm text-muted-foreground">
+                    <td className="whitespace-nowrap py-3.5 px-3 text-sm text-muted-foreground">
                       {formatDate(student.consultation_date || student.created_at)}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-3">
                       {(() => {
                         const trialDates = parseTrialDates(student.trial_dates);
                         if (trialDates.length === 0) {
@@ -307,12 +305,7 @@ export function PendingStudentList({ students, loading, sort, onReload, onSortCh
                             {trialDates.map((trial, idx) => (
                               <Badge
                                 key={idx}
-                                variant="outline"
-                                className={`text-xs flex items-center gap-1 ${
-                                  trial.attended
-                                    ? 'bg-success-soft text-success border-success/30'
-                                    : 'bg-muted text-secondary-foreground border-border'
-                                }`}
+                                variant={trial.attended ? 'success' : 'secondary'}
                               >
                                 {formatTrialDate(trial.date)}
                                 {trial.attended ? (
@@ -326,7 +319,7 @@ export function PendingStudentList({ students, loading, sort, onReload, onSortCh
                         );
                       })()}
                     </td>
-                    <td className="py-3 px-4 max-w-[120px]">
+                    <td className="py-3.5 px-3 min-w-[96px] max-w-[140px]">
                       <button
                         onClick={() => handleOpenMemoModal(student)}
                         aria-label={`${student.name} 미등록관리 메모 보기`}
@@ -344,7 +337,7 @@ export function PendingStudentList({ students, loading, sort, onReload, onSortCh
                         )}
                       </button>
                     </td>
-                    <td className="whitespace-nowrap py-3 px-4 text-right">
+                    <td className="whitespace-nowrap py-3.5 px-3 text-right">
                       <div className="flex items-center justify-end gap-3">
                         <Button
                           size="sm"

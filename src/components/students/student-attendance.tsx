@@ -111,18 +111,18 @@ export function StudentAttendanceComponent({ studentId }: Props) {
           <StatCard
             label="출석률"
             value={`${data.summary.attendance_rate}%`}
-            color="bg-primary-50 dark:bg-primary-900/30"
-            textColor="text-primary-700 dark:text-primary-400"
+            color="bg-primary-soft"
+            textColor="text-primary"
           />
         </div>
       )}
 
       {/* Calendar */}
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-0 sm:p-0">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-[3px] border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : error ? (
             <div className="text-center py-12 text-muted-foreground">
@@ -153,12 +153,12 @@ export function StudentAttendanceComponent({ studentId }: Props) {
                     <div
                       key={day}
                       className={`h-16 border border-border/50 p-1 relative ${
-                        isToday ? 'bg-primary-50/50 dark:bg-primary-900/20' : ''
+                        isToday ? 'bg-primary-soft/60' : ''
                       }`}
                     >
                       <span className={`text-xs font-medium ${
                         dow === 0 ? 'text-destructive' : dow === 6 ? 'text-primary' : 'text-foreground'
-                      } ${isToday ? 'bg-primary-500 text-white rounded-full w-5 h-5 flex items-center justify-center' : ''}`}>
+                      } ${isToday ? 'bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center' : ''}`}>
                         {day}
                       </span>
                       {records.length > 0 && (
@@ -196,7 +196,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
       {/* Detailed list */}
       {data?.records && data.records.length > 0 && (
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-0 sm:p-0">
             <h4 className="text-sm font-semibold mb-3 flex items-center gap-1.5">
               <CalendarDays className="w-4 h-4" />
               상세 기록
@@ -218,7 +218,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
                       {STATUS_LABELS[r.attendance_status || ''] || '미체크'}
                     </span>
                     {r.is_makeup && (
-                      <span className="text-xs bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 px-1.5 py-0.5 rounded">보충</span>
+                      <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary">보충</span>
                     )}
                     {r.notes && (
                       <span className="text-xs text-muted-foreground truncate">{r.notes}</span>

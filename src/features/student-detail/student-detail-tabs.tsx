@@ -9,8 +9,8 @@ interface StudentDetailTabsProps {
 
 export function StudentDetailTabs({ activeTab, tabs, onTabChange }: StudentDetailTabsProps) {
   return (
-    <div className="overflow-x-auto border-b border-border">
-      <div className="flex min-w-max gap-1" role="tablist" aria-label="학생 운영 기록">
+    <div className="scrollbar-none overflow-x-auto">
+      <div className="inline-flex min-w-max gap-1 rounded-xl bg-muted p-1" role="tablist" aria-label="학생 운영 기록">
         {tabs.map((tab) => {
           const active = activeTab === tab.id;
           return (
@@ -18,10 +18,10 @@ export function StudentDetailTabs({ activeTab, tabs, onTabChange }: StudentDetai
               key={tab.id}
               aria-selected={active}
               className={cn(
-                'inline-flex h-11 items-center gap-2 border-b-2 px-3 text-sm font-medium transition-colors',
+                'inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 text-sm font-semibold transition-colors',
                 active
-                  ? 'border-muted-foreground/40 text-foreground'
-                  : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground',
+                  ? 'bg-card text-foreground shadow-[0_1px_3px_rgba(0,0,0,0.08)]'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
               role="tab"
               type="button"
@@ -29,7 +29,7 @@ export function StudentDetailTabs({ activeTab, tabs, onTabChange }: StudentDetai
             >
               {tab.label}
               {tab.count ? (
-                <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{tab.count}</span>
+                <span className="text-xs tabular-nums text-muted-foreground">{tab.count}</span>
               ) : null}
             </button>
           );

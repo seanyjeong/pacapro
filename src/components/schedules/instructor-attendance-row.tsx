@@ -28,8 +28,8 @@ export function InstructorAttendanceRow({
   return (
     <div
       className={cn(
-        'rounded-lg border p-4 transition-colors',
-        isChecked ? 'border-primary-300 bg-primary-50/50 dark:bg-primary-950/50' : 'border-border'
+        'rounded-xl p-4 transition-colors',
+        isChecked ? 'bg-primary-soft' : 'bg-muted'
       )}
     >
       <div className="mb-3 flex items-center justify-between">
@@ -37,13 +37,13 @@ export function InstructorAttendanceRow({
           <div
             className={cn(
               'flex h-10 w-10 items-center justify-center rounded-full font-medium',
-              isChecked ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/40 text-white'
+              isChecked ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground'
             )}
           >
             {instructor.name.charAt(0)}
           </div>
           <div>
-            <p className="font-medium text-foreground">{instructor.name}</p>
+            <p className="text-[15px] font-semibold text-foreground">{instructor.name}</p>
             <p className="text-sm text-muted-foreground">
               {isChecked && edited ? INSTRUCTOR_ATTENDANCE_STATUS_LABELS[edited.status] : '미체크'}
             </p>
@@ -53,7 +53,7 @@ export function InstructorAttendanceRow({
         {isChecked && edited && (
           <span
             className={cn(
-              'rounded-full border px-3 py-1 text-sm font-medium',
+              'rounded-full px-3 py-1 text-sm font-semibold',
               INSTRUCTOR_ATTENDANCE_STATUS_COLORS[edited.status]
             )}
           >
@@ -68,10 +68,10 @@ export function InstructorAttendanceRow({
             key={status}
             type="button"
             className={cn(
-              'rounded-lg border px-3 py-2 text-sm font-medium transition-all',
+              'h-11 rounded-xl px-2 text-[15px] font-bold transition-colors',
               edited?.status === status
                 ? INSTRUCTOR_ATTENDANCE_STATUS_COLORS[status]
-                : 'border-border bg-card text-muted-foreground hover:bg-muted'
+                : 'bg-card text-secondary-foreground hover:text-foreground'
             )}
             onClick={() => onStatusChange(instructor.id, status)}
           >
@@ -81,7 +81,7 @@ export function InstructorAttendanceRow({
       </div>
 
       {isChecked && (edited?.status === 'present' || edited?.status === 'late') && (
-        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-border pt-3">
+        <div className="mt-3 grid grid-cols-2 gap-3">
           <TimeInput
             label="출근 시간"
             value={edited?.checkInTime || ''}
@@ -112,7 +112,7 @@ function TimeInput({
       <label className="mb-1 block text-xs text-muted-foreground">{label}</label>
       <input
         type="time"
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+        className="h-11 w-full rounded-xl bg-card px-3 text-[15px] text-foreground outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />

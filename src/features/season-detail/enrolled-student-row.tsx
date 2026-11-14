@@ -36,11 +36,11 @@ export function EnrolledStudentRow({
   const hasPaidAmount = hasPaidSeasonAmount(enrollment);
 
   return (
-    <tr className="border-b border-border last:border-0 hover:bg-muted/40">
-      <td className="px-4 py-3">
+    <tr className="border-b border-border/60 last:border-0 hover:bg-muted/60">
+      <td className="px-3 py-3.5">
         <Link
           aria-label={`${enrollment.student_name ?? '학생'} 학생 상세`}
-          className="font-medium text-foreground underline-offset-4 hover:underline"
+          className="text-[15px] font-semibold text-foreground underline-offset-4 hover:underline"
           href={`/students/${enrollment.student_id}`}
         >
           {enrollment.student_name ?? '-'}
@@ -50,7 +50,7 @@ export function EnrolledStudentRow({
         </p>
         {enrollment.aftercare_applied_at && <p className="mt-1 text-xs font-medium text-primary">자동 졸업 완료</p>}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3.5">
         {discountAmount > 0 ? (
           <div className="space-y-0.5">
             <p className="text-xs text-muted-foreground line-through">{formatSeasonFee(originalFee)}</p>
@@ -64,13 +64,13 @@ export function EnrolledStudentRow({
         )}
         <SeasonPaymentAmountSummary enrollment={enrollment} />
       </td>
-      <td className="px-4 py-3 text-sm text-muted-foreground">
+      <td className="px-3 py-3.5 text-sm text-muted-foreground">
         {enrollment.registration_date || enrollment.registered_at?.split('T')[0] || '-'}
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3.5">
         <SeasonPaymentStatusBadge status={enrollment.payment_status} />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-3 py-3.5">
         {!isCancelled ? (
           <SeasonTimeSlotToggleGroup
             selectedSlots={timeSlots}
@@ -79,12 +79,12 @@ export function EnrolledStudentRow({
           />
         ) : null}
       </td>
-      <td className="px-4 py-3 text-right">
+      <td className="px-3 py-3.5 text-right">
         {!isCancelled ? (
           <div className="flex justify-end gap-1">
             {hasPaidAmount ? (
               <Button className="text-warning hover:text-warning" size="sm" type="button" variant="ghost" onClick={onOpenRefund}>
-                <Receipt className="mr-1 h-4 w-4" />
+                <Receipt className="h-4 w-4" />
                 환불
               </Button>
             ) : (
@@ -96,7 +96,7 @@ export function EnrolledStudentRow({
                 variant="ghost"
                 onClick={onCancel}
               >
-                {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="mr-1 h-4 w-4" />}
+                {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
                 {!cancelling ? '취소' : null}
               </Button>
             )}

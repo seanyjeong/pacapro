@@ -37,7 +37,7 @@ const EXTRA_DAY_REQUEST_ERROR_MESSAGE = '출근 요청을 등록하지 못했습
 const TIME_SLOTS: { slot: TimeSlot; label: string; icon: typeof Sun; color: string; defaultStart: string; defaultEnd: string }[] = [
   { slot: 'morning', label: '오전', icon: Sunrise, color: 'text-warning', defaultStart: '09:00', defaultEnd: '12:00' },
   { slot: 'afternoon', label: '오후', icon: Sun, color: 'text-primary', defaultStart: '13:00', defaultEnd: '17:00' },
-  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-purple-600', defaultStart: '18:00', defaultEnd: '21:00' },
+  { slot: 'evening', label: '저녁', icon: Moon, color: 'text-secondary-foreground', defaultStart: '18:00', defaultEnd: '21:00' },
 ];
 
 interface ExtraDayRequestModalProps {
@@ -163,7 +163,7 @@ export function ExtraDayRequestModal({
 
         <div className="space-y-4 py-4 px-1">
           {error && (
-            <div role="alert" className="flex items-center gap-2 p-3 bg-destructive-soft border border-destructive/30 rounded-lg text-destructive text-sm">
+            <div role="alert" className="flex items-center gap-2 rounded-xl bg-destructive-soft p-3 text-sm text-destructive">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
               {error}
             </div>
@@ -183,7 +183,7 @@ export function ExtraDayRequestModal({
                 <select
                   value={selectedInstructorId || ''}
                   onChange={(e) => setSelectedInstructorId(Number(e.target.value) || null)}
-                  className="w-full px-3 py-2 border border-border rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                  className="h-11 w-full rounded-xl border border-transparent bg-muted px-3 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10"
                 >
                   <option value="">강사를 선택하세요</option>
                   {instructors.map((instructor) => (
@@ -200,17 +200,17 @@ export function ExtraDayRequestModal({
                 <label className="block text-sm font-medium text-secondary-foreground mb-2">
                   시간대
                 </label>
-                <div className="flex gap-2">
+                <div className="flex gap-1 rounded-xl bg-muted p-1">
                   {TIME_SLOTS.map(({ slot, label, icon: Icon, color }) => (
                     <button
                       key={slot}
                       type="button"
                       onClick={() => setSelectedTimeSlot(slot)}
                       className={cn(
-                        'flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border text-sm font-medium transition-colors',
+                        'flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition-colors',
                         selectedTimeSlot === slot
-                          ? 'bg-primary-soft border-primary text-primary'
-                          : 'bg-card border-border text-secondary-foreground hover:bg-muted'
+                          ? 'bg-card text-primary'
+                          : 'text-muted-foreground hover:text-foreground'
                       )}
                     >
                       <Icon className={cn('w-4 h-4', selectedTimeSlot === slot ? 'text-primary' : color)} />
@@ -263,10 +263,11 @@ export function ExtraDayRequestModal({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={handleClose}>
+          <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={handleClose}>
             취소
           </Button>
           <Button
+            className="w-full sm:w-auto"
             onClick={handleSubmit}
             disabled={submitting || !selectedInstructorId}
           >

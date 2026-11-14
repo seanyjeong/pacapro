@@ -5,7 +5,6 @@
  */
 
 import { useRouter, useParams } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, User } from 'lucide-react';
 import { AttendanceChecker } from '@/components/schedules/attendance-checker';
@@ -21,9 +20,8 @@ import type { AttendanceSubmission } from '@/lib/types/schedule';
 import {
   formatDateKorean,
   getTimeSlotLabel,
-  getTimeSlotColor,
 } from '@/lib/utils/schedule-helpers';
-import { cn } from '@/lib/utils';
+import { TIME_SLOT_BADGE } from '@/features/schedules/time-slot-meta';
 
 const ATTENDANCE_LOAD_ERROR = '출석 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 
@@ -70,10 +68,9 @@ export default function AttendancePage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto w-full max-w-5xl space-y-5 py-4 md:py-8">
+      <div className="mx-auto w-full max-w-3xl space-y-4">
         <SchedulePageHeader
-          description="수업 출석 정보를 불러오는 중입니다."
-          eyebrow="Attendance Desk"
+          description="수업 출석 정보를 불러오는 중이에요."
           onBack={() => router.push('/schedules')}
           title="출석 체크"
         />
@@ -84,10 +81,9 @@ export default function AttendancePage() {
 
   if (scheduleError || attendanceError || !schedule) {
     return (
-      <div className="mx-auto w-full max-w-5xl space-y-5 py-4 md:py-8">
+      <div className="mx-auto w-full max-w-3xl space-y-4">
         <SchedulePageHeader
-          description="출석 정보를 다시 불러올 수 있습니다."
-          eyebrow="Attendance Desk"
+          description="출석 정보를 다시 불러올 수 있어요."
           onBack={() => router.push('/schedules')}
           title="출석 체크"
         />
@@ -104,57 +100,35 @@ export default function AttendancePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-5 py-4 md:py-8">
+    <div className="mx-auto w-full max-w-3xl space-y-4">
       <SchedulePageHeader
-        description="학생 출석 상태와 보충 사유를 한 번에 정리합니다."
-        eyebrow="Attendance Desk"
+        description="학생 출석 상태와 보충 사유를 한 번에 정리해요."
         onBack={() => router.push('/schedules')}
         title="출석 체크"
       />
 
-      <Card className="rounded-md">
-        <CardHeader className="border-b border-border px-4 py-3">
-          <CardTitle className="text-base tracking-normal">
-            {schedule.title || `${schedule.instructor_name} 수업`}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">수업 날짜</p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDateKorean(schedule.class_date)}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">시간대</p>
-                <Badge
-                  variant="outline"
-                  className={cn('mt-1', getTimeSlotColor(schedule.time_slot))}
-                >
-                  {getTimeSlotLabel(schedule.time_slot)}
-                </Badge>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <User className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm font-medium">강사</p>
-                <p className="text-sm text-muted-foreground">
-                  {schedule.instructor_name || '강사'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <section className="rounded-2xl bg-card px-5 py-4 sm:px-6" aria-label="수업 정보">
+        <p className="truncate text-[17px] font-bold text-foreground">
+          {schedule.title || `${schedule.instructor_name} 수업`}
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-secondary-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <span className="sr-only">수업 날짜</span>
+            {formatDateKorean(schedule.class_date)}
+          </span>
+          <Badge variant={TIME_SLOT_BADGE[schedule.time_slot]} className="gap-1">
+            <Clock className="h-3 w-3" aria-hidden />
+            <span className="sr-only">시간대</span>
+            {getTimeSlotLabel(schedule.time_slot)}
+          </Badge>
+          <span className="inline-flex items-center gap-1.5">
+            <User className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <span className="sr-only">강사</span>
+            {schedule.instructor_name || '강사'}
+          </span>
+        </div>
+      </section>
 
       <AttendanceChecker
         attendances={attendances}
@@ -168,9 +142,9 @@ export default function AttendancePage() {
       />
 
       {schedule.attendance_taken && (
-        <div className="rounded-md border border-primary/30 bg-primary-soft p-4">
-          <p className="text-sm text-primary">
-            이 수업의 출석은 이미 완료되었습니다. 수정이 필요한 경우 관리자에게 문의하세요.
+        <div className="rounded-2xl bg-primary-soft p-4">
+          <p className="text-sm font-medium text-primary">
+            이 수업의 출석은 이미 끝났어요. 수정이 필요하면 관리자에게 문의해 주세요.
           </p>
         </div>
       )}

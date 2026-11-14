@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import type { ScoreData } from './performance-types';
 import { getScoreSubjects } from './performance-utils';
 
@@ -9,29 +10,27 @@ interface PerformanceScoreCardProps {
 export function PerformanceScoreCard({ examTitle, scores }: PerformanceScoreCardProps) {
   if (!scores) {
     return (
-      <section className="rounded-md border border-border bg-background px-4 py-4">
+      <section className="rounded-xl bg-card px-4 py-4">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold text-foreground">{examTitle}</h3>
-          <span className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground">데이터 없음</span>
+          <h3 className="text-[15px] font-bold text-foreground">{examTitle}</h3>
+          <Badge variant="secondary">데이터 없음</Badge>
         </div>
-        <p className="py-6 text-center text-sm text-muted-foreground">성적 정보가 없습니다.</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">성적 정보가 없어요.</p>
       </section>
     );
   }
 
   return (
-    <section className="rounded-md border border-border bg-background px-4 py-4 shadow-sm">
+    <section className="rounded-xl bg-card px-4 py-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-foreground">{examTitle}</h3>
-        <span className="rounded-md border border-success/30 bg-success-soft px-2 py-1 text-xs font-medium text-success">
-          조회됨
-        </span>
+        <h3 className="text-[15px] font-bold text-foreground">{examTitle}</h3>
+        <Badge variant="success">조회됨</Badge>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-2 text-center sm:grid-cols-3 xl:grid-cols-6">
         {getScoreSubjects(scores).map((subject) => (
-          <div key={subject.label} className="min-w-0 rounded-md border border-border bg-muted/30 px-2 py-2">
+          <div key={subject.label} className="min-w-0 rounded-xl bg-muted px-2 py-2.5">
             <p className="text-xs font-medium text-muted-foreground">{subject.label}</p>
-            <p className="mt-1 text-xl font-semibold tracking-normal text-foreground">{subject.grade}</p>
+            <p className="mt-0.5 text-xl font-extrabold text-foreground tabular-nums">{subject.grade}</p>
             <p className="mt-1 truncate text-[11px] text-muted-foreground">{subject.subject}</p>
           </div>
         ))}

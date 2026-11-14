@@ -13,7 +13,7 @@ interface SeasonAlertProps {
 export function SeasonAlert({ actionLabel, className = '', message, onAction, testId, title }: SeasonAlertProps) {
   return (
     <section
-      className={`rounded-md border border-warning/30 bg-warning-soft p-4 text-warning ${className}`}
+      className={`rounded-2xl bg-warning-soft p-5 text-warning ${className}`}
       data-testid={testId}
       role="alert"
     >
@@ -21,12 +21,12 @@ export function SeasonAlert({ actionLabel, className = '', message, onAction, te
         <div className="flex min-w-0 items-start gap-3">
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
           <div className="space-y-1">
-            <h2 className="text-sm font-semibold">{title}</h2>
+            <h2 className="text-[15px] font-bold">{title}</h2>
             <p className="break-keep text-sm">{message}</p>
           </div>
         </div>
         {onAction && actionLabel ? (
-          <Button className="gap-2" size="sm" type="button" variant="outline" onClick={onAction}>
+          <Button className="w-full gap-2 sm:w-auto" size="sm" type="button" variant="outline" onClick={onAction}>
             <RefreshCw className="h-4 w-4" />
             {actionLabel}
           </Button>

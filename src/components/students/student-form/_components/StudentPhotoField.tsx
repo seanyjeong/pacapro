@@ -110,12 +110,12 @@ export function StudentPhotoField({
   const hasStoredPhoto = !!photoStudent?.profile_thumb_key || !!photoStudent?.profile_image_url;
 
   return (
-    <Card className="rounded-md shadow-none">
+    <Card>
       <CardHeader><CardTitle>학생 사진</CardTitle></CardHeader>
-      <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <CardContent className="flex flex-col gap-4">
         <div className="flex min-w-0 items-center gap-4">
           {hasPendingPhoto ? (
-            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img alt="" className="h-full w-full object-contain" src={previewUrl} />
             </div>
@@ -134,7 +134,7 @@ export function StudentPhotoField({
           </div>
         </div>
 
-        <div className="flex shrink-0 gap-2">
+        <div className="flex gap-2">
           <input
             ref={inputRef}
             accept="image/jpeg,image/png,image/webp"

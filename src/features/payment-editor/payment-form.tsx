@@ -50,81 +50,79 @@ export function PaymentForm({ mode, initialData, editingPayment, students, onSub
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <PaymentFormSummary finalAmount={finalAmount} formData={formData} students={students} paymentContext={editingPayment} />
+    <form onSubmit={submit} className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+      <div className="min-w-0 lg:sticky lg:top-20 lg:order-2">
+        <PaymentFormSummary finalAmount={finalAmount} formData={formData} students={students} paymentContext={editingPayment} />
+      </div>
 
-      <section className="rounded-lg border border-border/70 bg-card">
-        <SectionHeader title="청구 대상" />
-        <div className="grid gap-4 p-4 sm:grid-cols-2">
-          <Field label="학생">
-            <select value={formData.student_id} onChange={(event) => changeStudent(Number(event.target.value))} disabled={mode === 'edit'} className={controlClassName} required>
-              <option value={0}>학생 선택</option>
-              {students.map((student) => (
-                <option key={student.id} value={student.id}>{student.name} ({student.student_number})</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="청구 유형">
-            <select value={formData.payment_type} onChange={(event) => changePaymentType(event.target.value as PaymentFormData['payment_type'])} className={controlClassName} required>
-              {PAYMENT_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-            </select>
-          </Field>
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-border/70 bg-card">
-        <SectionHeader title="청구 조건" />
-        <div className="grid gap-4 p-4 sm:grid-cols-2">
-          <Field label="청구 월">
-            <input type="month" value={formData.year_month} onChange={(event) => setField('year_month', event.target.value)} className={controlClassName} required />
-          </Field>
-          <Field label="납부 기한">
-            <input type="date" value={formData.due_date} onChange={(event) => setField('due_date', event.target.value)} className={controlClassName} required />
-          </Field>
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-border/70 bg-card">
-        <SectionHeader title="금액" />
-        <div className="grid gap-4 p-4 sm:grid-cols-3">
-          <MoneyField label="기본 금액" value={formData.base_amount} onChange={(value) => setField('base_amount', value)} required />
-          <MoneyField label="할인 금액" value={formData.discount_amount} onChange={(value) => setField('discount_amount', value)} />
-          <MoneyField label="추가 금액" value={formData.additional_amount} onChange={(value) => setField('additional_amount', value)} />
-        </div>
-        <div className="border-t border-border/70 p-4">
-          <div className="flex items-center justify-between rounded-md bg-primary-soft px-3 py-3">
-            <span className="text-sm font-semibold text-primary">최종 청구 금액</span>
-            <span className="text-xl font-bold text-primary">{finalAmount.toLocaleString()}원</span>
+      <div className="min-w-0 space-y-4 lg:order-1">
+        <section className="rounded-2xl bg-card">
+          <SectionHeader title="청구 대상" />
+          <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2 sm:px-6">
+            <Field label="학생">
+              <select value={formData.student_id} onChange={(event) => changeStudent(Number(event.target.value))} disabled={mode === 'edit'} className={controlClassName} required>
+                <option value={0}>학생 선택</option>
+                {students.map((student) => (
+                  <option key={student.id} value={student.id}>{student.name} ({student.student_number})</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="청구 유형">
+              <select value={formData.payment_type} onChange={(event) => changePaymentType(event.target.value as PaymentFormData['payment_type'])} className={controlClassName} required>
+                {PAYMENT_TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </Field>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="rounded-lg border border-border/70 bg-card">
-        <SectionHeader title="메모" />
-        <div className="grid gap-4 p-4 sm:grid-cols-2">
-          <Field label="설명">
-            <input type="text" value={formData.description} onChange={(event) => setField('description', event.target.value)} className={controlClassName} />
-          </Field>
-          <Field label="내부 메모">
-            <textarea value={formData.notes} onChange={(event) => setField('notes', event.target.value)} className={controlClassName} rows={3} />
-          </Field>
-        </div>
-      </section>
+        <section className="rounded-2xl bg-card">
+          <SectionHeader title="청구 조건" />
+          <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2 sm:px-6">
+            <Field label="청구 월">
+              <input type="month" value={formData.year_month} onChange={(event) => setField('year_month', event.target.value)} className={controlClassName} required />
+            </Field>
+            <Field label="납부 기한">
+              <input type="date" value={formData.due_date} onChange={(event) => setField('due_date', event.target.value)} className={controlClassName} required />
+            </Field>
+          </div>
+        </section>
 
-      <div className="flex justify-end gap-2 border-t border-border/70 pt-4">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>취소</Button>
-        <Button type="submit" disabled={loading}>{loading ? '저장 중' : mode === 'edit' ? '수정' : '등록'}</Button>
+        <section className="rounded-2xl bg-card">
+          <SectionHeader title="금액" />
+          <div className="grid gap-4 px-5 pb-5 sm:grid-cols-3 sm:px-6">
+            <MoneyField label="기본 금액" value={formData.base_amount} onChange={(value) => setField('base_amount', value)} required />
+            <MoneyField label="할인 금액" value={formData.discount_amount} onChange={(value) => setField('discount_amount', value)} />
+            <MoneyField label="추가 금액" value={formData.additional_amount} onChange={(value) => setField('additional_amount', value)} />
+          </div>
+        </section>
+
+        <section className="rounded-2xl bg-card">
+          <SectionHeader title="메모" />
+          <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2 sm:px-6">
+            <Field label="설명">
+              <input type="text" value={formData.description} onChange={(event) => setField('description', event.target.value)} className={controlClassName} />
+            </Field>
+            <Field label="내부 메모">
+              <textarea value={formData.notes} onChange={(event) => setField('notes', event.target.value)} className={controlClassName} rows={3} />
+            </Field>
+          </div>
+        </section>
+
+        <div className="flex gap-2 sm:justify-end">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading} className="flex-1 sm:flex-none">취소</Button>
+          <Button type="submit" disabled={loading} className="flex-1 sm:flex-none">{loading ? '저장 중' : mode === 'edit' ? '수정' : '등록'}</Button>
+        </div>
       </div>
     </form>
   );
 }
 
-const controlClassName = 'w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:bg-muted';
+const controlClassName = 'min-h-11 w-full rounded-xl border border-transparent bg-muted px-3 py-2.5 text-[15px] text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10 disabled:opacity-60';
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="border-b border-border/70 p-3">
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+    <div className="px-5 pb-3 pt-5 sm:px-6">
+      <h2 className="text-[17px] font-bold tracking-tight text-foreground">{title}</h2>
     </div>
   );
 }
@@ -132,7 +130,7 @@ function SectionHeader({ title }: { title: string }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block font-medium text-muted-foreground">{label}</span>
+      <span className="mb-1.5 block text-[13px] font-semibold text-secondary-foreground">{label}</span>
       {children}
     </label>
   );
@@ -141,7 +139,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function MoneyField({ label, value, onChange, required = false }: { label: string; value?: number; onChange: (value: number) => void; required?: boolean }) {
   return (
     <Field label={label}>
-      <MoneyInput value={value} onChange={onChange} required={required} className="py-2 text-sm focus:ring-2 focus:ring-primary/20" />
+      <MoneyInput value={value} onChange={onChange} required={required} className="text-[15px] font-semibold tabular-nums" />
     </Field>
   );
 }

@@ -13,7 +13,7 @@ export function SeasonStatusBadge({ status, label, tone }: SeasonStatusBadgeProp
   const badgeLabel = label ?? (status ? SEASON_STATUS_LABELS[status] ?? status : '-');
 
   return (
-    <Badge className="rounded-md" variant={badgeTone === 'default' ? 'outline' : badgeTone}>
+    <Badge variant={badgeTone === 'default' ? 'secondary' : badgeTone}>
       {badgeLabel}
     </Badge>
   );

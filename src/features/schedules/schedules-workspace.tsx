@@ -23,6 +23,7 @@ interface SchedulesWorkspaceProps {
   onEditSchedule: (scheduleId: number) => void;
   onMonthChange: (year: number, month: number) => void;
   onOpenExtraDay: () => void;
+  onOpenInstructorAttendance: () => void;
   onPanelSave: () => void;
   onScheduleClick: (scheduleId: number) => void;
   onSlotClick: (date: string, slot: TimeSlot) => void;
@@ -36,7 +37,7 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
     : 0;
   const deskGridClass = props.isPanelExpanded
     ? 'xl:grid-cols-[minmax(0,1fr)_300px]'
-    : 'xl:grid-cols-[minmax(0,1fr)_48px]';
+    : 'xl:grid-cols-[minmax(0,1fr)_56px]';
 
   const instructorPanel = props.isPanelExpanded ? (
     <>
@@ -58,12 +59,12 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
 
   return (
     <Tabs defaultValue="calendar" className="space-y-5">
-      <TabsList className="grid w-full max-w-xs grid-cols-2 rounded-md border border-border bg-muted p-1">
-        <TabsTrigger value="calendar" className="flex items-center gap-2 rounded-sm">
+      <TabsList className="grid w-full max-w-xs grid-cols-2">
+        <TabsTrigger value="calendar" className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
           캘린더
         </TabsTrigger>
-        <TabsTrigger value="list" className="flex items-center gap-2 rounded-sm">
+        <TabsTrigger value="list" className="flex items-center gap-2">
           <List className="h-4 w-4" />
           목록
         </TabsTrigger>
@@ -71,11 +72,11 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
 
       <TabsContent value="calendar" className="space-y-4">
         <SelectedDateOperations
-          consultations={props.consultations}
           instructorStats={props.instructorStats}
           schedules={props.schedules}
           selectedDate={props.selectedDate}
-          onConsultationClick={props.onConsultationClick}
+          onOpenExtraDay={props.onOpenExtraDay}
+          onOpenInstructorAttendance={props.onOpenInstructorAttendance}
           onSlotClick={props.onSlotClick}
         />
 
@@ -114,7 +115,7 @@ export function SchedulesWorkspace(props: SchedulesWorkspaceProps) {
               onSlotClick={props.onSlotClick}
             />
           </div>
-          <div className={`hidden flex-col transition-all duration-200 xl:flex ${props.isPanelExpanded ? 'w-[300px]' : 'w-12'}`}>
+          <div className={`hidden flex-col transition-all duration-200 xl:flex ${props.isPanelExpanded ? 'w-[300px]' : 'w-14'}`}>
             {instructorPanel}
           </div>
         </div>

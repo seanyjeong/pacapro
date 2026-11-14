@@ -15,7 +15,7 @@ const RECORD_TYPE_LABELS: Record<StudentPerformance['record_type'], string> = {
 export function StudentPerformanceComponent({ performances, loading }: StudentPerformanceProps) {
   if (loading) {
     return (
-      <div className="rounded-md border border-border bg-muted/30 p-5" aria-busy="true">
+      <div className="rounded-xl bg-muted p-5" aria-busy="true">
         <div className="h-4 w-24 rounded-md bg-muted" />
         <div className="mt-4 space-y-3">
           {Array.from({ length: 3 }).map((_, index) => (
@@ -28,7 +28,7 @@ export function StudentPerformanceComponent({ performances, loading }: StudentPe
 
   if (performances.length === 0) {
     return (
-      <div className="rounded-md border border-dashed border-border bg-muted/30 p-6">
+      <div className="rounded-xl bg-muted p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground">
             <ClipboardList className="h-5 w-5" />
@@ -45,7 +45,7 @@ export function StudentPerformanceComponent({ performances, loading }: StudentPe
   }
 
   return (
-    <div className="overflow-hidden rounded-md border border-border bg-background">
+    <div className="overflow-x-auto">
       <div className="grid grid-cols-[1fr_auto] gap-3 border-b border-border bg-muted/30 px-4 py-3 text-xs font-medium text-muted-foreground">
         <span>기록</span>
         <span>주요 지표</span>

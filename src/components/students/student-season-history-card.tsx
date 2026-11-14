@@ -43,7 +43,7 @@ export function StudentSeasonHistoryCard({
 
   return (
     <Card>
-      <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <CardHeader className="gap-3 px-0 pt-0 sm:flex-row sm:items-center sm:justify-between sm:px-0 sm:pt-0">
         <div>
           <CardTitle className="flex items-center text-lg">
             <Trophy className="mr-2 h-5 w-5" />
@@ -60,7 +60,7 @@ export function StudentSeasonHistoryCard({
           </Button>
         ) : null}
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0 sm:px-0">
         {enrollments.length === 0 ? (
           <EmptySeasonState canEnroll={hasAvailableSeason} onOpenEnroll={onOpenEnroll} />
         ) : (
@@ -91,7 +91,7 @@ function EmptySeasonState({
   onOpenEnroll: () => void;
 }) {
   return (
-    <div className="rounded-md border border-dashed border-border bg-muted/20 px-4 py-8 text-center">
+    <div className="rounded-xl bg-muted px-4 py-8 text-center">
       <Trophy className="mx-auto mb-4 h-12 w-12 text-muted-foreground/40" />
       <p className="text-sm font-medium text-foreground">등록된 시즌이 없습니다.</p>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -126,7 +126,7 @@ function SeasonEnrollmentRow({
   const isRefunding = refundLoading && selectedEnrollmentForRefund?.id === enrollment.id;
 
   return (
-    <div className="rounded-md border border-border bg-background p-4 transition-colors hover:bg-muted/30">
+    <div className="rounded-xl bg-muted p-4 transition-colors hover:bg-muted/70">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

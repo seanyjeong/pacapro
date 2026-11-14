@@ -21,7 +21,7 @@ interface SeasonCreateFormProps {
   submitting: boolean;
 }
 
-const inputClass = 'h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15';
+const inputClass = 'h-11 w-full min-w-0 rounded-xl border border-transparent bg-muted px-3 text-[15px] font-normal text-foreground outline-none focus-visible:border-primary focus-visible:bg-card focus-visible:ring-4 focus-visible:ring-primary/10 disabled:opacity-50';
 
 export function SeasonCreateForm({
   currentYear,
@@ -51,11 +51,11 @@ export function SeasonCreateForm({
 
       <SeasonFormSummary formData={formData} />
 
-      <section className="rounded-md border border-border bg-card">
+      <section className="rounded-2xl bg-card">
         <SectionHeader title="기본 정보" />
-        <div className="grid gap-3 p-4 md:grid-cols-4">
-          <label className="grid gap-1 text-sm font-medium text-foreground md:col-span-2">
-            시즌명 <span className="text-destructive">*</span>
+        <div className="grid gap-3 px-5 pb-5 pt-3 sm:px-6 sm:pb-6 md:grid-cols-4">
+          <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground md:col-span-2">
+            <span>시즌명 <span className="text-destructive">*</span></span>
             <input
               className={inputClass}
               placeholder="예: 2027 정시 집중반"
@@ -63,7 +63,7 @@ export function SeasonCreateForm({
               onChange={(event) => onChange('season_name', event.target.value)}
             />
           </label>
-          <label className="grid gap-1 text-sm font-medium text-foreground">
+          <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
             연도
             <select className={inputClass} value={formData.year} onChange={(event) => onChange('year', Number(event.target.value))}>
               {yearOptions.map((year) => (
@@ -71,7 +71,7 @@ export function SeasonCreateForm({
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-sm font-medium text-foreground">
+          <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
             시즌 타입
             <select className={inputClass} value={formData.season_type} onChange={(event) => onChange('season_type', event.target.value as SeasonType)}>
               <option value="early">수시</option>
@@ -81,10 +81,10 @@ export function SeasonCreateForm({
         </div>
       </section>
 
-      <section className="rounded-md border border-border bg-card">
+      <section className="rounded-2xl bg-card">
         <SectionHeader title="기간" />
-        <div className="grid gap-3 p-4 md:grid-cols-3">
-          <label className="grid gap-1 text-sm font-medium text-foreground">
+        <div className="grid gap-3 px-5 pb-5 pt-3 sm:px-6 sm:pb-6 md:grid-cols-3">
+          <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
             비시즌 종강일
             <input
               className={inputClass}
@@ -93,12 +93,12 @@ export function SeasonCreateForm({
               onChange={(event) => onChange('non_season_end_date', event.target.value)}
             />
           </label>
-          <label className="grid gap-1 text-sm font-medium text-foreground">
-            시즌 시작일 <span className="text-destructive">*</span>
+          <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
+            <span>시즌 시작일 <span className="text-destructive">*</span></span>
             <input className={inputClass} type="date" value={formData.start_date} onChange={(event) => onChange('start_date', event.target.value)} />
           </label>
-          <label className="grid gap-1 text-sm font-medium text-foreground">
-            시즌 종료일 <span className="text-destructive">*</span>
+          <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
+            <span>시즌 종료일 <span className="text-destructive">*</span></span>
             <input className={inputClass} type="date" value={formData.end_date} onChange={(event) => onChange('end_date', event.target.value)} />
           </label>
         </div>
@@ -106,11 +106,11 @@ export function SeasonCreateForm({
 
       <SeasonAftercareControl formData={formData} onChange={onChange} required />
 
-      <section className="rounded-md border border-border bg-card">
+      <section className="rounded-2xl bg-card">
         <SectionHeader title="운영 설정" />
-        <div className="space-y-4 p-4">
+        <div className="space-y-5 px-5 pb-5 pt-3 sm:px-6 sm:pb-6">
           <div>
-            <p className="text-sm font-medium text-foreground">운영 요일 <span className="text-destructive">*</span></p>
+            <p className="text-[13px] font-semibold text-secondary-foreground">운영 요일 <span className="text-destructive">*</span></p>
             <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
               {OPERATING_DAY_OPTIONS.map((day) => {
                 const selected = formData.operating_days.includes(day.value);
@@ -118,7 +118,7 @@ export function SeasonCreateForm({
                   <button
                     key={day.value}
                     type="button"
-                    className={`h-10 rounded-md border text-sm font-semibold transition-colors ${selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-foreground hover:bg-muted'}`}
+                    className={`h-11 rounded-xl text-[15px] font-semibold transition-colors ${selected ? 'bg-primary text-primary-foreground' : 'bg-muted text-secondary-foreground hover:text-foreground'}`}
                     onClick={() => onToggleOperatingDay(day.value)}
                   >
                     {day.label}
@@ -128,11 +128,11 @@ export function SeasonCreateForm({
             </div>
           </div>
 
-          <div className="border-t border-border/70 pt-4">
-            <p className="text-sm font-medium text-foreground">학년별 수업 시간대</p>
+          <div>
+            <p className="text-[13px] font-semibold text-secondary-foreground">학년별 수업 시간대</p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {SEASON_TARGET_GRADES.map((grade) => (
-                <div key={grade} className="grid gap-2 rounded-md border border-border bg-background p-3 sm:grid-cols-[52px_1fr] sm:items-center">
+                <div key={grade} className="grid gap-2 rounded-xl bg-muted p-3 sm:grid-cols-[52px_1fr] sm:items-center">
                   <span className="text-sm font-semibold text-foreground">{grade}</span>
                   <div className="grid grid-cols-3 gap-2">
                     {TIME_SLOT_OPTIONS.map((slot) => {
@@ -141,7 +141,7 @@ export function SeasonCreateForm({
                         <button
                           key={slot.value}
                           type="button"
-                          className={`h-9 rounded-md border text-sm font-semibold transition-colors ${selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-background text-foreground hover:bg-muted'}`}
+                          className={`h-10 rounded-lg text-sm font-semibold transition-colors ${selected ? 'bg-primary text-primary-foreground' : 'bg-card text-secondary-foreground hover:text-foreground'}`}
                           onClick={() => onToggleTimeSlot(grade, slot.value)}
                         >
                           {slot.label}
@@ -156,18 +156,18 @@ export function SeasonCreateForm({
         </div>
       </section>
 
-      <section className="rounded-md border border-border bg-card">
+      <section className="rounded-2xl bg-card">
         <SectionHeader title="금액과 연속등록" />
-        <div className="grid gap-3 p-4 md:grid-cols-3">
-          <label className="grid gap-1 text-sm font-medium text-foreground">
+        <div className="grid gap-3 px-5 pb-5 pt-3 sm:px-6 sm:pb-6 md:grid-cols-3">
+          <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
             기본 시즌비 (원)
             <MoneyInput
               value={formData.season_fee}
               onChange={(seasonFee) => onChange('season_fee', seasonFee)}
-              className="h-10 border-border focus:border-primary focus:ring-2 focus:ring-primary/15"
+              className="font-normal"
             />
           </label>
-          <label className="grid gap-1 text-sm font-medium text-foreground">
+          <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
             할인 타입
             <select
               className={inputClass}
@@ -180,7 +180,7 @@ export function SeasonCreateForm({
             </select>
           </label>
           {formData.continuous_discount_type === 'rate' && (
-            <label className="grid gap-1 text-sm font-medium text-foreground">
+            <label className="grid gap-1.5 text-[13px] font-semibold text-secondary-foreground">
               할인율 (%)
               <input
                 className={`${inputClass} text-right`}
@@ -199,12 +199,12 @@ export function SeasonCreateForm({
         />
       </section>
 
-      <div className="flex flex-col-reverse gap-2 border-t border-border pt-4 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" onClick={onCancel}>
+      <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+        <Button className="w-full sm:w-auto" type="button" variant="outline" onClick={onCancel}>
           취소
         </Button>
-        <Button type="submit" disabled={submitting}>
-          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        <Button className="w-full sm:w-auto" type="submit" disabled={submitting}>
+          {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
           등록
         </Button>
       </div>
@@ -214,8 +214,8 @@ export function SeasonCreateForm({
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <div className="border-b border-border bg-muted/20 px-4 py-3">
-      <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+    <div className="px-5 pt-5 sm:px-6">
+      <h2 className="text-[17px] font-bold tracking-tight text-foreground">{title}</h2>
     </div>
   );
 }
