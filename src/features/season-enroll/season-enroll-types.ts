@@ -11,6 +11,7 @@ export interface SeasonEnrollStudent {
   is_trial?: boolean | number | null;
   is_season_registered: boolean;
   current_season_id: number | null;
+  branch_id?: number | null;
 }
 
 export interface SeasonEnrollLoadResult {

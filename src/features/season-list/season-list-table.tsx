@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Edit2, FileText, Trash2, UserPlus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import type { Season } from '@/lib/types/season';
 import { formatOperatingDays, formatSeasonFee, parseOperatingDays } from '@/lib/types/season';
@@ -10,6 +11,7 @@ import { formatDateRange } from './season-list-utils';
 
 interface SeasonListTableProps {
   seasons: Season[];
+  branchNameOf?: (season: Season) => string; // 지점 쓰는 학원만: 지점 이름 또는 '전 지점'
   onDelete: (seasonId: number, seasonName: string) => void;
   onOpen: (seasonId: number) => void;
 }
@@ -18,7 +20,7 @@ type SeasonRowProps = Omit<SeasonListTableProps, 'seasons'> & {
   season: Season;
 };
 
-export function SeasonListTable({ seasons, onDelete, onOpen }: SeasonListTableProps) {
+export function SeasonListTable({ seasons, branchNameOf, onDelete, onOpen }: SeasonListTableProps) {
   return (
     <>
       <div className="px-4 pt-4 sm:px-5">
@@ -39,27 +41,30 @@ export function SeasonListTable({ seasons, onDelete, onOpen }: SeasonListTablePr
           </thead>
           <tbody className="divide-y divide-border/60">
             {seasons.map((season) => (
-              <SeasonListTableRow key={season.id} season={season} onDelete={onDelete} onOpen={onOpen} />
+              <SeasonListTableRow key={season.id} season={season} branchNameOf={branchNameOf} onDelete={onDelete} onOpen={onOpen} />
             ))}
           </tbody>
         </table>
       </div>
       <div className="divide-y divide-border/60 md:hidden">
         {seasons.map((season) => (
-          <SeasonListMobileRow key={season.id} season={season} onDelete={onDelete} onOpen={onOpen} />
+          <SeasonListMobileRow key={season.id} season={season} branchNameOf={branchNameOf} onDelete={onDelete} onOpen={onOpen} />
         ))}
       </div>
     </>
   );
 }
 
-function SeasonListTableRow({ season, onDelete, onOpen }: SeasonRowProps) {
+function SeasonListTableRow({ season, branchNameOf, onDelete, onOpen }: SeasonRowProps) {
   const operatingDays = parseOperatingDays(season.operating_days);
   return (
     <tr className="cursor-pointer transition-colors hover:bg-muted/60" data-testid="season-row" onClick={() => onOpen(season.id)}>
       <td className="w-[190px] px-3 py-3.5">
         <p className="truncate text-[15px] font-semibold text-foreground">{season.season_name}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{new Date(season.season_start_date).getFullYear()}년</p>
+        <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+          {new Date(season.season_start_date).getFullYear()}년
+          {branchNameOf ? <Badge variant={season.branch_id ? 'default' : 'secondary'}>{branchNameOf(season)}</Badge> : null}
+        </div>
       </td>
       <td className="w-[80px] whitespace-nowrap px-3 py-3.5"><SeasonTypeBadge type={season.season_type} /></td>
       <td className="w-[200px] whitespace-nowrap px-3 py-3.5 text-sm text-muted-foreground">{formatDateRange(season.season_start_date, season.season_end_date)}</td>
@@ -73,7 +78,7 @@ function SeasonListTableRow({ season, onDelete, onOpen }: SeasonRowProps) {
   );
 }
 
-function SeasonListMobileRow({ season, onDelete, onOpen }: SeasonRowProps) {
+function SeasonListMobileRow({ season, branchNameOf, onDelete, onOpen }: SeasonRowProps) {
   return (
     <div className="space-y-3 px-4 py-4" data-testid="season-row" onClick={() => onOpen(season.id)}>
       <div className="flex items-start justify-between gap-3">
@@ -85,6 +90,7 @@ function SeasonListMobileRow({ season, onDelete, onOpen }: SeasonRowProps) {
       </div>
       <div className="flex flex-wrap items-center gap-2 text-[13px] text-secondary-foreground">
         <SeasonTypeBadge type={season.season_type} />
+        {branchNameOf ? <Badge variant={season.branch_id ? 'default' : 'secondary'}>{branchNameOf(season)}</Badge> : null}
         <span>{formatSeasonFee(season.default_season_fee)}</span>
         <span>{formatOperatingDays(parseOperatingDays(season.operating_days))}</span>
       </div>

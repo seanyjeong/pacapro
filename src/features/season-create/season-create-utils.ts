@@ -20,6 +20,7 @@ export interface SeasonCreateRequest {
   season_name: string;
   season_start_date: string;
   season_type: SeasonType;
+  branch_id?: number | null;
 }
 
 export function createInitialSeasonForm(currentYear = new Date().getFullYear()): SeasonFormData {
@@ -73,6 +74,8 @@ export function buildSeasonCreatePayload(formData: SeasonFormData): SeasonCreate
     season_name: formData.season_name.trim(),
     season_start_date: formData.start_date,
     season_type: formData.season_type,
+    // 지점을 고른 학원만 보낸다(지점 없는 학원은 요청이 지금과 같다)
+    ...(formData.branch_id !== undefined ? { branch_id: formData.branch_id } : {}),
   };
 }
 

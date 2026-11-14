@@ -10,6 +10,7 @@ import {
 import type { SeasonEnrollStudent } from './season-enroll-types';
 import {
   filterEligibleStudents,
+  filterSeasonBranchStudents,
   filterStudents,
   formatTimeSlots,
   getDefaultTimeSlots,
@@ -50,7 +51,7 @@ export function useSeasonEnrollState(seasonId: number | null) {
         fetchSeasonEligibleStudents(),
       ]);
       setSeason(seasonResponse.season);
-      setStudents(filterEligibleStudents(allStudents));
+      setStudents(filterSeasonBranchStudents(filterEligibleStudents(allStudents), seasonResponse.season));
     } catch {
       setError(SEASON_ENROLL_LOAD_ERROR);
     } finally {

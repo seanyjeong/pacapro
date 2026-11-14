@@ -38,6 +38,7 @@ interface StudentFormProps {
   onRestSuccess?: () => void;
   onResumeSuccess?: () => void;
   classId?: number | null; // 신규 등록에서 고른 반(반 학원비 표 자동 채움)
+  branchId?: number | null; // 신규 등록에서 고른 지점(지점 시즌만 후보로)
 }
 
 export function StudentForm({
@@ -50,8 +51,9 @@ export function StudentForm({
   onRestSuccess,
   onResumeSuccess,
   classId,
+  branchId,
 }: StudentFormProps) {
-  const hook = useStudentForm({ mode, initialData, initialIsTrial, onSubmit, classId });
+  const hook = useStudentForm({ mode, initialData, initialIsTrial, onSubmit, classId, branchId });
 
   const [resumeOpen, setResumeOpen] = useState(false);
 

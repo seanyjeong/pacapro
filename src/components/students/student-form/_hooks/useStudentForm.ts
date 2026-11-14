@@ -21,12 +21,13 @@ interface StudentFormProps {
   initialIsTrial?: boolean;
   onSubmit: (data: StudentFormData, pendingPhotoFile?: File | null) => Promise<void>;
   classId?: number | null; // 신규 등록에서 고른 반. 없으면 학생의 지금 반
+  branchId?: number | null; // 신규 등록에서 고른 지점. 다른 지점 시즌은 등록 후보에서 뺀다
 }
 
 // 엑셀 가져오기 등으로 숫자만 저장된 번호를 서버 정규화와 같은 하이픈 형식으로 맞춰 수정 검증을 통과시킨다.
 const toHyphenPhone = (value: string) => value.replace(/^(\d{3})(\d{3,4})(\d{4})$/, '$1-$2-$3');
 
-export function useStudentForm({ mode, initialData, initialIsTrial = false, onSubmit, classId }: StudentFormProps) {
+export function useStudentForm({ mode, initialData, initialIsTrial = false, onSubmit, classId, branchId = null }: StudentFormProps) {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [confirmState, setConfirmState] = useState<StudentFormConfirmState | null>(null);
@@ -463,7 +464,8 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
     pendingPhotoFile, setPendingPhotoFile,
     academySettings,
     classTuition,
-    availableSeasons, seasonsLoading,
+    availableSeasons: availableSeasons.filter((season) => !season.branch_id || season.branch_id === branchId),
+    seasonsLoading,
     enrollInSeason, setEnrollInSeason,
     selectedSeasonId, setSelectedSeasonId,
     isTrial, setIsTrial,

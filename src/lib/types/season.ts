@@ -51,6 +51,7 @@ export interface Season {
   continuous_discount_type: ContinuousDiscountType;
   continuous_discount_rate: number;
   status: SeasonStatus;
+  branch_id?: number | null; // 지점별 시즌. null = 전 지점
   created_at: string;
   updated_at: string;
 }
@@ -74,6 +75,7 @@ export interface SeasonFormData {
   continuous_discount_rate?: number;
   status?: SeasonStatus;
   notes?: string;
+  branch_id?: number | null; // 지점 쓰는 학원에서 고른 지점. null = 전 지점, 없으면 보내지 않는다
 }
 
 // 시즌 필터

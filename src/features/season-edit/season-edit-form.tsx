@@ -6,6 +6,7 @@ import { SeasonAlert } from '@/features/seasons/season-alert';
 import { SeasonFormSummary } from '@/features/seasons/season-form-summary';
 import { SeasonMonthlyPolicyControl } from '@/features/seasons/season-monthly-policy-control';
 import { SeasonAftercareControl } from '@/features/seasons/season-aftercare-control';
+import { SeasonBranchField } from '@/features/seasons/season-branch-field';
 import type { ContinuousDiscountType, SeasonFormData, SeasonStatus, SeasonType, TimeSlot } from '@/lib/types/season';
 import { OPERATING_DAY_OPTIONS, SEASON_TARGET_GRADES, TIME_SLOT_OPTIONS } from '@/lib/types/season';
 
@@ -76,6 +77,7 @@ export function SeasonEditForm({
               ))}
             </select>
           </label>
+          <SeasonBranchField className={inputClass} value={formData.branch_id} onChange={(branchId) => onChange('branch_id', branchId)} />
         </div>
       </section>
 

@@ -46,6 +46,12 @@ export function filterEligibleStudents(students: SeasonEnrollStudent[]): SeasonE
   return students.filter((student) => isSeasonEnrollableStudent(student) && isEligibleSeasonStudent(student));
 }
 
+// 지점 시즌의 등록 후보는 그 지점 학생만. 전 지점 시즌(지점 없음)은 지금처럼 모두.
+export function filterSeasonBranchStudents(students: SeasonEnrollStudent[], season: Pick<Season, 'branch_id'>): SeasonEnrollStudent[] {
+  if (!season.branch_id) return students;
+  return students.filter((student) => student.branch_id === season.branch_id);
+}
+
 export function filterStudents(students: SeasonEnrollStudent[], searchTerm: string): SeasonEnrollStudent[] {
   const term = searchTerm.trim();
   if (!term) return students;

@@ -24,6 +24,7 @@ export interface SeasonEditRequest {
   season_start_date: string;
   season_type: SeasonType;
   status: SeasonStatus;
+  branch_id?: number | null;
 }
 
 export function mapSeasonToEditForm(season: Season): SeasonFormData {
@@ -43,6 +44,7 @@ export function mapSeasonToEditForm(season: Season): SeasonFormData {
     start_date: season.season_start_date,
     status: season.status,
     year: new Date(season.season_start_date).getFullYear(),
+    ...(season.branch_id != null ? { branch_id: season.branch_id } : {}),
   };
 }
 
@@ -77,6 +79,8 @@ export function buildSeasonEditPayload(formData: SeasonFormData): SeasonEditRequ
     season_start_date: formData.start_date,
     season_type: formData.season_type,
     status: formData.status || 'draft',
+    // 지점을 고른 학원만 보낸다(지점 없는 학원은 요청이 지금과 같다)
+    ...(formData.branch_id !== undefined ? { branch_id: formData.branch_id } : {}),
   };
 }
 

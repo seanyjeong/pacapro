@@ -157,6 +157,7 @@ function NewStudentContent() {
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         classId={placement.class_id}
+        branchId={placement.branch_id}
       />
       </>
       )}

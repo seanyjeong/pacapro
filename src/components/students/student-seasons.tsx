@@ -24,9 +24,10 @@ const EMPTY_EDIT_DATA = {
 interface StudentSeasonsProps {
   studentId: number;
   studentType: 'exam' | 'adult';
+  branchId?: number | null; // 학생 지점. 다른 지점 시즌은 등록 후보에서 뺀다
 }
 
-export function StudentSeasonsComponent({ studentId, studentType }: StudentSeasonsProps) {
+export function StudentSeasonsComponent({ studentId, studentType, branchId = null }: StudentSeasonsProps) {
   const [enrollments, setEnrollments] = useState<StudentSeason[]>([]);
   const [activeSeasons, setActiveSeasons] = useState<Season[]>([]);
   const [loading, setLoading] = useState(true);
@@ -299,7 +300,7 @@ export function StudentSeasonsComponent({ studentId, studentType }: StudentSeaso
   };
 
   const enrolledSeasonIds = new Set(enrollments.map(e => e.season_id));
-  const availableSeasons = activeSeasons.filter(s => !enrolledSeasonIds.has(s.id));
+  const availableSeasons = activeSeasons.filter(s => !enrolledSeasonIds.has(s.id) && (!s.branch_id || s.branch_id === branchId));
 
   if (loading) {
     return (
