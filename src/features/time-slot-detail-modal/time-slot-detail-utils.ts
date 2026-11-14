@@ -3,6 +3,7 @@ import type {
   InstructorAttendance,
   InstructorAttendanceState,
   StudentAttendanceState,
+  StudentPlacementGroup,
 } from './time-slot-detail-types';
 import type { TimeSlot } from '@/lib/types/schedule';
 
@@ -66,6 +67,44 @@ export function sortStudentsForAttendance(students: AttendanceStudent[]): Attend
   return [...students].sort((a, b) => {
     if (a.season_type && !b.season_type) return -1;
     if (!a.season_type && b.season_type) return 1;
+    return 0;
+  });
+}
+
+// 지점·반별로 묶는다. 순서는 지점·반 설정 순서, 지점·반이 없는 학생은 맨 뒤. 묶음 안 순서는 받은 순서 그대로.
+export function groupStudentsByPlacement(students: AttendanceStudent[]): StudentPlacementGroup[] {
+  const groups = new Map<string, StudentPlacementGroup>();
+  const sortKeys = new Map<string, number[]>();
+  for (const student of students) {
+    const branchId = student.branch_id ?? null;
+    const classId = student.class_id ?? null;
+    const key = `${branchId ?? 'none'}:${classId ?? 'none'}`;
+    let group = groups.get(key);
+    if (!group) {
+      group = {
+        key,
+        branchId,
+        branchName: student.branch_name ?? null,
+        classId,
+        className: student.class_name ?? null,
+        students: [],
+      };
+      groups.set(key, group);
+      sortKeys.set(key, [
+        branchId === null ? Number.MAX_SAFE_INTEGER : student.branch_sort_order ?? 0,
+        branchId ?? 0,
+        classId === null ? Number.MAX_SAFE_INTEGER : student.class_sort_order ?? 0,
+        classId ?? 0,
+      ]);
+    }
+    group.students.push(student);
+  }
+  return [...groups.values()].sort((a, b) => {
+    const left = sortKeys.get(a.key) ?? [];
+    const right = sortKeys.get(b.key) ?? [];
+    for (let i = 0; i < left.length; i += 1) {
+      if (left[i] !== right[i]) return left[i] - right[i];
+    }
     return 0;
   });
 }

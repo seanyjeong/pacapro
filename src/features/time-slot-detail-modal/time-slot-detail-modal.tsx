@@ -21,7 +21,7 @@ export function TimeSlotDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
+      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl xl:max-w-5xl">
         <TimeSlotDetailHeader
           date={date}
           timeSlot={timeSlot}
@@ -49,6 +49,7 @@ export function TimeSlotDetailModal({
               <div className="h-px bg-border/60" />
 
               <StudentAttendanceSection
+                key={`${date}-${timeSlot}`}
                 date={date}
                 timeSlot={timeSlot}
                 students={state.students}

@@ -16,6 +16,22 @@ export interface AttendanceStudent {
   trial_dates?: Array<{ date: string; attended: boolean; time_slot: string }> | null;
   is_makeup?: boolean | number | null;
   notes?: string | null;
+  branch_id?: number | null;
+  branch_name?: string | null;
+  branch_sort_order?: number | null;
+  class_id?: number | null;
+  class_name?: string | null;
+  class_sort_order?: number | null;
+}
+
+/** 출석 창에서 지점·반별로 묶은 학생. 지점·반이 없으면 id 가 null. */
+export interface StudentPlacementGroup {
+  key: string;
+  branchId: number | null;
+  branchName: string | null;
+  classId: number | null;
+  className: string | null;
+  students: AttendanceStudent[];
 }
 
 export interface Instructor {
