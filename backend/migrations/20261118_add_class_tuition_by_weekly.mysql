@@ -13,3 +13,16 @@ SET @branch_sql = (
 PREPARE branch_stmt FROM @branch_sql;
 EXECUTE branch_stmt;
 DEALLOCATE PREPARE branch_stmt;
+
+-- 바로 전 반 학원비 표(표를 바꿀 때 예전 값을 남긴다). NULL = 예전엔 학원 기본표.
+-- "반 학원비 적용" 미리보기가 예전 표 금액과 다른 학생(개별 금액)을 알아보는 데만 쓴다.
+SET @branch_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE classes ADD COLUMN tuition_by_weekly_before JSON NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @branch_schema AND TABLE_NAME = 'classes' AND COLUMN_NAME = 'tuition_by_weekly_before'
+);
+PREPARE branch_stmt FROM @branch_sql;
+EXECUTE branch_stmt;
+DEALLOCATE PREPARE branch_stmt;

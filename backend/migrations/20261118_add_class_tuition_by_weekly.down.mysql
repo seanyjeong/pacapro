@@ -1,2 +1,2 @@
 -- Manual rollback only. 반마다 따로 적어 둔 학원비 표가 사라진다(학생에 저장된 학원비는 그대로).
-ALTER TABLE classes DROP COLUMN tuition_by_weekly;
+ALTER TABLE classes DROP COLUMN tuition_by_weekly_before, DROP COLUMN tuition_by_weekly;
