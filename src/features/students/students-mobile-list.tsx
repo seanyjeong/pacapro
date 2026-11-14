@@ -4,6 +4,7 @@ import { StudentAvatar } from '@/components/students/student-avatar';
 import type { Student } from '@/lib/types/student';
 import {
     formatClassDays,
+    formatCurrency,
     formatPhoneNumber,
     getStudentDisplayInfo,
 } from '@/lib/utils/student-helpers';
@@ -18,7 +19,7 @@ interface StudentsMobileListProps {
     placementOf?: (student: Student) => string;
 }
 
-// 휴대폰 학생 목록: 한 명이 한 줄(사진 · 이름 + 상태 · 학년/지점·반 · 연락처).
+// 휴대폰 학생 목록: 한 명이 한 줄(사진 · 이름 + 상태 · 학년/지점·반 · 연락처 · 월 학원비).
 export function StudentsMobileList({
     loading,
     students,
@@ -70,6 +71,12 @@ export function StudentsMobileList({
                                     {formatPhoneNumber(student.phone)} · {formatClassDays(student.class_days)} 주 {student.weekly_count}회
                                 </span>
                                 {parents && <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">{parents}</span>}
+                            </span>
+                            <span className="shrink-0 text-right">
+                                <span className="block text-[11px] text-muted-foreground">월 학원비</span>
+                                <span className="block text-[14px] font-semibold tabular-nums text-foreground">
+                                    {formatCurrency(student.monthly_tuition)}
+                                </span>
                             </span>
                             <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground/60" />
                         </button>

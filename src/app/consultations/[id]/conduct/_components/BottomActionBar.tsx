@@ -34,10 +34,11 @@ export function BottomActionBar({
     return () => window.clearInterval(interval);
   }, []);
 
-  const sidebarOffsetClass = sidebarCollapsed ? 'md:left-[68px]' : 'md:left-64';
+  // 앱 뼈대(layout-wrapper)의 사이드바 폭과 같게. 휴대폰 폭에서는 아래 탭(mobile-nav, 68px) 위에 띄운다.
+  const sidebarOffsetClass = sidebarCollapsed ? 'md:left-[76px]' : 'md:left-[248px]';
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-card/95 shadow-lg backdrop-blur ${sidebarOffsetClass}`}>
+    <div className={`fixed bottom-[calc(env(safe-area-inset-bottom)+68px)] left-0 right-0 z-20 border-t border-border bg-card/95 shadow-lg backdrop-blur md:bottom-0 ${sidebarOffsetClass}`}>
       <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         {consultation.consultation_type === 'learning' ? (
           <>
