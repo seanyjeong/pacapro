@@ -89,10 +89,10 @@ export function EnrolledConsultationDetailDialog({
             </div>
 
             {consultation.linked_student_id && (
-              <div className="border-t pt-4">
+              <div className="border-t border-border/60 pt-4">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between rounded-md p-2 transition-colors hover:bg-muted"
+                  className="flex w-full items-center justify-between rounded-xl p-2 transition-colors hover:bg-muted"
                   onClick={onToggleScores}
                 >
                   <div className="flex items-center gap-2">
@@ -131,9 +131,9 @@ export function EnrolledConsultationDetailDialog({
                           { label: '탐구2', score: studentScores.탐구2?.등급, sub: studentScores.탐구2?.선택과목 },
                           { label: '한국사', score: studentScores.한국사?.등급 },
                         ].map((item) => (
-                          <div key={item.label} className="rounded bg-muted/50 p-2 text-center">
+                          <div key={item.label} className="rounded-xl bg-muted p-2 text-center">
                             <p className="text-xs text-muted-foreground">{item.label}</p>
-                            <p className="text-lg font-bold">{item.score || '-'}</p>
+                            <p className="text-lg font-extrabold tabular-nums">{item.score || '-'}</p>
                             <p className="truncate text-xs text-muted-foreground">{item.sub}</p>
                           </div>
                         ))}

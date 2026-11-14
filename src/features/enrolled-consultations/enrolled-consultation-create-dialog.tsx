@@ -79,7 +79,7 @@ export function EnrolledConsultationCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto rounded-md p-0">
+      <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto p-0">
         <DialogHeader className="px-5 py-4">
           <DialogTitle>재원생상담 등록</DialogTitle>
           <p className="text-sm text-muted-foreground">재원생을 선택하고 상담 일정과 필요한 성적 메모를 함께 남깁니다.</p>
@@ -116,7 +116,7 @@ export function EnrolledConsultationCreateDialog({
                     )}
                   </div>
                   {studentDropdownOpen && (
-                    <div className="absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover shadow-lg">
+                    <div className="absolute z-[100] mt-1 max-h-60 w-full overflow-auto rounded-xl border border-border/60 bg-popover shadow-lg">
                       {filteredStudents.map((student) => (
                         <button
                           key={student.id}
@@ -153,9 +153,9 @@ export function EnrolledConsultationCreateDialog({
               <div>
                 <Label htmlFor="enrolled-consultation-time">시간 *</Label>
                 {loadingBookedTimes ? (
-                  <div className="mt-1 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">시간을 불러오는 중입니다.</div>
+                  <div className="mt-1 rounded-xl bg-muted px-3.5 py-2.5 text-sm text-muted-foreground">시간을 불러오는 중입니다.</div>
                 ) : hasNoTimeSlots ? (
-                  <div className="mt-1 rounded-md border border-warning/30 bg-warning-soft px-3 py-2 text-sm text-warning">
+                  <div className="mt-1 rounded-xl bg-warning-soft px-3.5 py-2.5 text-sm text-warning">
                     <p className="font-medium">상담 가능 시간이 설정되지 않았습니다.</p>
                     <Link className="mt-1 inline-flex text-xs font-semibold underline" href="/consultations/settings">
                       상담 설정으로 이동
@@ -181,13 +181,13 @@ export function EnrolledConsultationCreateDialog({
                     </SelectContent>
                   </Select>
                 ) : (
-                  <p className="mt-1 rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">날짜를 먼저 선택해주세요.</p>
+                  <p className="mt-1 rounded-xl bg-muted px-3.5 py-2.5 text-sm text-muted-foreground">날짜를 먼저 선택해주세요.</p>
                 )}
               </div>
             </div>
           </section>
 
-          <section className="space-y-3 border-t border-border pt-4">
+          <section className="space-y-3 border-t border-border/60 pt-4">
             <div>
               <Label htmlFor="enrolled-consultation-type">상담 유형</Label>
               <Select
@@ -234,7 +234,7 @@ export function EnrolledConsultationCreateDialog({
                   {CREATE_SCORE_EXAMS.map((exam) => {
                     const scoreData = createScores[exam];
                     return (
-                      <div key={exam} className="rounded-md bg-muted/30 p-3">
+                      <div key={exam} className="rounded-xl bg-muted p-3">
                         <div className="mb-2 flex items-center justify-between">
                           <p className="text-sm font-medium">{exam} 모평</p>
                           {scoreData && <Badge className="bg-success-soft text-xs text-success">정시엔진 연동</Badge>}

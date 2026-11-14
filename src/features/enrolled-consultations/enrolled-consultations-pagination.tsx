@@ -10,19 +10,21 @@ export function EnrolledConsultationsPagination({ pagination, onChange }: Enroll
   if (pagination.totalPages <= 1) return null;
 
   return (
-    <div className="flex justify-center gap-2">
+    <div className="flex items-center justify-center gap-2 border-t border-border/60 px-5 py-4">
       <Button
         variant="outline"
+        size="sm"
         disabled={pagination.page === 1}
         onClick={() => onChange({ ...pagination, page: pagination.page - 1 })}
       >
         이전
       </Button>
-      <span className="flex items-center px-4">
+      <span className="px-3 text-sm font-semibold text-secondary-foreground tabular-nums">
         {pagination.page} / {pagination.totalPages}
       </span>
       <Button
         variant="outline"
+        size="sm"
         disabled={pagination.page === pagination.totalPages}
         onClick={() => onChange({ ...pagination, page: pagination.page + 1 })}
       >

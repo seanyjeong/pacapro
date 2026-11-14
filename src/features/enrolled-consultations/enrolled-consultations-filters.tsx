@@ -2,6 +2,7 @@ import { RefreshCw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ALL_STATUS_FILTER } from './enrolled-consultations-constants';
 import type { DateFilter } from './enrolled-consultations-types';
 
@@ -15,6 +16,7 @@ interface EnrolledConsultationsFiltersProps {
   onRefresh: () => void;
 }
 
+/** 목록 카드 맨 위 한 줄: 기간 탭 + 검색 + 상태 + 새로고침. */
 export function EnrolledConsultationsFilters({
   search,
   statusFilter,
@@ -25,18 +27,25 @@ export function EnrolledConsultationsFilters({
   onRefresh,
 }: EnrolledConsultationsFiltersProps) {
   return (
-    <section className="rounded-md border border-border bg-card p-4 shadow-none">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-        <div className="relative min-w-0 flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="학생명, 학년 검색..."
-            value={search}
-            onChange={(event) => onSearchChange(event.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[160px_160px_auto]">
+    <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+      <Tabs value={dateFilter} onValueChange={(value) => onDateFilterChange(value as DateFilter)} className="w-auto">
+        <TabsList className="w-full lg:w-auto" aria-label="기간 필터">
+          <TabsTrigger value="all">전체 기간</TabsTrigger>
+          <TabsTrigger value="today">오늘</TabsTrigger>
+          <TabsTrigger value="week">이번 주</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <div className="relative min-w-0 flex-1">
+        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="학생명, 학년 검색..."
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          className="pl-10"
+        />
+      </div>
+      <div className="flex gap-2">
+        <div className="min-w-0 flex-1 lg:w-[160px] lg:flex-none">
           <Select
             value={statusFilter || ALL_STATUS_FILTER}
             onValueChange={(value) => onStatusChange(value === ALL_STATUS_FILTER ? '' : value)}
@@ -53,22 +62,11 @@ export function EnrolledConsultationsFilters({
               <SelectItem value="no_show">노쇼</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={dateFilter} onValueChange={(value) => onDateFilterChange(value as DateFilter)}>
-            <SelectTrigger aria-label="기간 필터">
-              <SelectValue placeholder="기간" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">전체 기간</SelectItem>
-              <SelectItem value="today">오늘</SelectItem>
-              <SelectItem value="week">이번 주</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button className="w-full justify-center sm:w-auto" variant="outline" onClick={onRefresh}>
-            <RefreshCw className="mr-2 h-4 w-4 sm:mr-0" />
-            <span className="sm:sr-only">새로고침</span>
-          </Button>
         </div>
+        <Button variant="outline" size="icon" onClick={onRefresh} title="새로고침" aria-label="새로고침">
+          <RefreshCw className="h-4 w-4" />
+        </Button>
       </div>
-    </section>
+    </div>
   );
 }

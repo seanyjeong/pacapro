@@ -1,34 +1,38 @@
-import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils/cn';
 
 interface EnrolledStatCardProps {
   label: string;
-  helper: string;
-  icon: ReactNode;
   tone?: 'default' | 'pending' | 'confirmed' | 'completed';
   value: number;
+  active: boolean;
+  onClick: () => void;
 }
 
-export function EnrolledStatCard({ label, helper, icon, tone = 'default', value }: EnrolledStatCardProps) {
+const toneClass = {
+  default: 'text-foreground',
+  pending: 'text-warning',
+  confirmed: 'text-primary',
+  completed: 'text-success',
+} as const;
+
+/** 상태별 상담 수. 누르면 그 상태로 거른다. */
+export function EnrolledStatCard({ label, tone = 'default', value, active, onClick }: EnrolledStatCardProps) {
   return (
-    <section className="rounded-md border border-border bg-card shadow-none">
-      <div className="flex items-start justify-between gap-3 p-4">
-        <div>
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="mt-1 text-2xl font-semibold tracking-normal text-foreground tabular-nums">{value}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
-        </div>
-        <div
-          className={cn(
-            'flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/35 text-muted-foreground',
-            tone === 'pending' && 'border-warning/30 bg-warning-soft text-warning',
-            tone === 'confirmed' && 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/45 dark:text-sky-300',
-            tone === 'completed' && 'border-success/30 bg-success-soft text-success',
-          )}
-        >
-          {icon}
-        </div>
-      </div>
-    </section>
+    <button
+      type="button"
+      aria-pressed={active}
+      aria-label={`${label} 보기`}
+      onClick={onClick}
+      className={cn(
+        'min-w-0 rounded-2xl bg-card p-5 text-left transition-colors hover:bg-card/70 active:scale-[0.99]',
+        active && 'ring-2 ring-primary'
+      )}
+    >
+      <span className="block text-sm font-semibold text-secondary-foreground">{label}</span>
+      <span className={cn('mt-1 block text-[26px] font-extrabold leading-tight tracking-tight tabular-nums', toneClass[tone])}>
+        {value}
+        <span className="ml-0.5 text-sm font-bold text-muted-foreground">건</span>
+      </span>
+    </button>
   );
 }
