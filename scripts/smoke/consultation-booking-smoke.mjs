@@ -11,6 +11,7 @@ import {
 const BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
 const SLUG = 'ilsan';
 const RESERVATION_NUMBER = 'R-2026-0001';
+const RESERVATION_PHONE_LAST4 = '5678';
 
 const pageInfo = {
   academy: { id: 1, name: 'P-ACA 일산', slug: SLUG },
@@ -33,7 +34,8 @@ function nextAvailableDate() {
   const date = new Date();
   date.setDate(date.getDate() + 1);
   if (date.getDay() === 0) date.setDate(date.getDate() + 1);
-  return date.toISOString().split('T')[0];
+  // toISOString 은 UTC 라 한국 시간 0~9시에는 하루 앞(오늘)이 나와 닫힌 날을 고르게 된다. 현지 날짜로 만든다.
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function makeState(overrides = {}) {
@@ -78,6 +80,10 @@ async function installRoutes(context, state) {
       });
     }
     if (method === 'GET' && path === `/public/reservation/${RESERVATION_NUMBER}`) {
+      // 예약 변경 화면은 예약자 연락처 끝 4자리를 확인한 뒤에만 예약을 보여 준다.
+      if (url.searchParams.get('phoneLast4') !== RESERVATION_PHONE_LAST4) {
+        return jsonRoute(route, { error: '예약 정보를 찾을 수 없습니다.' }, 404);
+      }
       return jsonRoute(route, {
         id: 701,
         reservationNumber: RESERVATION_NUMBER,
@@ -90,7 +96,11 @@ async function installRoutes(context, state) {
         academySlug: SLUG,
       });
     }
-    if (method === 'PUT' && path === `/public/reservation/${RESERVATION_NUMBER}`) {
+    // 확인된 예약은 학원 주소가 붙은 경로로 바꾼다(옛 경로도 받는다).
+    if (method === 'PUT' && (
+      path === `/public/reservation/${RESERVATION_NUMBER}`
+      || path === `/public/consultation/${SLUG}/reservation/${RESERVATION_NUMBER}`
+    )) {
       const payload = request.postDataJSON();
       state.reservationPayloads.push(payload);
       if (state.failReservationUpdate) {
@@ -205,6 +215,16 @@ async function runNormal(browser) {
   return { state, diagnostics };
 }
 
+// 예약 변경 화면 첫 단계: 예약자 연락처 끝 4자리 확인(틀리면 안내, 맞으면 예약 변경 화면).
+async function verifyReservation(page) {
+  await page.getByTestId('reservation-verification-workspace').waitFor();
+  await page.getByLabel('예약자 연락처 끝 4자리').fill('0000');
+  await page.getByRole('button', { name: '예약 정보 확인' }).click();
+  await page.getByText('예약번호 또는 연락처 끝 4자리가 맞지 않습니다.').waitFor();
+  await page.getByLabel('예약자 연락처 끝 4자리').fill(RESERVATION_PHONE_LAST4);
+  await page.getByRole('button', { name: '예약 정보 확인' }).click();
+}
+
 async function runReservationChangeSuccess(browser) {
   const state = makeState();
   const context = await createContext(browser, state, { width: 390, height: 844 });
@@ -212,6 +232,7 @@ async function runReservationChangeSuccess(browser) {
   const diagnostics = createDiagnostics(page);
 
   await page.goto(`/consultation/${RESERVATION_NUMBER}`, { waitUntil: 'networkidle' });
+  await verifyReservation(page);
   await page.getByTestId('reservation-change-workspace').waitFor();
   await page.getByText('예약 변경 데스크').waitFor();
   await page.getByRole('heading', { name: '상담 예약 변경' }).waitFor();
@@ -219,7 +240,7 @@ async function runReservationChangeSuccess(browser) {
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '예약 변경하기' }), 'reservation change success');
   await page.getByRole('heading', { name: '예약이 변경되었습니다' }).waitFor();
   const payload = state.reservationPayloads.at(-1);
-  if (payload?.preferredTime !== '15:00:00') {
+  if (payload?.preferredTime !== '15:00:00' || payload?.phoneLast4 !== RESERVATION_PHONE_LAST4) {
     throw new Error(`reservation change payload mismatch: ${JSON.stringify(payload)}`);
   }
   await assertNoRawVisibleText(page, 'reservation change success');
@@ -237,6 +258,7 @@ async function runReservationChangeError(browser) {
   const diagnostics = createDiagnostics(page);
 
   await page.goto(`/consultation/${RESERVATION_NUMBER}`, { waitUntil: 'networkidle' });
+  await verifyReservation(page);
   await page.getByTestId('reservation-change-workspace').waitFor();
   await page.getByText('예약 변경 데스크').waitFor();
   await page.getByRole('heading', { name: '상담 예약 변경' }).waitFor();

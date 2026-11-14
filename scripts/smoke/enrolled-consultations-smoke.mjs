@@ -178,8 +178,10 @@ async function waitForEnrolledShell(page) {
   await page.getByTestId('enrolled-consultations-operations-workspace').waitFor();
   const board = page.getByTestId('enrolled-consultations-work-queue');
   await board.waitFor();
-  await board.getByText('재원생상담 운영 보드').waitFor();
-  await board.getByText('확인 대기').first().waitFor();
+  // 새 디자인: '재원생상담 운영 보드'의 숫자·거르기 버튼은 위 상태별 숫자 칸(대기중·확정)으로,
+  // 보드 자리에는 다음 상담 바로 가기와 상담 시간 설정 상태 줄이 남는다.
+  await board.getByRole('link', { name: /상담 시간 설정 (정상|필요)/ }).waitFor();
+  await page.getByRole('button', { name: '대기중 보기' }).waitFor();
 }
 
 async function waitForHit(state, expected) {
@@ -197,27 +199,31 @@ async function runDesktop(browser) {
   await page.goto('/consultations/enrolled', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '재원생상담', exact: true }).waitFor();
   await waitForEnrolledShell(page);
-  await page.getByText('Learning Desk').waitFor();
+  // 영어 소제목 'Learning Desk' 는 새 디자인에서 없앴다.
   const board = page.getByTestId('enrolled-consultations-work-queue');
-  await board.getByText('확인 대기 1건').waitFor();
-  await board.getByText('일정 확정 1건').waitFor();
-  const pendingFilter = board.getByRole('button', { name: '확인 대기 보기' });
+  await page.getByRole('button', { name: '대기중 보기' }).getByText('1건').waitFor();
+  await page.getByRole('button', { name: '확정 보기' }).getByText('1건').waitFor();
+  const pendingFilter = page.getByRole('button', { name: '대기중 보기' });
   await pendingFilter.click();
   if ((await pendingFilter.getAttribute('aria-pressed')) !== 'true') {
     throw new Error('enrolled consultations pending queue filter is not active');
   }
   await waitForHit(state, 'status=pending');
-  const confirmedFilter = board.getByRole('button', { name: '일정 확정 보기' });
+  const confirmedFilter = page.getByRole('button', { name: '확정 보기' });
   await confirmedFilter.click();
   if ((await confirmedFilter.getAttribute('aria-pressed')) !== 'true') {
     throw new Error('enrolled consultations confirmed queue filter is not active');
   }
   await waitForHit(state, 'status=confirmed');
-  await board.getByRole('link', { name: '상담 달력' }).waitFor();
-  if ((await board.getByRole('link', { name: '상담 달력' }).getAttribute('href')) !== '/consultations/calendar?type=learning') {
+  // 상담 달력·상담 설정 바로가기는 화면 머리 버튼으로 옮겨졌다. 보드의 상담 시간 설정 줄도 같은 설정 화면으로 간다.
+  await page.getByRole('link', { name: '상담 달력' }).waitFor();
+  if ((await page.getByRole('link', { name: '상담 달력' }).getAttribute('href')) !== '/consultations/calendar?type=learning') {
     throw new Error('learning calendar quick link mismatch');
   }
-  if ((await board.getByRole('link', { name: '상담 시간 설정' }).getAttribute('href')) !== '/consultations/settings') {
+  if ((await page.getByRole('link', { name: '상담 설정' }).getAttribute('href')) !== '/consultations/settings') {
+    throw new Error('consultation settings quick link mismatch');
+  }
+  if ((await board.getByRole('link', { name: /상담 시간 설정/ }).getAttribute('href')) !== '/consultations/settings') {
     throw new Error('consultation settings quick link mismatch');
   }
   await page.getByText('김진우').first().waitFor();
@@ -335,7 +341,6 @@ async function runMobile(browser) {
   await page.goto('/consultations/enrolled', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '재원생상담', exact: true }).waitFor();
   await waitForEnrolledShell(page);
-  await page.getByText('Learning Desk').waitFor();
   await page.getByText('상담 시간 설정 정상').waitFor();
   await page.getByRole('button', { name: /김진우/ }).first().waitFor();
   await assertNoRawVisibleText(page, 'enrolled consultations mobile');

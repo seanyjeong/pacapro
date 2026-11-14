@@ -129,8 +129,9 @@ async function runDesktop(browser) {
   await page.getByTestId('consultations-filter-bar').waitFor();
   const desktopQueue = page.getByTestId('consultations-work-queue');
   await desktopQueue.waitFor();
-  await page.getByText('오늘 상담 운영 보드').waitFor();
-  await desktopQueue.getByText('확인 필요', { exact: true }).waitFor();
+  // 새 디자인: '오늘 상담 운영 보드'는 상태별 숫자 칸 줄로 바뀌었다(확인 필요 → 대기중, 일정 확정 → 확정).
+  await desktopQueue.getByText('전체', { exact: true }).waitFor();
+  await desktopQueue.getByText('대기중', { exact: true }).waitFor();
   await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
   try {
     await page.getByText('김진우').first().waitFor();
@@ -140,13 +141,13 @@ async function runDesktop(browser) {
     const bodyText = (await page.locator('body').innerText()).slice(0, 1200);
     throw new Error(`consultation rows did not render; hits=${JSON.stringify(state.hits)}; pageErrors=${JSON.stringify(diagnostics.pageErrors)}; consoleErrors=${JSON.stringify(diagnostics.consoleErrors)}; body=${bodyText}; cause=${error}`);
   }
-  const pendingFilter = desktopQueue.getByRole('button', { name: '확인 필요 보기' });
+  const pendingFilter = desktopQueue.getByRole('button', { name: /^대기중\s*\d+\s*건$/ });
   await pendingFilter.click();
   if ((await pendingFilter.getAttribute('aria-pressed')) !== 'true') {
     throw new Error('consultations pending queue filter is not active');
   }
   await waitForHit(state, 'status=pending');
-  const confirmedFilter = desktopQueue.getByRole('button', { name: '일정 확정 보기' });
+  const confirmedFilter = desktopQueue.getByRole('button', { name: /^확정\s*\d+\s*건$/ });
   await confirmedFilter.click();
   if ((await confirmedFilter.getAttribute('aria-pressed')) !== 'true') {
     throw new Error('consultations confirmed queue filter is not active');
@@ -181,7 +182,7 @@ async function runMobile(browser) {
   await page.getByTestId('consultations-filter-bar').waitFor();
   const mobileQueue = page.getByTestId('consultations-work-queue');
   await mobileQueue.waitFor();
-  await mobileQueue.getByText('확인 필요', { exact: true }).waitFor();
+  await mobileQueue.getByText('대기중', { exact: true }).waitFor();
   await page.getByText('김진우').first().waitFor();
   await assertNoRawVisibleText(page, 'consultations mobile');
   await assertNoHorizontalOverflow(page, 'consultations mobile');
@@ -205,8 +206,8 @@ async function runLoadError(browser) {
   const { context, page } = result;
 
   await page.goto('/consultations', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '상담 목록을 불러오지 못했습니다' }).waitFor();
-  await page.getByText('잠시 후 다시 시도해주세요.').waitFor();
+  await page.getByRole('heading', { name: '상담 목록을 불러오지 못했어요' }).waitFor();
+  await page.getByText('잠시 후 다시 시도해 주세요.').waitFor();
   await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'consultations load error');
   await assertNoHorizontalOverflow(page, 'consultations load error');

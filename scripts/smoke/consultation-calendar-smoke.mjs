@@ -9,6 +9,7 @@ import {
   launchSmokeBrowser,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
+  statTile,
 } from './paca-smoke-utils.mjs';
 
 const TEST_DATE = '2026-06-24';
@@ -130,7 +131,8 @@ async function runDesktop(browser) {
   await waitForCalendarShell(page);
   await page.getByTestId('consultation-calendar-month-card').getByText('2026년 6월').waitFor();
   await page.getByText('김진우').first().waitFor();
-  await page.getByText('상담 일정').waitFor();
+  // 새 디자인: 머리의 '상담 일정 N건'은 요약 줄의 '이번 달 상담' 칸으로 옮겨졌다.
+  await statTile(page.getByTestId('consultation-calendar-work-queue'), '이번 달 상담').getByText(/^\d+건$/).waitFor();
   await assertNoRawVisibleText(page, 'consultation calendar desktop');
   await assertNoHorizontalOverflow(page, 'consultation calendar desktop');
   await page.screenshot({ path: '/Users/etlab/paca-consultation-calendar-desktop.png', fullPage: true });
@@ -168,7 +170,7 @@ async function runLoadError(browser) {
   await page.goto('/consultations/calendar', { waitUntil: 'domcontentloaded' });
   await page.getByTestId('consultation-calendar-operations-workspace').waitFor();
   await page.getByTestId('consultation-calendar-work-queue').waitFor();
-  await page.getByRole('heading', { name: '상담 달력 정보를 불러오지 못했습니다' }).waitFor();
+  await page.getByRole('heading', { name: '상담 달력 정보를 불러오지 못했어요' }).waitFor();
   await page.getByText('잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'consultation calendar load error');
   await assertNoHorizontalOverflow(page, 'consultation calendar load error');
@@ -210,7 +212,8 @@ async function waitForCalendarShell(page) {
   await page.getByTestId('consultation-calendar-month-card').waitFor();
   const queue = page.getByTestId('consultation-calendar-work-queue');
   await queue.waitFor();
-  await queue.getByText('월간 상담 운영 보드').waitFor();
+  // 새 디자인: '월간 상담 운영 보드' 제목 대신 이번 달 상담 숫자 요약 칸으로 시작한다.
+  await queue.getByText('이번 달 상담', { exact: true }).waitFor();
   await queue.getByText('신규 상담', { exact: true }).waitFor();
   await queue.getByText('재원생 상담', { exact: true }).waitFor();
   await queue.getByText('상담 메모', { exact: true }).waitFor();
