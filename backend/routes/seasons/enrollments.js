@@ -45,6 +45,7 @@ const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../.
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { planSeasonCancel, applySeasonCancel } = require('../../services/seasonEnrollmentService');
 const { planSeasonEnrollmentUpdate, applySeasonEnrollmentUpdate } = require('../../services/seasonEnrollmentUpdateService');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -90,7 +91,7 @@ router.post('/enrollments/:enrollment_id/pay', verifyToken, checkPermission('sea
             });
         }
 
-        const paymentDate = paid_date || new Date().toISOString().split('T')[0];
+        const paymentDate = paid_date || getKoreaDateText();
         const paymentAmount = paid_amount || enrollment.season_fee;
 
         await pool.execute(
@@ -296,7 +297,7 @@ router.post('/enrollments/:enrollment_id/refund-preview', verifyToken, checkPerm
             });
         }
 
-        const cancelDate = cancellation_date || new Date().toISOString().split('T')[0];
+        const cancelDate = cancellation_date || getKoreaDateText();
 
         let weeklyDays = [];
         if (enrollment.operating_days) {
@@ -403,7 +404,7 @@ router.post('/enrollments/:enrollment_id/cancel', verifyToken, checkPermission('
             });
         }
 
-        const cancelDate = cancellation_date || new Date().toISOString().split('T')[0];
+        const cancelDate = cancellation_date || getKoreaDateText();
 
         const [seasonInfo] = await pool.execute(
             `SELECT operating_days FROM seasons WHERE id = ?`,

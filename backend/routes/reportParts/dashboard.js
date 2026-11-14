@@ -3,12 +3,13 @@ const { verifyToken, requireRole } = require('../../middleware/auth');
 const logger = require('../../utils/logger');
 const { paidAmountSql, remainingAmountSql, dueUnpaidSql } = require('../../utils/paymentAmountSql');
 const { parseBranchIds, studentBranchSql, paymentBranchSql } = require('../../utils/branchFilter');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 function registerDashboardReport(router) {
     router.get('/dashboard', verifyToken, requireRole('owner', 'admin', 'staff'), async (req, res) => {
         try {
             const academyId = req.user.academyId;
-            const currentMonth = new Date().toISOString().slice(0, 7);
+            const currentMonth = getKoreaDateText().slice(0, 7);
             // 지점을 주면 학생 수와 학원비 매출·미납만 그 지점으로 가른다. 기타 수입·지출·강사는 학원 전체.
             const branchIds = parseBranchIds(req.query.branch_ids);
             if (!branchIds) {
@@ -28,7 +29,7 @@ function registerDashboardReport(router) {
                 [academyId, ...branchIds]
             );
 
-            const today = new Date().toISOString().split('T')[0];
+            const today = getKoreaDateText();
             const [restEndedStats] = await db.query(
                 `SELECT COUNT(*) as count
                  FROM students

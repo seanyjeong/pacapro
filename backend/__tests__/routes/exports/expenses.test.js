@@ -86,10 +86,8 @@ describe('GET /paca/exports/expenses', () => {
         await request(buildApp()).get('/paca/exports/expenses?year=2026&month=1');
 
         expect(pool.execute.mock.calls[0][0]).toMatch(/BETWEEN \? AND \?/);
-        // 원본 동작 보존 (ADR-013): new Date(2026, 1, 0).toISOString().split('T')[0]
-        // = KST 2026-01-31 = UTC 2026-01-30T15:00 → split = '2026-01-30'
-        // (원본 코드 timezone 영향 그대로 유지)
-        expect(pool.execute.mock.calls[0][1]).toEqual([1, '2026-01-01', '2026-01-30']);
+        // 월말은 서버 시간대와 상관없이 그 달 마지막 날이다 (KST 서버에서 하루 앞서던 문제 수정).
+        expect(pool.execute.mock.calls[0][1]).toEqual([1, '2026-01-01', '2026-01-31']);
     });
 
     test('5xx + 한국어 메시지 + e.message 누출 0건', async () => {

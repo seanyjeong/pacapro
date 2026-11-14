@@ -38,6 +38,7 @@
  */
 
 const { pool, verifyCallbackSignature, logger } = require('./_utils');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -237,7 +238,7 @@ router.post('/payment-callback', verifyCallbackSignature, async (req, res) => {
                 newPaidAmount,
                 newStatus,
                 paymentMethodMap[method] || 'card',
-                approvedAt ? new Date(approvedAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                approvedAt ? getKoreaDateText(new Date(approvedAt)) : getKoreaDateText(),
                 `\n[토스] ${amount.toLocaleString()}원 결제 (${new Date().toLocaleString('ko-KR')})`,
                 paymentId
             ]

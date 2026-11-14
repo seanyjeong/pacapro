@@ -32,6 +32,7 @@
 
 const { pool, logger } = require('./_utils');
 const { verifyToken } = require('../../middleware/auth');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -79,7 +80,7 @@ router.get('/', verifyToken, async (req, res) => {
 
 router.get('/active', verifyToken, async (req, res) => {
     try {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getKoreaDateText();
 
         const [seasons] = await pool.execute(
             `SELECT * FROM seasons

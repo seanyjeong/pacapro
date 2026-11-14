@@ -11,9 +11,10 @@
 const { pool, decryptStudentName, logger } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql } = require('../../utils/paymentAmountSql');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 function getTodayString() {
-    return new Date().toISOString().split('T')[0];
+    return getKoreaDateText();
 }
 
 function parsePositiveAmount(value) {

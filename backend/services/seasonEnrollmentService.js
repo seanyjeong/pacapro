@@ -19,6 +19,7 @@ const {
     removeStudentFromRegularSchedules,
     seasonRegularBlockStart
 } = require('./seasonScheduleAssignment');
+const { getKoreaDateText } = require('../utils/proratedPaymentDueDate');
 
 const VALID_TIME_SLOTS = ['morning', 'afternoon', 'evening'];
 
@@ -283,7 +284,7 @@ async function applySeasonEnrollment(conn, { season, seasonId, student, studentI
                 studentId,
                 seasonId,
                 plan.finalSeasonFee || 0,
-                input.registrationDate || new Date().toISOString().split('T')[0],
+                input.registrationDate || getKoreaDateText(),
                 input.afterSeasonAction || 'regular',
                 plan.proRatedMonth,
                 plan.proRated?.proRatedFee || 0,
@@ -334,7 +335,7 @@ async function applySeasonEnrollment(conn, { season, seasonId, student, studentI
     if (season.status === 'active' && student.status !== 'paused') {
         try {
             const studentGrade = student.grade || '';
-            const regDateStr = input.registrationDate || new Date().toISOString().split('T')[0];
+            const regDateStr = input.registrationDate || getKoreaDateText();
             seasonAssignResult = await autoAssignStudentToSeasonSchedules(
                 studentId,
                 academyId,

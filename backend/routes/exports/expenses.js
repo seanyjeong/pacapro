@@ -29,6 +29,7 @@ const {
     applyCellStyle,
     applyTotalRowStyle
 } = require('./_utils');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
     router.get('/expenses', verifyToken, checkPermission('reports', 'view'), async (req, res) => {
@@ -43,7 +44,7 @@ module.exports = function(router) {
                 params.push(start_date, end_date);
             } else if (year && month) {
                 const startOfMonth = `${year}-${month.toString().padStart(2, '0')}-01`;
-                const endOfMonth = new Date(year, month, 0).toISOString().split('T')[0];
+                const endOfMonth = new Date(Date.UTC(year, month, 0)).toISOString().split('T')[0];
                 dateFilter = 'AND e.expense_date BETWEEN ? AND ?';
                 params.push(startOfMonth, endOfMonth);
             }
@@ -159,7 +160,7 @@ module.exports = function(router) {
                 ? `${start_date}_${end_date}`
                 : year && month
                     ? `${year}년${month}월`
-                    : new Date().toISOString().split('T')[0];
+                    : getKoreaDateText();
             const filename = `지출내역_${dateStr}.xlsx`;
 
             res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');

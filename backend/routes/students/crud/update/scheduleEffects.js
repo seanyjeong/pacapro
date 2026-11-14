@@ -4,6 +4,7 @@ const {
     reassignStudentSchedules,
     logger,
 } = require('../_utils');
+const { getKoreaDateText } = require('../../../../utils/proratedPaymentDueDate');
 
 async function reassignClassSchedules(context) {
     const {
@@ -137,7 +138,7 @@ async function reassignTrialSchedules(context) {
 async function cleanupStatusSchedules(context) {
     const { pool, studentId, academyId, status, oldStatus } = context;
     const result = { pauseInfo: null, trialCancelInfo: null, pendingInfo: null };
-    const today = new Date().toISOString().split('T')[0];
+    const today = getKoreaDateText();
 
     if (status === 'paused' && oldStatus !== 'paused') {
         try {

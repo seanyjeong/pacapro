@@ -52,6 +52,7 @@ const {
     syncPeakTrainerAsync,
     logger
 } = require('./_utils');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -351,7 +352,7 @@ module.exports = function(router) {
                     gender || null,
                     email || null,
                     encryptedResidentNumber,
-                    hire_date || new Date().toISOString().split('T')[0],
+                    hire_date || getKoreaDateText(),
                     salary_type,
                     finalInstructorType,
                     hourly_rate || 0,

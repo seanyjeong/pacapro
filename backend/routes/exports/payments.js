@@ -31,6 +31,7 @@ const {
 } = require('./_utils');
 
 const { parseBranchIds, paymentBranchSql } = require('../../utils/branchFilter');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
     router.get('/payments', verifyToken, checkPermission('reports', 'view'), async (req, res) => {
@@ -193,7 +194,7 @@ module.exports = function(router) {
                 ? `${start_date}_${end_date}`
                 : year && month
                     ? `${year}년${month}월`
-                    : new Date().toISOString().split('T')[0];
+                    : getKoreaDateText();
             const statusStr = status ? `_${STATUS_LABELS[status] || status}` : '';
             const filename = `납부내역${statusStr}_${dateStr}.xlsx`;
 

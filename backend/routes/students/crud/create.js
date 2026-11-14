@@ -254,7 +254,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                 discount_rate || 0,
                 discount_reason || null,
                 payment_due_day || null,
-                enrollment_date || new Date().toISOString().split('T')[0],
+                enrollment_date || getKoreaDateText(),
                 encryptedAddress,
                 notes || null,
                 is_trial ? 'trial' : 'active',
@@ -428,7 +428,7 @@ router.post('/', verifyToken, checkPermission('students', 'edit'), async (req, r
                         result.insertId,
                         req.user.academyId,
                         parsedClassDays,
-                        enrollment_date || new Date().toISOString().split('T')[0],
+                        enrollment_date || getKoreaDateText(),
                         time_slot || 'evening'
                     );
                 } catch (assignError) {

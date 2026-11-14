@@ -4,6 +4,7 @@ const logger = require('../../../utils/logger');
 const {
     getPromotedStudentValues,
 } = require('../../../services/studentGradePromotionService');
+const { getKoreaDateText } = require('../../../utils/proratedPaymentDueDate');
 
 function addAdmissionTransition(detail, student, promotedValues) {
     if (!promotedValues.admissionTypeChanged) return detail;
@@ -60,7 +61,7 @@ module.exports = function registerAutoPromoteRoute(router) {
                                 [student.id]
                             );
 
-                            const today = new Date().toISOString().split('T')[0];
+                            const today = getKoreaDateText();
                             await connection.execute(
                                 `DELETE a FROM attendance a
                                  JOIN class_schedules cs ON a.class_schedule_id = cs.id

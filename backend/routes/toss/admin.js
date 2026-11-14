@@ -31,6 +31,7 @@
 
 const { pool, decrypt, logger } = require('./_utils');
 const { verifyToken, checkPermission, checkAcademyAccess } = require('../../middleware/auth');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -236,7 +237,7 @@ router.post('/queue/:id/match', verifyToken, checkPermission('payments', 'edit')
             [
                 newPaidAmount,
                 newStatus,
-                queueItem.approved_at ? new Date(queueItem.approved_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+                queueItem.approved_at ? getKoreaDateText(new Date(queueItem.approved_at)) : getKoreaDateText(),
                 `\n[토스 수동매칭] ${parseFloat(queueItem.amount).toLocaleString()}원 (${new Date().toLocaleString('ko-KR')})`,
                 payment_id
             ]
@@ -363,7 +364,7 @@ router.get('/stats', verifyToken, checkPermission('payments', 'view'), checkAcad
         const { year_month } = req.query;
 
         // 이번 달 기본
-        const targetMonth = year_month || new Date().toISOString().slice(0, 7);
+        const targetMonth = year_month || getKoreaDateText().slice(0, 7);
 
         const [stats] = await pool.execute(
             `SELECT

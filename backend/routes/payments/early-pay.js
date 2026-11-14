@@ -6,6 +6,7 @@
 
 const { pool, decrypt, truncateToThousands, logger } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -33,7 +34,7 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
             });
         }
 
-        const payDate = payment_date || new Date().toISOString().split('T')[0];
+        const payDate = payment_date || getKoreaDateText();
 
         await connection.beginTransaction();
 
@@ -85,7 +86,7 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
         const finalAmount = Math.max(0, baseAmount - discountAmount);
         const dueDay = student.payment_due_day || student.tuition_due_day || 5;
         const [year, month] = year_month.split('-').map(Number);
-        const dueDateStr = new Date(year, month - 1, dueDay).toISOString().split('T')[0];
+        const dueDateStr = new Date(Date.UTC(year, month - 1, dueDay)).toISOString().split('T')[0];
         const earlyNote = '[미리납] 원장 직접 수납';
         const description = `${year}년 ${month}월 학원비`;
 

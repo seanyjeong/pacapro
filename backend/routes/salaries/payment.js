@@ -33,6 +33,7 @@ const {
     logger,
     decryptInstructorName,
 } = require('./_utils');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
     /**
@@ -94,7 +95,7 @@ module.exports = function(router) {
                 });
             }
 
-            const actualPaymentDate = payment_date || new Date().toISOString().split('T')[0];
+            const actualPaymentDate = payment_date || getKoreaDateText();
             const paidIds = salariesToPay.map(s => s.id);
 
             // ADR-016: UPDATE IN 절 자리표시자 명시 전개
@@ -194,7 +195,7 @@ module.exports = function(router) {
                 });
             }
 
-            const actualPaymentDate = payment_date || new Date().toISOString().split('T')[0];
+            const actualPaymentDate = payment_date || getKoreaDateText();
 
             // 지급 상태 업데이트
             await connection.execute(

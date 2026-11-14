@@ -24,7 +24,7 @@
  *   - student_payments UPDATE 컬럼/순서/값 1:1 보존
  *   - revenues 는 payment_id 로 연결하고 결제 방법은 student_payments 에 저장
  *   - notes CONCAT 패턴 보존 ('\n' 구분자)
- *   - paid_date 기본값 = today (`new Date().toISOString().split('T')[0]`) 보존
+ *   - paid_date 기본값 = today (`getKoreaDateText()`) 보존
  *
  * 분리 결정 (ADR-006): ~170줄 — 분리 불요.
  */
@@ -32,6 +32,7 @@
 const { pool, decryptStudentName, logger } = require('./_utils');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { remainingAmountSql } = require('../../utils/paymentAmountSql');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -146,7 +147,7 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
                 newDiscountAmount,
                 paymentStatus,
                 payment_method,
-                payment_date || new Date().toISOString().split('T')[0],
+                payment_date || getKoreaDateText(),
                 paymentNote,
                 paymentId
             ]
@@ -174,7 +175,7 @@ router.post('/:id/pay', verifyToken, checkPermission('payments', 'edit'), async 
                 payment.academy_id,
                 revenueCategory,
                 paid_amount,
-                payment_date || new Date().toISOString().split('T')[0],
+                payment_date || getKoreaDateText(),
                 paymentId,
                 payment.student_id,
                 revenueDescription

@@ -28,7 +28,7 @@ async function updatePendingPayments(context) {
         const nextTuition = monthlyTuition !== undefined ? monthlyTuition : updatedStudent.monthly_tuition;
         const nextDiscountRate = discountRate !== undefined ? discountRate : (updatedStudent.discount_rate || 0);
         const finalTuition = nextTuition * (1 - nextDiscountRate / 100);
-        const currentYearMonth = new Date().toISOString().slice(0, 7);
+        const currentYearMonth = getKoreaDateText().slice(0, 7);
 
         // 이미 적용된 크레딧(carryover_amount)·추가 금액은 남긴다.
         await pool.execute(

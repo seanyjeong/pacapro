@@ -40,6 +40,7 @@
 const { pool, decrypt, truncateToThousands, logger } = require('./_utils');
 const { verifyToken } = require('../../middleware/auth');
 const crypto = require('crypto');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -186,7 +187,7 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
             });
         }
 
-        const payDate = payment_date || new Date().toISOString().split('T')[0];
+        const payDate = payment_date || getKoreaDateText();
 
         await connection.beginTransaction();
 
@@ -244,7 +245,7 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
             const totalDiscountAmount = studentDiscount + prepaidDiscount;
 
             const [year, month] = yearMonth.split('-').map(Number);
-            const dueDateStr = new Date(year, month - 1, dueDay).toISOString().split('T')[0];
+            const dueDateStr = new Date(Date.UTC(year, month - 1, dueDay)).toISOString().split('T')[0];
             const prepaidNote = `[선납 ${months.length}개월] ${rate}% 할인 (${prepaidDiscount.toLocaleString()}원)`;
 
             if (existing.length === 0) {

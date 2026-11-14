@@ -39,6 +39,7 @@ const {
 } = require('./_utils');
 const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../../services/seasonPaymentSummary');
 const { verifyToken, checkPermission } = require('../../middleware/auth');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -132,7 +133,7 @@ router.delete('/:id/students/:student_id', verifyToken, checkPermission('seasons
             });
         }
 
-        const cancelDate = new Date().toISOString().split('T')[0];
+        const cancelDate = getKoreaDateText();
         const weeklyDays = parseWeeklyDays(enrollment.class_days);
 
         const refundResult = calculateSeasonRefund({

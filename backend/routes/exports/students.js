@@ -25,6 +25,7 @@ const {
     decryptArray
 } = require('./_utils');
 const { STUDENT_ADMISSION_LABELS } = require('../../constants/studentAdmissionTypes');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 const TEMPLATE_HEADERS = ['이름', '연락처', '학교', '성별', '학년', '등록일', '입시유형', '상태'];
 
@@ -255,7 +256,7 @@ module.exports = function(router) {
             }
 
             // 파일명 생성
-            const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+            const today = getKoreaDateText().replace(/-/g, '');
             const filename = `학생명단_${today}.xlsx`;
             const fallbackFilename = `students_${today}.xlsx`;
             const workbookBuffer = await workbook.xlsx.writeBuffer();

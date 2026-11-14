@@ -3,6 +3,7 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
 const { parseClassDaysWithSlots, reassignStudentSchedules } = require('./_utils');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -144,7 +145,7 @@ router.put('/class-days/bulk', verifyToken, checkPermission('class_days', 'edit'
                             );
                             const discountRate = stRows.length > 0 ? (stRows[0].discount_rate || 0) : 0;
                             const finalTuition = newTuition * (1 - discountRate / 100);
-                            const currentYearMonth = new Date().toISOString().slice(0, 7);
+                            const currentYearMonth = getKoreaDateText().slice(0, 7);
                             await db.query(
                                 `UPDATE student_payments
                                  SET base_amount = ?, final_amount = ?, updated_at = NOW()
@@ -287,7 +288,7 @@ router.put('/:id/class-days', verifyToken, checkPermission('class_days', 'edit')
                     );
                     const discountRate = stRows.length > 0 ? (stRows[0].discount_rate || 0) : 0;
                     const finalTuition = newTuition * (1 - discountRate / 100);
-                    const currentYearMonth = new Date().toISOString().slice(0, 7);
+                    const currentYearMonth = getKoreaDateText().slice(0, 7);
                     await db.query(
                         `UPDATE student_payments
                          SET base_amount = ?, final_amount = ?, updated_at = NOW()

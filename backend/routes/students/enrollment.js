@@ -44,6 +44,7 @@ const { SEASON_PAYMENT_SUMMARY_JOIN, applySeasonPaymentSummary } = require('../.
 const {
     getAdmissionTypeAfterGradeChange,
 } = require('../../services/studentGradePromotionService');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -54,7 +55,7 @@ module.exports = function(router) {
 router.get('/rest-ended', verifyToken, requireRole('owner', 'admin', 'staff'), async (req, res) => {
     try {
         const academyId = req.user.academyId;
-        const today = new Date().toISOString().split('T')[0];
+        const today = getKoreaDateText();
 
         const [students] = await pool.execute(
             `SELECT

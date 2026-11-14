@@ -52,6 +52,7 @@ const { verifyToken, checkPermission } = require('../../middleware/auth');
 const { decrypt } = require('../../utils/encryption');
 const logger = require('../../utils/logger');
 const { truncateToThousands, countClassDaysInPeriod } = require('./_utils');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
 
@@ -190,7 +191,7 @@ router.post('/:id/manual-credit', verifyToken, checkPermission('payments', 'edit
         let classDatesInfo = null;
         let periodInfo = null;
         let perClassFee = 0;
-        const today = new Date().toISOString().split('T')[0];
+        const today = getKoreaDateText();
 
         if (hasDirectAmount) {
             // 금액 직접 입력 — perClassFee 계산 불필요

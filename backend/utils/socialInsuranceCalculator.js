@@ -2,6 +2,8 @@
  * 2026 social insurance calculator for employee payroll deductions.
  */
 
+const { getKoreaDateText } = require('./proratedPaymentDueDate');
+
 const NATIONAL_PENSION_LIMIT_PERIODS = [
     {
         fromYearMonth: '2026-07',
@@ -65,7 +67,7 @@ function normalizeYearMonth(yearMonth) {
     if (typeof yearMonth === 'string' && /^\d{4}-\d{2}$/.test(yearMonth)) {
         return yearMonth;
     }
-    return new Date().toISOString().slice(0, 7);
+    return getKoreaDateText().slice(0, 7);
 }
 
 function getNationalPensionLimits(yearMonth) {

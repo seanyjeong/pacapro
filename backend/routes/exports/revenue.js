@@ -35,6 +35,7 @@ const {
 } = require('./_utils');
 
 const { parseBranchIds, paymentBranchSql } = require('../../utils/branchFilter');
+const { getKoreaDateText } = require('../../utils/proratedPaymentDueDate');
 
 module.exports = function(router) {
     router.get('/revenue', verifyToken, checkPermission('reports', 'view'), async (req, res) => {
@@ -54,7 +55,7 @@ module.exports = function(router) {
                 params.push(start_date, end_date, start_date, end_date);
             } else if (year && month) {
                 const startOfMonth = `${year}-${month.toString().padStart(2, '0')}-01`;
-                const endOfMonth = new Date(year, month, 0).toISOString().split('T')[0];
+                const endOfMonth = new Date(Date.UTC(year, month, 0)).toISOString().split('T')[0];
                 dateFilter = 'AND (sp.paid_date BETWEEN ? AND ? OR oi.income_date BETWEEN ? AND ?)';
                 params.push(startOfMonth, endOfMonth, startOfMonth, endOfMonth);
             }
@@ -90,7 +91,7 @@ module.exports = function(router) {
                 incomeParams.push(start_date, end_date);
             } else if (year && month) {
                 const startOfMonth = `${year}-${month.toString().padStart(2, '0')}-01`;
-                const endOfMonth = new Date(year, month, 0).toISOString().split('T')[0];
+                const endOfMonth = new Date(Date.UTC(year, month, 0)).toISOString().split('T')[0];
                 incomeParams.push(startOfMonth, endOfMonth);
             }
 
@@ -250,7 +251,7 @@ module.exports = function(router) {
                 ? `${start_date}_${end_date}`
                 : year && month
                     ? `${year}년${month}월`
-                    : new Date().toISOString().split('T')[0];
+                    : getKoreaDateText();
             const filename = `수입내역_${dateStr}.xlsx`;
 
             // 응답 헤더 설정
