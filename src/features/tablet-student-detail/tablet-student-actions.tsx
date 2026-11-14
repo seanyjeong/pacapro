@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { CalendarCog, CheckCircle2, CreditCard, MessageSquare, Monitor } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
 import type { TabletStudentDetail } from './tablet-student-detail-types';
 
 interface TabletStudentActionsProps {
@@ -9,8 +10,8 @@ interface TabletStudentActionsProps {
 
 export function TabletStudentActions({ student }: TabletStudentActionsProps) {
   return (
-    <nav aria-label="학생 업무 바로가기" className="grid gap-2 rounded-md border border-border bg-background p-3 sm:grid-cols-5">
-      <StudentActionLink href={`/tablet/payments?studentId=${student.id}`} label={`${student.name} 결제 확인`} icon={<CreditCard className="h-4 w-4" />}>
+    <nav aria-label="학생 업무 바로가기" className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <StudentActionLink href={`/tablet/payments?studentId=${student.id}`} label={`${student.name} 결제 확인`} icon={<CreditCard className="h-4 w-4" />} primary>
         결제 확인
       </StudentActionLink>
       <StudentActionLink href={`/tablet/sms?studentId=${student.id}&recipient=parent`} label={`${student.name} 문자 보내기`} icon={<MessageSquare className="h-4 w-4" />}>
@@ -29,13 +30,9 @@ export function TabletStudentActions({ student }: TabletStudentActionsProps) {
   );
 }
 
-function StudentActionLink({ children, href, icon, label }: { children: ReactNode; href: string; icon: ReactNode; label: string }) {
+function StudentActionLink({ children, href, icon, label, primary }: { children: ReactNode; href: string; icon: ReactNode; label: string; primary?: boolean }) {
   return (
-    <Link
-      aria-label={label}
-      href={href}
-      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 text-sm font-semibold text-foreground hover:bg-muted focus:outline-none focus:ring-2 focus:ring-ring/30"
-    >
+    <Link aria-label={label} href={href} className={buttonVariants({ variant: primary ? 'secondary' : 'outline', className: 'h-12' })}>
       {icon}
       {children}
     </Link>

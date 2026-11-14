@@ -9,8 +9,9 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle, Clock, Loader2, RefreshCw, Search, Sparkles, UserCheck, Users, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { EmptyState, PageHeader } from '@/components/ui/page';
+import { AlertCircle, Loader2, RefreshCw, Search, Users, X } from 'lucide-react';
 import { StudentStatsCards } from '@/components/students/student-stats-cards';
 import { TrialStudentList } from '@/components/students/trial-student-list';
 import { PendingStudentList } from '@/components/students/pending-student-list';
@@ -77,102 +78,91 @@ function TabletStudentsPageContent() {
   // 에러 화면
   if (error && !loading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">학생 관리</h1>
-          <p className="text-muted-foreground">학생 조회</p>
-        </div>
+      <div className="space-y-4">
+        <PageHeader title="학생 관리" description="학생 조회" />
 
-        <Card>
-          <CardContent className="p-12 text-center">
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">학생 정보를 불러오지 못했습니다</h3>
-            <p className="text-muted-foreground mb-4">잠시 후 다시 시도해주세요.</p>
+        <section className="rounded-2xl bg-card py-6">
+          <EmptyState icon={AlertCircle} title="학생 정보를 불러오지 못했어요" description="잠시 후 다시 시도해 주세요." />
+          <div className="flex justify-center pb-4">
             <Button onClick={handleReload}>다시 시도</Button>
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       </div>
     );
   }
 
   // 탭 정의
   const tabs = [
-    { id: 'active' as const, label: '재원생', icon: UserCheck, color: 'text-success' },
-    { id: 'paused' as const, label: '휴원', icon: Users, color: 'text-warning' },
-    { id: 'trial' as const, label: '체험생', icon: Sparkles, color: 'text-purple-600 dark:text-purple-400' },
-    { id: 'pending' as const, label: '미등록', icon: Clock, color: 'text-warning' },
+    { id: 'active' as const, label: '재원생' },
+    { id: 'paused' as const, label: '휴원' },
+    { id: 'trial' as const, label: '체험생' },
+    { id: 'pending' as const, label: '미등록' },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">학생 관리</h1>
-          <p className="text-muted-foreground">학생 조회</p>
-        </div>
-        <Button variant="outline" onClick={handleReload}>
-          <RefreshCw className="w-4 h-4 mr-2" />
-          새로고침
-        </Button>
-      </div>
+    <div className="space-y-4">
+      <PageHeader
+        title="학생 관리"
+        description="학생 조회"
+        actions={(
+          <Button variant="outline" onClick={handleReload}>
+            <RefreshCw className="h-4 w-4" />
+            새로고침
+          </Button>
+        )}
+      />
 
-      {/* 탭 네비게이션 */}
-      <div className="border-b border-border">
-        <nav aria-label="학생 상태" className="-mb-px flex space-x-6 overflow-x-auto">
+      {/* 통계 카드 */}
+      <StudentStatsCards refreshTrigger={statsRefreshTrigger} />
+
+      {/* 상태 탭 + 검색 */}
+      <section className="space-y-3 rounded-2xl bg-card p-4" aria-label="학생 찾기">
+        <nav aria-label="학생 상태" className="flex flex-wrap gap-1.5">
           {tabs.map((tab) => {
-            const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
+                type="button"
+                aria-pressed={isActive}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-2 py-3 px-1 border-b-2 font-medium text-sm transition-colors whitespace-nowrap',
-                  isActive
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                  'inline-flex h-10 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition-colors',
+                  isActive ? 'bg-foreground text-background' : 'bg-muted text-secondary-foreground hover:text-foreground'
                 )}
               >
-                <Icon className={cn('w-4 h-4', isActive ? tab.color : '')} />
                 {tab.label}
               </button>
             );
           })}
         </nav>
-      </div>
 
-      {/* 통계 카드 */}
-      <StudentStatsCards refreshTrigger={statsRefreshTrigger} />
-
-      {/* 검색 */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="text"
-                placeholder="학생 이름, 학교로 검색..."
-                value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-10 pr-10 py-2 border border-border rounded-lg text-sm bg-card text-foreground"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => handleSearch('')}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <div className="text-sm text-muted-foreground whitespace-nowrap">
-              총 <span className="font-semibold text-foreground">{students.length}</span>명
-            </div>
+        <div className="flex items-center gap-4">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="학생 이름, 학교로 검색..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => handleSearch('')}
+                aria-label="검색어 지우기"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
-        </CardContent>
-      </Card>
+          <div className="whitespace-nowrap text-sm text-muted-foreground">
+            총 <span className="text-base font-extrabold text-foreground tabular-nums">{students.length}</span>명
+          </div>
+        </div>
+      </section>
 
       {/* 학생 목록 - 탭에 따라 다른 컴포넌트 표시 */}
       {activeTab === 'trial' ? (
@@ -198,19 +188,10 @@ function TabletStudentsPageContent() {
 
       {/* 안내 */}
       {!loading && students.length === 0 && !searchQuery && (
-        <Card className="bg-primary-soft border-primary/30">
-          <CardContent className="p-4">
-            <div className="flex items-start space-x-3">
-              <AlertCircle className="w-5 h-5 text-primary mt-0.5" />
-              <div className="flex-1">
-                <h4 className="text-sm font-semibold text-primary mb-1">안내</h4>
-                <p className="text-sm text-primary">
-                  해당 상태의 학생이 없습니다.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <p className="flex items-center gap-2 rounded-2xl bg-primary-soft px-4 py-3 text-sm font-medium text-primary" role="note">
+          <Users className="h-4 w-4 shrink-0" />
+          해당 상태의 학생이 없어요.
+        </p>
       )}
     </div>
   );
@@ -219,13 +200,10 @@ function TabletStudentsPageContent() {
 // 로딩 폴백
 function LoadingFallback() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">학생 관리</h1>
-        <p className="text-muted-foreground">학생 조회</p>
-      </div>
+    <div className="space-y-4">
+      <PageHeader title="학생 관리" description="학생 조회" />
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     </div>
   );

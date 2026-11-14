@@ -1,13 +1,13 @@
 import { formatDateToString } from '@/lib/utils/schedule-helpers';
 import type { TabletAttendanceSummary } from './tablet-student-detail-types';
 
-export const TABLET_STUDENT_STATUS_META: Record<string, { label: string; className: string }> = {
-  active: { label: '재원', className: 'bg-success-soft text-success' },
-  graduated: { label: '졸업', className: 'bg-primary-soft text-primary' },
-  paused: { label: '휴원', className: 'bg-warning-soft text-warning' },
-  pending: { label: '대기', className: 'bg-muted text-secondary-foreground' },
-  trial: { label: '체험', className: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' },
-  withdrawn: { label: '퇴원', className: 'bg-destructive-soft text-destructive' },
+export const TABLET_STUDENT_STATUS_META: Record<string, { label: string; variant: 'success' | 'default' | 'warning' | 'secondary' | 'destructive' }> = {
+  active: { label: '재원', variant: 'success' },
+  graduated: { label: '졸업', variant: 'default' },
+  paused: { label: '휴원', variant: 'warning' },
+  pending: { label: '대기', variant: 'secondary' },
+  trial: { label: '체험', variant: 'default' },
+  withdrawn: { label: '퇴원', variant: 'destructive' },
 };
 
 export function getCurrentMonthRange(): { end: string; start: string } {
