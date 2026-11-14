@@ -96,12 +96,12 @@ export function MobileLoading() {
   );
 }
 
-export function MobileErrorCard({ message, onRetry }: { message: string; onRetry: () => void }) {
+export function MobileErrorCard({ message, onRetry, retryLabel = '다시 불러오기' }: { message: string; onRetry: () => void; retryLabel?: string }) {
   return (
     <div role="alert" className="rounded-2xl bg-destructive-soft p-5 text-destructive">
       <p className="text-[15px] font-semibold">{message}</p>
       <Button variant="outline" className="mt-4 w-full bg-card" onClick={onRetry}>
-        다시 불러오기
+        {retryLabel}
       </Button>
     </div>
   );

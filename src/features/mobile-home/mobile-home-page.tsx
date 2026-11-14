@@ -23,14 +23,14 @@ export function MobileHomePage() {
       <div className="space-y-4">
         <MobileHomeHeader
           academyName={state.academyName}
-          dateLabel={state.todayLabels.date}
           userName={state.userName}
-          weekdayLabel={state.todayLabels.weekday}
         />
 
         <MobileHomeOperationsPanel
+          dateLabel={state.todayLabels.date}
           items={state.menuItems}
           roleLabel={state.userRoleLabel}
+          weekdayLabel={state.todayLabels.weekday}
         />
 
         <MobileHomeMenu items={state.menuItems} />

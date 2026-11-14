@@ -21,14 +21,14 @@ export function MobileAcademyEventsPage() {
   const selectedEvents = events.filter(event => event.event_date === state.selectedDate);
 
   return (
-    <MobileCalendarShell title="학원일정" description="행사와 휴일을 함께 확인해요." loading={state.loading} error={state.error}
-      errorMessage="학원 일정을 불러오지 못했어요. 잠시 후 다시 시도해 주세요." onRetry={state.reload}>
+    <MobileCalendarShell title="학원일정" description="행사와 휴일을 함께 확인하세요." loading={state.loading} error={state.error}
+      errorMessage="학원 일정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요." onRetry={state.reload}>
       <MobileMonthCalendar {...state} entries={entries} onDateSelect={state.setSelectedDate} />
       {!state.loading && !state.error && (
         <section aria-label="선택한 날짜의 학원 일정" className="rounded-2xl bg-card p-5">
           <h2 className="text-[17px] font-bold">{dateLabel(state.selectedDate)}</h2>
-          {!events.length && <p className="mt-2 text-sm text-muted-foreground">이번 달에 등록된 학원 일정이 없어요.</p>}
-          {events.length > 0 && !selectedEvents.length && <p className="mt-2 text-sm text-muted-foreground">이 날짜에 등록된 일정이 없어요.</p>}
+          {!events.length && <p className="mt-2 text-sm text-muted-foreground">이번 달에 등록된 학원 일정이 없습니다.</p>}
+          {events.length > 0 && !selectedEvents.length && <p className="mt-2 text-sm text-muted-foreground">이 날짜에 등록된 일정이 없습니다.</p>}
           {selectedEvents.length > 0 && (
             <ul className="mt-2 divide-y divide-border/60">
               {selectedEvents.map(event => (

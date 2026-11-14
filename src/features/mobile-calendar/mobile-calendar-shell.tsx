@@ -23,8 +23,8 @@ export function MobileCalendarShell(props: MobileCalendarShellProps) {
         </MobileIconButton>
       )}
     >
-      {props.loading && <p role="status" className="px-1 text-sm text-muted-foreground">일정을 불러오는 중이에요</p>}
-      {props.error && <MobileErrorCard message={props.errorMessage} onRetry={props.onRetry} />}
+      {props.loading && <p role="status" className="px-1 text-sm text-muted-foreground">일정을 불러오는 중입니다.</p>}
+      {props.error && <MobileErrorCard message={props.errorMessage} onRetry={props.onRetry} retryLabel="다시 시도" />}
       {props.children}
     </MobileScreen>
   );

@@ -1,13 +1,13 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { isOwner } from '@/lib/utils/permissions';
-import { MobileLoading, MobileScreen } from '../mobile-home/mobile-screen';
+import { MobileIconButton, MobileLoading, MobileScreen } from '../mobile-home/mobile-screen';
 import { MobileConsultationCreateSheet } from './mobile-consultation-create-sheet';
 import { MobileConsultationDetailSheet } from './mobile-consultation-detail-sheet';
 import { MobileConsultationsCalendar } from './mobile-consultations-calendar';
-import { MobileConsultationsHeader } from './mobile-consultations-header';
+import { MobileConsultationsTitle } from './mobile-consultations-header';
 import { MobileConsultationsList } from './mobile-consultations-list';
 import { useMobileConsultationsState } from './use-mobile-consultations-state';
 
@@ -23,18 +23,20 @@ export function MobileConsultationsPage() {
   return (
     <MobileScreen
       testId="mobile-consultations-workspace"
-      title="오늘 상담"
-      description={state.selectedDateLabel}
-      actions={(
-        <MobileConsultationsHeader
+      title={(
+        <MobileConsultationsTitle
           showCalendar={state.showCalendar}
-          loading={state.loading}
-          onRefresh={state.loadConsultations}
           onToggleCalendar={() => {
             state.setCalendarMonth({ year: state.selectedDate.getFullYear(), month: state.selectedDate.getMonth() });
             state.setShowCalendar(!state.showCalendar);
           }}
         />
+      )}
+      description={state.selectedDateLabel}
+      actions={(
+        <MobileIconButton label="상담 목록 새로고침" onClick={state.loadConsultations} disabled={state.loading}>
+          <RefreshCw className={`h-5 w-5 ${state.loading ? 'animate-spin' : ''}`} />
+        </MobileIconButton>
       )}
       footer={canCreate ? (
         <Button type="button" size="lg" className="w-full" onClick={state.openCreateForm} aria-label="신규 상담 등록">

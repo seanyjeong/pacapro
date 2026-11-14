@@ -24,7 +24,7 @@ export function TabletScheduleOperations({
   onAssignInstructor,
 }: TabletScheduleOperationsProps) {
   return (
-    <>
+    <section className="space-y-4" aria-label="선택일 운영">
       <section className="grid grid-cols-3 gap-3" aria-label="선택일 숫자 요약">
         <StatTile icon={ListChecks} label="수업" tone="primary" value={`${schedules.length}개`} />
         <StatTile icon={Users} label="학생" tone="success" value={`${totalStudents}명`} />
@@ -52,7 +52,7 @@ export function TabletScheduleOperations({
           </>
         )}
       >
-        <div aria-label="선택일 운영">
+        <div>
           {schedules.length === 0 ? (
             <p className="rounded-xl bg-muted px-4 py-8 text-center text-sm text-muted-foreground">
               선택한 날짜에 수업이 없어요.
@@ -64,7 +64,7 @@ export function TabletScheduleOperations({
           )}
         </div>
       </SectionCard>
-    </>
+    </section>
   );
 }
 

@@ -82,7 +82,7 @@ function TabletStudentsPageContent() {
         <PageHeader title="학생 관리" description="학생 조회" />
 
         <section className="rounded-2xl bg-card py-6">
-          <EmptyState icon={AlertCircle} title="학생 정보를 불러오지 못했어요" description="잠시 후 다시 시도해 주세요." />
+          <EmptyState icon={AlertCircle} title="학생 정보를 불러오지 못했습니다" description="잠시 후 다시 시도해주세요." />
           <div className="flex justify-center pb-4">
             <Button onClick={handleReload}>다시 시도</Button>
           </div>

@@ -1,6 +1,5 @@
 import { Bell, BellOff, ChevronDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils/cn';
 import { MOBILE_PUSH_SETTING_ITEMS } from './mobile-home-constants';
 import type { NotificationSettings } from '@/lib/api/notificationSettings';
@@ -83,12 +82,15 @@ export function MobileHomePushPanel({
                     <p className="truncate text-[13px] text-muted-foreground">{item.description}</p>
                   </div>
                 </div>
-                <Switch
-                  checked={settings[item.key]}
-                  onCheckedChange={() => onSettingToggle(item.key)}
+                <button
+                  type="button"
+                  onClick={() => onSettingToggle(item.key)}
                   disabled={settingsLoading}
                   aria-label={`${item.title} ${settings[item.key] ? '끄기' : '켜기'}`}
-                />
+                  className={cn('relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50', settings[item.key] ? 'bg-primary' : 'bg-border')}
+                >
+                  <span className={cn('absolute left-0 top-0.5 h-6 w-6 rounded-full bg-card transition-transform', settings[item.key] ? 'translate-x-[22px]' : 'translate-x-0.5')} />
+                </button>
               </li>
             );
           })}

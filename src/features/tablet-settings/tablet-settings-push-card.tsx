@@ -1,6 +1,5 @@
 import { Bell, BellOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils/cn';
 import type { NotificationSettings } from '@/lib/api/notificationSettings';
 import { getActiveNotificationCount } from './tablet-settings-utils';
@@ -66,16 +65,19 @@ export function TabletSettingsPushCard({
                 <p className="text-[15px] font-semibold text-foreground">{item.label}</p>
                 <p className="mt-0.5 text-[13px] text-muted-foreground">{item.description}</p>
               </div>
-              {saving ? (
-                <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" aria-label={`${item.label} 저장 중`} />
-              ) : (
-                <Switch
-                  checked={enabled}
-                  onCheckedChange={() => onToggleNotification(item.key)}
-                  disabled={!!notificationSavingKey}
-                  aria-label={`${item.label} ${enabled ? '끄기' : '켜기'}`}
-                />
-              )}
+              <button
+                type="button"
+                onClick={() => onToggleNotification(item.key)}
+                disabled={!!notificationSavingKey}
+                aria-label={`${item.label} ${enabled ? '끄기' : '켜기'}`}
+                className={cn('relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-60', enabled ? 'bg-primary' : 'bg-border')}
+              >
+                {saving ? (
+                  <Loader2 className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-spin text-primary-foreground" />
+                ) : (
+                  <span className={cn('absolute left-0 top-0.5 h-6 w-6 rounded-full bg-card transition-transform', enabled ? 'translate-x-[22px]' : 'translate-x-0.5')} />
+                )}
+              </button>
             </li>
           );
         })}
