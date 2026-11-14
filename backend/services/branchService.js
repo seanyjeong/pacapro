@@ -88,6 +88,8 @@ async function deleteBranch(id, academyId) {
     if (usage.classes > 0 || usage.students > 0) return fail(409, '반이나 학생이 있는 지점은 지울 수 없습니다. 먼저 옮기거나 사용 안 함으로 바꿔주세요.');
     // 지난 청구서가 이 지점에 고정돼 있다. 지우면 그 매출·미납을 어느 지점으로도 볼 수 없게 된다.
     if (usage.payments > 0) return fail(409, '학원비 청구서가 있는 지점은 지울 수 없습니다. 지난 매출·미납을 이 지점으로 볼 수 있게 남겨 둡니다.');
+    // 지점 시즌이 남으면 그 시즌의 등록 후보·표시가 사라진 지점을 가리킨다.
+    if (usage.seasons > 0) return fail(409, '이 지점 시즌이 있어 지울 수 없습니다. 시즌의 지점을 바꾸거나 전 지점으로 돌린 뒤 지워주세요.');
     await repo.deleteBranch(id, academyId);
     return { status: 200, message: '지점을 지웠습니다.' };
 }

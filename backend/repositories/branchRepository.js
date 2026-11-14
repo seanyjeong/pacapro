@@ -58,8 +58,9 @@ async function branchUsage(id, academyId) {
     const [[row]] = await db.query(
         `SELECT (SELECT COUNT(*) FROM classes WHERE branch_id = ? AND academy_id = ?) AS classes,
                 (SELECT COUNT(*) FROM students WHERE branch_id = ? AND academy_id = ? AND deleted_at IS NULL) AS students,
-                (SELECT COUNT(*) FROM student_payments WHERE branch_id = ? AND academy_id = ?) AS payments`,
-        [id, academyId, id, academyId, id, academyId]);
+                (SELECT COUNT(*) FROM student_payments WHERE branch_id = ? AND academy_id = ?) AS payments,
+                (SELECT COUNT(*) FROM seasons WHERE branch_id = ? AND academy_id = ?) AS seasons`,
+        [id, academyId, id, academyId, id, academyId, id, academyId]);
     return row;
 }
 
