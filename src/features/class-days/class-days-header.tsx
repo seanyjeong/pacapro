@@ -1,15 +1,30 @@
+import Link from 'next/link';
+import { UserPlus, Users } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page';
+
 interface ClassDaysHeaderProps {
   description?: string;
-  totalCount?: number;
+  showLinks?: boolean;
 }
 
-export function ClassDaysHeader({ description, totalCount }: ClassDaysHeaderProps) {
-  const summary = description || `재원생 ${totalCount ?? 0}명의 수업 요일을 관리합니다.`;
-
+export function ClassDaysHeader({ description, showLinks = false }: ClassDaysHeaderProps) {
   return (
-    <header className="border-b border-border/70 pb-4">
-      <h1 className="mt-1 text-2xl font-semibold tracking-normal text-foreground">수업일 관리</h1>
-      <p className="mt-1 text-sm text-muted-foreground">{summary}</p>
-    </header>
+    <PageHeader
+      title="수업일 관리"
+      description={description || '재원생의 수업 요일과 시간대를 바꿔요.'}
+      actions={showLinks ? (
+        <>
+          <Link className={buttonVariants({ variant: 'outline' })} href="/students">
+            <Users className="h-4 w-4" />
+            학생 목록
+          </Link>
+          <Link className={buttonVariants({ variant: 'outline' })} href="/students/new">
+            <UserPlus className="h-4 w-4" />
+            학생 등록
+          </Link>
+        </>
+      ) : undefined}
+    />
   );
 }
