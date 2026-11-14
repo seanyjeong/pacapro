@@ -23,7 +23,7 @@ const { monthlyBillAmounts, floorRatio } = require('../../utils/monthlyBillAmoun
 
 const database = 'pending_bill_mysql_test';
 const TABLES = ['academies', 'academy_settings', 'students', 'student_payments', 'rest_credits', 'classes', 'seasons', 'student_seasons',
-    'instructors', 'consultations', 'max_engine_payment_settlements'];
+    'instructors', 'consultations', 'max_engine_payment_settlements', 'revenues'];
 const MIGRATIONS = ['20261001_add_season_aftercare.mysql', '20261112_add_branches_and_student_class.mysql', '20261113_add_student_payment_branch.mysql',
     '20261114_add_consultation_branch.mysql', '20261116_add_class_instructor.mysql', '20261118_add_class_tuition_by_weekly.mysql',
     '20261118_add_season_branch.mysql'];
@@ -110,7 +110,7 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         const payments = express.Router();
         require('../../routes/payments/bulk')(payments); require('../../routes/payments/bulk/monthlyForStudent')(payments);
         require('../../routes/payments/crud')(payments); require('../../routes/payments/early-pay')(payments);
-        require('../../routes/payments/prepaid')(payments);
+        require('../../routes/payments/prepaid')(payments); require('../../routes/payments/pay')(payments);
         a.use('/paca/payments', payments);
         return a;
     };
@@ -497,6 +497,50 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
             expect((await pool.query("SELECT COUNT(*) AS n FROM student_payments WHERE `year_month` = ? AND payment_type = 'monthly'", [THIS_MONTH]))[0][0].n).toBe(1);
         }
         log.mockRestore();
+    });
+
+    test('일부 납부 50,000원 청구를 선납·미리 납부 → 그 청구 매출 합계 = 최종 금액(두 번 잡히지 않음), paid_amount = 최종 금액', async () => {
+        const [m1, m2] = [koreaMonth(2), koreaMonth(3)];
+        const pendingBill = () => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type, base_amount,
+            discount_amount, additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status)
+            VALUES (1, 1, 1, ?, 'monthly', 300000, 0, 0, 0, 300000, 0, 0, ?, 'pending')`, [m1, `${m1}-05`]);
+        const ledger = async () => (await pool.query(`SELECT p.\`year_month\` AS ym, p.final_amount, p.paid_amount, p.payment_status,
+            (SELECT COALESCE(SUM(r.amount), 0) FROM revenues r WHERE r.payment_id = p.id) AS revenue
+            FROM student_payments p ORDER BY p.\`year_month\``))[0].map(row => [row.ym, Number(row.final_amount), Number(row.paid_amount), row.payment_status, Number(row.revenue)]);
+        const partialPay = async () => {
+            const res = await request(app()).post('/paca/payments/1/pay').send({ paid_amount: 50000, payment_method: 'cash' });
+            expect([res.status, res.body.payment?.payment_status]).toEqual([200, 'partial']);
+        };
+
+        // 선납 2개월 5%: 285,000원씩, 일부 납부 50,000원 청구는 235,000원만 더 받는다
+        await seed({ tuition: 300000, rate: 0, bills: false });
+        await pool.query('DELETE FROM revenues');
+        await pendingBill();
+        await partialPay();
+        const body = { student_id: 1, months: [m1, m2], prepaid_discount_rate: 5, payment_method: 'cash' };
+        const preview = await request(app()).post('/paca/payments/prepaid-preview').send(body);
+        expect([preview.body.months[0].paid_amount, preview.body.total_final]).toEqual([50000, 235000 + 285000]);
+        const paid = await request(app()).post('/paca/payments/prepaid-pay').send(body);
+        expect(paid.body.total_amount).toBe(235000 + 285000);
+        expect(await ledger()).toEqual([[m1, 285000, 285000, 'paid', 285000], [m2, 285000, 285000, 'paid', 285000]]);
+
+        // 미리 납부: 300,000원 청구에 일부 납부 50,000원 → 250,000원만 매출
+        await seed({ tuition: 300000, rate: 0, bills: false });
+        await pool.query('DELETE FROM revenues');
+        await pendingBill();
+        await partialPay();
+        const early = await request(app()).post('/paca/payments/early-pay').send({ student_id: 1, year_month: m1, payment_method: 'cash' });
+        expect([early.body.final_amount, early.body.received_amount]).toEqual([300000, 250000]);
+        expect(await ledger()).toEqual([[m1, 300000, 300000, 'paid', 300000]]);
+
+        // 이미 낸 금액이 선납 금액보다 많으면 막고 아무것도 바꾸지 않는다
+        await seed({ tuition: 300000, rate: 0, bills: false });
+        await pool.query('DELETE FROM revenues');
+        await pendingBill();
+        expect((await request(app()).post('/paca/payments/1/pay').send({ paid_amount: 290000, payment_method: 'cash' })).status).toBe(200);
+        const blocked = await request(app()).post('/paca/payments/prepaid-pay').send(body);
+        expect(blocked.status).toBe(400);
+        expect(await ledger()).toEqual([[m1, 300000, 290000, 'partial', 290000]]);
     });
 
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {

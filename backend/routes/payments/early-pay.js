@@ -94,6 +94,17 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
         const finalAmount = existing.length === 0
             ? billFinalAmount(baseAmount, discountAmount)
             : billFinalAfterChange(existing[0], { base_amount: baseAmount, discount_amount: discountAmount });
+        // 일부 납부한 청구: 이번에 받는 돈은 남은 금액(최종 − 이미 낸 금액)뿐이다(수납 pay.js 가 낸 만큼 이미 매출에 넣었다)
+        const alreadyPaid = existing.length ? parseFloat(existing[0].paid_amount) || 0 : 0;
+        if (alreadyPaid > finalAmount) {
+            await connection.rollback();
+            connection.release();
+            return res.status(400).json({
+                error: 'Validation Error',
+                message: `이미 낸 금액(${alreadyPaid.toLocaleString()}원)이 미리 납부 금액(${finalAmount.toLocaleString()}원)보다 많습니다. 청구 내역에서 금액을 확인해 주세요.`,
+            });
+        }
+        const receivedAmount = finalAmount - alreadyPaid;
         const dueDay = student.payment_due_day || student.tuition_due_day || 5;
         const [year, month] = year_month.split('-').map(Number);
         const dueDateStr = new Date(Date.UTC(year, month - 1, dueDay)).toISOString().split('T')[0];
@@ -151,33 +162,34 @@ router.post('/early-pay', verifyToken, checkPermission('payments', 'edit'), asyn
             );
         }
 
-        try {
+        // 매출 장부: 수납(pay.js)과 같은 칸(payment_id 로 청구 연결, 운영 장부에 payment_method 칸 없음)·같은 트랜잭션.
+        // 이번에 받은 남은 금액만 넣는다. (예전 INSERT 는 없는 payment_method 칸 때문에 늘 실패해 조용히 빠졌다)
+        if (receivedAmount > 0) {
             await connection.execute(
                 `INSERT INTO revenues (
                     academy_id, category, amount, revenue_date,
-                    payment_method, student_id, description
+                    payment_id, student_id, description
                 ) VALUES (?, 'tuition', ?, ?, ?, ?, ?)`,
                 [
                     req.user.academyId,
-                    finalAmount,
+                    receivedAmount,
                     payDate,
-                    payment_method,
+                    paymentId,
                     student_id,
                     `미리납 - ${year_month}`,
                 ]
             );
-        } catch (revenueError) {
-            logger.info('Revenue table insert skipped:', revenueError.message);
         }
 
         await connection.commit();
         connection.release();
 
         res.json({
-            message: `${year}년 ${month}월 학원비 미리 납부가 완료되었습니다.`,
+            message: `${year}년 ${month}월 학원비 미리 납부가 완료되었습니다. (받은 금액 ${receivedAmount.toLocaleString()}원)`,
             payment_id: paymentId,
             year_month,
             final_amount: finalAmount,
+            received_amount: receivedAmount,
             student_name: decrypt(student.name),
         });
     } catch (error) {

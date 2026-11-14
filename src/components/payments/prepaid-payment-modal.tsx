@@ -16,6 +16,7 @@ import { Banknote, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { paymentsAPI } from '@/lib/api/payments';
 import type { PrepaidPreviewResponse, PrepaidMonthDetail } from '@/lib/types/payment';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 interface PrepaidPaymentModalProps {
   open: boolean;
@@ -151,7 +152,10 @@ export function PrepaidPaymentModal({
       onClose();
     } catch (err: unknown) {
       console.warn('선납 결제 처리에 실패했습니다.', err);
-      setFormError(PREPAID_PAY_ERROR);
+      // 400: 이미 낸 금액이 선납 금액보다 많은 달 등 — 서버 안내 문구를 그대로 보여 준다
+      setFormError(axios.isAxiosError(err) && err.response?.status === 400 && err.response.data?.message
+        ? err.response.data.message
+        : PREPAID_PAY_ERROR);
     } finally {
       setPaying(false);
     }
@@ -168,6 +172,10 @@ export function PrepaidPaymentModal({
   // 할인 전 정상가 합계 (payable 월만)
   const totalNormal = preview
     ? preview.months.filter(m => m.status !== 'already_paid').reduce((sum, m) => sum + m.base_amount - m.student_discount, 0)
+    : 0;
+  // 일부 납부한 달의 이미 낸 금액 — 최종 납부(total_final)에서 빠져 있다
+  const totalAlreadyPaid = preview
+    ? preview.months.filter(m => m.status !== 'already_paid').reduce((sum, m) => sum + (m.paid_amount || 0), 0)
     : 0;
 
   return (
@@ -293,6 +301,12 @@ export function PrepaidPaymentModal({
                   <div className="flex justify-between text-success">
                     <span>선납 할인 (-{preview.prepaid_discount_rate}%)</span>
                     <span>-{preview.total_prepaid_discount.toLocaleString()}원</span>
+                  </div>
+                )}
+                {totalAlreadyPaid > 0 && (
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>이미 낸 금액 (일부 납부)</span>
+                    <span>-{totalAlreadyPaid.toLocaleString()}원</span>
                   </div>
                 )}
                 <div className="border-t pt-1.5 flex justify-between font-semibold text-base">

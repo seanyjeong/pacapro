@@ -211,6 +211,7 @@ export interface PrepaidMonthDetail {
   student_discount: number;
   prepaid_discount: number;
   final_amount: number;
+  paid_amount?: number; // 일부 납부한 청구의 이미 낸 금액(최종 납부에서 뺀다)
   status: 'new' | 'existing_unpaid' | 'already_paid';
 }
 
@@ -256,6 +257,7 @@ export interface EarlyPayResponse {
   payment_id: number;
   year_month: string;
   final_amount: number;
+  received_amount?: number; // 이번에 받은 금액(최종 − 이미 낸 금액)
   student_name: string;
 }
 

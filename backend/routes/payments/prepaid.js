@@ -12,6 +12,7 @@
  *
  * 응답 표면 보존 (ADR-013):
  *   POST /prepaid-preview → { student_name, monthly_tuition, student_discount_rate, prepaid_discount_rate, months, total_final, total_prepaid_discount, months_payable, months_already_paid }
+ *     months[].paid_amount(이미 낸 금액) 추가, total_final·total_amount 는 이번에 받을 금액(최종 − 이미 낸 금액) 합계
  *   POST /prepaid-pay     → { message, prepaid_group_id, total_amount, total_discount, months_processed, months_skipped }
  *   4xx                   → { error, message }
  *   5xx                   → { error:'Server Error', message:'...' }
@@ -32,7 +33,7 @@
  *   - student_payments INSERT/UPDATE 컬럼/순서/값 1:1 보존
  *   - prepaid_group_id (crypto.randomUUID) 발급 패턴 보존
  *   - notes (`[선납 N개월] X% 할인 (Y원)`) 포맷 보존
- *   - revenues INSERT (선납 결제) 1:1 보존
+ *   - revenues INSERT (선납 결제): 이번에 받은 금액만, 수납(pay.js)과 같은 칸(payment_id)으로 같은 트랜잭션에 기록
  *
  * 분리 결정 (ADR-006): ~290줄 — 분리 불요.
  */
@@ -131,19 +132,22 @@ router.post('/prepaid-preview', verifyToken, async (req, res) => {
             const { studentDiscount, prepaidDiscount, finalAmount } =
                 prepaidMonthAmounts(baseAmount, studentDiscountRate, rate, status === 'existing_unpaid' ? existing[0] : null);
 
+            // 일부 납부한 청구는 이미 낸 금액을 빼고 받는다(실행과 같음) — total_final 은 이번에 받을 금액 합계
+            const paidAmount = status === 'existing_unpaid' ? parseFloat(existing[0].paid_amount) || 0 : 0;
             const detail = {
                 year_month: yearMonth,
                 base_amount: baseAmount,
                 student_discount: studentDiscount,
                 prepaid_discount: status === 'already_paid' ? 0 : prepaidDiscount,
                 final_amount: status === 'already_paid' ? 0 : finalAmount,
+                paid_amount: paidAmount,
                 status
             };
 
             monthDetails.push(detail);
 
             if (status !== 'already_paid') {
-                totalFinal += finalAmount;
+                totalFinal += Math.max(finalAmount - paidAmount, 0);
                 totalPrepaidDiscount += prepaidDiscount;
                 monthsPayable++;
             } else {
@@ -260,13 +264,27 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
             const { prepaidDiscount, totalDiscountAmount, finalAmount } =
                 prepaidMonthAmounts(baseAmount, studentDiscountRate, rate, existing[0] || null);
 
+            // 일부 납부한 청구: 이번에 받는 돈은 남은 금액(최종 − 이미 낸 금액)뿐이다(수납 pay.js 가 낸 만큼 이미 매출에 넣었다).
+            // 선납 할인으로 최종 금액이 이미 낸 금액보다 작아지면 넘는 돈을 돌려줄 경로가 없어 선납 전체를 막는다.
+            const alreadyPaid = existing.length ? parseFloat(existing[0].paid_amount) || 0 : 0;
+            if (alreadyPaid > finalAmount) {
+                await connection.rollback();
+                connection.release();
+                return res.status(400).json({
+                    error: 'Validation Error',
+                    message: `${yearMonth}은 이미 낸 금액(${alreadyPaid.toLocaleString()}원)이 선납 금액(${finalAmount.toLocaleString()}원)보다 많습니다. 이 달을 빼고 선납하거나 청구 내역에서 금액을 확인해 주세요.`
+                });
+            }
+            const receivedAmount = finalAmount - alreadyPaid;
+
             const [year, month] = yearMonth.split('-').map(Number);
             const dueDateStr = new Date(Date.UTC(year, month - 1, dueDay)).toISOString().split('T')[0];
             const prepaidNote = `[선납 ${months.length}개월] ${rate}% 할인 (${prepaidDiscount.toLocaleString()}원)`;
 
+            let paymentId = existing.length ? existing[0].id : null;
             if (existing.length === 0) {
                 // INSERT 새 레코드 (paid 상태로)
-                await connection.execute(
+                const [inserted] = await connection.execute(
                     `INSERT INTO student_payments (
                         student_id, academy_id, \`year_month\`, payment_type,
                         base_amount, discount_amount, additional_amount, final_amount,
@@ -291,6 +309,7 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
                         prepaidGroupId
                     ]
                 );
+                paymentId = inserted.insertId;
             } else {
                 // UPDATE 기존 미납 레코드
                 await connection.execute(
@@ -316,28 +335,27 @@ router.post('/prepaid-pay', verifyToken, async (req, res) => {
                 );
             }
 
-            // revenues 테이블 INSERT
-            try {
+            // 매출 장부: 수납(pay.js)과 같은 칸(payment_id 로 청구 연결, 운영 장부에 payment_method 칸 없음)·같은 트랜잭션.
+            // 이번에 받은 남은 금액만 넣는다. (예전 INSERT 는 없는 payment_method 칸 때문에 늘 실패해 조용히 빠졌다)
+            if (receivedAmount > 0) {
                 await connection.execute(
                     `INSERT INTO revenues (
                         academy_id, category, amount, revenue_date,
-                        payment_method, student_id, description
+                        payment_id, student_id, description
                     ) VALUES (?, 'tuition', ?, ?, ?, ?, ?)`,
                     [
                         req.user.academyId,
-                        finalAmount,
+                        receivedAmount,
                         payDate,
-                        payment_method,
+                        paymentId,
                         student_id,
                         `선납 결제 - ${yearMonth} (${months.length}개월)`
                     ]
                 );
-            } catch (revenueError) {
-                logger.info('Revenue table insert skipped:', revenueError.message);
             }
 
             monthsProcessed.push(yearMonth);
-            totalAmount += finalAmount;
+            totalAmount += receivedAmount;
             totalDiscount += prepaidDiscount;
         }
 
