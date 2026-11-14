@@ -48,7 +48,8 @@ export const schedulesApi = {
    * 수업 등록
    */
   createSchedule: async (data: ScheduleFormData, config?: APIRequestConfig): Promise<ClassSchedule> => {
-    return apiClient.post<ClassSchedule>(BASE_PATH, data, config);
+    const response = await apiClient.post<{ schedule: ClassSchedule }>(BASE_PATH, data, config);
+    return response.schedule;
   },
 
   /**
