@@ -26,7 +26,8 @@ interface ClassTuitionRowProps {
  * 표를 바꿔도 학생 학원비는 그대로다 — "반 학원비 적용"에서 학생별 금액을 확인하고 바꾼다.
  */
 export function ClassTuitionRow({ label, cls, disabled, onSave, onApplied }: ClassTuitionRowProps) {
-  const saved = cls.tuition_by_weekly;
+  // 옛 응답(칸 없음)도 학원 기본표로 본다
+  const saved = cls.tuition_by_weekly ?? null;
   const [own, setOwn] = useState(saved !== null);
   const [draft, setDraft] = useState<WeeklyTuitionTable>(saved ?? emptyTable());
   const [applyOpen, setApplyOpen] = useState(false);
