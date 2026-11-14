@@ -76,7 +76,22 @@ describe('GET /paca/consultations/settings/info', () => {
             { dayOfWeek: 0, isAvailable: true, startTime: '10:00', endTime: '20:00' },
         ]);
         expect(res.body.blockedSlots).toHaveLength(1);
+        expect(res.body.settings.checklist_template).toBeNull();
         expect(pool.query).not.toHaveBeenCalled();
+    });
+
+    test('저장된 체크리스트 템플릿을 settings.checklist_template 으로 돌려준다', async () => {
+        const template = [{ id: 1, category: 'QA범주', text: 'QA항목' }];
+        pool.execute
+            .mockResolvedValueOnce([[{ id: 1, name: '학원A', slug: 'academy-a' }]])
+            .mockResolvedValueOnce([[{ is_enabled: 1, checklist_template: template }]])
+            .mockResolvedValueOnce([[]])
+            .mockResolvedValueOnce([[]]);
+
+        const res = await request(makeApp()).get('/paca/consultations/settings/info');
+
+        expect(res.status).toBe(200);
+        expect(res.body.settings.checklist_template).toEqual(template);
     });
 
     test('settings row 없으면 기본값 적용', async () => {
@@ -143,6 +158,23 @@ describe('PUT /paca/consultations/settings/info', () => {
         expect(res.body.message).toBe('설정이 저장되었습니다.');
         expect(pool.execute).toHaveBeenCalledTimes(1);
         expect(pool.query).not.toHaveBeenCalled();
+    });
+
+    test('체크리스트 템플릿을 저장하고, 보내지 않은 저장은 기존 템플릿을 둔다', async () => {
+        pool.execute.mockResolvedValue([{}]);
+        const template = [{ id: 1, category: 'QA범주', text: 'QA항목' }];
+
+        await request(makeApp())
+            .put('/paca/consultations/settings/info')
+            .send({ pageTitle: '상담 예약', checklist_template: template });
+        await request(makeApp())
+            .put('/paca/consultations/settings/info')
+            .send({ pageTitle: '상담 예약' });
+
+        const [savedSql, savedParams] = pool.execute.mock.calls[0];
+        expect(savedSql).toContain('checklist_template = COALESCE(VALUES(checklist_template), checklist_template)');
+        expect(JSON.parse(savedParams[11])).toEqual(template);
+        expect(pool.execute.mock.calls[1][1][11]).toBeNull();
     });
 
     test('5xx → { error: 한국어 }', async () => {

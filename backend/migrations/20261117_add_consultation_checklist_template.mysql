@@ -1,0 +1,14 @@
+-- Backup first. Apply before deploying code that saves consultation_settings.checklist_template.
+-- 상담 체크리스트 템플릿: 상담 설정에서 고친 범주·항목을 저장한다. NULL = 기본 체크리스트.
+-- Add at the end so MySQL 8 can use INSTANT without rebuilding existing rows.
+SET @checklist_schema = DATABASE();
+SET @checklist_sql = (
+    SELECT IF(COUNT(*) = 0,
+        'ALTER TABLE consultation_settings ADD COLUMN checklist_template JSON NULL, ALGORITHM=INSTANT',
+        'SELECT 1')
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = @checklist_schema AND TABLE_NAME = 'consultation_settings' AND COLUMN_NAME = 'checklist_template'
+);
+PREPARE checklist_stmt FROM @checklist_sql;
+EXECUTE checklist_stmt;
+DEALLOCATE PREPARE checklist_stmt;

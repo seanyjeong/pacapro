@@ -81,7 +81,13 @@ module.exports = function (router) {
                         : ['블로그/인터넷 검색', '지인 소개', '현수막/전단지', 'SNS', '기타'],
                     sendConfirmationAlimtalk: setting.send_confirmation_alimtalk ?? true,
                     confirmationTemplateCode: setting.confirmation_template_code || '',
-                    minAdvanceHours: setting.min_advance_hours ?? 4
+                    minAdvanceHours: setting.min_advance_hours ?? 4,
+                    // 상담 체크리스트 템플릿. null 이면 프론트 기본 체크리스트를 쓴다.
+                    checklist_template: setting.checklist_template
+                        ? (typeof setting.checklist_template === 'string'
+                            ? JSON.parse(setting.checklist_template)
+                            : setting.checklist_template)
+                        : null
                 },
                 weeklyHours: weeklyHours.map((h) => ({
                     dayOfWeek: h.day_of_week,
@@ -114,7 +120,8 @@ module.exports = function (router) {
                 referralSources,
                 sendConfirmationAlimtalk,
                 confirmationTemplateCode,
-                minAdvanceHours
+                minAdvanceHours,
+                checklist_template
             } = req.body;
 
             // slug 업데이트 (학원 테이블)
@@ -143,8 +150,8 @@ module.exports = function (router) {
                     academy_id, is_enabled, page_title, page_description,
                     slot_duration, max_reservations_per_slot, advance_days,
                     referral_sources, send_confirmation_alimtalk, confirmation_template_code,
-                    min_advance_hours
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    min_advance_hours, checklist_template
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
                     is_enabled = VALUES(is_enabled),
                     page_title = VALUES(page_title),
@@ -155,7 +162,8 @@ module.exports = function (router) {
                     referral_sources = VALUES(referral_sources),
                     send_confirmation_alimtalk = VALUES(send_confirmation_alimtalk),
                     confirmation_template_code = VALUES(confirmation_template_code),
-                    min_advance_hours = VALUES(min_advance_hours)`,
+                    min_advance_hours = VALUES(min_advance_hours),
+                    checklist_template = COALESCE(VALUES(checklist_template), checklist_template)`,
                 [
                     academyId,
                     isEnabled ?? true,
@@ -167,7 +175,9 @@ module.exports = function (router) {
                     referralSources ? JSON.stringify(referralSources) : '["블로그/인터넷 검색", "지인 소개", "현수막/전단지", "SNS", "기타"]',
                     sendConfirmationAlimtalk ?? true,
                     confirmationTemplateCode || null,
-                    minAdvanceHours ?? 4
+                    minAdvanceHours ?? 4,
+                    // 체크리스트를 보내지 않은 저장(주소·기본 설정)은 저장된 템플릿을 그대로 둔다.
+                    Array.isArray(checklist_template) ? JSON.stringify(checklist_template) : null
                 ]
             );
 

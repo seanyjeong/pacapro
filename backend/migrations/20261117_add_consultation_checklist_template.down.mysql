@@ -1,0 +1,2 @@
+-- Manual rollback only. 학원이 고친 상담 체크리스트 템플릿이 사라지고 기본 체크리스트로 돌아간다.
+ALTER TABLE consultation_settings DROP COLUMN checklist_template;

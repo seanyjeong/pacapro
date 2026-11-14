@@ -55,12 +55,14 @@ export function useConsultationSettingsState() {
         const response = await getConsultationSettings(SUPPRESS_API_ERROR_TOAST);
         const loadedSlug = response.academy?.slug || '';
         const loadedHours = response.weeklyHours || [];
-        const savedTemplate = (response.settings as { checklist_template?: ChecklistTemplate[] })?.checklist_template;
+        // 체크리스트는 checklistTemplate 상태가 따로 들고 저장한다. 기본 설정 저장에 옛 템플릿이 실려 덮어쓰지 않게 뺀다.
+        const { checklist_template: savedTemplate, ...loadedSettings } =
+          (response.settings || {}) as ConsultationSettingsPatch;
 
         setAcademyName(response.academy?.name || '');
         setSlug(loadedSlug);
         setOriginalSlug(loadedSlug);
-        setSettings(response.settings || {});
+        setSettings(loadedSettings);
         setHasSavedWeeklyHours(loadedHours.length > 0);
         setWeeklyHours(loadedHours.length === 0 ? createDefaultWeeklyHours() : loadedHours);
         setBlockedSlots(response.blockedSlots || []);
