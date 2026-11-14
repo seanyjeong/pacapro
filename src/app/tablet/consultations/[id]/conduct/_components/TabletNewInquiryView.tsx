@@ -41,10 +41,10 @@ export function TabletNewInquiryView({
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-[0.9fr_1.8fr]">
       <div className="space-y-5">
-        <Card className="rounded-md shadow-none">
+        <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center">
+              <CardTitle className="flex items-center text-[17px]">
                 <User className="h-5 w-5 mr-2 text-primary" />
                 기본 정보
               </CardTitle>
@@ -52,9 +52,9 @@ export function TabletNewInquiryView({
                 variant="ghost"
                 size="sm"
                 onClick={onOpenStudentEdit}
-                className="h-8 px-2"
+                className="h-9 px-3"
               >
-                <Edit className="h-4 w-4 mr-1" />
+                <Edit className="h-4 w-4" />
                 수정
               </Button>
             </div>
@@ -127,9 +127,9 @@ export function TabletNewInquiryView({
           const admissionTypeLabel = getConsultationAdmissionTypeLabel(scores.admissionType);
 
           return (
-            <Card className="rounded-md shadow-none">
+            <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center">
+                <CardTitle className="flex items-center text-[17px]">
                   <GraduationCap className="h-5 w-5 mr-2 text-primary" />
                   성적 정보
                 </CardTitle>
@@ -147,7 +147,7 @@ export function TabletNewInquiryView({
                   {hasAdmissionType && (
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-sm">입시</span>
-                      <span className="rounded bg-primary-soft px-2 py-0.5 text-sm font-semibold text-primary">
+                      <span className="rounded-full bg-primary-soft px-2.5 py-0.5 text-sm font-semibold text-primary">
                         {admissionTypeLabel}
                       </span>
                     </div>
@@ -164,7 +164,7 @@ export function TabletNewInquiryView({
                         };
                         const value = scores.mockTestGrades?.[subject as keyof typeof scores.mockTestGrades];
                         return (
-                          <div key={subject} className="rounded-md bg-muted p-2 text-center">
+                          <div key={subject} className="rounded-xl bg-muted p-2 text-center">
                             <div className="text-xs text-muted-foreground">{labels[subject]}</div>
                             <div className={`font-bold ${value === -1 ? 'text-muted-foreground text-sm' : 'text-foreground'}`}>
                               {value === -1 ? '-' : value ?? '-'}
@@ -180,7 +180,7 @@ export function TabletNewInquiryView({
           );
         })()}
 
-        <Card className="rounded-md shadow-none">
+        <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">상담 메모</CardTitle>
           </CardHeader>
@@ -196,23 +196,23 @@ export function TabletNewInquiryView({
       </div>
 
       <div className="lg:col-span-2">
-        <Card className="rounded-md shadow-none">
+        <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center">
+            <CardTitle className="flex items-center text-[17px]">
               <CheckSquare className="h-5 w-5 mr-2 text-primary" />
               상담 체크리스트
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {Object.entries(groupedChecklist).map(([category, items]) => (
-              <div key={category} className="overflow-hidden rounded-md border border-border">
+              <div key={category} className="overflow-hidden rounded-xl bg-muted">
                 <button
                   onClick={() => toggleCategory(category)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-muted hover:bg-muted/80 transition-colors"
+                  className="flex min-h-[52px] w-full items-center justify-between px-4 py-3 transition-colors hover:bg-muted/70"
                 >
                   <div className="flex items-center">
-                    <span className="font-medium text-foreground">{category}</span>
-                    <Badge variant="secondary" className="ml-2">
+                    <span className="font-bold text-foreground">{category}</span>
+                    <Badge variant="default" className="ml-2 bg-card">
                       {items.filter(i => i.checked).length}/{items.length}
                     </Badge>
                   </div>
@@ -224,7 +224,7 @@ export function TabletNewInquiryView({
                 </button>
 
                 {expandedCategories[category] && (
-                  <div className="divide-y">
+                  <div className="divide-y divide-border/60 bg-card">
                     {items.map((item) => (
                       <div key={item.id} className="px-5 py-4 space-y-3">
                         <div

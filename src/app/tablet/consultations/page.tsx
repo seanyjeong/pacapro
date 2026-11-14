@@ -75,7 +75,7 @@ export default function TabletConsultationsPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <TabletConsultationsOperations
         consultations={consultations}
         dateLabel={formatTabletConsultationDate(selectedDate)}
@@ -90,14 +90,16 @@ export default function TabletConsultationsPage() {
         onToday={handleToday}
       />
 
-      <TabletConsultationsFilterBar
-        dateFilter={dateFilter}
-        search={search}
-        onDateFilterChange={setDateFilter}
-        onSearchChange={setSearch}
-      />
+      <section className="rounded-2xl bg-card p-5">
+        <TabletConsultationsFilterBar
+          dateFilter={dateFilter}
+          search={search}
+          onDateFilterChange={setDateFilter}
+          onSearchChange={setSearch}
+        />
 
-      <TabletConsultationsList consultations={consultations} dateFilter={dateFilter} />
+        <TabletConsultationsList consultations={consultations} dateFilter={dateFilter} />
+      </section>
     </div>
   );
 }

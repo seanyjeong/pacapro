@@ -37,10 +37,10 @@ export function TabletLearningView({
 }: TabletLearningViewProps) {
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-      <Card className="rounded-md shadow-none">
+      <Card>
         <CardHeader className="pb-3">
           <button onClick={() => toggleSection('학업')} className="w-full flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center">
+            <CardTitle className="flex items-center text-[17px]">
               <GraduationCap className="h-5 w-5 mr-2 text-primary" />
               학업
             </CardTitle>
@@ -83,9 +83,9 @@ export function TabletLearningView({
             <div>
               <Label className="text-sm text-muted-foreground mb-2 block">모의고사 성적 (등급)</Label>
               <div className="overflow-x-auto">
-                <table className="w-full rounded-md border border-border text-sm">
+                <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-muted">
+                    <tr className="border-b border-border/60 text-[13px] text-muted-foreground">
                       <th className="p-2 text-left font-medium">회차</th>
                       <th className="p-2 text-center font-medium">국어</th>
                       <th className="p-2 text-center font-medium">수학</th>
@@ -96,7 +96,7 @@ export function TabletLearningView({
                   </thead>
                   <tbody>
                     {(['march', 'june', 'september'] as const).map((month) => (
-                      <tr key={month} className="border-t border-border">
+                      <tr key={month} className="border-b border-border/60 last:border-0">
                         <td className="p-2 font-medium">
                           {month === 'march' ? '3월' : month === 'june' ? '6월' : '9월'}
                         </td>
@@ -106,7 +106,7 @@ export function TabletLearningView({
                               type="number"
                               min="1"
                               max="9"
-                              className="h-8 text-center w-12"
+                              className="h-9 w-12 px-1 text-center"
                               value={learningForm.mockTestScores[month]?.[subject] || ''}
                               onChange={(e) => {
                                 setLearningForm({
@@ -143,10 +143,10 @@ export function TabletLearningView({
         )}
       </Card>
 
-      <Card className="rounded-md shadow-none">
+      <Card>
         <CardHeader className="pb-3">
           <button onClick={() => toggleSection('실기')} className="w-full flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center">
+            <CardTitle className="flex items-center text-[17px]">
               <Sparkles className="h-5 w-5 mr-2 text-warning" />
               실기 (P-EAK)
             </CardTitle>
@@ -193,7 +193,7 @@ export function TabletLearningView({
             ) : Object.keys(peakRecords).length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {Object.entries(peakRecords).map(([name, record]) => (
-                  <div key={name} className="rounded-md bg-muted p-3 text-center">
+                  <div key={name} className="rounded-xl bg-muted p-3 text-center">
                     <div className="text-xs text-muted-foreground mb-1">{name}</div>
                     <div className="text-lg font-bold text-foreground">
                       {record.value} <span className="text-sm font-normal">{record.unit}</span>
@@ -225,11 +225,11 @@ export function TabletLearningView({
         )}
       </Card>
 
-      <Card className="rounded-md shadow-none">
+      <Card>
         <CardHeader className="pb-3">
           <button onClick={() => toggleSection('목표')} className="w-full flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center">
-              <Target className="h-5 w-5 mr-2 text-purple-600" />
+            <CardTitle className="flex items-center text-[17px]">
+              <Target className="h-5 w-5 mr-2 text-primary" />
               목표
             </CardTitle>
             {expandedSections['목표'] ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
@@ -270,10 +270,10 @@ export function TabletLearningView({
         )}
       </Card>
 
-      <Card className="rounded-md shadow-none">
+      <Card>
         <CardHeader className="pb-3">
           <button onClick={() => toggleSection('기타')} className="w-full flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center">
+            <CardTitle className="flex items-center text-[17px]">
               <Calendar className="h-5 w-5 mr-2 text-success" />
               기타
             </CardTitle>

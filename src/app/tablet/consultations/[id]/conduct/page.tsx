@@ -108,14 +108,14 @@ export default function TabletConductPage({ params }: PageProps) {
   if (loadError || !consultation) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center px-4">
-        <section className="w-full max-w-xl rounded-md border border-warning/30 bg-warning-soft p-5 text-warning">
+        <section className="w-full max-w-xl rounded-2xl bg-warning-soft p-5 text-warning">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <div>
               <h1 className="text-base font-semibold">상담 정보를 불러오지 못했습니다</h1>
               <p className="mt-1 text-sm">{loadError || '잠시 후 다시 시도해주세요.'}</p>
-              <Button variant="outline" className="mt-4 bg-background/80" onClick={() => router.push(backUrl)}>
-                <ArrowLeft className="mr-2 h-4 w-4" />
+              <Button variant="outline" className="mt-4 bg-card" onClick={() => router.push(backUrl)}>
+                <ArrowLeft className="h-4 w-4" />
                 {backLabel}
               </Button>
             </div>
@@ -126,7 +126,7 @@ export default function TabletConductPage({ params }: PageProps) {
   }
 
   return (
-    <div className="space-y-6 pb-28">
+    <div className="space-y-4 pb-32">
       <TabletConductHeader
         consultation={consultation}
         progressPercent={progressPercent}
