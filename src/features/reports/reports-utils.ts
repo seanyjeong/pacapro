@@ -1,5 +1,12 @@
 import { inBranches } from '@/features/branches/branch-checks';
-import type { ReportComputedStats, ReportDateRange, ReportExportType, ReportSourceData, ReportStats } from './reports-types';
+import type {
+  ReportAccess,
+  ReportComputedStats,
+  ReportDateRange,
+  ReportExportType,
+  ReportSourceData,
+  ReportStats,
+} from './reports-types';
 
 export const REPORT_LOAD_ERROR = '리포트 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
 export const REPORT_EXPORT_ERROR = '엑셀 파일을 다운로드하지 못했습니다. 잠시 후 다시 시도해주세요.';
@@ -118,6 +125,15 @@ export function calculateComputedStats(stats: ReportStats = EMPTY_STATS): Report
     collectionRate,
     unpaidAmount: Math.max(stats.payments.totalAmount - stats.payments.paidAmountFromBilled, 0),
   };
+}
+
+// 총 수입은 학원비 수납 + 기타 수입, 순이익은 거기서 지출을 뺀 값이라 재료를 다 볼 수 있을 때만 보여 준다.
+export function canSeeIncomeTotal(access: ReportAccess): boolean {
+  return access.payments && access.incomes;
+}
+
+export function canSeeProfit(access: ReportAccess): boolean {
+  return canSeeIncomeTotal(access) && access.expenses;
 }
 
 function toAmount(value: number | string | null | undefined): number {

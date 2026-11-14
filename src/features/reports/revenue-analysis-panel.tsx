@@ -1,13 +1,14 @@
-import type { ReportComputedStats, ReportStats } from './reports-types';
+import type { ReportAccess, ReportComputedStats, ReportStats } from './reports-types';
 import { formatReportAmount } from './reports-utils';
 import { ReportProgressRow } from './report-progress-row';
 
 interface RevenueAnalysisPanelProps {
+  access: ReportAccess;
   stats: ReportStats;
   computed: ReportComputedStats;
 }
 
-export function RevenueAnalysisPanel({ stats, computed }: RevenueAnalysisPanelProps) {
+export function RevenueAnalysisPanel({ access, stats, computed }: RevenueAnalysisPanelProps) {
   const billedAmount = stats.payments.totalAmount;
   const collectedPercent = billedAmount > 0 ? (stats.payments.paidAmountFromBilled / billedAmount) * 100 : 0;
   const unpaidPercent = billedAmount > 0 ? (computed.unpaidAmount / billedAmount) * 100 : 0;
@@ -54,13 +55,15 @@ export function RevenueAnalysisPanel({ stats, computed }: RevenueAnalysisPanelPr
               {formatReportAmount(stats.payments.paidAmount)}원
             </p>
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">기타수입</p>
-            <p className="mt-1 text-base font-semibold text-foreground">
-              {formatReportAmount(stats.otherIncomes.totalAmount)}원
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">{stats.otherIncomes.total}건</p>
-          </div>
+          {access.incomes && (
+            <div>
+              <p className="text-sm text-muted-foreground">기타수입</p>
+              <p className="mt-1 text-base font-semibold text-foreground">
+                {formatReportAmount(stats.otherIncomes.totalAmount)}원
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">{stats.otherIncomes.total}건</p>
+            </div>
+          )}
         </div>
       </div>
     </section>

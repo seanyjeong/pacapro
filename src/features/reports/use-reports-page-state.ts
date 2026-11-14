@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { exportsApi } from '@/lib/api/exports';
-import { fetchReportSourceData } from './reports-api';
-import type { ReportExportType, ReportSourceData } from './reports-types';
+import { fetchReportSourceData, getReportAccess } from './reports-api';
+import type { ReportAccess, ReportExportType, ReportSourceData } from './reports-types';
 import {
   calculateComputedStats,
   calculateReportStats,
@@ -17,10 +17,12 @@ import { useBranchChecks } from '@/features/branches/branch-checks';
 const EMPTY_SOURCE: ReportSourceData = {
   students: [], payments: [], paidPayments: [], expenses: [], instructors: [], otherIncomes: [],
 };
+const NO_ACCESS: ReportAccess = { payments: false, expenses: false, instructors: false, incomes: false };
 
 export function useReportsPageState() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentYearMonth);
   const [source, setSource] = useState<ReportSourceData>(EMPTY_SOURCE);
+  const [access, setAccess] = useState<ReportAccess>(NO_ACCESS);
   const [branchIds, setBranchIds] = useBranchChecks();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +33,9 @@ export function useReportsPageState() {
     setLoading(true);
     setError(null);
     try {
-      setSource(await fetchReportSourceData(selectedMonth));
+      const nextAccess = getReportAccess();
+      setSource(await fetchReportSourceData(selectedMonth, nextAccess));
+      setAccess(nextAccess);
     } catch {
       setError(REPORT_LOAD_ERROR);
     } finally {
@@ -73,6 +77,7 @@ export function useReportsPageState() {
   const computed = useMemo(() => calculateComputedStats(stats), [stats]);
 
   return {
+    access,
     branchIds,
     computed,
     error,

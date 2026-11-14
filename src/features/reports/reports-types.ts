@@ -22,6 +22,14 @@ export interface ReportSourceData {
   otherIncomes: OtherIncome[];
 }
 
+// 직원은 볼 권한이 있는 자료만 불러와 보여 준다. 학생 목록은 권한 없이 열린다.
+export interface ReportAccess {
+  payments: boolean;
+  expenses: boolean;
+  instructors: boolean;
+  incomes: boolean;
+}
+
 export interface ReportStats {
   students: {
     total: number;

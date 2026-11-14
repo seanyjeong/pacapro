@@ -10,11 +10,18 @@ import { ReportsHeader } from './reports-header';
 import { ReportsLoadingState } from './reports-loading-state';
 import { ReportsOperationsBoard } from './reports-operations-board';
 import { RevenueAnalysisPanel } from './revenue-analysis-panel';
+import { canSeeProfit } from './reports-utils';
 import { useReportsPageState } from './use-reports-page-state';
 
 export function ReportsPage() {
   const state = useReportsPageState();
   const { branches } = useBranchTree();
+  const hiddenLabels = [
+    !state.access.payments && '학원비',
+    !state.access.incomes && '기타 수입',
+    !state.access.expenses && '지출',
+    !state.access.instructors && '강사',
+  ].filter((label): label is string => Boolean(label));
 
   if (state.loading) {
     return <ReportsLoadingState selectedMonth={state.selectedMonth} />;
@@ -49,22 +56,30 @@ export function ReportsPage() {
           순이익은 그 전체 지출을 뺀 값입니다.
         </p>
       )}
+      {hiddenLabels.length > 0 && (
+        <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground" role="note">
+          권한에 맞춰 {hiddenLabels.join('·')} 정보는 숨겨져 있습니다.
+        </p>
+      )}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[minmax(0,1fr)_300px] xl:items-start">
         <div className="order-1 min-w-0 xl:col-start-1 xl:row-start-1">
-          <ReportSummaryStrip computed={state.computed} stats={state.stats} />
+          <ReportSummaryStrip access={state.access} computed={state.computed} stats={state.stats} />
         </div>
 
         <main className="order-3 min-w-0 space-y-5 xl:col-start-1 xl:row-start-2">
           <div className="grid grid-cols-1 gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
-            <RevenueAnalysisPanel computed={state.computed} stats={state.stats} />
-            <PeopleAnalysisPanel stats={state.stats} />
+            {state.access.payments && (
+              <RevenueAnalysisPanel access={state.access} computed={state.computed} stats={state.stats} />
+            )}
+            <PeopleAnalysisPanel access={state.access} stats={state.stats} />
           </div>
 
-          <ProfitAnalysisPanel computed={state.computed} stats={state.stats} />
+          {canSeeProfit(state.access) && <ProfitAnalysisPanel computed={state.computed} stats={state.stats} />}
         </main>
         <div className="order-2 min-w-0 xl:sticky xl:top-20 xl:col-start-2 xl:row-span-2 xl:row-start-1">
           <ReportsOperationsBoard
+            access={state.access}
             computed={state.computed}
             exportingType={state.exportingType}
             selectedMonth={state.selectedMonth}

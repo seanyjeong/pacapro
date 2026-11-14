@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { Banknote, ChevronLeft, ChevronRight, Download, RefreshCw, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { ReportComputedStats, ReportExportType, ReportStats } from './reports-types';
-import { formatReportAmount, getCurrentYearMonth, shiftReportMonth } from './reports-utils';
+import type { ReportAccess, ReportComputedStats, ReportExportType, ReportStats } from './reports-types';
+import { canSeeProfit, formatReportAmount, getCurrentYearMonth, shiftReportMonth } from './reports-utils';
 
 interface ReportsOperationsBoardProps {
+  access: ReportAccess;
   computed: ReportComputedStats;
   exportingType: ReportExportType | null;
   selectedMonth: string;
@@ -21,6 +22,7 @@ const EXPORT_ACTIONS: Array<{ type: ReportExportType; label: string; shortLabel:
 ];
 
 export function ReportsOperationsBoard({
+  access,
   computed,
   exportingType,
   selectedMonth,
@@ -30,11 +32,12 @@ export function ReportsOperationsBoard({
 }: ReportsOperationsBoardProps) {
   const profitPrefix = computed.netProfit >= 0 ? '+' : '';
   const quickLinks = [
-    { label: '미수납 관리', meta: `${stats.payments.unpaid}건`, href: '/payments?payment_status=pending', icon: Banknote },
-    { label: '수입 내역', meta: `기타 ${stats.otherIncomes.total}건`, href: '/incomes', icon: TrendingUp },
-    { label: '지출 내역', meta: `${stats.expenses.total}건`, href: '/expenses', icon: TrendingDown },
-    { label: '학생 관리', meta: `재원생 ${stats.students.active}명`, href: '/students', icon: Users },
-  ];
+    { label: '미수납 관리', meta: `${stats.payments.unpaid}건`, href: '/payments?payment_status=pending', icon: Banknote, visible: access.payments },
+    { label: '수입 내역', meta: `기타 ${stats.otherIncomes.total}건`, href: '/incomes', icon: TrendingUp, visible: access.incomes },
+    { label: '지출 내역', meta: `${stats.expenses.total}건`, href: '/expenses', icon: TrendingDown, visible: access.expenses },
+    { label: '학생 관리', meta: `재원생 ${stats.students.active}명`, href: '/students', icon: Users, visible: true },
+  ].filter((link) => link.visible);
+  const people = access.instructors ? `${stats.students.active}명 / ${stats.instructors.active}명` : `${stats.students.active}명`;
 
   return (
     <aside
@@ -49,10 +52,16 @@ export function ReportsOperationsBoard({
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Metric label="순이익" testId="reports-metric-net-profit" value={`${profitPrefix}${formatReportAmount(computed.netProfit)}원`} />
-        <Metric label="수납률" testId="reports-metric-collection" value={`${computed.collectionRate}%`} />
-        <Metric label="미수납" testId="reports-metric-unpaid" value={`${formatReportAmount(computed.unpaidAmount)}원`} />
-        <Metric label="운영 인원" testId="reports-metric-people" value={`${stats.students.active}명 / ${stats.instructors.active}명`} />
+        {canSeeProfit(access) && (
+          <Metric label="순이익" testId="reports-metric-net-profit" value={`${profitPrefix}${formatReportAmount(computed.netProfit)}원`} />
+        )}
+        {access.payments && (
+          <>
+            <Metric label="수납률" testId="reports-metric-collection" value={`${computed.collectionRate}%`} />
+            <Metric label="미수납" testId="reports-metric-unpaid" value={`${formatReportAmount(computed.unpaidAmount)}원`} />
+          </>
+        )}
+        <Metric label="운영 인원" testId="reports-metric-people" value={people} />
       </div>
 
       <div className="space-y-2">

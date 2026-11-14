@@ -1,16 +1,19 @@
-import type { ReportStats } from './reports-types';
+import type { ReportAccess, ReportStats } from './reports-types';
 import { formatReportAmount } from './reports-utils';
 
 interface PeopleAnalysisPanelProps {
+  access: ReportAccess;
   stats: ReportStats;
 }
 
-export function PeopleAnalysisPanel({ stats }: PeopleAnalysisPanelProps) {
+export function PeopleAnalysisPanel({ access, stats }: PeopleAnalysisPanelProps) {
   const rows = [
     { label: '재원생', value: `${stats.students.active}명`, marker: 'bg-emerald-500' },
     { label: '휴원생', value: `${stats.students.paused}명`, marker: 'bg-amber-400' },
-    { label: '활동 강사', value: `${stats.instructors.active}명`, marker: 'bg-sky-500' },
   ];
+  if (access.instructors) {
+    rows.push({ label: '활동 강사', value: `${stats.instructors.active}명`, marker: 'bg-sky-500' });
+  }
 
   return (
     <section className="rounded-md border border-border bg-card p-5" aria-labelledby="people-analysis-title">
