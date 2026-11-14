@@ -32,6 +32,8 @@ const { calculateResumePayment } = require('../../services/resumePaymentService'
 // --- 1) 반 학원비 적용: 실제 SQL ---
 function memoryDb() {
     const database = new DatabaseSync(':memory:');
+    database.function('GREATEST', (a, b) => Math.max(a, b));
+    database.function('NOW', () => 'now');
     database.exec(`
         CREATE TABLE academy_settings (id INTEGER PRIMARY KEY, academy_id INTEGER, settings TEXT);
         INSERT INTO academy_settings (academy_id, settings) VALUES (1, '{"exam_tuition":{"weekly_3":300000},"adult_tuition":{}}');
@@ -39,20 +41,27 @@ function memoryDb() {
         INSERT INTO branches (id, academy_id, name) VALUES (1, 1, '수성');
         CREATE TABLE classes (
             id INTEGER PRIMARY KEY, academy_id INTEGER, branch_id INTEGER, class_name TEXT, default_time_slot TEXT,
-            class_days TEXT, instructor_id INTEGER, sort_order INTEGER DEFAULT 0, status TEXT DEFAULT 'active', tuition_by_weekly TEXT
+            class_days TEXT, instructor_id INTEGER, sort_order INTEGER DEFAULT 0, status TEXT DEFAULT 'active', tuition_by_weekly TEXT,
+            tuition_by_weekly_before TEXT
         );
         INSERT INTO classes (id, academy_id, branch_id, class_name, tuition_by_weekly) VALUES
             (8, 1, 1, '정시반', '{"weekly_3":450000}'), (9, 1, 1, '선행반', NULL);
         CREATE TABLE students (
             id INTEGER PRIMARY KEY, academy_id INTEGER, name TEXT, status TEXT, student_type TEXT, weekly_count INTEGER,
             monthly_tuition REAL, discount_rate REAL, final_monthly_tuition REAL, branch_id INTEGER, class_id INTEGER,
-            class_days TEXT, time_slot TEXT, payment_due_day INTEGER, enrollment_date TEXT, rest_start_date TEXT, deleted_at TEXT
+            class_days TEXT, time_slot TEXT, payment_due_day INTEGER, enrollment_date TEXT, rest_start_date TEXT, is_trial INTEGER DEFAULT 0,
+            deleted_at TEXT
         );
         INSERT INTO students (id, academy_id, name, status, student_type, weekly_count, monthly_tuition, discount_rate, branch_id, class_id,
                               class_days, time_slot, enrollment_date, rest_start_date) VALUES
             (1, 1, '정시반 학생', 'active', 'exam', 3, 300000, 10, 1, 8, '[1,3,5]', 'evening', '2026-11-18', '2026-12-01'),
             (2, 1, '선행반 학생', 'active', 'exam', 3, 300000, 10, 1, 9, '[1,3,5]', 'evening', '2026-11-18', '2026-12-01'),
             (3, 1, '반 없는 학생', 'active', 'exam', 3, 300000, 0, NULL, NULL, '[1,3,5]', 'evening', '2026-11-18', '2026-12-01');
+        CREATE TABLE student_payments (
+            id INTEGER PRIMARY KEY, academy_id INTEGER, student_id INTEGER, year_month TEXT, payment_type TEXT, payment_status TEXT,
+            is_prorated INTEGER DEFAULT 0, description TEXT, base_amount REAL, additional_amount REAL DEFAULT 0,
+            carryover_amount REAL DEFAULT 0, final_amount REAL, updated_at TEXT
+        );
     `);
     const query = async (sql, params = []) => {
         const statement = database.prepare(sql);
@@ -168,7 +177,8 @@ test('반 학원비 적용 뒤 반 표가 있는 반 학생은 새 금액으로,
     expect(preview.body.students.map(s => [s.student_id, s.current_tuition, s.new_tuition, s.new_final_tuition]))
         .toEqual([[1, 300000, 450000, 405000]]);
     const applied = await request(branches).post('/paca/branches/classes/8/apply-tuition')
-        .send({ changes: preview.body.students.filter(s => s.changed).map(s => ({ student_id: s.student_id, new_tuition: s.new_tuition })) });
+        .send({ changes: preview.body.students.filter(s => s.changed)
+            .map(s => ({ student_id: s.student_id, current_tuition: s.current_tuition, new_tuition: s.new_tuition })) });
     expect(applied.status).toBe(200);
     const students = readStudents();
     expect(students.map(s => [s.id, s.monthly_tuition, s.discount_rate])).toEqual([[1, 450000, 10], [2, 300000, 10], [3, 300000, 0]]);

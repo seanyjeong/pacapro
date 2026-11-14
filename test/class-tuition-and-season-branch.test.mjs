@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadTypeScript } from './helpers/load-typescript.mjs';
 
-const { resolveTuitionTable } = loadTypeScript('src/lib/utils/tuition-table.ts');
+const { resolveTuitionTable, autoFillTuition } = loadTypeScript('src/lib/utils/tuition-table.ts');
 const { filterSeasonBranchStudents } = loadTypeScript('src/features/season-enroll/season-enroll-utils.ts');
 
 const academy = { exam_tuition: { weekly_3: 300000 }, adult_tuition: { weekly_3: 200000 } };
@@ -23,4 +23,14 @@ test('지점 시즌 등록 후보는 그 지점 학생만, 전 지점 시즌은 
   assert.deepEqual(filterSeasonBranchStudents(students, { branch_id: 3 }).map((s) => s.id), [1]);
   assert.deepEqual(filterSeasonBranchStudents(students, { branch_id: null }).map((s) => s.id), [1, 2, 3, 4]);
   assert.deepEqual(filterSeasonBranchStudents(students, {}).map((s) => s.id), [1, 2, 3, 4]);
+});
+
+test('자동 채움: 반 표 0원 칸은 지금 금액 그대로, 학원 표 0원은 지금처럼 0', () => {
+  const classTable = { weekly_1: 0, weekly_2: 400000, weekly_3: 450000 };
+  assert.equal(autoFillTuition(classTable, 3, true, 300000), 450000);
+  assert.equal(autoFillTuition(classTable, 1, true, 300000), 300000);
+  assert.equal(autoFillTuition(classTable, 0, true, 300000), 300000);
+  assert.equal(autoFillTuition({ weekly_3: 300000 }, 1, false, 280000), 0);
+  assert.equal(autoFillTuition({ weekly_3: 300000 }, 0, false, 280000), 0);
+  assert.equal(autoFillTuition({ weekly_3: 300000 }, 3, false, 280000), 300000);
 });

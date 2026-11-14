@@ -36,7 +36,7 @@ jest.mock('../../config/database', () => {
                 CREATE TABLE classes (
                     id INTEGER PRIMARY KEY, academy_id INTEGER, branch_id INTEGER, class_name TEXT,
                     default_time_slot TEXT DEFAULT 'afternoon', class_days TEXT, instructor_id INTEGER, sort_order INTEGER DEFAULT 0, status TEXT DEFAULT 'active',
-                    tuition_by_weekly TEXT
+                    tuition_by_weekly TEXT, tuition_by_weekly_before TEXT
                 );
                 CREATE TABLE instructors (id INTEGER PRIMARY KEY, academy_id INTEGER, name TEXT);
                 INSERT INTO instructors (id, academy_id, name) VALUES (7, 1, '가강사'), (8, 2, '나강사');
@@ -52,6 +52,7 @@ jest.mock('../../config/database', () => {
                 INSERT INTO student_payments (id, academy_id, student_id, updated_at) VALUES
                     (1, 1, 1, 'kept'), (2, 1, 2, 'kept');
                 CREATE TABLE consultations (id INTEGER PRIMARY KEY, academy_id INTEGER, branch_id INTEGER);
+                CREATE TABLE seasons (id INTEGER PRIMARY KEY, academy_id INTEGER, branch_id INTEGER);
             `);
         }
     };

@@ -55,6 +55,12 @@ describe('학원비 표 찾기', () => {
         expect(weeklyTuitionAmount(resolveTuitionTable(null, 'exam', classTable), 2)).toBe(450000);
         expect(weeklyTuitionAmount(resolveTuitionTable(academySettings, 'exam', classTable), 0)).toBeNull();
     });
+
+    test('반 표가 모두 0원이면 표 없음 — 학원 표를 쓴다', () => {
+        const allZero = JSON.stringify({ weekly_1: 0, weekly_2: 0, weekly_3: 0 });
+        expect(resolveTuitionTable(academySettings, 'exam', allZero)).toBe(academySettings.exam_tuition);
+        expect(weeklyTuitionAmount(resolveTuitionTable(academySettings, 'exam', allZero), 2)).toBe(300000);
+    });
 });
 
 describe('수업일 즉시 변경', () => {
