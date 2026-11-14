@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils/cn';
 import { formatTabletClassDays, formatTabletWon } from '@/features/tablet-students/tablet-student-utils';
 import type { TabletAttendanceSummary, TabletStudentDetail } from './tablet-student-detail-types';
 import { formatTabletEnrollmentDate } from './tablet-student-detail-utils';
+import { getEffectiveMonthlyTuition } from '@/lib/utils/student-helpers';
 
 interface TabletStudentSummaryProps {
   attendanceSummary: TabletAttendanceSummary | null;
@@ -12,7 +13,8 @@ interface TabletStudentSummaryProps {
 }
 
 export function TabletStudentSummary({ attendanceSummary, student }: TabletStudentSummaryProps) {
-  const effectiveTuition = student.final_monthly_tuition || student.monthly_tuition;
+  // 실납부: PC 학생 상세와 같은 함수(월 청구 식 — 할인 반영). 예전엔 할인 전 월 학원비를 그대로 보였다.
+  const effectiveTuition = getEffectiveMonthlyTuition(student);
 
   return (
     <section className="grid gap-3 lg:grid-cols-3">

@@ -57,6 +57,28 @@ function sameDecimal(left: Amount, right: Amount) {
   return a.n * pow10(b.scale) === b.n * pow10(a.scale);
 }
 
+/** 금액 × 분자 / 분모를 정확히 계산해 unit(기본 1,000원) 단위로 내림 — 서버 floorRatio 와 같음 */
+export function floorRatio(amount: Amount, numerator: Amount, denominator: Amount, unit = 1000) {
+  const a = decimal(amount);
+  const n = decimal(numerator);
+  const d = decimal(denominator);
+  if (d.n === ZERO) return NaN; // 서버와 같음
+  return Number(floorDivide(a.n * n.n * pow10(d.scale), pow10(a.scale + n.scale) * d.n * BigInt(unit))) * unit;
+}
+
+/** 금액 × 비율(%) / 100 을 정확히 계산해 unit 단위로 내림 — 서버 floorPercent 와 같음 */
+export function floorPercent(amount: Amount, rate: Amount, unit = 1000) {
+  const a = decimal(amount);
+  const r = decimal(rate);
+  return Number(floorDivide(a.n * r.n, pow10(a.scale + r.scale + 2) * BigInt(unit))) * unit;
+}
+
+/** 월 청구 할인액·최종 금액 — 서버 monthlyBillAmounts 와 같음(할인액 천원 절삭, 최종 천원 절삭) */
+export function monthlyBillAmounts(tuition: Amount, discountRate: Amount, additional: Amount = 0, carryover: Amount = 0) {
+  const discount = floorPercent(tuition, discountRate);
+  return { discount, final: billFinalAmount(tuition, discount, additional, carryover) };
+}
+
 export interface BillAmounts {
   base_amount: Amount;
   discount_amount?: Amount;

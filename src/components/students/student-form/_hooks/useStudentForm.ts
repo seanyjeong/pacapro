@@ -10,6 +10,7 @@ import type { Season } from '@/lib/types/season';
 import { EXAM_ADMISSION_OPTIONS, ADULT_ADMISSION_OPTIONS, isAdvanceAdmissionGrade } from '@/lib/types/student';
 import type { ClassDaySlot } from '@/lib/types/student';
 import { parseClassDaysWithSlots, extractDayNumbers } from '@/lib/utils/student-helpers';
+import { monthlyBillAmounts } from '@/lib/utils/bill-amounts';
 import { STUDENT_PARENT_PHONE_FIELDS } from '@/constants/student-parent-phones';
 import { useBranchTree } from '@/hooks/use-branches';
 import { autoFillTuition, resolveTuitionTable } from '@/lib/utils/tuition-table';
@@ -218,12 +219,11 @@ export function useStudentForm({ mode, initialData, initialIsTrial = false, onSu
       : prev));
   }, [placementClassId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const finalTuition = useMemo(() => {
-    const base = formData.monthly_tuition || 0;
-    const discountRate = formData.discount_rate || 0;
-    const discountAmount = Math.round(base * (discountRate / 100));
-    return base - discountAmount;
-  }, [formData.monthly_tuition, formData.discount_rate]);
+  // 실납부액: 월 청구와 같은 식(서버 monthlyBillAmounts — 할인액 천원 절삭). 예전 반올림 식은 370,000·29% 를 262,700 으로 보였다(청구 263,000)
+  const finalTuition = useMemo(
+    () => monthlyBillAmounts(formData.monthly_tuition || 0, formData.discount_rate || 0).final,
+    [formData.monthly_tuition, formData.discount_rate],
+  );
 
   const formatTimeLabel = (timeRange: string | undefined, defaultRange: string): string => {
     const range = timeRange || defaultRange;

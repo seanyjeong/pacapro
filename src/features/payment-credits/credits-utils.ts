@@ -64,5 +64,6 @@ export function getStudentStatusLabel(value: string) {
 }
 
 export function sumStudentRemaining(students: Array<{ total_remaining: number }>) {
-  return students.reduce((sum, student) => sum + student.total_remaining, 0);
+  // 서버 SUM 은 문자열('18000')로 올 수 있다 — 숫자로 바꿔 더한다(예전엔 이어붙여 180,008,000 으로 보였다)
+  return students.reduce((sum, student) => sum + (Number(student.total_remaining) || 0), 0);
 }

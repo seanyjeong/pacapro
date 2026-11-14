@@ -121,3 +121,37 @@ test('편집 화면: 원 단위가 있는 청구도 바꾸지 않은 칸은 내�
   assert.deepEqual(['base_amount', 'discount_amount', 'additional_amount'].filter((key) => key in payload), []);
   assert.equal(server.billFinalAfterChange(payment, payload), 291000);
 });
+
+// 화면 금액 계산(직접 청구 할인 자동 채움·학생 등록/상세 월 금액·태블릿 실납부·크레딧 합계·복귀 일할)도 서버와 같은 식
+test('floorRatio·floorPercent·monthlyBillAmounts: 프론트 = 서버 (시드 고정 무작위 4,000개)', () => {
+  const rand = random(20261115);
+  const int = (max) => Math.floor(rand() * (max + 1));
+  const rates = () => (rand() < 0.5 ? int(100) : `${int(99)}.${String(int(99)).padStart(2, '0')}`);
+  const money = () => (rand() < 0.6 ? int(2000) * 1000 : `${int(2000000)}.${String(int(99)).padStart(2, '0')}`);
+  for (let i = 0; i < 4000; i++) {
+    const amount = money(), rate = rates(), n = int(31), d = 1 + int(30);
+    const label = `${i} ${amount} ${rate} ${n}/${d}`;
+    assert.equal(front.floorPercent(amount, rate), server.floorPercent(amount, rate), label);
+    assert.equal(front.floorPercent(amount, rate, 1), server.floorPercent(amount, rate, 1), label);
+    assert.equal(front.floorRatio(amount, n, d), server.floorRatio(amount, n, d), label);
+    assert.deepEqual(front.monthlyBillAmounts(amount, rate), server.monthlyBillAmounts(amount, rate), label);
+  }
+});
+
+test('D05·D02·D12·D17: 화면 금액 = 청구 금액', () => {
+  const { getStudentTuitionValues } = loadTypeScript('src/features/payment-editor/payment-editor-utils.ts');
+  const { calculateDiscountedTuition, calculateDiscountAmount, getEffectiveMonthlyTuition } = loadTypeScript('src/lib/utils/student-helpers.ts');
+  // D05: 125,000·32.8% → 할인 41,000(예전 40,000)
+  assert.deepEqual(getStudentTuitionValues({ id: 1, name: 'x', student_number: '1', monthly_tuition: 125000, final_monthly_tuition: null, discount_rate: 32.8 }),
+    { base_amount: 125000, discount_amount: 41000 });
+  assert.equal(server.monthlyBillAmounts(125000, '32.80').discount, 41000);
+  // D02: 370,000·29% → 263,000(예전 262,700), 할인 107,000
+  assert.equal(calculateDiscountedTuition(370000, 29), 263000);
+  assert.equal(calculateDiscountAmount(370000, 29), 107000);
+  assert.equal(getEffectiveMonthlyTuition({ monthly_tuition: '370000.00', discount_rate: '29.00', final_monthly_tuition: null }), server.monthlyBillAmounts(370000, 29).final);
+  // D12: 태블릿 실납부 400,000·29% → 284,000(예전 400,000)
+  assert.equal(getEffectiveMonthlyTuition({ monthly_tuition: 400000, discount_rate: '29.00', final_monthly_tuition: null }), 284000);
+  // D17: 서버 SUM 문자열을 숫자로 더한다(예전 '0180008000' → 180,008,000)
+  const { sumStudentRemaining } = loadTypeScript('src/features/payment-credits/credits-utils.ts');
+  assert.equal(sumStudentRemaining([{ total_remaining: '18000' }, { total_remaining: '8000' }]), 26000);
+});

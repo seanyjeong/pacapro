@@ -16,7 +16,7 @@ import { studentsAPI } from '@/lib/api/students';
 import { getSafeApiToastMessage } from '@/lib/api/error-message';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { truncateToThousands } from '@/lib/utils/payment-helpers';
+import { floorPercent, floorRatio, monthlyBillAmounts } from '@/lib/utils/bill-amounts';
 
 const RESUME_ERROR_MESSAGE = '복귀 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.';
 const CREDIT_CONFLICT_ERROR = 'REST_CREDIT_RECALCULATION_CONFLICT';
@@ -152,8 +152,8 @@ export function StudentResumeModal({
     const monthlyTuition = parseFloat(student.monthly_tuition) || 0;
     const discountRate = parseFloat(student.discount_rate) || 0;
 
-    // 할인 적용된 월 학원비
-    const discountedTuition = monthlyTuition * (1 - discountRate / 100);
+    // 할인 적용된 월 학원비(다음 달부터) — 월 청구와 같은 식(할인액 천원 절삭)
+    const discountedTuition = monthlyBillAmounts(monthlyTuition, discountRate).final;
 
     // 월 총 수업일 (주 횟수 × 4주)
     const monthlyTotal = weeklyCount * 4;
@@ -161,11 +161,11 @@ export function StudentResumeModal({
     // 복귀일~월말 수업 횟수
     const remainingDays = Math.min(countClassDaysUntilMonthEnd(resumeDate, classDaysArray), monthlyTotal);
 
-    // 일할계산 금액 (천원 단위 절삭)
+    // 일할계산 금액 — 서버 복귀 일할(resumePaymentService)과 같은 정확한 곱셈·나눗셈(천원 절삭)
     const baseAmount = resumeDate.endsWith('-01')
       ? monthlyTuition
-      : truncateToThousands(monthlyTuition * (remainingDays / monthlyTotal));
-    const proRatedAmount = baseAmount - truncateToThousands(baseAmount * discountRate / 100);
+      : floorRatio(monthlyTuition, remainingDays, monthlyTotal);
+    const proRatedAmount = baseAmount - floorPercent(baseAmount, discountRate);
 
     return {
       classDays: formatClassDays(student.class_days),
@@ -173,7 +173,7 @@ export function StudentResumeModal({
       remainingDays,
       monthlyTotal,
       proRatedAmount,
-      discountedTuition: Math.round(discountedTuition),
+      discountedTuition,
     };
   }, [student, resumeDate]);
 

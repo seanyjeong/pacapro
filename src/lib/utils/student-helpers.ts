@@ -5,6 +5,7 @@
 
 import type { Student, StudentType, Grade, StudentStatus, ClassDaySlot, ClassDaysValue } from '@/lib/types/student';
 import { WEEKDAY_MAP, STUDENT_TYPE_LABELS, GRADE_LABELS } from '@/lib/types/student';
+import { monthlyBillAmounts } from '@/lib/utils/bill-amounts';
 
 /**
  * 학번 포맷팅
@@ -201,32 +202,30 @@ export function formatClassDaysWithSlots(
 }
 
 /**
- * 할인 적용 금액 계산
- * @example calculateDiscountedTuition(300000, 10) => 270000
+ * 할인 적용 월 금액 — 월 청구와 같은 식(서버 monthlyBillAmounts: 할인액 천원 절삭, 최종 천원 절삭)
+ * @example calculateDiscountedTuition(370000, 29) => 263000 (예전 반올림 식은 262,700)
  */
 export function calculateDiscountedTuition(tuition: number | string, discountRate: number | string): number {
-  const t = typeof tuition === 'string' ? parseFloat(tuition) : tuition;
-  const d = typeof discountRate === 'string' ? parseFloat(discountRate) : discountRate;
-  return Math.round(t * (1 - d / 100));
+  return monthlyBillAmounts(tuition, discountRate).final;
 }
 
-export function getEffectiveMonthlyTuition(
-  student: Pick<Student, 'discount_rate' | 'final_monthly_tuition' | 'monthly_tuition'>
-): number {
-  if (student.final_monthly_tuition !== null && student.final_monthly_tuition !== '') {
-    return Number.parseFloat(student.final_monthly_tuition) || 0;
+export function getEffectiveMonthlyTuition(student: {
+  discount_rate?: number | string | null;
+  final_monthly_tuition?: number | string | null;
+  monthly_tuition?: number | string | null;
+}): number {
+  if (student.final_monthly_tuition !== null && student.final_monthly_tuition !== undefined && student.final_monthly_tuition !== '') {
+    return Number.parseFloat(String(student.final_monthly_tuition)) || 0;
   }
-  return calculateDiscountedTuition(student.monthly_tuition, student.discount_rate);
+  return calculateDiscountedTuition(student.monthly_tuition ?? 0, student.discount_rate ?? 0);
 }
 
 /**
- * 할인 금액 계산
- * @example calculateDiscountAmount(300000, 10) => 30000
+ * 할인 금액 — 월 청구와 같은 식(천원 절삭)
+ * @example calculateDiscountAmount(370000, 29) => 107000
  */
 export function calculateDiscountAmount(tuition: number | string, discountRate: number | string): number {
-  const t = typeof tuition === 'string' ? parseFloat(tuition) : tuition;
-  const d = typeof discountRate === 'string' ? parseFloat(discountRate) : discountRate;
-  return Math.round(t * (d / 100));
+  return monthlyBillAmounts(tuition, discountRate).discount;
 }
 
 /**

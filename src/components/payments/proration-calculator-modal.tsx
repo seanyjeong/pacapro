@@ -25,6 +25,7 @@ import apiClient from '@/lib/api/client';
 import { useBranchTree } from '@/hooks/use-branches';
 import { getKoreaDateText } from '@/lib/utils/lifecycle-billing';
 import { resolveTuitionTable } from '@/lib/utils/tuition-table';
+import { floorRatio } from '@/lib/utils/bill-amounts';
 
 interface ProrationCalculatorModalProps {
   open: boolean;
@@ -45,11 +46,6 @@ const DAY_OPTIONS = [
 
 function getTuitionForWeeklyCount(tuitionTable: TuitionTable, weeklyCount: number) {
   return tuitionTable[String(weeklyCount)] || tuitionTable[`weekly_${weeklyCount}`] || 0;
-}
-
-// backend truncateToThousands와 동일 (천원 단위 절삭)
-function truncateToThousands(value: number) {
-  return Math.floor(value / 1000) * 1000;
 }
 
 export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorModalProps) {
@@ -118,7 +114,8 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
     }
 
     if (totalClassDays > 0 && classDaysFromEnroll > 0) {
-      const amount = truncateToThousands((tuition / totalClassDays) * classDaysFromEnroll);
+      // 서버 첫 달 일할과 같은 정확한 곱셈·나눗셈(천원 절삭) — 예전 (학원비 ÷ 회수) × 회수 소수 계산은 천원이 어긋날 수 있었다
+      const amount = floorRatio(tuition, classDaysFromEnroll, totalClassDays);
       return {
         month,
         enrollDay,
@@ -128,7 +125,7 @@ export function ProrationCalculatorModal({ open, onClose }: ProrationCalculatorM
       };
     }
     // 수업요일 미선택 시 일수 기준 (backend와 동일 fallback)
-    const amount = truncateToThousands((tuition * remainingDays) / lastDayOfMonth);
+    const amount = floorRatio(tuition, remainingDays, lastDayOfMonth);
     return {
       month,
       enrollDay,

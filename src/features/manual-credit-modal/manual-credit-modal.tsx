@@ -19,6 +19,7 @@ import { ManualCreditCreateForm } from './manual-credit-create-form';
 import { ManualCreditDeleteDialog } from './manual-credit-delete-dialog';
 import { ManualCreditList } from './manual-credit-list';
 import { DAY_NAMES, countClassDaysInPeriod, getApiErrorMessage } from './manual-credit-utils';
+import { floorRatio } from '@/lib/utils/bill-amounts';
 
 const QUIET_REQUEST = { suppressErrorToast: true };
 
@@ -54,10 +55,8 @@ export function ManualCreditModal({
   const [deleteTarget, setDeleteTarget] = useState<ManualCredit | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const perClassFee = useMemo(() => {
-    const fee = monthlyTuition / (weeklyCount * 4);
-    return Math.floor(fee / 1000) * 1000;
-  }, [monthlyTuition, weeklyCount]);
+  // 1회 수업료: 서버(POST /students/:id/manual-credit)와 같은 정확한 나눗셈(천원 절삭)
+  const perClassFee = useMemo(() => floorRatio(monthlyTuition, 1, weeklyCount * 4), [monthlyTuition, weeklyCount]);
 
   const dateCalculation = useMemo(() => {
     if (!startDate || !endDate || classDays.length === 0) {

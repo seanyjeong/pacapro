@@ -1,5 +1,5 @@
 import type { Payment, PaymentFormData } from '@/lib/types/payment';
-import { billFinalAfterChange, billFinalAmount } from '@/lib/utils/bill-amounts';
+import { billFinalAfterChange, billFinalAmount, monthlyBillAmounts } from '@/lib/utils/bill-amounts';
 import { getCurrentYearMonth, getNextDueDate } from '@/lib/utils/payment-helpers';
 import type { PaymentFormStudent } from './payment-editor-types';
 
@@ -38,9 +38,8 @@ export function getStudentTuitionValues(student: PaymentFormStudent | undefined)
   if (typeof finalMonthlyTuition === 'number' && finalMonthlyTuition >= 0 && finalMonthlyTuition <= baseAmount) {
     return { base_amount: baseAmount, discount_amount: baseAmount - Math.floor(finalMonthlyTuition) };
   }
-  const discountRate = Number(student.discount_rate) || 0;
-  const discountAmount = Math.floor((baseAmount * (discountRate / 100)) / 1000) * 1000;
-  return { base_amount: baseAmount, discount_amount: discountAmount };
+  // 월 청구와 같은 할인액(서버 monthlyBillAmounts) — 예전 소수 곱셈은 125,000 × 32.8% 를 40,000 으로 잘랐다(맞는 값 41,000)
+  return { base_amount: baseAmount, discount_amount: monthlyBillAmounts(baseAmount, student.discount_rate).discount };
 }
 
 const AMOUNT_FIELDS = ['base_amount', 'discount_amount', 'additional_amount'] as const;

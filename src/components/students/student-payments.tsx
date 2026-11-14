@@ -18,6 +18,7 @@ import { formatDate } from '@/lib/utils/student-helpers';
 import { REST_CREDIT_TYPE_LABELS, REST_CREDIT_STATUS_LABELS, parseClassDays } from '@/lib/types/student';
 import { studentsAPI } from '@/lib/api/students';
 import { ManualCreditModal } from './manual-credit-modal';
+import { getApiErrorMessage } from '@/features/manual-credit-modal/manual-credit-utils';
 import { PrepaidPaymentModal } from '@/components/payments/prepaid-payment-modal';
 import { EarlyPayModal } from '@/components/payments/early-pay-modal';
 import { StudentPaymentHistory } from './student-payment-history';
@@ -139,14 +140,15 @@ export function StudentPaymentsComponent({
 
     try {
       setApplying(true);
-      const result = await studentsAPI.applyCredit(studentId, selectedCredit.id, applyYearMonth);
+      const result = await studentsAPI.applyCredit(studentId, selectedCredit.id, applyYearMonth, { suppressErrorToast: true });
       toast.success(result.message || '크레딧을 적용했습니다.');
       setApplyModalOpen(false);
       setSelectedCredit(null);
       await refreshPaymentSurface();
     } catch (err: unknown) {
       console.warn('크레딧 적용에 실패했습니다.', err);
-      toast.error('크레딧을 적용하지 못했습니다. 잠시 후 다시 시도해주세요.');
+      // 서버 안내(예: 다른 창에서 먼저 적용해 "이미 사용 완료된 크레딧입니다.")를 그대로 보여 준다 — 크레딧 관리 창과 같음
+      toast.error(getApiErrorMessage(err, '크레딧을 적용하지 못했습니다. 잠시 후 다시 시도해주세요.'));
     } finally {
       setApplying(false);
     }

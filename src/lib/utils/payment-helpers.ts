@@ -6,13 +6,6 @@
 import type { Payment, UnpaidPayment } from '@/lib/types/payment';
 
 /**
- * 금액을 천원 단위로 절삭 (백원 단위 버림)
- */
-export function truncateToThousands(amount: number): number {
-  return Math.floor(amount / 1000) * 1000;
-}
-
-/**
  * 학원비 금액 포맷팅 (정수만, 소수점 없음)
  */
 export function formatPaymentAmount(amount: number): string {

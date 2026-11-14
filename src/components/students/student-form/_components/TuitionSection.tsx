@@ -5,6 +5,7 @@ import type { StudentFormData } from '@/lib/types/student';
 import type { AcademySettings } from '../_types';
 import { MoneyInput } from '@/components/ui/money-input';
 import { resolveTuitionTable } from '@/lib/utils/tuition-table';
+import { monthlyBillAmounts } from '@/lib/utils/bill-amounts';
 
 interface TuitionSectionProps {
   isTrial: boolean;
@@ -60,7 +61,7 @@ export function TuitionSection({
             <label className="mb-2 block text-sm font-semibold text-foreground">할인율 (%)</label>
             <input type="number" value={formData.discount_rate || ''}
               onChange={(e) => handleChange('discount_rate', e.target.value === '' ? 0 : parseFloat(e.target.value))}
-              placeholder="0" min="0" max="100" step="1"
+              placeholder="0" min="0" max="100" step="0.01"
               className="w-full min-h-11 rounded-xl border border-transparent bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10 text-right" />
           </div>
 
@@ -105,7 +106,7 @@ export function TuitionSection({
           {(formData.discount_rate || 0) > 0 && (
             <div className="flex justify-between items-center text-destructive mt-2">
               <span>할인 ({formData.discount_rate}%)</span>
-              <span>-{formatCurrency(Math.round((formData.monthly_tuition || 0) * ((formData.discount_rate || 0) / 100)))}</span>
+              <span>-{formatCurrency(monthlyBillAmounts(formData.monthly_tuition || 0, formData.discount_rate || 0).discount)}</span>
             </div>
           )}
           <div className="flex justify-between items-center mt-3 pt-3 border-t border-border/60">
