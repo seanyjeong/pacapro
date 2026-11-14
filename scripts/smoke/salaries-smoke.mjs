@@ -199,6 +199,11 @@ async function openSalariesPage(page) {
   }
 }
 
+// 새 디자인: 넓은 화면(xl 이상)은 표 줄(tr), 좁은 화면은 카드(article)로 보인다. 지금 보이는 쪽을 고른다.
+function salaryRow(page, text) {
+  return page.locator(':is(article, tbody tr):visible', { hasText: text });
+}
+
 async function runNormal(browser) {
   const state = makeState();
   const defaultMonth = defaultSalaryYearMonth();
@@ -209,9 +214,9 @@ async function runNormal(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openSalariesPage(page);
-  await page.locator('header').getByText('Finance Desk').waitFor();
-  await page.locator('article:has-text("김강사")').waitFor();
-  await page.locator('article:has-text("박트레이너")').waitFor();
+  // 영어 소제목 'Finance Desk' 는 새 디자인에서 없앴다.
+  await salaryRow(page, '김강사').waitFor();
+  await salaryRow(page, '박트레이너').waitFor();
   await assertOperationsBoard(page);
   await page.getByRole('button', { name: '김강사 급여 명세서 보기' }).waitFor();
   const instructorLink = page.getByRole('link', { name: '김강사 강사 상세 보기' });
@@ -223,14 +228,14 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'salaries desktop');
   await page.screenshot({ path: '/Users/etlab/paca-salaries-desktop.png', fullPage: true });
 
-  const board = page.getByTestId('salaries-operations-board');
-  await board.getByRole('button', { name: '지급 대기 2건' }).click();
+  // 새 디자인: '급여 작업 보드'의 지급 대기·전체 칸은 위 '급여 요약' 줄의 같은 test id 칸(누르면 거르기)이 되었다.
+  await page.getByTestId('salaries-metric-pending').getByRole('button', { name: /2건/ }).click();
   await waitForState(() => hasSalaryHit(state, { ...defaultMonth, status: 'pending' }), 'pending salary filter');
-  await page.locator('article:has-text("김강사")').waitFor();
-  await page.locator('article:has-text("이코치")').waitFor({ state: 'hidden' });
-  await board.getByRole('button', { name: '전체 2건' }).click();
+  await salaryRow(page, '김강사').waitFor();
+  await salaryRow(page, '이코치').waitFor({ state: 'hidden' });
+  await page.getByTestId('salaries-metric-total').getByRole('button', { name: /2건/ }).click();
   await waitForState(() => hasSalaryHit(state, defaultMonth), 'all salary filter');
-  await page.locator('article:has-text("이코치")').waitFor();
+  await salaryRow(page, '이코치').waitFor();
   await page.locator('header').getByRole('button', { name: '엑셀' }).click();
   await waitForState(
     () => state.hits.some((hit) =>
@@ -249,7 +254,7 @@ async function runNormal(browser) {
   await waitForState(() => hasSalaryHit(state, defaultMonth), 'next salary month');
   await page.getByLabel('조회 월').filter({ hasText: yearMonthText(defaultMonth) }).waitFor();
 
-  await page.getByTestId('salaries-operations-board').getByRole('button', { name: /모두 지급처리 \(2건\)/ }).click();
+  await page.locator('header').getByRole('button', { name: /모두 지급처리 \(2건\)/ }).click();
   await page.getByLabel('비밀번호').fill('owner-pass');
   await page.getByRole('button', { name: '확인' }).click();
   await page.getByText('급여 일괄 지급이 완료되었습니다.').waitFor();
@@ -275,13 +280,13 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await assertOperationsBoard(page, { paid: '3건', pending: '0건', unpaid: '0원', bulkAction: '모두 지급처리 (0건)' });
-  await page.locator('article:has-text("김강사")').waitFor();
+  await salaryRow(page, '김강사').waitFor();
   await page.getByRole('button', { name: '김강사 급여 명세서 보기' }).waitFor();
   await page.getByRole('link', { name: '김강사 강사 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'salaries mobile');
   await assertNoHorizontalOverflow(page, 'salaries mobile');
   await page.screenshot({ path: '/Users/etlab/paca-salaries-mobile.png', fullPage: true });
-  await page.locator('article:has-text("김강사")').scrollIntoViewIfNeeded();
+  await salaryRow(page, '김강사').scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/Users/etlab/paca-salaries-mobile-list.png', fullPage: true });
 
   await context.close();
@@ -297,15 +302,16 @@ async function assertOperationsBoard(page, options = {}) {
     unpaid: '1,873,750원',
     ...options,
   };
-  const board = page.getByTestId('salaries-operations-board');
-  await board.getByRole('heading', { name: '급여 작업 보드' }).waitFor();
-  await board.getByTestId('salaries-metric-total').getByText(expected.total).waitFor();
-  await board.getByTestId('salaries-metric-pending').getByText(expected.pending).waitFor();
-  await board.getByTestId('salaries-metric-unpaid').getByText(expected.unpaid).waitFor();
-  await board.getByTestId('salaries-metric-paid').getByText(expected.paid).waitFor();
-  await board.getByRole('button', { name: '지급 대기 보기' }).waitFor();
-  await board.getByRole('button', { name: '지급 완료 보기' }).waitFor();
-  await board.getByRole('button', { name: expected.bulkAction }).waitFor();
+  // 새 디자인: '급여 작업 보드'는 '급여 요약' 숫자 줄(같은 test id, 누르면 거르기)이 되고,
+  // 모두 지급처리 버튼은 화면 머리로 옮겨졌다. 미지급 금액은 지급 대기 칸 아래 설명이다.
+  await page.getByRole('region', { name: '급여 요약' }).waitFor();
+  await page.getByTestId('salaries-metric-total').getByText(expected.total, { exact: true }).waitFor();
+  await page.getByTestId('salaries-metric-pending').getByText(expected.pending, { exact: true }).waitFor();
+  await page.getByTestId('salaries-metric-unpaid').getByText(expected.unpaid).waitFor();
+  await page.getByTestId('salaries-metric-paid').getByText(expected.paid, { exact: true }).waitFor();
+  await page.getByTestId('salaries-metric-pending').getByRole('button').waitFor();
+  await page.getByTestId('salaries-metric-paid').getByRole('button').waitFor();
+  await page.locator('header').getByRole('button', { name: expected.bulkAction }).waitFor();
 }
 
 async function runError(browser) {

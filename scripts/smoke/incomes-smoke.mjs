@@ -121,6 +121,15 @@ async function openIncomesPage(page) {
   }
 }
 
+// 새 디자인: 넓은 화면(lg 이상)은 표 줄(tr), 좁은 화면은 카드(article)로 보인다. 지금 보이는 쪽을 고른다.
+function incomeRow(page, text) {
+  return page.locator(':is(article, tbody tr):visible', { hasText: text });
+}
+
+function incomeMetricButton(page, key) {
+  return page.getByTestId(`incomes-metric-${key}`).getByRole('button');
+}
+
 async function runNormal(browser) {
   const state = makeState();
   const context = await createAuthedContext(browser, { width: 1365, height: 900 });
@@ -134,21 +143,21 @@ async function runNormal(browser) {
   });
 
   await openIncomesPage(page);
-  await page.locator('header').getByText('Finance Desk').waitFor();
+  // 영어 소제목 'Finance Desk' 는 새 디자인에서 없앴다.
   await assertOperationsBoard(page);
-  await page.locator('article:has-text("박민수")').waitFor();
-  await page.locator('article:has-text("체험 특강 수입")').waitFor();
-  const operationsBoard = page.getByTestId('incomes-operations-board');
-  await operationsBoard.getByRole('button', { name: '학원비 수입 보기' }).click();
-  await page.locator('article:has-text("박민수")').waitFor();
-  await page.locator('article:has-text("체험 특강 수입")').waitFor({ state: 'hidden' });
-  await operationsBoard.getByRole('button', { name: '기타 수입 보기' }).click();
-  await page.locator('article:has-text("체험 특강 수입")').waitFor();
-  await page.locator('article:has-text("박민수")').waitFor({ state: 'hidden' });
-  await operationsBoard.getByRole('button', { name: '전체 수입 보기' }).click();
-  await page.locator('article:has-text("박민수")').waitFor();
-  await page.locator('article:has-text("체험 특강 수입")').waitFor();
-  const tuitionRow = page.locator('article:has-text("박민수")');
+  await incomeRow(page, '박민수').waitFor();
+  await incomeRow(page, '체험 특강 수입').waitFor();
+  // 옛 보드의 '학원비/기타/전체 수입 보기' 숫자 칸은 위 '수입 요약' 줄의 같은 test id 칸(누르면 목록 구분이 바뀜)이 되었다.
+  await incomeMetricButton(page, 'tuition').click();
+  await incomeRow(page, '박민수').waitFor();
+  await incomeRow(page, '체험 특강 수입').waitFor({ state: 'hidden' });
+  await incomeMetricButton(page, 'other').click();
+  await incomeRow(page, '체험 특강 수입').waitFor();
+  await incomeRow(page, '박민수').waitFor({ state: 'hidden' });
+  await incomeMetricButton(page, 'total').click();
+  await incomeRow(page, '박민수').waitFor();
+  await incomeRow(page, '체험 특강 수입').waitFor();
+  const tuitionRow = incomeRow(page, '박민수');
   const paymentLink = tuitionRow.getByRole('link', { name: '박민수 결제 상세 보기' });
   await paymentLink.waitFor();
   if ((await paymentLink.getAttribute('href')) !== '/payments/701') {
@@ -159,12 +168,12 @@ async function runNormal(browser) {
   if ((await studentLink.getAttribute('href')) !== '/students/41') {
     throw new Error('missing student detail link for tuition income row');
   }
-  await page.locator('article:has-text("체험 특강 수입")').getByRole('button', { name: '체험 특강 수입 기타수입 상세 보기' }).waitFor();
+  await incomeRow(page, '체험 특강 수입').getByRole('button', { name: '체험 특강 수입 기타수입 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'incomes desktop');
   await assertNoHorizontalOverflow(page, 'incomes desktop');
   await page.screenshot({ path: '/Users/etlab/paca-incomes-desktop.png', fullPage: true });
 
-  await page.getByTestId('incomes-operations-board').getByRole('button', { name: '기타수입 등록' }).click();
+  await page.getByRole('button', { name: '기타수입 등록', exact: true }).click();
   await page.getByLabel('날짜').fill('2026-06-18');
   await page.getByLabel('카테고리').selectOption('beverage');
   await page.getByLabel('금액').fill('45000');
@@ -177,10 +186,10 @@ async function runNormal(browser) {
   if (state.createdPayload?.category !== 'beverage') throw new Error(`unexpected category ${state.createdPayload?.category}`);
 
   await page.getByLabel('수입 검색', { exact: true }).fill('이서연');
-  await page.locator('article:has-text("이서연")').waitFor();
-  await page.locator('article:has-text("박민수")').waitFor({ state: 'hidden' });
+  await incomeRow(page, '이서연').waitFor();
+  await incomeRow(page, '박민수').waitFor({ state: 'hidden' });
   await page.getByLabel('수입 검색', { exact: true }).fill('');
-  await page.locator('article:has-text("입시 설명회 참가비")').getByRole('button', { name: '기타 수입 삭제' }).click();
+  await incomeRow(page, '입시 설명회 참가비').getByRole('button', { name: '기타 수입 삭제' }).click();
   await page.getByRole('alertdialog').getByRole('heading', { name: '기타 수입 삭제' }).waitFor();
   await page.getByRole('alertdialog').getByRole('button', { name: '삭제' }).click();
   await page.getByText('삭제되었습니다.').waitFor();
@@ -192,16 +201,16 @@ async function runNormal(browser) {
   await assertOperationsBoard(page, { other: '2건', ratio: '82%', total: '1,285,000원' });
   await page.getByTestId('incomes-operations-board').scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/Users/etlab/paca-incomes-mobile-board.png', fullPage: false });
-  await page.locator('article:has-text("박민수")').waitFor();
-  await page.locator('article:has-text("체험 특강 수입")').waitFor();
-  const tuitionCard = page.locator('article:has-text("박민수")');
+  await incomeRow(page, '박민수').waitFor();
+  await incomeRow(page, '체험 특강 수입').waitFor();
+  const tuitionCard = incomeRow(page, '박민수');
   await tuitionCard.getByRole('link', { name: '박민수 결제 상세 보기' }).waitFor();
   await tuitionCard.getByRole('link', { name: '박민수 학생 상세 보기' }).waitFor();
-  await page.locator('article:has-text("체험 특강 수입")').getByRole('button', { name: '체험 특강 수입 기타수입 상세 보기' }).waitFor();
+  await incomeRow(page, '체험 특강 수입').getByRole('button', { name: '체험 특강 수입 기타수입 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'incomes mobile');
   await assertNoHorizontalOverflow(page, 'incomes mobile');
   await page.screenshot({ path: '/Users/etlab/paca-incomes-mobile.png', fullPage: true });
-  await page.locator('article:has-text("체험 특강 수입")').scrollIntoViewIfNeeded();
+  await incomeRow(page, '체험 특강 수입').scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/Users/etlab/paca-incomes-mobile-list.png', fullPage: true });
 
   await context.close();
@@ -216,15 +225,17 @@ async function assertOperationsBoard(page, options = {}) {
     tuition: '2건',
     ...options,
   };
+  // 새 디자인: '수입 작업 보드'를 나눴다. 숫자는 위 '수입 요약' 줄, 목록 구분(전체·학원비 수납) 버튼은
+  // 목록 위 필터 줄(같은 test id), 기타수입 등록 버튼은 화면 머리로 옮겨졌다.
   const board = page.getByTestId('incomes-operations-board');
-  await board.getByRole('heading', { name: '수입 작업 보드' }).waitFor();
-  await board.getByTestId('incomes-metric-total').getByText(expected.total).waitFor();
-  await board.getByTestId('incomes-metric-tuition').getByText(expected.tuition).waitFor();
-  await board.getByTestId('incomes-metric-other').getByText(expected.other).waitFor();
-  await board.getByTestId('incomes-metric-ratio').getByText(expected.ratio).waitFor();
-  await board.getByRole('button', { name: '전체 보기' }).waitFor();
-  await board.getByRole('button', { name: '학원비 보기' }).waitFor();
-  await board.getByRole('button', { name: '기타수입 등록' }).waitFor();
+  await page.getByRole('region', { name: '수입 요약' }).waitFor();
+  await page.getByTestId('incomes-metric-total').getByText(expected.total).waitFor();
+  await page.getByTestId('incomes-metric-tuition').getByText(expected.tuition).waitFor();
+  await page.getByTestId('incomes-metric-other').getByText(expected.other).waitFor();
+  await page.getByTestId('incomes-metric-ratio').getByText(expected.ratio, { exact: true }).waitFor();
+  await board.getByRole('button', { name: /^전체 \(\d+\)$/ }).waitFor();
+  await board.getByRole('button', { name: /^학원비 수납 \(\d+\)$/ }).waitFor();
+  await page.getByRole('button', { name: '기타수입 등록', exact: true }).waitFor();
 }
 
 async function runError(browser) {

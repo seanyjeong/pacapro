@@ -160,24 +160,25 @@ async function runNormal(browser) {
   await page.getByText('450,000원').first().waitFor();
   await page.getByText('카드 승인 취소').waitFor();
 
-  await page.getByRole('button', { name: '납부 기록' }).first().click();
+  // 버튼 이름 '납부 기록'은 '납부하기'로 바뀌었다(224944e, 새 디자인 이전).
+  await page.getByRole('button', { name: '납부하기' }).first().click();
   const paymentAmountInput = page.getByLabel('납부 금액');
   await paymentAmountInput.waitFor();
   if ((await paymentAmountInput.inputValue()) !== '450,000') {
     throw new Error(`initial payment amount did not use remaining amount: ${await paymentAmountInput.inputValue()}`);
   }
   await paymentAmountInput.fill('100000');
-  await page.locator('form').getByRole('button', { name: '납부 기록' }).click();
-  await page.getByText('납부가 기록되었습니다.').waitFor();
+  await page.locator('form').getByRole('button', { name: '납부하기' }).click();
+  await page.getByText('납부가 완료되었습니다.').waitFor();
   if (state.payPayload?.paid_amount !== 100000) throw new Error(`unexpected payment payload ${JSON.stringify(state.payPayload)}`);
   if (state.payPayload?.payment_method !== 'account') throw new Error(`unexpected payment method ${JSON.stringify(state.payPayload)}`);
   await page.getByText('350,000원').first().waitFor();
-  await page.getByRole('button', { name: '납부 기록' }).first().click();
+  await page.getByRole('button', { name: '납부하기' }).first().click();
   await paymentAmountInput.waitFor();
   if ((await paymentAmountInput.inputValue()) !== '350,000') {
     throw new Error(`reopened payment amount did not reset to remaining amount: ${await paymentAmountInput.inputValue()}`);
   }
-  await page.getByRole('button', { name: '납부 기록 닫기' }).click();
+  await page.getByRole('button', { name: '납부하기 닫기' }).click();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });

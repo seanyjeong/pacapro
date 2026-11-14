@@ -143,7 +143,8 @@ async function runNormal(browser) {
   await page.getByRole('button', { name: '상태 필터' }).click();
   await Promise.all([
     page.waitForResponse((response) => response.url().includes('/payments/credits?status=pending')),
-    page.getByLabel('크레딧 필터').getByText('대기').click(),
+    // 필터 줄에 '대기 크레딧 보기' 버튼도 함께 있어 선택 목록의 '대기' 항목을 정확히 고른다.
+    page.getByLabel('크레딧 필터').getByText('대기', { exact: true }).click(),
   ]);
   if (!state.hits.some((hit) => hit.includes('/payments/credits?status=pending'))) {
     throw new Error(`missing status filter request: ${state.hits.join(' | ')}`);
@@ -161,17 +162,19 @@ async function runNormal(browser) {
   return { state, diagnostics };
 }
 
+// 새 디자인: '크레딧 작업 보드'를 나눠 옮겼다. 잔여·대기·보유 학생 숫자는 위 요약 줄,
+// 대기·부분적용·전체 보기 버튼은 목록 필터 줄, 보유 학생 링크·유형 수는 오른쪽 '보유 학생'·'유형 요약' 카드.
 async function assertOperationsBoard(page) {
-  const board = page.getByTestId('credits-operations-board');
-  await board.getByRole('heading', { name: '크레딧 작업 보드' }).waitFor();
-  await board.getByTestId('credits-metric-remaining').getByText('170,000원').waitFor();
-  await board.getByTestId('credits-metric-pending').getByText('50,000원').waitFor();
-  await board.getByTestId('credits-metric-students').getByText('2명').waitFor();
-  await board.getByTestId('credits-metric-types').getByText('2개').waitFor();
-  await board.getByRole('button', { name: '대기 크레딧 보기' }).waitFor();
-  await board.getByRole('button', { name: '부분적용 보기' }).waitFor();
-  await board.getByRole('button', { name: '전체 크레딧 보기' }).waitFor();
-  const boardStudentLink = board.getByRole('link', { name: '박민수 학생 상세 보기' });
+  await page.getByRole('region', { name: '크레딧 요약' }).waitFor();
+  await page.getByTestId('credits-metric-remaining').getByText('170,000원').waitFor();
+  await page.getByTestId('credits-metric-pending').getByText('50,000원').waitFor();
+  await page.getByTestId('credits-metric-students').getByText('2명').waitFor();
+  await page.getByTestId('credits-metric-types').getByText('2개').waitFor();
+  const filterBar = page.getByLabel('크레딧 필터');
+  await filterBar.getByRole('button', { name: '대기 크레딧 보기' }).waitFor();
+  await filterBar.getByRole('button', { name: '부분적용 보기' }).waitFor();
+  await filterBar.getByRole('button', { name: '전체 크레딧 보기' }).waitFor();
+  const boardStudentLink = page.getByTestId('credits-board-students').getByRole('link', { name: '박민수 학생 상세 보기' });
   await boardStudentLink.waitFor();
   if ((await boardStudentLink.getAttribute('href')) !== '/students/41') {
     throw new Error('missing credit board student link');

@@ -108,6 +108,11 @@ async function openExpensesPage(page) {
   }
 }
 
+// 새 디자인: 넓은 화면(lg 이상)은 표 줄(tr), 좁은 화면은 카드(article)로 보인다. 지금 보이는 쪽을 고른다.
+function expenseRow(page, text) {
+  return page.locator(':is(article, tbody tr):visible', { hasText: text });
+}
+
 async function runNormal(browser) {
   const state = makeState();
   const context = await createAuthedContext(browser, { width: 1365, height: 900 });
@@ -121,30 +126,30 @@ async function runNormal(browser) {
   });
 
   await openExpensesPage(page);
-  await page.locator('header').getByText('Finance Desk').waitFor();
+  // 영어 소제목 'Finance Desk' 는 새 디자인에서 없앴다.
   await assertOperationsBoard(page);
-  await page.locator('article:has-text("강남 지점 월세")').waitFor();
-  await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor();
+  await expenseRow(page, '강남 지점 월세').waitFor();
+  await expenseRow(page, '박민수 휴원 환불 대기').waitFor();
   const operationsBoard = page.getByTestId('expenses-operations-board');
   await operationsBoard.getByRole('button', { name: '환불 대기 지출 보기' }).click();
-  await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor();
-  await page.locator('article:has-text("강남 지점 월세")').waitFor({ state: 'hidden' });
+  await expenseRow(page, '박민수 휴원 환불 대기').waitFor();
+  await expenseRow(page, '강남 지점 월세').waitFor({ state: 'hidden' });
   if ((await page.getByLabel('지출 검색').inputValue()) !== '환불') {
     throw new Error('refund metric did not sync the expense search input');
   }
   await operationsBoard.getByRole('button', { name: '급여 연동 지출 보기' }).click();
-  await page.locator('article:has-text("5월 강사 급여")').waitFor();
-  await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor({ state: 'hidden' });
+  await expenseRow(page, '5월 강사 급여').waitFor();
+  await expenseRow(page, '박민수 휴원 환불 대기').waitFor({ state: 'hidden' });
   if ((await page.getByLabel('지출 검색').inputValue()) !== '급여') {
     throw new Error('salary metric did not sync the expense search input');
   }
   await operationsBoard.getByRole('button', { name: '전체 지출 보기' }).click();
-  await page.locator('article:has-text("강남 지점 월세")').waitFor();
-  await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor();
+  await expenseRow(page, '강남 지점 월세').waitFor();
+  await expenseRow(page, '박민수 휴원 환불 대기').waitFor();
   if ((await page.getByLabel('지출 검색').inputValue()) !== '') {
     throw new Error('total metric did not clear the expense search input');
   }
-  const salaryRow = page.locator('article:has-text("5월 강사 급여")');
+  const salaryRow = expenseRow(page, '5월 강사 급여');
   await salaryRow.getByRole('button', { name: '5월 강사 급여 지출 상세 보기' }).waitFor();
   const salaryLink = salaryRow.getByRole('link', { name: '5월 강사 급여 급여 명세서 보기' });
   await salaryLink.waitFor();
@@ -164,7 +169,7 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'expenses desktop');
   await page.screenshot({ path: '/Users/etlab/paca-expenses-desktop.png', fullPage: true });
 
-  await page.getByTestId('expenses-operations-board').getByRole('button', { name: '지출 등록' }).click();
+  await page.getByRole('button', { name: '지출 등록', exact: true }).click();
   await page.getByLabel('지출일').fill('2026-06-18');
   await page.getByLabel('카테고리').selectOption('supplies');
   await page.getByLabel('금액').fill('85000');
@@ -181,18 +186,18 @@ async function runNormal(browser) {
   }
 
   await page.getByLabel('지출 검색').fill('월세');
-  await page.locator('article:has-text("강남 지점 월세")').waitFor();
-  await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor({ state: 'hidden' });
+  await expenseRow(page, '강남 지점 월세').waitFor();
+  await expenseRow(page, '박민수 휴원 환불 대기').waitFor({ state: 'hidden' });
   await page.getByLabel('지출 검색').fill('');
-  await page.locator('article:has-text("박민수 휴원 환불 대기")').waitFor();
+  await expenseRow(page, '박민수 휴원 환불 대기').waitFor();
 
-  await page.locator('article:has-text("박민수 휴원 환불 대기")').getByRole('button', { name: '환불 완료' }).click();
+  await expenseRow(page, '박민수 휴원 환불 대기').getByRole('button', { name: '환불 완료' }).click();
   await page.getByRole('alertdialog').getByRole('heading', { name: '환불 완료 처리' }).waitFor();
   await page.getByRole('alertdialog').getByRole('button', { name: '완료 처리' }).click();
   await page.getByText('환불이 완료 처리되었습니다.').waitFor();
   if (state.refundPayload?.payment_method !== 'cash') throw new Error(`unexpected refund payload ${JSON.stringify(state.refundPayload)}`);
 
-  await page.locator('article:has-text("강남 지점 월세")').getByRole('button', { name: '지출 삭제' }).click();
+  await expenseRow(page, '강남 지점 월세').getByRole('button', { name: '지출 삭제' }).click();
   await page.getByRole('alertdialog').getByRole('heading', { name: '지출 삭제' }).waitFor();
   await page.getByRole('alertdialog').getByRole('button', { name: '삭제' }).click();
   await page.getByText('삭제되었습니다.').waitFor();
@@ -202,15 +207,15 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await assertOperationsBoard(page, { refund: '0건', total: '2건', totalAmount: '1,032,660원' });
-  await page.locator('article:has-text("5월 강사 급여")').waitFor();
-  const salaryCard = page.locator('article:has-text("5월 강사 급여")');
+  await expenseRow(page, '5월 강사 급여').waitFor();
+  const salaryCard = expenseRow(page, '5월 강사 급여');
   await salaryCard.getByRole('button', { name: '5월 강사 급여 지출 상세 보기' }).waitFor();
   await salaryCard.getByRole('link', { name: '5월 강사 급여 급여 명세서 보기' }).waitFor();
   await salaryCard.getByRole('link', { name: '이코치 강사 상세 보기' }).waitFor();
   await assertNoRawVisibleText(page, 'expenses mobile');
   await assertNoHorizontalOverflow(page, 'expenses mobile');
   await page.screenshot({ path: '/Users/etlab/paca-expenses-mobile.png', fullPage: true });
-  await page.locator('article:has-text("5월 강사 급여")').scrollIntoViewIfNeeded();
+  await expenseRow(page, '5월 강사 급여').scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/Users/etlab/paca-expenses-mobile-list.png', fullPage: true });
 
   await context.close();
@@ -225,15 +230,18 @@ async function assertOperationsBoard(page, options = {}) {
     totalAmount: '2,987,660원',
     ...options,
   };
+  // 새 디자인: '지출 작업 보드'를 나눴다. 숫자는 위 '지출 요약' 줄, 리스트·달력 전환과 빠른 거르기는
+  // 목록 위 필터 줄(같은 test id), 지출 등록 버튼은 화면 머리로 옮겨졌다.
   const board = page.getByTestId('expenses-operations-board');
-  await board.getByRole('heading', { name: '지출 작업 보드' }).waitFor();
-  await board.getByTestId('expenses-metric-total').getByText(expected.total).waitFor();
-  await board.getByTestId('expenses-metric-amount').getByText(expected.totalAmount).waitFor();
-  await board.getByTestId('expenses-metric-refund').getByText(expected.refund).waitFor();
-  await board.getByTestId('expenses-metric-salary').getByText(expected.salary).waitFor();
-  await board.getByRole('button', { name: '리스트 보기' }).waitFor();
-  await board.getByRole('button', { name: '달력 보기' }).waitFor();
-  await board.getByRole('button', { name: '지출 등록' }).waitFor();
+  await page.getByRole('region', { name: '지출 요약' }).waitFor();
+  await page.getByTestId('expenses-metric-total').getByText(expected.total).waitFor();
+  await page.getByTestId('expenses-metric-amount').getByText(expected.totalAmount).waitFor();
+  // 급여 연동 건수가 환불 대기 칸 아래 설명으로 들어가 같은 칸 안에 있으므로 큰 숫자만 정확히 본다.
+  await page.getByTestId('expenses-metric-refund').getByText(expected.refund, { exact: true }).waitFor();
+  await page.getByTestId('expenses-metric-salary').getByText(expected.salary).waitFor();
+  await board.getByRole('button', { name: '리스트', exact: true }).waitFor();
+  await board.getByRole('button', { name: '달력', exact: true }).waitFor();
+  await page.getByRole('button', { name: '지출 등록', exact: true }).waitFor();
 }
 
 async function runError(browser) {

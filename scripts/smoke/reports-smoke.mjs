@@ -7,6 +7,7 @@ import {
   launchSmokeBrowser,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
+  statTile,
 } from './paca-smoke-utils.mjs';
 
 const BASE_URL = process.env.PACA_SMOKE_BASE_URL || 'http://localhost:3109';
@@ -129,7 +130,7 @@ async function runNormal(browser) {
   const diagnostics = createDiagnostics(page);
 
   await openReportsPage(page);
-  await page.locator('header').getByText('Finance Desk').waitFor();
+  // 영어 소제목 'Finance Desk' 는 새 디자인에서 없앴다.
   await assertOperationsBoard(page);
   await page.getByText('970,000원').first().waitFor();
   await page.getByLabel('수입 분석').getByText('500,000원').waitFor();
@@ -152,13 +153,17 @@ async function runNormal(browser) {
   await assertNoHorizontalOverflow(page, 'reports desktop');
   await page.screenshot({ path: '/Users/etlab/paca-reports-desktop.png', fullPage: true });
 
-  const board = page.getByTestId('reports-operations-board');
+  // 월 이동 버튼은 보드 대신 화면 머리의 '리포트 월 이동' 묶음에 있다.
+  const monthNav = page.getByRole('group', { name: '리포트 월 이동' });
   const initialMonth = currentYearMonth();
   const previousMonth = shiftYearMonth(initialMonth, -1);
-  await board.getByRole('button', { name: '이전 달' }).click();
+  await monthNav.getByRole('button', { name: '이전 달' }).click();
   await waitForState(() => state.hits.includes(paymentsQuery(previousMonth)), 'previous month query');
-  await board.getByRole('button', { name: '다음 달' }).click();
-  await waitForState(() => state.hits.filter((hit) => hit === paymentsQuery(initialMonth)).length >= 3, 'next month query');
+  // 처음 불러오기 횟수는 개발 서버(StrictMode 두 번 실행)와 빌드 서버가 달라서, 누르기 전보다 한 번 더 불렀는지로 본다.
+  const initialMonthHits = () => state.hits.filter((hit) => hit === paymentsQuery(initialMonth)).length;
+  const beforeNext = initialMonthHits();
+  await monthNav.getByRole('button', { name: '다음 달' }).click();
+  await waitForState(() => initialMonthHits() > beforeNext, 'next month query');
 
   await page.locator('#report-month').fill('2026-05');
   await page.locator('#report-month').dispatchEvent('change');
@@ -167,18 +172,20 @@ async function runNormal(browser) {
     throw new Error(`month query not called: ${JSON.stringify(state.hits)}`);
   }
 
-  await page.getByTestId('reports-operations-board').getByRole('button', { name: '수입 내역 다운로드' }).click();
+  await openExportMenu(page);
+  await page.getByRole('button', { name: '수입 내역 다운로드' }).click();
   await waitForState(() => state.exportHits.some((hit) => hit.startsWith('/exports/revenue?')), 'revenue export');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '리포트', exact: true }).waitFor();
-  await page.locator('header').getByText('Finance Desk').waitFor();
   await assertOperationsBoard(page);
-  await page.getByTestId('reports-operations-board').scrollIntoViewIfNeeded();
+  await page.getByRole('region', { name: '리포트 요약' }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: '/Users/etlab/paca-reports-mobile-board.png', fullPage: false });
   await page.getByRole('link', { name: /미수납 관리 1건/ }).waitFor();
-  await page.getByRole('link', { name: /학생 관리 재원생 2명/ }).waitFor();
+  // 재원생 수는 '학생 관리' 바로 가기 대신 위 요약 줄의 '재원생' 칸에 보인다.
+  await page.getByRole('link', { name: /학생 관리/ }).waitFor();
+  await statTile(page.getByRole('region', { name: '리포트 요약' }), '재원생').getByText('2명', { exact: true }).waitFor();
   await assertNoRawVisibleText(page, 'reports mobile');
   await assertNoHorizontalOverflow(page, 'reports mobile');
   await page.screenshot({ path: '/Users/etlab/paca-reports-mobile.png', fullPage: true });
@@ -188,14 +195,23 @@ async function runNormal(browser) {
 }
 
 async function assertOperationsBoard(page) {
-  const board = page.getByTestId('reports-operations-board');
-  await board.getByRole('heading', { name: '리포트 작업 보드' }).waitFor();
-  await board.getByTestId('reports-metric-net-profit').getByText('+570,000원').waitFor();
-  await board.getByTestId('reports-metric-collection').getByText('55%').waitFor();
-  await board.getByTestId('reports-metric-unpaid').getByText('500,000원').waitFor();
-  await board.getByRole('link', { name: /미수납 관리 1건/ }).waitFor();
-  await board.getByRole('button', { name: '수입 내역 다운로드' }).waitFor();
-  await board.getByRole('button', { name: '연간 재무 리포트 다운로드' }).waitFor();
+  // 새 디자인: '리포트 작업 보드'를 나눴다. 순이익은 위 '리포트 요약' 줄, 수납률·미수납은 수입 분석 카드,
+  // 바로가기는 '바로 가기' 카드, 다운로드는 머리의 '엑셀 다운로드' 메뉴로 옮겨졌다(같은 test id·이름).
+  await page.getByRole('region', { name: '리포트 요약' }).waitFor();
+  await page.getByTestId('reports-metric-net-profit').getByText('+570,000원').waitFor();
+  await page.getByTestId('reports-metric-collection').getByText('55%').waitFor();
+  await page.getByTestId('reports-metric-unpaid').getByText('500,000원').waitFor();
+  await page.getByRole('navigation', { name: '리포트 빠른 이동' }).getByRole('link', { name: /미수납 관리 1건/ }).waitFor();
+  await openExportMenu(page);
+  await page.getByRole('button', { name: '수입 내역 다운로드' }).waitFor();
+  await page.getByRole('button', { name: '연간 재무 리포트 다운로드' }).waitFor();
+  // 메뉴 바깥 전체를 덮는 닫기 단추는 가운데가 메뉴에 가려 있어 클릭 이벤트로 닫는다.
+  await page.getByRole('button', { name: '다운로드 메뉴 닫기' }).dispatchEvent('click');
+  await page.getByRole('button', { name: '수입 내역 다운로드' }).waitFor({ state: 'hidden' });
+}
+
+async function openExportMenu(page) {
+  await page.getByRole('button', { name: '엑셀 다운로드' }).click();
 }
 
 async function runLoadError(browser) {

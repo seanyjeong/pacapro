@@ -134,7 +134,7 @@ async function runNormal(browser) {
 
   await page.goto('/salaries/201', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '급여 명세서' }).waitFor();
-  await page.getByText('김강사').waitFor();
+  await page.getByText('김강사', { exact: true }).waitFor();
   await page.getByText('오전: 45,000원 x 7회 = 315,000원').waitFor();
   await page.getByText('국민연금').waitFor();
   await assertNoRawVisibleText(page, 'desktop normal');

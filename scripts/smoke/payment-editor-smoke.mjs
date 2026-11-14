@@ -96,6 +96,11 @@ function makeState(overrides = {}) {
   return { payment: makePayment(), hits: [], externalContinues: [], ...overrides };
 }
 
+// 새 디자인 위 막대에 '학생·강사·전화번호 검색' 칸이 생겨 청구 화면의 '학생' 선택칸(combobox)만 고른다.
+function studentSelect(page) {
+  return page.getByRole('combobox', { name: /^학생/ });
+}
+
 async function runCreate(browser) {
   const state = makeState();
   const context = await createAuthedContext(browser, { width: 1365, height: 900 });
@@ -105,7 +110,7 @@ async function runCreate(browser) {
 
   await page.goto('/payments/new', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 청구' }).waitFor();
-  await page.getByLabel('학생').selectOption('43');
+  await studentSelect(page).selectOption('43');
   await page.getByTestId('payment-form-summary').getByText('최유나').waitFor();
   await page.getByTestId('payment-form-summary').getByText('468,000원').waitFor();
   if ((await moneyInputDigits(page.getByLabel('기본 금액'))) !== '520000') {
@@ -114,7 +119,7 @@ async function runCreate(browser) {
   if ((await moneyInputDigits(page.getByLabel('할인 금액'))) !== '52000') {
     throw new Error('custom final tuition should derive one discount amount from base-final');
   }
-  await page.getByLabel('학생').selectOption('41');
+  await studentSelect(page).selectOption('41');
   await page.getByLabel('청구 월').fill('2026-07');
   await page.getByLabel('납부 기한').fill('2026-07-10');
   await page.getByLabel('설명').fill('7월 수강료');
@@ -147,7 +152,7 @@ async function runEdit(browser) {
 
   await page.goto('/payments/401/edit', { waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 수정' }).waitFor();
-  if (!(await page.getByLabel('학생').isDisabled())) throw new Error('student selector should be locked in edit mode');
+  if (!(await studentSelect(page).isDisabled())) throw new Error('student selector should be locked in edit mode');
   await page.getByLabel('기본 금액').fill('580000');
   await page.getByLabel('내부 메모').fill('수정 후 메모');
   const editSummary = page.getByTestId('payment-form-summary');

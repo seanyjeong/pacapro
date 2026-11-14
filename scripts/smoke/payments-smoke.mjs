@@ -167,7 +167,7 @@ async function runNormal(browser) {
   await waitForInitialRows(page);
   await assertOperationsBoard(page);
   await assertPaymentDesktopLayout(page);
-  await page.getByRole('button', { name: '일할계산기' }).click();
+  await page.getByRole('button', { name: '일할계산', exact: true }).click();
   await page.getByText('일할계산 계산기').waitFor();
   await page.getByRole('button', { name: '월', exact: true }).click();
   await page.getByRole('button', { name: '수', exact: true }).click();
@@ -188,14 +188,14 @@ async function runNormal(browser) {
   await page.getByRole('button', { name: '초기화' }).click();
   await page.locator('tr:has-text("박민수")').waitFor();
 
-  const board = page.getByTestId('payments-operations-board');
-  await board.getByRole('button', { name: '미납 1건' }).click();
+  // 새 디자인: 옛 '수납 작업 보드'의 미납·총 청구 칸은 위 '학원비 요약' 줄의 같은 test id 칸(누르면 표 필터)이 되었다.
+  await page.getByTestId('payments-metric-unpaid').getByRole('button').click();
   await page.locator('tr:has-text("박민수")').waitFor();
   await page.locator('tr:has-text("이서연")').waitFor({ state: 'hidden' });
   if (!state.hits.some((hit) => hit.includes('/payments?') && hit.includes('payment_status=pending'))) {
     throw new Error(`missing pending metric query: ${state.hits.join(' | ')}`);
   }
-  await board.getByRole('button', { name: '총 청구 1건' }).click();
+  await page.getByTestId('payments-metric-total').getByRole('button', { name: /1건/ }).click();
   await page.locator('tr:has-text("이서연")').waitFor();
   await page.locator('tr:has-text("기아림")').waitFor();
 
@@ -227,7 +227,7 @@ async function runNormal(browser) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload({ waitUntil: 'networkidle' });
   await page.getByRole('heading', { name: '학원비 관리' }).waitFor();
-  await assertOperationsBoard(page, { paidRate: '67%', unpaid: '0건', unpaidAction: '미납 알림 발송 (0명)' });
+  await assertOperationsBoard(page, { paidRate: '67%', unpaid: '0건', unpaidAction: '미납 알림 (0명)' });
   await page.locator('article:has-text("박민수")').waitFor();
   await assertNoRawVisibleText(page, 'payments mobile');
   await assertNoHorizontalOverflow(page, 'payments mobile');
@@ -243,18 +243,19 @@ async function assertOperationsBoard(page, options = {}) {
     total: '3건',
     unpaid: '1건',
     previous: '1건',
-    unpaidAction: '미납 알림 발송 (1명)',
+    unpaidAction: '미납 알림 (1명)',
     ...options,
   };
-  const board = page.getByTestId('payments-operations-board');
-  await board.getByRole('heading', { name: '수납 작업 보드' }).waitFor();
-  await board.getByTestId('payments-metric-total').getByText(expected.total).waitFor();
-  await board.getByTestId('payments-metric-unpaid').getByText(expected.unpaid).waitFor();
-  await board.getByTestId('payments-metric-previous').getByText(expected.previous).waitFor();
-  await board.getByTestId('payments-metric-rate').getByText(expected.paidRate).waitFor();
-  await board.getByRole('button', { name: '일할계산 열기' }).waitFor();
-  await board.getByRole('button', { name: expected.unpaidAction }).waitFor();
-  await board.getByRole('button', { name: '신규 학원비 청구' }).waitFor();
+  // 새 디자인: '수납 작업 보드'는 위 '학원비 요약' 숫자 줄(같은 test id)로 합쳐지고,
+  // 일할계산·미납 알림·학원비 청구 버튼은 화면 머리로 옮겨졌다. 전달 미납은 미납 칸 아래 설명으로 들어갔다.
+  await page.getByRole('region', { name: '학원비 요약' }).waitFor();
+  await page.getByTestId('payments-metric-total').getByText(expected.total, { exact: true }).waitFor();
+  await page.getByTestId('payments-metric-unpaid').getByText(expected.unpaid, { exact: true }).waitFor();
+  await page.getByTestId('payments-metric-previous').getByText(expected.previous).waitFor();
+  await page.getByTestId('payments-metric-rate').getByText(expected.paidRate, { exact: true }).waitFor();
+  await page.getByRole('button', { name: '일할계산', exact: true }).waitFor();
+  await page.getByRole('button', { name: expected.unpaidAction }).waitFor();
+  await page.getByRole('button', { name: '학원비 청구', exact: true }).waitFor();
 }
 
 async function assertPaymentDesktopLayout(page) {
@@ -288,7 +289,8 @@ async function assertPaymentDesktopLayout(page) {
   if (layout.boardLeft > 0 && layout.resetRight > layout.boardLeft - 4) {
     throw new Error(`payment filters overlap operations board: ${JSON.stringify(layout)}`);
   }
-  if (layout.maxStatHeight > 130) throw new Error(`payment stat cards are too tall: ${JSON.stringify(layout)}`);
+  // 새 디자인 숫자 칸(StatTile)은 아이콘·큰 숫자·설명 한 줄까지 136px 정도다. 글자가 한 줄 더 접히면(약 +30px) 걸리게 140px 로 본다.
+  if (layout.maxStatHeight > 140) throw new Error(`payment stat cards are too tall: ${JSON.stringify(layout)}`);
   if (layout.actionButtonLineCounts.some((count) => count > 1)) {
     throw new Error(`payment action buttons wrapped: ${JSON.stringify(layout)}`);
   }
