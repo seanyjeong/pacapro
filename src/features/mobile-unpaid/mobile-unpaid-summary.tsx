@@ -8,16 +8,16 @@ interface MobileUnpaidSummaryProps {
 
 export function MobileUnpaidSummary({ canViewAmount, stats }: MobileUnpaidSummaryProps) {
   return (
-    <section className="grid grid-cols-3 gap-2" aria-label="미납 요약">
-      <div className="col-span-2 rounded-lg border border-border bg-card p-3">
-        <p className="text-xs text-muted-foreground">미납 금액</p>
-        <p className="mt-1 truncate font-mono text-2xl font-semibold text-foreground">
+    <section className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-2xl bg-card p-5" aria-label="미납 요약">
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-secondary-foreground">미납 금액</p>
+        <p className="mt-1 truncate text-[26px] font-extrabold leading-tight tracking-tight text-destructive tabular-nums">
           {canViewAmount ? `${formatAmount(stats.totalUnpaid)}원` : '금액 숨김'}
         </p>
       </div>
-      <div className="rounded-lg border border-border bg-card p-3 text-center">
-        <p className="font-mono text-2xl font-semibold text-foreground">{stats.count}</p>
-        <p className="mt-1 text-xs text-muted-foreground">학생</p>
+      <div className="text-right">
+        <p className="text-sm font-semibold text-secondary-foreground">학생</p>
+        <p className="mt-1 text-[26px] font-extrabold leading-tight tabular-nums text-foreground">{stats.count}명</p>
       </div>
     </section>
   );

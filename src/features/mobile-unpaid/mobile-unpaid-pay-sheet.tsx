@@ -1,5 +1,6 @@
-import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils/cn';
+import { MobileSheet, mobileChoiceClass } from '../mobile-home/mobile-screen';
 import { MOBILE_UNPAID_PAYMENT_METHODS } from './mobile-unpaid-constants';
 import type { MobileUnpaidPaymentMethod, MobileUnpaidPaySheetState } from './mobile-unpaid-types';
 import { formatAmount, getDisplayStudentName, getUnpaidAmount } from './mobile-unpaid-utils';
@@ -28,55 +29,41 @@ export function MobileUnpaidPaySheet({
   const studentName = getDisplayStudentName(payment);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-foreground px-3 pb-3" role="dialog" aria-modal="true" data-testid="mobile-unpaid-pay-sheet">
-      <div className="w-full rounded-lg border border-border bg-card p-4 shadow-xl">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-success-soft text-success">
-            <Check className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h2 className="text-base font-semibold text-foreground">완납 처리</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {studentName} · {payment.year_month}
-            </p>
-          </div>
-          {canViewAmount && (
-            <p className="shrink-0 font-mono text-base font-semibold text-success">
-              {formatAmount(unpaidAmount)}원
-            </p>
-          )}
+    <MobileSheet dialog testId="mobile-unpaid-pay-sheet" title="완납 처리" description={`${studentName} · ${payment.year_month}`}>
+      {canViewAmount && (
+        <div className="rounded-2xl bg-success-soft px-5 py-4">
+          <p className="text-sm font-semibold text-success">받을 금액</p>
+          <p className="mt-1 text-[26px] font-extrabold leading-tight text-success tabular-nums">{formatAmount(unpaidAmount)}원</p>
         </div>
+      )}
 
-        <div className="mt-4 grid grid-cols-3 gap-2" aria-label="결제 방법">
-          {MOBILE_UNPAID_PAYMENT_METHODS.map((option) => {
-            const Icon = option.icon;
-            const active = method === option.value;
-            return (
-              <button
-                type="button"
-                key={option.value}
-                onClick={() => onMethodChange(option.value)}
-                className={`rounded-lg border px-2 py-3 text-sm font-medium transition
-                  ${active
-                    ? 'border-muted-foreground/40 bg-foreground text-white'
-                    : 'border-border bg-muted text-secondary-foreground'}`}
-              >
-                <Icon className="mx-auto mb-1 h-4 w-4" />
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <Button type="button" variant="outline" className="h-12" onClick={onCancel} disabled={processing}>
-            취소
-          </Button>
-          <Button type="button" className="h-12" onClick={onConfirm} disabled={processing}>
-            {processing ? '저장 중...' : '완납 저장'}
-          </Button>
-        </div>
+      <div className="grid grid-cols-3 gap-2" aria-label="결제 방법">
+        {MOBILE_UNPAID_PAYMENT_METHODS.map((option) => {
+          const Icon = option.icon;
+          const active = method === option.value;
+          return (
+            <button
+              type="button"
+              key={option.value}
+              aria-pressed={active}
+              onClick={() => onMethodChange(option.value)}
+              className={cn(mobileChoiceClass(active), 'flex h-16 flex-col items-center justify-center gap-1')}
+            >
+              <Icon className="h-5 w-5" />
+              {option.label}
+            </button>
+          );
+        })}
       </div>
-    </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <Button type="button" variant="outline" size="lg" onClick={onCancel} disabled={processing}>
+          취소
+        </Button>
+        <Button type="button" size="lg" onClick={onConfirm} disabled={processing}>
+          {processing ? '저장 중...' : '완납 저장'}
+        </Button>
+      </div>
+    </MobileSheet>
   );
 }

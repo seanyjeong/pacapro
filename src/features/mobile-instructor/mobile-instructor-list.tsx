@@ -1,5 +1,6 @@
-import { AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Users } from 'lucide-react';
+import { EmptyState } from '@/components/ui/page';
+import { MobileErrorCard, MobileSkeleton } from '../mobile-home/mobile-screen';
 import { MobileInstructorSlotSection } from './mobile-instructor-slot-section';
 import type { MobileInstructor, MobileInstructorAttendanceStatus, MobileInstructorTimeSlot, SlotOption } from './mobile-instructor-types';
 
@@ -37,39 +38,23 @@ export function MobileInstructorList({
   onStatusChange,
 }: MobileInstructorListProps) {
   if (loading) {
-    return (
-      <div className="space-y-3" data-testid="mobile-instructor-loading">
-        {[0, 1, 2].map((key) => (
-          <div key={key} className="h-36 animate-pulse rounded-lg border border-border bg-card" />
-        ))}
-      </div>
-    );
+    return <MobileSkeleton className="h-36" testId="mobile-instructor-loading" />;
   }
 
   if (error) {
-    return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive-soft p-4 text-destructive">
-        <p className="text-sm font-medium">{error}</p>
-        <Button variant="outline" className="mt-3 w-full border-destructive/30 bg-card" onClick={onRetry}>
-          다시 불러오기
-        </Button>
-      </div>
-    );
+    return <MobileErrorCard message={error} onRetry={onRetry} />;
   }
 
   if (totalInstructors === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-card px-4 py-12 text-center">
-        <AlertCircle className="mx-auto h-10 w-10 text-muted-foreground" />
-        <p className="mt-3 text-sm font-medium text-secondary-foreground">
-          {dateLabel}에 배정된 강사가 없습니다.
-        </p>
+      <div className="rounded-2xl bg-card">
+        <EmptyState icon={Users} title={`${dateLabel}에 배정된 강사가 없어요`} />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {slots.map((slot) => (
         <MobileInstructorSlotSection
           key={slot.value}

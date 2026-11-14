@@ -1,6 +1,9 @@
 'use client';
 
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { isOwner } from '@/lib/utils/permissions';
+import { MobileLoading, MobileScreen } from '../mobile-home/mobile-screen';
 import { MobileConsultationCreateSheet } from './mobile-consultation-create-sheet';
 import { MobileConsultationDetailSheet } from './mobile-consultation-detail-sheet';
 import { MobileConsultationsCalendar } from './mobile-consultations-calendar';
@@ -12,29 +15,34 @@ export function MobileConsultationsPage() {
   const state = useMobileConsultationsState();
 
   if (state.hasPermission === null) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-muted">
-        <div className="text-sm text-muted-foreground">로딩 중...</div>
-      </div>
-    );
+    return <MobileLoading />;
   }
 
   const canCreate = isOwner();
 
   return (
-    <div className="min-h-screen bg-muted text-foreground" data-testid="mobile-consultations-workspace">
-      <MobileConsultationsHeader
-        selectedDateLabel={state.selectedDateLabel}
-        showCalendar={state.showCalendar}
-        loading={state.loading}
-        onBack={() => state.router.push('/m')}
-        onRefresh={state.loadConsultations}
-        onToggleCalendar={() => {
-          state.setCalendarMonth({ year: state.selectedDate.getFullYear(), month: state.selectedDate.getMonth() });
-          state.setShowCalendar(!state.showCalendar);
-        }}
-      />
-
+    <MobileScreen
+      testId="mobile-consultations-workspace"
+      title="오늘 상담"
+      description={state.selectedDateLabel}
+      actions={(
+        <MobileConsultationsHeader
+          showCalendar={state.showCalendar}
+          loading={state.loading}
+          onRefresh={state.loadConsultations}
+          onToggleCalendar={() => {
+            state.setCalendarMonth({ year: state.selectedDate.getFullYear(), month: state.selectedDate.getMonth() });
+            state.setShowCalendar(!state.showCalendar);
+          }}
+        />
+      )}
+      footer={canCreate ? (
+        <Button type="button" size="lg" className="w-full" onClick={state.openCreateForm} aria-label="신규 상담 등록">
+          <Plus className="h-5 w-5" />
+          신규 상담 등록
+        </Button>
+      ) : undefined}
+    >
       {state.showCalendar && (
         <MobileConsultationsCalendar
           calendarMonth={state.calendarMonth}
@@ -46,27 +54,14 @@ export function MobileConsultationsPage() {
         />
       )}
 
-      <main className="mx-auto w-full max-w-md px-4 py-4 pb-24">
-        <MobileConsultationsList
-          consultations={state.consultations}
-          loading={state.loading}
-          error={state.listError}
-          stats={state.stats}
-          onOpen={state.setSelectedConsultation}
-          onRetry={state.loadConsultations}
-        />
-      </main>
-
-      {canCreate && (
-        <button
-          type="button"
-          onClick={state.openCreateForm}
-          className="fixed bottom-6 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-foreground text-white shadow-lg transition active:scale-95"
-          aria-label="신규 상담 등록"
-        >
-          <span className="text-2xl leading-none">+</span>
-        </button>
-      )}
+      <MobileConsultationsList
+        consultations={state.consultations}
+        loading={state.loading}
+        error={state.listError}
+        stats={state.stats}
+        onOpen={state.setSelectedConsultation}
+        onRetry={state.loadConsultations}
+      />
 
       <MobileConsultationCreateSheet
         open={state.showCreateForm}
@@ -90,6 +85,6 @@ export function MobileConsultationsPage() {
         onStatusChange={state.changeStatus}
         onToggleStatusChange={() => state.setShowStatusChange(!state.showStatusChange)}
       />
-    </div>
+    </MobileScreen>
   );
 }

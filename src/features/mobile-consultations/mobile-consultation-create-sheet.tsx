@@ -1,5 +1,9 @@
-import { Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils/cn';
+import { MobileSheet, mobileChoiceClass } from '../mobile-home/mobile-screen';
 import { GRADE_OPTIONS, generateTimeSlots } from './mobile-consultations-constants';
 import type { CreateConsultationForm } from './mobile-consultations-types';
 
@@ -14,6 +18,8 @@ interface MobileConsultationCreateSheetProps {
   onSubmit: () => void;
 }
 
+const labelClass = 'mb-1.5 block text-sm font-semibold text-secondary-foreground';
+
 export function MobileConsultationCreateSheet({
   open,
   bookedTimes,
@@ -27,124 +33,112 @@ export function MobileConsultationCreateSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 px-0" onClick={onClose}>
+    <MobileSheet
+      title="신규 상담 등록"
+      description="학생, 날짜, 시간을 입력해 주세요."
+      closeLabel="신규 상담 등록 닫기"
+      onClose={onClose}
+      onOverlayClick={onClose}
+    >
       <form
-        className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-card pb-8 shadow-2xl"
-        onClick={(event) => event.stopPropagation()}
+        className="space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit();
         }}
       >
-        <div className="flex justify-center pt-3 pb-2">
-          <div className="h-1 w-10 rounded-full bg-muted-foreground/40" />
+        <label className="block">
+          <span className={labelClass}>학생명 *</span>
+          <Input
+            type="text"
+            value={form.studentName}
+            onChange={(event) => onChange({ studentName: event.target.value })}
+            placeholder="학생 이름"
+          />
+        </label>
+
+        <label className="block">
+          <span className={labelClass}>연락처 *</span>
+          <Input
+            type="tel"
+            value={form.phone}
+            onChange={(event) => onChange({ phone: event.target.value })}
+            placeholder="010-0000-0000"
+          />
+        </label>
+
+        <div>
+          <span className={labelClass}>학년 *</span>
+          <div className="grid grid-cols-3 gap-2">
+            {GRADE_OPTIONS.map((grade) => (
+              <button
+                type="button"
+                key={grade}
+                aria-pressed={form.grade === grade}
+                onClick={() => onChange({ grade: form.grade === grade ? '' : grade })}
+                className={mobileChoiceClass(form.grade === grade)}
+              >
+                {grade}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-4 px-5 pb-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">신규 상담 등록</h2>
-              <p className="text-sm text-muted-foreground">학생, 날짜, 시간을 입력하세요.</p>
-            </div>
-            <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="신규 상담 등록 닫기">
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+        <label className="block">
+          <span className={labelClass}>상담일 *</span>
+          <Input
+            type="date"
+            value={form.preferredDate}
+            onChange={(event) => onDateChange(event.target.value)}
+            className="dark:[color-scheme:dark]"
+          />
+        </label>
 
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-secondary-foreground">학생명 *</span>
-            <input
-              type="text"
-              value={form.studentName}
-              onChange={(event) => onChange({ studentName: event.target.value })}
-              placeholder="학생 이름"
-              className="w-full rounded-lg border border-border bg-card px-3 py-3 text-foreground outline-none focus:ring-2 focus:ring-muted-foreground/40"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-secondary-foreground">연락처 *</span>
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={(event) => onChange({ phone: event.target.value })}
-              placeholder="010-0000-0000"
-              className="w-full rounded-lg border border-border bg-card px-3 py-3 text-foreground outline-none focus:ring-2 focus:ring-muted-foreground/40"
-            />
-          </label>
-
+        {form.preferredDate && (
           <div>
-            <span className="mb-2 block text-sm font-medium text-secondary-foreground">학년 *</span>
-            <div className="grid grid-cols-3 gap-2">
-              {GRADE_OPTIONS.map((grade) => (
-                <button
-                  type="button"
-                  key={grade}
-                  onClick={() => onChange({ grade: form.grade === grade ? '' : grade })}
-                  className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition
-                    ${form.grade === grade
-                      ? 'border-muted-foreground/40 bg-foreground text-white'
-                      : 'border-border bg-muted text-secondary-foreground'}`}
-                >
-                  {grade}
-                </button>
-              ))}
+            <span className={labelClass}>시간 *</span>
+            <div className="grid max-h-52 grid-cols-4 gap-1.5 overflow-y-auto pr-1">
+              {generateTimeSlots().map((slot) => {
+                const booked = bookedTimes.includes(slot);
+                const selected = form.preferredTime === slot;
+                return (
+                  <button
+                    type="button"
+                    key={slot}
+                    disabled={booked}
+                    aria-pressed={selected}
+                    onClick={() => onChange({ preferredTime: slot })}
+                    className={cn(
+                      'h-11 rounded-xl text-sm font-semibold tabular-nums transition-colors',
+                      selected && 'bg-primary text-primary-foreground',
+                      booked && 'cursor-not-allowed bg-muted text-muted-foreground/60 line-through',
+                      !selected && !booked && 'bg-muted text-foreground hover:bg-primary-soft hover:text-primary'
+                    )}
+                  >
+                    {slot}
+                  </button>
+                );
+              })}
             </div>
           </div>
+        )}
 
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-secondary-foreground">상담일 *</span>
-            <input
-              type="date"
-              value={form.preferredDate}
-              onChange={(event) => onDateChange(event.target.value)}
-              className="w-full rounded-lg border border-border bg-card px-3 py-3 text-foreground outline-none focus:ring-2 focus:ring-muted-foreground/40"
-            />
-          </label>
+        <label className="block">
+          <span className={labelClass}>메모</span>
+          <Textarea
+            value={form.notes}
+            onChange={(event) => onChange({ notes: event.target.value })}
+            placeholder="상담 관련 메모"
+            rows={2}
+            className="resize-none"
+          />
+        </label>
 
-          {form.preferredDate && (
-            <div>
-              <span className="mb-2 block text-sm font-medium text-secondary-foreground">시간 *</span>
-              <div className="grid max-h-48 grid-cols-4 gap-1.5 overflow-y-auto pr-1">
-                {generateTimeSlots().map((slot) => {
-                  const booked = bookedTimes.includes(slot);
-                  const selected = form.preferredTime === slot;
-                  return (
-                    <button
-                      type="button"
-                      key={slot}
-                      disabled={booked}
-                      onClick={() => onChange({ preferredTime: slot })}
-                      className={`rounded-lg border py-2 text-sm font-medium transition
-                        ${selected ? 'border-success bg-success text-white' : ''}
-                        ${booked ? 'cursor-not-allowed border-border bg-muted text-muted-foreground line-through' : ''}
-                        ${!selected && !booked ? 'border-border bg-card text-foreground hover:bg-muted' : ''}`}
-                    >
-                      {slot}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium text-secondary-foreground">메모</span>
-            <textarea
-              value={form.notes}
-              onChange={(event) => onChange({ notes: event.target.value })}
-              placeholder="상담 관련 메모"
-              rows={2}
-              className="w-full resize-none rounded-lg border border-border bg-card px-3 py-3 text-foreground outline-none focus:ring-2 focus:ring-muted-foreground/40"
-            />
-          </label>
-
-          <Button type="submit" className="w-full gap-2" disabled={creating}>
-            {creating && <Loader2 className="h-4 w-4 animate-spin" />}
-            {creating ? '등록 중...' : '상담 등록'}
-          </Button>
-        </div>
+        <Button type="submit" size="lg" className="w-full" disabled={creating}>
+          {creating && <Loader2 className="h-4 w-4 animate-spin" />}
+          {creating ? '등록 중...' : '상담 등록'}
+        </Button>
       </form>
-    </div>
+    </MobileSheet>
   );
 }

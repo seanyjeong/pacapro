@@ -39,10 +39,10 @@ export function MobileAttendanceStudentCard({
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
             {student.grade && student.grade !== '0' && student.grade !== '00' && <span>{student.grade}</span>}
-            {student.is_season_student && <Badge variant="warning">시즌</Badge>}
-            {student.is_makeup && <Badge variant="default">보충</Badge>}
+            {!!student.is_season_student && <Badge variant="warning">시즌</Badge>}
+            {!!student.is_makeup && <Badge variant="default">보충</Badge>}
             {student.assigned === false && <Badge variant="secondary">오늘 수업 아님</Badge>}
-            {student.is_trial && <Badge variant="success">체험 {student.trial_remaining ?? 0}회</Badge>}
+            {!!student.is_trial && <Badge variant="success">체험 {student.trial_remaining ?? 0}회</Badge>}
           </div>
         </div>
         <Button type="button" variant="outline" size="icon" onClick={() => onCall(student.phone)} aria-label={`${student.student_name} 전화`} className="shrink-0 rounded-full">

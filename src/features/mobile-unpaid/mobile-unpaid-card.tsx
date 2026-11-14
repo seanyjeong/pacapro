@@ -1,5 +1,6 @@
-import { Calendar, Phone, UserRound } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Phone } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button, buttonVariants } from '@/components/ui/button';
 import type { UnpaidPayment } from '@/lib/types/payment';
 import { formatAmount, getContactPhone, getDisplayStudentName, getOverdueTone, getUnpaidAmount } from './mobile-unpaid-utils';
 
@@ -26,32 +27,24 @@ export function MobileUnpaidCard({
   const overdueLabel = daysOverdue > 0 ? `${daysOverdue}일 연체` : '미납';
 
   return (
-    <article
-      className="rounded-lg border border-border bg-card p-4 shadow-sm"
-      data-testid="mobile-unpaid-card"
-    >
+    <article className="rounded-2xl bg-card p-4" data-testid="mobile-unpaid-card">
       <div className="flex items-start gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-muted text-secondary-foreground">
-          <UserRound className="h-5 w-5" />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-[15px] font-bold text-secondary-foreground">
+          {studentName.charAt(0)}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center justify-between gap-2">
-            <h2 className="truncate text-base font-semibold text-foreground">{studentName}</h2>
+            <h2 className="truncate text-[17px] font-bold text-foreground">{studentName}</h2>
             {canViewAmount && (
-              <span className="shrink-0 font-mono text-sm font-semibold text-destructive">
+              <span className="shrink-0 text-[17px] font-extrabold text-destructive tabular-nums">
                 {formatAmount(getUnpaidAmount(payment))}원
               </span>
             )}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5" />
-            <span>{payment.year_month}</span>
-            <span className={`rounded-full border px-2 py-0.5 font-medium ${getOverdueTone(daysOverdue)}`}>{overdueLabel}</span>
-            {payment.payment_status === 'partial' && (
-              <span className="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 font-medium text-sky-700 dark:border-sky-900 dark:bg-sky-950/40 dark:text-sky-300">
-                부분납부
-              </span>
-            )}
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-muted-foreground">
+            <span className="tabular-nums">{payment.year_month}</span>
+            <Badge variant={getOverdueTone(daysOverdue)}>{overdueLabel}</Badge>
+            {payment.payment_status === 'partial' && <Badge variant="default">부분납부</Badge>}
           </div>
         </div>
       </div>
@@ -62,18 +55,18 @@ export function MobileUnpaidCard({
             href={`tel:${contactPhone}`}
             aria-label={`${studentName} 보호자 전화`}
             onClick={() => onCall(payment)}
-            className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-muted text-sm font-medium text-secondary-foreground transition active:scale-[0.98]"
+            className={buttonVariants({ variant: 'outline', className: 'min-w-0 px-2' })}
           >
-            <Phone className="mr-1.5 h-4 w-4" />
-            <span className="truncate">{contactPhone}</span>
+            <Phone className="h-4 w-4" />
+            <span className="truncate text-sm tabular-nums">{contactPhone}</span>
           </a>
         ) : (
-          <Button type="button" variant="outline" className="h-11" onClick={() => onCall(payment)}>
-            <Phone className="mr-1.5 h-4 w-4" />
+          <Button type="button" variant="outline" onClick={() => onCall(payment)}>
+            <Phone className="h-4 w-4" />
             전화
           </Button>
         )}
-        <Button type="button" className="h-11" disabled={!canMarkPaid || processing} onClick={() => onPay(payment)}>
+        <Button type="button" disabled={!canMarkPaid || processing} onClick={() => onPay(payment)}>
           완납 처리
         </Button>
       </div>
