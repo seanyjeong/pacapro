@@ -328,7 +328,7 @@ export function StudentResumeModal({
             <Button
               type="submit"
               disabled={processing}
-              className="bg-success hover:bg-success/90 text-white"
+              className="bg-success text-success-foreground hover:bg-success/90"
             >
               {processing ? '처리 중...' : '복귀 처리'}
             </Button>

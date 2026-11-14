@@ -122,7 +122,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
         <CardContent className="p-0 sm:p-0">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-3 border-primary-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-8 h-8 border-[3px] border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           ) : error ? (
             <div className="text-center py-12 text-muted-foreground">
@@ -158,7 +158,7 @@ export function StudentAttendanceComponent({ studentId }: Props) {
                     >
                       <span className={`text-xs font-medium ${
                         dow === 0 ? 'text-destructive' : dow === 6 ? 'text-primary' : 'text-foreground'
-                      } ${isToday ? 'bg-primary-500 text-white rounded-full w-5 h-5 flex items-center justify-center' : ''}`}>
+                      } ${isToday ? 'bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center' : ''}`}>
                         {day}
                       </span>
                       {records.length > 0 && (

@@ -42,7 +42,7 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
 }
 
 export function inputClassName(error?: string) {
-  return `w-full px-4 py-2 border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 ${
-    error ? 'border-destructive' : 'border-border'
+  return `min-h-11 w-full rounded-xl border bg-muted px-4 py-2.5 text-[15px] text-foreground focus:border-primary focus:bg-card focus:outline-none focus:ring-4 focus:ring-primary/10 ${
+    error ? 'border-destructive' : 'border-transparent'
   }`;
 }

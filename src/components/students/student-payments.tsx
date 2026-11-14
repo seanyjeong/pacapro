@@ -181,7 +181,7 @@ export function StudentPaymentsComponent({
     return (
       <Card>
         <CardContent className="p-12 text-center">
-          <div className="w-12 h-12 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-muted-foreground">납부 내역을 불러오는 중...</p>
         </CardContent>
       </Card>
@@ -229,7 +229,6 @@ export function StudentPaymentsComponent({
               <Button
                 size="sm"
                 onClick={() => setCreditModalOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-white"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 크레딧 추가
@@ -394,7 +393,6 @@ export function StudentPaymentsComponent({
             <Button
               onClick={handleApplyCredit}
               disabled={applying || !applyYearMonth}
-              className="bg-primary hover:bg-primary/90 text-white"
             >
               {applying ? '적용 중...' : '적용'}
             </Button>
