@@ -653,6 +653,21 @@ run('미납 청구 갱신·월 청구 금액 — 실제 MySQL 8', () => {
         }
     });
 
+    test('추가 50,000원 붙은 청구를 3일 휴원으로 33,000원으로 줄인 달 선납 5% → 할인 0, 33,000원 그대로, 할인 칸 음수 없음', async () => {
+        const [m1, m2] = [koreaMonth(2), koreaMonth(3)];
+        await seed({ tuition: 450000, rate: 0, bills: false });
+        await pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type, base_amount, discount_amount,
+            additional_amount, carryover_amount, final_amount, paid_amount, is_prorated, due_date, payment_status, description)
+            VALUES (1, 1, 1, ?, 'monthly', 450000, 0, 50000, 0, 33000, 0, 1, ?, 'pending', '휴원 정산')`, [m1, `${m1}-05`]);
+        const body = { student_id: 1, months: [m1, m2], prepaid_discount_rate: 5, payment_method: 'cash' };
+        const preview = await request(app()).post('/paca/payments/prepaid-preview').send(body);
+        expect([preview.body.months[0].prepaid_discount, preview.body.months[0].final_amount]).toEqual([0, 33000]);
+        expect((await request(app()).post('/paca/payments/prepaid-pay').send(body)).status).toBe(200);
+        const [[row]] = await pool.query('SELECT discount_amount, final_amount, paid_amount, payment_status FROM student_payments WHERE id = 1');
+        expect([Number(row.discount_amount), Number(row.final_amount), Number(row.paid_amount), row.payment_status]).toEqual([0, 33000, 33000, 'paid']);
+        expect((await pool.query('SELECT COUNT(*) AS n FROM student_payments WHERE discount_amount < 0'))[0][0].n).toBe(0);
+    });
+
     test('같은 달 미납 청구를 일괄 청구·자동 청구로 다시 돌려도 추가 금액 10,000원은 남고 최종 금액에 들어간다', async () => {
         const [year, mon] = THIS_MONTH.split('-').map(Number);
         const pendingBill = (carryover, final) => pool.query(`INSERT INTO student_payments (id, student_id, academy_id, \`year_month\`, payment_type,

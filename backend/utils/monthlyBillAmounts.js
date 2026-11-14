@@ -146,12 +146,14 @@ function billFinalAfterChange(bill, changes = {}) {
 
 /**
  * 청구 대상 금액 중 학원비 몫(학생 할인 뒤, 추가 금액·크레딧 빼기 전) — 선납 할인의 바탕.
- * 보통 청구: 학원비 − 할인액, 따로 정한 청구: 지금 최종 금액 + 크레딧 − 추가 금액. 정확한 10진 문자열.
+ * 보통 청구: 학원비 − 할인액, 따로 정한 청구: 지금 최종 금액 + 크레딧 − 추가 금액. 정확한 10진 문자열, 0 미만이면 '0'.
+ * (추가 금액이 붙은 청구를 휴원으로 크게 줄이면 '최종 + 크레딧 − 추가'가 음수가 될 수 있다 — 그때 선납 할인은 0)
  */
 function billTuitionCharge(bill) {
     const { n, scale } = decimalSum([...chargeTerms(bill), [bill.additional_amount, -1]]);
-    const negative = n < 0n, digits = (negative ? -n : n).toString().padStart(scale + 1, '0');
-    return `${negative ? '-' : ''}${scale ? `${digits.slice(0, -scale)}.${digits.slice(-scale)}` : digits}`;
+    if (n <= 0n) return '0';
+    const digits = n.toString().padStart(scale + 1, '0');
+    return scale ? `${digits.slice(0, -scale)}.${digits.slice(-scale)}` : digits;
 }
 
 // 크레딧 수동 적용 한도: 이 청구에서 더 뺄 수 있는 금액(청구 대상 금액 − 이미 적용된 크레딧, 원 단위 내림)

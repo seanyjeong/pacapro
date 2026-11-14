@@ -57,13 +57,14 @@ const { lockStudentForBilling } = require('../../repositories/studentBillingLock
 function prepaidMonthAmounts(tuition, studentDiscountRate, prepaidRate, existingBill) {
     if (existingBill && isSeparatelyPricedBill(existingBill)) {
         const listAmount = Number(billTuitionCharge(existingBill));
-        const prepaidDiscount = floorPercent(billTuitionCharge(existingBill), prepaidRate);
+        // 선납 할인은 0 미만이 될 수 없다(할인이 음수면 더 청구된다)
+        const prepaidDiscount = Math.max(floorPercent(billTuitionCharge(existingBill), prepaidRate), 0);
         const totalDiscountAmount = addWon(existingBill.discount_amount, prepaidDiscount);
         return { baseAmount: existingBill.base_amount, studentDiscount: 0, listAmount, prepaidDiscount, totalDiscountAmount,
             finalAmount: billFinalAfterChange(existingBill, { discount_amount: totalDiscountAmount }) };
     }
     const studentDiscount = floorPercent(tuition, studentDiscountRate);
-    const prepaidDiscount = floorPercent(tuition - studentDiscount, prepaidRate);
+    const prepaidDiscount = Math.max(floorPercent(tuition - studentDiscount, prepaidRate), 0);
     const totalDiscountAmount = studentDiscount + prepaidDiscount;
     const finalAmount = existingBill
         ? billFinalAfterChange(existingBill, { base_amount: tuition, discount_amount: totalDiscountAmount })
