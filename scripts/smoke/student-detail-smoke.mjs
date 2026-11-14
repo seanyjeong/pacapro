@@ -7,6 +7,7 @@ import {
   launchSmokeBrowser,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
+  statTile,
 } from './paca-smoke-utils.mjs';
 
 const PHOTO_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
@@ -248,6 +249,29 @@ async function installRoutes(context, state) {
       });
     }
 
+    // 퇴원 창은 학원비 처리 미리보기(10월 추가)가 와야 '퇴원 처리 완료'를 누를 수 있다. 바뀌는 청구가 없는 미리보기를 준다.
+    if (method === 'POST' && path === '/students/41/lifecycle-billing-preview') {
+      const payload = JSON.parse(request.postData() || '{}');
+      const zero = {
+        original_amount: 0, before_final_amount: 0, prorated_amount: 0, adjusted_amount: 0,
+        paid_amount: 0, outstanding_amount: 0, waived_amount: 0, refundable_amount: 0,
+      };
+      return jsonRoute(route, {
+        action: payload.action,
+        date: payload.date,
+        year_month: String(payload.date || '').slice(0, 7),
+        student_id: 41,
+        days_before: null,
+        days_month: null,
+        summary: zero,
+        rows: [],
+        requires_confirmation: true,
+        readonly: true,
+        external_refund_executed: false,
+        preview_hash: 'smoke-withdraw-preview',
+      });
+    }
+
     if (method === 'POST' && path === '/students/41/withdraw') {
       const payload = JSON.parse(request.postData() || '{}');
       state.withdrawPayload = payload;
@@ -261,6 +285,8 @@ async function installRoutes(context, state) {
       };
       return jsonRoute(route, {
         message: 'withdrawn',
+        // 퇴원 응답의 학원비 처리 결과(10월 추가). 화면이 이 결과로 완료 안내를 만든다.
+        billing: { cancelledPayments: 0, adjustedPayments: 0, waivedAmount: 0, paymentIds: [], message: '변경된 청구가 없습니다.' },
         student: {
           id: 41,
           name: '김진우',
@@ -304,6 +330,23 @@ async function createStudentDetailPage(browser, mode, viewport = { width: 1365, 
   return { context, page, state, diagnostics };
 }
 
+// 새 디자인: '학생 작업 보드'는 학생 요약 아래 동작 줄(같은 test id)이 되었다. 자주 쓰는 수업일 변경·문자 발송은 버튼,
+// 수업/학원비 변경·졸업·퇴원·삭제는 '더보기' 메뉴, 납부 내역·출결 현황·시즌 등록은 아래 탭으로 옮겨졌다.
+async function openMoreActions(page) {
+  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '학생 동작 더보기' }).click();
+  await page.getByRole('menu').waitFor();
+}
+
+async function assertStudentActions(page) {
+  const board = page.getByTestId('student-detail-operations-board');
+  await board.getByRole('button', { name: '수업일 변경' }).waitFor();
+  await board.getByRole('button', { name: '문자 발송' }).waitFor();
+  await openMoreActions(page);
+  await page.getByRole('menuitem', { name: '수업/학원비 변경' }).waitFor();
+  await page.keyboard.press('Escape');
+  await page.getByRole('menu').waitFor({ state: 'hidden' });
+}
+
 async function runNormalDesktop(browser) {
   const result = await createStudentDetailPage(browser, 'success');
   const { context, page, state } = result;
@@ -316,16 +359,16 @@ async function runNormalDesktop(browser) {
     throw new Error('student profile photo was not requested on detail page');
   }
   await page.getByText('S-2026-041').waitFor();
-  await page.locator('section').filter({ hasText: /^실납부\s*468,000원/ }).waitFor();
-  await page.getByText('수업 및 학원비', { exact: true }).waitFor();
-  await page.locator('section').filter({ hasText: '수업 및 학원비' }).getByText('매월 5일 납부').waitFor();
-  await page.getByText('연락처', { exact: true }).waitFor();
-  await page.getByText('기타 정보', { exact: true }).waitFor();
-  await page.getByRole('heading', { name: '학생 작업 보드' }).waitFor();
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '수업/학원비 변경' }).waitFor();
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '수업일 변경' }).waitFor();
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '문자 발송' }).waitFor();
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '납부 내역' }).waitFor();
+  // 새 디자인: '수업 및 학원비' 카드는 위 숫자 요약의 '실납부' 칸(금액·할인·납부일)으로 합쳐졌다.
+  // 실납부 468,000원 = 520,000원에서 10% 할인(할인액 52,000원) — 오늘 바뀐 월 청구 식(천원 절삭)으로도 같은 값.
+  await statTile(page, '실납부').getByText('468,000원', { exact: true }).waitFor();
+  await statTile(page, '실납부').getByText(/매월 5일 납부/).waitFor();
+  // '연락처'·'기타 정보' 소제목은 '학생 정보' 카드 하나로 합쳐졌다(연락처·주소·등록일 칸은 그대로).
+  await page.getByRole('heading', { name: '학생 정보' }).waitFor();
+  await page.getByText('학생 연락처', { exact: true }).waitFor();
+  await page.getByText('등록일', { exact: true }).waitFor();
+  await assertStudentActions(page);
+  await page.getByRole('tab', { name: /^납부 내역/ }).waitFor();
   await page.getByText('2026-06', { exact: true }).waitFor();
   if (await page.getByText('개발 중').count()) {
     throw new Error('student detail exposes internal development copy');
@@ -334,7 +377,7 @@ async function runNormalDesktop(browser) {
   await assertNoHorizontalOverflow(page, 'student detail desktop');
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-desktop.png', fullPage: true });
 
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '납부 내역' }).click();
+  await page.getByRole('tab', { name: /^납부 내역/ }).click();
   await page.getByText('2026-06', { exact: true }).waitFor();
   await page.getByText('468,000원').first().waitFor();
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '첫 달 일할 재계산' }), 'first payment recalculation');
@@ -357,7 +400,7 @@ async function runNormalDesktop(browser) {
   if (!state.manualCreditDeleted) throw new Error('manual credit deletion API was not called');
   await page.getByRole('button', { name: '닫기' }).click();
 
-  await page.getByRole('button', { name: '시즌 등록 보기' }).click();
+  await page.getByRole('tab', { name: '시즌 등록' }).click();
   await page.getByRole('heading', { name: '시즌 등록 현황' }).waitFor();
   await page.getByText('2026 정시 시즌').waitFor();
   await clickWithoutNativeDialog(page, page.getByRole('button', { name: '취소' }).first(), 'season enrollment cancellation');
@@ -367,16 +410,19 @@ async function runNormalDesktop(browser) {
   await page.getByText('취소됨').waitFor();
   if (!state.seasonCancelled) throw new Error('season cancellation API was not called');
 
-  await clickWithoutNativeDialog(page, page.getByTestId('student-detail-operations-board').getByRole('button', { name: '삭제' }), 'delete action');
+  await openMoreActions(page);
+  await clickWithoutNativeDialog(page, page.getByRole('menuitem', { name: '삭제' }), 'delete action');
   await page.getByRole('alertdialog').getByRole('heading', { name: '학생 삭제' }).waitFor();
   await page.getByRole('button', { name: '취소' }).click();
 
-  await clickWithoutNativeDialog(page, page.getByRole('button', { name: '퇴원 처리' }), 'withdraw action');
+  await openMoreActions(page);
+  await clickWithoutNativeDialog(page, page.getByRole('menuitem', { name: '퇴원 처리' }), 'withdraw action');
   await page.getByRole('alertdialog').getByRole('heading', { name: '퇴원 처리' }).waitFor();
   await page.getByLabel('퇴원 사유').fill('타 학원 이동');
   await page.getByRole('button', { name: '퇴원 처리 완료' }).click();
-  await page.getByText('현재 상태: 퇴원').waitFor();
-  if (state.withdrawPayload?.reason !== '타 학원 이동') {
+  // 새 디자인: '현재 상태: …' 글자 대신 맨 위 학생 이름 옆 상태 배지로 보인다.
+  await page.getByRole('heading', { name: '김진우', exact: true }).locator('..').getByText('퇴원', { exact: true }).waitFor();
+  if (state.withdrawPayload?.reason !== '타 학원 이동' || state.withdrawPayload?.billing_preview_hash !== 'smoke-withdraw-preview') {
     throw new Error(`unexpected withdraw payload: ${JSON.stringify(state.withdrawPayload)}`);
   }
 
@@ -391,15 +437,13 @@ async function runNormalMobile(browser) {
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
   await page.getByText('김진우').first().waitFor();
-  await page.getByRole('heading', { name: '학생 작업 보드' }).waitFor();
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '수업/학원비 변경' }).waitFor();
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '수업일 변경' }).waitFor();
+  await assertStudentActions(page);
   await page.getByText('2026-06', { exact: true }).waitFor();
   await assertNoRawVisibleText(page, 'student detail mobile');
   await assertNoHorizontalOverflow(page, 'student detail mobile');
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-mobile.png', fullPage: true });
 
-  await page.getByRole('button', { name: '시즌 등록 보기' }).click();
+  await page.getByRole('tab', { name: '시즌 등록' }).click();
   const seasonHeading = page.getByRole('heading', { name: '시즌 등록 현황' });
   await seasonHeading.waitFor();
   await seasonHeading.scrollIntoViewIfNeeded();
@@ -417,7 +461,8 @@ async function runError(browser) {
   const { context, page } = result;
 
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('heading', { name: '학생 상세' }).waitFor({ timeout: 15000 });
+  // 새 디자인의 불러오기 실패 화면에는 '학생 상세' 화면 제목이 없고 오류 카드 제목만 있다.
+  await page.getByRole('alert').getByRole('heading', { name: '학생 정보를 불러올 수 없어요' }).waitFor({ timeout: 15000 });
   await page.getByText('학생 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor({ timeout: 15000 });
   await page.getByRole('button', { name: '목록으로' }).waitFor();
   await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
@@ -434,7 +479,7 @@ async function runAttendanceError(browser) {
   const { context, page } = result;
   await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '출결 현황' }).click();
+  await page.getByRole('tab', { name: '출결 현황' }).click();
   await page.getByText('출결 데이터를 불러올 수 없습니다.').waitFor();
   await page.waitForTimeout(300);
   if (await page.getByText('요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.').count()) {

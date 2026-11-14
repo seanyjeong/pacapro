@@ -7,6 +7,7 @@ import {
   launchSmokeBrowser,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
+  statTile,
 } from './paca-smoke-utils.mjs';
 
 function makeState(mode) {
@@ -105,7 +106,7 @@ async function runDesktopSave(browser) {
   if ((await page.locator('tbody tr').filter({ hasText: '김진우' }).count()) !== 0) {
     throw new Error('scheduled class-days filter still shows unscheduled student');
   }
-  await page.getByTestId('class-days-operations-board').getByRole('button', { name: '필터 초기화' }).click();
+  await page.getByRole('button', { name: '필터 초기화' }).click();
   await page.locator('tbody tr').filter({ hasText: '김진우' }).waitFor();
   const effectiveFromLabel = await page.getByLabel('적용 시작월').locator('option:checked').textContent();
   if (effectiveFromLabel !== '즉시 적용 (이번 달)') {
@@ -123,7 +124,8 @@ async function runDesktopSave(browser) {
   await page.getByLabel('일괄 화요일 시간대').selectOption('morning');
   await page.getByLabel('일괄 금요일 시간대').selectOption('afternoon');
   await page.getByRole('button', { name: '선택 학생에 적용' }).click();
-  await page.getByText('2명 변경됨').waitFor();
+  // 새 디자인: 'N명 변경됨' 배지 대신 저장 버튼에 바뀐 학생 수가 보인다.
+  await page.getByRole('button', { name: '저장 (2명)' }).waitFor();
   await assertOperationsBoard(page, {
     changed: 2,
     focused: null,
@@ -131,7 +133,7 @@ async function runDesktopSave(browser) {
     scheduled: 1,
     selected: 2,
   });
-  await page.getByTestId('class-days-operations-board').getByRole('button', { name: '적용 내용 저장' }).click();
+  await saveButton(page).click();
   await page.getByText('수업일 변경이 저장되었습니다.').waitFor();
 
   if (!state.bulkPayload) throw new Error('class-days bulk payload was not sent');
@@ -188,8 +190,9 @@ async function runFocusedStudent(browser) {
   });
   await page.getByRole('button', { name: '월/수/금 프리셋' }).click();
   await page.getByRole('button', { name: '선택 학생에 적용' }).click();
-  await page.getByText('1명 변경됨').waitFor();
-  await page.getByTestId('class-days-operations-board').getByRole('button', { name: '적용 내용 저장' }).click();
+  // 새 디자인: 'N명 변경됨' 배지 대신 저장 버튼에 바뀐 학생 수가 보인다.
+  await page.getByRole('button', { name: '저장 (1명)' }).waitFor();
+  await saveButton(page).click();
   await page.getByText('수업일 변경이 저장되었습니다.').waitFor();
   const studentPayload = state.bulkPayload?.students?.[0];
   if (state.bulkPayload?.students?.length !== 1 || studentPayload?.id !== 41) {
@@ -211,18 +214,28 @@ async function runFocusedStudent(browser) {
   return result;
 }
 
+// 새 디자인: '수업일 작업 보드'를 없애고 같은 정보를 제자리로 옮겼다.
+// 변경 대기·예약 변경 → 숫자 요약 칸, 표시 학생 → 목록 카드의 '총 N명', 선택 학생 → 일괄 변경 카드의 'N명 선택',
+// 적용 시작 → '적용 시작월' 선택칸, 집중 학생 → 목록의 'OOO 집중 보기' 배지.
 async function assertOperationsBoard(page, expected) {
   const board = page.getByTestId('class-days-operations-board');
   await board.waitFor();
-  await board.getByRole('heading', { name: '수업일 작업 보드' }).waitFor();
-  await board.getByText(new RegExp(`표시 학생\\s*${expected.result}명`)).waitFor();
-  await board.getByText(new RegExp(`선택 학생\\s*${expected.selected}명`)).waitFor();
-  await board.getByText(new RegExp(`변경 대기\\s*${expected.changed}명`)).waitFor();
-  await board.getByText(new RegExp(`예약 변경\\s*${expected.scheduled}명`)).waitFor();
-  await board.getByText(/적용 시작\s*즉시 적용 \(이번 달\)/).waitFor();
-  if (expected.focused) {
-    await board.getByText(new RegExp(`집중 학생\\s*${expected.focused}`)).waitFor();
+  await page.getByRole('region', { name: '학생 수업일' }).getByText(new RegExp(`^총\\s*${expected.result}\\s*명$`)).waitFor();
+  await page.getByText(`${expected.selected}명 선택`, { exact: true }).waitFor();
+  await statTile(board, '변경 대기').getByText(`${expected.changed}명`, { exact: true }).waitFor();
+  await statTile(board, '예약 변경').getByText(`${expected.scheduled}명`, { exact: true }).waitFor();
+  const effectiveFromLabel = await page.getByLabel('적용 시작월').locator('option:checked').textContent();
+  if (effectiveFromLabel !== '즉시 적용 (이번 달)') {
+    throw new Error(`class-days effective month label mismatch: ${effectiveFromLabel}`);
   }
+  if (expected.focused) {
+    await page.getByText(`${expected.focused} 집중 보기`, { exact: true }).waitFor();
+  }
+}
+
+// 옛 보드의 '적용 내용 저장' 버튼은 적용 시작월 카드의 '저장 (N명)' 버튼이 되었다.
+function saveButton(page) {
+  return page.getByRole('button', { name: /^저장 \(\d+명\)$/ });
 }
 
 async function runSaveError(browser) {
@@ -232,7 +245,7 @@ async function runSaveError(browser) {
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
   await page.locator('tbody tr').filter({ hasText: '김진우' }).getByRole('button', { name: '김진우 화요일 선택' }).click();
-  await page.getByTestId('class-days-operations-board').getByRole('button', { name: '적용 내용 저장' }).click();
+  await saveButton(page).click();
   await page.getByRole('alert').getByRole('heading', { name: '저장 실패' }).waitFor();
   await page.getByText('수업일 변경을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'class days save error');
@@ -249,7 +262,7 @@ async function runLoadError(browser) {
 
   await page.goto('/students/class-days', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '수업일 관리' }).waitFor();
-  await page.getByRole('alert').getByRole('heading', { name: '수업일 목록을 불러오지 못했습니다' }).waitFor();
+  await page.getByRole('alert').getByRole('heading', { name: '수업일 목록을 불러오지 못했어요' }).waitFor();
   await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'class days load error');
   await assertNoHorizontalOverflow(page, 'class days load error');

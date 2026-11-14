@@ -7,6 +7,7 @@ import {
   launchSmokeBrowser,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
+  statTile,
 } from './paca-smoke-utils.mjs';
 
 const STUDENT_MEMO = '기존 엑셀 이관 학생\n최초 등록일은 과거 이력 기준이며 이관 전 납부 내역은 별도 확인';
@@ -136,15 +137,16 @@ async function createPage(browser, viewport, memo = STUDENT_MEMO) {
 
 async function assertWorkspace(page, label) {
   await page.getByTestId('student-detail-workspace').waitFor();
+  // 새 디자인: '학생 작업 보드'의 미납 관리 숫자는 위 숫자 요약의 '미납' 칸, 탭 이동 버튼(납부 내역·출결 현황·상담 기록)은
+  // 아래 '학생 운영 기록' 탭으로 옮겨졌다. 동작 줄(같은 test id)에는 수업일 변경·문자 발송 버튼이 남는다.
   const board = page.getByTestId('student-detail-operations-board');
-  await board.getByRole('heading', { name: '학생 작업 보드' }).waitFor();
-  await board.getByText('미납 관리').waitFor();
-  await board.getByText('348,000원').waitFor();
+  await statTile(page, '미납').getByText('348,000원', { exact: true }).waitFor();
   await board.getByRole('button', { name: '수업일 변경' }).waitFor();
   await board.getByRole('button', { name: '문자 발송' }).waitFor();
-  await board.getByRole('button', { name: '납부 내역' }).waitFor();
-  await board.getByRole('button', { name: '출결 현황' }).waitFor();
-  await board.getByRole('button', { name: '상담 기록' }).waitFor();
+  const tabs = page.getByRole('tablist', { name: '학생 운영 기록' });
+  await tabs.getByRole('tab', { name: /^납부 내역/ }).waitFor();
+  await tabs.getByRole('tab', { name: '출결 현황' }).waitFor();
+  await tabs.getByRole('tab', { name: '상담 기록' }).waitFor();
   const studentMemo = page.getByTestId('student-detail-memo');
   await studentMemo.getByText('학생 메모', { exact: true }).waitFor();
   const memoText = await studentMemo.locator('p').innerText();
@@ -160,11 +162,11 @@ async function runDesktop(browser) {
   await page.getByRole('heading', { name: '학생 상세' }).waitFor();
   await assertWorkspace(page, 'student detail workspace desktop');
   if (state.studentDetailAuthHeader !== 'Bearer smoke-token') throw new Error('student detail auth header missing');
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '납부 내역' }).click();
+  await page.getByRole('tab', { name: /^납부 내역/ }).click();
   if ((await page.getByRole('link', { name: '2026-06 납부 수정' }).getAttribute('href')) !== '/payments/501/edit') throw new Error('unexpected payment edit link');
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '출결 현황' }).click();
+  await page.getByRole('tab', { name: '출결 현황' }).click();
   await page.getByText('출결 기록이 없습니다.').waitFor();
-  await page.getByTestId('student-detail-operations-board').getByRole('button', { name: '상담 기록' }).click();
+  await page.getByRole('tab', { name: '상담 기록' }).click();
   await page.getByText('상담 기록이 없습니다').waitFor();
   await page.screenshot({ path: '/Users/etlab/paca-student-detail-workspace-desktop.png', fullPage: true });
   await context.close();

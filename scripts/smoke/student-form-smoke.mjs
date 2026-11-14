@@ -170,6 +170,30 @@ async function installRoutes(context, state) {
       });
     }
 
+    // 휴원 창은 학원비 처리 미리보기(10월 추가)가 와야 휴원 처리 버튼을 누를 수 있다. 바뀌는 청구가 없는 미리보기를 준다.
+    if (method === 'POST' && path === '/students/77/lifecycle-billing-preview') {
+      const payload = JSON.parse(request.postData() || '{}');
+      const zero = {
+        original_amount: 0, before_final_amount: 0, prorated_amount: 0, adjusted_amount: 0,
+        paid_amount: 0, outstanding_amount: 0, waived_amount: 0, refundable_amount: 0,
+      };
+      return jsonRoute(route, {
+        action: payload.action,
+        date: payload.date,
+        year_month: String(payload.date || '').slice(0, 7),
+        student_id: 77,
+        days_before: null,
+        days_month: null,
+        summary: zero,
+        rows: [],
+        requires_confirmation: true,
+        readonly: true,
+        external_refund_executed: false,
+        preview_hash: 'smoke-rest-preview',
+        credit: null,
+      });
+    }
+
     if (method === 'POST' && path === '/students/77/process-rest') {
       state.restPayload = JSON.parse(request.postData() || '{}');
       if (state.mode === 'rest-error') {
@@ -436,14 +460,16 @@ async function runRestError(browser) {
   await page.getByRole('heading', { name: '학생 정보 수정' }).waitFor();
   await page.locator('select').last().selectOption('paused');
   await page.getByRole('heading', { name: /휴원 처리/ }).waitFor();
-  await page.getByRole('heading', { name: '수업료 처리' }).waitFor();
-  await page.getByRole('button', { name: '휴원 처리' }).click();
-  await page.getByText('휴원 처리를 완료하지 못했습니다. 잠시 후 다시 시도해주세요.').waitFor();
+  // 휴원 창(10월 개편): '수업료 처리' 대신 학원비 처리 미리보기와 '이월·환불 크레딧 선택'이 있고,
+  // 미리보기를 확인한 뒤 '확인한 금액으로 휴원 처리'로 보낸다. 실패 안내 문구도 함께 바뀌었다.
+  await page.getByRole('group', { name: '이월·환불 크레딧 선택' }).waitFor();
+  await page.getByRole('button', { name: '확인한 금액으로 휴원 처리' }).click();
+  await page.getByText('휴원 처리를 완료하지 못했습니다. 변경 내역을 확인해주세요.').waitFor();
   await assertNoRawVisibleText(page, 'student rest modal error');
   await assertNoHorizontalOverflow(page, 'student rest modal error');
   await page.screenshot({ path: '/Users/etlab/paca-student-rest-error-mobile.png', fullPage: true });
 
-  if (state.restPayload?.credit_type !== 'none') {
+  if (state.restPayload?.credit_type !== 'none' || state.restPayload?.billing_preview_hash !== 'smoke-rest-preview') {
     throw new Error(`unexpected rest payload: ${JSON.stringify(state.restPayload)}`);
   }
 

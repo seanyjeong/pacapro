@@ -76,7 +76,8 @@ async function main() {
 
     await page.goto('/students', { waitUntil: 'domcontentloaded' });
     await page.getByTestId('students-operations-workspace').waitFor();
-    const admissionFilter = page.locator('label:has-text("입시유형")').locator('..').locator('select');
+    // 새 디자인: 필터 선택칸은 라벨(화면에 안 보이는 글자)이 감싸는 모양이라 접근 이름으로 고른다.
+    const admissionFilter = page.getByRole('combobox', { name: /^입시유형/ });
     await admissionFilter.selectOption('advance');
     await page.locator('table').getByText('김진우').waitFor({ state: 'hidden' });
     await page.locator('th:has-text("학생 정보")').getByRole('button').click();
@@ -90,7 +91,8 @@ async function main() {
       throw new Error('목록 복귀 후 정렬이 사라졌습니다.');
     }
 
-    await page.getByRole('button', { name: /미등록관리/ }).click();
+    // 새 디자인: 학생 상태 이동은 버튼 대신 '학생 상태' 탭(role=tab)이다.
+    await page.getByRole('tab', { name: /미등록관리/ }).click();
     await page.locator('table').getByText('오미등').waitFor();
     const schoolHeader = page.locator('th:has-text("학교")');
     await schoolHeader.getByRole('button').click();

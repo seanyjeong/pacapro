@@ -8,6 +8,7 @@ import {
   launchSmokeBrowser,
   nonServiceWorkerErrors,
   normalizePacaApiPath,
+  statTile,
 } from './paca-smoke-utils.mjs';
 import fs from 'node:fs/promises';
 
@@ -215,12 +216,12 @@ async function runDesktop(browser) {
   await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
   await waitForStudentsShell(page);
   await page.getByText(`P-ACA v${DEFAULT_APP_VERSION}`, { exact: true }).waitFor();
-  await page.getByRole('button', { name: /재원생/ }).click();
-  const board = page.getByTestId('students-work-queue');
-  await board.getByText('학생 운영 보드').waitFor();
-  await board.getByText(/현재 목록\s*2명/).first().waitFor();
-  await board.getByText(/체험\s*1명/).waitFor();
-  await board.getByText(/미등록\s*1명/).waitFor();
+  await statusTab(page, /재원생/).click();
+  // 새 디자인: '학생 운영 보드'를 없앴다. 현재 목록 수는 목록 카드의 '총 N명', 체험·미등록 수와 상태 이동 버튼은
+  // 위 숫자 칸(같은 이름의 버튼), 바로 가기 링크는 화면 머리의 '바로 가기' 메뉴로 옮겨졌다.
+  await studentListCount(page, 2).waitFor();
+  await statTile(page, '체험').getByText('1명', { exact: true }).waitFor();
+  await statTile(page, '미등록').getByText('1명', { exact: true }).waitFor();
   const download = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: '엑셀' }).click(),
@@ -250,34 +251,42 @@ async function runDesktop(browser) {
     throw new Error(`student import payload too small: ${state.importPayloadBytes}`);
   }
 
-  await board.getByRole('link', { name: '수업일 관리' }).waitFor();
-  if ((await board.getByRole('link', { name: '수업일 관리' }).getAttribute('href')) !== '/students/class-days') {
+  await page.getByRole('button', { name: '바로 가기' }).click();
+  const quickLinks = page.getByRole('menu');
+  await quickLinks.getByRole('menuitem', { name: '수업일 관리' }).waitFor();
+  if ((await quickLinks.getByRole('menuitem', { name: '수업일 관리' }).getAttribute('href')) !== '/students/class-days') {
     throw new Error('student class-days quick link mismatch');
   }
-  if ((await board.getByRole('link', { name: '상담 관리' }).getAttribute('href')) !== '/consultations/enrolled') {
+  if ((await quickLinks.getByRole('menuitem', { name: '상담 관리' }).getAttribute('href')) !== '/consultations/enrolled') {
     throw new Error('student consultation quick link mismatch');
   }
-  if ((await board.getByRole('link', { name: '문자 발송' }).getAttribute('href')) !== '/sms') {
+  if ((await quickLinks.getByRole('menuitem', { name: '문자 발송' }).getAttribute('href')) !== '/sms') {
     throw new Error('student sms quick link mismatch');
   }
-  await board.getByRole('button', { name: '체험 학생 보기' }).click();
+  await page.keyboard.press('Escape');
+  await quickLinks.waitFor({ state: 'hidden' });
+  await page.getByRole('button', { name: '체험 학생 보기' }).click();
   await page.locator('table').getByText('최체험').waitFor();
   await page.locator('table').getByText('김진우').waitFor({ state: 'hidden' });
-  await board.getByRole('button', { name: '미등록 학생 보기' }).click();
+  await page.getByRole('button', { name: '미등록 학생 보기' }).click();
   await page.locator('table').getByText('이민수').waitFor();
   await page.locator('table').getByText('최체험').waitFor({ state: 'hidden' });
-  await board.getByRole('button', { name: '재원 학생 보기' }).click();
+  await page.getByRole('button', { name: '재원 학생 보기' }).click();
   await page.locator('table').getByText('김진우').waitFor();
   await page.locator('table').getByText('박서연').waitFor();
-  await page.getByRole('button', { name: /예비생/ }).click();
+  await statusTab(page, /예비생/).click();
   await page.locator('table').getByText('정예비').waitFor();
   await page.locator('table').getByText('김진우').waitFor({ state: 'hidden' });
   await page.locator('tr:has-text("정예비")').getByText('예비생').waitFor();
-  await page.getByRole('button', { name: /재원생/ }).click();
+  await statusTab(page, /재원생/).click();
   const advanceBadge = page.locator('tr:has-text("박서연")').getByText('선행반');
   await advanceBadge.waitFor();
-  if (!(await advanceBadge.getAttribute('class'))?.includes('violet')) throw new Error('선행반 배지 색상이 구분되지 않습니다.');
-  const admissionFilter = page.locator('label:has-text("입시유형")').locator('..').locator('select');
+  // 새 디자인은 직접 색(violet) 대신 배지 종류로 입시유형을 나눈다. 정시 배지와 모양(class)이 달라야 한다.
+  const regularBadge = page.locator('tr:has-text("김진우")').getByText('정시', { exact: true });
+  if ((await advanceBadge.getAttribute('class')) === (await regularBadge.getAttribute('class'))) {
+    throw new Error('선행반 배지 색상이 구분되지 않습니다.');
+  }
+  const admissionFilter = page.getByRole('combobox', { name: /^입시유형/ });
   await admissionFilter.selectOption('advance');
   await page.locator('table').getByText('김진우').waitFor({ state: 'hidden' });
   if (!state.hits.some((hit) => hit.includes('admission_type=advance'))) throw new Error('선행반 필터 API 요청이 없습니다.');
@@ -308,7 +317,7 @@ async function runDesktop(browser) {
   await assertNoHorizontalOverflow(page, 'students desktop');
   await page.screenshot({ path: '/Users/etlab/paca-students-desktop.png', fullPage: true });
 
-  await page.getByRole('button', { name: /미등록관리/ }).click();
+  await statusTab(page, /미등록관리/).click();
   await page.locator('table').getByText('이민수').waitFor();
   await page.getByPlaceholder('학생·부모님 이름, 학번, 연락처').fill('이민수');
   const pendingRow = page.locator('tr:has-text("이민수")');
@@ -320,7 +329,7 @@ async function runDesktop(browser) {
   }
   await page.goBack({ waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
-  await page.getByRole('button', { name: '미등록관리 상담 후속' }).click();
+  await statusTab(page, '미등록관리 상담 후속').click();
   await page.getByPlaceholder('학생·부모님 이름, 학번, 연락처').fill('이민수');
   await pendingRow.waitFor();
   await clickWithoutNativeDialog(page, pendingRow.locator('button').last(), 'pending student delete');
@@ -338,7 +347,7 @@ async function runDesktop(browser) {
   }
 
   await page.getByPlaceholder('학생·부모님 이름, 학번, 연락처').fill('');
-  await page.getByRole('button', { name: '체험생 등록 전환' }).click();
+  await statusTab(page, '체험생 등록 전환').click();
   const trialRow = page.locator('tr:has-text("최체험")');
   await trialRow.waitFor();
   await clickWithoutNativeDialog(page, trialRow.getByRole('button', { name: '미등록관리로 이동' }), 'trial move to pending');
@@ -366,16 +375,16 @@ async function runMobile(browser) {
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
   await waitForStudentsShell(page);
-  await page.getByTestId('students-work-queue').getByText('학생 운영 보드').waitFor();
-  await page.getByTestId('students-work-queue').getByText(/현재 목록\s*2명/).first().waitFor();
+  await studentListCount(page, 2).waitFor();
   const detailButton = page.getByRole('button', { name: '김진우 상세 보기' });
   await detailButton.waitFor();
   await page.getByText('김진우').first().waitFor();
   await page.getByText('010-1111-2222').first().waitFor();
   await page.getByText('월 학원비').first().waitFor();
-  await page.getByRole('button', { name: /예비생/ }).click();
+  await statusTab(page, /예비생/).click();
   await page.getByText('정예비').first().waitFor();
-  await page.locator('article:has-text("정예비")').getByText('예비생', { exact: true }).waitFor();
+  // 새 디자인 휴대폰 목록은 카드(article) 대신 한 줄 목록(li)이다.
+  await page.locator('li:has-text("정예비")').getByText('예비생', { exact: true }).waitFor();
   const shell = await page.locator('div.flex.h-screen').first().evaluate((element) => ({
     scrollLeft: element.scrollLeft, overflow: element.scrollWidth - element.clientWidth,
   }));
@@ -383,7 +392,7 @@ async function runMobile(browser) {
   await assertNoRawVisibleText(page, 'students mobile');
   await assertNoHorizontalOverflow(page, 'students mobile');
   await page.screenshot({ path: '/Users/etlab/paca-students-mobile.png', fullPage: true });
-  await page.getByRole('button', { name: /재원생/ }).click();
+  await statusTab(page, /재원생/).click();
   await detailButton.scrollIntoViewIfNeeded();
 
   await context.close();
@@ -392,7 +401,16 @@ async function runMobile(browser) {
 
 async function waitForStudentsShell(page) {
   await page.getByTestId('students-operations-workspace').waitFor();
-  await page.getByTestId('students-work-queue').waitFor();
+  await page.getByRole('region', { name: '학생 목록' }).waitFor();
+}
+
+// 새 디자인: 학생 상태 이동은 '학생 상태' 탭(role=tab, 이름 = '재원생 수강 중' 처럼 탭 이름 + 설명)이다.
+function statusTab(page, name) {
+  return page.getByRole('tablist', { name: '학생 상태' }).getByRole('tab', { name });
+}
+
+function studentListCount(page, count) {
+  return page.getByRole('region', { name: '학생 목록' }).getByText(new RegExp(`^총\\s*${count}\\s*명$`));
 }
 
 function fulfillPhoto(route) {
@@ -409,7 +427,7 @@ async function runLoadError(browser) {
   const { context, page } = result;
 
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('alert').getByRole('heading', { name: '학생 정보를 불러오지 못했습니다' }).waitFor();
+  await page.getByRole('alert').getByRole('heading', { name: '학생 정보를 불러오지 못했어요' }).waitFor();
   await page.getByRole('button', { name: '학생 등록' }).waitFor();
   await page.getByRole('button', { name: '다시 불러오기' }).waitFor();
   await assertNoRawVisibleText(page, 'students load error');
@@ -427,7 +445,7 @@ async function runPendingDeleteError(browser) {
   await page.goto('/students', { waitUntil: 'domcontentloaded' });
   await page.getByRole('heading', { name: '학생 운영', exact: true }).waitFor();
   await page.locator('table').getByText('김진우').waitFor();
-  await page.getByRole('button', { name: '미등록관리 상담 후속' }).click();
+  await statusTab(page, '미등록관리 상담 후속').click();
   const pendingRow = page.locator('tr:has-text("이민수")');
   try {
     await pendingRow.waitFor();

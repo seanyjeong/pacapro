@@ -99,7 +99,8 @@ try {
     await scenario(width, async (page) => {
       await page.goto(url, { waitUntil: 'networkidle' });
       await page.getByPlaceholder('학생·부모님 이름, 학번, 연락처').fill('김아버지');
-      await page.getByText('아버지 김아버지', { exact: true }).filter({ visible: true }).first().waitFor();
+      // 새 디자인 휴대폰 목록은 '아버지 … · 어머니 …'를 한 줄로 이어 보여 주므로 정확 일치 대신 포함 여부로 본다.
+      await page.getByText('아버지 김아버지').filter({ visible: true }).first().waitFor();
       await page.waitForFunction(() => !document.body.innerText.includes('이학생'));
       assert.ok((await page.locator('body').innerText()).includes('김첫째'));
       assert.ok((await page.locator('body').innerText()).includes('김둘째'));

@@ -161,7 +161,8 @@ async function main() {
 
     await page.goto('/students/41', { waitUntil: 'domcontentloaded' });
     await page.getByRole('heading', { name: '학생 상세' }).waitFor();
-    await page.getByRole('button', { name: '시즌 등록 보기' }).click();
+    // 새 디자인: 학생 작업 보드의 '시즌 등록 보기' 버튼은 아래 운영 기록 탭('시즌 등록')이 되었다.
+    await page.getByRole('tab', { name: '시즌 등록' }).click();
     await page.getByRole('heading', { name: '시즌 등록 현황' }).waitFor();
 
     await page.getByRole('button', { name: '시즌 등록', exact: true }).click();
