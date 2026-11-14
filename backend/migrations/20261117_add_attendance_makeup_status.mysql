@@ -1,0 +1,18 @@
+-- Apply after a verified backup. The running code already writes 'makeup'; no deploy order needed.
+-- 보충 출석: 출석 화면은 원래 수업 기록에 attendance_status='makeup' 과 makeup_date 를 저장하고,
+-- 보충 날짜 수업은 그 값으로 보충 학생을 불러온다. 운영 ENUM 에 makeup 이 없어 지금까지
+-- 상태가 빈 값('')으로 저장되고 보충 날짜 수업에도 학생이 나오지 않았다.
+-- Preserve existing ENUM order; append makeup so stored ordinal values do not change.
+ALTER TABLE attendance
+  MODIFY COLUMN attendance_status
+  ENUM('present','absent','late','excused','makeup')
+  NULL DEFAULT 'present';
+
+-- 빈 값('')은 ENUM 에 없는 값을 넣었을 때만 생긴다. 보충 날짜가 함께 있는 행은 보충으로 저장하려던 기록이다.
+-- 실행 전 대상 건수 확인: SELECT COUNT(*) FROM attendance WHERE attendance_status = '' AND makeup_date IS NOT NULL;
+UPDATE attendance
+  SET attendance_status = 'makeup'
+  WHERE attendance_status = '' AND makeup_date IS NOT NULL;
+
+-- Rollback is deliberately manual: first stop new makeup writes, decide how to
+-- reclassify every makeup row, then remove the final ENUM member.
