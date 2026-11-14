@@ -113,18 +113,6 @@ export function ExpenseCalendar({
     return expensesByDate.get(selectedDate) || null;
   }, [selectedDate, expensesByDate]);
 
-  // 월간 총 지출
-  const monthlyTotal = useMemo(() => {
-    let total = 0;
-    expensesByDate.forEach((summary, date) => {
-      const dateObj = new Date(date);
-      if (dateObj.getFullYear() === currentYear && dateObj.getMonth() === currentMonth) {
-        total += summary.totalAmount;
-      }
-    });
-    return total;
-  }, [expensesByDate, currentYear, currentMonth]);
-
   const handlePrevMonth = () => {
     const newDate = new Date(currentYear, currentMonth - 1, 1);
     setCurrentDate(newDate);
@@ -170,15 +158,10 @@ export function ExpenseCalendar({
     <>
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-foreground">
-              <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-              {currentYear}년 {currentMonth + 1}월 지출
-            </h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              월간 총 지출 <span className="font-bold tabular-nums text-destructive">{monthlyTotal.toLocaleString()}원</span>
-            </p>
-          </div>
+          <h2 className="flex items-center gap-2 text-[17px] font-bold tracking-tight text-foreground">
+            <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+            {currentYear}년 {currentMonth + 1}월 지출
+          </h2>
           <div className="flex items-center gap-2 self-end sm:self-auto">
             <Button variant="outline" size="sm" onClick={handleToday}>
               오늘
